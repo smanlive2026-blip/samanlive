@@ -55,7 +55,7 @@ const nearbyVideos = [
 
 // RENDER MODULES - CHAMAKDAR GRADIENT
 document.getElementById('serviceGrid').innerHTML = allModules.map((module, idx) => `
-    <div class="service-item" style="--delay: ${idx * 0.01}s">
+    <div class="service-item" style="animation-delay: ${idx * 0.01}s">
         <a href="${module.link}">
             <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
             <p>${module.name}</p>
@@ -101,12 +101,12 @@ document.getElementById('campaignContainer').innerHTML = campaignChunks.map((chu
     </div>
 `).join('');
 
-// RENDER NEARBY - 6 PER SLIDE EK LINE GOL
+// RENDER NEARBY - 6 ICON LINE 1 + 3 VIDEO LINE 2
 const nearbyChunks = [];
 for (let i = 0; i < nearbyServices.length; i += 6) {
     nearbyChunks.push(nearbyServices.slice(i, i + 6));
 }
-document.getElementById('nearbyContainer').innerHTML = nearbyChunks.map((chunk, idx) => `
+document.getElementById('nearbyContent').innerHTML = nearbyChunks.map((chunk, idx) => `
     <div class="nearby-slide ${idx === 0? 'active' : ''}">
         <div class="nearby-shops-grid">
             ${chunk.map(service => `
@@ -118,17 +118,17 @@ document.getElementById('nearbyContainer').innerHTML = nearbyChunks.map((chunk, 
                 </div>
             `).join('')}
         </div>
-    </div>
-`).join('');
-
-// RENDER 3 VIDEOS - 5 SEC, EK LINE ME
-document.getElementById('nearbyVideosContainer').innerHTML = nearbyVideos.map((video, idx) => `
-    <div class="video-card">
-        <video muted loop autoplay playsinline>
-            <source src="${video.url}#t=0,5" type="video/mp4">
-        </video>
-        <div class="video-label">${video.title}</div>
-        <div class="video-play">▶</div>
+        <div class="nearby-videos">
+            ${nearbyVideos.map(video => `
+                <div class="video-card">
+                    <video muted loop autoplay playsinline>
+                        <source src="${video.url}#t=0,5" type="video/mp4">
+                    </video>
+                    <div class="video-label">${video.title}</div>
+                    <div class="video-play">▶</div>
+                </div>
+            `).join('')}
+        </div>
     </div>
 `).join('');
 
@@ -137,7 +137,7 @@ document.getElementById('nearbyDots').innerHTML = nearbyChunks.map((_, idx) => `
     <span class="${idx === 0? 'active' : ''}" onclick="goToNearby(${idx})"></span>
 `).join('');
 
-// SLIDER LOGIC
+// SLIDER LOGIC - SPACE KE SAATH SELECTOR
 let topAdIndex = 0;
 let campaignIndex = 0;
 let nearbyIndex = 0;
@@ -145,7 +145,7 @@ let nearbyIndex = 0;
 function showTopAd(idx) {
     const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
     slides.forEach(s => s.classList.remove('active'));
-    slides[idx].classList.add('active');
+    if(slides[idx]) slides[idx].classList.add('active');
     topAdIndex = idx;
 }
 function nextTopAd() {
@@ -162,7 +162,7 @@ function prevTopAd() {
 function showCampaign(idx) {
     const slides = document.querySelectorAll('#campaignContainer.ad-slide');
     slides.forEach(s => s.classList.remove('active'));
-    slides[idx].classList.add('active');
+    if(slides[idx]) slides[idx].classList.add('active');
     campaignIndex = idx;
 }
 function nextCampaign() {
@@ -177,21 +177,21 @@ function prevCampaign() {
 }
 
 function showNearby(idx) {
-    const slides = document.querySelectorAll('#nearbyContainer.nearby-slide');
+    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
     const dots = document.querySelectorAll('#nearbyDots span');
     slides.forEach(s => s.classList.remove('active'));
     dots.forEach(d => d.classList.remove('active'));
-    slides[idx].classList.add('active');
-    dots[idx].classList.add('active');
+    if(slides[idx]) slides[idx].classList.add('active');
+    if(dots[idx]) dots[idx].classList.add('active');
     nearbyIndex = idx;
 }
 function nextNearby() {
-    const slides = document.querySelectorAll('#nearbyContainer.nearby-slide');
+    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
     nearbyIndex = (nearbyIndex + 1) % slides.length;
     showNearby(nearbyIndex);
 }
 function prevNearby() {
-    const slides = document.querySelectorAll('#nearbyContainer.nearby-slide');
+    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
     nearbyIndex = (nearbyIndex - 1 + slides.length) % slides.length;
     showNearby(nearbyIndex);
 }
