@@ -24,6 +24,17 @@ for(let i = 0; i < 200; i++) {
     });
 }
 
+// CAMPAIGN - 200 CAMPAIGNS, 4 PER SLIDE
+const allCampaigns = [];
+for(let i = 0; i < 200; i++) {
+    allCampaigns.push({
+        title: `Campaign ${i + 1}`,
+        desc: `Join Now`,
+        btn: "Join",
+        color: adColors[i % adColors.length]
+    });
+}
+
 // NEARBY - 48 SERVICES, 6 PER SLIDE
 const nearbyServices = [];
 for(let i = 0; i < 48; i++) {
@@ -34,6 +45,13 @@ for(let i = 0; i < 48; i++) {
         color: `hsl(${(i * 11) % 360}, 70%, 55%)`
     });
 }
+
+// 3 VIDEOS - 5 SEC WALE
+const nearbyVideos = [
+    { title: "Shop Tour", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+    { title: "Best Deals", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" },
+    { title: "New Arrivals", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" }
+];
 
 // RENDER MODULES - CHAMAKDAR GRADIENT
 document.getElementById('serviceGrid').innerHTML = allModules.map((module, idx) => `
@@ -64,16 +82,19 @@ document.getElementById('topAdsContainer').innerHTML = topAdChunks.map((chunk, i
     </div>
 `).join('');
 
-// RENDER BOTTOM ADS - 4 PER SLIDE EK LINE
-const bottomAdChunks = topAdChunks.slice(0, 50);
-document.getElementById('bottomAdsContainer').innerHTML = bottomAdChunks.map((chunk, idx) => `
+// RENDER CAMPAIGN - 4 PER SLIDE EK LINE
+const campaignChunks = [];
+for (let i = 0; i < allCampaigns.length; i += 4) {
+    campaignChunks.push(allCampaigns.slice(i, i + 4));
+}
+document.getElementById('campaignContainer').innerHTML = campaignChunks.map((chunk, idx) => `
     <div class="ad-slide ${idx === 0? 'active' : ''}">
         <div class="ads-grid">
-            ${chunk.map(ad => `
-                <div class="ad-card" style="background: linear-gradient(135deg, ${ad.color}, ${ad.color}cc)">
-                    <h3>${ad.title}</h3>
-                    <p>${ad.desc}</p>
-                    <button class="ad-btn">${ad.btn}</button>
+            ${chunk.map(campaign => `
+                <div class="campaign-card" style="background: linear-gradient(135deg, ${campaign.color}, ${campaign.color}cc)">
+                    <h3>${campaign.title}</h3>
+                    <p>${campaign.desc}</p>
+                    <button class="campaign-btn">${campaign.btn}</button>
                 </div>
             `).join('')}
         </div>
@@ -100,6 +121,17 @@ document.getElementById('nearbyContainer').innerHTML = nearbyChunks.map((chunk, 
     </div>
 `).join('');
 
+// RENDER 3 VIDEOS - 5 SEC, EK LINE ME
+document.getElementById('nearbyVideosContainer').innerHTML = nearbyVideos.map((video, idx) => `
+    <div class="video-card">
+        <video muted loop autoplay playsinline>
+            <source src="${video.url}#t=0,5" type="video/mp4">
+        </video>
+        <div class="video-label">${video.title}</div>
+        <div class="video-play">▶</div>
+    </div>
+`).join('');
+
 // RENDER DOTS
 document.getElementById('nearbyDots').innerHTML = nearbyChunks.map((_, idx) => `
     <span class="${idx === 0? 'active' : ''}" onclick="goToNearby(${idx})"></span>
@@ -107,7 +139,7 @@ document.getElementById('nearbyDots').innerHTML = nearbyChunks.map((_, idx) => `
 
 // SLIDER LOGIC
 let topAdIndex = 0;
-let bottomAdIndex = 0;
+let campaignIndex = 0;
 let nearbyIndex = 0;
 
 function showTopAd(idx) {
@@ -127,21 +159,21 @@ function prevTopAd() {
     showTopAd(topAdIndex);
 }
 
-function showBottomAd(idx) {
-    const slides = document.querySelectorAll('#bottomAdsContainer.ad-slide');
+function showCampaign(idx) {
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
     slides.forEach(s => s.classList.remove('active'));
     slides[idx].classList.add('active');
-    bottomAdIndex = idx;
+    campaignIndex = idx;
 }
-function nextBottomAd() {
-    const slides = document.querySelectorAll('#bottomAdsContainer.ad-slide');
-    bottomAdIndex = (bottomAdIndex + 1) % slides.length;
-    showBottomAd(bottomAdIndex);
+function nextCampaign() {
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    campaignIndex = (campaignIndex + 1) % slides.length;
+    showCampaign(campaignIndex);
 }
-function prevBottomAd() {
-    const slides = document.querySelectorAll('#bottomAdsContainer.ad-slide');
-    bottomAdIndex = (bottomAdIndex - 1 + slides.length) % slides.length;
-    showBottomAd(bottomAdIndex);
+function prevCampaign() {
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
+    showCampaign(campaignIndex);
 }
 
 function showNearby(idx) {
@@ -167,5 +199,5 @@ function goToNearby(idx) { showNearby(idx); }
 
 // AUTO SLIDE
 setInterval(nextTopAd, 5000);
-setInterval(nextBottomAd, 6000);
+setInterval(nextCampaign, 6000);
 setInterval(nextNearby, 4000);

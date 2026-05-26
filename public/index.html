@@ -15,17 +15,14 @@
     <!-- HEADER -->
     <header class="header">
         <div class="header-container">
-            <!-- LOGO LEFT -->
             <div class="logo">
                 <div class="logo-icon">S</div>
                 <span class="logo-text">SAMANLIVE</span>
             </div>
-            <!-- SEARCH BAR CENTER -->
             <div class="search-box">
                 <input type="text" placeholder="Search services, shops..." id="searchInput">
                 <button class="search-btn">🔍</button>
             </div>
-            <!-- RIGHT SIDE - NOTIFICATION + PROFILE -->
             <div class="header-right">
                 <div class="notification-icon">
                     🔔
@@ -46,7 +43,7 @@
                 <button class="ad-nav next" onclick="nextTopAd()">›</button>
             </div>
 
-            <!-- NEARBY SERVICES - 6 EK LINE ME CHOTE GOL -->
+            <!-- NEARBY SERVICES + 3 VIDEO - USI DABBE ME -->
             <div class="nearby-slider">
                 <div class="nearby-header">
                     <h2>📍 Near You</h2>
@@ -54,8 +51,8 @@
                         <button onclick="prevNearby()">‹</button>
                         <button onclick="nextNearby()">›</button>
                     </div>
-                </div>
                 <div class="nearby-container" id="nearbyContainer"></div>
+                <div class="nearby-videos" id="nearbyVideosContainer"></div>
                 <div class="nearby-dots" id="nearbyDots"></div>
             </div>
 
@@ -67,11 +64,14 @@
                 </div>
             </div>
 
-            <!-- BOTTOM OFFER - 4 EK LINE ME CHOTE -->
-            <div class="bottom-ad-slider">
-                <div class="ad-container" id="bottomAdsContainer"></div>
-                <button class="ad-nav prev" onclick="prevBottomAd()">‹</button>
-                <button class="ad-nav next" onclick="nextBottomAd()">›</button>
+            <!-- CAMPAIGN SECTION - 4 EK LINE ME -->
+            <div class="campaign-slider">
+                <div class="campaign-header">
+                    <h2>🎯 Live Campaigns</h2>
+                </div>
+                <div class="ad-container" id="campaignContainer"></div>
+                <button class="ad-nav prev" onclick="prevCampaign()">‹</button>
+                <button class="ad-nav next" onclick="nextCampaign()">›</button>
             </div>
         </div>
     </main>
@@ -108,7 +108,6 @@
                         <li>Phone: +91 12345 67890</li>
                     </ul>
                 </div>
-            </div>
             <div class="footer-bottom">
                 <p>© 2024 SAMANLIVE. All rights reserved.</p>
                 <p>POWERED BY STEEL | Made in India ❤️</p>
