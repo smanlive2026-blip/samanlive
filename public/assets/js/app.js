@@ -1,4 +1,4 @@
-// 100 MODULES GENERATE
+// 100 MODULES - CHAMAKDAR
 const moduleNames = ["Education", "Health", "Kids", "Games", "Music", "Books", "Shopping", "Food", "Travel", "Real Estate", "Jobs", "Automotive", "Finance", "Banking", "Stocks", "Payments", "Movies", "TV Shows", "Art", "Photography", "Writing", "Theater", "Fitness", "Yoga", "Sports", "Football", "Basketball", "Tennis", "Swimming", "Cycling", "Climbing", "Skiing", "Surfing", "Fishing", "Camping", "Gardening", "Pets", "Cats", "Birds", "Fish", "Butterfly", "Flowers", "Trees", "Night", "Weather", "Rainbow", "Stars", "Earth", "Space", "UFO", "Robots", "Target"];
 const moduleIcons = ["📚", "🏥", "👶", "🎮", "🎵", "📖", "🛒", "🍕", "✈️", "🏠", "💼", "🚗", "💰", "🏦", "📈", "💳", "🎬", "📺", "🎨", "📷", "✍️", "🎭", "💪", "🧘", "⚽", "🏈", "🏀", "🎾", "🏊", "🚴", "🧗", "⛷️", "🏄", "🎣", "🏕️", "🌱", "🐾", "🐱", "🐦", "🐟", "🦋", "🌸", "🌳", "🌙", "☁️", "🌈", "⭐", "🌍", "🚀", "🛸", "🤖", "🎯"];
 const allModules = [];
@@ -7,45 +7,45 @@ for(let i = 0; i < 100; i++) {
     allModules.push({
         icon: moduleIcons[idx],
         name: `${moduleNames[idx]}`,
-        color: `hsl(${(i * 7) % 360}, 70%, 50%)`,
+        color: `hsl(${(i * 7) % 360}, 70%, 55%)`,
         link: `/modules/${moduleNames[idx].toLowerCase().replace(' ', '-')}-${i}`
     });
 }
 
-// ADS DATA - 200 ADS, 4 PER SLIDE
+// ADS - 200 ADS, 4 PER SLIDE
 const allAds = [];
 const adColors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#ef4444", "#6366f1", "#14b8a6"];
 for(let i = 0; i < 200; i++) {
     allAds.push({
-        title: `Mega Offer ${i + 1}`,
-        desc: `Up to 70% OFF`,
-        btn: "Shop Now",
+        title: `Offer ${i + 1}`,
+        desc: `70% OFF`,
+        btn: "Buy",
         color: adColors[i % adColors.length]
     });
 }
 
-// NEARBY SERVICES - 48 SERVICES, 6 PER SLIDE
+// NEARBY - 48 SERVICES, 6 PER SLIDE
 const nearbyServices = [];
 for(let i = 0; i < 48; i++) {
     const idx = i % moduleNames.length;
     nearbyServices.push({
         icon: moduleIcons[idx],
         name: `${moduleNames[idx]}`,
-        color: `hsl(${(i * 11) % 360}, 70%, 50%)`
+        color: `hsl(${(i * 11) % 360}, 70%, 55%)`
     });
 }
 
-// RENDER MODULES - CHAMAKDAR BADE ICON
+// RENDER MODULES - CHAMAKDAR GRADIENT
 document.getElementById('serviceGrid').innerHTML = allModules.map((module, idx) => `
     <div class="service-item" style="--delay: ${idx * 0.01}s">
         <a href="${module.link}">
-            <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd); color: white;">${module.icon}</div>
+            <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
             <p>${module.name}</p>
         </a>
     </div>
 `).join('');
 
-// RENDER TOP ADS - 4 PER SLIDE 2x2
+// RENDER TOP ADS - 4 PER SLIDE EK LINE
 const topAdChunks = [];
 for (let i = 0; i < allAds.length; i += 4) {
     topAdChunks.push(allAds.slice(i, i + 4));
@@ -64,7 +64,7 @@ document.getElementById('topAdsContainer').innerHTML = topAdChunks.map((chunk, i
     </div>
 `).join('');
 
-// RENDER BOTTOM ADS - 4 PER SLIDE 2x2
+// RENDER BOTTOM ADS - 4 PER SLIDE EK LINE
 const bottomAdChunks = topAdChunks.slice(0, 50);
 document.getElementById('bottomAdsContainer').innerHTML = bottomAdChunks.map((chunk, idx) => `
     <div class="ad-slide ${idx === 0? 'active' : ''}">
@@ -80,7 +80,7 @@ document.getElementById('bottomAdsContainer').innerHTML = bottomAdChunks.map((ch
     </div>
 `).join('');
 
-// RENDER NEARBY - 6 PER SLIDE 3x2 GOL
+// RENDER NEARBY - 6 PER SLIDE EK LINE GOL
 const nearbyChunks = [];
 for (let i = 0; i < nearbyServices.length; i += 6) {
     nearbyChunks.push(nearbyServices.slice(i, i + 6));
