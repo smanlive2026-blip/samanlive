@@ -1,8 +1,7 @@
 // 100 MODULES GENERATE
-const allModules = [];
 const moduleNames = ["Education", "Health", "Kids", "Games", "Music", "Books", "Shopping", "Food", "Travel", "Real Estate", "Jobs", "Automotive", "Finance", "Banking", "Stocks", "Payments", "Movies", "TV Shows", "Art", "Photography", "Writing", "Theater", "Fitness", "Yoga", "Sports", "Football", "Basketball", "Tennis", "Swimming", "Cycling", "Climbing", "Skiing", "Surfing", "Fishing", "Camping", "Gardening", "Pets", "Cats", "Birds", "Fish", "Butterfly", "Flowers", "Trees", "Night", "Weather", "Rainbow", "Stars", "Earth", "Space", "UFO", "Robots", "Target"];
-const moduleIcons = ["🎓", "🏥", "👶", "🎮", "🎵", "📚", "🛒", "🍕", "✈️", "🏠", "💼", "🚗", "💰", "🏦", "📈", "💳", "🎬", "📺", "🎨", "📷", "✍️", "🎭", "🏋️", "🧘", "🏃", "⚽", "🏀", "🎾", "🏊", "🚴", "🧗", "🎿", "🏄", "🎣", "🏕️", "🌱", "🐕", "🐱", "🐦", "🐠", "🦋", "🌸", "🌳", "🌙", "☀️", "🌈", "⭐", "🌍", "🚀", "🛸", "🤖", "🎯"];
-
+const moduleIcons = ["📚", "🏥", "👶", "🎮", "🎵", "📖", "🛒", "🍕", "✈️", "🏠", "💼", "🚗", "💰", "🏦", "📈", "💳", "🎬", "📺", "🎨", "📷", "✍️", "🎭", "💪", "🧘", "⚽", "🏈", "🏀", "🎾", "🏊", "🚴", "🧗", "⛷️", "🏄", "🎣", "🏕️", "🌱", "🐾", "🐱", "🐦", "🐟", "🦋", "🌸", "🌳", "🌙", "☁️", "🌈", "⭐", "🌍", "🚀", "🛸", "🤖", "🎯"];
+const allModules = [];
 for(let i = 0; i < 100; i++) {
     const idx = i % moduleNames.length;
     allModules.push({
@@ -13,45 +12,41 @@ for(let i = 0; i < 100; i++) {
     });
 }
 
-// 250 ADS - 5 PER SLIDE = 50 SLIDE
+// ADS DATA - 250 ADS
 const allAds = [];
-for(let i = 1; i <= 250; i++) {
+const adColors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#ef4444", "#6366f1", "#14b8a6"];
+for(let i = 0; i < 250; i++) {
     allAds.push({
-        title: `Special Offer #${i}`,
-        desc: `Save up to ${20 + (i % 80)}% on premium services!`,
-        btn: "Shop Now",
-        color: `hsl(${(i * 7) % 360}, 70%, 50%)`
+        title: `Special Offer ${i + 1}`,
+        desc: `Get amazing discounts on service ${i + 1}`,
+        btn: "Claim Now",
+        color: adColors[i % adColors.length]
     });
 }
 
-// 50 NEARBY SHOPS - 10 PER SLIDE = 5 SLIDE
+// NEARBY SERVICES - 50 SERVICES
 const nearbyServices = [];
-const shopTypes = ["Shops", "Hospitals", "Hotels", "Restaurants", "Pharmacy", "Petrol", "ATMs", "Taxi", "Grocery", "Theatres", "Salon", "Mechanic", "Mobile Shop", "Clothing", "Bakery"];
-const shopIcons = ["🏪", "🏥", "🏨", "🍽️", "💊", "⛽", "🏧", "🚕", "🛒", "🎬", "💇", "🔧", "📱", "👕", "🥖"];
-
-for(let i = 1; i <= 50; i++) {
-    const idx = i % shopTypes.length;
-    const km = (Math.random() * 5 + 0.5).toFixed(1);
+for(let i = 0; i < 50; i++) {
+    const idx = i % moduleNames.length;
     nearbyServices.push({
-        icon: shopIcons[idx],
-        name: `${shopTypes[idx]} ${i}`,
-        desc: `${km} km away • Open Now`,
-        btn: "Visit",
-        color: `hsl(${(i * 15) % 360}, 70%, 50%)`
+        icon: moduleIcons[idx],
+        name: `${moduleNames[idx]} Shop ${i + 1}`,
+        desc: `Best ${moduleNames[idx]} services near you`,
+        color: `hsl(${(i * 11) % 360}, 70%, 50%)`
     });
 }
 
-// LOAD 100 MODULES
-document.getElementById('serviceGrid').innerHTML = allModules.map((module, i) => `
-    <div class="service-item" style="--delay: ${i * 0.02}s">
+// RENDER MODULES
+document.getElementById('serviceGrid').innerHTML = allModules.map((module, idx) => `
+    <div class="service-item" style="--delay: ${idx * 0.01}s">
         <a href="${module.link}">
-            <div class="service-icon" style="background: ${module.color}">${module.icon}</div>
+            <div class="service-icon" style="background: ${module.color}20; color: ${module.color}">${module.icon}</div>
             <p>${module.name}</p>
         </a>
     </div>
 `).join('');
 
-// TOP ADS - 5 PER SLIDE
+// RENDER TOP ADS - 5 PER SLIDE
 const topAdChunks = [];
 for (let i = 0; i < allAds.length; i += 5) {
     topAdChunks.push(allAds.slice(i, i + 5));
@@ -70,7 +65,7 @@ document.getElementById('topAdsContainer').innerHTML = topAdChunks.map((chunk, i
     </div>
 `).join('');
 
-// BOTTOM ADS - 5 PER SLIDE, 50 SLIDES
+// RENDER BOTTOM ADS - 5 PER SLIDE
 const bottomAdChunks = topAdChunks.slice(0, 50);
 document.getElementById('bottomAdsContainer').innerHTML = bottomAdChunks.map((chunk, idx) => `
     <div class="ad-slide ${idx === 0? 'active' : ''}">
@@ -86,7 +81,7 @@ document.getElementById('bottomAdsContainer').innerHTML = bottomAdChunks.map((ch
     </div>
 `).join('');
 
-// NEARBY - 10 PER SLIDE, 5 SLIDES
+// RENDER NEARBY - 10 PER SLIDE
 const nearbyChunks = [];
 for (let i = 0; i < nearbyServices.length; i += 10) {
     nearbyChunks.push(nearbyServices.slice(i, i + 10));
@@ -100,46 +95,84 @@ document.getElementById('nearbyContainer').innerHTML = nearbyChunks.map((chunk, 
                     <div class="nearby-info">
                         <h4>${service.name}</h4>
                         <p>${service.desc}</p>
-                        <button style="color: ${service.color}">${service.btn}</button>
+                        <button>Visit</button>
                     </div>
                 </div>
             `).join('')}
         </div>
     </div>
 `).join('');
+
+// RENDER DOTS
 document.getElementById('nearbyDots').innerHTML = nearbyChunks.map((_, idx) => `
     <span class="${idx === 0? 'active' : ''}" onclick="goToNearby(${idx})"></span>
 `).join('');
 
-// SLIDER FUNCTIONS - 5 SEC
-let currentTopAd = 0, currentBottomAd = 0, currentNearby = 0;
+// SLIDER LOGIC
+let topAdIndex = 0;
+let bottomAdIndex = 0;
+let nearbyIndex = 0;
 
-function updateTopAd() {
-    document.querySelectorAll('#topAdsContainer.ad-slide').forEach((s, i) => s.classList.toggle('active', i === currentTopAd));
+function showTopAd(idx) {
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    slides.forEach(s => s.classList.remove('active'));
+    slides[idx].classList.add('active');
+    topAdIndex = idx;
 }
-function nextTopAd() { currentTopAd = (currentTopAd + 1) % topAdChunks.length; updateTopAd(); }
-function prevTopAd() { currentTopAd = (currentTopAd - 1 + topAdChunks.length) % topAdChunks.length; updateTopAd(); }
-
-function updateBottomAd() {
-    document.querySelectorAll('#bottomAdsContainer.ad-slide').forEach((s, i) => s.classList.toggle('active', i === currentBottomAd));
+function nextTopAd() {
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    topAdIndex = (topAdIndex + 1) % slides.length;
+    showTopAd(topAdIndex);
 }
-function nextBottomAd() { currentBottomAd = (currentBottomAd + 1) % bottomAdChunks.length; updateBottomAd(); }
-function prevBottomAd() { currentBottomAd = (currentBottomAd - 1 + bottomAdChunks.length) % bottomAdChunks.length; updateBottomAd(); }
-
-function updateNearby() {
-    document.querySelectorAll('.nearby-slide').forEach((s, i) => s.classList.toggle('active', i === currentNearby));
-    document.querySelectorAll('.nearby-dots span').forEach((d, i) => d.classList.toggle('active', i === currentNearby));
+function prevTopAd() {
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
+    showTopAd(topAdIndex);
 }
-function nextNearby() { currentNearby = (currentNearby + 1) % nearbyChunks.length; updateNearby(); }
-function prevNearby() { currentNearby = (currentNearby - 1 + nearbyChunks.length) % nearbyChunks.length; updateNearby(); }
-function goToNearby(i) { currentNearby = i; updateNearby(); }
 
-// AUTO SLIDE - 5 SEC
-setInterval(nextTopAd, 5000);
-setInterval(nextBottomAd, 5000);
-setInterval(nextNearby, 5000);
+function showBottomAd(idx) {
+    const slides = document.querySelectorAll('#bottomAdsContainer.ad-slide');
+    slides.forEach(s => s.classList.remove('active'));
+    slides[idx].classList.add('active');
+    bottomAdIndex = idx;
+}
+function nextBottomAd() {
+    const slides = document.querySelectorAll('#bottomAdsContainer.ad-slide');
+    bottomAdIndex = (bottomAdIndex + 1) % slides.length;
+    showBottomAd(bottomAdIndex);
+}
+function prevBottomAd() {
+    const slides = document.querySelectorAll('#bottomAdsContainer.ad-slide');
+    bottomAdIndex = (bottomAdIndex - 1 + slides.length) % slides.length;
+    showBottomAd(bottomAdIndex);
+}
 
-// MENU
+function showNearby(idx) {
+    const slides = document.querySelectorAll('#nearbyContainer.nearby-slide');
+    const dots = document.querySelectorAll('#nearbyDots span');
+    slides.forEach(s => s.classList.remove('active'));
+    dots.forEach(d => d.classList.remove('active'));
+    slides[idx].classList.add('active');
+    dots[idx].classList.add('active');
+    nearbyIndex = idx;
+}
+function nextNearby() {
+    const slides = document.querySelectorAll('#nearbyContainer.nearby-slide');
+    nearbyIndex = (nearbyIndex + 1) % slides.length;
+    showNearby(nearbyIndex);
+}
+function prevNearby() {
+    const slides = document.querySelectorAll('#nearbyContainer.nearby-slide');
+    nearbyIndex = (nearbyIndex - 1 + slides.length) % slides.length;
+    showNearby(nearbyIndex);
+}
+function goToNearby(idx) { showNearby(idx); }
+
 function toggleMenu() {
-    document.getElementById('mobileMenu')?.classList.toggle('active');
+    alert('Mobile menu coming soon!');
 }
+
+// AUTO SLIDE
+setInterval(nextTopAd, 5000);
+setInterval(nextBottomAd, 6000);
+setInterval(nextNearby, 4000);
