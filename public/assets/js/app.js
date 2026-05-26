@@ -6,56 +6,55 @@ for(let i = 0; i < 100; i++) {
     const idx = i % moduleNames.length;
     allModules.push({
         icon: moduleIcons[idx],
-        name: `${moduleNames[idx]} ${Math.floor(i/moduleNames.length) + 1}`,
+        name: `${moduleNames[idx]}`,
         color: `hsl(${(i * 7) % 360}, 70%, 50%)`,
         link: `/modules/${moduleNames[idx].toLowerCase().replace(' ', '-')}-${i}`
     });
 }
 
-// ADS DATA - 250 ADS
+// ADS DATA - 200 ADS, 4 PER SLIDE
 const allAds = [];
 const adColors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#ef4444", "#6366f1", "#14b8a6"];
-for(let i = 0; i < 250; i++) {
+for(let i = 0; i < 200; i++) {
     allAds.push({
-        title: `Special Offer ${i + 1}`,
-        desc: `Get amazing discounts on service ${i + 1}`,
-        btn: "Claim Now",
+        title: `Mega Offer ${i + 1}`,
+        desc: `Up to 70% OFF`,
+        btn: "Shop Now",
         color: adColors[i % adColors.length]
     });
 }
 
-// NEARBY SERVICES - 50 SERVICES
+// NEARBY SERVICES - 48 SERVICES, 6 PER SLIDE
 const nearbyServices = [];
-for(let i = 0; i < 50; i++) {
+for(let i = 0; i < 48; i++) {
     const idx = i % moduleNames.length;
     nearbyServices.push({
         icon: moduleIcons[idx],
-        name: `${moduleNames[idx]} Shop ${i + 1}`,
-        desc: `Best ${moduleNames[idx]} services near you`,
+        name: `${moduleNames[idx]}`,
         color: `hsl(${(i * 11) % 360}, 70%, 50%)`
     });
 }
 
-// RENDER MODULES
+// RENDER MODULES - CHAMAKDAR BADE ICON
 document.getElementById('serviceGrid').innerHTML = allModules.map((module, idx) => `
     <div class="service-item" style="--delay: ${idx * 0.01}s">
         <a href="${module.link}">
-            <div class="service-icon" style="background: ${module.color}20; color: ${module.color}">${module.icon}</div>
+            <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd); color: white;">${module.icon}</div>
             <p>${module.name}</p>
         </a>
     </div>
 `).join('');
 
-// RENDER TOP ADS - 5 PER SLIDE
+// RENDER TOP ADS - 4 PER SLIDE 2x2
 const topAdChunks = [];
-for (let i = 0; i < allAds.length; i += 5) {
-    topAdChunks.push(allAds.slice(i, i + 5));
+for (let i = 0; i < allAds.length; i += 4) {
+    topAdChunks.push(allAds.slice(i, i + 4));
 }
 document.getElementById('topAdsContainer').innerHTML = topAdChunks.map((chunk, idx) => `
     <div class="ad-slide ${idx === 0? 'active' : ''}">
         <div class="ads-grid">
             ${chunk.map(ad => `
-                <div class="ad-card" style="background: ${ad.color}">
+                <div class="ad-card" style="background: linear-gradient(135deg, ${ad.color}, ${ad.color}cc)">
                     <h3>${ad.title}</h3>
                     <p>${ad.desc}</p>
                     <button class="ad-btn">${ad.btn}</button>
@@ -65,13 +64,13 @@ document.getElementById('topAdsContainer').innerHTML = topAdChunks.map((chunk, i
     </div>
 `).join('');
 
-// RENDER BOTTOM ADS - 5 PER SLIDE
+// RENDER BOTTOM ADS - 4 PER SLIDE 2x2
 const bottomAdChunks = topAdChunks.slice(0, 50);
 document.getElementById('bottomAdsContainer').innerHTML = bottomAdChunks.map((chunk, idx) => `
     <div class="ad-slide ${idx === 0? 'active' : ''}">
         <div class="ads-grid">
             ${chunk.map(ad => `
-                <div class="ad-card" style="background: ${ad.color}">
+                <div class="ad-card" style="background: linear-gradient(135deg, ${ad.color}, ${ad.color}cc)">
                     <h3>${ad.title}</h3>
                     <p>${ad.desc}</p>
                     <button class="ad-btn">${ad.btn}</button>
@@ -81,21 +80,19 @@ document.getElementById('bottomAdsContainer').innerHTML = bottomAdChunks.map((ch
     </div>
 `).join('');
 
-// RENDER NEARBY - 10 PER SLIDE
+// RENDER NEARBY - 6 PER SLIDE 3x2 GOL
 const nearbyChunks = [];
-for (let i = 0; i < nearbyServices.length; i += 10) {
-    nearbyChunks.push(nearbyServices.slice(i, i + 10));
+for (let i = 0; i < nearbyServices.length; i += 6) {
+    nearbyChunks.push(nearbyServices.slice(i, i + 6));
 }
 document.getElementById('nearbyContainer').innerHTML = nearbyChunks.map((chunk, idx) => `
     <div class="nearby-slide ${idx === 0? 'active' : ''}">
         <div class="nearby-shops-grid">
             ${chunk.map(service => `
                 <div class="nearby-shop-card">
-                    <div class="nearby-icon" style="background: ${service.color}33">${service.icon}</div>
+                    <div class="nearby-icon">${service.icon}</div>
                     <div class="nearby-info">
                         <h4>${service.name}</h4>
-                        <p>${service.desc}</p>
-                        <button>Visit</button>
                     </div>
                 </div>
             `).join('')}
@@ -167,10 +164,6 @@ function prevNearby() {
     showNearby(nearbyIndex);
 }
 function goToNearby(idx) { showNearby(idx); }
-
-function toggleMenu() {
-    alert('Mobile menu coming soon!');
-}
 
 // AUTO SLIDE
 setInterval(nextTopAd, 5000);

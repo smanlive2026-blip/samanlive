@@ -10,41 +10,38 @@
     <!-- HEADER -->
     <header class="header">
         <div class="header-container">
-            <!-- PROFILE LEFT -->
-            <div class="profile-section">
-                <div class="profile-avatar">P</div>
+            <!-- LOGO LEFT -->
+            <div class="logo">
+                <div class="logo-icon">S</div>
+                <span class="logo-text">SAMANLIVE</span>
             </div>
             <!-- SEARCH BAR CENTER -->
             <div class="search-box">
                 <input type="text" placeholder="Search services, shops..." id="searchInput">
                 <button class="search-btn">🔍</button>
-                <button class="mic-btn">🎤</button>
             </div>
-            <!-- RIGHT SIDE - NOTIFICATION + LOGO -->
+            <!-- RIGHT SIDE - NOTIFICATION + PROFILE -->
             <div class="header-right">
                 <div class="notification-icon">
                     🔔
                     <span class="notif-badge">3</span>
                 </div>
-                <div class="logo">
-                    <div class="logo-icon">S</div>
-                </div>
+                <div class="profile-avatar">P</div>
             </div>
-            <button class="mobile-menu-btn" onclick="toggleMenu()">☰</button>
         </div>
     </header>
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
         <div class="container">
-            <!-- TOP AD SLIDER - 5 ADS PER SLIDE -->
+            <!-- TOP OFFER - 4 PER SLIDE, 2x2 GRID -->
             <div class="top-ad-slider">
                 <div class="ad-container" id="topAdsContainer"></div>
                 <button class="ad-nav prev" onclick="prevTopAd()">‹</button>
                 <button class="ad-nav next" onclick="nextTopAd()">›</button>
             </div>
 
-            <!-- NEARBY SERVICES - 10 SHOP PER SLIDE -->
+            <!-- NEARBY SERVICES - 6 PER SLIDE, 3x2 GRID -->
             <div class="nearby-slider">
                 <div class="nearby-header">
                     <h2>📍 Near You</h2>
@@ -57,13 +54,15 @@
                 <div class="nearby-dots" id="nearbyDots"></div>
             </div>
 
-            <!-- 100 MODULES GRID -->
+            <!-- ALL SERVICE - DIBBE ME SCROLL, 3 PER ROW -->
             <div class="services-section" id="services">
                 <h2 class="section-title">All Services</h2>
-                <div class="service-grid" id="serviceGrid"></div>
+                <div class="service-box">
+                    <div class="service-grid" id="serviceGrid"></div>
+                </div>
             </div>
 
-            <!-- BOTTOM AD SLIDER - 5 PER SLIDE -->
+            <!-- BOTTOM OFFER - 4 PER SLIDE, 2x2 GRID -->
             <div class="bottom-ad-slider">
                 <div class="ad-container" id="bottomAdsContainer"></div>
                 <button class="ad-nav prev" onclick="prevBottomAd()">‹</button>
