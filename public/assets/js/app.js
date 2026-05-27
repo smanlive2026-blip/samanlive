@@ -53,6 +53,14 @@ const nearbyVideos = [
     { title: "New Arrivals", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" }
 ];
 
+// 4 TRACKING BUTTONS - NAYE
+const trackingButtons = [
+    { icon: "👶", name: "Track Child", action: "trackChild()" },
+    { icon: "📦", name: "Track Delivery", action: "trackDelivery()" },
+    { icon: "👨‍👩‍👧", name: "Track Family", action: "trackFamily()" },
+    { icon: "🌍", name: "Global Search", action: "globalSearch()" }
+];
+
 // RENDER MODULES - CHAMAKDAR GRADIENT
 document.getElementById('serviceGrid').innerHTML = allModules.map((module, idx) => `
     <div class="service-item" style="animation-delay: ${idx * 0.01}s">
@@ -101,7 +109,7 @@ document.getElementById('campaignContainer').innerHTML = campaignChunks.map((chu
     </div>
 `).join('');
 
-// RENDER NEARBY - 6 ICON LINE 1 + 3 VIDEO LINE 2
+// RENDER NEARBY - LINE 1: 6 ICON + LINE 2: 3 VIDEO + LINE 3: 4 BUTTON
 const nearbyChunks = [];
 for (let i = 0; i < nearbyServices.length; i += 6) {
     nearbyChunks.push(nearbyServices.slice(i, i + 6));
@@ -129,6 +137,14 @@ document.getElementById('nearbyContent').innerHTML = nearbyChunks.map((chunk, id
                 </div>
             `).join('')}
         </div>
+        <div class="nearby-tracking">
+            ${trackingButtons.map(btn => `
+                <div class="track-btn" onclick="${btn.action}">
+                    <div class="track-icon">${btn.icon}</div>
+                    <p>${btn.name}</p>
+                </div>
+            `).join('')}
+        </div>
     </div>
 `).join('');
 
@@ -137,7 +153,26 @@ document.getElementById('nearbyDots').innerHTML = nearbyChunks.map((_, idx) => `
     <span class="${idx === 0? 'active' : ''}" onclick="goToNearby(${idx})"></span>
 `).join('');
 
-// SLIDER LOGIC - SPACE KE SAATH SELECTOR
+// TRACKING FUNCTIONS
+function trackChild() {
+    alert("Track Child: GPS location of your child will show here");
+}
+function trackDelivery() {
+    alert("Track Delivery: Live status of your orders");
+}
+function trackFamily() {
+    alert("Track Family: See family members location");
+}
+function globalSearch() {
+    const choice = confirm("Choose Search:\nOK = 10KM Around You\nCancel = Search Worldwide");
+    if(choice) {
+        alert("Searching within 10KM radius...");
+    } else {
+        alert("Searching Worldwide...");
+    }
+}
+
+// SLIDER LOGIC - SPACE KE SAATH SELECTOR - LAPTOP VIEW FIX
 let topAdIndex = 0;
 let campaignIndex = 0;
 let nearbyIndex = 0;
