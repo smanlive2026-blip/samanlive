@@ -3,29 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAMANLIVE - All Services</title>
-    <link rel="stylesheet" href="/assets/css/main.css">
+    <title>SAMANLIVE - Track, Order, Connect</title>
+    <!-- Google Fonts for Premium Amazon/Tech Look -->
+    <link href="https://googleapis.com" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- VIDEO BACKGROUND -->
-    <div class="video-bg">
-        <div class="video-overlay"></div>
-    </div>
 
-    <!-- HEADER -->
+    <!-- HEADER SECTION -->
     <header class="header">
         <div class="header-container">
-            <div class="logo">
-                <div class="logo-icon">S</div>
-                <span class="logo-text">SAMANLIVE</span>
+            <!-- 1. Unique Vector Logo -->
+            <div class="logo-box">
+                <svg class="main-logo" xmlns="http://w3.org" viewBox="0 0 500 500">
+                    <defs>
+                        <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
+                            <stop offset="0%" stop-color="#242e3a" />
+                            <stop offset="100%" stop-color="#111822" />
+                        </radialGradient>
+                        <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ff9900" />
+                            <stop offset="100%" stop-color="#ff4500" />
+                        </linearGradient>
+                        <linearGradient id="blueGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#00a8e8" />
+                            <stop offset="100%" stop-color="#005b94" />
+                        </linearGradient>
+                        <filter id="textGlow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="4" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+                    <rect width="500" height="500" rx="50" fill="url(#bgGrad)" />
+                    <g transform="translate(145, 80)">
+                        <circle cx="105" cy="110" r="20" fill="#ff5500" />
+                        <circle cx="105" cy="110" r="40" fill="none" stroke="#00a8e8" stroke-width="6" stroke-dasharray="10 12" opacity="0.8" />
+                        <circle cx="105" cy="110" r="60" fill="none" stroke="#ff9900" stroke-width="6" stroke-dasharray="15 15" opacity="0.7" />
+                        <path d="M20,100 C20,30 90,10 140,10 C180,10 200,40 190,80 C180,110 140,120 110,130 C70,140 20,150 20,200" fill="none" stroke="url(#orangeGrad)" stroke-width="26" stroke-linecap="round" />
+                        <path d="M190,110 C190,180 120,210 70,210 C30,210 10,180 20,150 C30,120 70,110 100,100 C140,90 190,80 190,110 Z" fill="none" stroke="url(#blueGrad)" stroke-width="22" stroke-linecap="round" />
+                    </g>
+                    <g transform="translate(250, 395)">
+                        <text font-family="'Montserrat', sans-serif" font-weight="900" font-size="52" fill="#ffffff" text-anchor="middle" letter-spacing="2">SAMAN<tspan fill="#ff9900" filter="url(#textGlow)">LIVE</tspan></text>
+                    </g>
+                    <g transform="translate(250, 445)">
+                        <text font-family="'Montserrat', sans-serif" font-weight="700" font-size="14" fill="#00a8e8" text-anchor="middle" letter-spacing="6" opacity="0.9">TRACK • ORDER • CONNECT</text>
+                    </g>
+                </svg>
             </div>
+
+            <!-- 2. Responsive Search Bar -->
             <div class="search-box">
-                <input type="text" placeholder="Search services, shops..." id="searchInput">
+                <input type="text" placeholder="Search for services, delivery, tracking..." id="searchInput">
                 <button class="search-btn">🔍</button>
             </div>
+
+            <!-- 3. Header Action Icons -->
             <div class="header-right">
                 <div class="notification-icon">
-                    🔍
+                    <span class="icon-sym">🔔</span>
                     <span class="notif-badge">3</span>
                 </div>
                 <div class="profile-avatar">P</div>
@@ -33,91 +68,89 @@
         </div>
     </header>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN APP WRAPPER -->
     <main class="main-content">
         <div class="container">
-            <!-- TOP OFFER -->
-            <div class="top-ad-slider">
-                <div class="ad-container" id="topAdsContainer"></div>
-                <button class="ad-nav prev" onclick="prevTopAd()">‹</button>
-                <button class="ad-nav next" onclick="nextTopAd()">›</button>
-            </div>
-
-            <!-- NEARBY SECTION (3 LINES NOW) -->
-            <div class="nearby-slider">
+            
+            <!-- NEAR YOU SECTION -->
+            <section class="nearby-slider-section">
                 <div class="nearby-header">
-                    <h2>🔍 Near You</h2>
-                    <div class="nearby-controls">
-                        <button onclick="prevNearby()">‹</button>
-                        <button onclick="nextNearby()">›</button>
-                    </div>
+                    <h2>📍 Near You</h2>
                 </div>
-                <div class="nearby-content" id="nearbyContent"></div>
+                
+                <div class="nearby-container" id="nearbyContent">
+                    <!-- JavaScript Dynamic Grid Content (Line 1 & Line 2) Elements Inject Here -->
+                </div>
+
+                <!-- LINE 3 - SPECIFIED NEW UTILITY BUTTONS -->
+                <div class="nearby-actions-row">
+                    <button class="action-btn-item dynamic-pulse">Track Your Child</button>
+                    <button class="action-btn-item">Track Your Family</button>
+                    <button class="action-btn-item">Track Your Delivery</button>
+                    <button class="action-btn-item highlight-btn">Add Location</button>
+                </div>
+
+                <!-- Slider Navigation Controls -->
                 <div class="nearby-dots" id="nearbyDots"></div>
-            </div>
+            </section>
 
-            <!-- ALL SERVICE -->
-            <div class="services-section" id="services">
-                <h2 class="section-title">All Services</h2>
-                <div class="service-box">
-                    <div class="service-grid" id="serviceGrid"></div>
-                </div>
-            </div>
-
-            <!-- CAMPAIGN SECTION -->
-            <div class="campaign-slider">
-                <div class="campaign-header">
-                    <h2>🔍 Live Campaigns</h2>
-                </div>
-                <div class="ad-container" id="campaignContainer"></div>
-                <button class="ad-nav prev" onclick="prevCampaign()">‹</button>
-                <button class="ad-nav next" onclick="nextCampaign()">›</button>
-            </div>
         </div>
     </main>
 
-    <!-- AMAZON-STYLE FOOTER -->
+    <!-- FOOTER SECTION - PREMIUM AMAZON STYLING -->
     <footer class="footer">
-        <a href="#" class="back-to-top">Back to top</a>
+        <a href="#" class="back-to-top" id="backToTop">Back to top</a>
+        
         <div class="footer-container">
             <div class="footer-grid">
                 <div class="footer-col">
                     <h3>Get to Know Us</h3>
                     <ul>
-                        <li><a href="/about">About SAMANLIVE</a></li>
-                        <li><a href="/contact">Contact Us</a></li>
-                        <li><a href="/">Home</a></li>
+                        <li><a href="#">About SAMANLIVE</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Press Releases</a></li>
+                        <li><a href="#">Corporate Values</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
                     <h3>Connect with Us</h3>
                     <ul>
-                        <li>Email: support@samanlive.com</li>
-                        <li>Phone: +91 12345 67890</li>
+                        <li><a href="#">Facebook</a></li>
+                        <li><a href="#">Twitter / X</a></li>
+                        <li><a href="#">Instagram</a></li>
+                        <li><a href="#">LinkedIn</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Make Money with Us</h3>
+                    <ul>
+                        <li><a href="#">Register as Partner</a></li>
+                        <li><a href="#">Advertise Your Service</a></li>
+                        <li><a href="#">Become an Affiliate</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
                     <h3>Let Us Help You</h3>
                     <ul>
-                        <li><a href="#services">All Services</a></li>
-                        <li><a href="/refund">Refund Policy</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h3>Legal & Policies</h3>
-                    <ul>
-                        <li><a href="/privacy">Privacy Policy</a></li>
-                        <li><a href="/terms">Terms & Conditions</a></li>
+                        <li><a href="#">Your Account</a></li>
+                        <li><a href="#">Tracking Center</a></li>
+                        <li><a href="#">Help & Support</a></li>
+                        <li><a href="#">Safe Delivery Guide</a></li>
                     </ul>
                 </div>
             </div>
+
+            <div class="footer-divider"></div>
+
             <div class="footer-bottom">
-                <p>© 2026 SAMANLIVE. All rights reserved.</p>
-                <p>POWERED BY STEEL | Made in India 🔍</p>
+                <div class="footer-bottom-logo">
+                    <span>SAMAN<span class="orange-txt">LIVE</span></span>
+                </div>
+                <p class="copyright-text">© 2026 SAMANLIVE, Inc. All Global Content and Interface Operations Protected Globally.</p>
             </div>
         </div>
     </footer>
 
-    <script src="/assets/js/app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
