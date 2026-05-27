@@ -1,121 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAMANLIVE - All Services</title>
-    <link rel="stylesheet" href="/assets/css/main.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAMANLIVE - All Services</title>
+<link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
-    <!-- VIDEO BACKGROUND -->
-    <div class="video-bg">
-        <div class="video-overlay"></div>
-    </div>
-
-    <!-- HEADER -->
-    <header class="header">
-        <div class="header-container">
-            <div class="logo">
-                <div class="logo-icon">S</div>
-                <span class="logo-text">SAMANLIVE</span>
-            </div>
-            <div class="search-box">
-                <input type="text" placeholder="Search services, shops..." id="searchInput">
-                <button class="search-btn">🔍</button>
-            </div>
-            <div class="header-right">
-                <div class="notification-icon">
-                    🔔
-                    <span class="notif-badge">3</span>
-                </div>
-                <div class="profile-avatar">P</div>
-            </div>
-        </div>
-    </header>
-
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
-        <div class="container">
-            <!-- TOP OFFER - 4 EK LINE ME CHOTE -->
-            <div class="top-ad-slider">
-                <div class="ad-container" id="topAdsContainer"></div>
-                <button class="ad-nav prev" onclick="prevTopAd()">‹</button>
-                <button class="ad-nav next" onclick="nextTopAd()">›</button>
-            </div>
-
-            <!-- NEARBY: LINE 1 = 6 ICON + LINE 2 = 3 VIDEO + LINE 3 = 4 TRACKING BUTTON -->
-            <div class="nearby-slider">
-                <div class="nearby-header">
-                    <h2>📍 Near You</h2>
-                    <div class="nearby-controls">
-                        <button onclick="prevNearby()">‹</button>
-                        <button onclick="nextNearby()">›</button>
-                    </div>
-                </div>
-                <div class="nearby-content" id="nearbyContent"></div>
-                <div class="nearby-dots" id="nearbyDots"></div>
-            </div>
-
-            <!-- ALL SERVICE - CHAMAKDAR DABBA -->
-            <div class="services-section" id="services">
-                <h2 class="section-title">All Services</h2>
-                <div class="service-box">
-                    <div class="service-grid" id="serviceGrid"></div>
-                </div>
-            </div>
-
-            <!-- CAMPAIGN SECTION - 4 EK LINE ME -->
-            <div class="campaign-slider">
-                <div class="campaign-header">
-                    <h2>🎯 Live Campaigns</h2>
-                </div>
-                <div class="ad-container" id="campaignContainer"></div>
-                <button class="ad-nav prev" onclick="prevCampaign()">‹</button>
-                <button class="ad-nav next" onclick="nextCampaign()">›</button>
-            </div>
-        </div>
-    </main>
-
-    <!-- FOOTER - 2 LINE ME -->
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-grid">
-                <div class="footer-col">
-                    <h3>About SAMANLIVE</h3>
-                    <p>Your one-stop platform for all services. Find everything near you.</p>
-                </div>
-                <div class="footer-col">
-                    <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="/">Home</a></li>
-                        <li><a href="#services">All Services</a></li>
-                        <li><a href="/about">About Us</a></li>
-                        <li><a href="/contact">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h3>Legal</h3>
-                    <ul>
-                        <li><a href="/privacy">Privacy Policy</a></li>
-                        <li><a href="/terms">Terms & Conditions</a></li>
-                        <li><a href="/refund">Refund Policy</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h3>Contact Us</h3>
-                    <ul>
-                        <li>Email: support@samanlive.com</li>
-                        <li>Phone: +91 12345 67890</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>© 2024 SAMANLIVE. All rights reserved.</p>
-                <p>POWERED BY STEEL | Made in India ❤️</p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="/assets/js/app.js"></script>
+<!-- VIDEO BACKGROUND -->
+<div class="video-bg">
+<div class="video-overlay"></div>
+</div>
+<!-- HEADER -->
+<header class="header">
+<div class="header-container">
+<div class="logo">
+<div class="logo-icon">S</div>
+<span class="logo-text">SAMANLIVE</span>
+</div>
+<div class="search-box">
+<input type="text" placeholder="Search services, shops..." id="searchInput">
+<button class="search-btn">🔍</button>
+</div>
+<div class="header-right">
+<div class="notification-icon">
+🔍
+<span class="notif-badge">3</span>
+</div>
+<div class="profile-avatar">P</div>
+</div>
+</div>
+</header>
+<!-- MAIN CONTENT -->
+<main class="main-content">
+<div class="container">
+<!-- TOP OFFER - 4 EK LINE ME CHOTE -->
+<div class="top-ad-slider">
+<div class="ad-container" id="topAdsContainer"></div>
+<button class="ad-nav prev" onclick="prevTopAd()">‹</button>
+<button class="ad-nav next" onclick="nextTopAd()">›</button>
+</div>
+<!-- NEARBY: 6 ICON LINE 1 + 3 VIDEO LINE 2 -->
+<div class="nearby-slider">
+<div class="nearby-header">
+<h2>🔍 Near You</h2>
+<div class="nearby-controls">
+<button onclick="prevNearby()">‹</button>
+<button onclick="nextNearby()">›</button>
+</div>
+</div>
+<div class="nearby-content" id="nearbyContent"></div>
+<div class="nearby-dots" id="nearbyDots"></div>
+</div>
+<!-- ALL SERVICE - CHAMAKDAR DABBA -->
+<div class="services-section" id="services">
+<h2 class="section-title">All Services</h2>
+<div class="service-box">
+<div class="service-grid" id="serviceGrid"></div>
+</div>
+</div>
+<!-- CAMPAIGN SECTION - 4 EK LINE ME -->
+<div class="campaign-slider">
+<div class="campaign-header">
+<h2>🔍 Live Campaigns</h2>
+</div>
+<div class="ad-container" id="campaignContainer"></div>
+<button class="ad-nav prev" onclick="prevCampaign()">‹</button>
+<button class="ad-nav next" onclick="nextCampaign()">›</button>
+</div>
+</div>
+</main>
+<!-- FOOTER - 2 LINE ME -->
+<footer class="footer">
+<div class="footer-container">
+<div class="footer-grid">
+<div class="footer-col">
+<h3>About SAMANLIVE</h3>
+<p>Your one-stop platform for all services. Find everything near you.</p>
+</div>
+<div class="footer-col">
+<h3>Quick Links</h3>
+<ul>
+<li><a href="/">Home</a></li>
+<li><a href="#services">All Services</a></li>
+<li><a href="/about">About Us</a></li>
+<li><a href="/contact">Contact</a></li>
+</ul>
+</div>
+<div class="footer-col">
+<h3>Legal</h3>
+<ul>
+<li><a href="/privacy">Privacy Policy</a></li>
+<li><a href="/terms">Terms & Conditions</a></li>
+<li><a href="/refund">Refund Policy</a></li>
+</ul>
+</div>
+<div class="footer-col">
+<h3>Contact Us</h3>
+<ul>
+<li>Email: support@samanlive.com</li>
+<li>Phone: +91 12345 67890</li>
+</ul>
+</div>
+</div>
+<div class="footer-bottom">
+<p>© 2024 SAMANLIVE. All rights reserved.</p>
+<p>POWERED BY STEEL | Made in India 🔍</p>
+</div>
+</div>
+</footer>
+<script src="/assets/js/app.js"></script>
 </body>
 </html>

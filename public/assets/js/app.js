@@ -1,237 +1,203 @@
 // 100 MODULES - CHAMAKDAR
-const moduleNames = ["Education", "Health", "Kids", "Games", "Music", "Books", "Shopping", "Food", "Travel", "Real Estate", "Jobs", "Automotive", "Finance", "Banking", "Stocks", "Payments", "Movies", "TV Shows", "Art", "Photography", "Writing", "Theater", "Fitness", "Yoga", "Sports", "Football", "Basketball", "Tennis", "Swimming", "Cycling", "Climbing", "Skiing", "Surfing", "Fishing", "Camping", "Gardening", "Pets", "Cats", "Birds", "Fish", "Butterfly", "Flowers", "Trees", "Night", "Weather", "Rainbow", "Stars", "Earth", "Space", "UFO", "Robots", "Target"];
-const moduleIcons = ["📚", "🏥", "👶", "🎮", "🎵", "📖", "🛒", "🍕", "✈️", "🏠", "💼", "🚗", "💰", "🏦", "📈", "💳", "🎬", "📺", "🎨", "📷", "✍️", "🎭", "💪", "🧘", "⚽", "🏈", "🏀", "🎾", "🏊", "🚴", "🧗", "⛷️", "🏄", "🎣", "🏕️", "🌱", "🐾", "🐱", "🐦", "🐟", "🦋", "🌸", "🌳", "🌙", "☁️", "🌈", "⭐", "🌍", "🚀", "🛸", "🤖", "🎯"];
+const moduleNames = ["Education", "Health", "Kids", "Games", "Music", 
+"Books", "Shopping", "Food", "Travel", "Real Estate", "Jobs", 
+"Automotive", "Finance", "Banking", "Stocks", "Payments", "Movies", "TV Shows", "Art", "Photography", "Writing", "Theater", "Fitness", "Yoga", 
+"Sports", "Football", "Basketball", "Tennis", "Swimming", "Cycling", 
+"Climbing", "Skiing", "Surfing", "Fishing", "Camping", "Gardening", 
+"Pets", "Cats", "Birds", "Fish", "Butterfly", "Flowers", "Trees", 
+"Night", "Weather", "Rainbow", "Stars", "Earth", "Space", "UFO", 
+"Robots", "Target"];
+const moduleIcons = ["🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", 
+"🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", 
+"⚽", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", 
+"🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "🔍", "⭐", "🔍", "🔍", "🔍", "🔍", "🔍"];
 const allModules = [];
 for(let i = 0; i < 100; i++) {
-    const idx = i % moduleNames.length;
-    allModules.push({
-        icon: moduleIcons[idx],
-        name: `${moduleNames[idx]}`,
-        color: `hsl(${(i * 7) % 360}, 70%, 55%)`,
-        link: `/modules/${moduleNames[idx].toLowerCase().replace(' ', '-')}-${i}`
-    });
+const idx = i % moduleNames.length;
+allModules.push({
+icon: moduleIcons[idx],
+name: `${moduleNames[idx]}`,
+color: `hsl(${(i * 7) % 360}, 70%, 55%)`,
+link: `/modules/${moduleNames[idx].toLowerCase().replace(' ', '-')}-${i}`
+});
 }
-
 // ADS - 200 ADS, 4 PER SLIDE
 const allAds = [];
-const adColors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#ef4444", "#6366f1", "#14b8a6"];
+const adColors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", 
+"#ef4444", "#6366f1", "#14b8a6"];
 for(let i = 0; i < 200; i++) {
-    allAds.push({
-        title: `Offer ${i + 1}`,
-        desc: `70% OFF`,
-        btn: "Buy",
-        color: adColors[i % adColors.length]
-    });
+allAds.push({
+title: `Offer ${i + 1}`,
+desc: `70% OFF`,
+btn: "Buy",
+color: adColors[i % adColors.length]
+});
 }
-
 // CAMPAIGN - 200 CAMPAIGNS, 4 PER SLIDE
 const allCampaigns = [];
 for(let i = 0; i < 200; i++) {
-    allCampaigns.push({
-        title: `Campaign ${i + 1}`,
-        desc: `Join Now`,
-        btn: "Join",
-        color: adColors[i % adColors.length]
-    });
+allCampaigns.push({
+title: `Campaign ${i + 1}`,
+desc: `Join Now`,
+btn: "Join",
+color: adColors[i % adColors.length]
+});
 }
-
 // NEARBY - 48 SERVICES, 6 PER SLIDE
 const nearbyServices = [];
 for(let i = 0; i < 48; i++) {
-    const idx = i % moduleNames.length;
-    nearbyServices.push({
-        icon: moduleIcons[idx],
-        name: `${moduleNames[idx]}`,
-        color: `hsl(${(i * 11) % 360}, 70%, 55%)`
-    });
+const idx = i % moduleNames.length;
+nearbyServices.push({
+icon: moduleIcons[idx],
+name: `${moduleNames[idx]}`,
+color: `hsl(${(i * 11) % 360}, 70%, 55%)`
+});
 }
-
 // 3 VIDEOS - 5 SEC WALE
 const nearbyVideos = [
-    { title: "Shop Tour", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
-    { title: "Best Deals", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" },
-    { title: "New Arrivals", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" }
+{ title: "Shop Tour", url: "https://googleapis.com" },
+{ title: "Best Deals", url: "https://googleapis.com" },
+{ title: "New Arrivals", url: "https://googleapis.com" }
 ];
-
-// 4 TRACKING BUTTONS - NAYE
-const trackingButtons = [
-    { icon: "👶", name: "Track Child", action: "trackChild()" },
-    { icon: "📦", name: "Track Delivery", action: "trackDelivery()" },
-    { icon: "👨‍👩‍👧", name: "Track Family", action: "trackFamily()" },
-    { icon: "🌍", name: "Global Search", action: "globalSearch()" }
-];
-
 // RENDER MODULES - CHAMAKDAR GRADIENT
-document.getElementById('serviceGrid').innerHTML = allModules.map((module, idx) => `
-    <div class="service-item" style="animation-delay: ${idx * 0.01}s">
-        <a href="${module.link}">
-            <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
-            <p>${module.name}</p>
-        </a>
-    </div>
+document.getElementById('serviceGrid').innerHTML =
+allModules.map((module, idx) => `
+<div class="service-item" style="animation-delay: ${idx * 0.01}s">
+<a href="${module.link}">
+<div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
+<p>${module.name}</p>
+</a>
+</div>
 `).join('');
-
 // RENDER TOP ADS - 4 PER SLIDE EK LINE
 const topAdChunks = [];
 for (let i = 0; i < allAds.length; i += 4) {
-    topAdChunks.push(allAds.slice(i, i + 4));
+topAdChunks.push(allAds.slice(i, i + 4));
 }
-document.getElementById('topAdsContainer').innerHTML = topAdChunks.map((chunk, idx) => `
-    <div class="ad-slide ${idx === 0? 'active' : ''}">
-        <div class="ads-grid">
-            ${chunk.map(ad => `
-                <div class="ad-card" style="background: linear-gradient(135deg, ${ad.color}, ${ad.color}cc)">
-                    <h3>${ad.title}</h3>
-                    <p>${ad.desc}</p>
-                    <button class="ad-btn">${ad.btn}</button>
-                </div>
-            `).join('')}
-        </div>
-    </div>
+document.getElementById('topAdsContainer').innerHTML =
+topAdChunks.map((chunk, idx) => `
+<div class="ad-slide ${idx === 0? 'active' : ''}">
+<div class="ads-grid">
+${chunk.map(ad => `
+<div class="ad-card" style="background: linear-gradient(135deg, ${ad.color}, ${ad.color}cc)">
+<h3>${ad.title}</h3>
+<p>${ad.desc}</p>
+<button class="ad-btn">${ad.btn}</button>
+</div>
+`).join('')}
+</div>
+</div>
 `).join('');
-
 // RENDER CAMPAIGN - 4 PER SLIDE EK LINE
 const campaignChunks = [];
 for (let i = 0; i < allCampaigns.length; i += 4) {
-    campaignChunks.push(allCampaigns.slice(i, i + 4));
+campaignChunks.push(allCampaigns.slice(i, i + 4));
 }
-document.getElementById('campaignContainer').innerHTML = campaignChunks.map((chunk, idx) => `
-    <div class="ad-slide ${idx === 0? 'active' : ''}">
-        <div class="ads-grid">
-            ${chunk.map(campaign => `
-                <div class="campaign-card" style="background: linear-gradient(135deg, ${campaign.color}, ${campaign.color}cc)">
-                    <h3>${campaign.title}</h3>
-                    <p>${campaign.desc}</p>
-                    <button class="campaign-btn">${campaign.btn}</button>
-                </div>
-            `).join('')}
-        </div>
-    </div>
+document.getElementById('campaignContainer').innerHTML =
+campaignChunks.map((chunk, idx) => `
+<div class="ad-slide ${idx === 0? 'active' : ''}">
+<div class="ads-grid">
+${chunk.map(campaign => `
+<div class="campaign-card" style="background: linear-gradient(135deg, ${campaign.color}, ${campaign.color}cc)">
+<h3>${campaign.title}</h3>
+<p>${campaign.desc}</p>
+<button class="campaign-btn">${campaign.btn}</button>
+</div>
+`).join('')}
+</div>
+</div>
 `).join('');
-
-// RENDER NEARBY - LINE 1: 6 ICON + LINE 2: 3 VIDEO + LINE 3: 4 BUTTON
+// RENDER NEARBY - 6 ICON LINE 1 + 3 VIDEO LINE 2
 const nearbyChunks = [];
 for (let i = 0; i < nearbyServices.length; i += 6) {
-    nearbyChunks.push(nearbyServices.slice(i, i + 6));
+nearbyChunks.push(nearbyServices.slice(i, i + 6));
 }
-document.getElementById('nearbyContent').innerHTML = nearbyChunks.map((chunk, idx) => `
-    <div class="nearby-slide ${idx === 0? 'active' : ''}">
-        <div class="nearby-shops-grid">
-            ${chunk.map(service => `
-                <div class="nearby-shop-card">
-                    <div class="nearby-icon">${service.icon}</div>
-                    <div class="nearby-info">
-                        <h4>${service.name}</h4>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-        <div class="nearby-videos">
-            ${nearbyVideos.map(video => `
-                <div class="video-card">
-                    <video muted loop autoplay playsinline>
-                        <source src="${video.url}#t=0,5" type="video/mp4">
-                    </video>
-                    <div class="video-label">${video.title}</div>
-                    <div class="video-play">▶</div>
-                </div>
-            `).join('')}
-        </div>
-        <div class="nearby-tracking">
-            ${trackingButtons.map(btn => `
-                <div class="track-btn" onclick="${btn.action}">
-                    <div class="track-icon">${btn.icon}</div>
-                    <p>${btn.name}</p>
-                </div>
-            `).join('')}
-        </div>
-    </div>
+document.getElementById('nearbyContent').innerHTML =
+nearbyChunks.map((chunk, idx) => `
+<div class="nearby-slide ${idx === 0? 'active' : ''}">
+<div class="nearby-shops-grid">
+${chunk.map(service => `
+<div class="nearby-shop-card">
+<div class="nearby-icon">${service.icon}</div>
+<div class="nearby-info">
+<h4>${service.name}</h4>
+</div>
+</div>
+`).join('')}
+</div>
+<div class="nearby-videos">
+${nearbyVideos.map(video => `
+<div class="video-card">
+<video muted loop autoplay playsinline>
+<source src="${video.url}#t=0,5" type="video/mp4">
+</video>
+<div class="video-label">${video.title}</div>
+<div class="video-play">▶</div>
+</div>
+`).join('')}
+</div>
+</div>
 `).join('');
-
 // RENDER DOTS
 document.getElementById('nearbyDots').innerHTML = nearbyChunks.map((_, idx) => `
-    <span class="${idx === 0? 'active' : ''}" onclick="goToNearby(${idx})"></span>
+<span class="${idx === 0? 'active' : ''}" onclick="goToNearby(${idx})"></span>
 `).join('');
-
-// TRACKING FUNCTIONS
-function trackChild() {
-    alert("Track Child: GPS location of your child will show here");
-}
-function trackDelivery() {
-    alert("Track Delivery: Live status of your orders");
-}
-function trackFamily() {
-    alert("Track Family: See family members location");
-}
-function globalSearch() {
-    const choice = confirm("Choose Search:\nOK = 10KM Around You\nCancel = Search Worldwide");
-    if(choice) {
-        alert("Searching within 10KM radius...");
-    } else {
-        alert("Searching Worldwide...");
-    }
-}
-
-// SLIDER LOGIC - SPACE KE SAATH SELECTOR - LAPTOP VIEW FIX
+// SLIDER LOGIC - SPACE KE SAATH SELECTOR
 let topAdIndex = 0;
 let campaignIndex = 0;
 let nearbyIndex = 0;
-
 function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
-    slides.forEach(s => s.classList.remove('active'));
-    if(slides[idx]) slides[idx].classList.add('active');
-    topAdIndex = idx;
+const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
+slides.forEach(s => s.classList.remove('active'));
+if(slides[idx]) slides[idx].classList.add('active');
+topAdIndex = idx;
 }
 function nextTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
-    topAdIndex = (topAdIndex + 1) % slides.length;
-    showTopAd(topAdIndex);
+const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
+topAdIndex = (topAdIndex + 1) % slides.length;
+showTopAd(topAdIndex);
 }
 function prevTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
-    topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
-    showTopAd(topAdIndex);
+const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
+topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
+showTopAd(topAdIndex);
 }
-
 function showCampaign(idx) {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
-    slides.forEach(s => s.classList.remove('active'));
-    if(slides[idx]) slides[idx].classList.add('active');
-    campaignIndex = idx;
+const slides = document.querySelectorAll('#campaignContainer .ad-slide');
+slides.forEach(s => s.classList.remove('active'));
+if(slides[idx]) slides[idx].classList.add('active');
+campaignIndex = idx;
 }
 function nextCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
-    campaignIndex = (campaignIndex + 1) % slides.length;
-    showCampaign(campaignIndex);
+const slides = document.querySelectorAll('#campaignContainer .ad-slide');
+campaignIndex = (campaignIndex + 1) % slides.length;
+showCampaign(campaignIndex);
 }
 function prevCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
-    campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
-    showCampaign(campaignIndex);
+const slides = document.querySelectorAll('#campaignContainer .ad-slide');
+campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
+showCampaign(campaignIndex);
 }
-
 function showNearby(idx) {
-    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
-    const dots = document.querySelectorAll('#nearbyDots span');
-    slides.forEach(s => s.classList.remove('active'));
-    dots.forEach(d => d.classList.remove('active'));
-    if(slides[idx]) slides[idx].classList.add('active');
-    if(dots[idx]) dots[idx].classList.add('active');
-    nearbyIndex = idx;
+const slides = document.querySelectorAll('#nearbyContent .nearby-slide');
+const dots = document.querySelectorAll('#nearbyDots span');
+slides.forEach(s => s.classList.remove('active'));
+dots.forEach(d => d.classList.remove('active'));
+if(slides[idx]) slides[idx].classList.add('active');
+if(dots[idx]) dots[idx].classList.add('active');
+nearbyIndex = idx;
 }
 function nextNearby() {
-    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
-    nearbyIndex = (nearbyIndex + 1) % slides.length;
-    showNearby(nearbyIndex);
+const slides = document.querySelectorAll('#nearbyContent .nearby-slide');
+nearbyIndex = (nearbyIndex + 1) % slides.length;
+showNearby(nearbyIndex);
 }
 function prevNearby() {
-    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
-    nearbyIndex = (nearbyIndex - 1 + slides.length) % slides.length;
-    showNearby(nearbyIndex);
+const slides = document.querySelectorAll('#nearbyContent .nearby-slide');
+nearbyIndex = (nearbyIndex - 1 + slides.length) % slides.length;
+showNearby(nearbyIndex);
 }
 function goToNearby(idx) { showNearby(idx); }
-
 // AUTO SLIDE
 setInterval(nextTopAd, 5000);
 setInterval(nextCampaign, 6000);
