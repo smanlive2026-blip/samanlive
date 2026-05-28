@@ -1,3 +1,7 @@
+// ========================================
+// SAMANLIVE - COMPLETE JAVASCRIPT
+// ========================================
+
 // 50 OFFERS - TOP WALE
 const allAds = [];
 const adColors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#ef4444", "#6366f1", "#14b8a6"];
@@ -95,7 +99,9 @@ for(let i = 0; i < 48; i++) {
     });
 }
 
+// ========================================
 // RENDER SERVICES - 52 ITEMS
+// ========================================
 document.getElementById('serviceGrid').innerHTML = allModules.map((module) => `
     <div class="service-item">
         <a href="${module.link}">
@@ -105,7 +111,9 @@ document.getElementById('serviceGrid').innerHTML = allModules.map((module) => `
     </div>
 `).join('');
 
+// ========================================
 // RENDER TOP ADS - 50 ITEMS, 4 PER SLIDE
+// ========================================
 const topAdChunks = [];
 for (let i = 0; i < allAds.length; i += 4) {
     topAdChunks.push(allAds.slice(i, i + 4));
@@ -124,7 +132,9 @@ document.getElementById('topAdsContainer').innerHTML = topAdChunks.map((chunk, i
     </div>
 `).join('');
 
+// ========================================
 // RENDER CAMPAIGNS - 48 ITEMS, 4 PER SLIDE
+// ========================================
 const campaignChunks = [];
 for (let i = 0; i < allCampaigns.length; i += 4) {
     campaignChunks.push(allCampaigns.slice(i, i + 4));
@@ -143,37 +153,40 @@ document.getElementById('campaignContainer').innerHTML = campaignChunks.map((chu
     </div>
 `).join('');
 
-// RENDER NEARBY - SHOP/VIDEO ALAG SLIDES
+// ========================================
+// RENDER SHOPS SLIDER - 6 PER SLIDE
+// ========================================
 const shopChunks = [];
-for (let i = 0; i < nearbyServices.length; i += 5) {
-    shopChunks.push(nearbyServices.slice(i, i + 5));
+for (let i = 0; i < nearbyServices.length; i += 6) {
+    shopChunks.push(nearbyServices.slice(i, i + 6));
 }
-
-let nearbySlides = [];
-
-// SHOP SLIDES
-shopChunks.forEach((chunk, idx) => {
-    nearbySlides.push(`
-        <div class="nearby-slide ${idx === 0? 'active' : ''}">
-            <div class="nearby-shops-grid">
-                ${chunk.map(service => `
-                    <div class="nearby-shop-card">
-                        <div class="nearby-icon">${service.icon}</div>
-                        <div class="nearby-info">
-                            <h4>${service.name}</h4>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
+document.getElementById('shopsContent').innerHTML = shopChunks.map((chunk, idx) => `
+    <div class="nearby-slide ${idx === 0? 'active' : ''}">
+        <div class="shops-grid">
+            ${chunk.map(service => `
+                <div class="shop-card">
+                    <div class="shop-icon">${service.icon}</div>
+                    <div class="shop-name">${service.name}</div>
+                </div>
+            `).join('')}
         </div>
-    `);
-});
+    </div>
+`).join('');
+document.getElementById('shopsDots').innerHTML = shopChunks.map((_, idx) => `
+    <span class="${idx === 0? 'active' : ''}" onclick="goToShop(${idx})"></span>
+`).join('');
 
-// VIDEO SLIDE
-nearbySlides.push(`
-    <div class="nearby-slide">
-        <div class="nearby-videos">
-            ${nearbyVideos.map(video => `
+// ========================================
+// RENDER VIDEOS SLIDER - 3 PER SLIDE
+// ========================================
+const videoChunks = [];
+for (let i = 0; i < nearbyVideos.length; i += 3) {
+    videoChunks.push(nearbyVideos.slice(i, i + 3));
+}
+document.getElementById('videosContent').innerHTML = videoChunks.map((chunk, idx) => `
+    <div class="nearby-slide ${idx === 0? 'active' : ''}">
+        <div class="videos-grid">
+            ${chunk.map(video => `
                 <div class="video-card">
                     <video muted loop autoplay playsinline>
                         <source src="${video.url}#t=0,5" type="video/mp4">
@@ -184,76 +197,175 @@ nearbySlides.push(`
             `).join('')}
         </div>
     </div>
-`);
-
-document.getElementById('nearbyContent').innerHTML = nearbySlides.join('');
-
-// RENDER DOTS
-document.getElementById('nearbyDots').innerHTML = nearbySlides.map((_, idx) => `
-    <span class="${idx === 0? 'active' : ''}" onclick="goToNearby(${idx})"></span>
+`).join('');
+document.getElementById('videosDots').innerHTML = videoChunks.map((_, idx) => `
+    <span class="${idx === 0? 'active' : ''}" onclick="goToVideo(${idx})"></span>
 `).join('');
 
-// SLIDER LOGIC
+// ========================================
+// SLIDER LOGIC - TOP ADS
+// ========================================
 let topAdIndex = 0;
-let campaignIndex = 0;
-let nearbyIndex = 0;
-
 function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     topAdIndex = idx;
 }
 function nextTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
     topAdIndex = (topAdIndex + 1) % slides.length;
     showTopAd(topAdIndex);
 }
 function prevTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
     topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
     showTopAd(topAdIndex);
 }
 
+// ========================================
+// SLIDER LOGIC - CAMPAIGNS
+// ========================================
+let campaignIndex = 0;
 function showCampaign(idx) {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    const slides = document.querySelectorAll('#campaignContainer .ad-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     campaignIndex = idx;
 }
 function nextCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    const slides = document.querySelectorAll('#campaignContainer .ad-slide');
     campaignIndex = (campaignIndex + 1) % slides.length;
     showCampaign(campaignIndex);
 }
 function prevCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    const slides = document.querySelectorAll('#campaignContainer .ad-slide');
     campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
     showCampaign(campaignIndex);
 }
 
-function showNearby(idx) {
-    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
-    const dots = document.querySelectorAll('#nearbyDots span');
+// ========================================
+// SLIDER LOGIC - SHOPS
+// ========================================
+let shopIndex = 0;
+function showShop(idx) {
+    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
+    const dots = document.querySelectorAll('#shopsDots span');
     slides.forEach(s => s.classList.remove('active'));
     dots.forEach(d => d.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     if(dots[idx]) dots[idx].classList.add('active');
-    nearbyIndex = idx;
+    shopIndex = idx;
 }
-function nextNearby() {
-    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
-    nearbyIndex = (nearbyIndex + 1) % slides.length;
-    showNearby(nearbyIndex);
+function nextShop() {
+    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
+    shopIndex = (shopIndex + 1) % slides.length;
+    showShop(shopIndex);
 }
-function prevNearby() {
-    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
-    nearbyIndex = (nearbyIndex - 1 + slides.length) % slides.length;
-    showNearby(nearbyIndex);
+function prevShop() {
+    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
+    shopIndex = (shopIndex - 1 + slides.length) % slides.length;
+    showShop(shopIndex);
 }
-function goToNearby(idx) { showNearby(idx); }
+function goToShop(idx) { showShop(idx); }
 
-// AUTO SLIDE - 5 SEC
+// ========================================
+// SLIDER LOGIC - VIDEOS
+// ========================================
+let videoIndex = 0;
+function showVideo(idx) {
+    const slides = document.querySelectorAll('#videosContent .nearby-slide');
+    const dots = document.querySelectorAll('#videosDots span');
+    slides.forEach(s => s.classList.remove('active'));
+    dots.forEach(d => d.classList.remove('active'));
+    if(slides[idx]) slides[idx].classList.add('active');
+    if(dots[idx]) dots[idx].classList.add('active');
+    videoIndex = idx;
+}
+function nextVideo() {
+    const slides = document.querySelectorAll('#videosContent .nearby-slide');
+    videoIndex = (videoIndex + 1) % slides.length;
+    showVideo(videoIndex);
+}
+function prevVideo() {
+    const slides = document.querySelectorAll('#videosContent .nearby-slide');
+    videoIndex = (videoIndex - 1 + slides.length) % slides.length;
+    showVideo(videoIndex);
+}
+function goToVideo(idx) { showVideo(idx); }
+
+// ========================================
+// AUTO SLIDE - 5 SECONDS
+// ========================================
 setInterval(nextTopAd, 5000);
 setInterval(nextCampaign, 6000);
-setInterval(nextNearby, 5000);
+setInterval(nextShop, 4000);
+setInterval(nextVideo, 5000);
+
+// ========================================
+// SEARCH FUNCTIONALITY
+// ========================================
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    console.log('Searching for:', searchTerm);
+});
+
+// ========================================
+// VIDEO CLICK TO PLAY/PAUSE
+// ========================================
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.video-card')) {
+        const video = e.target.closest('.video-card').querySelector('video');
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
+    }
+});
+
+// ========================================
+// NOTIFICATION CLICK
+// ========================================
+document.querySelector('.notification-icon').addEventListener('click', function() {
+    alert('3 New Notifications!');
+});
+
+// ========================================
+// PROFILE CLICK
+// ========================================
+document.querySelector('.profile-avatar').addEventListener('click', function() {
+    alert('Profile Menu Coming Soon!');
+});
+
+// ========================================
+// TRACK BUTTONS CLICK
+// ========================================
+document.querySelectorAll('.nearby-action-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const text = this.textContent.trim();
+        alert(`${text} feature coming soon!`);
+    });
+});
+
+// ========================================
+// PREVENT ZOOM
+// ========================================
+document.addEventListener('gesturestart', function(e) {
+    e.preventDefault();
+});
+document.addEventListener('gesturechange', function(e) {
+    e.preventDefault();
+});
+document.addEventListener('gestureend', function(e) {
+    e.preventDefault();
+});
+
+// ========================================
+// CONSOLE LOG ON LOAD
+// ========================================
+console.log('SAMANLIVE Loaded Successfully!');
+console.log('Total Services:', allModules.length);
+console.log('Total Offers:', allAds.length);
+console.log('Total Campaigns:', allCampaigns.length);
+console.log('Total Shops:', nearbyServices.length);

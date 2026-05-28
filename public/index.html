@@ -22,10 +22,12 @@
 <div class="header-right">
 <div class="notification-icon">🔔<span class="notif-badge">3</span></div>
 <div class="profile-avatar">P</div>
+</div>
 </header>
 
 <main class="main-content">
 <div class="container">
+
 <!-- TOP OFFERS - 50 ITEMS, 4 PER SLIDE -->
 <div class="top-ad-slider">
 <div class="ad-container" id="topAdsContainer"></div>
@@ -33,29 +35,53 @@
 <button class="ad-nav next" onclick="nextTopAd()">›</button>
 </div>
 
-<!-- NEAR YOU - CHOTA DABBA + SHOP/VIDEO ALAG SLIDES -->
+<!-- NEAR YOU - 3 LINE ALAG ALAG -->
 <div class="nearby-slider">
 <div class="nearby-header">
 <h2>📍 Near You</h2>
-<div class="nearby-controls">
-<button onclick="prevNearby()">‹</button>
-<button onclick="nextNearby()">›</button>
 </div>
-<div class="nearby-content" id="nearbyContent"></div>
+
+<!-- LINE 1: SHOPS SLIDER -->
+<div class="nearby-line">
+<div class="line-header">
+<span>Shops Near You</span>
+<div class="line-controls">
+<button onclick="prevShop()">‹</button>
+<button onclick="nextShop()">›</button>
+</div>
+</div>
+<div class="line-content" id="shopsContent"></div>
+<div class="line-dots" id="shopsDots"></div>
+</div>
+
+<!-- LINE 2: VIDEOS SLIDER -->
+<div class="nearby-line">
+<div class="line-header">
+<span>Live Videos</span>
+<div class="line-controls">
+<button onclick="prevVideo()">‹</button>
+<button onclick="nextVideo()">›</button>
+</div>
+</div>
+<div class="line-content" id="videosContent"></div>
+<div class="line-dots" id="videosDots"></div>
+</div>
+
+<!-- LINE 3: 4 BUTTONS FIXED -->
 <div class="nearby-actions-row">
 <button class="nearby-action-btn">👶 Track Child</button>
 <button class="nearby-action-btn">📦 Track Delivery</button>
 <button class="nearby-action-btn">👨‍👩‍👧 Track Family</button>
 <button class="nearby-action-btn add-location-btn">📍 Add Location</button>
 </div>
-<div class="nearby-dots" id="nearbyDots"></div>
 </div>
 
-<!-- ALL SERVICES - 52 ITEMS, 3 PER ROW, NO SIDE ARROW -->
+<!-- ALL SERVICES - 52 ITEMS, 3 PER ROW -->
 <div class="services-section" id="services">
 <h2 class="section-title">All Services</h2>
 <div class="service-box">
 <div class="service-grid" id="serviceGrid"></div>
+</div>
 </div>
 
 <!-- CAMPAIGNS - 48 ITEMS, 4 PER SLIDE -->
@@ -67,9 +93,11 @@
 <button class="ad-nav prev" onclick="prevCampaign()">‹</button>
 <button class="ad-nav next" onclick="nextCampaign()">›</button>
 </div>
+
+</div>
 </main>
 
-<!-- FOOTER AMAZON MOBILE STYLE -->
+<!-- FOOTER AMAZON MOBILE -->
 <footer class="footer">
 <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">Back to top</a>
 <div class="footer-container">
@@ -107,11 +135,11 @@
 <li><a href="/terms">Terms & Conditions</a></li>
 </ul>
 </div>
+</div>
 <div class="footer-bottom">
 <div class="footer-logo">SAMANLIVE</div>
 <p>© 2026 SAMANLIVE. All rights reserved.</p>
 <p>Made in India ❤️</p>
-</div>
 </div>
 </footer>
 <script src="/assets/js/app.js"></script>
