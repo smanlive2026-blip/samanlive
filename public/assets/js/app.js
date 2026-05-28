@@ -14,7 +14,7 @@ for(let i = 0; i < 50; i++) {
     });
 }
 
-// 52 SERVICES - EDUCATION, HEALTH, KIDS TOP PE
+// 54 SERVICES - EDUCATION, HEALTH, KIDS TOP PE
 const allModules = [
     { icon: "📚", name: "EDUCATION", color: "#3b82f6", link: "/education" },
     { icon: "🏥", name: "HEALTH", color: "#ef4444", link: "/health" },
@@ -67,7 +67,7 @@ const allModules = [
     { icon: "🚀", name: "SPACE", color: "#6366f1", link: "/space" },
     { icon: "🛸", name: "UFO", color: "#8b5cf6", link: "/ufo" },
     { icon: "🤖", name: "ROBOTS", color: "#6b7280", link: "/robots" },
-    { icon: "🎯", name: "TARGET", color: "#ef4444", link: "/target" }
+    { icon: "🎯", name: "TARGET", color: "#ef4444", link: "/target" }, // <-- YAHAN COMMA ADD KIYA
     { icon: "💃", name: "DANCE", color: "#ec4899", link: "/dance" },
     { icon: "💄", name: "BEAUTY", color: "#f472b6", link: "/beauty" }
 ];
@@ -102,7 +102,7 @@ for(let i = 0; i < 48; i++) {
 }
 
 // ========================================
-// RENDER SERVICES - 52 ITEMS
+// RENDER SERVICES - 54 ITEMS
 // ========================================
 document.getElementById('serviceGrid').innerHTML = allModules.map((module) => `
     <div class="service-item">
