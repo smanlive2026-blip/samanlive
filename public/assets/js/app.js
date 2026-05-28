@@ -68,6 +68,8 @@ const allModules = [
     { icon: "🛸", name: "UFO", color: "#8b5cf6", link: "/ufo" },
     { icon: "🤖", name: "ROBOTS", color: "#6b7280", link: "/robots" },
     { icon: "🎯", name: "TARGET", color: "#ef4444", link: "/target" }
+    { icon: "💃", name: "DANCE", color: "#ec4899", link: "/dance" },
+    { icon: "💄", name: "BEAUTY", color: "#f472b6", link: "/beauty" }
 ];
 
 // 50 NEARBY SHOPS
