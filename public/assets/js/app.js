@@ -67,15 +67,15 @@ const allModules = [
     { icon: "🚀", name: "SPACE", color: "#6366f1", link: "/space" },
     { icon: "🛸", name: "UFO", color: "#8b5cf6", link: "/ufo" },
     { icon: "🤖", name: "ROBOTS", color: "#6b7280", link: "/robots" },
-    { icon: "🎯", name: "TARGET", color: "#ef4444", link: "/target" }, // <-- YAHAN COMMA ADD KIYA
+    { icon: "🎯", name: "TARGET", color: "#ef4444", link: "/target" },
     { icon: "💃", name: "DANCE", color: "#ec4899", link: "/dance" },
     { icon: "💄", name: "BEAUTY", color: "#f472b6", link: "/beauty" }
 ];
 
-// 50 NEARBY SHOPS
+// 54 NEARBY SHOPS - BAS YE BADLA HAI
 const nearbyServices = [];
 const shopIcons = ["📚", "🏥", "👶", "🎮", "🎵", "🛒", "🍕", "✈️", "🏠", "💼", "🚗", "💰", "🏦", "📈", "💳"];
-for(let i = 0; i < 50; i++) {
+for(let i = 0; i < 54; i++) {
     nearbyServices.push({
         icon: shopIcons[i % 15],
         name: `Shop ${i + 1}`,
