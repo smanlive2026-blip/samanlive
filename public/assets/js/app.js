@@ -1,216 +1,259 @@
-// ==========================================
-// 1. DATA INITIALIZATION (MOCK DATA)
-// ==========================================
-
-// --- TOTAL 50 ADS/OFFERS DATA ---
-// Mobile maps 4 items per slide, Laptop maps 10 items per slide natively
+// 50 OFFERS - TOP WALE
 const allAds = [];
 const adColors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#ef4444", "#6366f1", "#14b8a6"];
-const adImages = [
-    "https://unsplash.com",
-    "https://unsplash.com",
-    "https://unsplash.com",
-    "https://unsplash.com"
-];
-
-for (let i = 0; i < 50; i++) {
+for(let i = 0; i < 50; i++) {
     allAds.push({
-        title: `Mega Offer ${i + 1}`,
-        desc: `${40 + (i % 6) * 10}% Upto OFF`,
-        btn: "Grab Now",
-        color: adColors[i % adColors.length],
-        image: adImages[i % adImages.length]
+        title: `Offer ${i + 1}`,
+        desc: `70% OFF`,
+        btn: "Buy",
+        color: adColors[i % adColors.length]
     });
 }
 
-// --- TOTAL 52 SERVICES / MODULES DATA ---
-const rawModuleNames = [
-    "Education", "Health", "Kids Area", "Gaming", "Music Lounge", "Books Store", "Shopping", "Food Delivery", 
-    "Travel Hub", "Real Estate", "Job Search", "Automotive", "Finance", "Net Banking", "Stock Market", "Online Payments", 
-    "Movies", "TV Shows", "Art Gallery", "Photography", "Creative Writing", "Theater", "Fitness Gym", "Yoga Center", 
-    "Sports Club", "Football", "Basketball", "Tennis Court", "Swimming", "Cycling Track", "Mountain Climbing", "Skiing Resort", 
-    "Surfing Club", "Fishing Spot", "Camping Site", "Gardening", "Pet Shop", "Cat Care", "Bird Sanctuary", "Aquarium Fish", 
-    "Butterfly Park", "Flower Nursery", "Tree Plantation", "Night Life", "Weather Forecast", "Rainbow Events", "Star Gazing", 
-    "Earth Explorer", "Space Research", "UFO Tracking", "Robot Tech", "Target Agency"
+// 52 SERVICES - EDUCATION, HEALTH, KIDS TOP PE
+const allModules = [
+    { icon: "📚", name: "EDUCATION", color: "#3b82f6", link: "/education" },
+    { icon: "🏥", name: "HEALTH", color: "#ef4444", link: "/health" },
+    { icon: "👶", name: "KIDS", color: "#f59e0b", link: "/kids" },
+    { icon: "🎮", name: "GAMES", color: "#8b5cf6", link: "/games" },
+    { icon: "🎵", name: "MUSIC", color: "#ec4899", link: "/music" },
+    { icon: "📖", name: "BOOKS", color: "#10b981", link: "/books" },
+    { icon: "🛒", name: "SHOPPING", color: "#6366f1", link: "/shopping" },
+    { icon: "🍕", name: "FOOD", color: "#f59e0b", link: "/food" },
+    { icon: "✈️", name: "TRAVEL", color: "#06b6d4", link: "/travel" },
+    { icon: "🏠", name: "REAL ESTATE", color: "#84cc16", link: "/real-estate" },
+    { icon: "💼", name: "JOBS", color: "#3b82f6", link: "/jobs" },
+    { icon: "🚗", name: "AUTOMOTIVE", color: "#6b7280", link: "/automotive" },
+    { icon: "💰", name: "FINANCE", color: "#10b981", link: "/finance" },
+    { icon: "🏦", name: "BANKING", color: "#1e40af", link: "/banking" },
+    { icon: "📈", name: "STOCKS", color: "#ef4444", link: "/stocks" },
+    { icon: "💳", name: "PAYMENTS", color: "#8b5cf6", link: "/payments" },
+    { icon: "🎬", name: "MOVIES", color: "#ec4899", link: "/movies" },
+    { icon: "📺", name: "TV SHOWS", color: "#6366f1", link: "/tv" },
+    { icon: "🎨", name: "ART", color: "#f59e0b", link: "/art" },
+    { icon: "📷", name: "PHOTOGRAPHY", color: "#6b7280", link: "/photography" },
+    { icon: "✍️", name: "WRITING", color: "#3b82f6", link: "/writing" },
+    { icon: "🎭", name: "THEATER", color: "#8b5cf6", link: "/theater" },
+    { icon: "💪", name: "FITNESS", color: "#ef4444", link: "/fitness" },
+    { icon: "🧘", name: "YOGA", color: "#10b981", link: "/yoga" },
+    { icon: "⚽", name: "SPORTS", color: "#f59e0b", link: "/sports" },
+    { icon: "🏈", name: "FOOTBALL", color: "#92400e", link: "/football" },
+    { icon: "🏀", name: "BASKETBALL", color: "#f97316", link: "/basketball" },
+    { icon: "🎾", name: "TENNIS", color: "#84cc16", link: "/tennis" },
+    { icon: "🏊", name: "SWIMMING", color: "#06b6d4", link: "/swimming" },
+    { icon: "🚴", name: "CYCLING", color: "#6b7280", link: "/cycling" },
+    { icon: "🧗", name: "CLIMBING", color: "#92400e", link: "/climbing" },
+    { icon: "⛷️", name: "SKIING", color: "#60a5fa", link: "/skiing" },
+    { icon: "🏄", name: "SURFING", color: "#06b6d4", link: "/surfing" },
+    { icon: "🎣", name: "FISHING", color: "#3b82f6", link: "/fishing" },
+    { icon: "🏕️", name: "CAMPING", color: "#84cc16", link: "/camping" },
+    { icon: "🌱", name: "GARDENING", color: "#10b981", link: "/gardening" },
+    { icon: "🐾", name: "PETS", color: "#f59e0b", link: "/pets" },
+    { icon: "🐱", name: "CATS", color: "#6b7280", link: "/cats" },
+    { icon: "🐦", name: "BIRDS", color: "#60a5fa", link: "/birds" },
+    { icon: "🐟", name: "FISH", color: "#06b6d4", link: "/fish" },
+    { icon: "🦋", name: "BUTTERFLY", color: "#ec4899", link: "/butterfly" },
+    { icon: "🌸", name: "FLOWERS", color: "#f472b6", link: "/flowers" },
+    { icon: "🌳", name: "TREES", color: "#10b981", link: "/trees" },
+    { icon: "🌙", name: "NIGHT", color: "#1e293b", link: "/night" },
+    { icon: "☁️", name: "WEATHER", color: "#60a5fa", link: "/weather" },
+    { icon: "🌈", name: "RAINBOW", color: "#f59e0b", link: "/rainbow" },
+    { icon: "⭐", name: "STARS", color: "#fbbf24", link: "/stars" },
+    { icon: "🌍", name: "EARTH", color: "#10b981", link: "/earth" },
+    { icon: "🚀", name: "SPACE", color: "#6366f1", link: "/space" },
+    { icon: "🛸", name: "UFO", color: "#8b5cf6", link: "/ufo" },
+    { icon: "🤖", name: "ROBOTS", color: "#6b7280", link: "/robots" },
+    { icon: "🎯", name: "TARGET", color: "#ef4444", link: "/target" }
 ];
 
-const moduleImageKeywords = [
-    "education", "healthcare", "kids", "gaming", "music", "books", "fashion", "food",
-    "travel", "house", "office", "car", "money", "bank", "chart", "wallet",
-    "cinema", "tv", "art", "camera", "pen", "theater", "gym", "yoga",
-    "stadium", "football", "basketball", "tennis", "swim", "bicycle", "mountain", "ski",
-    "surf", "fish", "camp", "garden", "pets", "cat", "bird", "aquarium",
-    "butterfly", "flower", "tree", "bar", "weather", "rainbow", "stars",
-    "earth", "space", "robot", "cyberpunk", "target"
-];
-
-const allModules = [];
-for (let i = 0; i < 52; i++) {
-    const idx = i % rawModuleNames.length;
-    allModules.push({
-        name: rawModuleNames[idx],
-        image: `https://unsplash.com` || `https://unsplash.com{moduleImageKeywords[idx]}`,
-        link: `/modules/${rawModuleNames[idx].toLowerCase().replace(/\s+/g, '-')}-${i}`
+// 50 NEARBY SHOPS
+const nearbyServices = [];
+const shopIcons = ["📚", "🏥", "👶", "🎮", "🎵", "🛒", "🍕", "✈️", "🏠", "💼", "🚗", "💰", "🏦", "📈", "💳"];
+for(let i = 0; i < 50; i++) {
+    nearbyServices.push({
+        icon: shopIcons[i % 15],
+        name: `Shop ${i + 1}`,
+        color: `hsl(${(i * 11) % 360}, 70%, 55%)`
     });
 }
 
-// --- NEARBY SHOPS DATA (8 items for loop array) ---
-const shopNames = ["Star Bakery", "Apex Pharmacy", "Kids Joy", "Pixel Gaming", "Tune Music", "Novel Books", "Trend Mart", "Desi Food"];
-const shopKeywords = ["bakery", "pharmacy", "toys", "arcade", "instruments", "bookstore", "boutique", "restaurant"];
-const nearbyShops = [];
-for (let i = 0; i < 24; i++) {
-    const idx = i % shopNames.length;
-    nearbyShops.push({
-        name: shopNames[idx],
-        image: `https://unsplash.com` // Premium generic retail store UI
-    });
-}
-
-// --- 3 REAL HIGH-QUALITY VIDEO LINKS (REPLACING ANIMATION) ---
+// 3 VIDEOS
 const nearbyVideos = [
-    { title: "SamanLive Shop Tour", url: "https://mixkit.co" },
-    { title: "Best Festive Deals", url: "https://mixkit.co" },
-    { title: "Exclusive New Arrivals", url: "https://mixkit.co" }
+    { title: "Shop Tour", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+    { title: "Best Deals", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" },
+    { title: "New Arrivals", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" }
 ];
 
-// --- CAMPAIGN OFFERS (GOL MODULES WITH BACKGROUNDS) ---
+// 48 CAMPAIGNS
 const allCampaigns = [];
-for (let i = 0; i < 20; i++) {
+for(let i = 0; i < 48; i++) {
     allCampaigns.push({
         title: `Campaign ${i + 1}`,
         desc: `Join Now`,
-        btn: "Enter",
-        image: `https://unsplash.com`
+        btn: "Join",
+        color: adColors[i % adColors.length]
     });
 }
 
+// RENDER SERVICES - 52 ITEMS
+document.getElementById('serviceGrid').innerHTML = allModules.map((module) => `
+    <div class="service-item">
+        <a href="${module.link}">
+            <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
+            <p>${module.name}</p>
+        </a>
+    </div>
+`).join('');
 
-// ==========================================
-// 2. RENDERING CORE ENGINE
-// ==========================================
-
-function getItemsPerSlide() {
-    return window.innerWidth <= 768 ? { ads: 4, nearby: 4, campaigns: 4 } : { ads: 10, nearby: 8, campaigns: 6 };
+// RENDER TOP ADS - 50 ITEMS, 4 PER SLIDE
+const topAdChunks = [];
+for (let i = 0; i < allAds.length; i += 4) {
+    topAdChunks.push(allAds.slice(i, i + 4));
 }
-
-// --- 52 MODULES ENGINE ---
-function renderModules() {
-    const grid = document.getElementById('serviceGrid');
-    if (!grid) return;
-    grid.innerHTML = allModules.map((module, idx) => `
-        <div class="service-item" style="animation-delay: ${idx * 0.01}s">
-            <a href="${module.link}">
-                <div class="service-icon" style="background-image: url('${module.image}'); background-size: cover; background-position: center;"></div>
-                <p>${module.name}</p>
-            </a>
+document.getElementById('topAdsContainer').innerHTML = topAdChunks.map((chunk, idx) => `
+    <div class="ad-slide ${idx === 0? 'active' : ''}">
+        <div class="ads-grid">
+            ${chunk.map(ad => `
+                <div class="ad-card" style="background: linear-gradient(135deg, ${ad.color}, ${ad.color}cc)">
+                    <h3>${ad.title}</h3>
+                    <p>${ad.desc}</p>
+                    <button class="ad-btn">${ad.btn}</button>
+                </div>
+            `).join('')}
         </div>
-    `).join('');
+    </div>
+`).join('');
+
+// RENDER CAMPAIGNS - 48 ITEMS, 4 PER SLIDE
+const campaignChunks = [];
+for (let i = 0; i < allCampaigns.length; i += 4) {
+    campaignChunks.push(allCampaigns.slice(i, i + 4));
 }
-
-// --- DYNAMIC AD SLIDER ---
-function renderAds() {
-    const container = document.getElementById('topAdsContainer');
-    if (!container) return;
-    const itemsPerSlide = getItemsPerSlide().ads;
-    const chunks = [];
-    
-    for (let i = 0; i < allAds.length; i += itemsPerSlide) {
-        chunks.push(allAds.slice(i, i + itemsPerSlide));
-    }
-
-    container.innerHTML = chunks.map((chunk, idx) => `
-        <div class="ad-slide ${idx === 0 ? 'active' : ''}">
-            <div class="ads-grid" style="grid-template-columns: repeat(${chunk.length}, 1fr);">
-                ${chunk.map(ad => `
-                    <div class="ad-card" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('${ad.image}'); background-size: cover;">
-                        <h3>${ad.title}</h3>
-                        <p>${ad.desc}</p>
-                        <button class="ad-btn">${ad.btn}</button>
-                    </div>
-                `).join('')}
-            </div>
+document.getElementById('campaignContainer').innerHTML = campaignChunks.map((chunk, idx) => `
+    <div class="ad-slide ${idx === 0? 'active' : ''}">
+        <div class="ads-grid">
+            ${chunk.map(campaign => `
+                <div class="campaign-card" style="background: linear-gradient(135deg, ${campaign.color}, ${campaign.color}cc)">
+                    <h3>${campaign.title}</h3>
+                    <p>${campaign.desc}</p>
+                    <button class="campaign-btn">${campaign.btn}</button>
+                </div>
+            `).join('')}
         </div>
-    `).join('');
+    </div>
+`).join('');
+
+// RENDER NEARBY - SHOP/VIDEO ALAG SLIDES
+const shopChunks = [];
+for (let i = 0; i < nearbyServices.length; i += 5) {
+    shopChunks.push(nearbyServices.slice(i, i + 5));
 }
 
-// --- NEARBY SHOPS SLIDER (WITHOUT DOT SIGN) ---
-function renderNearby() {
-    const container = document.getElementById('nearbyContent');
-    if (!container) return;
-    const itemsPerSlide = getItemsPerSlide().nearby;
-    const chunks = [];
+let nearbySlides = [];
 
-    for (let i = 0; i < nearbyShops.length; i += itemsPerSlide) {
-        chunks.push(nearbyShops.slice(i, i + itemsPerSlide));
-    }
-
-    container.innerHTML = chunks.map((chunk, idx) => `
-        <div class="nearby-slide ${idx === 0 ? 'active' : ''}">
-            <div class="nearby-shops-grid" style="grid-template-columns: repeat(${chunk.length}, 1fr);">
-                ${chunk.map(shop => `
+// SHOP SLIDES
+shopChunks.forEach((chunk, idx) => {
+    nearbySlides.push(`
+        <div class="nearby-slide ${idx === 0? 'active' : ''}">
+            <div class="nearby-shops-grid">
+                ${chunk.map(service => `
                     <div class="nearby-shop-card">
-                        <div class="nearby-icon" style="background-image: url('${shop.image}'); background-size: cover; background-position: center; border-radius: 50%;"></div>
+                        <div class="nearby-icon">${service.icon}</div>
                         <div class="nearby-info">
-                            <h4>${shop.name}</h4>
+                            <h4>${service.name}</h4>
                         </div>
                     </div>
                 `).join('')}
             </div>
-            
-            <!-- LINE 2: REAL INTERNET STREAMING VIDEOS -->
-            <div class="nearby-videos">
-                ${nearbyVideos.map(video => `
-                    <div class="video-card">
-                        <video muted loop autoplay playsinline>
-                            <source src="${video.url}" type="video/mp4">
-                        </video>
-                        <div class="video-label">${video.title}</div>
-                        <div class="video-play">▶</div>
-                    </div>
-                `).join('')}
-            </div>
-
-            <!-- LINE 3 ACTIONS SYSTEM -->
-            <div class="nearby-actions-row">
-                <button class="nearby-action-btn">Track Your Child</button>
-                <button class="nearby-action-btn">Track Your Family</button>
-                <button class="nearby-action-btn">Track Your Delivery</button>
-                <button class="nearby-action-btn add-location-btn">Add Location</button>
-            </div>
         </div>
-    `).join('');
-}
+    `);
+});
 
-// --- LIVE CAMPAIGN RENDERING ENGINE (ROUND/GOL LOOK) ---
-function renderCampaigns() {
-    const container = document.getElementById('campaignContainer');
-    if (!container) return;
-    const itemsPerSlide = window.innerWidth <= 768 ? 4 : 6;
-    const chunks = [];
-
-    for (let i = 0; i < allCampaigns.length; i += itemsPerSlide) {
-        chunks.push(allCampaigns.slice(i, i + itemsPerSlide));
-    }
-
-    container.innerHTML = chunks.map((chunk, idx) => `
-        <div class="ad-slide ${idx === 0 ? 'active' : ''}">
-            <div class="ads-grid" style="grid-template-columns: repeat(${chunk.length}, 1fr);">
-                ${chunk.map(camp => `
-                    <div class="campaign-card" style="border-radius: 50%; aspect-ratio: 1; overflow: hidden; position: relative; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('${camp.image}') no-repeat center/cover; padding: 10px; border: 3px solid #ff9900;">
-                        <h3 style="font-size: 11px; color: white; margin-bottom: 2px;">${camp.title}</h3>
-                        <p style="font-size: 9px; color: #ff9900; font-weight: bold; margin-bottom: 4px;">${camp.desc}</p>
-                        <button class="campaign-btn" style="padding: 3px 8px; font-size: 8px; border-radius: 10px; background: #fff; color:#111; border:none; cursor:pointer; font-weight:bold;">${camp.btn}</button>
-                    </div>
-                `).join('')}
-            </div>
+// VIDEO SLIDE
+nearbySlides.push(`
+    <div class="nearby-slide">
+        <div class="nearby-videos">
+            ${nearbyVideos.map(video => `
+                <div class="video-card">
+                    <video muted loop autoplay playsinline>
+                        <source src="${video.url}#t=0,5" type="video/mp4">
+                    </video>
+                    <div class="video-label">${video.title}</div>
+                    <div class="video-play">▶</div>
+                </div>
+            `).join('')}
         </div>
-    `).join('');
-}
+    </div>
+`);
 
+document.getElementById('nearbyContent').innerHTML = nearbySlides.join('');
 
-// ==========================================
-// 3. EVENT LISTENERS & CAROUSEL NAVIGATION LOGIC
-// ==========================================
+// RENDER DOTS
+document.getElementById('nearbyDots').innerHTML = nearbySlides.map((_, idx) => `
+    <span class="${idx === 0? 'active' : ''}" onclick="goToNearby(${idx})"></span>
+`).join('');
 
+// SLIDER LOGIC
 let topAdIndex = 0;
 let campaignIndex = 0;
+let nearbyIndex = 0;
+
+function showTopAd(idx) {
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    slides.forEach(s => s.classList.remove('active'));
+    if(slides[idx]) slides[idx].classList.add('active');
+    topAdIndex = idx;
+}
+function nextTopAd() {
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    topAdIndex = (topAdIndex + 1) % slides.length;
+    showTopAd(topAdIndex);
+}
+function prevTopAd() {
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
+    showTopAd(topAdIndex);
+}
+
+function showCampaign(idx) {
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    slides.forEach(s => s.classList.remove('active'));
+    if(slides[idx]) slides[idx].classList.add('active');
+    campaignIndex = idx;
+}
+function nextCampaign() {
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    campaignIndex = (campaignIndex + 1) % slides.length;
+    showCampaign(campaignIndex);
+}
+function prevCampaign() {
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
+    showCampaign(campaignIndex);
+}
+
+function showNearby(idx) {
+    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
+    const dots = document.querySelectorAll('#nearbyDots span');
+    slides.forEach(s => s.classList.remove('active'));
+    dots.forEach(d => d.classList.remove('active'));
+    if(slides[idx]) slides[idx].classList.add('active');
+    if(dots[idx]) dots[idx].classList.add('active');
+    nearbyIndex = idx;
+}
+function nextNearby() {
+    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
+    nearbyIndex = (nearbyIndex + 1) % slides.length;
+    showNearby(nearbyIndex);
+}
+function prevNearby() {
+    const slides = document.querySelectorAll('#nearbyContent.nearby-slide');
+    nearbyIndex = (nearbyIndex - 1 + slides.length) % slides.length;
+    showNearby(nearbyIndex);
+}
+function goToNearby(idx) { showNearby(idx); }
+
+// AUTO SLIDE - 5 SEC
+setInterval(nextTopAd, 5000);
+setInterval(nextCampaign, 6000);
+setInterval(nextNearby, 5000);
