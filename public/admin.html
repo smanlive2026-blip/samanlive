@@ -4,43 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAMANLIVE Admin Panel</title>
+    <!-- LEAFLET CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; padding: 20px; }
-     .container { max-width: 1600px; margin: 0 auto; }
+    .container { max-width: 1600px; margin: 0 auto; }
         h1 { color: #1e40af; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-     .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-     .tab { padding: 10px 20px; background: white; border: none; cursor: pointer; border-radius: 8px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-     .tab.active { background: #1e40af; color: white; }
-     .content { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
-     .content.active { display: block; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab { padding: 10px 20px; background: white; border: none; cursor: pointer; border-radius: 8px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .tab.active { background: #1e40af; color: white; }
+    .content { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
+    .content.active { display: block; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
         th { background: #f9fafb; font-weight: 600; color: #374151; }
         button { padding: 8px 16px; margin: 2px; cursor: pointer; border: none; border-radius: 6px; font-weight: 600; }
-     .btn-primary { background: #3b82f6; color: white; }
-     .btn-danger { background: #ef4444; color: white; }
-     .btn-success { background: #10b981; color: white; }
-     .btn-warning { background: #f59e0b; color: white; }
-     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-     .modal-content { background: white; margin: 30px auto; padding: 30px; width: 90%; max-width: 700px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
-     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-     .form-group { margin-bottom: 15px; }
-     .form-group.full { grid-column: 1 / -1; }
-     .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #374151; }
-     .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
-     .color-preview { width: 50px; height: 50px; border-radius: 8px; border: 2px solid #e5e7eb; margin-top: 5px; }
-     .icon-preview { font-size: 40px; margin-top: 5px; }
-     .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-     .status-active { background: #d1fae5; color: #065f46; }
-     .status-hidden { background: #fee2e2; color: #991b1b; }
-     .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-     .search-box { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; width: 300px; }
-     .upload-box { border: 2px dashed #d1d5db; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 15px; background: #f9fafb; }
-     .upload-box input[type="file"] { margin: 10px 0; }
-     .link-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
-     .link-item input { flex: 1; }
-     .link-item button { flex-shrink: 0; }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-success { background: #10b981; color: white; }
+    .btn-warning { background: #f59e0b; color: white; }
+    .btn-secondary { background: #6b7280; color: white; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+    .modal-content { background: white; margin: 30px auto; padding: 30px; width: 90%; max-width: 700px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #374151; }
+    .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+    .color-preview { width: 50px; height: 50px; border-radius: 8px; border: 2px solid #e5e7eb; margin-top: 5px; }
+    .icon-preview { font-size: 40px; margin-top: 5px; }
+    .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .status-active { background: #d1fae5; color: #065f46; }
+    .status-hidden { background: #fee2e2; color: #991b1b; }
+    .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .search-box { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; width: 300px; }
+    .upload-box { border: 2px dashed #d1d5db; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 15px; background: #f9fafb; }
+    .upload-box input[type="file"] { margin: 10px 0; }
+    .link-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+    .link-item input { flex: 1; }
+    .link-item button { flex-shrink: 0; }
+     #map, #shopMap { height: 450px; margin: 15px 0; border-radius: 8px; border: 2px solid #e5e7eb; }
+    .map-controls { display: flex; gap: 10px; margin-bottom: 15px; }
+    .area-info { background: #f0f9ff; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #3b82f6; }
     </style>
 </head>
 <body>
@@ -49,10 +56,12 @@
 
         <div class="tabs">
             <button class="tab active" onclick="showTab('modules', event)">📦 Modules (54)</button>
+            <button class="tab" onclick="showTab('moduleArea', event)">📍 Module Area</button>
             <button class="tab" onclick="showTab('ads', event)">📢 Top Ads (54)</button>
             <button class="tab" onclick="showTab('videos', event)">🎬 Live Videos</button>
             <button class="tab" onclick="showTab('campaigns', event)">🎯 Campaigns (52)</button>
             <button class="tab" onclick="showTab('shops', event)">🏪 Shops (54)</button>
+            <button class="tab" onclick="showTab('shopLocation', event)">🏪 Shop Location</button>
             <button class="tab" onclick="showTab('settings', event)">⚙️ Settings</button>
         </div>
 
@@ -64,10 +73,35 @@
             </div>
             <table id="modulesTable">
                 <thead>
-                    <tr><th>Icon</th><th>Name</th><th>Color</th><th>Link</th><th>Priority</th><th>Status</th><th>Actions</th></tr>
+                    <tr><th>Icon</th><th>Name</th><th>Color</th><th>Link</th><th>Area</th><th>Priority</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
+        </div>
+
+        <!-- MODULE AREA TAB - NEW -->
+        <div id="moduleAreaTab" class="content">
+            <h2>📍 Module Area Mapping</h2>
+            <p style="color:#64748b;margin-bottom:15px;">Module select karke map pe circle ya polygon draw karo. Jis area me module active karna hai.</p>
+
+            <div class="form-group">
+                <label>Select Module:</label>
+                <select id="moduleSelectArea" onchange="loadModuleArea()">
+                    <option value="">-- Select Module --</option>
+                </select>
+            </div>
+
+            <div class="map-controls">
+                <button class="btn-primary" onclick="saveModuleArea()">💾 Save Area</button>
+                <button class="btn-secondary" onclick="clearModuleDrawing()">🗑️ Clear Drawing</button>
+                <button class="btn-warning" onclick="deleteModuleArea()">❌ Remove Area</button>
+            </div>
+
+            <div id="map"></div>
+
+            <div class="area-info" id="areaInfo" style="display:none;">
+                <strong>Current Area:</strong> <span id="areaDetails"></span>
+            </div>
         </div>
 
         <!-- ADS TAB -->
@@ -81,7 +115,7 @@
             </table>
         </div>
 
-        <!-- VIDEOS TAB - VIDEO UPLOAD SYSTEM -->
+        <!-- VIDEOS TAB -->
         <div id="videosTab" class="content">
             <div class="action-bar">
                 <button class="btn-success" onclick="addItem('video')">+ Add New Video</button>
@@ -116,12 +150,60 @@
                 <button class="btn-success" onclick="addItem('shop')">+ Add New Shop</button>
             </div>
             <table id="shopsTable">
-                <thead><tr><th>Icon</th><th>Name</th><th>Color</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Icon</th><th>Name</th><th>Module</th><th>Location</th><th>Range</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
 
-        <!-- SETTINGS TAB - LOGO FILE UPLOAD ADDED -->
+        <!-- SHOP LOCATION TAB - NEW -->
+        <div id="shopLocationTab" class="content">
+            <h2>🏪 Shop Fixed Location</h2>
+            <p style="color:#64748b;margin-bottom:15px;">Shop ki exact location set karo. Map pe click karke point select karo.</p>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Select Shop:</label>
+                    <select id="shopSelectLocation" onchange="loadShopLocation()">
+                        <option value="">-- Select Shop --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Link to Module:</label>
+                    <select id="shopModuleLink">
+                        <option value="">-- Select Module --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Shop Name:</label>
+                    <input type="text" id="shopName" placeholder="Raju Electrician">
+                </div>
+                <div class="form-group">
+                    <label>Phone:</label>
+                    <input type="text" id="shopPhone" placeholder="9876543210">
+                </div>
+                <div class="form-group">
+                    <label>Range (meters):</label>
+                    <input type="number" id="shopRange" value="5000" placeholder="5000">
+                </div>
+                <div class="form-group full">
+                    <label>Address:</label>
+                    <input type="text" id="shopAddress" placeholder="Hazratganj, Lucknow">
+                </div>
+            </div>
+
+            <div class="map-controls">
+                <button class="btn-primary" onclick="saveShopLocation()">💾 Save Shop Location</button>
+                <button class="btn-secondary" onclick="clearShopMarker()">🗑️ Clear Marker</button>
+            </div>
+
+            <div id="shopMap"></div>
+
+            <div class="area-info" id="shopLocationInfo" style="display:none;">
+                <strong>Current Location:</strong> <span id="shopLocationDetails"></span>
+            </div>
+        </div>
+
+        <!-- SETTINGS TAB -->
         <div id="settingsTab" class="content">
             <h2>🎨 Site Settings</h2>
             <div class="form-grid">
@@ -204,10 +286,16 @@
         </div>
     </div>
 
+<!-- LEAFLET JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
 <script>
 let allData = {};
 let currentTab = 'modules';
 let footerLinks = [];
+let map, drawnItems, currentModuleLayer;
+let shopMap, shopMarker, currentShopId;
 
 async function loadData() {
     const res = await fetch('/api/admin/data');
@@ -215,6 +303,26 @@ async function loadData() {
     if(!allData.settings.footerLinks) allData.settings.footerLinks = [];
     footerLinks = [...allData.settings.footerLinks];
     renderAll();
+    populateModuleDropdowns();
+}
+
+function populateModuleDropdowns() {
+    const moduleSelect = document.getElementById('moduleSelectArea');
+    const shopModuleSelect = document.getElementById('shopModuleLink');
+    const shopSelect = document.getElementById('shopSelectLocation');
+
+    moduleSelect.innerHTML = '<option value="">-- Select Module --</option>';
+    shopModuleSelect.innerHTML = '<option value="">-- Select Module --</option>';
+    shopSelect.innerHTML = '<option value="">-- Select Shop --</option>';
+
+    allData.modules.forEach(m => {
+        moduleSelect.innerHTML += `<option value="${m.id}">${m.icon} ${m.name}</option>`;
+        shopModuleSelect.innerHTML += `<option value="${m.id}">${m.icon} ${m.name}</option>`;
+    });
+
+    allData.shops.forEach(s => {
+        shopSelect.innerHTML += `<option value="${s.id}">${s.icon} ${s.name}</option>`;
+    });
 }
 
 function renderAll() {
@@ -228,12 +336,15 @@ function renderAll() {
 
 function renderModules() {
     const tbody = document.querySelector('#modulesTable tbody');
-    tbody.innerHTML = allData.modules.map(m => `
+    tbody.innerHTML = allData.modules.map(m => {
+        const areaCount = m.areas? m.areas.length : 0;
+        return `
         <tr>
             <td style="font-size:24px;">${m.icon}</td>
             <td><strong>${m.name}</strong><br><small>${m.desc || ''}</small></td>
             <td><div style="width:40px;height:40px;background:${m.color};border-radius:8px;"></div></td>
             <td>${m.link}</td>
+            <td><span class="status-badge ${areaCount > 0? 'status-active' : 'status-hidden'}">${areaCount} Areas</span></td>
             <td>${m.priority}</td>
             <td><span class="status-badge ${m.status? 'status-active' : 'status-hidden'}">${m.status? '✅ Active' : '❌ Hidden'}</span></td>
             <td>
@@ -241,7 +352,7 @@ function renderModules() {
                 <button class="btn-danger" onclick="deleteItem('module', '${m.id}')">Delete</button>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 function renderAds() {
@@ -299,11 +410,16 @@ function renderCampaigns() {
 
 function renderShops() {
     const tbody = document.querySelector('#shopsTable tbody');
-    tbody.innerHTML = allData.shops.map(s => `
+    tbody.innerHTML = allData.shops.map(s => {
+        const module = allData.modules.find(m => m.id === s.moduleId);
+        const hasLocation = s.lat && s.lng;
+        return `
         <tr>
             <td style="font-size:24px;">${s.icon}</td>
-            <td><strong>${s.name}</strong></td>
-            <td><div style="width:40px;height:40px;background:${s.color};border-radius:8px;"></div></td>
+            <td><strong>${s.name}</strong><br><small>${s.address || ''}</small></td>
+            <td>${module? module.name : '-'}</td>
+            <td><span class="status-badge ${hasLocation? 'status-active' : 'status-hidden'}">${hasLocation? '📍 Set' : '❌ Not Set'}</span></td>
+            <td>${s.range || 5000}m</td>
             <td>${s.priority}</td>
             <td><span class="status-badge ${s.status? 'status-active' : 'status-hidden'}">${s.status? '✅ Active' : '❌ Hidden'}</span></td>
             <td>
@@ -311,7 +427,7 @@ function renderShops() {
                 <button class="btn-danger" onclick="deleteItem('shop', '${s.id}')">Delete</button>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 function renderSettings() {
@@ -325,7 +441,6 @@ function renderSettings() {
     document.getElementById('settingTwitter').value = allData.settings.twitter || '';
     document.getElementById('settingYoutube').value = allData.settings.youtube || '';
 
-    // Logo preview
     const logoUrl = allData.settings.logoImage || '';
     const logoPreview = document.getElementById('logoPreview');
     const logoIconPreview = document.getElementById('logoIconPreview');
@@ -389,7 +504,6 @@ async function uploadLogoFile() {
             statusEl.textContent = '✅ Logo uploaded!';
             statusEl.style.color = '#10b981';
 
-            // Update settings with new logo URL
             allData.settings.logoImage = data.url;
             await fetch('/api/admin/settings', {
                 method: 'PUT',
@@ -441,6 +555,9 @@ function showTab(tab, event) {
     event.target.classList.add('active');
     document.getElementById(tab + 'Tab').classList.add('active');
     currentTab = tab;
+
+    if(tab === 'moduleArea') initModuleMap();
+    if(tab === 'shopLocation') initShopMap();
 }
 
 function getFields(type) {
@@ -480,6 +597,9 @@ function getFields(type) {
             { key: 'name', label: 'Shop Name', type: 'text' },
             { key: 'icon', label: 'Icon (Emoji)', type: 'text' },
             { key: 'color', label: 'Color', type: 'color' },
+            { key: 'phone', label: 'Phone', type: 'text' },
+            { key: 'address', label: 'Address', type: 'text' },
+            { key: 'range', label: 'Range (meters)', type: 'number' },
             { key: 'priority', label: 'Priority', type: 'number' },
             { key: 'status', label: 'Status', type: 'select', options: [{v: true, t: '✅ Active'}, {v: false, t: '❌ Hidden'}] }
         ]
@@ -545,7 +665,7 @@ async function saveItem() {
 
 async function deleteItem(type, id) {
     if(confirm('Are you sure? This cannot be undone.')) {
-        await fetch(`/api/admin/${type}/${id}`, { method: 'DELETE' });
+                await fetch(`/api/admin/${type}/${id}`, { method: 'DELETE' });
         loadData();
     }
 }
@@ -573,7 +693,7 @@ async function saveSettings() {
     loadData();
 }
 
-// VIDEO UPLOAD FUNCTION - SYSTEM SE DIRECT
+// VIDEO UPLOAD FUNCTION
 async function uploadVideoFile() {
     const fileInput = document.getElementById('videoUploadFile');
     const file = fileInput.files[0];
@@ -601,7 +721,6 @@ async function uploadVideoFile() {
             statusEl.textContent = '✅ Uploaded! URL: ' + data.url;
             statusEl.style.color = '#10b981';
 
-            // Auto add to videos list
             const title = prompt('Video ka title daalo:', file.name.split('.')[0]);
             if(title) {
                 await fetch('/api/admin/video', {
@@ -635,6 +754,215 @@ function filterTable(tableId, query) {
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(query.toLowerCase())? '' : 'none';
     });
+}
+
+// ========================================
+// MODULE AREA MAP FUNCTIONS
+// ========================================
+function initModuleMap() {
+    if(map) return; // Already initialized
+
+    map = L.map('map').setView([26.8467, 80.9462], 12); // Lucknow default
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    const drawControl = new L.Control.Draw({
+        draw: {
+            polygon: true,
+            circle: true,
+            rectangle: true,
+            marker: false,
+            polyline: false,
+            circlemarker: false
+        },
+        edit: { featureGroup: drawnItems }
+    });
+    map.addControl(drawControl);
+
+    map.on('draw:created', function(e) {
+        drawnItems.clearLayers();
+        currentModuleLayer = e.layer;
+        drawnItems.addLayer(e.layer);
+    });
+}
+
+function loadModuleArea() {
+    const moduleId = document.getElementById('moduleSelectArea').value;
+    if(!moduleId) {
+        document.getElementById('areaInfo').style.display = 'none';
+        return;
+    }
+
+    const module = allData.modules.find(m => m.id === moduleId);
+    if(!module ||!module.areas || module.areas.length === 0) {
+        document.getElementById('areaInfo').style.display = 'none';
+        return;
+    }
+
+    drawnItems.clearLayers();
+    const area = module.areas[0];
+
+    if(area.type === 'circle') {
+        const circle = L.circle([area.lat, area.lng], { radius: area.radius });
+        drawnItems.addLayer(circle);
+        map.setView([area.lat, area.lng], 13);
+        document.getElementById('areaDetails').textContent = `Circle - Radius: ${area.radius}m`;
+    } else if(area.type === 'polygon') {
+        const polygon = L.polygon(area.coordinates);
+        drawnItems.addLayer(polygon);
+        map.fitBounds(polygon.getBounds());
+        document.getElementById('areaDetails').textContent = `Polygon - ${area.coordinates.length} points`;
+    }
+
+    document.getElementById('areaInfo').style.display = 'block';
+}
+
+async function saveModuleArea() {
+    const moduleId = document.getElementById('moduleSelectArea').value;
+    if(!moduleId) return alert('Module select karo pehle!');
+
+    let areaData = {};
+    drawnItems.eachLayer(layer => {
+        if(layer instanceof L.Circle) {
+            areaData = {
+                type: 'circle',
+                lat: layer.getLatLng().lat,
+                lng: layer.getLatLng().lng,
+                radius: Math.round(layer.getRadius())
+            };
+        } else if(layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+            areaData = {
+                type: 'polygon',
+                coordinates: layer.getLatLngs()[0].map(p => [p.lat, p.lng])
+            };
+        }
+    });
+
+    if(!areaData.type) return alert('Map pe circle ya polygon draw karo pehle!');
+
+    await fetch(`/api/admin/module/${moduleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ areas: [areaData] })
+    });
+
+    alert('✅ Area save ho gaya!');
+    loadData();
+}
+
+function clearModuleDrawing() {
+    drawnItems.clearLayers();
+}
+
+async function deleteModuleArea() {
+    const moduleId = document.getElementById('moduleSelectArea').value;
+    if(!moduleId) return alert('Module select karo pehle!');
+    if(!confirm('Area delete karna hai?')) return;
+
+    await fetch(`/api/admin/module/${moduleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ areas: [] })
+    });
+
+    drawnItems.clearLayers();
+    document.getElementById('areaInfo').style.display = 'none';
+    alert('✅ Area delete ho gaya!');
+    loadData();
+}
+
+// ========================================
+// SHOP LOCATION MAP FUNCTIONS
+// ========================================
+function initShopMap() {
+    if(shopMap) return;
+
+    shopMap = L.map('shopMap').setView([26.8467, 80.9462], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(shopMap);
+
+    shopMap.on('click', function(e) {
+        if(shopMarker) shopMap.removeLayer(shopMarker);
+        shopMarker = L.marker(e.latlng).addTo(shopMap);
+        updateShopLocationInfo(e.latlng);
+    });
+}
+
+function loadShopLocation() {
+    const shopId = document.getElementById('shopSelectLocation').value;
+    if(!shopId) {
+        document.getElementById('shopLocationInfo').style.display = 'none';
+        return;
+    }
+
+    const shop = allData.shops.find(s => s.id === shopId);
+    if(!shop) return;
+
+    // Fill form fields
+    document.getElementById('shopName').value = shop.name || '';
+    document.getElementById('shopPhone').value = shop.phone || '';
+    document.getElementById('shopRange').value = shop.range || 5000;
+    document.getElementById('shopAddress').value = shop.address || '';
+    document.getElementById('shopModuleLink').value = shop.moduleId || '';
+
+    // Show marker if location exists
+    if(shop.lat && shop.lng) {
+        if(shopMarker) shopMap.removeLayer(shopMarker);
+        shopMarker = L.marker([shop.lat, shop.lng]).addTo(shopMap);
+        shopMap.setView([shop.lat, shop.lng], 15);
+        updateShopLocationInfo({ lat: shop.lat, lng: shop.lng });
+    } else {
+        document.getElementById('shopLocationInfo').style.display = 'none';
+    }
+}
+
+function updateShopLocationInfo(latlng) {
+    document.getElementById('shopLocationDetails').textContent = `Lat: ${latlng.lat.toFixed(6)}, Lng: ${latlng.lng.toFixed(6)}`;
+    document.getElementById('shopLocationInfo').style.display = 'block';
+}
+
+async function saveShopLocation() {
+    const shopId = document.getElementById('shopSelectLocation').value;
+    if(!shopId) return alert('Shop select karo pehle!');
+
+    let lat = null, lng = null;
+    if(shopMarker) {
+        const pos = shopMarker.getLatLng();
+        lat = pos.lat;
+        lng = pos.lng;
+    }
+
+    const shopData = {
+        name: document.getElementById('shopName').value,
+        phone: document.getElementById('shopPhone').value,
+        range: parseInt(document.getElementById('shopRange').value) || 5000,
+        address: document.getElementById('shopAddress').value,
+        moduleId: document.getElementById('shopModuleLink').value,
+        lat: lat,
+        lng: lng
+    };
+
+    await fetch(`/api/admin/shop/${shopId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(shopData)
+    });
+
+    alert('✅ Shop location save ho gayi!');
+    loadData();
+}
+
+function clearShopMarker() {
+    if(shopMarker) {
+        shopMap.removeLayer(shopMarker);
+        shopMarker = null;
+    }
+    document.getElementById('shopLocationInfo').style.display = 'none';
 }
 
 loadData();

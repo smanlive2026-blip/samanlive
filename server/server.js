@@ -38,11 +38,133 @@ function writeDB(data) {
 }
 
 // ========================================
-// PUBLIC APIs - Frontend
+// LOCATION HELPERS - NEW
+// ========================================
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // meters
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function isPointInPolygon(point, vs) {
+    const x = point[0], y = point[1];
+    let inside = false;
+    for(let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+        const xi = vs[i][0], yi = vs[i][1];
+        const xj = vs[j][0], yj = vs[j][1];
+        const intersect = ((yi > y)!== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if(intersect) inside =!inside;
+    }
+    return inside;
+}
+
+function checkModuleInArea(module, userLat, userLng) {
+    if(!module.areas || module.areas.length === 0) return { inArea: true, distance: 0 }; // All India available
+
+    for(let area of module.areas) {
+        if(area.type === 'circle') {
+            const dist = getDistance(userLat, userLng, area.lat, area.lng);
+            if(dist <= area.radius) {
+                return { inArea: true, distance: Math.round(dist) };
+            }
+        }
+        if(area.type === 'polygon') {
+            if(isPointInPolygon([userLat, userLng], area.coordinates)) {
+                return { inArea: true, distance: 0 };
+            }
+        }
+    }
+    return { inArea: false, distance: 0 };
+}
+
+// ========================================
+// PUBLIC APIs - Frontend - UPDATED
 // ========================================
 app.get('/api/modules', (req, res) => {
     const db = readDB();
-    res.json(db.modules.filter(m => m.status).sort((a, b) => a.priority - b.priority));
+    const userLat = parseFloat(req.query.lat);
+    const userLng = parseFloat(req.query.lng);
+
+    let modules = db.modules.filter(m => m.status);
+
+    // Agar location mili hai to filter karo
+    if(userLat && userLng) {
+        modules = modules.filter(m => {
+            const check = checkModuleInArea(m, userLat, userLng);
+            if(check.inArea) {
+                m.distance = check.distance;
+                return true;
+            }
+            return false;
+        }).sort((a, b) => a.distance - b.distance); // Najdeek wale pehle
+    } else {
+        modules = modules.sort((a, b) => a.priority - b.priority);
+    }
+
+    res.json(modules);
+});
+
+app.get('/api/shops', (req, res) => {
+    const db = readDB();
+    const userLat = parseFloat(req.query.lat);
+    const userLng = parseFloat(req.query.lng);
+
+    let shops = db.shops.filter(s => s.status);
+
+    // Location filter for shops
+    if(userLat && userLng) {
+        shops = shops.map(s => {
+            if(s.lat && s.lng) {
+                const dist = getDistance(userLat, userLng, s.lat, s.lng);
+                s.distance = Math.round(dist);
+                s.inRange = dist <= (s.range || 5000); // Default 5km
+            } else {
+                s.distance = 999999;
+                s.inRange = false;
+            }
+            return s;
+        }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
+    } else {
+        shops = shops.sort((a, b) => a.priority - b.priority);
+    }
+
+    res.json(shops);
+});
+
+// NEW: Combined Homepage API
+app.get('/api/homepage', (req, res) => {
+    const db = readDB();
+    const userLat = parseFloat(req.query.lat);
+    const userLng = parseFloat(req.query.lng);
+
+    if(!userLat ||!userLng) {
+        return res.json({ modules: [], shops: [] });
+    }
+
+    // Modules filter
+    let modules = db.modules.filter(m => {
+        if(!m.status) return false;
+        const check = checkModuleInArea(m, userLat, userLng);
+        if(check.inArea) {
+            m.distance = (check.distance/1000).toFixed(1); // km me
+            return true;
+        }
+        return false;
+    }).sort((a, b) => a.distance - b.distance);
+
+    // Shops filter
+    let shops = db.shops.filter(s => {
+        if(!s.status ||!s.lat ||!s.lng) return false;
+        const dist = getDistance(userLat, userLng, s.lat, s.lng);
+        s.distance = Math.round(dist);
+        return dist <= (s.range || 5000);
+    }).sort((a, b) => a.distance - b.distance);
+
+    res.json({ modules, shops });
 });
 
 app.get('/api/ads', (req, res) => {
@@ -60,18 +182,13 @@ app.get('/api/campaigns', (req, res) => {
     res.json(db.campaigns.filter(c => c.status).sort((a, b) => a.priority - b.priority));
 });
 
-app.get('/api/shops', (req, res) => {
-    const db = readDB();
-    res.json(db.shops.filter(s => s.status).sort((a, b) => a.priority - b.priority));
-});
-
 app.get('/api/settings', (req, res) => {
     const db = readDB();
     res.json(db.settings);
 });
 
 // ========================================
-// ADMIN APIs - Control Panel
+// ADMIN APIs - Control Panel - SAME AS BEFORE
 // ========================================
 app.get('/api/admin/data', (req, res) => {
     res.json(readDB());
@@ -98,7 +215,8 @@ app.post('/api/admin/module', (req, res) => {
         priority: db.modules.length + 1,
         desc: "",
         banner: "",
-     ...req.body
+        areas: [],
+    ...req.body
     };
     db.modules.push(newItem);
     writeDB(db);
@@ -190,7 +308,7 @@ app.delete('/api/admin/campaign/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// Shops CRUD
+// Shops CRUD - UPDATED for location
 app.put('/api/admin/shop/:id', (req, res) => {
     const db = readDB();
     const idx = db.shops.findIndex(s => s.id === req.params.id);
@@ -203,7 +321,13 @@ app.put('/api/admin/shop/:id', (req, res) => {
 
 app.post('/api/admin/shop', (req, res) => {
     const db = readDB();
-    const newItem = { id: 's-' + Date.now(), status: true, priority: db.shops.length + 1,...req.body };
+    const newItem = {
+        id: 's-' + Date.now(),
+        status: true,
+        priority: db.shops.length + 1,
+        range: 5000, // Default 5km range
+       ...req.body
+    };
     db.shops.push(newItem);
     writeDB(db);
     res.json({ success: true, data: newItem });

@@ -1,5 +1,5 @@
 // ========================================
-// SAMANLIVE - DYNAMIC JAVASCRIPT - FIXED
+// SAMANLIVE - DYNAMIC JAVASCRIPT - LOCATION BASED
 // ========================================
 
 // Global variables
@@ -9,29 +9,91 @@ let nearbyServices = [];
 let nearbyVideos = [];
 let allCampaigns = [];
 let siteSettings = {};
+let userLocation = null;
 
 // ========================================
-// LOAD DATA FROM SERVER
+// GET USER LOCATION
+// ========================================
+function getUserLocation() {
+    return new Promise((resolve) => {
+        if(!navigator.geolocation) {
+            console.log('Geolocation not supported');
+            resolve(null);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                console.log('User Location:', userLocation);
+                resolve(userLocation);
+            },
+            (error) => {
+                console.log('Location access denied or failed:', error);
+                resolve(null);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            }
+        );
+    });
+}
+
+// ========================================
+// LOAD DATA FROM SERVER - WITH LOCATION
 // ========================================
 async function loadAllData() {
     try {
-        const [modulesRes, adsRes, videosRes, campaignsRes, shopsRes, settingsRes] = await Promise.all([
-            fetch('/api/modules'),
-            fetch('/api/ads'),
-            fetch('/api/videos'),
-            fetch('/api/campaigns'),
-            fetch('/api/shops'),
-            fetch('/api/settings')
-        ]);
+        // Pehle location try karo
+        await getUserLocation();
 
-        allModules = await modulesRes.json();
-        allAds = await adsRes.json();
-        nearbyVideos = await videosRes.json();
-        allCampaigns = await campaignsRes.json();
-        nearbyServices = await shopsRes.json();
-        siteSettings = await settingsRes.json();
+        // Location mili to /api/homepage use karo, warna normal APIs
+        if(userLocation) {
+            const homepageRes = await fetch(`/api/homepage?lat=${userLocation.lat}&lng=${userLocation.lng}`);
+            const homepageData = await homepageRes.json();
+            
+            // Homepage API se filtered modules + shops
+            allModules = homepageData.modules || [];
+            nearbyServices = homepageData.shops || [];
 
-        console.log('SAMANLIVE Loaded Successfully!');
+            // Baaki APIs normal load karo
+            const [adsRes, videosRes, campaignsRes, settingsRes] = await Promise.all([
+                fetch('/api/ads'),
+                fetch('/api/videos'),
+                fetch('/api/campaigns'),
+                fetch('/api/settings')
+            ]);
+
+            allAds = await adsRes.json();
+            nearbyVideos = await videosRes.json();
+            allCampaigns = await campaignsRes.json();
+            siteSettings = await settingsRes.json();
+
+        } else {
+            // Location nahi mili to purana tarika
+            const [modulesRes, adsRes, videosRes, campaignsRes, shopsRes, settingsRes] = await Promise.all([
+                fetch('/api/modules'),
+                fetch('/api/ads'),
+                fetch('/api/videos'),
+                fetch('/api/campaigns'),
+                fetch('/api/shops'),
+                fetch('/api/settings')
+            ]);
+
+            allModules = await modulesRes.json();
+            allAds = await adsRes.json();
+            nearbyVideos = await videosRes.json();
+            allCampaigns = await campaignsRes.json();
+            nearbyServices = await shopsRes.json();
+            siteSettings = await settingsRes.json();
+        }
+
+        console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', nearbyServices.length);
 
         // Render everything
         renderServices();
@@ -54,7 +116,6 @@ function updateLogo() {
 
     if(header) header.style.background = `linear-gradient(135deg, ${siteSettings.headerColor || '#667eea'}, #764ba2)`;
     
-    // Logo Image ya Text Icon
     if(logoContainer) {
         const logoImg = siteSettings.logoImage;
         const logoText = siteSettings.logoText || 'SAMANLIVE';
@@ -72,7 +133,6 @@ function updateLogo() {
     if(footerLogo) footerLogo.textContent = siteSettings.logoText || 'SAMANLIVE';
     if(footerText) footerText.textContent = siteSettings.footerText || '© 2026 SAMANLIVE. All rights reserved.';
     
-    // Footer color aur about bhi update kar
     const footer = document.querySelector('.footer');
     if(footer && siteSettings.footerColor) {
         footer.style.background = siteSettings.footerColor;
@@ -110,17 +170,24 @@ function sortModulesByUsage(modules) {
 }
 
 // ========================================
-// RENDER SERVICES - 54 MODULES - SMART SORTED
+// RENDER SERVICES - 54 MODULES - SMART SORTED + DISTANCE
 // ========================================
 function renderServices() {
     const sortedModules = sortModulesByUsage(allModules);
     const gridEl = document.getElementById('serviceGrid');
+    
+    if(allModules.length === 0) {
+        if(gridEl) gridEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Aapke area me koi service available nahi hai</p>';
+        return;
+    }
+
     if(gridEl) {
         gridEl.innerHTML = sortedModules.map((module) => `
             <div class="service-item" data-module-id="${module.id}">
                 <a href="${module.link}" onclick="saveModuleClick('${module.id}')">
                     <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
                     <p>${module.name}</p>
+                    ${module.distance ? `<small style="color:#10b981;font-size:11px;">${module.distance} km</small>` : ''}
                 </a>
             </div>
         `).join('');
@@ -128,7 +195,7 @@ function renderServices() {
 }
 
 // ========================================
-// RENDER TOP ADS - 54 OFFERS, 4 PER SLIDE - DYNAMIC AUTO SLIDE
+// RENDER TOP ADS - 54 OFFERS, 4 PER SLIDE
 // ========================================
 function renderTopAds() {
     const topAdChunks = [];
@@ -154,7 +221,7 @@ function renderTopAds() {
 }
 
 // ========================================
-// RENDER CAMPAIGNS - 52 CAMPAIGNS, 4 PER SLIDE - DYNAMIC AUTO SLIDE
+// RENDER CAMPAIGNS - 52 CAMPAIGNS, 4 PER SLIDE
 // ========================================
 function renderCampaigns() {
     const campaignChunks = [];
@@ -180,7 +247,7 @@ function renderCampaigns() {
 }
 
 // ========================================
-// RENDER SHOPS - 54 SHOPS, 6 PER SLIDE = 9 SLIDES - DYNAMIC AUTO SLIDE
+// RENDER SHOPS - 54 SHOPS, 6 PER SLIDE - WITH DISTANCE
 // ========================================
 function renderShops() {
     const shopChunks = [];
@@ -188,6 +255,12 @@ function renderShops() {
         shopChunks.push(nearbyServices.slice(i, i + 6));
     }
     const shopsEl = document.getElementById('shopsContent');
+    
+    if(nearbyServices.length === 0) {
+        if(shopsEl) shopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Aapke aas-paas koi shop nahi mili</p>';
+        return;
+    }
+
     if(shopsEl) {
         shopsEl.innerHTML = shopChunks.map((chunk, idx) => `
             <div class="nearby-slide ${idx === 0? 'active' : ''}">
@@ -196,6 +269,7 @@ function renderShops() {
                         <div class="shop-card">
                             <div class="shop-icon">${service.icon}</div>
                             <div class="shop-name">${service.name}</div>
+                            ${service.distance ? `<small style="color:#10b981;font-size:11px;">${service.distance}m</small>` : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -211,7 +285,7 @@ function renderShops() {
 }
 
 // ========================================
-// RENDER VIDEOS - 3 PER SLIDE - DYNAMIC AUTO SLIDE
+// RENDER VIDEOS - 3 PER SLIDE
 // ========================================
 function renderVideos() {
     const videoChunks = [];
@@ -245,7 +319,7 @@ function renderVideos() {
 }
 
 // ========================================
-// SLIDER LOGIC - TOP ADS - FIXED SELECTOR
+// SLIDER LOGIC - TOP ADS
 // ========================================
 let topAdIndex = 0;
 function showTopAd(idx) {
@@ -268,7 +342,7 @@ function prevTopAd() {
 }
 
 // ========================================
-// SLIDER LOGIC - CAMPAIGNS - FIXED SELECTOR
+// SLIDER LOGIC - CAMPAIGNS
 // ========================================
 let campaignIndex = 0;
 function showCampaign(idx) {
@@ -291,7 +365,7 @@ function prevCampaign() {
 }
 
 // ========================================
-// SLIDER LOGIC - SHOPS - FIXED SELECTOR
+// SLIDER LOGIC - SHOPS
 // ========================================
 let shopIndex = 0;
 function showShop(idx) {
@@ -318,7 +392,7 @@ function prevShop() {
 function goToShop(idx) { showShop(idx); }
 
 // ========================================
-// SLIDER LOGIC - VIDEOS - FIXED SELECTOR
+// SLIDER LOGIC - VIDEOS
 // ========================================
 let videoIndex = 0;
 function showVideo(idx) {
@@ -345,7 +419,7 @@ function prevVideo() {
 function goToVideo(idx) { showVideo(idx); }
 
 // ========================================
-// AUTO SLIDE - SAB DHIRE DHIRE SIDE ME SARKEGA
+// AUTO SLIDE
 // ========================================
 setInterval(nextTopAd, 5000);
 setInterval(nextCampaign, 6000);
@@ -364,11 +438,9 @@ document.addEventListener('click', function(e) {
 });
 
 function openVideoModal(url) {
-    // Purana modal hatao
     const oldModal = document.getElementById('videoModal');
     if(oldModal) oldModal.remove();
 
-    // Naya modal banao
     const modal = document.createElement('div');
     modal.id = 'videoModal';
     modal.style.cssText = `
@@ -393,7 +465,6 @@ function openVideoModal(url) {
     `;
     document.body.appendChild(modal);
     
-    // Background click pe close
     modal.addEventListener('click', function(e) {
         if(e.target === modal) closeVideoModal();
     });
