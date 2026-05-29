@@ -5,7 +5,7 @@ const multer = require('multer');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Video upload config - Admin se direct video upload
+// Video + Image upload config - Dono ke liye
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const dir = 'public/uploads';
@@ -13,7 +13,9 @@ const storage = multer.diskStorage({
         cb(null, dir);
     },
     filename: (req, file, cb) => {
-        cb(null, 'video-' + Date.now() + path.extname(file.originalname));
+        const ext = path.extname(file.originalname);
+        const name = file.mimetype.startsWith('image')? 'logo-' : 'video-';
+        cb(null, name + Date.now() + ext);
     }
 });
 const upload = multer({ storage: storage });
@@ -96,7 +98,7 @@ app.post('/api/admin/module', (req, res) => {
         priority: db.modules.length + 1,
         desc: "",
         banner: "",
-      ...req.body
+     ...req.body
     };
     db.modules.push(newItem);
     writeDB(db);
@@ -257,7 +259,10 @@ app.get('/modules/:moduleName', (req, res) => {
             <header class="header" style="background: linear-gradient(135deg, ${db.settings.headerColor}, #764ba2);">
                 <div class="header-container">
                     <div class="logo">
-                        <div class="logo-icon">${db.settings.logoIcon}</div>
+                        ${db.settings.logoImage?
+                            `<img src="${db.settings.logoImage}" class="logo-img" style="width:40px;height:40px;border-radius:8px;object-fit:contain;margin-right:10px;">` :
+                            `<div class="logo-icon">${db.settings.logoText.charAt(0)}</div>`
+                        }
                         <span class="logo-text">${db.settings.logoText}</span>
                     </div>
                 </div>
