@@ -229,17 +229,17 @@
     { "id": "s-53", "name": "Shop 53", "icon": "✈️", "color": "#06b6d4", "priority": 53, "status": true },
     { "id": "s-54", "name": "Shop 54", "icon": "🏠", "color": "#84cc16", "priority": 54, "status": true }
   ],
-  "settings": {
-    "logoText": "SAMANLIVE",
-    "logoIcon": "S",
-    "headerColor": "#667eea",
-    "footerColor": "#1e293b",
-    "footerText": "© 2026 SAMANLIVE. All rights reserved.",
-    "footerAbout": "SAMANLIVE - Your all in one service platform",
-    "facebook": "",
-    "instagram": "",
-    "twitter": "",
-    "youtube": "",
-    "footerLinks": []
-  }
+"settings": {
+  "logoText": "SAMANLIVE",
+  "logoImage": "",
+  "headerColor": "#667eea",
+  "footerColor": "#1e293b",
+  "footerText": "© 2026 SAMANLIVE. All rights reserved.",
+  "footerAbout": "SAMANLIVE - Your all in one service platform",
+  "facebook": "",
+  "instagram": "",
+  "twitter": "",
+  "youtube": "",
+  "footerLinks": []
+}
 }
