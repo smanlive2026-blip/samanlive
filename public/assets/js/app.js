@@ -2,7 +2,7 @@
 // SAMANLIVE - COMPLETE JAVASCRIPT
 // ========================================
 
-// 50 OFFERS - TOP WALE
+// 50 OFFERS - TOP WALE - DYNAMIC 2+ KAHA SE BHI CHAL SAKTE
 const allAds = [];
 const adColors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#ef4444", "#6366f1", "#14b8a6"];
 for(let i = 0; i < 50; i++) {
@@ -14,62 +14,56 @@ for(let i = 0; i < 50; i++) {
     });
 }
 
-// 54 SERVICES - EDUCATION, HEALTH, KIDS TOP PE
+// 54 SERVICES - EDUCATION, HEALTH, KIDS TOP PE - NAME CHANGED + NEW ADDED
 const allModules = [
-    { icon: "📚", name: "EDUCATION", color: "#3b82f6", link: "/education" },
-    { icon: "🏥", name: "HEALTH", color: "#ef4444", link: "/health" },
-    { icon: "👶", name: "KIDS", color: "#f59e0b", link: "/kids" },
-    { icon: "🎮", name: "GAMES", color: "#8b5cf6", link: "/games" },
-    { icon: "🎵", name: "MUSIC", color: "#ec4899", link: "/music" },
-    { icon: "📖", name: "BOOKS", color: "#10b981", link: "/books" },
-    { icon: "🛒", name: "SHOPPING", color: "#6366f1", link: "/shopping" },
-    { icon: "🍕", name: "FOOD", color: "#f59e0b", link: "/food" },
-    { icon: "✈️", name: "TRAVEL", color: "#06b6d4", link: "/travel" },
-    { icon: "🏠", name: "REAL ESTATE", color: "#84cc16", link: "/real-estate" },
-    { icon: "💼", name: "JOBS", color: "#3b82f6", link: "/jobs" },
-    { icon: "🚗", name: "AUTOMOTIVE", color: "#6b7280", link: "/automotive" },
-    { icon: "💰", name: "FINANCE", color: "#10b981", link: "/finance" },
-    { icon: "🏦", name: "BANKING", color: "#1e40af", link: "/banking" },
-    { icon: "📈", name: "STOCKS", color: "#ef4444", link: "/stocks" },
-    { icon: "💳", name: "PAYMENTS", color: "#8b5cf6", link: "/payments" },
-    { icon: "🎬", name: "MOVIES", color: "#ec4899", link: "/movies" },
-    { icon: "📺", name: "TV SHOWS", color: "#6366f1", link: "/tv" },
-    { icon: "🎨", name: "ART", color: "#f59e0b", link: "/art" },
-    { icon: "📷", name: "PHOTOGRAPHY", color: "#6b7280", link: "/photography" },
-    { icon: "✍️", name: "WRITING", color: "#3b82f6", link: "/writing" },
-    { icon: "🎭", name: "THEATER", color: "#8b5cf6", link: "/theater" },
-    { icon: "💪", name: "FITNESS", color: "#ef4444", link: "/fitness" },
-    { icon: "🧘", name: "YOGA", color: "#10b981", link: "/yoga" },
-    { icon: "⚽", name: "SPORTS", color: "#f59e0b", link: "/sports" },
-    { icon: "🏈", name: "FOOTBALL", color: "#92400e", link: "/football" },
-    { icon: "🏀", name: "BASKETBALL", color: "#f97316", link: "/basketball" },
-    { icon: "🎾", name: "TENNIS", color: "#84cc16", link: "/tennis" },
-    { icon: "🏊", name: "SWIMMING", color: "#06b6d4", link: "/swimming" },
-    { icon: "🚴", name: "CYCLING", color: "#6b7280", link: "/cycling" },
-    { icon: "🧗", name: "CLIMBING", color: "#92400e", link: "/climbing" },
-    { icon: "⛷️", name: "SKIING", color: "#60a5fa", link: "/skiing" },
-    { icon: "🏄", name: "SURFING", color: "#06b6d4", link: "/surfing" },
-    { icon: "🎣", name: "FISHING", color: "#3b82f6", link: "/fishing" },
-    { icon: "🏕️", name: "CAMPING", color: "#84cc16", link: "/camping" },
-    { icon: "🌱", name: "GARDENING", color: "#10b981", link: "/gardening" },
-    { icon: "🐾", name: "PETS", color: "#f59e0b", link: "/pets" },
-    { icon: "🐱", name: "CATS", color: "#6b7280", link: "/cats" },
-    { icon: "🐦", name: "BIRDS", color: "#60a5fa", link: "/birds" },
-    { icon: "🐟", name: "FISH", color: "#06b6d4", link: "/fish" },
-    { icon: "🦋", name: "BUTTERFLY", color: "#ec4899", link: "/butterfly" },
-    { icon: "🌸", name: "FLOWERS", color: "#f472b6", link: "/flowers" },
-    { icon: "🌳", name: "TREES", color: "#10b981", link: "/trees" },
-    { icon: "🌙", name: "NIGHT", color: "#1e293b", link: "/night" },
-    { icon: "☁️", name: "WEATHER", color: "#60a5fa", link: "/weather" },
-    { icon: "🌈", name: "RAINBOW", color: "#f59e0b", link: "/rainbow" },
-    { icon: "⭐", name: "STARS", color: "#fbbf24", link: "/stars" },
-    { icon: "🌍", name: "EARTH", color: "#10b981", link: "/earth" },
-    { icon: "🚀", name: "SPACE", color: "#6366f1", link: "/space" },
-    { icon: "🛸", name: "UFO", color: "#8b5cf6", link: "/ufo" },
-    { icon: "🤖", name: "ROBOTS", color: "#6b7280", link: "/robots" },
-    { icon: "🎯", name: "TARGET", color: "#ef4444", link: "/target" },
-    { icon: "💃", name: "DANCE", color: "#ec4899", link: "/dance" },
-    { icon: "💄", name: "BEAUTY", color: "#f472b6", link: "/beauty" }
+    { icon: "📚", name: "EDUCATION", color: "#3b82f6", link: "/education", id: "education" },
+    { icon: "🏥", name: "HEALTH", color: "#ef4444", link: "/health", id: "health" },
+    { icon: "👶", name: "KIDS", color: "#f59e0b", link: "/kids", id: "kids" },
+    { icon: "🎮", name: "GAMES", color: "#8b5cf6", link: "/games", id: "games" },
+    { icon: "🎵", name: "MUSIC", color: "#ec4899", link: "/music", id: "music" },
+    { icon: "📖", name: "BOOKS", color: "#10b981", link: "/books", id: "books" },
+    { icon: "🛒", name: "MARKET", color: "#6366f1", link: "/market", id: "market" },
+    { icon: "🍕", name: "FOOD", color: "#f59e0b", link: "/food", id: "food" },
+    { icon: "✈️", name: "TRAVEL", color: "#06b6d4", link: "/travel", id: "travel" },
+    { icon: "🏠", name: "REAL ESTATE", color: "#84cc16", link: "/real-estate", id: "realestate" },
+    { icon: "💼", name: "JOBS", color: "#3b82f6", link: "/jobs", id: "jobs" },
+    { icon: "🚗", name: "AUTOMOTIVE SERVICE", color: "#6b7280", link: "/automotive-service", id: "automotive" },
+    { icon: "💰", name: "SAMANPAY", color: "#10b981", link: "/samanpay", id: "samanpay" },
+    { icon: "🏦", name: "BANKING", color: "#1e40af", link: "/banking", id: "banking" },
+    { icon: "🏍️", name: "RENTAL SERVICE", color: "#10b981", link: "/rental-service", id: "rental" },
+    { icon: "🎬", name: "MOVIES", color: "#ec4899", link: "/movies", id: "movies" },
+    { icon: "📺", name: "TV SHOWS", color: "#6366f1", link: "/tv", id: "tv" },
+    { icon: "🎨", name: "ART", color: "#f59e0b", link: "/art", id: "art" },
+    { icon: "✍️", name: "WRITING PAD", color: "#3b82f6", link: "/writing-pad", id: "writing" },
+    { icon: "🎭", name: "THEATER", color: "#8b5cf6", link: "/theater", id: "theater" },
+    { icon: "💪", name: "FITNESS", color: "#ef4444", link: "/fitness", id: "fitness" },
+    { icon: "🧘", name: "YOGA", color: "#10b981", link: "/yoga", id: "yoga" },
+    { icon: "⚽", name: "SPORTS", color: "#f59e0b", link: "/sports", id: "sports" },
+    { icon: "🏀", name: "BASKETBALL", color: "#f97316", link: "/basketball", id: "basketball" },
+    { icon: "🎾", name: "TENNIS", color: "#84cc16", link: "/tennis", id: "tennis" },
+    { icon: "🚴", name: "CYCLING", color: "#6b7280", link: "/cycling", id: "cycling" },
+    { icon: "🎣", name: "FISHING", color: "#3b82f6", link: "/fishing", id: "fishing" },
+    { icon: "🏕️", name: "CAMPING", color: "#84cc16", link: "/camping", id: "camping" },
+    { icon: "🌱", name: "GARDENING", color: "#10b981", link: "/gardening", id: "gardening" },
+    { icon: "🐾", name: "PETS", color: "#f59e0b", link: "/pets", id: "pets" },
+    { icon: "🐱", name: "CATS", color: "#6b7280", link: "/cats", id: "cats" },
+    { icon: "🐦", name: "BIRDS", color: "#60a5fa", link: "/birds", id: "birds" },
+    { icon: "🐟", name: "FISH", color: "#06b6d4", link: "/fish", id: "fish" },
+    { icon: "🦋", name: "BUTTERFLY", color: "#ec4899", link: "/butterfly", id: "butterfly" },
+    { icon: "🌸", name: "FLOWERS", color: "#f472b6", link: "/flowers", id: "flowers" },
+    { icon: "🌳", name: "TREES", color: "#10b981", link: "/trees", id: "trees" },
+    { icon: "🌙", name: "NIGHT", color: "#1e293b", link: "/night", id: "night" },
+    { icon: "☁️", name: "WEATHER", color: "#60a5fa", link: "/weather", id: "weather" },
+    { icon: "🌈", name: "RAINBOW", color: "#f59e0b", link: "/rainbow", id: "rainbow" },
+    { icon: "⭐", name: "STARS", color: "#fbbf24", link: "/stars", id: "stars" },
+    { icon: "🌍", name: "EARTH", color: "#10b981", link: "/earth", id: "earth" },
+    { icon: "🚀", name: "SPACE", color: "#6366f1", link: "/space", id: "space" },
+    { icon: "🛸", name: "UFO", color: "#8b5cf6", link: "/ufo", id: "ufo" },
+    { icon: "🤖", name: "ROBOTS", color: "#6b7280", link: "/robots", id: "robots" },
+    { icon: "🎯", name: "TARGET", color: "#ef4444", link: "/target", id: "target" },
+    { icon: "💃", name: "DANCE", color: "#ec4899", link: "/dance", id: "dance" },
+    { icon: "💄", name: "BEAUTY", color: "#f472b6", link: "/beauty", id: "beauty" },
+    { icon: "👷", name: "KARIGAR", color: "#f59e0b", link: "/karigar", id: "karigar" }
 ];
 
 // 54 NEARBY SHOPS - BAS YE BADLA HAI
@@ -90,7 +84,7 @@ const nearbyVideos = [
     { title: "New Arrivals", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" }
 ];
 
-// 48 CAMPAIGNS
+// 48 CAMPAIGNS - DYNAMIC
 const allCampaigns = [];
 for(let i = 0; i < 48; i++) {
     allCampaigns.push({
@@ -102,19 +96,47 @@ for(let i = 0; i < 48; i++) {
 }
 
 // ========================================
-// RENDER SERVICES - 54 ITEMS
+// SMART SORT - USER JISKO JYADA TOUCH KARE VO UPAR
 // ========================================
-document.getElementById('serviceGrid').innerHTML = allModules.map((module) => `
-    <div class="service-item">
-        <a href="${module.link}">
-            <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
-            <p>${module.name}</p>
-        </a>
-    </div>
-`).join('');
+function getModuleClicks() {
+    const clicks = localStorage.getItem('samanlive_module_clicks');
+    return clicks? JSON.parse(clicks) : {};
+}
+
+function saveModuleClick(moduleId) {
+    const clicks = getModuleClicks();
+    clicks[moduleId] = (clicks[moduleId] || 0) + 1;
+    localStorage.setItem('samanlive_module_clicks', JSON.stringify(clicks));
+    renderServices(); // Turant re-sort kar de
+}
+
+function sortModulesByUsage(modules) {
+    const clicks = getModuleClicks();
+    return [...modules].sort((a, b) => {
+        const clicksA = clicks[a.id] || 0;
+        const clicksB = clicks[b.id] || 0;
+        return clicksB - clicksA; // Jyada click wala upar
+    });
+}
 
 // ========================================
-// RENDER TOP ADS - 50 ITEMS, 4 PER SLIDE
+// RENDER SERVICES - SMART SORTED
+// ========================================
+function renderServices() {
+    const sortedModules = sortModulesByUsage(allModules);
+    document.getElementById('serviceGrid').innerHTML = sortedModules.map((module) => `
+        <div class="service-item" data-module-id="${module.id}">
+            <a href="${module.link}" onclick="saveModuleClick('${module.id}')">
+                <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
+                <p>${module.name}</p>
+            </a>
+        </div>
+    `).join('');
+}
+renderServices(); // Page load pe render karo
+
+// ========================================
+// RENDER TOP ADS - 50 ITEMS, 4 PER SLIDE - DYNAMIC
 // ========================================
 const topAdChunks = [];
 for (let i = 0; i < allAds.length; i += 4) {
@@ -135,7 +157,7 @@ document.getElementById('topAdsContainer').innerHTML = topAdChunks.map((chunk, i
 `).join('');
 
 // ========================================
-// RENDER CAMPAIGNS - 48 ITEMS, 4 PER SLIDE
+// RENDER CAMPAIGNS - 48 ITEMS, 4 PER SLIDE - DYNAMIC
 // ========================================
 const campaignChunks = [];
 for (let i = 0; i < allCampaigns.length; i += 4) {
@@ -156,7 +178,7 @@ document.getElementById('campaignContainer').innerHTML = campaignChunks.map((chu
 `).join('');
 
 // ========================================
-// RENDER SHOPS SLIDER - 6 PER SLIDE
+// RENDER SHOPS SLIDER - 6 PER SLIDE - BUTTON JAISE USE HOGA
 // ========================================
 const shopChunks = [];
 for (let i = 0; i < nearbyServices.length; i += 6) {
@@ -179,7 +201,7 @@ document.getElementById('shopsDots').innerHTML = shopChunks.map((_, idx) => `
 `).join('');
 
 // ========================================
-// RENDER VIDEOS SLIDER - 3 PER SLIDE
+// RENDER VIDEOS SLIDER - 3 PER SLIDE - LIVE VIDEO LIST
 // ========================================
 const videoChunks = [];
 for (let i = 0; i < nearbyVideos.length; i += 3) {
@@ -209,18 +231,18 @@ document.getElementById('videosDots').innerHTML = videoChunks.map((_, idx) => `
 // ========================================
 let topAdIndex = 0;
 function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     topAdIndex = idx;
 }
 function nextTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
     topAdIndex = (topAdIndex + 1) % slides.length;
     showTopAd(topAdIndex);
 }
 function prevTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
     topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
     showTopAd(topAdIndex);
 }
@@ -230,18 +252,18 @@ function prevTopAd() {
 // ========================================
 let campaignIndex = 0;
 function showCampaign(idx) {
-    const slides = document.querySelectorAll('#campaignContainer .ad-slide');
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     campaignIndex = idx;
 }
 function nextCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer .ad-slide');
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
     campaignIndex = (campaignIndex + 1) % slides.length;
     showCampaign(campaignIndex);
 }
 function prevCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer .ad-slide');
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
     campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
     showCampaign(campaignIndex);
 }
@@ -251,7 +273,7 @@ function prevCampaign() {
 // ========================================
 let shopIndex = 0;
 function showShop(idx) {
-    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
     const dots = document.querySelectorAll('#shopsDots span');
     slides.forEach(s => s.classList.remove('active'));
     dots.forEach(d => d.classList.remove('active'));
@@ -260,12 +282,12 @@ function showShop(idx) {
     shopIndex = idx;
 }
 function nextShop() {
-    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
     shopIndex = (shopIndex + 1) % slides.length;
     showShop(shopIndex);
 }
 function prevShop() {
-    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
     shopIndex = (shopIndex - 1 + slides.length) % slides.length;
     showShop(shopIndex);
 }
@@ -276,7 +298,7 @@ function goToShop(idx) { showShop(idx); }
 // ========================================
 let videoIndex = 0;
 function showVideo(idx) {
-    const slides = document.querySelectorAll('#videosContent .nearby-slide');
+    const slides = document.querySelectorAll('#videosContent.nearby-slide');
     const dots = document.querySelectorAll('#videosDots span');
     slides.forEach(s => s.classList.remove('active'));
     dots.forEach(d => d.classList.remove('active'));
@@ -285,19 +307,19 @@ function showVideo(idx) {
     videoIndex = idx;
 }
 function nextVideo() {
-    const slides = document.querySelectorAll('#videosContent .nearby-slide');
+    const slides = document.querySelectorAll('#videosContent.nearby-slide');
     videoIndex = (videoIndex + 1) % slides.length;
     showVideo(videoIndex);
 }
 function prevVideo() {
-    const slides = document.querySelectorAll('#videosContent .nearby-slide');
+    const slides = document.querySelectorAll('#videosContent.nearby-slide');
     videoIndex = (videoIndex - 1 + slides.length) % slides.length;
     showVideo(videoIndex);
 }
 function goToVideo(idx) { showVideo(idx); }
 
 // ========================================
-// AUTO SLIDE - 5 SECONDS
+// AUTO SLIDE - 5 SECONDS - DYNAMIC
 // ========================================
 setInterval(nextTopAd, 5000);
 setInterval(nextCampaign, 6000);
@@ -341,7 +363,7 @@ document.querySelector('.profile-avatar').addEventListener('click', function() {
 });
 
 // ========================================
-// TRACK BUTTONS CLICK
+// TRACK BUTTONS CLICK - NEAR YOU BUTTONS
 // ========================================
 document.querySelectorAll('.nearby-action-btn').forEach(btn => {
     btn.addEventListener('click', function() {
