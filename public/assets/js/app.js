@@ -47,17 +47,41 @@ async function loadAllData() {
 }
 
 function updateLogo() {
-    const logoIcon = document.querySelector('.logo-icon');
-    const logoText = document.querySelector('.logo-text');
+    const logoContainer = document.querySelector('.logo');
     const header = document.querySelector('.header');
     const footerLogo = document.querySelector('.footer-logo');
     const footerText = document.querySelector('.footer-bottom p');
 
-    if(logoIcon) logoIcon.textContent = siteSettings.logoIcon || 'S';
-    if(logoText) logoText.textContent = siteSettings.logoText || 'SAMANLIVE';
     if(header) header.style.background = `linear-gradient(135deg, ${siteSettings.headerColor || '#667eea'}, #764ba2)`;
+    
+    // Logo Image ya Text Icon
+    if(logoContainer) {
+        const logoImg = siteSettings.logoImage;
+        const logoText = siteSettings.logoText || 'SAMANLIVE';
+        const logoFirstChar = logoText.charAt(0);
+        
+        logoContainer.innerHTML = `
+            ${logoImg ? 
+                `<img src="${logoImg}" class="logo-img" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-right:10px;">` : 
+                `<div class="logo-icon">${logoFirstChar}</div>`
+            }
+            <div class="logo-text">${logoText}</div>
+        `;
+    }
+    
     if(footerLogo) footerLogo.textContent = siteSettings.logoText || 'SAMANLIVE';
     if(footerText) footerText.textContent = siteSettings.footerText || '© 2026 SAMANLIVE. All rights reserved.';
+    
+    // Footer color aur about bhi update kar
+    const footer = document.querySelector('.footer');
+    if(footer && siteSettings.footerColor) {
+        footer.style.background = siteSettings.footerColor;
+    }
+    
+    const footerAbout = document.querySelector('.footer-about p');
+    if(footerAbout && siteSettings.footerAbout) {
+        footerAbout.textContent = siteSettings.footerAbout;
+    }
 }
 
 // ========================================

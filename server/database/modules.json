@@ -80,10 +80,17 @@
     { "id": "s5", "icon": "🎵", "name": "Shop 5", "color": "hsl(44, 70%, 55%)", "status": true, "priority": 5 },
     { "id": "s6", "icon": "🛒", "name": "Shop 6", "color": "hsl(55, 70%, 55%)", "status": true, "priority": 6 }
   ],
-  "settings": {
-    "logoText": "SAMANLIVE",
-    "logoIcon": "S",
-    "headerColor": "#667eea",
-    "footerText": "© 2026 SAMANLIVE. All rights reserved."
-  }
+"settings": {
+  "logoText": "SAMANLIVE",
+  "logoImage": "",
+  "headerColor": "#667eea",
+  "footerColor": "#1e293b",
+  "footerText": "© 2026 SAMANLIVE. All rights reserved.",
+  "footerAbout": "SAMANLIVE - Your all in one service platform",
+  "facebook": "",
+  "instagram": "",
+  "twitter": "",
+  "youtube": "",
+  "footerLinks": []
+}  
 }
