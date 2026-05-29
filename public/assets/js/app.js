@@ -63,7 +63,13 @@ const allModules = [
     { icon: "🎯", name: "TARGET", color: "#ef4444", link: "/target", id: "target" },
     { icon: "💃", name: "DANCE", color: "#ec4899", link: "/dance", id: "dance" },
     { icon: "💄", name: "BEAUTY", color: "#f472b6", link: "/beauty", id: "beauty" },
-    { icon: "👷", name: "KARIGAR", color: "#f59e0b", link: "/karigar", id: "karigar" }
+    { icon: "👷", name: "KARIGAR", color: "#f59e0b", link: "/karigar", id: "karigar" },
+    { icon: "📱", name: "MOBILE", color: "#3b82f6", link: "/mobile", id: "mobile" },
+    { icon: "💻", name: "LAPTOP", color: "#6366f1", link: "/laptop", id: "laptop" },
+    { icon: "🖥️", name: "COMPUTER", color: "#8b5cf6", link: "/computer", id: "computer" },
+    { icon: "⌚", name: "WATCHES", color: "#f59e0b", link: "/watches", id: "watches" },
+    { icon: "🎧", name: "HEADPHONES", color: "#ef4444", link: "/headphones", id: "headphones" },
+    { icon: "📷", name: "CAMERA", color: "#10b981", link: "/camera", id: "camera" }
 ];
 
 // 54 NEARBY SHOPS - BAS YE BADLA HAI
@@ -124,14 +130,17 @@ function sortModulesByUsage(modules) {
 // ========================================
 function renderServices() {
     const sortedModules = sortModulesByUsage(allModules);
-    document.getElementById('serviceGrid').innerHTML = sortedModules.map((module) => `
-        <div class="service-item" data-module-id="${module.id}">
-            <a href="${module.link}" onclick="saveModuleClick('${module.id}')">
-                <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
-                <p>${module.name}</p>
-            </a>
-        </div>
-    `).join('');
+    const gridEl = document.getElementById('serviceGrid');
+    if(gridEl) {
+        gridEl.innerHTML = sortedModules.map((module) => `
+            <div class="service-item" data-module-id="${module.id}">
+                <a href="${module.link}" onclick="saveModuleClick('${module.id}')">
+                    <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
+                    <p>${module.name}</p>
+                </a>
+            </div>
+        `).join('');
+    }
 }
 renderServices(); // Page load pe render karo
 
@@ -142,19 +151,22 @@ const topAdChunks = [];
 for (let i = 0; i < allAds.length; i += 4) {
     topAdChunks.push(allAds.slice(i, i + 4));
 }
-document.getElementById('topAdsContainer').innerHTML = topAdChunks.map((chunk, idx) => `
-    <div class="ad-slide ${idx === 0? 'active' : ''}">
-        <div class="ads-grid">
-            ${chunk.map(ad => `
-                <div class="ad-card" style="background: linear-gradient(135deg, ${ad.color}, ${ad.color}cc)">
-                    <h3>${ad.title}</h3>
-                    <p>${ad.desc}</p>
-                    <button class="ad-btn">${ad.btn}</button>
-                </div>
-            `).join('')}
+const topAdsEl = document.getElementById('topAdsContainer');
+if(topAdsEl) {
+    topAdsEl.innerHTML = topAdChunks.map((chunk, idx) => `
+        <div class="ad-slide ${idx === 0? 'active' : ''}">
+            <div class="ads-grid">
+                ${chunk.map(ad => `
+                    <div class="ad-card" style="background: linear-gradient(135deg, ${ad.color}, ${ad.color}cc)">
+                        <h3>${ad.title}</h3>
+                        <p>${ad.desc}</p>
+                        <button class="ad-btn">${ad.btn}</button>
+                    </div>
+                `).join('')}
+            </div>
         </div>
-    </div>
-`).join('');
+    `).join('');
+}
 
 // ========================================
 // RENDER CAMPAIGNS - 48 ITEMS, 4 PER SLIDE - DYNAMIC
@@ -163,19 +175,22 @@ const campaignChunks = [];
 for (let i = 0; i < allCampaigns.length; i += 4) {
     campaignChunks.push(allCampaigns.slice(i, i + 4));
 }
-document.getElementById('campaignContainer').innerHTML = campaignChunks.map((chunk, idx) => `
-    <div class="ad-slide ${idx === 0? 'active' : ''}">
-        <div class="ads-grid">
-            ${chunk.map(campaign => `
-                <div class="campaign-card" style="background: linear-gradient(135deg, ${campaign.color}, ${campaign.color}cc)">
-                    <h3>${campaign.title}</h3>
-                    <p>${campaign.desc}</p>
-                    <button class="campaign-btn">${campaign.btn}</button>
-                </div>
-            `).join('')}
+const campaignEl = document.getElementById('campaignContainer');
+if(campaignEl) {
+    campaignEl.innerHTML = campaignChunks.map((chunk, idx) => `
+        <div class="ad-slide ${idx === 0? 'active' : ''}">
+            <div class="ads-grid">
+                ${chunk.map(campaign => `
+                    <div class="campaign-card" style="background: linear-gradient(135deg, ${campaign.color}, ${campaign.color}cc)">
+                        <h3>${campaign.title}</h3>
+                        <p>${campaign.desc}</p>
+                        <button class="campaign-btn">${campaign.btn}</button>
+                    </div>
+                `).join('')}
+            </div>
         </div>
-    </div>
-`).join('');
+    `).join('');
+}
 
 // ========================================
 // RENDER SHOPS SLIDER - 6 PER SLIDE - BUTTON JAISE USE HOGA
@@ -184,21 +199,27 @@ const shopChunks = [];
 for (let i = 0; i < nearbyServices.length; i += 6) {
     shopChunks.push(nearbyServices.slice(i, i + 6));
 }
-document.getElementById('shopsContent').innerHTML = shopChunks.map((chunk, idx) => `
-    <div class="nearby-slide ${idx === 0? 'active' : ''}">
-        <div class="shops-grid">
-            ${chunk.map(service => `
-                <div class="shop-card">
-                    <div class="shop-icon">${service.icon}</div>
-                    <div class="shop-name">${service.name}</div>
-                </div>
-            `).join('')}
+const shopsEl = document.getElementById('shopsContent');
+if(shopsEl) {
+    shopsEl.innerHTML = shopChunks.map((chunk, idx) => `
+        <div class="nearby-slide ${idx === 0? 'active' : ''}">
+            <div class="shops-grid">
+                ${chunk.map(service => `
+                    <div class="shop-card">
+                        <div class="shop-icon">${service.icon}</div>
+                        <div class="shop-name">${service.name}</div>
+                    </div>
+                `).join('')}
+            </div>
         </div>
-    </div>
-`).join('');
-document.getElementById('shopsDots').innerHTML = shopChunks.map((_, idx) => `
-    <span class="${idx === 0? 'active' : ''}" onclick="goToShop(${idx})"></span>
-`).join('');
+    `).join('');
+}
+const shopsDotsEl = document.getElementById('shopsDots');
+if(shopsDotsEl) {
+    shopsDotsEl.innerHTML = shopChunks.map((_, idx) => `
+        <span class="${idx === 0? 'active' : ''}" onclick="goToShop(${idx})"></span>
+    `).join('');
+}
 
 // ========================================
 // RENDER VIDEOS SLIDER - 3 PER SLIDE - LIVE VIDEO LIST
@@ -207,24 +228,30 @@ const videoChunks = [];
 for (let i = 0; i < nearbyVideos.length; i += 3) {
     videoChunks.push(nearbyVideos.slice(i, i + 3));
 }
-document.getElementById('videosContent').innerHTML = videoChunks.map((chunk, idx) => `
-    <div class="nearby-slide ${idx === 0? 'active' : ''}">
-        <div class="videos-grid">
-            ${chunk.map(video => `
-                <div class="video-card">
-                    <video muted loop autoplay playsinline>
-                        <source src="${video.url}#t=0,5" type="video/mp4">
-                    </video>
-                    <div class="video-label">${video.title}</div>
-                    <div class="video-play">▶</div>
-                </div>
-            `).join('')}
+const videosEl = document.getElementById('videosContent');
+if(videosEl) {
+    videosEl.innerHTML = videoChunks.map((chunk, idx) => `
+        <div class="nearby-slide ${idx === 0? 'active' : ''}">
+            <div class="videos-grid">
+                ${chunk.map(video => `
+                    <div class="video-card">
+                        <video muted loop autoplay playsinline>
+                            <source src="${video.url}#t=0,5" type="video/mp4">
+                        </video>
+                        <div class="video-label">${video.title}</div>
+                        <div class="video-play">▶</div>
+                    </div>
+                `).join('')}
+            </div>
         </div>
-    </div>
-`).join('');
-document.getElementById('videosDots').innerHTML = videoChunks.map((_, idx) => `
-    <span class="${idx === 0? 'active' : ''}" onclick="goToVideo(${idx})"></span>
-`).join('');
+    `).join('');
+}
+const videosDotsEl = document.getElementById('videosDots');
+if(videosDotsEl) {
+    videosDotsEl.innerHTML = videoChunks.map((_, idx) => `
+        <span class="${idx === 0? 'active' : ''}" onclick="goToVideo(${idx})"></span>
+    `).join('');
+}
 
 // ========================================
 // SLIDER LOGIC - TOP ADS
@@ -329,10 +356,13 @@ setInterval(nextVideo, 5000);
 // ========================================
 // SEARCH FUNCTIONALITY
 // ========================================
-document.getElementById('searchInput').addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    console.log('Searching for:', searchTerm);
-});
+const searchInput = document.getElementById('searchInput');
+if(searchInput) {
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        console.log('Searching for:', searchTerm);
+    });
+}
 
 // ========================================
 // VIDEO CLICK TO PLAY/PAUSE
@@ -351,16 +381,22 @@ document.addEventListener('click', function(e) {
 // ========================================
 // NOTIFICATION CLICK
 // ========================================
-document.querySelector('.notification-icon').addEventListener('click', function() {
-    alert('3 New Notifications!');
-});
+const notifIcon = document.querySelector('.notification-icon');
+if(notifIcon) {
+    notifIcon.addEventListener('click', function() {
+        alert('3 New Notifications!');
+    });
+}
 
 // ========================================
 // PROFILE CLICK
 // ========================================
-document.querySelector('.profile-avatar').addEventListener('click', function() {
-    alert('Profile Menu Coming Soon!');
-});
+const profileAvatar = document.querySelector('.profile-avatar');
+if(profileAvatar) {
+    profileAvatar.addEventListener('click', function() {
+        alert('Profile Menu Coming Soon!');
+    });
+}
 
 // ========================================
 // TRACK BUTTONS CLICK - NEAR YOU BUTTONS
