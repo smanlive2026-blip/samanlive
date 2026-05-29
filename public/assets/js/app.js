@@ -1,5 +1,5 @@
 // ========================================
-// SAMANLIVE - DYNAMIC JAVASCRIPT - FINAL
+// SAMANLIVE - DYNAMIC JAVASCRIPT - FIXED
 // ========================================
 
 // Global variables
@@ -32,11 +32,6 @@ async function loadAllData() {
         siteSettings = await settingsRes.json();
 
         console.log('SAMANLIVE Loaded Successfully!');
-        console.log('Total Services:', allModules.length);
-        console.log('Total Offers:', allAds.length);
-        console.log('Total Campaigns:', allCampaigns.length);
-        console.log('Total Shops:', nearbyServices.length);
-        console.log('Total Videos:', nearbyVideos.length);
 
         // Render everything
         renderServices();
@@ -205,9 +200,9 @@ function renderVideos() {
             <div class="nearby-slide ${idx === 0? 'active' : ''}">
                 <div class="videos-grid">
                     ${chunk.map(video => `
-                        <div class="video-card">
-                            <video muted loop autoplay playsinline>
-                                <source src="${video.url}#t=0,5" type="video/mp4">
+                        <div class="video-card" data-video-url="${video.url}">
+                            <video muted loop playsinline>
+                                <source src="${video.url}" type="video/mp4">
                             </video>
                             <div class="video-label">${video.title}</div>
                             <div class="video-play">▶</div>
@@ -226,57 +221,57 @@ function renderVideos() {
 }
 
 // ========================================
-// SLIDER LOGIC - TOP ADS
+// SLIDER LOGIC - TOP ADS - FIXED SELECTOR
 // ========================================
 let topAdIndex = 0;
 function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     topAdIndex = idx;
 }
 function nextTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex + 1) % slides.length;
     showTopAd(topAdIndex);
 }
 function prevTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
     showTopAd(topAdIndex);
 }
 
 // ========================================
-// SLIDER LOGIC - CAMPAIGNS
+// SLIDER LOGIC - CAMPAIGNS - FIXED SELECTOR
 // ========================================
 let campaignIndex = 0;
 function showCampaign(idx) {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    const slides = document.querySelectorAll('#campaignContainer .ad-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     campaignIndex = idx;
 }
 function nextCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    const slides = document.querySelectorAll('#campaignContainer .ad-slide');
     if(slides.length === 0) return;
     campaignIndex = (campaignIndex + 1) % slides.length;
     showCampaign(campaignIndex);
 }
 function prevCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    const slides = document.querySelectorAll('#campaignContainer .ad-slide');
     if(slides.length === 0) return;
     campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
     showCampaign(campaignIndex);
 }
 
 // ========================================
-// SLIDER LOGIC - SHOPS - 9 SLIDES AUTO
+// SLIDER LOGIC - SHOPS - FIXED SELECTOR
 // ========================================
 let shopIndex = 0;
 function showShop(idx) {
-    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
     const dots = document.querySelectorAll('#shopsDots span');
     slides.forEach(s => s.classList.remove('active'));
     dots.forEach(d => d.classList.remove('active'));
@@ -285,13 +280,13 @@ function showShop(idx) {
     shopIndex = idx;
 }
 function nextShop() {
-    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
     if(slides.length === 0) return;
     shopIndex = (shopIndex + 1) % slides.length;
     showShop(shopIndex);
 }
 function prevShop() {
-    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
     if(slides.length === 0) return;
     shopIndex = (shopIndex - 1 + slides.length) % slides.length;
     showShop(shopIndex);
@@ -299,11 +294,11 @@ function prevShop() {
 function goToShop(idx) { showShop(idx); }
 
 // ========================================
-// SLIDER LOGIC - VIDEOS - 3 PER SLIDE AUTO
+// SLIDER LOGIC - VIDEOS - FIXED SELECTOR
 // ========================================
 let videoIndex = 0;
 function showVideo(idx) {
-    const slides = document.querySelectorAll('#videosContent.nearby-slide');
+    const slides = document.querySelectorAll('#videosContent .nearby-slide');
     const dots = document.querySelectorAll('#videosDots span');
     slides.forEach(s => s.classList.remove('active'));
     dots.forEach(d => d.classList.remove('active'));
@@ -312,13 +307,13 @@ function showVideo(idx) {
     videoIndex = idx;
 }
 function nextVideo() {
-    const slides = document.querySelectorAll('#videosContent.nearby-slide');
+    const slides = document.querySelectorAll('#videosContent .nearby-slide');
     if(slides.length === 0) return;
     videoIndex = (videoIndex + 1) % slides.length;
     showVideo(videoIndex);
 }
 function prevVideo() {
-    const slides = document.querySelectorAll('#videosContent.nearby-slide');
+    const slides = document.querySelectorAll('#videosContent .nearby-slide');
     if(slides.length === 0) return;
     videoIndex = (videoIndex - 1 + slides.length) % slides.length;
     showVideo(videoIndex);
@@ -328,10 +323,62 @@ function goToVideo(idx) { showVideo(idx); }
 // ========================================
 // AUTO SLIDE - SAB DHIRE DHIRE SIDE ME SARKEGA
 // ========================================
-setInterval(nextTopAd, 5000); // Top offers - 5 sec
-setInterval(nextCampaign, 6000); // Campaigns - 6 sec
-setInterval(nextShop, 4000); // Shops - 4 sec - 9 slides
-setInterval(nextVideo, 5000); // Videos - 5 sec - 3 per slide
+setInterval(nextTopAd, 5000);
+setInterval(nextCampaign, 6000);
+setInterval(nextShop, 4000);
+setInterval(nextVideo, 5000);
+
+// ========================================
+// VIDEO CLICK - FULLSCREEN MODAL
+// ========================================
+document.addEventListener('click', function(e) {
+    const videoCard = e.target.closest('.video-card');
+    if (videoCard) {
+        const videoUrl = videoCard.dataset.videoUrl;
+        openVideoModal(videoUrl);
+    }
+});
+
+function openVideoModal(url) {
+    // Purana modal hatao
+    const oldModal = document.getElementById('videoModal');
+    if(oldModal) oldModal.remove();
+
+    // Naya modal banao
+    const modal = document.createElement('div');
+    modal.id = 'videoModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    modal.innerHTML = `
+        <div style="position:relative;width:90%;max-width:900px;">
+            <button onclick="closeVideoModal()" style="position:absolute;top:-40px;right:0;background:#fff;border:none;font-size:30px;width:40px;height:40px;border-radius:50%;cursor:pointer;z-index:10000;">×</button>
+            <video controls autoplay style="width:100%;border-radius:10px;">
+                <source src="${url}" type="video/mp4">
+            </video>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Background click pe close
+    modal.addEventListener('click', function(e) {
+        if(e.target === modal) closeVideoModal();
+    });
+}
+
+function closeVideoModal() {
+    const modal = document.getElementById('videoModal');
+    if(modal) modal.remove();
+}
 
 // ========================================
 // SEARCH FUNCTIONALITY
@@ -343,20 +390,6 @@ if(searchInput) {
         console.log('Searching for:', searchTerm);
     });
 }
-
-// ========================================
-// VIDEO CLICK TO PLAY/PAUSE
-// ========================================
-document.addEventListener('click', function(e) {
-    if (e.target.closest('.video-card')) {
-        const video = e.target.closest('.video-card').querySelector('video');
-        if (video.paused) {
-            video.play();
-        } else {
-            video.pause();
-        }
-    }
-});
 
 // ========================================
 // NOTIFICATION CLICK
@@ -379,25 +412,9 @@ if(profileAvatar) {
 }
 
 // ========================================
-// TRACK BUTTONS CLICK
-// ========================================
-document.querySelectorAll('.nearby-action-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const text = this.textContent.trim();
-        alert(`${text} feature coming soon!`);
-    });
-});
-
-// ========================================
 // PREVENT ZOOM
 // ========================================
 document.addEventListener('gesturestart', function(e) {
-    e.preventDefault();
-});
-document.addEventListener('gesturechange', function(e) {
-    e.preventDefault();
-});
-document.addEventListener('gestureend', function(e) {
     e.preventDefault();
 });
 

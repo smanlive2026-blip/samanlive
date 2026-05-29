@@ -233,6 +233,13 @@
     "logoText": "SAMANLIVE",
     "logoIcon": "S",
     "headerColor": "#667eea",
-    "footerText": "© 2026 SAMANLIVE. All rights reserved."
+    "footerColor": "#1e293b",
+    "footerText": "© 2026 SAMANLIVE. All rights reserved.",
+    "footerAbout": "SAMANLIVE - Your all in one service platform",
+    "facebook": "",
+    "instagram": "",
+    "twitter": "",
+    "youtube": "",
+    "footerLinks": []
   }
 }
