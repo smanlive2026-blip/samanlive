@@ -1,150 +1,289 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Static files serve karo - public folder se
-app.use(express.static(path.join(__dirname, '../public')));
+const upload = multer({ dest: 'public/uploads/' });
+const dbPath = path.join(__dirname, './database/modules.json');
 
-// JSON parse karne ke liye
+// Static files
+app.use(express.static(path.join(__dirname, '../public')));
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Home route - index.html bhejo
+// DB Helpers
+function readDB() {
+    return JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+}
+
+function writeDB(data) {
+    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+}
+
+// ========================================
+// PUBLIC APIs - Frontend
+// ========================================
+app.get('/api/modules', (req, res) => {
+    const db = readDB();
+    res.json(db.modules.filter(m => m.status).sort((a, b) => a.priority - b.priority));
+});
+
+app.get('/api/ads', (req, res) => {
+    const db = readDB();
+    res.json(db.ads.filter(a => a.status).sort((a, b) => a.priority - b.priority));
+});
+
+app.get('/api/videos', (req, res) => {
+    const db = readDB();
+    res.json(db.videos.filter(v => v.status).sort((a, b) => a.priority - b.priority));
+});
+
+app.get('/api/campaigns', (req, res) => {
+    const db = readDB();
+    res.json(db.campaigns.filter(c => c.status).sort((a, b) => a.priority - b.priority));
+});
+
+app.get('/api/shops', (req, res) => {
+    const db = readDB();
+    res.json(db.shops.filter(s => s.status).sort((a, b) => a.priority - b.priority));
+});
+
+app.get('/api/settings', (req, res) => {
+    const db = readDB();
+    res.json(db.settings);
+});
+
+// ========================================
+// ADMIN APIs - Control Panel
+// ========================================
+app.get('/api/admin/data', (req, res) => {
+    res.json(readDB());
+});
+
+// Modules CRUD
+app.put('/api/admin/module/:id', (req, res) => {
+    const db = readDB();
+    const idx = db.modules.findIndex(m => m.id === req.params.id);
+    if(idx!== -1) {
+        db.modules[idx] = {...db.modules[idx],...req.body};
+        writeDB(db);
+        res.json({ success: true, data: db.modules[idx] });
+    } else {
+        res.status(404).json({ error: 'Not found' });
+    }
+});
+
+app.post('/api/admin/module', (req, res) => {
+    const db = readDB();
+    const newItem = { 
+        id: req.body.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(), 
+        status: true, 
+        priority: db.modules.length + 1,
+        desc: "",
+        banner: "",
+       ...req.body 
+    };
+    db.modules.push(newItem);
+    writeDB(db);
+    res.json({ success: true, data: newItem });
+});
+
+app.delete('/api/admin/module/:id', (req, res) => {
+    const db = readDB();
+    db.modules = db.modules.filter(m => m.id!== req.params.id);
+    writeDB(db);
+    res.json({ success: true });
+});
+
+// Ads CRUD
+app.put('/api/admin/ad/:id', (req, res) => {
+    const db = readDB();
+    const idx = db.ads.findIndex(a => a.id === req.params.id);
+    if(idx!== -1) {
+        db.ads[idx] = {...db.ads[idx],...req.body};
+        writeDB(db);
+        res.json({ success: true });
+    } else res.status(404).json({ error: 'Not found' });
+});
+
+app.post('/api/admin/ad', (req, res) => {
+    const db = readDB();
+    const newItem = { id: 'ad-' + Date.now(), status: true, priority: db.ads.length + 1,...req.body };
+    db.ads.push(newItem);
+    writeDB(db);
+    res.json({ success: true, data: newItem });
+});
+
+app.delete('/api/admin/ad/:id', (req, res) => {
+    const db = readDB();
+    db.ads = db.ads.filter(a => a.id!== req.params.id);
+    writeDB(db);
+    res.json({ success: true });
+});
+
+// Videos CRUD
+app.put('/api/admin/video/:id', (req, res) => {
+    const db = readDB();
+    const idx = db.videos.findIndex(v => v.id === req.params.id);
+    if(idx!== -1) {
+        db.videos[idx] = {...db.videos[idx],...req.body};
+        writeDB(db);
+        res.json({ success: true });
+    } else res.status(404).json({ error: 'Not found' });
+});
+
+app.post('/api/admin/video', (req, res) => {
+    const db = readDB();
+    const newItem = { id: 'v-' + Date.now(), status: true, priority: db.videos.length + 1,...req.body };
+    db.videos.push(newItem);
+    writeDB(db);
+    res.json({ success: true, data: newItem });
+});
+
+app.delete('/api/admin/video/:id', (req, res) => {
+    const db = readDB();
+    db.videos = db.videos.filter(v => v.id!== req.params.id);
+    writeDB(db);
+    res.json({ success: true });
+});
+
+// Campaigns CRUD
+app.put('/api/admin/campaign/:id', (req, res) => {
+    const db = readDB();
+    const idx = db.campaigns.findIndex(c => c.id === req.params.id);
+    if(idx!== -1) {
+        db.campaigns[idx] = {...db.campaigns[idx],...req.body};
+        writeDB(db);
+        res.json({ success: true });
+    } else res.status(404).json({ error: 'Not found' });
+});
+
+app.post('/api/admin/campaign', (req, res) => {
+    const db = readDB();
+    const newItem = { id: 'c-' + Date.now(), status: true, priority: db.campaigns.length + 1,...req.body };
+    db.campaigns.push(newItem);
+    writeDB(db);
+    res.json({ success: true, data: newItem });
+});
+
+app.delete('/api/admin/campaign/:id', (req, res) => {
+    const db = readDB();
+    db.campaigns = db.campaigns.filter(c => c.id!== req.params.id);
+    writeDB(db);
+    res.json({ success: true });
+});
+
+// Shops CRUD
+app.put('/api/admin/shop/:id', (req, res) => {
+    const db = readDB();
+    const idx = db.shops.findIndex(s => s.id === req.params.id);
+    if(idx!== -1) {
+        db.shops[idx] = {...db.shops[idx],...req.body};
+        writeDB(db);
+        res.json({ success: true });
+    } else res.status(404).json({ error: 'Not found' });
+});
+
+app.post('/api/admin/shop', (req, res) => {
+    const db = readDB();
+    const newItem = { id: 's-' + Date.now(), status: true, priority: db.shops.length + 1,...req.body };
+    db.shops.push(newItem);
+    writeDB(db);
+    res.json({ success: true, data: newItem });
+});
+
+app.delete('/api/admin/shop/:id', (req, res) => {
+    const db = readDB();
+    db.shops = db.shops.filter(s => s.id!== req.params.id);
+    writeDB(db);
+    res.json({ success: true });
+});
+
+// Settings
+app.put('/api/admin/settings', (req, res) => {
+    const db = readDB();
+    db.settings = {...db.settings,...req.body};
+    writeDB(db);
+    res.json({ success: true, settings: db.settings });
+});
+
+// Upload
+app.post('/api/admin/upload', upload.single('file'), (req, res) => {
+    res.json({ success: true, url: `/uploads/${req.file.filename}` });
+});
+
+// Admin page
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/admin.html'));
+});
+
+// Home
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Saare 52 modules ke routes
-const modules = [
-    'education', 'health', 'kids', 'games', 'music', 'books', 
-    'shopping', 'food', 'travel', 'real-estate', 'jobs', 'automotive',
-    'finance', 'banking', 'stocks', 'payments', 'movies', 'tv-shows',
-    'art', 'photography', 'writing', 'theater', 'fitness', 'yoga',
-    'sports', 'football', 'basketball', 'tennis', 'swimming', 'cycling',
-    'climbing', 'skiing', 'surfing', 'fishing', 'camping', 'gardening',
-    'pets', 'cats', 'birds', 'fish', 'butterfly', 'flowers',
-    'trees', 'night', 'weather', 'rainbow', 'stars', 'earth',
-    'space', 'ufo', 'robots', 'target'
-];
+// Dynamic module pages
+app.get('/modules/:moduleName', (req, res) => {
+    const db = readDB();
+    const module = db.modules.find(m => m.id === req.params.moduleName);
+    if (!module) return res.status(404).send('Module not found');
 
-// Har module ka route banao
-modules.forEach(module => {
-    app.get(`/modules/${module}`, (req, res) => {
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${module.toUpperCase()} - SAMANLIVE</title>
-                <link rel="stylesheet" href="/assets/css/main.css">
-                <style>
-                    .module-page {
-                        min-height: 60vh;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        text-align: center;
-                        padding: 50px 20px;
-                    }
-                    .module-content h1 {
-                        font-size: 48px;
-                        color: #1e40af;
-                        margin-bottom: 20px;
-                        text-transform: capitalize;
-                    }
-                    .module-content p {
-                        font-size: 18px;
-                        color: #64748b;
-                        margin-bottom: 30px;
-                    }
-                    .back-btn {
-                        background: #1e40af;
-                        color: white;
-                        padding: 12px 30px;
-                        border: none;
-                        border-radius: 25px;
-                        font-size: 16px;
-                        cursor: pointer;
-                        text-decoration: none;
-                        display: inline-block;
-                    }
-                    .back-btn:hover {
-                        background: #1e3a8a;
-                    }
-                </style>
-            </head>
-            <body>
-                <header class="header">
-                    <div class="header-container">
-                        <div class="logo">
-                            <div class="logo-icon">S</div>
-                            <span>SAMANLIVE</span>
-                        </div>
-                        <nav class="desktop-nav">
-                            <a href="/">Home</a>
-                            <a href="/#services">Services</a>
-                            <a href="/#about">About</a>
-                        </nav>
-                        <div class="user-section">
-                            <div class="user-avatar">U</div>
-                        </div>
-                    </div>
-                </header>
-
-                <main class="main-content">
-                    <div class="container">
-                        <div class="module-page">
-                            <div class="module-content">
-                                <h1>${module.replace('-', ' ')} Module</h1>
-                                <p>Ye ${module} ka page hai. Yahan is service ka pura content aayega.</p>
-                                <p>Abhi development me hai 🚀</p>
-                                <a href="/" class="back-btn">← Back to Home</a>
-                            </div>
-                        </div>
-                    </div>
-                </main>
-
-                <footer class="footer">
-                    <div class="footer-container">
-                        <div class="footer-bottom">
-                            <p>© 2024 SAMANLIVE. All rights reserved.</p>
-                        </div>
-                    </div>
-                </footer>
-            </body>
-            </html>
-        `);
-    });
-});
-
-// 404 Error handle
-app.use((req, res) => {
-    res.status(404).send(`
+    res.send(`
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
-            <title>404 - Page Not Found</title>
-            <style>
-                body { font-family: Arial; text-align: center; padding: 50px; }
-                h1 { color: #1e40af; font-size: 72px; margin: 0; }
-                p { color: #64748b; font-size: 18px; }
-                a { background: #1e40af; color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; display: inline-block; margin-top: 20px; }
-            </style>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${module.name} - ${db.settings.logoText}</title>
+            <link rel="stylesheet" href="/assets/css/main.css">
         </head>
         <body>
-            <h1>404</h1>
-            <p>Oops! Page nahi mila 😅</p>
-            <a href="/">Home Pe Wapas Jao</a>
+            <div class="video-bg"><div class="video-overlay"></div></div>
+            <header class="header" style="background: linear-gradient(135deg, ${db.settings.headerColor}, #764ba2);">
+                <div class="header-container">
+                    <div class="logo">
+                        <div class="logo-icon">${db.settings.logoIcon}</div>
+                        <span class="logo-text">${db.settings.logoText}</span>
+                    </div>
+                </div>
+            </header>
+            <main class="main-content">
+                <div class="container">
+                    <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:50px 20px;">
+                        <div>
+                            <div style="font-size:80px;margin-bottom:20px;">${module.icon}</div>
+                            <h1 style="font-size:48px;color:${module.color};margin-bottom:20px;">${module.name}</h1>
+                            <p style="font-size:18px;color:#64748b;margin-bottom:30px;">${module.desc || 'Ye ' + module.name + ' ka page hai. Yahan is service ka pura content aayega.'}</p>
+                            <a href="/" style="background:${module.color};color:white;padding:12px 30px;border:none;border-radius:25px;font-size:16px;text-decoration:none;display:inline-block;">← Back to Home</a>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </body>
         </html>
     `);
 });
 
-// Server start karo
+// 404
+app.use((req, res) => {
+    res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>404 - Page Not Found</title></head>
+        <body style="font-family:Arial;text-align:center;padding:50px;">
+            <h1 style="color:#1e40af;font-size:72px;margin:0;">404</h1>
+            <p style="color:#64748b;font-size:18px;">Oops! Page nahi mila 😅</p>
+            <a href="/" style="background:#1e40af;color:white;padding:12px 30px;text-decoration:none;border-radius:25px;display:inline-block;margin-top:20px;">Home Pe Wapas Jao</a>
+        </body>
+        </html>
+    `);
+});
+
 app.listen(PORT, () => {
-    console.log(`✅ SAMANLIVE Server chalu ho gaya: http://localhost:${PORT}`);
-    console.log(`📁 Serving static files from: ${path.join(__dirname, '../public')}`);
-    console.log(`🚀 52 Modules ready hai!`);
+    console.log(`✅ SAMANLIVE Server: http://localhost:${PORT}`);
+    console.log(`🔧 Admin Panel: http://localhost:${PORT}/admin`);
+    console.log(`📁 Serving: ${path.join(__dirname, '../public')}`);
 });

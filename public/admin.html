@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAMANLIVE Admin Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; padding: 20px; }
+      .container { max-width: 1600px; margin: 0 auto; }
+        h1 { color: #1e40af; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+      .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+      .tab { padding: 10px 20px; background: white; border: none; cursor: pointer; border-radius: 8px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+      .tab.active { background: #1e40af; color: white; }
+      .content { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
+      .content.active { display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; }
+        button { padding: 8px 16px; margin: 2px; cursor: pointer; border: none; border-radius: 6px; font-weight: 600; }
+      .btn-primary { background: #3b82f6; color: white; }
+      .btn-danger { background: #ef4444; color: white; }
+      .btn-success { background: #10b981; color: white; }
+      .btn-warning { background: #f59e0b; color: white; }
+      .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+      .modal-content { background: white; margin: 30px auto; padding: 30px; width: 90%; max-width: 700px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+      .form-group { margin-bottom: 15px; }
+      .form-group.full { grid-column: 1 / -1; }
+      .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #374151; }
+      .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+      .color-preview { width: 50px; height: 50px; border-radius: 8px; border: 2px solid #e5e7eb; margin-top: 5px; }
+      .icon-preview { font-size: 40px; margin-top: 5px; }
+      .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+      .status-active { background: #d1fae5; color: #065f46; }
+      .status-hidden { background: #fee2e2; color: #991b1b; }
+      .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+      .search-box { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; width: 300px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 SAMANLIVE Control Panel</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('modules', event)">📦 Modules (54)</button>
+            <button class="tab" onclick="showTab('ads', event)">📢 Top Ads</button>
+            <button class="tab" onclick="showTab('videos', event)">🎬 Live Videos</button>
+            <button class="tab" onclick="showTab('campaigns', event)">🎯 Campaigns</button>
+            <button class="tab" onclick="showTab('shops', event)">🏪 Shops</button>
+            <button class="tab" onclick="showTab('settings', event)">⚙️ Settings</button>
+        </div>
+
+        <!-- MODULES TAB -->
+        <div id="modulesTab" class="content active">
+            <div class="action-bar">
+                <button class="btn-success" onclick="addItem('module')">+ Add New Module</button>
+                <input type="text" class="search-box" placeholder="Search modules..." onkeyup="filterTable('modulesTable', this.value)">
+            </div>
+            <table id="modulesTable">
+                <thead>
+                    <tr><th>Icon</th><th>Name</th><th>Color</th><th>Link</th><th>Priority</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- ADS TAB -->
+        <div id="adsTab" class="content">
+            <div class="action-bar">
+                <button class="btn-success" onclick="addItem('ad')">+ Add New Ad</button>
+            </div>
+            <table id="adsTable">
+                <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- VIDEOS TAB -->
+        <div id="videosTab" class="content">
+            <div class="action-bar">
+                <button class="btn-success" onclick="addItem('video')">+ Add New Video</button>
+            </div>
+            <table id="videosTable">
+                <thead><tr><th>Title</th><th>URL</th><th>Preview</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- CAMPAIGNS TAB -->
+        <div id="campaignsTab" class="content">
+            <div class="action-bar">
+                <button class="btn-success" onclick="addItem('campaign')">+ Add New Campaign</button>
+            </div>
+            <table id="campaignsTable">
+                <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- SHOPS TAB -->
+        <div id="shopsTab" class="content">
+            <div class="action-bar">
+                <button class="btn-success" onclick="addItem('shop')">+ Add New Shop</button>
+            </div>
+            <table id="shopsTable">
+                <thead><tr><th>Icon</th><th>Name</th><th>Color</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div id="settingsTab" class="content">
+            <h2>Site Settings</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Logo Text:</label>
+                    <input type="text" id="settingLogoText">
+                </div>
+                <div class="form-group">
+                    <label>Logo Icon:</label>
+                    <input type="text" id="settingLogoIcon">
+                </div>
+                <div class="form-group">
+                    <label>Header Color:</label>
+                    <input type="color" id="settingHeaderColor">
+                </div>
+                <div class="form-group full">
+                    <label>Footer Text:</label>
+                    <input type="text" id="settingFooterText">
+                </div>
+            </div>
+            <button class="btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+        </div>
+    </div>
+
+    <!-- UNIVERSAL MODAL -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Edit Item</h2>
+            <input type="hidden" id="editId">
+            <input type="hidden" id="editType">
+            <div id="modalFields"></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn-primary" onclick="saveItem()">💾 Save Changes</button>
+                <button onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+let allData = {};
+let currentTab = 'modules';
+
+async function loadData() {
+    const res = await fetch('/api/admin/data');
+    allData = await res.json();
+    renderAll();
+}
+
+function renderAll() {
+    renderModules();
+    renderAds();
+    renderVideos();
+    renderCampaigns();
+    renderShops();
+    renderSettings();
+}
+
+function renderModules() {
+    const tbody = document.querySelector('#modulesTable tbody');
+    tbody.innerHTML = allData.modules.map(m => `
+        <tr>
+            <td style="font-size:24px;">${m.icon}</td>
+            <td><strong>${m.name}</strong><br><small>${m.desc || ''}</small></td>
+            <td><div style="width:40px;height:40px;background:${m.color};border-radius:8px;"></div></td>
+            <td>${m.link}</td>
+            <td>${m.priority}</td>
+            <td><span class="status-badge ${m.status? 'status-active' : 'status-hidden'}">${m.status? '✅ Active' : '❌ Hidden'}</span></td>
+            <td>
+                <button class="btn-primary" onclick="editItem('module', '${m.id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('module', '${m.id}')">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderAds() {
+    const tbody = document.querySelector('#adsTable tbody');
+    tbody.innerHTML = allData.ads.map(a => `
+        <tr>
+            <td><strong>${a.title}</strong></td>
+            <td>${a.desc}</td>
+            <td>${a.btn}</td>
+            <td><div style="width:40px;height:40px;background:${a.color};border-radius:8px;"></div></td>
+            <td><span class="status-badge ${a.status? 'status-active' : 'status-hidden'}">${a.status? '✅ Active' : '❌ Hidden'}</span></td>
+            <td>
+                <button class="btn-primary" onclick="editItem('ad', '${a.id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('ad', '${a.id}')">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderVideos() {
+    const tbody = document.querySelector('#videosTable tbody');
+    tbody.innerHTML = allData.videos.map(v => `
+        <tr>
+            <td><strong>${v.title}</strong></td>
+            <td><small>${v.url.substring(0, 50)}...</small></td>
+            <td><video width="100" height="60" src="${v.url}" muted></video></td>
+            <td><span class="status-badge ${v.status? 'status-active' : 'status-hidden'}">${v.status? '✅ Active' : '❌ Hidden'}</span></td>
+            <td>
+                <button class="btn-primary" onclick="editItem('video', '${v.id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('video', '${v.id}')">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderCampaigns() {
+    const tbody = document.querySelector('#campaignsTable tbody');
+    tbody.innerHTML = allData.campaigns.map(c => `
+        <tr>
+            <td><strong>${c.title}</strong></td>
+            <td>${c.desc}</td>
+            <td>${c.btn}</td>
+            <td><div style="width:40px;height:40px;background:${c.color};border-radius:8px;"></div></td>
+            <td><span class="status-badge ${c.status? 'status-active' : 'status-hidden'}">${c.status? '✅ Active' : '❌ Hidden'}</span></td>
+            <td>
+                <button class="btn-primary" onclick="editItem('campaign', '${c.id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('campaign', '${c.id}')">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderShops() {
+    const tbody = document.querySelector('#shopsTable tbody');
+    tbody.innerHTML = allData.shops.map(s => `
+        <tr>
+            <td style="font-size:24px;">${s.icon}</td>
+            <td><strong>${s.name}</strong></td>
+            <td><div style="width:40px;height:40px;background:${s.color};border-radius:8px;"></div></td>
+            <td><span class="status-badge ${s.status? 'status-active' : 'status-hidden'}">${s.status? '✅ Active' : '❌ Hidden'}</span></td>
+            <td>
+                <button class="btn-primary" onclick="editItem('shop', '${s.id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('shop', '${s.id}')">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderSettings() {
+    document.getElementById('settingLogoText').value = allData.settings.logoText;
+    document.getElementById('settingLogoIcon').value = allData.settings.logoIcon;
+    document.getElementById('settingHeaderColor').value = allData.settings.headerColor;
+    document.getElementById('settingFooterText').value = allData.settings.footerText;
+}
+
+function showTab(tab, event) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById(tab + 'Tab').classList.add('active');
+    currentTab = tab;
+}
+
+function getFields(type) {
+    const fields = {
+        module: [
+            { key: 'name', label: 'Module Name', type: 'text', placeholder: 'EDUCATION' },
+            { key: 'icon', label: 'Icon (Emoji)', type: 'text', placeholder: '📚' },
+            { key: 'color', label: 'Color', type: 'color' },
+            { key: 'link', label: 'Link', type: 'text', placeholder: '/education' },
+            { key: 'desc', label: 'Description', type: 'textarea' },
+            { key: 'priority', label: 'Priority', type: 'number' },
+            { key: 'status', label: 'Status', type: 'select', options: [{v: true, t: '✅ Active'}, {v: false, t: '❌ Hidden'}] }
+        ],
+        ad: [
+            { key: 'title', label: 'Title', type: 'text' },
+            { key: 'desc', label: 'Description', type: 'text' },
+            { key: 'btn', label: 'Button Text', type: 'text' },
+            { key: 'color', label: 'Color', type: 'color' },
+            { key: 'priority', label: 'Priority', type: 'number' },
+            { key: 'status', label: 'Status', type: 'select', options: [{v: true, t: '✅ Active'}, {v: false, t: '❌ Hidden'}] }
+        ],
+        video: [
+            { key: 'title', label: 'Title', type: 'text' },
+            { key: 'url', label: 'Video URL', type: 'text' },
+            { key: 'priority', label: 'Priority', type: 'number' },
+            { key: 'status', label: 'Status', type: 'select', options: [{v: true, t: '✅ Active'}, {v: false, t: '❌ Hidden'}] }
+        ],
+        campaign: [
+            { key: 'title', label: 'Title', type: 'text' },
+            { key: 'desc', label: 'Description', type: 'text' },
+            { key: 'btn', label: 'Button Text', type: 'text' },
+            { key: 'color', label: 'Color', type: 'color' },
+            { key: 'priority', label: 'Priority', type: 'number' },
+            { key: 'status', label: 'Status', type: 'select', options: [{v: true, t: '✅ Active'}, {v: false, t: '❌ Hidden'}] }
+        ],
+        shop: [
+            { key: 'name', label: 'Shop Name', type: 'text' },
+            { key: 'icon', label: 'Icon (Emoji)', type: 'text' },
+            { key: 'color', label: 'Color', type: 'color' },
+            { key: 'priority', label: 'Priority', type: 'number' },
+            { key: 'status', label: 'Status', type: 'select', options: [{v: true, t: '✅ Active'}, {v: false, t: '❌ Hidden'}] }
+        ]
+    };
+    return fields[type] || [];
+}
+
+function addItem(type) {
+    document.getElementById('modalTitle').textContent = 'Add New ' + type.charAt(0).toUpperCase() + type.slice(1);
+    document.getElementById('editId').value = '';
+    document.getElementById('editType').value = type;
+    renderModalFields(type, {});
+    document.getElementById('editModal').style.display = 'block';
+}
+
+function editItem(type, id) {
+    const item = allData[type + 's'].find(x => x.id === id);
+    document.getElementById('modalTitle').textContent = 'Edit ' + type.charAt(0).toUpperCase() + type.slice(1);
+    document.getElementById('editId').value = id;
+    document.getElementById('editType').value = type;
+    renderModalFields(type, item);
+    document.getElementById('editModal').style.display = 'block';
+}
+
+function renderModalFields(type, data) {
+    const fields = getFields(type);
+    const html = fields.map(f => {
+        const val = data[f.key]!== undefined? data[f.key] : '';
+        if(f.type === 'textarea') {
+            return `<div class="form-group full"><label>${f.label}:</label><textarea id="field_${f.key}" rows="3">${val}</textarea></div>`;
+        } else if(f.type === 'select') {
+            return `<div class="form-group"><label>${f.label}:</label><select id="field_${f.key}">${f.options.map(o => `<option value="${o.v}" ${val === o.v? 'selected' : ''}>${o.t}</option>`).join('')}</select></div>`;
+        } else {
+            return `<div class="form-group"><label>${f.label}:</label><input type="${f.type}" id="field_${f.key}" value="${val}" placeholder="${f.placeholder || ''}"></div>`;
+        }
+    }).join('');
+    document.getElementById('modalFields').innerHTML = `<div class="form-grid">${html}</div>`;
+}
+
+async function saveItem() {
+    const id = document.getElementById('editId').value;
+    const type = document.getElementById('editType').value;
+    const fields = getFields(type);
+    const data = {};
+    
+    fields.forEach(f => {
+        const el = document.getElementById(`field_${f.key}`);
+        data[f.key] = f.type === 'select'? el.value === 'true' : el.value;
+    });
+
+    const url = id? `/api/admin/${type}/${id}` : `/api/admin/${type}`;
+    const method = id? 'PUT' : 'POST';
+    
+    await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    
+    closeModal();
+    loadData();
+}
+
+async function deleteItem(type, id) {
+    if(confirm('Are you sure? This cannot be undone.')) {
+        await fetch(`/api/admin/${type}/${id}`, { method: 'DELETE' });
+        loadData();
+    }
+}
+
+async function saveSettings() {
+    const data = {
+        logoText: document.getElementById('settingLogoText').value,
+        logoIcon: document.getElementById('settingLogoIcon').value,
+        headerColor: document.getElementById('settingHeaderColor').value,
+        footerText: document.getElementById('settingFooterText').value
+    };
+    await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    alert('✅ Settings saved! Refresh your site to see changes.');
+    loadData();
+}
+
+function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+function filterTable(tableId, query) {
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query.toLowerCase())? '' : 'none';
+    });
+}
+
+loadData();
+</script>
+</body>
+</html>
