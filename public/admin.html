@@ -7,47 +7,49 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; padding: 20px; }
-      .container { max-width: 1600px; margin: 0 auto; }
+       .container { max-width: 1600px; margin: 0 auto; }
         h1 { color: #1e40af; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-      .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-      .tab { padding: 10px 20px; background: white; border: none; cursor: pointer; border-radius: 8px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-      .tab.active { background: #1e40af; color: white; }
-      .content { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
-      .content.active { display: block; }
+       .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+       .tab { padding: 10px 20px; background: white; border: none; cursor: pointer; border-radius: 8px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+       .tab.active { background: #1e40af; color: white; }
+       .content { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
+       .content.active { display: block; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
         th { background: #f9fafb; font-weight: 600; color: #374151; }
         button { padding: 8px 16px; margin: 2px; cursor: pointer; border: none; border-radius: 6px; font-weight: 600; }
-      .btn-primary { background: #3b82f6; color: white; }
-      .btn-danger { background: #ef4444; color: white; }
-      .btn-success { background: #10b981; color: white; }
-      .btn-warning { background: #f59e0b; color: white; }
-      .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-      .modal-content { background: white; margin: 30px auto; padding: 30px; width: 90%; max-width: 700px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
-      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-      .form-group { margin-bottom: 15px; }
-      .form-group.full { grid-column: 1 / -1; }
-      .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #374151; }
-      .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
-      .color-preview { width: 50px; height: 50px; border-radius: 8px; border: 2px solid #e5e7eb; margin-top: 5px; }
-      .icon-preview { font-size: 40px; margin-top: 5px; }
-      .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-      .status-active { background: #d1fae5; color: #065f46; }
-      .status-hidden { background: #fee2e2; color: #991b1b; }
-      .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-      .search-box { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; width: 300px; }
+       .btn-primary { background: #3b82f6; color: white; }
+       .btn-danger { background: #ef4444; color: white; }
+       .btn-success { background: #10b981; color: white; }
+       .btn-warning { background: #f59e0b; color: white; }
+       .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+       .modal-content { background: white; margin: 30px auto; padding: 30px; width: 90%; max-width: 700px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+       .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+       .form-group { margin-bottom: 15px; }
+       .form-group.full { grid-column: 1 / -1; }
+       .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #374151; }
+       .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+       .color-preview { width: 50px; height: 50px; border-radius: 8px; border: 2px solid #e5e7eb; margin-top: 5px; }
+       .icon-preview { font-size: 40px; margin-top: 5px; }
+       .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+       .status-active { background: #d1fae5; color: #065f46; }
+       .status-hidden { background: #fee2e2; color: #991b1b; }
+       .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+       .search-box { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; width: 300px; }
+       .upload-box { border: 2px dashed #d1d5db; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 15px; background: #f9fafb; }
+       .upload-box input[type="file"] { margin: 10px 0; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🔧 SAMANLIVE Control Panel</h1>
-        
+
         <div class="tabs">
             <button class="tab active" onclick="showTab('modules', event)">📦 Modules (54)</button>
-            <button class="tab" onclick="showTab('ads', event)">📢 Top Ads</button>
+            <button class="tab" onclick="showTab('ads', event)">📢 Top Ads (54)</button>
             <button class="tab" onclick="showTab('videos', event)">🎬 Live Videos</button>
-            <button class="tab" onclick="showTab('campaigns', event)">🎯 Campaigns</button>
-            <button class="tab" onclick="showTab('shops', event)">🏪 Shops</button>
+            <button class="tab" onclick="showTab('campaigns', event)">🎯 Campaigns (52)</button>
+            <button class="tab" onclick="showTab('shops', event)">🏪 Shops (54)</button>
             <button class="tab" onclick="showTab('settings', event)">⚙️ Settings</button>
         </div>
 
@@ -71,18 +73,25 @@
                 <button class="btn-success" onclick="addItem('ad')">+ Add New Ad</button>
             </div>
             <table id="adsTable">
-                <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
 
-        <!-- VIDEOS TAB -->
+        <!-- VIDEOS TAB - VIDEO UPLOAD SYSTEM -->
         <div id="videosTab" class="content">
             <div class="action-bar">
                 <button class="btn-success" onclick="addItem('video')">+ Add New Video</button>
             </div>
+            <div class="upload-box">
+                <p><strong>📤 Direct Video Upload:</strong></p>
+                <p style="font-size:12px;color:#64748b;margin-bottom:10px;">System se video select karo, auto upload ho jayega</p>
+                <input type="file" id="videoUploadFile" accept="video/*">
+                <button class="btn-primary" onclick="uploadVideoFile()">Upload Video</button>
+                <p id="uploadStatus" style="margin-top:10px;font-weight:600;"></p>
+            </div>
             <table id="videosTable">
-                <thead><tr><th>Title</th><th>URL</th><th>Preview</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Title</th><th>URL</th><th>Preview</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -93,7 +102,7 @@
                 <button class="btn-success" onclick="addItem('campaign')">+ Add New Campaign</button>
             </div>
             <table id="campaignsTable">
-                <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -104,7 +113,7 @@
                 <button class="btn-success" onclick="addItem('shop')">+ Add New Shop</button>
             </div>
             <table id="shopsTable">
-                <thead><tr><th>Icon</th><th>Name</th><th>Color</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Icon</th><th>Name</th><th>Color</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -193,6 +202,7 @@ function renderAds() {
             <td>${a.desc}</td>
             <td>${a.btn}</td>
             <td><div style="width:40px;height:40px;background:${a.color};border-radius:8px;"></div></td>
+            <td>${a.priority}</td>
             <td><span class="status-badge ${a.status? 'status-active' : 'status-hidden'}">${a.status? '✅ Active' : '❌ Hidden'}</span></td>
             <td>
                 <button class="btn-primary" onclick="editItem('ad', '${a.id}')">Edit</button>
@@ -209,6 +219,7 @@ function renderVideos() {
             <td><strong>${v.title}</strong></td>
             <td><small>${v.url.substring(0, 50)}...</small></td>
             <td><video width="100" height="60" src="${v.url}" muted></video></td>
+            <td>${v.priority}</td>
             <td><span class="status-badge ${v.status? 'status-active' : 'status-hidden'}">${v.status? '✅ Active' : '❌ Hidden'}</span></td>
             <td>
                 <button class="btn-primary" onclick="editItem('video', '${v.id}')">Edit</button>
@@ -226,6 +237,7 @@ function renderCampaigns() {
             <td>${c.desc}</td>
             <td>${c.btn}</td>
             <td><div style="width:40px;height:40px;background:${c.color};border-radius:8px;"></div></td>
+            <td>${c.priority}</td>
             <td><span class="status-badge ${c.status? 'status-active' : 'status-hidden'}">${c.status? '✅ Active' : '❌ Hidden'}</span></td>
             <td>
                 <button class="btn-primary" onclick="editItem('campaign', '${c.id}')">Edit</button>
@@ -242,6 +254,7 @@ function renderShops() {
             <td style="font-size:24px;">${s.icon}</td>
             <td><strong>${s.name}</strong></td>
             <td><div style="width:40px;height:40px;background:${s.color};border-radius:8px;"></div></td>
+            <td>${s.priority}</td>
             <td><span class="status-badge ${s.status? 'status-active' : 'status-hidden'}">${s.status? '✅ Active' : '❌ Hidden'}</span></td>
             <td>
                 <button class="btn-primary" onclick="editItem('shop', '${s.id}')">Edit</button>
@@ -287,7 +300,7 @@ function getFields(type) {
         ],
         video: [
             { key: 'title', label: 'Title', type: 'text' },
-            { key: 'url', label: 'Video URL', type: 'text' },
+            { key: 'url', label: 'Video URL', type: 'text', placeholder: '/uploads/video.mp4 ya https://...' },
             { key: 'priority', label: 'Priority', type: 'number' },
             { key: 'status', label: 'Status', type: 'select', options: [{v: true, t: '✅ Active'}, {v: false, t: '❌ Hidden'}] }
         ],
@@ -347,7 +360,7 @@ async function saveItem() {
     const type = document.getElementById('editType').value;
     const fields = getFields(type);
     const data = {};
-    
+
     fields.forEach(f => {
         const el = document.getElementById(`field_${f.key}`);
         data[f.key] = f.type === 'select'? el.value === 'true' : el.value;
@@ -355,13 +368,13 @@ async function saveItem() {
 
     const url = id? `/api/admin/${type}/${id}` : `/api/admin/${type}`;
     const method = id? 'PUT' : 'POST';
-    
+
     await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     });
-    
+
     closeModal();
     loadData();
 }
@@ -387,6 +400,58 @@ async function saveSettings() {
     });
     alert('✅ Settings saved! Refresh your site to see changes.');
     loadData();
+}
+
+// VIDEO UPLOAD FUNCTION - SYSTEM SE DIRECT
+async function uploadVideoFile() {
+    const fileInput = document.getElementById('videoUploadFile');
+    const file = fileInput.files[0];
+    const statusEl = document.getElementById('uploadStatus');
+
+    if(!file) {
+        alert('Please select a video file first!');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    statusEl.textContent = '⏳ Uploading...';
+    statusEl.style.color = '#f59e0b';
+
+    try {
+        const res = await fetch('/api/admin/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        if(data.success) {
+            statusEl.textContent = '✅ Uploaded! URL: ' + data.url;
+            statusEl.style.color = '#10b981';
+
+            // Auto add to videos list
+            const title = prompt('Video ka title daalo:', file.name.split('.')[0]);
+            if(title) {
+                await fetch('/api/admin/video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        url: data.url,
+                        priority: allData.videos.length + 1,
+                        status: true
+                    })
+                });
+                loadData();
+                fileInput.value = '';
+                setTimeout(() => { statusEl.textContent = ''; }, 3000);
+            }
+        }
+    } catch(e) {
+        statusEl.textContent = '❌ Upload failed!';
+        statusEl.style.color = '#ef4444';
+    }
 }
 
 function closeModal() {

@@ -5,7 +5,19 @@ const multer = require('multer');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const upload = multer({ dest: 'public/uploads/' });
+// Video upload config - Admin se direct video upload
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = 'public/uploads';
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, 'video-' + Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
+
 const dbPath = path.join(__dirname, './database/modules.json');
 
 // Static files
@@ -78,13 +90,13 @@ app.put('/api/admin/module/:id', (req, res) => {
 
 app.post('/api/admin/module', (req, res) => {
     const db = readDB();
-    const newItem = { 
-        id: req.body.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(), 
-        status: true, 
+    const newItem = {
+        id: req.body.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+        status: true,
         priority: db.modules.length + 1,
         desc: "",
         banner: "",
-       ...req.body 
+      ...req.body
     };
     db.modules.push(newItem);
     writeDB(db);
@@ -210,7 +222,7 @@ app.put('/api/admin/settings', (req, res) => {
     res.json({ success: true, settings: db.settings });
 });
 
-// Upload
+// Upload - Image/Video dono
 app.post('/api/admin/upload', upload.single('file'), (req, res) => {
     res.json({ success: true, url: `/uploads/${req.file.filename}` });
 });

@@ -1,5 +1,5 @@
 // ========================================
-// SAMANLIVE - DYNAMIC JAVASCRIPT
+// SAMANLIVE - DYNAMIC JAVASCRIPT - FINAL
 // ========================================
 
 // Global variables
@@ -36,6 +36,7 @@ async function loadAllData() {
         console.log('Total Offers:', allAds.length);
         console.log('Total Campaigns:', allCampaigns.length);
         console.log('Total Shops:', nearbyServices.length);
+        console.log('Total Videos:', nearbyVideos.length);
 
         // Render everything
         renderServices();
@@ -90,7 +91,7 @@ function sortModulesByUsage(modules) {
 }
 
 // ========================================
-// RENDER SERVICES - SMART SORTED
+// RENDER SERVICES - 54 MODULES - SMART SORTED
 // ========================================
 function renderServices() {
     const sortedModules = sortModulesByUsage(allModules);
@@ -108,7 +109,7 @@ function renderServices() {
 }
 
 // ========================================
-// RENDER TOP ADS - DYNAMIC
+// RENDER TOP ADS - 54 OFFERS, 4 PER SLIDE - DYNAMIC AUTO SLIDE
 // ========================================
 function renderTopAds() {
     const topAdChunks = [];
@@ -134,7 +135,7 @@ function renderTopAds() {
 }
 
 // ========================================
-// RENDER CAMPAIGNS - DYNAMIC
+// RENDER CAMPAIGNS - 52 CAMPAIGNS, 4 PER SLIDE - DYNAMIC AUTO SLIDE
 // ========================================
 function renderCampaigns() {
     const campaignChunks = [];
@@ -160,7 +161,7 @@ function renderCampaigns() {
 }
 
 // ========================================
-// RENDER SHOPS SLIDER - DYNAMIC
+// RENDER SHOPS - 54 SHOPS, 6 PER SLIDE = 9 SLIDES - DYNAMIC AUTO SLIDE
 // ========================================
 function renderShops() {
     const shopChunks = [];
@@ -191,7 +192,7 @@ function renderShops() {
 }
 
 // ========================================
-// RENDER VIDEOS SLIDER - DYNAMIC
+// RENDER VIDEOS - 3 PER SLIDE - DYNAMIC AUTO SLIDE
 // ========================================
 function renderVideos() {
     const videoChunks = [];
@@ -271,7 +272,7 @@ function prevCampaign() {
 }
 
 // ========================================
-// SLIDER LOGIC - SHOPS
+// SLIDER LOGIC - SHOPS - 9 SLIDES AUTO
 // ========================================
 let shopIndex = 0;
 function showShop(idx) {
@@ -298,7 +299,7 @@ function prevShop() {
 function goToShop(idx) { showShop(idx); }
 
 // ========================================
-// SLIDER LOGIC - VIDEOS
+// SLIDER LOGIC - VIDEOS - 3 PER SLIDE AUTO
 // ========================================
 let videoIndex = 0;
 function showVideo(idx) {
@@ -325,12 +326,12 @@ function prevVideo() {
 function goToVideo(idx) { showVideo(idx); }
 
 // ========================================
-// AUTO SLIDE - 5 SECONDS
+// AUTO SLIDE - SAB DHIRE DHIRE SIDE ME SARKEGA
 // ========================================
-setInterval(nextTopAd, 5000);
-setInterval(nextCampaign, 6000);
-setInterval(nextShop, 4000);
-setInterval(nextVideo, 5000);
+setInterval(nextTopAd, 5000); // Top offers - 5 sec
+setInterval(nextCampaign, 6000); // Campaigns - 6 sec
+setInterval(nextShop, 4000); // Shops - 4 sec - 9 slides
+setInterval(nextVideo, 5000); // Videos - 5 sec - 3 per slide
 
 // ========================================
 // SEARCH FUNCTIONALITY
