@@ -80,17 +80,44 @@
     { "id": "s5", "icon": "🎵", "name": "Shop 5", "color": "hsl(44, 70%, 55%)", "status": true, "priority": 5 },
     { "id": "s6", "icon": "🛒", "name": "Shop 6", "color": "hsl(55, 70%, 55%)", "status": true, "priority": 6 }
   ],
-"settings": {
-  "logoText": "SAMANLIVE",
-  "logoImage": "",
-  "headerColor": "#667eea",
-  "footerColor": "#1e293b",
-  "footerText": "© 2026 SAMANLIVE. All rights reserved.",
-  "footerAbout": "SAMANLIVE - Your all in one service platform",
-  "facebook": "",
-  "instagram": "",
-  "twitter": "",
-  "youtube": "",
-  "footerLinks": []
-}  
+  "settings": {
+    "logoText": "SAMANLIVE",
+    "logoImage": "",
+    "headerColor": "#667eea",
+    "footerColor": "#1e293b",
+    "footerText": "© 2026 SAMANLIVE. All rights reserved.",
+    "footerAbout": "SAMANLIVE - Your all in one service platform",
+    "facebook": "",
+    "instagram": "",
+    "twitter": "",
+    "youtube": "",
+    "footerLinks": []
+  },
+  "marketCategories": [
+    { "id": "fruit-market", "name": "Fruit Market", "icon": "🍎", "color": "#ef4444" },
+    { "id": "vegetable-market", "name": "Vegetable Market", "icon": "🥦", "color": "#10b981" },
+    { "id": "kirana-store", "name": "Kirana Store", "icon": "🛒", "color": "#6366f1" },
+    { "id": "milk-dairy", "name": "Milk & Dairy", "icon": "🥛", "color": "#06b6d4" },
+    { "id": "medical-store", "name": "Medical Store", "icon": "💊", "color": "#ef4444" },
+    { "id": "restaurant", "name": "Restaurant", "icon": "🍽️", "color": "#f59e0b" },
+    { "id": "bakery", "name": "Bakery", "icon": "🍞", "color": "#f97316" },
+    { "id": "meat-shop", "name": "Meat Shop", "icon": "🍗", "color": "#dc2626" },
+    { "id": "sweet-shop", "name": "Sweet Shop", "icon": "🍬", "color": "#ec4899" },
+    { "id": "electronics", "name": "Electronics", "icon": "📱", "color": "#3b82f6" },
+    { "id": "mobile-shop", "name": "Mobile Shop", "icon": "📞", "color": "#6366f1" },
+    { "id": "computer-shop", "name": "Computer Shop", "icon": "💻", "color": "#8b5cf6" },
+    { "id": "clothing", "name": "Clothing", "icon": "👕", "color": "#ec4899" },
+    { "id": "footwear", "name": "Footwear", "icon": "👟", "color": "#f59e0b" },
+    { "id": "jewellery", "name": "Jewellery", "icon": "💍", "color": "#fbbf24" },
+    { "id": "cosmetics", "name": "Cosmetics", "icon": "💄", "color": "#f472b6" },
+    { "id": "hardware", "name": "Hardware", "icon": "🔧", "color": "#6b7280" },
+    { "id": "furniture", "name": "Furniture", "icon": "🪑", "color": "#92400e" },
+    { "id": "stationery", "name": "Stationery", "icon": "✏️", "color": "#3b82f6" },
+    { "id": "toy-shop", "name": "Toy Shop", "icon": "🧸", "color": "#f59e0b" },
+    { "id": "book-store", "name": "Book Store", "icon": "📚", "color": "#10b981" },
+    { "id": "gift-shop", "name": "Gift Shop", "icon": "🎁", "color": "#ec4899" },
+    { "id": "flower-shop", "name": "Flower Shop", "icon": "🌸", "color": "#f472b6" },
+    { "id": "pet-shop", "name": "Pet Shop", "icon": "🐾", "color": "#f59e0b" },
+    { "id": "sports-shop", "name": "Sports Shop", "icon": "⚽", "color": "#ef4444" }
+  ]
 }

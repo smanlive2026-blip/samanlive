@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 // Video + Image upload config - Dono ke liye
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const dir = 'public/uploads';
+        const dir = path.join(__dirname, '../public/uploads');
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
         cb(null, dir);
     },
@@ -20,7 +20,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-const dbPath = path.join(__dirname, './database/modules.json');
+// FIX: dbPath me../ lagaya kyunki server.js server folder me hai
+const dbPath = path.join(__dirname, '../database/modules.json');
 
 // Static files
 app.use(express.static(path.join(__dirname, '../public')));
@@ -187,6 +188,9 @@ app.get('/api/settings', (req, res) => {
     res.json(db.settings);
 });
 
+// FIX: MARKET API ROUTE ADD KIYA - YE LINE ZARURI HAI
+app.use('/api/market', require('./routes/market'));
+
 // ========================================
 // ADMIN APIs - Control Panel - SAME AS BEFORE
 // ========================================
@@ -216,7 +220,7 @@ app.post('/api/admin/module', (req, res) => {
         desc: "",
         banner: "",
         areas: [],
-    ...req.body
+   ...req.body
     };
     db.modules.push(newItem);
     writeDB(db);
@@ -326,7 +330,7 @@ app.post('/api/admin/shop', (req, res) => {
         status: true,
         priority: db.shops.length + 1,
         range: 5000, // Default 5km range
-       ...req.body
+      ...req.body
     };
     db.shops.push(newItem);
     writeDB(db);
