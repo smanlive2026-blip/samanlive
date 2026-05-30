@@ -6,7 +6,7 @@
     { "icon": "🎮", "name": "GAMES", "color": "#8b5cf6", "link": "/games", "id": "games", "status": true, "priority": 4, "desc": "", "banner": "" },
     { "icon": "🎵", "name": "MUSIC", "color": "#ec4899", "link": "/music", "id": "music", "status": true, "priority": 5, "desc": "", "banner": "" },
     { "icon": "📖", "name": "BOOKS", "color": "#10b981", "link": "/books", "id": "books", "status": true, "priority": 6, "desc": "", "banner": "" },
-    { "icon": "🛒", "name": "MARKET", "color": "#6366f1", "link": "/market", "id": "market", "status": true, "priority": 7, "desc": "", "banner": "" },
+    { "icon": "🛒", "name": "MARKET", "color": "#6366f1", "link": "/modules/market", "id": "market", "status": true, "priority": 7, "desc": "", "banner": "" },
     { "icon": "🍕", "name": "FOOD", "color": "#f59e0b", "link": "/food", "id": "food", "status": true, "priority": 8, "desc": "", "banner": "" },
     { "icon": "✈️", "name": "TRAVEL", "color": "#06b6d4", "link": "/travel", "id": "travel", "status": true, "priority": 9, "desc": "", "banner": "" },
     { "icon": "🏠", "name": "REAL ESTATE", "color": "#84cc16", "link": "/real-estate", "id": "realestate", "status": true, "priority": 10, "desc": "", "banner": "" },
