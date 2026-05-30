@@ -1,1 +1,150 @@
- 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Market - SAMANLIVE</title>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <style>
+        .market-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .market-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .market-header h1 {
+            font-size: 42px;
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+        .market-header p {
+            color: #64748b;
+            font-size: 16px;
+        }
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .category-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 2px solid transparent;
+        }
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            border-color: var(--cat-color);
+        }
+        .category-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        .category-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 18px;
+            color: #64748b;
+        }
+        .error {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 18px;
+            color: #ef4444;
+        }
+        @media (max-width: 768px) {
+            .categories-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 15px;
+            }
+            .category-card {
+                padding: 20px 10px;
+            }
+            .category-icon {
+                font-size: 40px;
+            }
+            .market-header h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-bg"><div class="video-overlay"></div></div>
+    
+    <header class="header" style="background: linear-gradient(135deg, #10b981, #059669);">
+        <div class="header-container">
+            <div class="logo">
+                <div class="logo-icon">S</div>
+                <span class="logo-text">SAMANLIVE</span>
+            </div>
+            <a href="/" style="color:white;text-decoration:none;font-weight:600;">← Home</a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="market-container">
+            <div class="market-header">
+                <h1>🛒 Local Market</h1>
+                <p>Aas-paas ki sabhi dukaanen ek jagah</p>
+            </div>
+
+            <div id="categoriesBox" class="categories-grid">
+                <div class="loading">Loading categories...</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/market/categories');
+                if (!res.ok) throw new Error('API Error');
+                
+                const categories = await res.json();
+                const box = document.getElementById('categoriesBox');
+                
+                if (categories.length === 0) {
+                    box.innerHTML = '<div class="loading">Koi category nahi mili</div>';
+                    return;
+                }
+
+                box.innerHTML = categories.map(cat => `
+                    <div class="category-card" style="--cat-color: ${cat.color}" onclick="openCategory('${cat.id}')">
+                        <div class="category-icon">${cat.icon}</div>
+                        <div class="category-name">${cat.name}</div>
+                    </div>
+                `).join('');
+                
+            } catch(err) {
+                console.error(err);
+                document.getElementById('categoriesBox').innerHTML = 
+                    '<div class="error">Error loading categories 😢<br><small>Server chalu hai?</small></div>';
+            }
+        }
+
+        function openCategory(id) {
+            // Abhi ke liye alert, baad me shops ka page banayenge
+            alert('Opening: ' + id + '\n\nShops ka page next step me banayenge');
+            // Future: window.location.href = `/modules/market/shops.html?category=${id}`;
+        }
+
+        // Page load hote hi categories load karo
+        loadCategories();
+    </script>
+</body>
+</html>
