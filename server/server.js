@@ -20,8 +20,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// FIX: dbPath me../ lagaya kyunki server.js server folder me hai
-const dbPath = path.join(__dirname, '../database/modules.json');
+// FIX 1: dbPath sahi kiya - server folder ke andar database folder hai
+const dbPath = path.join(__dirname, './database/modules.json');
 
 // Static files
 app.use(express.static(path.join(__dirname, '../public')));
@@ -64,7 +64,7 @@ function isPointInPolygon(point, vs) {
 }
 
 function checkModuleInArea(module, userLat, userLng) {
-    if(!module.areas || module.areas.length === 0) return { inArea: true, distance: 0 }; // All India available
+    if(!module.areas || module.areas.length === 0) return { inArea: true, distance: 0 };
 
     for(let area of module.areas) {
         if(area.type === 'circle') {
@@ -83,7 +83,7 @@ function checkModuleInArea(module, userLat, userLng) {
 }
 
 // ========================================
-// PUBLIC APIs - Frontend - UPDATED
+// PUBLIC APIs - Frontend - FIXED
 // ========================================
 app.get('/api/modules', (req, res) => {
     const db = readDB();
@@ -92,7 +92,6 @@ app.get('/api/modules', (req, res) => {
 
     let modules = db.modules.filter(m => m.status);
 
-    // Agar location mili hai to filter karo
     if(userLat && userLng) {
         modules = modules.filter(m => {
             const check = checkModuleInArea(m, userLat, userLng);
@@ -101,7 +100,7 @@ app.get('/api/modules', (req, res) => {
                 return true;
             }
             return false;
-        }).sort((a, b) => a.distance - b.distance); // Najdeek wale pehle
+        }).sort((a, b) => a.distance - b.distance);
     } else {
         modules = modules.sort((a, b) => a.priority - b.priority);
     }
@@ -116,13 +115,12 @@ app.get('/api/shops', (req, res) => {
 
     let shops = db.shops.filter(s => s.status);
 
-    // Location filter for shops
     if(userLat && userLng) {
         shops = shops.map(s => {
             if(s.lat && s.lng) {
                 const dist = getDistance(userLat, userLng, s.lat, s.lng);
                 s.distance = Math.round(dist);
-                s.inRange = dist <= (s.range || 5000); // Default 5km
+                s.inRange = dist <= (s.range || 5000);
             } else {
                 s.distance = 999999;
                 s.inRange = false;
@@ -136,34 +134,36 @@ app.get('/api/shops', (req, res) => {
     res.json(shops);
 });
 
-// NEW: Combined Homepage API
+// FIX 2: Homepage API - Location na mile to bhi saare modules dikhao
 app.get('/api/homepage', (req, res) => {
     const db = readDB();
     const userLat = parseFloat(req.query.lat);
     const userLng = parseFloat(req.query.lng);
 
-    if(!userLat ||!userLng) {
-        return res.json({ modules: [], shops: [] });
+    let modules = [];
+    let shops = [];
+
+    if(userLat && userLng) {
+        modules = db.modules.filter(m => {
+            if(!m.status) return false;
+            const check = checkModuleInArea(m, userLat, userLng);
+            if(check.inArea) {
+                m.distance = (check.distance/1000).toFixed(1);
+                return true;
+            }
+            return false;
+        }).sort((a, b) => a.distance - b.distance);
+
+        shops = db.shops.filter(s => {
+            if(!s.status ||!s.lat ||!s.lng) return false;
+            const dist = getDistance(userLat, userLng, s.lat, s.lng);
+            s.distance = Math.round(dist);
+            return dist <= (s.range || 5000);
+        }).sort((a, b) => a.distance - b.distance);
+    } else {
+        modules = db.modules.filter(m => m.status).sort((a, b) => a.priority - b.priority);
+        shops = db.shops.filter(s => s.status).sort((a, b) => a.priority - b.priority);
     }
-
-    // Modules filter
-    let modules = db.modules.filter(m => {
-        if(!m.status) return false;
-        const check = checkModuleInArea(m, userLat, userLng);
-        if(check.inArea) {
-            m.distance = (check.distance/1000).toFixed(1); // km me
-            return true;
-        }
-        return false;
-    }).sort((a, b) => a.distance - b.distance);
-
-    // Shops filter
-    let shops = db.shops.filter(s => {
-        if(!s.status ||!s.lat ||!s.lng) return false;
-        const dist = getDistance(userLat, userLng, s.lat, s.lng);
-        s.distance = Math.round(dist);
-        return dist <= (s.range || 5000);
-    }).sort((a, b) => a.distance - b.distance);
 
     res.json({ modules, shops });
 });
@@ -188,11 +188,11 @@ app.get('/api/settings', (req, res) => {
     res.json(db.settings);
 });
 
-// FIX: MARKET API ROUTE ADD KIYA - YE LINE ZARURI HAI
+// MARKET API ROUTE
 app.use('/api/market', require('./routes/market'));
 
 // ========================================
-// ADMIN APIs - Control Panel - SAME AS BEFORE
+// ADMIN APIs - Control Panel
 // ========================================
 app.get('/api/admin/data', (req, res) => {
     res.json(readDB());
@@ -220,7 +220,7 @@ app.post('/api/admin/module', (req, res) => {
         desc: "",
         banner: "",
         areas: [],
-   ...req.body
+ ...req.body
     };
     db.modules.push(newItem);
     writeDB(db);
@@ -312,7 +312,7 @@ app.delete('/api/admin/campaign/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// Shops CRUD - UPDATED for location
+// Shops CRUD
 app.put('/api/admin/shop/:id', (req, res) => {
     const db = readDB();
     const idx = db.shops.findIndex(s => s.id === req.params.id);
@@ -329,8 +329,8 @@ app.post('/api/admin/shop', (req, res) => {
         id: 's-' + Date.now(),
         status: true,
         priority: db.shops.length + 1,
-        range: 5000, // Default 5km range
-      ...req.body
+        range: 5000,
+    ...req.body
     };
     db.shops.push(newItem);
     writeDB(db);
@@ -352,7 +352,7 @@ app.put('/api/admin/settings', (req, res) => {
     res.json({ success: true, settings: db.settings });
 });
 
-// Upload - Image/Video dono
+// Upload
 app.post('/api/admin/upload', upload.single('file'), (req, res) => {
     res.json({ success: true, url: `/uploads/${req.file.filename}` });
 });
