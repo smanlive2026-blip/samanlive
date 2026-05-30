@@ -89,7 +89,19 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .service-item { text-align: center; animation: popIn 0.3s ease-out; }
 @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 .service-item a { text-decoration: none; color: inherit; display: block; }
-.service-icon { width: 100%; aspect-ratio: 1; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 5px; color: white; box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+.service-icon { 
+    width: 100%; 
+    aspect-ratio: 1; 
+    border-radius: 18px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 45px; /* CHANGED BY AI - PEHLE 28px THA */
+    margin-bottom: 5px; 
+    color: white; 
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15); 
+    line-height: 1; /* ADDED BY AI - EMOJI PERFECT CENTER ME RAHEGA */
+}
 .service-item p { font-size: 10px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.2px; }
 
 /* CAMPAIGNS - 48 ITEMS, 4 PER SLIDE */
@@ -128,7 +140,10 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
   .nearby-actions-row { grid-template-columns: repeat(4, 1fr); gap: 5px; }
   .video-card { height: 50px; }
   .service-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .service-icon { font-size: 24px; border-radius: 14px; }
+  .service-icon { 
+    font-size: 38px; /* CHANGED BY AI - PEHLE 24px THA */
+    border-radius: 14px; 
+  }
   .service-item p { font-size: 9px; }
   .footer-links { grid-template-columns: repeat(2, 1fr); }
 }

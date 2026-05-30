@@ -172,12 +172,13 @@ function sortModulesByUsage(modules) {
 // ========================================
 // RENDER SERVICES - 54 MODULES - SMART SORTED + DISTANCE
 // ========================================
-function renderServices() {
-    const sortedModules = sortModulesByUsage(allModules);
+function renderServices(filteredModules = null) { /* ADDED BY AI - SEARCH FIX: filteredModules parameter add kiya */
+    const modulesToRender = filteredModules || allModules; /* ADDED BY AI - SEARCH FIX */
+    const sortedModules = sortModulesByUsage(modulesToRender);
     const gridEl = document.getElementById('serviceGrid');
     
-    if(allModules.length === 0) {
-        if(gridEl) gridEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Aapke area me koi service available nahi hai</p>';
+    if(modulesToRender.length === 0) { /* ADDED BY AI - SEARCH FIX: allModules ki jagah modulesToRender */
+        if(gridEl) gridEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Koi service nahi mili</p>';
         return;
     }
 
@@ -476,13 +477,23 @@ function closeVideoModal() {
 }
 
 // ========================================
-// SEARCH FUNCTIONALITY
+// SEARCH FUNCTIONALITY - ADDED BY AI
 // ========================================
 const searchInput = document.getElementById('searchInput');
 if(searchInput) {
     searchInput.addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        console.log('Searching for:', searchTerm);
+        const searchTerm = e.target.value.toLowerCase().trim();
+        
+        if(searchTerm === '') {
+            // Search khali hai to sab modules dikhao
+            renderServices();
+        } else {
+            // Filter modules by name
+            const filtered = allModules.filter(module => 
+                module.name.toLowerCase().includes(searchTerm)
+            );
+            renderServices(filtered);
+        }
     });
 }
 
