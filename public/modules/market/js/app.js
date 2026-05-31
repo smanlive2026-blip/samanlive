@@ -71,22 +71,46 @@ async function fetchShops(url) {
         return;
     }
 
-    box.innerHTML = `
-        <div class="shops-grid">
-            ${shops.map(shop => `
-                <div class="shop-card">
-                    <div class="shop-header">
-                        <div class="shop-icon">${shop.icon}</div>
-                        <div class="shop-info">
-                            <h3>${shop.name}</h3>
-                            <div class="shop-address">📍 ${shop.address || 'Address not available'}</div>
-                        </div>
+    // Banner list - yahan apne banner add kar
+    const banners = [
+        { img: '/assets/banners/banner1.jpg', link: '#' },
+        { img: '/assets/banners/banner2.jpg', link: '#' },
+        { img: '/assets/banners/banner3.jpg', link: '#' },
+        { img: '/assets/banners/banner4.jpg', link: '#' }
+    ];
+    
+    let html = '<div class="shops-grid">';
+    let bannerIndex = 0;
+
+    shops.forEach((shop, index) => {
+        // 1. Shop card
+        html += `
+            <div class="shop-card">
+                <div class="shop-header">
+                    <div class="shop-icon">${shop.icon}</div>
+                    <div class="shop-info">
+                        <h3>${shop.name}</h3>
+                        <div class="shop-address">📍 ${shop.address || 'Address not available'}</div>
                     </div>
-                    ${shop.distance ? `<div class="shop-distance">${shop.distance}m door</div>` : ''}
                 </div>
-            `).join('')}
-        </div>
-    `;
+                ${shop.distance ? `<div class="shop-distance">${shop.distance}m door</div>` : ''}
+            </div>
+        `;
+
+        // 2. Har 8 shops = 2 lines ke baad banner - UNLIMITED
+        if ((index + 1) % 8 === 0) {
+            const banner = banners[bannerIndex % banners.length];
+            html += `
+                <div class="shop-banner" onclick="window.open('${banner.link}', '_blank')">
+                    <img src="${banner.img}" alt="Promo Banner">
+                </div>
+            `;
+            bannerIndex++;
+        }
+    });
+
+    html += '</div>';
+    box.innerHTML = html;
 }
 
 function backToCategories() {
