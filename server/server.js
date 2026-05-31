@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -31,7 +33,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // DB Helpers
 function readDB() {
-    return JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+    const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+    if (!data.areaManagers) data.areaManagers = [];
+    if (!data.areas) data.areas = [];
+    return data;
 }
 
 function writeDB(data) {
@@ -191,6 +196,9 @@ app.get('/api/settings', (req, res) => {
 // MARKET API ROUTE
 app.use('/api/market', require('./routes/market'));
 
+// AREA MANAGER API ROUTE - NEW
+app.use('/api/area-manager', require('./routes/area-manager'));
+
 // ========================================
 // ADMIN APIs - Control Panel
 // ========================================
@@ -220,7 +228,7 @@ app.post('/api/admin/module', (req, res) => {
         desc: "",
         banner: "",
         areas: [],
- ...req.body
+...req.body
     };
     db.modules.push(newItem);
     writeDB(db);
@@ -330,7 +338,7 @@ app.post('/api/admin/shop', (req, res) => {
         status: true,
         priority: db.shops.length + 1,
         range: 5000,
-    ...req.body
+   ...req.body
     };
     db.shops.push(newItem);
     writeDB(db);
@@ -360,6 +368,11 @@ app.post('/api/admin/upload', upload.single('file'), (req, res) => {
 // Admin page
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/admin.html'));
+});
+
+// Area Manager page - NEW
+app.get('/area-manager', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/area-manager.html'));
 });
 
 // Home
@@ -430,5 +443,6 @@ app.use((req, res) => {
 app.listen(PORT, () => {
     console.log(`✅ SAMANLIVE Server: http://localhost:${PORT}`);
     console.log(`🔧 Admin Panel: http://localhost:${PORT}/admin`);
+    console.log(`👨‍💼 Area Manager: http://localhost:${PORT}/area-manager`);
     console.log(`📁 Serving: ${path.join(__dirname, '../public')}`);
 });

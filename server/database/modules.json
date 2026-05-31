@@ -119,5 +119,45 @@
     { "id": "flower-shop", "name": "Flower Shop", "icon": "🌸", "color": "#f472b6" },
     { "id": "pet-shop", "name": "Pet Shop", "icon": "🐾", "color": "#f59e0b" },
     { "id": "sports-shop", "name": "Sports Shop", "icon": "⚽", "color": "#ef4444" }
+  ],
+  "areas": [
+    {
+      "id": "area-1",
+      "name": "Surat City",
+      "type": "circle",
+      "lat": 21.1702,
+      "lng": 72.8311,
+      "radius": 10000,
+      "status": true
+    },
+    {
+      "id": "area-2",
+      "name": "Ahmedabad",
+      "type": "circle", 
+      "lat": 23.0225,
+      "lng": 72.5714,
+      "radius": 15000,
+      "status": true
+    }
+  ],
+  "areaManagers": [
+    {
+      "id": "mgr-surat-1",
+      "email": "surat@test.com",
+      "password": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+      "name": "Surat Manager",
+      "areaId": "area-1",
+      "status": true,
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "mgr-amd-1",
+      "email": "amd@test.com",
+      "password": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+      "name": "Ahmedabad Manager",
+      "areaId": "area-2",
+      "status": true,
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
   ]
 }
