@@ -102,11 +102,11 @@ router.get('/dashboard', authManager, (req, res) => {
 });
 
 // ========================================
-// SHOP ADD - APNE AREA ME HI
+// SHOP ADD - APNE AREA ME HI - BANNER ADD KIYA
 // ========================================
 router.post('/shop', authManager, (req, res) => {
     const db = readDB();
-    const { name, icon, color, categoryId, lat, lng, range, address, phone } = req.body;
+    const { name, icon, color, categoryId, lat, lng, range, address, phone, banner } = req.body;
     const area = db.areas.find(a => a.id === req.manager.areaId);
 
     if (!name ||!categoryId ||!lat ||!lng) {
@@ -131,6 +131,7 @@ router.post('/shop', authManager, (req, res) => {
         range: range || 5000,
         address: address || '',
         phone: phone || '',
+        banner: banner || '', // BANNER FIELD ADD KIYA
         status: true,
         priority: db.shops.length + 1,
         createdAt: new Date().toISOString(),
@@ -144,7 +145,7 @@ router.post('/shop', authManager, (req, res) => {
 });
 
 // ========================================
-// SHOP UPDATE - SIRF APNI SHOP
+// SHOP UPDATE - SIRF APNI SHOP - BANNER SUPPORT
 // ========================================
 router.put('/shop/:id', authManager, (req, res) => {
     const db = readDB();
@@ -166,11 +167,8 @@ router.put('/shop/:id', authManager, (req, res) => {
 
     db.shops[shopIdx] = {...db.shops[shopIdx],...req.body };
 
-    if (writeDB(db)) {
-        res.json({ success: true, data: db.shops[shopIdx] });
-    } else {
-        res.status(500).json({ error: 'Update nahi hua' });
-    }
+    writeDB(db);
+    res.json({ success: true, data: db.shops[shopIdx] });
 });
 
 // ========================================
@@ -187,11 +185,8 @@ router.delete('/shop/:id', authManager, (req, res) => {
 
     db.shops = db.shops.filter(s => s.id!== req.params.id);
 
-    if (writeDB(db)) {
-        res.json({ success: true });
-    } else {
-        res.status(500).json({ error: 'Delete nahi hua' });
-    }
+    writeDB(db);
+    res.json({ success: true });
 });
 
 module.exports = router;

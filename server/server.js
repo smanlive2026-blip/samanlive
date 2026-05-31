@@ -194,7 +194,7 @@ app.get('/api/settings', (req, res) => {
 });
 
 // ========================================
-// MARKET SHOPS API - Area Manager ki shops ke liye - NEW ROUTE
+// MARKET SHOPS API - Area Manager ki shops ke liye - BANNER SUPPORT ADD
 // ========================================
 app.get('/api/market/shops/:categoryId', (req, res) => {
     const db = readDB();
@@ -223,6 +223,7 @@ app.get('/api/market/shops/:categoryId', (req, res) => {
         }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
     }
 
+    // banner field automatically jayegi kyunki shop object me hai
     res.json(shops);
 });
 
@@ -353,7 +354,7 @@ app.delete('/api/admin/campaign/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// Shops CRUD
+// Shops CRUD - BANNER SUPPORT ADD KIYA
 app.put('/api/admin/shop/:id', (req, res) => {
     const db = readDB();
     const idx = db.shops.findIndex(s => s.id === req.params.id);
@@ -371,7 +372,8 @@ app.post('/api/admin/shop', (req, res) => {
         status: true,
         priority: db.shops.length + 1,
         range: 5000,
-  ...req.body
+        banner: '', // BANNER FIELD ADD KIYA
+ ...req.body
     };
     db.shops.push(newItem);
     writeDB(db);

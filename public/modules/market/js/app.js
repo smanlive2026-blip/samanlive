@@ -71,7 +71,7 @@ async function fetchShops(url) {
         return;
     }
 
-    // Banner list - yahan apne banner add kar
+    // Banner list - fallback ke liye agar shop ka banner na ho
     const banners = [
         { img: '/assets/banners/banner1.jpg', link: '#' },
         { img: '/assets/banners/banner2.jpg', link: '#' },
@@ -97,17 +97,43 @@ async function fetchShops(url) {
             </div>
         `;
 
-        // 2. Har 8 shops = 2 lines ke baad banner - UNLIMITED
+        // 2. Har 8 shops = 2 lines ke baad banner - SHOP KA BANNER PRIORITY
         if ((index + 1) % 8 === 0) {
-            const banner = banners[bannerIndex % banners.length];
-            html += `
-                <div class="shop-banner" onclick="window.open('${banner.link}', '_blank')">
-                    <img src="${banner.img}" alt="Promo Banner">
-                </div>
-            `;
+            // Pehle check karo is 8-shop block me kisi ka banner hai kya
+            const shopWithBanner = shops.slice(index - 7, index + 1).find(s => s.banner && s.banner !== '');
+            
+            if (shopWithBanner && shopWithBanner.banner) {
+                // Shop ka banner dikhao
+                html += `
+                    <div class="shop-banner">
+                        <img src="${shopWithBanner.banner}" alt="Shop Banner">
+                    </div>
+                `;
+            } else {
+                // Fallback: Default banner
+                const banner = banners[bannerIndex % banners.length];
+                html += `
+                    <div class="shop-banner" onclick="window.open('${banner.link}', '_blank')">
+                        <img src="${banner.img}" alt="Promo Banner">
+                    </div>
+                `;
+            }
             bannerIndex++;
         }
     });
+
+    // Agar last me 8 se kam shops bachi aur koi banner nahi dikha to last me dikha do
+    const remainingShops = shops.length % 8;
+    if (remainingShops > 0) {
+        const lastShopWithBanner = shops.slice(-remainingShops).find(s => s.banner && s.banner !== '');
+        if (lastShopWithBanner) {
+            html += `
+                <div class="shop-banner">
+                    <img src="${lastShopWithBanner.banner}" alt="Shop Banner">
+                </div>
+            `;
+        }
+    }
 
     html += '</div>';
     box.innerHTML = html;

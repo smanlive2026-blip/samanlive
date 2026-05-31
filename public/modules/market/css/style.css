@@ -108,7 +108,7 @@
     margin-top: 8px;
 }
 
-/* BANNER - 4 DUKAN KI JAGAH LEGA, SAME HEIGHT */
+/* BANNER - 4 DUKAN KI JAGAH LEGA, SAME HEIGHT - UPDATED */
 .shop-banner {
     grid-column: span 4;
     height: 140px;
@@ -117,6 +117,8 @@
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     transition: all 0.3s;
+    background: #e2e8f0;
+    margin: 5px 0;
 }
 
 .shop-banner:hover {
@@ -270,5 +272,95 @@
     .shop-banner {
         grid-column: span 1;
         height: 100px;
+    }
+}
+
+/* ========================================
+   MOBILE COMPACT OVERRIDES - NAYA ADD KIYA
+   ======================================== */
+@media (max-width: 767px) {
+    .shop-card {
+        padding: 10px !important;
+        min-height: 95px !important;
+    }
+    
+    .shop-header {
+        gap: 8px !important;
+        margin-bottom: 6px !important;
+    }
+    
+    .shop-icon {
+        font-size: 22px !important;
+        width: 34px !important;
+        height: 34px !important;
+    }
+    
+    .shop-info h3 {
+        font-size: 13px !important;
+        margin-bottom: 3px !important;
+    }
+    
+    .shop-address {
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+    }
+    
+    .shop-distance {
+        padding: 2px 6px !important;
+        font-size: 9px !important;
+        margin-top: 4px !important;
+    }
+    
+    .shop-banner {
+        height: 95px !important;
+    }
+    
+    .category-card {
+        padding: 12px 8px !important;
+    }
+    
+    .category-icon {
+        font-size: 30px !important;
+        margin-bottom: 5px !important;
+    }
+    
+    .category-name {
+        font-size: 11px !important;
+    }
+    
+    .market-header h1 {
+        font-size: 22px !important;
+    }
+    
+    .market-header p {
+        font-size: 12px !important;
+    }
+    
+    .shops-grid {
+        gap: 10px !important;
+        padding: 10px !important;
+    }
+}
+
+/* EXTRA SMALL MOBILE */
+@media (max-width: 380px) {
+    .shops-grid {
+        gap: 8px !important;
+        padding: 8px !important;
+    }
+    
+    .shop-card {
+        padding: 8px !important;
+        min-height: 85px !important;
+    }
+    
+    .shop-icon {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 18px !important;
+    }
+    
+    .shop-info h3 {
+        font-size: 12px !important;
     }
 }

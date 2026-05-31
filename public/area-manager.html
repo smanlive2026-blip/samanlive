@@ -79,6 +79,7 @@
         }
         #map { height: 300px; border-radius: 8px; margin-top: 10px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .banner-preview { width: 100%; max-width: 400px; margin-top: 10px; border-radius: 8px; display: none; }
         @media (max-width: 768px) {
             .form-row { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: 1fr; }
@@ -176,6 +177,7 @@
                         <label>Icon</label>
                         <input type="text" id="shopIcon" placeholder="🏪" maxlength="2">
                     </div>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Category *</label>
@@ -208,6 +210,14 @@
                 <div class="form-group">
                     <label>Service Range (meters)</label>
                     <input type="number" id="shopRange" value="5000" min="100" max="50000">
+                </div>
+                <!-- BANNER UPLOAD - NAYA ADD KIYA -->
+                <div class="form-group">
+                    <label>Shop Banner Image (Market me dikhega)</label>
+                    <input type="file" id="shopBannerInput" accept="image/*" onchange="uploadShopBanner(this)">
+                    <small style="color:#64748b;display:block;margin-top:5px;">Size: 800x200 px recommended</small>
+                    <img id="shopBannerPreview" class="banner-preview">
+                    <input type="hidden" id="shopBannerUrl">
                 </div>
                 <button type="submit" class="btn">Save Shop</button>
             </form>
@@ -340,10 +350,16 @@
                 document.getElementById('shopLat').value = shop.lat;
                 document.getElementById('shopLng').value = shop.lng;
                 document.getElementById('shopRange').value = shop.range || 5000;
+                document.getElementById('shopBannerUrl').value = shop.banner || '';
+                if(shop.banner) {
+                    document.getElementById('shopBannerPreview').src = shop.banner;
+                    document.getElementById('shopBannerPreview').style.display = 'block';
+                }
                 initMap(shop.lat, shop.lng);
             } else {
                 document.getElementById('shopForm').reset();
                 document.getElementById('shopId').value = '';
+                document.getElementById('shopBannerPreview').style.display = 'none';
                 initMap(23.0225, 72.5714); // Default Surat
             }
         }
@@ -354,6 +370,30 @@
 
         function editShop(shop) {
             openShopModal(shop);
+        }
+
+        // BANNER UPLOAD - NAYA FUNCTION
+        async function uploadShopBanner(input) {
+            if(input.files[0]) {
+                const formData = new FormData();
+                formData.append('file', input.files[0]);
+
+                try {
+                    const res = await fetch('/api/admin/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+
+                    if(data.success) {
+                        document.getElementById('shopBannerUrl').value = data.url;
+                        document.getElementById('shopBannerPreview').src = data.url;
+                        document.getElementById('shopBannerPreview').style.display = 'block';
+                    }
+                } catch(err) {
+                    alert('Banner upload failed!');
+                }
+            }
         }
 
         // INIT MAP
@@ -377,7 +417,7 @@
             });
         }
 
-        // SAVE SHOP
+        // SAVE SHOP - BANNER FIELD ADD KIYA
         document.getElementById('shopForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const shopId = document.getElementById('shopId').value;
@@ -389,7 +429,8 @@
                 address: document.getElementById('shopAddress').value,
                 lat: document.getElementById('shopLat').value,
                 lng: document.getElementById('shopLng').value,
-                range: document.getElementById('shopRange').value
+                range: document.getElementById('shopRange').value,
+                banner: document.getElementById('shopBannerUrl').value // BANNER ADD KIYA
             };
 
             try {
