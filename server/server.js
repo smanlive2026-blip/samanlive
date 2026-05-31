@@ -4,8 +4,14 @@ const fs = require('fs');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose'); // MONGOOSE ADD KIYA
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// MONGODB CONNECTION - NAYA ADD KIYA
+mongoose.connect(process.env.MONGO_URL)
+ .then(() => console.log('MongoDB Connected ✅'))
+ .catch(err => console.log('MongoDB Error:', err));
 
 // Video + Image upload config - Dono ke liye
 const storage = multer.diskStorage({
