@@ -264,13 +264,13 @@
     }
 }
 
-/* SMALL MOBILE - 1 DUKAN PER LINE */
+/* SMALL MOBILE - AB BHI 2 DUKAN PER LINE - EDITED */
 @media (max-width: 480px) {
     .shops-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr); /* 1 ki jagah 2 kar diya */
     }
     .shop-banner {
-        grid-column: span 1;
+        grid-column: span 2; /* 1 ki jagah 2 kar diya */
         height: 100px;
     }
 }

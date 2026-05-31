@@ -4,11 +4,11 @@ async function loadCategories() {
     try {
         const res = await fetch('/api/market/categories');
         if (!res.ok) throw new Error('API Error');
-        
+
         const categories = await res.json();
         currentCategories = categories;
         const box = document.getElementById('categoriesBox');
-        
+
         if (categories.length === 0) {
             box.innerHTML = '<div class="loading">Koi category nahi mili</div>';
             return;
@@ -20,10 +20,10 @@ async function loadCategories() {
                 <div class="category-name">${cat.name}</div>
             </div>
         `).join('');
-        
+
     } catch(err) {
         console.error(err);
-        document.getElementById('categoriesBox').innerHTML = 
+        document.getElementById('categoriesBox').innerHTML =
             '<div class="error">Error loading categories 😢<br><small>Server chalu hai?</small></div>';
     }
 }
@@ -41,7 +41,7 @@ async function openCategory(id, name, icon) {
 
     try {
         let url = `/api/market/shops/${id}`;
-        
+
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const lat = pos.coords.latitude;
@@ -56,7 +56,7 @@ async function openCategory(id, name, icon) {
         }
     } catch(err) {
         console.error(err);
-        document.getElementById('shopsBox').innerHTML = 
+        document.getElementById('shopsBox').innerHTML =
             '<div class="error">Error loading shops 😢</div>';
     }
 }
@@ -65,7 +65,7 @@ async function fetchShops(url) {
     const res = await fetch(url);
     const shops = await res.json();
     const box = document.getElementById('shopsBox');
-    
+
     if (shops.length === 0) {
         box.innerHTML = '<div class="loading">Is category me abhi koi shop nahi hai 😔</div>';
         return;
@@ -78,7 +78,7 @@ async function fetchShops(url) {
         { img: '/assets/banners/banner3.jpg', link: '#' },
         { img: '/assets/banners/banner4.jpg', link: '#' }
     ];
-    
+
     let html = '<div class="shops-grid">';
     let bannerIndex = 0;
 
@@ -93,15 +93,15 @@ async function fetchShops(url) {
                         <div class="shop-address">📍 ${shop.address || 'Address not available'}</div>
                     </div>
                 </div>
-                ${shop.distance ? `<div class="shop-distance">${shop.distance}m door</div>` : ''}
+                ${shop.distance? `<div class="shop-distance">${shop.distance}m door</div>` : ''}
             </div>
         `;
 
         // 2. Har 8 shops = 2 lines ke baad banner - SHOP KA BANNER PRIORITY
         if ((index + 1) % 8 === 0) {
             // Pehle check karo is 8-shop block me kisi ka banner hai kya
-            const shopWithBanner = shops.slice(index - 7, index + 1).find(s => s.banner && s.banner !== '');
-            
+            const shopWithBanner = shops.slice(Math.max(0, index - 7), index + 1).find(s => s.banner && s.banner!== '');
+
             if (shopWithBanner && shopWithBanner.banner) {
                 // Shop ka banner dikhao
                 html += `
@@ -122,18 +122,8 @@ async function fetchShops(url) {
         }
     });
 
-    // Agar last me 8 se kam shops bachi aur koi banner nahi dikha to last me dikha do
-    const remainingShops = shops.length % 8;
-    if (remainingShops > 0) {
-        const lastShopWithBanner = shops.slice(-remainingShops).find(s => s.banner && s.banner !== '');
-        if (lastShopWithBanner) {
-            html += `
-                <div class="shop-banner">
-                    <img src="${lastShopWithBanner.banner}" alt="Shop Banner">
-                </div>
-            `;
-        }
-    }
+    // EDITED: Remaining shops ka banner logic hata diya. Sirf 8 complete hone pe hi banner aayega.
+    // Agar 8 se kam shops hain to banner nahi aayega. Yehi chahiye tha tujhe.
 
     html += '</div>';
     box.innerHTML = html;
