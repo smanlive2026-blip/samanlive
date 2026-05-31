@@ -63,7 +63,7 @@ router.get('/category/:id', (req, res) => {
     res.json(category);
 });
 
-// 3. Category Ke Hisaab Se Shops - Location Filter Ke Saath
+// 3. Category Ke Hisaab Se Shops - Location Filter Ke Saath - BANNER ADD KIYA
 router.get('/shops', (req, res) => {
     const db = readDB();
     const categoryId = req.query.category;
@@ -96,10 +96,16 @@ router.get('/shops', (req, res) => {
         shops = shops.sort((a, b) => a.priority - b.priority);
     }
 
+    // BANNER FIELD ENSURE KARO - AGAR NAHI HAI TO EMPTY STRING
+    shops = shops.map(shop => ({
+       ...shop,
+        banner: shop.banner || ''
+    }));
+
     res.json(shops);
 });
 
-// 4. Single Shop Ki Details
+// 4. Single Shop Ki Details - BANNER ADD KIYA
 router.get('/shop/:id', (req, res) => {
     const db = readDB();
     const shop = db.shops.find(s => s.id === req.params.id);
@@ -108,7 +114,13 @@ router.get('/shop/:id', (req, res) => {
         return res.status(404).json({ error: 'Shop nahi mili' });
     }
 
-    res.json(shop);
+    // BANNER FIELD ENSURE KARO
+    const shopData = {
+       ...shop,
+        banner: shop.banner || ''
+    };
+
+    res.json(shopData);
 });
 
 // ========================================
@@ -176,10 +188,10 @@ router.delete('/admin/category/:id', (req, res) => {
     }
 });
 
-// 4. Shop Add Karo - Category Ke Saath
+// 4. Shop Add Karo - Category Ke Saath - BANNER SUPPORT ADD KIYA
 router.post('/admin/shop', (req, res) => {
     const db = readDB();
-    const { name, icon, color, categoryId, lat, lng, range, address, phone } = req.body;
+    const { name, icon, color, categoryId, lat, lng, range, address, phone, banner } = req.body;
 
     if (!name ||!categoryId) {
         return res.status(400).json({ error: 'Name aur Category zaruri hai' });
@@ -196,6 +208,7 @@ router.post('/admin/shop', (req, res) => {
         range: range || 5000,
         address: address || '',
         phone: phone || '',
+        banner: banner || '', // BANNER FIELD ADD KIYA
         status: true,
         priority: db.shops.length + 1,
         createdAt: new Date().toISOString()

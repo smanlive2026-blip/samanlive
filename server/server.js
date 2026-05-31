@@ -194,38 +194,38 @@ app.get('/api/settings', (req, res) => {
 });
 
 // ========================================
-// MARKET SHOPS API - Area Manager ki shops ke liye - BANNER SUPPORT ADD
+// MARKET SHOPS API - COMMENTED OUT - routes/market.js USE HO RAHI HAI
 // ========================================
-app.get('/api/market/shops/:categoryId', (req, res) => {
-    const db = readDB();
-    const { categoryId } = req.params;
-    const userLat = parseFloat(req.query.lat);
-    const userLng = parseFloat(req.query.lng);
-
-    // 1. Sirf is category ki active shops nikalo
-    let shops = db.shops.filter(s =>
-        s.categoryId === categoryId &&
-        s.status!== false
-    );
-
-    // 2. Agar location mili hai to 5km radius filter lagao
-    if (userLat && userLng) {
-        shops = shops.map(shop => {
-            if (shop.lat && shop.lng) {
-                const dist = getDistance(userLat, userLng, parseFloat(shop.lat), parseFloat(shop.lng));
-                shop.distance = Math.round(dist); // meters me
-                shop.inRange = dist <= 5000; // 5km
-            } else {
-                shop.distance = 999999;
-                shop.inRange = false;
-            }
-            return shop;
-        }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
-    }
-
-    // banner field automatically jayegi kyunki shop object me hai
-    res.json(shops);
-});
+// app.get('/api/market/shops/:categoryId', (req, res) => {
+// const db = readDB();
+// const { categoryId } = req.params;
+// const userLat = parseFloat(req.query.lat);
+// const userLng = parseFloat(req.query.lng);
+//
+// // 1. Sirf is category ki active shops nikalo
+// let shops = db.shops.filter(s =>
+// s.categoryId === categoryId &&
+// s.status!== false
+// );
+//
+// // 2. Agar location mili hai to 5km radius filter lagao
+// if (userLat && userLng) {
+// shops = shops.map(shop => {
+// if (shop.lat && shop.lng) {
+// const dist = getDistance(userLat, userLng, parseFloat(shop.lat), parseFloat(shop.lng));
+// shop.distance = Math.round(dist); // meters me
+// shop.inRange = dist <= 5000; // 5km
+// } else {
+// shop.distance = 999999;
+// shop.inRange = false;
+// }
+// return shop;
+// }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
+// }
+//
+// // banner field automatically jayegi kyunki shop object me hai
+// res.json(shops);
+// });
 
 // MARKET API ROUTE
 app.use('/api/market', require('./routes/market'));
@@ -373,7 +373,7 @@ app.post('/api/admin/shop', (req, res) => {
         priority: db.shops.length + 1,
         range: 5000,
         banner: '', // BANNER FIELD ADD KIYA
- ...req.body
+...req.body
     };
     db.shops.push(newItem);
     writeDB(db);
