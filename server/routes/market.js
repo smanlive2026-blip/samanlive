@@ -98,7 +98,47 @@ router.get('/shops', (req, res) => {
 
     // BANNER FIELD ENSURE KARO - AGAR NAHI HAI TO EMPTY STRING
     shops = shops.map(shop => ({
-       ...shop,
+      ...shop,
+        banner: shop.banner || ''
+    }));
+
+    res.json(shops);
+});
+
+// 3.1. CATEGORY ID SE SHOPS - MODULE PAGE KE LIYE - NEW ROUTE ADD KIYA
+router.get('/shops/:categoryId', (req, res) => {
+    const db = readDB();
+    const { categoryId } = req.params;
+    const userLat = parseFloat(req.query.lat);
+    const userLng = parseFloat(req.query.lng);
+
+    let shops = db.shops.filter(s =>
+        s.categoryId === categoryId &&
+        s.status!== false
+    );
+
+    // Location filter
+    if (userLat && userLng) {
+        shops = shops.map(s => {
+            if (s.lat && s.lng) {
+                const dist = getDistance(userLat, userLng, s.lat, s.lng);
+                s.distance = Math.round(dist);
+                s.distanceKm = (dist/1000).toFixed(1);
+                s.inRange = dist <= (s.range || 5000);
+            } else {
+                s.distance = 999999;
+                s.distanceKm = 'N/A';
+                s.inRange = false;
+            }
+            return s;
+        }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
+    } else {
+        shops = shops.sort((a, b) => a.priority - b.priority);
+    }
+
+    // BANNER FIELD ENSURE KARO
+    shops = shops.map(shop => ({
+      ...shop,
         banner: shop.banner || ''
     }));
 
@@ -116,7 +156,7 @@ router.get('/shop/:id', (req, res) => {
 
     // BANNER FIELD ENSURE KARO
     const shopData = {
-       ...shop,
+      ...shop,
         banner: shop.banner || ''
     };
 
