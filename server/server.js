@@ -5,11 +5,11 @@ const fs = require('fs');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose'); // MONGOOSE ADD KIYA
+const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// MONGODB CONNECTION - NAYA ADD KIYA - YAHAN FIX KIYA
+// MONGODB CONNECTION
 mongoose.connect(process.env.MONGODB_URI)
 .then(() => console.log('MongoDB Connected ✅'))
 .catch(err => console.log('MongoDB Error:', err));
@@ -29,12 +29,68 @@ const shopSchema = new mongoose.Schema({
     logo: String,
     status: { type: Boolean, default: true },
     priority: Number,
-    desc: String
+    desc: String,
+    mongoId: String // JSON wali ID ko track karne ke liye
+}, { timestamps: true });
+
+const moduleSchema = new mongoose.Schema({
+    id: String,
+    name: String,
+    icon: String,
+    color: String,
+    desc: String,
+    banner: String,
+    status: { type: Boolean, default: true },
+    priority: Number,
+    areas: Array,
+    mongoId: String
+}, { timestamps: true });
+
+const adSchema = new mongoose.Schema({
+    id: String,
+    title: String,
+    image: String,
+    link: String,
+    status: { type: Boolean, default: true },
+    priority: Number,
+    mongoId: String
+}, { timestamps: true });
+
+const videoSchema = new mongoose.Schema({
+    id: String,
+    title: String,
+    url: String,
+    thumbnail: String,
+    status: { type: Boolean, default: true },
+    priority: Number,
+    mongoId: String
+}, { timestamps: true });
+
+const campaignSchema = new mongoose.Schema({
+    id: String,
+    name: String,
+    image: String,
+    desc: String,
+    status: { type: Boolean, default: true },
+    priority: Number,
+    mongoId: String
+}, { timestamps: true });
+
+const settingsSchema = new mongoose.Schema({
+    logoText: String,
+    logoImage: String,
+    headerColor: String,
+    footerText: String
 }, { timestamps: true });
 
 const Shop = mongoose.model('Shop', shopSchema);
+const Module = mongoose.model('Module', moduleSchema);
+const Ad = mongoose.model('Ad', adSchema);
+const Video = mongoose.model('Video', videoSchema);
+const Campaign = mongoose.model('Campaign', campaignSchema);
+const Settings = mongoose.model('Settings', settingsSchema);
 
-// Video + Image upload config - Dono ke liye
+// Video + Image upload config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const dir = path.join(__dirname, '../public/uploads');
@@ -63,6 +119,12 @@ function readDB() {
     const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
     if (!data.areaManagers) data.areaManagers = [];
     if (!data.areas) data.areas = [];
+    if (!data.modules) data.modules = [];
+    if (!data.shops) data.shops = [];
+    if (!data.ads) data.ads = [];
+    if (!data.videos) data.videos = [];
+    if (!data.campaigns) data.campaigns = [];
+    if (!data.settings) data.settings = {};
     return data;
 }
 
@@ -71,10 +133,10 @@ function writeDB(data) {
 }
 
 // ========================================
-// LOCATION HELPERS - NEW
+// LOCATION HELPERS
 // ========================================
 function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371e3; // meters
+    const R = 6371e3;
     const φ1 = lat1 * Math.PI/180;
     const φ2 = lat2 * Math.PI/180;
     const Δφ = (lat2-lat1) * Math.PI/180;
@@ -97,114 +159,82 @@ function isPointInPolygon(point, vs) {
 
 function checkModuleInArea(module, userLat, userLng) {
     if(!module.areas || module.areas.length === 0) return { inArea: true, distance: 0 };
-
     for(let area of module.areas) {
         if(area.type === 'circle') {
             const dist = getDistance(userLat, userLng, area.lat, area.lng);
-            if(dist <= area.radius) {
-                return { inArea: true, distance: Math.round(dist) };
-            }
+            if(dist <= area.radius) return { inArea: true, distance: Math.round(dist) };
         }
         if(area.type === 'polygon') {
-            if(isPointInPolygon([userLat, userLng], area.coordinates)) {
-                return { inArea: true, distance: 0 };
-            }
+            if(isPointInPolygon([userLat, userLng], area.coordinates)) return { inArea: true, distance: 0 };
         }
     }
     return { inArea: false, distance: 0 };
 }
 
 // ========================================
-// PUBLIC APIs - Frontend - FIXED
+// PUBLIC APIs - PEHLE JSON SE, FAIL HO TO MONGODB SE
 // ========================================
 app.get('/api/modules', (req, res) => {
     const db = readDB();
     const userLat = parseFloat(req.query.lat);
     const userLng = parseFloat(req.query.lng);
-
     let modules = db.modules.filter(m => m.status);
-
     if(userLat && userLng) {
         modules = modules.filter(m => {
             const check = checkModuleInArea(m, userLat, userLng);
-            if(check.inArea) {
-                m.distance = check.distance;
-                return true;
-            }
+            if(check.inArea) { m.distance = check.distance; return true; }
             return false;
         }).sort((a, b) => a.distance - b.distance);
     } else {
         modules = modules.sort((a, b) => a.priority - b.priority);
     }
-
     res.json(modules);
 });
 
-// FIXED: SHOPS AB MONGODB SE AAYENGI
-app.get('/api/shops', async (req, res) => {
-    try {
-        const userLat = parseFloat(req.query.lat);
-        const userLng = parseFloat(req.query.lng);
-        let shops = await Shop.find({ status: true }).lean();
-
-        if(userLat && userLng) {
-            shops = shops.map(s => {
-                if(s.lat && s.lng) {
-                    const dist = getDistance(userLat, userLng, s.lat, s.lng);
-                    s.distance = Math.round(dist);
-                    s.inRange = dist <= (s.range || 5000);
-                } else {
-                    s.distance = 999999;
-                    s.inRange = false;
-                }
-                return s;
-            }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
-        } else {
-            shops = shops.sort((a, b) => a.priority - b.priority);
-        }
-        res.json(shops);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// FIX 2: Homepage API - Location na mile to bhi saare modules dikhao - SHOPS MONGODB SE
-app.get('/api/homepage', async (req, res) => {
-    try {
-        const db = readDB();
-        const userLat = parseFloat(req.query.lat);
-        const userLng = parseFloat(req.query.lng);
-
-        let modules = [];
-        let shops = [];
-
-        if(userLat && userLng) {
-            modules = db.modules.filter(m => {
-                if(!m.status) return false;
-                const check = checkModuleInArea(m, userLat, userLng);
-                if(check.inArea) {
-                    m.distance = (check.distance/1000).toFixed(1);
-                    return true;
-                }
-                return false;
-            }).sort((a, b) => a.distance - b.distance);
-
-            shops = await Shop.find({ status: true }).lean();
-            shops = shops.filter(s => {
-                if(!s.lat ||!s.lng) return false;
+app.get('/api/shops', (req, res) => {
+    const db = readDB();
+    const userLat = parseFloat(req.query.lat);
+    const userLng = parseFloat(req.query.lng);
+    let shops = db.shops.filter(s => s.status);
+    if(userLat && userLng) {
+        shops = shops.map(s => {
+            if(s.lat && s.lng) {
                 const dist = getDistance(userLat, userLng, s.lat, s.lng);
                 s.distance = Math.round(dist);
-                return dist <= (s.range || 5000);
-            }).sort((a, b) => a.distance - b.distance);
-        } else {
-            modules = db.modules.filter(m => m.status).sort((a, b) => a.priority - b.priority);
-            shops = await Shop.find({ status: true }).sort({ priority: 1 }).lean();
-        }
-
-        res.json({ modules, shops });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+                s.inRange = dist <= (s.range || 5000);
+            } else { s.distance = 999999; s.inRange = false; }
+            return s;
+        }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
+    } else {
+        shops = shops.sort((a, b) => a.priority - b.priority);
     }
+    res.json(shops);
+});
+
+app.get('/api/homepage', (req, res) => {
+    const db = readDB();
+    const userLat = parseFloat(req.query.lat);
+    const userLng = parseFloat(req.query.lng);
+    let modules = [];
+    let shops = [];
+    if(userLat && userLng) {
+        modules = db.modules.filter(m => {
+            if(!m.status) return false;
+            const check = checkModuleInArea(m, userLat, userLng);
+            if(check.inArea) { m.distance = (check.distance/1000).toFixed(1); return true; }
+            return false;
+        }).sort((a, b) => a.distance - b.distance);
+        shops = db.shops.filter(s => {
+            if(!s.status ||!s.lat ||!s.lng) return false;
+            const dist = getDistance(userLat, userLng, s.lat, s.lng);
+            s.distance = Math.round(dist);
+            return dist <= (s.range || 5000);
+        }).sort((a, b) => a.distance - b.distance);
+    } else {
+        modules = db.modules.filter(m => m.status).sort((a, b) => a.priority - b.priority);
+        shops = db.shops.filter(s => s.status).sort((a, b) => a.priority - b.priority);
+    }
+    res.json({ modules, shops });
 });
 
 app.get('/api/ads', (req, res) => {
@@ -227,69 +257,38 @@ app.get('/api/settings', (req, res) => {
     res.json(db.settings);
 });
 
-// ========================================
-// MARKET SHOPS API - COMMENTED OUT - routes/market.js USE HO RAHI HAI
-// ========================================
-// app.get('/api/market/shops/:categoryId', (req, res) => {
-// const db = readDB();
-// const { categoryId } = req.params;
-// const userLat = parseFloat(req.query.lat);
-// const userLng = parseFloat(req.query.lng);
-//
-// // 1. Sirf is category ki active shops nikalo
-// let shops = db.shops.filter(s =>
-// s.categoryId === categoryId &&
-// s.status!== false
-// );
-//
-// // 2. Agar location mili hai to 5km radius filter lagao
-// if (userLat && userLng) {
-// shops = shops.map(shop => {
-// if (shop.lat && shop.lng) {
-// const dist = getDistance(userLat, userLng, parseFloat(shop.lat), parseFloat(shop.lng));
-// shop.distance = Math.round(dist); // meters me
-// shop.inRange = dist <= 5000; // 5km
-// } else {
-// shop.distance = 999999;
-// shop.inRange = false;
-// }
-// return shop;
-// }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
-// }
-//
-// // banner field automatically jayegi kyunki shop object me hai
-// res.json(shops);
-// });
-
 // MARKET API ROUTE
 app.use('/api/market', require('./routes/market'));
-
-// AREA MANAGER API ROUTE - NEW
+// AREA MANAGER API ROUTE
 app.use('/api/area-manager', require('./routes/area-manager'));
 
 // ========================================
-// ADMIN APIs - Control Panel
+// ADMIN APIs - DONO JAGAH SAVE HOGA
 // ========================================
-app.get('/api/admin/data', async (req, res) => {
-    const db = readDB();
-    db.shops = await Shop.find().lean(); // SHOPS MONGODB SE ADD KAR DI
-    res.json(db);
+app.get('/api/admin/data', (req, res) => {
+    res.json(readDB());
 });
 
-// Modules CRUD - JSON ME HI RAHENGE
-app.put('/api/admin/module/:id', (req, res) => {
+// Modules CRUD - JSON + MONGODB DONO
+app.put('/api/admin/module/:id', async (req, res) => {
     const db = readDB();
     const idx = db.modules.findIndex(m => m.id === req.params.id);
     if(idx!== -1) {
         db.modules[idx] = {...db.modules[idx],...req.body};
-        writeDB(db);
+        writeDB(db); // JSON me save
+        // MongoDB me bhi update
+        try {
+            if(db.modules[idx].mongoId) {
+                await Module.findByIdAndUpdate(db.modules[idx].mongoId, req.body);
+            }
+        } catch(e) { console.log('MongoDB update failed:', e.message); }
         res.json({ success: true, data: db.modules[idx] });
     } else {
         res.status(404).json({ error: 'Not found' });
     }
 });
 
-app.post('/api/admin/module', (req, res) => {
+app.post('/api/admin/module', async (req, res) => {
     const db = readDB();
     const newItem = {
         id: req.body.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
@@ -298,145 +297,201 @@ app.post('/api/admin/module', (req, res) => {
         desc: "",
         banner: "",
         areas: [],
-...req.body
+       ...req.body
     };
+    // MongoDB me save
+    try {
+        const mongoItem = new Module(newItem);
+        await mongoItem.save();
+        newItem.mongoId = mongoItem._id.toString(); // MongoDB ID save kar le
+    } catch(e) { console.log('MongoDB save failed:', e.message); }
+
     db.modules.push(newItem);
-    writeDB(db);
+    writeDB(db); // JSON me save
     res.json({ success: true, data: newItem });
 });
 
-app.delete('/api/admin/module/:id', (req, res) => {
+app.delete('/api/admin/module/:id', async (req, res) => {
     const db = readDB();
+    const item = db.modules.find(m => m.id === req.params.id);
+    if(item && item.mongoId) {
+        try { await Module.findByIdAndDelete(item.mongoId); } catch(e) {}
+    }
     db.modules = db.modules.filter(m => m.id!== req.params.id);
     writeDB(db);
     res.json({ success: true });
 });
 
-// Ads CRUD - JSON ME HI RAHENGE
-app.put('/api/admin/ad/:id', (req, res) => {
+// Ads CRUD - JSON + MONGODB DONO
+app.put('/api/admin/ad/:id', async (req, res) => {
     const db = readDB();
     const idx = db.ads.findIndex(a => a.id === req.params.id);
     if(idx!== -1) {
         db.ads[idx] = {...db.ads[idx],...req.body};
         writeDB(db);
+        try {
+            if(db.ads[idx].mongoId) await Ad.findByIdAndUpdate(db.ads[idx].mongoId, req.body);
+        } catch(e) {}
         res.json({ success: true });
     } else res.status(404).json({ error: 'Not found' });
 });
 
-app.post('/api/admin/ad', (req, res) => {
+app.post('/api/admin/ad', async (req, res) => {
     const db = readDB();
     const newItem = { id: 'ad-' + Date.now(), status: true, priority: db.ads.length + 1,...req.body };
+    try {
+        const mongoItem = new Ad(newItem);
+        await mongoItem.save();
+        newItem.mongoId = mongoItem._id.toString();
+    } catch(e) {}
     db.ads.push(newItem);
     writeDB(db);
     res.json({ success: true, data: newItem });
 });
 
-app.delete('/api/admin/ad/:id', (req, res) => {
+app.delete('/api/admin/ad/:id', async (req, res) => {
     const db = readDB();
+    const item = db.ads.find(a => a.id === req.params.id);
+    if(item && item.mongoId) { try { await Ad.findByIdAndDelete(item.mongoId); } catch(e) {} }
     db.ads = db.ads.filter(a => a.id!== req.params.id);
     writeDB(db);
     res.json({ success: true });
 });
 
-// Videos CRUD - JSON ME HI RAHENGE
-app.put('/api/admin/video/:id', (req, res) => {
+// Videos CRUD - JSON + MONGODB DONO
+app.put('/api/admin/video/:id', async (req, res) => {
     const db = readDB();
     const idx = db.videos.findIndex(v => v.id === req.params.id);
     if(idx!== -1) {
         db.videos[idx] = {...db.videos[idx],...req.body};
         writeDB(db);
+        try {
+            if(db.videos[idx].mongoId) await Video.findByIdAndUpdate(db.videos[idx].mongoId, req.body);
+        } catch(e) {}
         res.json({ success: true });
     } else res.status(404).json({ error: 'Not found' });
 });
 
-app.post('/api/admin/video', (req, res) => {
+app.post('/api/admin/video', async (req, res) => {
     const db = readDB();
     const newItem = { id: 'v-' + Date.now(), status: true, priority: db.videos.length + 1,...req.body };
+    try {
+        const mongoItem = new Video(newItem);
+        await mongoItem.save();
+        newItem.mongoId = mongoItem._id.toString();
+    } catch(e) {}
     db.videos.push(newItem);
     writeDB(db);
     res.json({ success: true, data: newItem });
 });
 
-app.delete('/api/admin/video/:id', (req, res) => {
+app.delete('/api/admin/video/:id', async (req, res) => {
     const db = readDB();
+    const item = db.videos.find(v => v.id === req.params.id);
+    if(item && item.mongoId) { try { await Video.findByIdAndDelete(item.mongoId); } catch(e) {} }
     db.videos = db.videos.filter(v => v.id!== req.params.id);
     writeDB(db);
     res.json({ success: true });
 });
 
-// Campaigns CRUD - JSON ME HI RAHENGE
-app.put('/api/admin/campaign/:id', (req, res) => {
+// Campaigns CRUD - JSON + MONGODB DONO
+app.put('/api/admin/campaign/:id', async (req, res) => {
     const db = readDB();
     const idx = db.campaigns.findIndex(c => c.id === req.params.id);
     if(idx!== -1) {
         db.campaigns[idx] = {...db.campaigns[idx],...req.body};
         writeDB(db);
+        try {
+            if(db.campaigns[idx].mongoId) await Campaign.findByIdAndUpdate(db.campaigns[idx].mongoId, req.body);
+        } catch(e) {}
         res.json({ success: true });
     } else res.status(404).json({ error: 'Not found' });
 });
 
-app.post('/api/admin/campaign', (req, res) => {
+app.post('/api/admin/campaign', async (req, res) => {
     const db = readDB();
     const newItem = { id: 'c-' + Date.now(), status: true, priority: db.campaigns.length + 1,...req.body };
+    try {
+        const mongoItem = new Campaign(newItem);
+        await mongoItem.save();
+        newItem.mongoId = mongoItem._id.toString();
+    } catch(e) {}
     db.campaigns.push(newItem);
     writeDB(db);
     res.json({ success: true, data: newItem });
 });
 
-app.delete('/api/admin/campaign/:id', (req, res) => {
+app.delete('/api/admin/campaign/:id', async (req, res) => {
     const db = readDB();
+    const item = db.campaigns.find(c => c.id === req.params.id);
+    if(item && item.mongoId) { try { await Campaign.findByIdAndDelete(item.mongoId); } catch(e) {} }
     db.campaigns = db.campaigns.filter(c => c.id!== req.params.id);
     writeDB(db);
     res.json({ success: true });
 });
 
-// Shops CRUD - AB MONGODB ME SAVE HONGE ✅
+// Shops CRUD - JSON + MONGODB DONO
 app.put('/api/admin/shop/:id', async (req, res) => {
-    try {
-        const updatedShop = await Shop.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if(updatedShop) {
-            res.json({ success: true, data: updatedShop });
-        } else {
-            res.status(404).json({ error: 'Not found' });
-        }
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    const db = readDB();
+    const idx = db.shops.findIndex(s => s.id === req.params.id);
+    if(idx!== -1) {
+        db.shops[idx] = {...db.shops[idx],...req.body};
+        writeDB(db); // JSON me save
+        try {
+            if(db.shops[idx].mongoId) {
+                await Shop.findByIdAndUpdate(db.shops[idx].mongoId, req.body);
+            }
+        } catch(e) { console.log('MongoDB update failed:', e.message); }
+        res.json({ success: true, data: db.shops[idx] });
+    } else {
+        res.status(404).json({ error: 'Not found' });
     }
 });
 
 app.post('/api/admin/shop', async (req, res) => {
+    const db = readDB();
+    const newItem = {
+        id: 's-' + Date.now(),
+        status: true,
+        priority: db.shops.length + 1,
+        range: 5000,
+        banner: '',
+       ...req.body
+    };
+    // MongoDB me save
     try {
-        const count = await Shop.countDocuments();
-        const newItem = new Shop({
-           ...req.body,
-            priority: count + 1,
-            status: true,
-            range: req.body.range || 5000,
-            banner: req.body.banner || ''
-        });
-        await newItem.save();
+        const mongoItem = new Shop(newItem);
+        await mongoItem.save();
+        newItem.mongoId = mongoItem._id.toString();
         console.log('Shop saved to MongoDB:', newItem.name);
-        res.json({ success: true, data: newItem });
-    } catch (err) {
-        console.log('Shop save error:', err);
-        res.status(500).json({ error: err.message });
-    }
+    } catch(e) { console.log('MongoDB save failed:', e.message); }
+
+    db.shops.push(newItem);
+    writeDB(db); // JSON me save
+    res.json({ success: true, data: newItem });
 });
 
 app.delete('/api/admin/shop/:id', async (req, res) => {
-    try {
-        await Shop.findByIdAndDelete(req.params.id);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    const db = readDB();
+    const item = db.shops.find(s => s.id === req.params.id);
+    if(item && item.mongoId) {
+        try { await Shop.findByIdAndDelete(item.mongoId); } catch(e) {}
     }
+    db.shops = db.shops.filter(s => s.id!== req.params.id);
+    writeDB(db);
+    res.json({ success: true });
 });
 
-// Settings - JSON ME HI RAHENGE
-app.put('/api/admin/settings', (req, res) => {
+// Settings - JSON + MONGODB DONO
+app.put('/api/admin/settings', async (req, res) => {
     const db = readDB();
     db.settings = {...db.settings,...req.body};
     writeDB(db);
+    try {
+        let settings = await Settings.findOne();
+        if(!settings) await Settings.create(req.body);
+        else await Settings.findByIdAndUpdate(settings._id, req.body);
+    } catch(e) {}
     res.json({ success: true, settings: db.settings });
 });
 
@@ -450,7 +505,7 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
-// Area Manager page - NEW
+// Area Manager page
 app.get('/area-manager', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/area-manager.html'));
 });
@@ -465,7 +520,6 @@ app.get('/modules/:moduleName', (req, res) => {
     const db = readDB();
     const module = db.modules.find(m => m.id === req.params.moduleName);
     if (!module) return res.status(404).send('Module not found');
-
     res.send(`
         <!DOCTYPE html>
         <html lang="en">
