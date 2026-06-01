@@ -508,16 +508,6 @@ if(notifIcon) {
 }
 
 // ========================================
-// PROFILE CLICK - ADMIN PANEL KHOLO
-// ========================================
-const profileAvatar = document.querySelector('.profile-avatar');
-if(profileAvatar) {
-    profileAvatar.addEventListener('click', function() {
-        window.location.href = '/admin';
-    });
-}
-
-// ========================================
 // PREVENT ZOOM
 // ========================================
 document.addEventListener('gesturestart', function(e) {
@@ -528,3 +518,293 @@ document.addEventListener('gesturestart', function(e) {
 // INIT - Page load pe sab load karo
 // ========================================
 loadAllData();
+
+// ========================================
+// USER AUTH + PROFILE SYSTEM - NAYA ADD KIYA
+// ========================================
+let currentUser = null;
+let scannedUserData = null;
+let html5QrcodeScanner = null;
+
+// CHECK IF LOGGED IN ON PAGE LOAD
+window.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('userToken');
+    if (token) {
+        fetchUserData(token);
+    }
+    updateProfileAvatar();
+});
+
+// FETCH USER DATA
+async function fetchUserData(token) {
+    try {
+        const res = await fetch('/api/auth/me', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data.success) {
+            currentUser = data.user;
+            updateProfileAvatar();
+            document.getElementById('homeQrBtn').style.display = 'block';
+        } else {
+            localStorage.removeItem('userToken');
+        }
+    } catch (err) {
+        localStorage.removeItem('userToken');
+    }
+}
+
+// UPDATE PROFILE AVATAR
+function updateProfileAvatar() {
+    const avatar = document.querySelector('.profile-avatar');
+    if (currentUser) {
+        avatar.innerHTML = `<img src="${currentUser.profilePic || '/assets/default-avatar.png'}" alt="Profile">`;
+        avatar.onclick = openProfileModal;
+    } else {
+        avatar.innerHTML = 'P';
+        avatar.onclick = openLoginModal;
+    }
+}
+
+// LOGIN MODAL
+function openLoginModal() {
+    document.getElementById('loginModal').style.display = 'flex';
+}
+function closeLoginModal() {
+    document.getElementById('loginModal').style.display = 'none';
+}
+
+// PHONE LOGIN
+async function loginWithPhone() {
+    const phone = document.getElementById('loginPhone').value.trim();
+    const name = document.getElementById('loginName').value.trim();
+    
+    if (!phone || phone.length !== 10) return alert('Valid 10 digit phone dalo');
+    if (!name) return alert('Name dalo');
+    
+    try {
+        const res = await fetch('/api/auth/login-phone', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, name })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            localStorage.setItem('userToken', data.token);
+            currentUser = data.user;
+            closeLoginModal();
+            updateProfileAvatar();
+            document.getElementById('homeQrBtn').style.display = 'block';
+            alert('Login Success! 🎉');
+        } else {
+            alert('Login failed: ' + data.error);
+        }
+    } catch (err) {
+        alert('Login failed. Server check karo.');
+    }
+}
+
+// GOOGLE LOGIN - Baad me Firebase add karenge
+function loginWithGoogle() {
+    alert('Google Login setup ho raha hai. Abhi phone se login karo 🙏');
+}
+
+// PROFILE MODAL
+function openProfileModal() {
+    if (!currentUser) return openLoginModal();
+    
+    document.getElementById('profileName').textContent = currentUser.name;
+    document.getElementById('userUniqueId').textContent = currentUser.userId;
+    document.getElementById('profilePic').src = currentUser.profilePic || '/assets/default-avatar.png';
+    document.getElementById('profileModal').style.display = 'flex';
+}
+function closeProfileModal() {
+    document.getElementById('profileModal').style.display = 'none';
+    document.getElementById('qrCodeBox').style.display = 'none';
+    document.getElementById('detailsForm').style.display = 'none';
+}
+
+// SHOW QR CODE
+function showUserQR() {
+    const qrBox = document.getElementById('qrCodeBox');
+    if (qrBox.style.display === 'none') {
+        qrBox.style.display = 'block';
+        generateQRCode(currentUser.qrCodeData);
+    } else {
+        qrBox.style.display = 'none';
+    }
+}
+
+// GENERATE QR
+function generateQRCode(text) {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js';
+    script.onload = () => {
+        const canvas = document.getElementById('qrCanvas');
+        QRCode.toCanvas(canvas, text, { width: 200, margin: 2 });
+    };
+    document.head.appendChild(script);
+}
+
+// SHOW DETAILS FORM
+function showDetailsForm() {
+    const form = document.getElementById('detailsForm');
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        document.getElementById('detailName').value = currentUser.name || '';
+        document.getElementById('detailEmail').value = currentUser.email || '';
+        document.getElementById('detailPhone').value = currentUser.phone || '';
+        document.getElementById('detailAddress').value = currentUser.address?.street || '';
+        document.getElementById('detailLang').value = currentUser.language || 'hi';
+    } else {
+        form.style.display = 'none';
+    }
+}
+
+// UPDATE DETAILS
+async function updateUserDetails() {
+    const token = localStorage.getItem('userToken');
+    const data = {
+        name: document.getElementById('detailName').value,
+        email: document.getElementById('detailEmail').value,
+        phone: document.getElementById('detailPhone').value,
+        address: { street: document.getElementById('detailAddress').value },
+        language: document.getElementById('detailLang').value
+    };
+    
+    try {
+        const res = await fetch('/api/user/update', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (result.success) {
+            currentUser = result.user;
+            alert('Details Updated! ✅');
+            closeProfileModal();
+            updateProfileAvatar();
+        }
+    } catch (err) {
+        alert('Update failed');
+    }
+}
+
+// QR SCANNER
+function openQRScanner() {
+    if (!currentUser) return alert('Pehle login karo bhai');
+    document.getElementById('qrScannerModal').style.display = 'flex';
+    
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/html5-qrcode';
+    script.onload = () => {
+        if (html5QrcodeScanner) html5QrcodeScanner.clear();
+        html5QrcodeScanner = new Html5QrcodeScanner("qrReader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+    };
+    document.head.appendChild(script);
+}
+
+function onScanSuccess(decodedText) {
+    try {
+        scannedUserData = JSON.parse(decodedText);
+        document.getElementById('scannedUserName').textContent = `${scannedUserData.name} - ${scannedUserData.userId}`;
+        document.getElementById('scanResult').style.display = 'block';
+    } catch (err) {
+        alert('Invalid QR Code');
+    }
+}
+
+function closeQRScanner() {
+    document.getElementById('qrScannerModal').style.display = 'none';
+    document.getElementById('scanResult').style.display = 'none';
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear();
+    }
+}
+
+function handleBuy() {
+    alert(`BUY: ${scannedUserData.name} se kharidna hai 🛒\nUser ID: ${scannedUserData.userId}`);
+    closeQRScanner();
+}
+
+function handleSell() {
+    alert(`SELL: ${scannedUserData.name} ko bechna hai 📦\nUser ID: ${scannedUserData.userId}`);
+    closeQRScanner();
+}
+
+// LOGOUT
+function logout() {
+    localStorage.removeItem('userToken');
+    currentUser = null;
+    updateProfileAvatar();
+    document.getElementById('homeQrBtn').style.display = 'none';
+    closeProfileModal();
+    alert('Logged out successfully!');
+}
+
+// ========================================
+// SHOP CREATION SYSTEM - NAYA ADD KIYA
+// ========================================
+function showCreateShop() {
+    if (!currentUser) return alert('Pehle login karo bhai');
+    if (currentUser.hasShop) return alert('Tumhari shop already hai!');
+    
+    // Modules dropdown fill kar
+    const select = document.getElementById('shopModuleSelect');
+    select.innerHTML = '<option value="">Select Service Type</option>';
+    allModules.forEach(m => {
+        select.innerHTML += `<option value="${m.id}">${m.icon} ${m.name}</option>`;
+    });
+    
+    document.getElementById('createShopModal').style.display = 'flex';
+}
+
+function closeCreateShopModal() {
+    document.getElementById('createShopModal').style.display = 'none';
+}
+
+async function submitCreateShop() {
+    const token = localStorage.getItem('userToken');
+    const shopData = {
+        name: document.getElementById('shopNameInput').value.trim(),
+        moduleId: document.getElementById('shopModuleSelect').value,
+        phone: document.getElementById('shopPhoneInput').value.trim(),
+        address: document.getElementById('shopAddressInput').value.trim(),
+        range: parseInt(document.getElementById('shopRangeInput').value) || 5000,
+        icon: document.getElementById('shopIconInput').value || '🏪',
+        color: '#10b981',
+        priority: 1
+    };
+    
+    if (!shopData.name || !shopData.moduleId || !shopData.phone || !shopData.address) {
+        return alert('Sab fields bharo bhai!');
+    }
+    
+    try {
+        const res = await fetch('/api/shop/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(shopData)
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            alert('✅ Shop ban gayi! Ab admin se approval milega.\n\nAbhi status: Pending');
+            currentUser.hasShop = true;
+            closeCreateShopModal();
+            closeProfileModal();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (err) {
+        alert('Shop create failed. Server check karo.');
+    }
+}

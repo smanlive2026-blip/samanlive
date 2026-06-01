@@ -142,6 +142,104 @@
 <p>Made in India ❤️</p>
 </div>
 </footer>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <span class="modal-close" onclick="closeLoginModal()">&times;</span>
+        <h2>Login to SAMANLIVE</h2>
+        <div class="login-tab" id="phoneLogin">
+            <input type="tel" id="loginPhone" placeholder="Mobile Number" maxlength="10">
+            <input type="text" id="loginName" placeholder="Your Name">
+            <button onclick="loginWithPhone()" class="login-btn">Login with OTP</button>
+        </div>
+        <div class="divider">OR</div>
+        <button onclick="loginWithGoogle()" class="google-btn">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"> 
+            Continue with Google
+        </button>
+    </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="profileModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box profile-modal">
+        <span class="modal-close" onclick="closeProfileModal()">&times;</span>
+        <div class="profile-header">
+            <img id="profilePic" src="/assets/default-avatar.png" class="profile-img">
+            <div>
+                <h3 id="profileName">User</h3>
+                <div class="user-id-box" onclick="showUserQR()">
+                    <span>ID: </span><b id="userUniqueId">USER123</b>
+                    <span class="qr-icon">📱</span>
+                </div>
+            </div>
+        </div>
+        <div id="qrCodeBox" style="display:none;">
+            <canvas id="qrCanvas"></canvas>
+            <p>Scan to get user details</p>
+        </div>
+        <div class="profile-options">
+            <button onclick="showDetailsForm()">📋 My Details</button>
+            <button onclick="showCreateShop()">🏪 Create Shop</button>
+            <button onclick="openQRScanner()">📷 Scan QR</button>
+            <button onclick="logout()" class="logout-btn">🚪 Logout</button>
+        </div>
+        <div id="detailsForm" style="display:none;">
+            <input type="text" id="detailName" placeholder="Full Name">
+            <input type="email" id="detailEmail" placeholder="Email">
+            <input type="tel" id="detailPhone" placeholder="Phone">
+            <input type="text" id="detailAddress" placeholder="Address">
+            <select id="detailLang">
+                <option value="hi">Hindi</option>
+                <option value="en">English</option>
+            </select>
+            <button onclick="updateUserDetails()" class="login-btn">Save Details</button>
+        </div>
+    </div>
+</div>
+
+<!-- QR SCANNER MODAL -->
+<div id="qrScannerModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <span class="modal-close" onclick="closeQRScanner()">&times;</span>
+        <h3>Scan QR Code</h3>
+        <div id="qrReader" style="width:100%;"></div>
+        <div id="scanResult" style="display:none;">
+            <h4>Scanned User:</h4>
+            <p id="scannedUserName"></p>
+            <div class="scan-actions">
+                <button onclick="handleBuy()" class="login-btn">💰 BUY</button>
+                <button onclick="handleSell()" class="login-btn">📦 SELL</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CREATE SHOP MODAL -->
+<div id="createShopModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <span class="modal-close" onclick="closeCreateShopModal()">&times;</span>
+        <h2>🏪 Create Your Shop</h2>
+        <input type="text" id="shopNameInput" placeholder="Shop Name" required>
+        <select id="shopModuleSelect" required>
+            <option value="">Select Service Type</option>
+        </select>
+        <input type="tel" id="shopPhoneInput" placeholder="Shop Phone" maxlength="10" required>
+        <textarea id="shopAddressInput" placeholder="Shop Full Address" rows="3" required></textarea>
+        <input type="number" id="shopRangeInput" placeholder="Delivery Range (meters)" value="5000" required>
+        <div style="display:flex; gap:10px; align-items:center; margin:10px 0;">
+            <label>Shop Icon:</label>
+            <input type="text" id="shopIconInput" placeholder="🏪" value="🏪" style="width:60px; text-align:center; font-size:20px;">
+        </div>
+        <button onclick="submitCreateShop()" class="login-btn">✅ Create Shop</button>
+        <p style="font-size:12px; color:#64748b; margin-top:10px;">Shop admin approval ke baad live hogi</p>
+    </div>
+</div>
+
+<!-- FLOATING QR BUTTON -->
+<button id="homeQrBtn" class="floating-qr-btn" onclick="openQRScanner()" style="display:none;">📷</button>
+
 <script src="/assets/js/app.js"></script>
 </body>
 </html>

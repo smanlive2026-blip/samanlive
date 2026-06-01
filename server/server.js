@@ -30,7 +30,8 @@ const shopSchema = new mongoose.Schema({
     status: { type: Boolean, default: true },
     priority: Number,
     desc: String,
-    mongoId: String // JSON wali ID ko track karne ke liye
+    mongoId: String, // JSON wali ID ko track karne ke liye
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // NAYA ADD KIYA
 }, { timestamps: true });
 
 const moduleSchema = new mongoose.Schema({
@@ -83,12 +84,33 @@ const settingsSchema = new mongoose.Schema({
     footerText: String
 }, { timestamps: true });
 
+// USER SCHEMA - NAYA ADD KIYA
+const userSchema = new mongoose.Schema({
+    userId: { type: String, unique: true }, // USER001, USER002
+    name: { type: String, required: true },
+    phone: String,
+    email: String,
+    password: String,
+    profilePic: { type: String, default: '/assets/default-avatar.png' },
+    address: {
+        street: String,
+        city: String,
+        state: String,
+        pincode: String
+    },
+    language: { type: String, default: 'hi' },
+    qrCodeData: String, // JSON string for QR
+    hasShop: { type: Boolean, default: false },
+    googleId: String
+}, { timestamps: true });
+
 const Shop = mongoose.model('Shop', shopSchema);
 const Module = mongoose.model('Module', moduleSchema);
 const Ad = mongoose.model('Ad', adSchema);
 const Video = mongoose.model('Video', videoSchema);
 const Campaign = mongoose.model('Campaign', campaignSchema);
 const Settings = mongoose.model('Settings', settingsSchema);
+const User = mongoose.model('User', userSchema); // NAYA ADD KIYA
 
 // Video + Image upload config
 const storage = multer.diskStorage({
@@ -133,6 +155,28 @@ function writeDB(data) {
 }
 
 // ========================================
+// AUTH MIDDLEWARE - NAYA ADD KIYA
+// ========================================
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.status(401).json({ error: 'Access denied' });
+
+    jwt.verify(token, process.env.JWT_SECRET || 'samanlive_secret_key', (err, user) => {
+        if (err) return res.status(403).json({ error: 'Invalid token' });
+        req.user = user;
+        next();
+    });
+}
+
+// GENERATE USER ID - NAYA ADD KIYA
+async function generateUserId() {
+    const count = await User.countDocuments();
+    return `USER${String(count + 1).padStart(3, '0')}`;
+}
+
+// ========================================
 // LOCATION HELPERS
 // ========================================
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -170,6 +214,113 @@ function checkModuleInArea(module, userLat, userLng) {
     }
     return { inArea: false, distance: 0 };
 }
+
+// ========================================
+// USER AUTH ROUTES - NAYA ADD KIYA
+// ========================================
+app.post('/api/auth/login-phone', async (req, res) => {
+    try {
+        const { phone, name } = req.body;
+        if (!phone ||!name) return res.status(400).json({ error: 'Phone and name required' });
+
+        let user = await User.findOne({ phone });
+
+        if (!user) {
+            // New user
+            const userId = await generateUserId();
+            const qrData = JSON.stringify({ userId, name, phone });
+
+            user = new User({
+                userId,
+                name,
+                phone,
+                qrCodeData: qrData
+            });
+            await user.save();
+        }
+
+        const token = jwt.sign(
+            { userId: user._id, phone: user.phone },
+            process.env.JWT_SECRET || 'samanlive_secret_key',
+            { expiresIn: '30d' }
+        );
+
+        res.json({ success: true, token, user });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId).select('-password');
+        res.json({ success: true, user });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.put('/api/user/update', authenticateToken, async (req, res) => {
+    try {
+        const updates = req.body;
+        const user = await User.findByIdAndUpdate(
+            req.user.userId,
+            { $set: updates },
+            { new: true }
+        ).select('-password');
+
+        // Update QR data if name/phone changed
+        if (updates.name || updates.phone) {
+            user.qrCodeData = JSON.stringify({
+                userId: user.userId,
+                name: user.name,
+                phone: user.phone
+            });
+            await user.save();
+        }
+
+        res.json({ success: true, user });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ========================================
+// SHOP CREATION BY USER - NAYA ADD KIYA
+// ========================================
+app.post('/api/shop/create', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        if (user.hasShop) {
+            return res.status(400).json({ error: 'User already has a shop' });
+        }
+
+        const { name, moduleId, phone, address, range, icon, color } = req.body;
+
+        const shop = new Shop({
+            name,
+            moduleId,
+            phone,
+            address,
+            range,
+            icon,
+            color,
+            priority: 1,
+            status: false, // Pending approval
+            ownerId: req.user.userId
+        });
+
+        await shop.save();
+
+        // User me hasShop true kar do
+        user.hasShop = true;
+        await user.save();
+
+        res.json({ success: true, shop });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // ========================================
 // PUBLIC APIs - PEHLE JSON SE, FAIL HO TO MONGODB SE
@@ -297,7 +448,7 @@ app.post('/api/admin/module', async (req, res) => {
         desc: "",
         banner: "",
         areas: [],
-       ...req.body
+      ...req.body
     };
     // MongoDB me save
     try {
@@ -456,7 +607,7 @@ app.post('/api/admin/shop', async (req, res) => {
         priority: db.shops.length + 1,
         range: 5000,
         banner: '',
-       ...req.body
+      ...req.body
     };
     // MongoDB me save
     try {
