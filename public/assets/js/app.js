@@ -808,3 +808,25 @@ async function submitCreateShop() {
         alert('Shop create failed. Server check karo.');
     }
 }
+
+// ========================================
+// AUTO TRAIN SLIDING - SHOPS & VIDEOS - NAYA ADD KIYA
+// ========================================
+// Train ki tarah continuous smooth scroll
+function startTrainSliding() {
+    // Shops auto train
+    const shopsContainer = document.getElementById('shopsContent');
+    if (shopsContainer) {
+        shopsContainer.classList.add('auto-train');
+        // CSS se handle hoga - main.css me animation add karna
+    }
+    
+    // Videos auto train  
+    const videosContainer = document.getElementById('videosContent');
+    if (videosContainer) {
+        videosContainer.classList.add('auto-train');
+    }
+}
+
+// Page load ke baad train chalu karo
+setTimeout(startTrainSliding, 2000);

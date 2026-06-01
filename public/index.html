@@ -45,11 +45,12 @@
 <div class="nearby-line">
 <div class="line-header">
 <span>Shops Near You</span>
-<div class="line-controls">
+<div class="line-controls" style="display:none;">
 <button onclick="prevShop()">‹</button>
 <button onclick="nextShop()">›</button>
 </div>
-<div class="line-content" id="shopsContent"></div>
+</div>
+<div class="line-content auto-train" id="shopsContent"></div>
 <div class="line-dots" id="shopsDots"></div>
 </div>
 
@@ -57,11 +58,11 @@
 <div class="nearby-line">
 <div class="line-header">
 <span>Live Videos</span>
-<div class="line-controls">
+<div class="line-controls" style="display:none;">
 <button onclick="prevVideo()">‹</button>
 <button onclick="nextVideo()">›</button>
 </div>
-<div class="line-content" id="videosContent"></div>
+<div class="line-content auto-train" id="videosContent"></div>
 <div class="line-dots" id="videosDots"></div>
 </div>
 
@@ -72,12 +73,14 @@
 <button class="nearby-action-btn">👨‍👩‍👧 Track Family</button>
 <button class="nearby-action-btn scanner-btn" onclick="openQRScanner()">📷 Scanner</button>
 </div>
+</div>
 
 <!-- ALL SERVICES - 52 ITEMS, 3 PER ROW -->
 <div class="services-section" id="services">
 <h2 class="section-title">All Services</h2>
 <div class="service-box">
 <div class="service-grid" id="serviceGrid"></div>
+</div>
 </div>
 
 <!-- CAMPAIGNS - 48 ITEMS, 4 PER SLIDE -->
@@ -130,7 +133,6 @@
 <li><a href="/privacy">Privacy Policy</a></li>
 <li><a href="/terms">Terms & Conditions</a></li>
 </ul>
-</div>
 </div>
 <div class="footer-bottom">
 <div class="footer-logo">SAMANLIVE</div>
