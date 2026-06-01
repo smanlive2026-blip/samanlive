@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -8,10 +9,30 @@ const mongoose = require('mongoose'); // MONGOOSE ADD KIYA
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// MONGODB CONNECTION - NAYA ADD KIYA
-mongoose.connect(process.env.MONGO_URL)
- .then(() => console.log('MongoDB Connected ✅'))
- .catch(err => console.log('MongoDB Error:', err));
+// MONGODB CONNECTION - NAYA ADD KIYA - YAHAN FIX KIYA
+mongoose.connect(process.env.MONGODB_URI)
+.then(() => console.log('MongoDB Connected ✅'))
+.catch(err => console.log('MongoDB Error:', err));
+
+// ========================================
+// MONGOOSE SCHEMAS - NAYA ADD KIYA
+// ========================================
+const shopSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    categoryId: String,
+    address: String,
+    phone: String,
+    lat: Number,
+    lng: Number,
+    range: { type: Number, default: 5000 },
+    banner: String,
+    logo: String,
+    status: { type: Boolean, default: true },
+    priority: Number,
+    desc: String
+}, { timestamps: true });
+
+const Shop = mongoose.model('Shop', shopSchema);
 
 // Video + Image upload config - Dono ke liye
 const storage = multer.diskStorage({
@@ -37,7 +58,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// DB Helpers
+// DB Helpers - JSON FILE KE LIYE - ABHI BHI USE HONGE
 function readDB() {
     const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
     if (!data.areaManagers) data.areaManagers = [];
@@ -119,64 +140,71 @@ app.get('/api/modules', (req, res) => {
     res.json(modules);
 });
 
-app.get('/api/shops', (req, res) => {
-    const db = readDB();
-    const userLat = parseFloat(req.query.lat);
-    const userLng = parseFloat(req.query.lng);
+// FIXED: SHOPS AB MONGODB SE AAYENGI
+app.get('/api/shops', async (req, res) => {
+    try {
+        const userLat = parseFloat(req.query.lat);
+        const userLng = parseFloat(req.query.lng);
+        let shops = await Shop.find({ status: true }).lean();
 
-    let shops = db.shops.filter(s => s.status);
-
-    if(userLat && userLng) {
-        shops = shops.map(s => {
-            if(s.lat && s.lng) {
-                const dist = getDistance(userLat, userLng, s.lat, s.lng);
-                s.distance = Math.round(dist);
-                s.inRange = dist <= (s.range || 5000);
-            } else {
-                s.distance = 999999;
-                s.inRange = false;
-            }
-            return s;
-        }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
-    } else {
-        shops = shops.sort((a, b) => a.priority - b.priority);
+        if(userLat && userLng) {
+            shops = shops.map(s => {
+                if(s.lat && s.lng) {
+                    const dist = getDistance(userLat, userLng, s.lat, s.lng);
+                    s.distance = Math.round(dist);
+                    s.inRange = dist <= (s.range || 5000);
+                } else {
+                    s.distance = 999999;
+                    s.inRange = false;
+                }
+                return s;
+            }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
+        } else {
+            shops = shops.sort((a, b) => a.priority - b.priority);
+        }
+        res.json(shops);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    res.json(shops);
 });
 
-// FIX 2: Homepage API - Location na mile to bhi saare modules dikhao
-app.get('/api/homepage', (req, res) => {
-    const db = readDB();
-    const userLat = parseFloat(req.query.lat);
-    const userLng = parseFloat(req.query.lng);
+// FIX 2: Homepage API - Location na mile to bhi saare modules dikhao - SHOPS MONGODB SE
+app.get('/api/homepage', async (req, res) => {
+    try {
+        const db = readDB();
+        const userLat = parseFloat(req.query.lat);
+        const userLng = parseFloat(req.query.lng);
 
-    let modules = [];
-    let shops = [];
+        let modules = [];
+        let shops = [];
 
-    if(userLat && userLng) {
-        modules = db.modules.filter(m => {
-            if(!m.status) return false;
-            const check = checkModuleInArea(m, userLat, userLng);
-            if(check.inArea) {
-                m.distance = (check.distance/1000).toFixed(1);
-                return true;
-            }
-            return false;
-        }).sort((a, b) => a.distance - b.distance);
+        if(userLat && userLng) {
+            modules = db.modules.filter(m => {
+                if(!m.status) return false;
+                const check = checkModuleInArea(m, userLat, userLng);
+                if(check.inArea) {
+                    m.distance = (check.distance/1000).toFixed(1);
+                    return true;
+                }
+                return false;
+            }).sort((a, b) => a.distance - b.distance);
 
-        shops = db.shops.filter(s => {
-            if(!s.status ||!s.lat ||!s.lng) return false;
-            const dist = getDistance(userLat, userLng, s.lat, s.lng);
-            s.distance = Math.round(dist);
-            return dist <= (s.range || 5000);
-        }).sort((a, b) => a.distance - b.distance);
-    } else {
-        modules = db.modules.filter(m => m.status).sort((a, b) => a.priority - b.priority);
-        shops = db.shops.filter(s => s.status).sort((a, b) => a.priority - b.priority);
+            shops = await Shop.find({ status: true }).lean();
+            shops = shops.filter(s => {
+                if(!s.lat ||!s.lng) return false;
+                const dist = getDistance(userLat, userLng, s.lat, s.lng);
+                s.distance = Math.round(dist);
+                return dist <= (s.range || 5000);
+            }).sort((a, b) => a.distance - b.distance);
+        } else {
+            modules = db.modules.filter(m => m.status).sort((a, b) => a.priority - b.priority);
+            shops = await Shop.find({ status: true }).sort({ priority: 1 }).lean();
+        }
+
+        res.json({ modules, shops });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    res.json({ modules, shops });
 });
 
 app.get('/api/ads', (req, res) => {
@@ -242,11 +270,13 @@ app.use('/api/area-manager', require('./routes/area-manager'));
 // ========================================
 // ADMIN APIs - Control Panel
 // ========================================
-app.get('/api/admin/data', (req, res) => {
-    res.json(readDB());
+app.get('/api/admin/data', async (req, res) => {
+    const db = readDB();
+    db.shops = await Shop.find().lean(); // SHOPS MONGODB SE ADD KAR DI
+    res.json(db);
 });
 
-// Modules CRUD
+// Modules CRUD - JSON ME HI RAHENGE
 app.put('/api/admin/module/:id', (req, res) => {
     const db = readDB();
     const idx = db.modules.findIndex(m => m.id === req.params.id);
@@ -282,7 +312,7 @@ app.delete('/api/admin/module/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// Ads CRUD
+// Ads CRUD - JSON ME HI RAHENGE
 app.put('/api/admin/ad/:id', (req, res) => {
     const db = readDB();
     const idx = db.ads.findIndex(a => a.id === req.params.id);
@@ -308,7 +338,7 @@ app.delete('/api/admin/ad/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// Videos CRUD
+// Videos CRUD - JSON ME HI RAHENGE
 app.put('/api/admin/video/:id', (req, res) => {
     const db = readDB();
     const idx = db.videos.findIndex(v => v.id === req.params.id);
@@ -334,7 +364,7 @@ app.delete('/api/admin/video/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// Campaigns CRUD
+// Campaigns CRUD - JSON ME HI RAHENGE
 app.put('/api/admin/campaign/:id', (req, res) => {
     const db = readDB();
     const idx = db.campaigns.findIndex(c => c.id === req.params.id);
@@ -360,40 +390,49 @@ app.delete('/api/admin/campaign/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// Shops CRUD - BANNER SUPPORT ADD KIYA
-app.put('/api/admin/shop/:id', (req, res) => {
-    const db = readDB();
-    const idx = db.shops.findIndex(s => s.id === req.params.id);
-    if(idx!== -1) {
-        db.shops[idx] = {...db.shops[idx],...req.body};
-        writeDB(db);
+// Shops CRUD - AB MONGODB ME SAVE HONGE ✅
+app.put('/api/admin/shop/:id', async (req, res) => {
+    try {
+        const updatedShop = await Shop.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if(updatedShop) {
+            res.json({ success: true, data: updatedShop });
+        } else {
+            res.status(404).json({ error: 'Not found' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/admin/shop', async (req, res) => {
+    try {
+        const count = await Shop.countDocuments();
+        const newItem = new Shop({
+           ...req.body,
+            priority: count + 1,
+            status: true,
+            range: req.body.range || 5000,
+            banner: req.body.banner || ''
+        });
+        await newItem.save();
+        console.log('Shop saved to MongoDB:', newItem.name);
+        res.json({ success: true, data: newItem });
+    } catch (err) {
+        console.log('Shop save error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/admin/shop/:id', async (req, res) => {
+    try {
+        await Shop.findByIdAndDelete(req.params.id);
         res.json({ success: true });
-    } else res.status(404).json({ error: 'Not found' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/admin/shop', (req, res) => {
-    const db = readDB();
-    const newItem = {
-        id: 's-' + Date.now(),
-        status: true,
-        priority: db.shops.length + 1,
-        range: 5000,
-        banner: '', // BANNER FIELD ADD KIYA
-...req.body
-    };
-    db.shops.push(newItem);
-    writeDB(db);
-    res.json({ success: true, data: newItem });
-});
-
-app.delete('/api/admin/shop/:id', (req, res) => {
-    const db = readDB();
-    db.shops = db.shops.filter(s => s.id!== req.params.id);
-    writeDB(db);
-    res.json({ success: true });
-});
-
-// Settings
+// Settings - JSON ME HI RAHENGE
 app.put('/api/admin/settings', (req, res) => {
     const db = readDB();
     db.settings = {...db.settings,...req.body};
