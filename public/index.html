@@ -51,7 +51,6 @@
 </div>
 </div>
 <div class="line-content auto-train" id="shopsContent"></div>
-<div class="line-dots" id="shopsDots"></div>
 </div>
 
 <!-- LINE 2: VIDEOS SLIDER -->
@@ -62,11 +61,11 @@
 <button onclick="prevVideo()">‹</button>
 <button onclick="nextVideo()">›</button>
 </div>
-<div class="line-content auto-train" id="videosContent"></div>
-<div class="line-dots" id="videosDots"></div>
+</div>
+<div class="line-content auto-train" id="videosContent" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;"></div>
 </div>
 
-<!-- LINE 3: 4 BUTTONS FIXED -->
+<!-- LINE 3: 4 BUTTONS FIXED - SAB SAME RAHEGA -->
 <div class="nearby-actions-row">
 <button class="nearby-action-btn">👶 Track Child</button>
 <button class="nearby-action-btn">📦 Track Delivery</button>
@@ -134,10 +133,12 @@
 <li><a href="/terms">Terms & Conditions</a></li>
 </ul>
 </div>
+</div>
 <div class="footer-bottom">
 <div class="footer-logo">SAMANLIVE</div>
 <p>© 2026 SAMANLIVE. All rights reserved.</p>
 <p>Made in India ❤️</p>
+</div>
 </div>
 </footer>
 
@@ -234,9 +235,6 @@
         <p style="font-size:12px; color:#64748b; margin-top:10px;">Shop admin approval ke baad live hogi</p>
     </div>
 </div>
-
-<!-- FLOATING QR BUTTON -->
-<button id="homeQrBtn" class="floating-qr-btn" onclick="openQRScanner()" style="display:none;">📷</button>
 
 <script src="/assets/js/app.js"></script>
 </body>

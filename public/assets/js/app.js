@@ -277,21 +277,15 @@ function renderShops() {
             </div>
         `).join('');
     }
-    const shopsDotsEl = document.getElementById('shopsDots');
-    if(shopsDotsEl) {
-        shopsDotsEl.innerHTML = shopChunks.map((_, idx) => `
-            <span class="${idx === 0? 'active' : ''}" onclick="goToShop(${idx})"></span>
-        `).join('');
-    }
 }
 
 // ========================================
-// RENDER VIDEOS - 3 PER SLIDE
+// RENDER VIDEOS - 4 PER SLIDE - CAMERA ICON HATA DIYA
 // ========================================
 function renderVideos() {
     const videoChunks = [];
-    for (let i = 0; i < nearbyVideos.length; i += 3) {
-        videoChunks.push(nearbyVideos.slice(i, i + 3));
+    for (let i = 0; i < nearbyVideos.length; i += 4) { // 3 se 4 kar diya
+        videoChunks.push(nearbyVideos.slice(i, i + 4));
     }
     const videosEl = document.getElementById('videosContent');
     if(videosEl) {
@@ -304,17 +298,10 @@ function renderVideos() {
                                 <source src="${video.url}" type="video/mp4">
                             </video>
                             <div class="video-label">${video.title}</div>
-                            <div class="video-play">▶</div>
                         </div>
                     `).join('')}
                 </div>
             </div>
-        `).join('');
-    }
-    const videosDotsEl = document.getElementById('videosDots');
-    if(videosDotsEl) {
-        videosDotsEl.innerHTML = videoChunks.map((_, idx) => `
-            <span class="${idx === 0? 'active' : ''}" onclick="goToVideo(${idx})"></span>
         `).join('');
     }
 }
@@ -366,16 +353,13 @@ function prevCampaign() {
 }
 
 // ========================================
-// SLIDER LOGIC - SHOPS
+// SLIDER LOGIC - SHOPS - DOTS HATA DIYE
 // ========================================
 let shopIndex = 0;
 function showShop(idx) {
     const slides = document.querySelectorAll('#shopsContent .nearby-slide');
-    const dots = document.querySelectorAll('#shopsDots span');
     slides.forEach(s => s.classList.remove('active'));
-    dots.forEach(d => d.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
-    if(dots[idx]) dots[idx].classList.add('active');
     shopIndex = idx;
 }
 function nextShop() {
@@ -393,16 +377,13 @@ function prevShop() {
 function goToShop(idx) { showShop(idx); }
 
 // ========================================
-// SLIDER LOGIC - VIDEOS
+// SLIDER LOGIC - VIDEOS - DOTS HATA DIYE
 // ========================================
 let videoIndex = 0;
 function showVideo(idx) {
     const slides = document.querySelectorAll('#videosContent .nearby-slide');
-    const dots = document.querySelectorAll('#videosDots span');
     slides.forEach(s => s.classList.remove('active'));
-    dots.forEach(d => d.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
-    if(dots[idx]) dots[idx].classList.add('active');
     videoIndex = idx;
 }
 function nextVideo() {
@@ -545,7 +526,6 @@ async function fetchUserData(token) {
         if (data.success) {
             currentUser = data.user;
             updateProfileAvatar();
-            document.getElementById('homeQrBtn').style.display = 'block';
         } else {
             localStorage.removeItem('userToken');
         }
@@ -595,7 +575,6 @@ async function loginWithPhone() {
             currentUser = data.user;
             closeLoginModal();
             updateProfileAvatar();
-            document.getElementById('homeQrBtn').style.display = 'block';
             alert('Login Success! 🎉');
         } else {
             alert('Login failed: ' + data.error);
@@ -742,7 +721,6 @@ function logout() {
     localStorage.removeItem('userToken');
     currentUser = null;
     updateProfileAvatar();
-    document.getElementById('homeQrBtn').style.display = 'none';
     closeProfileModal();
     alert('Logged out successfully!');
 }
