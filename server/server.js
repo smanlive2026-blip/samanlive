@@ -449,7 +449,7 @@ app.post('/api/admin/module', async (req, res) => {
         desc: "",
         banner: "",
         areas: [],
-     ...req.body
+    ...req.body
     };
     // MongoDB me save
     try {
@@ -608,7 +608,7 @@ app.post('/api/admin/shop', async (req, res) => {
         priority: db.shops.length + 1,
         range: 5000,
         banner: '',
-     ...req.body
+    ...req.body
     };
     // MongoDB me save
     try {
@@ -630,6 +630,70 @@ app.delete('/api/admin/shop/:id', async (req, res) => {
         try { await Shop.findByIdAndDelete(item.mongoId); } catch(e) {}
     }
     db.shops = db.shops.filter(s => s.id!== req.params.id);
+    writeDB(db);
+    res.json({ success: true });
+});
+
+// ========================================
+// AREA MANAGER CRUD - NAYA ADD KIYA
+// ========================================
+app.get('/api/admin/areaManager', (req, res) => {
+    const db = readDB();
+    res.json(db.areaManagers || []);
+});
+
+app.post('/api/admin/areaManager', async (req, res) => {
+    const db = readDB();
+    const { password,...restData } = req.body;
+
+    // Password hash karo
+    const hashedPassword = password? await bcrypt.hash(password, 10) : '';
+
+    const newManager = {
+        id: 'am-' + Date.now(),
+       ...restData,
+        password: hashedPassword,
+        createdAt: new Date().toISOString(),
+        status: restData.status!== undefined? restData.status : true
+    };
+
+    if (!db.areaManagers) db.areaManagers = [];
+    db.areaManagers.push(newManager);
+    writeDB(db);
+
+    // Password hata ke response bhejo
+    const { password: _,...managerWithoutPassword } = newManager;
+    res.json({ success: true, data: managerWithoutPassword });
+});
+
+app.put('/api/admin/areaManager/:id', async (req, res) => {
+    const db = readDB();
+    if (!db.areaManagers) db.areaManagers = [];
+
+    const idx = db.areaManagers.findIndex(m => m.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Manager not found' });
+
+    const { password,...restData } = req.body;
+    const updateData = {...db.areaManagers[idx],...restData };
+
+    // Agar password diya hai to hash karo
+    if (password && password.trim()!== '') {
+        updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    db.areaManagers[idx] = updateData;
+    writeDB(db);
+
+    // Password hata ke response bhejo
+    const { password: _,...managerWithoutPassword } = updateData;
+    res.json({ success: true, data: managerWithoutPassword });
+});
+
+app.delete('/api/admin/areaManager/:id', (req, res) => {
+    const db = readDB();
+    if (!db.areaManagers) db.areaManagers = [];
+
+    db.areaManagers = db.areaManagers.filter(m => m.id!== req.params.id);
     writeDB(db);
     res.json({ success: true });
 });

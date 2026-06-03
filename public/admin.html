@@ -48,7 +48,7 @@
      #map, #shopMap { height: 450px; margin: 15px 0; border-radius: 8px; border: 2px solid #e5e7eb; }
 .map-controls { display: flex; gap: 10px; margin-bottom: 15px; }
 .area-info { background: #f0f9ff; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #3b82f6; }
-    #qrLog { background: #1e1e; color: #0f0; padding: 15px; height: 200px; overflow-y: scroll; font-family: monospace; font-size: 12px; border-radius: 8px; }
+    #qrLog { background: #1e1e1e; color: #0f0; padding: 15px; height: 200px; overflow-y: scroll; font-family: monospace; font-size: 12px; border-radius: 8px; }
 .batch-card { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; background: #fafafa; }
 .batch-card h4 { margin: 0 0 10px 0; color: #1e40af; }
 .pdf-link { display: inline-block; margin: 5px 10px 5px 0; padding: 8px 12px; background: #42b72a; color: white; text-decoration: none; border-radius: 4px; font-size: 13px; }
@@ -66,6 +66,7 @@
             <button class="tab" onclick="showTab('campaigns', event)">🎯 Campaigns (52)</button>
             <button class="tab" onclick="showTab('shops', event)">🏪 Shops (54)</button>
             <button class="tab" onclick="showTab('shopLocation', event)">🏪 Shop Location</button>
+            <button class="tab" onclick="showTab('areaManagers', event)">👨‍💼 Area Managers</button>
             <button class="tab" onclick="showTab('qrBatch', event)">🎟️ QR Batch</button>
             <button class="tab" onclick="showTab('settings', event)">⚙️ Settings</button>
         </div>
@@ -155,7 +156,7 @@
                 <button class="btn-success" onclick="addItem('shop')">+ Add New Shop</button>
             </div>
             <table id="shopsTable">
-                <thead><tr><th>Icon</th><th>Name</th><th>Module</th><th>Location</th><th>Range</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Icon</th><th>Name</th><th>Module</th><th>Manager</th><th>Location</th><th>Range</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -205,6 +206,27 @@
 
             <div class="area-info" id="shopLocationInfo" style="display:none;">
                 <strong>Current Location:</strong> <span id="shopLocationDetails"></span>
+            </div>
+        </div>
+
+        <!-- AREA MANAGERS TAB - NEW -->
+        <div id="areaManagersTab" class="content">
+            <h2>👨‍💼 Area Managers Control</h2>
+            <p style="color:#64748b;margin-bottom:15px;">Yaha se Area Manager banao, unke shops manage karo. Login link copy karke manager ko de do.</p>
+            <div class="action-bar">
+                <button class="btn-success" onclick="addItem('areaManager')">+ Add New Area Manager</button>
+                <input type="text" class="search-box" placeholder="Search managers..." onkeyup="filterTable('areaManagersTable', this.value)">
+            </div>
+            <table id="areaManagersTable">
+                <thead><tr><th>Name</th><th>City/Area</th><th>Email</th><th>Phone</th><th>Total Shops</th><th>Login Link</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <div id="areaManagerShopsSection" style="display:none; margin-top:30px;">
+                <h3>🏪 Shops of: <span id="selectedManagerName"></span></h3>
+                <div class="action-bar">
+                    <button class="btn-success" onclick="addShopForManager()">+ Add Shop for this Manager</button>
+                </div>
+                <table id="managerShopsTable"><thead><tr><th>Icon</th><th>Name</th><th>Category</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
             </div>
         </div>
 
@@ -378,10 +400,13 @@ let currentTab = 'modules';
 let footerLinks = [];
 let map, drawnItems, currentModuleLayer;
 let shopMap, shopMarker, currentShopId;
+let selectedManagerId = null;
 
 async function loadData() {
     const res = await fetch('/api/admin/data');
     allData = await res.json();
+    if(!allData.settings) allData.settings = {};
+    if(!allData.areaManagers) allData.areaManagers = [];
     if(!allData.settings.footerLinks) allData.settings.footerLinks = [];
     footerLinks = [...allData.settings.footerLinks];
     renderAll();
@@ -413,6 +438,7 @@ function renderAll() {
     renderVideos();
     renderCampaigns();
     renderShops();
+    renderAreaManagers();
     renderSettings();
     loadQRBatches();
 }
@@ -495,12 +521,14 @@ function renderShops() {
     const tbody = document.querySelector('#shopsTable tbody');
     tbody.innerHTML = allData.shops.map(s => {
         const module = allData.modules.find(m => m.id === s.moduleId);
+        const manager = allData.areaManagers.find(m => m.id === s.areaManagerId);
         const hasLocation = s.lat && s.lng;
         return `
         <tr>
             <td style="font-size:24px;">${s.icon}</td>
             <td><strong>${s.name}</strong><br><small>${s.address || ''}</small></td>
             <td>${module? module.name : '-'}</td>
+            <td>${manager? manager.name : 'Admin'}</td>
             <td><span class="status-badge ${hasLocation? 'status-active' : 'status-hidden'}">${hasLocation? '📍 Set' : '❌ Not Set'}</span></td>
             <td>${s.range || 5000}m</td>
             <td>${s.priority}</td>
@@ -511,6 +539,67 @@ function renderShops() {
             </td>
         </tr>
     `}).join('');
+}
+
+function renderAreaManagers() {
+    const tbody = document.querySelector('#areaManagersTable tbody');
+    tbody.innerHTML = allData.areaManagers.map(m => {
+        const shopCount = allData.shops.filter(s => s.areaManagerId === m.id).length;
+        return `<tr>
+            <td><strong>${m.name}</strong></td>
+            <td>${m.city}</td>
+            <td>${m.email}</td>
+            <td>${m.phone || '-'}</td>
+            <td>${shopCount}</td>
+            <td><input type="text" value="https://samanlive.in/manager/${m.city.toLowerCase()}" readonly style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:12px;"></td>
+            <td><span class="status-badge ${m.status? 'status-active' : 'status-hidden'}">${m.status? '✅ Active' : '❌ Disabled'}</span></td>
+            <td>
+                <button class="btn-primary" onclick="viewManagerShops('${m.id}', '${m.name}')">Shops</button>
+                <button class="btn-secondary" onclick="editItem('areaManager', '${m.id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('areaManager', '${m.id}')">Delete</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function viewManagerShops(managerId, managerName) {
+    selectedManagerId = managerId;
+    document.getElementById('selectedManagerName').textContent = managerName;
+    document.getElementById('areaManagerShopsSection').style.display = 'block';
+    const shops = allData.shops.filter(s => s.areaManagerId === managerId);
+    const tbody = document.querySelector('#managerShopsTable tbody');
+    if(shops.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8;">Is manager ke paas koi shop nahi hai</td></tr>';
+        return;
+    }
+    tbody.innerHTML = shops.map(s => `<tr>
+        <td style="font-size:20px;">${s.icon}</td>
+        <td><strong>${s.name}</strong></td>
+        <td>${getCategoryName(s.categoryId)}</td>
+        <td>${s.address || '-'}</td>
+        <td><span class="status-badge ${s.status? 'status-active' : 'status-hidden'}">${s.status? 'Active' : 'Inactive'}</span></td>
+        <td>
+            <button class="btn-primary" onclick="editItem('shop', '${s.id}')">Edit</button>
+            <button class="btn-danger" onclick="deleteItem('shop', '${s.id}')">Delete</button>
+        </td>
+    </tr>`).join('');
+}
+
+function addShopForManager() {
+    if(!selectedManagerId) return alert('Pehle koi manager select karo');
+    addItem('shop');
+    setTimeout(() => {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.id = 'field_areaManagerId';
+        hiddenInput.value = selectedManagerId;
+        document.getElementById('modalFields').appendChild(hiddenInput);
+    }, 100);
+}
+
+function getCategoryName(categoryId) {
+    const module = allData.modules.find(m => m.id === categoryId);
+    return module ? module.name : '-';
 }
 
 function renderSettings() {
@@ -635,13 +724,14 @@ function removeFooterLink(idx) {
 function showTab(tab, event) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-    event.target.classList.add('active');
+    if(event) event.target.classList.add('active');
     document.getElementById(tab + 'Tab').classList.add('active');
     currentTab = tab;
 
     if(tab === 'moduleArea') initModuleMap();
     if(tab === 'shopLocation') initShopMap();
     if(tab === 'qrBatch') loadQRBatches();
+    if(tab === 'areaManagers') document.getElementById('areaManagerShopsSection').style.display = 'none';
 }
 
 function getFields(type) {
@@ -686,6 +776,14 @@ function getFields(type) {
             { key: 'range', label: 'Range (meters)', type: 'number' },
             { key: 'priority', label: 'Priority', type: 'number' },
             { key: 'status', label: 'Status', type: 'select', options: [{v: true, t: '✅ Active'}, {v: false, t: '❌ Hidden'}] }
+        ],
+        areaManager: [
+            { key: 'name', label: 'Manager Name', type: 'text', placeholder: 'Ramesh Kumar' },
+            { key: 'city', label: 'City/Area', type: 'text', placeholder: 'Lucknow' },
+            { key: 'email', label: 'Email', type: 'text', placeholder: 'ramesh@email.com' },
+            { key: 'password', label: 'Password', type: 'text', placeholder: 'Set password' },
+            { key: 'phone', label: 'Phone', type: 'text', placeholder: '9876543210' },
+            { key: 'status', label: 'Status', type: 'select', options: [{v: true, t: '✅ Active'}, {v: false, t: '❌ Disabled'}] }
         ]
     };
     return fields[type] || [];
@@ -731,6 +829,7 @@ async function saveItem() {
 
     fields.forEach(f => {
         const el = document.getElementById(`field_${f.key}`);
+        if(!el) return;
         data[f.key] = f.type === 'select'? el.value === 'true' : el.value;
     });
 
