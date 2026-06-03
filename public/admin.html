@@ -10,48 +10,48 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; padding: 20px; }
- .container { max-width: 1600px; margin: 0 auto; }
+.container { max-width: 1600px; margin: 0 auto; }
         h1 { color: #1e40af; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
- .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
- .tab { padding: 10px 20px; background: white; border: none; cursor: pointer; border-radius: 8px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
- .tab.active { background: #1e40af; color: white; }
- .content { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
- .content.active { display: block; }
+.tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.tab { padding: 10px 20px; background: white; border: none; cursor: pointer; border-radius: 8px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.tab.active { background: #1e40af; color: white; }
+.content { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
+.content.active { display: block; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
         th { background: #f9fafb; font-weight: 600; color: #374151; }
         button { padding: 8px 16px; margin: 2px; cursor: pointer; border: none; border-radius: 6px; font-weight: 600; }
- .btn-primary { background: #3b82f6; color: white; }
- .btn-danger { background: #ef4444; color: white; }
- .btn-success { background: #10b981; color: white; }
- .btn-warning { background: #f59e0b; color: white; }
- .btn-secondary { background: #6b7280; color: white; }
- .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
- .modal-content { background: white; margin: 30px auto; padding: 30px; width: 90%; max-width: 700px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
- .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
- .form-group { margin-bottom: 15px; }
- .form-group.full { grid-column: 1 / -1; }
- .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #374151; }
- .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
- .color-preview { width: 50px; height: 50px; border-radius: 8px; border: 2px solid #e5e7eb; margin-top: 5px; }
- .icon-preview { font-size: 40px; margin-top: 5px; }
- .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
- .status-active { background: #d1fae5; color: #065f46; }
- .status-hidden { background: #fee2e2; color: #991b1b; }
- .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
- .search-box { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; width: 300px; }
- .upload-box { border: 2px dashed #d1d5db; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 15px; background: #f9fafb; }
- .upload-box input[type="file"] { margin: 10px 0; }
- .link-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
- .link-item input { flex: 1; }
- .link-item button { flex-shrink: 0; }
+.btn-primary { background: #3b82f6; color: white; }
+.btn-danger { background: #ef4444; color: white; }
+.btn-success { background: #10b981; color: white; }
+.btn-warning { background: #f59e0b; color: white; }
+.btn-secondary { background: #6b7280; color: white; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+.modal-content { background: white; margin: 30px auto; padding: 30px; width: 90%; max-width: 700px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.form-group { margin-bottom: 15px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #374151; }
+.form-group input,.form-group select,.form-group textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+.color-preview { width: 50px; height: 50px; border-radius: 8px; border: 2px solid #e5e7eb; margin-top: 5px; }
+.icon-preview { font-size: 40px; margin-top: 5px; }
+.status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.status-active { background: #d1fae5; color: #065f46; }
+.status-hidden { background: #fee2e2; color: #991b1b; }
+.action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.search-box { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; width: 300px; }
+.upload-box { border: 2px dashed #d1d5db; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 15px; background: #f9fafb; }
+.upload-box input[type="file"] { margin: 10px 0; }
+.link-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+.link-item input { flex: 1; }
+.link-item button { flex-shrink: 0; }
      #map, #shopMap { height: 450px; margin: 15px 0; border-radius: 8px; border: 2px solid #e5e7eb; }
- .map-controls { display: flex; gap: 10px; margin-bottom: 15px; }
- .area-info { background: #f0f9ff; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #3b82f6; }
-    #qrLog { background: #1e1e1e; color: #0f0; padding: 15px; height: 200px; overflow-y: scroll; font-family: monospace; font-size: 12px; border-radius: 8px; }
- .batch-card { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; background: #fafafa; }
- .batch-card h4 { margin: 0 0 10px 0; color: #1e40af; }
- .pdf-link { display: inline-block; margin: 5px 10px 5px 0; padding: 8px 12px; background: #42b72a; color: white; text-decoration: none; border-radius: 4px; font-size: 13px; }
+.map-controls { display: flex; gap: 10px; margin-bottom: 15px; }
+.area-info { background: #f0f9ff; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #3b82f6; }
+    #qrLog { background: #1e1e; color: #0f0; padding: 15px; height: 200px; overflow-y: scroll; font-family: monospace; font-size: 12px; border-radius: 8px; }
+.batch-card { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; background: #fafafa; }
+.batch-card h4 { margin: 0 0 10px 0; color: #1e40af; }
+.pdf-link { display: inline-block; margin: 5px 10px 5px 0; padding: 8px 12px; background: #42b72a; color: white; text-decoration: none; border-radius: 4px; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -653,7 +653,8 @@ function getFields(type) {
             { key: 'link', label: 'Link', type: 'text', placeholder: '/education' },
             { key: 'desc', label: 'Description', type: 'textarea' },
             { key: 'priority', label: 'Priority', type: 'number' },
-            { key: 'status', label: 'Status', type: 'select', options: [{v: true, t: '✅ Active ],
+            { key: 'status', label:'Status', type: 'select', options: [{v: true, t: '✅ Active'}, {v: false, t: '❌ Hidden'}] }
+        ],
         ad: [
             { key: 'title', label: 'Title', type: 'text' },
             { key: 'desc', label: 'Description', type: 'text' },
@@ -843,9 +844,9 @@ function filterTable(tableId, query) {
 // MODULE AREA MAP FUNCTIONS
 // ========================================
 function initModuleMap() {
-    if(map) return; // Already initialized
+    if(map) return;
 
-    map = L.map('map').setView([26.8467, 80.9462], 12); // Lucknow default
+    map = L.map('map').setView([26.8467, 80.9462], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
     }).addTo(map);
@@ -986,14 +987,12 @@ function loadShopLocation() {
     const shop = allData.shops.find(s => s.id === shopId);
     if(!shop) return;
 
-    // Fill form fields
     document.getElementById('shopName').value = shop.name || '';
     document.getElementById('shopPhone').value = shop.phone || '';
     document.getElementById('shopRange').value = shop.range || 5000;
     document.getElementById('shopAddress').value = shop.address || '';
     document.getElementById('shopModuleLink').value = shop.moduleId || '';
 
-    // Show marker if location exists
     if(shop.lat && shop.lng) {
         if(shopMarker) shopMap.removeLayer(shopMarker);
         shopMarker = L.marker([shop.lat, shop.lng]).addTo(shopMap);
@@ -1061,7 +1060,7 @@ async function generateQRBatch() {
     const btn = event.target;
     btn.disabled = true;
     btn.innerText = 'Ban Raha Hai... Wait...';
-    document.getElementById('downloadBtns').style.display = 'none'; // Hide old buttons
+    document.getElementById('downloadBtns').style.display = 'none';
     qrLog('🚀 QR Generation Start...');
 
     const data = {
@@ -1117,7 +1116,6 @@ async function makeQRPDF(folderPath, finalPdf1Name, finalPdf2Name) {
         qrLog(result.log || result.error);
         qrLog('✅ DONE! Dono PDF ready hai.');
 
-        // NEW: Show download buttons
         if(result.success) {
             document.getElementById('downloadBtns').style.display = 'block';
             const btn1 = document.getElementById('btnPdf1');
