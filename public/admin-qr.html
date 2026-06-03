@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Generator - SamanLive</title>
+    <style>
+        body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+        .box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        button { background: #4CAF50; color: white; font-weight: bold; cursor: pointer; border: none; }
+        button:hover { background: #45a049; }
+        .cmd { background: #263238; color: #aed581; padding: 15px; border-radius: 5px; margin-top: 20px; font-family: monospace; word-break: break-all; }
+        h2 { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>SamanLive QR Batch Generator</h2>
+        <input type="text" id="manager_id" placeholder="Manager ID" value="MGR_78">
+        <input type="text" id="product_name" placeholder="Product Name" value="Parle-G 5Rs">
+        <input type="text" id="batch" placeholder="Batch Number" value="NOV_2026_JPR">
+        <input type="text" id="mfg_date" placeholder="MFG Date MM/YYYY" value="11/2026">
+        <input type="number" id="quantity" placeholder="Kitne QR Chahiye?" value="1000">
+        <button onclick="generateCommand()">Command Banao</button>
+        
+        <div id="output" style="display:none;">
+            <h3>Terminal Me Ye Command Chalao:</h3>
+            <div class="cmd" id="command"></div>
+            <p>⚠️ Note: Ye command copy karke VS Code ke terminal me paste kar dena. QR `qr_output` folder me ban jayenge.</p>
+        </div>
+    </div>
+
+    <script>
+        function generateCommand() {
+            const mid = document.getElementById('manager_id').value;
+            const pname = document.getElementById('product_name').value;
+            const batch = document.getElementById('batch').value;
+            const mfg = document.getElementById('mfg_date').value;
+            const qty = document.getElementById('quantity').value;
+            
+            if(!mid || !pname || !batch || !mfg || !qty) {
+                alert("Saare field bharo bhai");
+                return;
+            }
+            
+            const cmd = `node generate-qr-batch.js "${mid}" "${pname}" "${batch}" "${mfg}" ${qty}`;
+            document.getElementById('command').innerText = cmd;
+            document.getElementById('output').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
