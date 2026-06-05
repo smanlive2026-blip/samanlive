@@ -539,7 +539,7 @@ function updateProfileAvatar() {
     const avatar = document.querySelector('.profile-avatar');
     if (currentUser) {
         avatar.innerHTML = `<img src="${currentUser.profilePic || '/assets/default-avatar.png'}" alt="Profile">`;
-        avatar.onclick = openProfileModal;
+        avatar.onclick = goToProfilePage; // CHANGE 1: YAHAN BADLA
     } else {
         avatar.innerHTML = 'P';
         avatar.onclick = openLoginModal;
@@ -817,5 +817,5 @@ function goToProfilePage() {
         openLoginModal();
         return;
     }
-    window.location.href = '/profile/profile.html';
+    window.location.href = '/profile/profile.html'; // CHANGE 2: YAHAN BADLA
 }
