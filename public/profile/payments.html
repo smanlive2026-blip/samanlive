@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Payment Methods - SAMANLIVE</title>
+<link rel="stylesheet" href="/assets/css/main.css">
+<style>
+.payments-page {
+    min-height: 100vh;
+    background: #f1f5f9;
+    padding-bottom: 100px;
+}
+.header-bar {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 16px 20px;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.header-bar .back-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 12px;
+}
+.header-bar h1 {
+    display: inline-block;
+    font-size: 20px;
+    margin: 0;
+}
+.payments-container {
+    margin: 20px;
+}
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 24px 0 12px 0;
+}
+.payment-card {
+    background: white;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.payment-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.payment-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+.upi-icon { background: linear-gradient(135deg, #10b981, #059669); }
+.card-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.wallet-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.payment-details h3 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    color: #1e293b;
+}
+.payment-details p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+.default-badge {
+    background: #10b981;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.payment-actions {
+    display: flex;
+    gap: 8px;
+}
+.action-btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-default {
+    background: #dbeafe;
+    color: #1e40af;
+}
+.btn-delete {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.add-payment-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+    z-index: 50;
+}
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+.empty-state .icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+.empty-state h2 {
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+.empty-state p {
+    color: #64748b;
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal-overlay.active {
+    display: flex;
+}
+.modal-box {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #1e293b;
+}
+.close-modal {
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    color: #64748b;
+}
+.modal-body {
+    padding: 24px;
+}
+.payment-type-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.type-tab {
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.type-tab.active {
+    border-color: #667eea;
+    background: #eef2ff;
+}
+.type-tab .icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+.type-tab .label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+.form-group {
+    margin-bottom: 18px;
+}
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+.checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+.checkbox-group label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+}
+.save-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+   .payments-container {
+        margin: 16px;
+    }
+   .form-row {
+        grid-template-columns: 1fr;
+    }
+   .add-payment-btn {
+        left: 16px;
+        right: 16px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="payments-page">
+    <div class="header-bar">
+        <button class="back-btn" onclick="window.location.href='/profile.html'">← Back</button>
+        <h1>Payment Methods</h1>
+    </div>
+
+    <div class="payments-container" id="paymentsContainer">
+        <div class="empty-state">
+            <div class="icon">💳</div>
+            <h2>No Payment Methods</h2>
+            <p>Add UPI, Cards or Wallets for faster checkout</p>
+        </div>
+    </div>
+
+    <button class="add-payment-btn" onclick="openPaymentModal()">+ Add Payment Method</button>
+</div>
+
+<!-- Add Payment Modal -->
+<div class="modal-overlay" id="paymentModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Add Payment Method</h2>
+            <button class="close-modal" onclick="closePaymentModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="payment-type-tabs">
+                <div class="type-tab active" data-type="upi" onclick="selectPaymentType('upi')">
+                    <div class="icon">📱</div>
+                    <div class="label">UPI</div>
+                </div>
+                <div class="type-tab" data-type="card" onclick="selectPaymentType('card')">
+                    <div class="icon">💳</div>
+                    <div class="label">Card</div>
+                </div>
+                <div class="type-tab" data-type="wallet" onclick="selectPaymentType('wallet')">
+                    <div class="icon">👛</div>
+                    <div class="label">Wallet</div>
+                </div>
+            </div>
+
+            <!-- UPI Form -->
+            <div id="upiForm" class="payment-form">
+                <div class="form-group">
+                    <label>UPI ID *</label>
+                    <input type="text" id="upiId" placeholder="yourname@paytm">
+                </div>
+                <div class="form-group">
+                    <label>Name on UPI *</label>
+                    <input type="text" id="upiName" placeholder="Full name">
+                </div>
+            </div>
+
+            <!-- Card Form -->
+            <div id="cardForm" class="payment-form" style="display:none">
+                <div class="form-group">
+                    <label>Card Number *</label>
+                    <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                </div>
+                <div class="form-group">
+                    <label>Cardholder Name *</label>
+                    <input type="text" id="cardName" placeholder="Name on card">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Expiry *</label>
+                        <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5">
+                    </div>
+                    <div class="form-group">
+                        <label>CVV *</label>
+                        <input type="password" id="cardCvv" placeholder="123" maxlength="3">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wallet Form -->
+            <div id="walletForm" class="payment-form" style="display:none">
+                <div class="form-group">
+                    <label>Wallet Type *</label>
+                    <select id="walletType">
+                        <option value="paytm">Paytm Wallet</option>
+                        <option value="phonepe">PhonePe Wallet</option>
+                        <option value="amazonpay">Amazon Pay</option>
+                        <option value="mobikwik">MobiKwik</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mobile Number *</label>
+                    <input type="tel" id="walletPhone" placeholder="10 digit mobile" maxlength="10">
+                </div>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="setDefaultPayment">
+                <label for="setDefaultPayment">Set as default payment method</label>
+            </div>
+
+            <button class="save-btn" onclick="savePayment()" id="saveBtn">Save Payment Method</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let allPayments = [];
+let selectedPaymentType = 'upi';
+
+// Load payments
+window.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+        window.location.href = '/';
+        return;
+    }
+    await loadPayments();
+});
+
+async function loadPayments() {
+    const token = localStorage.getItem('userToken');
+    try {
+        const res = await fetch('/api/user/payments', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data.success) {
+            allPayments = data.payments || [];
+            renderPayments();
+        }
+    } catch (err) {
+        console.error('Failed to load payments:', err);
+    }
+}
+
+function renderPayments() {
+    const container = document.getElementById('paymentsContainer');
+
+    if (allPayments.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="icon">💳</div>
+                <h2>No Payment Methods</h2>
+                <p>Add UPI, Cards or Wallets for faster checkout</p>
+            </div>
+        `;
+        return;
+    }
+
+    const upiPayments = allPayments.filter(p => p.type === 'upi');
+    const cardPayments = allPayments.filter(p => p.type === 'card');
+    const walletPayments = allPayments.filter(p => p.type === 'wallet');
+
+    let html = '';
+
+    if (upiPayments.length > 0) {
+        html += '<div class="section-title">UPI</div>';
+        html += upiPayments.map(p => renderPaymentCard(p)).join('');
+    }
+
+    if (cardPayments.length > 0) {
+        html += '<div class="section-title">Cards</div>';
+        html += cardPayments.map(p => renderPaymentCard(p)).join('');
+    }
+
+    if (walletPayments.length > 0) {
+        html += '<div class="section-title">Wallets</div>';
+        html += walletPayments.map(p => renderPaymentCard(p)).join('');
+    }
+
+    container.innerHTML = html;
+}
+
+function renderPaymentCard(payment) {
+    let iconClass, iconEmoji, displayText;
+
+    if (payment.type === 'upi') {
+        iconClass = 'upi-icon';
+        iconEmoji = '📱';
+        displayText = payment.upiId;
+    } else if (payment.type === 'card') {
+        iconClass = 'card-icon';
+        iconEmoji = '💳';
+        displayText = '**** **** **** ' + payment.cardLast4;
+    } else {
+        iconClass = 'wallet-icon';
+        iconEmoji = '👛';
+        displayText = payment.walletType + ' - ' + payment.phone;
+    }
+
+    return `
+        <div class="payment-card">
+            <div class="payment-left">
+                <div class="payment-icon ${iconClass}">${iconEmoji}</div>
+                <div class="payment-details">
+                    <h3>${payment.name}</h3>
+                    <p>${displayText}</p>
+                </div>
+            <div class="payment-actions">
+                ${payment.isDefault ? '<span class="default-badge">DEFAULT</span>' : `
+                    <button class="action-btn btn-default" onclick="setDefaultPayment('${payment._id}')">Set Default</button>
+                `}
+                <button class="action-btn btn-delete" onclick="deletePayment('${payment._id}')">Delete</button>
+            </div>
+        </div>
+    `;
+}
+
+function openPaymentModal() {
+    document.getElementById('paymentModal').classList.add('active');
+    selectPaymentType('upi');
+}
+
+function closePaymentModal() {
+    document.getElementById('paymentModal').classList.remove('active');
+}
+
+function selectPaymentType(type) {
+    selectedPaymentType = type;
+    document.querySelectorAll('.type-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`[data-type="${type}"]`).classList.add('active');
+    
+    document.getElementById('upiForm').style.display = type === 'upi' ? 'block' : 'none';
+    document.getElementById('cardForm').style.display = type === 'card' ? 'block' : 'none';
+    document.getElementById('walletForm').style.display = type === 'wallet' ? 'block' : 'none';
+}
+
+async function savePayment() {
+    const btn = document.getElementById('saveBtn');
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    const token = localStorage.getItem('userToken');
+    let paymentData = {
+        type: selectedPaymentType,
+        isDefault: document.getElementById('setDefaultPayment').checked
+    };
+
+    if (selectedPaymentType === 'upi') {
+        paymentData.upiId = document.getElementById('upiId').value.trim();
+        paymentData.name = document.getElementById('upiName').value.trim();
+        if (!paymentData.upiId || !paymentData.name) {
+            alert('Please fill all UPI fields!');
+            btn.textContent = 'Save Payment Method';
+            btn.disabled = false;
+            return;
+        }
+    } else if (selectedPaymentType === 'card') {
+        paymentData.cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+        paymentData.cardName = document.getElementById('cardName').value.trim();
+        paymentData.cardExpiry = document.getElementById('cardExpiry').value.trim();
+        paymentData.cardCvv = document.getElementById('cardCvv').value.trim();
+        if (!paymentData.cardNumber || !paymentData.cardName || !paymentData.cardExpiry || !paymentData.cardCvv) {
+            alert('Please fill all card fields!');
+            btn.textContent = 'Save Payment Method';
+            btn.disabled = false;
+            return;
+        }
+    } else {
+        paymentData.walletType = document.getElementById('walletType').value;
+        paymentData.phone = document.getElementById('walletPhone').value.trim();
+        paymentData.name = paymentData.walletType + ' Wallet';
+        if (!paymentData.phone) {
+            alert('Please enter mobile number!');
+            btn.textContent = 'Save Payment Method';
+            btn.disabled = false;
+            return;
+        }
+    }
+
+    try {
+        const res = await fetch('/api/user/payments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(paymentData)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            await loadPayments();
+            closePaymentModal();
+            alert('✅ Payment method added!');
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (err) {
+        alert('Failed to save payment method');
+    }
+
+    btn.textContent = 'Save Payment Method';
+    btn.disabled = false;
+}
+
+async function deletePayment(paymentId) {
+    if (!confirm('Delete this payment method?')) return;
+
+    const token = localStorage.getItem('userToken');
+    try {
+        const res = await fetch(`/api/user/payments/${paymentId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data.success) {
+            await loadPayments();
+            alert('Payment method deleted!');
+        }
+    } catch (err) {
+        alert('Failed to delete');
+    }
+}
+
+async function setDefaultPayment(paymentId) {
+    const token = localStorage.getItem('userToken');
+    try {
+        const res = await fetch(`/api/user/payments/${paymentId}/default`, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data.success) {
+            await loadPayments();
+            alert('✅ Default payment updated!');
+        }
+    } catch (err) {
+        alert('Failed to set default');
+    }
+}
+
+// Card number formatting
+document.getElementById('cardNumber')?.addEventListener('input', (e) => {
+    let value = e.target.value.replace(/\s/g, '');
+    let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
+    e.target.value = formatted;
+});
+
+// Expiry formatting
+document.getElementById('cardExpiry')?.addEventListener('input', (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length >= 2) {
+        value = value.slice(0,2) + '/' + value.slice(2,4);
+    }
+    e.target.value = value;
+});
+</script>
+</body>
+</html>

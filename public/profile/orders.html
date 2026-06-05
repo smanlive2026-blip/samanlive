@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>My Orders - SAMANLIVE</title>
+<link rel="stylesheet" href="/assets/css/main.css">
+<style>
+.orders-page {
+    min-height: 100vh;
+    background: #f1f5f9;
+    padding-bottom: 40px;
+}
+.header-bar {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 16px 20px;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.header-bar .back-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 12px;
+}
+.header-bar h1 {
+    display: inline-block;
+    font-size: 20px;
+    margin: 0;
+}
+.filter-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px;
+    background: white;
+    overflow-x: auto;
+    border-bottom: 1px solid #e2e8f0;
+}
+.filter-tab {
+    padding: 8px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    background: white;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.filter-tab.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+.orders-container {
+    margin: 20px;
+}
+.order-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.order-id {
+    font-size: 14px;
+    color: #64748b;
+}
+.order-id b {
+    color: #1e293b;
+}
+.order-status {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.status-delivered {
+    background: #d1fae5;
+    color: #065f46;
+}
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.status-shipped {
+    background: #dbeafe;
+    color: #1e40af;
+}
+.order-body {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.order-img {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: #f1f5f9;
+}
+.order-details h3 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    color: #1e293b;
+}
+.order-details p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+.order-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+.order-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+}
+.order-actions {
+    display: flex;
+    gap: 8px;
+}
+.action-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+.btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+}
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+.empty-state .icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+.empty-state h2 {
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+.empty-state p {
+    color: #64748b;
+    margin-bottom: 20px;
+}
+.shop-now-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+@media (max-width: 768px) {
+    .orders-container {
+        margin: 16px;
+    }
+    .order-body {
+        flex-direction: column;
+    }
+    .order-footer {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    .order-actions {
+        width: 100%;
+    }
+    .action-btn {
+        flex: 1;
+    }
+}
+</style>
+</head>
+<body>
+<div class="orders-page">
+    <div class="header-bar">
+        <button class="back-btn" onclick="window.location.href='/profile.html'">← Back</button>
+        <h1>My Orders</h1>
+    </div>
+
+    <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterOrders('all')">All Orders</button>
+        <button class="filter-tab" onclick="filterOrders('pending')">Pending</button>
+        <button class="filter-tab" onclick="filterOrders('shipped')">Shipped</button>
+        <button class="filter-tab" onclick="filterOrders('delivered')">Delivered</button>
+        <button class="filter-tab" onclick="filterOrders('cancelled')">Cancelled</button>
+    </div>
+
+    <div class="orders-container" id="ordersContainer">
+        <div class="empty-state">
+            <div class="icon">📦</div>
+            <h2>No Orders Yet</h2>
+            <p>You haven't placed any orders yet. Start shopping now!</p>
+            <button class="shop-now-btn" onclick="window.location.href='/'">Shop Now</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let allOrders = [];
+let currentFilter = 'all';
+
+// Load orders
+window.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+        window.location.href = '/';
+        return;
+    }
+    await loadOrders();
+});
+
+async function loadOrders() {
+    const token = localStorage.getItem('userToken');
+    try {
+        const res = await fetch('/api/orders/my-orders', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data.success) {
+            allOrders = data.orders || [];
+            renderOrders();
+        } else {
+            showEmptyState();
+        }
+    } catch (err) {
+        console.error('Failed to load orders:', err);
+        showEmptyState();
+    }
+}
+
+function filterOrders(status) {
+    currentFilter = status;
+    document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+    event.target.classList.add('active');
+    renderOrders();
+}
+
+function renderOrders() {
+    const container = document.getElementById('ordersContainer');
+    const filtered = currentFilter === 'all' 
+        ? allOrders 
+        : allOrders.filter(o => o.status === currentFilter);
+
+    if (filtered.length === 0) {
+        showEmptyState();
+        return;
+    }
+
+    container.innerHTML = filtered.map(order => `
+        <div class="order-card">
+            <div class="order-header">
+                <div class="order-id">
+                    Order <b>#${order.orderId}</b><br>
+                    <span>${new Date(order.createdAt).toLocaleDateString('en-IN')}</span>
+                </div>
+                <div class="order-status status-${order.status}">${order.status}</div>
+            </div>
+            <div class="order-body">
+                <img src="${order.items[0]?.image || '/assets/default-product.png'}" class="order-img" alt="Product">
+                <div class="order-details">
+                    <h3>${order.items[0]?.name || 'Product'}</h3>
+                    <p>Qty: ${order.items[0]?.quantity || 1} • ${order.items.length} item(s)</p>
+                    <p>Shop: ${order.shopName || 'SAMANLIVE Store'}</p>
+                </div>
+            <div class="order-footer">
+                <div class="order-price">₹${order.totalAmount}</div>
+                <div class="order-actions">
+                    ${order.status === 'delivered' ? `
+                        <button class="action-btn btn-secondary" onclick="returnOrder('${order._id}')">Return</button>
+                        <button class="action-btn btn-primary" onclick="buyAgain('${order._id}')">Buy Again</button>
+                    ` : order.status === 'pending' ? `
+                        <button class="action-btn btn-secondary" onclick="cancelOrder('${order._id}')">Cancel</button>
+                        <button class="action-btn btn-primary" onclick="trackOrder('${order._id}')">Track</button>
+                    ` : `
+                        <button class="action-btn btn-primary" onclick="trackOrder('${order._id}')">Track Order</button>
+                    `}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showEmptyState() {
+    document.getElementById('ordersContainer').innerHTML = `
+        <div class="empty-state">
+            <div class="icon">📦</div>
+            <h2>No Orders Found</h2>
+            <p>No orders match this filter. Try different filter or start shopping!</p>
+            <button class="shop-now-btn" onclick="window.location.href='/'">Shop Now</button>
+        </div>
+    `;
+}
+
+function trackOrder(orderId) {
+    alert('Tracking order: ' + orderId + '\n\nFeature coming soon!');
+}
+
+function cancelOrder(orderId) {
+    if (confirm('Cancel this order?')) {
+        alert('Order cancelled: ' + orderId + '\n\nAPI call pending.');
+    }
+}
+
+function returnOrder(orderId) {
+    alert('Return request for order: ' + orderId + '\n\nFeature coming soon!');
+}
+
+function buyAgain(orderId) {
+    alert('Adding items to cart: ' + orderId + '\n\nFeature coming soon!');
+}
+</script>
+</body>
+</html>

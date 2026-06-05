@@ -15,25 +15,13 @@ mongoose.connect(process.env.MONGODB_URI)
 .catch(err => console.log('MongoDB Error:', err));
 
 // ========================================
-// MONGOOSE SCHEMAS - NAYA ADD KIYA
+// MODELS REQUIRE KAR - models/Shop.js USE KARENGE
 // ========================================
-const shopSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    categoryId: String,
-    address: String,
-    phone: String,
-    lat: Number,
-    lng: Number,
-    range: { type: Number, default: 5000 },
-    banner: String,
-    logo: String,
-    status: { type: Boolean, default: true },
-    priority: Number,
-    desc: String,
-    mongoId: String, // JSON wali ID ko track karne ke liye
-    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // NAYA ADD KIYA
-}, { timestamps: true });
+const Shop = require('./models/Shop');
 
+// ========================================
+// MONGOOSE SCHEMAS - Shop.js ALAG FILE ME HAI
+// ========================================
 const moduleSchema = new mongoose.Schema({
     id: String,
     name: String,
@@ -84,34 +72,101 @@ const settingsSchema = new mongoose.Schema({
     footerText: String
 }, { timestamps: true });
 
-// USER SCHEMA - NAYA ADD KIYA
+// USER SCHEMA - UPDATE KAR SIRF YE ADD KARNA HAI
+const addressSchema = new mongoose.Schema({
+    type: { type: String, enum: ['Home', 'Work', 'Other'], default: 'Home' },
+    name: { type: String, required: true },
+    phone: { type: String, required: true },
+    line1: { type: String, required: true },
+    line2: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    pincode: { type: String, required: true },
+    isDefault: { type: Boolean, default: false },
+    location: {
+        type: { type: String, enum: ['Point'], default: 'Point' },
+        coordinates: { type: [Number], default: [0, 0] }
+    }
+});
+
+const paymentSchema = new mongoose.Schema({
+    type: { type: String, enum: ['upi', 'card', 'wallet'], required: true },
+    name: String,
+    upiId: String,
+    cardLast4: String,
+    cardExpiry: String,
+    walletType: String,
+    phone: String,
+    isDefault: { type: Boolean, default: false }
+});
+
+const notificationSchema = new mongoose.Schema({
+    type: { type: String, enum: ['order', 'promo', 'shop', 'system'], required: true },
+    title: { type: String, required: true },
+    message: { type: String, required: true },
+    actionUrl: String,
+    read: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+});
+
 const userSchema = new mongoose.Schema({
-    userId: { type: String, unique: true }, // USER001, USER002
+    userId: { type: String, unique: true },
     name: { type: String, required: true },
     phone: String,
     email: String,
     password: String,
     profilePic: { type: String, default: '/assets/default-avatar.png' },
+    bio: String,
     address: {
         street: String,
         city: String,
         state: String,
         pincode: String
     },
+    // NAYA ADD KAR - PROFILE PAGES KE LIYE
+    addresses: [addressSchema],
+    payments: [paymentSchema],
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+    notifications: [notificationSchema],
+    settings: {
+        notifOrders: { type: Boolean, default: true },
+        notifPromos: { type: Boolean, default: true },
+        notifPush: { type: Boolean, default: true },
+        notifEmail: { type: Boolean, default: false },
+        privacyLocation: { type: Boolean, default: true },
+        darkMode: { type: Boolean, default: false }
+    },
+    shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', default: null },
     language: { type: String, default: 'hi' },
-    qrCodeData: String, // JSON string for QR
+    qrCodeData: String,
     hasShop: { type: Boolean, default: false },
     googleId: String
 }, { timestamps: true });
 
-const Shop = mongoose.model('Shop', shopSchema);
-const Module = mongoose.model('Module', moduleSchema);
-const Ad = mongoose.model('Ad', adSchema);
-const Video = mongoose.model('Video', videoSchema);
-const Campaign = mongoose.model('Campaign', campaignSchema);
-const Settings = mongoose.model('Settings', settingsSchema);
-const User = mongoose.model('User', userSchema); // NAYA ADD KIYA
+userSchema.index({ 'addresses.location': '2dsphere' });
 
+// PRODUCT SCHEMA - NAYA ADD KAR WISHLIST KE LIYE
+const productSchema = new mongoose.Schema({
+    name: String,
+    price: Number,
+    oldPrice: Number,
+    image: String,
+    shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop' },
+    category: String,
+    stock: { type: Number, default: 0 },
+    status: { type: Boolean, default: true }
+}, { timestamps: true });
+
+// MODELS COMPILE KAR
+const Module = mongoose.models.Module || mongoose.model('Module', moduleSchema);
+const Ad = mongoose.models.Ad || mongoose.model('Ad', adSchema);
+const Video = mongoose.models.Video || mongoose.model('Video', videoSchema);
+const Campaign = mongoose.models.Campaign || mongoose.model('Campaign', campaignSchema);
+const Settings = mongoose.models.Settings || mongoose.model('Settings', settingsSchema);
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
+
+// BAAKI TERA PURANA CODE SAME RAHEGA...
 // Video + Image upload config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -127,7 +182,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// FIX 1: dbPath sahi kiya - server folder ke andar database folder hai
 const dbPath = path.join(__dirname, './database/modules.json');
 
 // Static files
@@ -137,7 +191,7 @@ app.use('/qr_output', express.static(path.join(__dirname, './qr_output')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// DB Helpers - JSON FILE KE LIYE - ABHI BHI USE HONGE
+// DB Helpers - SAME
 function readDB() {
     const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
     if (!data.areaManagers) data.areaManagers = [];
@@ -155,9 +209,7 @@ function writeDB(data) {
     fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
 }
 
-// ========================================
-// AUTH MIDDLEWARE - NAYA ADD KIYA
-// ========================================
+// AUTH MIDDLEWARE - SAME
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -171,15 +223,13 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// GENERATE USER ID - NAYA ADD KIYA
+// GENERATE USER ID - SAME
 async function generateUserId() {
     const count = await User.countDocuments();
     return `USER${String(count + 1).padStart(3, '0')}`;
 }
 
-// ========================================
-// LOCATION HELPERS
-// ========================================
+// LOCATION HELPERS - SAME
 function getDistance(lat1, lon1, lat2, lon2) {
     const R = 6371e3;
     const φ1 = lat1 * Math.PI/180;
@@ -216,9 +266,7 @@ function checkModuleInArea(module, userLat, userLng) {
     return { inArea: false, distance: 0 };
 }
 
-// ========================================
-// USER AUTH ROUTES - NAYA ADD KIYA
-// ========================================
+// USER AUTH ROUTES - SAME
 app.post('/api/auth/login-phone', async (req, res) => {
     try {
         const { phone, name } = req.body;
@@ -227,7 +275,6 @@ app.post('/api/auth/login-phone', async (req, res) => {
         let user = await User.findOne({ phone });
 
         if (!user) {
-            // New user
             const userId = await generateUserId();
             const qrData = JSON.stringify({ userId, name, phone });
 
@@ -270,7 +317,6 @@ app.put('/api/user/update', authenticateToken, async (req, res) => {
             { new: true }
         ).select('-password');
 
-        // Update QR data if name/phone changed
         if (updates.name || updates.phone) {
             user.qrCodeData = JSON.stringify({
                 userId: user.userId,
@@ -286,9 +332,7 @@ app.put('/api/user/update', authenticateToken, async (req, res) => {
     }
 });
 
-// ========================================
-// SHOP CREATION BY USER - NAYA ADD KIYA
-// ========================================
+// SHOP CREATION BY USER - SAME
 app.post('/api/shop/create', authenticateToken, async (req, res) => {
     try {
         const user = await User.findById(req.user.userId);
@@ -307,13 +351,12 @@ app.post('/api/shop/create', authenticateToken, async (req, res) => {
             icon,
             color,
             priority: 1,
-            status: false, // Pending approval
+            status: false,
             ownerId: req.user.userId
         });
 
         await shop.save();
 
-        // User me hasShop true kar do
         user.hasShop = true;
         await user.save();
 
@@ -323,9 +366,7 @@ app.post('/api/shop/create', authenticateToken, async (req, res) => {
     }
 });
 
-// ========================================
-// PUBLIC APIs - PEHLE JSON SE, FAIL HO TO MONGODB SE
-// ========================================
+// PUBLIC APIs - SAME
 app.get('/api/modules', (req, res) => {
     const db = readDB();
     const userLat = parseFloat(req.query.lat);
@@ -415,20 +456,26 @@ app.use('/api/market', require('./routes/market'));
 app.use('/api/area-manager', require('./routes/area-manager'));
 
 // ========================================
-// ADMIN APIs - DONO JAGAH SAVE HOGA
+// NAYI PROFILE ROUTES - SIRF YE ADD KAR
 // ========================================
+app.use('/api', require('./routes/userAddresses'));
+app.use('/api', require('./routes/userPayments'));
+app.use('/api', require('./routes/wishlist'));
+app.use('/api', require('./routes/orders'));
+app.use('/api', require('./routes/notifications'));
+app.use('/api', require('./routes/shop'));
+
+// ADMIN APIs - SAME RAHEGA TERA PURANA
 app.get('/api/admin/data', (req, res) => {
     res.json(readDB());
 });
 
-// Modules CRUD - JSON + MONGODB DONO
 app.put('/api/admin/module/:id', async (req, res) => {
     const db = readDB();
     const idx = db.modules.findIndex(m => m.id === req.params.id);
     if(idx!== -1) {
         db.modules[idx] = {...db.modules[idx],...req.body};
-        writeDB(db); // JSON me save
-        // MongoDB me bhi update
+        writeDB(db);
         try {
             if(db.modules[idx].mongoId) {
                 await Module.findByIdAndUpdate(db.modules[idx].mongoId, req.body);
@@ -449,17 +496,16 @@ app.post('/api/admin/module', async (req, res) => {
         desc: "",
         banner: "",
         areas: [],
-    ...req.body
+      ...req.body
     };
-    // MongoDB me save
     try {
         const mongoItem = new Module(newItem);
         await mongoItem.save();
-        newItem.mongoId = mongoItem._id.toString(); // MongoDB ID save kar le
+        newItem.mongoId = mongoItem._id.toString();
     } catch(e) { console.log('MongoDB save failed:', e.message); }
 
     db.modules.push(newItem);
-    writeDB(db); // JSON me save
+    writeDB(db);
     res.json({ success: true, data: newItem });
 });
 
@@ -474,7 +520,6 @@ app.delete('/api/admin/module/:id', async (req, res) => {
     res.json({ success: true });
 });
 
-// Ads CRUD - JSON + MONGODB DONO
 app.put('/api/admin/ad/:id', async (req, res) => {
     const db = readDB();
     const idx = db.ads.findIndex(a => a.id === req.params.id);
@@ -510,7 +555,6 @@ app.delete('/api/admin/ad/:id', async (req, res) => {
     res.json({ success: true });
 });
 
-// Videos CRUD - JSON + MONGODB DONO
 app.put('/api/admin/video/:id', async (req, res) => {
     const db = readDB();
     const idx = db.videos.findIndex(v => v.id === req.params.id);
@@ -546,7 +590,6 @@ app.delete('/api/admin/video/:id', async (req, res) => {
     res.json({ success: true });
 });
 
-// Campaigns CRUD - JSON + MONGODB DONO
 app.put('/api/admin/campaign/:id', async (req, res) => {
     const db = readDB();
     const idx = db.campaigns.findIndex(c => c.id === req.params.id);
@@ -582,13 +625,12 @@ app.delete('/api/admin/campaign/:id', async (req, res) => {
     res.json({ success: true });
 });
 
-// Shops CRUD - JSON + MONGODB DONO
 app.put('/api/admin/shop/:id', async (req, res) => {
     const db = readDB();
     const idx = db.shops.findIndex(s => s.id === req.params.id);
     if(idx!== -1) {
         db.shops[idx] = {...db.shops[idx],...req.body};
-        writeDB(db); // JSON me save
+        writeDB(db);
         try {
             if(db.shops[idx].mongoId) {
                 await Shop.findByIdAndUpdate(db.shops[idx].mongoId, req.body);
@@ -608,9 +650,8 @@ app.post('/api/admin/shop', async (req, res) => {
         priority: db.shops.length + 1,
         range: 5000,
         banner: '',
-    ...req.body
+      ...req.body
     };
-    // MongoDB me save
     try {
         const mongoItem = new Shop(newItem);
         await mongoItem.save();
@@ -619,7 +660,7 @@ app.post('/api/admin/shop', async (req, res) => {
     } catch(e) { console.log('MongoDB save failed:', e.message); }
 
     db.shops.push(newItem);
-    writeDB(db); // JSON me save
+    writeDB(db);
     res.json({ success: true, data: newItem });
 });
 
@@ -634,9 +675,6 @@ app.delete('/api/admin/shop/:id', async (req, res) => {
     res.json({ success: true });
 });
 
-// ========================================
-// AREA MANAGER CRUD - NAYA ADD KIYA
-// ========================================
 app.get('/api/admin/areaManager', (req, res) => {
     const db = readDB();
     res.json(db.areaManagers || []);
@@ -646,12 +684,11 @@ app.post('/api/admin/areaManager', async (req, res) => {
     const db = readDB();
     const { password,...restData } = req.body;
 
-    // Password hash karo
     const hashedPassword = password? await bcrypt.hash(password, 10) : '';
 
     const newManager = {
         id: 'am-' + Date.now(),
-       ...restData,
+      ...restData,
         password: hashedPassword,
         createdAt: new Date().toISOString(),
         status: restData.status!== undefined? restData.status : true
@@ -661,7 +698,6 @@ app.post('/api/admin/areaManager', async (req, res) => {
     db.areaManagers.push(newManager);
     writeDB(db);
 
-    // Password hata ke response bhejo
     const { password: _,...managerWithoutPassword } = newManager;
     res.json({ success: true, data: managerWithoutPassword });
 });
@@ -676,7 +712,6 @@ app.put('/api/admin/areaManager/:id', async (req, res) => {
     const { password,...restData } = req.body;
     const updateData = {...db.areaManagers[idx],...restData };
 
-    // Agar password diya hai to hash karo
     if (password && password.trim()!== '') {
         updateData.password = await bcrypt.hash(password, 10);
     }
@@ -684,7 +719,6 @@ app.put('/api/admin/areaManager/:id', async (req, res) => {
     db.areaManagers[idx] = updateData;
     writeDB(db);
 
-    // Password hata ke response bhejo
     const { password: _,...managerWithoutPassword } = updateData;
     res.json({ success: true, data: managerWithoutPassword });
 });
@@ -698,7 +732,6 @@ app.delete('/api/admin/areaManager/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// Settings - JSON + MONGODB DONO
 app.put('/api/admin/settings', async (req, res) => {
     const db = readDB();
     db.settings = {...db.settings,...req.body};
@@ -711,18 +744,13 @@ app.put('/api/admin/settings', async (req, res) => {
     res.json({ success: true, settings: db.settings });
 });
 
-// Upload
 app.post('/api/admin/upload', upload.single('file'), (req, res) => {
     res.json({ success: true, url: `/uploads/${req.file.filename}` });
 });
 
-// ========================================
-// QR BATCH APIs - NAYA ADD KIYA
-// ========================================
 const { exec } = require('child_process');
 const QR_CURRENT_LOGO = 'public/logos/qr_logo.png';
 
-// 1. QR Generate API
 app.post('/api/generate-qr', (req, res) => {
     const { manager_id, product_name, batch, mfg_date, quantity, qr_size_mm } = req.body;
     const logoPath = fs.existsSync(QR_CURRENT_LOGO)? QR_CURRENT_LOGO : 'public/logos/default.png';
@@ -737,7 +765,6 @@ app.post('/api/generate-qr', (req, res) => {
     });
 });
 
-// 2. PDF Generate API
 app.post('/api/make-qr-pdf', (req, res) => {
     const { folderPath } = req.body;
     const cmd = `node make-pdf.js "${folderPath}"`;
@@ -748,14 +775,12 @@ app.post('/api/make-qr-pdf', (req, res) => {
     });
 });
 
-// 3. QR Logo Upload API
 app.post('/api/upload-qr-logo', upload.single('logo'), (req, res) => {
     const destPath = path.join(__dirname, '../public/logos/qr_logo.png');
     fs.renameSync(req.file.path, destPath);
     res.json({ success: true, logoPath: 'logos/qr_logo.png' });
 });
 
-// 4. QR Batches List API
 app.get('/api/qr-batches', (req, res) => {
     const dir = path.join(__dirname, './qr_output');
     if (!fs.existsSync(dir)) return res.json([]);
@@ -777,22 +802,18 @@ app.get('/api/qr-batches', (req, res) => {
     res.json(batches);
 });
 
-// Admin page
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
-// Area Manager page
 app.get('/area-manager', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/area-manager.html'));
 });
 
-// Home
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Dynamic module pages
 app.get('/modules/:moduleName', (req, res) => {
     const db = readDB();
     const module = db.modules.find(m => m.id === req.params.moduleName);
@@ -836,7 +857,6 @@ app.get('/modules/:moduleName', (req, res) => {
     `);
 });
 
-// 404
 app.use((req, res) => {
     res.status(404).send(`
         <!DOCTYPE html>
@@ -852,8 +872,8 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`✅ SAMANLIVE Server: http://localhost:${PORT}`);
-    console.log(`🔧 Admin Panel: http://localhost:${PORT}/admin`);
-    console.log(`👨‍💼 Area Manager: http://localhost:${PORT}/area-manager`);
-    console.log(`📁 Serving: ${path.join(__dirname, '../public')}`);
+    console.log('✅ SAMANLIVE Server: http://localhost:' + PORT);
+    console.log('🔧 Admin Panel: http://localhost:' + PORT + '/admin');
+    console.log('👨‍💼 Area Manager: http://localhost:' + PORT + '/area-manager');
+    console.log('📁 Serving: ' + path.join(__dirname, '../public'));
 });

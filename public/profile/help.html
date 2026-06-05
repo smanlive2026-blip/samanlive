@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Help & Support - SAMANLIVE</title>
+<link rel="stylesheet" href="/assets/css/main.css">
+<style>
+.help-page {
+    min-height: 100vh;
+    background: #f1f5f9;
+    padding-bottom: 40px;
+}
+.header-bar {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 16px 20px;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.header-bar.back-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 12px;
+}
+.header-bar h1 {
+    display: inline-block;
+    font-size: 20px;
+    margin: 0;
+}
+.help-container {
+    margin: 20px;
+}
+.search-box {
+    background: white;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: #1e293b;
+}
+.search-box input::placeholder {
+    color: #94a3b8;
+}
+.quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+.action-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+.action-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+}
+.action-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 24px 0 12px 0;
+}
+.faq-section {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+.faq-item {
+    border-bottom: 1px solid #f1f5f9;
+}
+.faq-item:last-child {
+    border-bottom: none;
+}
+.faq-question {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    transition: background 0.2s;
+}
+.faq-question:hover {
+    background: #f8fafc;
+}
+.faq-arrow {
+    font-size: 20px;
+    color: #cbd5e1;
+    transition: transform 0.3s;
+}
+.faq-item.active.faq-arrow {
+    transform: rotate(180deg);
+}
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding: 0 20px;
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+}
+.faq-item.active .faq-answer {
+    max-height: 500px;
+    padding: 0 20px 16px 20px;
+}
+.contact-section {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+}
+.contact-item:last-child {
+    border-bottom: none;
+}
+.contact-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: #eef2ff;
+}
+.contact-info h3 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    color: #1e293b;
+}
+.contact-info p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+@media (max-width: 768px) {
+  .help-container {
+        margin: 16px;
+    }
+  .quick-actions {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+<body>
+<div class="help-page">
+    <div class="header-bar">
+        <button class="back-btn" onclick="window.location.href='/profile.html'">← Back</button>
+        <h1>Help & Support</h1>
+    </div>
+
+    <div class="help-container">
+        <div class="search-box">
+            <span>🔍</span>
+            <input type="text" placeholder="Search for help..." id="searchInput" oninput="searchFAQ()">
+        </div>
+
+        <div class="quick-actions">
+            <div class="action-card" onclick="startChat()">
+                <div class="action-icon">💬</div>
+                <div class="action-title">Live Chat</div>
+            </div>
+            <div class="action-card" onclick="callSupport()">
+                <div class="action-icon">📞</div>
+                <div class="action-title">Call Us</div>
+            </div>
+            <div class="action-card" onclick="openEmail()">
+                <div class="action-icon">📧</div>
+                <div class="action-title">Email Support</div>
+            </div>
+            <div class="action-card" onclick="openWhatsApp()">
+                <div class="action-icon">💚</div>
+                <div class="action-title">WhatsApp</div>
+            </div>
+        </div>
+
+        <div class="section-title">Frequently Asked Questions</div>
+        <div class="faq-section" id="faqSection">
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    How do I place an order?
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Browse products, add to cart, select delivery address, choose payment method and confirm order. You'll receive order confirmation via SMS and email.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    How can I track my order?
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Go to Profile → My Orders → Select your order → Click "Track Order". You'll see real-time status updates.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    What is the return policy?
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Most items can be returned within 7 days of delivery. Items must be unused and in original packaging. Go to My Orders → Return to initiate.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    How do I create my shop?
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Profile → Create Shop → Fill shop details, select service type, add location → Submit. Admin will verify and approve within 24 hours.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    What payment methods are accepted?
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    We accept UPI, Credit/Debit Cards, Net Banking, Wallets, and Cash on Delivery for eligible orders.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    How do I cancel my order?
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Orders can be cancelled before shipping. Go to My Orders → Select order → Cancel. Refund will be processed in 5-7 business days.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    How long does delivery take?
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Delivery time depends on your location and shop. Usually 30 mins to 2 hours for local delivery. You'll see estimated time at checkout.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    How do I contact customer support?
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Use Live Chat, Call +91 1234567890, Email support@samanlive.com, or WhatsApp us. We're available 9 AM to 9 PM, 7 days a week.
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Contact Us</div>
+        <div class="contact-section">
+            <div class="contact-item" onclick="callSupport()">
+                <div class="contact-icon">📞</div>
+                <div class="contact-info">
+                    <h3>Phone Support</h3>
+                    <p>+91 1234567890 (9 AM - 9 PM)</p>
+                </div>
+            </div>
+            <div class="contact-item" onclick="openEmail()">
+                <div class="contact-icon">📧</div>
+                <div class="contact-info">
+                    <h3>Email Support</h3>
+                    <p>support@samanlive.com</p>
+                </div>
+            </div>
+            <div class="contact-item" onclick="openWhatsApp()">
+                <div class="contact-icon">💚</div>
+                <div class="contact-info">
+                    <h3>WhatsApp</h3>
+                    <p>+91 1234567890</p>
+                </div>
+            </div>
+            <div class="contact-item" onclick="startChat()">
+                <div class="contact-icon">💬</div>
+                <div class="contact-info">
+                    <h3>Live Chat</h3>
+                    <p>Chat with our support team</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFAQ(element) {
+    const faqItem = element.parentElement;
+    const wasActive = faqItem.classList.contains('active');
+
+    // Close all FAQs
+    document.querySelectorAll('.faq-item').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    // Open clicked FAQ if it wasn't active
+    if (!wasActive) {
+        faqItem.classList.add('active');
+    }
+}
+
+function searchFAQ() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const faqItems = document.querySelectorAll('.faq-item');
+
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question').textContent.toLowerCase();
+        const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+
+        if (question.includes(query) || answer.includes(query)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function startChat() {
+    alert('💬 Live Chat\n\nConnecting you to our support team...\n\nFeature coming soon!');
+}
+
+function callSupport() {
+    window.location.href = 'tel:+911234567890';
+}
+
+function openEmail() {
+    window.location.href = 'mailto:support@samanlive.com?subject=Support Request';
+}
+
+function openWhatsApp() {
+    window.open('https://wa.me/911234567890?text=Hi, I need help with SAMANLIVE', '_blank');
+}
+</script>
+</body>
+</html>

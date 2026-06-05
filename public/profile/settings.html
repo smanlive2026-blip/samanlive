@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Settings - SAMANLIVE</title>
+<link rel="stylesheet" href="/assets/css/main.css">
+<style>
+.settings-page {
+    min-height: 100vh;
+    background: #f1f5f9;
+    padding-bottom: 40px;
+}
+.header-bar {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 16px 20px;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.header-bar.back-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 12px;
+}
+.header-bar h1 {
+    display: inline-block;
+    font-size: 20px;
+    margin: 0;
+}
+.settings-container {
+    margin: 20px;
+}
+.settings-section {
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+.section-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.section-header h2 {
+    margin: 0;
+    font-size: 16px;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.setting-item {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.setting-item:last-child {
+    border-bottom: none;
+}
+.setting-item:hover {
+    background: #f8fafc;
+}
+.setting-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+}
+.setting-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: #eef2ff;
+}
+.setting-info h3 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    color: #1e293b;
+}
+.setting-info p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+.setting-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.arrow-icon {
+    font-size: 18px;
+    color: #cbd5e1;
+}
+.toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 28px;
+}
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: 0.3s;
+    border-radius: 28px;
+}
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+input:checked +.toggle-slider {
+    background-color: #667eea;
+}
+input:checked +.toggle-slider:before {
+    transform: translateX(22px);
+}
+.danger-zone {
+    border: 2px solid #fee2e2;
+}
+.danger-zone.section-header h2 {
+    color: #dc2626;
+}
+.logout-btn {
+    width: 100%;
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+}
+.delete-btn {
+    width: 100%;
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 12px;
+}
+.version-info {
+    text-align: center;
+    padding: 20px;
+    color: #94a3b8;
+    font-size: 13px;
+}
+@media (max-width: 768px) {
+  .settings-container {
+        margin: 16px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="settings-page">
+    <div class="header-bar">
+        <button class="back-btn" onclick="window.location.href='/profile.html'">← Back</button>
+        <h1>Settings</h1>
+    </div>
+
+    <div class="settings-container">
+        <!-- Account Settings -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2>👤 Account</h2>
+            </div>
+            <div class="setting-item" onclick="window.location.href='/profile/details.html'">
+                <div class="setting-left">
+                    <div class="setting-icon">📝</div>
+                    <div class="setting-info">
+                        <h3>Edit Profile</h3>
+                        <p>Update your name, phone, email</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <span class="arrow-icon">›</span>
+                </div>
+            <div class="setting-item" onclick="changePassword()">
+                <div class="setting-left">
+                    <div class="setting-icon">🔒</div>
+                    <div class="setting-info">
+                        <h3>Change Password</h3>
+                        <p>Update your account password</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <span class="arrow-icon">›</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2>🔔 Notifications</h2>
+            </div>
+            <div class="setting-item">
+                <div class="setting-left">
+                    <div class="setting-icon">📦</div>
+                    <div class="setting-info">
+                        <h3>Order Updates</h3>
+                        <p>Get notified about order status</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notifOrders" checked onchange="saveSetting('notifOrders', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-left">
+                    <div class="setting-icon">🎁</div>
+                    <div class="setting-info">
+                        <h3>Promotions & Offers</h3>
+                        <p>Deals, discounts and coupons</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notifPromos" checked onchange="saveSetting('notifPromos', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-left">
+                    <div class="setting-icon">📱</div>
+                    <div class="setting-info">
+                        <h3>Push Notifications</h3>
+                        <p>Receive push notifications</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notifPush" checked onchange="saveSetting('notifPush', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-left">
+                    <div class="setting-icon">📧</div>
+                    <div class="setting-info">
+                        <h3>Email Notifications</h3>
+                        <p>Get updates via email</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notifEmail" onchange="saveSetting('notifEmail', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Settings -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2>🔐 Privacy</h2>
+            </div>
+            <div class="setting-item">
+                <div class="setting-left">
+                    <div class="setting-icon">📍</div>
+                    <div class="setting-info">
+                        <h3>Location Services</h3>
+                        <p>Allow location for nearby shops</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="privacyLocation" checked onchange="saveSetting('privacyLocation', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="setting-item" onclick="window.location.href='/privacy-policy'">
+                <div class="setting-left">
+                    <div class="setting-icon">📄</div>
+                    <div class="setting-info">
+                        <h3>Privacy Policy</h3>
+                        <p>Read our privacy policy</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <span class="arrow-icon">›</span>
+                </div>
+            </div>
+            <div class="setting-item" onclick="window.location.href='/terms'">
+                <div class="setting-left">
+                    <div class="setting-icon">📋</div>
+                    <div class="setting-info">
+                        <h3>Terms & Conditions</h3>
+                        <p>Read terms of service</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <span class="arrow-icon">›</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Settings -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2>⚙️ App Settings</h2>
+            </div>
+            <div class="setting-item">
+                <div class="setting-left">
+                    <div class="setting-icon">🌐</div>
+                    <div class="setting-info">
+                        <h3>Language</h3>
+                        <p>English</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <span class="arrow-icon">›</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-left">
+                    <div class="setting-icon">🌙</div>
+                    <div class="setting-info">
+                        <h3>Dark Mode</h3>
+                        <p>Switch to dark theme</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="darkMode" onchange="toggleDarkMode(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="setting-item" onclick="clearCache()">
+                <div class="setting-left">
+                    <div class="setting-icon">🗑️</div>
+                    <div class="setting-info">
+                        <h3>Clear Cache</h3>
+                        <p>Free up storage space</p>
+                    </div>
+                </div>
+                <div class="setting-right">
+                    <span class="arrow-icon">›</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="settings-section danger-zone">
+            <div class="section-header">
+                <h2>⚠️ Danger Zone</h2>
+            </div>
+            <div style="padding: 20px;">
+                <button class="logout-btn" onclick="logout()">Logout</button>
+                <button class="delete-btn" onclick="deleteAccount()">Delete Account</button>
+            </div>
+        </div>
+
+        <div class="version-info">
+            SAMANLIVE v1.0.0<br>
+            © 2026 SAMANLIVE. All rights reserved.
+        </div>
+    </div>
+</div>
+
+<script>
+// Load settings
+window.addEventListener('DOMContentLoaded', () => {
+    loadSettings();
+});
+
+function loadSettings() {
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    document.getElementById('notifOrders').checked = settings.notifOrders!== false;
+    document.getElementById('notifPromos').checked = settings.notifPromos!== false;
+    document.getElementById('notifPush').checked = settings.notifPush!== false;
+    document.getElementById('notifEmail').checked = settings.notifEmail === true;
+    document.getElementById('privacyLocation').checked = settings.privacyLocation!== false;
+    document.getElementById('darkMode').checked = settings.darkMode === true;
+}
+
+function saveSetting(key, value) {
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    settings[key] = value;
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+
+    // Show toast
+    showToast('Setting saved!');
+}
+
+function toggleDarkMode(enabled) {
+    saveSetting('darkMode', enabled);
+    if (enabled) {
+        document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+    } else {
+        document.body.style.filter = 'none';
+    }
+}
+
+function changePassword() {
+    alert('Change Password feature coming soon!\n\nYou will receive OTP on registered mobile.');
+}
+
+function clearCache() {
+    if (confirm('Clear app cache? This will not delete your data.')) {
+        localStorage.removeItem('appCache');
+        showToast('Cache cleared successfully!');
+    }
+}
+
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('userSettings');
+        window.location.href = '/';
+    }
+}
+
+function deleteAccount() {
+    if (confirm('⚠️ WARNING: This will permanently delete your account and all data.\n\nThis action cannot be undone. Are you sure?')) {
+        if (confirm('Final confirmation: Delete account permanently?')) {
+            alert('Account deletion request submitted.\n\nYour account will be deleted within 24 hours.');
+            logout();
+        }
+    }
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+}
+</script>
+</body>
+</html>

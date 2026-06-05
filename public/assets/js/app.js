@@ -808,3 +808,14 @@ function startTrainSliding() {
 
 // Page load ke baad train chalu karo
 setTimeout(startTrainSliding, 2000);
+
+// ========================================
+// PROFILE PAGE REDIRECT - ADDED FOR NEW PROFILE SYSTEM
+// ========================================
+function goToProfilePage() {
+    if (!currentUser) {
+        openLoginModal();
+        return;
+    }
+    window.location.href = '/profile.html';
+}

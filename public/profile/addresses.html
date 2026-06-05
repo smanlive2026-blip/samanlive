@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>My Addresses - SAMANLIVE</title>
+<link rel="stylesheet" href="/assets/css/main.css">
+<style>
+.addresses-page {
+    min-height: 100vh;
+    background: #f1f5f9;
+    padding-bottom: 100px;
+}
+.header-bar {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 16px 20px;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.header-bar.back-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 12px;
+}
+.header-bar h1 {
+    display: inline-block;
+    font-size: 20px;
+    margin: 0;
+}
+.addresses-container {
+    margin: 20px;
+}
+.address-card {
+    background: white;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    position: relative;
+}
+.default-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #10b981;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.address-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #eef2ff;
+    color: #667eea;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.address-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+}
+.address-text {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+.address-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+.action-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-edit {
+    background: #f1f5f9;
+    color: #475569;
+}
+.btn-delete {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.btn-default {
+    background: #dbeafe;
+    color: #1e40af;
+}
+.add-address-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+    z-index: 50;
+}
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+.empty-state.icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+.empty-state h2 {
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+.empty-state p {
+    color: #64748b;
+    margin-bottom: 20px;
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal-overlay.active {
+    display: flex;
+}
+.modal-box {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #1e293b;
+}
+.close-modal {
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    color: #64748b;
+}
+.modal-body {
+    padding: 24px;
+}
+.form-group {
+    margin-bottom: 18px;
+}
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+.form-group textarea {
+    resize: vertical;
+    min-height: 70px;
+}
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.location-box {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 18px;
+}
+.location-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.location-header h3 {
+    margin: 0;
+    font-size: 15px;
+    color: #1e293b;
+}
+.get-location-btn {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+}
+.location-coords {
+    font-size: 13px;
+    color: #64748b;
+}
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+.checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+.checkbox-group label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+}
+.save-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+   .addresses-container {
+        margin: 16px;
+    }
+   .form-row {
+        grid-template-columns: 1fr;
+    }
+   .add-address-btn {
+        left: 16px;
+        right: 16px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="addresses-page">
+    <div class="header-bar">
+        <button class="back-btn" onclick="window.location.href='/profile.html'">← Back</button>
+        <h1>My Addresses</h1>
+    </div>
+
+    <div class="addresses-container" id="addressesContainer">
+        <div class="empty-state">
+            <div class="icon">📍</div>
+            <h2>No Addresses Saved</h2>
+            <p>Add your delivery addresses to get faster checkout</p>
+        </div>
+    </div>
+
+    <button class="add-address-btn" onclick="openAddressModal()">+ Add New Address</button>
+</div>
+
+<!-- Add/Edit Address Modal -->
+<div class="modal-overlay" id="addressModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add New Address</h2>
+            <button class="close-modal" onclick="closeAddressModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="addressId">
+
+            <div class="form-group">
+                <label>Address Type *</label>
+                <select id="addressType">
+                    <option value="Home">🏠 Home</option>
+                    <option value="Work">🏢 Work</option>
+                    <option value="Other">📍 Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" id="addressName" placeholder="Receiver's name">
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number *</label>
+                <input type="tel" id="addressPhone" placeholder="10 digit mobile" maxlength="10">
+            </div>
+
+            <div class="form-group">
+                <label>Flat, House no, Building *</label>
+                <input type="text" id="addressLine1" placeholder="Example: 123, ABC Apartments">
+            </div>
+
+            <div class="form-group">
+                <label>Area, Street, Landmark *</label>
+                <textarea id="addressLine2" placeholder="Example: Near XYZ Mall, Main Road"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>City *</label>
+                    <input type="text" id="addressCity" placeholder="City">
+                </div>
+                <div class="form-group">
+                    <label>Pincode *</label>
+                    <input type="text" id="addressPincode" placeholder="6 digits" maxlength="6">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>State *</label>
+                <input type="text" id="addressState" placeholder="State">
+            </div>
+
+            <div class="location-box">
+                <div class="location-header">
+                    <h3>📍 GPS Location</h3>
+                    <button class="get-location-btn" onclick="getAddressLocation()">Get GPS</button>
+                </div>
+                <div class="location-coords" id="locationCoords">
+                    GPS location optional but recommended for accurate delivery
+                </div>
+                <input type="hidden" id="addressLat">
+                <input type="hidden" id="addressLng">
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="setDefault">
+                <label for="setDefault">Set as default address</label>
+            </div>
+
+            <button class="save-btn" onclick="saveAddress()" id="saveBtn">Save Address</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentUser = null;
+let allAddresses = [];
+let editingAddressId = null;
+
+// Load addresses
+window.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+        window.location.href = '/';
+        return;
+    }
+    await loadAddresses();
+});
+
+async function loadAddresses() {
+    const token = localStorage.getItem('userToken');
+    try {
+        const res = await fetch('/api/user/addresses', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data.success) {
+            allAddresses = data.addresses || [];
+            renderAddresses();
+        }
+    } catch (err) {
+        console.error('Failed to load addresses:', err);
+    }
+}
+
+function renderAddresses() {
+    const container = document.getElementById('addressesContainer');
+
+    if (allAddresses.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="icon">📍</div>
+                <h2>No Addresses Saved</h2>
+                <p>Add your delivery addresses to get faster checkout</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = allAddresses.map(addr => `
+        <div class="address-card">
+            ${addr.isDefault? '<div class="default-badge">DEFAULT</div>' : ''}
+            <div class="address-type">
+                ${addr.type === 'Home'? '🏠' : addr.type === 'Work'? '🏢' : '📍'} ${addr.type}
+            </div>
+            <div class="address-name">${addr.name}</div>
+            <div class="address-text">
+                ${addr.line1}<br>
+                ${addr.line2}<br>
+                ${addr.city}, ${addr.state} - ${addr.pincode}<br>
+                📱 ${addr.phone}
+                ${addr.location? `<br>📍 GPS: ${addr.location.coordinates[1].toFixed(4)}, ${addr.location.coordinates[0].toFixed(4)}` : ''}
+            </div>
+            <div class="address-actions">
+                ${!addr.isDefault? `<button class="action-btn btn-default" onclick="setDefaultAddress('${addr._id}')">Set Default</button>` : ''}
+                <button class="action-btn btn-edit" onclick="editAddress('${addr._id}')">Edit</button>
+                <button class="action-btn btn-delete" onclick="deleteAddress('${addr._id}')">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function openAddressModal(addressId = null) {
+    editingAddressId = addressId;
+    document.getElementById('modalTitle').textContent = addressId? 'Edit Address' : 'Add New Address';
+
+    if (addressId) {
+        const addr = allAddresses.find(a => a._id === addressId);
+        document.getElementById('addressId').value = addr._id;
+        document.getElementById('addressType').value = addr.type;
+        document.getElementById('addressName').value = addr.name;
+        document.getElementById('addressPhone').value = addr.phone;
+        document.getElementById('addressLine1').value = addr.line1;
+        document.getElementById('addressLine2').value = addr.line2;
+        document.getElementById('addressCity').value = addr.city;
+        document.getElementById('addressPincode').value = addr.pincode;
+        document.getElementById('addressState').value = addr.state;
+        document.getElementById('setDefault').checked = addr.isDefault;
+
+        if (addr.location) {
+            document.getElementById('addressLat').value = addr.location.coordinates[1];
+            document.getElementById('addressLng').value = addr.location.coordinates[0];
+            document.getElementById('locationCoords').innerHTML = `
+                <strong>Lat:</strong> ${addr.location.coordinates[1].toFixed(6)}<br>
+                <strong>Lng:</strong> ${addr.location.coordinates[0].toFixed(6)}
+            `;
+        }
+    } else {
+        document.getElementById('addressId').value = '';
+        document.getElementById('addressType').value = 'Home';
+        document.getElementById('addressName').value = '';
+        document.getElementById('addressPhone').value = '';
+        document.getElementById('addressLine1').value = '';
+        document.getElementById('addressLine2').value = '';
+        document.getElementById('addressCity').value = '';
+        document.getElementById('addressPincode').value = '';
+        document.getElementById('addressState').value = '';
+        document.getElementById('setDefault').checked = false;
+        document.getElementById('addressLat').value = '';
+        document.getElementById('addressLng').value = '';
+        document.getElementById('locationCoords').innerHTML = 'GPS location optional but recommended for accurate delivery';
+    }
+
+    document.getElementById('addressModal').classList.add('active');
+}
+
+function closeAddressModal() {
+    document.getElementById('addressModal').classList.remove('active');
+}
+
+function getAddressLocation() {
+    const btn = document.querySelector('.get-location-btn');
+    btn.textContent = 'Getting...';
+    btn.disabled = true;
+
+    if (!navigator.geolocation) {
+        alert('Geolocation not supported');
+        btn.textContent = 'Get GPS';
+        btn.disabled = false;
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            document.getElementById('addressLat').value = lat;
+            document.getElementById('addressLng').value = lng;
+            document.getElementById('locationCoords').innerHTML = `
+                <strong>Lat:</strong> ${lat.toFixed(6)}<br>
+                <strong>Lng:</strong> ${lng.toFixed(6)}
+            `;
+            btn.textContent = 'Get GPS';
+            btn.disabled = false;
+            alert('✅ GPS location captured!');
+        },
+        (error) => {
+            alert('Location access denied. Please enable location.');
+            btn.textContent = 'Get GPS';
+            btn.disabled = false;
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+async function saveAddress() {
+    const btn = document.getElementById('saveBtn');
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    const token = localStorage.getItem('userToken');
+    const lat = document.getElementById('addressLat').value;
+    const lng = document.getElementById('addressLng').value;
+
+    const addressData = {
+        type: document.getElementById('addressType').value,
+        name: document.getElementById('addressName').value.trim(),
+        phone: document.getElementById('addressPhone').value.trim(),
+        line1: document.getElementById('addressLine1').value.trim(),
+        line2: document.getElementById('addressLine2').value.trim(),
+        city: document.getElementById('addressCity').value.trim(),
+        pincode: document.getElementById('addressPincode').value.trim(),
+        state: document.getElementById('addressState').value.trim(),
+        isDefault: document.getElementById('setDefault').checked,
+        location: lat && lng? {
+            type: 'Point',
+            coordinates: [parseFloat(lng), parseFloat(lat)]
+        } : null
+    };
+
+    if (!addressData.name ||!addressData.phone ||!addressData.line1 ||!addressData.city ||!addressData.pincode ||!addressData.state) {
+        alert('Please fill all required fields!');
+        btn.textContent = 'Save Address';
+        btn.disabled = false;
+        return;
+    }
+
+    try {
+        const url = editingAddressId
+           ? `/api/user/addresses/${editingAddressId}`
+            : '/api/user/addresses';
+        const method = editingAddressId? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(addressData)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            await loadAddresses();
+            closeAddressModal();
+            alert('✅ Address saved successfully!');
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (err) {
+        alert('Failed to save address. Try again.');
+    }
+
+    btn.textContent = 'Save Address';
+    btn.disabled = false;
+}
+
+function editAddress(addressId) {
+    openAddressModal(addressId);
+}
+
+async function deleteAddress(addressId) {
+    if (!confirm('Delete this address?')) return;
+
+    const token = localStorage.getItem('userToken');
+    try {
+        const res = await fetch(`/api/user/addresses/${addressId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data.success) {
+            await loadAddresses();
+            alert('Address deleted!');
+        }
+    } catch (err) {
+        alert('Failed to delete address');
+    }
+}
+
+async function setDefaultAddress(addressId) {
+    const token = localStorage.getItem('userToken');
+    try {
+        const res = await fetch(`/api/user/addresses/${addressId}/default`, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data.success) {
+            await loadAddresses();
+            alert('✅ Default address updated!');
+        }
+    } catch (err) {
+        alert('Failed to set default');
+    }
+}
+</script>
+</body>
+</html>
