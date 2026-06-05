@@ -3,9 +3,9 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const mongoose = require('mongoose'); // NEW
+const mongoose = require('mongoose');
 
-// Models Import - NEW
+// Models Import
 const Shop = require('./server/models/Shop');
 const User = require('./server/models/User');
 const Module = require('./server/models/Module');
@@ -13,11 +13,9 @@ const Module = require('./server/models/Module');
 const app = express();
 const PORT = 4000;
 
-// MongoDB Connect - NEW
-mongoose.connect('mongodb://localhost:27017/samanlive', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => console.log('✅ MongoDB Connected'))
+// MongoDB Connect - FIXED: Options hata diye
+mongoose.connect('mongodb://localhost:27017/samanlive')
+  .then(() => console.log('✅ MongoDB Connected'))
   .catch(err => console.log('❌ MongoDB Error:', err));
 
 app.use(express.json());
@@ -36,7 +34,7 @@ if (!fs.existsSync(CURRENT_LOGO)) {
 }
 
 // ========================================
-// ADMIN PANEL API ROUTES - NEW
+// ADMIN PANEL API ROUTES
 // ========================================
 
 // 1. ADMIN DATA - Sab data ek saath
@@ -50,18 +48,18 @@ app.get('/api/admin/data', async (req, res) => {
             success: true,
             modules,
             shops,
-            ads: [], // Baad me add karna
+            ads: [],
             videos: [],
             campaigns: [],
             areaManagers: [],
-            settings: {} // Baad me add karna
+            settings: {}
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// 2. PENDING SHOPS LIST - NEW
+// 2. PENDING SHOPS LIST
 app.get('/api/admin/pending-shops', async (req, res) => {
     try {
         const shops = await Shop.find({ status: 'pending' })
@@ -73,13 +71,13 @@ app.get('/api/admin/pending-shops', async (req, res) => {
     }
 });
 
-// 3. APPROVE/REJECT SHOP - NEW
+// 3. APPROVE/REJECT SHOP
 app.put('/api/admin/approve-shop/:id', async (req, res) => {
     try {
-        const { action } = req.body; // 'approved' ya 'rejected'
+        const { action } = req.body;
         const shop = await Shop.findByIdAndUpdate(req.params.id, {
             status: action,
-            approvedBy: null, // req.user.id add karna baad me
+            approvedBy: null,
             approvedAt: new Date()
         }, { new: true });
         
@@ -90,7 +88,7 @@ app.put('/api/admin/approve-shop/:id', async (req, res) => {
     }
 });
 
-// 4. AREA ANALYTICS - NEW
+// 4. AREA ANALYTICS
 app.get('/api/admin/area-analytics', async (req, res) => {
     try {
         const totalUsers = await User.countDocuments({ role: 'user' });
@@ -121,7 +119,7 @@ app.get('/api/admin/area-analytics', async (req, res) => {
     }
 });
 
-// 5. UPDATE SHOP STATUS - Generic update ke liye
+// 5. UPDATE SHOP STATUS
 app.put('/api/admin/shop/:id', async (req, res) => {
     try {
         const shop = await Shop.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -144,10 +142,10 @@ app.delete('/api/admin/shop/:id', async (req, res) => {
 });
 
 // ========================================
-// QR GENERATION APIS - TERA PURANA CODE
+// QR GENERATION APIS
 // ========================================
 
-// 1. QR Generate API - UPDATED: Ab direct PDF naam aur link bhejega
+// 1. QR Generate API
 app.post('/api/generate', (req, res) => {
     const { manager_id, product_name, batch, mfg_date, quantity, qr_size_mm, area_manager_name, area_manager_id } = req.body;
     const cmd = `node generate-qr-batch.js "${manager_id}" "${product_name}" "${batch}" "${mfg_date}" ${quantity} ${qr_size_mm} "${CURRENT_LOGO}"`;
@@ -156,13 +154,11 @@ app.post('/api/generate', (req, res) => {
     exec(cmd, (error, stdout, stderr) => {
         if (error) return res.status(500).json({ success: false, error: stderr });
 
-        // Output folder nikalo
         const match = stdout.match(/Folder: (.*)/);
         const outputDir = match ? match[1].trim() : null;
         
         if (!outputDir) return res.status(500).json({ success: false, error: 'Folder not found in output' });
 
-        // PDF ka naam banao - Area Manager + ID + Size ke hisab se
         const safeName = area_manager_name.replace(/[^a-zA-Z0-9]/g, '_');
         const pdf1Name = `${safeName}_${area_manager_id}_${qr_size_mm}mm_ID_LAYER.pdf`;
         const pdf2Name = `${safeName}_${area_manager_id}_${qr_size_mm}mm_QR_LAYER.pdf`;
@@ -179,7 +175,7 @@ app.post('/api/generate', (req, res) => {
     });
 });
 
-// 2. PDF Generate API - UPDATED: PDF banane ke baad naam badal dega aur link bhejega
+// 2. PDF Generate API
 app.post('/api/make-pdf', (req, res) => {
     const { folderPath, finalPdf1Name, finalPdf2Name } = req.body;
     const cmd = `node make-pdf.js "${folderPath}"`;
@@ -187,7 +183,6 @@ app.post('/api/make-pdf', (req, res) => {
     exec(cmd, (error, stdout, stderr) => {
         if (error) return res.status(500).json({ success: false, error: stderr });
 
-        // PDF ban gaya, ab naam badal do
         const oldPdf1 = path.join(folderPath, '1_ID_LAYER.pdf');
         const oldPdf2 = path.join(folderPath, '2_QR_LAYER.pdf');
         const newPdf1 = path.join(folderPath, finalPdf1Name);
@@ -197,7 +192,6 @@ app.post('/api/make-pdf', (req, res) => {
             if (fs.existsSync(oldPdf1)) fs.renameSync(oldPdf1, newPdf1);
             if (fs.existsSync(oldPdf2)) fs.renameSync(oldPdf2, newPdf2);
 
-            // Final download link banao
             const relativePath = folderPath.replace(/\\/g, '/').replace('qr_output/', '');
             const url1 = `/qr_output/${relativePath}/${finalPdf1Name}`;
             const url2 = `/qr_output/${relativePath}/${finalPdf2Name}`;
