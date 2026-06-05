@@ -817,5 +817,5 @@ function goToProfilePage() {
         openLoginModal();
         return;
     }
-    window.location.href = '/profile/profile.html'; // CHANGE 2: YAHAN BADLA
+window.location.href = '/profile.html'; // public/profile.html khulega
 }
