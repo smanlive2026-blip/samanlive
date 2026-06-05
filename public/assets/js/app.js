@@ -817,5 +817,5 @@ function goToProfilePage() {
         openLoginModal();
         return;
     }
-    window.location.href = '/profile.html';
+    window.location.href = '/profile/profile.html';
 }
