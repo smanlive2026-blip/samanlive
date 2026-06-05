@@ -7,6 +7,8 @@
     <!-- LEAFLET CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <!-- CHART.JS ADDED -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; padding: 20px; }
@@ -38,6 +40,7 @@
 .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
 .status-active { background: #d1fae5; color: #065f46; }
 .status-hidden { background: #fee2e2; color: #991b1b; }
+.status-pending { background: #fef3c7; color: #92400e; }
 .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .search-box { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; width: 300px; }
 .upload-box { border: 2px dashed #d1d5db; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 15px; background: #f9fafb; }
@@ -52,6 +55,8 @@
 .batch-card { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; background: #fafafa; }
 .batch-card h4 { margin: 0 0 10px 0; color: #1e40af; }
 .pdf-link { display: inline-block; margin: 5px 10px 5px 0; padding: 8px 12px; background: #42b72a; color: white; text-decoration: none; border-radius: 4px; font-size: 13px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+.card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; }
     </style>
 </head>
 <body>
@@ -65,6 +70,8 @@
             <button class="tab" onclick="showTab('videos', event)">🎬 Live Videos</button>
             <button class="tab" onclick="showTab('campaigns', event)">🎯 Campaigns (52)</button>
             <button class="tab" onclick="showTab('shops', event)">🏪 Shops (54)</button>
+            <button class="tab" onclick="showTab('pendingShops', event)">⏳ Pending Shops</button>
+            <button class="tab" onclick="showTab('analytics', event)">📊 Area Analytics</button>
             <button class="tab" onclick="showTab('shopLocation', event)">🏪 Shop Location</button>
             <button class="tab" onclick="showTab('areaManagers', event)">👨‍💼 Area Managers</button>
             <button class="tab" onclick="showTab('qrBatch', event)">🎟️ QR Batch</button>
@@ -150,15 +157,64 @@
             </table>
         </div>
 
-        <!-- SHOPS TAB -->
+        <!-- SHOPS TAB - ADD BUTTON HATAYA -->
         <div id="shopsTab" class="content">
             <div class="action-bar">
-                <button class="btn-success" onclick="addItem('shop')">+ Add New Shop</button>
+                <input type="text" class="search-box" placeholder="Search shops..." onkeyup="filterTable('shopsTable', this.value)">
             </div>
             <table id="shopsTable">
                 <thead><tr><th>Icon</th><th>Name</th><th>Module</th><th>Manager</th><th>Location</th><th>Range</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody></tbody>
             </table>
+        </div>
+
+        <!-- PENDING SHOPS TAB - NEW -->
+        <div id="pendingShopsTab" class="content">
+            <h2>⏳ Pending Shop Approvals</h2>
+            <p style="color:#64748b;margin-bottom:15px;">User dwara banayi gayi shops - Approve/Reject karo</p>
+            <table id="pendingShopsTable">
+                <thead>
+                    <tr>
+                        <th>User Name</th>
+                        <th>Shop Name</th>
+                        <th>Module</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Area</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- ANALYTICS TAB - NEW -->
+        <div id="analyticsTab" class="content">
+            <h2>📊 Area Wise Analytics</h2>
+            <div class="stats-grid">
+                <div class="card" style="text-align:center;">
+                    <h3 style="color:#64748b;font-size:14px;">Total Users</h3>
+                    <div style="font-size:32px;font-weight:700;color:#1e293b;" id="totalUsersCount">0</div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <h3 style="color:#64748b;font-size:14px;">Total Shops</h3>
+                    <div style="font-size:32px;font-weight:700;color:#1e293b;" id="totalShopsCount">0</div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <h3 style="color:#64748b;font-size:14px;">Pending Approval</h3>
+                    <div style="font-size:32px;font-weight:700;color:#f59e0b;" id="pendingShopsCount">0</div>
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="card">
+                    <h3>Shops by Area</h3>
+                    <canvas id="areaChart" height="300"></canvas>
+                </div>
+                <div class="card">
+                    <h3>Shop Status</h3>
+                    <canvas id="statusChart" height="300"></canvas>
+                </div>
+            </div>
         </div>
 
         <!-- SHOP LOCATION TAB - NEW -->
@@ -401,6 +457,7 @@ let footerLinks = [];
 let map, drawnItems, currentModuleLayer;
 let shopMap, shopMarker, currentShopId;
 let selectedManagerId = null;
+let areaChart, statusChart;
 
 async function loadData() {
     const res = await fetch('/api/admin/data');
@@ -519,10 +576,12 @@ function renderCampaigns() {
 
 function renderShops() {
     const tbody = document.querySelector('#shopsTable tbody');
-    tbody.innerHTML = allData.shops.map(s => {
+    tbody.innerHTML = allData.shops.filter(s => s.status === 'approved' || s.status === true).map(s => {
         const module = allData.modules.find(m => m.id === s.moduleId);
         const manager = allData.areaManagers.find(m => m.id === s.areaManagerId);
         const hasLocation = s.lat && s.lng;
+        const statusClass = s.status === 'approved' || s.status === true ? 'status-active' : s.status === 'pending' ? 'status-pending' : 'status-hidden';
+        const statusText = s.status === 'approved' || s.status === true ? '✅ Active' : s.status === 'pending' ? '⏳ Pending' : '❌ Hidden';
         return `
         <tr>
             <td style="font-size:24px;">${s.icon}</td>
@@ -532,7 +591,7 @@ function renderShops() {
             <td><span class="status-badge ${hasLocation? 'status-active' : 'status-hidden'}">${hasLocation? '📍 Set' : '❌ Not Set'}</span></td>
             <td>${s.range || 5000}m</td>
             <td>${s.priority}</td>
-            <td><span class="status-badge ${s.status? 'status-active' : 'status-hidden'}">${s.status? '✅ Active' : '❌ Hidden'}</span></td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
             <td>
                 <button class="btn-primary" onclick="editItem('shop', '${s.id}')">Edit</button>
                 <button class="btn-danger" onclick="deleteItem('shop', '${s.id}')">Delete</button>
@@ -599,7 +658,7 @@ function addShopForManager() {
 
 function getCategoryName(categoryId) {
     const module = allData.modules.find(m => m.id === categoryId);
-    return module ? module.name : '-';
+    return module? module.name : '-';
 }
 
 function renderSettings() {
@@ -732,6 +791,8 @@ function showTab(tab, event) {
     if(tab === 'shopLocation') initShopMap();
     if(tab === 'qrBatch') loadQRBatches();
     if(tab === 'areaManagers') document.getElementById('areaManagerShopsSection').style.display = 'none';
+    if(tab === 'pendingShops') loadPendingShops();
+    if(tab === 'analytics') loadAnalytics();
 }
 
 function getFields(type) {
@@ -775,7 +836,7 @@ function getFields(type) {
             { key: 'address', label: 'Address', type: 'text' },
             { key: 'range', label: 'Range (meters)', type: 'number' },
             { key: 'priority', label: 'Priority', type: 'number' },
-            { key: 'status', label: 'Status', type: 'select', options: [{v: true, t: '✅ Active'}, {v: false, t: '❌ Hidden'}] }
+            { key: 'status', label: 'Status', type: 'select', options: [{v: 'approved', t: '✅ Approved'}, {v: 'pending', t: '⏳ Pending'}, {v: 'rejected', t: '❌ Rejected'}] }
         ],
         areaManager: [
             { key: 'name', label: 'Manager Name', type: 'text', placeholder: 'Ramesh Kumar' },
@@ -813,7 +874,7 @@ function renderModalFields(type, data) {
         if(f.type === 'textarea') {
             return `<div class="form-group full"><label>${f.label}:</label><textarea id="field_${f.key}" rows="3">${val}</textarea></div>`;
         } else if(f.type === 'select') {
-            return `<div class="form-group"><label>${f.label}:</label><select id="field_${f.key}">${f.options.map(o => `<option value="${o.v}" ${val === o.v? 'selected' : ''}>${o.t}</option>`).join('')}</select></div>`;
+            return `<div class="form-group"><label>${f.label}:</label><select id="field_${f.key}">${f.options.map(o => `<option value="${o.v}" ${val == o.v? 'selected' : ''}>${o.t}</option>`).join('')}</select></div>`;
         } else {
             return `<div class="form-group"><label>${f.label}:</label><input type="${f.type}" id="field_${f.key}" value="${val}" placeholder="${f.placeholder || ''}"></div>`;
         }
@@ -830,7 +891,11 @@ async function saveItem() {
     fields.forEach(f => {
         const el = document.getElementById(`field_${f.key}`);
         if(!el) return;
-        data[f.key] = f.type === 'select'? el.value === 'true' : el.value;
+        if(f.type === 'select' && f.key!== 'status') {
+            data[f.key] = el.value === 'true';
+        } else {
+            data[f.key] = el.value;
+        }
     });
 
     const url = id? `/api/admin/${type}/${id}` : `/api/admin/${type}`;
@@ -1267,6 +1332,112 @@ async function loadQRBatches() {
         document.getElementById('qrBatchList').innerHTML = html || '<p style="color:#64748b;">Koi batch nahi mila. Upar se naya banao.</p>';
     } catch(e) {
         document.getElementById('qrBatchList').innerHTML = '<p style="color:red;">Error loading batches</p>';
+    }
+}
+
+// ========================================
+// NEW FUNCTIONS FOR PENDING SHOPS & ANALYTICS
+// ========================================
+async function loadPendingShops() {
+    try {
+        const res = await fetch('/api/admin/pending-shops');
+        const data = await res.json();
+        const tbody = document.querySelector('#pendingShopsTable tbody');
+
+        if(!data.shops || data.shops.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">Koi pending shop nahi hai</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = data.shops.map(s => `
+            <tr>
+                <td><strong>${s.createdBy?.name || 'Unknown'}</strong><br><small>${s.createdBy?.email || ''}</small></td>
+                <td><strong>${s.name}</strong></td>
+                <td>${s.moduleId?.name || '-'}</td>
+                <td>${s.phone || '-'}</td>
+                <td>${s.address || '-'}</td>
+                <td>${s.area || '-'}</td>
+                <td>
+                    <button class="btn-success" onclick="approveShop('${s._id}', 'approved')">✅ Approve</button>
+                    <button class="btn-danger" onclick="approveShop('${s._id}', 'rejected')">❌ Reject</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function approveShop(shopId, action) {
+    if(!confirm(`Shop ko ${action} karna hai?`)) return;
+
+    try {
+        const res = await fetch(`/api/admin/approve-shop/${shopId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action })
+        });
+        const data = await res.json();
+
+        if(data.success) {
+            alert(`✅ Shop ${action} ho gayi!`);
+            loadPendingShops();
+            loadData();
+        } else {
+            alert('❌ Error: ' + data.error);
+        }
+    } catch(e) {
+        alert('❌ Network Error');
+    }
+}
+
+async function loadAnalytics() {
+    try {
+        const res = await fetch('/api/admin/area-analytics');
+        const data = await res.json();
+
+        document.getElementById('totalUsersCount').textContent = data.totalUsers;
+        document.getElementById('totalShopsCount').textContent = data.totalShops;
+        document.getElementById('pendingShopsCount').textContent = data.pendingShops;
+
+        // Area Chart
+        const areaCtx = document.getElementById('areaChart').getContext('2d');
+        if(areaChart) areaChart.destroy();
+        areaChart = new Chart(areaCtx, {
+            type: 'bar',
+            data: {
+                labels: data.areaData.map(d => d._id || 'Unknown'),
+                datasets: [{
+                    label: 'Shops',
+                    data: data.areaData.map(d => d.count),
+                    backgroundColor: '#3b82f6'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        if(statusChart) statusChart.destroy();
+        statusChart = new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: data.statusData.map(d => d._id),
+                datasets: [{
+                    data: data.statusData.map(d => d.count),
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    } catch(e) {
+        console.error(e);
     }
 }
 

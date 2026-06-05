@@ -3,9 +3,22 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const mongoose = require('mongoose'); // NEW
+
+// Models Import - NEW
+const Shop = require('./server/models/Shop');
+const User = require('./server/models/User');
+const Module = require('./server/models/Module');
 
 const app = express();
 const PORT = 4000;
+
+// MongoDB Connect - NEW
+mongoose.connect('mongodb://localhost:27017/samanlive', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => console.log('❌ MongoDB Error:', err));
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -21,6 +34,118 @@ if (!fs.existsSync(CURRENT_LOGO)) {
     // 1x1 transparent png
     fs.writeFileSync(CURRENT_LOGO, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64'));
 }
+
+// ========================================
+// ADMIN PANEL API ROUTES - NEW
+// ========================================
+
+// 1. ADMIN DATA - Sab data ek saath
+app.get('/api/admin/data', async (req, res) => {
+    try {
+        const modules = await Module.find().sort({ priority: 1 });
+        const shops = await Shop.find().populate('createdBy', 'name email').populate('approvedBy', 'name');
+        const users = await User.find();
+        
+        res.json({
+            success: true,
+            modules,
+            shops,
+            ads: [], // Baad me add karna
+            videos: [],
+            campaigns: [],
+            areaManagers: [],
+            settings: {} // Baad me add karna
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. PENDING SHOPS LIST - NEW
+app.get('/api/admin/pending-shops', async (req, res) => {
+    try {
+        const shops = await Shop.find({ status: 'pending' })
+            .populate('createdBy', 'name email')
+            .populate('serviceType');
+        res.json({ success: true, shops });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. APPROVE/REJECT SHOP - NEW
+app.put('/api/admin/approve-shop/:id', async (req, res) => {
+    try {
+        const { action } = req.body; // 'approved' ya 'rejected'
+        const shop = await Shop.findByIdAndUpdate(req.params.id, {
+            status: action,
+            approvedBy: null, // req.user.id add karna baad me
+            approvedAt: new Date()
+        }, { new: true });
+        
+        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
+        res.json({ success: true, shop });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 4. AREA ANALYTICS - NEW
+app.get('/api/admin/area-analytics', async (req, res) => {
+    try {
+        const totalUsers = await User.countDocuments({ role: 'user' });
+        const totalShops = await Shop.countDocuments({ status: 'approved' });
+        const pendingShops = await Shop.countDocuments({ status: 'pending' });
+        
+        const areaData = await Shop.aggregate([
+            { $match: { status: 'approved', area: { $ne: null } } },
+            { $group: { _id: "$area", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 10 }
+        ]);
+        
+        const statusData = await Shop.aggregate([
+            { $group: { _id: "$status", count: { $sum: 1 } } }
+        ]);
+        
+        res.json({ 
+            success: true, 
+            totalUsers, 
+            totalShops, 
+            pendingShops,
+            areaData,
+            statusData
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 5. UPDATE SHOP STATUS - Generic update ke liye
+app.put('/api/admin/shop/:id', async (req, res) => {
+    try {
+        const shop = await Shop.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
+        res.json({ success: true, shop });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 6. DELETE SHOP
+app.delete('/api/admin/shop/:id', async (req, res) => {
+    try {
+        const shop = await Shop.findByIdAndDelete(req.params.id);
+        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// QR GENERATION APIS - TERA PURANA CODE
+// ========================================
 
 // 1. QR Generate API - UPDATED: Ab direct PDF naam aur link bhejega
 app.post('/api/generate', (req, res) => {
@@ -42,14 +167,6 @@ app.post('/api/generate', (req, res) => {
         const pdf1Name = `${safeName}_${area_manager_id}_${qr_size_mm}mm_ID_LAYER.pdf`;
         const pdf2Name = `${safeName}_${area_manager_id}_${qr_size_mm}mm_QR_LAYER.pdf`;
 
-        // Purane PDF ka naam badal do
-        const oldPdf1 = path.join(outputDir, '1_ID_LAYER.pdf');
-        const oldPdf2 = path.join(outputDir, '2_QR_LAYER.pdf');
-        const newPdf1 = path.join(outputDir, pdf1Name);
-        const newPdf2 = path.join(outputDir, pdf2Name);
-
-        // Make-pdf.js chalane ke baad rename karna hai, to abhi bas folder bhej dete hain
-        // Aur make-pdf ke baad rename karenge
         res.json({ 
             success: true, 
             log: stdout, 
@@ -129,4 +246,5 @@ app.get('/api/batches', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`✅ Admin Panel: http://localhost:${PORT}/admin.html`);
+    console.log(`✅ MongoDB APIs Ready`);
 });

@@ -61,39 +61,35 @@ router.post('/login', async (req, res) => {
         id: manager.id,
         email: manager.email,
         name: manager.name,
-        areaId: manager.areaId
+        assignedAreas: manager.assignedAreas || [manager.city] // NEW: Multiple areas
     }, JWT_SECRET, { expiresIn: '7d' });
 
     res.json({
         success: true,
         token,
-        manager: { id: manager.id, name: manager.name, email: manager.email, areaId: manager.areaId }
+        manager: { id: manager.id, name: manager.name, email: manager.email, assignedAreas: manager.assignedAreas }
     });
 });
 
 // ========================================
-// DASHBOARD - SIRF APNE AREA KA
+// DASHBOARD - SIRF ASSIGNED AREAS KA
 // ========================================
 router.get('/dashboard', authManager, (req, res) => {
     const db = readDB();
-    const area = db.areas.find(a => a.id === req.manager.areaId);
-    if (!area) return res.status(404).json({ error: 'Area nahi mila' });
+    const manager = db.areaManagers.find(m => m.id === req.manager.id);
+    const assignedAreas = manager.assignedAreas || [manager.city];
 
+    // Sirf assigned areas ki approved shops
     const areaShops = db.shops.filter(shop => {
-        if (!shop.lat ||!shop.lng) return false;
-        if (area.type === 'circle') {
-            const dist = getDistance(area.lat, area.lng, shop.lat, shop.lng);
-            return dist <= area.radius;
-        }
-        return false;
+        return assignedAreas.includes(shop.area) && shop.status === 'approved';
     });
 
     res.json({
         success: true,
-        area,
+        assignedAreas,
         stats: {
             totalShops: areaShops.length,
-            activeShops: areaShops.filter(s => s.status).length,
+            activeShops: areaShops.filter(s => s.isActive).length,
             totalCategories: db.marketCategories.length
         },
         shops: areaShops,
@@ -102,91 +98,43 @@ router.get('/dashboard', authManager, (req, res) => {
 });
 
 // ========================================
-// SHOP ADD - APNE AREA ME HI - BANNER ADD KIYA
+// SHOP CREATE - DELETE KAR DIYA ❌
+// Ab manager shop create nahi kar sakta
 // ========================================
-router.post('/shop', authManager, (req, res) => {
-    const db = readDB();
-    const { name, icon, color, categoryId, lat, lng, range, address, phone, banner } = req.body;
-    const area = db.areas.find(a => a.id === req.manager.areaId);
-
-    if (!name ||!categoryId ||!lat ||!lng) {
-        return res.status(400).json({ error: 'Name, Category, Lat, Lng zaruri hai' });
-    }
-
-    if (!area) return res.status(404).json({ error: 'Area nahi mila' });
-
-    if (area.type === 'circle') {
-        const dist = getDistance(area.lat, area.lng, parseFloat(lat), parseFloat(lng));
-        if (dist > area.radius) return res.status(403).json({ error: 'Location area ke bahar hai' });
-    }
-
-    const newShop = {
-        id: 'shop-' + Date.now(),
-        name,
-        icon: icon || '🏪',
-        color: color || '#6366f1',
-        categoryId,
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
-        range: range || 5000,
-        address: address || '',
-        phone: phone || '',
-        banner: banner || '', // BANNER FIELD ADD KIYA
-        status: true,
-        priority: db.shops.length + 1,
-        createdAt: new Date().toISOString(),
-        createdBy: req.manager.id,
-        areaId: req.manager.areaId
-    };
-
-    db.shops.push(newShop);
-    writeDB(db);
-    res.json({ success: true, data: newShop });
-});
 
 // ========================================
-// SHOP UPDATE - SIRF APNI SHOP - BANNER SUPPORT
+// SHOP UPDATE - SIRF EDIT KAR SAKTA HAI
 // ========================================
 router.put('/shop/:id', authManager, (req, res) => {
     const db = readDB();
     const shopIdx = db.shops.findIndex(s => s.id === req.params.id);
 
     if (shopIdx === -1) return res.status(404).json({ error: 'Shop nahi mili' });
-    if (db.shops[shopIdx].createdBy!== req.manager.id) {
-        return res.status(403).json({ error: 'Ye shop aapki nahi hai' });
+
+    const shop = db.shops[shopIdx];
+    const manager = db.areaManagers.find(m => m.id === req.manager.id);
+    const assignedAreas = manager.assignedAreas || [manager.city];
+
+    // Check: Shop is manager ke assigned area me hai ya nahi
+    if (!assignedAreas.includes(shop.area)) {
+        return res.status(403).json({ error: 'Ye shop aapke area ki nahi hai' });
     }
 
-    // Area check agar lat/lng change ho raha hai
-    if (req.body.lat && req.body.lng) {
-        const area = db.areas.find(a => a.id === req.manager.areaId);
-        if (area && area.type === 'circle') {
-            const dist = getDistance(area.lat, area.lng, parseFloat(req.body.lat), parseFloat(req.body.lng));
-            if (dist > area.radius) return res.status(403).json({ error: 'Nayi location area ke bahar hai' });
-        }
-    }
+    // Sirf ye fields update kar sakta hai manager
+    const allowedFields = ['phone', 'banner', 'isActive', 'priority'];
+    const updateData = {};
+    allowedFields.forEach(field => {
+        if (req.body[field]!== undefined) updateData[field] = req.body[field];
+    });
 
-    db.shops[shopIdx] = {...db.shops[shopIdx],...req.body };
-
+    db.shops[shopIdx] = {...db.shops[shopIdx],...updateData};
     writeDB(db);
     res.json({ success: true, data: db.shops[shopIdx] });
 });
 
 // ========================================
-// SHOP DELETE - SIRF APNI SHOP
+// SHOP DELETE - HATA DIYA ❌
+// Manager delete nahi kar sakta, sirf admin
 // ========================================
-router.delete('/shop/:id', authManager, (req, res) => {
-    const db = readDB();
-    const shop = db.shops.find(s => s.id === req.params.id);
-
-    if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
-    if (shop.createdBy!== req.manager.id) {
-        return res.status(403).json({ error: 'Ye shop aapki nahi hai' });
-    }
-
-    db.shops = db.shops.filter(s => s.id!== req.params.id);
-
-    writeDB(db);
-    res.json({ success: true });
-});
 
 module.exports = router;
