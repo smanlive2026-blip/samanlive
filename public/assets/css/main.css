@@ -421,3 +421,30 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     border-radius: 50%;
     object-fit: cover;
 }
+
+/* ======================================== */
+/* TRAIN DRAG SUPPORT - ADDED BY AI */
+/* ======================================== */
+.shops-grid,.videos-grid {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    cursor: grab;
+    user-select: none;
+    scrollbar-width: none; /* Firefox */
+}
+
+.shops-grid::-webkit-scrollbar,
+.videos-grid::-webkit-scrollbar {
+    display: none; /* Chrome Safari */
+}
+
+.shops-grid:active,.videos-grid:active {
+    cursor: grabbing;
+}
+
+/* Jab drag ho raha ho to animation ruk jaye */
+.shops-grid.dragging,.videos-grid.dragging {
+    animation-play-state: paused!important;
+}

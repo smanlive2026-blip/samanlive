@@ -252,7 +252,7 @@ function renderCampaigns() {
 // ========================================
 function renderShops() {
     // FIXED BY AI - Train effect ke liye double kar diya + slide hata diya
-    const doubleShops = [...nearbyServices, ...nearbyServices];
+    const doubleShops = [...nearbyServices,...nearbyServices];
     const shopsEl = document.getElementById('shopsContent');
 
     if(nearbyServices.length === 0) {
@@ -305,19 +305,19 @@ function renderVideos() {
 // ========================================
 let topAdIndex = 0;
 function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer .ad-slide'); // FIXED BY AI - space add kiya
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI - space add kiya
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     topAdIndex = idx;
 }
 function nextTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer .ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex + 1) % slides.length;
     showTopAd(topAdIndex);
 }
 function prevTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer .ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
     showTopAd(topAdIndex);
@@ -328,19 +328,19 @@ function prevTopAd() {
 // ========================================
 let campaignIndex = 0;
 function showCampaign(idx) {
-    const slides = document.querySelectorAll('#campaignContainer .ad-slide'); // FIXED BY AI - space add kiya
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI - space add kiya
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     campaignIndex = idx;
 }
 function nextCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer .ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     campaignIndex = (campaignIndex + 1) % slides.length;
     showCampaign(campaignIndex);
 }
 function prevCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer .ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
     showCampaign(campaignIndex);
@@ -791,22 +791,69 @@ async function submitCreateShop() {
 }
 
 // ========================================
-// AUTO TRAIN SLIDING - SHOPS & VIDEOS - NAYA ADD KIYA
+// AUTO TRAIN SLIDING + DRAG SUPPORT - UPDATED BY AI
 // ========================================
-// Train ki tarah continuous smooth scroll
 function startTrainSliding() {
-    // Shops auto train
-    const shopsContainer = document.getElementById('shopsContent');
-    if (shopsContainer) {
-        shopsContainer.classList.add('auto-train');
-        // CSS se handle hoga - main.css me animation add karna
-    }
+    const containers = [
+        document.getElementById('shopsContent'),
+        document.getElementById('videosContent')
+    ];
 
-    // Videos auto train
-    const videosContainer = document.getElementById('videosContent');
-    if (videosContainer) {
-        videosContainer.classList.add('auto-train');
-    }
+    containers.forEach(container => {
+        if (!container) return;
+
+        container.classList.add('auto-train');
+
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        // Mouse events - Desktop ke liye
+        container.addEventListener('mousedown', (e) => {
+            isDown = true;
+            container.classList.add('dragging');
+            startX = e.pageX - container.offsetLeft;
+            scrollLeft = container.scrollLeft;
+        });
+
+        container.addEventListener('mouseleave', () => {
+            isDown = false;
+            container.classList.remove('dragging');
+        });
+
+        container.addEventListener('mouseup', () => {
+            isDown = false;
+            container.classList.remove('dragging');
+        });
+
+        container.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - container.offsetLeft;
+            const walk = (x - startX) * 2; // scroll speed 2x
+            container.scrollLeft = scrollLeft - walk;
+        });
+
+        // Touch events - Mobile ke liye
+        container.addEventListener('touchstart', (e) => {
+            isDown = true;
+            container.classList.add('dragging');
+            startX = e.touches[0].pageX - container.offsetLeft;
+            scrollLeft = container.scrollLeft;
+        });
+
+        container.addEventListener('touchend', () => {
+            isDown = false;
+            container.classList.remove('dragging');
+        });
+
+        container.addEventListener('touchmove', (e) => {
+            if (!isDown) return;
+            const x = e.touches[0].pageX - container.offsetLeft;
+            const walk = (x - startX) * 2;
+            container.scrollLeft = scrollLeft - walk;
+        });
+    });
 }
 
 // Page load ke baad train chalu karo
