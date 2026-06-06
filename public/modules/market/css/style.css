@@ -1,37 +1,164 @@
+/* ========================================
+   MARKET MODULE - 250 CATEGORIES - PROFESSIONAL
+   ======================================== */
+
+.market-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.market-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.market-header h1 {
+    font-size: 42px;
+    color: #10b981;
+    margin-bottom: 10px;
+    font-weight: 800;
+}
+
+.market-header p {
+    color: #64748b;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+/* ADDED BY AI - SEARCH BOX */
+.market-search-box {
+    max-width: 600px;
+    margin: 0 auto 20px;
+}
+
+.market-search-box input {
+    width: 100%;
+    padding: 14px 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.3s;
+    background: white;
+}
+
+.market-search-box input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+/* ADDED BY AI - FILTER BUTTONS */
+.market-filters {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 8px 20px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #64748b;
+}
+
+.filter-btn.active, .filter-btn:hover {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+/* ADDED BY AI - CATEGORY COUNT */
+.category-count {
+    text-align: center;
+    padding: 15px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.category-count span {
+    color: #10b981;
+    font-size: 18px;
+}
+
+/* CATEGORIES GRID - 250 KE LIYE OPTIMIZED */
+#categoriesBox {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    padding: 15px;
+}
+
 .category-card {
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     cursor: pointer;
     transition: all 0.3s;
     text-align: center;
     border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--cat-color, #10b981);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+}
+
+.category-card:hover::before {
+    transform: scaleX(1);
 }
 
 .category-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-    border-color: var(--cat-color);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    border-color: var(--cat-color, #10b981);
 }
 
 .category-icon {
     font-size: 48px;
     margin-bottom: 10px;
+    transition: transform 0.3s;
+}
+
+.category-card:hover .category-icon {
+    transform: scale(1.1);
 }
 
 .category-name {
     font-size: 14px;
     font-weight: 600;
     color: #1e293b;
+    line-height: 1.3;
 }
 
-/* CATEGORIES GRID - Ye same rahega */
-#categoriesBox {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    padding: 15px;
+.category-count-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
 }
 
 /* SHOPS GRID - 4 PER LINE DESKTOP PE */
@@ -108,7 +235,7 @@
     margin-top: 8px;
 }
 
-/* BANNER - 4 DUKAN KI JAGAH LEGA, SAME HEIGHT - UPDATED */
+/* BANNER - 4 DUKAN KI JAGAH LEGA, SAME HEIGHT */
 .shop-banner {
     grid-column: span 4;
     height: 140px;
@@ -161,33 +288,12 @@
     margin-top: 10px;
 }
 
-.market-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.market-header {
-    text-align: center;
-    margin-bottom: 40px;
-}
-
-.market-header h1 {
-    font-size: 42px;
-    color: #10b981;
-    margin-bottom: 10px;
-}
-
-.market-header p {
-    color: #64748b;
-    font-size: 16px;
-}
-
 .loading {
     text-align: center;
     padding: 60px 20px;
     font-size: 18px;
     color: #64748b;
+    grid-column: 1 / -1;
 }
 
 .error {
@@ -195,13 +301,14 @@
     padding: 60px 20px;
     font-size: 18px;
     color: #ef4444;
+    grid-column: 1 / -1;
 }
 
-/* TABLET - 3 DUKAN PER LINE */
+/* TABLET - 3 CATEGORIES PER LINE */
 @media (min-width: 768px) and (max-width: 1023px) {
     #categoriesBox {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
         padding: 20px;
     }
     
@@ -221,19 +328,50 @@
     }
 }
 
-/* DESKTOP - 4 DUKAN PER LINE */
+/* DESKTOP - 5 CATEGORIES PER LINE FOR 250 */
 @media (min-width: 1024px) {
     #categoriesBox {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        grid-template-columns: repeat(5, 1fr);
         gap: 20px;
         padding: 20px;
     }
+    
+    .market-header h1 {
+        font-size: 48px;
+    }
 }
 
-/* MOBILE - 2 DUKAN PER LINE */
+/* LARGE DESKTOP - 6 CATEGORIES */
+@media (min-width: 1400px) {
+    #categoriesBox {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+/* MOBILE - 2 CATEGORIES PER LINE */
 @media (max-width: 767px) {
     .market-header h1 {
-        font-size: 32px;
+        font-size: 28px;
+    }
+    
+    .market-header p {
+        font-size: 14px;
+    }
+    
+    .market-search-box input {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .filter-btn {
+        padding: 6px 16px;
+        font-size: 12px;
+    }
+    
+    #categoriesBox {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 12px;
     }
     
     .shops-grid {
@@ -248,119 +386,70 @@
     }
     
     .category-card {
-        padding: 20px 10px;
+        padding: 16px 10px;
     }
     .category-icon {
-        font-size: 40px;
+        font-size: 36px;
+        margin-bottom: 8px;
+    }
+    .category-name {
+        font-size: 12px;
     }
     .shop-card {
-        padding: 15px;
-        min-height: 120px;
+        padding: 12px;
+        min-height: 110px;
     }
     .shop-icon {
-        font-size: 28px;
-        width: 45px;
-        height: 45px;
+        font-size: 24px;
+        width: 40px;
+        height: 40px;
+    }
+    .shop-info h3 {
+        font-size: 14px;
     }
 }
 
-/* SMALL MOBILE - AB BHI 2 DUKAN PER LINE - EDITED */
+/* SMALL MOBILE - 2 CATEGORIES COMPACT */
 @media (max-width: 480px) {
     .shops-grid {
-        grid-template-columns: repeat(2, 1fr); /* 1 ki jagah 2 kar diya */
+        grid-template-columns: repeat(2, 1fr);
     }
     .shop-banner {
-        grid-column: span 2; /* 1 ki jagah 2 kar diya */
+        grid-column: span 2;
         height: 100px;
+    }
+    
+    .market-filters {
+        gap: 6px;
+    }
+    
+    .filter-btn {
+        padding: 5px 12px;
+        font-size: 11px;
     }
 }
 
-/* ========================================
-   MOBILE COMPACT OVERRIDES - NAYA ADD KIYA
-   ======================================== */
-@media (max-width: 767px) {
-    .shop-card {
-        padding: 10px !important;
-        min-height: 95px !important;
+/* EXTRA SMALL - 2 CATEGORIES TIGHT */
+@media (max-width: 380px) {
+    #categoriesBox {
+        gap: 10px;
+        padding: 10px;
     }
     
-    .shop-header {
-        gap: 8px !important;
-        margin-bottom: 6px !important;
-    }
-    
-    .shop-icon {
-        font-size: 22px !important;
-        width: 34px !important;
-        height: 34px !important;
-    }
-    
-    .shop-info h3 {
-        font-size: 13px !important;
-        margin-bottom: 3px !important;
-    }
-    
-    .shop-address {
-        font-size: 10px !important;
-        line-height: 1.2 !important;
-    }
-    
-    .shop-distance {
-        padding: 2px 6px !important;
-        font-size: 9px !important;
-        margin-top: 4px !important;
-    }
-    
-    .shop-banner {
-        height: 95px !important;
+    .shops-grid {
+        gap: 10px;
+        padding: 10px;
     }
     
     .category-card {
-        padding: 12px 8px !important;
+        padding: 14px 8px;
     }
     
     .category-icon {
-        font-size: 30px !important;
-        margin-bottom: 5px !important;
+        font-size: 32px;
     }
     
     .category-name {
-        font-size: 11px !important;
-    }
-    
-    .market-header h1 {
-        font-size: 22px !important;
-    }
-    
-    .market-header p {
-        font-size: 12px !important;
-    }
-    
-    .shops-grid {
-        gap: 10px !important;
-        padding: 10px !important;
-    }
-}
-
-/* EXTRA SMALL MOBILE */
-@media (max-width: 380px) {
-    .shops-grid {
-        gap: 8px !important;
-        padding: 8px !important;
-    }
-    
-    .shop-card {
-        padding: 8px !important;
-        min-height: 85px !important;
-    }
-    
-    .shop-icon {
-        width: 30px !important;
-        height: 30px !important;
-        font-size: 18px !important;
-    }
-    
-    .shop-info h3 {
-        font-size: 12px !important;
+        font-size: 11px;
     }
 }

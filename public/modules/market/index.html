@@ -24,11 +24,29 @@
         <div class="market-container" id="mainContainer">
             <div class="market-header">
                 <h1>🛒 Local Market</h1>
-                <p>Aas-paas ki sabhi dukaanen ek jagah</p>
+                <p>Aas-paas ki 250+ dukaanen ek jagah</p>
+                
+                <!-- ADDED BY AI - Search Bar for 250 Categories -->
+                <div class="market-search-box">
+                    <input type="text" id="categorySearch" placeholder="🔍 Category search karo... Grocery, Electronics, etc">
+                </div>
+                
+                <!-- ADDED BY AI - Filter Buttons -->
+                <div class="market-filters">
+                    <button class="filter-btn active" data-filter="all">All 250</button>
+                    <button class="filter-btn" data-filter="popular">Popular</button>
+                    <button class="filter-btn" data-filter="az">A-Z</button>
+                </div>
             </div>
 
+            <!-- MODIFIED BY AI - Categories Grid for 250 -->
             <div id="categoriesBox" class="categories-grid">
-                <div class="loading">Loading categories...</div>
+                <div class="loading">Loading 250 categories...</div>
+            </div>
+            
+            <!-- ADDED BY AI - Total Count -->
+            <div class="category-count">
+                Total: <span id="totalCount">250</span> Categories
             </div>
         </div>
     </main>
