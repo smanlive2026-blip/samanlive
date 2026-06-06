@@ -14,7 +14,7 @@ function readDB() {
         return JSON.parse(fs.readFileSync(dbPath, 'utf8'));
     } catch (err) {
         console.error('DB Read Error:', err);
-        return { marketCategories: [], shops: [] };
+        return { marketCategories: [], shops: [], areas: [] };
     }
 }
 
@@ -45,10 +45,27 @@ function getDistance(lat1, lon1, lat2, lon2) {
 // PUBLIC APIs - FRONTEND KE LIYE
 // ========================================
 
-// 1. Saari Market Categories Dedo
+// 1. Saari Market Categories Dedo - AREA + STATUS FILTER ADD KIYA
 router.get('/categories', (req, res) => {
     const db = readDB();
-    res.json(db.marketCategories || []);
+    const city = req.query.city; //?city=surat ya?city=ahmedabad
+
+    let categories = db.marketCategories || [];
+
+    // Sirf active categories
+    categories = categories.filter(c => c.status!== false);
+
+    // Area filter - Agar city bheji hai
+    if (city) {
+        const area = db.areas.find(a => a.name.toLowerCase().includes(city.toLowerCase()));
+        if (area) {
+            categories = categories.filter(c =>
+               !c.area || c.area.length === 0 || c.area.includes(area.id)
+            );
+        }
+    }
+
+    res.json(categories);
 });
 
 // 2. Specific Category Ki Details
@@ -98,7 +115,7 @@ router.get('/shops', (req, res) => {
 
     // BANNER FIELD ENSURE KARO - AGAR NAHI HAI TO EMPTY STRING
     shops = shops.map(shop => ({
-     ...shop,
+    ...shop,
         banner: shop.banner || ''
     }));
 
@@ -138,7 +155,7 @@ router.get('/shops/:categoryId', (req, res) => {
 
     // BANNER FIELD ENSURE KARO
     shops = shops.map(shop => ({
-     ...shop,
+    ...shop,
         banner: shop.banner || ''
     }));
 
@@ -156,7 +173,7 @@ router.get('/shop/:id', (req, res) => {
 
     // BANNER FIELD ENSURE KARO
     const shopData = {
-     ...shop,
+    ...shop,
         banner: shop.banner || ''
     };
 
@@ -167,10 +184,10 @@ router.get('/shop/:id', (req, res) => {
 // ADMIN APIs - CONTROL PANEL KE LIYE
 // ========================================
 
-// 1. Nayi Category Add Karo
+// 1. Nayi Category Add Karo - GROUP, AREA, STATUS, DESC ADD KIYA
 router.post('/admin/category', (req, res) => {
     const db = readDB();
-    const { name, icon, color } = req.body;
+    const { name, icon, color, group, area, status, desc } = req.body;
 
     if (!name ||!icon) {
         return res.status(400).json({ error: 'Name aur Icon zaruri hai' });
@@ -180,7 +197,11 @@ router.post('/admin/category', (req, res) => {
         id: name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
         name,
         icon,
-        color: color || '#6366f1'
+        color: color || '#6366f1',
+        group: group || 'General',
+        area: area || [], // ["area-1", "area-2"] ya [] for all areas
+        status: status!== false, // default true
+        desc: desc || ''
     };
 
     if (!db.marketCategories) db.marketCategories = [];
@@ -193,7 +214,7 @@ router.post('/admin/category', (req, res) => {
     }
 });
 
-// 2. Category Update Karo
+// 2. Category Update Karo - GROUP, AREA, STATUS UPDATE SUPPORT
 router.put('/admin/category/:id', (req, res) => {
     const db = readDB();
     const idx = db.marketCategories.findIndex(c => c.id === req.params.id);
@@ -228,7 +249,13 @@ router.delete('/admin/category/:id', (req, res) => {
     }
 });
 
-// 4. Shop Add Karo - Category Ke Saath - BANNER SUPPORT ADD KIYA
+// 4. Saari Categories - Admin Ke Liye - STATUS FILTER NAHI
+router.get('/admin/categories', (req, res) => {
+    const db = readDB();
+    res.json(db.marketCategories || []);
+});
+
+// 5. Shop Add Karo - Category Ke Saath - BANNER SUPPORT ADD KIYA
 router.post('/admin/shop', (req, res) => {
     const db = readDB();
     const { name, icon, color, categoryId, lat, lng, range, address, phone, banner } = req.body;
@@ -261,6 +288,41 @@ router.post('/admin/shop', (req, res) => {
         res.json({ success: true, data: newShop });
     } else {
         res.status(500).json({ error: 'Save nahi hua' });
+    }
+});
+
+// 6. Shop Update Karo
+router.put('/admin/shop/:id', (req, res) => {
+    const db = readDB();
+    const idx = db.shops.findIndex(s => s.id === req.params.id);
+
+    if (idx === -1) {
+        return res.status(404).json({ error: 'Shop nahi mili' });
+    }
+
+    db.shops[idx] = {...db.shops[idx],...req.body };
+
+    if (writeDB(db)) {
+        res.json({ success: true, data: db.shops[idx] });
+    } else {
+        res.status(500).json({ error: 'Update nahi hua' });
+    }
+});
+
+// 7. Shop Delete Karo
+router.delete('/admin/shop/:id', (req, res) => {
+    const db = readDB();
+    const initialLength = db.shops.length;
+    db.shops = db.shops.filter(s => s.id!== req.params.id);
+
+    if (db.shops.length === initialLength) {
+        return res.status(404).json({ error: 'Shop nahi mili' });
+    }
+
+    if (writeDB(db)) {
+        res.json({ success: true });
+    } else {
+        res.status(500).json({ error: 'Delete nahi hua' });
     }
 });
 

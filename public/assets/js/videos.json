@@ -1,0 +1,74 @@
+[
+  {
+    "id": "v-1",
+    "title": "Shop Tour",
+    "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    "shopId": "s-1",
+    "shopName": "Ramesh Kirana Store",
+    "priority": 1,
+    "status": true
+  },
+  {
+    "id": "v-2",
+    "title": "Fresh Vegetables",
+    "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    "shopId": "s-2",
+    "shopName": "Sharma Sabzi Wala",
+    "priority": 2,
+    "status": true
+  },
+  {
+    "id": "v-3",
+    "title": "Mobile Repair",
+    "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    "shopId": "s-3",
+    "shopName": "Tech Zone Mobile",
+    "priority": 3,
+    "status": true
+  },
+  {
+    "id": "v-4",
+    "title": "Cake Making",
+    "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    "shopId": "s-4",
+    "shopName": "Sweet Bakery",
+    "priority": 4,
+    "status": true
+  },
+  {
+    "id": "v-5",
+    "title": "Hair Cut Style",
+    "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+    "shopId": "s-5",
+    "shopName": "Style Salon",
+    "priority": 5,
+    "status": true
+  },
+  {
+    "id": "v-6",
+    "title": "Pizza Live",
+    "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+    "shopId": "s-6",
+    "shopName": "Pizza Point",
+    "priority": 6,
+    "status": true
+  },
+  {
+    "id": "v-7",
+    "title": "Dairy Products",
+    "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+    "shopId": "s-7",
+    "shopName": "Amul Dairy",
+    "priority": 7,
+    "status": true
+  },
+  {
+    "id": "v-8",
+    "title": "Clothes Collection",
+    "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+    "shopId": "s-8",
+    "shopName": "Fashion Hub",
+    "priority": 8,
+    "status": true
+  }
+]
