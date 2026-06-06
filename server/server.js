@@ -188,6 +188,9 @@ const dbPath = path.join(__dirname, './database/modules.json');
 app.use(express.static(path.join(__dirname, '../public')));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 app.use('/qr_output', express.static(path.join(__dirname, './qr_output')));
+// ✅ NAYA ADD - ADMIN PANEL STATIC
+app.use('/admin-panel', express.static(path.join(__dirname, '../public/admin-panel')));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -496,7 +499,7 @@ app.post('/api/admin/module', async (req, res) => {
         desc: "",
         banner: "",
         areas: [],
-      ...req.body
+     ...req.body
     };
     try {
         const mongoItem = new Module(newItem);
@@ -650,7 +653,7 @@ app.post('/api/admin/shop', async (req, res) => {
         priority: db.shops.length + 1,
         range: 5000,
         banner: '',
-      ...req.body
+     ...req.body
     };
     try {
         const mongoItem = new Shop(newItem);
@@ -688,7 +691,7 @@ app.post('/api/admin/areaManager', async (req, res) => {
 
     const newManager = {
         id: 'am-' + Date.now(),
-      ...restData,
+     ...restData,
         password: hashedPassword,
         createdAt: new Date().toISOString(),
         status: restData.status!== undefined? restData.status : true
@@ -802,8 +805,24 @@ app.get('/api/qr-batches', (req, res) => {
     res.json(batches);
 });
 
+// ✅ NAYA ADMIN PANEL ROUTES
+app.get('/admin-panel', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/admin-panel/index.html'));
+});
+
+app.get('/admin-panel/:page', (req, res) => {
+    const page = req.params.page;
+    const allowedPages = ['modules', 'content', 'shops', 'managers', 'qr-batch'];
+    if (allowedPages.includes(page)) {
+        res.sendFile(path.join(__dirname, `../public/admin-panel/${page}.html`));
+    } else {
+        res.status(404).send('Page not found');
+    }
+});
+
+// Purana /admin redirect kar de naya pe
 app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin.html'));
+    res.redirect('/admin-panel');
 });
 
 app.get('/area-manager', (req, res) => {
@@ -870,10 +889,9 @@ app.use((req, res) => {
         </html>
     `);
 });
-
-app.listen(PORT, () => {
+    app.listen(PORT, () => {
     console.log('✅ SAMANLIVE Server: http://localhost:' + PORT);
-    console.log('🔧 Admin Panel: http://localhost:' + PORT + '/admin');
+    console.log('🔧 Admin Panel: http://localhost:' + PORT + '/admin-panel');
     console.log('👨‍💼 Area Manager: http://localhost:' + PORT + '/area-manager');
     console.log('📁 Serving: ' + path.join(__dirname, '../public'));
 });

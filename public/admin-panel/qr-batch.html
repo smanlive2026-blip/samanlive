@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Batch - SAMANLIVE Admin</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 SAMANLIVE Control Panel</h1>
+        
+        <!-- NAVBAR - QR Batch active hai -->
+        <div class="admin-navbar">
+            <a href="index.html" class="nav-btn">📊 Dashboard</a>
+            <a href="modules.html" class="nav-btn">📦 Modules</a>
+            <a href="content.html" class="nav-btn">📢 Content</a>
+            <a href="shops.html" class="nav-btn">🏪 Shops</a>
+            <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
+            <a href="qr-batch.html" class="nav-btn active">🎟️ QR Batch</a>
+        </div>
+
+        <!-- QR BATCH TAB -->
+        <div id="qrBatchTab" class="content">
+            <h2>🎟️ QR Batch Generator</h2>
+            <p style="color:#64748b;margin-bottom:15px;">Product ke liye QR banao. PDF auto ban jayegi. Click karte hi printing wale ko de do.</p>
+
+            <div class="form-grid">
+                <div class="card">
+                    <h3>1. Naya Batch Banao</h3>
+                    <div class="form-group">
+                        <label>Manager ID:</label>
+                        <input id="qr_manager_id" placeholder="MGR_78" value="MGR_78">
+                    </div>
+                    <div class="form-group">
+                        <label>Product Name:</label>
+                        <input id="qr_product_name" placeholder="Parle-G 5Rs" value="Parle-G 5Rs">
+                    </div>
+                    <div class="form-group">
+                        <label>Batch Number:</label>
+                        <input id="qr_batch" placeholder="NOV_2026_JPR" value="NOV_2026_JPR">
+                    </div>
+                    <div class="form-group">
+                        <label>MFG Date:</label>
+                        <input id="qr_mfg_date" placeholder="MM/YYYY" value="11/2026">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity:</label>
+                        <input id="qr_quantity" type="number" placeholder="1000" value="1000">
+                    </div>
+                    <div class="form-group">
+                        <label>QR Size:</label>
+                        <select id="qr_size_mm">
+                            <option value="15">Chota Packet - 15mm</option>
+                            <option value="20" selected>Medium Packet - 20mm</option>
+                            <option value="25">Bada Packet - 25mm</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Area Manager Name:</label>
+                        <input id="qr_area_manager_name" placeholder="Ramesh Kumar" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Area Manager ID:</label>
+                        <input id="qr_area_manager_id" placeholder="AM101" required>
+                    </div>
+                    <button class="btn-success" onclick="generateQRBatch()">🎯 QR + PDF Generate Karo</button>
+
+                    <div id="downloadBtns" style="display:none; margin-top:20px; padding:15px; background:#d4edda; border-radius:8px; border:1px solid #c3e6cb;">
+                        <h4 style="margin:0 0 10px 0; color:#155724;">✅ PDF Ready - Direct Download:</h4>
+                        <a id="btnPdf1" class="btn btn-success" download style="margin:5px; display:inline-block;"></a>
+                        <a id="btnPdf2" class="btn btn-success" download style="margin:5px; display:inline-block;"></a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>2. Logo Control</h3>
+                    <p>Current Logo:</p>
+                    <img id="qrCurrentLogo" src="/logos/default.png" width="100" style="border:1px solid #ddd; margin: 10px 0;">
+                    <input type="file" id="qrLogoFile" accept="image/png, image/jpeg">
+                    <button class="btn-primary" onclick="uploadQRLogo()">Logo Change Karo</button>
+                    <p style="font-size:12px;color:#64748b;margin-top:5px;">Ye logo QR ke beech me lagega</p>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+                <h3>Live Process Log</h3>
+                <div id="qrLog">System Ready...</div>
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+                <h3>3. Purane Batches & PDF Download</h3>
+                <button class="btn-secondary" onclick="loadQRBatches()">🔄 Refresh List</button>
+                <div id="qrBatchList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UNIVERSAL MODAL -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Edit Item</h2>
+            <input type="hidden" id="editId">
+            <input type="hidden" id="editType">
+            <div id="modalFields"></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn-primary" onclick="saveItem()">💾 Save Changes</button>
+                <button onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+<script src="assets/admin.js"></script>
+<script>
+// Is page ke liye QR Batch ka JS
+loadData();
+loadQRBatches();
+</script>
+</body>
+</html>

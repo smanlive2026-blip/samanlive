@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content - SAMANLIVE Admin</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 SAMANLIVE Control Panel</h1>
+        
+        <!-- NAVBAR - Content active hai -->
+        <div class="admin-navbar">
+            <a href="index.html" class="nav-btn">📊 Dashboard</a>
+            <a href="modules.html" class="nav-btn">📦 Modules</a>
+            <a href="content.html" class="nav-btn active">📢 Content</a>
+            <a href="shops.html" class="nav-btn">🏪 Shops</a>
+            <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
+            <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
+        </div>
+
+        <!-- ADS TAB -->
+        <div id="adsTab" class="content">
+            <div class="action-bar">
+                <button class="btn-success" onclick="addItem('ad')">+ Add New Ad</button>
+            </div>
+            <table id="adsTable">
+                <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- VIDEOS TAB -->
+        <div id="videosTab" class="content" style="margin-top:20px;">
+            <div class="action-bar">
+                <button class="btn-success" onclick="addItem('video')">+ Add New Video</button>
+            </div>
+            <div class="upload-box">
+                <p><strong>📤 Direct Video Upload:</strong></p>
+                <p style="font-size:12px;color:#64748b;margin-bottom:10px;">System se video select karo, auto upload ho jayega</p>
+                <input type="file" id="videoUploadFile" accept="video/*">
+                <button class="btn-primary" onclick="uploadVideoFile()">Upload Video</button>
+                <p id="uploadStatus" style="margin-top:10px;font-weight:600;"></p>
+            </div>
+            <table id="videosTable">
+                <thead><tr><th>Title</th><th>URL</th><th>Preview</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- CAMPAIGNS TAB -->
+        <div id="campaignsTab" class="content" style="margin-top:20px;">
+            <div class="action-bar">
+                <button class="btn-success" onclick="addItem('campaign')">+ Add New Campaign</button>
+            </div>
+            <table id="campaignsTable">
+                <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- UNIVERSAL MODAL -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Edit Item</h2>
+            <input type="hidden" id="editId">
+            <input type="hidden" id="editType">
+            <div id="modalFields"></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn-primary" onclick="saveItem()">💾 Save Changes</button>
+                <button onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+<script src="assets/admin.js"></script>
+<script>
+// Is page ke liye Ads + Videos + Campaigns ka JS
+loadData();
+</script>
+</body>
+</html>

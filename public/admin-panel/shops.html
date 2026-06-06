@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shops - SAMANLIVE Admin</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 SAMANLIVE Control Panel</h1>
+        
+        <!-- NAVBAR - Shops active hai -->
+        <div class="admin-navbar">
+            <a href="index.html" class="nav-btn">📊 Dashboard</a>
+            <a href="modules.html" class="nav-btn">📦 Modules</a>
+            <a href="content.html" class="nav-btn">📢 Content</a>
+            <a href="shops.html" class="nav-btn active">🏪 Shops</a>
+            <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
+            <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
+        </div>
+
+        <!-- SHOPS TAB -->
+        <div id="shopsTab" class="content">
+            <div class="action-bar">
+                <input type="text" class="search-box" placeholder="Search shops..." onkeyup="filterTable('shopsTable', this.value)">
+            </div>
+            <table id="shopsTable">
+                <thead><tr><th>Icon</th><th>Name</th><th>Module</th><th>Manager</th><th>Location</th><th>Range</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- PENDING SHOPS TAB -->
+        <div id="pendingShopsTab" class="content" style="margin-top:20px;">
+            <h2>⏳ Pending Shop Approvals</h2>
+            <p style="color:#64748b;margin-bottom:15px;">User dwara banayi gayi shops - Approve/Reject karo</p>
+            <table id="pendingShopsTable">
+                <thead>
+                    <tr>
+                        <th>User Name</th>
+                        <th>Shop Name</th>
+                        <th>Module</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Area</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- SHOP LOCATION TAB -->
+        <div id="shopLocationTab" class="content" style="margin-top:20px;">
+            <h2>🏪 Shop Fixed Location</h2>
+            <p style="color:#64748b;margin-bottom:15px;">Shop ki exact location set karo. Map pe click karke point select karo.</p>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Select Shop:</label>
+                    <select id="shopSelectLocation" onchange="loadShopLocation()">
+                        <option value="">-- Select Shop --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Link to Module:</label>
+                    <select id="shopModuleLink">
+                        <option value="">-- Select Module --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Shop Name:</label>
+                    <input type="text" id="shopName" placeholder="Raju Electrician">
+                </div>
+                <div class="form-group">
+                    <label>Phone:</label>
+                    <input type="text" id="shopPhone" placeholder="9876543210">
+                </div>
+                <div class="form-group">
+                    <label>Range (meters):</label>
+                    <input type="number" id="shopRange" value="5000" placeholder="5000">
+                </div>
+                <div class="form-group full">
+                    <label>Address:</label>
+                    <input type="text" id="shopAddress" placeholder="Hazratganj, Lucknow">
+                </div>
+            </div>
+
+            <div class="map-controls">
+                <button class="btn-primary" onclick="saveShopLocation()">💾 Save Shop Location</button>
+                <button class="btn-secondary" onclick="clearShopMarker()">🗑️ Clear Marker</button>
+            </div>
+
+            <div id="shopMap"></div>
+
+            <div class="area-info" id="shopLocationInfo" style="display:none;">
+                <strong>Current Location:</strong> <span id="shopLocationDetails"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- UNIVERSAL MODAL -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Edit Item</h2>
+            <input type="hidden" id="editId">
+            <input type="hidden" id="editType">
+            <div id="modalFields"></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn-primary" onclick="saveItem()">💾 Save Changes</button>
+                <button onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="assets/admin.js"></script>
+<script>
+// Is page ke liye Shops + Pending + Shop Location ka JS
+loadData();
+initShopMap();
+</script>
+</body>
+</html>

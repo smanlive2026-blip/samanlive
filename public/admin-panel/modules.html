@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modules - SAMANLIVE Admin</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 SAMANLIVE Control Panel</h1>
+        
+        <!-- NAVBAR - Modules active hai -->
+        <div class="admin-navbar">
+            <a href="index.html" class="nav-btn">📊 Dashboard</a>
+            <a href="modules.html" class="nav-btn active">📦 Modules</a>
+            <a href="content.html" class="nav-btn">📢 Content</a>
+            <a href="shops.html" class="nav-btn">🏪 Shops</a>
+            <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
+            <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
+        </div>
+
+        <!-- MODULES TAB - ACCORDION WALA -->
+        <div id="modulesTab" class="content">
+            <div class="action-bar">
+                <button class="btn-success" onclick="addItem('module')">+ Add New Module</button>
+                <input type="text" class="search-box" placeholder="Search modules..." onkeyup="filterTable('modulesTable', this.value)">
+            </div>
+            <table id="modulesTable">
+                <thead>
+                    <tr><th style="width:40px;"></th><th>Icon</th><th>Name</th><th>Color</th><th>Link</th><th>Areas</th><th>Priority</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- MODULE AREA TAB -->
+        <div id="moduleAreaTab" class="content" style="margin-top:20px;">
+            <h2>📍 Module Area Mapping</h2>
+            <p style="color:#64748b;margin-bottom:15px;">Module select karke map pe circle ya polygon draw karo. Jis area me module active karna hai.</p>
+
+            <div class="form-group">
+                <label>Select Module:</label>
+                <select id="moduleSelectArea" onchange="loadModuleArea()">
+                    <option value="">-- Select Module --</option>
+                </select>
+            </div>
+
+            <div class="map-controls">
+                <button class="btn-primary" onclick="saveModuleArea()">💾 Save Area</button>
+                <button class="btn-secondary" onclick="clearModuleDrawing()">🗑️ Clear Drawing</button>
+                <button class="btn-warning" onclick="deleteModuleArea()">❌ Remove Area</button>
+            </div>
+
+            <div id="map"></div>
+
+            <div class="area-info" id="areaInfo" style="display:none;">
+                <strong>Current Area:</strong> <span id="areaDetails"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- UNIVERSAL MODAL -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Edit Item</h2>
+            <input type="hidden" id="editId">
+            <input type="hidden" id="editType">
+            <div id="modalFields"></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn-primary" onclick="saveItem()">💾 Save Changes</button>
+                <button onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="assets/admin.js"></script>
+<script>
+// Is page ke liye Modules + Module Area ka JS
+loadData();
+initModuleMap();
+</script>
+</body>
+</html>

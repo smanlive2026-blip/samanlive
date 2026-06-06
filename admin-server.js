@@ -15,8 +15,8 @@ const PORT = 4000;
 
 // MongoDB Connect - FIXED: Options hata diye
 mongoose.connect('mongodb://localhost:27017/samanlive')
-  .then(() => console.log('✅ MongoDB Connected'))
-  .catch(err => console.log('❌ MongoDB Error:', err));
+ .then(() => console.log('✅ MongoDB Connected'))
+ .catch(err => console.log('❌ MongoDB Error:', err));
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -34,20 +34,44 @@ if (!fs.existsSync(CURRENT_LOGO)) {
 }
 
 // ========================================
+// JSON DB HELPERS - NAYA ADD KIYA - AREA/CATEGORY KE LIYE
+// ========================================
+const dbPath = path.join(__dirname, './database/modules.json');
+
+function readDB() {
+    const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+    if (!data.modules) data.modules = [];
+    if (!data.areas) data.areas = [];
+    if (!data.shops) data.shops = [];
+    if (!data.ads) data.ads = [];
+    if (!data.videos) data.videos = [];
+    if (!data.campaigns) data.campaigns = [];
+    if (!data.areaManagers) data.areaManagers = [];
+    if (!data.settings) data.settings = {};
+    return data;
+}
+
+function writeDB(data) {
+    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+}
+
+// ========================================
 // ADMIN PANEL API ROUTES
 // ========================================
 
-// 1. ADMIN DATA - Sab data ek saath
+// 1. ADMIN DATA - Sab data ek saath - UPDATED: areas add kiya
 app.get('/api/admin/data', async (req, res) => {
     try {
         const modules = await Module.find().sort({ priority: 1 });
         const shops = await Shop.find().populate('createdBy', 'name email').populate('approvedBy', 'name');
         const users = await User.find();
-        
+        const db = readDB(); // ← NAYA ADD KIYA
+
         res.json({
             success: true,
             modules,
             shops,
+            areas: db.areas || [], // ← NAYA ADD KIYA
             ads: [],
             videos: [],
             campaigns: [],
@@ -63,8 +87,8 @@ app.get('/api/admin/data', async (req, res) => {
 app.get('/api/admin/pending-shops', async (req, res) => {
     try {
         const shops = await Shop.find({ status: 'pending' })
-            .populate('createdBy', 'name email')
-            .populate('serviceType');
+           .populate('createdBy', 'name email')
+           .populate('serviceType');
         res.json({ success: true, shops });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -80,7 +104,7 @@ app.put('/api/admin/approve-shop/:id', async (req, res) => {
             approvedBy: null,
             approvedAt: new Date()
         }, { new: true });
-        
+
         if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
         res.json({ success: true, shop });
     } catch (err) {
@@ -94,22 +118,22 @@ app.get('/api/admin/area-analytics', async (req, res) => {
         const totalUsers = await User.countDocuments({ role: 'user' });
         const totalShops = await Shop.countDocuments({ status: 'approved' });
         const pendingShops = await Shop.countDocuments({ status: 'pending' });
-        
+
         const areaData = await Shop.aggregate([
             { $match: { status: 'approved', area: { $ne: null } } },
             { $group: { _id: "$area", count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 10 }
         ]);
-        
+
         const statusData = await Shop.aggregate([
             { $group: { _id: "$status", count: { $sum: 1 } } }
         ]);
-        
-        res.json({ 
-            success: true, 
-            totalUsers, 
-            totalShops, 
+
+        res.json({
+            success: true,
+            totalUsers,
+            totalShops,
             pendingShops,
             areaData,
             statusData
@@ -142,6 +166,144 @@ app.delete('/api/admin/shop/:id', async (req, res) => {
 });
 
 // ========================================
+// MODULE DETAIL & AREA/CATEGORY APIS - NAYA ADD KIYA
+// ========================================
+
+// 1. GET SINGLE MODULE WITH CATEGORIES
+app.get('/api/admin/module/:id', async (req, res) => {
+    try {
+        const db = readDB();
+        const module = db.modules.find(m => m.id === req.params.id);
+
+        if (!module) return res.status(404).json({ error: 'Module nahi mila' });
+
+        if (!module.categories) module.categories = [];
+        if (!module.areas) module.areas = [];
+
+        res.json({ success: true, module, areas: db.areas || [] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. UPDATE MODULE AREAS - Module Area tab se save hoga
+app.put('/api/admin/module/:id/areas', async (req, res) => {
+    try {
+        const db = readDB();
+        const idx = db.modules.findIndex(m => m.id === req.params.id);
+
+        if (idx === -1) return res.status(404).json({ error: 'Module nahi mila' });
+
+        db.modules[idx].areas = req.body.areas || [];
+        writeDB(db);
+
+        try {
+            if (db.modules[idx].mongoId) {
+                await Module.findByIdAndUpdate(db.modules[idx].mongoId, { areas: req.body.areas });
+            }
+        } catch(e) { console.log('MongoDB skip:', e.message); }
+
+        res.json({ success: true, data: db.modules[idx] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. ADD CATEGORY IN MODULE
+app.post('/api/admin/module/:id/category', async (req, res) => {
+    try {
+        const db = readDB();
+        const idx = db.modules.findIndex(m => m.id === req.params.id);
+
+        if (idx === -1) return res.status(404).json({ error: 'Module nahi mila' });
+
+        if (!db.modules[idx].categories) db.modules[idx].categories = [];
+
+        const newCat = {
+            id: req.body.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+            name: req.body.name,
+            icon: req.body.icon || '📦',
+            color: req.body.color || '#10b981',
+            group: req.body.group || 'General',
+            status: req.body.status!== undefined? req.body.status : true,
+            areas: req.body.areas || []
+        };
+
+        db.modules[idx].categories.push(newCat);
+        writeDB(db);
+
+        try {
+            if (db.modules[idx].mongoId) {
+                await Module.findByIdAndUpdate(db.modules[idx].mongoId, {
+                    categories: db.modules[idx].categories
+                });
+            }
+        } catch(e) { console.log('MongoDB skip:', e.message); }
+
+        res.json({ success: true, data: newCat });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 4. UPDATE CATEGORY - Area toggle ke liye
+app.put('/api/admin/module/:id/category/:catId', async (req, res) => {
+    try {
+        const db = readDB();
+        const modIdx = db.modules.findIndex(m => m.id === req.params.id);
+
+        if (modIdx === -1) return res.status(404).json({ error: 'Module nahi mila' });
+
+        const catIdx = db.modules[modIdx].categories.findIndex(c => c.id === req.params.catId);
+        if (catIdx === -1) return res.status(404).json({ error: 'Category nahi mili' });
+
+        db.modules[modIdx].categories[catIdx] = {
+          ...db.modules[modIdx].categories[catIdx],
+          ...req.body
+        };
+
+        writeDB(db);
+
+        try {
+            if (db.modules[modIdx].mongoId) {
+                await Module.findByIdAndUpdate(db.modules[modIdx].mongoId, {
+                    categories: db.modules[modIdx].categories
+                });
+            }
+        } catch(e) { console.log('MongoDB skip:', e.message); }
+
+        res.json({ success: true, data: db.modules[modIdx].categories[catIdx] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 5. DELETE CATEGORY
+app.delete('/api/admin/module/:id/category/:catId', async (req, res) => {
+    try {
+        const db = readDB();
+        const modIdx = db.modules.findIndex(m => m.id === req.params.id);
+
+        if (modIdx === -1) return res.status(404).json({ error: 'Module nahi mila' });
+
+        db.modules[modIdx].categories = db.modules[modIdx].categories.filter(c => c.id!== req.params.catId);
+        writeDB(db);
+
+        try {
+            if (db.modules[modIdx].mongoId) {
+                await Module.findByIdAndUpdate(db.modules[modIdx].mongoId, {
+                    categories: db.modules[modIdx].categories
+                });
+            }
+        } catch(e) { console.log('MongoDB skip:', e.message); }
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
 // QR GENERATION APIS
 // ========================================
 
@@ -155,17 +317,17 @@ app.post('/api/generate', (req, res) => {
         if (error) return res.status(500).json({ success: false, error: stderr });
 
         const match = stdout.match(/Folder: (.*)/);
-        const outputDir = match ? match[1].trim() : null;
-        
+        const outputDir = match? match[1].trim() : null;
+
         if (!outputDir) return res.status(500).json({ success: false, error: 'Folder not found in output' });
 
         const safeName = area_manager_name.replace(/[^a-zA-Z0-9]/g, '_');
         const pdf1Name = `${safeName}_${area_manager_id}_${qr_size_mm}mm_ID_LAYER.pdf`;
         const pdf2Name = `${safeName}_${area_manager_id}_${qr_size_mm}mm_QR_LAYER.pdf`;
 
-        res.json({ 
-            success: true, 
-            log: stdout, 
+        res.json({
+            success: true,
+            log: stdout,
             outputDir,
             tempPdf1: '1_ID_LAYER.pdf',
             tempPdf2: '2_QR_LAYER.pdf',
@@ -196,8 +358,8 @@ app.post('/api/make-pdf', (req, res) => {
             const url1 = `/qr_output/${relativePath}/${finalPdf1Name}`;
             const url2 = `/qr_output/${relativePath}/${finalPdf2Name}`;
 
-            res.json({ 
-                success: true, 
+            res.json({
+                success: true,
                 log: stdout,
                 url1: url1,
                 name1: finalPdf1Name,
@@ -230,9 +392,9 @@ app.get('/api/batches', (req, res) => {
         return {
             name: folder,
             path: folderPath,
-            info: fs.existsSync(infoPath) ? JSON.parse(fs.readFileSync(infoPath)) : null,
-            pdf1: fs.existsSync(pdf1) ? pdf1 : null,
-            pdf2: fs.existsSync(pdf2) ? pdf2 : null
+            info: fs.existsSync(infoPath)? JSON.parse(fs.readFileSync(infoPath)) : null,
+            pdf1: fs.existsSync(pdf1)? pdf1 : null,
+            pdf2: fs.existsSync(pdf2)? pdf2 : null
         };
     });
     res.json(batches);

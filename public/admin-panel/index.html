@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SAMANLIVE Admin</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 SAMANLIVE Control Panel</h1>
+        
+        <!-- NAYA NAVBAR - 6 PAGE KE LIYE -->
+        <div class="admin-navbar">
+            <a href="index.html" class="nav-btn active">📊 Dashboard</a>
+            <a href="modules.html" class="nav-btn">📦 Modules</a>
+            <a href="content.html" class="nav-btn">📢 Content</a>
+            <a href="shops.html" class="nav-btn">🏪 Shops</a>
+            <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
+            <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
+        </div>
+
+        <!-- ANALYTICS TAB KA CONTENT -->
+        <div id="analyticsTab" class="content">
+            <h2>📊 Area Wise Analytics</h2>
+            <div class="stats-grid">
+                <div class="card" style="text-align:center;">
+                    <h3 style="color:#64748b;font-size:14px;">Total Users</h3>
+                    <div style="font-size:32px;font-weight:700;color:#1e293b;" id="totalUsersCount">0</div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <h3 style="color:#64748b;font-size:14px;">Total Shops</h3>
+                    <div style="font-size:32px;font-weight:700;color:#1e293b;" id="totalShopsCount">0</div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <h3 style="color:#64748b;font-size:14px;">Pending Approval</h3>
+                    <div style="font-size:32px;font-weight:700;color:#f59e0b;" id="pendingShopsCount">0</div>
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="card">
+                    <h3>Shops by Area</h3>
+                    <canvas id="areaChart" height="300"></canvas>
+                </div>
+                <div class="card">
+                    <h3>Shop Status</h3>
+                    <canvas id="statusChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS TAB KA CONTENT -->
+        <div id="settingsTab" class="content" style="margin-top:20px;">
+            <h2>🎨 Site Settings</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Logo Text:</label>
+                    <input type="text" id="settingLogoText">
+                </div>
+                <div class="form-group full">
+                    <label>Logo Image:</label>
+                    <div style="display:flex;gap:15px;align-items:center;">
+                        <div>
+                            <img id="logoPreview" src="" style="width:80px;height:80px;border-radius:12px;border:2px solid #e5e7eb;object-fit:cover;display:none;">
+                            <div id="logoIconPreview" style="width:80px;height:80px;border-radius:12px;background:#667eea;color:white;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:bold;"></div>
+                        </div>
+                        <div style="flex:1;">
+                            <input type="file" id="logoUploadFile" accept="image/*" onchange="previewLogo(event)">
+                            <button class="btn-primary" onclick="uploadLogoFile()" style="margin-top:8px;">📤 Upload Logo</button>
+                            <p style="font-size:12px;color:#64748b;margin-top:5px;">PNG, JPG, SVG - Max 2MB</p>
+                            <p id="logoUploadStatus" style="margin-top:5px;font-weight:600;"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Header Color:</label>
+                    <input type="color" id="settingHeaderColor">
+                </div>
+                <div class="form-group">
+                    <label>Footer Color:</label>
+                    <input type="color" id="settingFooterColor">
+                </div>
+                <div class="form-group full">
+                    <label>Footer Text:</label>
+                    <input type="text" id="settingFooterText">
+                </div>
+                <div class="form-group full">
+                    <label>Footer About Text:</label>
+                    <textarea id="settingFooterAbout" rows="3" placeholder="About company description..."></textarea>
+                </div>
+            </div>
+
+            <h3 style="margin-top:30px;margin-bottom:15px;">🔗 Footer Links</h3>
+            <div id="footerLinksContainer"></div>
+            <button class="btn-success" onclick="addFooterLink()">+ Add Link</button>
+
+            <h3 style="margin-top:30px;margin-bottom:15px;">📱 Social Media Links</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Facebook URL:</label>
+                    <input type="text" id="settingFacebook" placeholder="https://facebook.com/...">
+                </div>
+                <div class="form-group">
+                    <label>Instagram URL:</label>
+                    <input type="text" id="settingInstagram" placeholder="https://instagram.com/...">
+                </div>
+                <div class="form-group">
+                    <label>Twitter URL:</label>
+                    <input type="text" id="settingTwitter" placeholder="https://twitter.com/...">
+                </div>
+                <div class="form-group">
+                    <label>YouTube URL:</label>
+                    <input type="text" id="settingYoutube" placeholder="https://youtube.com/...">
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="saveSettings()" style="margin-top:20px;">💾 Save All Settings</button>
+        </div>
+    </div>
+
+    <!-- UNIVERSAL MODAL -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Edit Item</h2>
+            <input type="hidden" id="editId">
+            <input type="hidden" id="editType">
+            <div id="modalFields"></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn-primary" onclick="saveItem()">💾 Save Changes</button>
+                <button onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+<script src="assets/admin.js"></script>
+<script>
+// Is page ke liye sirf Analytics + Settings ka JS
+loadData();
+loadAnalytics();
+</script>
+</body>
+</html>
