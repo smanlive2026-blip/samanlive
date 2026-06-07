@@ -8,12 +8,20 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="assets/admin.css">
+    <style>
+        #moduleMap { height: 500px; width: 100%; border-radius: 8px; margin-top: 15px; }
+       .module-row { cursor: pointer; }
+       .module-row:hover { background: #f8fafc; }
+       .expand-icon { transition: transform 0.2s; display: inline-block; }
+       .expand-icon.open { transform: rotate(90deg); }
+       .area-expand { padding: 15px; background: #f8fafc; border-radius: 8px; }
+       .area-row { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>🔧 SAMANLIVE Control Panel</h1>
 
-        <!-- NAVBAR - Modules active hai -->
         <div class="admin-navbar">
             <a href="index.html" class="nav-btn">📊 Dashboard</a>
             <a href="modules.html" class="nav-btn active">📦 Modules</a>
@@ -55,7 +63,7 @@
                 <button class="btn-warning" onclick="deleteModuleArea()">❌ Remove Area</button>
             </div>
 
-            <div id="map"></div>
+            <div id="moduleMap"></div>
 
             <div class="area-info" id="areaInfo" style="display:none;">
                 <strong>Current Area:</strong> <span id="areaDetails"></span>
@@ -89,7 +97,6 @@ let map, drawingManager, drawnItems;
 let currentModuleId = null;
 let currentDrawnLayer = null;
 
-// Toast
 function showToast(msg, type = 'success') {
     const toast = document.createElement('div');
     toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
@@ -98,7 +105,6 @@ function showToast(msg, type = 'success') {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// API Call
 async function apiCall(endpoint, method = 'GET', body = null) {
     try {
         const opts = { method, headers: {} };
@@ -111,45 +117,51 @@ async function apiCall(endpoint, method = 'GET', body = null) {
         if (!res.ok) throw new Error(data.error || 'API Error');
         return data;
     } catch (err) {
+        console.error('API Error:', err);
         showToast(err.message, 'error');
         throw err;
     }
 }
 
-// ==================== LOAD DATA ====================
 async function loadData() {
     try {
+        console.log('Loading modules...');
         allModules = await apiCall('/modules');
+        console.log('Modules loaded:', allModules);
         renderModules();
         populateModuleDropdown();
     } catch (err) {
-        console.error(err);
+        console.error('Load error:', err);
     }
 }
 
-// Render Modules Table with Accordion - FIXED FOR BOOLEAN STATUS
 function renderModules() {
     const tbody = document.querySelector('#modulesTable tbody');
+    if (!tbody) {
+        console.error('Table body not found');
+        return;
+    }
+    
     tbody.innerHTML = allModules.map(m => {
-        // Fix: status true/false ko active/hidden me convert karo
         const moduleStatus = m.status === true || m.status === 'active'? 'active' : 'hidden';
+        const moduleId = m._id || m.id;
         
         return `
-        <tr class="module-row" onclick="toggleModuleAreas('${m._id || m.id}')">
-            <td><span class="expand-icon" id="icon-${m._id || m.id}">▶</span></td>
+        <tr class="module-row" onclick="toggleModuleAreas('${moduleId}')">
+            <td><span class="expand-icon" id="icon-${moduleId}">▶</span></td>
             <td>${m.icon}</td>
             <td>${m.name}</td>
             <td><span style="background:${m.color};padding:4px 8px;border-radius:4px;color:white">${m.color}</span></td>
             <td>${m.link}</td>
             <td><span class="shop-count-badge">${m.areas?.length || 0} areas</span></td>
-            <td>${m.priority}</td>
+            <td>${m.priority || 0}</td>
             <td><span class="status-badge status-${moduleStatus}">${moduleStatus}</span></td>
             <td onclick="event.stopPropagation()">
-                <button class="btn-primary" onclick="editItem('${m._id || m.id}')">Edit</button>
-                <button class="btn-danger" onclick="deleteItem('${m._id || m.id}')">Delete</button>
+                <button class="btn-primary" onclick="editItem('${moduleId}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('${moduleId}')">Delete</button>
             </td>
         </tr>
-        <tr id="areas-${m._id || m.id}" style="display:none;">
+        <tr id="areas-${moduleId}" style="display:none;">
             <td colspan="9">
                 <div class="area-expand">
                     <h4>📍 Areas for ${m.name}</h4>
@@ -164,19 +176,20 @@ function renderModuleAreas(module) {
     if (!module.areas || module.areas.length === 0) {
         return '<p style="color:#6b7280;">No areas mapped yet. Use Module Area Mapping below.</p>';
     }
+    const moduleId = module._id || module.id;
     return module.areas.map((area, idx) => `
         <div class="area-row">
             <strong>Area ${idx + 1}:</strong> ${area.type} -
             ${area.type === 'circle'? `Radius: ${Math.round(area.radius)}m` : `Polygon with ${area.coordinates?.length || 0} points`}
-            <button class="btn-danger" style="float:right;padding:4px 8px;font-size:12px;" onclick="removeArea('${module._id || module.id}', ${idx})">Remove</button>
+            <button class="btn-danger" style="float:right;padding:4px 8px;font-size:12px;" onclick="removeArea('${moduleId}', ${idx})">Remove</button>
         </div>
     `).join('');
 }
 
-// Toggle Accordion
 window.toggleModuleAreas = (id) => {
     const row = document.getElementById(`areas-${id}`);
     const icon = document.getElementById(`icon-${id}`);
+    if (!row ||!icon) return;
     if (row.style.display === 'none') {
         row.style.display = '';
         icon.classList.add('open');
@@ -186,52 +199,28 @@ window.toggleModuleAreas = (id) => {
     }
 };
 
-// Populate Dropdown
 function populateModuleDropdown() {
     const select = document.getElementById('moduleSelectArea');
+    if (!select) return;
     select.innerHTML = '<option value="">-- Select Module --</option>' +
         allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${m.name}</option>`).join('');
 }
 
-// ==================== MODULE CRUD ====================
 window.addItem = (type) => {
     editingId = null;
     document.getElementById('editId').value = '';
     document.getElementById('editType').value = 'module';
     document.getElementById('modalTitle').textContent = 'Add New Module';
-
     const fields = `
         <div class="form-grid">
-            <div class="form-group">
-                <label>Name *</label>
-                <input type="text" id="field_name" required>
-            </div>
-            <div class="form-group">
-                <label>Icon (Emoji) *</label>
-                <input type="text" id="field_icon" placeholder="🏠" required>
-            </div>
-            <div class="form-group">
-                <label>Color *</label>
-                <input type="color" id="field_color" value="#3b82f6" required>
-            </div>
-            <div class="form-group">
-                <label>Link *</label>
-                <input type="text" id="field_link" placeholder="/home-service" required>
-            </div>
-            <div class="form-group">
-                <label>Priority</label>
-                <input type="number" id="field_priority" value="0">
-            </div>
-            <div class="form-group">
-                <label>Status</label>
-                <select id="field_status">
-                    <option value="active">Active</option>
-                    <option value="hidden">Hidden</option>
-                </select>
-            </div>
+            <div class="form-group"><label>Name *</label><input type="text" id="field_name" required></div>
+            <div class="form-group"><label>Icon (Emoji) *</label><input type="text" id="field_icon" placeholder="🏠" required></div>
+            <div class="form-group"><label>Color *</label><input type="color" id="field_color" value="#3b82f6" required></div>
+            <div class="form-group"><label>Link *</label><input type="text" id="field_link" placeholder="/home-service" required></div>
+            <div class="form-group"><label>Priority</label><input type="number" id="field_priority" value="0"></div>
+            <div class="form-group"><label>Status</label><select id="field_status"><option value="active">Active</option><option value="hidden">Hidden</option></select></div>
         </div>
     `;
-
     document.getElementById('modalFields').innerHTML = fields;
     document.getElementById('editModal').style.display = 'block';
 };
@@ -239,21 +228,17 @@ window.addItem = (type) => {
 window.editItem = (id) => {
     const m = allModules.find(x => x._id === id || x.id === id);
     if (!m) return;
-
     editingId = id;
     document.getElementById('editId').value = id;
     document.getElementById('editType').value = 'module';
     document.getElementById('modalTitle').textContent = 'Edit Module';
-
-    addItem('module'); // Form bana do
-
+    addItem('module');
     setTimeout(() => {
         document.getElementById('field_name').value = m.name || '';
         document.getElementById('field_icon').value = m.icon || '';
         document.getElementById('field_color').value = m.color || '#3b82f6';
         document.getElementById('field_link').value = m.link || '';
         document.getElementById('field_priority').value = m.priority || 0;
-        // Fix: status true/false handle karo
         document.getElementById('field_status').value = m.status === true || m.status === 'active'? 'active' : 'hidden';
     }, 100);
 };
@@ -267,12 +252,10 @@ window.saveItem = async () => {
         priority: parseInt(document.getElementById('field_priority').value || 0),
         status: document.getElementById('field_status').value
     };
-
     if (!data.name ||!data.icon ||!data.link) {
         showToast('Name, Icon and Link are required', 'error');
         return;
     }
-
     try {
         if (editingId) {
             await apiCall('/modules/' + editingId, 'PUT', data);
@@ -295,7 +278,6 @@ window.deleteItem = async (id) => {
     } catch (err) {}
 };
 
-// Remove Area from Module
 window.removeArea = async (moduleId, areaIdx) => {
     if (!confirm('Remove this area?')) return;
     try {
@@ -307,26 +289,22 @@ window.removeArea = async (moduleId, areaIdx) => {
     } catch (err) {}
 };
 
-// ==================== MAP LOGIC ====================
 function initModuleMap() {
-    map = L.map('map').setView([28.6139, 77.2090], 12); // Delhi default
+    const mapDiv = document.getElementById('moduleMap');
+    if (!mapDiv) {
+        console.error('Map div not found');
+        return;
+    }
+    
+    map = L.map('moduleMap').setView([28.6139, 77.2090], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
     drawingManager = new L.Control.Draw({
-        draw: {
-            polygon: true,
-            circle: true,
-            rectangle: false,
-            polyline: false,
-            marker: false,
-            circlemarker: false
-        },
-        edit: {
-            featureGroup: drawnItems
-        }
+        draw: { polygon: true, circle: true, rectangle: false, polyline: false, marker: false, circlemarker: false },
+        edit: { featureGroup: drawnItems }
     });
     map.addControl(drawingManager);
 
@@ -336,13 +314,14 @@ function initModuleMap() {
         drawnItems.addLayer(currentDrawnLayer);
         showAreaInfo(e.layer);
     });
+    
+    setTimeout(() => map.invalidateSize(), 100);
 }
 
 function showAreaInfo(layer) {
     const info = document.getElementById('areaInfo');
     const details = document.getElementById('areaDetails');
     info.style.display = 'block';
-
     if (layer instanceof L.Circle) {
         const center = layer.getLatLng();
         const radius = Math.round(layer.getRadius());
@@ -359,12 +338,10 @@ window.loadModuleArea = () => {
     drawnItems.clearLayers();
     currentDrawnLayer = null;
     document.getElementById('areaInfo').style.display = 'none';
-
     if (!moduleId) return;
-
     const module = allModules.find(m => m._id === moduleId || m.id === moduleId);
     if (module.areas && module.areas.length > 0) {
-        const area = module.areas[0]; // Show first area
+        const area = module.areas[0];
         if (area.type === 'circle') {
             currentDrawnLayer = L.circle([area.center.lat, area.center.lng], { radius: area.radius });
             drawnItems.addLayer(currentDrawnLayer);
@@ -387,27 +364,18 @@ window.saveModuleArea = async () => {
         showToast('Please draw an area on map first', 'error');
         return;
     }
-
     let areaData = {};
     if (currentDrawnLayer instanceof L.Circle) {
         const center = currentDrawnLayer.getLatLng();
-        areaData = {
-            type: 'circle',
-            center: { lat: center.lat, lng: center.lng },
-            radius: currentDrawnLayer.getRadius()
-        };
+        areaData = { type: 'circle', center: { lat: center.lat, lng: center.lng }, radius: currentDrawnLayer.getRadius() };
     } else if (currentDrawnLayer instanceof L.Polygon) {
         const coords = currentDrawnLayer.getLatLngs()[0].map(p => ({ lat: p.lat, lng: p.lng }));
-        areaData = {
-            type: 'polygon',
-            coordinates: coords
-        };
+        areaData = { type: 'polygon', coordinates: coords };
     }
-
     try {
         const module = allModules.find(m => m._id === currentModuleId || m.id === currentModuleId);
         if (!module.areas) module.areas = [];
-        module.areas = [areaData]; // Replace with new area, ya push karo multiple ke liye
+        module.areas = [areaData];
         await apiCall('/modules/' + currentModuleId, 'PUT', { areas: module.areas });
         showToast('Area saved successfully');
         loadData();
@@ -434,17 +402,19 @@ window.deleteModuleArea = async () => {
     } catch (err) {}
 };
 
-// Filter Table
 window.filterTable = (tableId, query) => {
     const rows = document.querySelectorAll(`#${tableId} tbody tr.module-row`);
     const q = query.toLowerCase();
     rows.forEach(row => {
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(q)? '' : 'none';
+        const nextRow = row.nextElementSibling;
+        if (nextRow && nextRow.id.startsWith('areas-')) {
+            nextRow.style.display = 'none';
+        }
     });
 };
 
-// Close Modal
 window.closeModal = () => {
     document.getElementById('editModal').style.display = 'none';
 };
@@ -456,8 +426,10 @@ window.onclick = (e) => {
 };
 
 // Init
-loadData();
-initModuleMap();
+document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+    initModuleMap();
+});
 </script>
 </body>
 </html>
