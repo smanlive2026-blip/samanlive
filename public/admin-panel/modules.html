@@ -127,25 +127,29 @@ async function loadData() {
     }
 }
 
-// Render Modules Table with Accordion
+// Render Modules Table with Accordion - FIXED FOR BOOLEAN STATUS
 function renderModules() {
     const tbody = document.querySelector('#modulesTable tbody');
-    tbody.innerHTML = allModules.map(m => `
-        <tr class="module-row" onclick="toggleModuleAreas('${m._id}')">
-            <td><span class="expand-icon" id="icon-${m._id}">▶</span></td>
+    tbody.innerHTML = allModules.map(m => {
+        // Fix: status true/false ko active/hidden me convert karo
+        const moduleStatus = m.status === true || m.status === 'active'? 'active' : 'hidden';
+        
+        return `
+        <tr class="module-row" onclick="toggleModuleAreas('${m._id || m.id}')">
+            <td><span class="expand-icon" id="icon-${m._id || m.id}">▶</span></td>
             <td>${m.icon}</td>
             <td>${m.name}</td>
             <td><span style="background:${m.color};padding:4px 8px;border-radius:4px;color:white">${m.color}</span></td>
             <td>${m.link}</td>
             <td><span class="shop-count-badge">${m.areas?.length || 0} areas</span></td>
             <td>${m.priority}</td>
-            <td><span class="status-badge status-${m.status}">${m.status}</span></td>
+            <td><span class="status-badge status-${moduleStatus}">${moduleStatus}</span></td>
             <td onclick="event.stopPropagation()">
-                <button class="btn-primary" onclick="editItem('${m._id}')">Edit</button>
-                <button class="btn-danger" onclick="deleteItem('${m._id}')">Delete</button>
+                <button class="btn-primary" onclick="editItem('${m._id || m.id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('${m._id || m.id}')">Delete</button>
             </td>
         </tr>
-        <tr id="areas-${m._id}" style="display:none;">
+        <tr id="areas-${m._id || m.id}" style="display:none;">
             <td colspan="9">
                 <div class="area-expand">
                     <h4>📍 Areas for ${m.name}</h4>
@@ -153,7 +157,7 @@ function renderModules() {
                 </div>
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="9" style="text-align:center;color:#6b7280">No modules found</td></tr>';
+    `}).join('') || '<tr><td colspan="9" style="text-align:center;color:#6b7280">No modules found</td></tr>';
 }
 
 function renderModuleAreas(module) {
@@ -164,7 +168,7 @@ function renderModuleAreas(module) {
         <div class="area-row">
             <strong>Area ${idx + 1}:</strong> ${area.type} -
             ${area.type === 'circle'? `Radius: ${Math.round(area.radius)}m` : `Polygon with ${area.coordinates?.length || 0} points`}
-            <button class="btn-danger" style="float:right;padding:4px 8px;font-size:12px;" onclick="removeArea('${module._id}', ${idx})">Remove</button>
+            <button class="btn-danger" style="float:right;padding:4px 8px;font-size:12px;" onclick="removeArea('${module._id || module.id}', ${idx})">Remove</button>
         </div>
     `).join('');
 }
@@ -186,7 +190,7 @@ window.toggleModuleAreas = (id) => {
 function populateModuleDropdown() {
     const select = document.getElementById('moduleSelectArea');
     select.innerHTML = '<option value="">-- Select Module --</option>' +
-        allModules.map(m => `<option value="${m._id}">${m.icon} ${m.name}</option>`).join('');
+        allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${m.name}</option>`).join('');
 }
 
 // ==================== MODULE CRUD ====================
@@ -233,7 +237,7 @@ window.addItem = (type) => {
 };
 
 window.editItem = (id) => {
-    const m = allModules.find(x => x._id === id);
+    const m = allModules.find(x => x._id === id || x.id === id);
     if (!m) return;
 
     editingId = id;
@@ -249,7 +253,8 @@ window.editItem = (id) => {
         document.getElementById('field_color').value = m.color || '#3b82f6';
         document.getElementById('field_link').value = m.link || '';
         document.getElementById('field_priority').value = m.priority || 0;
-        document.getElementById('field_status').value = m.status || 'active';
+        // Fix: status true/false handle karo
+        document.getElementById('field_status').value = m.status === true || m.status === 'active'? 'active' : 'hidden';
     }, 100);
 };
 
@@ -294,7 +299,7 @@ window.deleteItem = async (id) => {
 window.removeArea = async (moduleId, areaIdx) => {
     if (!confirm('Remove this area?')) return;
     try {
-        const module = allModules.find(m => m._id === moduleId);
+        const module = allModules.find(m => m._id === moduleId || m.id === moduleId);
         module.areas.splice(areaIdx, 1);
         await apiCall('/modules/' + moduleId, 'PUT', { areas: module.areas });
         showToast('Area removed');
@@ -357,7 +362,7 @@ window.loadModuleArea = () => {
 
     if (!moduleId) return;
 
-    const module = allModules.find(m => m._id === moduleId);
+    const module = allModules.find(m => m._id === moduleId || m.id === moduleId);
     if (module.areas && module.areas.length > 0) {
         const area = module.areas[0]; // Show first area
         if (area.type === 'circle') {
@@ -400,7 +405,7 @@ window.saveModuleArea = async () => {
     }
 
     try {
-        const module = allModules.find(m => m._id === currentModuleId);
+        const module = allModules.find(m => m._id === currentModuleId || m.id === currentModuleId);
         if (!module.areas) module.areas = [];
         module.areas = [areaData]; // Replace with new area, ya push karo multiple ke liye
         await apiCall('/modules/' + currentModuleId, 'PUT', { areas: module.areas });
