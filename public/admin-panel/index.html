@@ -36,6 +36,18 @@
                     <div style="font-size:32px;font-weight:700;color:#1e293b;" id="totalShopsCount">0</div>
                 </div>
                 <div class="card" style="text-align:center;">
+                    <h3 style="color:#64748b;font-size:14px;">Total Modules</h3>
+                    <div style="font-size:32px;font-weight:700;color:#8b5cf6;" id="totalModulesCount">0</div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <h3 style="color:#64748b;font-size:14px;">Total Content</h3>
+                    <div style="font-size:32px;font-weight:700;color:#06b6d4;" id="totalContentCount">0</div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <h3 style="color:#64748b;font-size:14px;">Total Managers</h3>
+                    <div style="font-size:32px;font-weight:700;color:#ec4899;" id="totalManagersCount">0</div>
+                </div>
+                <div class="card" style="text-align:center;">
                     <h3 style="color:#64748b;font-size:14px;">Pending Approval</h3>
                     <div style="font-size:32px;font-weight:700;color:#f59e0b;" id="pendingShopsCount">0</div>
                 </div>
@@ -74,6 +86,7 @@
                             <p id="logoUploadStatus" style="margin-top:5px;font-weight:600;"></p>
                         </div>
                     </div>
+                </div>
                 <div class="form-group">
                     <label>Header Color:</label>
                     <input type="color" id="settingHeaderColor">
@@ -178,31 +191,38 @@ async function loadAnalytics() {
 
         document.getElementById('totalUsersCount').textContent = stats.users || 0;
         document.getElementById('totalShopsCount').textContent = stats.shops || 0;
+        document.getElementById('totalModulesCount').textContent = stats.modules || 0;
+        document.getElementById('totalContentCount').textContent = stats.content || 0;
+        document.getElementById('totalManagersCount').textContent = stats.managers || 0;
         document.getElementById('pendingShopsCount').textContent = shops.filter(s => s.status === 'pending').length;
 
         // Area Chart
         const areaCounts = {};
         shops.forEach(s => {
-            areaCounts[s.area] = (areaCounts[s.area] || 0) + 1;
+            if (s.area) areaCounts[s.area] = (areaCounts[s.area] || 0) + 1;
         });
 
         if (areaChart) areaChart.destroy();
-        areaChart = new Chart(document.getElementById('areaChart'), {
-            type: 'bar',
-            data: {
-                labels: Object.keys(areaCounts),
-                datasets: [{
-                    label: 'Shops',
-                    data: Object.values(areaCounts),
-                    backgroundColor: '#3b82f6'
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+        if (Object.keys(areaCounts).length > 0) {
+            areaChart = new Chart(document.getElementById('areaChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(areaCounts),
+                    datasets: [{
+                        label: 'Shops',
+                        data: Object.values(areaCounts),
+                        backgroundColor: '#3b82f6'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
 
         // Status Chart
         const statusCounts = { active: 0, pending: 0, hidden: 0 };
-        shops.forEach(s => statusCounts[s.status]++);
+        shops.forEach(s => {
+            if (statusCounts[s.status]!== undefined) statusCounts[s.status]++;
+        });
 
         if (statusChart) statusChart.destroy();
         statusChart = new Chart(document.getElementById('statusChart'), {
@@ -218,7 +238,7 @@ async function loadAnalytics() {
         });
 
     } catch (err) {
-        console.error(err);
+        console.error('Analytics Error:', err);
     }
 }
 
@@ -248,7 +268,9 @@ async function loadSettings() {
         }
 
         renderFooterLinks();
-    } catch (err) {}
+    } catch (err) {
+        console.error('Settings Error:', err);
+    }
 }
 
 function renderFooterLinks() {

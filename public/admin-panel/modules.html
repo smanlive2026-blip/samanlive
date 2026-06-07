@@ -163,7 +163,7 @@ function renderModuleAreas(module) {
     return module.areas.map((area, idx) => `
         <div class="area-row">
             <strong>Area ${idx + 1}:</strong> ${area.type} -
-            ${area.type === 'circle'? `Radius: ${area.radius}m` : `Polygon with ${area.coordinates?.length || 0} points`}
+            ${area.type === 'circle'? `Radius: ${Math.round(area.radius)}m` : `Polygon with ${area.coordinates?.length || 0} points`}
             <button class="btn-danger" style="float:right;padding:4px 8px;font-size:12px;" onclick="removeArea('${module._id}', ${idx})">Remove</button>
         </div>
     `).join('');
@@ -198,10 +198,6 @@ window.addItem = (type) => {
 
     const fields = `
         <div class="form-grid">
-            <div class="form-group">
-                <label>Module ID *</label>
-                <input type="text" id="field_id" placeholder="mod_home_service" required>
-            </div>
             <div class="form-group">
                 <label>Name *</label>
                 <input type="text" id="field_name" required>
@@ -248,7 +244,6 @@ window.editItem = (id) => {
     addItem('module'); // Form bana do
 
     setTimeout(() => {
-        document.getElementById('field_id').value = m.id || '';
         document.getElementById('field_name').value = m.name || '';
         document.getElementById('field_icon').value = m.icon || '';
         document.getElementById('field_color').value = m.color || '#3b82f6';
@@ -260,7 +255,6 @@ window.editItem = (id) => {
 
 window.saveItem = async () => {
     const data = {
-        id: document.getElementById('field_id').value,
         name: document.getElementById('field_name').value,
         icon: document.getElementById('field_icon').value,
         color: document.getElementById('field_color').value,
@@ -269,8 +263,8 @@ window.saveItem = async () => {
         status: document.getElementById('field_status').value
     };
 
-    if (!data.id ||!data.name ||!data.icon ||!data.link) {
-        showToast('ID, Name, Icon and Link are required', 'error');
+    if (!data.name ||!data.icon ||!data.link) {
+        showToast('Name, Icon and Link are required', 'error');
         return;
     }
 

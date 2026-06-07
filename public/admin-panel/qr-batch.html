@@ -79,7 +79,7 @@
                 <div class="card">
                     <h3>2. Logo Control</h3>
                     <p>Current Logo:</p>
-                    <img id="qrCurrentLogo" src="/logos/default.png" width="100" style="border:1px solid #ddd; margin: 10px 0;">
+                    <img id="qrCurrentLogo" src="/logos/default.png" width="100" style="border:1px solid #ddd; margin: 10px 0;" onerror="this.src='/assets/logo.png'">
                     <input type="file" id="qrLogoFile" accept="image/png, image/jpeg">
                     <button class="btn-primary" onclick="uploadQRLogo()">Logo Change Karo</button>
                     <p style="font-size:12px;color:#64748b;margin-top:5px;">Ye logo QR ke beech me lagega</p>
@@ -194,9 +194,9 @@ window.generateQRBatch = async () => {
         // Show download buttons
         const btn1 = document.getElementById('btnPdf1');
         const btn2 = document.getElementById('btnPdf2');
-        btn1.href = result.pdf1Url;
+        btn1.href = result.pdf1Url || `/api/qr/download/${result.batchId}/1`;
         btn1.textContent = `📥 Download PDF 1 (${result.pdf1})`;
-        btn2.href = result.pdf2Url;
+        btn2.href = result.pdf2Url || `/api/qr/download/${result.batchId}/2`;
         btn2.textContent = `📥 Download PDF 2 (${result.pdf2})`;
         document.getElementById('downloadBtns').style.display = 'block';
 
@@ -223,9 +223,9 @@ window.uploadQRLogo = async () => {
 
     try {
         const res = await apiCall('/qr/upload-logo', 'POST', formData);
-        document.getElementById('qrCurrentLogo').src = res.logoUrl + '?t=' + Date.now();
+        document.getElementById('qrCurrentLogo').src = (res.logoUrl || '/logos/default.png') + '?t=' + Date.now();
         showToast('Logo uploaded successfully');
-        logToQRConsole('✅ Logo updated: ' + res.logoUrl);
+        logToQRConsole('✅ Logo updated: ' + (res.logoUrl || '/logos/default.png'));
         fileInput.value = '';
     } catch (err) {
         logToQRConsole('❌ Logo upload failed');
@@ -249,8 +249,8 @@ window.loadQRBatches = async () => {
                 <p><strong>Manager:</strong> ${b.managerId} | <strong>Area Manager:</strong> ${b.areaManagerName} (${b.areaManagerId})</p>
                 <p><strong>Qty:</strong> ${b.quantity} | <strong>Size:</strong> ${b.sizeMm}mm | <strong>MFG:</strong> ${b.mfgDate} | <strong>Date:</strong> ${new Date(b.createdAt).toLocaleDateString()}</p>
                 <div style="margin-top:10px;">
-                    <a href="${b.pdf1Url}" class="pdf-link" target="_blank" download>📥 PDF 1</a>
-                    <a href="${b.pdf2Url}" class="pdf-link" target="_blank" download>📥 PDF 2</a>
+                    <a href="${b.pdf1Url || `/api/qr/download/${b._id}/1`}" class="pdf-link" target="_blank" download>📥 PDF 1</a>
+                    <a href="${b.pdf2Url || `/api/qr/download/${b._id}/2`}" class="pdf-link" target="_blank" download>📥 PDF 2</a>
                     <button class="btn-danger" onclick="deleteBatch('${b._id}')" style="margin-left:10px;padding:8px 12px;font-size:13px;">🗑️ Delete</button>
                 </div>
             </div>

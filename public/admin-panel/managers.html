@@ -115,7 +115,7 @@ function renderManagers() {
     const tbody = document.querySelector('#areaManagersTable tbody');
     tbody.innerHTML = allManagers.map(m => {
         const managerShops = allShops.filter(s => s.managerId === m._id);
-        const loginLink = `${window.location.origin}/manager-login?token=${m.loginToken}`;
+        const loginLink = `${window.location.origin}/manager-login?token=${m.loginToken || 'pending'}`;
         return `
             <tr>
                 <td>${m.name}</td>
@@ -154,10 +154,10 @@ window.viewManagerShops = (managerId) => {
     const tbody = document.querySelector('#managerShopsTable tbody');
     tbody.innerHTML = managerShops.map(s => `
         <tr>
-            <td><img src="${s.logo || '/assets/logo.png'}" style="width:40px;height:40px;border-radius:6px;object-fit:cover"></td>
+            <td><img src="${s.logo || s.image || '/assets/logo.png'}" style="width:40px;height:40px;border-radius:6px;object-fit:cover" onerror="this.src='/assets/logo.png'"></td>
             <td>${s.name}</td>
-            <td>${s.category}</td>
-            <td>${s.address}</td>
+            <td>${s.category || s.moduleId || '-'}</td>
+            <td>${s.address || '-'}</td>
             <td><span class="status-badge status-${s.status}">${s.status}</span></td>
             <td>
                 <button class="btn-primary" onclick="editShop('${s._id}')">Edit</button>
@@ -203,7 +203,7 @@ window.addItem = (type) => {
                 <label>Status</label>
                 <select id="field_status">
                     <option value="active">Active</option>
-                    <option value="hidden">Hidden</option>
+                    <option value="inactive">Inactive</option>
                 </select>
             </div>
         </div>
@@ -285,7 +285,8 @@ window.deleteItem = async (id) => {
 
 // Add Shop For Manager
 window.addShopForManager = () => {
-    showToast('Go to Shops page to add shop for this manager', 'error');
+    if (!selectedManagerId) return;
+    window.location.href = `shops.html?manager=${selectedManagerId}`;
 };
 
 // Edit Shop - redirect to shops page

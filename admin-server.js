@@ -10,6 +10,9 @@ const mongoose = require('mongoose');
 const Shop = require('./server/models/Shop');
 const User = require('./server/models/User');
 const Module = require('./server/models/Module');
+const Content = require('./server/models/Content');
+const Manager = require('./server/models/Manager');
+const Setting = require('./server/models/Setting');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -57,7 +60,246 @@ function writeDB(data) {
 }
 
 // ========================================
-// ADMIN PANEL API ROUTES
+// DASHBOARD STATS API - NAYA ADD KIYA
+// ========================================
+app.get('/api/stats', async (req, res) => {
+    try {
+        const users = await User.countDocuments();
+        const shops = await Shop.countDocuments();
+        const modules = await Module.countDocuments();
+        const content = await Content.countDocuments();
+        const managers = await Manager.countDocuments();
+        res.json({ users, shops, modules, content, managers });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// SETTINGS API - NAYA ADD KIYA
+// ========================================
+app.get('/api/settings', async (req, res) => {
+    try {
+        let settings = await Setting.findOne();
+        if (!settings) {
+            settings = await Setting.create({
+                logoText: 'SAMANLIVE',
+                headerColor: '#1e40af',
+                footerColor: '#1e293b',
+                footerText: '© 2026 SAMANLIVE',
+                footerAbout: 'Best services in your city',
+                footerLinks: [],
+                facebook: '',
+                instagram: '',
+                twitter: '',
+                youtube: ''
+            });
+        }
+        res.json(settings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/settings', async (req, res) => {
+    try {
+        const settings = await Setting.findOneAndUpdate({}, req.body, { new: true, upsert: true });
+        res.json(settings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// MODULES API - NAYA ADD KIYA
+// ========================================
+app.get('/api/modules', async (req, res) => {
+    try {
+        const modules = await Module.find().sort({ priority: 1 });
+        res.json(modules);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/modules', async (req, res) => {
+    try {
+        const module = await Module.create(req.body);
+        res.json(module);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/modules/:id', async (req, res) => {
+    try {
+        const module = await Module.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!module) return res.status(404).json({ error: 'Module nahi mila' });
+        res.json(module);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/modules/:id', async (req, res) => {
+    try {
+        const module = await Module.findByIdAndDelete(req.params.id);
+        if (!module) return res.status(404).json({ error: 'Module nahi mila' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// SHOPS API - NAYA ADD KIYA
+// ========================================
+app.get('/api/shops', async (req, res) => {
+    try {
+        const shops = await Shop.find();
+        res.json(shops);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/shops/:id', async (req, res) => {
+    try {
+        const shop = await Shop.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
+        res.json(shop);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/shops/:id', async (req, res) => {
+    try {
+        const shop = await Shop.findByIdAndDelete(req.params.id);
+        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// CONTENT API - NAYA ADD KIYA
+// ========================================
+app.get('/api/content', async (req, res) => {
+    try {
+        const content = await Content.find().sort({ createdAt: -1 });
+        res.json(content);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/content', async (req, res) => {
+    try {
+        const content = await Content.create(req.body);
+        res.json(content);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/content/:id', async (req, res) => {
+    try {
+        const content = await Content.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!content) return res.status(404).json({ error: 'Content nahi mila' });
+        res.json(content);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/content/:id', async (req, res) => {
+    try {
+        const content = await Content.findByIdAndDelete(req.params.id);
+        if (!content) return res.status(404).json({ error: 'Content nahi mila' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// MANAGERS API - NAYA ADD KIYA
+// ========================================
+app.get('/api/managers', async (req, res) => {
+    try {
+        const managers = await Manager.find();
+        res.json(managers);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/managers', async (req, res) => {
+    try {
+        const bcrypt = require('bcryptjs');
+        if (req.body.password) {
+            req.body.password = await bcrypt.hash(req.body.password, 10);
+        }
+        // Login token generate karo
+        req.body.loginToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        const manager = await Manager.create(req.body);
+        res.json(manager);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/managers/:id', async (req, res) => {
+    try {
+        const bcrypt = require('bcryptjs');
+        if (req.body.password) {
+            req.body.password = await bcrypt.hash(req.body.password, 10);
+        }
+        const manager = await Manager.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!manager) return res.status(404).json({ error: 'Manager nahi mila' });
+        res.json(manager);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/managers/:id', async (req, res) => {
+    try {
+        const manager = await Manager.findByIdAndDelete(req.params.id);
+        if (!manager) return res.status(404).json({ error: 'Manager nahi mila' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// VIDEO UPLOAD API - NAYA ADD KIYA
+// ========================================
+const videoUpload = multer({ dest: 'public/uploads/videos/' });
+app.post('/api/upload/video', videoUpload.single('video'), (req, res) => {
+    try {
+        const url = `/uploads/videos/${req.file.filename}`;
+        res.json({ url });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// LOGO UPLOAD API - NAYA ADD KIYA
+app.post('/api/upload/logo', upload.single('logo'), (req, res) => {
+    try {
+        const url = `/logos/${req.file.filename}`;
+        res.json({ url });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// ADMIN PANEL API ROUTES - TERA PURANA CODE
 // ========================================
 
 // 1. ADMIN DATA - Sab data ek saath - UPDATED: areas add kiya
@@ -88,8 +330,8 @@ app.get('/api/admin/data', async (req, res) => {
 app.get('/api/admin/pending-shops', async (req, res) => {
     try {
         const shops = await Shop.find({ status: 'pending' })
-          .populate('createdBy', 'name email')
-          .populate('serviceType');
+         .populate('createdBy', 'name email')
+         .populate('serviceType');
         res.json({ success: true, shops });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -259,8 +501,8 @@ app.put('/api/admin/module/:id/category/:catId', async (req, res) => {
         if (catIdx === -1) return res.status(404).json({ error: 'Category nahi mili' });
 
         db.modules[modIdx].categories[catIdx] = {
-         ...db.modules[modIdx].categories[catIdx],
-         ...req.body
+        ...db.modules[modIdx].categories[catIdx],
+        ...req.body
         };
 
         writeDB(db);

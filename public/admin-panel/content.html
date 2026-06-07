@@ -135,7 +135,7 @@ function renderAds() {
             <td>${ad.title}</td>
             <td>${ad.description || '-'}</td>
             <td>${ad.buttonText || '-'}</td>
-            <td><span style="background:${ad.color};padding:4px 8px;border-radius:4px;color:white">${ad.color}</span></td>
+            <td><span style="background:${ad.color || '#3b82f6'};padding:4px 8px;border-radius:4px;color:white">${ad.color || '#3b82f6'}</span></td>
             <td>${ad.priority || 0}</td>
             <td><span class="status-badge status-${ad.status}">${ad.status}</span></td>
             <td>
@@ -154,7 +154,7 @@ function renderVideos() {
         <tr>
             <td>${v.title}</td>
             <td><a href="${v.url}" target="_blank" style="color:#3b82f6">Link</a></td>
-            <td><video src="${v.url}" style="width:100px;height:60px;border-radius:6px;" controls></video></td>
+            <td><video src="${v.url}" style="width:100px;height:60px;border-radius:6px;" controls onerror="this.style.display='none'"></video></td>
             <td>${v.priority || 0}</td>
             <td><span class="status-badge status-${v.status}">${v.status}</span></td>
             <td>
@@ -174,7 +174,7 @@ function renderCampaigns() {
             <td>${c.title}</td>
             <td>${c.description || '-'}</td>
             <td>${c.buttonText || '-'}</td>
-            <td><span style="background:${c.color};padding:4px 8px;border-radius:4px;color:white">${c.color}</span></td>
+            <td><span style="background:${c.color || '#3b82f6'};padding:4px 8px;border-radius:4px;color:white">${c.color || '#3b82f6'}</span></td>
             <td>${c.priority || 0}</td>
             <td><span class="status-badge status-${c.status}">${c.status}</span></td>
             <td>
