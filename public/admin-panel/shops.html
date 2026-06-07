@@ -12,7 +12,7 @@
 <body>
     <div class="container">
         <h1>🔧 SAMANLIVE Control Panel</h1>
-        
+
         <!-- NAVBAR - Shops active hai -->
         <div class="admin-navbar">
             <a href="index.html" class="nav-btn">📊 Dashboard</a>
@@ -121,7 +121,338 @@
 <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <script src="assets/admin.js"></script>
 <script>
-// Is page ke liye Shops + Pending + Shop Location ka JS
+// ==================== SHOPS PAGE JS ====================
+const API = '/api';
+let allShops = [];
+let allModules = [];
+let allManagers = [];
+let editingId = null;
+let shopMap, shopMarker, shopCircle;
+let currentShopLocation = null;
+
+// Toast
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// API Call
+async function apiCall(endpoint, method = 'GET', body = null) {
+    try {
+        const opts = { method, headers: {} };
+        if (body &&!(body instanceof FormData)) {
+            opts.headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(body);
+        } else if (body) {
+            opts.body = body;
+        }
+        const res = await fetch(API + endpoint, opts);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'API Error');
+        return data;
+    } catch (err) {
+        showToast(err.message, 'error');
+        throw err;
+    }
+}
+
+// ==================== LOAD DATA ====================
+async function loadData() {
+    try {
+        [allShops, allModules, allManagers] = await Promise.all([
+            apiCall('/shops'),
+            apiCall('/modules'),
+            apiCall('/managers')
+        ]);
+        renderShops();
+        renderPendingShops();
+        populateShopDropdowns();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// Render Active Shops
+function renderShops() {
+    const shops = allShops.filter(s => s.status !== 'pending');
+    const tbody = document.querySelector('#shopsTable tbody');
+    tbody.innerHTML = shops.map(s => {
+        const module = allModules.find(m => m._id === s.moduleId);
+        const manager = allManagers.find(m => m._id === s.managerId);
+        return `
+            <tr>
+                <td><img src="${s.logo || '/assets/logo.png'}" style="width:40px;height:40px;border-radius:6px;object-fit:cover"></td>
+                <td>${s.name}</td>
+                <td>${module ? module.icon + ' ' + module.name : '-'}</td>
+                <td>${manager ? manager.name : 'Unassigned'}</td>
+                <td>${s.address || '-'}</td>
+                <td>${s.range || 0}m</td>
+                <td>${s.priority || 0}</td>
+                <td><span class="status-badge status-${s.status}">${s.status}</span></td>
+                <td>
+                    <button class="btn-primary" onclick="editShop('${s._id}')">Edit</button>
+                    <button class="btn-danger" onclick="deleteShop('${s._id}')">Delete</button>
+                </td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="9" style="text-align:center;color:#6b7280">No shops found</td></tr>';
+}
+
+// Render Pending Shops
+function renderPendingShops() {
+    const pending = allShops.filter(s => s.status === 'pending');
+    const tbody = document.querySelector('#pendingShopsTable tbody');
+    tbody.innerHTML = pending.map(s => {
+        const module = allModules.find(m => m._id === s.moduleId);
+        return `
+            <tr>
+                <td>${s.createdBy || 'User'}</td>
+                <td>${s.name}</td>
+                <td>${module ? module.icon + ' ' + module.name : '-'}</td>
+                <td>${s.phone || '-'}</td>
+                <td>${s.address || '-'}</td>
+                <td>${s.area || '-'}</td>
+                <td>
+                    <button class="btn-success" onclick="approveShop('${s._id}')">✅ Approve</button>
+                    <button class="btn-danger" onclick="rejectShop('${s._id}')">❌ Reject</button>
+                </td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="7" style="text-align:center;color:#6b7280">No pending shops</td></tr>';
+}
+
+// Populate Dropdowns
+function populateShopDropdowns() {
+    const shopSelect = document.getElementById('shopSelectLocation');
+    shopSelect.innerHTML = '<option value="">-- Select Shop --</option>' +
+        allShops.filter(s => s.status !== 'pending').map(s => `<option value="${s._id}">${s.name}</option>`).join('');
+
+    const moduleSelect = document.getElementById('shopModuleLink');
+    moduleSelect.innerHTML = '<option value="">-- Select Module --</option>' +
+        allModules.map(m => `<option value="${m._id}">${m.icon} ${m.name}</option>`).join('');
+}
+
+// ==================== SHOP CRUD ====================
+window.editShop = (id) => {
+    const s = allShops.find(x => x._id === id);
+    if (!s) return;
+
+    editingId = id;
+    document.getElementById('editId').value = id;
+    document.getElementById('editType').value = 'shop';
+    document.getElementById('modalTitle').textContent = 'Edit Shop';
+
+    const fields = `
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Shop Name *</label>
+                <input type="text" id="field_name" value="${s.name}" required>
+            </div>
+            <div class="form-group">
+                <label>Module *</label>
+                <select id="field_moduleId" required>
+                    <option value="">-- Select Module --</option>
+                    ${allModules.map(m => `<option value="${m._id}" ${s.moduleId === m._id ? 'selected' : ''}>${m.icon} ${m.name}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Manager</label>
+                <select id="field_managerId">
+                    <option value="">-- Unassigned --</option>
+                    ${allManagers.map(m => `<option value="${m._id}" ${s.managerId === m._id ? 'selected' : ''}>${m.name}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="text" id="field_phone" value="${s.phone || ''}">
+            </div>
+            <div class="form-group">
+                <label>Range (meters)</label>
+                <input type="number" id="field_range" value="${s.range || 5000}">
+            </div>
+            <div class="form-group">
+                <label>Priority</label>
+                <input type="number" id="field_priority" value="${s.priority || 0}">
+            </div>
+            <div class="form-group full">
+                <label>Address</label>
+                <input type="text" id="field_address" value="${s.address || ''}">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="field_status">
+                    <option value="active" ${s.status === 'active' ? 'selected' : ''}>Active</option>
+                    <option value="hidden" ${s.status === 'hidden' ? 'selected' : ''}>Hidden</option>
+                </select>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('modalFields').innerHTML = fields;
+    document.getElementById('editModal').style.display = 'block';
+};
+
+window.saveItem = async () => {
+    const data = {
+        name: document.getElementById('field_name').value,
+        moduleId: document.getElementById('field_moduleId').value,
+        managerId: document.getElementById('field_managerId').value || null,
+        phone: document.getElementById('field_phone').value,
+        range: parseInt(document.getElementById('field_range').value || 5000),
+        priority: parseInt(document.getElementById('field_priority').value || 0),
+        address: document.getElementById('field_address').value,
+        status: document.getElementById('field_status').value
+    };
+
+    if (!data.name || !data.moduleId) {
+        showToast('Name and Module are required', 'error');
+        return;
+    }
+
+    try {
+        await apiCall('/shops/' + editingId, 'PUT', data);
+        showToast('Shop updated');
+        closeModal();
+        loadData();
+    } catch (err) {}
+};
+
+window.deleteShop = async (id) => {
+    if (!confirm('Delete this shop?')) return;
+    try {
+        await apiCall('/shops/' + id, 'DELETE');
+        showToast('Shop deleted');
+        loadData();
+    } catch (err) {}
+};
+
+// Approve/Reject
+window.approveShop = async (id) => {
+    if (!confirm('Approve this shop?')) return;
+    try {
+        await apiCall('/shops/' + id, 'PUT', { status: 'active' });
+        showToast('Shop approved');
+        loadData();
+    } catch (err) {}
+};
+
+window.rejectShop = async (id) => {
+    if (!confirm('Reject this shop?')) return;
+    try {
+        await apiCall('/shops/' + id, 'DELETE');
+        showToast('Shop rejected');
+        loadData();
+    } catch (err) {}
+};
+
+// ==================== MAP LOGIC ====================
+function initShopMap() {
+    shopMap = L.map('shopMap').setView([28.6139, 77.2090], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(shopMap);
+
+    shopMap.on('click', (e) => {
+        if (shopMarker) shopMap.removeLayer(shopMarker);
+        if (shopCircle) shopMap.removeLayer(shopCircle);
+
+        currentShopLocation = e.latlng;
+        shopMarker = L.marker(e.latlng).addTo(shopMap);
+
+        const range = parseInt(document.getElementById('shopRange').value || 5000);
+        shopCircle = L.circle(e.latlng, { radius: range, color: '#3b82f6', fillOpacity: 0.1 }).addTo(shopMap);
+
+        document.getElementById('shopLocationInfo').style.display = 'block';
+        document.getElementById('shopLocationDetails').textContent = `Lat: ${e.latlng.lat.toFixed(6)}, Lng: ${e.latlng.lng.toFixed(6)} | Range: ${range}m`;
+    });
+}
+
+window.loadShopLocation = () => {
+    const shopId = document.getElementById('shopSelectLocation').value;
+    if (!shopId) return;
+
+    const shop = allShops.find(s => s._id === shopId);
+    if (!shop) return;
+
+    document.getElementById('shopName').value = shop.name || '';
+    document.getElementById('shopPhone').value = shop.phone || '';
+    document.getElementById('shopRange').value = shop.range || 5000;
+    document.getElementById('shopAddress').value = shop.address || '';
+    document.getElementById('shopModuleLink').value = shop.moduleId || '';
+
+    if (shop.location && shop.location.lat && shop.location.lng) {
+        if (shopMarker) shopMap.removeLayer(shopMarker);
+        if (shopCircle) shopMap.removeLayer(shopCircle);
+
+        currentShopLocation = shop.location;
+        shopMarker = L.marker(shop.location).addTo(shopMap);
+        shopCircle = L.circle(shop.location, { radius: shop.range || 5000, color: '#3b82f6', fillOpacity: 0.1 }).addTo(shopMap);
+        shopMap.setView(shop.location, 14);
+
+        document.getElementById('shopLocationInfo').style.display = 'block';
+        document.getElementById('shopLocationDetails').textContent = `Lat: ${shop.location.lat.toFixed(6)}, Lng: ${shop.location.lng.toFixed(6)} | Range: ${shop.range}m`;
+    }
+};
+
+window.saveShopLocation = async () => {
+    const shopId = document.getElementById('shopSelectLocation').value;
+    if (!shopId) {
+        showToast('Please select a shop first', 'error');
+        return;
+    }
+    if (!currentShopLocation) {
+        showToast('Please click on map to set location', 'error');
+        return;
+    }
+
+    const data = {
+        name: document.getElementById('shopName').value,
+        phone: document.getElementById('shopPhone').value,
+        range: parseInt(document.getElementById('shopRange').value || 5000),
+        address: document.getElementById('shopAddress').value,
+        moduleId: document.getElementById('shopModuleLink').value,
+        location: { lat: currentShopLocation.lat, lng: currentShopLocation.lng }
+    };
+
+    try {
+        await apiCall('/shops/' + shopId, 'PUT', data);
+        showToast('Shop location saved');
+        loadData();
+    } catch (err) {}
+};
+
+window.clearShopMarker = () => {
+    if (shopMarker) shopMap.removeLayer(shopMarker);
+    if (shopCircle) shopMap.removeLayer(shopCircle);
+    currentShopLocation = null;
+    shopMarker = null;
+    shopCircle = null;
+    document.getElementById('shopLocationInfo').style.display = 'none';
+};
+
+// Filter Table
+window.filterTable = (tableId, query) => {
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+    const q = query.toLowerCase();
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+    });
+};
+
+// Close Modal
+window.closeModal = () => {
+    document.getElementById('editModal').style.display = 'none';
+};
+
+window.onclick = (e) => {
+    if (e.target.classList.contains('modal')) {
+        closeModal();
+    }
+};
+
+// Init
 loadData();
 initShopMap();
 </script>

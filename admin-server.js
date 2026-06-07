@@ -1,3 +1,4 @@
+require('dotenv').config(); // ← YE LINE 1 PE ADD KAR BAS
 const express = require('express');
 const { exec } = require('child_process');
 const path = require('path');
@@ -11,12 +12,12 @@ const User = require('./server/models/User');
 const Module = require('./server/models/Module');
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 
-// MongoDB Connect - FIXED: Options hata diye
-mongoose.connect('mongodb://localhost:27017/samanlive')
- .then(() => console.log('✅ MongoDB Connected'))
- .catch(err => console.log('❌ MongoDB Error:', err));
+// MongoDB Connect - BAS YE LINE CHANGE KI HAI
+mongoose.connect(process.env.MONGODB_URI)
+.then(() => console.log('✅ MongoDB Connected'))
+.catch(err => console.log('❌ MongoDB Error:', err));
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -87,8 +88,8 @@ app.get('/api/admin/data', async (req, res) => {
 app.get('/api/admin/pending-shops', async (req, res) => {
     try {
         const shops = await Shop.find({ status: 'pending' })
-           .populate('createdBy', 'name email')
-           .populate('serviceType');
+          .populate('createdBy', 'name email')
+          .populate('serviceType');
         res.json({ success: true, shops });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -258,8 +259,8 @@ app.put('/api/admin/module/:id/category/:catId', async (req, res) => {
         if (catIdx === -1) return res.status(404).json({ error: 'Category nahi mili' });
 
         db.modules[modIdx].categories[catIdx] = {
-          ...db.modules[modIdx].categories[catIdx],
-          ...req.body
+         ...db.modules[modIdx].categories[catIdx],
+         ...req.body
         };
 
         writeDB(db);

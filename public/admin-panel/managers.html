@@ -61,7 +61,271 @@
 
 <script src="assets/admin.js"></script>
 <script>
-// Is page ke liye Area Managers ka JS
+// ==================== MANAGERS PAGE JS ====================
+const API = '/api';
+let allManagers = [];
+let allShops = [];
+let editingId = null;
+let selectedManagerId = null;
+
+// Toast
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// API Call
+async function apiCall(endpoint, method = 'GET', body = null) {
+    try {
+        const opts = { method, headers: {} };
+        if (body &&!(body instanceof FormData)) {
+            opts.headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(body);
+        } else if (body) {
+            opts.body = body;
+        }
+        const res = await fetch(API + endpoint, opts);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'API Error');
+        return data;
+    } catch (err) {
+        showToast(err.message, 'error');
+        throw err;
+    }
+}
+
+// Load All Data
+async function loadData() {
+    try {
+        [allManagers, allShops] = await Promise.all([
+            apiCall('/managers'),
+            apiCall('/shops')
+        ]);
+        renderManagers();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// Render Managers Table
+function renderManagers() {
+    const tbody = document.querySelector('#areaManagersTable tbody');
+    tbody.innerHTML = allManagers.map(m => {
+        const managerShops = allShops.filter(s => s.managerId === m._id);
+        const loginLink = `${window.location.origin}/manager-login?token=${m.loginToken}`;
+        return `
+            <tr>
+                <td>${m.name}</td>
+                <td>${m.area}</td>
+                <td>${m.email}</td>
+                <td>${m.phone || '-'}</td>
+                <td><span class="shop-count-badge">${managerShops.length}</span></td>
+                <td>
+                    <button class="btn-secondary" onclick="copyLink('${loginLink}')" style="font-size:11px;padding:4px 8px;">📋 Copy</button>
+                </td>
+                <td><span class="status-badge status-${m.status}">${m.status}</span></td>
+                <td>
+                    <button class="btn-primary" onclick="viewManagerShops('${m._id}')">Shops</button>
+                    <button class="btn-primary" onclick="editItem('${m._id}')">Edit</button>
+                    <button class="btn-danger" onclick="deleteItem('${m._id}')">Delete</button>
+                </td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="8" style="text-align:center;color:#6b7280">No managers found</td></tr>';
+}
+
+// Copy Login Link
+window.copyLink = (link) => {
+    navigator.clipboard.writeText(link);
+    showToast('Login link copied to clipboard');
+};
+
+// View Manager Shops
+window.viewManagerShops = (managerId) => {
+    selectedManagerId = managerId;
+    const manager = allManagers.find(m => m._id === managerId);
+    document.getElementById('selectedManagerName').textContent = manager.name;
+    document.getElementById('areaManagerShopsSection').style.display = 'block';
+
+    const managerShops = allShops.filter(s => s.managerId === managerId);
+    const tbody = document.querySelector('#managerShopsTable tbody');
+    tbody.innerHTML = managerShops.map(s => `
+        <tr>
+            <td><img src="${s.logo || '/assets/logo.png'}" style="width:40px;height:40px;border-radius:6px;object-fit:cover"></td>
+            <td>${s.name}</td>
+            <td>${s.category}</td>
+            <td>${s.address}</td>
+            <td><span class="status-badge status-${s.status}">${s.status}</span></td>
+            <td>
+                <button class="btn-primary" onclick="editShop('${s._id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteShop('${s._id}')">Delete</button>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="6" style="text-align:center;color:#6b7280">No shops assigned</td></tr>';
+
+    // Scroll to section
+    document.getElementById('areaManagerShopsSection').scrollIntoView({ behavior: 'smooth' });
+};
+
+// Add Item
+window.addItem = (type) => {
+    editingId = null;
+    document.getElementById('editId').value = '';
+    document.getElementById('editType').value = type;
+    document.getElementById('modalTitle').textContent = 'Add New Area Manager';
+
+    const fields = `
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Name *</label>
+                <input type="text" id="field_name" required>
+            </div>
+            <div class="form-group">
+                <label>City/Area *</label>
+                <input type="text" id="field_area" required>
+            </div>
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="field_email" required>
+            </div>
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="text" id="field_phone">
+            </div>
+            <div class="form-group">
+                <label>Password *</label>
+                <input type="password" id="field_password" required>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="field_status">
+                    <option value="active">Active</option>
+                    <option value="hidden">Hidden</option>
+                </select>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('modalFields').innerHTML = fields;
+    document.getElementById('editModal').style.display = 'block';
+};
+
+// Edit Item
+window.editItem = (id) => {
+    const m = allManagers.find(x => x._id === id);
+    if (!m) return;
+
+    editingId = id;
+    document.getElementById('editId').value = id;
+    document.getElementById('editType').value = 'areaManager';
+    document.getElementById('modalTitle').textContent = 'Edit Area Manager';
+
+    addItem('areaManager'); // Form bana do
+
+    setTimeout(() => {
+        document.getElementById('field_name').value = m.name || '';
+        document.getElementById('field_area').value = m.area || '';
+        document.getElementById('field_email').value = m.email || '';
+        document.getElementById('field_phone').value = m.phone || '';
+        document.getElementById('field_password').value = ''; // Password khali rakho
+        document.getElementById('field_password').placeholder = 'Leave blank to keep old password';
+        document.getElementById('field_status').value = m.status || 'active';
+    }, 100);
+};
+
+// Save Item
+window.saveItem = async () => {
+    const data = {
+        name: document.getElementById('field_name').value,
+        area: document.getElementById('field_area').value,
+        email: document.getElementById('field_email').value,
+        phone: document.getElementById('field_phone').value,
+        status: document.getElementById('field_status').value
+    };
+
+    const password = document.getElementById('field_password').value;
+    if (password) data.password = password;
+
+    if (!data.name || !data.area || !data.email) {
+        showToast('Name, Area and Email are required', 'error');
+        return;
+    }
+
+    if (!editingId && !password) {
+        showToast('Password is required for new manager', 'error');
+        return;
+    }
+
+    try {
+        if (editingId) {
+            await apiCall('/managers/' + editingId, 'PUT', data);
+            showToast('Manager updated');
+        } else {
+            await apiCall('/managers', 'POST', data);
+            showToast('Manager created');
+        }
+        closeModal();
+        loadData();
+    } catch (err) {}
+};
+
+// Delete Item
+window.deleteItem = async (id) => {
+    if (!confirm('Delete this manager? All assigned shops will become unassigned.')) return;
+    try {
+        await apiCall('/managers/' + id, 'DELETE');
+        showToast('Manager deleted');
+        document.getElementById('areaManagerShopsSection').style.display = 'none';
+        loadData();
+    } catch (err) {}
+};
+
+// Add Shop For Manager
+window.addShopForManager = () => {
+    showToast('Go to Shops page to add shop for this manager', 'error');
+};
+
+// Edit Shop - redirect to shops page
+window.editShop = (id) => {
+    window.location.href = `shops.html?edit=${id}`;
+};
+
+// Delete Shop
+window.deleteShop = async (id) => {
+    if (!confirm('Delete this shop?')) return;
+    try {
+        await apiCall('/shops/' + id, 'DELETE');
+        showToast('Shop deleted');
+        loadData();
+        if (selectedManagerId) viewManagerShops(selectedManagerId);
+    } catch (err) {}
+};
+
+// Filter Table
+window.filterTable = (tableId, query) => {
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+    const q = query.toLowerCase();
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+    });
+};
+
+// Close Modal
+window.closeModal = () => {
+    document.getElementById('editModal').style.display = 'none';
+};
+
+window.onclick = (e) => {
+    if (e.target.classList.contains('modal')) {
+        closeModal();
+    }
+};
+
+// Init
 loadData();
 </script>
 </body>

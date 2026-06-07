@@ -12,7 +12,7 @@
 <body>
     <div class="container">
         <h1>🔧 SAMANLIVE Control Panel</h1>
-        
+
         <!-- NAVBAR - Content active hai -->
         <div class="admin-navbar">
             <a href="index.html" class="nav-btn">📊 Dashboard</a>
@@ -80,7 +80,294 @@
 
 <script src="assets/admin.js"></script>
 <script>
-// Is page ke liye Ads + Videos + Campaigns ka JS
+// ==================== CONTENT PAGE JS ====================
+const API = '/api';
+let allContent = [];
+let editingId = null;
+
+// Toast
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// API Call
+async function apiCall(endpoint, method = 'GET', body = null) {
+    try {
+        const opts = { method, headers: {} };
+        if (body &&!(body instanceof FormData)) {
+            opts.headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(body);
+        } else if (body) {
+            opts.body = body;
+        }
+        const res = await fetch(API + endpoint, opts);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'API Error');
+        return data;
+    } catch (err) {
+        showToast(err.message, 'error');
+        throw err;
+    }
+}
+
+// Load All Content Data
+async function loadData() {
+    try {
+        allContent = await apiCall('/content');
+        renderAds();
+        renderVideos();
+        renderCampaigns();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// Render Ads Table
+function renderAds() {
+    const ads = allContent.filter(c => c.type === 'ad');
+    const tbody = document.querySelector('#adsTable tbody');
+    tbody.innerHTML = ads.map(ad => `
+        <tr>
+            <td>${ad.title}</td>
+            <td>${ad.description || '-'}</td>
+            <td>${ad.buttonText || '-'}</td>
+            <td><span style="background:${ad.color};padding:4px 8px;border-radius:4px;color:white">${ad.color}</span></td>
+            <td>${ad.priority || 0}</td>
+            <td><span class="status-badge status-${ad.status}">${ad.status}</span></td>
+            <td>
+                <button class="btn-primary" onclick="editItem('${ad._id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('${ad._id}')">Delete</button>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="7" style="text-align:center;color:#6b7280">No ads found</td></tr>';
+}
+
+// Render Videos Table
+function renderVideos() {
+    const videos = allContent.filter(c => c.type === 'video');
+    const tbody = document.querySelector('#videosTable tbody');
+    tbody.innerHTML = videos.map(v => `
+        <tr>
+            <td>${v.title}</td>
+            <td><a href="${v.url}" target="_blank" style="color:#3b82f6">Link</a></td>
+            <td><video src="${v.url}" style="width:100px;height:60px;border-radius:6px;" controls></video></td>
+            <td>${v.priority || 0}</td>
+            <td><span class="status-badge status-${v.status}">${v.status}</span></td>
+            <td>
+                <button class="btn-primary" onclick="editItem('${v._id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('${v._id}')">Delete</button>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="6" style="text-align:center;color:#6b7280">No videos found</td></tr>';
+}
+
+// Render Campaigns Table
+function renderCampaigns() {
+    const campaigns = allContent.filter(c => c.type === 'campaign');
+    const tbody = document.querySelector('#campaignsTable tbody');
+    tbody.innerHTML = campaigns.map(c => `
+        <tr>
+            <td>${c.title}</td>
+            <td>${c.description || '-'}</td>
+            <td>${c.buttonText || '-'}</td>
+            <td><span style="background:${c.color};padding:4px 8px;border-radius:4px;color:white">${c.color}</span></td>
+            <td>${c.priority || 0}</td>
+            <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+            <td>
+                <button class="btn-primary" onclick="editItem('${c._id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('${c._id}')">Delete</button>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="7" style="text-align:center;color:#6b7280">No campaigns found</td></tr>';
+}
+
+// Add New Item
+window.addItem = (type) => {
+    editingId = null;
+    document.getElementById('editId').value = '';
+    document.getElementById('editType').value = type;
+    document.getElementById('modalTitle').textContent = `Add New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+
+    let fields = `
+        <div class="form-group full">
+            <label>Title *</label>
+            <input type="text" id="field_title" required>
+        </div>
+    `;
+
+    if (type === 'ad' || type === 'campaign') {
+        fields += `
+            <div class="form-group full">
+                <label>Description</label>
+                <textarea id="field_description" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Button Text</label>
+                <input type="text" id="field_buttonText">
+            </div>
+            <div class="form-group">
+                <label>Button Link</label>
+                <input type="text" id="field_buttonLink">
+            </div>
+            <div class="form-group">
+                <label>Color</label>
+                <input type="color" id="field_color" value="#3b82f6">
+            </div>
+        `;
+    }
+
+    if (type === 'video') {
+        fields += `
+            <div class="form-group full">
+                <label>Video URL *</label>
+                <input type="text" id="field_url" placeholder="https://..." required>
+            </div>
+        `;
+    }
+
+    fields += `
+        <div class="form-group">
+            <label>Priority</label>
+            <input type="number" id="field_priority" value="0">
+        </div>
+        <div class="form-group">
+            <label>Status</label>
+            <select id="field_status">
+                <option value="active">Active</option>
+                <option value="hidden">Hidden</option>
+            </select>
+        </div>
+    `;
+
+    document.getElementById('modalFields').innerHTML = fields;
+    document.getElementById('editModal').style.display = 'block';
+};
+
+// Edit Item
+window.editItem = (id) => {
+    const item = allContent.find(x => x._id === id);
+    if (!item) return;
+
+    editingId = id;
+    document.getElementById('editId').value = id;
+    document.getElementById('editType').value = item.type;
+    document.getElementById('modalTitle').textContent = `Edit ${item.type.charAt(0).toUpperCase() + item.type.slice(1)}`;
+
+    addItem(item.type); // Form bana do
+
+    // Values fill karo
+    setTimeout(() => {
+        document.getElementById('field_title').value = item.title || '';
+        if (document.getElementById('field_description')) document.getElementById('field_description').value = item.description || '';
+        if (document.getElementById('field_buttonText')) document.getElementById('field_buttonText').value = item.buttonText || '';
+        if (document.getElementById('field_buttonLink')) document.getElementById('field_buttonLink').value = item.buttonLink || '';
+        if (document.getElementById('field_color')) document.getElementById('field_color').value = item.color || '#3b82f6';
+        if (document.getElementById('field_url')) document.getElementById('field_url').value = item.url || '';
+        if (document.getElementById('field_priority')) document.getElementById('field_priority').value = item.priority || 0;
+        if (document.getElementById('field_status')) document.getElementById('field_status').value = item.status || 'active';
+    }, 100);
+};
+
+// Save Item
+window.saveItem = async () => {
+    const type = document.getElementById('editType').value;
+    const data = {
+        type: type,
+        title: document.getElementById('field_title').value,
+        description: document.getElementById('field_description')?.value || '',
+        buttonText: document.getElementById('field_buttonText')?.value || '',
+        buttonLink: document.getElementById('field_buttonLink')?.value || '',
+        color: document.getElementById('field_color')?.value || '#3b82f6',
+        url: document.getElementById('field_url')?.value || '',
+        priority: parseInt(document.getElementById('field_priority')?.value || 0),
+        status: document.getElementById('field_status')?.value || 'active'
+    };
+
+    if (!data.title) {
+        showToast('Title is required', 'error');
+        return;
+    }
+
+    try {
+        if (editingId) {
+            await apiCall('/content/' + editingId, 'PUT', data);
+            showToast('Updated successfully');
+        } else {
+            await apiCall('/content', 'POST', data);
+            showToast('Created successfully');
+        }
+        closeModal();
+        loadData();
+    } catch (err) {}
+};
+
+// Delete Item
+window.deleteItem = async (id) => {
+    if (!confirm('Are you sure you want to delete this?')) return;
+    try {
+        await apiCall('/content/' + id, 'DELETE');
+        showToast('Deleted successfully');
+        loadData();
+    } catch (err) {}
+};
+
+// Upload Video File
+window.uploadVideoFile = async () => {
+    const fileInput = document.getElementById('videoUploadFile');
+    const status = document.getElementById('uploadStatus');
+
+    if (!fileInput.files[0]) {
+        showToast('Please select a video file', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('video', fileInput.files[0]);
+
+    status.textContent = 'Uploading...';
+    status.style.color = '#3b82f6';
+
+    try {
+        const res = await apiCall('/upload/video', 'POST', formData);
+        status.textContent = 'Upload successful!';
+        status.style.color = '#10b981';
+
+        // Auto create video entry
+        await apiCall('/content', 'POST', {
+            type: 'video',
+            title: fileInput.files[0].name.split('.')[0],
+            url: res.url,
+            priority: 0,
+            status: 'active'
+        });
+
+        showToast('Video uploaded & added');
+        fileInput.value = '';
+        loadData();
+        setTimeout(() => status.textContent = '', 3000);
+    } catch (err) {
+        status.textContent = 'Upload failed!';
+        status.style.color = '#ef4444';
+    }
+};
+
+// Close Modal
+window.closeModal = () => {
+    document.getElementById('editModal').style.display = 'none';
+};
+
+// Close on outside click
+window.onclick = (e) => {
+    if (e.target.classList.contains('modal')) {
+        closeModal();
+    }
+};
+
+// Init
 loadData();
 </script>
 </body>

@@ -12,7 +12,7 @@
 <body>
     <div class="container">
         <h1>🔧 SAMANLIVE Control Panel</h1>
-        
+
         <!-- NAVBAR - QR Batch active hai -->
         <div class="admin-navbar">
             <a href="index.html" class="nav-btn">📊 Dashboard</a>
@@ -115,9 +115,178 @@
 
 <script src="assets/admin.js"></script>
 <script>
-// Is page ke liye QR Batch ka JS
-loadData();
+// ==================== QR BATCH PAGE JS ====================
+const API = '/api';
+
+// Toast
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// API Call
+async function apiCall(endpoint, method = 'GET', body = null) {
+    try {
+        const opts = { method, headers: {} };
+        if (body &&!(body instanceof FormData)) {
+            opts.headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(body);
+        } else if (body) {
+            opts.body = body;
+        }
+        const res = await fetch(API + endpoint, opts);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'API Error');
+        return data;
+    } catch (err) {
+        showToast(err.message, 'error');
+        logToQRConsole('❌ Error: ' + err.message);
+        throw err;
+    }
+}
+
+// QR Log
+function logToQRConsole(msg) {
+    const log = document.getElementById('qrLog');
+    log.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    log.scrollTop = log.scrollHeight;
+}
+
+// ==================== GENERATE QR BATCH ====================
+window.generateQRBatch = async () => {
+    const data = {
+        manager_id: document.getElementById('qr_manager_id').value,
+        product_name: document.getElementById('qr_product_name').value,
+        batch: document.getElementById('qr_batch').value,
+        mfg_date: document.getElementById('qr_mfg_date').value,
+        quantity: parseInt(document.getElementById('qr_quantity').value),
+        size_mm: parseInt(document.getElementById('qr_size_mm').value),
+        area_manager_name: document.getElementById('qr_area_manager_name').value,
+        area_manager_id: document.getElementById('qr_area_manager_id').value
+    };
+
+    if (!data.manager_id || !data.product_name || !data.batch || !data.quantity || !data.area_manager_name || !data.area_manager_id) {
+        showToast('Sab fields bharo bhai', 'error');
+        return;
+    }
+
+    if (data.quantity > 50000) {
+        showToast('Max 50000 QR ek batch me', 'error');
+        return;
+    }
+
+    logToQRConsole('🚀 Starting QR Batch Generation...');
+    logToQRConsole(`📦 Product: ${data.product_name} | Qty: ${data.quantity} | Size: ${data.size_mm}mm`);
+
+    try {
+        document.getElementById('downloadBtns').style.display = 'none';
+
+        const result = await apiCall('/qr/generate', 'POST', data);
+
+        logToQRConsole('✅ QR Generation Complete!');
+        logToQRConsole(`📄 PDF 1: ${result.pdf1}`);
+        logToQRConsole(`📄 PDF 2: ${result.pdf2}`);
+        logToQRConsole(`🔗 Batch ID: ${result.batchId}`);
+
+        // Show download buttons
+        const btn1 = document.getElementById('btnPdf1');
+        const btn2 = document.getElementById('btnPdf2');
+        btn1.href = result.pdf1Url;
+        btn1.textContent = `📥 Download PDF 1 (${result.pdf1})`;
+        btn2.href = result.pdf2Url;
+        btn2.textContent = `📥 Download PDF 2 (${result.pdf2})`;
+        document.getElementById('downloadBtns').style.display = 'block';
+
+        showToast('QR Batch Generated Successfully');
+        loadQRBatches();
+
+    } catch (err) {
+        logToQRConsole('❌ Generation Failed');
+    }
+};
+
+// ==================== UPLOAD LOGO ====================
+window.uploadQRLogo = async () => {
+    const fileInput = document.getElementById('qrLogoFile');
+    if (!fileInput.files[0]) {
+        showToast('Please select a logo file', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('logo', fileInput.files[0]);
+
+    logToQRConsole('📤 Uploading logo...');
+
+    try {
+        const res = await apiCall('/qr/upload-logo', 'POST', formData);
+        document.getElementById('qrCurrentLogo').src = res.logoUrl + '?t=' + Date.now();
+        showToast('Logo uploaded successfully');
+        logToQRConsole('✅ Logo updated: ' + res.logoUrl);
+        fileInput.value = '';
+    } catch (err) {
+        logToQRConsole('❌ Logo upload failed');
+    }
+};
+
+// ==================== LOAD BATCHES ====================
+window.loadQRBatches = async () => {
+    try {
+        const batches = await apiCall('/qr/batches');
+        const container = document.getElementById('qrBatchList');
+
+        if (batches.length === 0) {
+            container.innerHTML = '<p style="color:#6b7280;text-align:center;margin-top:15px;">No batches found</p>';
+            return;
+        }
+
+        container.innerHTML = batches.map(b => `
+            <div class="batch-card">
+                <h4>Batch: ${b.batchId} - ${b.productName}</h4>
+                <p><strong>Manager:</strong> ${b.managerId} | <strong>Area Manager:</strong> ${b.areaManagerName} (${b.areaManagerId})</p>
+                <p><strong>Qty:</strong> ${b.quantity} | <strong>Size:</strong> ${b.sizeMm}mm | <strong>MFG:</strong> ${b.mfgDate} | <strong>Date:</strong> ${new Date(b.createdAt).toLocaleDateString()}</p>
+                <div style="margin-top:10px;">
+                    <a href="${b.pdf1Url}" class="pdf-link" target="_blank" download>📥 PDF 1</a>
+                    <a href="${b.pdf2Url}" class="pdf-link" target="_blank" download>📥 PDF 2</a>
+                    <button class="btn-danger" onclick="deleteBatch('${b._id}')" style="margin-left:10px;padding:8px 12px;font-size:13px;">🗑️ Delete</button>
+                </div>
+            </div>
+        `).join('');
+
+        logToQRConsole(`📋 Loaded ${batches.length} batches`);
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+// Delete Batch
+window.deleteBatch = async (id) => {
+    if (!confirm('Delete this batch? PDFs will also be removed.')) return;
+    try {
+        await apiCall('/qr/batches/' + id, 'DELETE');
+        showToast('Batch deleted');
+        logToQRConsole('🗑️ Batch deleted');
+        loadQRBatches();
+    } catch (err) {}
+};
+
+// Close Modal
+window.closeModal = () => {
+    document.getElementById('editModal').style.display = 'none';
+};
+
+window.onclick = (e) => {
+    if (e.target.classList.contains('modal')) {
+        closeModal();
+    }
+};
+
+// Init
 loadQRBatches();
+logToQRConsole('System Ready - Waiting for commands...');
 </script>
 </body>
 </html>

@@ -12,7 +12,7 @@
 <body>
     <div class="container">
         <h1>🔧 SAMANLIVE Control Panel</h1>
-        
+
         <!-- NAVBAR - Modules active hai -->
         <div class="admin-navbar">
             <a href="index.html" class="nav-btn">📊 Dashboard</a>
@@ -81,7 +81,382 @@
 <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <script src="assets/admin.js"></script>
 <script>
-// Is page ke liye Modules + Module Area ka JS
+// ==================== MODULES PAGE JS ====================
+const API = '/api';
+let allModules = [];
+let editingId = null;
+let map, drawingManager, drawnItems;
+let currentModuleId = null;
+let currentDrawnLayer = null;
+
+// Toast
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// API Call
+async function apiCall(endpoint, method = 'GET', body = null) {
+    try {
+        const opts = { method, headers: {} };
+        if (body) {
+            opts.headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(body);
+        }
+        const res = await fetch(API + endpoint, opts);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'API Error');
+        return data;
+    } catch (err) {
+        showToast(err.message, 'error');
+        throw err;
+    }
+}
+
+// ==================== LOAD DATA ====================
+async function loadData() {
+    try {
+        allModules = await apiCall('/modules');
+        renderModules();
+        populateModuleDropdown();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// Render Modules Table with Accordion
+function renderModules() {
+    const tbody = document.querySelector('#modulesTable tbody');
+    tbody.innerHTML = allModules.map(m => `
+        <tr class="module-row" onclick="toggleModuleAreas('${m._id}')">
+            <td><span class="expand-icon" id="icon-${m._id}">▶</span></td>
+            <td>${m.icon}</td>
+            <td>${m.name}</td>
+            <td><span style="background:${m.color};padding:4px 8px;border-radius:4px;color:white">${m.color}</span></td>
+            <td>${m.link}</td>
+            <td><span class="shop-count-badge">${m.areas?.length || 0} areas</span></td>
+            <td>${m.priority}</td>
+            <td><span class="status-badge status-${m.status}">${m.status}</span></td>
+            <td onclick="event.stopPropagation()">
+                <button class="btn-primary" onclick="editItem('${m._id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteItem('${m._id}')">Delete</button>
+            </td>
+        </tr>
+        <tr id="areas-${m._id}" style="display:none;">
+            <td colspan="9">
+                <div class="area-expand">
+                    <h4>📍 Areas for ${m.name}</h4>
+                    ${renderModuleAreas(m)}
+                </div>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="9" style="text-align:center;color:#6b7280">No modules found</td></tr>';
+}
+
+function renderModuleAreas(module) {
+    if (!module.areas || module.areas.length === 0) {
+        return '<p style="color:#6b7280;">No areas mapped yet. Use Module Area Mapping below.</p>';
+    }
+    return module.areas.map((area, idx) => `
+        <div class="area-row">
+            <strong>Area ${idx + 1}:</strong> ${area.type} -
+            ${area.type === 'circle'? `Radius: ${area.radius}m` : `Polygon with ${area.coordinates?.length || 0} points`}
+            <button class="btn-danger" style="float:right;padding:4px 8px;font-size:12px;" onclick="removeArea('${module._id}', ${idx})">Remove</button>
+        </div>
+    `).join('');
+}
+
+// Toggle Accordion
+window.toggleModuleAreas = (id) => {
+    const row = document.getElementById(`areas-${id}`);
+    const icon = document.getElementById(`icon-${id}`);
+    if (row.style.display === 'none') {
+        row.style.display = '';
+        icon.classList.add('open');
+    } else {
+        row.style.display = 'none';
+        icon.classList.remove('open');
+    }
+};
+
+// Populate Dropdown
+function populateModuleDropdown() {
+    const select = document.getElementById('moduleSelectArea');
+    select.innerHTML = '<option value="">-- Select Module --</option>' +
+        allModules.map(m => `<option value="${m._id}">${m.icon} ${m.name}</option>`).join('');
+}
+
+// ==================== MODULE CRUD ====================
+window.addItem = (type) => {
+    editingId = null;
+    document.getElementById('editId').value = '';
+    document.getElementById('editType').value = 'module';
+    document.getElementById('modalTitle').textContent = 'Add New Module';
+
+    const fields = `
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Module ID *</label>
+                <input type="text" id="field_id" placeholder="mod_home_service" required>
+            </div>
+            <div class="form-group">
+                <label>Name *</label>
+                <input type="text" id="field_name" required>
+            </div>
+            <div class="form-group">
+                <label>Icon (Emoji) *</label>
+                <input type="text" id="field_icon" placeholder="🏠" required>
+            </div>
+            <div class="form-group">
+                <label>Color *</label>
+                <input type="color" id="field_color" value="#3b82f6" required>
+            </div>
+            <div class="form-group">
+                <label>Link *</label>
+                <input type="text" id="field_link" placeholder="/home-service" required>
+            </div>
+            <div class="form-group">
+                <label>Priority</label>
+                <input type="number" id="field_priority" value="0">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="field_status">
+                    <option value="active">Active</option>
+                    <option value="hidden">Hidden</option>
+                </select>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('modalFields').innerHTML = fields;
+    document.getElementById('editModal').style.display = 'block';
+};
+
+window.editItem = (id) => {
+    const m = allModules.find(x => x._id === id);
+    if (!m) return;
+
+    editingId = id;
+    document.getElementById('editId').value = id;
+    document.getElementById('editType').value = 'module';
+    document.getElementById('modalTitle').textContent = 'Edit Module';
+
+    addItem('module'); // Form bana do
+
+    setTimeout(() => {
+        document.getElementById('field_id').value = m.id || '';
+        document.getElementById('field_name').value = m.name || '';
+        document.getElementById('field_icon').value = m.icon || '';
+        document.getElementById('field_color').value = m.color || '#3b82f6';
+        document.getElementById('field_link').value = m.link || '';
+        document.getElementById('field_priority').value = m.priority || 0;
+        document.getElementById('field_status').value = m.status || 'active';
+    }, 100);
+};
+
+window.saveItem = async () => {
+    const data = {
+        id: document.getElementById('field_id').value,
+        name: document.getElementById('field_name').value,
+        icon: document.getElementById('field_icon').value,
+        color: document.getElementById('field_color').value,
+        link: document.getElementById('field_link').value,
+        priority: parseInt(document.getElementById('field_priority').value || 0),
+        status: document.getElementById('field_status').value
+    };
+
+    if (!data.id ||!data.name ||!data.icon ||!data.link) {
+        showToast('ID, Name, Icon and Link are required', 'error');
+        return;
+    }
+
+    try {
+        if (editingId) {
+            await apiCall('/modules/' + editingId, 'PUT', data);
+            showToast('Module updated');
+        } else {
+            await apiCall('/modules', 'POST', data);
+            showToast('Module created');
+        }
+        closeModal();
+        loadData();
+    } catch (err) {}
+};
+
+window.deleteItem = async (id) => {
+    if (!confirm('Delete this module?')) return;
+    try {
+        await apiCall('/modules/' + id, 'DELETE');
+        showToast('Module deleted');
+        loadData();
+    } catch (err) {}
+};
+
+// Remove Area from Module
+window.removeArea = async (moduleId, areaIdx) => {
+    if (!confirm('Remove this area?')) return;
+    try {
+        const module = allModules.find(m => m._id === moduleId);
+        module.areas.splice(areaIdx, 1);
+        await apiCall('/modules/' + moduleId, 'PUT', { areas: module.areas });
+        showToast('Area removed');
+        loadData();
+    } catch (err) {}
+};
+
+// ==================== MAP LOGIC ====================
+function initModuleMap() {
+    map = L.map('map').setView([28.6139, 77.2090], 12); // Delhi default
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    drawingManager = new L.Control.Draw({
+        draw: {
+            polygon: true,
+            circle: true,
+            rectangle: false,
+            polyline: false,
+            marker: false,
+            circlemarker: false
+        },
+        edit: {
+            featureGroup: drawnItems
+        }
+    });
+    map.addControl(drawingManager);
+
+    map.on(L.Draw.Event.CREATED, (e) => {
+        drawnItems.clearLayers();
+        currentDrawnLayer = e.layer;
+        drawnItems.addLayer(currentDrawnLayer);
+        showAreaInfo(e.layer);
+    });
+}
+
+function showAreaInfo(layer) {
+    const info = document.getElementById('areaInfo');
+    const details = document.getElementById('areaDetails');
+    info.style.display = 'block';
+
+    if (layer instanceof L.Circle) {
+        const center = layer.getLatLng();
+        const radius = Math.round(layer.getRadius());
+        details.textContent = `Circle - Center: ${center.lat.toFixed(4)}, ${center.lng.toFixed(4)} | Radius: ${radius}m`;
+    } else if (layer instanceof L.Polygon) {
+        const coords = layer.getLatLngs()[0];
+        details.textContent = `Polygon - ${coords.length} points`;
+    }
+}
+
+window.loadModuleArea = () => {
+    const moduleId = document.getElementById('moduleSelectArea').value;
+    currentModuleId = moduleId;
+    drawnItems.clearLayers();
+    currentDrawnLayer = null;
+    document.getElementById('areaInfo').style.display = 'none';
+
+    if (!moduleId) return;
+
+    const module = allModules.find(m => m._id === moduleId);
+    if (module.areas && module.areas.length > 0) {
+        const area = module.areas[0]; // Show first area
+        if (area.type === 'circle') {
+            currentDrawnLayer = L.circle([area.center.lat, area.center.lng], { radius: area.radius });
+            drawnItems.addLayer(currentDrawnLayer);
+            map.setView([area.center.lat, area.center.lng], 13);
+        } else if (area.type === 'polygon') {
+            currentDrawnLayer = L.polygon(area.coordinates);
+            drawnItems.addLayer(currentDrawnLayer);
+            map.fitBounds(currentDrawnLayer.getBounds());
+        }
+        showAreaInfo(currentDrawnLayer);
+    }
+};
+
+window.saveModuleArea = async () => {
+    if (!currentModuleId) {
+        showToast('Please select a module first', 'error');
+        return;
+    }
+    if (!currentDrawnLayer) {
+        showToast('Please draw an area on map first', 'error');
+        return;
+    }
+
+    let areaData = {};
+    if (currentDrawnLayer instanceof L.Circle) {
+        const center = currentDrawnLayer.getLatLng();
+        areaData = {
+            type: 'circle',
+            center: { lat: center.lat, lng: center.lng },
+            radius: currentDrawnLayer.getRadius()
+        };
+    } else if (currentDrawnLayer instanceof L.Polygon) {
+        const coords = currentDrawnLayer.getLatLngs()[0].map(p => ({ lat: p.lat, lng: p.lng }));
+        areaData = {
+            type: 'polygon',
+            coordinates: coords
+        };
+    }
+
+    try {
+        const module = allModules.find(m => m._id === currentModuleId);
+        if (!module.areas) module.areas = [];
+        module.areas = [areaData]; // Replace with new area, ya push karo multiple ke liye
+        await apiCall('/modules/' + currentModuleId, 'PUT', { areas: module.areas });
+        showToast('Area saved successfully');
+        loadData();
+    } catch (err) {}
+};
+
+window.clearModuleDrawing = () => {
+    drawnItems.clearLayers();
+    currentDrawnLayer = null;
+    document.getElementById('areaInfo').style.display = 'none';
+};
+
+window.deleteModuleArea = async () => {
+    if (!currentModuleId) {
+        showToast('Please select a module first', 'error');
+        return;
+    }
+    if (!confirm('Remove area from this module?')) return;
+    try {
+        await apiCall('/modules/' + currentModuleId, 'PUT', { areas: [] });
+        showToast('Area removed');
+        clearModuleDrawing();
+        loadData();
+    } catch (err) {}
+};
+
+// Filter Table
+window.filterTable = (tableId, query) => {
+    const rows = document.querySelectorAll(`#${tableId} tbody tr.module-row`);
+    const q = query.toLowerCase();
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q)? '' : 'none';
+    });
+};
+
+// Close Modal
+window.closeModal = () => {
+    document.getElementById('editModal').style.display = 'none';
+};
+
+window.onclick = (e) => {
+    if (e.target.classList.contains('modal')) {
+        closeModal();
+    }
+};
+
+// Init
 loadData();
 initModuleMap();
 </script>

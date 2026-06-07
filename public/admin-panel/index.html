@@ -12,7 +12,7 @@
 <body>
     <div class="container">
         <h1>🔧 SAMANLIVE Control Panel</h1>
-        
+
         <!-- NAYA NAVBAR - 6 PAGE KE LIYE -->
         <div class="admin-navbar">
             <a href="index.html" class="nav-btn active">📊 Dashboard</a>
@@ -74,7 +74,6 @@
                             <p id="logoUploadStatus" style="margin-top:5px;font-weight:600;"></p>
                         </div>
                     </div>
-                </div>
                 <div class="form-group">
                     <label>Header Color:</label>
                     <input type="color" id="settingHeaderColor">
@@ -137,9 +136,233 @@
 
 <script src="assets/admin.js"></script>
 <script>
-// Is page ke liye sirf Analytics + Settings ka JS
-loadData();
+// ==================== INDEX PAGE JS ====================
+const API = '/api';
+let areaChart, statusChart;
+let currentSettings = {};
+
+// Toast
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// API Call
+async function apiCall(endpoint, method = 'GET', body = null) {
+    try {
+        const opts = { method, headers: {} };
+        if (body &&!(body instanceof FormData)) {
+            opts.headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(body);
+        } else if (body) {
+            opts.body = body;
+        }
+        const res = await fetch(API + endpoint, opts);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'API Error');
+        return data;
+    } catch (err) {
+        showToast(err.message, 'error');
+        throw err;
+    }
+}
+
+// ==================== ANALYTICS ====================
+async function loadAnalytics() {
+    try {
+        const stats = await apiCall('/stats');
+        const shops = await apiCall('/shops');
+
+        document.getElementById('totalUsersCount').textContent = stats.users || 0;
+        document.getElementById('totalShopsCount').textContent = stats.shops || 0;
+        document.getElementById('pendingShopsCount').textContent = shops.filter(s => s.status === 'pending').length;
+
+        // Area Chart
+        const areaCounts = {};
+        shops.forEach(s => {
+            areaCounts[s.area] = (areaCounts[s.area] || 0) + 1;
+        });
+
+        if (areaChart) areaChart.destroy();
+        areaChart = new Chart(document.getElementById('areaChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(areaCounts),
+                datasets: [{
+                    label: 'Shops',
+                    data: Object.values(areaCounts),
+                    backgroundColor: '#3b82f6'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Status Chart
+        const statusCounts = { active: 0, pending: 0, hidden: 0 };
+        shops.forEach(s => statusCounts[s.status]++);
+
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Active', 'Pending', 'Hidden'],
+                datasets: [{
+                    data: [statusCounts.active, statusCounts.pending, statusCounts.hidden],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// ==================== SETTINGS ====================
+async function loadSettings() {
+    try {
+        currentSettings = await apiCall('/settings');
+        document.getElementById('settingLogoText').value = currentSettings.logoText || '';
+        document.getElementById('settingHeaderColor').value = currentSettings.headerColor || '#1e40af';
+        document.getElementById('settingFooterColor').value = currentSettings.footerColor || '#1e293b';
+        document.getElementById('settingFooterText').value = currentSettings.footerText || '';
+        document.getElementById('settingFooterAbout').value = currentSettings.footerAbout || '';
+        document.getElementById('settingFacebook').value = currentSettings.facebook || '';
+        document.getElementById('settingInstagram').value = currentSettings.instagram || '';
+        document.getElementById('settingTwitter').value = currentSettings.twitter || '';
+        document.getElementById('settingYoutube').value = currentSettings.youtube || '';
+
+        // Logo Preview
+        if (currentSettings.logoUrl) {
+            document.getElementById('logoPreview').src = currentSettings.logoUrl;
+            document.getElementById('logoPreview').style.display = 'block';
+            document.getElementById('logoIconPreview').style.display = 'none';
+        } else {
+            document.getElementById('logoIconPreview').textContent = (currentSettings.logoText || 'S')[0];
+            document.getElementById('logoIconPreview').style.display = 'flex';
+            document.getElementById('logoPreview').style.display = 'none';
+        }
+
+        renderFooterLinks();
+    } catch (err) {}
+}
+
+function renderFooterLinks() {
+    const container = document.getElementById('footerLinksContainer');
+    const links = currentSettings.footerLinks || [];
+    container.innerHTML = links.map((link, i) => `
+        <div class="form-grid" style="margin-bottom:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;">
+            <div class="form-group">
+                <label>Link Text:</label>
+                <input type="text" value="${link.text}" onchange="updateFooterLink(${i}, 'text', this.value)">
+            </div>
+            <div class="form-group">
+                <label>Link URL:</label>
+                <input type="text" value="${link.url}" onchange="updateFooterLink(${i}, 'url', this.value)">
+            </div>
+            <div class="form-group" style="display:flex;align-items:end;">
+                <button class="btn-danger" onclick="removeFooterLink(${i})">Remove</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.addFooterLink = () => {
+    if (!currentSettings.footerLinks) currentSettings.footerLinks = [];
+    currentSettings.footerLinks.push({ text: '', url: '' });
+    renderFooterLinks();
+};
+
+window.updateFooterLink = (i, field, value) => {
+    currentSettings.footerLinks[i][field] = value;
+};
+
+window.removeFooterLink = (i) => {
+    currentSettings.footerLinks.splice(i, 1);
+    renderFooterLinks();
+};
+
+window.previewLogo = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('logoPreview').src = e.target.result;
+            document.getElementById('logoPreview').style.display = 'block';
+            document.getElementById('logoIconPreview').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+window.uploadLogoFile = async () => {
+    const fileInput = document.getElementById('logoUploadFile');
+    const status = document.getElementById('logoUploadStatus');
+
+    if (!fileInput.files[0]) {
+        showToast('Please select a logo file', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('logo', fileInput.files[0]);
+
+    status.textContent = 'Uploading...';
+    status.style.color = '#3b82f6';
+
+    try {
+        const res = await apiCall('/upload/logo', 'POST', formData);
+        currentSettings.logoUrl = res.url;
+        status.textContent = 'Upload successful!';
+        status.style.color = '#10b981';
+        showToast('Logo uploaded');
+        setTimeout(() => status.textContent = '', 3000);
+    } catch (err) {
+        status.textContent = 'Upload failed!';
+        status.style.color = '#ef4444';
+    }
+};
+
+window.saveSettings = async () => {
+    const data = {
+        logoText: document.getElementById('settingLogoText').value,
+        logoUrl: currentSettings.logoUrl || '',
+        headerColor: document.getElementById('settingHeaderColor').value,
+        footerColor: document.getElementById('settingFooterColor').value,
+        footerText: document.getElementById('settingFooterText').value,
+        footerAbout: document.getElementById('settingFooterAbout').value,
+        footerLinks: currentSettings.footerLinks || [],
+        facebook: document.getElementById('settingFacebook').value,
+        instagram: document.getElementById('settingInstagram').value,
+        twitter: document.getElementById('settingTwitter').value,
+        youtube: document.getElementById('settingYoutube').value
+    };
+
+    try {
+        await apiCall('/settings', 'PUT', data);
+        showToast('Settings saved successfully');
+        loadSettings();
+    } catch (err) {}
+};
+
+// Close Modal
+window.closeModal = () => {
+    document.getElementById('editModal').style.display = 'none';
+};
+
+window.onclick = (e) => {
+    if (e.target.classList.contains('modal')) {
+        closeModal();
+    }
+};
+
+// Init
 loadAnalytics();
+loadSettings();
 </script>
 </body>
 </html>
