@@ -22,9 +22,9 @@ const Shop = require('./models/Shop');
 // ========================================
 // NAYA ADD - admin-server.js wale Models Import
 // ========================================
-const Manager = require('./server/models/Manager');
-const Content = require('./server/models/Content');
-const Setting = require('./server/models/Setting');
+const Manager = require('./models/Manager');
+const Content = require('./models/Content');
+const Setting = require('./models/Setting');
 
 // ========================================
 // MONGOOSE SCHEMAS - Shop.js ALAG FILE ME HAI
