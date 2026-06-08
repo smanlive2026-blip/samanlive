@@ -31,8 +31,10 @@
         .btn-danger { background: #ef4444; }
         .btn-danger:hover { background: #dc2626; }
         .btn-small { padding: 8px 16px; font-size: 14px; width: auto; }
+        .btn-copy { background: #10b981; }
+        .btn-copy:hover { background: #059669; }
         
-        .dashboard { display: none; }
+        .dashboard, .admin-panel { display: none; }
         .header {
             background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 20px;
             display: flex; justify-content: space-between; align-items: center;
@@ -105,7 +107,40 @@
         </div>
     </div>
 
-    <!-- DASHBOARD -->
+    <!-- ADMIN PANEL - MANAGER CREATE -->
+    <div class="admin-panel" id="adminPanel">
+        <div class="header">
+            <h1>👨‍💼 Area Manager Management</h1>
+        </div>
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <h2>All Managers</h2>
+                    <button class="btn btn-small" onclick="openAddManagerModal()">+ Add New Manager</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Area</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Login Link</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="managersTable">
+                            <tr><td colspan="7" style="text-align:center; padding: 40px; color: #94a3b8;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MANAGER DASHBOARD -->
     <div class="dashboard" id="dashboard">
         <div class="header">
             <h1>🏪 Area Manager Dashboard</h1>
@@ -116,7 +151,6 @@
         </div>
 
         <div class="container">
-            <!-- STATS -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <h3>TOTAL SHOPS</h3>
@@ -132,7 +166,6 @@
                 </div>
             </div>
 
-            <!-- SHOPS TABLE -->
             <div class="card">
                 <div class="card-header">
                     <h2>📍 My Area Shops</h2>
@@ -156,6 +189,49 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ADD MANAGER MODAL -->
+    <div class="modal" id="addManagerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Manager</h2>
+                <button class="close-btn" onclick="closeAddManagerModal()">×</button>
+            </div>
+            <form id="addManagerForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Name *</label>
+                        <input type="text" id="managerNameInput" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="managerEmailInput" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Password *</label>
+                        <input type="password" id="managerPasswordInput" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="managerPhoneInput">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Area Name *</label>
+                        <input type="text" id="managerAreaInput" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Service Charge %</label>
+                        <input type="number" id="managerChargeInput" value="5" min="0" max="100">
+                    </div>
+                </div>
+                <button type="submit" class="btn">Create Manager</button>
+            </form>
         </div>
     </div>
 
@@ -211,7 +287,6 @@
                     <label>Service Range (meters)</label>
                     <input type="number" id="shopRange" value="5000" min="100" max="50000">
                 </div>
-                <!-- BANNER UPLOAD - NAYA ADD KIYA -->
                 <div class="form-group">
                     <label>Shop Banner Image (Market me dikhega)</label>
                     <input type="file" id="shopBannerInput" accept="image/*" onchange="uploadShopBanner(this)">
@@ -226,15 +301,121 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdmin = urlParams.get('admin') === 'true';
+        
         let token = localStorage.getItem('areaManagerToken');
         let managerData = null;
         let map = null;
         let marker = null;
         let categories = [];
 
-        // Check if already logged in
-        if (token) {
+        // CHECK MODE
+        if (isAdmin) {
+            showAdminPanel();
+        } else if (token) {
             showDashboard();
+        }
+
+        // ADMIN PANEL FUNCTIONS
+        async function showAdminPanel() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            await loadManagers();
+        }
+
+        async function loadManagers() {
+            try {
+                const res = await fetch('/api/managers');
+                const data = await res.json();
+                renderManagers(data);
+            } catch (err) {
+                alert('Error loading managers');
+            }
+        }
+
+        function renderManagers(managers) {
+            const tbody = document.getElementById('managersTable');
+            if (managers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color: #94a3b8;">Koi manager nahi hai</td></tr>';
+                return;
+            }
+
+            const baseUrl = window.location.origin + window.location.pathname.replace('?admin=true', '');
+            tbody.innerHTML = managers.map(m => `
+                <tr>
+                    <td><strong>${m.name}</strong></td>
+                    <td>${m.email}</td>
+                    <td>${m.area}</td>
+                    <td>${m.phone || '-'}</td>
+                    <td><span class="badge ${m.isActive ? 'badge-success' : 'badge-danger'}">${m.isActive ? 'Active' : 'Inactive'}</span></td>
+                    <td>
+                        <button class="btn btn-small btn-copy" onclick="copyLoginLink('${baseUrl}?token=${m.loginToken}')">Copy Link</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-small btn-danger" onclick="deleteManager('${m.id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openAddManagerModal() {
+            document.getElementById('addManagerModal').classList.add('active');
+        }
+
+        function closeAddManagerModal() {
+            document.getElementById('addManagerModal').classList.remove('active');
+            document.getElementById('addManagerForm').reset();
+        }
+
+        document.getElementById('addManagerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const managerData = {
+                name: document.getElementById('managerNameInput').value,
+                email: document.getElementById('managerEmailInput').value,
+                password: document.getElementById('managerPasswordInput').value,
+                phone: document.getElementById('managerPhoneInput').value,
+                area: document.getElementById('managerAreaInput').value,
+                serviceCharge: document.getElementById('managerChargeInput').value
+            };
+
+            try {
+                const res = await fetch('/api/managers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(managerData)
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('Manager created!');
+                    closeAddManagerModal();
+                    loadManagers();
+                } else {
+                    alert(data.error || 'Error creating manager');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        async function deleteManager(id) {
+            if (!confirm('Pakka delete karna hai?')) return;
+            try {
+                const res = await fetch(`/api/managers/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Manager deleted!');
+                    loadManagers();
+                }
+            } catch (err) {
+                alert('Error deleting');
+            }
+        }
+
+        function copyLoginLink(link) {
+            navigator.clipboard.writeText(link);
+            alert('Login link copied!');
         }
 
         // LOGIN
@@ -336,7 +517,6 @@
             document.getElementById('shopModal').classList.add('active');
             document.getElementById('modalTitle').textContent = shop ? 'Edit Shop' : 'Add New Shop';
             
-            // Load categories
             const catSelect = document.getElementById('shopCategory');
             catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
 
@@ -360,7 +540,7 @@
                 document.getElementById('shopForm').reset();
                 document.getElementById('shopId').value = '';
                 document.getElementById('shopBannerPreview').style.display = 'none';
-                initMap(23.0225, 72.5714); // Default Surat
+                initMap(23.0225, 72.5714);
             }
         }
 
@@ -372,7 +552,6 @@
             openShopModal(shop);
         }
 
-        // BANNER UPLOAD - NAYA FUNCTION
         async function uploadShopBanner(input) {
             if(input.files[0]) {
                 const formData = new FormData();
@@ -396,7 +575,6 @@
             }
         }
 
-        // INIT MAP
         function initMap(lat, lng) {
             if (map) map.remove();
             map = L.map('map').setView([lat, lng], 13);
@@ -417,7 +595,6 @@
             });
         }
 
-        // SAVE SHOP - BANNER FIELD ADD KIYA
         document.getElementById('shopForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const shopId = document.getElementById('shopId').value;
@@ -430,7 +607,7 @@
                 lat: document.getElementById('shopLat').value,
                 lng: document.getElementById('shopLng').value,
                 range: document.getElementById('shopRange').value,
-                banner: document.getElementById('shopBannerUrl').value // BANNER ADD KIYA
+                banner: document.getElementById('shopBannerUrl').value
             };
 
             try {
@@ -459,7 +636,6 @@
             }
         });
 
-        // DELETE SHOP
         async function deleteShop(id) {
             if (!confirm('Pakka delete karna hai?')) return;
             
@@ -481,7 +657,6 @@
             }
         }
 
-        // LOGOUT
         function logout() {
             localStorage.removeItem('areaManagerToken');
             token = null;
