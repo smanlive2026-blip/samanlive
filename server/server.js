@@ -1305,6 +1305,9 @@ app.get('/modules/:moduleName', (req, res) => {
     `);
 });
 
+const managerRoutes = require('./routes/managerRoutes');
+app.use(managerRoutes);
+
 app.use((req, res) => {
     res.status(404).send(`
         <!DOCTYPE html>

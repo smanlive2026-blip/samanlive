@@ -64,6 +64,8 @@
         .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .badge-success { background: #d1fae5; color: #065f46; }
         .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
         .actions { display: flex; gap: 8px; }
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -82,6 +84,12 @@
         #map { height: 300px; border-radius: 8px; margin-top: 10px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .banner-preview { width: 100%; max-width: 400px; margin-top: 10px; border-radius: 8px; display: none; }
+        .module-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .module-tag { 
+            background: #e0e7ff; color: #4338ca; padding: 4px 10px; 
+            border-radius: 12px; font-size: 12px; font-weight: 600;
+        }
+        .history-details { font-size: 12px; color: #64748b; margin-top: 4px; }
         @media (max-width: 768px) {
             .form-row { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: 1fr; }
@@ -125,6 +133,7 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Area</th>
+                                <th>Modules</th>
                                 <th>Phone</th>
                                 <th>Status</th>
                                 <th>Login Link</th>
@@ -132,7 +141,7 @@
                             </tr>
                         </thead>
                         <tbody id="managersTable">
-                            <tr><td colspan="7" style="text-align:center; padding: 40px; color: #94a3b8;">Loading...</td></tr>
+                            <tr><td colspan="8" style="text-align:center; padding: 40px; color: #94a3b8;">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -164,6 +173,10 @@
                     <h3>AREA NAME</h3>
                     <div class="value" style="font-size: 20px;" id="areaName">-</div>
                 </div>
+                <div class="stat-card">
+                    <h3>MODULES</h3>
+                    <div class="value" style="font-size: 14px;" id="moduleList">-</div>
+                </div>
             </div>
 
             <div class="card">
@@ -189,10 +202,34 @@
                     </table>
                 </div>
             </div>
+
+            <!-- HISTORY LOG CARD - NAYA ADD KIYA -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📜 Recent Activity Log</h2>
+                    <button class="btn btn-small" onclick="loadHistory()">Refresh</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Shop Name</th>
+                                <th>Module</th>
+                                <th>Time</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTable">
+                            <tr><td colspan="5" style="text-align:center; padding: 40px; color: #94a3b8;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ADD MANAGER MODAL -->
+    <!-- ADD MANAGER MODAL - ADMIN ONLY -->
     <div class="modal" id="addManagerModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -229,6 +266,13 @@
                         <label>Service Charge %</label>
                         <input type="number" id="managerChargeInput" value="5" min="0" max="100">
                     </div>
+                </div>
+                <div class="form-group">
+                    <label>Module Access * (Manager kaunsi categories handle karega)</label>
+                    <select id="managerModulesInput" multiple size="8" required>
+                        <option value="">Loading categories...</option>
+                    </select>
+                    <small style="color:#64748b; display:block; margin-top:5px;">Ctrl/Cmd + Click to select multiple</small>
                 </div>
                 <button type="submit" class="btn">Create Manager</button>
             </form>
@@ -303,16 +347,22 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const isAdmin = urlParams.get('admin') === 'true';
+        const tokenParam = urlParams.get('token');
         
         let token = localStorage.getItem('areaManagerToken');
         let managerData = null;
         let map = null;
         let marker = null;
         let categories = [];
+        let allCategoriesList = [];
 
         // CHECK MODE
         if (isAdmin) {
             showAdminPanel();
+        } else if (tokenParam) {
+            localStorage.setItem('areaManagerToken', tokenParam);
+            token = tokenParam;
+            showDashboard();
         } else if (token) {
             showDashboard();
         }
@@ -321,7 +371,22 @@
         async function showAdminPanel() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('adminPanel').style.display = 'block';
+            await loadAllCategories();
             await loadManagers();
+        }
+
+        async function loadAllCategories() {
+            try {
+                const res = await fetch('/api/market/categories');
+                allCategoriesList = await res.json();
+                
+                const select = document.getElementById('managerModulesInput');
+                select.innerHTML = allCategoriesList.map(c => 
+                    `<option value="${c.id}">${c.icon} ${c.name}</option>`
+                ).join('');
+            } catch (err) {
+                console.error('Failed to load categories');
+            }
         }
 
         async function loadManagers() {
@@ -337,26 +402,34 @@
         function renderManagers(managers) {
             const tbody = document.getElementById('managersTable');
             if (managers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color: #94a3b8;">Koi manager nahi hai</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 40px; color: #94a3b8;">Koi manager nahi hai</td></tr>';
                 return;
             }
 
             const baseUrl = window.location.origin + window.location.pathname.replace('?admin=true', '');
-            tbody.innerHTML = managers.map(m => `
+            tbody.innerHTML = managers.map(m => {
+                const moduleNames = (m.moduleAccess || []).map(id => {
+                    const cat = allCategoriesList.find(c => c.id === id);
+                    return cat ? cat.name : id;
+                }).slice(0, 2).join(', ');
+                const extraCount = (m.moduleAccess || []).length > 2 ? ` +${m.moduleAccess.length - 2}` : '';
+
+                return `
                 <tr>
                     <td><strong>${m.name}</strong></td>
                     <td>${m.email}</td>
                     <td>${m.area}</td>
+                    <td style="font-size:12px;">${moduleNames}${extraCount}</td>
                     <td>${m.phone || '-'}</td>
-                    <td><span class="badge ${m.isActive ? 'badge-success' : 'badge-danger'}">${m.isActive ? 'Active' : 'Inactive'}</span></td>
+                    <td><span class="badge ${m.status ? 'badge-success' : 'badge-danger'}">${m.status ? 'Active' : 'Inactive'}</span></td>
                     <td>
                         <button class="btn btn-small btn-copy" onclick="copyLoginLink('${baseUrl}?token=${m.loginToken}')">Copy Link</button>
                     </td>
                     <td>
-                        <button class="btn btn-small btn-danger" onclick="deleteManager('${m.id}')">Delete</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteManager('${m._id}')">Delete</button>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         function openAddManagerModal() {
@@ -370,17 +443,27 @@
 
         document.getElementById('addManagerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            const selectedOptions = document.getElementById('managerModulesInput').selectedOptions;
+            const moduleAccess = Array.from(selectedOptions).map(opt => opt.value);
+
+            if (moduleAccess.length === 0) {
+                alert('Kam se kam 1 Module select karo!');
+                return;
+            }
+
             const managerData = {
                 name: document.getElementById('managerNameInput').value,
                 email: document.getElementById('managerEmailInput').value,
                 password: document.getElementById('managerPasswordInput').value,
                 phone: document.getElementById('managerPhoneInput').value,
                 area: document.getElementById('managerAreaInput').value,
-                serviceCharge: document.getElementById('managerChargeInput').value
+                serviceCharge: document.getElementById('managerChargeInput').value,
+                moduleAccess: moduleAccess
             };
 
             try {
-                const res = await fetch('/api/managers', {
+                const res = await fetch('/api/admin/create-manager', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(managerData)
@@ -388,7 +471,7 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    alert('Manager created!');
+                    alert(`Manager created!\nLogin Link: ${data.loginLink}\nTemp Password: ${data.tempPassword}`);
                     closeAddManagerModal();
                     loadManagers();
                 } else {
@@ -455,19 +538,26 @@
         // LOAD DASHBOARD DATA
         async function loadDashboard() {
             try {
-                const res = await fetch('/api/area-manager/dashboard', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
+                const res = await fetch('/api/area-manager/dashboard?token=' + token);
                 const data = await res.json();
 
                 if (data.success) {
+                    managerData = data.manager;
                     document.getElementById('managerName').textContent = managerData.name;
-                    document.getElementById('areaName').textContent = data.area.name;
-                    document.getElementById('totalShops').textContent = data.stats.totalShops;
-                    document.getElementById('activeShops').textContent = data.stats.activeShops;
+                    document.getElementById('areaName').textContent = data.manager.area;
                     
-                    categories = data.categories;
+                    const moduleNames = (data.manager.modules || []).map(id => {
+                        const cat = allCategoriesList.find(c => c.id === id);
+                        return cat ? `${cat.icon} ${cat.name}` : id;
+                    }).join(', ');
+                    document.getElementById('moduleList').textContent = moduleNames || '-';
+                    
+                    document.getElementById('totalShops').textContent = data.shops.length;
+                    document.getElementById('activeShops').textContent = data.shops.filter(s => s.status).length;
+                    
+                    categories = data.categories || allCategoriesList;
                     renderShops(data.shops);
+                    loadHistory(); // NAYA ADD KIYA
                 } else {
                     alert(data.error);
                     logout();
@@ -476,6 +566,61 @@
                 alert('Error loading dashboard');
                 logout();
             }
+        }
+
+        // LOAD HISTORY - NAYA FUNCTION
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/admin/shop-history', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    renderHistory(data.history);
+                }
+            } catch (err) {
+                console.error('Error loading history');
+            }
+        }
+
+        // RENDER HISTORY - NAYA FUNCTION
+        function renderHistory(history) {
+            const tbody = document.getElementById('historyTable');
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: #94a3b8;">Koi activity nahi</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = history.slice(0, 20).map(h => {
+                const actionBadge = h.action === 'create' ? 'badge-success' : 
+                                   h.action === 'edit' ? 'badge-info' : 'badge-danger';
+                const time = new Date(h.timestamp).toLocaleString('en-IN', {
+                    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                });
+                
+                let details = '';
+                if (h.action === 'edit' && h.oldData && h.newData) {
+                    const changes = [];
+                    if (h.oldData.name !== h.newData.name) changes.push(`Name: ${h.oldData.name} → ${h.newData.name}`);
+                    if (h.oldData.address !== h.newData.address) changes.push('Address updated');
+                    if (h.oldData.banner !== h.newData.banner) changes.push('Banner changed');
+                    details = changes.join(', ') || 'Updated';
+                } else if (h.action === 'delete') {
+                    details = `Deleted: ${h.oldData.name}`;
+                } else if (h.action === 'create') {
+                    details = `Created: ${h.newData.name}`;
+                }
+
+                return `
+                <tr>
+                    <td><span class="badge ${actionBadge}">${h.action.toUpperCase()}</span></td>
+                    <td><strong>${h.shopName}</strong></td>
+                    <td>${h.oldData?.moduleId || h.newData?.moduleId || '-'}</td>
+                    <td>${time}</td>
+                    <td class="history-details">${details}</td>
+                </tr>
+            `}).join('');
         }
 
         // RENDER SHOPS
@@ -490,7 +635,7 @@
                 <tr>
                     <td style="font-size: 24px;">${shop.icon}</td>
                     <td><strong>${shop.name}</strong></td>
-                    <td>${getCategoryName(shop.categoryId)}</td>
+                    <td>${getCategoryName(shop.moduleId || shop.categoryId)}</td>
                     <td>${shop.address || '-'}</td>
                     <td>
                         <span class="badge ${shop.status ? 'badge-success' : 'badge-danger'}">
@@ -499,8 +644,8 @@
                     </td>
                     <td>
                         <div class="actions">
-                            <button class="btn btn-small" onclick='editShop(${JSON.stringify(shop)})'>Edit</button>
-                            <button class="btn btn-small btn-danger" onclick="deleteShop('${shop.id}')">Delete</button>
+                            <button class="btn btn-small" onclick='editShop(${JSON.stringify(shop).replace(/'/g, "&apos;")})'>Edit</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteShop('${shop._id || shop.id}')">Delete</button>
                         </div>
                     </td>
                 </tr>
@@ -517,14 +662,18 @@
             document.getElementById('shopModal').classList.add('active');
             document.getElementById('modalTitle').textContent = shop ? 'Edit Shop' : 'Add New Shop';
             
+            const allowedCategories = categories.filter(c => 
+                managerData.modules.includes(c.id)
+            );
+            
             const catSelect = document.getElementById('shopCategory');
-            catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+            catSelect.innerHTML = allowedCategories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
 
             if (shop) {
-                document.getElementById('shopId').value = shop.id;
+                document.getElementById('shopId').value = shop._id || shop.id;
                 document.getElementById('shopName').value = shop.name;
                 document.getElementById('shopIcon').value = shop.icon;
-                document.getElementById('shopCategory').value = shop.categoryId;
+                document.getElementById('shopCategory').value = shop.moduleId || shop.categoryId;
                 document.getElementById('shopPhone').value = shop.phone || '';
                 document.getElementById('shopAddress').value = shop.address || '';
                 document.getElementById('shopLat').value = shop.lat;
@@ -601,7 +750,7 @@
             const shopData = {
                 name: document.getElementById('shopName').value,
                 icon: document.getElementById('shopIcon').value,
-                categoryId: document.getElementById('shopCategory').value,
+                moduleId: document.getElementById('shopCategory').value,
                 phone: document.getElementById('shopPhone').value,
                 address: document.getElementById('shopAddress').value,
                 lat: document.getElementById('shopLat').value,

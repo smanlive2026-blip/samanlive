@@ -6,21 +6,31 @@ const managerSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true },
   password: { type: String, required: true },
-  
-  // NAYA ADD - Service Charge & Documents
-  serviceCharge: { type: Number, default: 5 }, // % me, default 5%
+
+  serviceCharge: { type: Number, default: 5 },
   documents: {
-    aadhar: { type: String, default: '' }, // Aadhar card image URL
-    pan: { type: String, default: '' },    // PAN card image URL
-    photo: { type: String, default: '' },  // Manager photo URL
-    addressProof: { type: String, default: '' } // Address proof URL
+    aadhar: { type: String, default: '' },
+    pan: { type: String, default: '' },
+    photo: { type: String, default: '' },
+    addressProof: { type: String, default: '' }
   },
-  
-  loginToken: { type: String, default: '' }, // Unique link ke liye
-  status: { type: Boolean, default: true }, // true = active, false = inactive
-  lastLogin: { type: Date }, // NAYA - Last login track karne ke liye
-  
+
+  moduleAccess: {
+    type: [String],
+    default: [],
+    required: true
+  },
+
+  loginToken: { type: String, default: '', unique: true, sparse: true },
+  tempPassword: { type: String, default: '' },
+  status: { type: Boolean, default: true },
+  lastLogin: { type: Date },
+
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
+
+managerSchema.index({ loginToken: 1 });
+managerSchema.index({ area: 1, status: 1 });
+managerSchema.index({ moduleAccess: 1 });
 
 module.exports = mongoose.model('Manager', managerSchema);

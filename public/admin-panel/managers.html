@@ -15,8 +15,29 @@
         }
         .login-link-box input { width: 100%; padding: 8px; border: 1px solid #10b981; border-radius: 4px; }
         .badge-pending { background: #fef3c7; color: #92400e; }
-        .banner-thumb { width: 120px; height: 40px; object-fit: cover; border-radius: 4px; }
-        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+        .banner-thumb { width: 120px; height: 40px; object-fit: cover; border-radius: 4px; cursor: pointer; }
+        .module-select-box { 
+            border: 1px solid #d1d5db; border-radius: 8px; padding: 10px; 
+            max-height: 200px; overflow-y: auto; background: #f9fafb;
+        }
+        .module-checkbox { display: flex; align-items: center; padding: 6px 0; }
+        .module-checkbox input { margin-right: 8px; width: 16px; height: 16px; }
+        .module-checkbox label { cursor: pointer; font-size: 14px; }
+        .selected-modules { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+        .module-tag { 
+            background: #667eea; color: white; padding: 4px 10px; 
+            border-radius: 12px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .module-tag span { cursor: pointer; }
+        .search-module { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 8px; }
+        .history-details { font-size: 12px; color: #64748b; margin-top: 4px; }
+        .filter-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .filter-row select { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; }
+        .banner-modal-img { width: 100%; max-width: 600px; border-radius: 8px; }
+        @media (max-width: 768px) { 
+            .form-grid { grid-template-columns: 1fr; } 
+            .filter-row { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -57,6 +78,7 @@
                                 <th>Photo</th>
                                 <th>Name</th>
                                 <th>Area</th>
+                                <th>Modules</th>
                                 <th>Email</th>
                                 <th>Phone</th>
                                 <th>Service Charge</th>
@@ -66,7 +88,7 @@
                             </tr>
                         </thead>
                         <tbody id="managersTable">
-                            <tr><td colspan="9" style="text-align:center; padding: 40px;">Loading...</td></tr>
+                            <tr><td colspan="10" style="text-align:center; padding: 40px;">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -76,6 +98,7 @@
             <div class="card">
                 <div class="card-header">
                     <h2>🖼️ Pending Banner Approvals</h2>
+                    <button class="btn btn-small" onclick="loadData()">Refresh</button>
                 </div>
                 <div style="overflow-x: auto;">
                     <table>
@@ -86,11 +109,49 @@
                                 <th>Area</th>
                                 <th>Banner</th>
                                 <th>Status</th>
+                                <th>Uploaded</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="bannerTable">
-                            <tr><td colspan="6" style="text-align:center; padding: 40px;">Loading...</td></tr>
+                            <tr><td colspan="7" style="text-align:center; padding: 40px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MANAGER ACTIVITY LOG TABLE -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📜 Manager Activity Log</h2>
+                    <button class="btn btn-small" onclick="loadHistory()">Refresh</button>
+                </div>
+                <div class="filter-row">
+                    <select id="historyManagerFilter" onchange="loadHistory()">
+                        <option value="">All Managers</option>
+                    </select>
+                    <select id="historyActionFilter" onchange="loadHistory()">
+                        <option value="">All Actions</option>
+                        <option value="create">Create</option>
+                        <option value="edit">Edit</option>
+                        <option value="delete">Delete</option>
+                    </select>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Manager</th>
+                                <th>Action</th>
+                                <th>Shop Name</th>
+                                <th>Area</th>
+                                <th>Module</th>
+                                <th>Time</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTable">
+                            <tr><td colspan="7" style="text-align:center; padding: 40px;">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -100,7 +161,7 @@
 
     <!-- ADD/EDIT MANAGER MODAL -->
     <div class="modal" id="managerModal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
                 <h2 id="modalTitle">Add New Area Manager</h2>
                 <button class="close-btn" onclick="closeModal()">×</button>
@@ -134,6 +195,17 @@
                             <option value="true">Active</option>
                             <option value="false">Inactive</option>
                         </select>
+                    </div>
+                    
+                    <!-- MODULE ACCESS -->
+                    <div class="form-group form-full">
+                        <label>Module Access * (Select kar manager kaunsi category handle karega)</label>
+                        <input type="text" class="search-module" id="moduleSearch" placeholder="Search module... 🔍" onkeyup="filterModules()">
+                        <div class="module-select-box" id="moduleSelectBox">
+                            <div style="text-align:center; color:#64748b; padding:10px;">Loading modules...</div>
+                        </div>
+                        <div class="selected-modules" id="selectedModules"></div>
+                        <input type="hidden" id="moduleAccess">
                     </div>
                     
                     <!-- DOCUMENTS UPLOAD -->
@@ -179,42 +251,151 @@
         </div>
     </div>
 
+    <!-- BANNER PREVIEW MODAL -->
+    <div class="modal" id="bannerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Banner Preview</h2>
+                <button class="close-btn" onclick="closeBannerModal()">×</button>
+            </div>
+            <img id="bannerModalImg" class="banner-modal-img">
+        </div>
+    </div>
+
     <script>
         let managers = [];
         let pendingShops = [];
+        let allCategories = [];
+        let selectedModuleIds = [];
+
+        // LOAD ALL CATEGORIES FROM MARKET API
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/market/categories');
+                allCategories = await res.json();
+                if (!allCategories || allCategories.length === 0) {
+                    allCategories = [
+                        {"id":"grocery","name":"Grocery Store","icon":"🛒"},
+                        {"id":"electronics","name":"Electronics","icon":"📱"},
+                        {"id":"pharmacy","name":"Pharmacy","icon":"💊"},
+                        {"id":"restaurant","name":"Restaurant","icon":"🍽️"}
+                    ];
+                }
+                renderModuleCheckboxes();
+            } catch(err) {
+                console.error('Category load failed:', err);
+                allCategories = [
+                    {"id":"grocery","name":"Grocery Store","icon":"🛒"},
+                    {"id":"electronics","name":"Electronics","icon":"📱"}
+                ];
+                renderModuleCheckboxes();
+            }
+        }
+
+        // RENDER MODULE CHECKBOXES
+        function renderModuleCheckboxes() {
+            const box = document.getElementById('moduleSelectBox');
+            box.innerHTML = allCategories.map(cat => `
+                <div class="module-checkbox">
+                    <input type="checkbox" id="mod_${cat.id}" value="${cat.id}" onchange="toggleModule('${cat.id}', '${cat.name}', '${cat.icon}')">
+                    <label for="mod_${cat.id}">${cat.icon} ${cat.name}</label>
+                </div>
+            `).join('');
+        }
+
+        // FILTER MODULES ON SEARCH
+        function filterModules() {
+            const query = document.getElementById('moduleSearch').value.toLowerCase();
+            const boxes = document.querySelectorAll('.module-checkbox');
+            boxes.forEach(box => {
+                const text = box.textContent.toLowerCase();
+                box.style.display = text.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        // TOGGLE MODULE SELECTION
+        function toggleModule(id, name, icon) {
+            const checkbox = document.getElementById(`mod_${id}`);
+            if (checkbox.checked) {
+                if (!selectedModuleIds.includes(id)) {
+                    selectedModuleIds.push(id);
+                }
+            } else {
+                selectedModuleIds = selectedModuleIds.filter(m => m !== id);
+            }
+            renderSelectedModules();
+            document.getElementById('moduleAccess').value = JSON.stringify(selectedModuleIds);
+        }
+
+        // RENDER SELECTED MODULE TAGS
+        function renderSelectedModules() {
+            const container = document.getElementById('selectedModules');
+            container.innerHTML = selectedModuleIds.map(id => {
+                const cat = allCategories.find(c => c.id === id);
+                if (!cat) return '';
+                return `
+                    <div class="module-tag">
+                        ${cat.icon} ${cat.name}
+                        <span onclick="removeModule('${id}')">×</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // REMOVE MODULE
+        function removeModule(id) {
+            selectedModuleIds = selectedModuleIds.filter(m => m !== id);
+            const cb = document.getElementById(`mod_${id}`);
+            if (cb) cb.checked = false;
+            renderSelectedModules();
+            document.getElementById('moduleAccess').value = JSON.stringify(selectedModuleIds);
+        }
 
         // LOAD DATA
         async function loadData() {
-            // Load Managers
             const res1 = await fetch('/api/managers');
             managers = await res1.json();
             renderManagers();
 
-            // Load Pending Banners
-            const res2 = await fetch('/api/admin/shops?bannerPending=true');
+            const res2 = await fetch('/api/admin/pending-banners');
             const data = await res2.json();
             pendingShops = data.shops || [];
             renderBanners();
 
-            // Stats
             document.getElementById('totalManagers').textContent = managers.length;
             document.getElementById('activeManagers').textContent = managers.filter(m => m.status).length;
             document.getElementById('pendingBanners').textContent = pendingShops.length;
+
+            // History filter me managers add karo
+            const filterSelect = document.getElementById('historyManagerFilter');
+            filterSelect.innerHTML = '<option value="">All Managers</option>' + 
+                managers.map(m => `<option value="${m._id}">${m.name} - ${m.area}</option>`).join('');
         }
 
         // RENDER MANAGERS TABLE
         function renderManagers() {
             const tbody = document.getElementById('managersTable');
             if (managers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding: 40px;">Koi manager nahi hai</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 40px;">Koi manager nahi hai</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = managers.map(m => `
+            tbody.innerHTML = managers.map(m => {
+                let moduleNames = '-';
+                if (m.moduleAccess && m.moduleAccess.length > 0) {
+                    moduleNames = m.moduleAccess.map(id => {
+                        const cat = allCategories.find(c => c.id === id);
+                        return cat ? `${cat.icon} ${cat.name}` : id;
+                    }).slice(0, 2).join(', ');
+                    if (m.moduleAccess.length > 2) moduleNames += ` +${m.moduleAccess.length - 2}`;
+                }
+
+                return `
                 <tr>
                     <td><img src="${m.documents?.photo || '/assets/default-avatar.png'}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"></td>
                     <td><strong>${m.name}</strong></td>
                     <td>${m.area}</td>
+                    <td style="font-size:12px;">${moduleNames}</td>
                     <td>${m.email}</td>
                     <td>${m.phone}</td>
                     <td>${m.serviceCharge}%</td>
@@ -224,29 +405,32 @@
                     </td>
                     <td>
                         <div class="actions">
-                            <button class="btn btn-small" onclick='editManager(${JSON.stringify(m)})'>Edit</button>
+                            <button class="btn btn-small" onclick='editManager(${JSON.stringify(m).replace(/'/g, "&apos;")})'>Edit</button>
                             <button class="btn btn-small btn-danger" onclick="deleteManager('${m._id}')">Delete</button>
                         </div>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         // RENDER PENDING BANNERS
         function renderBanners() {
             const tbody = document.getElementById('bannerTable');
             if (pendingShops.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px;">Koi pending banner nahi</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">Koi pending banner nahi</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = pendingShops.map(shop => `
+            tbody.innerHTML = pendingShops.map(shop => {
+                const uploaded = shop.updatedAt ? new Date(shop.updatedAt).toLocaleDateString('en-IN') : '-';
+                return `
                 <tr>
-                    <td><strong>${shop.shopName}</strong></td>
+                    <td><strong>${shop.name}</strong></td>
                     <td>${shop.managerId?.name || '-'}</td>
                     <td>${shop.area}</td>
-                    <td><img src="${shop.banner}" class="banner-thumb"></td>
+                    <td><img src="${shop.banner}" class="banner-thumb" onclick="viewBanner('${shop.banner}')"></td>
                     <td><span class="badge badge-pending">Pending</span></td>
+                    <td>${uploaded}</td>
                     <td>
                         <div class="actions">
                             <button class="btn btn-small btn-success" onclick="approveBanner('${shop._id}')">Approve</button>
@@ -254,7 +438,79 @@
                         </div>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
+        }
+
+        // LOAD HISTORY
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/admin/shop-history');
+                const data = await res.json();
+
+                if (data.success) {
+                    renderHistory(data.history);
+                }
+            } catch (err) {
+                console.error('Error loading history');
+            }
+        }
+
+        // RENDER HISTORY
+        function renderHistory(history) {
+            const tbody = document.getElementById('historyTable');
+            
+            const managerFilter = document.getElementById('historyManagerFilter').value;
+            const actionFilter = document.getElementById('historyActionFilter').value;
+            
+            let filtered = history;
+            if (managerFilter) {
+                filtered = filtered.filter(h => h.managerId?._id === managerFilter);
+            }
+            if (actionFilter) {
+                filtered = filtered.filter(h => h.action === actionFilter);
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">Koi activity nahi</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.slice(0, 50).map(h => {
+                const actionBadge = h.action === 'create' ? 'badge-success' : 
+                                   h.action === 'edit' ? 'badge-info' : 'badge-danger';
+                const time = new Date(h.timestamp).toLocaleString('en-IN', {
+                    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                });
+                
+                let details = '';
+                if (h.action === 'edit' && h.oldData && h.newData) {
+                    const changes = [];
+                    if (h.oldData.name !== h.newData.name) changes.push(`Name: ${h.oldData.name} → ${h.newData.name}`);
+                    if (h.oldData.address !== h.newData.address) changes.push('Address updated');
+                    if (h.oldData.banner !== h.newData.banner) changes.push('Banner changed');
+                    if (h.oldData.phone !== h.newData.phone) changes.push('Phone updated');
+                    details = changes.join(', ') || 'Updated';
+                } else if (h.action === 'delete') {
+                    details = `Deleted shop`;
+                } else if (h.action === 'create') {
+                    details = `New shop created`;
+                }
+
+                const managerName = h.managerId?.name || 'Unknown';
+                const managerArea = h.managerId?.area || h.area;
+                const moduleName = h.oldData?.moduleId || h.newData?.moduleId || '-';
+
+                return `
+                <tr>
+                    <td><strong>${managerName}</strong><br><small style="color:#64748b;">${managerArea}</small></td>
+                    <td><span class="badge ${actionBadge}">${h.action.toUpperCase()}</span></td>
+                    <td><strong>${h.shopName}</strong></td>
+                    <td>${h.area}</td>
+                    <td>${moduleName}</td>
+                    <td>${time}</td>
+                    <td class="history-details">${details}</td>
+                </tr>
+            `}).join('');
         }
 
         // MODAL FUNCTIONS
@@ -265,6 +521,10 @@
             document.getElementById('managerId').value = '';
             document.getElementById('loginLinkBox').style.display = 'none';
             document.querySelectorAll('.doc-preview').forEach(img => img.style.display = 'none');
+            
+            selectedModuleIds = [];
+            document.querySelectorAll('.module-checkbox input').forEach(cb => cb.checked = false);
+            renderSelectedModules();
         }
 
         function closeModal() {
@@ -282,7 +542,15 @@
             document.getElementById('serviceCharge').value = m.serviceCharge;
             document.getElementById('status').value = m.status;
 
-            // Load documents
+            if (m.moduleAccess && m.moduleAccess.length > 0) {
+                selectedModuleIds = [...m.moduleAccess];
+                selectedModuleIds.forEach(id => {
+                    const cb = document.getElementById(`mod_${id}`);
+                    if (cb) cb.checked = true;
+                });
+                renderSelectedModules();
+            }
+
             if (m.documents) {
                 ['photo', 'aadhar', 'pan', 'addressProof'].forEach(doc => {
                     if (m.documents[doc]) {
@@ -321,6 +589,11 @@
             e.preventDefault();
             const managerId = document.getElementById('managerId').value;
 
+            if (selectedModuleIds.length === 0) {
+                alert('Kam se kam 1 Module select karo!');
+                return;
+            }
+
             const managerData = {
                 name: document.getElementById('name').value,
                 area: document.getElementById('area').value,
@@ -328,6 +601,7 @@
                 phone: document.getElementById('phone').value,
                 serviceCharge: document.getElementById('serviceCharge').value,
                 status: document.getElementById('status').value === 'true',
+                moduleAccess: selectedModuleIds,
                 documents: {
                     photo: document.getElementById('photo').value,
                     aadhar: document.getElementById('aadhar').value,
@@ -348,7 +622,6 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    // Naye manager ke liye login link dikhao
                     if (data.loginLink) {
                         document.getElementById('loginLink').value = data.loginLink;
                         document.getElementById('tempPassword').textContent = data.tempPassword;
@@ -358,6 +631,7 @@
                         closeModal();
                     }
                     loadData();
+                    loadHistory();
                 } else {
                     alert(data.error || 'Error saving manager');
                 }
@@ -368,7 +642,7 @@
 
         // COPY LOGIN LINK
         function copyLink(token) {
-            const link = `${window.location.origin}/area-manager?token=${token}`;
+            const link = `${window.location.origin}/area-manager.html?token=${token}`;
             navigator.clipboard.writeText(link);
             alert('Login link copied!');
         }
@@ -392,11 +666,13 @@
         async function approveBanner(shopId) {
             if (!confirm('Banner approve karna hai?')) return;
             try {
-                const res = await fetch(`/api/admin/approve-banner/${shopId}`, { method: 'PUT' });
+                const res = await fetch(`/api/admin/approve-banner/${shopId}`, { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
                     alert('Banner approved!');
                     loadData();
+                } else {
+                    alert(data.error);
                 }
             } catch (err) {
                 alert('Error: ' + err.message);
@@ -407,19 +683,33 @@
         async function rejectBanner(shopId) {
             if (!confirm('Banner reject karna hai? Image delete ho jayegi.')) return;
             try {
-                const res = await fetch(`/api/admin/reject-banner/${shopId}`, { method: 'PUT' });
+                const res = await fetch(`/api/admin/reject-banner/${shopId}`, { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
                     alert('Banner rejected!');
                     loadData();
+                } else {
+                    alert(data.error);
                 }
             } catch (err) {
                 alert('Error: ' + err.message);
             }
         }
 
+        // VIEW BANNER
+        function viewBanner(url) {
+            document.getElementById('bannerModalImg').src = url;
+            document.getElementById('bannerModal').classList.add('active');
+        }
+
+        function closeBannerModal() {
+            document.getElementById('bannerModal').classList.remove('active');
+        }
+
         // INIT
+        loadCategories();
         loadData();
+        loadHistory();
     </script>
 </body>
 </html>
