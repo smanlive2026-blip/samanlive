@@ -1,42 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const Manager = require('../models/Manager');
+const Shop = require('../models/Shop');
+const Module = require('../models/Module');
 
-const dbPath = path.join(__dirname, '../database/modules.json');
-const JWT_SECRET = 'samanlive-area-manager-secret-2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'samanlive-area-manager-secret-2026';
 
-function readDB() {
-    const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-    if (!data.areaManagers) data.areaManagers = [];
-    if (!data.areas) data.areas = [];
-    if (!data.shops) data.shops = [];
-    if (!data.marketCategories) data.marketCategories = [];
-    return data;
-}
-
-function writeDB(data) {
-    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-}
-
-function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371e3;
-    const φ1 = lat1 * Math.PI/180;
-    const φ2 = lat2 * Math.PI/180;
-    const Δφ = (lat2-lat1) * Math.PI/180;
-    const Δλ = (lon2-lon1) * Math.PI/180;
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-function authManager(req, res, next) {
+// ========================================
+// AUTH MIDDLEWARE
+// ========================================
+async function authManager(req, res, next) {
     const token = req.headers['authorization']?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'Token nahi mila' });
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.manager = decoded;
+        const manager = await Manager.findById(decoded.id);
+        if (!manager ||!manager.status) {
+            return res.status(401).json({ error: 'Manager inactive ya nahi mila' });
+        }
+        req.manager = manager;
         next();
     } catch (err) {
         return res.status(401).json({ error: 'Invalid token' });
@@ -44,97 +28,180 @@ function authManager(req, res, next) {
 }
 
 // ========================================
-// LOGIN
+// LOGIN - Email/Password YA LoginToken se
 // ========================================
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
-    if (!email ||!password) return res.status(400).json({ error: 'Email aur Password zaruri hai' });
+    const { email, password, loginToken } = req.body;
 
-    const db = readDB();
-    const manager = db.areaManagers.find(m => m.email === email && m.status);
-    if (!manager) return res.status(401).json({ error: 'Manager nahi mila ya inactive hai' });
+    try {
+        let manager;
 
-    const validPass = await bcrypt.compare(password, manager.password);
-    if (!validPass) return res.status(401).json({ error: 'Password galat hai' });
+        // Method 1: LoginToken se login - Admin se generate hua link
+        if (loginToken) {
+            manager = await Manager.findOne({ loginToken, status: true });
+            if (!manager) return res.status(401).json({ error: 'Invalid ya expired link' });
+        }
+        // Method 2: Email/Password se login
+        else {
+            if (!email ||!password) {
+                return res.status(400).json({ error: 'Email aur Password zaruri hai' });
+            }
+            manager = await Manager.findOne({ email, status: true });
+            if (!manager) return res.status(401).json({ error: 'Manager nahi mila ya inactive hai' });
 
-    const token = jwt.sign({
-        id: manager.id,
-        email: manager.email,
-        name: manager.name,
-        assignedAreas: manager.assignedAreas || [manager.city] // NEW: Multiple areas
-    }, JWT_SECRET, { expiresIn: '7d' });
+            const validPass = await bcrypt.compare(password, manager.password);
+            if (!validPass) return res.status(401).json({ error: 'Password galat hai' });
+        }
 
-    res.json({
-        success: true,
-        token,
-        manager: { id: manager.id, name: manager.name, email: manager.email, assignedAreas: manager.assignedAreas }
-    });
-});
+        const token = jwt.sign({
+            id: manager._id,
+            email: manager.email,
+            name: manager.name,
+            area: manager.area
+        }, JWT_SECRET, { expiresIn: '7d' });
 
-// ========================================
-// DASHBOARD - SIRF ASSIGNED AREAS KA
-// ========================================
-router.get('/dashboard', authManager, (req, res) => {
-    const db = readDB();
-    const manager = db.areaManagers.find(m => m.id === req.manager.id);
-    const assignedAreas = manager.assignedAreas || [manager.city];
-
-    // Sirf assigned areas ki approved shops
-    const areaShops = db.shops.filter(shop => {
-        return assignedAreas.includes(shop.area) && shop.status === 'approved';
-    });
-
-    res.json({
-        success: true,
-        assignedAreas,
-        stats: {
-            totalShops: areaShops.length,
-            activeShops: areaShops.filter(s => s.isActive).length,
-            totalCategories: db.marketCategories.length
-        },
-        shops: areaShops,
-        categories: db.marketCategories
-    });
-});
-
-// ========================================
-// SHOP CREATE - DELETE KAR DIYA ❌
-// Ab manager shop create nahi kar sakta
-// ========================================
-
-// ========================================
-// SHOP UPDATE - SIRF EDIT KAR SAKTA HAI
-// ========================================
-router.put('/shop/:id', authManager, (req, res) => {
-    const db = readDB();
-    const shopIdx = db.shops.findIndex(s => s.id === req.params.id);
-
-    if (shopIdx === -1) return res.status(404).json({ error: 'Shop nahi mili' });
-
-    const shop = db.shops[shopIdx];
-    const manager = db.areaManagers.find(m => m.id === req.manager.id);
-    const assignedAreas = manager.assignedAreas || [manager.city];
-
-    // Check: Shop is manager ke assigned area me hai ya nahi
-    if (!assignedAreas.includes(shop.area)) {
-        return res.status(403).json({ error: 'Ye shop aapke area ki nahi hai' });
+        res.json({
+            success: true,
+            token,
+            manager: {
+                id: manager._id,
+                name: manager.name,
+                email: manager.email,
+                area: manager.area,
+                serviceCharge: manager.serviceCharge
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    // Sirf ye fields update kar sakta hai manager
-    const allowedFields = ['phone', 'banner', 'isActive', 'priority'];
-    const updateData = {};
-    allowedFields.forEach(field => {
-        if (req.body[field]!== undefined) updateData[field] = req.body[field];
-    });
-
-    db.shops[shopIdx] = {...db.shops[shopIdx],...updateData};
-    writeDB(db);
-    res.json({ success: true, data: db.shops[shopIdx] });
 });
 
 // ========================================
-// SHOP DELETE - HATA DIYA ❌
-// Manager delete nahi kar sakta, sirf admin
+// DASHBOARD - Sirf apne area ki shops
 // ========================================
+router.get('/dashboard', authManager, async (req, res) => {
+    try {
+        const managerArea = req.manager.area;
+
+        // Apne area ki shops
+        const areaShops = await Shop.find({
+            area: managerArea
+        }).lean();
+
+        // Categories - modules.json se ya Module collection se
+        const modules = await Module.find({ status: true });
+        const categories = modules.flatMap(m => m.categories || []);
+
+        res.json({
+            success: true,
+            area: managerArea,
+            stats: {
+                totalShops: areaShops.length,
+                activeShops: areaShops.filter(s => s.status).length,
+                pendingBanners: areaShops.filter(s => s.banner &&!s.bannerApproved).length
+            },
+            shops: areaShops,
+            categories: categories
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// SHOP CREATE - Manager bana sakta hai apne area me
+// ========================================
+router.post('/shop', authManager, async (req, res) => {
+    try {
+        const managerArea = req.manager.area;
+        const { name, icon, categoryId, phone, address, lat, lng, range, banner } = req.body;
+
+        if (!name ||!categoryId ||!lat ||!lng) {
+            return res.status(400).json({ error: 'Name, Category, Lat, Lng required hai' });
+        }
+
+        const shop = new Shop({
+            name,
+            icon: icon || '🏪',
+            categoryId,
+            phone,
+            address,
+            lat: parseFloat(lat),
+            lng: parseFloat(lng),
+            range: range || 5000,
+            banner: banner || '',
+            bannerApproved: false, // NAYA - Default pending, admin approve karega
+            area: managerArea, // Auto assign manager ka area
+            managerId: req.manager._id,
+            status: true
+        });
+
+        await shop.save();
+        res.json({ success: true, data: shop });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// SHOP UPDATE - Sirf apne area ki shop edit kar sakta hai
+// ========================================
+router.put('/shop/:id', authManager, async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.id);
+
+        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
+
+        // Check: Shop is manager ke area ki hai ya nahi
+        if (shop.area!== req.manager.area) {
+            return res.status(403).json({ error: 'Ye shop aapke area ki nahi hai' });
+        }
+
+        // Allowed fields manager ke liye
+        const allowedFields = ['name', 'phone', 'address', 'lat', 'lng', 'range', 'icon', 'banner', 'status'];
+        const updateData = {};
+
+        allowedFields.forEach(field => {
+            if (req.body[field]!== undefined) {
+                updateData[field] = req.body[field];
+            }
+        });
+
+        // Agar banner change hua to approval reset karo
+        if (req.body.banner && req.body.banner!== shop.banner) {
+            updateData.bannerApproved = false; // Admin firse approve karega
+        }
+
+        const updatedShop = await Shop.findByIdAndUpdate(
+            req.params.id,
+            updateData,
+            { new: true }
+        );
+
+        res.json({ success: true, data: updatedShop });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// SHOP DELETE - Sirf apne area ki
+// ========================================
+router.delete('/shop/:id', authManager, async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.id);
+
+        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
+
+        if (shop.area!== req.manager.area) {
+            return res.status(403).json({ error: 'Ye shop aapke area ki nahi hai' });
+        }
+
+        await Shop.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 module.exports = router;

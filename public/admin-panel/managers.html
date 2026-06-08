@@ -3,332 +3,423 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Managers - SAMANLIVE Admin</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Area Managers - SAMANLIVE Admin</title>
     <link rel="stylesheet" href="assets/admin.css">
+    <style>
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-full { grid-column: 1 / -1; }
+        .doc-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; }
+        .login-link-box { 
+            background: #d1fae5; border: 2px solid #10b981; padding: 15px; 
+            border-radius: 8px; margin-top: 15px; display: none;
+        }
+        .login-link-box input { width: 100%; padding: 8px; border: 1px solid #10b981; border-radius: 4px; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .banner-thumb { width: 120px; height: 40px; object-fit: cover; border-radius: 4px; }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔧 SAMANLIVE Control Panel</h1>
-        
-        <!-- NAVBAR - Managers active hai -->
-        <div class="admin-navbar">
-            <a href="index.html" class="nav-btn">📊 Dashboard</a>
-            <a href="modules.html" class="nav-btn">📦 Modules</a>
-            <a href="content.html" class="nav-btn">📢 Content</a>
-            <a href="shops.html" class="nav-btn">🏪 Shops</a>
-            <a href="managers.html" class="nav-btn active">👨‍💼 Managers</a>
-            <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
-        </div>
+    <div class="admin-container">
+        <!-- Sidebar same rahega - index.html se copy kar lena -->
 
-        <!-- AREA MANAGERS TAB -->
-        <div id="areaManagersTab" class="content">
-            <h2>👨‍💼 Area Managers Control</h2>
-            <p style="color:#64748b;margin-bottom:15px;">Yaha se Area Manager banao, unke shops manage karo. Login link copy karke manager ko de do.</p>
-            <div class="action-bar">
-                <button class="btn-success" onclick="addItem('areaManager')">+ Add New Area Manager</button>
-                <input type="text" class="search-box" placeholder="Search managers..." onkeyup="filterTable('areaManagersTable', this.value)">
+        <div class="main-content">
+            <div class="header">
+                <h1>👨‍💼 Area Managers</h1>
+                <button class="btn btn-primary" onclick="openAddModal()">+ Add New Manager</button>
             </div>
-            <table id="areaManagersTable">
-                <thead><tr><th>Name</th><th>City/Area</th><th>Email</th><th>Phone</th><th>Total Shops</th><th>Login Link</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody></tbody>
-            </table>
-            <div id="areaManagerShopsSection" style="display:none; margin-top:30px;">
-                <h3>🏪 Shops of: <span id="selectedManagerName"></span></h3>
-                <div class="action-bar">
-                    <button class="btn-success" onclick="addShopForManager()">+ Add Shop for this Manager</button>
+
+            <!-- STATS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>TOTAL MANAGERS</h3>
+                    <div class="value" id="totalManagers">0</div>
                 </div>
-                <table id="managerShopsTable"><thead><tr><th>Icon</th><th>Name</th><th>Category</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
+                <div class="stat-card">
+                    <h3>ACTIVE MANAGERS</h3>
+                    <div class="value" id="activeManagers">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>PENDING BANNERS</h3>
+                    <div class="value" id="pendingBanners">0</div>
+                </div>
+            </div>
+
+            <!-- MANAGERS TABLE -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>All Area Managers</h2>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Name</th>
+                                <th>Area</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Service Charge</th>
+                                <th>Status</th>
+                                <th>Login Link</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="managersTable">
+                            <tr><td colspan="9" style="text-align:center; padding: 40px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PENDING BANNERS TABLE -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>🖼️ Pending Banner Approvals</h2>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Shop Name</th>
+                                <th>Manager</th>
+                                <th>Area</th>
+                                <th>Banner</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bannerTable">
+                            <tr><td colspan="6" style="text-align:center; padding: 40px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- UNIVERSAL MODAL -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <h2 id="modalTitle">Edit Item</h2>
-            <input type="hidden" id="editId">
-            <input type="hidden" id="editType">
-            <div id="modalFields"></div>
-            <div style="display:flex;gap:10px;margin-top:20px;">
-                <button class="btn-primary" onclick="saveItem()">💾 Save Changes</button>
-                <button onclick="closeModal()">Cancel</button>
+    <!-- ADD/EDIT MANAGER MODAL -->
+    <div class="modal" id="managerModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Area Manager</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
             </div>
+            <form id="managerForm">
+                <input type="hidden" id="managerId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Area/City *</label>
+                        <input type="text" id="area" placeholder="Jaipur, Delhi" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone *</label>
+                        <input type="text" id="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Service Charge % *</label>
+                        <input type="number" id="serviceCharge" value="5" min="0" max="50" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="status">
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+                    
+                    <!-- DOCUMENTS UPLOAD -->
+                    <div class="form-group">
+                        <label>Manager Photo</label>
+                        <input type="file" id="photoInput" accept="image/*" onchange="uploadDoc(this, 'photo')">
+                        <img id="photoPreview" class="doc-preview">
+                        <input type="hidden" id="photo">
+                    </div>
+                    <div class="form-group">
+                        <label>Aadhar Card</label>
+                        <input type="file" id="aadharInput" accept="image/*" onchange="uploadDoc(this, 'aadhar')">
+                        <img id="aadharPreview" class="doc-preview">
+                        <input type="hidden" id="aadhar">
+                    </div>
+                    <div class="form-group">
+                        <label>PAN Card</label>
+                        <input type="file" id="panInput" accept="image/*" onchange="uploadDoc(this, 'pan')">
+                        <img id="panPreview" class="doc-preview">
+                        <input type="hidden" id="pan">
+                    </div>
+                    <div class="form-group">
+                        <label>Address Proof</label>
+                        <input type="file" id="addressProofInput" accept="image/*" onchange="uploadDoc(this, 'addressProof')">
+                        <img id="addressProofPreview" class="doc-preview">
+                        <input type="hidden" id="addressProof">
+                    </div>
+                </div>
+
+                <!-- LOGIN LINK BOX - Submit ke baad dikhega -->
+                <div class="login-link-box" id="loginLinkBox">
+                    <strong>✅ Manager Created! Login Link:</strong>
+                    <input type="text" id="loginLink" readonly onclick="this.select()">
+                    <small style="color:#065f46; display: block; margin-top: 5px;">
+                        Temp Password: <b id="tempPassword"></b> | Ye link manager ko bhej do
+                    </small>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                    Save Manager
+                </button>
+            </form>
         </div>
     </div>
 
-<script src="assets/admin.js"></script>
-<script>
-// ==================== MANAGERS PAGE JS ====================
-// const API = '/api'; ← YE LINE HATA DI. admin.js me already hai
+    <script>
+        let managers = [];
+        let pendingShops = [];
 
-let allManagers = [];
-let allShops = [];
-let editingId = null;
-let selectedManagerId = null;
+        // LOAD DATA
+        async function loadData() {
+            // Load Managers
+            const res1 = await fetch('/api/managers');
+            managers = await res1.json();
+            renderManagers();
 
-// Toast
-function showToast(msg, type = 'success') {
-    const toast = document.createElement('div');
-    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
+            // Load Pending Banners
+            const res2 = await fetch('/api/admin/shops?bannerPending=true');
+            const data = await res2.json();
+            pendingShops = data.shops || [];
+            renderBanners();
 
-// API Call
-async function apiCall(endpoint, method = 'GET', body = null) {
-    try {
-        const opts = { method, headers: {} };
-        if (body &&!(body instanceof FormData)) {
-            opts.headers['Content-Type'] = 'application/json';
-            opts.body = JSON.stringify(body);
-        } else if (body) {
-            opts.body = body;
+            // Stats
+            document.getElementById('totalManagers').textContent = managers.length;
+            document.getElementById('activeManagers').textContent = managers.filter(m => m.status).length;
+            document.getElementById('pendingBanners').textContent = pendingShops.length;
         }
-        const res = await fetch(API + endpoint, opts);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'API Error');
-        return data;
-    } catch (err) {
-        showToast(err.message, 'error');
-        throw err;
-    }
-}
 
-// Load All Data
-async function loadData() {
-    try {
-        [allManagers, allShops] = await Promise.all([
-            apiCall('/managers'),
-            apiCall('/shops')
-        ]);
-        renderManagers();
-    } catch (err) {
-        console.error(err);
-    }
-}
+        // RENDER MANAGERS TABLE
+        function renderManagers() {
+            const tbody = document.getElementById('managersTable');
+            if (managers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding: 40px;">Koi manager nahi hai</td></tr>';
+                return;
+            }
 
-// Render Managers Table
-function renderManagers() {
-    const tbody = document.querySelector('#areaManagersTable tbody');
-    tbody.innerHTML = allManagers.map(m => {
-        const managerShops = allShops.filter(s => s.managerId === m._id);
-        const loginLink = `${window.location.origin}/manager-login?token=${m.loginToken || 'pending'}`;
-        return `
-            <tr>
-                <td>${m.name}</td>
-                <td>${m.area}</td>
-                <td>${m.email}</td>
-                <td>${m.phone || '-'}</td>
-                <td><span class="shop-count-badge">${managerShops.length}</span></td>
-                <td>
-                    <button class="btn-secondary" onclick="copyLink('${loginLink}')" style="font-size:11px;padding:4px 8px;">📋 Copy</button>
-                </td>
-                <td><span class="status-badge status-${m.status}">${m.status}</span></td>
-                <td>
-                    <button class="btn-primary" onclick="viewManagerShops('${m._id}')">Shops</button>
-                    <button class="btn-primary" onclick="editItem('${m._id}')">Edit</button>
-                    <button class="btn-danger" onclick="deleteItem('${m._id}')">Delete</button>
-                </td>
-            </tr>
-        `;
-    }).join('') || '<tr><td colspan="8" style="text-align:center;color:#6b7280">No managers found</td></tr>';
-}
-
-// Copy Login Link
-window.copyLink = (link) => {
-    navigator.clipboard.writeText(link);
-    showToast('Login link copied to clipboard');
-};
-
-// View Manager Shops
-window.viewManagerShops = (managerId) => {
-    selectedManagerId = managerId;
-    const manager = allManagers.find(m => m._id === managerId);
-    document.getElementById('selectedManagerName').textContent = manager.name;
-    document.getElementById('areaManagerShopsSection').style.display = 'block';
-
-    const managerShops = allShops.filter(s => s.managerId === managerId);
-    const tbody = document.querySelector('#managerShopsTable tbody');
-    tbody.innerHTML = managerShops.map(s => `
-        <tr>
-            <td><img src="${s.logo || s.image || '/assets/logo.png'}" style="width:40px;height:40px;border-radius:6px;object-fit:cover" onerror="this.src='/assets/logo.png'"></td>
-            <td>${s.name}</td>
-            <td>${s.category || s.moduleId || '-'}</td>
-            <td>${s.address || '-'}</td>
-            <td><span class="status-badge status-${s.status}">${s.status}</span></td>
-            <td>
-                <button class="btn-primary" onclick="editShop('${s._id}')">Edit</button>
-                <button class="btn-danger" onclick="deleteShop('${s._id}')">Delete</button>
-            </td>
-        </tr>
-    `).join('') || '<tr><td colspan="6" style="text-align:center;color:#6b7280">No shops assigned</td></tr>';
-
-    // Scroll to section
-    document.getElementById('areaManagerShopsSection').scrollIntoView({ behavior: 'smooth' });
-};
-
-// Add Item
-window.addItem = (type) => {
-    editingId = null;
-    document.getElementById('editId').value = '';
-    document.getElementById('editType').value = type;
-    document.getElementById('modalTitle').textContent = 'Add New Area Manager';
-
-    const fields = `
-        <div class="form-grid">
-            <div class="form-group">
-                <label>Name *</label>
-                <input type="text" id="field_name" required>
-            </div>
-            <div class="form-group">
-                <label>City/Area *</label>
-                <input type="text" id="field_area" required>
-            </div>
-            <div class="form-group">
-                <label>Email *</label>
-                <input type="email" id="field_email" required>
-            </div>
-            <div class="form-group">
-                <label>Phone</label>
-                <input type="text" id="field_phone">
-            </div>
-            <div class="form-group">
-                <label>Password *</label>
-                <input type="password" id="field_password" required>
-            </div>
-            <div class="form-group">
-                <label>Status</label>
-                <select id="field_status">
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-            </div>
-        </div>
-    `;
-
-    document.getElementById('modalFields').innerHTML = fields;
-    document.getElementById('editModal').style.display = 'block';
-};
-
-// Edit Item
-window.editItem = (id) => {
-    const m = allManagers.find(x => x._id === id);
-    if (!m) return;
-
-    editingId = id;
-    document.getElementById('editId').value = id;
-    document.getElementById('editType').value = 'areaManager';
-    document.getElementById('modalTitle').textContent = 'Edit Area Manager';
-
-    addItem('areaManager'); // Form bana do
-
-    setTimeout(() => {
-        document.getElementById('field_name').value = m.name || '';
-        document.getElementById('field_area').value = m.area || '';
-        document.getElementById('field_email').value = m.email || '';
-        document.getElementById('field_phone').value = m.phone || '';
-        document.getElementById('field_password').value = ''; // Password khali rakho
-        document.getElementById('field_password').placeholder = 'Leave blank to keep old password';
-        document.getElementById('field_status').value = m.status || 'active';
-    }, 100);
-};
-
-// Save Item
-window.saveItem = async () => {
-    const data = {
-        name: document.getElementById('field_name').value,
-        area: document.getElementById('field_area').value,
-        email: document.getElementById('field_email').value,
-        phone: document.getElementById('field_phone').value,
-        status: document.getElementById('field_status').value
-    };
-
-    const password = document.getElementById('field_password').value;
-    if (password) data.password = password;
-
-    if (!data.name || !data.area || !data.email) {
-        showToast('Name, Area and Email are required', 'error');
-        return;
-    }
-
-    if (!editingId && !password) {
-        showToast('Password is required for new manager', 'error');
-        return;
-    }
-
-    try {
-        if (editingId) {
-            await apiCall('/managers/' + editingId, 'PUT', data);
-            showToast('Manager updated');
-        } else {
-            await apiCall('/managers', 'POST', data);
-            showToast('Manager created');
+            tbody.innerHTML = managers.map(m => `
+                <tr>
+                    <td><img src="${m.documents?.photo || '/assets/default-avatar.png'}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"></td>
+                    <td><strong>${m.name}</strong></td>
+                    <td>${m.area}</td>
+                    <td>${m.email}</td>
+                    <td>${m.phone}</td>
+                    <td>${m.serviceCharge}%</td>
+                    <td><span class="badge ${m.status ? 'badge-success' : 'badge-danger'}">${m.status ? 'Active' : 'Inactive'}</span></td>
+                    <td>
+                        <button class="btn btn-small" onclick="copyLink('${m.loginToken}')">Copy Link</button>
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn btn-small" onclick='editManager(${JSON.stringify(m)})'>Edit</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteManager('${m._id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
         }
-        closeModal();
+
+        // RENDER PENDING BANNERS
+        function renderBanners() {
+            const tbody = document.getElementById('bannerTable');
+            if (pendingShops.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px;">Koi pending banner nahi</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pendingShops.map(shop => `
+                <tr>
+                    <td><strong>${shop.shopName}</strong></td>
+                    <td>${shop.managerId?.name || '-'}</td>
+                    <td>${shop.area}</td>
+                    <td><img src="${shop.banner}" class="banner-thumb"></td>
+                    <td><span class="badge badge-pending">Pending</span></td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn btn-small btn-success" onclick="approveBanner('${shop._id}')">Approve</button>
+                            <button class="btn btn-small btn-danger" onclick="rejectBanner('${shop._id}')">Reject</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // MODAL FUNCTIONS
+        function openAddModal() {
+            document.getElementById('managerModal').classList.add('active');
+            document.getElementById('modalTitle').textContent = 'Add New Area Manager';
+            document.getElementById('managerForm').reset();
+            document.getElementById('managerId').value = '';
+            document.getElementById('loginLinkBox').style.display = 'none';
+            document.querySelectorAll('.doc-preview').forEach(img => img.style.display = 'none');
+        }
+
+        function closeModal() {
+            document.getElementById('managerModal').classList.remove('active');
+        }
+
+        function editManager(m) {
+            openAddModal();
+            document.getElementById('modalTitle').textContent = 'Edit Manager';
+            document.getElementById('managerId').value = m._id;
+            document.getElementById('name').value = m.name;
+            document.getElementById('area').value = m.area;
+            document.getElementById('email').value = m.email;
+            document.getElementById('phone').value = m.phone;
+            document.getElementById('serviceCharge').value = m.serviceCharge;
+            document.getElementById('status').value = m.status;
+
+            // Load documents
+            if (m.documents) {
+                ['photo', 'aadhar', 'pan', 'addressProof'].forEach(doc => {
+                    if (m.documents[doc]) {
+                        document.getElementById(doc).value = m.documents[doc];
+                        document.getElementById(doc + 'Preview').src = m.documents[doc];
+                        document.getElementById(doc + 'Preview').style.display = 'block';
+                    }
+                });
+            }
+        }
+
+        // UPLOAD DOCUMENT
+        async function uploadDoc(input, type) {
+            if (!input.files[0]) return;
+            const formData = new FormData();
+            formData.append('file', input.files[0]);
+
+            try {
+                const res = await fetch('/api/admin/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById(type).value = data.url;
+                    document.getElementById(type + 'Preview').src = data.url;
+                    document.getElementById(type + 'Preview').style.display = 'block';
+                }
+            } catch (err) {
+                alert('Upload failed!');
+            }
+        }
+
+        // SAVE MANAGER
+        document.getElementById('managerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const managerId = document.getElementById('managerId').value;
+
+            const managerData = {
+                name: document.getElementById('name').value,
+                area: document.getElementById('area').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                serviceCharge: document.getElementById('serviceCharge').value,
+                status: document.getElementById('status').value === 'true',
+                documents: {
+                    photo: document.getElementById('photo').value,
+                    aadhar: document.getElementById('aadhar').value,
+                    pan: document.getElementById('pan').value,
+                    addressProof: document.getElementById('addressProof').value
+                }
+            };
+
+            try {
+                const url = managerId ? `/api/managers/${managerId}` : '/api/admin/create-manager';
+                const method = managerId ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(managerData)
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Naye manager ke liye login link dikhao
+                    if (data.loginLink) {
+                        document.getElementById('loginLink').value = data.loginLink;
+                        document.getElementById('tempPassword').textContent = data.tempPassword;
+                        document.getElementById('loginLinkBox').style.display = 'block';
+                    } else {
+                        alert('Manager updated!');
+                        closeModal();
+                    }
+                    loadData();
+                } else {
+                    alert(data.error || 'Error saving manager');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        // COPY LOGIN LINK
+        function copyLink(token) {
+            const link = `${window.location.origin}/area-manager?token=${token}`;
+            navigator.clipboard.writeText(link);
+            alert('Login link copied!');
+        }
+
+        // DELETE MANAGER
+        async function deleteManager(id) {
+            if (!confirm('Pakka delete karna hai?')) return;
+            try {
+                const res = await fetch(`/api/managers/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Manager deleted!');
+                    loadData();
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        // APPROVE BANNER
+        async function approveBanner(shopId) {
+            if (!confirm('Banner approve karna hai?')) return;
+            try {
+                const res = await fetch(`/api/admin/approve-banner/${shopId}`, { method: 'PUT' });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Banner approved!');
+                    loadData();
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        // REJECT BANNER
+        async function rejectBanner(shopId) {
+            if (!confirm('Banner reject karna hai? Image delete ho jayegi.')) return;
+            try {
+                const res = await fetch(`/api/admin/reject-banner/${shopId}`, { method: 'PUT' });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Banner rejected!');
+                    loadData();
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        // INIT
         loadData();
-    } catch (err) {}
-};
-
-// Delete Item
-window.deleteItem = async (id) => {
-    if (!confirm('Delete this manager? All assigned shops will become unassigned.')) return;
-    try {
-        await apiCall('/managers/' + id, 'DELETE');
-        showToast('Manager deleted');
-        document.getElementById('areaManagerShopsSection').style.display = 'none';
-        loadData();
-    } catch (err) {}
-};
-
-// Add Shop For Manager
-window.addShopForManager = () => {
-    if (!selectedManagerId) return;
-    window.location.href = `shops.html?manager=${selectedManagerId}`;
-};
-
-// Edit Shop - redirect to shops page
-window.editShop = (id) => {
-    window.location.href = `shops.html?edit=${id}`;
-};
-
-// Delete Shop
-window.deleteShop = async (id) => {
-    if (!confirm('Delete this shop?')) return;
-    try {
-        await apiCall('/shops/' + id, 'DELETE');
-        showToast('Shop deleted');
-        loadData();
-        if (selectedManagerId) viewManagerShops(selectedManagerId);
-    } catch (err) {}
-};
-
-// Filter Table
-window.filterTable = (tableId, query) => {
-    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-    const q = query.toLowerCase();
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(q) ? '' : 'none';
-    });
-};
-
-// Close Modal
-window.closeModal = () => {
-    document.getElementById('editModal').style.display = 'none';
-};
-
-window.onclick = (e) => {
-    if (e.target.classList.contains('modal')) {
-        closeModal();
-    }
-};
-
-// Init
-loadData();
-</script>
+    </script>
 </body>
 </html>

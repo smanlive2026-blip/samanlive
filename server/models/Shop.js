@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const shopSchema = new mongoose.Schema({
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // NEW: Kis user ne banayi
+    managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' }, // NAYA ADD - Area Manager ne banayi to
     shopName: { type: String, required: true },
     ownerName: { type: String, required: true },
     phone: { type: String, required: true },
@@ -24,6 +25,11 @@ const shopSchema = new mongoose.Schema({
     banner: String,
     logo: String,
 
+    // NAYA ADD - Banner Approval System
+    bannerApproved: { type: Boolean, default: false }, // Admin approve karega tab true hoga
+    bannerApprovedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Kis admin ne approve kiya
+    bannerApprovedAt: { type: Date }, // Kab approve hua
+
     // STATUS SYSTEM - NEW
     status: {
         type: String,
@@ -39,10 +45,11 @@ const shopSchema = new mongoose.Schema({
     rating: { type: Number, default: 0 },
     totalOrders: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now }
-});
+}, { timestamps: true });
 
 shopSchema.index({ location: '2dsphere' });
 shopSchema.index({ status: 1 }); // NEW: Pending shops fast search ke liye
 shopSchema.index({ area: 1 }); // NEW: Area wise filter ke liye
+shopSchema.index({ bannerApproved: 1 }); // NAYA ADD - Approved banners fast search
 
 module.exports = mongoose.models.Shop || mongoose.model('Shop', shopSchema);

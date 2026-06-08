@@ -429,7 +429,8 @@ app.post('/api/shop/create', authenticateToken, async (req, res) => {
             color,
             priority: 1,
             status: false,
-            ownerId: req.user.userId
+            ownerId: req.user.userId,
+            bannerApproved: false // NAYA ADD - Banner default pending
         });
 
         await shop.save();
@@ -479,6 +480,51 @@ app.get('/api/shops', (req, res) => {
         shops = shops.sort((a, b) => a.priority - b.priority);
     }
     res.json(shops);
+});
+
+// ========================================
+// NAYA ADD - PUBLIC SHOPS API FOR USER PANEL
+// Area wise + sirf approved banners dikhenge
+// ========================================
+app.get('/api/public/shops', async (req, res) => {
+    try {
+        const { lat, lng, area } = req.query;
+        let query = { status: true };
+
+        // Agar area diya hai to filter karo
+        if (area) {
+            query.area = area;
+        }
+
+        let shops = await Shop.find(query).lean();
+
+        // Sirf approved banner wali shop ka banner dikhao
+        shops = shops.map(shop => {
+            if (!shop.bannerApproved) {
+                shop.banner = ''; // Pending banner hide kar do
+            }
+            return shop;
+        });
+
+        // Location wise sort agar lat/lng hai
+        if (lat && lng) {
+            shops = shops.map(s => {
+                if (s.lat && s.lng) {
+                    const dist = getDistance(parseFloat(lat), parseFloat(lng), s.lat, s.lng);
+                    s.distance = Math.round(dist);
+                    s.inRange = dist <= (s.range || 5000);
+                } else {
+                    s.distance = 999999;
+                    s.inRange = false;
+                }
+                return s;
+            }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
+        }
+
+        res.json({ success: true, shops });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.get('/api/homepage', (req, res) => {
@@ -584,12 +630,86 @@ app.delete('/api/content/:id', async (req, res) => {
 });
 
 // ========================================
-// NAYA ADD - MANAGERS API MONGODB WALA
+// NAYA ADD - MANAGERS API MONGODB WALA - UPDATED
 // ========================================
 app.get('/api/managers', async (req, res) => {
     try {
-        const managers = await Manager.find();
+        const managers = await Manager.find().select('-password');
         res.json(managers);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// NAYA - ADMIN PANEL SE MANAGER BANANE KA API
+app.post('/api/admin/create-manager', async (req, res) => {
+    try {
+        const { name, email, phone, area, serviceCharge, documents } = req.body;
+
+        // Check agar email already exist karta hai
+        const existing = await Manager.findOne({ email });
+        if (existing) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+
+        // Auto generate password
+        const tempPassword = Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        // Unique login token generate
+        const loginToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+        const manager = await Manager.create({
+            name,
+            email,
+            phone,
+            password: hashedPassword,
+            area: area || '',
+            serviceCharge: serviceCharge || 5,
+            documents: documents || {},
+            loginToken,
+            status: true
+        });
+
+        // Login link banao
+        const loginLink = `${req.protocol}://${req.get('host')}/area-manager?token=${loginToken}`;
+
+        res.json({
+            success: true,
+            manager: {...manager.toObject(), password: undefined },
+            tempPassword,
+            loginLink
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// NAYA - BANNER APPROVE API
+app.put('/api/admin/approve-banner/:shopId', async (req, res) => {
+    try {
+        const shop = await Shop.findByIdAndUpdate(
+            req.params.shopId,
+            { bannerApproved: true },
+            { new: true }
+        );
+        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
+        res.json({ success: true, shop });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// NAYA - BANNER REJECT API
+app.put('/api/admin/reject-banner/:shopId', async (req, res) => {
+    try {
+        const shop = await Shop.findByIdAndUpdate(
+            req.params.shopId,
+            { bannerApproved: false, banner: '' },
+            { new: true }
+        );
+        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
+        res.json({ success: true, shop });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -626,6 +746,25 @@ app.delete('/api/managers/:id', async (req, res) => {
         const manager = await Manager.findByIdAndDelete(req.params.id);
         if (!manager) return res.status(404).json({ error: 'Manager nahi mila' });
         res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// ⭐⭐ NAYA ADD KIYA HAI - YAHAN PASTE KIYA ⭐⭐
+// ADMIN SHOPS API - Pending Banners ke liye
+// ========================================
+app.get('/api/admin/shops', async (req, res) => {
+    try {
+        let query = {};
+        // Agar bannerPending=true hai to sirf unapproved banners wali shop
+        if (req.query.bannerPending === 'true') {
+            query.banner = { $ne: '' }; // Banner laga hua hai
+            query.bannerApproved = false; // But approved nahi hai
+        }
+        const shops = await Shop.find(query).populate('managerId', 'name email area');
+        res.json({ success: true, shops });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -682,7 +821,7 @@ app.post('/api/admin/module', async (req, res) => {
         banner: "",
         areas: [],
         categories: [], // ← NAYA ADD
-   ...req.body
+ ...req.body
     };
     try {
         const mongoItem = new Module(newItem);
@@ -836,7 +975,8 @@ app.post('/api/admin/shop', async (req, res) => {
         priority: db.shops.length + 1,
         range: 5000,
         banner: '',
-   ...req.body
+        bannerApproved: false, // NAYA ADD - Default pending
+...req.body
     };
     try {
         const mongoItem = new Shop(newItem);
@@ -874,7 +1014,7 @@ app.post('/api/admin/areaManager', async (req, res) => {
 
     const newManager = {
         id: 'am-' + Date.now(),
-   ...restData,
+...restData,
         password: hashedPassword,
         createdAt: new Date().toISOString(),
         status: restData.status!== undefined? restData.status : true
@@ -1049,8 +1189,8 @@ app.put('/api/admin/module/:id/category/:catId', async (req, res) => {
         if (catIdx === -1) return res.status(404).json({ error: 'Category nahi mili' });
 
         db.modules[modIdx].categories[catIdx] = {
-      ...db.modules[modIdx].categories[catIdx],
-      ...req.body
+   ...db.modules[modIdx].categories[catIdx],
+   ...req.body
         };
 
         writeDB(db);
