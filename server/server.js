@@ -20,6 +20,13 @@ mongoose.connect(process.env.MONGODB_URI)
 const Shop = require('./models/Shop');
 
 // ========================================
+// NAYA ADD - admin-server.js wale Models Import
+// ========================================
+const Manager = require('./server/models/Manager');
+const Content = require('./server/models/Content');
+const Setting = require('./server/models/Setting');
+
+// ========================================
 // MONGOOSE SCHEMAS - Shop.js ALAG FILE ME HAI
 // ========================================
 const moduleSchema = new mongoose.Schema({
@@ -32,7 +39,8 @@ const moduleSchema = new mongoose.Schema({
     status: { type: Boolean, default: true },
     priority: Number,
     areas: Array,
-    mongoId: String
+    mongoId: String,
+    categories: Array // ← NAYA ADD - admin-server.js ke liye
 }, { timestamps: true });
 
 const adSchema = new mongoose.Schema({
@@ -69,7 +77,14 @@ const settingsSchema = new mongoose.Schema({
     logoText: String,
     logoImage: String,
     headerColor: String,
-    footerText: String
+    footerText: String,
+    footerColor: String, // ← NAYA ADD
+    footerAbout: String, // ← NAYA ADD
+    footerLinks: Array, // ← NAYA ADD
+    facebook: String, // ← NAYA ADD
+    instagram: String, // ← NAYA ADD
+    twitter: String, // ← NAYA ADD
+    youtube: String // ← NAYA ADD
 }, { timestamps: true });
 
 // USER SCHEMA - UPDATE KAR SIRF YE ADD KARNA HAI
@@ -182,13 +197,21 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// NAYA ADD - admin-server.js wala logo upload
+const uploadLogo = multer({ dest: 'public/logos/' });
+let CURRENT_LOGO = 'public/logos/default.png';
+
+// Default logo banao agar nahi hai
+if (!fs.existsSync('public/logos')) fs.mkdirSync('public/logos', { recursive: true });
+if (!fs.existsSync(CURRENT_LOGO)) {
+    fs.writeFileSync(CURRENT_LOGO, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64'));
+}
+
 const dbPath = path.join(__dirname, './database/modules.json');
 
 // Static files
 app.use(express.static(path.join(__dirname, '../public')));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
-app.use('/qr_output', express.static(path.join(__dirname, './qr_output')));
-// ✅ NAYA ADD - ADMIN PANEL STATIC
 app.use('/admin-panel', express.static(path.join(__dirname, '../public/admin-panel')));
 
 app.use(express.json());
@@ -268,6 +291,57 @@ function checkModuleInArea(module, userLat, userLng) {
     }
     return { inArea: false, distance: 0 };
 }
+
+// ========================================
+// NAYA ADD - ADMIN DASHBOARD STATS API
+// ========================================
+app.get('/api/stats', async (req, res) => {
+    try {
+        const users = await User.countDocuments();
+        const shops = await Shop.countDocuments();
+        const modules = await Module.countDocuments();
+        const content = await Content.countDocuments();
+        const managers = await Manager.countDocuments();
+        res.json({ users, shops, modules, content, managers });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// NAYA ADD - SETTINGS API MONGODB WALA
+// ========================================
+app.get('/api/settings/mongo', async (req, res) => {
+    try {
+        let settings = await Setting.findOne();
+        if (!settings) {
+            settings = await Setting.create({
+                logoText: 'SAMANLIVE',
+                headerColor: '#1e40af',
+                footerColor: '#1e293b',
+                footerText: '© 2026 SAMANLIVE',
+                footerAbout: 'Best services in your city',
+                footerLinks: [],
+                facebook: '',
+                instagram: '',
+                twitter: '',
+                youtube: ''
+            });
+        }
+        res.json(settings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/settings/mongo', async (req, res) => {
+    try {
+        const settings = await Setting.findOneAndUpdate({}, req.body, { new: true, upsert: true });
+        res.json(settings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // USER AUTH ROUTES - SAME
 app.post('/api/auth/login-phone', async (req, res) => {
@@ -468,9 +542,117 @@ app.use('/api', require('./routes/orders'));
 app.use('/api', require('./routes/notifications'));
 app.use('/api', require('./routes/shop'));
 
+// ========================================
+// NAYA ADD - CONTENT API MONGODB WALA
+// ========================================
+app.get('/api/content', async (req, res) => {
+    try {
+        const content = await Content.find().sort({ createdAt: -1 });
+        res.json(content);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/content', async (req, res) => {
+    try {
+        const content = await Content.create(req.body);
+        res.json(content);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/content/:id', async (req, res) => {
+    try {
+        const content = await Content.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!content) return res.status(404).json({ error: 'Content nahi mila' });
+        res.json(content);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/content/:id', async (req, res) => {
+    try {
+        const content = await Content.findByIdAndDelete(req.params.id);
+        if (!content) return res.status(404).json({ error: 'Content nahi mila' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// NAYA ADD - MANAGERS API MONGODB WALA
+// ========================================
+app.get('/api/managers', async (req, res) => {
+    try {
+        const managers = await Manager.find();
+        res.json(managers);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/managers', async (req, res) => {
+    try {
+        if (req.body.password) {
+            req.body.password = await bcrypt.hash(req.body.password, 10);
+        }
+        req.body.loginToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        const manager = await Manager.create(req.body);
+        res.json(manager);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/managers/:id', async (req, res) => {
+    try {
+        if (req.body.password) {
+            req.body.password = await bcrypt.hash(req.body.password, 10);
+        }
+        const manager = await Manager.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!manager) return res.status(404).json({ error: 'Manager nahi mila' });
+        res.json(manager);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/managers/:id', async (req, res) => {
+    try {
+        const manager = await Manager.findByIdAndDelete(req.params.id);
+        if (!manager) return res.status(404).json({ error: 'Manager nahi mila' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ADMIN APIs - SAME RAHEGA TERA PURANA
-app.get('/api/admin/data', (req, res) => {
-    res.json(readDB());
+app.get('/api/admin/data', async (req, res) => {
+    try {
+        const modules = await Module.find().sort({ priority: 1 });
+        const shops = await Shop.find().populate('createdBy', 'name email').populate('approvedBy', 'name');
+        const users = await User.find();
+        const db = readDB();
+
+        res.json({
+            success: true,
+            modules,
+            shops,
+            areas: db.areas || [],
+            ads: [],
+            videos: [],
+            campaigns: [],
+            areaManagers: [],
+            settings: {}
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.put('/api/admin/module/:id', async (req, res) => {
@@ -499,7 +681,8 @@ app.post('/api/admin/module', async (req, res) => {
         desc: "",
         banner: "",
         areas: [],
-     ...req.body
+        categories: [], // ← NAYA ADD
+   ...req.body
     };
     try {
         const mongoItem = new Module(newItem);
@@ -653,7 +836,7 @@ app.post('/api/admin/shop', async (req, res) => {
         priority: db.shops.length + 1,
         range: 5000,
         banner: '',
-     ...req.body
+   ...req.body
     };
     try {
         const mongoItem = new Shop(newItem);
@@ -691,7 +874,7 @@ app.post('/api/admin/areaManager', async (req, res) => {
 
     const newManager = {
         id: 'am-' + Date.now(),
-     ...restData,
+   ...restData,
         password: hashedPassword,
         createdAt: new Date().toISOString(),
         status: restData.status!== undefined? restData.status : true
@@ -751,58 +934,164 @@ app.post('/api/admin/upload', upload.single('file'), (req, res) => {
     res.json({ success: true, url: `/uploads/${req.file.filename}` });
 });
 
-const { exec } = require('child_process');
-const QR_CURRENT_LOGO = 'public/logos/qr_logo.png';
-
-app.post('/api/generate-qr', (req, res) => {
-    const { manager_id, product_name, batch, mfg_date, quantity, qr_size_mm } = req.body;
-    const logoPath = fs.existsSync(QR_CURRENT_LOGO)? QR_CURRENT_LOGO : 'public/logos/default.png';
-    const cmd = `node generate-qr-batch.js "${manager_id}" "${product_name}" "${batch}" "${mfg_date}" ${quantity} ${qr_size_mm} "${logoPath}"`;
-
-    console.log('Running QR Gen:', cmd);
-    exec(cmd, (error, stdout, stderr) => {
-        if (error) return res.status(500).json({ success: false, error: stderr || error.message });
-        const match = stdout.match(/Folder: (.*)/);
-        const outputDir = match? match[1].trim() : null;
-        res.json({ success: true, log: stdout, outputDir });
-    });
+// NAYA ADD - VIDEO UPLOAD API
+const videoUpload = multer({ dest: 'public/uploads/videos/' });
+app.post('/api/upload/video', videoUpload.single('video'), (req, res) => {
+    try {
+        const url = `/uploads/videos/${req.file.filename}`;
+        res.json({ url });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/make-qr-pdf', (req, res) => {
-    const { folderPath } = req.body;
-    const cmd = `node make-pdf.js "${folderPath}"`;
-
-    exec(cmd, (error, stdout, stderr) => {
-        if (error) return res.status(500).json({ success: false, error: stderr || error.message });
-        res.json({ success: true, log: stdout });
-    });
+// LOGO UPLOAD API - NAYA ADD
+app.post('/api/upload/logo', uploadLogo.single('logo'), (req, res) => {
+    try {
+        CURRENT_LOGO = req.file.path.replace(/\\/g, '/');
+        const url = `/${CURRENT_LOGO}`;
+        res.json({ success: true, url });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/upload-qr-logo', upload.single('logo'), (req, res) => {
-    const destPath = path.join(__dirname, '../public/logos/qr_logo.png');
-    fs.renameSync(req.file.path, destPath);
-    res.json({ success: true, logoPath: 'logos/qr_logo.png' });
+// ========================================
+// MODULE DETAIL & AREA/CATEGORY APIS - admin-server.js se
+// ========================================
+
+// 1. GET SINGLE MODULE WITH CATEGORIES
+app.get('/api/admin/module/:id', async (req, res) => {
+    try {
+        const db = readDB();
+        const module = db.modules.find(m => m.id === req.params.id);
+
+        if (!module) return res.status(404).json({ error: 'Module nahi mila' });
+
+        if (!module.categories) module.categories = [];
+        if (!module.areas) module.areas = [];
+
+        res.json({ success: true, module, areas: db.areas || [] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.get('/api/qr-batches', (req, res) => {
-    const dir = path.join(__dirname, './qr_output');
-    if (!fs.existsSync(dir)) return res.json([]);
+// 2. UPDATE MODULE AREAS - Module Area tab se save hoga
+app.put('/api/admin/module/:id/areas', async (req, res) => {
+    try {
+        const db = readDB();
+        const idx = db.modules.findIndex(m => m.id === req.params.id);
 
-    const batches = fs.readdirSync(dir).filter(f => fs.statSync(path.join(dir, f)).isDirectory()).map(folder => {
-        const folderPath = path.join(dir, folder);
-        const infoPath = path.join(folderPath, 'batch_info.json');
-        const pdf1 = path.join(folderPath, '1_ID_LAYER.pdf');
-        const pdf2 = path.join(folderPath, '2_QR_LAYER.pdf');
+        if (idx === -1) return res.status(404).json({ error: 'Module nahi mila' });
 
-        return {
-            name: folder,
-            path: folderPath,
-            info: fs.existsSync(infoPath)? JSON.parse(fs.readFileSync(infoPath)) : null,
-            pdf1: fs.existsSync(pdf1)? path.relative(path.join(__dirname, '.'), pdf1).replace(/\\/g, '/') : null,
-            pdf2: fs.existsSync(pdf2)? path.relative(path.join(__dirname, '.'), pdf2).replace(/\\/g, '/') : null
+        db.modules[idx].areas = req.body.areas || [];
+        writeDB(db);
+
+        try {
+            if (db.modules[idx].mongoId) {
+                await Module.findByIdAndUpdate(db.modules[idx].mongoId, { areas: req.body.areas });
+            }
+        } catch(e) { console.log('MongoDB skip:', e.message); }
+
+        res.json({ success: true, data: db.modules[idx] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. ADD CATEGORY IN MODULE
+app.post('/api/admin/module/:id/category', async (req, res) => {
+    try {
+        const db = readDB();
+        const idx = db.modules.findIndex(m => m.id === req.params.id);
+
+        if (idx === -1) return res.status(404).json({ error: 'Module nahi mila' });
+
+        if (!db.modules[idx].categories) db.modules[idx].categories = [];
+
+        const newCat = {
+            id: req.body.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+            name: req.body.name,
+            icon: req.body.icon || '📦',
+            color: req.body.color || '#10b981',
+            group: req.body.group || 'General',
+            status: req.body.status!== undefined? req.body.status : true,
+            areas: req.body.areas || []
         };
-    }).reverse();
-    res.json(batches);
+
+        db.modules[idx].categories.push(newCat);
+        writeDB(db);
+
+        try {
+            if (db.modules[idx].mongoId) {
+                await Module.findByIdAndUpdate(db.modules[idx].mongoId, {
+                    categories: db.modules[idx].categories
+                });
+            }
+        } catch(e) { console.log('MongoDB skip:', e.message); }
+
+        res.json({ success: true, data: newCat });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 4. UPDATE CATEGORY - Area toggle ke liye
+app.put('/api/admin/module/:id/category/:catId', async (req, res) => {
+    try {
+        const db = readDB();
+        const modIdx = db.modules.findIndex(m => m.id === req.params.id);
+
+        if (modIdx === -1) return res.status(404).json({ error: 'Module nahi mila' });
+
+        const catIdx = db.modules[modIdx].categories.findIndex(c => c.id === req.params.catId);
+        if (catIdx === -1) return res.status(404).json({ error: 'Category nahi mili' });
+
+        db.modules[modIdx].categories[catIdx] = {
+      ...db.modules[modIdx].categories[catIdx],
+      ...req.body
+        };
+
+        writeDB(db);
+
+        try {
+            if (db.modules[modIdx].mongoId) {
+                await Module.findByIdAndUpdate(db.modules[modIdx].mongoId, {
+                    categories: db.modules[modIdx].categories
+                });
+            }
+        } catch(e) { console.log('MongoDB skip:', e.message); }
+
+        res.json({ success: true, data: db.modules[modIdx].categories[catIdx] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 5. DELETE CATEGORY
+app.delete('/api/admin/module/:id/category/:catId', async (req, res) => {
+    try {
+        const db = readDB();
+        const modIdx = db.modules.findIndex(m => m.id === req.params.id);
+
+        if (modIdx === -1) return res.status(404).json({ error: 'Module nahi mila' });
+
+        db.modules[modIdx].categories = db.modules[modIdx].categories.filter(c => c.id!== req.params.catId);
+        writeDB(db);
+
+        try {
+            if (db.modules[modIdx].mongoId) {
+                await Module.findByIdAndUpdate(db.modules[modIdx].mongoId, {
+                    categories: db.modules[modIdx].categories
+                });
+            }
+        } catch(e) { console.log('MongoDB skip:', e.message); }
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ✅ NAYA ADMIN PANEL ROUTES
@@ -889,7 +1178,8 @@ app.use((req, res) => {
         </html>
     `);
 });
-    app.listen(PORT, () => {
+
+app.listen(PORT, () => {
     console.log('✅ SAMANLIVE Server: http://localhost:' + PORT);
     console.log('🔧 Admin Panel: http://localhost:' + PORT + '/admin-panel');
     console.log('👨‍💼 Area Manager: http://localhost:' + PORT + '/area-manager');
