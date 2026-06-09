@@ -209,11 +209,6 @@ if (!fs.existsSync(CURRENT_LOGO)) {
 
 const dbPath = path.join(__dirname, './database/modules.json');
 
-// Static files
-app.use(express.static(path.join(__dirname, '../public')));
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
-app.use('/admin-panel', express.static(path.join(__dirname, '../public/admin-panel')));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -575,7 +570,7 @@ app.get('/api/settings', (req, res) => {
 
 // MARKET API ROUTE
 app.use('/api/market', require('./routes/market'));
-// AREA MANAGER API ROUTE - YAHAN CHANGE KIYA BAS 's' ADD KIYA
+// AREA MANAGER API ROUTE
 app.use('/api/area-managers', require('./routes/area-manager'));
 
 // ========================================
@@ -1189,8 +1184,8 @@ app.put('/api/admin/module/:id/category/:catId', async (req, res) => {
         if (catIdx === -1) return res.status(404).json({ error: 'Category nahi mili' });
 
         db.modules[modIdx].categories[catIdx] = {
- ...db.modules[modIdx].categories[catIdx],
- ...req.body
+...db.modules[modIdx].categories[catIdx],
+...req.body
         };
 
         writeDB(db);
@@ -1233,6 +1228,13 @@ app.delete('/api/admin/module/:id/category/:catId', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// ========================================
+// STATIC FILES - SABSE LAST ME RAKHNA ZARURI HAI
+// ========================================
+app.use(express.static(path.join(__dirname, '../public')));
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+app.use('/admin-panel', express.static(path.join(__dirname, '../public/admin-panel')));
 
 // ✅ NAYA ADMIN PANEL ROUTES
 app.get('/admin-panel', (req, res) => {
