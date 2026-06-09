@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - SAMANLIVE Admin</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="assets/admin.css">
 </head>
@@ -13,9 +11,9 @@
     <div class="container">
         <h1>🔧 SAMANLIVE Control Panel</h1>
 
-        <!-- NAYA NAVBAR - 6 PAGE KE LIYE -->
+        <!-- NAVBAR - 6 PAGE KE LIYE -->
         <div class="admin-navbar">
-            <a href="index.html" class="nav-btn active">📊 Dashboard</a>
+            <a href="index.html" class="nav-btn">📊 Dashboard</a>
             <a href="modules.html" class="nav-btn">📦 Modules</a>
             <a href="content.html" class="nav-btn">📢 Content</a>
             <a href="shops.html" class="nav-btn">🏪 Shops</a>
@@ -81,7 +79,7 @@
                         </div>
                         <div style="flex:1;">
                             <input type="file" id="logoUploadFile" accept="image/*" onchange="previewLogo(event)">
-                            <button class="btn-primary" onclick="uploadLogoFile()" style="margin-top:8px;">📤 Upload Logo</button>
+                            <button class="btn-primary" id="uploadLogoBtn" onclick="uploadLogoFile()" style="margin-top:8px;">📤 Upload Logo</button>
                             <p style="font-size:12px;color:#64748b;margin-top:5px;">PNG, JPG, SVG - Max 2MB</p>
                             <p id="logoUploadStatus" style="margin-top:5px;font-weight:600;"></p>
                         </div>
@@ -129,66 +127,23 @@
                 </div>
             </div>
 
-            <button class="btn-primary" onclick="saveSettings()" style="margin-top:20px;">💾 Save All Settings</button>
-        </div>
-    </div>
-
-    <!-- UNIVERSAL MODAL -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <h2 id="modalTitle">Edit Item</h2>
-            <input type="hidden" id="editId">
-            <input type="hidden" id="editType">
-            <div id="modalFields"></div>
-            <div style="display:flex;gap:10px;margin-top:20px;">
-                <button class="btn-primary" onclick="saveItem()">💾 Save Changes</button>
-                <button onclick="closeModal()">Cancel</button>
-            </div>
+            <button class="btn-primary" id="saveSettingsBtn" onclick="saveSettings()" style="margin-top:20px;">💾 Save All Settings</button>
         </div>
     </div>
 
 <script src="assets/admin.js"></script>
 <script>
 // ==================== INDEX PAGE JS ====================
-// const API = '/api'; ← YE LINE HATA DI. admin.js me already hai
-
 let areaChart, statusChart;
 let currentSettings = {};
-
-// Toast
-function showToast(msg, type = 'success') {
-    const toast = document.createElement('div');
-    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-// API Call
-async function apiCall(endpoint, method = 'GET', body = null) {
-    try {
-        const opts = { method, headers: {} };
-        if (body &&!(body instanceof FormData)) {
-            opts.headers['Content-Type'] = 'application/json';
-            opts.body = JSON.stringify(body);
-        } else if (body) {
-            opts.body = body;
-        }
-        const res = await fetch(API + endpoint, opts);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'API Error');
-        return data;
-    } catch (err) {
-        showToast(err.message, 'error');
-        throw err;
-    }
-}
 
 // ==================== ANALYTICS ====================
 async function loadAnalytics() {
     try {
-        const stats = await apiCall('/stats');
-        const shops = await apiCall('/shops');
+        const [stats, shops] = await Promise.all([
+            apiCall('/stats'),
+            apiCall('/shops')
+        ]);
 
         document.getElementById('totalUsersCount').textContent = stats.users || 0;
         document.getElementById('totalShopsCount').textContent = stats.shops || 0;
@@ -281,11 +236,11 @@ function renderFooterLinks() {
         <div class="form-grid" style="margin-bottom:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;">
             <div class="form-group">
                 <label>Link Text:</label>
-                <input type="text" value="${link.text}" onchange="updateFooterLink(${i}, 'text', this.value)">
+                <input type="text" value="${link.text || ''}" onchange="updateFooterLink(${i}, 'text', this.value)">
             </div>
             <div class="form-group">
                 <label>Link URL:</label>
-                <input type="text" value="${link.url}" onchange="updateFooterLink(${i}, 'url', this.value)">
+                <input type="text" value="${link.url || ''}" onchange="updateFooterLink(${i}, 'url', this.value)">
             </div>
             <div class="form-group" style="display:flex;align-items:end;">
                 <button class="btn-danger" onclick="removeFooterLink(${i})">Remove</button>
@@ -312,6 +267,11 @@ window.removeFooterLink = (i) => {
 window.previewLogo = (e) => {
     const file = e.target.files[0];
     if (file) {
+        if (file.size > 2 * 1024 * 1024) {
+            showToast('File size must be less than 2MB', 'error');
+            e.target.value = '';
+            return;
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
             document.getElementById('logoPreview').src = e.target.result;
@@ -325,6 +285,7 @@ window.previewLogo = (e) => {
 window.uploadLogoFile = async () => {
     const fileInput = document.getElementById('logoUploadFile');
     const status = document.getElementById('logoUploadStatus');
+    const btn = document.getElementById('uploadLogoBtn');
 
     if (!fileInput.files[0]) {
         showToast('Please select a logo file', 'error');
@@ -336,6 +297,7 @@ window.uploadLogoFile = async () => {
 
     status.textContent = 'Uploading...';
     status.style.color = '#3b82f6';
+    btn.disabled = true;
 
     try {
         const res = await apiCall('/upload/logo', 'POST', formData);
@@ -347,10 +309,15 @@ window.uploadLogoFile = async () => {
     } catch (err) {
         status.textContent = 'Upload failed!';
         status.style.color = '#ef4444';
+    } finally {
+        btn.disabled = false;
     }
 };
 
 window.saveSettings = async () => {
+    const btn = document.getElementById('saveSettingsBtn');
+    btn.disabled = true;
+
     const data = {
         logoText: document.getElementById('settingLogoText').value,
         logoUrl: currentSettings.logoUrl || '',
@@ -368,24 +335,23 @@ window.saveSettings = async () => {
     try {
         await apiCall('/settings', 'PUT', data);
         showToast('Settings saved successfully');
-        loadSettings();
-    } catch (err) {}
-};
-
-// Close Modal
-window.closeModal = () => {
-    document.getElementById('editModal').style.display = 'none';
-};
-
-window.onclick = (e) => {
-    if (e.target.classList.contains('modal')) {
-        closeModal();
+        await loadSettings();
+    } catch (err) {} finally {
+        btn.disabled = false;
     }
 };
 
+// Destroy charts on page unload to prevent memory leak
+window.addEventListener('beforeunload', () => {
+    if (areaChart) areaChart.destroy();
+    if (statusChart) statusChart.destroy();
+});
+
 // Init
-loadAnalytics();
-loadSettings();
+document.addEventListener('DOMContentLoaded', () => {
+    loadAnalytics();
+    loadSettings();
+});
 </script>
 </body>
 </html>

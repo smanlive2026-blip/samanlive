@@ -5,11 +5,12 @@ const jwt = require('jsonwebtoken');
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
 const Module = require('../models/module');
+const ShopHistory = require('../models/shophistory');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'samanlive-area-manager-secret-2026';
 
 // ========================================
-// AUTH MIDDLEWARE
+// AUTH MIDDLEWARE - Manager Token Check
 // ========================================
 async function authManager(req, res, next) {
     const token = req.headers['authorization']?.split(' ')[1];
@@ -46,12 +47,16 @@ router.post('/login', async (req, res) => {
             if (!email ||!password) {
                 return res.status(400).json({ error: 'Email aur Password zaruri hai' });
             }
-            manager = await Manager.findOne({ email, status: true });
+            manager = await Manager.findOne({ email: email.toLowerCase(), status: true });
             if (!manager) return res.status(401).json({ error: 'Manager nahi mila ya inactive hai' });
 
             const validPass = await bcrypt.compare(password, manager.password);
             if (!validPass) return res.status(401).json({ error: 'Password galat hai' });
         }
+
+        // Update last login
+        manager.lastLogin = new Date();
+        await manager.save();
 
         const token = jwt.sign({
             id: manager._id,
@@ -68,7 +73,8 @@ router.post('/login', async (req, res) => {
                 name: manager.name,
                 email: manager.email,
                 area: manager.area,
-                serviceCharge: manager.serviceCharge
+                serviceCharge: manager.serviceCharge,
+                moduleAccess: manager.moduleAccess
             }
         });
     } catch (err) {
@@ -88,7 +94,7 @@ router.get('/dashboard', authManager, async (req, res) => {
             area: managerArea
         }).lean();
 
-        // Categories - modules.json se ya Module collection se
+        // Categories - modules se ya Module collection se
         const modules = await Module.find({ status: true });
         const categories = modules.flatMap(m => m.categories || []);
 
@@ -120,6 +126,11 @@ router.post('/shop', authManager, async (req, res) => {
             return res.status(400).json({ error: 'Name, Category, Lat, Lng required hai' });
         }
 
+        // Check if manager has access to this category
+        if (req.manager.moduleAccess &&!req.manager.moduleAccess.includes(categoryId)) {
+            return res.status(403).json({ error: 'Is category ka access nahi hai' });
+        }
+
         const shop = new Shop({
             name,
             icon: icon || '🏪',
@@ -137,6 +148,17 @@ router.post('/shop', authManager, async (req, res) => {
         });
 
         await shop.save();
+
+        // Log activity
+        await ShopHistory.create({
+            managerId: req.manager._id,
+            shopId: shop._id,
+            action: 'create',
+            shopName: shop.name,
+            area: shop.area,
+            newData: shop.toObject()
+        });
+
         res.json({ success: true, data: shop });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -156,6 +178,8 @@ router.put('/shop/:id', authManager, async (req, res) => {
         if (shop.area!== req.manager.area) {
             return res.status(403).json({ error: 'Ye shop aapke area ki nahi hai' });
         }
+
+        const oldData = shop.toObject();
 
         // Allowed fields manager ke liye
         const allowedFields = ['name', 'phone', 'address', 'lat', 'lng', 'range', 'icon', 'banner', 'status'];
@@ -178,6 +202,17 @@ router.put('/shop/:id', authManager, async (req, res) => {
             { new: true }
         );
 
+        // Log activity
+        await ShopHistory.create({
+            managerId: req.manager._id,
+            shopId: shop._id,
+            action: 'edit',
+            shopName: shop.name,
+            area: shop.area,
+            oldData: oldData,
+            newData: updatedShop.toObject()
+        });
+
         res.json({ success: true, data: updatedShop });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -197,8 +232,37 @@ router.delete('/shop/:id', authManager, async (req, res) => {
             return res.status(403).json({ error: 'Ye shop aapke area ki nahi hai' });
         }
 
+        // Log before delete
+        await ShopHistory.create({
+            managerId: req.manager._id,
+            shopId: shop._id,
+            action: 'delete',
+            shopName: shop.name,
+            area: shop.area,
+            oldData: shop.toObject()
+        });
+
         await Shop.findByIdAndDelete(req.params.id);
         res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// GET SINGLE SHOP - Detail ke liye
+// ========================================
+router.get('/shop/:id', authManager, async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.id);
+
+        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
+
+        if (shop.area!== req.manager.area) {
+            return res.status(403).json({ error: 'Ye shop aapke area ki nahi hai' });
+        }
+
+        res.json({ success: true, data: shop });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -9,13 +9,13 @@
     <link rel="stylesheet" href="assets/admin.css">
     <style>
         #moduleMap { height: 500px; width: 100%; border-radius: 8px; margin-top: 15px; }
-       .module-row { cursor: pointer; }
-       .module-row:hover { background: #f8fafc; }
-       .expand-icon { transition: transform 0.2s; display: inline-block; }
-       .expand-icon.open { transform: rotate(90deg); }
-       .area-expand { padding: 15px; background: #f8fafc; border-radius: 8px; }
-       .status-active { background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-       .status-hidden { background: #6b7280; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+      .module-row { cursor: pointer; }
+      .module-row:hover { background: #f8fafc; }
+      .expand-icon { transition: transform 0.2s; display: inline-block; }
+      .expand-icon.open { transform: rotate(90deg); }
+      .area-expand { padding: 15px; background: #f8fafc; border-radius: 8px; }
+      .status-active { background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+      .status-hidden { background: #6b7280; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -24,7 +24,7 @@
 
         <div class="admin-navbar">
             <a href="index.html" class="nav-btn">📊 Dashboard</a>
-            <a href="modules.html" class="nav-btn active">📦 Modules</a>
+            <a href="modules.html" class="nav-btn">📦 Modules</a>
             <a href="content.html" class="nav-btn">📢 Content</a>
             <a href="shops.html" class="nav-btn">🏪 Shops</a>
             <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
@@ -34,7 +34,7 @@
         <div id="modulesTab" class="content">
             <h2>📦 All Modules <span id="moduleCount"></span></h2>
             <div class="action-bar">
-                <button class="btn-success" onclick="addItem('module')">+ Add New Module</button>
+                <button class="btn-success" onclick="openAddModule()">+ Add New Module</button>
                 <input type="text" class="search-box" placeholder="Search modules..." onkeyup="filterTable('modulesTable', this.value)">
             </div>
             <table id="modulesTable">
@@ -56,7 +56,7 @@
                 </select>
             </div>
             <div class="map-controls">
-                <button class="btn-primary" onclick="saveModuleArea()">💾 Save Area</button>
+                <button class="btn-primary" id="saveAreaBtn" onclick="saveModuleArea()">💾 Save Area</button>
                 <button class="btn-secondary" onclick="clearModuleDrawing()">🗑️ Clear</button>
                 <button class="btn-warning" onclick="deleteModuleArea()">❌ Remove Area</button>
             </div>
@@ -73,8 +73,8 @@
             <input type="hidden" id="editId">
             <div id="modalFields"></div>
             <div style="display:flex;gap:10px;margin-top:20px;">
-                <button class="btn-primary" onclick="saveItem()">💾 Save Changes</button>
-                <button onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" id="saveModuleBtn" onclick="saveModule()">💾 Save Changes</button>
+                <button onclick="closeModuleModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -84,45 +84,30 @@
 <script src="assets/admin.js"></script>
 <script>
 // ==================== MODULES PAGE JS ====================
-// const API = '/api'; ← YE LINE HATA DI. admin.js me already hai
-
 let allModules = [];
 let editingId = null;
-let map, drawnItems;
+let map, drawnItems, drawControl;
 let currentModuleId = null;
 let currentDrawnLayer = null;
 
-function showToast(msg, type = 'success') {
-    const toast = document.createElement('div');
-    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;`;
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-async function apiCall(endpoint, method = 'GET', body = null) {
-    const opts = { method, headers: {} };
-    if (body) {
-        opts.headers['Content-Type'] = 'application/json';
-        opts.body = JSON.stringify(body);
-    }
-    const res = await fetch(API + endpoint, opts);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'API Error');
-    return data;
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text?? '';
+    return div.innerHTML;
 }
 
 // SABSE PEHLE TABLE LOAD HOGA
 async function loadData() {
     try {
         const result = await apiCall('/modules');
-        allModules = Array.isArray(result) ? result : [];
+        allModules = Array.isArray(result)? result : [];
         document.getElementById('moduleCount').textContent = `(${allModules.length})`;
         renderModules();
         populateModuleDropdown();
         initModuleMap();
     } catch (err) {
-        document.querySelector('#modulesTable tbody').innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;padding:20px;">Error: ${err.message}</td></tr>`;
+        document.querySelector('#modulesTable tbody').innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;padding:20px;">Error: ${escapeHtml(err.message)}</td></tr>`;
     }
 }
 
@@ -132,35 +117,40 @@ function renderModules() {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#6b7280;padding:20px;">No modules found</td></tr>';
         return;
     }
-    
+
     tbody.innerHTML = allModules.map(m => {
-        const moduleStatus = m.status === true || m.status === 'active' ? 'active' : 'hidden';
+        const moduleStatus = m.status === true || m.status === 'active'? 'active' : 'hidden';
         const moduleId = m.id || m._id;
-        
+
         return `
         <tr class="module-row" onclick="toggleModuleAreas('${moduleId}')">
             <td><span class="expand-icon" id="icon-${moduleId}">▶</span></td>
             <td style="font-size:24px">${m.icon}</td>
-            <td><b>${m.name}</b></td>
-            <td><span style="background:${m.color};padding:4px 8px;border-radius:4px;color:white">${m.color}</span></td>
-            <td>${m.link}</td>
+            <td><b>${escapeHtml(m.name)}</b></td>
+            <td><span style="background:${m.color};padding:4px 8px;border-radius:4px;color:white">${escapeHtml(m.color)}</span></td>
+            <td>${escapeHtml(m.link)}</td>
             <td><span class="shop-count-badge">${m.areas?.length || 0} areas</span></td>
             <td>${m.priority || 0}</td>
             <td><span class="status-${moduleStatus}">${moduleStatus}</span></td>
             <td onclick="event.stopPropagation()">
-                <button class="btn-primary" onclick="editItem('${moduleId}')">Edit</button>
-                <button class="btn-danger" onclick="deleteItem('${moduleId}')">Delete</button>
+                <button class="btn-primary" data-edit-id="${moduleId}">Edit</button>
+                <button class="btn-danger" onclick="deleteModule('${moduleId}')">Delete</button>
             </td>
         </tr>
         <tr id="areas-${moduleId}" style="display:none;">
             <td colspan="9">
                 <div class="area-expand">
-                    <h4>📍 Areas for ${m.name}</h4>
+                    <h4>📍 Areas for ${escapeHtml(m.name)}</h4>
                     ${renderModuleAreas(m)}
                 </div>
             </td>
         </tr>
     `}).join('');
+
+    // Attach edit listeners
+    document.querySelectorAll('[data-edit-id]').forEach(btn => {
+        btn.addEventListener('click', () => editModule(btn.dataset.editId));
+    });
 }
 
 function renderModuleAreas(module) {
@@ -193,10 +183,10 @@ window.toggleModuleAreas = (id) => {
 function populateModuleDropdown() {
     const select = document.getElementById('moduleSelectArea');
     select.innerHTML = '<option value="">-- Select Module --</option>' +
-        allModules.map(m => `<option value="${m.id || m._id}">${m.icon} ${m.name}</option>`).join('');
+        allModules.map(m => `<option value="${m.id || m._id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
 }
 
-window.addItem = () => {
+window.openAddModule = () => {
     editingId = null;
     document.getElementById('editId').value = '';
     document.getElementById('modalTitle').textContent = 'Add New Module';
@@ -213,13 +203,23 @@ window.addItem = () => {
     document.getElementById('editModal').style.display = 'block';
 };
 
-window.editItem = (id) => {
+function editModule(id) {
     const m = allModules.find(x => x.id === id || x._id === id);
     if (!m) return;
     editingId = id;
     document.getElementById('editId').value = id;
     document.getElementById('modalTitle').textContent = 'Edit Module';
-    addItem();
+    document.getElementById('modalFields').innerHTML = `
+        <div class="form-grid">
+            <div class="form-group"><label>Name *</label><input type="text" id="field_name" required></div>
+            <div class="form-group"><label>Icon *</label><input type="text" id="field_icon" required></div>
+            <div class="form-group"><label>Color *</label><input type="color" id="field_color" required></div>
+            <div class="form-group"><label>Link *</label><input type="text" id="field_link" required></div>
+            <div class="form-group"><label>Priority</label><input type="number" id="field_priority" value="0"></div>
+            <div class="form-group"><label>Status</label><select id="field_status"><option value="active">Active</option><option value="hidden">Hidden</option></select></div>
+        </div>
+    `;
+    document.getElementById('editModal').style.display = 'block';
     setTimeout(() => {
         document.getElementById('field_name').value = m.name || '';
         document.getElementById('field_icon').value = m.icon || '';
@@ -227,22 +227,28 @@ window.editItem = (id) => {
         document.getElementById('field_link').value = m.link || '';
         document.getElementById('field_priority').value = m.priority || 0;
         document.getElementById('field_status').value = m.status === true || m.status === 'active'? 'active' : 'hidden';
-    }, 100);
-};
+    }, 50);
+}
 
-window.saveItem = async () => {
+window.saveModule = async () => {
+    const btn = document.getElementById('saveModuleBtn');
+    btn.disabled = true;
+
     const data = {
-        name: document.getElementById('field_name').value,
-        icon: document.getElementById('field_icon').value,
+        name: document.getElementById('field_name').value.trim(),
+        icon: document.getElementById('field_icon').value.trim(),
         color: document.getElementById('field_color').value,
-        link: document.getElementById('field_link').value,
+        link: document.getElementById('field_link').value.trim(),
         priority: parseInt(document.getElementById('field_priority').value || 0),
         status: document.getElementById('field_status').value
     };
+
     if (!data.name ||!data.icon ||!data.link) {
         showToast('Name, Icon and Link are required', 'error');
+        btn.disabled = false;
         return;
     }
+
     try {
         if (editingId) {
             await apiCall('/modules/' + editingId, 'PUT', data);
@@ -251,17 +257,21 @@ window.saveItem = async () => {
             await apiCall('/modules', 'POST', data);
             showToast('Module created');
         }
-        closeModal();
-        loadData();
-    } catch (err) { showToast(err.message, 'error'); }
+        closeModuleModal();
+        await loadData();
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
 };
 
-window.deleteItem = async (id) => {
-    if (!confirm('Delete this module?')) return;
+window.deleteModule = async (id) => {
+    if (!confirm('Delete this module? This will affect all linked shops.')) return;
     try {
         await apiCall('/modules/' + id, 'DELETE');
         showToast('Module deleted');
-        loadData();
+        await loadData();
     } catch (err) { showToast(err.message, 'error'); }
 };
 
@@ -272,7 +282,7 @@ window.removeArea = async (moduleId, areaIdx) => {
         module.areas.splice(areaIdx, 1);
         await apiCall('/modules/' + moduleId, 'PUT', { areas: module.areas });
         showToast('Area removed');
-        loadData();
+        await loadData();
     } catch (err) { showToast(err.message, 'error'); }
 };
 
@@ -282,7 +292,7 @@ function initModuleMap() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
-    const drawControl = new L.Control.Draw({
+    drawControl = new L.Control.Draw({
         draw: { polygon: true, circle: true, rectangle: false, polyline: false, marker: false, circlemarker: false },
         edit: { featureGroup: drawnItems }
     });
@@ -330,8 +340,11 @@ window.loadModuleArea = () => {
 };
 
 window.saveModuleArea = async () => {
+    const btn = document.getElementById('saveAreaBtn');
     if (!currentModuleId) return showToast('Select module first', 'error');
     if (!currentDrawnLayer) return showToast('Draw area first', 'error');
+
+    btn.disabled = true;
     let areaData = {};
     if (currentDrawnLayer instanceof L.Circle) {
         const center = currentDrawnLayer.getLatLng();
@@ -340,12 +353,14 @@ window.saveModuleArea = async () => {
         areaData = { type: 'polygon', coordinates: currentDrawnLayer.getLatLngs()[0].map(p => ({ lat: p.lat, lng: p.lng })) };
     }
     try {
-        const module = allModules.find(m => m.id === currentModuleId || m._id === currentModuleId);
-        module.areas = [areaData];
-        await apiCall('/modules/' + currentModuleId, 'PUT', { areas: module.areas });
+        await apiCall('/modules/' + currentModuleId, 'PUT', { areas: [areaData] });
         showToast('Area saved');
-        loadData();
-    } catch (err) { showToast(err.message, 'error'); }
+        await loadData();
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
 };
 
 window.clearModuleDrawing = () => {
@@ -361,23 +376,19 @@ window.deleteModuleArea = async () => {
         await apiCall('/modules/' + currentModuleId, 'PUT', { areas: [] });
         showToast('Area removed');
         clearModuleDrawing();
-        loadData();
+        await loadData();
     } catch (err) { showToast(err.message, 'error'); }
 };
 
-window.filterTable = (tableId, query) => {
-    const rows = document.querySelectorAll(`#${tableId} tbody tr.module-row`);
-    const q = query.toLowerCase();
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(q)? '' : 'none';
-        const nextRow = row.nextElementSibling;
-        if (nextRow && nextRow.id.startsWith('areas-')) nextRow.style.display = 'none';
-    });
-};
+window.closeModuleModal = () => document.getElementById('editModal').style.display = 'none';
 
-window.closeModal = () => document.getElementById('editModal').style.display = 'none';
-window.onclick = (e) => { if (e.target.classList.contains('modal')) closeModal(); };
+// Destroy map on page unload to prevent memory leak
+window.addEventListener('beforeunload', () => {
+    if (map) {
+        map.remove();
+        map = null;
+    }
+});
 
 document.addEventListener('DOMContentLoaded', loadData);
 </script>

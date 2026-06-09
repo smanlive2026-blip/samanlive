@@ -821,7 +821,7 @@ app.post('/api/admin/module', async (req, res) => {
         banner: "",
         areas: [],
         categories: [], // ← NAYA ADD
- ...req.body
+...req.body
     };
     try {
         const mongoItem = new Module(newItem);
@@ -976,7 +976,7 @@ app.post('/api/admin/shop', async (req, res) => {
         range: 5000,
         banner: '',
         bannerApproved: false, // NAYA ADD - Default pending
-...req.body
+       ...req.body
     };
     try {
         const mongoItem = new Shop(newItem);
@@ -1014,7 +1014,7 @@ app.post('/api/admin/areaManager', async (req, res) => {
 
     const newManager = {
         id: 'am-' + Date.now(),
-...restData,
+       ...restData,
         password: hashedPassword,
         createdAt: new Date().toISOString(),
         status: restData.status!== undefined? restData.status : true
@@ -1189,8 +1189,8 @@ app.put('/api/admin/module/:id/category/:catId', async (req, res) => {
         if (catIdx === -1) return res.status(404).json({ error: 'Category nahi mili' });
 
         db.modules[modIdx].categories[catIdx] = {
-   ...db.modules[modIdx].categories[catIdx],
-   ...req.body
+  ...db.modules[modIdx].categories[catIdx],
+  ...req.body
         };
 
         writeDB(db);
@@ -1305,8 +1305,17 @@ app.get('/modules/:moduleName', (req, res) => {
     `);
 });
 
-const managerRoutes = require('./routes/managerRoutes');
-app.use(managerRoutes);
+// ========================================
+// FIX 1: DUPLICATE ROUTE HATAO - managerRoutes already loaded hai
+// ========================================
+// const managerRoutes = require('./routes/managerRoutes');
+// app.use(managerRoutes);
+
+// ========================================
+// FIX 2: AGAR managerRout.js BANAYI HAI TO YE UNCOMMENT KAR
+// ========================================
+// const managerRout = require('./routes/managerRout');
+// app.use('/api', managerRout);
 
 app.use((req, res) => {
     res.status(404).send(`

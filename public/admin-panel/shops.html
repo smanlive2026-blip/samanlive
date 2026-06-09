@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shops - SAMANLIVE Admin</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="assets/admin.css">
 </head>
 <body>
@@ -18,7 +16,7 @@
             <a href="index.html" class="nav-btn">📊 Dashboard</a>
             <a href="modules.html" class="nav-btn">📦 Modules</a>
             <a href="content.html" class="nav-btn">📢 Content</a>
-            <a href="shops.html" class="nav-btn active">🏪 Shops</a>
+            <a href="shops.html" class="nav-btn">🏪 Shops</a>
             <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
             <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
         </div>
@@ -78,11 +76,11 @@
                 </div>
                 <div class="form-group">
                     <label>Phone:</label>
-                    <input type="text" id="shopPhone" placeholder="9876543210">
+                    <input type="text" id="shopPhone" placeholder="9876543210" pattern="[0-9]{10}">
                 </div>
                 <div class="form-group">
                     <label>Range (meters):</label>
-                    <input type="number" id="shopRange" value="5000" placeholder="5000">
+                    <input type="number" id="shopRange" value="5000" placeholder="5000" min="100" max="50000">
                 </div>
                 <div class="form-group full">
                     <label>Address:</label>
@@ -91,11 +89,11 @@
             </div>
 
             <div class="map-controls">
-                <button class="btn-primary" onclick="saveShopLocation()">💾 Save Shop Location</button>
+                <button class="btn-primary" id="saveLocationBtn" onclick="saveShopLocation()">💾 Save Shop Location</button>
                 <button class="btn-secondary" onclick="clearShopMarker()">🗑️ Clear Marker</button>
             </div>
 
-            <div id="shopMap"></div>
+            <div id="shopMap" style="height:500px;width:100%;border-radius:8px;margin-top:15px;"></div>
 
             <div class="area-info" id="shopLocationInfo" style="display:none;">
                 <strong>Current Location:</strong> <span id="shopLocationDetails"></span>
@@ -111,19 +109,16 @@
             <input type="hidden" id="editType">
             <div id="modalFields"></div>
             <div style="display:flex;gap:10px;margin-top:20px;">
-                <button class="btn-primary" onclick="saveItem()">💾 Save Changes</button>
-                <button onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" id="saveShopBtn" onclick="saveShop()">💾 Save Changes</button>
+                <button onclick="closeShopModal()">Cancel</button>
             </div>
         </div>
     </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <script src="assets/admin.js"></script>
 <script>
 // ==================== SHOPS PAGE JS ====================
-// const API = '/api'; ← YE LINE HATA DI. admin.js me already hai
-
 let allShops = [];
 let allModules = [];
 let allManagers = [];
@@ -131,33 +126,11 @@ let editingId = null;
 let shopMap, shopMarker, shopCircle;
 let currentShopLocation = null;
 
-// Toast
-function showToast(msg, type = 'success') {
-    const toast = document.createElement('div');
-    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-// API Call
-async function apiCall(endpoint, method = 'GET', body = null) {
-    try {
-        const opts = { method, headers: {} };
-        if (body &&!(body instanceof FormData)) {
-            opts.headers['Content-Type'] = 'application/json';
-            opts.body = JSON.stringify(body);
-        } else if (body) {
-            opts.body = body;
-        }
-        const res = await fetch(API + endpoint, opts);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'API Error');
-        return data;
-    } catch (err) {
-        showToast(err.message, 'error');
-        throw err;
-    }
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text ?? '';
+    return div.innerHTML;
 }
 
 // ==================== LOAD DATA ====================
@@ -171,8 +144,9 @@ async function loadData() {
         renderShops();
         renderPendingShops();
         populateShopDropdowns();
+        initShopMap();
     } catch (err) {
-        console.error(err);
+        console.error('Load data error:', err);
     }
 }
 
@@ -180,64 +154,81 @@ async function loadData() {
 function renderShops() {
     const shops = allShops.filter(s => s.status !== 'pending');
     const tbody = document.querySelector('#shopsTable tbody');
+    
+    if (shops.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#6b7280">No shops found</td></tr>';
+        return;
+    }
+    
     tbody.innerHTML = shops.map(s => {
         const module = allModules.find(m => m._id === s.moduleId || m.id === s.moduleId);
         const manager = allManagers.find(m => m._id === s.managerId);
         return `
             <tr>
                 <td><img src="${s.logo || s.image || '/assets/logo.png'}" style="width:40px;height:40px;border-radius:6px;object-fit:cover" onerror="this.src='/assets/logo.png'"></td>
-                <td>${s.name}</td>
-                <td>${module ? module.icon + ' ' + module.name : '-'}</td>
-                <td>${manager ? manager.name : 'Unassigned'}</td>
-                <td>${s.address || '-'}</td>
+                <td>${escapeHtml(s.name)}</td>
+                <td>${module ? module.icon + ' ' + escapeHtml(module.name) : '-'}</td>
+                <td>${manager ? escapeHtml(manager.name) : 'Unassigned'}</td>
+                <td>${escapeHtml(s.address || '-')}</td>
                 <td>${s.range || 0}m</td>
                 <td>${s.priority || 0}</td>
                 <td><span class="status-badge status-${s.status}">${s.status}</span></td>
                 <td>
-                    <button class="btn-primary" onclick="editShop('${s._id}')">Edit</button>
+                    <button class="btn-primary" data-edit-id="${s._id}">Edit</button>
                     <button class="btn-danger" onclick="deleteShop('${s._id}')">Delete</button>
                 </td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="9" style="text-align:center;color:#6b7280">No shops found</td></tr>';
+    }).join('');
+
+    // Attach edit listeners
+    document.querySelectorAll('[data-edit-id]').forEach(btn => {
+        btn.addEventListener('click', () => editShop(btn.dataset.editId));
+    });
 }
 
 // Render Pending Shops
 function renderPendingShops() {
     const pending = allShops.filter(s => s.status === 'pending');
     const tbody = document.querySelector('#pendingShopsTable tbody');
+    
+    if (pending.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6b7280">No pending shops</td></tr>';
+        return;
+    }
+    
     tbody.innerHTML = pending.map(s => {
         const module = allModules.find(m => m._id === s.moduleId || m.id === s.moduleId);
         return `
             <tr>
-                <td>${s.createdBy?.name || s.createdBy || 'User'}</td>
-                <td>${s.name}</td>
-                <td>${module ? module.icon + ' ' + module.name : '-'}</td>
-                <td>${s.phone || '-'}</td>
-                <td>${s.address || '-'}</td>
-                <td>${s.area || '-'}</td>
+                <td>${escapeHtml(s.createdBy?.name || s.createdBy || 'User')}</td>
+                <td>${escapeHtml(s.name)}</td>
+                <td>${module ? module.icon + ' ' + escapeHtml(module.name) : '-'}</td>
+                <td>${escapeHtml(s.phone || '-')}</td>
+                <td>${escapeHtml(s.address || '-')}</td>
+                <td>${escapeHtml(s.area || '-')}</td>
                 <td>
                     <button class="btn-success" onclick="approveShop('${s._id}')">✅ Approve</button>
                     <button class="btn-danger" onclick="rejectShop('${s._id}')">❌ Reject</button>
                 </td>
             </tr>
         `;
-    }).join('') || '<tr><td colspan="7" style="text-align:center;color:#6b7280">No pending shops</td></tr>';
+    }).join('');
 }
 
 // Populate Dropdowns
 function populateShopDropdowns() {
     const shopSelect = document.getElementById('shopSelectLocation');
     shopSelect.innerHTML = '<option value="">-- Select Shop --</option>' +
-        allShops.filter(s => s.status !== 'pending').map(s => `<option value="${s._id}">${s.name}</option>`).join('');
+        allShops.filter(s => s.status !== 'pending').map(s => `<option value="${s._id}">${escapeHtml(s.name)}</option>`).join('');
 
     const moduleSelect = document.getElementById('shopModuleLink');
     moduleSelect.innerHTML = '<option value="">-- Select Module --</option>' +
-        allModules.map(m => `<option value="${m._id}">${m.icon} ${m.name}</option>`).join('');
+        allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
 }
 
 // ==================== SHOP CRUD ====================
-window.editShop = (id) => {
+function editShop(id) {
     const s = allShops.find(x => x._id === id);
     if (!s) return;
 
@@ -250,29 +241,29 @@ window.editShop = (id) => {
         <div class="form-grid">
             <div class="form-group">
                 <label>Shop Name *</label>
-                <input type="text" id="field_name" value="${s.name}" required>
+                <input type="text" id="field_name" value="${escapeHtml(s.name)}" required>
             </div>
             <div class="form-group">
                 <label>Module *</label>
                 <select id="field_moduleId" required>
                     <option value="">-- Select Module --</option>
-                    ${allModules.map(m => `<option value="${m._id}" ${s.moduleId === m._id ? 'selected' : ''}>${m.icon} ${m.name}</option>`).join('')}
+                    ${allModules.map(m => `<option value="${m._id || m.id}" ${s.moduleId === (m._id || m.id) ? 'selected' : ''}>${m.icon} ${escapeHtml(m.name)}</option>`).join('')}
                 </select>
             </div>
             <div class="form-group">
                 <label>Manager</label>
                 <select id="field_managerId">
                     <option value="">-- Unassigned --</option>
-                    ${allManagers.map(m => `<option value="${m._id}" ${s.managerId === m._id ? 'selected' : ''}>${m.name}</option>`).join('')}
+                    ${allManagers.map(m => `<option value="${m._id}" ${s.managerId === m._id ? 'selected' : ''}>${escapeHtml(m.name)}</option>`).join('')}
                 </select>
             </div>
             <div class="form-group">
                 <label>Phone</label>
-                <input type="text" id="field_phone" value="${s.phone || ''}">
+                <input type="text" id="field_phone" value="${escapeHtml(s.phone || '')}" pattern="[0-9]{10}">
             </div>
             <div class="form-group">
                 <label>Range (meters)</label>
-                <input type="number" id="field_range" value="${s.range || 5000}">
+                <input type="number" id="field_range" value="${s.range || 5000}" min="100" max="50000">
             </div>
             <div class="form-group">
                 <label>Priority</label>
@@ -280,7 +271,7 @@ window.editShop = (id) => {
             </div>
             <div class="form-group full">
                 <label>Address</label>
-                <input type="text" id="field_address" value="${s.address || ''}">
+                <input type="text" id="field_address" value="${escapeHtml(s.address || '')}">
             </div>
             <div class="form-group">
                 <label>Status</label>
@@ -294,31 +285,45 @@ window.editShop = (id) => {
 
     document.getElementById('modalFields').innerHTML = fields;
     document.getElementById('editModal').style.display = 'block';
-};
+}
 
-window.saveItem = async () => {
+window.saveShop = async () => {
+    const btn = document.getElementById('saveShopBtn');
+    btn.disabled = true;
+
     const data = {
-        name: document.getElementById('field_name').value,
+        name: document.getElementById('field_name').value.trim(),
         moduleId: document.getElementById('field_moduleId').value,
         managerId: document.getElementById('field_managerId').value || null,
-        phone: document.getElementById('field_phone').value,
+        phone: document.getElementById('field_phone').value.trim(),
         range: parseInt(document.getElementById('field_range').value || 5000),
         priority: parseInt(document.getElementById('field_priority').value || 0),
-        address: document.getElementById('field_address').value,
+        address: document.getElementById('field_address').value.trim(),
         status: document.getElementById('field_status').value
     };
 
     if (!data.name || !data.moduleId) {
         showToast('Name and Module are required', 'error');
+        btn.disabled = false;
+        return;
+    }
+
+    if (data.phone && !/^[0-9]{10}$/.test(data.phone)) {
+        showToast('Phone must be 10 digits', 'error');
+        btn.disabled = false;
         return;
     }
 
     try {
         await apiCall('/shops/' + editingId, 'PUT', data);
         showToast('Shop updated');
-        closeModal();
-        loadData();
-    } catch (err) {}
+        closeShopModal();
+        await loadData();
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
 };
 
 window.deleteShop = async (id) => {
@@ -326,7 +331,7 @@ window.deleteShop = async (id) => {
     try {
         await apiCall('/shops/' + id, 'DELETE');
         showToast('Shop deleted');
-        loadData();
+        await loadData();
     } catch (err) {}
 };
 
@@ -336,21 +341,22 @@ window.approveShop = async (id) => {
     try {
         await apiCall('/shops/' + id, 'PUT', { status: 'active' });
         showToast('Shop approved');
-        loadData();
+        await loadData();
     } catch (err) {}
 };
 
 window.rejectShop = async (id) => {
-    if (!confirm('Reject this shop?')) return;
+    if (!confirm('Reject this shop? This will delete it permanently.')) return;
     try {
         await apiCall('/shops/' + id, 'DELETE');
         showToast('Shop rejected');
-        loadData();
+        await loadData();
     } catch (err) {}
 };
 
 // ==================== MAP LOGIC ====================
 function initShopMap() {
+    if (shopMap) return;
     shopMap = L.map('shopMap').setView([28.6139, 77.2090], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(shopMap);
 
@@ -367,6 +373,8 @@ function initShopMap() {
         document.getElementById('shopLocationInfo').style.display = 'block';
         document.getElementById('shopLocationDetails').textContent = `Lat: ${e.latlng.lat.toFixed(6)}, Lng: ${e.latlng.lng.toFixed(6)} | Range: ${range}m`;
     });
+
+    setTimeout(() => shopMap.invalidateSize(), 200);
 }
 
 window.loadShopLocation = () => {
@@ -397,7 +405,9 @@ window.loadShopLocation = () => {
 };
 
 window.saveShopLocation = async () => {
+    const btn = document.getElementById('saveLocationBtn');
     const shopId = document.getElementById('shopSelectLocation').value;
+    
     if (!shopId) {
         showToast('Please select a shop first', 'error');
         return;
@@ -407,20 +417,31 @@ window.saveShopLocation = async () => {
         return;
     }
 
+    btn.disabled = true;
     const data = {
-        name: document.getElementById('shopName').value,
-        phone: document.getElementById('shopPhone').value,
+        name: document.getElementById('shopName').value.trim(),
+        phone: document.getElementById('shopPhone').value.trim(),
         range: parseInt(document.getElementById('shopRange').value || 5000),
-        address: document.getElementById('shopAddress').value,
+        address: document.getElementById('shopAddress').value.trim(),
         moduleId: document.getElementById('shopModuleLink').value,
         location: { lat: currentShopLocation.lat, lng: currentShopLocation.lng }
     };
 
+    if (data.phone && !/^[0-9]{10}$/.test(data.phone)) {
+        showToast('Phone must be 10 digits', 'error');
+        btn.disabled = false;
+        return;
+    }
+
     try {
         await apiCall('/shops/' + shopId, 'PUT', data);
         showToast('Shop location saved');
-        loadData();
-    } catch (err) {}
+        await loadData();
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
 };
 
 window.clearShopMarker = () => {
@@ -432,30 +453,20 @@ window.clearShopMarker = () => {
     document.getElementById('shopLocationInfo').style.display = 'none';
 };
 
-// Filter Table
-window.filterTable = (tableId, query) => {
-    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-    const q = query.toLowerCase();
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(q) ? '' : 'none';
-    });
-};
-
-// Close Modal
-window.closeModal = () => {
+window.closeShopModal = () => {
     document.getElementById('editModal').style.display = 'none';
 };
 
-window.onclick = (e) => {
-    if (e.target.classList.contains('modal')) {
-        closeModal();
+// Destroy map on page unload to prevent memory leak
+window.addEventListener('beforeunload', () => {
+    if (shopMap) {
+        shopMap.remove();
+        shopMap = null;
     }
-};
+});
 
 // Init
-loadData();
-initShopMap();
+document.addEventListener('DOMContentLoaded', loadData);
 </script>
 </body>
 </html>

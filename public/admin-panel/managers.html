@@ -41,13 +41,23 @@
     </style>
 </head>
 <body>
-    <div class="admin-container">
-        <!-- Sidebar same rahega - index.html se copy kar lena -->
+    <div class="container">
+        <h1>🔧 SAMANLIVE Control Panel</h1>
+
+        <!-- NAVBAR -->
+        <div class="admin-navbar">
+            <a href="index.html" class="nav-btn">📊 Dashboard</a>
+            <a href="modules.html" class="nav-btn">📦 Modules</a>
+            <a href="content.html" class="nav-btn">📢 Content</a>
+            <a href="shops.html" class="nav-btn">🏪 Shops</a>
+            <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
+            <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
+        </div>
 
         <div class="main-content">
             <div class="header">
                 <h1>👨‍💼 Area Managers</h1>
-                <button class="btn btn-primary" onclick="openAddModal()">+ Add New Manager</button>
+                <button class="btn btn-primary" onclick="openAddManager()">+ Add New Manager</button>
             </div>
 
             <!-- STATS -->
@@ -98,7 +108,7 @@
             <div class="card">
                 <div class="card-header">
                     <h2>🖼️ Pending Banner Approvals</h2>
-                    <button class="btn btn-small" onclick="loadData()">Refresh</button>
+                    <button class="btn btn-small" id="refreshBannerBtn" onclick="loadData()">Refresh</button>
                 </div>
                 <div style="overflow-x: auto;">
                     <table>
@@ -164,7 +174,7 @@
         <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
                 <h2 id="modalTitle">Add New Area Manager</h2>
-                <button class="close-btn" onclick="closeModal()">×</button>
+                <button class="close-btn" onclick="closeManagerModal()">×</button>
             </div>
             <form id="managerForm">
                 <input type="hidden" id="managerId">
@@ -183,7 +193,7 @@
                     </div>
                     <div class="form-group">
                         <label>Phone *</label>
-                        <input type="text" id="phone" required>
+                        <input type="text" id="phone" required pattern="[0-9]{10}">
                     </div>
                     <div class="form-group">
                         <label>Service Charge % *</label>
@@ -244,7 +254,7 @@
                     </small>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                <button type="submit" class="btn btn-primary" id="saveManagerBtn" style="width: 100%; margin-top: 20px;">
                     Save Manager
                 </button>
             </form>
@@ -262,6 +272,7 @@
         </div>
     </div>
 
+    <script src="assets/admin.js"></script>
     <script>
         let managers = [];
         let pendingShops = [];
@@ -271,8 +282,7 @@
         // LOAD ALL CATEGORIES FROM MARKET API
         async function loadCategories() {
             try {
-                const res = await fetch('/api/market/categories');
-                allCategories = await res.json();
+                allCategories = await apiCall('/market/categories');
                 if (!allCategories || allCategories.length === 0) {
                     allCategories = [
                         {"id":"grocery","name":"Grocery Store","icon":"🛒"},
@@ -297,8 +307,8 @@
             const box = document.getElementById('moduleSelectBox');
             box.innerHTML = allCategories.map(cat => `
                 <div class="module-checkbox">
-                    <input type="checkbox" id="mod_${cat.id}" value="${cat.id}" onchange="toggleModule('${cat.id}', '${cat.name}', '${cat.icon}')">
-                    <label for="mod_${cat.id}">${cat.icon} ${cat.name}</label>
+                    <input type="checkbox" id="mod_${cat.id}" value="${cat.id}" onchange="toggleModule('${cat.id}')">
+                    <label for="mod_${cat.id}">${cat.icon} ${escapeHtml(cat.name)}</label>
                 </div>
             `).join('');
         }
@@ -314,7 +324,7 @@
         }
 
         // TOGGLE MODULE SELECTION
-        function toggleModule(id, name, icon) {
+        function toggleModule(id) {
             const checkbox = document.getElementById(`mod_${id}`);
             if (checkbox.checked) {
                 if (!selectedModuleIds.includes(id)) {
@@ -335,7 +345,7 @@
                 if (!cat) return '';
                 return `
                     <div class="module-tag">
-                        ${cat.icon} ${cat.name}
+                        ${cat.icon} ${escapeHtml(cat.name)}
                         <span onclick="removeModule('${id}')">×</span>
                     </div>
                 `;
@@ -353,23 +363,34 @@
 
         // LOAD DATA
         async function loadData() {
-            const res1 = await fetch('/api/managers');
-            managers = await res1.json();
-            renderManagers();
+            const btn = document.getElementById('refreshBannerBtn');
+            if (btn) btn.disabled = true;
+            
+            try {
+                const [managersData, bannerData] = await Promise.all([
+                    apiCall('/managers'),
+                    apiCall('/admin/pending-banners')
+                ]);
+                
+                managers = managersData;
+                pendingShops = bannerData.shops || [];
+                
+                renderManagers();
+                renderBanners();
 
-            const res2 = await fetch('/api/admin/pending-banners');
-            const data = await res2.json();
-            pendingShops = data.shops || [];
-            renderBanners();
+                document.getElementById('totalManagers').textContent = managers.length;
+                document.getElementById('activeManagers').textContent = managers.filter(m => m.status).length;
+                document.getElementById('pendingBanners').textContent = pendingShops.length;
 
-            document.getElementById('totalManagers').textContent = managers.length;
-            document.getElementById('activeManagers').textContent = managers.filter(m => m.status).length;
-            document.getElementById('pendingBanners').textContent = pendingShops.length;
-
-            // History filter me managers add karo
-            const filterSelect = document.getElementById('historyManagerFilter');
-            filterSelect.innerHTML = '<option value="">All Managers</option>' + 
-                managers.map(m => `<option value="${m._id}">${m.name} - ${m.area}</option>`).join('');
+                // History filter me managers add karo
+                const filterSelect = document.getElementById('historyManagerFilter');
+                filterSelect.innerHTML = '<option value="">All Managers</option>' + 
+                    managers.map(m => `<option value="${m._id}">${escapeHtml(m.name)} - ${escapeHtml(m.area)}</option>`).join('');
+            } catch (err) {
+                console.error('Load data error:', err);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
         }
 
         // RENDER MANAGERS TABLE
@@ -385,19 +406,19 @@
                 if (m.moduleAccess && m.moduleAccess.length > 0) {
                     moduleNames = m.moduleAccess.map(id => {
                         const cat = allCategories.find(c => c.id === id);
-                        return cat ? `${cat.icon} ${cat.name}` : id;
+                        return cat ? `${cat.icon} ${escapeHtml(cat.name)}` : escapeHtml(id);
                     }).slice(0, 2).join(', ');
                     if (m.moduleAccess.length > 2) moduleNames += ` +${m.moduleAccess.length - 2}`;
                 }
 
                 return `
                 <tr>
-                    <td><img src="${m.documents?.photo || '/assets/default-avatar.png'}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"></td>
-                    <td><strong>${m.name}</strong></td>
-                    <td>${m.area}</td>
+                    <td><img src="${m.documents?.photo || '/assets/default-avatar.png'}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" onerror="this.src='/assets/default-avatar.png'"></td>
+                    <td><strong>${escapeHtml(m.name)}</strong></td>
+                    <td>${escapeHtml(m.area)}</td>
                     <td style="font-size:12px;">${moduleNames}</td>
-                    <td>${m.email}</td>
-                    <td>${m.phone}</td>
+                    <td>${escapeHtml(m.email)}</td>
+                    <td>${escapeHtml(m.phone)}</td>
                     <td>${m.serviceCharge}%</td>
                     <td><span class="badge ${m.status ? 'badge-success' : 'badge-danger'}">${m.status ? 'Active' : 'Inactive'}</span></td>
                     <td>
@@ -405,12 +426,20 @@
                     </td>
                     <td>
                         <div class="actions">
-                            <button class="btn btn-small" onclick='editManager(${JSON.stringify(m).replace(/'/g, "&apos;")})'>Edit</button>
+                            <button class="btn btn-small" data-manager-id="${m._id}">Edit</button>
                             <button class="btn btn-small btn-danger" onclick="deleteManager('${m._id}')">Delete</button>
                         </div>
                     </td>
                 </tr>
             `}).join('');
+
+            // Attach edit listeners after render
+            document.querySelectorAll('[data-manager-id]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const manager = managers.find(m => m._id === btn.dataset.managerId);
+                    editManager(manager);
+                });
+            });
         }
 
         // RENDER PENDING BANNERS
@@ -425,9 +454,9 @@
                 const uploaded = shop.updatedAt ? new Date(shop.updatedAt).toLocaleDateString('en-IN') : '-';
                 return `
                 <tr>
-                    <td><strong>${shop.name}</strong></td>
-                    <td>${shop.managerId?.name || '-'}</td>
-                    <td>${shop.area}</td>
+                    <td><strong>${escapeHtml(shop.name)}</strong></td>
+                    <td>${escapeHtml(shop.managerId?.name || '-')}</td>
+                    <td>${escapeHtml(shop.area)}</td>
                     <td><img src="${shop.banner}" class="banner-thumb" onclick="viewBanner('${shop.banner}')"></td>
                     <td><span class="badge badge-pending">Pending</span></td>
                     <td>${uploaded}</td>
@@ -444,9 +473,7 @@
         // LOAD HISTORY
         async function loadHistory() {
             try {
-                const res = await fetch('/api/admin/shop-history');
-                const data = await res.json();
-
+                const data = await apiCall('/admin/shop-history');
                 if (data.success) {
                     renderHistory(data.history);
                 }
@@ -485,7 +512,7 @@
                 let details = '';
                 if (h.action === 'edit' && h.oldData && h.newData) {
                     const changes = [];
-                    if (h.oldData.name !== h.newData.name) changes.push(`Name: ${h.oldData.name} → ${h.newData.name}`);
+                    if (h.oldData.name !== h.newData.name) changes.push(`Name: ${escapeHtml(h.oldData.name)} → ${escapeHtml(h.newData.name)}`);
                     if (h.oldData.address !== h.newData.address) changes.push('Address updated');
                     if (h.oldData.banner !== h.newData.banner) changes.push('Banner changed');
                     if (h.oldData.phone !== h.newData.phone) changes.push('Phone updated');
@@ -502,11 +529,11 @@
 
                 return `
                 <tr>
-                    <td><strong>${managerName}</strong><br><small style="color:#64748b;">${managerArea}</small></td>
+                    <td><strong>${escapeHtml(managerName)}</strong><br><small style="color:#64748b;">${escapeHtml(managerArea)}</small></td>
                     <td><span class="badge ${actionBadge}">${h.action.toUpperCase()}</span></td>
-                    <td><strong>${h.shopName}</strong></td>
-                    <td>${h.area}</td>
-                    <td>${moduleName}</td>
+                    <td><strong>${escapeHtml(h.shopName)}</strong></td>
+                    <td>${escapeHtml(h.area)}</td>
+                    <td>${escapeHtml(moduleName)}</td>
                     <td>${time}</td>
                     <td class="history-details">${details}</td>
                 </tr>
@@ -514,7 +541,7 @@
         }
 
         // MODAL FUNCTIONS
-        function openAddModal() {
+        function openAddManager() {
             document.getElementById('managerModal').classList.add('active');
             document.getElementById('modalTitle').textContent = 'Add New Area Manager';
             document.getElementById('managerForm').reset();
@@ -527,12 +554,12 @@
             renderSelectedModules();
         }
 
-        function closeModal() {
+        function closeManagerModal() {
             document.getElementById('managerModal').classList.remove('active');
         }
 
         function editManager(m) {
-            openAddModal();
+            openAddManager();
             document.getElementById('modalTitle').textContent = 'Edit Manager';
             document.getElementById('managerId').value = m._id;
             document.getElementById('name').value = m.name;
@@ -565,22 +592,26 @@
         // UPLOAD DOCUMENT
         async function uploadDoc(input, type) {
             if (!input.files[0]) return;
+            
+            if (input.files[0].size > 2 * 1024 * 1024) {
+                showToast('File size must be less than 2MB', 'error');
+                input.value = '';
+                return;
+            }
+            
             const formData = new FormData();
             formData.append('file', input.files[0]);
 
             try {
-                const res = await fetch('/api/admin/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
+                const data = await apiCall('/admin/upload', 'POST', formData);
                 if (data.success) {
                     document.getElementById(type).value = data.url;
                     document.getElementById(type + 'Preview').src = data.url;
                     document.getElementById(type + 'Preview').style.display = 'block';
+                    showToast('Upload successful');
                 }
             } catch (err) {
-                alert('Upload failed!');
+                showToast('Upload failed!', 'error');
             }
         }
 
@@ -588,18 +619,27 @@
         document.getElementById('managerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const managerId = document.getElementById('managerId').value;
-
+            const btn = document.getElementById('saveManagerBtn');
+            
             if (selectedModuleIds.length === 0) {
-                alert('Kam se kam 1 Module select karo!');
+                showToast('Kam se kam 1 Module select karo!', 'error');
                 return;
             }
 
+            const phone = document.getElementById('phone').value;
+            if (!/^[0-9]{10}$/.test(phone)) {
+                showToast('Phone number must be 10 digits', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+
             const managerData = {
-                name: document.getElementById('name').value,
-                area: document.getElementById('area').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                serviceCharge: document.getElementById('serviceCharge').value,
+                name: document.getElementById('name').value.trim(),
+                area: document.getElementById('area').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: phone,
+                serviceCharge: parseInt(document.getElementById('serviceCharge').value),
                 status: document.getElementById('status').value === 'true',
                 moduleAccess: selectedModuleIds,
                 documents: {
@@ -614,12 +654,7 @@
                 const url = managerId ? `/api/managers/${managerId}` : '/api/admin/create-manager';
                 const method = managerId ? 'PUT' : 'POST';
 
-                const res = await fetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(managerData)
-                });
-                const data = await res.json();
+                const data = await apiCall(url, method, managerData);
 
                 if (data.success) {
                     if (data.loginLink) {
@@ -627,16 +662,18 @@
                         document.getElementById('tempPassword').textContent = data.tempPassword;
                         document.getElementById('loginLinkBox').style.display = 'block';
                     } else {
-                        alert('Manager updated!');
-                        closeModal();
+                        showToast('Manager updated!');
+                        closeManagerModal();
                     }
-                    loadData();
-                    loadHistory();
+                    await loadData();
+                    await loadHistory();
                 } else {
-                    alert(data.error || 'Error saving manager');
+                    showToast(data.error || 'Error saving manager', 'error');
                 }
             } catch (err) {
-                alert('Error: ' + err.message);
+                console.error('Save error:', err);
+            } finally {
+                btn.disabled = false;
             }
         });
 
@@ -644,56 +681,43 @@
         function copyLink(token) {
             const link = `${window.location.origin}/area-manager.html?token=${token}`;
             navigator.clipboard.writeText(link);
-            alert('Login link copied!');
+            showToast('Login link copied!');
         }
 
         // DELETE MANAGER
         async function deleteManager(id) {
             if (!confirm('Pakka delete karna hai?')) return;
             try {
-                const res = await fetch(`/api/managers/${id}`, { method: 'DELETE' });
-                const data = await res.json();
+                const data = await apiCall(`/api/managers/${id}`, 'DELETE');
                 if (data.success) {
-                    alert('Manager deleted!');
-                    loadData();
+                    showToast('Manager deleted!');
+                    await loadData();
                 }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
+            } catch (err) {}
         }
 
         // APPROVE BANNER
         async function approveBanner(shopId) {
             if (!confirm('Banner approve karna hai?')) return;
             try {
-                const res = await fetch(`/api/admin/approve-banner/${shopId}`, { method: 'POST' });
-                const data = await res.json();
+                const data = await apiCall(`/api/admin/approve-banner/${shopId}`, 'POST');
                 if (data.success) {
-                    alert('Banner approved!');
-                    loadData();
-                } else {
-                    alert(data.error);
+                    showToast('Banner approved!');
+                    await loadData();
                 }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
+            } catch (err) {}
         }
 
         // REJECT BANNER
         async function rejectBanner(shopId) {
             if (!confirm('Banner reject karna hai? Image delete ho jayegi.')) return;
             try {
-                const res = await fetch(`/api/admin/reject-banner/${shopId}`, { method: 'POST' });
-                const data = await res.json();
+                const data = await apiCall(`/api/admin/reject-banner/${shopId}`, 'POST');
                 if (data.success) {
-                    alert('Banner rejected!');
-                    loadData();
-                } else {
-                    alert(data.error);
+                    showToast('Banner rejected!');
+                    await loadData();
                 }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
+            } catch (err) {}
         }
 
         // VIEW BANNER
@@ -707,9 +731,11 @@
         }
 
         // INIT
-        loadCategories();
-        loadData();
-        loadHistory();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadCategories();
+            await loadData();
+            await loadHistory();
+        });
     </script>
 </body>
 </html>

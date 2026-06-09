@@ -4,10 +4,17 @@
 
 const API = '/api';
 
+// ==================== ESCAPE HTML - XSS Protection ====================
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text ?? '';
+    return div.innerHTML;
+}
+
 // ==================== TOAST ====================
 function showToast(msg, type = 'success') {
     const toast = document.createElement('div');
-    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
+    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:system-ui;`;
     toast.textContent = msg;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
@@ -17,7 +24,7 @@ function showToast(msg, type = 'success') {
 async function apiCall(endpoint, method = 'GET', body = null) {
     try {
         const opts = { method, headers: {} };
-        if (body &&!(body instanceof FormData)) {
+        if (body && !(body instanceof FormData)) {
             opts.headers['Content-Type'] = 'application/json';
             opts.body = JSON.stringify(body);
         } else if (body) {
@@ -38,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Current page highlight karo
     const currentPage = window.location.pathname.split('/').pop().replace('.html', '') || 'index';
     document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
         const href = btn.getAttribute('href');
         if (href && href.includes(currentPage)) {
             btn.classList.add('active');
@@ -61,12 +69,19 @@ window.closeModal = () => {
     modals.forEach(m => m.style.display = 'none');
 };
 
-window.onclick = (e) => {
+// Background click pe modal close
+window.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal')) {
         closeModal();
     }
-};
-
-document.querySelectorAll('.close').forEach(btn => {
-    btn.onclick = () => btn.closest('.modal').style.display = 'none';
 });
+
+// Close button pe modal close - Fix: .close-btn use karo, .close nahi
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.close-btn').forEach(btn => {
+        btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none');
+    });
+});
+
+// Export utilities for pages
+window.escapeHtml = escapeHtml;
