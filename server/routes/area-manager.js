@@ -4,8 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
-const Module = require('../models/module');
-const ShopHistory = require('../models/shophistory');
+const Module = require('../models/Module'); // ← 'module' se 'Module' kiya
+const ShopHistory = require('../models/ShopHistory'); // ← 'shophistory' se 'ShopHistory' kiya
 
 const JWT_SECRET = process.env.JWT_SECRET || 'samanlive-area-manager-secret-2026';
 
