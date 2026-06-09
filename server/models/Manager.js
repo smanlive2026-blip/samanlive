@@ -15,7 +15,7 @@ const managerSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,
+    unique: true, // ← Ye khud index bana deta hai
     lowercase: true,
     trim: true,
     match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
@@ -96,7 +96,7 @@ const managerSchema = new mongoose.Schema({
   loginToken: {
     type: String,
     default: '',
-    unique: true,
+    unique: true, // ← Ye khud index bana deta hai
     sparse: true
   },
   tempPassword: {
@@ -119,12 +119,12 @@ const managerSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes for faster queries
-managerSchema.index({ loginToken: 1 });
+// Indexes for faster queries - Bas ye 3 rakho
 managerSchema.index({ area: 1, status: 1 });
 managerSchema.index({ moduleAccess: 1 });
-managerSchema.index({ email: 1 });
 managerSchema.index({ phone: 1 });
+// managerSchema.index({ email: 1 }); ← HATA DIYA - unique: true se already ban gaya
+// managerSchema.index({ loginToken: 1 }); ← HATA DIYA - unique: true se already ban gaya
 
 // Pre-save hook to ensure email is lowercase
 managerSchema.pre('save', function(next) {
