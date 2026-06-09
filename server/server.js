@@ -575,8 +575,8 @@ app.get('/api/settings', (req, res) => {
 
 // MARKET API ROUTE
 app.use('/api/market', require('./routes/market'));
-// AREA MANAGER API ROUTE
-app.use('/api/area-manager', require('./routes/area-manager'));
+// AREA MANAGER API ROUTE - YAHAN CHANGE KIYA BAS 's' ADD KIYA
+app.use('/api/area-managers', require('./routes/area-manager'));
 
 // ========================================
 // NAYI PROFILE ROUTES - SIRF YE ADD KAR
@@ -976,7 +976,7 @@ app.post('/api/admin/shop', async (req, res) => {
         range: 5000,
         banner: '',
         bannerApproved: false, // NAYA ADD - Default pending
-       ...req.body
+      ...req.body
     };
     try {
         const mongoItem = new Shop(newItem);
@@ -1014,7 +1014,7 @@ app.post('/api/admin/areaManager', async (req, res) => {
 
     const newManager = {
         id: 'am-' + Date.now(),
-       ...restData,
+      ...restData,
         password: hashedPassword,
         createdAt: new Date().toISOString(),
         status: restData.status!== undefined? restData.status : true
@@ -1189,8 +1189,8 @@ app.put('/api/admin/module/:id/category/:catId', async (req, res) => {
         if (catIdx === -1) return res.status(404).json({ error: 'Category nahi mili' });
 
         db.modules[modIdx].categories[catIdx] = {
-  ...db.modules[modIdx].categories[catIdx],
-  ...req.body
+ ...db.modules[modIdx].categories[catIdx],
+ ...req.body
         };
 
         writeDB(db);
