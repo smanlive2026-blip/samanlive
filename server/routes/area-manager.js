@@ -4,8 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
-const Module = require('../models/module'); // ← 'module' se 'Module' kiya
-const ShopHistory = require('../models/ShopHistory'); // ← 'shophistory' se 'ShopHistory' kiya
+const Module = require('../models/Module'); // ✅ 'M' capital kar diya
+const ShopHistory = require('../models/ShopHistory'); // ✅ Ye bhi capital 'S' aur 'H' check kar lena
 
 const JWT_SECRET = process.env.JWT_SECRET || 'samanlive-area-manager-secret-2026';
 
