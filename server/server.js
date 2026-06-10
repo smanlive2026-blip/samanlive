@@ -682,6 +682,27 @@ app.post('/api/admin/create-manager', async (req, res) => {
     }
 });
 
+// NAYA - AREA MANAGER TOKEN LOGIN VERIFY
+app.get('/api/area-manager/verify-token', async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) return res.status(400).json({ error: 'Token required' });
+
+        const manager = await Manager.findOne({ loginToken: token, status: true });
+        if (!manager) return res.status(401).json({ error: 'Invalid or expired token' });
+
+        const jwtToken = jwt.sign(
+            { managerId: manager._id, email: manager.email },
+            process.env.JWT_SECRET || 'samanlive_secret_key',
+            { expiresIn: '7d' }
+        );
+
+        res.json({ success: true, token: jwtToken, manager: {...manager.toObject(), password: undefined} });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // NAYA - BANNER APPROVE API
 app.put('/api/admin/approve-banner/:shopId', async (req, res) => {
     try {
@@ -749,7 +770,7 @@ app.delete('/api/managers/:id', async (req, res) => {
 });
 
 // ========================================
-// ⭐⭐ NAYA ADD KIYA HAI - YE 2 ROUTE MISSING THE ⭐⭐
+// ⭐⭐ YE 2 ROUTE MISSING THE - AB ADD KIYE ⭐⭐
 // ========================================
 
 // 1. PENDING BANNERS API - managers.html ke liye
@@ -775,7 +796,7 @@ app.get('/api/admin/shop-history', async (req, res) => {
             if (shop.history && shop.history.length > 0) {
                 shop.history.forEach(h => {
                     history.push({
-                       ...h.toObject(),
+                    ...h.toObject(),
                         shopName: shop.name,
                         area: shop.area,
                         managerId: shop.managerId
@@ -932,6 +953,7 @@ app.put('/api/admin/video/:id', async (req, res) => {
         res.json({ success: true });
     } else res.status(404).json({ error: 'Not found' });
 });
+
 app.post('/api/admin/video', async (req, res) => {
     const db = readDB();
     const newItem = { id: 'v-' + Date.now(), status: true, priority: db.videos.length + 1,...req.body };
@@ -939,7 +961,7 @@ app.post('/api/admin/video', async (req, res) => {
         const mongoItem = new Video(newItem);
         await mongoItem.save();
         newItem.mongoId = mongoItem._id.toString();
-    } catch(e) { // ← YE CATCH MISSING THA
+    } catch(e) { // ← YE CATCH MISSING THA - AB ADD KAR DIYA
         console.log('MongoDB save failed:', e.message);
     }
     db.videos.push(newItem);
@@ -1029,7 +1051,7 @@ app.post('/api/admin/shop', async (req, res) => {
         range: 5000,
         banner: '',
         bannerApproved: false,
-  ...req.body
+ ...req.body
     };
     try {
         const mongoItem = new Shop(newItem);
