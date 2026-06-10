@@ -654,15 +654,24 @@ app.post('/api/admin/create-manager', async (req, res) => {
         // Unique login token generate
         const loginToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
 
+        const finalArea = area && area.trim() ? area : 'Not Assigned';
+        const finalModuleAccess = (moduleAccess && moduleAccess.length > 0) ? moduleAccess : ['all'];
+        const finalDocuments = {
+            aadhar: documents?.aadhar || '',
+            pan: documents?.pan || '',
+            photo: documents?.photo || '',
+            addressProof: documents?.addressProof || ''
+        };
+
         const manager = await Manager.create({
             name,
             email,
             phone,
             password: hashedPassword,
-            area: area || '',
+            area: finalArea,
             serviceCharge: serviceCharge || 5,
-            documents: documents || {},
-            moduleAccess: moduleAccess || [],
+            documents: finalDocuments,
+            moduleAccess: finalModuleAccess,
             loginToken,
             status: true,
             tempPassword
@@ -678,6 +687,7 @@ app.post('/api/admin/create-manager', async (req, res) => {
             loginLink
         });
     } catch (err) {
+        console.log('Create Manager Error:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
