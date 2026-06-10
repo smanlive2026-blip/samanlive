@@ -1074,7 +1074,87 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/404.html'));
 });
+// ========================================
+// NAYA ADD - AREA MANAGER DASHBOARD APIs
+// ========================================
 
+// AREA MANAGER AUTH MIDDLEWARE
+function authenticateManager(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.status(401).json({ error: 'Access denied' });
+
+    jwt.verify(token, process.env.JWT_SECRET || 'samanlive_secret_key', (err, user) => {
+        if (err) return res.status(403).json({ error: 'Invalid token' });
+        if (!user.managerId) return res.status(403).json({ error: 'Not a manager token' });
+        req.manager = user;
+        next();
+    });
+}
+
+// AREA MANAGER KA DASHBOARD DATA
+app.get('/api/manager/dashboard', authenticateManager, async (req, res) => {
+    try {
+        const manager = await Manager.findById(req.manager.managerId);
+        if (!manager) return res.status(404).json({ error: 'Manager not found' });
+
+        // Manager ke area ki shops
+        const totalShops = await Shop.countDocuments({ area: manager.area });
+        const activeShops = await Shop.countDocuments({ area: manager.area, status: true });
+        const pendingBanners = await Shop.countDocuments({
+            area: manager.area,
+            banner: { $ne: '' },
+            bannerApproved: false
+        });
+
+        // Manager ke area ke modules count
+        const modules = await Module.countDocuments();
+
+        res.json({
+            success: true,
+            stats: {
+                totalShops,
+                activeShops,
+                pendingBanners,
+                modules
+            },
+            manager: {
+                name: manager.name,
+                email: manager.email,
+                area: manager.area,
+                serviceCharge: manager.serviceCharge
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// AREA MANAGER KI SHOPS
+app.get('/api/manager/shops', authenticateManager, async (req, res) => {
+    try {
+        const manager = await Manager.findById(req.manager.managerId);
+        if (!manager) return res.status(404).json({ error: 'Manager not found' });
+
+        const shops = await Shop.find({ area: manager.area }).sort({ createdAt: -1 });
+        res.json({ success: true, shops });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// AREA MANAGER KI SHOPS
+app.get('/api/manager/shops', authenticateManager, async (req, res) => {
+    try {
+        const manager = await Manager.findById(req.manager.managerId);
+        if (!manager) return res.status(404).json({ error: 'Manager not found' });
+
+        const shops = await Shop.find({ area: manager.area }).sort({ createdAt: -1 });
+        res.json({ success: true, shops });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 // Server start
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} 🚀`);
