@@ -230,7 +230,7 @@ function writeDB(data) {
     fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
 }
 
-// AUTH MIDDLEWARE - SAME
+// AUTH MIDDLEWARE - FIXED JWT_SECRET
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -240,6 +240,7 @@ function authenticateToken(req, res, next) {
     jwt.verify(token, process.env.JWT_SECRET || 'samanlive_secret_key', (err, user) => {
         if (err) return res.status(403).json({ error: 'Invalid token' });
         req.user = user;
+        req.userId = user.userId || user.id;
         next();
     });
 }
@@ -636,8 +637,8 @@ app.get('/api/managers', async (req, res) => {
     }
 });
 
-// NAYA - ADMIN PANEL SE MANAGER BANANE KA API
-app.post('/api/admin/create-manager', async (req, res) => {
+// NAYA - ADMIN PANEL SE MANAGER BANANE KA API - FIXED: authenticateToken add kiya
+app.post('/api/admin/create-manager', authenticateToken, async (req, res) => {
     try {
         const { name, email, phone, area, serviceCharge, documents, moduleAccess } = req.body;
 
@@ -654,8 +655,8 @@ app.post('/api/admin/create-manager', async (req, res) => {
         // Unique login token generate
         const loginToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
 
-        const finalArea = area && area.trim() ? area : 'Not Assigned';
-        const finalModuleAccess = (moduleAccess && moduleAccess.length > 0) ? moduleAccess : ['all'];
+        const finalArea = area && area.trim()? area : 'Not Assigned';
+        const finalModuleAccess = (moduleAccess && moduleAccess.length > 0)? moduleAccess : ['all'];
         const finalDocuments = {
             aadhar: documents?.aadhar || '',
             pan: documents?.pan || '',
@@ -806,7 +807,7 @@ app.get('/api/admin/shop-history', async (req, res) => {
             if (shop.history && shop.history.length > 0) {
                 shop.history.forEach(h => {
                     history.push({
-                    ...h.toObject(),
+                   ...h.toObject(),
                         shopName: shop.name,
                         area: shop.area,
                         managerId: shop.managerId
@@ -964,7 +965,7 @@ app.put('/api/admin/video/:id', async (req, res) => {
     } else res.status(404).json({ error: 'Not found' });
 });
 
-app.post('/api/admin/video', async (req, res) => {
+    app.post('/api/admin/video', async (req, res) => {
     const db = readDB();
     const newItem = { id: 'v-' + Date.now(), status: true, priority: db.videos.length + 1,...req.body };
     try {
@@ -1061,7 +1062,7 @@ app.post('/api/admin/shop', async (req, res) => {
         range: 5000,
         banner: '',
         bannerApproved: false,
- ...req.body
+...req.body
     };
     try {
         const mongoItem = new Shop(newItem);
@@ -1140,7 +1141,8 @@ app.get('/api/manager/dashboard', authenticateManager, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-// AREA MANAGER KI SHOPS
+
+// AREA MANAGER KI SHOPS - FIXED: Duplicate route hataya, sirf ek baar rakha
 app.get('/api/manager/shops', authenticateManager, async (req, res) => {
     try {
         const manager = await Manager.findById(req.manager.managerId);
@@ -1153,18 +1155,6 @@ app.get('/api/manager/shops', authenticateManager, async (req, res) => {
     }
 });
 
-// AREA MANAGER KI SHOPS
-app.get('/api/manager/shops', authenticateManager, async (req, res) => {
-    try {
-        const manager = await Manager.findById(req.manager.managerId);
-        if (!manager) return res.status(404).json({ error: 'Manager not found' });
-
-        const shops = await Shop.find({ area: manager.area }).sort({ createdAt: -1 });
-        res.json({ success: true, shops });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 // Server start
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} 🚀`);
