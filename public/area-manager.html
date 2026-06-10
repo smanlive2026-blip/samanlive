@@ -8,91 +8,91 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #f1f5f9; }
-        .login-container {
+       .login-container {
             min-height: 100vh; display: flex; align-items: center; justify-content: center;
             background: linear-gradient(135deg, #667eea, #764ba2);
         }
-        .login-box {
+       .login-box {
             background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             width: 90%; max-width: 400px;
         }
-        .login-box h1 { text-align: center; color: #1e293b; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; color: #475569; font-weight: 600; }
-        .form-group input, .form-group select, .form-group textarea {
+       .login-box h1 { text-align: center; color: #1e293b; margin-bottom: 30px; }
+       .form-group { margin-bottom: 20px; }
+       .form-group label { display: block; margin-bottom: 8px; color: #475569; font-weight: 600; }
+       .form-group input,.form-group select,.form-group textarea {
             width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;
         }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: #6366f1; }
-        .btn {
+       .form-group input:focus,.form-group select:focus { outline: none; border-color: #6366f1; }
+       .btn {
             width: 100%; padding: 14px; background: #6366f1; color: white; border: none;
             border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s;
         }
-        .btn:hover { background: #4f46e5; }
-        .btn-danger { background: #ef4444; }
-        .btn-danger:hover { background: #dc2626; }
-        .btn-small { padding: 8px 16px; font-size: 14px; width: auto; }
-        .btn-copy { background: #10b981; }
-        .btn-copy:hover { background: #059669; }
-        
-        .dashboard, .admin-panel { display: none; }
-        .header {
+       .btn:hover { background: #4f46e5; }
+       .btn-danger { background: #ef4444; }
+       .btn-danger:hover { background: #dc2626; }
+       .btn-small { padding: 8px 16px; font-size: 14px; width: auto; }
+       .btn-copy { background: #10b981; }
+       .btn-copy:hover { background: #059669; }
+
+       .dashboard,.admin-panel { display: none; }
+       .header {
             background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 20px;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .header h1 { font-size: 24px; }
-        .header-right { display: flex; gap: 15px; align-items: center; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
-        .stats-grid {
+       .header h1 { font-size: 24px; }
+       .header-right { display: flex; gap: 15px; align-items: center; }
+       .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
+       .stats-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;
         }
-        .stat-card {
+       .stat-card {
             background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 10px; }
-        .stat-card .value { font-size: 32px; font-weight: 700; color: #1e293b; }
-        .card {
+       .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 10px; }
+       .stat-card.value { font-size: 32px; font-weight: 700; color: #1e293b; }
+       .card {
             background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 25px;
         }
-        .card-header {
+       .card-header {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
             padding-bottom: 15px; border-bottom: 2px solid #f1f5f9;
         }
-        .card-header h2 { color: #1e293b; font-size: 20px; }
+       .card-header h2 { color: #1e293b; font-size: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
         th { background: #f8fafc; color: #475569; font-weight: 600; }
-        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .badge-success { background: #d1fae5; color: #065f46; }
-        .badge-danger { background: #fee2e2; color: #991b1b; }
-        .badge-warning { background: #fef3c7; color: #92400e; }
-        .badge-info { background: #dbeafe; color: #1e40af; }
-        .actions { display: flex; gap: 8px; }
-        .modal {
+       .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+       .badge-success { background: #d1fae5; color: #065f46; }
+       .badge-danger { background: #fee2e2; color: #991b1b; }
+       .badge-warning { background: #fef3c7; color: #92400e; }
+       .badge-info { background: #dbeafe; color: #1e40af; }
+       .actions { display: flex; gap: 8px; }
+       .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;
         }
-        .modal.active { display: flex; }
-        .modal-content {
+       .modal.active { display: flex; }
+       .modal-content {
             background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;
         }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .modal-header h2 { color: #1e293b; }
-        .close-btn {
+       .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+       .modal-header h2 { color: #1e293b; }
+       .close-btn {
             background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%;
             cursor: pointer; font-size: 20px; color: #64748b;
         }
         #map { height: 300px; border-radius: 8px; margin-top: 10px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .banner-preview { width: 100%; max-width: 400px; margin-top: 10px; border-radius: 8px; display: none; }
-        .module-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-        .module-tag { 
-            background: #e0e7ff; color: #4338ca; padding: 4px 10px; 
+       .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+       .banner-preview { width: 100%; max-width: 400px; margin-top: 10px; border-radius: 8px; display: none; }
+       .module-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+       .module-tag {
+            background: #e0e7ff; color: #4338ca; padding: 4px 10px;
             border-radius: 12px; font-size: 12px; font-weight: 600;
         }
-        .history-details { font-size: 12px; color: #64748b; margin-top: 4px; }
+       .history-details { font-size: 12px; color: #64748b; margin-top: 4px; }
         @media (max-width: 768px) {
-            .form-row { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr; }
+           .form-row { grid-template-columns: 1fr; }
+           .stats-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -321,7 +321,6 @@
                         <label>Longitude *</label>
                         <input type="number" step="any" id="shopLng" required readonly>
                     </div>
-                </div>
                 <div class="form-group">
                     <label>Select Location on Map *</label>
                     <div id="map"></div>
@@ -348,7 +347,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const isAdmin = urlParams.get('admin') === 'true';
         const tokenParam = urlParams.get('token');
-        
+
         let token = localStorage.getItem('areaManagerToken');
         let managerData = null;
         let map = null;
@@ -356,12 +355,41 @@
         let categories = [];
         let allCategoriesList = [];
 
+        // ========== TOKEN FIX START ==========
+        if (tokenParam) {
+            localStorage.setItem('areaManagerToken', tokenParam);
+            token = tokenParam;
+        }
+
+        const API = '/api';
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const currentToken = localStorage.getItem('areaManagerToken') || token;
+            try {
+                const opts = {
+                    method,
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                };
+                if (body &&!(body instanceof FormData)) {
+                    opts.headers['Content-Type'] = 'application/json';
+                    opts.body = JSON.stringify(body);
+                } else if (body) {
+                    opts.body = body;
+                }
+                const res = await fetch(API + endpoint, opts);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'API Error');
+                return data;
+            } catch (err) {
+                alert(err.message);
+                throw err;
+            }
+        }
+        // ========== TOKEN FIX END ==========
+
         // CHECK MODE
         if (isAdmin) {
             showAdminPanel();
         } else if (tokenParam) {
-            localStorage.setItem('areaManagerToken', tokenParam);
-            token = tokenParam;
             showDashboard();
         } else if (token) {
             showDashboard();
@@ -379,9 +407,9 @@
             try {
                 const res = await fetch('/api/market/categories');
                 allCategoriesList = await res.json();
-                
+
                 const select = document.getElementById('managerModulesInput');
-                select.innerHTML = allCategoriesList.map(c => 
+                select.innerHTML = allCategoriesList.map(c =>
                     `<option value="${c.id}">${c.icon} ${c.name}</option>`
                 ).join('');
             } catch (err) {
@@ -410,9 +438,9 @@
             tbody.innerHTML = managers.map(m => {
                 const moduleNames = (m.moduleAccess || []).map(id => {
                     const cat = allCategoriesList.find(c => c.id === id);
-                    return cat ? cat.name : id;
+                    return cat? cat.name : id;
                 }).slice(0, 2).join(', ');
-                const extraCount = (m.moduleAccess || []).length > 2 ? ` +${m.moduleAccess.length - 2}` : '';
+                const extraCount = (m.moduleAccess || []).length > 2? ` +${m.moduleAccess.length - 2}` : '';
 
                 return `
                 <tr>
@@ -421,7 +449,7 @@
                     <td>${m.area}</td>
                     <td style="font-size:12px;">${moduleNames}${extraCount}</td>
                     <td>${m.phone || '-'}</td>
-                    <td><span class="badge ${m.status ? 'badge-success' : 'badge-danger'}">${m.status ? 'Active' : 'Inactive'}</span></td>
+                    <td><span class="badge ${m.status? 'badge-success' : 'badge-danger'}">${m.status? 'Active' : 'Inactive'}</span></td>
                     <td>
                         <button class="btn btn-small btn-copy" onclick="copyLoginLink('${baseUrl}?token=${m.loginToken}')">Copy Link</button>
                     </td>
@@ -443,7 +471,7 @@
 
         document.getElementById('addManagerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const selectedOptions = document.getElementById('managerModulesInput').selectedOptions;
             const moduleAccess = Array.from(selectedOptions).map(opt => opt.value);
 
@@ -514,7 +542,7 @@
                     body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
-                
+
                 if (data.success) {
                     token = data.token;
                     localStorage.setItem('areaManagerToken', token);
@@ -538,26 +566,25 @@
         // LOAD DASHBOARD DATA
         async function loadDashboard() {
             try {
-                const res = await fetch('/api/area-manager/dashboard?token=' + token);
-                const data = await res.json();
+                const data = await apiCall('/area-manager/dashboard');
 
                 if (data.success) {
                     managerData = data.manager;
                     document.getElementById('managerName').textContent = managerData.name;
                     document.getElementById('areaName').textContent = data.manager.area;
-                    
+
                     const moduleNames = (data.manager.modules || []).map(id => {
                         const cat = allCategoriesList.find(c => c.id === id);
-                        return cat ? `${cat.icon} ${cat.name}` : id;
+                        return cat? `${cat.icon} ${cat.name}` : id;
                     }).join(', ');
                     document.getElementById('moduleList').textContent = moduleNames || '-';
-                    
+
                     document.getElementById('totalShops').textContent = data.shops.length;
                     document.getElementById('activeShops').textContent = data.shops.filter(s => s.status).length;
-                    
+
                     categories = data.categories || allCategoriesList;
                     renderShops(data.shops);
-                    loadHistory(); // NAYA ADD KIYA
+                    loadHistory();
                 } else {
                     alert(data.error);
                     logout();
@@ -568,14 +595,10 @@
             }
         }
 
-        // LOAD HISTORY - NAYA FUNCTION
+        // LOAD HISTORY
         async function loadHistory() {
             try {
-                const res = await fetch('/api/admin/shop-history', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                const data = await res.json();
-
+                const data = await apiCall('/admin/shop-history');
                 if (data.success) {
                     renderHistory(data.history);
                 }
@@ -584,7 +607,7 @@
             }
         }
 
-        // RENDER HISTORY - NAYA FUNCTION
+        // RENDER HISTORY
         function renderHistory(history) {
             const tbody = document.getElementById('historyTable');
             if (history.length === 0) {
@@ -593,18 +616,18 @@
             }
 
             tbody.innerHTML = history.slice(0, 20).map(h => {
-                const actionBadge = h.action === 'create' ? 'badge-success' : 
-                                   h.action === 'edit' ? 'badge-info' : 'badge-danger';
+                const actionBadge = h.action === 'create'? 'badge-success' :
+                                   h.action === 'edit'? 'badge-info' : 'badge-danger';
                 const time = new Date(h.timestamp).toLocaleString('en-IN', {
                     day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                 });
-                
+
                 let details = '';
                 if (h.action === 'edit' && h.oldData && h.newData) {
                     const changes = [];
-                    if (h.oldData.name !== h.newData.name) changes.push(`Name: ${h.oldData.name} → ${h.newData.name}`);
-                    if (h.oldData.address !== h.newData.address) changes.push('Address updated');
-                    if (h.oldData.banner !== h.newData.banner) changes.push('Banner changed');
+                    if (h.oldData.name!== h.newData.name) changes.push(`Name: ${h.oldData.name} → ${h.newData.name}`);
+                    if (h.oldData.address!== h.newData.address) changes.push('Address updated');
+                    if (h.oldData.banner!== h.newData.banner) changes.push('Banner changed');
                     details = changes.join(', ') || 'Updated';
                 } else if (h.action === 'delete') {
                     details = `Deleted: ${h.oldData.name}`;
@@ -638,8 +661,8 @@
                     <td>${getCategoryName(shop.moduleId || shop.categoryId)}</td>
                     <td>${shop.address || '-'}</td>
                     <td>
-                        <span class="badge ${shop.status ? 'badge-success' : 'badge-danger'}">
-                            ${shop.status ? 'Active' : 'Inactive'}
+                        <span class="badge ${shop.status? 'badge-success' : 'badge-danger'}">
+                            ${shop.status? 'Active' : 'Inactive'}
                         </span>
                     </td>
                     <td>
@@ -654,18 +677,18 @@
 
         function getCategoryName(id) {
             const cat = categories.find(c => c.id === id);
-            return cat ? cat.name : '-';
+            return cat? cat.name : '-';
         }
 
         // SHOP MODAL
         function openShopModal(shop = null) {
             document.getElementById('shopModal').classList.add('active');
-            document.getElementById('modalTitle').textContent = shop ? 'Edit Shop' : 'Add New Shop';
-            
-            const allowedCategories = categories.filter(c => 
+            document.getElementById('modalTitle').textContent = shop? 'Edit Shop' : 'Add New Shop';
+
+            const allowedCategories = categories.filter(c =>
                 managerData.modules.includes(c.id)
             );
-            
+
             const catSelect = document.getElementById('shopCategory');
             catSelect.innerHTML = allowedCategories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
 
@@ -728,9 +751,9 @@
             if (map) map.remove();
             map = L.map('map').setView([lat, lng], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            
+
             marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-            
+
             marker.on('dragend', function(e) {
                 const pos = e.target.getLatLng();
                 document.getElementById('shopLat').value = pos.lat.toFixed(6);
@@ -760,21 +783,13 @@
             };
 
             try {
-                const url = shopId ? `/api/area-manager/shop/${shopId}` : '/api/area-manager/shop';
-                const method = shopId ? 'PUT' : 'POST';
-                
-                const res = await fetch(url, {
-                    method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
-                    },
-                    body: JSON.stringify(shopData)
-                });
-                const data = await res.json();
+                const url = shopId? `/area-manager/shop/${shopId}` : '/area-manager/shop';
+                const method = shopId? 'PUT' : 'POST';
+
+                const data = await apiCall(url, method, shopData);
 
                 if (data.success) {
-                    alert(shopId ? 'Shop updated!' : 'Shop added!');
+                    alert(shopId? 'Shop updated!' : 'Shop added!');
                     closeShopModal();
                     loadDashboard();
                 } else {
@@ -787,13 +802,9 @@
 
         async function deleteShop(id) {
             if (!confirm('Pakka delete karna hai?')) return;
-            
+
             try {
-                const res = await fetch(`/api/area-manager/shop/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                const data = await res.json();
+                const data = await apiCall(`/area-manager/shop/${id}`, 'DELETE');
 
                 if (data.success) {
                     alert('Shop deleted!');
