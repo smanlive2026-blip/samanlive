@@ -289,7 +289,7 @@
         let pendingShops = [];
         let allCategories = [];
         let selectedModuleIds = [];
-        const API = '/api';
+        // const API = '/api'; // REMOVED - Already declared in admin.js
 
         // ========== UTILITY FUNCTIONS ==========
         function showToast(msg, type = 'success') {
@@ -305,36 +305,6 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
-        }
-
-        // Centralized API call function with auth
-        async function apiCall(endpoint, method = 'GET', body = null) {
-            const token = localStorage.getItem('adminToken') || '';
-            try {
-                const opts = {
-                    method,
-                    headers: { 'Authorization': `Bearer ${token}` }
-                };
-                if (body &&!(body instanceof FormData)) {
-                    opts.headers['Content-Type'] = 'application/json';
-                    opts.body = JSON.stringify(body);
-                } else if (body) {
-                    opts.body = body;
-                }
-                const res = await fetch(API + endpoint, opts);
-
-                const contentType = res.headers.get('content-type');
-                if (!contentType ||!contentType.includes('application/json')) {
-                    throw new Error('Server se JSON nahi mila');
-                }
-
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'API Error');
-                return data;
-            } catch (err) {
-                showToast(err.message, 'error');
-                throw err;
-            }
         }
 
         // ========== CATEGORIES ==========
@@ -725,14 +695,14 @@
             }
         });
 
-        // ========== COPY LOGIN LINK - FIXED ==========
+        // ========== COPY LOGIN LINK ==========
         function copyLink(token) {
             const link = `${window.location.origin}/area-manager.html?token=${token}`;
             navigator.clipboard.writeText(link);
             showToast('Login link copied! Manager ko bhej do');
         }
 
-        // ========== DELETE MANAGER - FIXED ==========
+        // ========== DELETE MANAGER ==========
         async function deleteManager(id) {
             if (!confirm('Pakka delete karna hai?')) return;
             try {
