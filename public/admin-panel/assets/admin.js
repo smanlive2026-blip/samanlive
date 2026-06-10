@@ -13,8 +13,13 @@ function escapeHtml(text) {
 
 // ==================== TOAST ====================
 function showToast(msg, type = 'success') {
+    // Pehle se koi toast hai to hata de
+    const oldToast = document.querySelector('.toast');
+    if (oldToast) oldToast.remove();
+    
     const toast = document.createElement('div');
-    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:system-ui;`;
+    toast.className = 'toast ' + type;
+    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:system-ui;font-size:14px;`;
     toast.textContent = msg;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
@@ -22,19 +27,32 @@ function showToast(msg, type = 'success') {
 
 // ==================== API CALL ====================
 async function apiCall(endpoint, method = 'GET', body = null) {
+    const token = localStorage.getItem('adminToken') || '';
     try {
-        const opts = { method, headers: {} };
-        if (body && !(body instanceof FormData)) {
+        const opts = { 
+            method, 
+            headers: { 'Authorization': `Bearer ${token}` }
+        };
+        
+        if (body &&!(body instanceof FormData)) {
             opts.headers['Content-Type'] = 'application/json';
             opts.body = JSON.stringify(body);
         } else if (body) {
             opts.body = body;
         }
+        
         const res = await fetch(API + endpoint, opts);
+        
+        const contentType = res.headers.get('content-type');
+        if (!contentType ||!contentType.includes('application/json')) {
+            throw new Error('Server error - Invalid response');
+        }
+        
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'API Error');
         return data;
     } catch (err) {
+        console.error('API Error:', err);
         showToast(err.message, 'error');
         throw err;
     }
@@ -42,7 +60,6 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 
 // ==================== NAV HIGHLIGHT ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Current page highlight karo
     const currentPage = window.location.pathname.split('/').pop().replace('.html', '') || 'index';
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -54,20 +71,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==================== UNIVERSAL FILTER ====================
-window.filterTable = (tableId, query) => {
+function filterTable(tableId, query) {
     const rows = document.querySelectorAll(`#${tableId} tbody tr`);
     const q = query.toLowerCase();
     rows.forEach(row => {
         const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(q) ? '' : 'none';
+        row.style.display = text.includes(q)? '' : 'none';
     });
-};
+}
 
 // ==================== UNIVERSAL MODAL CLOSE ====================
-window.closeModal = () => {
+function closeModal() {
     const modals = document.querySelectorAll('.modal');
-    modals.forEach(m => m.style.display = 'none');
-};
+    modals.forEach(m => {
+        m.style.display = 'none';
+        m.classList.remove('active');
+    });
+}
 
 // Background click pe modal close
 window.addEventListener('click', (e) => {
@@ -76,12 +96,44 @@ window.addEventListener('click', (e) => {
     }
 });
 
-// Close button pe modal close - Fix: .close-btn use karo, .close nahi
+// Close button pe modal close
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.close-btn').forEach(btn => {
-        btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none');
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeModal();
+        });
     });
 });
 
-// Export utilities for pages
+// ==================== COPY TO CLIPBOARD ====================
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied to clipboard!');
+    }).catch(() => {
+        showToast('Copy failed', 'error');
+    });
+}
+
+// ==================== FORMAT DATE ====================
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// ==================== EXPORT UTILITIES FOR PAGES ====================
 window.escapeHtml = escapeHtml;
+window.showToast = showToast;
+window.apiCall = apiCall;
+window.filterTable = filterTable;
+window.closeModal = closeModal;
+window.copyToClipboard = copyToClipboard;
+window.formatDate = formatDate;
+window.API = API;
