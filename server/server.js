@@ -191,11 +191,24 @@ const storage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname);
-        const name = file.mimetype.startsWith('image')? 'logo-' : 'video-';
-        cb(null, name + Date.now() + ext);
+        const name = file.fieldname + '-' + Date.now();
+        cb(null, name + ext);
     }
 });
 const upload = multer({ storage: storage });
+
+// NAYA ADD - Manager docs ke liye alag multer config
+const managerUpload = multer({
+    storage: storage,
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only images allowed'), false);
+        }
+    }
+});
 
 // NAYA ADD - admin-server.js wala logo upload
 const uploadLogo = multer({ dest: 'public/logos/' });
@@ -287,6 +300,19 @@ function checkModuleInArea(module, userLat, userLng) {
     }
     return { inArea: false, distance: 0 };
 }
+
+// ========================================
+// NAYA - Direct upload API - managers.html ke liye
+// ========================================
+app.post('/admin/upload', authenticateToken, managerUpload.single('file'), (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+        const url = '/uploads/' + req.file.filename;
+        res.json({ success: true, url });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // ========================================
 // NAYA ADD - ADMIN DASHBOARD STATS API
@@ -637,10 +663,15 @@ app.get('/api/managers', async (req, res) => {
     }
 });
 
-// NAYA - ADMIN PANEL SE MANAGER BANANE KA API - FIXED: authenticateToken add kiya
-app.post('/api/admin/create-manager', authenticateToken, async (req, res) => {
+// NAYA - ADMIN PANEL SE MANAGER BANANE KA API - FIXED: Multer ke saath
+app.post('/api/admin/create-manager', authenticateToken, managerUpload.fields([
+    { name: 'photo', maxCount: 1 },
+    { name: 'aadhar', maxCount: 1 },
+    { name: 'pan', maxCount: 1 },
+    { name: 'addressProof', maxCount: 1 }
+]), async (req, res) => {
     try {
-        const { name, email, phone, area, serviceCharge, documents, moduleAccess } = req.body;
+        const { name, email, phone, area, serviceCharge, moduleAccess, status } = req.body;
 
         // Check agar email already exist karta hai
         const existing = await Manager.findOne({ email });
@@ -656,12 +687,13 @@ app.post('/api/admin/create-manager', authenticateToken, async (req, res) => {
         const loginToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
 
         const finalArea = area && area.trim()? area : 'Not Assigned';
-        const finalModuleAccess = (moduleAccess && moduleAccess.length > 0)? moduleAccess : ['all'];
+        const finalModuleAccess = (moduleAccess && moduleAccess.length > 0)? JSON.parse(moduleAccess) : ['all'];
+
         const finalDocuments = {
-            aadhar: documents?.aadhar || '',
-            pan: documents?.pan || '',
-            photo: documents?.photo || '',
-            addressProof: documents?.addressProof || ''
+            photo: req.files['photo']? '/uploads/' + req.files['photo'][0].filename : '',
+            aadhar: req.files['aadhar']? '/uploads/' + req.files['aadhar'][0].filename : '',
+            pan: req.files['pan']? '/uploads/' + req.files['pan'][0].filename : '',
+            addressProof: req.files['addressProof']? '/uploads/' + req.files['addressProof'][0].filename : ''
         };
 
         const manager = await Manager.create({
@@ -674,7 +706,7 @@ app.post('/api/admin/create-manager', authenticateToken, async (req, res) => {
             documents: finalDocuments,
             moduleAccess: finalModuleAccess,
             loginToken,
-            status: true,
+            status: status === 'true',
             tempPassword
         });
 
@@ -807,7 +839,7 @@ app.get('/api/admin/shop-history', async (req, res) => {
             if (shop.history && shop.history.length > 0) {
                 shop.history.forEach(h => {
                     history.push({
-                   ...h.toObject(),
+                  ...h.toObject(),
                         shopName: shop.name,
                         area: shop.area,
                         managerId: shop.managerId
@@ -943,7 +975,7 @@ app.post('/api/admin/ad', async (req, res) => {
     res.json({ success: true, data: newItem });
 });
 
-app.delete('/api/admin/ad/:id', async (req, res) => {
+    app.delete('/api/admin/ad/:id', async (req, res) => {
     const db = readDB();
     const item = db.ads.find(a => a.id === req.params.id);
     if(item && item.mongoId) { try { await Ad.findByIdAndDelete(item.mongoId); } catch(e) {} }
@@ -965,7 +997,7 @@ app.put('/api/admin/video/:id', async (req, res) => {
     } else res.status(404).json({ error: 'Not found' });
 });
 
-    app.post('/api/admin/video', async (req, res) => {
+app.post('/api/admin/video', async (req, res) => {
     const db = readDB();
     const newItem = { id: 'v-' + Date.now(), status: true, priority: db.videos.length + 1,...req.body };
     try {
