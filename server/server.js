@@ -18,13 +18,10 @@ mongoose.connect(process.env.MONGODB_URI)
 // MODELS REQUIRE KAR - models/Shop.js USE KARENGE
 // ========================================
 const Shop = require('./models/Shop');
-
-// ========================================
-// NAYA ADD - admin-server.js wale Models Import
-// ========================================
 const Manager = require('./models/Manager');
 const Content = require('./models/Content');
 const Setting = require('./models/Setting');
+const ShopHistory = require('./models/ShopHistory');
 
 // ========================================
 // MONGOOSE SCHEMAS - Shop.js ALAG FILE ME HAI
@@ -40,7 +37,7 @@ const moduleSchema = new mongoose.Schema({
     priority: Number,
     areas: Array,
     mongoId: String,
-    categories: Array // ← NAYA ADD - admin-server.js ke liye
+    categories: Array
 }, { timestamps: true });
 
 const adSchema = new mongoose.Schema({
@@ -78,16 +75,16 @@ const settingsSchema = new mongoose.Schema({
     logoImage: String,
     headerColor: String,
     footerText: String,
-    footerColor: String, // ← NAYA ADD
-    footerAbout: String, // ← NAYA ADD
-    footerLinks: Array, // ← NAYA ADD
-    facebook: String, // ← NAYA ADD
-    instagram: String, // ← NAYA ADD
-    twitter: String, // ← NAYA ADD
-    youtube: String // ← NAYA ADD
+    footerColor: String,
+    footerAbout: String,
+    footerLinks: Array,
+    facebook: String,
+    instagram: String,
+    twitter: String,
+    youtube: String
 }, { timestamps: true });
 
-// USER SCHEMA - UPDATE KAR SIRF YE ADD KARNA HAI
+// USER SCHEMA - PURA RAHEGA
 const addressSchema = new mongoose.Schema({
     type: { type: String, enum: ['Home', 'Work', 'Other'], default: 'Home' },
     name: { type: String, required: true },
@@ -138,7 +135,6 @@ const userSchema = new mongoose.Schema({
         state: String,
         pincode: String
     },
-    // NAYA ADD KAR - PROFILE PAGES KE LIYE
     addresses: [addressSchema],
     payments: [paymentSchema],
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
@@ -160,7 +156,6 @@ const userSchema = new mongoose.Schema({
 
 userSchema.index({ 'addresses.location': '2dsphere' });
 
-// PRODUCT SCHEMA - NAYA ADD KAR WISHLIST KE LIYE
 const productSchema = new mongoose.Schema({
     name: String,
     price: Number,
@@ -181,7 +176,6 @@ const Settings = mongoose.models.Settings || mongoose.model('Settings', settings
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
 
-// BAAKI TERA PURANA CODE SAME RAHEGA...
 // Video + Image upload config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -197,10 +191,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// NAYA ADD - Manager docs ke liye alag multer config
 const managerUpload = multer({
     storage: storage,
-    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+    limits: { fileSize: 2 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
@@ -210,11 +203,9 @@ const managerUpload = multer({
     }
 });
 
-// NAYA ADD - admin-server.js wala logo upload
 const uploadLogo = multer({ dest: 'public/logos/' });
 let CURRENT_LOGO = 'public/logos/default.png';
 
-// Default logo banao agar nahi hai
 if (!fs.existsSync('public/logos')) fs.mkdirSync('public/logos', { recursive: true });
 if (!fs.existsSync(CURRENT_LOGO)) {
     fs.writeFileSync(CURRENT_LOGO, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64'));
@@ -225,7 +216,7 @@ const dbPath = path.join(__dirname, './database/modules.json');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// DB Helpers - SAME
+// DB Helpers
 function readDB() {
     const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
     if (!data.areaManagers) data.areaManagers = [];
@@ -243,13 +234,11 @@ function writeDB(data) {
     fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
 }
 
-// AUTH MIDDLEWARE - FIXED JWT_SECRET
+// AUTH MIDDLEWARE
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-
     if (!token) return res.status(401).json({ error: 'Access denied' });
-
     jwt.verify(token, process.env.JWT_SECRET || 'samanlive_secret_key', (err, user) => {
         if (err) return res.status(403).json({ error: 'Invalid token' });
         req.user = user;
@@ -258,13 +247,13 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// GENERATE USER ID - SAME
+// GENERATE USER ID
 async function generateUserId() {
     const count = await User.countDocuments();
     return `USER${String(count + 1).padStart(3, '0')}`;
 }
 
-// LOCATION HELPERS - SAME
+// LOCATION HELPERS
 function getDistance(lat1, lon1, lat2, lon2) {
     const R = 6371e3;
     const φ1 = lat1 * Math.PI/180;
@@ -301,9 +290,7 @@ function checkModuleInArea(module, userLat, userLng) {
     return { inArea: false, distance: 0 };
 }
 
-// ========================================
-// NAYA - Direct upload API - managers.html ke liye
-// ========================================
+// Direct upload API
 app.post('/admin/upload', authenticateToken, managerUpload.single('file'), (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
@@ -314,9 +301,7 @@ app.post('/admin/upload', authenticateToken, managerUpload.single('file'), (req,
     }
 });
 
-// ========================================
-// NAYA ADD - ADMIN DASHBOARD STATS API
-// ========================================
+// ADMIN DASHBOARD STATS API
 app.get('/api/stats', async (req, res) => {
     try {
         const users = await User.countDocuments();
@@ -330,9 +315,7 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
-// ========================================
-// NAYA ADD - SETTINGS API MONGODB WALA
-// ========================================
+// SETTINGS API
 app.get('/api/settings/mongo', async (req, res) => {
     try {
         let settings = await Setting.findOne();
@@ -365,33 +348,23 @@ app.put('/api/settings/mongo', async (req, res) => {
     }
 });
 
-// USER AUTH ROUTES - SAME
+// USER AUTH ROUTES - PURA RAKHA HAI
 app.post('/api/auth/login-phone', async (req, res) => {
     try {
         const { phone, name } = req.body;
         if (!phone ||!name) return res.status(400).json({ error: 'Phone and name required' });
-
         let user = await User.findOne({ phone });
-
         if (!user) {
             const userId = await generateUserId();
             const qrData = JSON.stringify({ userId, name, phone });
-
-            user = new User({
-                userId,
-                name,
-                phone,
-                qrCodeData: qrData
-            });
+            user = new User({ userId, name, phone, qrCodeData: qrData });
             await user.save();
         }
-
         const token = jwt.sign(
             { userId: user._id, phone: user.phone },
             process.env.JWT_SECRET || 'samanlive_secret_key',
             { expiresIn: '30d' }
         );
-
         res.json({ success: true, token, user });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -415,7 +388,6 @@ app.put('/api/user/update', authenticateToken, async (req, res) => {
             { $set: updates },
             { new: true }
         ).select('-password');
-
         if (updates.name || updates.phone) {
             user.qrCodeData = JSON.stringify({
                 userId: user.userId,
@@ -424,49 +396,13 @@ app.put('/api/user/update', authenticateToken, async (req, res) => {
             });
             await user.save();
         }
-
         res.json({ success: true, user });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
 
-// SHOP CREATION BY USER - SAME
-app.post('/api/shop/create', authenticateToken, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.userId);
-        if (user.hasShop) {
-            return res.status(400).json({ error: 'User already has a shop' });
-        }
-
-        const { name, moduleId, phone, address, range, icon, color } = req.body;
-
-        const shop = new Shop({
-            name,
-            moduleId,
-            phone,
-            address,
-            range,
-            icon,
-            color,
-            priority: 1,
-            status: false,
-            ownerId: req.user.userId,
-            bannerApproved: false // NAYA ADD - Banner default pending
-        });
-
-        await shop.save();
-
-        user.hasShop = true;
-        await user.save();
-
-        res.json({ success: true, shop });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-
-// PUBLIC APIs - SAME
+// PUBLIC APIs
 app.get('/api/modules', (req, res) => {
     const db = readDB();
     const userLat = parseFloat(req.query.lat);
@@ -504,35 +440,20 @@ app.get('/api/shops', (req, res) => {
     res.json(shops);
 });
 
-// ========================================
-// NAYA ADD - PUBLIC SHOPS API FOR USER PANEL
-// Area wise + sirf approved banners dikhenge
-// ========================================
 app.get('/api/public/shops', async (req, res) => {
     try {
         const { lat, lng, area } = req.query;
-        let query = { status: true };
-
-        // Agar area diya hai to filter karo
-        if (area) {
-            query.area = area;
-        }
-
+        let query = { status: 'approved', isActive: true };
+        if (area) query.area = area;
         let shops = await Shop.find(query).lean();
-
-        // Sirf approved banner wali shop ka banner dikhao
         shops = shops.map(shop => {
-            if (!shop.bannerApproved) {
-                shop.banner = ''; // Pending banner hide kar do
-            }
+            if (!shop.bannerApproved) shop.banner = '';
             return shop;
         });
-
-        // Location wise sort agar lat/lng hai
         if (lat && lng) {
             shops = shops.map(s => {
-                if (s.lat && s.lng) {
-                    const dist = getDistance(parseFloat(lat), parseFloat(lng), s.lat, s.lng);
+                if (s.location && s.location.coordinates) {
+                    const dist = getDistance(parseFloat(lat), parseFloat(lng), s.location.coordinates[1], s.location.coordinates[0]);
                     s.distance = Math.round(dist);
                     s.inRange = dist <= (s.range || 5000);
                 } else {
@@ -542,7 +463,6 @@ app.get('/api/public/shops', async (req, res) => {
                 return s;
             }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
         }
-
         res.json({ success: true, shops });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -595,14 +515,9 @@ app.get('/api/settings', (req, res) => {
     res.json(db.settings);
 });
 
-// MARKET API ROUTE
+// ROUTES FILES
 app.use('/api/market', require('./routes/market'));
-// AREA MANAGER API ROUTE
 app.use('/api/area-managers', require('./routes/area-manager'));
-
-// ========================================
-// NAYI PROFILE ROUTES - SIRF YE ADD KAR
-// ========================================
 app.use('/api', require('./routes/userAddresses'));
 app.use('/api', require('./routes/userPayments'));
 app.use('/api', require('./routes/wishlist'));
@@ -610,9 +525,7 @@ app.use('/api', require('./routes/orders'));
 app.use('/api', require('./routes/notifications'));
 app.use('/api', require('./routes/shop'));
 
-// ========================================
-// NAYA ADD - CONTENT API MONGODB WALA
-// ========================================
+// CONTENT APIs
 app.get('/api/content', async (req, res) => {
     try {
         const content = await Content.find().sort({ createdAt: -1 });
@@ -651,9 +564,7 @@ app.delete('/api/content/:id', async (req, res) => {
     }
 });
 
-// ========================================
-// NAYA ADD - MANAGERS API MONGODB WALA - UPDATED
-// ========================================
+// MANAGERS APIs
 app.get('/api/managers', async (req, res) => {
     try {
         const managers = await Manager.find().select('-password');
@@ -663,27 +574,19 @@ app.get('/api/managers', async (req, res) => {
     }
 });
 
-// NAYA - ADMIN PANEL SE MANAGER BANANE KA API - FIXED: Multer ke saath
 app.post('/api/admin/create-manager', managerUpload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'aadhar', maxCount: 1 },
     { name: 'pan', maxCount: 1 },
     { name: 'addressProof', maxCount: 1 }
-]), async (req, res, next) => { // ⭐ FIX 1: next parameter add kiya
+]), async (req, res, next) => {
     try {
         const { name, email, phone, area, serviceCharge, moduleAccess, status } = req.body;
-
-        // Check agar email already exist karta hai
         const existing = await Manager.findOne({ email });
-        if (existing) {
-            return res.status(400).json({ error: 'Email already registered' });
-        }
+        if (existing) return res.status(400).json({ error: 'Email already registered' });
 
-        // Auto generate password
         const tempPassword = Math.random().toString(36).slice(-8);
         const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
-        // Unique login token generate
         const loginToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
 
         const finalArea = area && area.trim()? area : 'Not Assigned';
@@ -697,9 +600,7 @@ app.post('/api/admin/create-manager', managerUpload.fields([
         };
 
         const manager = await Manager.create({
-            name,
-            email,
-            phone,
+            name, email, phone,
             password: hashedPassword,
             area: finalArea,
             serviceCharge: serviceCharge || 5,
@@ -710,9 +611,7 @@ app.post('/api/admin/create-manager', managerUpload.fields([
             tempPassword
         });
 
-        // Login link banao
         const loginLink = `${req.protocol}://${req.get('host')}/area-manager.html?token=${loginToken}`;
-
         res.json({
             success: true,
             manager: {...manager.toObject(), password: undefined },
@@ -720,38 +619,33 @@ app.post('/api/admin/create-manager', managerUpload.fields([
             loginLink
         });
     } catch (err) {
-        console.log('Create Manager Error:', err.message);
-        next(err); // ⭐ FIX 2: next(err) add kiya
+        next(err);
     }
 });
 
-// NAYA - AREA MANAGER TOKEN LOGIN VERIFY
 app.get('/api/area-manager/verify-token', async (req, res) => {
     try {
         const { token } = req.query;
         if (!token) return res.status(400).json({ error: 'Token required' });
-
         const manager = await Manager.findOne({ loginToken: token, status: true });
         if (!manager) return res.status(401).json({ error: 'Invalid or expired token' });
-
         const jwtToken = jwt.sign(
             { managerId: manager._id, email: manager.email },
             process.env.JWT_SECRET || 'samanlive_secret_key',
             { expiresIn: '7d' }
         );
-
         res.json({ success: true, token: jwtToken, manager: {...manager.toObject(), password: undefined} });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// NAYA - BANNER APPROVE API
+// BANNER APIs
 app.put('/api/admin/approve-banner/:shopId', async (req, res) => {
     try {
         const shop = await Shop.findByIdAndUpdate(
             req.params.shopId,
-            { bannerApproved: true },
+            { bannerApproved: true, bannerApprovedAt: new Date() },
             { new: true }
         );
         if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
@@ -761,7 +655,6 @@ app.put('/api/admin/approve-banner/:shopId', async (req, res) => {
     }
 });
 
-// NAYA - BANNER REJECT API
 app.put('/api/admin/reject-banner/:shopId', async (req, res) => {
     try {
         const shop = await Shop.findByIdAndUpdate(
@@ -776,47 +669,6 @@ app.put('/api/admin/reject-banner/:shopId', async (req, res) => {
     }
 });
 
-app.post('/api/managers', async (req, res) => {
-    try {
-        if (req.body.password) {
-            req.body.password = await bcrypt.hash(req.body.password, 10);
-        }
-        req.body.loginToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-        const manager = await Manager.create(req.body);
-        res.json(manager);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.put('/api/managers/:id', async (req, res) => {
-    try {
-        if (req.body.password) {
-            req.body.password = await bcrypt.hash(req.body.password, 10);
-        }
-        const manager = await Manager.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!manager) return res.status(404).json({ error: 'Manager nahi mila' });
-        res.json(manager);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.delete('/api/managers/:id', async (req, res) => {
-    try {
-        const manager = await Manager.findByIdAndDelete(req.params.id);
-        if (!manager) return res.status(404).json({ error: 'Manager nahi mila' });
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ========================================
-// ⭐⭐ YE 2 ROUTE MISSING THE - AB ADD KIYE ⭐⭐
-// ========================================
-
-// 1. PENDING BANNERS API - managers.html ke liye
 app.get('/api/admin/pending-banners', async (req, res) => {
     try {
         const shops = await Shop.find({
@@ -829,59 +681,27 @@ app.get('/api/admin/pending-banners', async (req, res) => {
     }
 });
 
-// 2. MANAGER ACTIVITY HISTORY API - managers.html ke liye
+// FIX 2: SHOP HISTORY - ShopHistory collection use kar
 app.get('/api/admin/shop-history', async (req, res) => {
     try {
-        const shops = await Shop.find({}).populate('managerId', 'name email area');
-
-        const history = [];
-        shops.forEach(shop => {
-            if (shop.history && shop.history.length > 0) {
-                shop.history.forEach(h => {
-                    history.push({
-                 ...h.toObject(),
-                        shopName: shop.name,
-                        area: shop.area,
-                        managerId: shop.managerId
-                    });
-                });
-            }
-        });
-
-        history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
+        const history = await ShopHistory.find({})
+          .populate('managerId', 'name email area')
+          .populate('shopId', 'shopName area')
+          .sort({ timestamp: -1 })
+          .limit(100);
         res.json({ success: true, history });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// ========================================
-// ADMIN SHOPS API - Pending Banners ke liye
-// ========================================
-app.get('/api/admin/shops', async (req, res) => {
-    try {
-        let query = {};
-        // Agar bannerPending=true hai to sirf unapproved banners wali shop
-        if (req.query.bannerPending === 'true') {
-            query.banner = { $ne: '' }; // Banner laga hua hai
-            query.bannerApproved = false; // But approved nahi hai
-        }
-        const shops = await Shop.find(query).populate('managerId', 'name email area');
-        res.json({ success: true, shops });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ADMIN APIs - SAME RAHEGA TERA PURANA
+// ADMIN DATA
 app.get('/api/admin/data', async (req, res) => {
     try {
         const modules = await Module.find().sort({ priority: 1 });
         const shops = await Shop.find().populate('createdBy', 'name email').populate('approvedBy', 'name');
         const users = await User.find();
         const db = readDB();
-
         res.json({
             success: true,
             modules,
@@ -898,6 +718,7 @@ app.get('/api/admin/data', async (req, res) => {
     }
 });
 
+// MODULE APIs
 app.put('/api/admin/module/:id', async (req, res) => {
     const db = readDB();
     const idx = db.modules.findIndex(m => m.id === req.params.id);
@@ -924,7 +745,7 @@ app.post('/api/admin/module', async (req, res) => {
         desc: "",
         banner: "",
         areas: [],
-        categories: [], // ← NAYA ADD
+        categories: [],
 ...req.body
     };
     try {
@@ -932,7 +753,6 @@ app.post('/api/admin/module', async (req, res) => {
         await mongoItem.save();
         newItem.mongoId = mongoItem._id.toString();
     } catch(e) { console.log('MongoDB save failed:', e.message); }
-
     db.modules.push(newItem);
     writeDB(db);
     res.json({ success: true, data: newItem });
@@ -949,6 +769,7 @@ app.delete('/api/admin/module/:id', async (req, res) => {
     res.json({ success: true });
 });
 
+// AD APIs
 app.put('/api/admin/ad/:id', async (req, res) => {
     const db = readDB();
     const idx = db.ads.findIndex(a => a.id === req.params.id);
@@ -984,6 +805,7 @@ app.delete('/api/admin/ad/:id', async (req, res) => {
     res.json({ success: true });
 });
 
+// VIDEO APIs
 app.put('/api/admin/video/:id', async (req, res) => {
     const db = readDB();
     const idx = db.videos.findIndex(v => v.id === req.params.id);
@@ -1021,6 +843,7 @@ app.delete('/api/admin/video/:id', async (req, res) => {
     res.json({ success: true });
 });
 
+// CAMPAIGN APIs
 app.put('/api/admin/campaign/:id', async (req, res) => {
     const db = readDB();
     const idx = db.campaigns.findIndex(c => c.id === req.params.id);
@@ -1066,6 +889,7 @@ app.delete('/api/admin/campaign/:id', async (req, res) => {
     res.json({ success: true });
 });
 
+// SHOP APIs
 app.put('/api/admin/shop/:id', async (req, res) => {
     const db = readDB();
     const idx = db.shops.findIndex(s => s.id === req.params.id);
@@ -1104,90 +928,19 @@ app.post('/api/admin/shop', async (req, res) => {
     } catch(e) {
         console.log('MongoDB save failed:', e.message);
     }
-
     db.shops.push(newItem);
     writeDB(db);
     res.json({ success: true, data: newItem });
 });
 
-// Static files serve karo
 app.use(express.static(path.join(__dirname, '../public')));
 
 // 404 ke liye
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/404.html'));
 });
-// ========================================
-// NAYA ADD - AREA MANAGER DASHBOARD APIs
-// ========================================
 
-// AREA MANAGER AUTH MIDDLEWARE
-function authenticateManager(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) return res.status(401).json({ error: 'Access denied' });
-
-    jwt.verify(token, process.env.JWT_SECRET || 'samanlive_secret_key', (err, user) => {
-        if (err) return res.status(403).json({ error: 'Invalid token' });
-        if (!user.managerId) return res.status(403).json({ error: 'Not a manager token' });
-        req.manager = user;
-        next();
-    });
-}
-
-// AREA MANAGER KA DASHBOARD DATA
-app.get('/api/manager/dashboard', authenticateManager, async (req, res) => {
-    try {
-        const manager = await Manager.findById(req.manager.managerId);
-        if (!manager) return res.status(404).json({ error: 'Manager not found' });
-
-        // Manager ke area ki shops
-        const totalShops = await Shop.countDocuments({ area: manager.area });
-        const activeShops = await Shop.countDocuments({ area: manager.area, status: true });
-        const pendingBanners = await Shop.countDocuments({
-            area: manager.area,
-            banner: { $ne: '' },
-            bannerApproved: false
-        });
-
-        // Manager ke area ke modules count
-        const modules = await Module.countDocuments();
-
-        res.json({
-            success: true,
-            stats: {
-                totalShops,
-                activeShops,
-                pendingBanners,
-                modules
-            },
-            manager: {
-                name: manager.name,
-                email: manager.email,
-                area: manager.area,
-                serviceCharge: manager.serviceCharge
-            }
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// AREA MANAGER KI SHOPS - FIXED: Duplicate route hataya, sirf ek baar rakha
-app.get('/api/manager/shops', authenticateManager, async (req, res) => {
-    try {
-        const manager = await Manager.findById(req.manager.managerId);
-        if (!manager) return res.status(404).json({ error: 'Manager not found' });
-
-        const shops = await Shop.find({ area: manager.area }).sort({ createdAt: -1 });
-        res.json({ success: true, shops });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ⭐ FIX 2: MULTER ERROR HANDLER - YAHI NAYA ADD KIYA HAI
+// MULTER ERROR HANDLER - SABSE END ME
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
