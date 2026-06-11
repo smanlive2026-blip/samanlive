@@ -2,10 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+
+// MULTER AB YAHAN SE AAYEGA
+const { managerUpload, upload } = require('./middleware/upload');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -176,34 +179,8 @@ const Settings = mongoose.models.Settings || mongoose.model('Settings', settings
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
 
-// Video + Image upload config
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const dir = path.join(__dirname, '../public/uploads');
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        cb(null, dir);
-    },
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        const name = file.fieldname + '-' + Date.now();
-        cb(null, name + ext);
-    }
-});
-const upload = multer({ storage: storage });
-
-const managerUpload = multer({
-    storage: storage,
-    limits: { fileSize: 2 * 1024 },
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only images allowed'), false);
-        }
-    }
-});
-
-const uploadLogo = multer({ dest: 'public/logos/' });
+// LOGO UPLOAD KE LIYE - ye rahega
+const uploadLogo = require('multer')({ dest: 'public/logos/' });
 let CURRENT_LOGO = 'public/logos/default.png';
 
 if (!fs.existsSync('public/logos')) fs.mkdirSync('public/logos', { recursive: true });
@@ -213,8 +190,9 @@ if (!fs.existsSync(CURRENT_LOGO)) {
 
 const dbPath = path.join(__dirname, './database/modules.json');
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// BODY PARSER LIMIT BADHA DI - 50MB
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // DB Helpers
 function readDB() {
@@ -291,7 +269,7 @@ function checkModuleInArea(module, userLat, userLng) {
 }
 
 // Direct upload API
-app.post('/admin/upload', authenticateToken, managerUpload.single('file'), (req, res) => {
+app.post('/admin/upload', authenticateToken, upload.single('file'), (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
         const url = '/uploads/' + req.file.filename;
@@ -574,13 +552,13 @@ app.get('/api/managers', async (req, res) => {
     }
 });
 
-// ✅ FIX KIYA - next parameter add kiya
+// ✅ MANAGER CREATE - next parameter add kiya
 app.post('/api/admin/create-manager', managerUpload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'aadhar', maxCount: 1 },
     { name: 'pan', maxCount: 1 },
     { name: 'addressProof', maxCount: 1 }
-]), async (req, res, next) => { // <-- YAHAN next ADD KIYA
+]), async (req, res, next) => {
     try {
         const { name, email, phone, area, serviceCharge, moduleAccess, status } = req.body;
         const existing = await Manager.findOne({ email });
@@ -594,10 +572,10 @@ app.post('/api/admin/create-manager', managerUpload.fields([
         const finalModuleAccess = (moduleAccess && moduleAccess.length > 0)? JSON.parse(moduleAccess) : ['all'];
 
         const finalDocuments = {
-            photo: req.files['photo']? '/uploads/' + req.files['photo'][0].filename : '',
-            aadhar: req.files['aadhar']? '/uploads/' + req.files['aadhar'][0].filename : '',
-            pan: req.files['pan']? '/uploads/' + req.files['pan'][0].filename : '',
-            addressProof: req.files['addressProof']? '/uploads/' + req.files['addressProof'][0].filename : ''
+            photo: req.files['photo']? '/uploads/managers/' + req.files['photo'][0].filename : '',
+            aadhar: req.files['aadhar']? '/uploads/managers/' + req.files['aadhar'][0].filename : '',
+            pan: req.files['pan']? '/uploads/managers/' + req.files['pan'][0].filename : '',
+            addressProof: req.files['addressProof']? '/uploads/managers/' + req.files['addressProof'][0].filename : ''
         };
 
         const manager = await Manager.create({
@@ -620,7 +598,7 @@ app.post('/api/admin/create-manager', managerUpload.fields([
             loginLink
         });
     } catch (err) {
-        next(err); // Ab ye chalega
+        next(err);
     }
 });
 
@@ -635,7 +613,7 @@ app.get('/api/area-manager/verify-token', async (req, res) => {
             process.env.JWT_SECRET || 'samanlive_secret_key',
             { expiresIn: '7d' }
         );
-        res.json({ success: true, token: jwtToken, manager: {...manager.toObject(), password: undefined} });
+        res.json({ success: true, token: jwtToken, manager: {...manager.toObject(), password: undefined } });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -686,10 +664,10 @@ app.get('/api/admin/pending-banners', async (req, res) => {
 app.get('/api/admin/shop-history', async (req, res) => {
     try {
         const history = await ShopHistory.find({})
-         .populate('managerId', 'name email area')
-         .populate('shopId', 'shopName area')
-         .sort({ timestamp: -1 })
-         .limit(100);
+        .populate('managerId', 'name email area')
+        .populate('shopId', 'shopName area')
+        .sort({ timestamp: -1 })
+        .limit(100);
         res.json({ success: true, history });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -724,7 +702,7 @@ app.put('/api/admin/module/:id', async (req, res) => {
     const db = readDB();
     const idx = db.modules.findIndex(m => m.id === req.params.id);
     if(idx!== -1) {
-        db.modules[idx] = {...db.modules[idx],...req.body};
+        db.modules[idx] = {...db.modules[idx],...req.body };
         writeDB(db);
         try {
             if(db.modules[idx].mongoId) {
@@ -747,7 +725,7 @@ app.post('/api/admin/module', async (req, res) => {
         banner: "",
         areas: [],
         categories: [],
-...req.body
+       ...req.body
     };
     try {
         const mongoItem = new Module(newItem);
@@ -775,7 +753,7 @@ app.put('/api/admin/ad/:id', async (req, res) => {
     const db = readDB();
     const idx = db.ads.findIndex(a => a.id === req.params.id);
     if(idx!== -1) {
-        db.ads[idx] = {...db.ads[idx],...req.body};
+        db.ads[idx] = {...db.ads[idx],...req.body };
         writeDB(db);
         try {
             if(db.ads[idx].mongoId) await Ad.findByIdAndUpdate(db.ads[idx].mongoId, req.body);
@@ -811,7 +789,7 @@ app.put('/api/admin/video/:id', async (req, res) => {
     const db = readDB();
     const idx = db.videos.findIndex(v => v.id === req.params.id);
     if(idx!== -1) {
-        db.videos[idx] = {...db.videos[idx],...req.body};
+        db.videos[idx] = {...db.videos[idx],...req.body };
         writeDB(db);
         try {
             if(db.videos[idx].mongoId) await Video.findByIdAndUpdate(db.videos[idx].mongoId, req.body);
@@ -849,7 +827,7 @@ app.put('/api/admin/campaign/:id', async (req, res) => {
     const db = readDB();
     const idx = db.campaigns.findIndex(c => c.id === req.params.id);
     if(idx!== -1) {
-        db.campaigns[idx] = {...db.campaigns[idx],...req.body};
+        db.campaigns[idx] = {...db.campaigns[idx],...req.body };
         writeDB(db);
         try {
             if(db.campaigns[idx].mongoId) await Campaign.findByIdAndUpdate(db.campaigns[idx].mongoId, req.body);
@@ -895,7 +873,7 @@ app.put('/api/admin/shop/:id', async (req, res) => {
     const db = readDB();
     const idx = db.shops.findIndex(s => s.id === req.params.id);
     if(idx!== -1) {
-        db.shops[idx] = {...db.shops[idx],...req.body};
+        db.shops[idx] = {...db.shops[idx],...req.body };
         writeDB(db);
         try {
             if(db.shops[idx].mongoId) {
@@ -919,7 +897,7 @@ app.post('/api/admin/shop', async (req, res) => {
         range: 5000,
         banner: '',
         bannerApproved: false,
-...req.body
+       ...req.body
     };
     try {
         const mongoItem = new Shop(newItem);
@@ -941,11 +919,11 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/404.html'));
 });
 
-// MULTER ERROR HANDLER - SABSE END ME
+ // MULTER ERROR HANDLER - SABSE END ME
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ error: 'File size too large. Max 2MB allowed' });
+            return res.status(400).json({ error: 'File size too large. Max 10MB allowed' });
         }
         return res.status(400).json({ error: err.message });
     }
