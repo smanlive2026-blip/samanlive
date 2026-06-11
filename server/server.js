@@ -669,7 +669,7 @@ app.post('/api/admin/create-manager', managerUpload.fields([
     { name: 'aadhar', maxCount: 1 },
     { name: 'pan', maxCount: 1 },
     { name: 'addressProof', maxCount: 1 }
-]), async (req, res) => {
+]), async (req, res, next) => { // ⭐ FIX 1: next parameter add kiya
     try {
         const { name, email, phone, area, serviceCharge, moduleAccess, status } = req.body;
 
@@ -721,7 +721,7 @@ app.post('/api/admin/create-manager', managerUpload.fields([
         });
     } catch (err) {
         console.log('Create Manager Error:', err.message);
-        res.status(500).json({ error: err.message });
+        next(err); // ⭐ FIX 2: next(err) add kiya
     }
 });
 
@@ -839,7 +839,7 @@ app.get('/api/admin/shop-history', async (req, res) => {
             if (shop.history && shop.history.length > 0) {
                 shop.history.forEach(h => {
                     history.push({
-                  ...h.toObject(),
+                 ...h.toObject(),
                         shopName: shop.name,
                         area: shop.area,
                         managerId: shop.managerId
@@ -975,7 +975,7 @@ app.post('/api/admin/ad', async (req, res) => {
     res.json({ success: true, data: newItem });
 });
 
-    app.delete('/api/admin/ad/:id', async (req, res) => {
+app.delete('/api/admin/ad/:id', async (req, res) => {
     const db = readDB();
     const item = db.ads.find(a => a.id === req.params.id);
     if(item && item.mongoId) { try { await Ad.findByIdAndDelete(item.mongoId); } catch(e) {} }
@@ -1004,7 +1004,7 @@ app.post('/api/admin/video', async (req, res) => {
         const mongoItem = new Video(newItem);
         await mongoItem.save();
         newItem.mongoId = mongoItem._id.toString();
-    } catch(e) { // ← YE CATCH MISSING THA - AB ADD KAR DIYA
+    } catch(e) {
         console.log('MongoDB save failed:', e.message);
     }
     db.videos.push(newItem);
@@ -1185,6 +1185,20 @@ app.get('/api/manager/shops', authenticateManager, async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// ⭐ FIX 2: MULTER ERROR HANDLER - YAHI NAYA ADD KIYA HAI
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ error: 'File size too large. Max 2MB allowed' });
+        }
+        return res.status(400).json({ error: err.message });
+    }
+    if (err) {
+        return res.status(500).json({ error: err.message });
+    }
+    next();
 });
 
 // Server start
