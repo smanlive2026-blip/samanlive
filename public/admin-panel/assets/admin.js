@@ -5,7 +5,7 @@ const API = '/api';
 // ==================== ESCAPE HTML - XSS Protection ====================
 function escapeHtml(text) {
     const div = document.createElement('div');
-    div.textContent = text?? '';
+    div.textContent = text ?? '';
     return div.innerHTML;
 }
 
@@ -23,17 +23,22 @@ function showToast(msg, type) {
     setTimeout(function() { toast.remove(); }, 3000);
 }
 
-// ==================== API CALL ====================
+// ==================== API CALL - FIXED FOR NO LOGIN ====================
 async function apiCall(endpoint, method, body) {
     if (method === undefined) method = 'GET';
-    const token = localStorage.getItem('adminToken') || '';
+    const token = localStorage.getItem('adminToken');
     try {
         const opts = {
             method: method,
-            headers: { 'Authorization': 'Bearer ' + token }
+            headers: {}
         };
 
-        if (body &&!(body instanceof FormData)) {
+        // Token hai to hi bhejo, warna skip karo
+        if (token) {
+            opts.headers['Authorization'] = 'Bearer ' + token;
+        }
+
+        if (body && !(body instanceof FormData)) {
             opts.headers['Content-Type'] = 'application/json';
             opts.body = JSON.stringify(body);
         } else if (body) {
@@ -63,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.nav-btn').forEach(function(btn) {
         btn.classList.remove('active');
         const href = btn.getAttribute('href');
-        if (href && href.indexOf(currentPage)!== -1) {
+        if (href && href.indexOf(currentPage) !== -1) {
             btn.classList.add('active');
         }
     });
@@ -75,7 +80,7 @@ function filterTable(tableId, query) {
     const q = query.toLowerCase();
     rows.forEach(function(row) {
         const text = row.textContent.toLowerCase();
-        row.style.display = text.indexOf(q)!== -1? '' : 'none';
+        row.style.display = text.indexOf(q) !== -1 ? '' : 'none';
     });
 }
 

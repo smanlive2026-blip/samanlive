@@ -664,7 +664,7 @@ app.get('/api/managers', async (req, res) => {
 });
 
 // NAYA - ADMIN PANEL SE MANAGER BANANE KA API - FIXED: Multer ke saath
-app.post('/api/admin/create-manager', authenticateToken, managerUpload.fields([
+app.post('/api/admin/create-manager', managerUpload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'aadhar', maxCount: 1 },
     { name: 'pan', maxCount: 1 },
