@@ -41,49 +41,25 @@ const managerSchema = new mongoose.Schema({
   documents: {
     aadhar: {
       type: String,
-      default: '',
-      validate: {
-        validator: function(v) {
-          return v === '' || /^https?:\/\/.+/.test(v);
-        },
-        message: 'Aadhar must be a valid URL'
-      }
+      default: ''
     },
     pan: {
       type: String,
-      default: '',
-      validate: {
-        validator: function(v) {
-          return v === '' || /^https?:\/\/.+/.test(v);
-        },
-        message: 'PAN must be a valid URL'
-      }
+      default: ''
     },
     photo: {
       type: String,
-      default: '',
-      validate: {
-        validator: function(v) {
-          return v === '' || /^https?:\/\/.+/.test(v);
-        },
-        message: 'Photo must be a valid URL'
-      }
+      default: ''
     },
     addressProof: {
       type: String,
-      default: '',
-      validate: {
-        validator: function(v) {
-          return v === '' || /^https?:\/\/.+/.test(v);
-        },
-        message: 'Address proof must be a valid URL'
-      }
+      default: ''
     }
   },
 
   moduleAccess: {
     type: [String],
-    default: ['all'], // ✅ FIX: Default 'all' daal diya
+    default: ['all'],
     required: [true, 'Module access is required'],
     validate: {
       validator: function(v) {
@@ -97,7 +73,7 @@ const managerSchema = new mongoose.Schema({
     type: String,
     unique: true,
     sparse: true,
-    default: undefined // ✅ FIX: '' ki jagah undefined kar diya
+    default: undefined
   },
   tempPassword: {
     type: String,
