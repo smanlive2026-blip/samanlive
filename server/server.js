@@ -193,7 +193,7 @@ const upload = multer({ storage: storage });
 
 const managerUpload = multer({
     storage: storage,
-    limits: { fileSize: 2 * 1024 * 1024 },
+    limits: { fileSize: 2 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
@@ -574,12 +574,13 @@ app.get('/api/managers', async (req, res) => {
     }
 });
 
+// ✅ FIX KIYA - next parameter add kiya
 app.post('/api/admin/create-manager', managerUpload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'aadhar', maxCount: 1 },
     { name: 'pan', maxCount: 1 },
     { name: 'addressProof', maxCount: 1 }
-]), async (req, res, next) => {
+]), async (req, res, next) => { // <-- YAHAN next ADD KIYA
     try {
         const { name, email, phone, area, serviceCharge, moduleAccess, status } = req.body;
         const existing = await Manager.findOne({ email });
@@ -619,7 +620,7 @@ app.post('/api/admin/create-manager', managerUpload.fields([
             loginLink
         });
     } catch (err) {
-        next(err);
+        next(err); // Ab ye chalega
     }
 });
 
@@ -685,10 +686,10 @@ app.get('/api/admin/pending-banners', async (req, res) => {
 app.get('/api/admin/shop-history', async (req, res) => {
     try {
         const history = await ShopHistory.find({})
-          .populate('managerId', 'name email area')
-          .populate('shopId', 'shopName area')
-          .sort({ timestamp: -1 })
-          .limit(100);
+         .populate('managerId', 'name email area')
+         .populate('shopId', 'shopName area')
+         .sort({ timestamp: -1 })
+         .limit(100);
         res.json({ success: true, history });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -949,8 +950,10 @@ app.use((err, req, res, next) => {
         return res.status(400).json({ error: err.message });
     }
     if (err) {
+        console.error('Server Error:', err);
         return res.status(500).json({ error: err.message });
     }
+    next();
 });
 
 // Server start
