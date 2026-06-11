@@ -9,55 +9,60 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔧 SAMANLIVE Control Panel</h1>
+        <div class="admin-header">
+            <h1>🔧 SAMANLIVE Control Panel</h1>
+        </div>
 
-        <!-- NAVBAR - 6 PAGE KE LIYE -->
+        <!-- NAVBAR - 5 PAGE KE LIYE -->
         <div class="admin-navbar">
-            <a href="index.html" class="nav-btn">📊 Dashboard</a>
+            <a href="index.html" class="nav-btn active">📊 Dashboard</a>
             <a href="modules.html" class="nav-btn">📦 Modules</a>
             <a href="content.html" class="nav-btn">📢 Content</a>
             <a href="shops.html" class="nav-btn">🏪 Shops</a>
             <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
-            <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
         </div>
 
         <!-- ANALYTICS TAB KA CONTENT -->
         <div id="analyticsTab" class="content">
             <h2>📊 Area Wise Analytics</h2>
             <div class="stats-grid">
-                <div class="card" style="text-align:center;">
-                    <h3 style="color:#64748b;font-size:14px;">Total Users</h3>
-                    <div style="font-size:32px;font-weight:700;color:#1e293b;" id="totalUsersCount">0</div>
+                <div class="card stat-card">
+                    <h3>Total Users</h3>
+                    <div class="stat-value" id="totalUsersCount">0</div>
                 </div>
-                <div class="card" style="text-align:center;">
-                    <h3 style="color:#64748b;font-size:14px;">Total Shops</h3>
-                    <div style="font-size:32px;font-weight:700;color:#1e293b;" id="totalShopsCount">0</div>
+                <div class="card stat-card">
+                    <h3>Total Shops</h3>
+                    <div class="stat-value" id="totalShopsCount">0</div>
                 </div>
-                <div class="card" style="text-align:center;">
-                    <h3 style="color:#64748b;font-size:14px;">Total Modules</h3>
-                    <div style="font-size:32px;font-weight:700;color:#8b5cf6;" id="totalModulesCount">0</div>
+                <div class="card stat-card">
+                    <h3>Total Modules</h3>
+                    <div class="stat-value purple" id="totalModulesCount">0</div>
                 </div>
-                <div class="card" style="text-align:center;">
-                    <h3 style="color:#64748b;font-size:14px;">Total Content</h3>
-                    <div style="font-size:32px;font-weight:700;color:#06b6d4;" id="totalContentCount">0</div>
+                <div class="card stat-card">
+                    <h3>Total Content</h3>
+                    <div class="stat-value cyan" id="totalContentCount">0</div>
                 </div>
-                <div class="card" style="text-align:center;">
-                    <h3 style="color:#64748b;font-size:14px;">Total Managers</h3>
-                    <div style="font-size:32px;font-weight:700;color:#ec4899;" id="totalManagersCount">0</div>
+                <div class="card stat-card">
+                    <h3>Total Managers</h3>
+                    <div class="stat-value pink" id="totalManagersCount">0</div>
                 </div>
-                <div class="card" style="text-align:center;">
-                    <h3 style="color:#64748b;font-size:14px;">Pending Approval</h3>
-                    <div style="font-size:32px;font-weight:700;color:#f59e0b;" id="pendingShopsCount">0</div>
+                <div class="card stat-card">
+                    <h3>Pending Approval</h3>
+                    <div class="stat-value orange" id="pendingShopsCount">0</div>
                 </div>
             </div>
-            <div class="form-grid">
+            <div class="chart-grid">
                 <div class="card">
                     <h3>Shops by Area</h3>
-                    <canvas id="areaChart" height="300"></canvas>
+                    <div class="chart-container">
+                        <canvas id="areaChart"></canvas>
+                    </div>
                 </div>
                 <div class="card">
                     <h3>Shop Status</h3>
-                    <canvas id="statusChart" height="300"></canvas>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -72,16 +77,16 @@
                 </div>
                 <div class="form-group full">
                     <label>Logo Image:</label>
-                    <div style="display:flex;gap:15px;align-items:center;">
-                        <div>
-                            <img id="logoPreview" src="" style="width:80px;height:80px;border-radius:12px;border:2px solid #e5e7eb;object-fit:cover;display:none;">
-                            <div id="logoIconPreview" style="width:80px;height:80px;border-radius:12px;background:#667eea;color:white;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:bold;"></div>
+                    <div class="logo-upload-wrapper">
+                        <div class="logo-preview-box">
+                            <img id="logoPreview" src="" style="display:none;">
+                            <div id="logoIconPreview"></div>
                         </div>
-                        <div style="flex:1;">
+                        <div class="logo-upload-controls">
                             <input type="file" id="logoUploadFile" accept="image/*" onchange="previewLogo(event)">
-                            <button class="btn-primary" id="uploadLogoBtn" onclick="uploadLogoFile()" style="margin-top:8px;">📤 Upload Logo</button>
-                            <p style="font-size:12px;color:#64748b;margin-top:5px;">PNG, JPG, SVG - Max 2MB</p>
-                            <p id="logoUploadStatus" style="margin-top:5px;font-weight:600;"></p>
+                            <button class="btn-primary" id="uploadLogoBtn" onclick="uploadLogoFile()">📤 Upload Logo</button>
+                            <p class="help-text">PNG, JPG, SVG - Max 2MB</p>
+                            <p id="logoUploadStatus" class="status-text"></p>
                         </div>
                     </div>
                 </div>
@@ -103,11 +108,11 @@
                 </div>
             </div>
 
-            <h3 style="margin-top:30px;margin-bottom:15px;">🔗 Footer Links</h3>
+            <h3 class="section-title">🔗 Footer Links</h3>
             <div id="footerLinksContainer"></div>
             <button class="btn-success" onclick="addFooterLink()">+ Add Link</button>
 
-            <h3 style="margin-top:30px;margin-bottom:15px;">📱 Social Media Links</h3>
+            <h3 class="section-title">📱 Social Media Links</h3>
             <div class="form-grid">
                 <div class="form-group">
                     <label>Facebook URL:</label>
@@ -127,7 +132,7 @@
                 </div>
             </div>
 
-            <button class="btn-primary" id="saveSettingsBtn" onclick="saveSettings()" style="margin-top:20px;">💾 Save All Settings</button>
+            <button class="btn-primary btn-lg" id="saveSettingsBtn" onclick="saveSettings()">💾 Save All Settings</button>
         </div>
     </div>
 
@@ -167,10 +172,15 @@ async function loadAnalytics() {
                     datasets: [{
                         label: 'Shops',
                         data: Object.values(areaCounts),
-                        backgroundColor: '#3b82f6'
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
             });
         }
 
@@ -195,6 +205,7 @@ async function loadAnalytics() {
 
     } catch (err) {
         console.error('Analytics Error:', err);
+        showToast('Failed to load analytics', 'error');
     }
 }
 
@@ -212,7 +223,6 @@ async function loadSettings() {
         document.getElementById('settingTwitter').value = currentSettings.twitter || '';
         document.getElementById('settingYoutube').value = currentSettings.youtube || '';
 
-        // Logo Preview
         if (currentSettings.logoUrl) {
             document.getElementById('logoPreview').src = currentSettings.logoUrl;
             document.getElementById('logoPreview').style.display = 'block';
@@ -233,7 +243,7 @@ function renderFooterLinks() {
     const container = document.getElementById('footerLinksContainer');
     const links = currentSettings.footerLinks || [];
     container.innerHTML = links.map((link, i) => `
-        <div class="form-grid" style="margin-bottom:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;">
+        <div class="footer-link-row">
             <div class="form-group">
                 <label>Link Text:</label>
                 <input type="text" value="${link.text || ''}" onchange="updateFooterLink(${i}, 'text', this.value)">
@@ -242,9 +252,7 @@ function renderFooterLinks() {
                 <label>Link URL:</label>
                 <input type="text" value="${link.url || ''}" onchange="updateFooterLink(${i}, 'url', this.value)">
             </div>
-            <div class="form-group" style="display:flex;align-items:end;">
-                <button class="btn-danger" onclick="removeFooterLink(${i})">Remove</button>
-            </div>
+            <button class="btn-danger btn-sm" onclick="removeFooterLink(${i})">🗑️</button>
         </div>
     `).join('');
 }
@@ -296,19 +304,19 @@ window.uploadLogoFile = async () => {
     formData.append('logo', fileInput.files[0]);
 
     status.textContent = 'Uploading...';
-    status.style.color = '#3b82f6';
+    status.className = 'status-text uploading';
     btn.disabled = true;
 
     try {
         const res = await apiCall('/upload/logo', 'POST', formData);
         currentSettings.logoUrl = res.url;
         status.textContent = 'Upload successful!';
-        status.style.color = '#10b981';
+        status.className = 'status-text success';
         showToast('Logo uploaded');
         setTimeout(() => status.textContent = '', 3000);
     } catch (err) {
         status.textContent = 'Upload failed!';
-        status.style.color = '#ef4444';
+        status.className = 'status-text error';
     } finally {
         btn.disabled = false;
     }
@@ -317,6 +325,7 @@ window.uploadLogoFile = async () => {
 window.saveSettings = async () => {
     const btn = document.getElementById('saveSettingsBtn');
     btn.disabled = true;
+    btn.textContent = 'Saving...';
 
     const data = {
         logoText: document.getElementById('settingLogoText').value,
@@ -338,16 +347,15 @@ window.saveSettings = async () => {
         await loadSettings();
     } catch (err) {} finally {
         btn.disabled = false;
+        btn.textContent = '💾 Save All Settings';
     }
 };
 
-// Destroy charts on page unload to prevent memory leak
 window.addEventListener('beforeunload', () => {
     if (areaChart) areaChart.destroy();
     if (statusChart) statusChart.destroy();
 });
 
-// Init
 document.addEventListener('DOMContentLoaded', () => {
     loadAnalytics();
     loadSettings();

@@ -6,52 +6,117 @@
     <title>Area Managers - SAMANLIVE Admin</title>
     <link rel="stylesheet" href="assets/admin.css">
     <style>
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-  .form-full { grid-column: 1 / -1; }
-  .doc-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; }
-  .login-link-box {
-            background: #d1fae5; border: 2px solid #10b981; padding: 15px;
-            border-radius: 8px; margin-top: 15px; display: none;
+     .doc-preview { 
+            width: 100px; 
+            height: 100px; 
+            object-fit: cover; 
+            border-radius: 8px; 
+            margin-top: 8px; 
+            display: none;
+            border: 2px solid #e5e7eb;
         }
-  .login-link-box input { width: 100%; padding: 8px; border: 1px solid #10b981; border-radius: 4px; }
-  .badge-pending { background: #fef3c7; color: #92400e; }
-  .badge-success { background: #d1fae5; color: #065f46; }
-  .badge-danger { background: #fee2e2; color: #991b1b; }
-  .badge-info { background: #dbeafe; color: #1e40af; }
-  .banner-thumb { width: 120px; height: 40px; object-fit: cover; border-radius: 4px; cursor: pointer; }
-  .module-select-box {
-            border: 1px solid #d1d5db; border-radius: 8px; padding: 10px;
-            max-height: 200px; overflow-y: auto; background: #f9fafb;
+     .login-link-box {
+            background: #d1fae5; 
+            border: 2px solid #10b981; 
+            padding: 16px;
+            border-radius: 10px; 
+            margin-top: 15px; 
+            display: none;
         }
-  .module-checkbox { display: flex; align-items: center; padding: 6px 0; }
-  .module-checkbox input { margin-right: 8px; width: 16px; height: 16px; }
-  .module-checkbox label { cursor: pointer; font-size: 14px; }
-  .selected-modules { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
-  .module-tag {
-            background: #667eea; color: white; padding: 4px 10px;
-            border-radius: 12px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;
+     .login-link-box input { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #10b981; 
+            border-radius: 6px;
+            margin-top: 8px;
+            font-size: 13px;
         }
-  .module-tag span { cursor: pointer; }
-  .search-module { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 8px; }
-  .history-details { font-size: 12px; color: #64748b; margin-top: 4px; }
-  .filter-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
-  .filter-row select { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; }
-  .banner-modal-img { width: 100%; max-width: 600px; border-radius: 8px; }
-  .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-  .modal.active { display: flex; align-items: center; justify-content: center; }
-  .modal-content { background: white; padding: 20px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
-  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .close-btn { background: none; border: none; font-size: 28px; cursor: pointer; }
+     .module-select-box {
+            border: 1px solid #d1d5db; 
+            border-radius: 8px; 
+            padding: 12px;
+            max-height: 200px; 
+            overflow-y: auto; 
+            background: #f9fafb;
+        }
+     .module-checkbox { 
+            display: flex; 
+            align-items: center; 
+            padding: 8px 0;
+            transition: background 0.2s;
+        }
+     .module-checkbox:hover { background: #f3f4f6; border-radius: 4px; }
+     .module-checkbox input { margin-right: 10px; width: 18px; height: 18px; cursor: pointer; }
+     .module-checkbox label { cursor: pointer; font-size: 14px; flex: 1; }
+     .selected-modules { 
+            margin-top: 10px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 8px; 
+        }
+     .module-tag {
+            background: #667eea; 
+            color: white; 
+            padding: 6px 12px;
+            border-radius: 16px; 
+            font-size: 12px; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px;
+        }
+     .module-tag span { cursor: pointer; font-weight: bold; }
+     .search-module { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 6px; 
+            margin-bottom: 10px;
+        }
+     .history-details { font-size: 12px; color: #64748b; margin-top: 4px; }
+     .filter-row { 
+            display: flex; 
+            gap: 12px; 
+            margin-bottom: 15px; 
+            flex-wrap: wrap; 
+        }
+     .filter-row select { 
+            padding: 10px 14px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 8px;
+            min-width: 200px;
+        }
+     .banner-thumb { 
+            width: 120px; 
+            height: 40px; 
+            object-fit: cover; 
+            border-radius: 6px; 
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+        }
+     .banner-modal-img { 
+            width: 100%; 
+            max-width: 600px; 
+            border-radius: 10px; 
+        }
+     .manager-photo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e5e7eb;
+        }
         @media (max-width: 768px) {
-      .form-grid { grid-template-columns: 1fr; }
-      .filter-row { flex-direction: column; }
+           .filter-row { flex-direction: column; }
+           .filter-row select { width: 100%; }
+           .banner-thumb { width: 80px; height: 30px; }
         }
     </style>
-    <script src="assets/admin.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 SAMANLIVE Control Panel</h1>
+        <div class="admin-header">
+            <h1>🔧 SAMANLIVE Control Panel</h1>
+        </div>
 
         <!-- NAVBAR -->
         <div class="admin-navbar">
@@ -60,28 +125,22 @@
             <a href="content.html" class="nav-btn">📢 Content</a>
             <a href="shops.html" class="nav-btn">🏪 Shops</a>
             <a href="managers.html" class="nav-btn active">👨‍💼 Managers</a>
-            <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
         </div>
 
         <div class="main-content">
-            <div class="header">
-                <h1>👨‍💼 Area Managers</h1>
-                <button class="btn btn-primary" onclick="openAddManager()">+ Add New Manager</button>
-            </div>
-
             <!-- STATS -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <h3>TOTAL MANAGERS</h3>
-                    <div class="value" id="totalManagers">0</div>
+                    <div class="stat-value" id="totalManagers">0</div>
                 </div>
                 <div class="stat-card">
                     <h3>ACTIVE MANAGERS</h3>
-                    <div class="value" id="activeManagers">0</div>
+                    <div class="stat-value" id="activeManagers">0</div>
                 </div>
                 <div class="stat-card">
                     <h3>PENDING BANNERS</h3>
-                    <div class="value" id="pendingBanners">0</div>
+                    <div class="stat-value orange" id="pendingBanners">0</div>
                 </div>
             </div>
 
@@ -89,6 +148,7 @@
             <div class="card">
                 <div class="card-header">
                     <h2>All Area Managers</h2>
+                    <button class="btn btn-success" onclick="openAddManager()">+ Add New Manager</button>
                 </div>
                 <div style="overflow-x: auto;">
                     <table>
@@ -100,7 +160,7 @@
                                 <th>Modules</th>
                                 <th>Email</th>
                                 <th>Phone</th>
-                                <th>Service Charge</th>
+                                <th>Service %</th>
                                 <th>Status</th>
                                 <th>Login Link</th>
                                 <th>Actions</th>
@@ -113,11 +173,11 @@
                 </div>
             </div>
 
-            <!-- PENDING BANNERS TABLE -->
+            <!-- PENDING BANNERS -->
             <div class="card">
                 <div class="card-header">
                     <h2>🖼️ Pending Banner Approvals</h2>
-                    <button class="btn btn-small" id="refreshBannerBtn" onclick="loadData()">Refresh</button>
+                    <button class="btn btn-secondary btn-sm" id="refreshBannerBtn" onclick="loadData()">Refresh</button>
                 </div>
                 <div style="overflow-x: auto;">
                     <table>
@@ -139,11 +199,11 @@
                 </div>
             </div>
 
-            <!-- MANAGER ACTIVITY LOG TABLE -->
+            <!-- ACTIVITY LOG -->
             <div class="card">
                 <div class="card-header">
                     <h2>📜 Manager Activity Log</h2>
-                    <button class="btn btn-small" onclick="loadHistory()">Refresh</button>
+                    <button class="btn btn-secondary btn-sm" onclick="loadHistory()">Refresh</button>
                 </div>
                 <div class="filter-row">
                     <select id="historyManagerFilter" onchange="loadHistory()">
@@ -217,8 +277,8 @@
                     </div>
 
                     <!-- MODULE ACCESS -->
-                    <div class="form-group form-full">
-                        <label>Module Access * (Select kar manager kaunsi category handle karega)</label>
+                    <div class="form-group full">
+                        <label>Module Access * (Select modules this manager can handle)</label>
                         <input type="text" class="search-module" id="moduleSearch" placeholder="Search module... 🔍" onkeyup="filterModules()">
                         <div class="module-select-box" id="moduleSelectBox">
                             <div style="text-align:center; color:#64748b; padding:10px;">Loading modules...</div>
@@ -226,7 +286,7 @@
                         <div class="selected-modules" id="selectedModules"></div>
                     </div>
 
-                    <!-- DOCUMENTS UPLOAD -->
+                    <!-- DOCUMENTS -->
                     <div class="form-group">
                         <label>Manager Photo</label>
                         <input type="file" id="photoInput" accept="image/*" onchange="previewImage(this, 'photoPreview')">
@@ -249,13 +309,13 @@
                     </div>
                 </div>
 
-                <!-- LOGIN LINK BOX - Submit ke baad dikhega -->
+                <!-- LOGIN LINK BOX -->
                 <div class="login-link-box" id="loginLinkBox">
                     <strong>✅ Manager Created! Login Link:</strong>
                     <input type="text" id="loginLink" readonly onclick="this.select()">
-                    <small style="color:#065f46; display: block; margin-top: 5px;">
-                        Temp Password: <b id="tempPassword"></b> | Ye link manager ko bhej do
-                    </small>
+                    <p class="help-text" style="color:#065f46;">
+                        Temp Password: <b id="tempPassword"></b> | Send this link to manager
+                    </p>
                 </div>
 
                 <button type="submit" class="btn btn-primary" id="saveManagerBtn" style="width: 100%; margin-top: 20px;">
@@ -276,13 +336,13 @@
         </div>
     </div>
 
-    <script>
+<script src="assets/admin.js"></script>
+<script>
         let managers = [];
         let pendingShops = [];
         let allCategories = [];
         let selectedModuleIds = [];
 
-        // ========== CATEGORIES ==========
         async function loadCategories() {
             try {
                 allCategories = await apiCall('/market/categories');
@@ -308,10 +368,10 @@
         function renderModuleCheckboxes() {
             const box = document.getElementById('moduleSelectBox');
             box.innerHTML = allCategories.map(function(cat) {
-                return '<div class="module-checkbox">' +
-                    '<input type="checkbox" id="mod_' + cat.id + '" value="' + cat.id + '" onchange="toggleModule(\'' + cat.id + '\')">' +
-                    '<label for="mod_' + cat.id + '">' + cat.icon + ' ' + escapeHtml(cat.name) + '</label>' +
-                    '</div>';
+                return `<div class="module-checkbox">
+                    <input type="checkbox" id="mod_${cat.id}" value="${cat.id}" onchange="toggleModule('${cat.id}')">
+                    <label for="mod_${cat.id}">${cat.icon} ${escapeHtml(cat.name)}</label>
+                    </div>`;
             }).join('');
         }
 
@@ -341,10 +401,10 @@
             container.innerHTML = selectedModuleIds.map(function(id) {
                 const cat = allCategories.find(function(c) { return c.id === id; });
                 if (!cat) return '';
-                return '<div class="module-tag">' +
-                    cat.icon + ' ' + escapeHtml(cat.name) +
-                    '<span onclick="removeModule(\'' + id + '\')">×</span>' +
-                    '</div>';
+                return `<div class="module-tag">
+                    ${cat.icon} ${escapeHtml(cat.name)}
+                    <span onclick="removeModule('${id}')">×</span>
+                    </div>`;
             }).join('');
         }
 
@@ -355,7 +415,6 @@
             renderSelectedModules();
         }
 
-        // ========== LOAD DATA ==========
         async function loadData() {
             const btn = document.getElementById('refreshBannerBtn');
             if (btn) btn.disabled = true;
@@ -377,7 +436,7 @@
                 const filterSelect = document.getElementById('historyManagerFilter');
                 filterSelect.innerHTML = '<option value="">All Managers</option>' +
                     managers.map(function(m) {
-                        return '<option value="' + m._id + '">' + escapeHtml(m.name) + ' - ' + escapeHtml(m.area) + '</option>';
+                        return `<option value="${m._id}">${escapeHtml(m.name)} - ${escapeHtml(m.area)}</option>`;
                     }).join('');
             } catch (err) {
                 console.error('Load data error:', err);
@@ -389,7 +448,7 @@
         function renderManagers() {
             const tbody = document.getElementById('managersTable');
             if (managers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 40px;">Koi manager nahi hai</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 40px;">No managers found</td></tr>';
                 return;
             }
 
@@ -403,49 +462,48 @@
                     if (m.moduleAccess.length > 2) moduleNames += ' +' + (m.moduleAccess.length - 2);
                 }
 
-                return '<tr>' +
-                    '<td><img src="' + (m.documents && m.documents.photo || '/assets/default-avatar.png') + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" onerror="this.src=\'/assets/default-avatar.png\'"></td>' +
-                    '<td><strong>' + escapeHtml(m.name) + '</strong></td>' +
-                    '<td>' + escapeHtml(m.area) + '</td>' +
-                    '<td style="font-size:12px;">' + moduleNames + '</td>' +
-                    '<td>' + escapeHtml(m.email) + '</td>' +
-                    '<td>' + escapeHtml(m.phone) + '</td>' +
-                    '<td>' + m.serviceCharge + '%</td>' +
-                    '<td><span class="badge ' + (m.status? 'badge-success' : 'badge-danger') + '">' + (m.status? 'Active' : 'Inactive') + '</span></td>' +
-                    '<td><button class="btn btn-small" onclick="copyLink(\'' + m.loginToken + '\')">Copy Link</button></td>' +
-                    '<td><div class="actions">' +
-                    '<button class="btn btn-small" onclick="editManager(\'' + m._id + '\')">Edit</button>' +
-                    '<button class="btn btn-small btn-danger" onclick="deleteManager(\'' + m._id + '\')">Delete</button>' +
-                    '</div></td>' +
-                    '</tr>';
+                return `<tr>
+                    <td><img src="${(m.documents && m.documents.photo) || '/assets/default-avatar.png'}" class="manager-photo" onerror="this.src='/assets/default-avatar.png'"></td>
+                    <td><strong>${escapeHtml(m.name)}</strong></td>
+                    <td>${escapeHtml(m.area)}</td>
+                    <td style="font-size:12px;">${moduleNames}</td>
+                    <td>${escapeHtml(m.email)}</td>
+                    <td>${escapeHtml(m.phone)}</td>
+                    <td>${m.serviceCharge}%</td>
+                    <td><span class="status-badge ${m.status? 'status-active' : 'status-hidden'}">${m.status? 'Active' : 'Inactive'}</span></td>
+                    <td><button class="btn btn-secondary btn-sm" onclick="copyLink('${m.loginToken}')">Copy Link</button></td>
+                    <td class="actions">
+                    <button class="btn btn-primary btn-sm" onclick="editManager('${m._id}')">Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteManager('${m._id}')">Delete</button>
+                    </td>
+                    </tr>`;
             }).join('');
         }
 
         function renderBanners() {
             const tbody = document.getElementById('bannerTable');
             if (pendingShops.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">Koi pending banner nahi</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">No pending banners</td></tr>';
                 return;
             }
 
             tbody.innerHTML = pendingShops.map(function(shop) {
                 const uploaded = shop.updatedAt? new Date(shop.updatedAt).toLocaleDateString('en-IN') : '-';
-                return '<tr>' +
-                    '<td><strong>' + escapeHtml(shop.name) + '</strong></td>' +
-                    '<td>' + escapeHtml(shop.managerId && shop.managerId.name || '-') + '</td>' +
-                    '<td>' + escapeHtml(shop.area) + '</td>' +
-                    '<td><img src="' + shop.banner + '" class="banner-thumb" onclick="viewBanner(\'' + shop.banner + '\')"></td>' +
-                    '<td><span class="badge badge-pending">Pending</span></td>' +
-                    '<td>' + uploaded + '</td>' +
-                    '<td><div class="actions">' +
-                    '<button class="btn btn-small btn-success" onclick="approveBanner(\'' + shop._id + '\')">Approve</button>' +
-                    '<button class="btn btn-small btn-danger" onclick="rejectBanner(\'' + shop._id + '\')">Reject</button>' +
-                    '</div></td>' +
-                    '</tr>';
+                return `<tr>
+                    <td><strong>${escapeHtml(shop.name)}</strong></td>
+                    <td>${escapeHtml(shop.managerId && shop.managerId.name || '-')}</td>
+                    <td>${escapeHtml(shop.area)}</td>
+                    <td><img src="${shop.banner}" class="banner-thumb" onclick="viewBanner('${shop.banner}')"></td>
+                    <td><span class="status-badge status-pending">Pending</span></td>
+                    <td>${uploaded}</td>
+                    <td class="actions">
+                    <button class="btn btn-success btn-sm" onclick="approveBanner('${shop._id}')">Approve</button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectBanner('${shop._id}')">Reject</button>
+                    </td>
+                    </tr>`;
             }).join('');
         }
 
-        // ========== HISTORY ==========
         async function loadHistory() {
             try {
                 const data = await apiCall('/admin/shop-history');
@@ -471,13 +529,13 @@
             }
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">Koi activity nahi</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">No activity found</td></tr>';
                 return;
             }
 
             tbody.innerHTML = filtered.slice(0, 50).map(function(h) {
-                const actionBadge = h.action === 'create'? 'badge-success' :
-                                   h.action === 'edit'? 'badge-info' : 'badge-danger';
+                const actionBadge = h.action === 'create'? 'status-success' :
+                                   h.action === 'edit'? 'status-info' : 'status-danger';
                 const time = new Date(h.timestamp).toLocaleString('en-IN', {
                     day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                 });
@@ -500,21 +558,19 @@
                 const managerArea = h.managerId && h.managerId.area || h.area;
                 const moduleName = h.oldData && h.oldData.moduleId || h.newData && h.newData.moduleId || '-';
 
-                return '<tr>' +
-                    '<td><strong>' + escapeHtml(managerName) + '</strong><br><small style="color:#64748b;">' + escapeHtml(managerArea) + '</small></td>' +
-                    '<td><span class="badge ' + actionBadge + '">' + h.action.toUpperCase() + '</span></td>' +
-                    '<td><strong>' + escapeHtml(h.shopName) + '</strong></td>' +
-                    '<td>' + escapeHtml(h.area) + '</td>' +
-                    '<td>' + escapeHtml(moduleName) + '</td>' +
-                    '<td>' + time + '</td>' +
-                    '<td class="history-details">' + details + '</td>' +
-                    '</tr>';
+                return `<tr>
+                    <td><strong>${escapeHtml(managerName)}</strong><br><small class="help-text">${escapeHtml(managerArea)}</small></td>
+                    <td><span class="status-badge ${actionBadge}">${h.action.toUpperCase()}</span></td>
+                    <td><strong>${escapeHtml(h.shopName)}</strong></td>
+                    <td>${escapeHtml(h.area)}</td>
+                    <td>${escapeHtml(moduleName)}</td>
+                    <td>${time}</td>
+                    <td class="history-details">${details}</td>
+                    </tr>`;
             }).join('');
         }
 
-        // ========== MODAL FUNCTIONS ==========
         function openAddManager() {
-            console.log('openAddManager called');
             document.getElementById('managerModal').classList.add('active');
             document.getElementById('modalTitle').textContent = 'Add New Area Manager';
             document.getElementById('managerForm').reset();
@@ -570,7 +626,6 @@
             }
         }
 
-        // ========== PREVIEW IMAGE ==========
         function previewImage(input, previewId) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
@@ -583,14 +638,13 @@
             }
         }
 
-        // ========== SAVE MANAGER - FIXED ==========
         document.getElementById('managerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const managerId = document.getElementById('managerId').value;
             const btn = document.getElementById('saveManagerBtn');
 
             if (selectedModuleIds.length === 0) {
-                showToast('Kam se kam 1 Module select karo!', 'error');
+                showToast('Select at least 1 Module!', 'error');
                 return;
             }
 
@@ -601,6 +655,7 @@
             }
 
             btn.disabled = true;
+            btn.textContent = 'Saving...';
 
             const formData = new FormData();
             formData.append('name', document.getElementById('name').value.trim());
@@ -611,7 +666,6 @@
             formData.append('status', document.getElementById('status').value);
             formData.append('moduleAccess', JSON.stringify(selectedModuleIds));
 
-            // Files direct append kar - agar select ki hain
             if (document.getElementById('photoInput').files[0]) {
                 formData.append('photo', document.getElementById('photoInput').files[0]);
             }
@@ -626,7 +680,6 @@
             }
 
             try {
-                // FIXED: /api hata diya kyunki admin.js me API = '/api' already hai
                 const url = managerId? '/managers/' + managerId : '/admin/create-manager';
                 const method = managerId? 'PUT' : 'POST';
 
@@ -652,18 +705,17 @@
                 showToast('Error saving manager', 'error');
             } finally {
                 btn.disabled = false;
+                btn.textContent = 'Save Manager';
             }
         });
 
-        // ========== COPY LOGIN LINK ==========
         function copyLink(token) {
             const link = window.location.origin + '/area-manager.html?token=' + token;
             copyToClipboard(link);
         }
 
-        // ========== DELETE MANAGER ==========
         async function deleteManager(id) {
-            if (!confirm('Pakka delete karna hai?')) return;
+            if (!confirm('Delete this manager? This action cannot be undone.')) return;
             try {
                 const data = await apiCall('/managers/' + id, 'DELETE');
                 if (data.success) {
@@ -673,9 +725,8 @@
             } catch (err) {}
         }
 
-        // ========== BANNER APPROVAL ==========
         async function approveBanner(shopId) {
-            if (!confirm('Banner approve karna hai?')) return;
+            if (!confirm('Approve this banner?')) return;
             try {
                 const data = await apiCall('/admin/approve-banner/' + shopId, 'POST');
                 if (data.success) {
@@ -686,7 +737,7 @@
         }
 
         async function rejectBanner(shopId) {
-            if (!confirm('Banner reject karna hai? Image delete ho jayegi.')) return;
+            if (!confirm('Reject this banner? Image will be deleted.')) return;
             try {
                 const data = await apiCall('/admin/reject-banner/' + shopId, 'POST');
                 if (data.success) {
@@ -705,9 +756,7 @@
             document.getElementById('bannerModal').classList.remove('active');
         }
 
-        // ========== INIT ==========
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('Page loaded, initializing...');
             await loadCategories();
             await loadData();
             await loadHistory();

@@ -6,84 +6,139 @@
     <title>Shops - SAMANLIVE Admin</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="assets/admin.css">
+    <style>
+       .shop-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid #e5e7eb;
+        }
+       .map-container { 
+            height: 450px; 
+            width: 100%; 
+            border-radius: 10px; 
+            margin-top: 15px;
+            border: 2px solid #e5e7eb;
+        }
+       .shop-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+       .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 768px) {
+           .map-container { height: 350px; }
+           .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 SAMANLIVE Control Panel</h1>
+        <div class="admin-header">
+            <h1>🔧 SAMANLIVE Control Panel</h1>
+        </div>
 
-        <!-- NAVBAR - Shops active hai -->
+        <!-- NAVBAR - Shops active -->
         <div class="admin-navbar">
             <a href="index.html" class="nav-btn">📊 Dashboard</a>
             <a href="modules.html" class="nav-btn">📦 Modules</a>
             <a href="content.html" class="nav-btn">📢 Content</a>
-            <a href="shops.html" class="nav-btn">🏪 Shops</a>
+            <a href="shops.html" class="nav-btn active">🏪 Shops</a>
             <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
-            <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
         </div>
 
-        <!-- SHOPS TAB -->
+        <!-- ACTIVE SHOPS -->
         <div id="shopsTab" class="content">
-            <div class="action-bar">
+            <div class="section-header">
+                <h2>🏪 Active Shops <span id="activeShopsCount" class="badge badge-info">0</span></h2>
                 <input type="text" class="search-box" placeholder="Search shops..." onkeyup="filterTable('shopsTable', this.value)">
             </div>
-            <table id="shopsTable">
-                <thead><tr><th>Icon</th><th>Name</th><th>Module</th><th>Manager</th><th>Location</th><th>Range</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody></tbody>
-            </table>
+            <div style="overflow-x:auto;">
+                <table id="shopsTable">
+                    <thead>
+                        <tr>
+                            <th>Logo</th>
+                            <th>Name</th>
+                            <th>Module</th>
+                            <th>Manager</th>
+                            <th>Location</th>
+                            <th>Range</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="9" style="text-align:center;padding:40px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- PENDING SHOPS TAB -->
+        <!-- PENDING SHOPS -->
         <div id="pendingShopsTab" class="content" style="margin-top:20px;">
-            <h2>⏳ Pending Shop Approvals</h2>
-            <p style="color:#64748b;margin-bottom:15px;">User dwara banayi gayi shops - Approve/Reject karo</p>
-            <table id="pendingShopsTable">
-                <thead>
-                    <tr>
-                        <th>User Name</th>
-                        <th>Shop Name</th>
-                        <th>Module</th>
-                        <th>Phone</th>
-                        <th>Address</th>
-                        <th>Area</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <h2>⏳ Pending Shop Approvals <span id="pendingShopsCount" class="badge badge-warning">0</span></h2>
+            <p class="help-text" style="margin-bottom:15px;">Users ne banayi hui shops - Approve ya Reject karo</p>
+            <div style="overflow-x:auto;">
+                <table id="pendingShopsTable">
+                    <thead>
+                        <tr>
+                            <th>User Name</th>
+                            <th>Shop Name</th>
+                            <th>Module</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                            <th>Area</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="7" style="text-align:center;padding:40px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- SHOP LOCATION TAB -->
+        <!-- SHOP LOCATION -->
         <div id="shopLocationTab" class="content" style="margin-top:20px;">
-            <h2>🏪 Shop Fixed Location</h2>
-            <p style="color:#64748b;margin-bottom:15px;">Shop ki exact location set karo. Map pe click karke point select karo.</p>
+            <h2>📍 Shop Fixed Location</h2>
+            <p class="help-text" style="margin-bottom:15px;">Shop ki exact location set karo. Map pe click karke point select karo.</p>
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Select Shop:</label>
+                    <label>Select Shop *</label>
                     <select id="shopSelectLocation" onchange="loadShopLocation()">
                         <option value="">-- Select Shop --</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Link to Module:</label>
+                    <label>Link to Module</label>
                     <select id="shopModuleLink">
                         <option value="">-- Select Module --</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Shop Name:</label>
+                    <label>Shop Name</label>
                     <input type="text" id="shopName" placeholder="Raju Electrician">
                 </div>
                 <div class="form-group">
-                    <label>Phone:</label>
+                    <label>Phone</label>
                     <input type="text" id="shopPhone" placeholder="9876543210" pattern="[0-9]{10}">
                 </div>
                 <div class="form-group">
-                    <label>Range (meters):</label>
+                    <label>Range (meters)</label>
                     <input type="number" id="shopRange" value="5000" placeholder="5000" min="100" max="50000">
                 </div>
                 <div class="form-group full">
-                    <label>Address:</label>
+                    <label>Address</label>
                     <input type="text" id="shopAddress" placeholder="Hazratganj, Lucknow">
                 </div>
             </div>
@@ -93,7 +148,7 @@
                 <button class="btn-secondary" onclick="clearShopMarker()">🗑️ Clear Marker</button>
             </div>
 
-            <div id="shopMap" style="height:500px;width:100%;border-radius:8px;margin-top:15px;"></div>
+            <div id="shopMap" class="map-container"></div>
 
             <div class="area-info" id="shopLocationInfo" style="display:none;">
                 <strong>Current Location:</strong> <span id="shopLocationDetails"></span>
@@ -101,16 +156,19 @@
         </div>
     </div>
 
-    <!-- UNIVERSAL MODAL -->
+    <!-- EDIT MODAL -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <h2 id="modalTitle">Edit Item</h2>
+            <div class="modal-header">
+                <h2 id="modalTitle">Edit Shop</h2>
+                <button class="close-btn" onclick="closeShopModal()">×</button>
+            </div>
             <input type="hidden" id="editId">
             <input type="hidden" id="editType">
             <div id="modalFields"></div>
             <div style="display:flex;gap:10px;margin-top:20px;">
                 <button class="btn-primary" id="saveShopBtn" onclick="saveShop()">💾 Save Changes</button>
-                <button onclick="closeShopModal()">Cancel</button>
+                <button class="btn-secondary" onclick="closeShopModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -126,14 +184,6 @@ let editingId = null;
 let shopMap, shopMarker, shopCircle;
 let currentShopLocation = null;
 
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text ?? '';
-    return div.innerHTML;
-}
-
-// ==================== LOAD DATA ====================
 async function loadData() {
     try {
         [allShops, allModules, allManagers] = await Promise.all([
@@ -150,13 +200,13 @@ async function loadData() {
     }
 }
 
-// Render Active Shops
 function renderShops() {
     const shops = allShops.filter(s => s.status !== 'pending');
     const tbody = document.querySelector('#shopsTable tbody');
+    document.getElementById('activeShopsCount').textContent = shops.length;
     
     if (shops.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#6b7280">No shops found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#6b7280;padding:40px;">No active shops found</td></tr>';
         return;
     }
     
@@ -165,35 +215,30 @@ function renderShops() {
         const manager = allManagers.find(m => m._id === s.managerId);
         return `
             <tr>
-                <td><img src="${s.logo || s.image || '/assets/logo.png'}" style="width:40px;height:40px;border-radius:6px;object-fit:cover" onerror="this.src='/assets/logo.png'"></td>
-                <td>${escapeHtml(s.name)}</td>
+                <td><img src="${s.logo || s.image || '/assets/logo.png'}" class="shop-logo" onerror="this.src='/assets/logo.png'"></td>
+                <td><b>${escapeHtml(s.name)}</b></td>
                 <td>${module ? module.icon + ' ' + escapeHtml(module.name) : '-'}</td>
-                <td>${manager ? escapeHtml(manager.name) : 'Unassigned'}</td>
-                <td>${escapeHtml(s.address || '-')}</td>
+                <td>${manager ? escapeHtml(manager.name) : '<span class="help-text">Unassigned</span>'}</td>
+                <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(s.address || '-')}</td>
                 <td>${s.range || 0}m</td>
                 <td>${s.priority || 0}</td>
                 <td><span class="status-badge status-${s.status}">${s.status}</span></td>
-                <td>
-                    <button class="btn-primary" data-edit-id="${s._id}">Edit</button>
-                    <button class="btn-danger" onclick="deleteShop('${s._id}')">Delete</button>
+                <td class="actions">
+                    <button class="btn-primary btn-sm" onclick="editShop('${s._id}')">Edit</button>
+                    <button class="btn-danger btn-sm" onclick="deleteShop('${s._id}')">Delete</button>
                 </td>
             </tr>
         `;
     }).join('');
-
-    // Attach edit listeners
-    document.querySelectorAll('[data-edit-id]').forEach(btn => {
-        btn.addEventListener('click', () => editShop(btn.dataset.editId));
-    });
 }
 
-// Render Pending Shops
 function renderPendingShops() {
     const pending = allShops.filter(s => s.status === 'pending');
     const tbody = document.querySelector('#pendingShopsTable tbody');
+    document.getElementById('pendingShopsCount').textContent = pending.length;
     
     if (pending.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6b7280">No pending shops</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6b7280;padding:40px;">No pending shops</td></tr>';
         return;
     }
     
@@ -202,21 +247,20 @@ function renderPendingShops() {
         return `
             <tr>
                 <td>${escapeHtml(s.createdBy?.name || s.createdBy || 'User')}</td>
-                <td>${escapeHtml(s.name)}</td>
+                <td><b>${escapeHtml(s.name)}</b></td>
                 <td>${module ? module.icon + ' ' + escapeHtml(module.name) : '-'}</td>
                 <td>${escapeHtml(s.phone || '-')}</td>
-                <td>${escapeHtml(s.address || '-')}</td>
+                <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(s.address || '-')}</td>
                 <td>${escapeHtml(s.area || '-')}</td>
-                <td>
-                    <button class="btn-success" onclick="approveShop('${s._id}')">✅ Approve</button>
-                    <button class="btn-danger" onclick="rejectShop('${s._id}')">❌ Reject</button>
+                <td class="actions">
+                    <button class="btn-success btn-sm" onclick="approveShop('${s._id}')">✅ Approve</button>
+                    <button class="btn-danger btn-sm" onclick="rejectShop('${s._id}')">❌ Reject</button>
                 </td>
             </tr>
         `;
     }).join('');
 }
 
-// Populate Dropdowns
 function populateShopDropdowns() {
     const shopSelect = document.getElementById('shopSelectLocation');
     shopSelect.innerHTML = '<option value="">-- Select Shop --</option>' +
@@ -227,7 +271,6 @@ function populateShopDropdowns() {
         allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
 }
 
-// ==================== SHOP CRUD ====================
 function editShop(id) {
     const s = allShops.find(x => x._id === id);
     if (!s) return;
@@ -267,7 +310,7 @@ function editShop(id) {
             </div>
             <div class="form-group">
                 <label>Priority</label>
-                <input type="number" id="field_priority" value="${s.priority || 0}">
+                <input type="number" id="field_priority" value="${s.priority || 0}" min="0">
             </div>
             <div class="form-group full">
                 <label>Address</label>
@@ -285,11 +328,13 @@ function editShop(id) {
 
     document.getElementById('modalFields').innerHTML = fields;
     document.getElementById('editModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
 }
 
 window.saveShop = async () => {
     const btn = document.getElementById('saveShopBtn');
     btn.disabled = true;
+    btn.textContent = 'Saving...';
 
     const data = {
         name: document.getElementById('field_name').value.trim(),
@@ -305,29 +350,30 @@ window.saveShop = async () => {
     if (!data.name || !data.moduleId) {
         showToast('Name and Module are required', 'error');
         btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
         return;
     }
 
     if (data.phone && !/^[0-9]{10}$/.test(data.phone)) {
         showToast('Phone must be 10 digits', 'error');
         btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
         return;
     }
 
     try {
         await apiCall('/shops/' + editingId, 'PUT', data);
-        showToast('Shop updated');
+        showToast('Shop updated successfully');
         closeShopModal();
         await loadData();
-    } catch (err) {
-        showToast(err.message, 'error');
-    } finally {
+    } catch (err) {} finally {
         btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
     }
 };
 
 window.deleteShop = async (id) => {
-    if (!confirm('Delete this shop?')) return;
+    if (!confirm('Delete this shop? This action cannot be undone.')) return;
     try {
         await apiCall('/shops/' + id, 'DELETE');
         showToast('Shop deleted');
@@ -335,18 +381,17 @@ window.deleteShop = async (id) => {
     } catch (err) {}
 };
 
-// Approve/Reject
 window.approveShop = async (id) => {
-    if (!confirm('Approve this shop?')) return;
+    if (!confirm('Approve this shop? It will become active.')) return;
     try {
         await apiCall('/shops/' + id, 'PUT', { status: 'active' });
-        showToast('Shop approved');
+        showToast('Shop approved successfully');
         await loadData();
     } catch (err) {}
 };
 
 window.rejectShop = async (id) => {
-    if (!confirm('Reject this shop? This will delete it permanently.')) return;
+    if (!confirm('Reject this shop? It will be deleted permanently.')) return;
     try {
         await apiCall('/shops/' + id, 'DELETE');
         showToast('Shop rejected');
@@ -354,11 +399,12 @@ window.rejectShop = async (id) => {
     } catch (err) {}
 };
 
-// ==================== MAP LOGIC ====================
 function initShopMap() {
     if (shopMap) return;
     shopMap = L.map('shopMap').setView([28.6139, 77.2090], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(shopMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(shopMap);
 
     shopMap.on('click', (e) => {
         if (shopMarker) shopMap.removeLayer(shopMarker);
@@ -418,6 +464,8 @@ window.saveShopLocation = async () => {
     }
 
     btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
     const data = {
         name: document.getElementById('shopName').value.trim(),
         phone: document.getElementById('shopPhone').value.trim(),
@@ -430,17 +478,17 @@ window.saveShopLocation = async () => {
     if (data.phone && !/^[0-9]{10}$/.test(data.phone)) {
         showToast('Phone must be 10 digits', 'error');
         btn.disabled = false;
+        btn.textContent = '💾 Save Shop Location';
         return;
     }
 
     try {
         await apiCall('/shops/' + shopId, 'PUT', data);
-        showToast('Shop location saved');
+        showToast('Shop location saved successfully');
         await loadData();
-    } catch (err) {
-        showToast(err.message, 'error');
-    } finally {
+    } catch (err) {} finally {
         btn.disabled = false;
+        btn.textContent = '💾 Save Shop Location';
     }
 };
 
@@ -455,9 +503,9 @@ window.clearShopMarker = () => {
 
 window.closeShopModal = () => {
     document.getElementById('editModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
 };
 
-// Destroy map on page unload to prevent memory leak
 window.addEventListener('beforeunload', () => {
     if (shopMap) {
         shopMap.remove();
@@ -465,7 +513,6 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-// Init
 document.addEventListener('DOMContentLoaded', loadData);
 </script>
 </body>

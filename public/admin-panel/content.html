@@ -5,72 +5,151 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Content - SAMANLIVE Admin</title>
     <link rel="stylesheet" href="assets/admin.css">
+    <style>
+       .upload-box {
+            background: #f0f9ff;
+            padding: 16px;
+            border-radius: 10px;
+            border: 2px dashed #3b82f6;
+            margin-bottom: 20px;
+        }
+       .upload-box p {
+            margin: 0 0 8px 0;
+        }
+       .video-preview {
+            width: 100px;
+            height: 60px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+       .content-section {
+            margin-bottom: 30px;
+        }
+       .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 768px) {
+           .upload-box { padding: 12px; }
+           .video-preview { width: 80px; height: 50px; }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 SAMANLIVE Control Panel</h1>
+        <div class="admin-header">
+            <h1>🔧 SAMANLIVE Control Panel</h1>
+        </div>
 
-        <!-- NAVBAR - Content active hai -->
+        <!-- NAVBAR - Content active -->
         <div class="admin-navbar">
             <a href="index.html" class="nav-btn">📊 Dashboard</a>
             <a href="modules.html" class="nav-btn">📦 Modules</a>
-            <a href="content.html" class="nav-btn">📢 Content</a>
+            <a href="content.html" class="nav-btn active">📢 Content</a>
             <a href="shops.html" class="nav-btn">🏪 Shops</a>
             <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
-            <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
         </div>
 
-        <!-- ADS TAB -->
-        <div id="adsTab" class="content">
-            <div class="action-bar">
+        <!-- ADS SECTION -->
+        <div id="adsTab" class="content content-section">
+            <div class="section-header">
+                <h2>📢 Ads <span id="adsCount" class="badge badge-info">0</span></h2>
                 <button class="btn-success" onclick="openAddContent('ad')">+ Add New Ad</button>
             </div>
-            <table id="adsTable">
-                <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody></tbody>
-            </table>
+            <div style="overflow-x:auto;">
+                <table id="adsTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Button</th>
+                            <th>Color</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="7" style="text-align:center;padding:40px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- VIDEOS TAB -->
-        <div id="videosTab" class="content" style="margin-top:20px;">
-            <div class="action-bar">
+        <!-- VIDEOS SECTION -->
+        <div id="videosTab" class="content content-section">
+            <div class="section-header">
+                <h2>🎬 Videos <span id="videosCount" class="badge badge-info">0</span></h2>
                 <button class="btn-success" onclick="openAddContent('video')">+ Add New Video</button>
             </div>
             <div class="upload-box">
-                <p><strong>📤 Direct Video Upload:</strong></p>
-                <p style="font-size:12px;color:#64748b;margin-bottom:10px;">System se video select karo, auto upload ho jayega</p>
+                <p><strong>📤 Direct Video Upload</strong></p>
+                <p class="help-text">Select video from system - auto uploads and creates entry</p>
                 <input type="file" id="videoUploadFile" accept="video/*">
                 <button class="btn-primary" id="uploadVideoBtn" onclick="uploadVideoFile()">Upload Video</button>
-                <p id="uploadStatus" style="margin-top:10px;font-weight:600;"></p>
+                <p id="uploadStatus" class="status-text"></p>
             </div>
-            <table id="videosTable">
-                <thead><tr><th>Title</th><th>URL</th><th>Preview</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody></tbody>
-            </table>
+            <div style="overflow-x:auto;">
+                <table id="videosTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>URL</th>
+                            <th>Preview</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="6" style="text-align:center;padding:40px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- CAMPAIGNS TAB -->
-        <div id="campaignsTab" class="content" style="margin-top:20px;">
-            <div class="action-bar">
+        <!-- CAMPAIGNS SECTION -->
+        <div id="campaignsTab" class="content content-section">
+            <div class="section-header">
+                <h2>🎯 Campaigns <span id="campaignsCount" class="badge badge-info">0</span></h2>
                 <button class="btn-success" onclick="openAddContent('campaign')">+ Add New Campaign</button>
             </div>
-            <table id="campaignsTable">
-                <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody></tbody>
-            </table>
+            <div style="overflow-x:auto;">
+                <table id="campaignsTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Button</th>
+                            <th>Color</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="7" style="text-align:center;padding:40px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <!-- UNIVERSAL MODAL -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <h2 id="modalTitle">Edit Item</h2>
+            <div class="modal-header">
+                <h2 id="modalTitle">Edit Item</h2>
+                <button class="close-btn" onclick="closeContentModal()">×</button>
+            </div>
             <input type="hidden" id="editId">
             <input type="hidden" id="editType">
             <div id="modalFields"></div>
             <div style="display:flex;gap:10px;margin-top:20px;">
                 <button class="btn-primary" id="saveContentBtn" onclick="saveContent()">💾 Save Changes</button>
-                <button onclick="closeContentModal()">Cancel</button>
+                <button class="btn-secondary" onclick="closeContentModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -81,7 +160,6 @@
 let allContent = [];
 let editingId = null;
 
-// ==================== LOAD ALL CONTENT DATA ====================
 async function loadData() {
     try {
         allContent = await apiCall('/content');
@@ -93,97 +171,83 @@ async function loadData() {
     }
 }
 
-// Render Ads Table
 function renderAds() {
     const ads = allContent.filter(c => c.type === 'ad');
     const tbody = document.querySelector('#adsTable tbody');
+    document.getElementById('adsCount').textContent = ads.length;
 
     if (ads.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6b7280">No ads found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6b7280;padding:40px;">No ads found. Click "Add New Ad" to create one.</td></tr>';
         return;
     }
 
     tbody.innerHTML = ads.map(ad => `
         <tr>
-            <td>${escapeHtml(ad.title)}</td>
-            <td>${escapeHtml(ad.description || '-')}</td>
+            <td><b>${escapeHtml(ad.title)}</b></td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(ad.description || '-')}</td>
             <td>${escapeHtml(ad.buttonText || '-')}</td>
-            <td><span style="background:${ad.color || '#3b82f6'};padding:4px 8px;border-radius:4px;color:white">${escapeHtml(ad.color || '#3b82f6')}</span></td>
+            <td><span class="color-badge" style="background:${ad.color || '#3b82f6'}">${escapeHtml(ad.color || '#3b82f6')}</span></td>
             <td>${ad.priority || 0}</td>
             <td><span class="status-badge status-${ad.status}">${ad.status}</span></td>
-            <td>
-                <button class="btn-primary" data-edit-id="${ad._id}">Edit</button>
-                <button class="btn-danger" onclick="deleteContent('${ad._id}')">Delete</button>
+            <td class="actions">
+                <button class="btn-primary btn-sm" onclick="editContent('${ad._id}')">Edit</button>
+                <button class="btn-danger btn-sm" onclick="deleteContent('${ad._id}')">Delete</button>
             </td>
         </tr>
     `).join('');
-
-    // Attach edit listeners
-    document.querySelectorAll('#adsTable [data-edit-id]').forEach(btn => {
-        btn.addEventListener('click', () => editContent(btn.dataset.editId));
-    });
 }
 
-// Render Videos Table
 function renderVideos() {
     const videos = allContent.filter(c => c.type === 'video');
     const tbody = document.querySelector('#videosTable tbody');
+    document.getElementById('videosCount').textContent = videos.length;
 
     if (videos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#6b7280">No videos found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:40px;">No videos found. Upload one above.</td></tr>';
         return;
     }
 
     tbody.innerHTML = videos.map(v => `
         <tr>
-            <td>${escapeHtml(v.title)}</td>
-            <td><a href="${v.url}" target="_blank" style="color:#3b82f6">Link</a></td>
-            <td><video src="${v.url}" style="width:100px;height:60px;border-radius:6px;" controls onerror="this.style.display='none'"></video></td>
+            <td><b>${escapeHtml(v.title)}</b></td>
+            <td><a href="${v.url}" target="_blank" class="btn-secondary btn-sm">View</a></td>
+            <td><video src="${v.url}" class="video-preview" controls onerror="this.style.display='none'"></video></td>
             <td>${v.priority || 0}</td>
             <td><span class="status-badge status-${v.status}">${v.status}</span></td>
-            <td>
-                <button class="btn-primary" data-edit-id="${v._id}">Edit</button>
-                <button class="btn-danger" onclick="deleteContent('${v._id}')">Delete</button>
+            <td class="actions">
+                <button class="btn-primary btn-sm" onclick="editContent('${v._id}')">Edit</button>
+                <button class="btn-danger btn-sm" onclick="deleteContent('${v._id}')">Delete</button>
             </td>
         </tr>
     `).join('');
-
-    document.querySelectorAll('#videosTable [data-edit-id]').forEach(btn => {
-        btn.addEventListener('click', () => editContent(btn.dataset.editId));
-    });
 }
 
-// Render Campaigns Table
 function renderCampaigns() {
     const campaigns = allContent.filter(c => c.type === 'campaign');
     const tbody = document.querySelector('#campaignsTable tbody');
+    document.getElementById('campaignsCount').textContent = campaigns.length;
 
     if (campaigns.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6b7280">No campaigns found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6b7280;padding:40px;">No campaigns found. Click "Add New Campaign" to create one.</td></tr>';
         return;
     }
 
     tbody.innerHTML = campaigns.map(c => `
         <tr>
-            <td>${escapeHtml(c.title)}</td>
-            <td>${escapeHtml(c.description || '-')}</td>
+            <td><b>${escapeHtml(c.title)}</b></td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.description || '-')}</td>
             <td>${escapeHtml(c.buttonText || '-')}</td>
-            <td><span style="background:${c.color || '#3b82f6'};padding:4px 8px;border-radius:4px;color:white">${escapeHtml(c.color || '#3b82f6')}</span></td>
+            <td><span class="color-badge" style="background:${c.color || '#3b82f6'}">${escapeHtml(c.color || '#3b82f6')}</span></td>
             <td>${c.priority || 0}</td>
             <td><span class="status-badge status-${c.status}">${c.status}</span></td>
-            <td>
-                <button class="btn-primary" data-edit-id="${c._id}">Edit</button>
-                <button class="btn-danger" onclick="deleteContent('${c._id}')">Delete</button>
+            <td class="actions">
+                <button class="btn-primary btn-sm" onclick="editContent('${c._id}')">Edit</button>
+                <button class="btn-danger btn-sm" onclick="deleteContent('${c._id}')">Delete</button>
             </td>
         </tr>
     `).join('');
-
-    document.querySelectorAll('#campaignsTable [data-edit-id]').forEach(btn => {
-        btn.addEventListener('click', () => editContent(btn.dataset.editId));
-    });
 }
 
-// Add New Item
 window.openAddContent = (type) => {
     editingId = null;
     document.getElementById('editId').value = '';
@@ -191,10 +255,11 @@ window.openAddContent = (type) => {
     document.getElementById('modalTitle').textContent = `Add New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
     let fields = `
-        <div class="form-group full">
-            <label>Title *</label>
-            <input type="text" id="field_title" required>
-        </div>
+        <div class="form-grid">
+            <div class="form-group full">
+                <label>Title *</label>
+                <input type="text" id="field_title" required>
+            </div>
     `;
 
     if (type === 'ad' || type === 'campaign') {
@@ -205,11 +270,11 @@ window.openAddContent = (type) => {
             </div>
             <div class="form-group">
                 <label>Button Text</label>
-                <input type="text" id="field_buttonText">
+                <input type="text" id="field_buttonText" placeholder="Learn More">
             </div>
             <div class="form-group">
                 <label>Button Link</label>
-                <input type="text" id="field_buttonLink">
+                <input type="text" id="field_buttonLink" placeholder="https://...">
             </div>
             <div class="form-group">
                 <label>Color</label>
@@ -228,24 +293,25 @@ window.openAddContent = (type) => {
     }
 
     fields += `
-        <div class="form-group">
-            <label>Priority</label>
-            <input type="number" id="field_priority" value="0">
-        </div>
-        <div class="form-group">
-            <label>Status</label>
-            <select id="field_status">
-                <option value="active">Active</option>
-                <option value="hidden">Hidden</option>
-            </select>
+            <div class="form-group">
+                <label>Priority</label>
+                <input type="number" id="field_priority" value="0" min="0">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="field_status">
+                    <option value="active">Active</option>
+                    <option value="hidden">Hidden</option>
+                </select>
+            </div>
         </div>
     `;
 
     document.getElementById('modalFields').innerHTML = fields;
     document.getElementById('editModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
 };
 
-// Edit Item
 function editContent(id) {
     const item = allContent.find(x => x._id === id);
     if (!item) return;
@@ -255,9 +321,8 @@ function editContent(id) {
     document.getElementById('editType').value = item.type;
     document.getElementById('modalTitle').textContent = `Edit ${item.type.charAt(0).toUpperCase() + item.type.slice(1)}`;
 
-    openAddContent(item.type); // Form bana do
+    openAddContent(item.type);
 
-    // Values fill karo
     setTimeout(() => {
         document.getElementById('field_title').value = item.title || '';
         if (document.getElementById('field_description')) document.getElementById('field_description').value = item.description || '';
@@ -270,10 +335,10 @@ function editContent(id) {
     }, 50);
 }
 
-// Save Item
 window.saveContent = async () => {
     const btn = document.getElementById('saveContentBtn');
     btn.disabled = true;
+    btn.textContent = 'Saving...';
 
     const type = document.getElementById('editType').value;
     const data = {
@@ -291,12 +356,14 @@ window.saveContent = async () => {
     if (!data.title) {
         showToast('Title is required', 'error');
         btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
         return;
     }
 
     if (type === 'video' &&!data.url) {
         showToast('Video URL is required', 'error');
         btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
         return;
     }
 
@@ -310,16 +377,14 @@ window.saveContent = async () => {
         }
         closeContentModal();
         await loadData();
-    } catch (err) {
-        showToast(err.message, 'error');
-    } finally {
+    } catch (err) {} finally {
         btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
     }
 };
 
-// Delete Item
 window.deleteContent = async (id) => {
-    if (!confirm('Are you sure you want to delete this?')) return;
+    if (!confirm('Are you sure you want to delete this item?')) return;
     try {
         await apiCall('/content/' + id, 'DELETE');
         showToast('Deleted successfully');
@@ -327,7 +392,6 @@ window.deleteContent = async (id) => {
     } catch (err) {}
 };
 
-// Upload Video File
 window.uploadVideoFile = async () => {
     const fileInput = document.getElementById('videoUploadFile');
     const status = document.getElementById('uploadStatus');
@@ -344,18 +408,18 @@ window.uploadVideoFile = async () => {
     }
 
     btn.disabled = true;
+    btn.textContent = 'Uploading...';
     const formData = new FormData();
     formData.append('video', fileInput.files[0]);
 
     status.textContent = 'Uploading...';
-    status.style.color = '#3b82f6';
+    status.className = 'status-text uploading';
 
     try {
         const res = await apiCall('/upload/video', 'POST', formData);
         status.textContent = 'Upload successful!';
-        status.style.color = '#10b981';
+        status.className = 'status-text success';
 
-        // Auto create video entry
         await apiCall('/content', 'POST', {
             type: 'video',
             title: fileInput.files[0].name.split('.')[0],
@@ -367,21 +431,24 @@ window.uploadVideoFile = async () => {
         showToast('Video uploaded & added');
         fileInput.value = '';
         await loadData();
-        setTimeout(() => status.textContent = '', 3000);
+        setTimeout(() => {
+            status.textContent = '';
+            status.className = 'status-text';
+        }, 3000);
     } catch (err) {
         status.textContent = 'Upload failed!';
-        status.style.color = '#ef4444';
+        status.className = 'status-text error';
     } finally {
         btn.disabled = false;
+        btn.textContent = 'Upload Video';
     }
 };
 
-// Close Modal
 window.closeContentModal = () => {
     document.getElementById('editModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
 };
 
-// Init
 document.addEventListener('DOMContentLoaded', loadData);
 </script>
 </body>

@@ -8,43 +8,83 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
     <link rel="stylesheet" href="assets/admin.css">
     <style>
-        #moduleMap { height: 500px; width: 100%; border-radius: 8px; margin-top: 15px; }
-      .module-row { cursor: pointer; }
-      .module-row:hover { background: #f8fafc; }
-      .expand-icon { transition: transform 0.2s; display: inline-block; }
-      .expand-icon.open { transform: rotate(90deg); }
-      .area-expand { padding: 15px; background: #f8fafc; border-radius: 8px; }
-      .status-active { background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-      .status-hidden { background: #6b7280; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+       .module-row { cursor: pointer; transition: background 0.2s; }
+       .module-row:hover { background: #f8fafc; }
+       .expand-icon { transition: transform 0.2s; display: inline-block; }
+       .expand-icon.open { transform: rotate(90deg); }
+       .area-expand { padding: 16px; background: #f8fafc; border-radius: 8px; margin-top: 8px; }
+       .area-row { 
+            background: white; 
+            padding: 12px; 
+            border-radius: 6px; 
+            border: 1px solid #e5e7eb;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+       .map-container { 
+            height: 450px; 
+            width: 100%; 
+            border-radius: 10px; 
+            margin-top: 15px;
+            border: 2px solid #e5e7eb;
+        }
+       .module-icon { font-size: 24px; }
+       .color-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        @media (max-width: 768px) {
+           .map-container { height: 350px; }
+           .area-row { flex-direction: column; gap: 8px; align-items: flex-start; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 SAMANLIVE Control Panel</h1>
+        <div class="admin-header">
+            <h1>🔧 SAMANLIVE Control Panel</h1>
+        </div>
 
         <div class="admin-navbar">
             <a href="index.html" class="nav-btn">📊 Dashboard</a>
-            <a href="modules.html" class="nav-btn">📦 Modules</a>
+            <a href="modules.html" class="nav-btn active">📦 Modules</a>
             <a href="content.html" class="nav-btn">📢 Content</a>
             <a href="shops.html" class="nav-btn">🏪 Shops</a>
             <a href="managers.html" class="nav-btn">👨‍💼 Managers</a>
-            <a href="qr-batch.html" class="nav-btn">🎟️ QR Batch</a>
         </div>
 
         <div id="modulesTab" class="content">
-            <h2>📦 All Modules <span id="moduleCount"></span></h2>
+            <h2>📦 All Modules <span id="moduleCount" class="badge badge-info"></span></h2>
             <div class="action-bar">
                 <button class="btn-success" onclick="openAddModule()">+ Add New Module</button>
                 <input type="text" class="search-box" placeholder="Search modules..." onkeyup="filterTable('modulesTable', this.value)">
             </div>
-            <table id="modulesTable">
-                <thead>
-                    <tr><th style="width:40px;"></th><th>Icon</th><th>Name</th><th>Color</th><th>Link</th><th>Areas</th><th>Priority</th><th>Status</th><th>Actions</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="9" style="text-align:center;padding:20px;">Loading...</td></tr>
-                </tbody>
-            </table>
+            <div style="overflow-x:auto;">
+                <table id="modulesTable">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"></th>
+                            <th>Icon</th>
+                            <th>Name</th>
+                            <th>Color</th>
+                            <th>Link</th>
+                            <th>Areas</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="9" style="text-align:center;padding:40px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div id="moduleAreaTab" class="content" style="margin-top:20px;">
@@ -60,7 +100,7 @@
                 <button class="btn-secondary" onclick="clearModuleDrawing()">🗑️ Clear</button>
                 <button class="btn-warning" onclick="deleteModuleArea()">❌ Remove Area</button>
             </div>
-            <div id="moduleMap"></div>
+            <div id="moduleMap" class="map-container"></div>
             <div class="area-info" id="areaInfo" style="display:none;">
                 <strong>Current Area:</strong> <span id="areaDetails"></span>
             </div>
@@ -69,12 +109,15 @@
 
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <h2 id="modalTitle">Edit Item</h2>
+            <div class="modal-header">
+                <h2 id="modalTitle">Edit Module</h2>
+                <button class="close-btn" onclick="closeModuleModal()">×</button>
+            </div>
             <input type="hidden" id="editId">
             <div id="modalFields"></div>
             <div style="display:flex;gap:10px;margin-top:20px;">
                 <button class="btn-primary" id="saveModuleBtn" onclick="saveModule()">💾 Save Changes</button>
-                <button onclick="closeModuleModal()">Cancel</button>
+                <button class="btn-secondary" onclick="closeModuleModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -90,31 +133,24 @@ let map, drawnItems, drawControl;
 let currentModuleId = null;
 let currentDrawnLayer = null;
 
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text?? '';
-    return div.innerHTML;
-}
-
-// SABSE PEHLE TABLE LOAD HOGA
 async function loadData() {
+    showLoading('modulesTable');
     try {
         const result = await apiCall('/modules');
         allModules = Array.isArray(result)? result : [];
-        document.getElementById('moduleCount').textContent = `(${allModules.length})`;
+        document.getElementById('moduleCount').textContent = allModules.length;
         renderModules();
         populateModuleDropdown();
         initModuleMap();
     } catch (err) {
-        document.querySelector('#modulesTable tbody').innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;padding:20px;">Error: ${escapeHtml(err.message)}</td></tr>`;
+        document.querySelector('#modulesTable tbody').innerHTML = `<tr><td colspan="9" style="text-align:center;color:#ef4444;padding:40px;">Error: ${escapeHtml(err.message)}</td></tr>`;
     }
 }
 
 function renderModules() {
     const tbody = document.querySelector('#modulesTable tbody');
     if (allModules.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#6b7280;padding:20px;">No modules found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#6b7280;padding:40px;">No modules found. Click "Add New Module" to create one.</td></tr>';
         return;
     }
 
@@ -125,16 +161,16 @@ function renderModules() {
         return `
         <tr class="module-row" onclick="toggleModuleAreas('${moduleId}')">
             <td><span class="expand-icon" id="icon-${moduleId}">▶</span></td>
-            <td style="font-size:24px">${m.icon}</td>
+            <td class="module-icon">${m.icon || '📦'}</td>
             <td><b>${escapeHtml(m.name)}</b></td>
-            <td><span style="background:${m.color};padding:4px 8px;border-radius:4px;color:white">${escapeHtml(m.color)}</span></td>
-            <td>${escapeHtml(m.link)}</td>
-            <td><span class="shop-count-badge">${m.areas?.length || 0} areas</span></td>
+            <td><span class="color-badge" style="background:${m.color}">${escapeHtml(m.color)}</span></td>
+            <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(m.link)}</td>
+            <td><span class="badge badge-info">${m.areas?.length || 0} areas</span></td>
             <td>${m.priority || 0}</td>
-            <td><span class="status-${moduleStatus}">${moduleStatus}</span></td>
-            <td onclick="event.stopPropagation()">
-                <button class="btn-primary" data-edit-id="${moduleId}">Edit</button>
-                <button class="btn-danger" onclick="deleteModule('${moduleId}')">Delete</button>
+            <td><span class="status-badge status-${moduleStatus}">${moduleStatus}</span></td>
+            <td onclick="event.stopPropagation()" class="actions">
+                <button class="btn-primary btn-sm" onclick="editModule('${moduleId}')">Edit</button>
+                <button class="btn-danger btn-sm" onclick="deleteModule('${moduleId}')">Delete</button>
             </td>
         </tr>
         <tr id="areas-${moduleId}" style="display:none;">
@@ -146,23 +182,19 @@ function renderModules() {
             </td>
         </tr>
     `}).join('');
-
-    // Attach edit listeners
-    document.querySelectorAll('[data-edit-id]').forEach(btn => {
-        btn.addEventListener('click', () => editModule(btn.dataset.editId));
-    });
 }
 
 function renderModuleAreas(module) {
     if (!module.areas || module.areas.length === 0) {
-        return '<p style="color:#6b7280;">No areas mapped yet.</p>';
+        return '<p style="color:#6b7280;margin:0;">No areas mapped yet. Use the map below to add one.</p>';
     }
     const moduleId = module.id || module._id;
     return module.areas.map((area, idx) => `
         <div class="area-row">
-            <strong>Area ${idx + 1}:</strong> ${area.type} -
-            ${area.type === 'circle'? `Radius: ${Math.round(area.radius)}m` : `Polygon with ${area.coordinates?.length || 0} points`}
-            <button class="btn-danger" style="float:right;padding:4px 8px;font-size:12px;" onclick="removeArea('${moduleId}', ${idx})">Remove</button>
+            <div>
+                <strong>Area ${idx + 1}:</strong> ${area.type === 'circle'? `Circle - Radius: ${Math.round(area.radius)}m` : `Polygon - ${area.coordinates?.length || 0} points`}
+            </div>
+            <button class="btn-danger btn-sm" onclick="removeArea('${moduleId}', ${idx})">Remove</button>
         </div>
     `).join('');
 }
@@ -193,14 +225,15 @@ window.openAddModule = () => {
     document.getElementById('modalFields').innerHTML = `
         <div class="form-grid">
             <div class="form-group"><label>Name *</label><input type="text" id="field_name" required></div>
-            <div class="form-group"><label>Icon *</label><input type="text" id="field_icon" required></div>
+            <div class="form-group"><label>Icon *</label><input type="text" id="field_icon" placeholder="📦" required></div>
             <div class="form-group"><label>Color *</label><input type="color" id="field_color" value="#3b82f6" required></div>
-            <div class="form-group"><label>Link *</label><input type="text" id="field_link" required></div>
-            <div class="form-group"><label>Priority</label><input type="number" id="field_priority" value="0"></div>
+            <div class="form-group"><label>Link *</label><input type="text" id="field_link" placeholder="/module-name" required></div>
+            <div class="form-group"><label>Priority</label><input type="number" id="field_priority" value="0" min="0"></div>
             <div class="form-group"><label>Status</label><select id="field_status"><option value="active">Active</option><option value="hidden">Hidden</option></select></div>
         </div>
     `;
     document.getElementById('editModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
 };
 
 function editModule(id) {
@@ -215,11 +248,12 @@ function editModule(id) {
             <div class="form-group"><label>Icon *</label><input type="text" id="field_icon" required></div>
             <div class="form-group"><label>Color *</label><input type="color" id="field_color" required></div>
             <div class="form-group"><label>Link *</label><input type="text" id="field_link" required></div>
-            <div class="form-group"><label>Priority</label><input type="number" id="field_priority" value="0"></div>
+            <div class="form-group"><label>Priority</label><input type="number" id="field_priority" min="0"></div>
             <div class="form-group"><label>Status</label><select id="field_status"><option value="active">Active</option><option value="hidden">Hidden</option></select></div>
         </div>
     `;
     document.getElementById('editModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
     setTimeout(() => {
         document.getElementById('field_name').value = m.name || '';
         document.getElementById('field_icon').value = m.icon || '';
@@ -233,6 +267,7 @@ function editModule(id) {
 window.saveModule = async () => {
     const btn = document.getElementById('saveModuleBtn');
     btn.disabled = true;
+    btn.textContent = 'Saving...';
 
     const data = {
         name: document.getElementById('field_name').value.trim(),
@@ -246,33 +281,33 @@ window.saveModule = async () => {
     if (!data.name ||!data.icon ||!data.link) {
         showToast('Name, Icon and Link are required', 'error');
         btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
         return;
     }
 
     try {
         if (editingId) {
             await apiCall('/modules/' + editingId, 'PUT', data);
-            showToast('Module updated');
+            showToast('Module updated successfully');
         } else {
             await apiCall('/modules', 'POST', data);
-            showToast('Module created');
+            showToast('Module created successfully');
         }
         closeModuleModal();
         await loadData();
-    } catch (err) {
-        showToast(err.message, 'error');
-    } finally {
+    } catch (err) {} finally {
         btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
     }
 };
 
 window.deleteModule = async (id) => {
-    if (!confirm('Delete this module? This will affect all linked shops.')) return;
+    if (!confirm('Delete this module? This will affect all linked shops and content.')) return;
     try {
         await apiCall('/modules/' + id, 'DELETE');
         showToast('Module deleted');
         await loadData();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) {}
 };
 
 window.removeArea = async (moduleId, areaIdx) => {
@@ -283,13 +318,15 @@ window.removeArea = async (moduleId, areaIdx) => {
         await apiCall('/modules/' + moduleId, 'PUT', { areas: module.areas });
         showToast('Area removed');
         await loadData();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) {}
 };
 
 function initModuleMap() {
     if (map) return;
     map = L.map('moduleMap').setView([28.6139, 77.2090], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
     drawControl = new L.Control.Draw({
@@ -345,6 +382,7 @@ window.saveModuleArea = async () => {
     if (!currentDrawnLayer) return showToast('Draw area first', 'error');
 
     btn.disabled = true;
+    btn.textContent = 'Saving...';
     let areaData = {};
     if (currentDrawnLayer instanceof L.Circle) {
         const center = currentDrawnLayer.getLatLng();
@@ -354,12 +392,11 @@ window.saveModuleArea = async () => {
     }
     try {
         await apiCall('/modules/' + currentModuleId, 'PUT', { areas: [areaData] });
-        showToast('Area saved');
+        showToast('Area saved successfully');
         await loadData();
-    } catch (err) {
-        showToast(err.message, 'error');
-    } finally {
+    } catch (err) {} finally {
         btn.disabled = false;
+        btn.textContent = '💾 Save Area';
     }
 };
 
@@ -371,18 +408,20 @@ window.clearModuleDrawing = () => {
 
 window.deleteModuleArea = async () => {
     if (!currentModuleId) return showToast('Select module first', 'error');
-    if (!confirm('Remove area?')) return;
+    if (!confirm('Remove all areas from this module?')) return;
     try {
         await apiCall('/modules/' + currentModuleId, 'PUT', { areas: [] });
-        showToast('Area removed');
+        showToast('Areas removed');
         clearModuleDrawing();
         await loadData();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) {}
 };
 
-window.closeModuleModal = () => document.getElementById('editModal').style.display = 'none';
+window.closeModuleModal = () => {
+    document.getElementById('editModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+};
 
-// Destroy map on page unload to prevent memory leak
 window.addEventListener('beforeunload', () => {
     if (map) {
         map.remove();

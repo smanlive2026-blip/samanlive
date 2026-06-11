@@ -4,8 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
-const Module = require('../models/Module'); // ✅ 'M' capital kar diya
-const ShopHistory = require('../models/ShopHistory'); // ✅ Ye bhi capital 'S' aur 'H' check kar lena
+const Module = require('../models/Module');
+const ShopHistory = require('../models/ShopHistory');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'samanlive-area-manager-secret-2026';
 
@@ -94,20 +94,25 @@ router.get('/dashboard', authManager, async (req, res) => {
             area: managerArea
         }).lean();
 
-        // Categories - modules se ya Module collection se
+        // Categories - Module collection se
         const modules = await Module.find({ status: true });
-        const categories = modules.flatMap(m => m.categories || []);
+        const categories = modules.map(m => ({
+            id: m.id,
+            name: m.name,
+            icon: m.icon
+        }));
 
         res.json({
             success: true,
             area: managerArea,
             stats: {
                 totalShops: areaShops.length,
-                activeShops: areaShops.filter(s => s.status).length,
+                activeShops: areaShops.filter(s => s.status === 'approved' && s.isActive).length,
                 pendingBanners: areaShops.filter(s => s.banner &&!s.bannerApproved).length
             },
             shops: areaShops,
-            categories: categories
+            categories: categories,
+            modules: req.manager.moduleAccess
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -127,24 +132,37 @@ router.post('/shop', authManager, async (req, res) => {
         }
 
         // Check if manager has access to this category
-        if (req.manager.moduleAccess &&!req.manager.moduleAccess.includes(categoryId)) {
+        if (req.manager.moduleAccess && req.manager.moduleAccess.length > 0 &&
+           !req.manager.moduleAccess.includes('all') &&
+           !req.manager.moduleAccess.includes(categoryId)) {
             return res.status(403).json({ error: 'Is category ka access nahi hai' });
         }
 
         const shop = new Shop({
-            name,
+            ownerId: req.manager._id, // Manager ko owner bana diya
+            ownerName: req.manager.name,
+            createdBy: req.manager._id,
+            managerId: req.manager._id,
+            shopName: name, // name → shopName
             icon: icon || '🏪',
-            categoryId,
-            phone,
-            address,
-            lat: parseFloat(lat),
-            lng: parseFloat(lng),
+            serviceType: categoryId, // categoryId → serviceType
+            phone: phone || req.manager.phone,
+            address: {
+                line1: address || '',
+                city: managerArea,
+                state: '',
+                pincode: ''
+            },
+            location: {
+                type: 'Point',
+                coordinates: [parseFloat(lng), parseFloat(lat)] // [lng, lat]
+            },
             range: range || 5000,
             banner: banner || '',
-            bannerApproved: false, // NAYA - Default pending, admin approve karega
-            area: managerArea, // Auto assign manager ka area
-            managerId: req.manager._id,
-            status: true
+            bannerApproved: false,
+            area: managerArea,
+            status: 'pending', // Admin approve karega
+            isActive: true
         });
 
         await shop.save();
@@ -154,13 +172,14 @@ router.post('/shop', authManager, async (req, res) => {
             managerId: req.manager._id,
             shopId: shop._id,
             action: 'create',
-            shopName: shop.name,
+            shopName: shop.shopName,
             area: shop.area,
             newData: shop.toObject()
         });
 
         res.json({ success: true, data: shop });
     } catch (err) {
+        console.error('Create shop error:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -182,18 +201,28 @@ router.put('/shop/:id', authManager, async (req, res) => {
         const oldData = shop.toObject();
 
         // Allowed fields manager ke liye
-        const allowedFields = ['name', 'phone', 'address', 'lat', 'lng', 'range', 'icon', 'banner', 'status'];
+        const { name, phone, address, lat, lng, range, icon, banner, status } = req.body;
         const updateData = {};
 
-        allowedFields.forEach(field => {
-            if (req.body[field]!== undefined) {
-                updateData[field] = req.body[field];
-            }
-        });
+        if (name!== undefined) updateData.shopName = name;
+        if (phone!== undefined) updateData.phone = phone;
+        if (address!== undefined) updateData.address = {...shop.address, line1: address };
+        if (lat!== undefined && lng!== undefined) {
+            updateData.location = {
+                type: 'Point',
+                coordinates: [parseFloat(lng), parseFloat(lat)]
+            };
+        }
+        if (range!== undefined) updateData.range = range;
+        if (icon!== undefined) updateData.icon = icon;
+        if (banner!== undefined) updateData.banner = banner;
+        if (status!== undefined) updateData.status = status;
 
         // Agar banner change hua to approval reset karo
-        if (req.body.banner && req.body.banner!== shop.banner) {
-            updateData.bannerApproved = false; // Admin firse approve karega
+        if (banner && banner!== shop.banner) {
+            updateData.bannerApproved = false;
+            updateData.bannerApprovedBy = null;
+            updateData.bannerApprovedAt = null;
         }
 
         const updatedShop = await Shop.findByIdAndUpdate(
@@ -207,7 +236,7 @@ router.put('/shop/:id', authManager, async (req, res) => {
             managerId: req.manager._id,
             shopId: shop._id,
             action: 'edit',
-            shopName: shop.name,
+            shopName: shop.shopName,
             area: shop.area,
             oldData: oldData,
             newData: updatedShop.toObject()
@@ -215,6 +244,7 @@ router.put('/shop/:id', authManager, async (req, res) => {
 
         res.json({ success: true, data: updatedShop });
     } catch (err) {
+        console.error('Update shop error:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -237,7 +267,7 @@ router.delete('/shop/:id', authManager, async (req, res) => {
             managerId: req.manager._id,
             shopId: shop._id,
             action: 'delete',
-            shopName: shop.name,
+            shopName: shop.shopName,
             area: shop.area,
             oldData: shop.toObject()
         });
