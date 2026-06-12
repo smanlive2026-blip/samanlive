@@ -712,7 +712,7 @@
             }
 
             try {
-                const url = managerId? '/managers/' + managerId : '/admin/create-manager';
+                const url = managerId? '/managers/' + managerId : '/api/admin/create-manager';
                 const method = managerId? 'PUT' : 'POST';
 
                 const data = await apiCall(url, method, formData);
@@ -749,7 +749,7 @@
         async function deleteManager(id) {
             if (!confirm('Delete this manager? This action cannot be undone.')) return;
             try {
-                const data = await apiCall('/managers/' + id, 'DELETE');
+                const data = await apiCall('/api/managers/' + id, 'DELETE');
                 if (data.success) {
                     showToast('Manager deleted!');
                     await loadData();
