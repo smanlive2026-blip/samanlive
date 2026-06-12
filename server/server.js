@@ -933,6 +933,12 @@ app.use((err, req, res, next) => {
     }
     next();
 });
+// Create uploads folder if not exists
+const uploadsDir = path.join(__dirname, 'uploads/managers');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Created uploads/managers folder');
+}
 
 // Server start
 app.listen(PORT, () => {
