@@ -57,6 +57,10 @@ router.post('/modules', async (req, res) => {
     if (data.categories && typeof data.categories === 'string') {
       data.categories = data.categories.split(',').map(c => c.trim()).filter(c => c);
     }
+    // id field ko hatao agar aa rahi hai - DUPLICATE ERROR FIX
+    delete data.id;
+    delete data._id;
+
     const module = new Module(data);
     await module.save();
     res.json({ success: true, module });
@@ -72,6 +76,10 @@ router.put('/modules/:id', async (req, res) => {
     if (data.categories && typeof data.categories === 'string') {
       data.categories = data.categories.split(',').map(c => c.trim()).filter(c => c);
     }
+    // id field ko hatao - DUPLICATE ERROR FIX
+    delete data.id;
+    delete data._id;
+
     const module = await Module.findByIdAndUpdate(req.params.id, data, { new: true });
     res.json({ success: true, module });
   } catch (err) {
@@ -409,6 +417,21 @@ router.get('/admin/data', async (req, res) => {
   }
 });
 
+// ==================== FIX DUPLICATE INDEX - NEW ROUTE ====================
+// Module me id_1 index ko delete karne ke liye
+router.get('/admin/fix-module-index', async (req, res) => {
+  try {
+    await Module.collection.dropIndex('id_1');
+    res.json({ success: true, message: 'Index id_1 dropped successfully' });
+  } catch (err) {
+    if (err.codeName === 'IndexNotFound') {
+      res.json({ success: true, message: 'Index already removed' });
+    } else {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  }
+});
+
 // ==================== MIGRATION - TEMP ROUTE ====================
 // Purane modules ko new schema me convert karne ke liye
 // Ek baar chala ke delete kar dena
@@ -446,14 +469,20 @@ router.get('/admin/migrate-old-modules', async (req, res) => {
         changed = true;
       }
 
+      // 4. id field ko hatao agar hai - DUPLICATE ERROR FIX
+      if (m.id!== undefined) {
+        m.set('id', undefined, { strict: false });
+        changed = true;
+      }
+
       if (changed) {
         await m.save();
         updated++;
       }
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: `Migrated ${updated}/${modules.length} modules`,
       note: 'Ab ye route delete kar sakte ho'
     });
