@@ -850,6 +850,51 @@ app.use((err, req, res, next) => {
     }
     next();
 });
+// Static files - Public folder serve kar - YE SABSE UPAR RAKHNA ROUTES SE
+app.use(express.static(path.join(__dirname, 'public')));
+
+// API ROUTES - Ye beech me
+const adminRoutes = require('./routes/adminRoutes');
+app.use('/api', adminRoutes);
+
+app.use('/api/market', require('./routes/market'));
+app.use('/api/area-managers', require('./routes/area-manager'));
+app.use('/api', require('./routes/userAddresses'));
+app.use('/api', require('./routes/userPayments'));
+app.use('/api', require('./routes/wishlist'));
+app.use('/api', require('./routes/orders'));
+app.use('/api', require('./routes/notifications'));
+app.use('/api', require('./routes/shop'));
+
+// Baki saare API routes yahan...
+
+// MULTER ERROR HANDLER
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ error: 'File size too large. Max 10MB allowed' });
+        }
+        return res.status(400).json({ error: err.message });
+    }
+    if (err) {
+        console.error('Server Error:', err);
+        return res.status(500).json({ error: err.message });
+    }
+    next();
+});
+
+// 404 HANDLER SIRF API KE LIYE - YE CHANGE HAI
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ 
+        error: 'API route not found',
+        path: req.originalUrl 
+    });
+});
+
+// HTML FILES KE LIYE - Ye add kar
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin-panel', 'index.html'));
+});
 
 // Server start - SIRF 1 BAAR
 app.listen(PORT, () => {
