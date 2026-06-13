@@ -15,7 +15,6 @@ let moduleMap, shopMap, drawnItems, drawControl;
 let currentModuleId = null, currentDrawnLayer = null;
 let shopMarker, shopCircle, currentShopLocation = null;
 let currentSettings = {};
-let marketStats = { totalCategories: 0 };
 
 // ==================== UTILITY FUNCTIONS ====================
 
@@ -31,7 +30,6 @@ async function apiCall(endpoint, method = 'GET', data = null) {
 
         if (data) {
             if (data instanceof FormData) {
-                // FormData ke liye Content-Type browser khud set karega
                 options.body = data;
             } else {
                 options.headers['Content-Type'] = 'application/json';
@@ -46,7 +44,6 @@ async function apiCall(endpoint, method = 'GET', data = null) {
             throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
         }
 
-        // Agar response empty hai to
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
             return await response.json();
@@ -64,7 +61,6 @@ async function apiCall(endpoint, method = 'GET', data = null) {
  * Toast notification dikhane ke liye
  */
 function showToast(message, type = 'success') {
-    // Purana toast hatao
     const existing = document.querySelector('.toast-notification');
     if (existing) existing.remove();
 
@@ -126,9 +122,7 @@ function filterTable(tableId, query) {
     const searchTerm = query.toLowerCase().trim();
 
     rows.forEach(row => {
-        // Agar "No data" wala row hai to skip karo
         if (row.cells.length === 1 && row.cells[0].colSpan > 1) return;
-
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(searchTerm)? '' : 'none';
     });
@@ -214,6 +208,7 @@ function showTab(tabName) {
     // Load data for tab
     if (tabName === 'dashboard') loadDashboard();
     if (tabName === 'modules') loadModules();
+    if (tabName === 'categories') loadCategories();
     if (tabName === 'shops') loadShops();
     if (tabName === 'managers') loadManagers();
     if (tabName === 'content') loadContent();
@@ -223,25 +218,20 @@ function showTab(tabName) {
 // ==================== DASHBOARD ====================
 async function loadDashboard() {
     try {
-        const [stats, shops, marketData] = await Promise.all([
+        const [stats, shops] = await Promise.all([
             apiCall('/stats'),
-            apiCall('/shops'),
-            apiCall('/admin/local-market-stats').catch(() => ({ totalCategories: 0 }))
+            apiCall('/shops')
         ]);
 
         allStats = stats;
-        marketStats = marketData;
 
         document.getElementById('totalUsersCount').textContent = formatNumber(stats.users || 0);
         document.getElementById('totalShopsCount').textContent = formatNumber(stats.shops || 0);
         document.getElementById('totalModulesCount').textContent = formatNumber(stats.modules || 0);
         document.getElementById('totalContentCount').textContent = formatNumber(stats.content || 0);
         document.getElementById('totalManagersCount').textContent = formatNumber(stats.managers || 0);
+        document.getElementById('totalCategoriesCount').textContent = formatNumber(stats.categories || 0);
         document.getElementById('pendingShopsCount').textContent = formatNumber(shops.filter(s => s.status === 'pending').length);
-
-        // Categories count add karo agar element exist karta hai
-        const catCountEl = document.getElementById('totalCategoriesCount');
-        if (catCountEl) catCountEl.textContent = formatNumber(marketStats.totalCategories || 0);
 
         renderCharts(shops);
     } catch (err) {
@@ -288,6 +278,147 @@ function renderCharts(shops) {
     });
 }
 
+// ==================== CATEGORIES ====================
+async function loadCategories() {
+    showLoading('categoriesTable');
+    try {
+        const [categories, modules] = await Promise.all([
+            apiCall('/categories'),
+            apiCall('/modules')
+        ]);
+        allCategories = Array.isArray(categories)? categories : [];
+        allModules = Array.isArray(modules)? modules : [];
+        document.getElementById('categoryCount').textContent = allCategories.length;
+        renderCategories();
+    } catch (err) {
+        document.querySelector('#categoriesTable tbody').innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:40px;">Error: ${escapeHtml(err.message)}</td></tr>`;
+    }
+}
+
+function renderCategories() {
+    const tbody = document.querySelector('#categoriesTable tbody');
+    if (allCategories.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6b7280;padding:40px;">No categories found. Click "Add New Category" to create one.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = allCategories.map(c => {
+        const module = allModules.find(m => m._id === c.moduleId || m.id === c.moduleId);
+        return `
+        <tr>
+            <td style="font-size:20px;">${c.icon || '📦'}</td>
+            <td><b>${escapeHtml(c.name)}</b></td>
+            <td>${module? module.icon + ' ' + escapeHtml(module.name) : '<span class="help-text">No Module</span>'}</td>
+            <td>${c.priority || 0}</td>
+            <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+            <td>${formatDate(c.createdAt)}</td>
+            <td class="actions">
+                <button class="btn-primary btn-sm" onclick="editCategory('${c._id}')">Edit</button>
+                <button class="btn-danger btn-sm" onclick="deleteCategory('${c._id}')">Delete</button>
+            </td>
+        </tr>
+    `}).join('');
+}
+
+window.openAddCategory = () => {
+    document.getElementById('categoryEditId').value = '';
+    document.getElementById('categoryModalTitle').textContent = 'Add New Category';
+    document.getElementById('categoryModalFields').innerHTML = `
+        <div class="form-grid">
+            <div class="form-group"><label>Name *</label><input type="text" id="field_cat_name" required></div>
+            <div class="form-group"><label>Icon</label><input type="text" id="field_cat_icon" placeholder="📦" value="📦"></div>
+            <div class="form-group">
+                <label>Module</label>
+                <select id="field_cat_moduleId">
+                    <option value="">-- No Module --</option>
+                    ${allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group"><label>Priority</label><input type="number" id="field_cat_priority" value="0" min="0"></div>
+            <div class="form-group"><label>Status</label><select id="field_cat_status"><option value="active">Active</option><option value="hidden">Hidden</option></select></div>
+        </div>
+    `;
+    document.getElementById('categoryModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+};
+
+window.editCategory = (id) => {
+    const c = allCategories.find(x => x._id === id);
+    if (!c) return;
+    document.getElementById('categoryEditId').value = id;
+    document.getElementById('categoryModalTitle').textContent = 'Edit Category';
+    document.getElementById('categoryModalFields').innerHTML = `
+        <div class="form-grid">
+            <div class="form-group"><label>Name *</label><input type="text" id="field_cat_name" value="${escapeHtml(c.name)}" required></div>
+            <div class="form-group"><label>Icon</label><input type="text" id="field_cat_icon" value="${escapeHtml(c.icon)}"></div>
+            <div class="form-group">
+                <label>Module</label>
+                <select id="field_cat_moduleId">
+                    <option value="">-- No Module --</option>
+                    ${allModules.map(m => `<option value="${m._id || m.id}" ${c.moduleId === (m._id || m.id)? 'selected' : ''}>${m.icon} ${escapeHtml(m.name)}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group"><label>Priority</label><input type="number" id="field_cat_priority" value="${c.priority || 0}" min="0"></div>
+            <div class="form-group"><label>Status</label><select id="field_cat_status"><option value="active" ${c.status === 'active'? 'selected' : ''}>Active</option><option value="hidden" ${c.status === 'hidden'? 'selected' : ''}>Hidden</option></select></div>
+        </div>
+    `;
+    document.getElementById('categoryModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+};
+
+window.saveCategory = async () => {
+    const btn = document.getElementById('saveCategoryBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    const id = document.getElementById('categoryEditId').value;
+
+    const data = {
+        name: document.getElementById('field_cat_name').value.trim(),
+        icon: document.getElementById('field_cat_icon').value.trim() || '📦',
+        moduleId: document.getElementById('field_cat_moduleId').value || null,
+        priority: parseInt(document.getElementById('field_cat_priority').value || 0),
+        status: document.getElementById('field_cat_status').value
+    };
+
+    if (!data.name) {
+        showToast('Name is required', 'error');
+        btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
+        return;
+    }
+
+    try {
+        if (id) {
+            await apiCall('/categories/' + id, 'PUT', data);
+            showToast('Category updated successfully');
+        } else {
+            await apiCall('/categories', 'POST', data);
+            showToast('Category created successfully');
+        }
+        closeCategoryModal();
+        await loadCategories();
+        await loadDashboard();
+    } catch (err) {} finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
+    }
+};
+
+window.deleteCategory = async (id) => {
+    if (!confirm('Delete this category?')) return;
+    try {
+        await apiCall('/categories/' + id, 'DELETE');
+        showToast('Category deleted');
+        await loadCategories();
+        await loadDashboard();
+    } catch (err) {}
+};
+
+window.closeCategoryModal = () => {
+    document.getElementById('categoryModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+};
+
 // ==================== MODULES ====================
 async function loadModules() {
     showLoading('modulesTable');
@@ -313,7 +444,8 @@ function renderModules() {
     tbody.innerHTML = allModules.map(m => {
         const moduleStatus = m.status === true || m.status === 'active'? 'active' : 'hidden';
         const moduleId = m.id || m._id;
-        const categoriesText = m.categories && m.categories.length > 0? m.categories.slice(0,2).join(', ') + (m.categories.length > 2? '...' : '') : '-';
+        const moduleCategories = allCategories.filter(c => c.moduleId === moduleId);
+        const categoriesText = moduleCategories.length > 0? moduleCategories.slice(0,2).map(c => c.name).join(', ') + (moduleCategories.length > 2? '...' : '') : '-';
 
         return `
         <tr class="module-row" onclick="toggleModuleAreas('${moduleId}')">
@@ -360,10 +492,12 @@ function renderModuleAreas(module) {
 }
 
 function renderModuleCategories(module) {
-    if (!module.categories || module.categories.length === 0) {
-        return '<p style="color:#6b7280;margin:0;">No categories added yet.</p>';
+    const moduleId = module.id || module._id;
+    const moduleCategories = allCategories.filter(c => c.moduleId === moduleId);
+    if (moduleCategories.length === 0) {
+        return '<p style="color:#6b7280;margin:0;">No categories added yet. Go to Categories tab to add.</p>';
     }
-    return `<div style="display:flex;flex-wrap:wrap;gap:8px;">${module.categories.map(cat => `<span class="badge badge-info">${escapeHtml(cat)}</span>`).join('')}</div>`;
+    return `<div style="display:flex;flex-wrap:wrap;gap:8px;">${moduleCategories.map(cat => `<span class="badge badge-info">${cat.icon} ${escapeHtml(cat.name)}</span>`).join('')}</div>`;
 }
 
 window.toggleModuleAreas = (id) => {
@@ -397,11 +531,6 @@ window.openAddModule = () => {
             <div class="form-group"><label>Link *</label><input type="text" id="field_link" placeholder="/module-name" required></div>
             <div class="form-group"><label>Priority</label><input type="number" id="field_priority" value="0" min="0"></div>
             <div class="form-group"><label>Status</label><select id="field_status"><option value="active">Active</option><option value="hidden">Hidden</option></select></div>
-            <div class="form-group full">
-                <label>Categories (comma separated)</label>
-                <input type="text" id="field_categories" placeholder="Fruits, Vegetables, Dairy">
-                <p class="help-text">Ye categories user app me dikhengi</p>
-            </div>
         </div>
     `;
     document.getElementById('moduleModal').style.display = 'block';
@@ -421,10 +550,6 @@ window.editModule = (id) => {
             <div class="form-group"><label>Link *</label><input type="text" id="field_link" value="${escapeHtml(m.link)}" required></div>
             <div class="form-group"><label>Priority</label><input type="number" id="field_priority" value="${m.priority || 0}" min="0"></div>
             <div class="form-group"><label>Status</label><select id="field_status"><option value="active" ${m.status === 'active' || m.status === true? 'selected' : ''}>Active</option><option value="hidden" ${m.status === 'hidden' || m.status === false? 'selected' : ''}>Hidden</option></select></div>
-            <div class="form-group full">
-                <label>Categories (comma separated)</label>
-                <input type="text" id="field_categories" value="${(m.categories || []).join(', ')}" placeholder="Fruits, Vegetables, Dairy">
-            </div>
         </div>
     `;
     document.getElementById('moduleModal').style.display = 'block';
@@ -436,7 +561,6 @@ window.saveModule = async () => {
     btn.disabled = true;
     btn.textContent = 'Saving...';
     const id = document.getElementById('moduleEditId').value;
-    const categories = document.getElementById('field_categories').value.split(',').map(c => c.trim()).filter(c => c);
 
     const data = {
         name: document.getElementById('field_name').value.trim(),
@@ -444,8 +568,7 @@ window.saveModule = async () => {
         color: document.getElementById('field_color').value,
         link: document.getElementById('field_link').value.trim(),
         priority: parseInt(document.getElementById('field_priority').value || 0),
-        status: document.getElementById('field_status').value,
-        categories: categories
+        status: document.getElementById('field_status').value
     };
 
     if (!data.name ||!data.icon ||!data.link) {
@@ -465,7 +588,7 @@ window.saveModule = async () => {
         }
         closeModuleModal();
         await loadModules();
-        await loadDashboard(); // Refresh dashboard stats
+        await loadDashboard();
     } catch (err) {} finally {
         btn.disabled = false;
         btn.textContent = '💾 Save Changes';
@@ -1039,7 +1162,6 @@ window.editManager = (id) => {
     selectedModuleIds = m.moduleAccess || [];
     renderSelectedModules();
 
-    // Check boxes
     setTimeout(() => {
         selectedModuleIds.forEach(id => {
             const cb = document.getElementById('mod_' + id);
@@ -1459,137 +1581,4 @@ window.addFooterLink = () => {
     renderFooterLinks(currentSettings.footerLinks);
 };
 
-window.updateFooterLink = (idx, field, value) => {
-    if (currentSettings.footerLinks[idx]) {
-        currentSettings.footerLinks[idx][field] = value;
-    }
-};
-
-window.removeFooterLink = (idx) => {
-    currentSettings.footerLinks.splice(idx, 1);
-    renderFooterLinks(currentSettings.footerLinks);
-};
-
-window.previewLogo = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            document.getElementById('logoPreview').src = e.target.result;
-            document.getElementById('logoPreview').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    }
-};
-
-window.uploadLogoFile = async () => {
-    const btn = document.getElementById('uploadLogoBtn');
-    const fileInput = document.getElementById('logoUploadFile');
-    const status = document.getElementById('logoUploadStatus');
-
-    if (!fileInput.files[0]) return showToast('Please select a logo', 'error');
-
-    btn.disabled = true;
-    btn.textContent = 'Uploading...';
-    status.textContent = 'Uploading...';
-
-    const formData = new FormData();
-    formData.append('logo', fileInput.files[0]);
-
-    try {
-        const result = await apiCall('/upload/logo', 'POST', formData);
-        currentSettings.logoUrl = result.url;
-        showToast('Logo uploaded successfully');
-        status.textContent = 'Uploaded!';
-    } catch (err) {
-        status.textContent = 'Upload failed';
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '📤 Upload Logo';
-        setTimeout(() => status.textContent = '', 3000);
-    }
-};
-
-window.saveSettings = async () => {
-    const btn = document.getElementById('saveSettingsBtn');
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-
-    const data = {
-        logoText: document.getElementById('settingLogoText').value,
-        logoUrl: currentSettings.logoUrl,
-        headerColor: document.getElementById('settingHeaderColor').value,
-        footerColor: document.getElementById('settingFooterColor').value,
-        footerText: document.getElementById('settingFooterText').value,
-        footerAbout: document.getElementById('settingFooterAbout').value,
-        facebook: document.getElementById('settingFacebook').value,
-        instagram: document.getElementById('settingInstagram').value,
-        twitter: document.getElementById('settingTwitter').value,
-        youtube: document.getElementById('settingYoutube').value,
-        footerLinks: currentSettings.footerLinks || []
-    };
-
-    try {
-        await apiCall('/settings', 'PUT', data);
-        showToast('Settings saved successfully');
-        await loadSettings();
-    } catch (err) {} finally {
-        btn.disabled = false;
-        btn.textContent = '💾 Save All Settings';
-    }
-};
-
-// ==================== ADD ANIMATIONS ====================
-if (!document.getElementById('toastStyles')) {
-    const style = document.createElement('style');
-    style.id = 'toastStyles';
-    style.textContent = `
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// ==================== GLOBAL ERROR HANDLER ====================
-window.addEventListener('error', function(e) {
-    console.error('Global Error:', e.error);
-});
-
-window.addEventListener('unhandledrejection', function(e) {
-    console.error('Unhandled Promise Rejection:', e.reason);
-});
-
-// ==================== EXPORT FOR USE ====================
-// Ye functions global scope me available hain
-window.apiCall = apiCall;
-window.showToast = showToast;
-window.escapeHtml = escapeHtml;
-window.showLoading = showLoading;
-window.filterTable = filterTable;
-window.copyToClipboard = copyToClipboard;
-window.formatDate = formatDate;
-window.formatNumber = formatNumber;
-window.debounce = debounce;
-
-// ==================== INIT ON LOAD ====================
-document.addEventListener('DOMContentLoaded', () => {
-    loadDashboard();
-});
+window.updateFooterLink =
