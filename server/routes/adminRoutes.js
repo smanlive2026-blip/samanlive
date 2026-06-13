@@ -417,6 +417,41 @@ router.get('/admin/data', async (req, res) => {
   }
 });
 
+// ==================== LOCAL MARKET STATS - NEW ====================
+// Local Market page ke liye stats
+router.get('/admin/local-market-stats', async (req, res) => {
+  try {
+    const modules = await Module.find({ status: { $in: ['active', true] } });
+    let totalCategories = 0;
+    let categoriesByModule = [];
+
+    modules.forEach(m => {
+      const catCount = m.categoryDetails?.length || 0;
+      totalCategories += catCount;
+      categoriesByModule.push({
+        id: m._id,
+        name: m.name,
+        icon: m.icon,
+        color: m.color,
+        categoriesCount: catCount,
+        priority: m.priority || 0
+      });
+    });
+
+    // Priority ke hisab se sort karo
+    categoriesByModule.sort((a, b) => b.priority - a.priority);
+
+    res.json({
+      success: true,
+      totalModules: modules.length,
+      totalCategories: totalCategories,
+      modules: categoriesByModule
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ==================== FIX DUPLICATE INDEX - NEW ROUTE ====================
 // Module me id_1 index ko delete karne ke liye
 router.get('/admin/fix-module-index', async (req, res) => {
