@@ -24,7 +24,10 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/samanlive
 
 // Routes
 app.use('/api', require('./routes/adminRoutes'));
-
+// Module detail page route
+app.get('/module-detail.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/admin/module-detail.html'));
+});
 // Admin panel route
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin/admin-panel/index.html'));
