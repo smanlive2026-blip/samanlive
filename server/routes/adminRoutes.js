@@ -574,4 +574,73 @@ router.get('/admin/local-market-stats', async (req, res) => {
     }
 });
 
+// ==================== CATEGORIES CRUD ====================
+const Category = require('../models/Category');
+
+// Get all categories
+router.get('/categories', async (req, res) => {
+    try {
+        const categories = await Category.find().populate('moduleId', 'name icon').sort({ priority: -1 });
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create category
+router.post('/categories', async (req, res) => {
+    try {
+        const category = new Category(req.body);
+        await category.save();
+        res.json({ success: true, category });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update category
+router.put('/categories/:id', async (req, res) => {
+    try {
+        const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json({ success: true, category });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete category
+router.delete('/categories/:id', async (req, res) => {
+    try {
+        await Category.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update dashboard stats to use real categories
+router.get('/stats', async (req, res) => {
+    try {
+        const User = require('../models/User');
+        const Shop = require('../models/Shop');
+        const Module = require('../models/Module');
+        const Content = require('../models/Content');
+        const Manager = require('../models/Manager');
+        const Category = require('../models/Category');
+
+        const [users, shops, modules, content, managers, categories] = await Promise.all([
+            User.countDocuments(),
+            Shop.countDocuments(),
+            Module.countDocuments(),
+            Content.countDocuments(),
+            Manager.countDocuments(),
+            Category.countDocuments()
+        ]);
+
+        res.json({ users, shops, modules, content, managers, categories });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
