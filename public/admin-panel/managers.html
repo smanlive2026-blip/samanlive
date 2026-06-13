@@ -95,9 +95,13 @@
                 renderManagers();
                 renderBanners();
 
-                document.getElementById('totalManagers').textContent = managers.length;
-                document.getElementById('activeManagers').textContent = managers.filter(function(m) { return m.status; }).length;
-                document.getElementById('pendingBanners').textContent = pendingShops.length;
+                // NULL CHECK LAGAYA YAHAN
+                const totalEl = document.getElementById('totalManagers');
+                const activeEl = document.getElementById('activeManagers');
+                const pendingEl = document.getElementById('pendingBanners');
+                if (totalEl) totalEl.textContent = managers.length;
+                if (activeEl) activeEl.textContent = managers.filter(function(m) { return m.status; }).length;
+                if (pendingEl) pendingEl.textContent = pendingShops.length;
 
                 const filterSelect = document.getElementById('historyManagerFilter');
                 if (filterSelect) {
@@ -108,7 +112,8 @@
                 }
             } catch (err) {
                 console.error('Load data error:', err);
-                document.getElementById('managersTable').innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 40px; color:#ef4444;">Failed to load data</td></tr>';
+                const tbody = document.getElementById('managersTable');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 40px; color:#ef4444;">Failed to load data</td></tr>';
             } finally {
                 if (btn) btn.disabled = false;
             }
@@ -185,7 +190,8 @@
                 }
             } catch (err) {
                 console.log('History API failed:', err);
-                document.getElementById('historyTable').innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:#64748b;">No activity found</td></tr>';
+                const tbody = document.getElementById('historyTable');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:#64748b;">No activity found</td></tr>';
             }
         }
 
