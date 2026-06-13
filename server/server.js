@@ -682,7 +682,43 @@ app.post('/api/admin/shop', async (req, res) => {
     }
 });
 
+<<<<<<< HEAD
 // MULTER ERROR HANDLER - YE EK HI BAAR
+=======
+// MULTER ERROR HANDLER - SABSE END ME
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ error: 'File size too large. Max 10MB allowed' });
+        }
+        return res.status(400).json({ error: err.message });
+    }
+    if (err) {
+        console.error('Server Error:', err);
+        return res.status(500).json({ error: err.message });
+    }
+    next();
+});
+// Static files - Public folder serve kar - YE SABSE UPAR RAKHNA ROUTES SE
+app.use(express.static(path.join(__dirname, 'public')));
+
+
+
+
+
+app.use('/api/market', require('./routes/market'));
+app.use('/api/area-managers', require('./routes/area-manager'));
+app.use('/api', require('./routes/userAddresses'));
+app.use('/api', require('./routes/userPayments'));
+app.use('/api', require('./routes/wishlist'));
+app.use('/api', require('./routes/orders'));
+app.use('/api', require('./routes/notifications'));
+app.use('/api', require('./routes/shop'));
+
+// Baki saare API routes yahan...
+
+// MULTER ERROR HANDLER
+>>>>>>> 2d3e18a0f18e3ddaf12aaa7b75b660841505429a
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
