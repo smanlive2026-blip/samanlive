@@ -1,3 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area Managers - SAMANLIVE Admin</title>
+    <style>
+   * { margin: 0; padding: 0; box-sizing: border-box; }
+   body { font-family: system-ui, sans-serif; background: #f5f5f5; padding: 20px; }
+  .container { max-width: 1400px; margin: 0 auto; }
+  .admin-header { background: #1e293b; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+  .admin-navbar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; }
+  .nav-btn { padding: 10px 20px; text-decoration: none; color: #333; border-radius: 6px; background: #f1f5f9; }
+  .nav-btn.active { background: #3b82f6; color: white; }
+  .main-content { background: white; padding: 20px; border-radius: 8px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+  .stat-card { background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
+  .stat-card h3 { font-size: 12px; color: #64748b; margin-bottom: 8px; }
+  .stat-value { font-size: 32px; font-weight: bold; color: #1e293b; }
+  .stat-value.orange { color: #f59e0b; }
+  .card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+  .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+  .btn-success { background: #10b981; color: white; }
+  .btn-primary { background: #3b82f6; color: white; }
+  .btn-danger { background: #ef4444; color: white; }
+  .btn-secondary { background: #64748b; color: white; }
+  .btn-sm { padding: 6px 12px; font-size: 13px; }
+   table { width: 100%; border-collapse: collapse; }
+   th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+   th { background: #f8fafc; font-weight: 600; font-size: 13px; }
+  .status-badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .status-active { background: #d1fae5; color: #065f46; }
+  .status-hidden { background: #fee2e2; color: #991b1b; }
+  .status-pending { background: #fef3c7; color: #92400e; }
+  .status-success { background: #d1fae5; color: #065f46; }
+  .status-info { background: #dbeafe; color: #1e40af; }
+  .status-danger { background: #fee2e2; color: #991b1b; }
+  .doc-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; border: 2px solid #e5e7eb; }
+  .login-link-box { background: #d1fae5; border: 2px solid #10b981; padding: 16px; border-radius: 10px; margin-top: 15px; display: none; }
+  .login-link-box input { width: 100%; padding: 10px; border: 1px solid #10b981; border-radius: 6px; margin-top: 8px; font-size: 13px; }
+  .module-select-box { border: 1px solid #d1d5db; border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto; background: #f9fafb; }
+  .module-checkbox { display: flex; align-items: center; padding: 8px 0; transition: background 0.2s; }
+  .module-checkbox:hover { background: #f3f4f6; border-radius: 4px; }
+  .module-checkbox input { margin-right: 10px; width: 18px; height: 18px; cursor: pointer; }
+  .module-checkbox label { cursor: pointer; font-size: 14px; flex: 1; }
+  .selected-modules { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .module-tag { background: #667eea; color: white; padding: 6px 12px; border-radius: 16px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+  .module-tag span { cursor: pointer; font-weight: bold; }
+  .search-module { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 10px; }
+  .history-details { font-size: 12px; color: #64748b; margin-top: 4px; }
+  .filter-row { display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; }
+  .filter-row select { padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; min-width: 200px; }
+  .banner-thumb { width: 120px; height: 40px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #e5e7eb; }
+  .banner-modal-img { width: 100%; max-width: 600px; border-radius: 10px; }
+  .manager-photo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb; }
+  .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+  .modal.active { display: flex!important; }
+  .modal-content { background: white; padding: 30px; border-radius: 12px; max-width: 90%; max-height: 90vh; overflow-y: auto; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .close-btn { background: none; border: none; font-size: 28px; cursor: pointer; color: #64748b; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  .form-group { display: flex; flex-direction: column; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+  .form-group input,.form-group select { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+  .help-text { font-size: 12px; color: #64748b; margin-top: 4px; }
+  .actions { display: flex; gap: 8px; }
+   @media (max-width: 768px) {.filter-row { flex-direction: column; }.filter-row select { width: 100%; }.banner-thumb { width: 80px; height: 30px; }.form-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="admin-header">
+            <h1>🔧 SAMANLIVE Control Panel</h1>
+        </div>
+
+        <div class="admin-navbar">
+            <a href="index.html" class="nav-btn">📊 Dashboard</a>
+            <a href="modules.html" class="nav-btn">📦 Modules</a>
+            <a href="content.html" class="nav-btn">📢 Content</a>
+            <a href="shops.html" class="nav-btn">🏪 Shops</a>
+            <a href="managers.html" class="nav-btn active">👨‍💼 Managers</a>
+        </div>
+
+        <div class="main-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>TOTAL MANAGERS</h3>
+                    <div class="stat-value" id="totalManagers">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>ACTIVE MANAGERS</h3>
+                    <div class="stat-value" id="activeManagers">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>PENDING BANNERS</h3>
+                    <div class="stat-value orange" id="pendingBanners">0</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>All Area Managers</h2>
+                    <button class="btn btn-success" onclick="openAddManager()">+ Add New Manager</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Name</th>
+                                <th>Area</th>
+                                <th>Modules</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Service %</th>
+                                <th>Status</th>
+                                <th>Login Link</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="managersTable">
+                            <tr><td colspan="10" style="text-align:center; padding: 40px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>🖼️ Pending Banner Approvals</h2>
+                    <button class="btn btn-secondary btn-sm" id="refreshBannerBtn" onclick="loadData()">Refresh</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Shop Name</th>
+                                <th>Manager</th>
+                                <th>Area</th>
+                                <th>Banner</th>
+                                <th>Status</th>
+                                <th>Uploaded</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bannerTable">
+                            <tr><td colspan="7" style="text-align:center; padding: 40px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>📜 Manager Activity Log</h2>
+                    <button class="btn btn-secondary btn-sm" onclick="loadHistory()">Refresh</button>
+                </div>
+                <div class="filter-row">
+                    <select id="historyManagerFilter" onchange="loadHistory()">
+                        <option value="">All Managers</option>
+                    </select>
+                    <select id="historyActionFilter" onchange="loadHistory()">
+                        <option value="">All Actions</option>
+                        <option value="create">Create</option>
+                        <option value="edit">Edit</option>
+                        <option value="delete">Delete</option>
+                    </select>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Manager</th>
+                                <th>Action</th>
+                                <th>Shop Name</th>
+                                <th>Area</th>
+                                <th>Module</th>
+                                <th>Time</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTable">
+                            <tr><td colspan="7" style="text-align:center; padding: 40px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="managerModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Area Manager</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <form id="managerForm">
+                <input type="hidden" id="managerId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Area/City *</label>
+                        <input type="text" id="area" placeholder="Jaipur, Delhi" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone *</label>
+                        <input type="text" id="phone" required pattern="[0-9]{10}">
+                    </div>
+                    <div class="form-group">
+                        <label>Service Charge % *</label>
+                        <input type="number" id="serviceCharge" value="5" min="0" max="50" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="status">
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Module Access * (Select modules this manager can handle)</label>
+                        <input type="text" class="search-module" id="moduleSearch" placeholder="Search module... 🔍" onkeyup="filterModules()">
+                        <div class="module-select-box" id="moduleSelectBox">
+                            <div style="text-align:center; color:#64748b; padding:10px;">Loading modules...</div>
+                        </div>
+                        <div class="selected-modules" id="selectedModules"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Manager Photo</label>
+                        <input type="file" id="photoInput" accept="image/*" onchange="previewImage(this, 'photoPreview')">
+                        <img id="photoPreview" class="doc-preview">
+                    </div>
+                    <div class="form-group">
+                        <label>Aadhar Card</label>
+                        <input type="file" id="aadharInput" accept="image/*" onchange="previewImage(this, 'aadharPreview')">
+                        <img id="aadharPreview" class="doc-preview">
+                    </div>
+                    <div class="form-group">
+                        <label>PAN Card</label>
+                        <input type="file" id="panInput" accept="image/*" onchange="previewImage(this, 'panPreview')">
+                        <img id="panPreview" class="doc-preview">
+                    </div>
+                    <div class="form-group">
+                        <label>Address Proof</label>
+                        <input type="file" id="addressProofInput" accept="image/*" onchange="previewImage(this, 'addressProofPreview')">
+                        <img id="addressProofPreview" class="doc-preview">
+                    </div>
+                </div>
+
+                <div class="login-link-box" id="loginLinkBox">
+                    <strong>✅ Manager Created! Login Link:</strong>
+                    <input type="text" id="loginLink" readonly onclick="this.select()">
+                    <p class="help-text" style="color:#065f46;">
+                        Temp Password: <b id="tempPassword"></b> | Send this link to manager
+                    </p>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="saveManagerBtn" style="width: 100%; margin-top: 20px;">
+                    Save Manager
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="bannerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Banner Preview</h2>
+                <button class="close-btn" onclick="closeBannerModal()">×</button>
+            </div>
+            <img id="bannerModalImg" class="banner-modal-img">
+        </div>
+    </div>
+
 <script src="assets/admin.js"></script>
 <script>
         let managers = [];
@@ -9,11 +294,8 @@
             try {
                 const data = await apiCall('/admin/data');
                 allCategories = data.modules || [];
-                if (!allCategories || allCategories.length === 0) {
-                    throw new Error('Empty categories');
-                }
+                if (!allCategories || allCategories.length === 0) throw new Error('Empty');
             } catch(err) {
-                console.log('Category API fail, using default:', err);
                 allCategories = [
                     {"id":"grocery","name":"Grocery Store","icon":"🛒"},
                     {"id":"electronics","name":"Electronics","icon":"📱"},
@@ -47,9 +329,7 @@
         function toggleModule(id) {
             const checkbox = document.getElementById('mod_' + id);
             if (checkbox.checked) {
-                if (selectedModuleIds.indexOf(id) === -1) {
-                    selectedModuleIds.push(id);
-                }
+                if (selectedModuleIds.indexOf(id) === -1) selectedModuleIds.push(id);
             } else {
                 selectedModuleIds = selectedModuleIds.filter(function(m) { return m!== id; });
             }
@@ -62,10 +342,7 @@
             container.innerHTML = selectedModuleIds.map(function(id) {
                 const cat = allCategories.find(function(c) { return c.id === id; });
                 if (!cat) return '';
-                return `<div class="module-tag">
-                    ${cat.icon} ${escapeHtml(cat.name)}
-                    <span onclick="removeModule('${id}')">×</span>
-                    </div>`;
+                return `<div class="module-tag">${cat.icon} ${escapeHtml(cat.name)}<span onclick="removeModule('${id}')">×</span></div>`;
             }).join('');
         }
 
@@ -79,36 +356,28 @@
         async function loadData() {
             const btn = document.getElementById('refreshBannerBtn');
             if (btn) btn.disabled = true;
-
             try {
                 const managersData = await apiCall('/managers');
                 managers = Array.isArray(managersData)? managersData : [];
-                
                 try {
                     const bannerData = await apiCall('/admin/pending-banners');
                     pendingShops = bannerData.shops || [];
                 } catch(e) {
-                    console.log('Banner API failed:', e);
                     pendingShops = [];
                 }
-
                 renderManagers();
                 renderBanners();
-
-                // NULL CHECK LAGAYA YAHAN
                 const totalEl = document.getElementById('totalManagers');
                 const activeEl = document.getElementById('activeManagers');
                 const pendingEl = document.getElementById('pendingBanners');
                 if (totalEl) totalEl.textContent = managers.length;
                 if (activeEl) activeEl.textContent = managers.filter(function(m) { return m.status; }).length;
                 if (pendingEl) pendingEl.textContent = pendingShops.length;
-
                 const filterSelect = document.getElementById('historyManagerFilter');
                 if (filterSelect) {
-                    filterSelect.innerHTML = '<option value="">All Managers</option>' +
-                        managers.map(function(m) {
-                            return `<option value="${m._id}">${escapeHtml(m.name)} - ${escapeHtml(m.area)}</option>`;
-                        }).join('');
+                    filterSelect.innerHTML = '<option value="">All Managers</option>' + managers.map(function(m) {
+                        return `<option value="${m._id}">${escapeHtml(m.name)} - ${escapeHtml(m.area)}</option>`;
+                    }).join('');
                 }
             } catch (err) {
                 console.error('Load data error:', err);
@@ -122,12 +391,10 @@
         function renderManagers() {
             const tbody = document.getElementById('managersTable');
             if (!tbody) return;
-            
             if (managers.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 40px;">No managers found</td></tr>';
                 return;
             }
-
             tbody.innerHTML = managers.map(function(m) {
                 let moduleNames = '-';
                 if (m.moduleAccess && m.moduleAccess.length > 0) {
@@ -137,7 +404,6 @@
                     }).slice(0, 2).join(', ');
                     if (m.moduleAccess.length > 2) moduleNames += ' +' + (m.moduleAccess.length - 2);
                 }
-
                 return `<tr>
                     <td><img src="${(m.documents && m.documents.photo) || '/assets/default-avatar.png'}" class="manager-photo" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'40\\' height=\\'40\\'%3E%3Crect fill=\\'%23e5e7eb\\' width=\\'40\\' height=\\'40\\'/%3E%3C/svg%3E'"></td>
                     <td><strong>${escapeHtml(m.name)}</strong></td>
@@ -159,12 +425,10 @@
         function renderBanners() {
             const tbody = document.getElementById('bannerTable');
             if (!tbody) return;
-            
             if (pendingShops.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">No pending banners</td></tr>';
                 return;
             }
-
             tbody.innerHTML = pendingShops.map(function(shop) {
                 const uploaded = shop.updatedAt? new Date(shop.updatedAt).toLocaleDateString('en-IN') : '-';
                 return `<tr>
@@ -185,11 +449,8 @@
         async function loadHistory() {
             try {
                 const data = await apiCall('/admin/shop-history');
-                if (data.success) {
-                    renderHistory(data.history);
-                }
+                if (data.success) renderHistory(data.history);
             } catch (err) {
-                console.log('History API failed:', err);
                 const tbody = document.getElementById('historyTable');
                 if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:#64748b;">No activity found</td></tr>';
             }
@@ -198,30 +459,18 @@
         function renderHistory(history) {
             const tbody = document.getElementById('historyTable');
             if (!tbody) return;
-            
             const managerFilter = document.getElementById('historyManagerFilter').value;
             const actionFilter = document.getElementById('historyActionFilter').value;
-
             let filtered = history || [];
-            if (managerFilter) {
-                filtered = filtered.filter(function(h) { return h.managerId && h.managerId._id === managerFilter; });
-            }
-            if (actionFilter) {
-                filtered = filtered.filter(function(h) { return h.action === actionFilter; });
-            }
-
+            if (managerFilter) filtered = filtered.filter(function(h) { return h.managerId && h.managerId._id === managerFilter; });
+            if (actionFilter) filtered = filtered.filter(function(h) { return h.action === actionFilter; });
             if (filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">No activity found</td></tr>';
                 return;
             }
-
             tbody.innerHTML = filtered.slice(0, 50).map(function(h) {
-                const actionBadge = h.action === 'create'? 'status-success' :
-                                   h.action === 'edit'? 'status-info' : 'status-danger';
-                const time = new Date(h.timestamp).toLocaleString('en-IN', {
-                    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-                });
-
+                const actionBadge = h.action === 'create'? 'status-success' : h.action === 'edit'? 'status-info' : 'status-danger';
+                const time = new Date(h.timestamp).toLocaleString('en-IN', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'});
                 let details = '';
                 if (h.action === 'edit' && h.oldData && h.newData) {
                     const changes = [];
@@ -230,16 +479,11 @@
                     if (h.oldData.banner!== h.newData.banner) changes.push('Banner changed');
                     if (h.oldData.phone!== h.newData.phone) changes.push('Phone updated');
                     details = changes.join(', ') || 'Updated';
-                } else if (h.action === 'delete') {
-                    details = 'Deleted shop';
-                } else if (h.action === 'create') {
-                    details = 'New shop created';
-                }
-
+                } else if (h.action === 'delete') details = 'Deleted shop';
+                else if (h.action === 'create') details = 'New shop created';
                 const managerName = h.managerId && h.managerId.name || 'Unknown';
                 const managerArea = h.managerId && h.managerId.area || h.area;
                 const moduleName = h.oldData && h.oldData.moduleId || h.newData && h.newData.moduleId || '-';
-
                 return `<tr>
                     <td><strong>${escapeHtml(managerName)}</strong><br><small class="help-text">${escapeHtml(managerArea)}</small></td>
                     <td><span class="status-badge ${actionBadge}">${h.action.toUpperCase()}</span></td>
@@ -264,7 +508,6 @@
                 img.style.display = 'none';
                 img.src = '';
             });
-
             selectedModuleIds = [];
             document.querySelectorAll('.module-checkbox input').forEach(function(cb) { cb.checked = false; });
             renderSelectedModules();
@@ -279,7 +522,6 @@
         function editManager(id) {
             const m = managers.find(function(x) { return x._id === id; });
             if (!m) return;
-
             openAddManager();
             document.getElementById('modalTitle').textContent = 'Edit Manager';
             document.getElementById('managerId').value = m._id;
@@ -289,7 +531,6 @@
             document.getElementById('phone').value = m.phone;
             document.getElementById('serviceCharge').value = m.serviceCharge;
             document.getElementById('status').value = m.status;
-
             if (m.moduleAccess && m.moduleAccess.length > 0) {
                 selectedModuleIds = [].concat(m.moduleAccess);
                 selectedModuleIds.forEach(function(id) {
@@ -298,7 +539,6 @@
                 });
                 renderSelectedModules();
             }
-
             if (m.documents) {
                 ['photo', 'aadhar', 'pan', 'addressProof'].forEach(function(doc) {
                     if (m.documents[doc]) {
@@ -381,7 +621,6 @@
             modal.style.display = 'none';
         }
 
-        // Make all functions global for onclick handlers
         window.openAddManager = openAddManager;
         window.closeModal = closeModal;
         window.editManager = editManager;
@@ -405,21 +644,17 @@
                     e.preventDefault();
                     const managerId = document.getElementById('managerId').value;
                     const btn = document.getElementById('saveManagerBtn');
-
                     if (selectedModuleIds.length === 0) {
                         showToast('Select at least 1 Module!', 'error');
                         return;
                     }
-
                     const phone = document.getElementById('phone').value;
                     if (!/^[0-9]{10}$/.test(phone)) {
                         showToast('Phone number must be 10 digits', 'error');
                         return;
                     }
-
                     btn.disabled = true;
                     btn.textContent = 'Saving...';
-
                     const formData = new FormData();
                     formData.append('name', document.getElementById('name').value.trim());
                     formData.append('area', document.getElementById('area').value.trim());
@@ -428,26 +663,14 @@
                     formData.append('serviceCharge', document.getElementById('serviceCharge').value);
                     formData.append('status', document.getElementById('status').value);
                     formData.append('moduleAccess', JSON.stringify(selectedModuleIds));
-
-                    if (document.getElementById('photoInput').files[0]) {
-                        formData.append('photo', document.getElementById('photoInput').files[0]);
-                    }
-                    if (document.getElementById('aadharInput').files[0]) {
-                        formData.append('aadhar', document.getElementById('aadharInput').files[0]);
-                    }
-                    if (document.getElementById('panInput').files[0]) {
-                        formData.append('pan', document.getElementById('panInput').files[0]);
-                    }
-                    if (document.getElementById('addressProofInput').files[0]) {
-                        formData.append('addressProof', document.getElementById('addressProofInput').files[0]);
-                    }
-
+                    if (document.getElementById('photoInput').files[0]) formData.append('photo', document.getElementById('photoInput').files[0]);
+                    if (document.getElementById('aadharInput').files[0]) formData.append('aadhar', document.getElementById('aadharInput').files[0]);
+                    if (document.getElementById('panInput').files[0]) formData.append('pan', document.getElementById('panInput').files[0]);
+                    if (document.getElementById('addressProofInput').files[0]) formData.append('addressProof', document.getElementById('addressProofInput').files[0]);
                     try {
                         const url = managerId? '/managers/' + managerId : '/admin/create-manager';
                         const method = managerId? 'PUT' : 'POST';
-
                         const data = await apiCall(url, method, formData);
-
                         if (data.success) {
                             if (data.loginLink) {
                                 document.getElementById('loginLink').value = data.loginLink;
