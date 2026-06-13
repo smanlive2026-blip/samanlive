@@ -5,7 +5,7 @@ const API = '/api';
 // ==================== ESCAPE HTML - XSS Protection ====================
 function escapeHtml(text) {
     const div = document.createElement('div');
-    div.textContent = text?? '';
+    div.textContent = text ?? '';
     return div.innerHTML;
 }
 
@@ -36,6 +36,9 @@ if (!document.getElementById('toast-styles')) {
             from { transform: translateX(0); opacity: 1; }
             to { transform: translateX(400px); opacity: 0; }
         }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     `;
     document.head.appendChild(style);
 }
@@ -53,7 +56,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
             opts.headers['Authorization'] = 'Bearer ' + token;
         }
 
-        if (body &&!(body instanceof FormData)) {
+        if (body && !(body instanceof FormData)) {
             opts.headers['Content-Type'] = 'application/json';
             opts.body = JSON.stringify(body);
         } else if (body) {
@@ -86,7 +89,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     }
 }
 
-// ==================== NAV HIGHLIGHT - FIXED ====================
+// ==================== NAV HIGHLIGHT ====================
 document.addEventListener('DOMContentLoaded', function() {
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('.nav-btn').forEach(function(btn) {
@@ -96,11 +99,6 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.classList.add('active');
         }
     });
-
-    // Load managers if on managers page
-    if (currentPage === 'managers.html') {
-        loadManagers();
-    }
 });
 
 // ==================== UNIVERSAL FILTER ====================
@@ -109,7 +107,7 @@ function filterTable(tableId, query) {
     const q = query.toLowerCase().trim();
     rows.forEach(function(row) {
         const text = row.textContent.toLowerCase();
-        row.style.display = text.indexOf(q)!== -1? '' : 'none';
+        row.style.display = text.indexOf(q) !== -1 ? '' : 'none';
     });
 }
 
@@ -183,238 +181,6 @@ function showLoading(elementId) {
     }
 }
 
-if (!document.getElementById('spinner-styles')) {
-    const style = document.createElement('style');
-    style.id = 'spinner-styles';
-    style.textContent = `
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// ==================== MANAGER FUNCTIONS ====================
-
-let editingManagerId = null;
-let allModules = [];
-
-// Load all managers
-async function loadManagers() {
-    try {
-        showLoading('managersTableBody');
-        const managers = await apiCall('/managers');
-        renderManagersTable(managers);
-    } catch (err) {
-        document.getElementById('managersTableBody').innerHTML = '<tr><td colspan="7" class="text-center">Error loading managers</td></tr>';
-    }
-}
-
-// Render managers table
-function renderManagersTable(managers) {
-    const tbody = document.getElementById('managersTableBody');
-    if (!tbody) return;
-    
-    if (!managers || managers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No managers found</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = managers.map(manager => `
-        <tr>
-            <td>${escapeHtml(manager.name)}</td>
-            <td>${escapeHtml(manager.area)}</td>
-            <td>${escapeHtml(manager.email)}</td>
-            <td>${escapeHtml(manager.phone)}</td>
-            <td>
-                <span class="badge ${manager.status? 'bg-success' : 'bg-danger'}">
-                    ${manager.status? 'Active' : 'Inactive'}
-                </span>
-            </td>
-            <td>${manager.moduleAccess? manager.moduleAccess.length : 0} Modules</td>
-            <td>
-                <button class="btn btn-sm btn-primary" onclick="editManager('${manager._id}')">
-                    <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteManager('${manager._id}')">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Open Add Manager Modal
-async function openAddManagerModal() {
-    editingManagerId = null;
-    document.getElementById('managerForm').reset();
-    document.getElementById('managerModalTitle').textContent = 'Add Manager';
-    document.getElementById('previewContainer').innerHTML = '';
-    
-    await loadModulesForManager();
-    
-    document.getElementById('managerModal').style.display = 'block';
-    document.body.style.overflow = 'hidden';
-}
-
-// Load modules for manager form
-async function loadModulesForManager() {
-    try {
-        const modules = await apiCall('/admin/data');
-        allModules = modules.modules || [];
-        
-        const container = document.getElementById('moduleAccessContainer');
-        if (!container) return;
-        
-        container.innerHTML = allModules.map(module => `
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="${module.name}" id="module_${module.id}">
-                <label class="form-check-label" for="module_${module.id}">
-                    ${escapeHtml(module.name)}
-                </label>
-            </div>
-        `).join('');
-    } catch (err) {
-        console.error('Error loading modules:', err);
-    }
-}
-
-// Edit Manager
-async function editManager(id) {
-    try {
-        const managers = await apiCall('/managers');
-        const manager = managers.find(m => m._id === id);
-        if (!manager) return;
-        
-        editingManagerId = id;
-        document.getElementById('managerModalTitle').textContent = 'Edit Manager';
-        
-        document.getElementById('managerName').value = manager.name;
-        document.getElementById('managerArea').value = manager.area;
-        document.getElementById('managerEmail').value = manager.email;
-        document.getElementById('managerPhone').value = manager.phone;
-        document.getElementById('managerServiceCharge').value = manager.serviceCharge || 5;
-        document.getElementById('managerStatus').value = manager.status.toString();
-        
-        await loadModulesForManager();
-        setTimeout(() => {
-            if (manager.moduleAccess) {
-                manager.moduleAccess.forEach(modName => {
-                    const checkbox = document.querySelector(`input[value="${modName}"]`);
-                    if (checkbox) checkbox.checked = true;
-                });
-            }
-        }, 100);
-        
-        if (manager.documents) {
-            let previewHTML = '';
-            if (manager.documents.photo) {
-                previewHTML += `<div class="col-3"><img src="${manager.documents.photo}" class="img-thumbnail" alt="Photo"><p class="small">Photo</p></div>`;
-            }
-            if (manager.documents.aadhar) {
-                previewHTML += `<div class="col-3"><img src="${manager.documents.aadhar}" class="img-thumbnail" alt="Aadhar"><p class="small">Aadhar</p></div>`;
-            }
-            if (manager.documents.pan) {
-                previewHTML += `<div class="col-3"><img src="${manager.documents.pan}" class="img-thumbnail" alt="PAN"><p class="small">PAN</p></div>`;
-            }
-            if (manager.documents.addressProof) {
-                previewHTML += `<div class="col-3"><img src="${manager.documents.addressProof}" class="img-thumbnail" alt="Address"><p class="small">Address Proof</p></div>`;
-            }
-            document.getElementById('previewContainer').innerHTML = previewHTML;
-        }
-        
-        document.getElementById('managerModal').style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    } catch (err) {
-        showToast('Error loading manager: ' + err.message, 'error');
-    }
-}
-
-// Save Manager - Form Submit
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('managerForm');
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData();
-            formData.append('name', document.getElementById('managerName').value);
-            formData.append('area', document.getElementById('managerArea').value);
-            formData.append('email', document.getElementById('managerEmail').value);
-            formData.append('phone', document.getElementById('managerPhone').value);
-            formData.append('serviceCharge', document.getElementById('managerServiceCharge').value);
-            formData.append('status', document.getElementById('managerStatus').value);
-            
-            const selectedModules = [];
-            document.querySelectorAll('#moduleAccessContainer input:checked').forEach(cb => {
-                selectedModules.push(cb.value);
-            });
-            formData.append('moduleAccess', JSON.stringify(selectedModules));
-            
-            const photoFile = document.getElementById('managerPhoto').files[0];
-            const aadharFile = document.getElementById('managerAadhar').files[0];
-            const panFile = document.getElementById('managerPan').files[0];
-            const addressFile = document.getElementById('managerAddressProof').files[0];
-            
-            if (photoFile) formData.append('photo', photoFile);
-            if (aadharFile) formData.append('aadhar', aadharFile);
-            if (panFile) formData.append('pan', panFile);
-            if (addressFile) formData.append('addressProof', addressFile);
-            
-            try {
-                const saveBtn = document.getElementById('saveManagerBtn');
-                saveBtn.disabled = true;
-                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
-                
-                let response;
-                if (editingManagerId) {
-                    response = await apiCall(`/managers/${editingManagerId}`, 'PUT', formData);
-                    showToast('Manager updated successfully', 'success');
-                } else {
-                    response = await apiCall('/admin/create-manager', 'POST', formData);
-                    showToast('Manager created! Temp Password: ' + response.tempPassword, 'success');
-                }
-                
-                closeModal();
-                loadManagers();
-                
-            } catch (err) {
-                // Error already shown by apiCall
-            } finally {
-                const saveBtn = document.getElementById('saveManagerBtn');
-                if (saveBtn) {
-                    saveBtn.disabled = false;
-                    saveBtn.innerHTML = 'Save Manager';
-                }
-            }
-        });
-    }
-});
-
-// Delete Manager
-async function deleteManager(id) {
-    if (!confirm('Are you sure you want to delete this manager?')) return;
-    
-    try {
-        await apiCall(`/managers/${id}`, 'DELETE');
-        showToast('Manager deleted successfully', 'success');
-        loadManagers();
-    } catch (err) {
-        // Error already shown by apiCall
-    }
-}
-
-// File preview
-function previewFile(input, previewId) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById(previewId).src = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
 // ==================== EXPORT UTILITIES ====================
 window.escapeHtml = escapeHtml;
 window.showToast = showToast;
@@ -426,7 +192,3 @@ window.formatDate = formatDate;
 window.logout = logout;
 window.showLoading = showLoading;
 window.API = API;
-window.openAddManagerModal = openAddManagerModal;
-window.editManager = editManager;
-window.deleteManager = deleteManager;
-window.previewFile = previewFile;

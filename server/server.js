@@ -5,7 +5,7 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-const multer = require('multer'); 
+const multer = require('multer');
 
 // MULTER AB YAHAN SE AAYEGA
 const { managerUpload, upload } = require('./middleware/upload');
@@ -285,6 +285,17 @@ app.post('/admin/upload', authenticateToken, upload.single('file'), (req, res) =
     }
 });
 
+// Video upload API - CONTENT PAGE KE LIYE
+app.post('/api/upload/video', authenticateToken, managerUpload.single('video'), (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No video uploaded' });
+        const url = '/uploads/managers/' + req.file.filename;
+        res.json({ success: true, url });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ADMIN DASHBOARD STATS API
 app.get('/api/stats', async (req, res) => {
     try {
@@ -550,7 +561,7 @@ app.delete('/api/content/:id', async (req, res) => {
 
 // ❌ PURANE MANAGER ROUTES DELETE KAR DIYE - AB ROUTER ME HAI
 // app.get('/api/managers'... )
-// app.post('/api/admin/create-manager'... ) 
+// app.post('/api/admin/create-manager'... )
 // app.put('/api/managers/:id'... )
 // YE SAB AB server/routes/adminRoutes.js me hai
 
@@ -622,7 +633,7 @@ app.post('/api/admin/module', async (req, res) => {
         banner: "",
         areas: [],
         categories: [],
-     ...req.body
+    ...req.body
     };
     try {
         const mongoItem = new Module(newItem);
@@ -794,7 +805,7 @@ app.post('/api/admin/shop', async (req, res) => {
         range: 5000,
         banner: '',
         bannerApproved: false,
-     ...req.body
+    ...req.body
     };
     try {
         const mongoItem = new Shop(newItem);
@@ -809,11 +820,12 @@ app.post('/api/admin/shop', async (req, res) => {
     res.json({ success: true, data: newItem });
 });
 
-app.use(express.static(path.join(__dirname, '../public')));
+// FIXED: Static path -../public hata diya
+app.use(express.static(path.join(__dirname, 'public')));
 
-// 404 ke liye
+// 404 ke liye - FIXED
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/404.html'));
+    res.sendFile(path.join(__dirname, 'public/404.html'));
 });
 
 // MULTER ERROR HANDLER - SABSE END ME
@@ -831,7 +843,7 @@ app.use((err, req, res, next) => {
     next();
 });
 
-// Create uploads folder if not exists
+// Create uploads folder if not exists - FIXED
 const uploadsDir = path.join(__dirname, 'public/uploads/managers');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });

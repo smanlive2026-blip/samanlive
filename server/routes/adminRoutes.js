@@ -3,17 +3,28 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
 const ShopHistory = require('../models/ShopHistory');
+const authenticateToken = require('../middleware/authenticateToken'); // ← Ye add kiya
 const router = express.Router();
 
 // ========================================
 // MULTER SETUP - Document Upload
 // ========================================
+const rootDir = path.join(__dirname, '..');
+const uploadDir = path.join(rootDir, 'public', 'uploads', 'managers');
+
+// Ensure folder exists
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('Created folder:', uploadDir);
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'public/uploads/managers/')
+    cb(null, uploadDir)
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -37,18 +48,11 @@ const upload = multer({
 });
 
 // ========================================
-// ADMIN AUTH MIDDLEWARE
-// ========================================
-function authAdmin(req, res, next) {
-  next();
-}
-
-// ========================================
 // MANAGER CRUD - ADMIN ONLY
 // ========================================
 
 // GET ALL MANAGERS
-router.get('/managers', authAdmin, async (req, res) => {
+router.get('/managers', authenticateToken, async (req, res) => {
     try {
         const managers = await Manager.find().select('-password').sort({ createdAt: -1 }).lean();
         res.json(managers);
@@ -58,7 +62,7 @@ router.get('/managers', authAdmin, async (req, res) => {
 });
 
 // CREATE NEW MANAGER
-router.post('/admin/create-manager', authAdmin, upload.fields([
+router.post('/admin/create-manager', authenticateToken, upload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'aadhar', maxCount: 1 },
     { name: 'pan', maxCount: 1 },
@@ -86,10 +90,10 @@ router.post('/admin/create-manager', authAdmin, upload.fields([
         }
 
         const documents = {};
-        if (req.files.photo) documents.photo = '/' + req.files.photo[0].path.replace(/\\/g, '/');
-        if (req.files.aadhar) documents.aadhar = '/' + req.files.aadhar[0].path.replace(/\\/g, '/');
-        if (req.files.pan) documents.pan = '/' + req.files.pan[0].path.replace(/\\/g, '/');
-        if (req.files.addressProof) documents.addressProof = '/' + req.files.addressProof[0].path.replace(/\\/g, '/');
+        if (req.files.photo) documents.photo = '/uploads/managers/' + req.files.photo[0].filename;
+        if (req.files.aadhar) documents.aadhar = '/uploads/managers/' + req.files.aadhar[0].filename;
+        if (req.files.pan) documents.pan = '/uploads/managers/' + req.files.pan[0].filename;
+        if (req.files.addressProof) documents.addressProof = '/uploads/managers/' + req.files.addressProof[0].filename;
 
         const loginToken = crypto.randomBytes(32).toString('hex');
         const tempPassword = Math.random().toString(36).slice(-8);
@@ -98,7 +102,7 @@ router.post('/admin/create-manager', authAdmin, upload.fields([
         const manager = new Manager({
             name,
             area,
-            email,
+            email: email.toLowerCase(),
             phone,
             password: hashedPassword,
             serviceCharge: serviceCharge || 5,
@@ -127,13 +131,13 @@ router.post('/admin/create-manager', authAdmin, upload.fields([
         });
 
     } catch (err) {
-        console.error(err);
+        console.error('Create manager error:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
 // UPDATE MANAGER
-router.put('/managers/:id', authAdmin, upload.fields([
+router.put('/managers/:id', authenticateToken, upload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'aadhar', maxCount: 1 },
     { name: 'pan', maxCount: 1 },
@@ -163,12 +167,12 @@ router.put('/managers/:id', authAdmin, upload.fields([
             updateData.status = updateData.status === 'true';
         }
 
-        if (req.files) {
+        if (req.files && Object.keys(req.files).length > 0) {
             updateData.documents = {};
-            if (req.files['photo']) updateData.documents.photo = '/' + req.files['photo'][0].path.replace(/\\/g, '/');
-            if (req.files['aadhar']) updateData.documents.aadhar = '/' + req.files['aadhar'][0].path.replace(/\\/g, '/');
-            if (req.files['pan']) updateData.documents.pan = '/' + req.files['pan'][0].path.replace(/\\/g, '/');
-            if (req.files['addressProof']) updateData.documents.addressProof = '/' + req.files['addressProof'][0].path.replace(/\\/g, '/');
+            if (req.files['photo']) updateData.documents.photo = '/uploads/managers/' + req.files['photo'][0].filename;
+            if (req.files['aadhar']) updateData.documents.aadhar = '/uploads/managers/' + req.files['aadhar'][0].filename;
+            if (req.files['pan']) updateData.documents.pan = '/uploads/managers/' + req.files['pan'][0].filename;
+            if (req.files['addressProof']) updateData.documents.addressProof = '/uploads/managers/' + req.files['addressProof'][0].filename;
         }
 
         const manager = await Manager.findByIdAndUpdate(id, updateData, {
@@ -187,7 +191,7 @@ router.put('/managers/:id', authAdmin, upload.fields([
 });
 
 // DELETE MANAGER
-router.delete('/managers/:id', authAdmin, async (req, res) => {
+router.delete('/managers/:id', authenticateToken, async (req, res) => {
     try {
         const manager = await Manager.findByIdAndDelete(req.params.id);
         if (!manager) {
@@ -200,7 +204,7 @@ router.delete('/managers/:id', authAdmin, async (req, res) => {
 });
 
 // UPLOAD DOCUMENT
-router.post('/admin/upload', authAdmin, upload.single('file'), async (req, res) => {
+router.post('/admin/upload', authenticateToken, upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
@@ -213,7 +217,7 @@ router.post('/admin/upload', authAdmin, upload.single('file'), async (req, res) 
 });
 
 // GET ADMIN DATA - Modules ke liye
-router.get('/admin/data', authAdmin, async (req, res) => {
+router.get('/admin/data', authenticateToken, async (req, res) => {
     try {
         const modules = [
             { id: 1, name: 'Grocery Store' },
@@ -232,7 +236,7 @@ router.get('/admin/data', authAdmin, async (req, res) => {
 // BANNER APPROVAL - ADMIN ONLY
 // ========================================
 
-router.get('/admin/pending-banners', authAdmin, async (req, res) => {
+router.get('/admin/pending-banners', authenticateToken, async (req, res) => {
     try {
         const shops = await Shop.find({
             banner: { $exists: true, $ne: '' },
@@ -241,9 +245,9 @@ router.get('/admin/pending-banners', authAdmin, async (req, res) => {
                 { bannerStatus: 'pending' }
             ]
         })
-       .populate('managerId', 'name area')
-       .sort({ updatedAt: -1 })
-       .lean();
+      .populate('managerId', 'name area')
+      .sort({ updatedAt: -1 })
+      .lean();
 
         res.json({ success: true, shops });
     } catch (err) {
@@ -251,7 +255,7 @@ router.get('/admin/pending-banners', authAdmin, async (req, res) => {
     }
 });
 
-router.post('/admin/approve-banner/:id', authAdmin, async (req, res) => {
+router.post('/admin/approve-banner/:id', authenticateToken, async (req, res) => {
     try {
         const shop = await Shop.findByIdAndUpdate(
             req.params.id,
@@ -270,7 +274,7 @@ router.post('/admin/approve-banner/:id', authAdmin, async (req, res) => {
     }
 });
 
-router.post('/admin/reject-banner/:id', authAdmin, async (req, res) => {
+router.post('/admin/reject-banner/:id', authenticateToken, async (req, res) => {
     try {
         const shop = await Shop.findByIdAndUpdate(
             req.params.id,
@@ -294,13 +298,13 @@ router.post('/admin/reject-banner/:id', authAdmin, async (req, res) => {
 // ACTIVITY LOG - ADMIN ONLY
 // ========================================
 
-router.get('/admin/shop-history', authAdmin, async (req, res) => {
+router.get('/admin/shop-history', authenticateToken, async (req, res) => {
     try {
         const history = await ShopHistory.find()
-       .populate('managerId', 'name email area')
-       .sort({ timestamp: -1 })
-       .limit(200)
-       .lean();
+      .populate('managerId', 'name email area')
+      .sort({ timestamp: -1 })
+      .limit(200)
+      .lean();
         res.json({ success: true, history });
     } catch (err) {
         res.status(500).json({ error: err.message });
