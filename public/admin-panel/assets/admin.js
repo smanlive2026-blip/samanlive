@@ -1,157 +1,157 @@
-console.log('admin.js loaded successfully');
+// ==================== GLOBAL CONFIG ====================
+const API_BASE = '/api'; // Tera backend URL. Render pe ye hi rahega
 
-const API = '/api';
+// ==================== UTILITY FUNCTIONS ====================
 
-// ==================== ESCAPE HTML - XSS Protection ====================
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text ?? '';
-    return div.innerHTML;
-}
-
-// ==================== TOAST ====================
-function showToast(msg, type = 'success') {
-    document.querySelectorAll('.toast').forEach(t => t.remove());
-
-    const toast = document.createElement('div');
-    toast.className = 'toast ' + type;
-    toast.style.cssText = `position:fixed;top:20px;right:20px;padding:15px 25px;background:${type==='success'?'#10b981':'#ef4444'};color:white;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:system-ui;font-size:14px;font-weight:600;animation:slideIn 0.3s ease;`;
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => { 
-        toast.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => toast.remove(), 300); 
-    }, 3000);
-}
-
-if (!document.getElementById('toast-styles')) {
-    const style = document.createElement('style');
-    style.id = 'toast-styles';
-    style.textContent = `
-        @keyframes slideIn {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(400px); opacity: 0; }
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// ==================== API CALL - PROFESSIONAL ====================
-async function apiCall(endpoint, method = 'GET', body = null) {
-    const token = localStorage.getItem('adminToken');
+/**
+ * API Call karne ka main function
+ */
+async function apiCall(endpoint, method = 'GET', data = null) {
     try {
-        const opts = {
+        const options = {
             method: method,
             headers: {}
         };
 
-        if (token) {
-            opts.headers['Authorization'] = 'Bearer ' + token;
-        }
-
-        if (body && !(body instanceof FormData)) {
-            opts.headers['Content-Type'] = 'application/json';
-            opts.body = JSON.stringify(body);
-        } else if (body) {
-            opts.body = body;
-        }
-
-        const res = await fetch(API + endpoint, opts);
-
-        const contentType = res.headers.get('content-type');
-        if (!contentType || contentType.indexOf('application/json') === -1) {
-            throw new Error('Server error - Invalid response');
-        }
-
-        const data = await res.json();
-        if (!res.ok) {
-            if (res.status === 401) {
-                localStorage.removeItem('adminToken');
-                showToast('Session expired. Please login again.', 'error');
-                setTimeout(() => window.location.href = '/login.html', 1500);
+        if (data) {
+            if (data instanceof FormData) {
+                // FormData ke liye Content-Type browser khud set karega
+                options.body = data;
+            } else {
+                options.headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(data);
             }
-            throw new Error(data.error || 'API Error');
         }
-        return data;
+
+        const response = await fetch(API_BASE + endpoint, options);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+            throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
+        }
+
+        // Agar response empty hai to
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        }
+        return { success: true };
+
     } catch (err) {
         console.error('API Error:', err);
-        if (!err.message.includes('Session expired')) {
-            showToast(err.message || 'Network error', 'error');
-        }
+        showToast(err.message || 'Something went wrong', 'error');
         throw err;
     }
 }
 
-// ==================== NAV HIGHLIGHT ====================
-document.addEventListener('DOMContentLoaded', function() {
-    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    document.querySelectorAll('.nav-btn').forEach(function(btn) {
-        btn.classList.remove('active');
-        const href = btn.getAttribute('href');
-        if (href === currentPage || (currentPage === 'index.html' && href === 'index.html')) {
-            btn.classList.add('active');
-        }
-    });
-});
+/**
+ * Toast notification dikhane ke liye
+ */
+function showToast(message, type = 'success') {
+    // Purana toast hatao
+    const existing = document.querySelector('.toast-notification');
+    if (existing) existing.remove();
 
-// ==================== UNIVERSAL FILTER ====================
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 14px 20px;
+        background: ${type === 'error'? '#ef4444' : type === 'warning'? '#f59e0b' : '#10b981'};
+        color: white;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.3s ease;
+        max-width: 350px;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+/**
+ * HTML escape karne ke liye - XSS se bachne ke liye
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Table me loading dikhane ke liye
+ */
+function showLoading(tableId) {
+    const tbody = document.querySelector(`#${tableId} tbody`);
+    if (tbody) {
+        const colCount = tbody.closest('table').querySelectorAll('thead th').length;
+        tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;padding:40px;color:#64748b;">Loading...</td></tr>`;
+    }
+}
+
+/**
+ * Table search/filter karne ke liye
+ */
 function filterTable(tableId, query) {
-    const rows = document.querySelectorAll('#' + tableId + ' tbody tr');
-    const q = query.toLowerCase().trim();
-    rows.forEach(function(row) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    const rows = table.querySelectorAll('tbody tr');
+    const searchTerm = query.toLowerCase().trim();
+
+    rows.forEach(row => {
+        // Agar "No data" wala row hai to skip karo
+        if (row.cells.length === 1 && row.cells[0].colSpan > 1) return;
+
         const text = row.textContent.toLowerCase();
-        row.style.display = text.indexOf(q) !== -1 ? '' : 'none';
+        row.style.display = text.includes(searchTerm)? '' : 'none';
     });
 }
 
-// ==================== UNIVERSAL MODAL CLOSE ====================
-function closeModal() {
-    const modals = document.querySelectorAll('.modal');
-    modals.forEach(function(m) {
-        m.style.display = 'none';
-        m.classList.remove('active');
-    });
-    document.body.style.overflow = 'auto';
-}
-
-window.addEventListener('click', function(e) {
-    if (e.target.classList.contains('modal')) {
-        closeModal();
-    }
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.close-btn').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeModal();
-        });
-    });
-});
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeModal();
-    }
-});
-
-// ==================== COPY TO CLIPBOARD ====================
+/**
+ * Clipboard me copy karne ke liye
+ */
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(function() {
-        showToast('Copied to clipboard!');
-    }).catch(function() {
-        showToast('Copy failed', 'error');
-    });
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Copied to clipboard!');
+        }).catch(() => {
+            fallbackCopy(text);
+        });
+    } else {
+        fallbackCopy(text);
+    }
 }
 
-// ==================== FORMAT DATE ====================
+function fallbackCopy(text) {
+    const input = document.createElement('input');
+    input.value = text;
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    try {
+        document.execCommand('copy');
+        showToast('Copied to clipboard!');
+    } catch (err) {
+        showToast('Failed to copy', 'error');
+    }
+    document.body.removeChild(input);
+}
+
+/**
+ * Date format karne ke liye
+ */
 function formatDate(dateString) {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -164,31 +164,76 @@ function formatDate(dateString) {
     });
 }
 
-// ==================== LOGOUT FUNCTION ====================
-function logout() {
-    if (confirm('Are you sure you want to logout?')) {
-        localStorage.removeItem('adminToken');
-        showToast('Logged out successfully');
-        setTimeout(() => window.location.href = '/login.html', 1000);
-    }
+/**
+ * Number format karne ke liye
+ */
+function formatNumber(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
 }
 
-// ==================== LOADING STATE ====================
-function showLoading(elementId) {
-    const el = document.getElementById(elementId);
-    if (el) {
-        el.innerHTML = '<div style="text-align:center;padding:40px;color:#64748b;"><div style="display:inline-block;width:40px;height:40px;border:4px solid #e5e7eb;border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite;"></div><p style="margin-top:10px;">Loading...</p></div>';
-    }
+/**
+ * Debounce function - search ke liye
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
-// ==================== EXPORT UTILITIES ====================
-window.escapeHtml = escapeHtml;
-window.showToast = showToast;
+// ==================== ADD ANIMATIONS ====================
+if (!document.getElementById('toastStyles')) {
+    const style = document.createElement('style');
+    style.id = 'toastStyles';
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ==================== GLOBAL ERROR HANDLER ====================
+window.addEventListener('error', function(e) {
+    console.error('Global Error:', e.error);
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('Unhandled Promise Rejection:', e.reason);
+});
+
+// ==================== EXPORT FOR USE ====================
+// Ye functions global scope me available hain
 window.apiCall = apiCall;
+window.showToast = showToast;
+window.escapeHtml = escapeHtml;
+window.showLoading = showLoading;
 window.filterTable = filterTable;
-window.closeModal = closeModal;
 window.copyToClipboard = copyToClipboard;
 window.formatDate = formatDate;
-window.logout = logout;
-window.showLoading = showLoading;
-window.API = API;
+window.formatNumber = formatNumber;
+window.debounce = debounce;

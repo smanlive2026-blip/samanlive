@@ -59,7 +59,7 @@ const managerSchema = new mongoose.Schema({
 
   moduleAccess: {
     type: [String],
-    default: ['all'],
+    default: [],
     required: [true, 'Module access is required'],
     validate: {
       validator: function(v) {
@@ -80,8 +80,9 @@ const managerSchema = new mongoose.Schema({
     default: ''
   },
   status: {
-    type: Boolean,
-    default: true
+    type: String,
+    enum: ['active', 'inactive', 'suspended'],
+    default: 'active'
   },
   lastLogin: {
     type: Date
