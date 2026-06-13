@@ -526,4 +526,52 @@ router.get('/admin/migrate-old-modules', async (req, res) => {
   }
 });
 
+// ==================== LOCAL MARKET STATS ====================
+// Get categories count from local-market.html for admin dashboard
+router.get('/admin/local-market-stats', async (req, res) => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const htmlPath = path.join(__dirname, '../../public/local-market.html');
+
+        if (!fs.existsSync(htmlPath)) {
+            return res.json({ success: true, totalModules: 0, totalCategories: 0, modules: [] });
+        }
+
+        const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+        const modulesMatch = htmlContent.match(/const\s+modules\s*=\s*(\[[\s\S]*?\]);/);
+
+        if (!modulesMatch) {
+            return res.json({ success: true, totalModules: 0, totalCategories: 0, modules: [] });
+        }
+
+        // Unsafe JSON parse se bachne ke liye eval use kiya - only for admin route
+        const modules = eval(modulesMatch[1]);
+        let totalCategories = 0;
+
+        const moduleStats = modules.map(m => {
+            const count = m.categories? m.categories.length : 0;
+            totalCategories += count;
+            return {
+                id: m.id,
+                name: m.name,
+                icon: m.icon,
+                color: m.color,
+                categoriesCount: count,
+                priority: m.priority || 0
+            };
+        });
+
+        res.json({
+            success: true,
+            totalModules: modules.length,
+            totalCategories: totalCategories,
+            modules: moduleStats
+        });
+    } catch (err) {
+        console.error('Local market stats error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
