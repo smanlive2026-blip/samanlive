@@ -6,7 +6,7 @@ const path = require('path');
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
 const ShopHistory = require('../models/ShopHistory');
-const Category = require('../models/Category');
+// const Category = require('../models/Category'); ← HATA DI
 const router = express.Router();
 
 // ========================================
@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  limits: { fileSize: 2 * 1024 }, // 2MB
   fileFilter: function (req, file, cb) {
     const allowedTypes = /jpeg|jpg|png/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -227,9 +227,9 @@ router.get('/admin/pending-banners', authAdmin, async (req, res) => {
                 { bannerStatus: 'pending' }
             ]
         })
-     .populate('managerId', 'name area')
-     .sort({ updatedAt: -1 })
-     .lean();
+    .populate('managerId', 'name area')
+    .sort({ updatedAt: -1 })
+    .lean();
 
         res.json({ success: true, shops });
     } catch (err) {
@@ -285,10 +285,10 @@ router.post('/admin/reject-banner/:id', authAdmin, async (req, res) => {
 router.get('/admin/shop-history', authAdmin, async (req, res) => {
     try {
         const history = await ShopHistory.find()
-         .populate('managerId', 'name email area')
-         .sort({ timestamp: -1 })
-         .limit(200)
-         .lean();
+        .populate('managerId', 'name email area')
+        .sort({ timestamp: -1 })
+        .limit(200)
+        .lean();
         res.json({ success: true, history });
     } catch (err) {
         res.status(500).json({ error: err.message });
