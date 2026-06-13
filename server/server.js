@@ -194,6 +194,16 @@ const dbPath = path.join(__dirname, './database/modules.json');
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Create uploads folder if not exists
+const uploadsDir = path.join(__dirname, 'public/uploads/managers');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Created uploads/managers folder');
+}
+
+// Static files - Public folder serve kar
+app.use(express.static(path.join(__dirname, 'public')));
+
 // DB Helpers
 function readDB() {
     const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
@@ -560,10 +570,6 @@ app.delete('/api/content/:id', async (req, res) => {
 });
 
 // ❌ PURANE MANAGER ROUTES DELETE KAR DIYE - AB ROUTER ME HAI
-// app.get('/api/managers'... )
-// app.post('/api/admin/create-manager'... )
-// app.put('/api/managers/:id'... )
-// YE SAB AB server/routes/adminRoutes.js me hai
 
 app.get('/api/area-manager/verify-token', async (req, res) => {
     try {
@@ -633,7 +639,7 @@ app.post('/api/admin/module', async (req, res) => {
         banner: "",
         areas: [],
         categories: [],
-    ...req.body
+   ...req.body
     };
     try {
         const mongoItem = new Module(newItem);
@@ -805,7 +811,7 @@ app.post('/api/admin/shop', async (req, res) => {
         range: 5000,
         banner: '',
         bannerApproved: false,
-    ...req.body
+   ...req.body
     };
     try {
         const mongoItem = new Shop(newItem);
@@ -820,12 +826,14 @@ app.post('/api/admin/shop', async (req, res) => {
     res.json({ success: true, data: newItem });
 });
 
-// FIXED: Static path -../public hata diya
-app.use(express.static(path.join(__dirname, 'public')));
-
-// 404 ke liye - FIXED
+// 404 ke liye - SPA fallback
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/404.html'));
+    const file404 = path.join(__dirname, 'public/404.html');
+    if (fs.existsSync(file404)) {
+        res.status(404).sendFile(file404);
+    } else {
+        res.status(404).json({ error: 'Page not found', path: req.originalUrl });
+    }
 });
 
 // MULTER ERROR HANDLER - SABSE END ME
@@ -843,14 +851,7 @@ app.use((err, req, res, next) => {
     next();
 });
 
-// Create uploads folder if not exists - FIXED
-const uploadsDir = path.join(__dirname, 'public/uploads/managers');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('Created uploads/managers folder');
-}
-
-// Server start
+// Server start - SIRF 1 BAAR
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} 🚀`);
 });
