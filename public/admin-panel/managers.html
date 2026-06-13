@@ -7,8 +7,8 @@
 
         async function loadCategories() {
             try {
-                allCategories = await apiCall('/admin/data');
-                allCategories = allCategories.modules || allCategories;
+                const data = await apiCall('/admin/data');
+                allCategories = data.modules || [];
                 if (!allCategories || allCategories.length === 0) {
                     throw new Error('Empty categories');
                 }
@@ -318,77 +318,6 @@
             }
         }
 
-        document.getElementById('managerForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const managerId = document.getElementById('managerId').value;
-            const btn = document.getElementById('saveManagerBtn');
-
-            if (selectedModuleIds.length === 0) {
-                showToast('Select at least 1 Module!', 'error');
-                return;
-            }
-
-            const phone = document.getElementById('phone').value;
-            if (!/^[0-9]{10}$/.test(phone)) {
-                showToast('Phone number must be 10 digits', 'error');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = 'Saving...';
-
-            const formData = new FormData();
-            formData.append('name', document.getElementById('name').value.trim());
-            formData.append('area', document.getElementById('area').value.trim());
-            formData.append('email', document.getElementById('email').value.trim());
-            formData.append('phone', phone);
-            formData.append('serviceCharge', document.getElementById('serviceCharge').value);
-            formData.append('status', document.getElementById('status').value);
-            formData.append('moduleAccess', JSON.stringify(selectedModuleIds));
-
-            if (document.getElementById('photoInput').files[0]) {
-                formData.append('photo', document.getElementById('photoInput').files[0]);
-            }
-            if (document.getElementById('aadharInput').files[0]) {
-                formData.append('aadhar', document.getElementById('aadharInput').files[0]);
-            }
-            if (document.getElementById('panInput').files[0]) {
-                formData.append('pan', document.getElementById('panInput').files[0]);
-            }
-            if (document.getElementById('addressProofInput').files[0]) {
-                formData.append('addressProof', document.getElementById('addressProofInput').files[0]);
-            }
-
-            try {
-                const url = managerId? '/managers/' + managerId : '/admin/create-manager';
-                const method = managerId? 'PUT' : 'POST';
-
-                const data = await apiCall(url, method, formData);
-
-                if (data.success) {
-                    if (data.loginLink) {
-                        document.getElementById('loginLink').value = data.loginLink;
-                        document.getElementById('tempPassword').textContent = data.tempPassword;
-                        document.getElementById('loginLinkBox').style.display = 'block';
-                        showToast('Manager created successfully!');
-                    } else {
-                        showToast('Manager updated!');
-                        closeModal();
-                    }
-                    await loadData();
-                    await loadHistory();
-                } else {
-                    showToast(data.error || 'Error saving manager', 'error');
-                }
-            } catch (err) {
-                console.error('Save error:', err);
-                showToast('Error saving manager', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Save Manager';
-            }
-        });
-
         function copyLink(token) {
             const link = window.location.origin + '/area-manager.html?token=' + token;
             copyToClipboard(link);
@@ -463,15 +392,86 @@
         window.loadData = loadData;
         window.loadHistory = loadHistory;
 
-        document.addEventListener('DOMContentLoaded', async function() {
-            try {
-                await loadCategories();
-                await loadData();
-                await loadHistory();
-            } catch(err) {
-                console.error('Init error:', err);
-                showToast('Some data failed to load', 'error');
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('managerForm');
+            if (form) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const managerId = document.getElementById('managerId').value;
+                    const btn = document.getElementById('saveManagerBtn');
+
+                    if (selectedModuleIds.length === 0) {
+                        showToast('Select at least 1 Module!', 'error');
+                        return;
+                    }
+
+                    const phone = document.getElementById('phone').value;
+                    if (!/^[0-9]{10}$/.test(phone)) {
+                        showToast('Phone number must be 10 digits', 'error');
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    btn.textContent = 'Saving...';
+
+                    const formData = new FormData();
+                    formData.append('name', document.getElementById('name').value.trim());
+                    formData.append('area', document.getElementById('area').value.trim());
+                    formData.append('email', document.getElementById('email').value.trim());
+                    formData.append('phone', phone);
+                    formData.append('serviceCharge', document.getElementById('serviceCharge').value);
+                    formData.append('status', document.getElementById('status').value);
+                    formData.append('moduleAccess', JSON.stringify(selectedModuleIds));
+
+                    if (document.getElementById('photoInput').files[0]) {
+                        formData.append('photo', document.getElementById('photoInput').files[0]);
+                    }
+                    if (document.getElementById('aadharInput').files[0]) {
+                        formData.append('aadhar', document.getElementById('aadharInput').files[0]);
+                    }
+                    if (document.getElementById('panInput').files[0]) {
+                        formData.append('pan', document.getElementById('panInput').files[0]);
+                    }
+                    if (document.getElementById('addressProofInput').files[0]) {
+                        formData.append('addressProof', document.getElementById('addressProofInput').files[0]);
+                    }
+
+                    try {
+                        const url = managerId? '/managers/' + managerId : '/admin/create-manager';
+                        const method = managerId? 'PUT' : 'POST';
+
+                        const data = await apiCall(url, method, formData);
+
+                        if (data.success) {
+                            if (data.loginLink) {
+                                document.getElementById('loginLink').value = data.loginLink;
+                                document.getElementById('tempPassword').textContent = data.tempPassword;
+                                document.getElementById('loginLinkBox').style.display = 'block';
+                                showToast('Manager created successfully!');
+                            } else {
+                                showToast('Manager updated!');
+                                closeModal();
+                            }
+                            await loadData();
+                            await loadHistory();
+                        } else {
+                            showToast(data.error || 'Error saving manager', 'error');
+                        }
+                    } catch (err) {
+                        console.error('Save error:', err);
+                        showToast('Error saving manager', 'error');
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = 'Save Manager';
+                    }
+                });
             }
+
+            // Init
+            loadCategories().then(() => {
+                loadData();
+                loadHistory();
+            });
         });
 </script>
 </body>
