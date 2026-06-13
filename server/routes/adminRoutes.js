@@ -12,16 +12,6 @@ const Content = require('../models/Content');
 const Setting = require('../models/Setting');
 const User = require('../models/User');
 
-// Temp route - index fix karne ke liye
-router.get('/admin/fix-index', async (req, res) => {
-  try {
-    await Module.collection.dropIndex('id_1');
-    res.json({ success: true, message: 'Index dropped' });
-  } catch (err) {
-    res.json({ success: false, error: err.message });
-  }
-});
-
 // ==================== UPLOAD SETUP ====================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -95,6 +85,89 @@ router.delete('/modules/:id', async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ==================== MODULE DETAIL PAGE ====================
+router.get('/admin/module/:id', async (req, res) => {
+  try {
+    const module = await Module.findById(req.params.id);
+    if (!module) return res.status(404).json({ success: false, error: 'Module not found' });
+
+    // Saare areas - ye tu DB se bhi le sakta hai
+    const areas = [
+      { id: 'lucknow', name: 'Lucknow', desc: 'Lucknow city area' },
+      { id: 'kanpur', name: 'Kanpur', desc: 'Kanpur city area' },
+      { id: 'varanasi', name: 'Varanasi', desc: 'Varanasi city area' },
+      { id: 'delhi', name: 'Delhi', desc: 'Delhi NCR area' },
+      { id: 'noida', name: 'Noida', desc: 'Noida area' },
+      { id: 'ghaziabad', name: 'Ghaziabad', desc: 'Ghaziabad area' }
+    ];
+
+    res.json({ success: true, module, areas });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/admin/module/:id/areas', async (req, res) => {
+  try {
+    const { areas } = req.body;
+    await Module.findByIdAndUpdate(req.params.id, { areas });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/admin/module/:id/category', async (req, res) => {
+  try {
+    const module = await Module.findById(req.params.id);
+    if (!module) return res.status(404).json({ success: false, error: 'Module not found' });
+
+    const newCategory = {
+      id: new mongoose.Types.ObjectId().toString(),
+      name: req.body.name,
+      icon: req.body.icon,
+      color: req.body.color,
+      group: req.body.group,
+      status: req.body.status,
+      areas: req.body.areas || []
+    };
+
+    module.categoryDetails = module.categoryDetails || [];
+    module.categoryDetails.push(newCategory);
+
+    // categories array me bhi name add karo list page ke liye
+    module.categories = module.categories || [];
+    if (!module.categories.includes(req.body.name)) {
+      module.categories.push(req.body.name);
+    }
+
+    await module.save();
+    res.json({ success: true, category: newCategory });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/admin/module/:id/category/:catId', async (req, res) => {
+  try {
+    const module = await Module.findById(req.params.id);
+    if (!module) return res.status(404).json({ success: false, error: 'Module not found' });
+
+    const catToDelete = module.categoryDetails.find(c => c.id === req.params.catId);
+    module.categoryDetails = (module.categoryDetails || []).filter(c => c.id!== req.params.catId);
+
+    // categories array se bhi hatao
+    if (catToDelete) {
+      module.categories = (module.categories || []).filter(name => name!== catToDelete.name);
+    }
+
+    await module.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -174,8 +247,8 @@ router.put('/managers/:id', upload.fields([
     const data = req.body;
     if (data.moduleAccess) data.moduleAccess = JSON.parse(data.moduleAccess);
 
-    const updateData = {...data };
     const existing = await Manager.findById(req.params.id);
+    const updateData = {...data };
     updateData.documents = existing.documents || {};
 
     if (req.files.photo) updateData.documents.photo = '/' + req.files.photo[0].path.replace('public/', '').replace(/\\/g, '/');
@@ -336,77 +409,56 @@ router.get('/admin/data', async (req, res) => {
   }
 });
 
-// ==================== MODULE DETAIL PAGE ====================
-
-// Get single module with all areas for detail page
-router.get('/admin/module/:id', async (req, res) => {
+// ==================== MIGRATION - TEMP ROUTE ====================
+// Purane modules ko new schema me convert karne ke liye
+// Ek baar chala ke delete kar dena
+router.get('/admin/migrate-old-modules', async (req, res) => {
   try {
-    const module = await Module.findById(req.params.id);
-    if (!module) return res.status(404).json({ success: false, error: 'Module not found' });
+    const modules = await Module.find({});
+    let updated = 0;
 
-    // Saare areas bhej do - ye tu modules.json se ya DB se le sakta hai
-    const areas = [
-      { id: 'lucknow', name: 'Lucknow', desc: 'Lucknow city area' },
-      { id: 'kanpur', name: 'Kanpur', desc: 'Kanpur city area' },
-      { id: 'varanasi', name: 'Varanasi', desc: 'Varanasi city area' },
-      { id: 'delhi', name: 'Delhi', desc: 'Delhi NCR area' }
-    ];
+    for (let m of modules) {
+      let changed = false;
 
-    res.json({ success: true, module, areas });
+      // 1. Boolean status ko string me convert kar
+      if (typeof m.status === 'boolean') {
+        m.status = m.status? 'active' : 'hidden';
+        changed = true;
+      }
+
+      // 2. Agar categoryDetails nahi hai aur categories array hai to convert kar
+      if ((!m.categoryDetails || m.categoryDetails.length === 0) && m.categories && m.categories.length > 0) {
+        m.categoryDetails = m.categories.map(name => ({
+          id: new mongoose.Types.ObjectId().toString(),
+          name: name,
+          icon: '📦',
+          color: '#10b981',
+          group: 'General',
+          status: true,
+          areas: []
+        }));
+        changed = true;
+      }
+
+      // 3. Areas field nahi hai to empty array
+      if (!m.areas) {
+        m.areas = [];
+        changed = true;
+      }
+
+      if (changed) {
+        await m.save();
+        updated++;
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      message: `Migrated ${updated}/${modules.length} modules`,
+      note: 'Ab ye route delete kar sakte ho'
+    });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Update module areas - konse area me active hai
-router.put('/admin/module/:id/areas', async (req, res) => {
-  try {
-    const { areas } = req.body;
-    await Module.findByIdAndUpdate(req.params.id, { areas });
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Add new category to module
-router.post('/admin/module/:id/category', async (req, res) => {
-  try {
-    const module = await Module.findById(req.params.id);
-    if (!module) return res.status(404).json({ success: false, error: 'Module not found' });
-
-    const newCategory = {
-      id: new mongoose.Types.ObjectId().toString(),
-      name: req.body.name,
-      icon: req.body.icon,
-      color: req.body.color,
-      group: req.body.group,
-      status: req.body.status,
-      areas: req.body.areas || []
-    };
-
-    module.categoryDetails = module.categoryDetails || [];
-    module.categoryDetails.push(newCategory);
-    await module.save();
-
-    res.json({ success: true, category: newCategory });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Delete category from module
-router.delete('/admin/module/:id/category/:catId', async (req, res) => {
-  try {
-    const module = await Module.findById(req.params.id);
-    if (!module) return res.status(404).json({ success: false, error: 'Module not found' });
-
-    module.categoryDetails = (module.categoryDetails || []).filter(c => c.id!== req.params.catId);
-    await module.save();
-
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 

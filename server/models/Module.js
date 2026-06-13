@@ -11,7 +11,7 @@ const categorySchema = new mongoose.Schema({
     areaId: String,
     status: Boolean
   }]
-}, { _id: false }); // <-- ye important hai
+}, { _id: false });
 
 const moduleSchema = new mongoose.Schema({
   name: { type: String, required: true },
