@@ -1,280 +1,191 @@
 const express = require('express');
-const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
+const router = express.Router();
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
-const ShopHistory = require('../models/ShopHistory');
-const authenticateToken = require('../middleware/authenticateToken');
-const { managerUpload } = require('../middleware/upload');
-const router = express.Router();
+const Module = require('../models/Module');
+const jwt = require('jsonwebtoken');
 
-// ========================================
-// MANAGER CRUD - ADMIN ONLY
-// ========================================
+const JWT_SECRET = process.env.JWT_SECRET || 'samanlive_secret_key';
 
-// GET ALL MANAGERS
-router.get('/managers', authenticateToken, async (req, res) => {
-    try {
-        const managers = await Manager.find().select('-password').sort({ createdAt: -1 }).lean();
-        res.json(managers);
-    } catch (err) {
-        console.error('Get managers error:', err);
-        res.status(500).json({ error: err.message });
+// ==================== MANAGER LOGIN ====================
+router.post('/area-manager/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const manager = await Manager.findOne({ email });
+    if (!manager) {
+      return res.status(401).json({ success: false, error: 'Manager not found' });
     }
+
+    if (!manager.status) {
+      return res.status(401).json({ success: false, error: 'Account deactivated' });
+    }
+
+    const isMatch = await manager.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, error: 'Invalid password' });
+    }
+
+    // Token generate karo
+    const token = jwt.sign({ id: manager._id, type: 'manager' }, JWT_SECRET, { expiresIn: '30d' });
+
+    res.json({
+      success: true,
+      token,
+      manager: {
+        _id: manager._id,
+        name: manager.name,
+        email: manager.email,
+        area: manager.area,
+        moduleAccess: manager.moduleAccess
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
-// CREATE NEW MANAGER
-router.post('/admin/create-manager', authenticateToken, managerUpload.fields([
-    { name: 'photo', maxCount: 1 },
-    { name: 'aadhar', maxCount: 1 },
-    { name: 'pan', maxCount: 1 },
-    { name: 'addressProof', maxCount: 1 }
-]), async (req, res) => {
-    try {
-        const { name, area, email, phone, serviceCharge, status, moduleAccess } = req.body;
+// ==================== AUTH MIDDLEWARE ====================
+const authManager = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ error: 'No token provided' });
 
-        if (!name ||!area ||!email ||!phone ||!moduleAccess) {
-            return res.status(400).json({ error: 'Sab required fields bharo' });
-        }
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const manager = await Manager.findById(decoded.id);
 
-        const parsedModuleAccess = JSON.parse(moduleAccess);
-        if (parsedModuleAccess.length === 0) {
-            return res.status(400).json({ error: 'Kam se kam 1 Module select karo' });
-        }
+    if (!manager ||!manager.status) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
 
-        if (!/^[0-9]{10}$/.test(phone)) {
-            return res.status(400).json({ error: 'Phone must be 10 digits' });
-        }
+    req.manager = manager;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
 
-        const exists = await Manager.findOne({ email: email.toLowerCase() });
-        if (exists) {
-            return res.status(400).json({ error: 'Email already registered' });
-        }
+// ==================== MANAGER DASHBOARD ====================
+router.get('/manager/dashboard', authManager, async (req, res) => {
+  try {
+    const manager = req.manager;
 
-        const documents = {};
-        if (req.files.photo) documents.photo = '/uploads/managers/' + req.files.photo[0].filename;
-        if (req.files.aadhar) documents.aadhar = '/uploads/managers/' + req.files.aadhar[0].filename;
-        if (req.files.pan) documents.pan = '/uploads/managers/' + req.files.pan[0].filename;
-        if (req.files.addressProof) documents.addressProof = '/uploads/managers/' + req.files.addressProof[0].filename;
+    // Manager ke area ki shops
+    const shops = await Shop.find({ area: manager.area, moduleId: { $in: manager.moduleAccess } });
 
-        const loginToken = crypto.randomBytes(32).toString('hex');
-        const tempPassword = Math.random().toString(36).slice(-8);
-        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    // Saari categories - manager ko dikhane ke liye
+    const modules = await Module.find({ _id: { $in: manager.moduleAccess } });
+    const categories = [];
+    modules.forEach(m => {
+      if (m.categoryDetails) {
+        categories.push(...m.categoryDetails);
+      }
+    });
 
-        const manager = new Manager({
-            name,
-            area,
-            email: email.toLowerCase(),
-            phone,
-            password: hashedPassword,
-            serviceCharge: serviceCharge || 5,
-            status: status || 'active',
-            moduleAccess: parsedModuleAccess,
-            documents: documents,
-            loginToken,
-            tempPassword
+    res.json({
+      success: true,
+      manager: {
+        _id: manager._id,
+        name: manager.name,
+        email: manager.email,
+        area: manager.area,
+        modules: manager.moduleAccess
+      },
+      shops,
+      categories
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==================== SHOP CRUD ====================
+router.post('/manager/shop', authManager, async (req, res) => {
+  try {
+    const manager = req.manager;
+    const data = req.body;
+
+    // Check karo ki ye category manager ke access me hai ya nahi
+    if (!manager.moduleAccess.includes(data.moduleId)) {
+      return res.status(403).json({ success: false, error: 'You dont have access to this category' });
+    }
+
+    const shop = new Shop({
+    ...data,
+      area: manager.area,
+      managerId: manager._id,
+      status: true
+    });
+
+    await shop.save();
+    res.json({ success: true, shop });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/manager/shop/:id', authManager, async (req, res) => {
+  try {
+    const manager = req.manager;
+    const shop = await Shop.findById(req.params.id);
+
+    if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
+    if (shop.managerId.toString()!== manager._id.toString()) {
+      return res.status(403).json({ success: false, error: 'Not your shop' });
+    }
+
+    Object.assign(shop, req.body);
+    await shop.save();
+
+    res.json({ success: true, shop });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/manager/shop/:id', authManager, async (req, res) => {
+  try {
+    const manager = req.manager;
+    const shop = await Shop.findById(req.params.id);
+
+    if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
+    if (shop.managerId.toString()!== manager._id.toString()) {
+      return res.status(403).json({ success: false, error: 'Not your shop' });
+    }
+
+    await Shop.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==================== PUBLIC API ====================
+router.get('/market/categories', async (req, res) => {
+  try {
+    const modules = await Module.find({ status: 'active' });
+    const categories = [];
+
+    modules.forEach(m => {
+      if (m.categoryDetails) {
+        m.categoryDetails.forEach(cat => {
+          if (cat.status) {
+            categories.push({
+              id: cat.id,
+              name: cat.name,
+              icon: cat.icon,
+              color: cat.color,
+              moduleId: m._id
+            });
+          }
         });
+      }
+    });
 
-        await manager.save();
-
-        const baseUrl = process.env.BASE_URL || 'https://samanlive.onrender.com';
-        const loginLink = `${baseUrl}/area-manager.html?token=${loginToken}`;
-
-        res.json({
-            success: true,
-            message: 'Manager created',
-            loginLink,
-            tempPassword,
-            manager: {
-                _id: manager._id,
-                name: manager.name,
-                email: manager.email
-            }
-        });
-
-    } catch (err) {
-        console.error('Create manager error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// UPDATE MANAGER
-router.put('/managers/:id', authenticateToken, managerUpload.fields([
-    { name: 'photo', maxCount: 1 },
-    { name: 'aadhar', maxCount: 1 },
-    { name: 'pan', maxCount: 1 },
-    { name: 'addressProof', maxCount: 1 }
-]), async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updateData = {...req.body };
-
-        if (updateData.moduleAccess) {
-            const parsed = JSON.parse(updateData.moduleAccess);
-            if (parsed.length === 0) {
-                return res.status(400).json({ error: 'Kam se kam 1 Module select karo' });
-            }
-            updateData.moduleAccess = parsed;
-        }
-
-        if (updateData.phone &&!/^[0-9]{10}$/.test(updateData.phone)) {
-            return res.status(400).json({ error: 'Phone must be 10 digits' });
-        }
-
-        if (updateData.email) {
-            updateData.email = updateData.email.toLowerCase();
-        }
-
-        // Status string hi rahega, convert nahi karna
-        if (updateData.status &&!['active', 'inactive', 'suspended'].includes(updateData.status)) {
-            updateData.status = 'active';
-        }
-
-        // Existing manager fetch karo documents merge karne ke liye
-        const existingManager = await Manager.findById(id);
-        if (!existingManager) {
-            return res.status(404).json({ error: 'Manager not found' });
-        }
-
-        if (req.files && Object.keys(req.files).length > 0) {
-            updateData.documents = {...existingManager.documents };
-            if (req.files['photo']) updateData.documents.photo = '/uploads/managers/' + req.files['photo'][0].filename;
-            if (req.files['aadhar']) updateData.documents.aadhar = '/uploads/managers/' + req.files['aadhar'][0].filename;
-            if (req.files['pan']) updateData.documents.pan = '/uploads/managers/' + req.files['pan'][0].filename;
-            if (req.files['addressProof']) updateData.documents.addressProof = '/uploads/managers/' + req.files['addressProof'][0].filename;
-        }
-
-        const manager = await Manager.findByIdAndUpdate(id, updateData, {
-            new: true,
-            runValidators: true
-        }).select('-password');
-
-        res.json({ success: true, manager });
-    } catch (err) {
-        console.error('Update manager error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// DELETE MANAGER
-router.delete('/managers/:id', authenticateToken, async (req, res) => {
-    try {
-        const manager = await Manager.findByIdAndDelete(req.params.id);
-        if (!manager) {
-            return res.status(404).json({ error: 'Manager not found' });
-        }
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// UPLOAD DOCUMENT
-router.post('/admin/upload', authenticateToken, managerUpload.single('file'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'No file uploaded' });
-        }
-        const url = `/uploads/managers/${req.file.filename}`;
-        res.json({ success: true, url });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// GET ADMIN DATA - Modules ke liye
-router.get('/admin/data', authenticateToken, async (req, res) => {
-    try {
-        const modules = [
-            { id: 1, name: 'Grocery Store' },
-            { id: 2, name: 'Electronics' },
-            { id: 3, name: 'Clothing' },
-            { id: 4, name: 'Restaurants' },
-            { id: 5, name: 'Pharmacy' }
-        ];
-        res.json({ success: true, modules });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ========================================
-// BANNER APPROVAL - ADMIN ONLY
-// ========================================
-
-router.get('/admin/pending-banners', authenticateToken, async (req, res) => {
-    try {
-        const shops = await Shop.find({
-            banner: { $exists: true, $ne: '' },
-            $or: [
-                { bannerApproved: false },
-                { bannerStatus: 'pending' }
-            ]
-        })
-       .populate('managerId', 'name area')
-       .sort({ updatedAt: -1 })
-       .lean();
-
-        res.json({ success: true, shops });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-router.post('/admin/approve-banner/:id', authenticateToken, async (req, res) => {
-    try {
-        const shop = await Shop.findByIdAndUpdate(
-            req.params.id,
-            {
-                bannerApproved: true,
-                bannerStatus: 'approved'
-            },
-            { new: true }
-        );
-        if (!shop) {
-            return res.status(404).json({ error: 'Shop not found' });
-        }
-        res.json({ success: true, shop });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-router.post('/admin/reject-banner/:id', authenticateToken, async (req, res) => {
-    try {
-        const shop = await Shop.findByIdAndUpdate(
-            req.params.id,
-            {
-                banner: '',
-                bannerApproved: false,
-                bannerStatus: 'rejected'
-            },
-            { new: true }
-        );
-        if (!shop) {
-            return res.status(404).json({ error: 'Shop not found' });
-        }
-        res.json({ success: true, shop });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ========================================
-// ACTIVITY LOG - ADMIN ONLY
-// ========================================
-
-router.get('/admin/shop-history', authenticateToken, async (req, res) => {
-    try {
-        const history = await ShopHistory.find()
-           .populate('managerId', 'name email area')
-           .sort({ timestamp: -1 })
-           .limit(200)
-           .lean();
-        res.json({ success: true, history });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

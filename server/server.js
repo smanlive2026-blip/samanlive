@@ -24,13 +24,21 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/samanlive
 
 // Routes
 app.use('/api', require('./routes/adminRoutes'));
+app.use('/api', require('./routes/managerRoutes'));
+
 // Module detail page route
 app.get('/module-detail.html', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin/module-detail.html'));
 });
+
 // Admin panel route
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin/admin-panel/index.html'));
+});
+
+// Area Manager route
+app.get('/area-manager.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/area-manager.html'));
 });
 
 // 404 fallback
