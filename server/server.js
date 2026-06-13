@@ -853,9 +853,9 @@ app.use((err, req, res, next) => {
 // Static files - Public folder serve kar - YE SABSE UPAR RAKHNA ROUTES SE
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API ROUTES - Ye beech me
-const adminRoutes = require('./routes/adminRoutes');
-app.use('/api', adminRoutes);
+
+
+
 
 app.use('/api/market', require('./routes/market'));
 app.use('/api/area-managers', require('./routes/area-manager'));
