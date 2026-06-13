@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authenticateToken');
 
 // GET /api/orders/my-orders - Get user orders
 router.get('/orders/my-orders', auth, async (req, res) => {

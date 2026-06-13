@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authenticateToken');
 
 // GET /api/user/addresses - Get all addresses
 router.get('/user/addresses', auth, async (req, res) => {

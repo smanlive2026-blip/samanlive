@@ -7,7 +7,7 @@ const fs = require('fs');
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
 const ShopHistory = require('../models/ShopHistory');
-const authenticateToken = require('../middleware/authenticateToken'); // ← Ye add kiya
+const authenticateToken = require('../middleware/authenticateToken');
 const router = express.Router();
 
 // ========================================

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authenticateToken');
 
 // GET /api/user/wishlist - Get all wishlist items with product details
 router.get('/user/wishlist', auth, async (req, res) => {

@@ -3,7 +3,7 @@ const router = express.Router();
 const Shop = require('../models/Shop');
 const User = require('../models/User');
 const ShopHistory = require('../models/ShopHistory');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authenticateToken');
 
 // ========================================
 // POST /api/shop/create - User apni shop banaye

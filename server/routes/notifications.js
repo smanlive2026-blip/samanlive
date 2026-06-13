@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authenticateToken');
 
 // GET /api/user/notifications - Get all notifications
 router.get('/user/notifications', auth, async (req, res) => {
