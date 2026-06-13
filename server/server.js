@@ -5,7 +5,7 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-const multer = require('multer');  
+const multer = require('multer'); 
 
 // MULTER AB YAHAN SE AAYEGA
 const { managerUpload, upload } = require('./middleware/upload');
@@ -267,6 +267,12 @@ function checkModuleInArea(module, userLat, userLng) {
     }
     return { inArea: false, distance: 0 };
 }
+
+// ========================================
+// ROUTES CONNECT KARO - ADMIN ROUTER YAHAN LAGA
+// ========================================
+const adminRoutes = require('./routes/adminRoutes');
+app.use('/api', adminRoutes);
 
 // Direct upload API
 app.post('/admin/upload', authenticateToken, upload.single('file'), (req, res) => {
@@ -542,65 +548,11 @@ app.delete('/api/content/:id', async (req, res) => {
     }
 });
 
-// MANAGERS APIs
-app.get('/api/managers', async (req, res) => {
-    try {
-        const managers = await Manager.find().select('-password');
-        res.json(managers);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ✅ MANAGER CREATE - next parameter add kiya
-app.post('/api/admin/create-manager', managerUpload.fields([
-    { name: 'photo', maxCount: 1 },
-    { name: 'aadhar', maxCount: 1 },
-    { name: 'pan', maxCount: 1 },
-    { name: 'addressProof', maxCount: 1 }
-]), async (req, res, next) => {
-    try {
-        const { name, email, phone, area, serviceCharge, moduleAccess, status } = req.body;
-        const existing = await Manager.findOne({ email });
-        if (existing) return res.status(400).json({ error: 'Email already registered' });
-
-        const tempPassword = Math.random().toString(36).slice(-8);
-        const hashedPassword = await bcrypt.hash(tempPassword, 10);
-        const loginToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-        const finalArea = area && area.trim()? area : 'Not Assigned';
-        const finalModuleAccess = (moduleAccess && moduleAccess.length > 0)? JSON.parse(moduleAccess) : ['all'];
-
-        const finalDocuments = {
-            photo: req.files['photo']? '/uploads/managers/' + req.files['photo'][0].filename : '',
-            aadhar: req.files['aadhar']? '/uploads/managers/' + req.files['aadhar'][0].filename : '',
-            pan: req.files['pan']? '/uploads/managers/' + req.files['pan'][0].filename : '',
-            addressProof: req.files['addressProof']? '/uploads/managers/' + req.files['addressProof'][0].filename : ''
-        };
-
-        const manager = await Manager.create({
-            name, email, phone,
-            password: hashedPassword,
-            area: finalArea,
-            serviceCharge: serviceCharge || 5,
-            documents: finalDocuments,
-            moduleAccess: finalModuleAccess,
-            loginToken,
-            status: status === 'true',
-            tempPassword
-        });
-
-        const loginLink = `${req.protocol}://${req.get('host')}/area-manager.html?token=${loginToken}`;
-        res.json({
-            success: true,
-            manager: {...manager.toObject(), password: undefined },
-            tempPassword,
-            loginLink
-        });
-    } catch (err) {
-        next(err);
-    }
-});
+// ❌ PURANE MANAGER ROUTES DELETE KAR DIYE - AB ROUTER ME HAI
+// app.get('/api/managers'... )
+// app.post('/api/admin/create-manager'... ) 
+// app.put('/api/managers/:id'... )
+// YE SAB AB server/routes/adminRoutes.js me hai
 
 app.get('/api/area-manager/verify-token', async (req, res) => {
     try {
@@ -614,90 +566,6 @@ app.get('/api/area-manager/verify-token', async (req, res) => {
             { expiresIn: '7d' }
         );
         res.json({ success: true, token: jwtToken, manager: {...manager.toObject(), password: undefined } });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// BANNER APIs
-app.put('/api/admin/approve-banner/:shopId', async (req, res) => {
-    try {
-        const shop = await Shop.findByIdAndUpdate(
-            req.params.shopId,
-            { bannerApproved: true, bannerApprovedAt: new Date() },
-            { new: true }
-        );
-        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
-        res.json({ success: true, shop });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.put('/api/admin/reject-banner/:shopId', async (req, res) => {
-    try {
-        const shop = await Shop.findByIdAndUpdate(
-            req.params.shopId,
-            { bannerApproved: false, banner: '' },
-            { new: true }
-        );
-        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
-        res.json({ success: true, shop });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.get('/api/admin/pending-banners', async (req, res) => {
-    try {
-        const shops = await Shop.find({
-            banner: { $ne: '' },
-            bannerApproved: false
-        }).populate('managerId', 'name email area');
-        res.json({ success: true, shops });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// FIX 2: SHOP HISTORY - ShopHistory collection use kar
-app.get('/api/admin/shop-history', async (req, res) => {
-    try {
-        const history = await ShopHistory.find({})
-        .populate('managerId', 'name email area')
-        .populate('shopId', 'shopName area')
-        .sort({ timestamp: -1 })
-        .limit(100);
-        res.json({ success: true, history });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ✅ MANAGER UPDATE 
-app.put('/api/managers/:id', managerUpload.fields([
-    { name: 'photo', maxCount: 1 },
-    { name: 'aadhar', maxCount: 1 },
-    { name: 'pan', maxCount: 1 },
-    { name: 'addressProof', maxCount: 1 }
-]), async (req, res) => {
-    try {
-        const updates = {...req.body };
-        
-        if (req.files) {
-            updates.documents = {};
-            if (req.files['photo']) updates.documents.photo = '/uploads/managers/' + req.files['photo'][0].filename;
-            if (req.files['aadhar']) updates.documents.aadhar = '/uploads/managers/' + req.files['aadhar'][0].filename;
-            if (req.files['pan']) updates.documents.pan = '/uploads/managers/' + req.files['pan'][0].filename;
-            if (req.files['addressProof']) updates.documents.addressProof = '/uploads/managers/' + req.files['addressProof'][0].filename;
-        }
-        
-        if (updates.moduleAccess) updates.moduleAccess = JSON.parse(updates.moduleAccess);
-        if (updates.status) updates.status = updates.status === 'true';
-        
-        const manager = await Manager.findByIdAndUpdate(req.params.id, updates, { new: true }).select('-password');
-        if (!manager) return res.status(404).json({ error: 'Manager nahi mila' });
-        res.json({ success: true, manager });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -754,7 +622,7 @@ app.post('/api/admin/module', async (req, res) => {
         banner: "",
         areas: [],
         categories: [],
-       ...req.body
+     ...req.body
     };
     try {
         const mongoItem = new Module(newItem);
@@ -926,7 +794,7 @@ app.post('/api/admin/shop', async (req, res) => {
         range: 5000,
         banner: '',
         bannerApproved: false,
-       ...req.body
+     ...req.body
     };
     try {
         const mongoItem = new Shop(newItem);
@@ -948,7 +816,7 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/404.html'));
 });
 
- // MULTER ERROR HANDLER - SABSE END ME
+// MULTER ERROR HANDLER - SABSE END ME
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
@@ -962,8 +830,9 @@ app.use((err, req, res, next) => {
     }
     next();
 });
+
 // Create uploads folder if not exists
-const uploadsDir = path.join(__dirname, 'uploads/managers');
+const uploadsDir = path.join(__dirname, 'public/uploads/managers');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
     console.log('Created uploads/managers folder');
