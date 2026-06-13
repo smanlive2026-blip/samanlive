@@ -12,6 +12,16 @@ const Content = require('../models/Content');
 const Setting = require('../models/Setting');
 const User = require('../models/User');
 
+// Temp route - index fix karne ke liye
+router.get('/admin/fix-index', async (req, res) => {
+  try {
+    await Module.collection.dropIndex('id_1');
+    res.json({ success: true, message: 'Index dropped' });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
 // ==================== UPLOAD SETUP ====================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

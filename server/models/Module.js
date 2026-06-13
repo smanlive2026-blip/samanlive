@@ -11,7 +11,7 @@ const categorySchema = new mongoose.Schema({
     areaId: String,
     status: Boolean
   }]
-});
+}, { _id: false }); // <-- ye important hai
 
 const moduleSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -20,9 +20,9 @@ const moduleSchema = new mongoose.Schema({
   link: String,
   desc: String,
   priority: { type: Number, default: 0 },
-  status: { type: String, enum: ['active', 'hidden'], default: 'active' }, // <-- Ye fix
-  categories: [String], // <-- Ye bhi fix, simple array
-  categoryDetails: [categorySchema], // <-- Detail page ke liye alag
+  status: { type: String, enum: ['active', 'hidden'], default: 'active' },
+  categories: [String],
+  categoryDetails: [categorySchema],
   areas: [{
     areaId: String,
     status: Boolean
