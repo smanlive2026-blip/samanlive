@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const mongoose = require('mongoose');
-const multer = require('multer'); 
+const multer = require('multer');  
 
 // MULTER AB YAHAN SE AAYEGA
 const { managerUpload, upload } = require('./middleware/upload');
