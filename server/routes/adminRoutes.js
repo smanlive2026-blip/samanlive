@@ -1,51 +1,12 @@
 const express = require('express');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
 const ShopHistory = require('../models/ShopHistory');
 const authenticateToken = require('../middleware/authenticateToken');
+const { managerUpload } = require('../middleware/upload'); // upload.js se import kar
 const router = express.Router();
-
-// ========================================
-// MULTER SETUP - Document Upload
-// ========================================
-const rootDir = path.join(__dirname, '..');
-const uploadDir = path.join(rootDir, 'public', 'uploads', 'managers');
-
-// Ensure folder exists
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-    console.log('Created folder:', uploadDir);
-}
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir)
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-  fileFilter: function (req, file, cb) {
-    const allowedTypes = /jpeg|jpg|png/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only PNG/JPG images allowed'));
-    }
-  }
-});
 
 // ========================================
 // MANAGER CRUD - ADMIN ONLY
@@ -57,15 +18,16 @@ router.get('/managers', authenticateToken, async (req, res) => {
         const managers = await Manager.find().select('-password').sort({ createdAt: -1 }).lean();
         res.json(managers);
     } catch (err) {
+        console.error('Get managers error:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
 // CREATE NEW MANAGER
-router.post('/admin/create-manager', authenticateToken, upload.fields([
+router.post('/admin/create-manager', authenticateToken, managerUpload.fields([
     { name: 'photo', maxCount: 1 },
-    { name: 'aadhar', maxCount: 1 },
-    { name: 'pan', maxCount: 1 },
+    { name: 'aadhar', maxCount: 1 }, // frontend me 'aadhar' bhej rahe
+    { name: 'pan', maxCount: 1 }, // frontend me 'pan' bhej rahe
     { name: 'addressProof', maxCount: 1 }
 ]), async (req, res) => {
     try {
@@ -137,7 +99,7 @@ router.post('/admin/create-manager', authenticateToken, upload.fields([
 });
 
 // UPDATE MANAGER
-router.put('/managers/:id', authenticateToken, upload.fields([
+router.put('/managers/:id', authenticateToken, managerUpload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'aadhar', maxCount: 1 },
     { name: 'pan', maxCount: 1 },
@@ -163,7 +125,7 @@ router.put('/managers/:id', authenticateToken, upload.fields([
             updateData.email = updateData.email.toLowerCase();
         }
 
-        if (updateData.status) {
+        if (updateData.status!== undefined) {
             updateData.status = updateData.status === 'true';
         }
 
@@ -186,6 +148,7 @@ router.put('/managers/:id', authenticateToken, upload.fields([
 
         res.json({ success: true, manager });
     } catch (err) {
+        console.error('Update manager error:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -204,7 +167,7 @@ router.delete('/managers/:id', authenticateToken, async (req, res) => {
 });
 
 // UPLOAD DOCUMENT
-router.post('/admin/upload', authenticateToken, upload.single('file'), async (req, res) => {
+router.post('/admin/upload', authenticateToken, managerUpload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
@@ -245,9 +208,9 @@ router.get('/admin/pending-banners', authenticateToken, async (req, res) => {
                 { bannerStatus: 'pending' }
             ]
         })
-      .populate('managerId', 'name area')
-      .sort({ updatedAt: -1 })
-      .lean();
+     .populate('managerId', 'name area')
+     .sort({ updatedAt: -1 })
+     .lean();
 
         res.json({ success: true, shops });
     } catch (err) {
@@ -301,10 +264,10 @@ router.post('/admin/reject-banner/:id', authenticateToken, async (req, res) => {
 router.get('/admin/shop-history', authenticateToken, async (req, res) => {
     try {
         const history = await ShopHistory.find()
-      .populate('managerId', 'name email area')
-      .sort({ timestamp: -1 })
-      .limit(200)
-      .lean();
+     .populate('managerId', 'name email area')
+     .sort({ timestamp: -1 })
+     .limit(200)
+     .lean();
         res.json({ success: true, history });
     } catch (err) {
         res.status(500).json({ error: err.message });
