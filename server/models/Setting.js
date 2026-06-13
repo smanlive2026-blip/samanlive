@@ -1,17 +1,17 @@
 const mongoose = require('mongoose');
 
 const settingSchema = new mongoose.Schema({
-  logoText: { type: String, default: 'SAMANLIVE' },
-  logoUrl: { type: String, default: '' },
-  headerColor: { type: String, default: '#1e40af' },
-  footerColor: { type: String, default: '#1e293b' },
-  footerText: { type: String, default: '© 2026 SAMANLIVE' },
-  footerAbout: { type: String, default: 'Best services in your city' },
-  footerLinks: { type: Array, default: [] },
-  facebook: { type: String, default: '' },
-  instagram: { type: String, default: '' },
-  twitter: { type: String, default: '' },
-  youtube: { type: String, default: '' }
-});
+  logoText: String,
+  logoUrl: String,
+  headerColor: String,
+  footerColor: String,
+  footerText: String,
+  footerAbout: String,
+  footerLinks: [{ text: String, url: String }],
+  facebook: String,
+  instagram: String,
+  twitter: String,
+  youtube: String
+}, { timestamps: true });
 
 module.exports = mongoose.model('Setting', settingSchema);
