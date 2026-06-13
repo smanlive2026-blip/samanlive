@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 
 const Module = require('../models/Module');
 const Shop = require('../models/Shop');
@@ -23,7 +24,7 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + '-' + file.originalname.replace(/\s/g, '_'));
   }
 });
-const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
+const upload = multer({ storage, limits: { fileSize: 50 * 1024 } });
 
 // ==================== DASHBOARD ====================
 router.get('/stats', async (req, res) => {
@@ -51,7 +52,12 @@ router.get('/modules', async (req, res) => {
 
 router.post('/modules', async (req, res) => {
   try {
-    const module = new Module(req.body);
+    const data = req.body;
+    // Categories string ko array me convert karo
+    if (data.categories && typeof data.categories === 'string') {
+      data.categories = data.categories.split(',').map(c => c.trim()).filter(c => c);
+    }
+    const module = new Module(data);
     await module.save();
     res.json({ success: true, module });
   } catch (err) {
@@ -61,7 +67,12 @@ router.post('/modules', async (req, res) => {
 
 router.put('/modules/:id', async (req, res) => {
   try {
-    const module = await Module.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const data = req.body;
+    // Categories string ko array me convert karo
+    if (data.categories && typeof data.categories === 'string') {
+      data.categories = data.categories.split(',').map(c => c.trim()).filter(c => c);
+    }
+    const module = await Module.findByIdAndUpdate(req.params.id, data, { new: true });
     res.json({ success: true, module });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -128,10 +139,10 @@ router.post('/admin/create-manager', upload.fields([
     data.tempPassword = Math.random().toString(36).substring(2, 10);
 
     data.documents = {};
-    if (req.files.photo) data.documents.photo = '/' + req.files.photo[0].path.replace('public/', '');
-    if (req.files.aadhar) data.documents.aadhar = '/' + req.files.aadhar[0].path.replace('public/', '');
-    if (req.files.pan) data.documents.pan = '/' + req.files.pan[0].path.replace('public/', '');
-    if (req.files.addressProof) data.documents.addressProof = '/' + req.files.addressProof[0].path.replace('public/', '');
+    if (req.files.photo) data.documents.photo = '/' + req.files.photo[0].path.replace('public/', '').replace(/\\/g, '/');
+    if (req.files.aadhar) data.documents.aadhar = '/' + req.files.aadhar[0].path.replace('public/', '').replace(/\\/g, '/');
+    if (req.files.pan) data.documents.pan = '/' + req.files.pan[0].path.replace('public/', '').replace(/\\/g, '/');
+    if (req.files.addressProof) data.documents.addressProof = '/' + req.files.addressProof[0].path.replace('public/', '').replace(/\\/g, '/');
 
     const manager = new Manager(data);
     await manager.save();
@@ -154,11 +165,13 @@ router.put('/managers/:id', upload.fields([
     if (data.moduleAccess) data.moduleAccess = JSON.parse(data.moduleAccess);
 
     const updateData = {...data };
-    updateData.documents = {};
-    if (req.files.photo) updateData.documents.photo = '/' + req.files.photo[0].path.replace('public/', '');
-    if (req.files.aadhar) updateData.documents.aadhar = '/' + req.files.aadhar[0].path.replace('public/', '');
-    if (req.files.pan) updateData.documents.pan = '/' + req.files.pan[0].path.replace('public/', '');
-    if (req.files.addressProof) updateData.documents.addressProof = '/' + req.files.addressProof[0].path.replace('public/', '');
+    const existing = await Manager.findById(req.params.id);
+    updateData.documents = existing.documents || {};
+
+    if (req.files.photo) updateData.documents.photo = '/' + req.files.photo[0].path.replace('public/', '').replace(/\\/g, '/');
+    if (req.files.aadhar) updateData.documents.aadhar = '/' + req.files.aadhar[0].path.replace('public/', '').replace(/\\/g, '/');
+    if (req.files.pan) updateData.documents.pan = '/' + req.files.pan[0].path.replace('public/', '').replace(/\\/g, '/');
+    if (req.files.addressProof) updateData.documents.addressProof = '/' + req.files.addressProof[0].path.replace('public/', '').replace(/\\/g, '/');
 
     const manager = await Manager.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.json({ success: true, manager });
@@ -179,7 +192,7 @@ router.delete('/managers/:id', async (req, res) => {
 // ==================== BANNERS ====================
 router.get('/admin/pending-banners', async (req, res) => {
   try {
-    const shops = await Shop.find({ banner: { $exists: true, $ne: null }, bannerStatus: 'pending' });
+    const shops = await Shop.find({ banner: { $exists: true, $ne: null }, bannerStatus: 'pending' }).populate('managerId', 'name');
     res.json({ shops });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -264,7 +277,7 @@ router.delete('/content/:id', async (req, res) => {
 // ==================== UPLOADS ====================
 router.post('/upload/video', upload.single('video'), async (req, res) => {
   try {
-    const url = '/' + req.file.path.replace('public/', '');
+    const url = '/' + req.file.path.replace('public/', '').replace(/\\/g, '/');
     res.json({ success: true, url });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -273,7 +286,7 @@ router.post('/upload/video', upload.single('video'), async (req, res) => {
 
 router.post('/upload/logo', upload.single('logo'), async (req, res) => {
   try {
-    const url = '/' + req.file.path.replace('public/', '');
+    const url = '/' + req.file.path.replace('public/', '').replace(/\\/g, '/');
     res.json({ success: true, url });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -312,6 +325,7 @@ router.get('/admin/data', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 // ==================== MODULE DETAIL PAGE ====================
 
 // Get single module with all areas for detail page
@@ -337,7 +351,7 @@ router.get('/admin/module/:id', async (req, res) => {
 // Update module areas - konse area me active hai
 router.put('/admin/module/:id/areas', async (req, res) => {
   try {
-    const { areas } = req.body; // [{ areaId: 'lucknow', status: true }]
+    const { areas } = req.body;
     await Module.findByIdAndUpdate(req.params.id, { areas });
     res.json({ success: true });
   } catch (err) {
@@ -361,8 +375,8 @@ router.post('/admin/module/:id/category', async (req, res) => {
       areas: req.body.areas || []
     };
 
-    module.categories = module.categories || [];
-    module.categories.push(newCategory);
+    module.categoryDetails = module.categoryDetails || [];
+    module.categoryDetails.push(newCategory);
     await module.save();
 
     res.json({ success: true, category: newCategory });
@@ -377,7 +391,7 @@ router.delete('/admin/module/:id/category/:catId', async (req, res) => {
     const module = await Module.findById(req.params.id);
     if (!module) return res.status(404).json({ success: false, error: 'Module not found' });
 
-    module.categories = module.categories.filter(c => c.id!== req.params.catId);
+    module.categoryDetails = (module.categoryDetails || []).filter(c => c.id!== req.params.catId);
     await module.save();
 
     res.json({ success: true });

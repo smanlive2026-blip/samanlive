@@ -20,8 +20,9 @@ const moduleSchema = new mongoose.Schema({
   link: String,
   desc: String,
   priority: { type: Number, default: 0 },
-  status: { type: Boolean, default: true },
-  categories: [categorySchema],
+  status: { type: String, enum: ['active', 'hidden'], default: 'active' }, // <-- Ye fix
+  categories: [String], // <-- Ye bhi fix, simple array
+  categoryDetails: [categorySchema], // <-- Detail page ke liye alag
   areas: [{
     areaId: String,
     status: Boolean
