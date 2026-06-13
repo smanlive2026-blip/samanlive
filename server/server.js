@@ -5,10 +5,11 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const mongoose = require('mongoose');
+const multer = require('multer'); 
 
 // MULTER AB YAHAN SE AAYEGA
 const { managerUpload, upload } = require('./middleware/upload');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -669,6 +670,35 @@ app.get('/api/admin/shop-history', async (req, res) => {
         .sort({ timestamp: -1 })
         .limit(100);
         res.json({ success: true, history });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ✅ MANAGER UPDATE 
+app.put('/api/managers/:id', managerUpload.fields([
+    { name: 'photo', maxCount: 1 },
+    { name: 'aadhar', maxCount: 1 },
+    { name: 'pan', maxCount: 1 },
+    { name: 'addressProof', maxCount: 1 }
+]), async (req, res) => {
+    try {
+        const updates = {...req.body };
+        
+        if (req.files) {
+            updates.documents = {};
+            if (req.files['photo']) updates.documents.photo = '/uploads/managers/' + req.files['photo'][0].filename;
+            if (req.files['aadhar']) updates.documents.aadhar = '/uploads/managers/' + req.files['aadhar'][0].filename;
+            if (req.files['pan']) updates.documents.pan = '/uploads/managers/' + req.files['pan'][0].filename;
+            if (req.files['addressProof']) updates.documents.addressProof = '/uploads/managers/' + req.files['addressProof'][0].filename;
+        }
+        
+        if (updates.moduleAccess) updates.moduleAccess = JSON.parse(updates.moduleAccess);
+        if (updates.status) updates.status = updates.status === 'true';
+        
+        const manager = await Manager.findByIdAndUpdate(req.params.id, updates, { new: true }).select('-password');
+        if (!manager) return res.status(404).json({ error: 'Manager nahi mila' });
+        res.json({ success: true, manager });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
