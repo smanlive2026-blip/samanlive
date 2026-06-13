@@ -6,7 +6,6 @@ const path = require('path');
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
 const ShopHistory = require('../models/ShopHistory');
-// const Category = require('../models/Category'); ← HATA DI
 const router = express.Router();
 
 // ========================================
@@ -38,7 +37,7 @@ const upload = multer({
 });
 
 // ========================================
-// ADMIN AUTH MIDDLEWARE - TODO: JWT add karna
+// ADMIN AUTH MIDDLEWARE
 // ========================================
 function authAdmin(req, res, next) {
   next();
@@ -58,7 +57,7 @@ router.get('/managers', authAdmin, async (req, res) => {
     }
 });
 
-// CREATE NEW MANAGER - MULTER ADD KIYA YAHAN
+// CREATE NEW MANAGER
 router.post('/admin/create-manager', authAdmin, upload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'aadhar', maxCount: 1 },
@@ -133,7 +132,7 @@ router.post('/admin/create-manager', authAdmin, upload.fields([
     }
 });
 
-// UPDATE MANAGER - MULTER ADD KIYA YAHAN BHI
+// UPDATE MANAGER
 router.put('/managers/:id', authAdmin, upload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'aadhar', maxCount: 1 },
@@ -213,11 +212,26 @@ router.post('/admin/upload', authAdmin, upload.single('file'), async (req, res) 
     }
 });
 
+// GET ADMIN DATA - Modules ke liye
+router.get('/admin/data', authAdmin, async (req, res) => {
+    try {
+        const modules = [
+            { id: 1, name: 'Grocery Store' },
+            { id: 2, name: 'Electronics' },
+            { id: 3, name: 'Clothing' },
+            { id: 4, name: 'Restaurants' },
+            { id: 5, name: 'Pharmacy' }
+        ];
+        res.json({ success: true, modules });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ========================================
 // BANNER APPROVAL - ADMIN ONLY
 // ========================================
 
-// GET PENDING BANNERS
 router.get('/admin/pending-banners', authAdmin, async (req, res) => {
     try {
         const shops = await Shop.find({
@@ -227,9 +241,9 @@ router.get('/admin/pending-banners', authAdmin, async (req, res) => {
                 { bannerStatus: 'pending' }
             ]
         })
-    .populate('managerId', 'name area')
-    .sort({ updatedAt: -1 })
-    .lean();
+       .populate('managerId', 'name area')
+       .sort({ updatedAt: -1 })
+       .lean();
 
         res.json({ success: true, shops });
     } catch (err) {
@@ -237,7 +251,6 @@ router.get('/admin/pending-banners', authAdmin, async (req, res) => {
     }
 });
 
-// APPROVE BANNER
 router.post('/admin/approve-banner/:id', authAdmin, async (req, res) => {
     try {
         const shop = await Shop.findByIdAndUpdate(
@@ -257,7 +270,6 @@ router.post('/admin/approve-banner/:id', authAdmin, async (req, res) => {
     }
 });
 
-// REJECT BANNER
 router.post('/admin/reject-banner/:id', authAdmin, async (req, res) => {
     try {
         const shop = await Shop.findByIdAndUpdate(
@@ -285,10 +297,10 @@ router.post('/admin/reject-banner/:id', authAdmin, async (req, res) => {
 router.get('/admin/shop-history', authAdmin, async (req, res) => {
     try {
         const history = await ShopHistory.find()
-        .populate('managerId', 'name email area')
-        .sort({ timestamp: -1 })
-        .limit(200)
-        .lean();
+       .populate('managerId', 'name email area')
+       .sort({ timestamp: -1 })
+       .limit(200)
+       .lean();
         res.json({ success: true, history });
     } catch (err) {
         res.status(500).json({ error: err.message });
