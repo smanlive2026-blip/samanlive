@@ -1,0 +1,275 @@
+<div class="page-header">
+    <h2>🔍 API Routes & Models Explorer</h2>
+    <div class="page-stats">
+        <div class="stat-card">
+            <div class="stat-value" id="totalRoutes">0</div>
+            <div class="stat-label">Total Routes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="totalModels">0</div>
+            <div class="stat-label">Models</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="lastUpdate">--:--</div>
+            <div class="stat-label">Last Updated</div>
+        </div>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="card-header">
+        <input type="text" id="routeSearch" placeholder="🔍 Search by path, method or model..." class="search-input">
+        <button class="btn-refresh" onclick="loadApiData()">
+            <span>🔄</span> Refresh
+        </button>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th width="140">Method</th>
+                    <th>Endpoint Path</th>
+                    <th width="100">Type</th>
+                </tr>
+            </thead>
+            <tbody id="routesTableBody">
+                <tr><td colspan="3" class="loading">Loading routes...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="card-header">
+        <h3>🗄️ Database Models</h3>
+    </div>
+    <div class="models-grid" id="modelsGrid"></div>
+</div>
+
+<style>
+.page-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    border: 1px solid #334155;
+}
+.page-header h2 {
+    color: #f1f5f9;
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+.page-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+}
+.stat-card {
+    background: rgba(15, 23, 42, 0.6);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #475569;
+}
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #60a5fa;
+    margin-bottom: 5px;
+}
+.stat-label {
+    font-size: 13px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.content-card {
+    background: #1e293b;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    margin-bottom: 25px;
+    overflow: hidden;
+}
+.card-header {
+    padding: 20px 25px;
+    background: #0f172a;
+    border-bottom: 1px solid #334155;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+.card-header h3 {
+    color: #e2e8f0;
+    font-size: 18px;
+    margin: 0;
+}
+.search-input {
+    flex: 1;
+    padding: 12px 18px;
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 14px;
+}
+.search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+.btn-refresh {
+    padding: 12px 24px;
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+.btn-refresh:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+.table-wrapper {
+    overflow-x: auto;
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.data-table thead {
+    background: #0f172a;
+}
+.data-table th {
+    padding: 15px 25px;
+    text-align: left;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.data-table td {
+    padding: 16px 25px;
+    border-bottom: 1px solid #334155;
+    color: #cbd5e1;
+}
+.data-table tbody tr:hover {
+    background: #0f172a;
+}
+.method-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.method-badge.GET { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+.method-badge.POST { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+.method-badge.PUT { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+.method-badge.DELETE { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+.path-text {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #e2e8f0;
+}
+.type-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #334155;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #94a3b8;
+}
+.models-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    padding: 25px;
+}
+.model-item {
+    background: #0f172a;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    transition: all 0.2s;
+}
+.model-item:hover {
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+}
+.model-name {
+    font-weight: 600;
+    color: #60a5fa;
+    font-size: 15px;
+}
+.loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #64748b;
+}
+</style>
+
+<script>
+(function() {
+    let allRoutes = [];
+
+    window.loadApiData = async function() {
+        try {
+            const res = await fetch('/api/admin/routes');
+            const data = await res.json();
+            allRoutes = data.routes;
+
+            document.getElementById('totalRoutes').textContent = data.total;
+            document.getElementById('totalModels').textContent = data.models.length;
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+            renderRoutes(allRoutes);
+
+            document.getElementById('modelsGrid').innerHTML = data.models
+              .map(m => `<div class="model-item"><div class="model-name">${m}</div></div>`)
+              .join('');
+
+        } catch (err) {
+            console.error('Error:', err);
+            document.getElementById('routesTableBody').innerHTML =
+                '<tr><td colspan="3" style="color: #f87171; text-align: center; padding: 40px;">Failed to load routes</td></tr>';
+        }
+    }
+
+    function renderRoutes(routes) {
+        const tbody = document.getElementById('routesTableBody');
+
+        if (routes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="loading">No routes found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = routes.map(r => `
+            <tr>
+                <td>${r.methods.map(m => `<span class="method-badge ${m}">${m}</span>`).join(' ')}</td>
+                <td><span class="path-text">${r.path}</span></td>
+                <td><span class="type-badge">${r.path.includes('/admin')? 'Admin' : r.path.includes('/manager')? 'Manager' : 'Public'}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    document.getElementById('routeSearch').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        const filtered = allRoutes.filter(r =>
+            r.path.toLowerCase().includes(query) ||
+            r.methods.some(m => m.toLowerCase().includes(query))
+        );
+        renderRoutes(filtered);
+    });
+
+    loadApiData();
+})();
+</script>

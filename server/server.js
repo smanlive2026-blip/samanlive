@@ -200,6 +200,38 @@ process.on('SIGTERM', async () => {
     process.exit(0);
 });
 
+// ==================== ADMIN API DOCS ROUTE ====================
+app.get('/api/admin/routes', (req, res) => {
+    const routes = [];
+
+    function extractRoutes(stack, basePath = '') {
+        stack.forEach(layer => {
+            if (layer.route) {
+                const path = basePath + layer.route.path;
+                const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
+                routes.push({
+                    path,
+                    methods,
+                    file: layer.route.stack[0].name || 'anonymous'
+                });
+            } else if (layer.name === 'router' && layer.handle.stack) {
+                const match = layer.regexp.toString().match(/^\/\^\\\/([^\\\/]+)/);
+                const newBase = match? basePath + '/' + match[1] : basePath;
+                extractRoutes(layer.handle.stack, newBase);
+            }
+        });
+    }
+
+    extractRoutes(app._router.stack);
+
+    res.json({
+        success: true,
+        total: routes.length,
+        routes: routes.sort((a, b) => a.path.localeCompare(b.path)),
+        models: mongoose.modelNames()
+    });
+});
+
 // ==================== START SERVER ====================
 const server = app.listen(PORT, () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
