@@ -11,12 +11,15 @@ const Manager = require('../models/Manager');
 const Content = require('../models/Content');
 const Setting = require('../models/Setting');
 const User = require('../models/User');
+const ShopHistory = require('../models/ShopHistory');
 
 // ==================== UPLOAD SETUP ====================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let dir = 'public/uploads/';
     if (file.fieldname === 'logo') dir = 'public/logos/';
+    if (file.fieldname === 'video') dir = 'public/videos/';
+    if (file.fieldname === 'banner') dir = 'public/banners/';
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
@@ -24,17 +27,34 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + '-' + file.originalname.replace(/\s/g, '_'));
   }
 });
-const upload = multer({ storage, limits: { fileSize: 50 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 } // ← 50MB kiya, pehle 50KB tha
+});
 
 // ==================== DASHBOARD ====================
 router.get('/stats', async (req, res) => {
   try {
-    const users = await User.countDocuments();
-    const shops = await Shop.countDocuments({ status: { $ne: 'pending' } });
-    const modules = await Module.countDocuments();
-    const content = await Content.countDocuments();
-    const managers = await Manager.countDocuments();
-    res.json({ users, shops, modules, content, managers });
+    const [users, shops, modules, content, managers, categories] = await Promise.all([
+      User.countDocuments(),
+      Shop.countDocuments({ status: 'approved' }),
+      Module.countDocuments(),
+      Content.countDocuments(),
+      Manager.countDocuments(),
+      Module.aggregate([
+        { $unwind: '$categoryDetails' },
+        { $count: 'total' }
+      ])
+    ]);
+
+    res.json({
+      users,
+      shops,
+      modules,
+      content,
+      managers,
+      categories: categories[0]?.total || 0
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -53,11 +73,9 @@ router.get('/modules', async (req, res) => {
 router.post('/modules', async (req, res) => {
   try {
     const data = req.body;
-    // Categories string ko array me convert karo
     if (data.categories && typeof data.categories === 'string') {
       data.categories = data.categories.split(',').map(c => c.trim()).filter(c => c);
     }
-    // id field ko hatao agar aa rahi hai - DUPLICATE ERROR FIX
     delete data.id;
     delete data._id;
 
@@ -72,11 +90,9 @@ router.post('/modules', async (req, res) => {
 router.put('/modules/:id', async (req, res) => {
   try {
     const data = req.body;
-    // Categories string ko array me convert karo
     if (data.categories && typeof data.categories === 'string') {
       data.categories = data.categories.split(',').map(c => c.trim()).filter(c => c);
     }
-    // id field ko hatao - DUPLICATE ERROR FIX
     delete data.id;
     delete data._id;
 
@@ -102,14 +118,13 @@ router.get('/admin/module/:id', async (req, res) => {
     const module = await Module.findById(req.params.id);
     if (!module) return res.status(404).json({ success: false, error: 'Module not found' });
 
-    // Saare areas - ye tu DB se bhi le sakta hai
     const areas = [
-      { id: 'lucknow', name: 'Lucknow', desc: 'Lucknow city area' },
-      { id: 'kanpur', name: 'Kanpur', desc: 'Kanpur city area' },
-      { id: 'varanasi', name: 'Varanasi', desc: 'Varanasi city area' },
-      { id: 'delhi', name: 'Delhi', desc: 'Delhi NCR area' },
-      { id: 'noida', name: 'Noida', desc: 'Noida area' },
-      { id: 'ghaziabad', name: 'Ghaziabad', desc: 'Ghaziabad area' }
+      { id: 'MUM001', name: 'Mumbai', desc: 'Mumbai city area' },
+      { id: 'DEL001', name: 'Delhi', desc: 'Delhi NCR area' },
+      { id: 'BAN001', name: 'Bangalore', desc: 'Bangalore area' },
+      { id: 'HYD001', name: 'Hyderabad', desc: 'Hyderabad area' },
+      { id: 'AHM001', name: 'Ahmedabad', desc: 'Ahmedabad area' },
+      { id: 'JAI001', name: 'Jaipur', desc: 'Jaipur area' }
     ];
 
     res.json({ success: true, module, areas });
@@ -136,17 +151,16 @@ router.post('/admin/module/:id/category', async (req, res) => {
     const newCategory = {
       id: new mongoose.Types.ObjectId().toString(),
       name: req.body.name,
-      icon: req.body.icon,
-      color: req.body.color,
-      group: req.body.group,
-      status: req.body.status,
+      icon: req.body.icon || '📦',
+      color: req.body.color || '#10b981',
+      group: req.body.group || 'General',
+      status: req.body.status!== undefined? req.body.status : true,
       areas: req.body.areas || []
     };
 
     module.categoryDetails = module.categoryDetails || [];
     module.categoryDetails.push(newCategory);
 
-    // categories array me bhi name add karo list page ke liye
     module.categories = module.categories || [];
     if (!module.categories.includes(req.body.name)) {
       module.categories.push(req.body.name);
@@ -167,7 +181,6 @@ router.delete('/admin/module/:id/category/:catId', async (req, res) => {
     const catToDelete = module.categoryDetails.find(c => c.id === req.params.catId);
     module.categoryDetails = (module.categoryDetails || []).filter(c => c.id!== req.params.catId);
 
-    // categories array se bhi hatao
     if (catToDelete) {
       module.categories = (module.categories || []).filter(name => name!== catToDelete.name);
     }
@@ -182,7 +195,22 @@ router.delete('/admin/module/:id/category/:catId', async (req, res) => {
 // ==================== SHOPS ====================
 router.get('/shops', async (req, res) => {
   try {
-    const shops = await Shop.find().sort({ createdAt: -1 });
+    const { status, area, search } = req.query;
+    let filter = {};
+
+    if (status) filter.status = status;
+    if (area) filter.area = area;
+    if (search) {
+      filter.$or = [
+        { shopName: { $regex: search, $options: 'i' } },
+        { ownerName: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const shops = await Shop.find(filter)
+     .populate('managerId', 'name')
+     .sort({ createdAt: -1 });
     res.json(shops);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -191,7 +219,22 @@ router.get('/shops', async (req, res) => {
 
 router.put('/shops/:id', async (req, res) => {
   try {
+    const oldShop = await Shop.findById(req.params.id);
     const shop = await Shop.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+    // Log history
+    if (req.body.status && oldShop.status!== req.body.status) {
+      await ShopHistory.logAction({
+        managerId: req.user?._id || oldShop.managerId,
+        shopId: shop._id,
+        shopName: shop.shopName,
+        action: req.body.status === 'approved'? 'approve' : 'reject',
+        oldData: { status: oldShop.status },
+        newData: { status: req.body.status },
+        area: shop.area
+      });
+    }
+
     res.json({ success: true, shop });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -200,7 +243,20 @@ router.put('/shops/:id', async (req, res) => {
 
 router.delete('/shops/:id', async (req, res) => {
   try {
+    const shop = await Shop.findById(req.params.id);
     await Shop.findByIdAndDelete(req.params.id);
+
+    // Log history
+    await ShopHistory.logAction({
+      managerId: shop.managerId,
+      shopId: shop._id,
+      shopName: shop.shopName,
+      action: 'delete',
+      oldData: shop.toObject(),
+      newData: {},
+      area: shop.area
+    });
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -225,9 +281,11 @@ router.post('/admin/create-manager', upload.fields([
 ]), async (req, res) => {
   try {
     const data = req.body;
-    data.moduleAccess = JSON.parse(data.moduleAccess);
-    data.loginToken = Math.random().toString(36).substring(2, 15);
-    data.tempPassword = Math.random().toString(36).substring(2, 10);
+    if (data.moduleAccess) data.moduleAccess = JSON.parse(data.moduleAccess);
+
+    const manager = new Manager(data);
+    manager.generateLoginToken();
+    manager.tempPassword = Math.random().toString(36).substring(2, 10);
 
     data.documents = {};
     if (req.files.photo) data.documents.photo = '/' + req.files.photo[0].path.replace('public/', '').replace(/\\/g, '/');
@@ -235,11 +293,11 @@ router.post('/admin/create-manager', upload.fields([
     if (req.files.pan) data.documents.pan = '/' + req.files.pan[0].path.replace('public/', '').replace(/\\/g, '/');
     if (req.files.addressProof) data.documents.addressProof = '/' + req.files.addressProof[0].path.replace('public/', '').replace(/\\/g, '/');
 
-    const manager = new Manager(data);
+    manager.documents = data.documents;
     await manager.save();
 
-    const loginLink = `${req.protocol}://${req.get('host')}/area-manager.html?token=${data.loginToken}`;
-    res.json({ success: true, manager, loginLink, tempPassword: data.tempPassword });
+    const loginLink = `${req.protocol}://${req.get('host')}/area-manager.html?token=${manager.loginToken}`;
+    res.json({ success: true, manager, loginLink, tempPassword: manager.tempPassword });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -280,10 +338,13 @@ router.delete('/managers/:id', async (req, res) => {
   }
 });
 
-// ==================== BANNERS ====================
+// ==================== BANNERS - FIXED ====================
 router.get('/admin/pending-banners', async (req, res) => {
   try {
-    const shops = await Shop.find({ banner: { $exists: true, $ne: null }, bannerStatus: 'pending' }).populate('managerId', 'name');
+    const shops = await Shop.find({
+      banner: { $exists: true, $ne: '' },
+      bannerApproved: false
+    }).populate('managerId', 'name');
     res.json({ shops });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -292,7 +353,11 @@ router.get('/admin/pending-banners', async (req, res) => {
 
 router.post('/admin/approve-banner/:shopId', async (req, res) => {
   try {
-    await Shop.findByIdAndUpdate(req.params.shopId, { bannerStatus: 'approved' });
+    await Shop.findByIdAndUpdate(req.params.shopId, {
+      bannerApproved: true,
+      bannerApprovedBy: req.user?._id,
+      bannerApprovedAt: new Date()
+    });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -301,7 +366,10 @@ router.post('/admin/approve-banner/:shopId', async (req, res) => {
 
 router.post('/admin/reject-banner/:shopId', async (req, res) => {
   try {
-    await Shop.findByIdAndUpdate(req.params.shopId, { banner: null, bannerStatus: 'rejected' });
+    await Shop.findByIdAndUpdate(req.params.shopId, {
+      banner: '',
+      bannerApproved: false
+    });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -311,16 +379,10 @@ router.post('/admin/reject-banner/:shopId', async (req, res) => {
 // ==================== ACTIVITY LOG ====================
 router.get('/admin/shop-history', async (req, res) => {
   try {
-    const shops = await Shop.find().populate('managerId', 'name area').limit(100).sort({ updatedAt: -1 });
-    const history = shops.map(s => ({
-      managerId: s.managerId,
-      action: 'edit',
-      shopName: s.name,
-      area: s.area,
-      timestamp: s.updatedAt,
-      oldData: {},
-      newData: { name: s.name, address: s.address, status: s.status }
-    }));
+    const history = await ShopHistory.find()
+     .populate('managerId', 'name area')
+     .sort({ createdAt: -1 })
+     .limit(100);
     res.json({ success: true, history });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -384,11 +446,19 @@ router.post('/upload/logo', upload.single('logo'), async (req, res) => {
   }
 });
 
+router.post('/upload/banner', upload.single('banner'), async (req, res) => {
+  try {
+    const url = '/' + req.file.path.replace('public/', '').replace(/\\/g, '/');
+    res.json({ success: true, url });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ==================== SETTINGS ====================
 router.get('/settings', async (req, res) => {
   try {
-    let settings = await Setting.findOne();
-    if (!settings) settings = await Setting.create({});
+    const settings = await Setting.getSettings();
     res.json(settings);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -417,11 +487,10 @@ router.get('/admin/data', async (req, res) => {
   }
 });
 
-// ==================== LOCAL MARKET STATS - NEW ====================
-// Local Market page ke liye stats
+// ==================== LOCAL MARKET STATS - FIXED ====================
 router.get('/admin/local-market-stats', async (req, res) => {
   try {
-    const modules = await Module.find({ status: { $in: ['active', true] } });
+    const modules = await Module.find({ status: 'active' });
     let totalCategories = 0;
     let categoriesByModule = [];
 
@@ -438,7 +507,6 @@ router.get('/admin/local-market-stats', async (req, res) => {
       });
     });
 
-    // Priority ke hisab se sort karo
     categoriesByModule.sort((a, b) => b.priority - a.priority);
 
     res.json({
@@ -452,8 +520,7 @@ router.get('/admin/local-market-stats', async (req, res) => {
   }
 });
 
-// ==================== FIX DUPLICATE INDEX - NEW ROUTE ====================
-// Module me id_1 index ko delete karne ke liye
+// ==================== FIX DUPLICATE INDEX ====================
 router.get('/admin/fix-module-index', async (req, res) => {
   try {
     await Module.collection.dropIndex('id_1');
@@ -468,8 +535,6 @@ router.get('/admin/fix-module-index', async (req, res) => {
 });
 
 // ==================== MIGRATION - TEMP ROUTE ====================
-// Purane modules ko new schema me convert karne ke liye
-// Ek baar chala ke delete kar dena
 router.get('/admin/migrate-old-modules', async (req, res) => {
   try {
     const modules = await Module.find({});
@@ -478,13 +543,11 @@ router.get('/admin/migrate-old-modules', async (req, res) => {
     for (let m of modules) {
       let changed = false;
 
-      // 1. Boolean status ko string me convert kar
       if (typeof m.status === 'boolean') {
         m.status = m.status? 'active' : 'hidden';
         changed = true;
       }
 
-      // 2. Agar categoryDetails nahi hai aur categories array hai to convert kar
       if ((!m.categoryDetails || m.categoryDetails.length === 0) && m.categories && m.categories.length > 0) {
         m.categoryDetails = m.categories.map(name => ({
           id: new mongoose.Types.ObjectId().toString(),
@@ -498,13 +561,11 @@ router.get('/admin/migrate-old-modules', async (req, res) => {
         changed = true;
       }
 
-      // 3. Areas field nahi hai to empty array
       if (!m.areas) {
         m.areas = [];
         changed = true;
       }
 
-      // 4. id field ko hatao agar hai - DUPLICATE ERROR FIX
       if (m.id!== undefined) {
         m.set('id', undefined, { strict: false });
         changed = true;
@@ -526,118 +587,52 @@ router.get('/admin/migrate-old-modules', async (req, res) => {
   }
 });
 
-// ==================== LOCAL MARKET STATS ====================
-// Get categories count from local-market.html for admin dashboard
-router.get('/admin/local-market-stats', async (req, res) => {
+const Banner = require('../models/Banner');
+
+// Get all banners
+router.get('/banners', async (req, res) => {
     try {
-        const fs = require('fs');
-        const path = require('path');
-        const htmlPath = path.join(__dirname, '../../public/local-market.html');
-
-        if (!fs.existsSync(htmlPath)) {
-            return res.json({ success: true, totalModules: 0, totalCategories: 0, modules: [] });
-        }
-
-        const htmlContent = fs.readFileSync(htmlPath, 'utf8');
-        const modulesMatch = htmlContent.match(/const\s+modules\s*=\s*(\[[\s\S]*?\]);/);
-
-        if (!modulesMatch) {
-            return res.json({ success: true, totalModules: 0, totalCategories: 0, modules: [] });
-        }
-
-        // Unsafe JSON parse se bachne ke liye eval use kiya - only for admin route
-        const modules = eval(modulesMatch[1]);
-        let totalCategories = 0;
-
-        const moduleStats = modules.map(m => {
-            const count = m.categories? m.categories.length : 0;
-            totalCategories += count;
-            return {
-                id: m.id,
-                name: m.name,
-                icon: m.icon,
-                color: m.color,
-                categoriesCount: count,
-                priority: m.priority || 0
-            };
-        });
-
-        res.json({
-            success: true,
-            totalModules: modules.length,
-            totalCategories: totalCategories,
-            modules: moduleStats
-        });
-    } catch (err) {
-        console.error('Local market stats error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ==================== CATEGORIES CRUD ====================
-const Category = require('../models/Category');
-
-// Get all categories
-router.get('/categories', async (req, res) => {
-    try {
-        const categories = await Category.find().populate('moduleId', 'name icon').sort({ priority: -1 });
-        res.json(categories);
+        const { status, type, placement } = req.query;
+        let filter = {};
+        if (status) filter.status = status;
+        if (type) filter.type = type;
+        if (placement) filter.placement = placement;
+        
+        const banners = await Banner.find(filter)
+            .populate('createdBy', 'name')
+            .sort({ priority: -1 });
+        res.json(banners);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Create category
-router.post('/categories', async (req, res) => {
+// Create banner
+router.post('/banners', upload.single('image'), async (req, res) => {
     try {
-        const category = new Category(req.body);
-        await category.save();
-        res.json({ success: true, category });
+        const bannerData = {
+            ...req.body,
+            image: '/' + req.file.path.replace('public/', '').replace(/\\/g, '/'),
+            createdBy: req.userId,
+            createdByType: 'admin'
+        };
+        const banner = new Banner(bannerData);
+        await banner.save();
+        res.json({ success: true, banner });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Update category
-router.put('/categories/:id', async (req, res) => {
+// Approve banner
+router.put('/banners/:id/approve', async (req, res) => {
     try {
-        const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.json({ success: true, category });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// Delete category
-router.delete('/categories/:id', async (req, res) => {
-    try {
-        await Category.findByIdAndDelete(req.params.id);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// Update dashboard stats to use real categories
-router.get('/stats', async (req, res) => {
-    try {
-        const User = require('../models/User');
-        const Shop = require('../models/Shop');
-        const Module = require('../models/Module');
-        const Content = require('../models/Content');
-        const Manager = require('../models/Manager');
-        const Category = require('../models/Category');
-
-        const [users, shops, modules, content, managers, categories] = await Promise.all([
-            User.countDocuments(),
-            Shop.countDocuments(),
-            Module.countDocuments(),
-            Content.countDocuments(),
-            Manager.countDocuments(),
-            Category.countDocuments()
-        ]);
-
-        res.json({ users, shops, modules, content, managers, categories });
+        const banner = await Banner.findByIdAndUpdate(req.params.id, {
+            status: 'approved',
+            approvedBy: req.userId,
+            approvedAt: new Date()
+        }, { new: true });
+        res.json({ success: true, banner });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -2,54 +2,70 @@ const mongoose = require('mongoose');
 
 const shopSchema = new mongoose.Schema({
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // NEW: Kis user ne banayi
-    managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' }, // NAYA ADD - Area Manager ne banayi to
-    shopName: { type: String, required: true },
-    ownerName: { type: String, required: true },
-    phone: { type: String, required: true },
-    email: String,
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' },
+    shopName: { type: String, required: true, trim: true },
+    ownerName: { type: String, required: true, trim: true },
+    phone: { type: String, required: true, trim: true },
+    email: { type: String, trim: true, lowercase: true },
     address: {
-        line1: String,
-        line2: String,
-        city: String,
-        state: String,
-        pincode: String
+        line1: { type: String, default: '' },
+        line2: { type: String, default: '' },
+        city: { type: String, default: '' },
+        state: { type: String, default: '' },
+        pincode: { type: String, default: '' }
     },
-    area: { type: String }, // NEW: Jaipur, Delhi etc - user ke profile se aayega
+    area: { type: String, default: '' },
     location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], default: [0, 0] } // [lng, lat]
+        coordinates: { type: [Number], default: [0, 0] }
     },
-    serviceType: { type: String, required: true }, // grocery, pharmacy, etc
-    description: String,
-    banner: String,
-    logo: String,
+    serviceType: { type: String, required: true, trim: true },
+    description: { type: String, default: '' },
+    banner: { type: String, default: '' },
+    logo: { type: String, default: '' },
 
-    // NAYA ADD - Banner Approval System
-    bannerApproved: { type: Boolean, default: false }, // Admin approve karega tab true hoga
-    bannerApprovedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Kis admin ne approve kiya
-    bannerApprovedAt: { type: Date }, // Kab approve hua
+    // Banner Approval System
+    bannerApproved: { type: Boolean, default: false },
+    bannerApprovedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    bannerApprovedAt: { type: Date },
 
-    // STATUS SYSTEM - NEW
+    // Status System
     status: {
         type: String,
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending'
     },
-    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // NEW: Kis admin ne approve ki
-    approvedAt: { type: Date }, // NEW: Kab approve hui
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    approvedAt: { type: Date },
+    rejectionReason: { type: String, default: '' }, // ← Naya add kiya
 
-    isVerified: { type: Boolean, default: false }, // Ab ye optional, status use hoga
+    isVerified: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
-    priority: { type: Number, default: 0 }, // NEW: Admin list me upar niche karne ke liye
-    rating: { type: Number, default: 0 },
+    priority: { type: Number, default: 0 },
+    rating: { type: Number, default: 0, min: 0, max: 5 },
     totalOrders: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now }
-}, { timestamps: true });
+}, {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
 
+// Indexes for fast queries
 shopSchema.index({ location: '2dsphere' });
-shopSchema.index({ status: 1 }); // NEW: Pending shops fast search ke liye
-shopSchema.index({ area: 1 }); // NEW: Area wise filter ke liye
-shopSchema.index({ bannerApproved: 1 }); // NAYA ADD - Approved banners fast search
+shopSchema.index({ status: 1 });
+shopSchema.index({ area: 1 });
+shopSchema.index({ bannerApproved: 1 });
+shopSchema.index({ serviceType: 1 }); // ← Naya add kiya
+shopSchema.index({ phone: 1 }); // ← Naya add kiya
+shopSchema.index({ managerId: 1 }); // ← Naya add kiya
+shopSchema.index({ createdAt: -1 }); // ← Naya add kiya - latest first
+
+// Virtual for full address
+shopSchema.virtual('fullAddress').get(function() {
+    const addr = this.address;
+    return `${addr.line1}, ${addr.city}, ${addr.state} - ${addr.pincode}`.trim();
+});
 
 module.exports = mongoose.models.Shop || mongoose.model('Shop', shopSchema);

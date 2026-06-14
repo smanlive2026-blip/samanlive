@@ -1,0 +1,156 @@
+<div class="content">
+    <h2>🎨 Site Settings</h2>
+    <div class="form-grid">
+        <div class="form-group">
+            <label>Logo Text:</label>
+            <input type="text" id="settingLogoText">
+        </div>
+        <div class="form-group full">
+            <label>Logo Image:</label>
+            <div class="logo-upload-wrapper">
+                <div class="logo-preview-box">
+                    <img id="logoPreview" src="" style="display:none;width:100px;height:100px;object-fit:contain;">
+                    <div id="logoIconPreview" style="width:100px;height:100px;background:#6366f1;color:white;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;border-radius:10px;"></div>
+                </div>
+                <div class="logo-upload-controls">
+                    <input type="file" id="logoUploadFile" accept="image/*" onchange="previewLogo(event)">
+                    <button class="btn-primary" id="uploadLogoBtn" onclick="uploadLogoFile()">📤 Upload Logo</button>
+                    <p class="help-text">PNG, JPG, SVG - Max 2MB</p>
+                    <p id="logoUploadStatus" class="status-text"></p>
+                </div>
+            </div>
+        </div>
+        <div class="form-group"><label>Header Color:</label><input type="color" id="settingHeaderColor"></div>
+        <div class="form-group"><label>Footer Color:</label><input type="color" id="settingFooterColor"></div>
+        <div class="form-group full"><label>Footer Text:</label><input type="text" id="settingFooterText"></div>
+        <div class="form-group full"><label>Footer About Text:</label><textarea id="settingFooterAbout" rows="3"></textarea></div>
+    </div>
+
+    <h3 class="section-title">🔗 Footer Links</h3>
+    <div id="footerLinksContainer"></div>
+    <button class="btn-success" onclick="addFooterLink()">+ Add Link</button>
+
+    <h3 class="section-title">📱 Social Media Links</h3>
+    <div class="form-grid">
+        <div class="form-group"><label>Facebook URL:</label><input type="text" id="settingFacebook" placeholder="https://facebook.com/..."></div>
+        <div class="form-group"><label>Instagram URL:</label><input type="text" id="settingInstagram" placeholder="https://instagram.com/..."></div>
+        <div class="form-group"><label>Twitter URL:</label><input type="text" id="settingTwitter" placeholder="https://twitter.com/..."></div>
+        <div class="form-group"><label>YouTube URL:</label><input type="text" id="settingYoutube" placeholder="https://youtube.com/..."></div>
+    </div>
+
+    <button class="btn-primary btn-lg" id="saveSettingsBtn" onclick="saveSettings()">💾 Save All Settings</button>
+</div>
+
+<script>
+let currentSettings = {};
+
+async function loadSettings() {
+    try {
+        currentSettings = await apiCall('/settings');
+        document.getElementById('settingLogoText').value = currentSettings.logoText || '';
+        document.getElementById('settingHeaderColor').value = currentSettings.headerColor || '#1e40af';
+        document.getElementById('settingFooterColor').value = currentSettings.footerColor || '#1e293b';
+        document.getElementById('settingFooterText').value = currentSettings.footerText || '';
+        document.getElementById('settingFooterAbout').value = currentSettings.footerAbout || '';
+        document.getElementById('settingFacebook').value = currentSettings.facebook || '';
+        document.getElementById('settingInstagram').value = currentSettings.instagram || '';
+        document.getElementById('settingTwitter').value = currentSettings.twitter || '';
+        document.getElementById('settingYoutube').value = currentSettings.youtube || '';
+        if (currentSettings.logoUrl) {
+            document.getElementById('logoPreview').src = currentSettings.logoUrl;
+            document.getElementById('logoPreview').style.display = 'block';
+            document.getElementById('logoIconPreview').style.display = 'none';
+        } else {
+            document.getElementById('logoIconPreview').textContent = (currentSettings.logoText || 'S')[0];
+            document.getElementById('logoIconPreview').style.display = 'flex';
+            document.getElementById('logoPreview').style.display = 'none';
+        }
+        renderFooterLinks();
+    } catch (err) {}
+}
+
+function renderFooterLinks() {
+    const container = document.getElementById('footerLinksContainer');
+    const links = currentSettings.footerLinks || [];
+    container.innerHTML = links.map((link, i) => `
+        <div class="footer-link-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:10px;align-items:end;">
+            <div class="form-group"><label>Link Text:</label><input type="text" value="${link.text||''}" onchange="updateFooterLink(${i},'text',this.value)"></div>
+            <div class="form-group"><label>Link URL:</label><input type="text" value="${link.url||''}" onchange="updateFooterLink(${i},'url',this.value)"></div>
+            <button class="btn-danger btn-sm" onclick="removeFooterLink(${i})">🗑️</button>
+        </div>`).join('');
+}
+
+window.addFooterLink = () => {
+    if (!currentSettings.footerLinks) currentSettings.footerLinks = [];
+    currentSettings.footerLinks.push({text:'', url:''});
+    renderFooterLinks();
+};
+
+window.updateFooterLink = (i, field, value) => { currentSettings.footerLinks[i][field] = value; };
+window.removeFooterLink = (i) => { currentSettings.footerLinks.splice(i, 1); renderFooterLinks(); };
+
+window.previewLogo = (e) => {
+    const file = e.target.files[0];
+    if (file && file.size > 2 * 1024 * 1024) {
+        showToast('File size must be less than 2MB', 'error');
+        e.target.value = '';
+        return;
+    }
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('logoPreview').src = e.target.result;
+            document.getElementById('logoPreview').style.display = 'block';
+            document.getElementById('logoIconPreview').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+window.uploadLogoFile = async () => {
+    const fileInput = document.getElementById('logoUploadFile');
+    const status = document.getElementById('logoUploadStatus');
+    if (!fileInput.files[0]) return showToast('Please select a logo', 'error');
+    const formData = new FormData();
+    formData.append('logo', fileInput.files[0]);
+    status.textContent = 'Uploading...';
+    try {
+        const res = await apiCall('/upload/logo', 'POST', formData);
+        currentSettings.logoUrl = res.url;
+        status.textContent = 'Upload successful!';
+        showToast('Logo uploaded');
+        setTimeout(() => status.textContent = '', 3000);
+    } catch (err) {
+        status.textContent = 'Upload failed!';
+    }
+};
+
+window.saveSettings = async () => {
+    const btn = document.getElementById('saveSettingsBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    const data = {
+        logoText: document.getElementById('settingLogoText').value,
+        logoUrl: currentSettings.logoUrl || '',
+        headerColor: document.getElementById('settingHeaderColor').value,
+        footerColor: document.getElementById('settingFooterColor').value,
+        footerText: document.getElementById('settingFooterText').value,
+        footerAbout: document.getElementById('settingFooterAbout').value,
+        footerLinks: currentSettings.footerLinks || [],
+        facebook: document.getElementById('settingFacebook').value,
+        instagram: document.getElementById('settingInstagram').value,
+        twitter: document.getElementById('settingTwitter').value,
+        youtube: document.getElementById('settingYoutube').value
+    };
+    try {
+        await apiCall('/settings', 'PUT', data);
+        showToast('Settings saved successfully');
+        await loadSettings();
+    } catch (err) {} finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Save All Settings';
+    }
+};
+
+loadSettings();
+</script>

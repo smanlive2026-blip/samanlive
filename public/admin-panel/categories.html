@@ -1,0 +1,117 @@
+<div class="content">
+    <h2>📂 All Categories <span id="categoryCount" class="badge badge-info"></span></h2>
+    <div class="action-bar">
+        <input type="text" class="search-box" placeholder="Search 250 categories..." onkeyup="filterTable('categoriesTable', this.value)">
+        <select onchange="filterByModule(this.value)" style="padding:10px;border:2px solid #e2e8f0;border-radius:8px;">
+            <option value="">All Modules</option>
+        </select>
+    </div>
+    <div style="overflow-x:auto;">
+        <table id="categoriesTable">
+            <thead><tr><th>Icon</th><th>Name</th><th>Module</th><th>Group</th><th>Color</th><th>Priority</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="7" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div id="categoryModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Category</h2>
+            <button class="close-btn" onclick="closeCategoryModal()">×</button>
+        </div>
+        <input type="hidden" id="catModuleId">
+        <input type="hidden" id="catIndex">
+        <div class="form-grid">
+            <div class="form-group"><label>Name *</label><input type="text" id="catName" required></div>
+            <div class="form-group"><label>Icon *</label><input type="text" id="catIcon" required></div>
+            <div class="form-group"><label>Color *</label><input type="color" id="catColor" required></div>
+            <div class="form-group"><label>Group</label><input type="text" id="catGroup"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+            <button class="btn-primary" onclick="saveCategory()">💾 Save Changes</button>
+            <button class="btn-secondary" onclick="closeCategoryModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let allCategoriesFlat = [];
+let moduleFilter = '';
+
+async function loadCategories() {
+    showLoading('categoriesTable');
+    try {
+        allModules = await apiCall('/modules');
+        allCategoriesFlat = [];
+        allModules.forEach(m => {
+            (m.categoryDetails || []).forEach((c, idx) => {
+                allCategoriesFlat.push({...c, moduleId: m._id, moduleName: m.name, moduleIcon: m.icon, catIndex: idx});
+            });
+        });
+        document.getElementById('categoryCount').textContent = allCategoriesFlat.length;
+        populateModuleFilter();
+        renderCategories();
+    } catch (err) {}
+}
+
+function populateModuleFilter() {
+    const select = document.querySelector('select[onchange="filterByModule(this.value)"]');
+    select.innerHTML = '<option value="">All Modules</option>' + 
+        allModules.map(m => `<option value="${m._id}">${m.icon} ${m.name}</option>`).join('');
+}
+
+function renderCategories() {
+    const tbody = document.querySelector('#categoriesTable tbody');
+    let filtered = moduleFilter ? allCategoriesFlat.filter(c => c.moduleId === moduleFilter) : allCategoriesFlat;
+    tbody.innerHTML = filtered.map(c => `
+        <tr>
+            <td style="font-size:24px;">${c.icon}</td>
+            <td><b>${escapeHtml(c.name)}</b></td>
+            <td>${c.moduleIcon} ${escapeHtml(c.moduleName)}</td>
+            <td>${escapeHtml(c.group||'-')}</td>
+            <td><span class="color-badge" style="background:${c.color}">${c.color}</span></td>
+            <td>${c.priority||0}</td>
+            <td class="actions">
+                <button class="btn-primary btn-sm" onclick="editCategory('${c.moduleId}', ${c.catIndex})">Edit</button>
+            </td>
+        </tr>`).join('');
+}
+
+window.filterByModule = (val) => { moduleFilter = val; renderCategories(); };
+
+window.editCategory = (moduleId, catIndex) => {
+    const m = allModules.find(x => x._id === moduleId);
+    const c = m.categoryDetails[catIndex];
+    document.getElementById('catModuleId').value = moduleId;
+    document.getElementById('catIndex').value = catIndex;
+    document.getElementById('catName').value = c.name;
+    document.getElementById('catIcon').value = c.icon;
+    document.getElementById('catColor').value = c.color;
+    document.getElementById('catGroup').value = c.group || '';
+    document.getElementById('categoryModal').style.display = 'block';
+};
+
+window.saveCategory = async () => {
+    const moduleId = document.getElementById('catModuleId').value;
+    const catIndex = parseInt(document.getElementById('catIndex').value);
+    const m = allModules.find(x => x._id === moduleId);
+    m.categoryDetails[catIndex] = {
+        ...m.categoryDetails[catIndex],
+        name: document.getElementById('catName').value.trim(),
+        icon: document.getElementById('catIcon').value.trim(),
+        color: document.getElementById('catColor').value,
+        group: document.getElementById('catGroup').value.trim()
+    };
+    try {
+        await apiCall('/modules/' + moduleId, 'PUT', {categoryDetails: m.categoryDetails});
+        showToast('Category updated!');
+        closeCategoryModal();
+        await loadCategories();
+    } catch (err) {}
+};
+
+window.closeCategoryModal = () => document.getElementById('categoryModal').style.display = 'none';
+loadCategories();
+</script>

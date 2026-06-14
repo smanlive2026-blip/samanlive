@@ -1,0 +1,41 @@
+<div class="content">
+    <h2>📊 Dashboard</h2>
+    <div class="stats-grid">
+        <div class="card stat-card"><h3>Total Users</h3><div class="stat-value" id="totalUsersCount">0</div></div>
+        <div class="card stat-card"><h3>Total Shops</h3><div class="stat-value" id="totalShopsCount">0</div></div>
+        <div class="card stat-card"><h3>Total Modules</h3><div class="stat-value purple" id="totalModulesCount">0</div></div>
+        <div class="card stat-card"><h3>Total Categories</h3><div class="stat-value green" id="totalCategoriesCount">0</div></div>
+        <div class="card stat-card"><h3>Total Content</h3><div class="stat-value cyan" id="totalContentCount">0</div></div>
+        <div class="card stat-card"><h3>Pending Shops</h3><div class="stat-value orange" id="pendingShopsCount">0</div></div>
+    </div>
+    <div class="chart-grid">
+        <div class="card"><h3>Shops by Area</h3><div class="chart-container"><canvas id="areaChart"></canvas></div></div>
+        <div class="card"><h3>Shop Status</h3><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
+    </div>
+</div>
+<script>
+async function loadDashboard() {
+    try {
+        const [stats, shops, modules] = await Promise.all([
+            apiCall('/stats'), apiCall('/shops'), apiCall('/modules')
+        ]);
+        allCategories = modules.flatMap(m => m.categoryDetails || []);
+        document.getElementById('totalUsersCount').textContent = stats.users || 0;
+        document.getElementById('totalShopsCount').textContent = stats.shops || 0;
+        document.getElementById('totalModulesCount').textContent = stats.modules || 0;
+        document.getElementById('totalCategoriesCount').textContent = allCategories.length;
+        document.getElementById('totalContentCount').textContent = stats.content || 0;
+        document.getElementById('pendingShopsCount').textContent = shops.filter(s => s.status === 'pending').length;
+
+        // Charts render karo
+        const areaCounts = {};
+        shops.forEach(s => { if(s.area) areaCounts[s.area] = (areaCounts[s.area]||0)+1 });
+        new Chart(document.getElementById('areaChart'), {
+            type: 'bar',
+            data: { labels: Object.keys(areaCounts), datasets: [{data: Object.values(areaCounts), backgroundColor: '#3b82f6'}] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    } catch (err) { console.error(err); }
+}
+loadDashboard();
+</script>

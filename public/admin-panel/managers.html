@@ -1,0 +1,250 @@
+<div class="content">
+    <div class="stats-grid">
+        <div class="stat-card"><h3>TOTAL MANAGERS</h3><div class="stat-value" id="totalManagers">0</div></div>
+        <div class="stat-card"><h3>ACTIVE</h3><div class="stat-value" id="activeManagers">0</div></div>
+        <div class="stat-card"><h3>PENDING BANNERS</h3><div class="stat-value orange" id="pendingBanners">0</div></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>All Area Managers</h2>
+            <button class="btn btn-success" onclick="openAddManager()">+ Add New Manager</button>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>Photo</th><th>Name</th><th>Area</th><th>Modules</th><th>Email</th><th>Phone</th><th>Service %</th><th>Status</th><th>Login Link</th><th>Actions</th></tr></thead>
+                <tbody id="managersTable"><tr><td colspan="10" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>🖼️ Pending Banner Approvals</h2>
+            <button class="btn btn-secondary btn-sm" onclick="loadManagers()">Refresh</button>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>Shop</th><th>Manager</th><th>Area</th><th>Banner</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="bannerTable"><tr><td colspan="6" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Manager Modal -->
+<div id="managerModal" class="modal">
+    <div class="modal-content" style="max-width:800px;">
+        <div class="modal-header"><h2 id="managerModalTitle">Add New Manager</h2><button class="close-btn" onclick="closeManagerModal()">×</button></div>
+        <form id="managerForm">
+            <input type="hidden" id="managerId">
+            <div class="form-grid">
+                <div class="form-group"><label>Full Name *</label><input type="text" id="managerName" required></div>
+                <div class="form-group"><label>Area/City *</label><input type="text" id="managerArea" required></div>
+                <div class="form-group"><label>Email *</label><input type="email" id="managerEmail" required></div>
+                <div class="form-group"><label>Phone *</label><input type="text" id="managerPhone" required pattern="[0-9]{10}"></div>
+                <div class="form-group"><label>Service Charge %</label><input type="number" id="managerServiceCharge" value="5" min="0" max="50"></div>
+                <div class="form-group"><label>Status</label><select id="managerStatus"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+                <div class="form-group full">
+                    <label>Module Access * (Select modules)</label>
+                    <input type="text" class="search-module" id="moduleSearch" placeholder="Search..." onkeyup="filterModules()">
+                    <div class="module-select-box" id="moduleSelectBox">Loading...</div>
+                    <div class="selected-modules" id="selectedModules"></div>
+                </div>
+            </div>
+            <div class="login-link-box" id="loginLinkBox" style="display:none;">
+                <strong>✅ Manager Created!</strong>
+                <input type="text" id="loginLink" readonly onclick="this.select()">
+                <p class="help-text">Temp Password: <b id="tempPassword"></b></p>
+            </div>
+            <button type="submit" class="btn btn-primary" id="saveManagerBtn" style="width:100%;margin-top:20px;">Save Manager</button>
+        </form>
+    </div>
+</div>
+
+<script>
+let selectedModuleIds = [];
+let pendingShops = [];
+
+async function loadManagers() {
+    try {
+        const [managersData, modulesData] = await Promise.all([apiCall('/managers'), apiCall('/modules')]);
+        allManagers = managersData || [];
+        allModules = modulesData || [];
+        try {
+            const bannerData = await apiCall('/admin/pending-banners');
+            pendingShops = bannerData.shops || [];
+        } catch(e) { pendingShops = []; }
+        renderManagers();
+        renderBanners();
+        renderModuleCheckboxes();
+        document.getElementById('totalManagers').textContent = allManagers.length;
+        document.getElementById('activeManagers').textContent = allManagers.filter(m=>m.status).length;
+        document.getElementById('pendingBanners').textContent = pendingShops.length;
+    } catch (err) {}
+}
+
+function renderManagers() {
+    const tbody = document.getElementById('managersTable');
+    tbody.innerHTML = allManagers.length === 0 ? '<tr><td colspan="10" style="text-align:center;padding:40px;">No managers</td></tr>' :
+        allManagers.map(m => {
+            const moduleNames = (m.moduleAccess||[]).map(id => {
+                const mod = allModules.find(x => x._id === id);
+                return mod? mod.icon+' '+mod.name : id;
+            }).slice(0,2).join(', ') + (m.moduleAccess.length>2?` +${m.moduleAccess.length-2}`:'');
+            return `<tr>
+                <td><img src="${m.documents?.photo||'/assets/default-avatar.png'}" class="manager-photo" onerror="this.src='/assets/default-avatar.png'"></td>
+                <td><strong>${escapeHtml(m.name)}</strong></td>
+                <td>${escapeHtml(m.area)}</td>
+                <td style="font-size:12px;">${moduleNames||'-'}</td>
+                <td>${escapeHtml(m.email)}</td>
+                <td>${escapeHtml(m.phone)}</td>
+                <td>${m.serviceCharge}%</td>
+                <td><span class="status-badge ${m.status?'status-active':'status-hidden'}">${m.status?'Active':'Inactive'}</span></td>
+                <td><button class="btn btn-secondary btn-sm" onclick="copyLink('${window.location.origin}/area-manager.html?token=${m.loginToken}')">Copy</button></td>
+                <td class="actions">
+                    <button class="btn btn-primary btn-sm" onclick="editManager('${m._id}')">Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteManager('${m._id}')">Delete</button>
+                </td>
+            </tr>`;
+        }).join('');
+}
+
+function renderBanners() {
+    const tbody = document.getElementById('bannerTable');
+    tbody.innerHTML = pendingShops.length === 0 ? '<tr><td colspan="6" style="text-align:center;padding:40px;">No pending banners</td></tr>' :
+        pendingShops.map(s => `<tr>
+            <td><strong>${escapeHtml(s.name)}</strong></td>
+            <td>${escapeHtml(s.managerId?.name||'-')}</td>
+            <td>${escapeHtml(s.area)}</td>
+            <td><img src="${s.banner}" class="banner-thumb" onclick="viewBanner('${s.banner}')"></td>
+            <td><span class="status-badge status-pending">Pending</span></td>
+            <td class="actions">
+                <button class="btn btn-success btn-sm" onclick="approveBanner('${s._id}')">Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="rejectBanner('${s._id}')">Reject</button>
+            </td>
+        </tr>`).join('');
+}
+
+function renderModuleCheckboxes() {
+    document.getElementById('moduleSelectBox').innerHTML = allModules.map(m => `
+        <div class="module-checkbox">
+            <input type="checkbox" id="mod_${m._id}" value="${m._id}" onchange="toggleModule('${m._id}')">
+            <label for="mod_${m._id}">${m.icon} ${escapeHtml(m.name)}</label>
+        </div>`).join('');
+}
+
+window.toggleModule = (id) => {
+    const idx = selectedModuleIds.indexOf(id);
+    if (idx > -1) selectedModuleIds.splice(idx, 1);
+    else selectedModuleIds.push(id);
+    renderSelectedModules();
+};
+
+function renderSelectedModules() {
+    document.getElementById('selectedModules').innerHTML = selectedModuleIds.map(id => {
+        const m = allModules.find(x => x._id === id);
+        return `<div class="module-tag">${m.icon} ${escapeHtml(m.name)}<span onclick="toggleModule('${id}')">×</span></div>`;
+    }).join('');
+}
+
+window.filterModules = () => {
+    const query = document.getElementById('moduleSearch').value.toLowerCase();
+    document.querySelectorAll('.module-checkbox').forEach(box => {
+        box.style.display = box.textContent.toLowerCase().includes(query)? 'flex':'none';
+    });
+};
+
+window.openAddManager = () => {
+    document.getElementById('managerId').value = '';
+    document.getElementById('managerModalTitle').textContent = 'Add New Manager';
+    document.getElementById('managerForm').reset();
+    selectedModuleIds = [];
+    renderSelectedModules();
+    document.getElementById('loginLinkBox').style.display = 'none';
+    document.getElementById('managerModal').style.display = 'block';
+};
+
+window.editManager = (id) => {
+    const m = allManagers.find(x => x._id === id);
+    document.getElementById('managerId').value = id;
+    document.getElementById('managerModalTitle').textContent = 'Edit Manager';
+    document.getElementById('managerName').value = m.name;
+    document.getElementById('managerArea').value = m.area;
+    document.getElementById('managerEmail').value = m.email;
+    document.getElementById('managerPhone').value = m.phone;
+    document.getElementById('managerServiceCharge').value = m.serviceCharge;
+    document.getElementById('managerStatus').value = m.status;
+    selectedModuleIds = [...(m.moduleAccess||[])];
+    renderSelectedModules();
+    setTimeout(() => selectedModuleIds.forEach(id => {
+        const cb = document.getElementById('mod_'+id);
+        if (cb) cb.checked = true;
+    }), 100);
+    document.getElementById('managerModal').style.display = 'block';
+};
+
+document.getElementById('managerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (selectedModuleIds.length === 0) return showToast('Select at least 1 Module!', 'error');
+    const id = document.getElementById('managerId').value;
+    const formData = {
+        name: document.getElementById('managerName').value,
+        area: document.getElementById('managerArea').value,
+        email: document.getElementById('managerEmail').value,
+        phone: document.getElementById('managerPhone').value,
+        serviceCharge: document.getElementById('managerServiceCharge').value,
+        status: document.getElementById('managerStatus').value,
+        moduleAccess: selectedModuleIds
+    };
+    try {
+        if (id) {
+            await apiCall('/managers/' + id, 'PUT', formData);
+            showToast('Manager updated!');
+            closeManagerModal();
+        } else {
+            const data = await apiCall('/admin/create-manager', 'POST', formData);
+            document.getElementById('loginLinkBox').style.display = 'block';
+            document.getElementById('loginLink').value = data.loginLink;
+            document.getElementById('tempPassword').textContent = data.tempPassword;
+            showToast('Manager created!');
+        }
+        await loadManagers();
+    } catch (err) {}
+});
+
+window.deleteManager = async (id) => {
+    if (!confirm('Delete this manager?')) return;
+    try {
+        await apiCall('/managers/' + id, 'DELETE');
+        showToast('Manager deleted');
+        await loadManagers();
+    } catch (err) {}
+};
+
+window.approveBanner = async (id) => {
+    try {
+        await apiCall('/admin/approve-banner/' + id, 'POST');
+        showToast('Banner approved!');
+        await loadManagers();
+    } catch (err) {}
+};
+
+window.rejectBanner = async (id) => {
+    if (!confirm('Reject this banner?')) return;
+    try {
+        await apiCall('/admin/reject-banner/' + id, 'POST');
+        showToast('Banner rejected');
+        await loadManagers();
+    } catch (err) {}
+};
+
+window.copyLink = (link) => {
+    navigator.clipboard.writeText(link);
+    showToast('Link copied!');
+};
+
+window.closeManagerModal = () => document.getElementById('managerModal').style.display = 'none';
+
+loadManagers();
+</script>

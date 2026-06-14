@@ -1,0 +1,248 @@
+<div class="content">
+    <h2>📦 All Modules <span id="moduleCount" class="badge badge-info"></span></h2>
+    <div class="action-bar">
+        <button class="btn-success" onclick="openAddModule()">+ Add New Module</button>
+        <input type="text" class="search-box" placeholder="Search modules..." onkeyup="filterTable('modulesTable', this.value)">
+    </div>
+    <div style="overflow-x:auto;">
+        <table id="modulesTable">
+            <thead><tr><th style="width:40px;"></th><th>Icon</th><th>Name</th><th>Color</th><th>Link</th><th>Categories</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="9" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="content" style="margin-top:20px;">
+    <h2>📍 Module Area Mapping</h2>
+    <div class="form-group">
+        <label>Select Module:</label>
+        <select id="moduleSelectArea" onchange="loadModuleArea()"><option value="">-- Select --</option></select>
+    </div>
+    <div class="map-controls">
+        <button class="btn-primary" id="saveAreaBtn" onclick="saveModuleArea()">💾 Save Area</button>
+        <button class="btn-secondary" onclick="clearModuleDrawing()">🗑️ Clear</button>
+    </div>
+    <div id="moduleMap" class="map-container"></div>
+</div>
+
+<!-- Module Modal -->
+<div id="moduleModal" class="modal">
+    <div class="modal-content" style="max-width:900px;">
+        <div class="modal-header">
+            <h2 id="moduleModalTitle">Edit Module</h2>
+            <button class="close-btn" onclick="closeModuleModal()">×</button>
+        </div>
+        <input type="hidden" id="moduleEditId">
+        <div id="moduleModalFields"></div>
+        <h3 style="margin:20px 0 10px;">📂 Categories in this Module</h3>
+        <div id="moduleCategoriesList"></div>
+        <button class="btn-success btn-sm" onclick="addCategoryToModule()" style="margin-top:10px;">+ Add Category</button>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+            <button class="btn-primary" id="saveModuleBtn" onclick="saveModule()">💾 Save Module</button>
+            <button class="btn-secondary" onclick="closeModuleModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentModuleCategories = [];
+let moduleMap, drawnItems, currentDrawnLayer, currentModuleId;
+
+async function loadModules() {
+    showLoading('modulesTable');
+    try {
+        allModules = await apiCall('/modules');
+        document.getElementById('moduleCount').textContent = allModules.length;
+        renderModules();
+        populateModuleDropdown();
+        initModuleMap();
+    } catch (err) {}
+}
+
+function renderModules() {
+    const tbody = document.querySelector('#modulesTable tbody');
+    tbody.innerHTML = allModules.map(m => {
+        const cats = m.categoryDetails || [];
+        const catsText = cats.length > 0? cats.slice(0,2).map(c=>c.name).join(', ') + (cats.length>2?'...':'') : '-';
+        return `<tr class="module-row" onclick="toggleModuleAreas('${m._id}')">
+            <td><span class="expand-icon" id="icon-${m._id}">▶</span></td>
+            <td style="font-size:24px;">${m.icon}</td>
+            <td><b>${escapeHtml(m.name)}</b></td>
+            <td><span class="color-badge" style="background:${m.color}">${m.color}</span></td>
+            <td>${escapeHtml(m.link)}</td>
+            <td><span class="badge badge-info">${cats.length} cats</span> ${catsText}</td>
+            <td>${m.priority||0}</td>
+            <td><span class="status-badge status-${m.status}">${m.status}</span></td>
+            <td onclick="event.stopPropagation()" class="actions">
+                <button class="btn-primary btn-sm" onclick="editModule('${m._id}')">Edit</button>
+                <button class="btn-danger btn-sm" onclick="deleteModule('${m._id}')">Delete</button>
+            </td>
+        </tr>
+        <tr id="areas-${m._id}" style="display:none;"><td colspan="9"><div class="area-expand">
+            <h4>Categories: ${cats.map(c=>`<span class="badge badge-info">${c.icon} ${c.name}</span>`).join(' ')||'No categories'}</h4>
+        </div></td></tr>`;
+    }).join('');
+}
+
+window.toggleModuleAreas = (id) => {
+    const row = document.getElementById(`areas-${id}`);
+    const icon = document.getElementById(`icon-${id}`);
+    if (row.style.display === 'none') { row.style.display = ''; icon.classList.add('open'); }
+    else { row.style.display = 'none'; icon.classList.remove('open'); }
+};
+
+function populateModuleDropdown() {
+    document.getElementById('moduleSelectArea').innerHTML = '<option value="">-- Select --</option>' +
+        allModules.map(m => `<option value="${m._id}">${m.icon} ${m.name}</option>`).join('');
+}
+
+window.openAddModule = () => {
+    document.getElementById('moduleEditId').value = '';
+    document.getElementById('moduleModalTitle').textContent = 'Add New Module';
+    currentModuleCategories = [];
+    renderModuleForm();
+    renderCategoryList();
+    document.getElementById('moduleModal').style.display = 'block';
+};
+
+window.editModule = (id) => {
+    const m = allModules.find(x => x._id === id);
+    document.getElementById('moduleEditId').value = id;
+    document.getElementById('moduleModalTitle').textContent = 'Edit Module';
+    currentModuleCategories = [...(m.categoryDetails || [])];
+    renderModuleForm(m);
+    renderCategoryList();
+    document.getElementById('moduleModal').style.display = 'block';
+};
+
+function renderModuleForm(m = {}) {
+    document.getElementById('moduleModalFields').innerHTML = `
+        <div class="form-grid">
+            <div class="form-group"><label>Name *</label><input type="text" id="field_name" value="${m.name||''}" required></div>
+            <div class="form-group"><label>Icon *</label><input type="text" id="field_icon" value="${m.icon||'📦'}" required></div>
+            <div class="form-group"><label>Color *</label><input type="color" id="field_color" value="${m.color||'#3b82f6'}" required></div>
+            <div class="form-group"><label>Link *</label><input type="text" id="field_link" value="${m.link||''}" required></div>
+            <div class="form-group"><label>Priority</label><input type="number" id="field_priority" value="${m.priority||0}" min="0"></div>
+            <div class="form-group"><label>Status</label><select id="field_status"><option value="active" ${m.status==='active'?'selected':''}>Active</option><option value="hidden" ${m.status==='hidden'?'selected':''}>Hidden</option></select></div>
+        </div>`;
+}
+
+function renderCategoryList() {
+    document.getElementById('moduleCategoriesList').innerHTML = currentModuleCategories.length === 0?
+        '<p style="color:#6b7280;">No categories. Click Add Category</p>' :
+        currentModuleCategories.map((c, i) => `
+            <div class="area-row" style="margin-bottom:8px;">
+                <div><strong>${c.icon} ${c.name}</strong> - ${c.group} <span style="color:${c.color}">${c.color}</span></div>
+                <button class="btn-danger btn-sm" onclick="removeCategory(${i})">Remove</button>
+            </div>`).join('');
+}
+
+window.addCategoryToModule = () => {
+    const name = prompt('Category Name:');
+    if (!name) return;
+    const icon = prompt('Icon (emoji):', '📦');
+    const color = prompt('Color (hex):', '#10b981');
+    const group = prompt('Group:', 'General');
+    currentModuleCategories.push({id: 'cat_' + Date.now(), name, icon, color, group});
+    renderCategoryList();
+};
+
+window.removeCategory = (idx) => {
+    currentModuleCategories.splice(idx, 1);
+    renderCategoryList();
+};
+
+window.saveModule = async () => {
+    const btn = document.getElementById('saveModuleBtn');
+    btn.disabled = true;
+    const id = document.getElementById('moduleEditId').value;
+    const data = {
+        name: document.getElementById('field_name').value.trim(),
+        icon: document.getElementById('field_icon').value.trim(),
+        color: document.getElementById('field_color').value,
+        link: document.getElementById('field_link').value.trim(),
+        priority: parseInt(document.getElementById('field_priority').value || 0),
+        status: document.getElementById('field_status').value,
+        categoryDetails: currentModuleCategories
+    };
+    if (!data.name ||!data.icon ||!data.link) {
+        showToast('Name, Icon, Link required', 'error');
+        btn.disabled = false;
+        return;
+    }
+    try {
+        if (id) await apiCall('/modules/' + id, 'PUT', data);
+        else await apiCall('/modules', 'POST', data);
+        showToast('Module saved!');
+        closeModuleModal();
+        await loadModules();
+    } catch (err) {} finally { btn.disabled = false; }
+};
+
+window.deleteModule = async (id) => {
+    if (!confirm('Delete this module? All categories will be deleted!')) return;
+    try {
+        await apiCall('/modules/' + id, 'DELETE');
+        showToast('Module deleted');
+        await loadModules();
+    } catch (err) {}
+};
+
+window.closeModuleModal = () => document.getElementById('moduleModal').style.display = 'none';
+
+// Map functions
+function initModuleMap() {
+    if (moduleMap) return;
+    moduleMap = L.map('moduleMap').setView([28.6139, 77.2090], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(moduleMap);
+    drawnItems = new L.FeatureGroup();
+    moduleMap.addLayer(drawnItems);
+    const drawControl = new L.Control.Draw({draw: {polygon:true,circle:true,rectangle:false,polyline:false,marker:false}, edit: {featureGroup: drawnItems}});
+    moduleMap.addControl(drawControl);
+    moduleMap.on(L.Draw.Event.CREATED, (e) => {
+        drawnItems.clearLayers();
+        currentDrawnLayer = e.layer;
+        drawnItems.addLayer(currentDrawnLayer);
+    });
+}
+
+window.loadModuleArea = () => {
+    currentModuleId = document.getElementById('moduleSelectArea').value;
+    drawnItems.clearLayers();
+    currentDrawnLayer = null;
+    if (!currentModuleId) return;
+    const module = allModules.find(m => m._id === currentModuleId);
+    if (module.areas && module.areas.length > 0) {
+        const area = module.areas[0];
+        if (area.type === 'circle') {
+            currentDrawnLayer = L.circle([area.center.lat, area.center.lng], {radius: area.radius});
+            moduleMap.setView([area.center.lat, area.center.lng], 13);
+        } else {
+            currentDrawnLayer = L.polygon(area.coordinates);
+            moduleMap.fitBounds(currentDrawnLayer.getBounds());
+        }
+        drawnItems.addLayer(currentDrawnLayer);
+    }
+};
+
+window.saveModuleArea = async () => {
+    if (!currentModuleId) return showToast('Select module first', 'error');
+    if (!currentDrawnLayer) return showToast('Draw area first', 'error');
+    let areaData = {};
+    if (currentDrawnLayer instanceof L.Circle) {
+        const center = currentDrawnLayer.getLatLng();
+        areaData = {type:'circle', center:{lat:center.lat,lng:center.lng}, radius:currentDrawnLayer.getRadius()};
+    } else {
+        areaData = {type:'polygon', coordinates:currentDrawnLayer.getLatLngs()[0].map(p=>({lat:p.lat,lng:p.lng}))};
+    }
+    try {
+        await apiCall('/modules/' + currentModuleId, 'PUT', {areas: [areaData]});
+        showToast('Area saved!');
+        await loadModules();
+    } catch (err) {}
+};
+
+window.clearModuleDrawing = () => { drawnItems.clearLayers(); currentDrawnLayer = null; };
+
+loadModules();
+</script>

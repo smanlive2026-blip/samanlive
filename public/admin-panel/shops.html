@@ -1,0 +1,195 @@
+<div class="content">
+    <div class="section-header">
+        <h2>🏪 Active Shops <span id="activeShopsCount" class="badge badge-info">0</span></h2>
+        <input type="text" class="search-box" placeholder="Search shops..." onkeyup="filterTable('shopsTable', this.value)">
+    </div>
+    <div style="overflow-x:auto;">
+        <table id="shopsTable">
+            <thead><tr><th>Logo</th><th>Name</th><th>Module</th><th>Manager</th><th>Location</th><th>Range</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="9" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="content" style="margin-top:20px;">
+    <h2>⏳ Pending Approvals <span id="pendingShopsCountTab" class="badge badge-warning">0</span></h2>
+    <div style="overflow-x:auto;">
+        <table id="pendingShopsTable">
+            <thead><tr><th>User</th><th>Shop Name</th><th>Module</th><th>Phone</th><th>Address</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="6" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="content" style="margin-top:20px;">
+    <h2>📍 Shop Location Manager</h2>
+    <div class="form-grid">
+        <div class="form-group"><label>Select Shop *</label><select id="shopSelectLocation" onchange="loadShopLocation()"><option value="">-- Select --</option></select></div>
+        <div class="form-group"><label>Module</label><select id="shopModuleLink"><option value="">-- Select --</option></select></div>
+        <div class="form-group"><label>Shop Name</label><input type="text" id="shopName"></div>
+        <div class="form-group"><label>Phone</label><input type="text" id="shopPhone" pattern="[0-9]{10}"></div>
+        <div class="form-group"><label>Range (meters)</label><input type="number" id="shopRange" value="5000" min="100" max="50000"></div>
+        <div class="form-group full"><label>Address</label><input type="text" id="shopAddress"></div>
+    </div>
+    <div class="map-controls">
+        <button class="btn-primary" id="saveLocationBtn" onclick="saveShopLocation()">💾 Save Location</button>
+        <button class="btn-secondary" onclick="clearShopMarker()">🗑️ Clear</button>
+    </div>
+    <div id="shopMap" class="map-container"></div>
+</div>
+
+<script>
+let shopMap, shopMarker, shopCircle, currentShopLocation = null;
+
+async function loadShops() {
+    try {
+        [allShops, allModules, allManagers] = await Promise.all([
+            apiCall('/shops'), apiCall('/modules'), apiCall('/managers')
+        ]);
+        renderShops();
+        renderPendingShops();
+        populateShopDropdowns();
+        initShopMap();
+    } catch (err) {}
+}
+
+function renderShops() {
+    const shops = allShops.filter(s => s.status !== 'pending');
+    document.getElementById('activeShopsCount').textContent = shops.length;
+    const tbody = document.querySelector('#shopsTable tbody');
+    tbody.innerHTML = shops.length === 0 ? '<tr><td colspan="9" style="text-align:center;padding:40px;">No active shops</td></tr>' :
+        shops.map(s => {
+            const module = allModules.find(m => m._id === s.moduleId);
+            const manager = allManagers.find(m => m._id === s.managerId);
+            return `<tr>
+                <td><img src="${s.logo||'/assets/logo.png'}" class="shop-logo" onerror="this.src='/assets/logo.png'"></td>
+                <td><b>${escapeHtml(s.name)}</b></td>
+                <td>${module? module.icon+' '+module.name:'-'}</td>
+                <td>${manager? manager.name:'<span class="help-text">Unassigned</span>'}</td>
+                <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(s.address||'-')}</td>
+                <td>${s.range||0}m</td>
+                <td>${s.priority||0}</td>
+                <td><span class="status-badge status-${s.status}">${s.status}</span></td>
+                <td class="actions">
+                    <button class="btn-primary btn-sm" onclick="editShop('${s._id}')">Edit</button>
+                    <button class="btn-danger btn-sm" onclick="deleteShop('${s._id}')">Delete</button>
+                </td>
+            </tr>`;
+        }).join('');
+}
+
+function renderPendingShops() {
+    const pending = allShops.filter(s => s.status === 'pending');
+    document.getElementById('pendingShopsCountTab').textContent = pending.length;
+    const tbody = document.querySelector('#pendingShopsTable tbody');
+    tbody.innerHTML = pending.length === 0 ? '<tr><td colspan="6" style="text-align:center;padding:40px;">No pending shops</td></tr>' :
+        pending.map(s => {
+            const module = allModules.find(m => m._id === s.moduleId);
+            return `<tr>
+                <td>${escapeHtml(s.createdBy?.name||'User')}</td>
+                <td><b>${escapeHtml(s.name)}</b></td>
+                <td>${module? module.icon+' '+module.name:'-'}</td>
+                <td>${escapeHtml(s.phone||'-')}</td>
+                <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(s.address||'-')}</td>
+                <td class="actions">
+                    <button class="btn-success btn-sm" onclick="approveShop('${s._id}')">✅ Approve</button>
+                    <button class="btn-danger btn-sm" onclick="rejectShop('${s._id}')">❌ Reject</button>
+                </td>
+            </tr>`;
+        }).join('');
+}
+
+function populateShopDropdowns() {
+    document.getElementById('shopSelectLocation').innerHTML = '<option value="">-- Select --</option>' +
+        allShops.filter(s=>s.status!=='pending').map(s=>`<option value="${s._id}">${escapeHtml(s.name)}</option>`).join('');
+    document.getElementById('shopModuleLink').innerHTML = '<option value="">-- Select --</option>' +
+        allModules.map(m=>`<option value="${m._id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
+}
+
+window.approveShop = async (id) => {
+    if (!confirm('Approve this shop?')) return;
+    try {
+        await apiCall('/shops/' + id, 'PUT', {status: 'active'});
+        showToast('Shop approved!');
+        await loadShops();
+    } catch (err) {}
+};
+
+window.rejectShop = async (id) => {
+    if (!confirm('Reject & delete this shop?')) return;
+    try {
+        await apiCall('/shops/' + id, 'DELETE');
+        showToast('Shop rejected');
+        await loadShops();
+    } catch (err) {}
+};
+
+window.deleteShop = async (id) => {
+    if (!confirm('Delete this shop permanently?')) return;
+    try {
+        await apiCall('/shops/' + id, 'DELETE');
+        showToast('Shop deleted');
+        await loadShops();
+    } catch (err) {}
+};
+
+function initShopMap() {
+    if (shopMap) return;
+    shopMap = L.map('shopMap').setView([28.6139, 77.2090], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(shopMap);
+    shopMap.on('click', (e) => {
+        if (shopMarker) shopMap.removeLayer(shopMarker);
+        if (shopCircle) shopMap.removeLayer(shopCircle);
+        currentShopLocation = e.latlng;
+        shopMarker = L.marker(e.latlng).addTo(shopMap);
+        const range = parseInt(document.getElementById('shopRange').value || 5000);
+        shopCircle = L.circle(e.latlng, {radius: range, color:'#3b82f6', fillOpacity:0.1}).addTo(shopMap);
+    });
+}
+
+window.loadShopLocation = () => {
+    const shopId = document.getElementById('shopSelectLocation').value;
+    if (!shopId) return;
+    const shop = allShops.find(s => s._id === shopId);
+    document.getElementById('shopName').value = shop.name || '';
+    document.getElementById('shopPhone').value = shop.phone || '';
+    document.getElementById('shopRange').value = shop.range || 5000;
+    document.getElementById('shopAddress').value = shop.address || '';
+    document.getElementById('shopModuleLink').value = shop.moduleId || '';
+    if (shop.location?.lat && shop.location?.lng) {
+        if (shopMarker) shopMap.removeLayer(shopMarker);
+        if (shopCircle) shopMap.removeLayer(shopCircle);
+        currentShopLocation = shop.location;
+        shopMarker = L.marker(shop.location).addTo(shopMap);
+        shopCircle = L.circle(shop.location, {radius: shop.range||5000, color:'#3b82f6', fillOpacity:0.1}).addTo(shopMap);
+        shopMap.setView(shop.location, 14);
+    }
+};
+
+window.saveShopLocation = async () => {
+    const shopId = document.getElementById('shopSelectLocation').value;
+    if (!shopId) return showToast('Select a shop', 'error');
+    if (!currentShopLocation) return showToast('Click on map to set location', 'error');
+    const data = {
+        name: document.getElementById('shopName').value.trim(),
+        phone: document.getElementById('shopPhone').value.trim(),
+        range: parseInt(document.getElementById('shopRange').value || 5000),
+        address: document.getElementById('shopAddress').value.trim(),
+        moduleId: document.getElementById('shopModuleLink').value,
+        location: {lat: currentShopLocation.lat, lng: currentShopLocation.lng}
+    };
+    try {
+        await apiCall('/shops/' + shopId, 'PUT', data);
+        showToast('Location saved!');
+        await loadShops();
+    } catch (err) {}
+};
+
+window.clearShopMarker = () => {
+    if (shopMarker) shopMap.removeLayer(shopMarker);
+    if (shopCircle) shopMap.removeLayer(shopCircle);
+    currentShopLocation = null;
+};
+
+loadShops();
+</script>

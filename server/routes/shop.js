@@ -50,7 +50,7 @@ router.post('/shop/create', auth, async (req, res) => {
             });
         }
 
-        // FIX 1: Address object properly merge karo
+        // Address object properly merge karo
         const finalAddress = {
             line1: address?.line1 || user.address?.line1 || '',
             line2: address?.line2 || user.address?.line2 || '',
@@ -62,6 +62,7 @@ router.post('/shop/create', auth, async (req, res) => {
         const shopData = {
             ownerId: req.userId,
             createdBy: req.userId,
+            managerId: null, // ← FIX: User shop me manager nahi hota
             shopName,
             ownerName,
             phone,
@@ -85,7 +86,7 @@ router.post('/shop/create', auth, async (req, res) => {
         const shop = new Shop(shopData);
         await shop.save();
 
-        // FIX 2: User ek hi baar save karo
+        // User ek hi baar save karo
         user.shopId = shop._id;
         user.hasShop = true;
         user.notifications.push({
@@ -95,6 +96,19 @@ router.post('/shop/create', auth, async (req, res) => {
             actionUrl: '/shop/dashboard'
         });
         await user.save();
+
+        // Log history - FIX: logAction method use kiya
+        await ShopHistory.logAction({
+            managerId: null, // User ne banaya
+            shopId: shop._id,
+            shopName: shop.shopName,
+            action: 'create',
+            oldData: {},
+            newData: shop.toObject(),
+            area: shop.area,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
 
         res.json({
             success: true,
@@ -117,7 +131,7 @@ router.get('/shop/my-shop', auth, async (req, res) => {
             return res.json({ success: false, error: 'No shop found' });
         }
 
-        const shop = await Shop.findById(user.shopId);
+        const shop = await Shop.findById(user.shopId).populate('managerId', 'name phone');
         if (!shop) {
             return res.json({ success: false, error: 'Shop not found' });
         }
@@ -158,10 +172,11 @@ router.put('/shop/update', auth, async (req, res) => {
             }
         });
 
-        // Address merge properly
+        // Address merge properly - FIX: null check
         if (req.body.address) {
+            const currentAddress = shop.address? shop.address.toObject() : {};
             updateData.address = {
-               ...shop.address.toObject(),
+               ...currentAddress,
                ...req.body.address
             };
             if (req.body.address.city) {
@@ -193,15 +208,18 @@ router.put('/shop/update', auth, async (req, res) => {
             { new: true }
         );
 
-        // Log history
-        await ShopHistory.create({
-            managerId: req.userId,
+        // Log history - FIX: logAction method use kiya
+        await ShopHistory.logAction({
+            managerId: shop.managerId, // Null bhi ho sakta hai
             shopId: shop._id,
-            action: 'edit',
             shopName: shop.shopName,
-            area: updatedShop.area || shop.area,
+            action: 'edit',
             oldData: oldData,
-            newData: updatedShop.toObject()
+            newData: updatedShop.toObject(),
+            changedFields: Object.keys(updateData),
+            area: updatedShop.area || shop.area,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
         });
 
         res.json({ success: true, shop: updatedShop, message: 'Shop updated successfully' });
@@ -216,7 +234,8 @@ router.put('/shop/update', auth, async (req, res) => {
 // ========================================
 router.get('/shop/:id', async (req, res) => {
     try {
-        const shop = await Shop.findById(req.params.id);
+        const shop = await Shop.findById(req.params.id)
+           .populate('managerId', 'name phone');
 
         if (!shop) {
             return res.status(404).json({ success: false, error: 'Shop not found' });
@@ -233,7 +252,51 @@ router.get('/shop/:id', async (req, res) => {
             shopData.banner = '';
         }
 
+        // Increment views
+        shop.views = (shop.views || 0) + 1;
+        await shop.save();
+
         res.json({ success: true, shop: shopData });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ========================================
+// GET /api/shops/nearby - Nearby shops search
+// ========================================
+router.get('/shops/nearby', async (req, res) => {
+    try {
+        const { lat, lng, radius = 5000, serviceType, limit = 20 } = req.query;
+
+        if (!lat ||!lng) {
+            return res.status(400).json({ success: false, error: 'Latitude and longitude required' });
+        }
+
+        let filter = {
+            status: 'approved',
+            isActive: true,
+            location: {
+                $near: {
+                    $geometry: {
+                        type: 'Point',
+                        coordinates: [parseFloat(lng), parseFloat(lat)]
+                    },
+                    $maxDistance: parseInt(radius)
+                }
+            }
+        };
+
+        if (serviceType) {
+            filter.serviceType = serviceType;
+        }
+
+        const shops = await Shop.find(filter)
+           .populate('managerId', 'name')
+           .limit(parseInt(limit))
+           .select('-banner'); // Banner mat bhejo list me
+
+        res.json({ success: true, shops, count: shops.length });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
