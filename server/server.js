@@ -127,33 +127,43 @@ app.get('/wishlist.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/wishlist.html'));
 });
 
-// ==================== TEMP DUMMY APIs FOR ADMIN PANEL ====================
-// Ye sab tere admin.js ke variables ke hisab se hain
+// ==================== TEMP DUMMY APIs FOR ADMIN + MANAGER ====================
 
-// Modules API
+// Modules API - FIXED: Direct array return kar raha
 app.get('/api/modules', (req, res) => {
-    res.json({
-        success: true,
-        data: [
-            {
-                _id: '1',
-                name: 'Electronics',
-                slug: 'electronics',
-                status: 'active',
-                description: 'Electronic items',
-                createdAt: new Date().toISOString()
-            },
-            {
-                _id: '2',
-                name: 'Grocery',
-                slug: 'grocery',
-                status: 'active',
-                description: 'Grocery items',
-                createdAt: new Date().toISOString()
-            }
-        ],
-        count: 2
-    });
+    res.json([
+        {
+            _id: '1',
+            name: 'Electronics',
+            slug: 'electronics',
+            icon: '📱',
+            color: '#3b82f6',
+            link: '/electronics',
+            status: 'active',
+            priority: 1,
+            categoryDetails: [
+                { id: 'cat_1', name: 'Mobile', icon: '📱', color: '#10b981', group: 'Gadgets' },
+                { id: 'cat_2', name: 'Laptop', icon: '💻', color: '#f59e0b', group: 'Gadgets' }
+            ],
+            areas: [],
+            createdAt: new Date().toISOString()
+        },
+        {
+            _id: '2',
+            name: 'Grocery',
+            slug: 'grocery',
+            icon: '🛒',
+            color: '#10b981',
+            link: '/grocery',
+            status: 'active',
+            priority: 2,
+            categoryDetails: [
+                { id: 'cat_3', name: 'Vegetables', icon: '🥬', color: '#22c55e', group: 'Food' }
+            ],
+            areas: [],
+            createdAt: new Date().toISOString()
+        }
+    ]);
 });
 
 app.post('/api/modules', (req, res) => {
@@ -166,6 +176,110 @@ app.put('/api/modules/:id', (req, res) => {
 
 app.delete('/api/modules/:id', (req, res) => {
     res.json({ success: true, message: 'Module deleted' });
+});
+
+// Categories API - Market categories ke liye
+app.get('/api/market/categories', (req, res) => {
+    res.json([
+        { id: '1', name: 'Electronics', icon: '📱' },
+        { id: '2', name: 'Grocery', icon: '🛒' }
+    ]);
+});
+
+// Managers API
+app.get('/api/managers', (req, res) => {
+    res.json([]);
+});
+
+// Admin Create Manager API
+app.post('/api/admin/create-manager', (req, res) => {
+    const loginToken = 'mgr_' + Date.now() + Math.random().toString(36).substr(2, 9);
+    const tempPassword = 'SL' + Math.floor(1000 + Math.random() * 9000);
+    
+    res.json({
+        success: true,
+        message: 'Manager created successfully',
+        loginLink: `https://samanlive.onrender.com/area-manager.html?token=${loginToken}`,
+        tempPassword: tempPassword,
+        data: {
+            _id: Date.now().toString(),
+            ...req.body,
+            loginToken: loginToken,
+            status: true
+        }
+    });
+});
+
+// Manager Login API
+app.post('/api/area-manager/login', (req, res) => {
+    const { email, password } = req.body;
+    
+    if (email && password) {
+        res.json({
+            success: true,
+            token: 'mgr_' + Date.now() + Math.random().toString(36).substr(2, 9),
+            manager: {
+                _id: '1',
+                name: 'Test Manager',
+                email: email,
+                area: 'Ahmedabad',
+                modules: ['1', '2'],
+                status: true
+            }
+        });
+    } else {
+        res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+});
+
+// Manager Dashboard API
+app.get('/api/manager/dashboard', (req, res) => {
+    res.json({
+        success: true,
+        manager: {
+            _id: '1',
+            name: 'Test Manager',
+            area: 'Ahmedabad',
+            modules: ['1', '2']
+        },
+        shops: [],
+        categories: [
+            { id: '1', name: 'Electronics', icon: '📱' },
+            { id: '2', name: 'Grocery', icon: '🛒' }
+        ]
+    });
+});
+
+// Manager Shop CRUD APIs
+app.post('/api/manager/shop', (req, res) => {
+    res.json({ success: true, message: 'Shop created', data: { _id: Date.now().toString(), ...req.body } });
+});
+
+app.put('/api/manager/shop/:id', (req, res) => {
+    res.json({ success: true, message: 'Shop updated' });
+});
+
+app.delete('/api/manager/shop/:id', (req, res) => {
+    res.json({ success: true, message: 'Shop deleted' });
+});
+
+// Admin Upload API - Banner ke liye
+app.post('/api/admin/upload', (req, res) => {
+    res.json({ 
+        success: true, 
+        url: 'https://via.placeholder.com/800x200.png?text=Banner',
+        message: 'File uploaded' 
+    });
+});
+
+// Admin History API
+app.get('/api/admin/shop-history', (req, res) => {
+    res.json({ success: true, history: [] });
+});
+
+// Pending Banners API
+app.get('/api/admin/pending-banners', (req, res) => {
+    res.json({ success: true, shops: [] });
 });
 
 // Categories API
@@ -182,26 +296,9 @@ app.get('/api/shops', (req, res) => {
     res.json({ success: true, data: [], count: 0 });
 });
 
-app.post('/api/shops', (req, res) => {
-    res.json({ success: true, message: 'Shop created' });
-});
-
-// Managers API
-app.get('/api/managers', (req, res) => {
-    res.json({ success: true, data: [], count: 0 });
-});
-
-app.post('/api/managers', (req, res) => {
-    res.json({ success: true, message: 'Manager created' });
-});
-
 // Content API
 app.get('/api/content', (req, res) => {
     res.json({ success: true, data: [], count: 0 });
-});
-
-app.post('/api/content', (req, res) => {
-    res.json({ success: true, message: 'Content created' });
 });
 
 // Banners API
