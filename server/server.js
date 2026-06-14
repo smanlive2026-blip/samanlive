@@ -131,42 +131,94 @@ app.get('/wishlist.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/wishlist.html'));
 });
 
-// ==================== TEMP DUMMY APIs FOR ADMIN ====================
+// ==================== TEMP DUMMY APIs FOR ADMIN PANEL ====================
+// Ye sab tere admin.js ke variables ke hisab se hain
+
+// Modules API
 app.get('/api/modules', (req, res) => {
     res.json({
         success: true,
         data: [
-            { _id: '1', name: 'Electronics', slug: 'electronics', status: 'active', createdAt: new Date() },
-            { _id: '2', name: 'Grocery', slug: 'grocery', status: 'active', createdAt: new Date() }
+            {
+                _id: '1',
+                name: 'Electronics',
+                slug: 'electronics',
+                status: 'active',
+                description: 'Electronic items',
+                createdAt: new Date().toISOString()
+            },
+            {
+                _id: '2',
+                name: 'Grocery',
+                slug: 'grocery',
+                status: 'active',
+                description: 'Grocery items',
+                createdAt: new Date().toISOString()
+            }
         ],
         count: 2
     });
 });
 
+app.post('/api/modules', (req, res) => {
+    res.json({ success: true, message: 'Module created', data: { _id: Date.now().toString(),...req.body } });
+});
+
+app.put('/api/modules/:id', (req, res) => {
+    res.json({ success: true, message: 'Module updated' });
+});
+
+app.delete('/api/modules/:id', (req, res) => {
+    res.json({ success: true, message: 'Module deleted' });
+});
+
+// Categories API
 app.get('/api/categories', (req, res) => {
     res.json({ success: true, data: [], count: 0 });
 });
 
+app.post('/api/categories', (req, res) => {
+    res.json({ success: true, message: 'Category created' });
+});
+
+// Shops API
 app.get('/api/shops', (req, res) => {
     res.json({ success: true, data: [], count: 0 });
 });
 
+app.post('/api/shops', (req, res) => {
+    res.json({ success: true, message: 'Shop created' });
+});
+
+// Managers API
 app.get('/api/managers', (req, res) => {
     res.json({ success: true, data: [], count: 0 });
 });
 
-app.get('/api/banners', (req, res) => {
-    res.json({ success: true, data: [], count: 0 });
+app.post('/api/managers', (req, res) => {
+    res.json({ success: true, message: 'Manager created' });
 });
 
+// Content API
 app.get('/api/content', (req, res) => {
     res.json({ success: true, data: [], count: 0 });
 });
 
-app.get('/api/settings', (req, res) => {
-    res.json({ success: true, data: {} });
+app.post('/api/content', (req, res) => {
+    res.json({ success: true, message: 'Content created' });
 });
 
+// Banners API
+app.get('/api/banners', (req, res) => {
+    res.json({ success: true, data: [], count: 0 });
+});
+
+// Settings API
+app.get('/api/settings', (req, res) => {
+    res.json({ success: true, data: { siteName: 'SAMANLIVE' } });
+});
+
+// Dashboard API
 app.get('/api/dashboard', (req, res) => {
     res.json({
         success: true,
@@ -174,7 +226,8 @@ app.get('/api/dashboard', (req, res) => {
             totalModules: 2,
             totalCategories: 0,
             totalShops: 0,
-            totalManagers: 0
+            totalManagers: 0,
+            totalContent: 0
         }
     });
 });
@@ -232,7 +285,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+   ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
