@@ -82,6 +82,10 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/admin/admin-panel/index.html'));
 });
 
+app.get('/admin-panel', (req, res) => {
+    res.redirect('/admin');
+});
+
 app.get('/admin/:page', (req, res) => {
     const filePath = path.join(__dirname, `../public/admin/admin-panel/${req.params.page}.html`);
     res.sendFile(filePath, (err) => {
@@ -127,6 +131,53 @@ app.get('/wishlist.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/wishlist.html'));
 });
 
+// ==================== TEMP DUMMY APIs FOR ADMIN ====================
+app.get('/api/modules', (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { _id: '1', name: 'Electronics', slug: 'electronics', status: 'active', createdAt: new Date() },
+            { _id: '2', name: 'Grocery', slug: 'grocery', status: 'active', createdAt: new Date() }
+        ],
+        count: 2
+    });
+});
+
+app.get('/api/categories', (req, res) => {
+    res.json({ success: true, data: [], count: 0 });
+});
+
+app.get('/api/shops', (req, res) => {
+    res.json({ success: true, data: [], count: 0 });
+});
+
+app.get('/api/managers', (req, res) => {
+    res.json({ success: true, data: [], count: 0 });
+});
+
+app.get('/api/banners', (req, res) => {
+    res.json({ success: true, data: [], count: 0 });
+});
+
+app.get('/api/content', (req, res) => {
+    res.json({ success: true, data: [], count: 0 });
+});
+
+app.get('/api/settings', (req, res) => {
+    res.json({ success: true, data: {} });
+});
+
+app.get('/api/dashboard', (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            totalModules: 2,
+            totalCategories: 0,
+            totalShops: 0,
+            totalManagers: 0
+        }
+    });
+});
 // ==================== HEALTH CHECK ====================
 app.get('/api/health', (req, res) => {
     res.json({
@@ -181,7 +232,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
