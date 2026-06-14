@@ -3,6 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const compression = require('compression');
+const fs = require('fs'); // <-- Ye add kar
 require('dotenv').config();
 
 const app = express();
@@ -139,6 +140,74 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// ==================== ADMIN API DOCS ROUTE - YE YAHAN HONA CHAHIYE ====================
+app.get('/api/admin/routes', (req, res) => {
+    try {
+        const routes = [];
+        const routeFileMap = new Map();
+
+        // Pehle route files ke naam nikalo
+        const routesDir = path.join(__dirname, './routes');
+        if (fs.existsSync(routesDir)) {
+            fs.readdirSync(routesDir).forEach(file => {
+                if (file.endsWith('.js')) {
+                    routeFileMap.set(file.replace('.js', ''), file);
+                }
+            });
+        }
+
+        function extractRoutes(stack, basePath = '', parentFile = 'server.js') {
+            stack.forEach(layer => {
+                if (layer.route) {
+                    const fullPath = basePath + layer.route.path;
+                    const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
+
+                    routes.push({
+                        path: fullPath,
+                        methods,
+                        file: parentFile
+                    });
+                } else if (layer.name === 'router' && layer.handle.stack) {
+                    // Router ka file name nikal
+                    let routerFile = parentFile;
+                    const match = layer.regexp.toString().match(/\\^\\\/([^\\\\]+)/);
+                    if (match && routeFileMap.has(match[1])) {
+                        routerFile = routeFileMap.get(match[1]);
+                    }
+
+                    const newBase = match? basePath + '/' + match[1] : basePath;
+                    extractRoutes(layer.handle.stack, newBase, routerFile);
+                }
+            });
+        }
+
+        if (app._router && app._router.stack) {
+            extractRoutes(app._router.stack);
+        }
+
+        // Sab route files ki list bhi bhej do
+        const allRouteFiles = fs.existsSync(routesDir)
+           ? fs.readdirSync(routesDir).filter(f => f.endsWith('.js'))
+            : [];
+
+        res.json({
+            success: true,
+            total: routes.length,
+            routes: routes.sort((a, b) => a.path.localeCompare(b.path)),
+            models: mongoose.modelNames(),
+            routeFiles: allRouteFiles
+        });
+    } catch (err) {
+        console.error('API Routes Error:', err);
+        res.status(500).json({
+            success: false,
+            error: err.message,
+            routes: [],
+            models: []
+        });
+    }
+});
+
 // ==================== 404 FALLBACK ====================
 app.get('*', (req, res) => {
     res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
@@ -181,7 +250,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
@@ -200,39 +269,7 @@ process.on('SIGTERM', async () => {
     process.exit(0);
 });
 
-// ==================== ADMIN API DOCS ROUTE ====================
-app.get('/api/admin/routes', (req, res) => {
-    const routes = [];
-
-    function extractRoutes(stack, basePath = '') {
-        stack.forEach(layer => {
-            if (layer.route) {
-                const path = basePath + layer.route.path;
-                const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
-                routes.push({
-                    path,
-                    methods,
-                    file: layer.route.stack[0].name || 'anonymous'
-                });
-            } else if (layer.name === 'router' && layer.handle.stack) {
-                const match = layer.regexp.toString().match(/^\/\^\\\/([^\\\/]+)/);
-                const newBase = match? basePath + '/' + match[1] : basePath;
-                extractRoutes(layer.handle.stack, newBase);
-            }
-        });
-    }
-
-    extractRoutes(app._router.stack);
-
-    res.json({
-        success: true,
-        total: routes.length,
-        routes: routes.sort((a, b) => a.path.localeCompare(b.path)),
-        models: mongoose.modelNames()
-    });
-});
-
-// ==================== START SERVER ====================
+// ==================== START SERVER - SABSE LAST ME ====================
 const server = app.listen(PORT, () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log(`📊 Admin Panel: http://localhost:${PORT}/admin`);
