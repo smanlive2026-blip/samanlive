@@ -16,7 +16,7 @@ const managerSchema = new mongoose.Schema({
   area: { type: String, required: true, trim: true },
   serviceCharge: { type: Number, default: 5, min: 0, max: 100 },
   moduleAccess: [{ type: String }], // Category IDs jo ye manager handle karega
-  loginToken: { type: String, unique: true, sparse: true }, // ← sparse add kiya
+  loginToken: { type: String, unique: true, sparse: true }, // sparse add kiya
   tempPassword: { type: String },
   status: { type: Boolean, default: true },
   documents: {
@@ -25,8 +25,8 @@ const managerSchema = new mongoose.Schema({
     pan: { type: String, default: '' },
     addressProof: { type: String, default: '' }
   },
-  lastLogin: { type: Date }, // ← Naya add kiya
-  totalShopsCreated: { type: Number, default: 0 } // ← Naya add kiya
+  lastLogin: { type: Date }, // Naya add kiya
+  totalShopsCreated: { type: Number, default: 0 } // Naya add kiya
 }, { 
   timestamps: true,
   toJSON: { virtuals: true },
@@ -34,10 +34,10 @@ const managerSchema = new mongoose.Schema({
 });
 
 // Indexes for fast queries
-managerSchema.index({ email: 1 });
+// managerSchema.index({ email: 1 }); // ← HATA DIYA: unique: true already index banata hai
 managerSchema.index({ area: 1 });
 managerSchema.index({ status: 1 });
-managerSchema.index({ loginToken: 1 });
+// managerSchema.index({ loginToken: 1 }); // ← HATA DIYA: unique: true already index banata hai
 managerSchema.index({ createdAt: -1 });
 
 // Password hash karne se pehle
