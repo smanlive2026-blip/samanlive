@@ -587,7 +587,7 @@ router.get('/admin/migrate-old-modules', async (req, res) => {
   }
 });
 
-const Banner = require('../models/Banner');
+const Banner = require('../models/banner');
 
 // Get all banners
 router.get('/banners', async (req, res) => {
