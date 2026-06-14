@@ -6,12 +6,16 @@ const Module = require('../models/Module');
 const ShopHistory = require('../models/ShopHistory');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'samanlive_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET || 'samanlive_secret_key_2026_change_this';
 
 // ==================== MANAGER LOGIN ====================
 router.post('/area-manager/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email ||!password) {
+      return res.status(400).json({ success: false, error: 'Email and password required' });
+    }
 
     const manager = await Manager.findOne({ email });
     if (!manager) {
@@ -51,14 +55,20 @@ router.post('/area-manager/login', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error('Login error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
-// ==================== TOKEN LOGIN - NAYA ADD KIYA ====================
+// ==================== TOKEN LOGIN ====================
 router.post('/area-manager/token-login', async (req, res) => {
   try {
     const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ success: false, error: 'Token required' });
+    }
+
     const manager = await Manager.findOne({ loginToken: token, status: true });
 
     if (!manager) {
@@ -82,35 +92,51 @@ router.post('/area-manager/token-login', async (req, res) => {
         name: manager.name,
         email: manager.email,
         area: manager.area,
-        moduleAccess: manager.moduleAccess
+        moduleAccess: manager.moduleAccess,
+        serviceCharge: manager.serviceCharge
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error('Token login error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // ==================== AUTH MIDDLEWARE ====================
 const authManager = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) return res.status(401).json({ error: 'No token provided' });
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ success: false, error: 'No token provided' });
+    }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const manager = await Manager.findById(decoded.id);
 
-    if (!manager || !manager.status) {
-      return res.status(401).json({ error: 'Invalid token or account deactivated' });
+    if (decoded.type!== 'manager') {
+      return res.status(403).json({ success: false, error: 'Manager access required' });
+    }
+
+    const manager = await Manager.findById(decoded.id).select('-password');
+
+    if (!manager ||!manager.status) {
+      return res.status(401).json({ success: false, error: 'Invalid token or account deactivated' });
     }
 
     req.manager = manager;
+    req.userId = manager._id;
+    req.userType = 'manager';
     next();
   } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, error: 'Token expired. Please login again.' });
+    }
+    return res.status(401).json({ success: false, error: 'Invalid token' });
   }
 };
 
-// ==================== MANAGER DASHBOARD - FIXED ====================
+// ==================== MANAGER DASHBOARD ====================
 router.get('/manager/dashboard', authManager, async (req, res) => {
   try {
     const manager = req.manager;
@@ -128,7 +154,6 @@ router.get('/manager/dashboard', authManager, async (req, res) => {
     allModules.forEach(m => {
       if (m.categoryDetails) {
         m.categoryDetails.forEach(cat => {
-          // Check karo ki ye category manager ke moduleAccess me hai ya nahi
           if (cat.status && manager.moduleAccess.includes(cat.id)) {
             accessibleCategories.push({
               id: cat.id,
@@ -160,18 +185,20 @@ router.get('/manager/dashboard', authManager, async (req, res) => {
         name: manager.name,
         email: manager.email,
         area: manager.area,
-        serviceCharge: manager.serviceCharge
+        serviceCharge: manager.serviceCharge,
+        moduleAccess: manager.moduleAccess
       },
       shops,
       categories: accessibleCategories,
       stats
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error('Dashboard error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
-// ==================== SHOP CRUD - FIXED ====================
+// ==================== SHOP CRUD ====================
 router.post('/manager/shop', authManager, async (req, res) => {
   try {
     const manager = req.manager;
@@ -186,12 +213,12 @@ router.post('/manager/shop', authManager, async (req, res) => {
     }
 
     const shop = new Shop({
-      ...data,
+     ...data,
       area: manager.area,
       managerId: manager._id,
-      ownerId: manager._id, // Manager hi owner
+      ownerId: manager._id,
       createdBy: manager._id,
-      status: 'pending', // ← FIX: 'pending' not true
+      status: 'pending',
       isActive: true
     });
 
@@ -216,7 +243,8 @@ router.post('/manager/shop', authManager, async (req, res) => {
 
     res.json({ success: true, shop });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error('Create shop error:', err);
+    res.status(500).json({ success: false, error: 'Failed to create shop' });
   }
 });
 
@@ -226,7 +254,7 @@ router.put('/manager/shop/:id', authManager, async (req, res) => {
     const shop = await Shop.findById(req.params.id);
 
     if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
-    if (shop.managerId.toString() !== manager._id.toString()) {
+    if (shop.managerId.toString()!== manager._id.toString()) {
       return res.status(403).json({ success: false, error: 'Not your shop' });
     }
 
@@ -250,7 +278,8 @@ router.put('/manager/shop/:id', authManager, async (req, res) => {
 
     res.json({ success: true, shop });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error('Update shop error:', err);
+    res.status(500).json({ success: false, error: 'Failed to update shop' });
   }
 });
 
@@ -260,7 +289,7 @@ router.delete('/manager/shop/:id', authManager, async (req, res) => {
     const shop = await Shop.findById(req.params.id);
 
     if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
-    if (shop.managerId.toString() !== manager._id.toString()) {
+    if (shop.managerId.toString()!== manager._id.toString()) {
       return res.status(403).json({ success: false, error: 'Not your shop' });
     }
 
@@ -280,9 +309,10 @@ router.delete('/manager/shop/:id', authManager, async (req, res) => {
       userAgent: req.headers['user-agent']
     });
 
-    res.json({ success: true });
+    res.json({ success: true, message: 'Shop deleted successfully' });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error('Delete shop error:', err);
+    res.status(500).json({ success: false, error: 'Failed to delete shop' });
   }
 });
 
@@ -313,7 +343,8 @@ router.get('/manager/categories', authManager, async (req, res) => {
 
     res.json({ success: true, categories });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error('Categories error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -344,7 +375,8 @@ router.get('/market/categories', async (req, res) => {
 
     res.json(categories);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Market categories error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

@@ -60,6 +60,7 @@ function authenticateToken(req, res, next) {
             req.tokenData = decoded;
             next();
         } catch (error) {
+            console.error('Auth middleware error:', error);
             return res.status(500).json({
                 success: false,
                 error: 'Authentication failed'
@@ -68,7 +69,7 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// Optional: Admin only middleware
+// Admin only middleware
 const requireAdmin = (req, res, next) => {
     if (req.userType!== 'admin' && req.user?.role!== 'admin') {
         return res.status(403).json({
@@ -79,7 +80,7 @@ const requireAdmin = (req, res, next) => {
     next();
 };
 
-// Optional: Manager only middleware
+// Manager only middleware
 const requireManager = (req, res, next) => {
     if (req.userType!== 'manager') {
         return res.status(403).json({
@@ -90,6 +91,9 @@ const requireManager = (req, res, next) => {
     next();
 };
 
-module.exports = authenticateToken;
-module.exports.requireAdmin = requireAdmin;
-module.exports.requireManager = requireManager;
+// Professional export
+module.exports = {
+    authenticateToken,
+    requireAdmin,
+    requireManager
+};
