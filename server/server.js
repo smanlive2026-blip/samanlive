@@ -269,6 +269,55 @@ process.on('SIGTERM', async () => {
     process.exit(0);
 });
 
+// ==================== ROUTE CODE VIEWER + EDITOR ====================
+// Sirf development me chalega
+if (process.env.NODE_ENV === 'development') {
+    
+    // 1. Code padhne ke liye
+    app.post('/api/admin/get-route-code', express.json(), (req, res) => {
+        try {
+            const { file, path: routePath, method } = req.body;
+            const filePath = path.join(__dirname, file === 'server.js'? '.' : './routes', file);
+            
+            if (!fs.existsSync(filePath)) {
+                return res.json({ success: false, error: 'File not found' });
+            }
+
+            const fileContent = fs.readFileSync(filePath, 'utf8');
+            
+            res.json({
+                success: true,
+                file: file,
+                code: fileContent,
+                routePath,
+                method
+            });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // 2. Code update karne ke liye - DANGER: Sirf local me
+    app.post('/api/admin/update-route-code', express.json(), (req, res) => {
+        try {
+            const { file, code } = req.body;
+            const filePath = path.join(__dirname, file === 'server.js'? '.' : './routes', file);
+            
+            // Backup banao pehle
+            fs.writeFileSync(filePath + '.backup', fs.readFileSync(filePath));
+            // Naya code likho
+            fs.writeFileSync(filePath, code);
+            
+            res.json({ 
+                success: true, 
+                message: 'File updated! Server restart karo changes dekhne ke liye.' 
+            });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+}
+
 // ==================== START SERVER - SABSE LAST ME ====================
 const server = app.listen(PORT, () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);

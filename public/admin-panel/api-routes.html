@@ -18,7 +18,7 @@
 
 <div class="content-card">
     <div class="card-header">
-        <input type="text" id="routeSearch" placeholder="🔍 Search by path, method or model..." class="search-input">
+        <input type="text" id="routeSearch" placeholder="🔍 Search by path, method, file..." class="search-input">
         <button class="btn-refresh" onclick="loadApiData()">
             <span>🔄</span> Refresh
         </button>
@@ -30,11 +30,12 @@
                 <tr>
                     <th width="140">Method</th>
                     <th>Endpoint Path</th>
+                    <th width="180">File</th>
                     <th width="100">Type</th>
                 </tr>
             </thead>
             <tbody id="routesTableBody">
-                <tr><td colspan="3" class="loading">Loading routes...</td></tr>
+                <tr><td colspan="4" class="loading">Loading routes...</td></tr>
             </tbody>
         </table>
     </div>
@@ -45,6 +46,24 @@
         <h3>🗄️ Database Models</h3>
     </div>
     <div class="models-grid" id="modelsGrid"></div>
+</div>
+
+<!-- Code Editor Modal -->
+<div id="codeModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div>
+        <h3 id="modalTitle">Edit Route</h3>
+        <p id="modalSubTitle" style="margin:5px 0 0 0; color:#94a3b8; font-size:13px;"></p>
+      </div>
+      <button onclick="closeModal()" class="btn-close">✕ Close</button>
+    </div>
+    <textarea id="codeEditor" spellcheck="false"></textarea>
+    <div class="modal-footer">
+      <div class="warning-text">⚠️ Local Dev Only: Changes will update your VS Code file directly</div>
+      <button onclick="saveCode()" class="btn-save">💾 Save to File</button>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -159,6 +178,10 @@
     border-bottom: 1px solid #334155;
     color: #cbd5e1;
 }
+.data-table tbody tr {
+    cursor: pointer;
+    transition: all 0.2s;
+}
 .data-table tbody tr:hover {
     background: #0f172a;
 }
@@ -170,6 +193,7 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-right: 5px;
 }
 .method-badge.GET { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
 .method-badge.POST { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
@@ -179,6 +203,15 @@
     font-family: 'Courier New', monospace;
     font-size: 14px;
     color: #e2e8f0;
+}
+.file-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #334155;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #60a5fa;
+    font-family: monospace;
 }
 .type-badge {
     display: inline-block;
@@ -215,16 +248,104 @@
     padding: 60px 20px;
     color: #64748b;
 }
+
+/* Modal Styles */
+#codeModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+.modal-content {
+    background: #1e293b;
+    width: 95%;
+    height: 92%;
+    margin: 2% auto;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #334155;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-header h3 {
+    margin: 0;
+    color: #f1f5f9;
+    font-size: 18px;
+}
+.btn-close {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.btn-close:hover {
+    background: #dc2626;
+}
+#codeEditor {
+    flex: 1;
+    background: #0f172a;
+    color: #e2e8f0;
+    border: none;
+    padding: 20px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+}
+.modal-footer {
+    padding: 15px 25px;
+    border-top: 1px solid #334155;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.warning-text {
+    color: #fbbf24;
+    font-size: 13px;
+}
+.btn-save {
+    background: #10b981;
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+}
+.btn-save:hover {
+    background: #059669;
+}
 </style>
 
 <script>
 (function() {
     let allRoutes = [];
+    let currentFile = '';
+    let currentRoute = {};
 
     window.loadApiData = async function() {
         try {
             const res = await fetch('/api/admin/routes');
             const data = await res.json();
+            
+            if(!data.success) {
+                throw new Error(data.error || 'Failed to load');
+            }
+            
             allRoutes = data.routes;
 
             document.getElementById('totalRoutes').textContent = data.total;
@@ -234,13 +355,13 @@
             renderRoutes(allRoutes);
 
             document.getElementById('modelsGrid').innerHTML = data.models
-              .map(m => `<div class="model-item"><div class="model-name">${m}</div></div>`)
-              .join('');
+             .map(m => `<div class="model-item"><div class="model-name">${m}</div></div>`)
+             .join('');
 
         } catch (err) {
             console.error('Error:', err);
             document.getElementById('routesTableBody').innerHTML =
-                '<tr><td colspan="3" style="color: #f87171; text-align: center; padding: 40px;">Failed to load routes</td></tr>';
+                `<tr><td colspan="4" style="color: #f87171; text-align: center; padding: 40px;">Failed to load routes: ${err.message}</td></tr>`;
         }
     }
 
@@ -248,24 +369,87 @@
         const tbody = document.getElementById('routesTableBody');
 
         if (routes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="loading">No routes found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="loading">No routes found</td></tr>';
             return;
         }
 
         tbody.innerHTML = routes.map(r => `
-            <tr>
+            <tr onclick='viewCode(${JSON.stringify(r).replace(/'/g, "&#39;")})'>
                 <td>${r.methods.map(m => `<span class="method-badge ${m}">${m}</span>`).join(' ')}</td>
                 <td><span class="path-text">${r.path}</span></td>
+                <td><span class="file-badge">${r.file || 'server.js'}</span></td>
                 <td><span class="type-badge">${r.path.includes('/admin')? 'Admin' : r.path.includes('/manager')? 'Manager' : 'Public'}</span></td>
             </tr>
         `).join('');
     }
 
+    window.viewCode = async function(route) {
+        currentRoute = route;
+        currentFile = route.file || 'server.js';
+        
+        try {
+            const res = await fetch('/api/admin/get-route-code', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    file: currentFile, 
+                    path: route.path, 
+                    method: route.methods[0] 
+                })
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                document.getElementById('modalTitle').textContent = `${route.methods[0]} ${route.path}`;
+                document.getElementById('modalSubTitle').textContent = `File: ${currentFile}`;
+                document.getElementById('codeEditor').value = data.code;
+                document.getElementById('codeModal').style.display = 'block';
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch(err) {
+            alert('Failed to load code: ' + err.message);
+        }
+    }
+
+    window.saveCode = async function() {
+        if(!confirm('Save changes to ' + currentFile + '? This will update the file directly.')) return;
+        
+        const code = document.getElementById('codeEditor').value;
+        try {
+            const res = await fetch('/api/admin/update-route-code', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ file: currentFile, code })
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                alert('✅ ' + data.message + '\n\nRestart server to see changes.');
+                closeModal();
+            } else {
+                alert('❌ Error: ' + data.error);
+            }
+        } catch(err) {
+            alert('❌ Failed to save: ' + err.message);
+        }
+    }
+
+    window.closeModal = function() {
+        document.getElementById('codeModal').style.display = 'none';
+    }
+
+    // Close on ESC
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape') closeModal();
+    });
+
     document.getElementById('routeSearch').addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase();
         const filtered = allRoutes.filter(r =>
             r.path.toLowerCase().includes(query) ||
-            r.methods.some(m => m.toLowerCase().includes(query))
+            r.methods.some(m => m.toLowerCase().includes(query)) ||
+            (r.file && r.file.toLowerCase().includes(query))
         );
         renderRoutes(filtered);
     });
