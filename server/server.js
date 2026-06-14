@@ -35,8 +35,6 @@ app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
 
 // ==================== MONGODB CONNECT ====================
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/samanlive', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 5000
 })
@@ -183,7 +181,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
