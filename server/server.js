@@ -3,7 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const compression = require('compression');
-const fs = require('fs'); // <-- Ye add kar
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -140,62 +140,93 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ==================== ADMIN API DOCS ROUTE - YE YAHAN HONA CHAHIYE ====================
+// ==================== ADMIN API DOCS ROUTE - ALL FILES SCANNER ====================
 app.get('/api/admin/routes', (req, res) => {
     try {
-        const routes = [];
-        const routeFileMap = new Map();
-
-        // Pehle route files ke naam nikalo
+        const allRoutes = [];
         const routesDir = path.join(__dirname, './routes');
-        if (fs.existsSync(routesDir)) {
-            fs.readdirSync(routesDir).forEach(file => {
-                if (file.endsWith('.js')) {
-                    routeFileMap.set(file.replace('.js', ''), file);
-                }
-            });
-        }
 
-        function extractRoutes(stack, basePath = '', parentFile = 'server.js') {
-            stack.forEach(layer => {
-                if (layer.route) {
-                    const fullPath = basePath + layer.route.path;
-                    const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
-
-                    routes.push({
-                        path: fullPath,
-                        methods,
-                        file: parentFile
-                    });
-                } else if (layer.name === 'router' && layer.handle.stack) {
-                    // Router ka file name nikal
-                    let routerFile = parentFile;
-                    const match = layer.regexp.toString().match(/\\^\\\/([^\\\\]+)/);
-                    if (match && routeFileMap.has(match[1])) {
-                        routerFile = routeFileMap.get(match[1]);
-                    }
-
-                    const newBase = match? basePath + '/' + match[1] : basePath;
-                    extractRoutes(layer.handle.stack, newBase, routerFile);
-                }
-            });
-        }
-
+        // 1. server.js ke direct routes
         if (app._router && app._router.stack) {
-            extractRoutes(app._router.stack);
+            app._router.stack.forEach(layer => {
+                if (layer.route) {
+                    const path = layer.route.path;
+                    const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
+                    allRoutes.push({
+                        path,
+                        methods,
+                        file: 'server.js',
+                        type: 'direct'
+                    });
+                }
+            });
         }
 
-        // Sab route files ki list bhi bhej do
-        const allRouteFiles = fs.existsSync(routesDir)
-           ? fs.readdirSync(routesDir).filter(f => f.endsWith('.js'))
-            : [];
+        // 2. routes/ folder ki saari files scan karo
+        if (fs.existsSync(routesDir)) {
+            const files = fs.readdirSync(routesDir);
+
+            files.forEach(file => {
+                if (file.endsWith('.js')) {
+                    const filePath = path.join(routesDir, file);
+                    const content = fs.readFileSync(filePath, 'utf8');
+
+                    // Regex se routes nikaalo: router.get('/path',...), router.post(...), etc
+                    const routeRegex = /router\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]/g;
+                    let match;
+
+                    while ((match = routeRegex.exec(content))!== null) {
+                        const method = match[1].toUpperCase();
+                        const routePath = match[2];
+
+                        // Base path nikaalo file name se
+                        let basePath = '';
+                        if (file === 'adminRoutes.js') basePath = '/api/admin';
+                        else if (file === 'managerRoutes.js') basePath = '/api/manager';
+                        else if (file === 'userRoutes.js') basePath = '/api/users';
+                        else if (file === 'market.js') basePath = '/api/market';
+                        else if (file === 'testRoutes.js') basePath = '/api/test';
+                        else if (file === 'shop.js') basePath = '/api/shop';
+                        else if (file === 'wishlistRoutes.js') basePath = '/api/wishlist';
+                        else if (file === 'paymentRoutes.js') basePath = '/api/payment';
+                        else if (file === 'notificationRoutes.js') basePath = '/api/notification';
+                        else if (file === 'bannerRoutes.js') basePath = '/api/banner';
+                        else {
+                            // Auto detect: xyzRoutes -> /api/xyz
+                            const name = file.replace('Routes.js', '').replace('.js', '').toLowerCase();
+                            basePath = `/api/${name}`;
+                        }
+
+                        const fullPath = basePath + routePath;
+
+                        allRoutes.push({
+                            path: fullPath,
+                            methods: [method],
+                            file: file,
+                            type: 'file'
+                        });
+                    }
+                }
+            });
+        }
+
+        // Duplicates hatao
+        const uniqueRoutes = [];
+        const seen = new Set();
+
+        allRoutes.forEach(r => {
+            const key = `${r.methods[0]}_${r.path}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                uniqueRoutes.push(r);
+            }
+        });
 
         res.json({
             success: true,
-            total: routes.length,
-            routes: routes.sort((a, b) => a.path.localeCompare(b.path)),
-            models: mongoose.modelNames(),
-            routeFiles: allRouteFiles
+            total: uniqueRoutes.length,
+            routes: uniqueRoutes.sort((a, b) => a.path.localeCompare(b.path)),
+            models: mongoose.modelNames()
         });
     } catch (err) {
         console.error('API Routes Error:', err);
@@ -205,6 +236,70 @@ app.get('/api/admin/routes', (req, res) => {
             routes: [],
             models: []
         });
+    }
+});
+
+// ==================== ROUTE CODE VIEWER + EDITOR ====================
+// Local aur production dono me chalega, lekin save sirf local me
+app.post('/api/admin/get-route-code', express.json(), (req, res) => {
+    try {
+        const { file } = req.body;
+        let filePath;
+
+        if (file === 'server.js') {
+            filePath = path.join(__dirname, 'server.js');
+        } else {
+            filePath = path.join(__dirname, './routes', file);
+        }
+
+        if (!fs.existsSync(filePath)) {
+            return res.json({ success: false, error: 'File not found: ' + file });
+        }
+
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+
+        res.json({
+            success: true,
+            file: file,
+            code: fileContent
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post('/api/admin/update-route-code', express.json(), (req, res) => {
+    try {
+        // Production me block kar do
+        if (process.env.NODE_ENV === 'production') {
+            return res.status(403).json({
+                success: false,
+                error: 'File editing disabled in production for security'
+            });
+        }
+
+        const { file, code } = req.body;
+        let filePath;
+
+        if (file === 'server.js') {
+            filePath = path.join(__dirname, 'server.js');
+        } else {
+            filePath = path.join(__dirname, './routes', file);
+        }
+
+        // Backup banao
+        const backupPath = filePath + '.backup-' + Date.now();
+        fs.copyFileSync(filePath, backupPath);
+
+        // Naya code likho
+        fs.writeFileSync(filePath, code);
+
+        res.json({
+            success: true,
+            message: `File ${file} updated! Server restart karo changes dekhne ke liye. Backup: ${path.basename(backupPath)}`
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
@@ -250,7 +345,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
@@ -268,55 +363,6 @@ process.on('SIGTERM', async () => {
     console.log('✅ MongoDB connection closed');
     process.exit(0);
 });
-
-// ==================== ROUTE CODE VIEWER + EDITOR ====================
-// Sirf development me chalega
-if (process.env.NODE_ENV === 'development') {
-    
-    // 1. Code padhne ke liye
-    app.post('/api/admin/get-route-code', express.json(), (req, res) => {
-        try {
-            const { file, path: routePath, method } = req.body;
-            const filePath = path.join(__dirname, file === 'server.js'? '.' : './routes', file);
-            
-            if (!fs.existsSync(filePath)) {
-                return res.json({ success: false, error: 'File not found' });
-            }
-
-            const fileContent = fs.readFileSync(filePath, 'utf8');
-            
-            res.json({
-                success: true,
-                file: file,
-                code: fileContent,
-                routePath,
-                method
-            });
-        } catch (err) {
-            res.status(500).json({ success: false, error: err.message });
-        }
-    });
-
-    // 2. Code update karne ke liye - DANGER: Sirf local me
-    app.post('/api/admin/update-route-code', express.json(), (req, res) => {
-        try {
-            const { file, code } = req.body;
-            const filePath = path.join(__dirname, file === 'server.js'? '.' : './routes', file);
-            
-            // Backup banao pehle
-            fs.writeFileSync(filePath + '.backup', fs.readFileSync(filePath));
-            // Naya code likho
-            fs.writeFileSync(filePath, code);
-            
-            res.json({ 
-                success: true, 
-                message: 'File updated! Server restart karo changes dekhne ke liye.' 
-            });
-        } catch (err) {
-            res.status(500).json({ success: false, error: err.message });
-        }
-    });
-}
 
 // ==================== START SERVER - SABSE LAST ME ====================
 const server = app.listen(PORT, () => {
