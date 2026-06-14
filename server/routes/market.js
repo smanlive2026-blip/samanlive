@@ -14,7 +14,7 @@ function readDB() {
         return JSON.parse(fs.readFileSync(dbPath, 'utf8'));
     } catch (err) {
         console.error('DB Read Error:', err);
-        return { marketCategories: [], shops: [], areas: [] };
+        return { marketCategories: [], shops: [], areas: [], modules: [] };
     }
 }
 
@@ -41,6 +41,19 @@ function getDistance(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+// NAYA: Point in Polygon check - Ye add kar
+function isPointInPolygon(point, vs) {
+    let x = point.lat, y = point.lng;
+    let inside = false;
+    for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+        let xi = vs[i].lat, yi = vs[i].lng;
+        let xj = vs[j].lat, yj = vs[j].lng;
+        let intersect = ((yi > y)!== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside =!inside;
+    }
+    return inside;
+}
+
 // ========================================
 // PUBLIC APIs - FRONTEND KE LIYE
 // ========================================
@@ -60,7 +73,7 @@ router.get('/categories', (req, res) => {
         const area = db.areas.find(a => a.name.toLowerCase().includes(city.toLowerCase()));
         if (area) {
             categories = categories.filter(c =>
-               !c.area || c.area.length === 0 || c.area.includes(area.id)
+              !c.area || c.area.length === 0 || c.area.includes(area.id)
             );
         }
     }
@@ -115,7 +128,7 @@ router.get('/shops', (req, res) => {
 
     // BANNER FIELD ENSURE KARO - AGAR NAHI HAI TO EMPTY STRING
     shops = shops.map(shop => ({
-    ...shop,
+   ...shop,
         banner: shop.banner || ''
     }));
 
@@ -155,7 +168,7 @@ router.get('/shops/:categoryId', (req, res) => {
 
     // BANNER FIELD ENSURE KARO
     shops = shops.map(shop => ({
-    ...shop,
+   ...shop,
         banner: shop.banner || ''
     }));
 
@@ -173,11 +186,61 @@ router.get('/shop/:id', (req, res) => {
 
     // BANNER FIELD ENSURE KARO
     const shopData = {
-    ...shop,
+   ...shop,
         banner: shop.banner || ''
     };
 
     res.json(shopData);
+});
+
+// ========================================
+// NAYA ROUTE: MODULES NEARBY - AREA WISE FILTER
+// ========================================
+router.post('/modules/nearby', (req, res) => {
+    try {
+        const db = readDB();
+        const { lat, lng } = req.body;
+
+        let modules = db.modules || [];
+
+        // Sirf active modules
+        modules = modules.filter(m => m.status === 'active' || m.status === true);
+
+        // Agar GPS nahi mila, sab bhej do
+        if (!lat ||!lng) {
+            return res.json({ success: true, modules: modules.sort((a, b) => (a.priority || 0) - (b.priority || 0)) });
+        }
+
+        // Filter karo: areas check karo
+        const filteredModules = modules.filter(module => {
+            // Agar module me koi area nahi = sabko dikhao
+            if (!module.areas || module.areas.length === 0) return true;
+
+            // Check karo kya user kisi area me hai
+            return module.areas.some(area => {
+                if (!area.status) return false; // Disabled area skip karo
+
+                if (area.type === 'circle' && area.center) {
+                    const distance = getDistance(
+                        lat, lng,
+                        area.center.lat, area.center.lng
+                    );
+                    return distance <= area.radius;
+                } else if (area.type === 'polygon' && area.coordinates) {
+                    return isPointInPolygon({ lat, lng }, area.coordinates);
+                }
+                return false;
+            });
+        });
+
+        res.json({
+            success: true,
+            modules: filteredModules.sort((a, b) => (a.priority || 0) - (b.priority || 0))
+        });
+    } catch (err) {
+        console.error('Modules Nearby Error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 // ========================================

@@ -45,52 +45,49 @@ function getUserLocation() {
 }
 
 // ========================================
-// LOAD DATA FROM SERVER - WITH LOCATION
+// LOAD DATA FROM SERVER - WITH LOCATION - UPDATED
 // ========================================
 async function loadAllData() {
     try {
         // Pehle location try karo
         await getUserLocation();
 
-        // Location mili to /api/homepage use karo, warna normal APIs
+        // Baaki APIs normal load karo
+        const [adsRes, videosRes, campaignsRes, settingsRes] = await Promise.all([
+            fetch('/api/ads'),
+            fetch('/api/videos'),
+            fetch('/api/campaigns'),
+            fetch('/api/settings')
+        ]);
+
+        allAds = await adsRes.json();
+        nearbyVideos = await videosRes.json();
+        allCampaigns = await campaignsRes.json();
+        siteSettings = await settingsRes.json();
+
+        // MODULES KO GPS KE SAATH LOAD KARO - YAHI CHANGE HAI
         if(userLocation) {
-            const homepageRes = await fetch(`/api/homepage?lat=${userLocation.lat}&lng=${userLocation.lng}`);
-            const homepageData = await homepageRes.json();
+            // Naya route: /api/modules/nearby - Area-wise modules
+            const modulesRes = await fetch('/api/modules/nearby', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lat: userLocation.lat, lng: userLocation.lng })
+            });
+            const modulesData = await modulesRes.json();
+            allModules = modulesData.modules || [];
 
-            // Homepage API se filtered modules + shops
-            allModules = homepageData.modules || [];
-            nearbyServices = homepageData.shops || [];
-
-            // Baaki APIs normal load karo
-            const [adsRes, videosRes, campaignsRes, settingsRes] = await Promise.all([
-                fetch('/api/ads'),
-                fetch('/api/videos'),
-                fetch('/api/campaigns'),
-                fetch('/api/settings')
-            ]);
-
-            allAds = await adsRes.json();
-            nearbyVideos = await videosRes.json();
-            allCampaigns = await campaignsRes.json();
-            siteSettings = await settingsRes.json();
-
+            // Shops bhi GPS ke saath load karo
+            const shopsRes = await fetch(`/api/shops?lat=${userLocation.lat}&lng=${userLocation.lng}`);
+            nearbyServices = await shopsRes.json();
         } else {
             // Location nahi mili to purana tarika
-            const [modulesRes, adsRes, videosRes, campaignsRes, shopsRes, settingsRes] = await Promise.all([
+            const [modulesRes, shopsRes] = await Promise.all([
                 fetch('/api/modules'),
-                fetch('/api/ads'),
-                fetch('/api/videos'),
-                fetch('/api/campaigns'),
-                fetch('/api/shops'),
-                fetch('/api/settings')
+                fetch('/api/shops')
             ]);
-
-            allModules = await modulesRes.json();
-            allAds = await adsRes.json();
-            nearbyVideos = await videosRes.json();
-            allCampaigns = await campaignsRes.json();
+            const modulesData = await modulesRes.json();
+            allModules = modulesData.modules || modulesData; // Backend se array ya object aa sakta hai
             nearbyServices = await shopsRes.json();
-            siteSettings = await settingsRes.json();
         }
 
         console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', nearbyServices.length);

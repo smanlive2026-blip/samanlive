@@ -3,34 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modules - SAMANLIVE</title>
+    <title>Modules Management - SAMANLIVE Admin</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #f1f5f9; }
-       .content { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { color: #1e293b; font-size: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #f1f5f9; padding: 20px; }
+       .content { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        h2 { color: #1e293b; font-size: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-weight: 600; }
        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
        .badge-info { background: #dbeafe; color: #1e40af; }
        .badge-success { background: #d1fae5; color: #065f46; }
        .badge-danger { background: #fee2e2; color: #991b1b; }
        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
-       .btn-success { background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; }
-       .btn-success:hover { background: #059669; }
-       .btn-primary { background: #6366f1; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; }
-       .btn-primary:hover { background: #4f46e5; }
-       .btn-secondary { background: #64748b; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-       .btn-danger { background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+       .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
+       .btn-success { background: #10b981; color: white; }
+       .btn-success:hover { background: #059669; transform: translateY(-1px); }
+       .btn-primary { background: #6366f1; color: white; }
+       .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); }
+       .btn-secondary { background: #64748b; color: white; }
+       .btn-secondary:hover { background: #475569; }
+       .btn-danger { background: #ef4444; color: white; }
+       .btn-danger:hover { background: #dc2626; }
        .btn-sm { padding: 6px 12px; font-size: 13px; }
-       .search-box { padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px; width: 300px; font-size: 14px; }
-       .search-box:focus { outline: none; border-color: #6366f1; }
+       .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none!important; }
+       .search-box { padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px; width: 300px; font-size: 14px; transition: 0.2s; }
+       .search-box:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
-        th { background: #f8fafc; color: #475569; font-weight: 600; font-size: 13px; text-transform: uppercase; }
+        th { background: #f8fafc; color: #475569; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
        .module-row { cursor: pointer; transition: 0.2s; }
        .module-row:hover { background: #f8fafc; }
-       .expand-icon { transition: 0.3s; display: inline-block; }
+       .expand-icon { transition: 0.3s; display: inline-block; color: #64748b; }
        .expand-icon.open { transform: rotate(90deg); }
        .color-badge { padding: 4px 10px; border-radius: 6px; color: white; font-size: 11px; font-weight: 600; }
        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
@@ -40,21 +44,31 @@
        .area-expand { padding: 20px; background: #f8fafc; }
        .form-group { margin-bottom: 15px; }
        .form-group label { display: block; margin-bottom: 6px; color: #475569; font-weight: 600; font-size: 14px; }
-       .form-group input,.form-group select { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
-       .form-group input:focus,.form-group select:focus { outline: none; border-color: #6366f1; }
+       .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: 0.2s; }
+       .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-       .map-container { height: 400px; border-radius: 8px; margin-top: 15px; }
-       .map-controls { display: flex; gap: 10px; margin-top: 15px; }
-       .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; }
+       .map-container { height: 400px; border-radius: 8px; margin-top: 15px; border: 2px solid #e2e8f0; }
+       .map-controls { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+       .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
        .modal.active { display: flex; }
-       .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; }
+       .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
-       .close-btn { background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px; color: #64748b; }
-       .area-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; }
+       .close-btn { background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px; color: #64748b; transition: 0.2s; }
+       .close-btn:hover { background: #e2e8f0; transform: rotate(90deg); }
+       .area-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; }
+       .toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 14px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; animation: slideInRight 0.3s ease; }
+       .toast.success { background: #10b981; }
+       .toast.error { background: #ef4444; }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+       .loading { text-align: center; padding: 40px; color: #94a3b8; }
+       .loading::after { content: '...'; animation: dots 1.5s steps(4, end) infinite; }
+        @keyframes dots { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%, 100% { content: '...'; } }
         @media (max-width: 768px) {
            .form-grid { grid-template-columns: 1fr; }
            .action-bar { flex-direction: column; align-items: stretch; }
            .search-box { width: 100%; }
+           .modal-content { padding: 20px; width: 95%; }
         }
     </style>
 </head>
@@ -62,7 +76,7 @@
 <div class="content">
     <h2>📦 All Modules <span id="moduleCount" class="badge badge-info">0</span></h2>
     <div class="action-bar">
-        <button class="btn-success" onclick="openAddModule()">+ Add New Module</button>
+        <button class="btn btn-success" onclick="openAddModule()">+ Add New Module</button>
         <input type="text" class="search-box" placeholder="Search modules..." onkeyup="filterTable('modulesTable', this.value)">
     </div>
     <div style="overflow-x:auto;">
@@ -81,7 +95,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">Loading modules...</td></tr>
+                <tr><td colspan="9" class="loading">Loading modules</td></tr>
             </tbody>
         </table>
     </div>
@@ -96,11 +110,11 @@
         </select>
     </div>
     <div class="map-controls">
-        <button class="btn-primary" id="saveAreaBtn" onclick="saveModuleArea()">💾 Save Area</button>
-        <button class="btn-secondary" onclick="clearModuleDrawing()">🗑️ Clear Drawing</button>
+        <button class="btn btn-primary" id="saveAreaBtn" onclick="saveModuleArea()">💾 Save Area</button>
+        <button class="btn btn-secondary" onclick="clearModuleDrawing()">🗑️ Clear Drawing</button>
     </div>
     <div id="moduleMap" class="map-container"></div>
-    <small style="color:#64748b;display:block;margin-top:10px;">Draw polygon or circle on map to set module service area</small>
+    <small style="color:#64748b;display:block;margin-top:10px;">Draw polygon or circle on map to set module service area. Use toolbar on left.</small>
 </div>
 
 <!-- Module Modal -->
@@ -112,12 +126,12 @@
         </div>
         <input type="hidden" id="moduleEditId">
         <div id="moduleModalFields"></div>
-        <h3 style="margin:20px 0 10px;color:#1e293b;">📂 Categories in this Module</h3>
+        <h3 style="margin:20px 0 10px;color:#1e293b;font-size:16px;">📂 Categories in this Module</h3>
         <div id="moduleCategoriesList"></div>
-        <button class="btn-success btn-sm" onclick="addCategoryToModule()" style="margin-top:10px;">+ Add Category</button>
+        <button class="btn btn-success btn-sm" onclick="addCategoryToModule()" style="margin-top:10px;">+ Add Category</button>
         <div style="display:flex;gap:10px;margin-top:25px;padding-top:20px;border-top:2px solid #f1f5f9;">
-            <button class="btn-primary" id="saveModuleBtn" onclick="saveModule()">💾 Save Module</button>
-            <button class="btn-secondary" onclick="closeModuleModal()">Cancel</button>
+            <button class="btn btn-primary" id="saveModuleBtn" onclick="saveModule()">💾 Save Module</button>
+            <button class="btn btn-secondary" onclick="closeModuleModal()">Cancel</button>
         </div>
     </div>
 </div>
@@ -125,6 +139,56 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script>
+// ========================================
+// UTILITY FUNCTIONS - MISSING THI YE
+// ========================================
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function showLoading(tableId) {
+    const tbody = document.querySelector(`#${tableId} tbody`);
+    if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="loading">Loading</td></tr>';
+}
+
+function filterTable(tableId, query) {
+    const table = document.getElementById(tableId);
+    const rows = table.querySelectorAll('tbody tr');
+    const searchTerm = query.toLowerCase();
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm)? '' : 'none';
+    });
+}
+
+async function apiCall(endpoint, method = 'GET', data = null) {
+    const options = {
+        method,
+        headers: { 'Content-Type': 'application/json' }
+    };
+    if (data) options.body = JSON.stringify(data);
+
+    const res = await fetch(`/api${endpoint}`, options);
+    const result = await res.json();
+
+    if (!res.ok) throw new Error(result.error || 'Request failed');
+    return result;
+}
+
+// ========================================
+// MODULE MANAGEMENT
+// ========================================
 let currentModuleCategories = [];
 let moduleMap, drawnItems, currentDrawnLayer, currentModuleId;
 let allModules = [];
@@ -132,7 +196,8 @@ let allModules = [];
 async function loadModules() {
     showLoading('modulesTable');
     try {
-        allModules = await apiCall('/modules');
+        const data = await apiCall('/modules');
+        allModules = data.modules || data; // Handle both formats
         document.getElementById('moduleCount').textContent = allModules.length;
         renderModules();
         populateModuleDropdown();
@@ -140,7 +205,7 @@ async function loadModules() {
     } catch (err) {
         console.error('Load modules error:', err);
         document.querySelector('#modulesTable tbody').innerHTML =
-            '<tr><td colspan="9" style="text-align:center;padding:40px;color:#ef4444;">Failed to load modules</td></tr>';
+            '<tr><td colspan="9" style="text-align:center;padding:40px;color:#ef4444;">Failed to load modules: ' + err.message + '</td></tr>';
     }
 }
 
@@ -155,21 +220,26 @@ function renderModules() {
     tbody.innerHTML = allModules.map(m => {
         const cats = m.categoryDetails || [];
         const catsText = cats.length > 0? cats.slice(0,2).map(c => escapeHtml(c.name)).join(', ') + (cats.length > 2? '...' : '') : '-';
-        return `<tr class="module-row" onclick="toggleModuleAreas('${m._id}')">
-            <td><span class="expand-icon" id="icon-${m._id}">▶</span></td>
+        const areaCount = m.areas? m.areas.filter(a => a.status!== false).length : 0;
+
+        return `<tr class="module-row" onclick="toggleModuleAreas('${m._id || m.id}')">
+            <td><span class="expand-icon" id="icon-${m._id || m.id}">▶</span></td>
             <td style="font-size:24px;">${m.icon || '📦'}</td>
-            <td><b>${escapeHtml(m.name)}</b></td>
+            <td>
+                <b>${escapeHtml(m.name)}</b>
+                ${areaCount > 0? `<br><small style="color:#6366f1;">${areaCount} area${areaCount > 1? 's' : ''}</small>` : ''}
+            </td>
             <td><span class="color-badge" style="background:${m.color}">${m.color}</span></td>
             <td>${escapeHtml(m.link || '-')}</td>
             <td><span class="badge badge-info">${cats.length}</span> ${catsText}</td>
             <td>${m.priority || 0}</td>
             <td><span class="status-badge status-${m.status}">${m.status}</span></td>
             <td onclick="event.stopPropagation()" class="actions">
-                <button class="btn-primary btn-sm" onclick="editModule('${m._id}')">Edit</button>
-                <button class="btn-danger btn-sm" onclick="deleteModule('${m._id}')">Delete</button>
+                <button class="btn btn-primary btn-sm" onclick="editModule('${m._id || m.id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteModule('${m._id || m.id}')">Delete</button>
             </td>
         </tr>
-        <tr id="areas-${m._id}" style="display:none;">
+        <tr id="areas-${m._id || m.id}" style="display:none;">
             <td colspan="9">
                 <div class="area-expand">
                     <h4 style="margin-bottom:10px;">Categories:</h4>
@@ -195,7 +265,7 @@ window.toggleModuleAreas = (id) => {
 function populateModuleDropdown() {
     const select = document.getElementById('moduleSelectArea');
     select.innerHTML = '<option value="">-- Select Module --</option>' +
-        allModules.map(m => `<option value="${m._id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
+        allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
 }
 
 window.openAddModule = () => {
@@ -204,11 +274,11 @@ window.openAddModule = () => {
     currentModuleCategories = [];
     renderModuleForm();
     renderCategoryList();
-    document.getElementById('moduleModal').style.display = 'flex';
+    document.getElementById('moduleModal').classList.add('active');
 };
 
 window.editModule = (id) => {
-    const m = allModules.find(x => x._id === id);
+    const m = allModules.find(x => (x._id || x.id) === id);
     if (!m) return showToast('Module not found', 'error');
 
     document.getElementById('moduleEditId').value = id;
@@ -216,7 +286,7 @@ window.editModule = (id) => {
     currentModuleCategories = [...(m.categoryDetails || [])];
     renderModuleForm(m);
     renderCategoryList();
-    document.getElementById('moduleModal').style.display = 'flex';
+    document.getElementById('moduleModal').classList.add('active');
 };
 
 function renderModuleForm(m = {}) {
@@ -249,6 +319,10 @@ function renderModuleForm(m = {}) {
                     <option value="hidden" ${m.status === 'hidden'? 'selected' : ''}>Hidden</option>
                 </select>
             </div>
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="field_desc" rows="2" placeholder="Module description...">${escapeHtml(m.desc || '')}</textarea>
         </div>`;
 }
 
@@ -266,7 +340,7 @@ function renderCategoryList() {
                 <span style="color:#64748b;margin-left:10px;">${escapeHtml(c.group || 'General')}</span>
                 <span style="color:${c.color};margin-left:10px;font-weight:600;">${c.color}</span>
             </div>
-            <button class="btn-danger btn-sm" onclick="removeCategory(${i})">Remove</button>
+            <button class="btn btn-danger btn-sm" onclick="removeCategory(${i})">Remove</button>
         </div>`).join('');
 }
 
@@ -306,6 +380,7 @@ window.saveModule = async () => {
         icon: document.getElementById('field_icon').value.trim(),
         color: document.getElementById('field_color').value,
         link: document.getElementById('field_link').value.trim(),
+        desc: document.getElementById('field_desc').value.trim(),
         priority: parseInt(document.getElementById('field_priority').value || 0),
         status: document.getElementById('field_status').value,
         categoryDetails: currentModuleCategories
@@ -348,15 +423,17 @@ window.deleteModule = async (id) => {
 };
 
 window.closeModuleModal = () => {
-    document.getElementById('moduleModal').style.display = 'none';
+    document.getElementById('moduleModal').classList.remove('active');
     currentModuleCategories = [];
 };
 
-// Map functions
+// ========================================
+// MAP FUNCTIONS
+// ========================================
 function initModuleMap() {
     if (moduleMap) return;
 
-    moduleMap = L.map('moduleMap').setView([28.6139, 77.2090], 12);
+    moduleMap = L.map('moduleMap').setView([23.0225, 72.5714], 11); // Ahmedabad default
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
     }).addTo(moduleMap);
@@ -366,14 +443,14 @@ function initModuleMap() {
 
     const drawControl = new L.Control.Draw({
         draw: {
-            polygon: { shapeOptions: { color: '#6366f1' } },
-            circle: { shapeOptions: { color: '#6366f1' } },
+            polygon: { shapeOptions: { color: '#6366f1', fillOpacity: 0.3 } },
+            circle: { shapeOptions: { color: '#6366f1', fillOpacity: 0.3 } },
             rectangle: false,
             polyline: false,
             marker: false,
             circlemarker: false
         },
-        edit: { featureGroup: drawnItems }
+        edit: { featureGroup: drawnItems, remove: true }
     });
     moduleMap.addControl(drawControl);
 
@@ -381,6 +458,7 @@ function initModuleMap() {
         drawnItems.clearLayers();
         currentDrawnLayer = e.layer;
         drawnItems.addLayer(currentDrawnLayer);
+        showToast('Area drawn. Click Save Area to confirm.', 'success');
     });
 }
 
@@ -391,23 +469,25 @@ window.loadModuleArea = () => {
 
     if (!currentModuleId) return;
 
-    const module = allModules.find(m => m._id === currentModuleId);
+    const module = allModules.find(m => (m._id || m.id) === currentModuleId);
     if (module && module.areas && module.areas.length > 0) {
         const area = module.areas[0];
         try {
-            if (area.type === 'circle') {
+            if (area.type === 'circle' && area.center) {
                 currentDrawnLayer = L.circle([area.center.lat, area.center.lng], {
                     radius: area.radius,
-                    color: '#6366f1'
+                    color: '#6366f1',
+                    fillOpacity: 0.3
                 });
                 moduleMap.setView([area.center.lat, area.center.lng], 13);
-            } else if (area.type === 'polygon') {
-                currentDrawnLayer = L.polygon(area.coordinates, { color: '#6366f1' });
+            } else if (area.type === 'polygon' && area.coordinates) {
+                currentDrawnLayer = L.polygon(area.coordinates, { color: '#6366f1', fillOpacity: 0.3 });
                 moduleMap.fitBounds(currentDrawnLayer.getBounds());
             }
-            drawnItems.addLayer(currentDrawnLayer);
+            if (currentDrawnLayer) drawnItems.addLayer(currentDrawnLayer);
         } catch (err) {
             console.error('Error loading area:', err);
+            showToast('Error loading area', 'error');
         }
     }
 };
@@ -422,16 +502,23 @@ window.saveModuleArea = async () => {
         return;
     }
 
-    let areaData = {};
+    const btn = document.getElementById('saveAreaBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    let areaData = { name: 'Service Area', status: true };
+
     if (currentDrawnLayer instanceof L.Circle) {
         const center = currentDrawnLayer.getLatLng();
         areaData = {
+           ...areaData,
             type: 'circle',
             center: { lat: center.lat, lng: center.lng },
-            radius: currentDrawnLayer.getRadius()
+            radius: Math.round(currentDrawnLayer.getRadius())
         };
     } else if (currentDrawnLayer instanceof L.Polygon) {
         areaData = {
+           ...areaData,
             type: 'polygon',
             coordinates: currentDrawnLayer.getLatLngs()[0].map(p => ({ lat: p.lat, lng: p.lng }))
         };
@@ -443,6 +530,9 @@ window.saveModuleArea = async () => {
         await loadModules();
     } catch (err) {
         showToast('Failed to save area: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Save Area';
     }
 };
 
