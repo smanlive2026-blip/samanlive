@@ -12,8 +12,8 @@ const PORT = process.env.PORT || 3000;
 // ==================== MIDDLEWARE ====================
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
-})); // Security headers
-app.use(compression()); // Gzip compression
+}));
+app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -37,7 +37,7 @@ app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/samanlive', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    maxPoolSize: 10, // Connection pooling
+    maxPoolSize: 10,
     serverSelectionTimeoutMS: 5000
 })
 .then(() => {
@@ -49,7 +49,6 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/samanlive
     process.exit(1);
 });
 
-// MongoDB Event Listeners
 mongoose.connection.on('error', err => {
     console.error('❌ MongoDB Error:', err);
 });
@@ -65,20 +64,20 @@ app.use('/api', require('./routes/adminRoutes'));
 // Manager Routes
 app.use('/api', require('./routes/managerRoutes'));
 
-// Shop Routes - User side
-app.use('/api', require('./routes/shop'));
+// Shop Routes - User side - TEMP COMMENT: File missing
+// app.use('/api', require('./routes/shop'));
 
-// Market/Public Routes - Categories, Shops listing
-app.use('/api', require('./routes/marketRoutes'));
+// Market/Public Routes - Fixed: marketRoutes → market
+app.use('/api', require('./routes/market'));
 
-// User Routes - Address, Wishlist, Payment, Notification
-app.use('/api', require('./routes/userRoutes'));
-app.use('/api', require('./routes/wishlistRoutes'));
-app.use('/api', require('./routes/paymentRoutes'));
-app.use('/api', require('./routes/notificationRoutes'));
+// User Routes - TEMP COMMENT: Files missing
+// app.use('/api', require('./routes/userRoutes'));
+// app.use('/api', require('./routes/wishlistRoutes'));
+// app.use('/api', require('./routes/paymentRoutes'));
+// app.use('/api', require('./routes/notificationRoutes'));
 
-// Banner Routes
-app.use('/api', require('./routes/bannerRoutes'));
+// Banner Routes - TEMP COMMENT: File missing
+// app.use('/api', require('./routes/bannerRoutes'));
 
 // ==================== ADMIN PANEL ROUTES ====================
 app.get('/admin', (req, res) => {
@@ -151,7 +150,6 @@ app.get('*', (req, res) => {
 app.use((err, req, res, next) => {
     console.error('❌ Error:', err.stack);
 
-    // Mongoose validation error
     if (err.name === 'ValidationError') {
         return res.status(400).json({
             success: false,
@@ -160,7 +158,6 @@ app.use((err, req, res, next) => {
         });
     }
 
-    // Mongoose duplicate key error
     if (err.code === 11000) {
         return res.status(400).json({
             success: false,
@@ -169,7 +166,6 @@ app.use((err, req, res, next) => {
         });
     }
 
-    // JWT errors
     if (err.name === 'JsonWebTokenError') {
         return res.status(401).json({
             success: false,
@@ -187,7 +183,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
