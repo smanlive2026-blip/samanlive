@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area Master - SuperLive</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        #map { height: 450px; width: 100%; border-radius: 8px; margin-top: 15px; }
+        .area-circle-info { background: #e3f2fd; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
+        .radius-locked { color: #ff6b00; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="stats-grid">
+            <div class="stat-card"><h3>TOTAL AREAS</h3><div class="stat-value" id="totalAreas">0</div></div>
+            <div class="stat-card"><h3>ACTIVE AREAS</h3><div class="stat-value" id="activeAreas">0</div></div>
+            <div class="stat-card"><h3>TOTAL MANAGERS</h3><div class="stat-value" id="totalManagersAll">0</div></div>
+            <div class="stat-card"><h3>COVERAGE</h3><div class="stat-value" style="font-size:18px;">50km Each</div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>All Areas - 50km Zone</h2>
+                <button class="btn btn-success" onclick="openAddArea()">+ Create New Area</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Area Code</th>
+                            <th>Area Name</th>
+                            <th>City</th>
+                            <th>State</th>
+                            <th>Centre Lat/Lng</th>
+                            <th>Radius</th>
+                            <th>Managers</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="areasTable">
+                        <tr><td colspan="9" style="text-align:center;padding:40px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Area Modal -->
+    <div id="areaModal" class="modal">
+        <div class="modal-content" style="max-width:900px;">
+            <div class="modal-header">
+                <h2 id="areaModalTitle">Create New Area</h2>
+                <button class="close-btn" onclick="closeAreaModal()">×</button>
+            </div>
+            <form id="areaForm">
+                <input type="hidden" id="areaId">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>Search City *</label>
+                        <input type="text" id="citySearch" placeholder="Type city name: Surat, Mumbai, Delhi..." autocomplete="off">
+                        <div id="cityResults" style="display:none; border:1px solid #ddd; max-height:200px; overflow-y:auto; background:#fff; position:absolute; z-index:1000; width:90%;"></div>
+                    </div>
+                    
+                    <div class="form-group"><label>Area Code *</label><input type="text" id="areaCode" placeholder="SURAT" required style="text-transform:uppercase;"></div>
+                    <div class="form-group"><label>Area Name *</label><input type="text" id="areaName" placeholder="Surat 50km Zone" required></div>
+                    <div class="form-group"><label>City Name</label><input type="text" id="cityName" readonly></div>
+                    <div class="form-group"><label>State</label><input type="text" id="stateName" readonly></div>
+                    <div class="form-group"><label>Centre Latitude</label><input type="text" id="centerLat" readonly></div>
+                    <div class="form-group"><label>Centre Longitude</label><input type="text" id="centerLng" readonly></div>
+                    <div class="form-group"><label>Radius</label><input type="text" value="50 km" disabled class="radius-locked"></div>
+                    <div class="form-group"><label>Status</label><select id="areaStatus"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+                    
+                    <div class="form-group full">
+                        <label>City Centre - 50km Coverage</label>
+                        <div id="map"></div>
+                        <div class="area-circle-info">
+                            📍 <b>Centre:</b> <span id="mapCenterText">Select city first</span> | 
+                            📏 <b>Radius:</b> <span class="radius-locked">50 km Fixed</span> | 
+                            🎯 Drag marker to adjust centre if needed
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="saveAreaBtn" style="width:100%;margin-top:20px;">Save Area</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAP_KEY&libraries=places"></script>
+    <script>
+        let allAreas = [];
+        let map, marker, circle;
+        let autocomplete;
+
+        async function loadAreas() {
+            try {
+                const [areasData, managersData] = await Promise.all([
+                    apiCall('/areas'),
+                    apiCall('/managers')
+                ]);
+                allAreas = areasData || [];
+                renderAreas(allAreas, managersData || []);
+                document.getElementById('totalAreas').textContent = allAreas.length;
+                document.getElementById('activeAreas').textContent = allAreas.filter(a => a.status).length;
+                document.getElementById('totalManagersAll').textContent = (managersData || []).length;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderAreas(areas, managers) {
+            const tbody = document.getElementById('areasTable');
+            tbody.innerHTML = areas.length === 0 ? '<tr><td colspan="9" style="text-align:center;padding:40px;">No areas created yet</td></tr>' :
+                areas.map(a => {
+                    const managerCount = managers.filter(m => m.areaCode === a.areaCode).length;
+                    const totalBuckets = 15;
+                    return `<tr>
+                        <td><strong>${escapeHtml(a.areaCode)}</strong></td>
+                        <td>${escapeHtml(a.areaName)}</td>
+                        <td>${escapeHtml(a.city)}</td>
+                        <td>${escapeHtml(a.state)}</td>
+                        <td style="font-size:12px;">${a.centerLat.toFixed(4)}, ${a.centerLng.toFixed(4)}</td>
+                        <td><span class="badge">50 km</span></td>
+                        <td><b>${managerCount}</b>/${totalBuckets}</td>
+                        <td><span class="status-badge ${a.status?'status-active':'status-hidden'}">${a.status?'Active':'Inactive'}</span></td>
+                        <td class="actions">
+                            <button class="btn btn-primary btn-sm" onclick="viewAreaDetail('${a.areaCode}')">Managers</button>
+                            <button class="btn btn-secondary btn-sm" onclick="editArea('${a._id}')">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteArea('${a._id}', ${managerCount})">Delete</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+        }
+
+        window.openAddArea = () => {
+            document.getElementById('areaId').value = '';
+            document.getElementById('areaModalTitle').textContent = 'Create New Area';
+            document.getElementById('areaForm').reset();
+            document.getElementById('areaModal').style.display = 'block';
+            setTimeout(initMap, 300);
+        };
+
+        function initMap() {
+            const defaultCenter = { lat: 20.5937, lng: 78.9629 }; // India center
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 5,
+                center: defaultCenter,
+                mapTypeControl: false
+            });
+
+            // City search autocomplete
+            const input = document.getElementById('citySearch');
+            autocomplete = new google.maps.places.Autocomplete(input, {
+                types: ['(cities)'],
+                componentRestrictions: { country: 'IN' }
+            });
+
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                if (!place.geometry) return;
+                
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                const city = place.name;
+                const state = place.address_components.find(c => c.types.includes('administrative_area_level_1'))?.long_name || '';
+                
+                document.getElementById('areaCode').value = city.substring(0, 8).toUpperCase().replace(/\s/g, '');
+                document.getElementById('areaName').value = city + ' 50km Zone';
+                document.getElementById('cityName').value = city;
+                document.getElementById('stateName').value = state;
+                document.getElementById('centerLat').value = lat.toFixed(6);
+                document.getElementById('centerLng').value = lng.toFixed(6);
+                document.getElementById('mapCenterText').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                
+                updateMapMarker(lat, lng);
+            });
+        }
+
+        function updateMapMarker(lat, lng) {
+            const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
+            map.setCenter(position);
+            map.setZoom(9);
+
+            if (marker) marker.setMap(null);
+            if (circle) circle.setMap(null);
+
+            marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                draggable: true,
+                title: 'City Centre - Drag to adjust'
+            });
+
+            circle = new google.maps.Circle({
+                map: map,
+                radius: 50000, // 50km in meters
+                fillColor: '#4285F4',
+                fillOpacity: 0.15,
+                strokeColor: '#4285F4',
+                strokeOpacity: 0.8,
+                strokeWeight: 2
+            });
+            circle.bindTo('center', marker, 'position');
+
+            marker.addListener('dragend', () => {
+                const newPos = marker.getPosition();
+                document.getElementById('centerLat').value = newPos.lat().toFixed(6);
+                document.getElementById('centerLng').value = newPos.lng().toFixed(6);
+                document.getElementById('mapCenterText').textContent = `${newPos.lat().toFixed(4)}, ${newPos.lng().toFixed(4)}`;
+            });
+        }
+
+        window.editArea = (id) => {
+            const a = allAreas.find(x => x._id === id);
+            document.getElementById('areaId').value = id;
+            document.getElementById('areaModalTitle').textContent = 'Edit Area';
+            document.getElementById('areaCode').value = a.areaCode;
+            document.getElementById('areaCode').disabled = true;
+            document.getElementById('areaName').value = a.areaName;
+            document.getElementById('cityName').value = a.city;
+            document.getElementById('stateName').value = a.state;
+            document.getElementById('centerLat').value = a.centerLat;
+            document.getElementById('centerLng').value = a.centerLng;
+            document.getElementById('areaStatus').value = a.status;
+            document.getElementById('areaModal').style.display = 'block';
+            setTimeout(() => {
+                initMap();
+                updateMapMarker(a.centerLat, a.centerLng);
+            }, 300);
+        };
+
+        document.getElementById('areaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('areaId').value;
+            const formData = {
+                areaCode: document.getElementById('areaCode').value.toUpperCase(),
+                areaName: document.getElementById('areaName').value,
+                city: document.getElementById('cityName').value,
+                state: document.getElementById('stateName').value,
+                centerLat: parseFloat(document.getElementById('centerLat').value),
+                centerLng: parseFloat(document.getElementById('centerLng').value),
+                radius: 50,
+                status: document.getElementById('areaStatus').value === 'true'
+            };
+
+            if (!formData.centerLat || !formData.centerLng) {
+                return showToast('Please select a city first!', 'error');
+            }
+
+            try {
+                if (id) {
+                    await apiCall('/areas/' + id, 'PUT', formData);
+                    showToast('Area updated!');
+                } else {
+                    await apiCall('/areas', 'POST', formData);
+                    showToast('Area created!');
+                }
+                closeAreaModal();
+                await loadAreas();
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        });
+
+        window.deleteArea = async (id, managerCount) => {
+            if (managerCount > 0) {
+                return showToast(`Cannot delete! ${managerCount} managers exist in this area. Delete them first.`, 'error');
+            }
+            if (!confirm('Delete this area? This cannot be undone.')) return;
+            try {
+                await apiCall('/areas/' + id, 'DELETE');
+                showToast('Area deleted');
+                await loadAreas();
+            } catch (err) {}
+        };
+
+        window.viewAreaDetail = (areaCode) => {
+            window.location.href = `area-detail.html?code=${areaCode}`;
+        };
+
+        window.closeAreaModal = () => {
+            document.getElementById('areaModal').style.display = 'none';
+            document.getElementById('areaCode').disabled = false;
+        };
+
+        loadAreas();
+    </script>
+</body>
+</html>

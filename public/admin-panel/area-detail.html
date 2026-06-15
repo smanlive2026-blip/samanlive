@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area Detail - SuperLive</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        #areaMap { height: 400px; width: 100%; border-radius: 8px; margin-bottom: 20px; }
+        .area-info-bar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .area-info-bar h2 { margin: 0 0 10px 0; font-size: 24px; }
+        .area-info-bar .info-row { display: flex; gap: 30px; flex-wrap: wrap; font-size: 14px; }
+        .bucket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 20px; }
+        .bucket-card { border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px; background: white; transition: all 0.3s; }
+        .bucket-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .bucket-card.filled { border-color: #4caf50; background: #f1f8f4; }
+        .bucket-card.vacant { border-color: #ff9800; background: #fff8e1; }
+        .bucket-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .bucket-name { font-size: 16px; font-weight: 600; color: #333; }
+        .bucket-status { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .status-filled { background: #4caf50; color: white; }
+        .status-vacant { background: #ff9800; color: white; }
+        .manager-info { font-size: 13px; color: #666; margin: 8px 0; }
+        .manager-info strong { color: #333; }
+        .bucket-actions { display: flex; gap: 8px; margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="breadcrumb" style="margin-bottom: 15px; font-size: 14px; color: #666;">
+            <a href="areas.html" style="color: #667eea; text-decoration: none;">← Back to All Areas</a>
+        </div>
+
+        <div class="area-info-bar">
+            <h2 id="areaTitle">Loading...</h2>
+            <div class="info-row">
+                <div>📍 <strong>Area Code:</strong> <span id="areaCodeText">-</span></div>
+                <div>🎯 <strong>Centre:</strong> <span id="centerCoords">-</span></div>
+                <div>📏 <strong>Radius:</strong> 50 km Fixed</div>
+                <div>👥 <strong>Managers:</strong> <span id="managerCountText">0/15</span></div>
+                <div>📊 <strong>Status:</strong> <span id="areaStatusText">-</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>🗺️ 50km Coverage Map</h2>
+            </div>
+            <div id="areaMap"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>👔 Area Managers - 15 Buckets</h2>
+                <button class="btn btn-success" onclick="addManagerQuick()" id="addManagerBtn">+ Add Manager</button>
+            </div>
+            
+            <div class="bucket-grid" id="bucketGrid">
+                <div style="grid-column: 1/-1; text-align:center; padding:40px; color:#999;">Loading buckets...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAP_KEY&libraries=places"></script>
+    <script>
+        let currentAreaCode = null;
+        let currentAreaData = null;
+        let allManagers = [];
+        let map, marker, circle;
+
+        // 15 Bucket List - Fixed
+        const BUCKET_LIST = [
+            { id: 'Grocery', name: 'Grocery Manager', icon: '🛒', desc: 'Ration, FMCG, Oil, Masala' },
+            { id: 'Fresh', name: 'Fresh Manager', icon: '🥬', desc: 'Sabzi, Fruit, Dairy, Bakery' },
+            { id: 'Food', name: 'Food Manager', icon: '🍕', desc: 'Restaurant, Tiffin, Cloud Kitchen' },
+            { id: 'Medicine', name: 'Medicine Manager', icon: '💊', desc: 'Dawai, Medical, Surgical' },
+            { id: 'Electronics', name: 'Electronics Manager', icon: '📱', desc: 'Mobile, TV, Fridge, Appliances' },
+            { id: 'Fashion', name: 'Fashion Manager', icon: '👗', desc: 'Kapde, Footwear, Accessories' },
+            { id: 'Home', name: 'Home Manager', icon: '🏠', desc: 'Furniture, Decor, Kitchenware' },
+            { id: 'Hardware', name: 'Hardware Manager', icon: '🔧', desc: 'Cement, Paint, Tools, Electric' },
+            { id: 'Beauty', name: 'Beauty Manager', icon: '💄', desc: 'Cosmetics, Salon, Parlour' },
+            { id: 'Auto', name: 'Auto Manager', icon: '🚗', desc: 'Bike/Car, Parts, Garage, Petrol' },
+            { id: 'Stationery', name: 'Stationery Manager', icon: '📚', desc: 'Books, School, Office Supply' },
+            { id: 'Service', name: 'Service Manager', icon: '⚙️', desc: 'Plumber, Electrician, Carpenter' },
+            { id: 'Meat', name: 'Meat Manager', icon: '🍖', desc: 'Chicken, Mutton, Fish, Eggs' },
+            { id: 'Puja', name: 'Puja Manager', icon: '🪔', desc: 'Agarbatti, Murti, Religious Items' },
+            { id: 'Others', name: 'Others Manager', icon: '🎁', desc: 'Pet, Toy, Gift, Sports' }
+        ];
+
+        function getUrlParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        async function loadAreaDetail() {
+            try {
+                currentAreaCode = getUrlParam('code');
+                if (!currentAreaCode) {
+                    alert('Area code missing!');
+                    window.location.href = 'areas.html';
+                    return;
+                }
+
+                const [areaData, managersData] = await Promise.all([
+                    apiCall('/area/' + currentAreaCode),
+                    apiCall('/managers?areaCode=' + currentAreaCode)
+                ]);
+
+                currentAreaData = areaData;
+                allManagers = managersData || [];
+
+                renderAreaInfo();
+                renderMap();
+                renderBuckets();
+            } catch (err) {
+                console.error(err);
+                showToast('Error loading area: ' + err.message, 'error');
+            }
+        }
+
+        function renderAreaInfo() {
+            document.getElementById('areaTitle').textContent = currentAreaData.areaName;
+            document.getElementById('areaCodeText').textContent = currentAreaData.areaCode;
+            document.getElementById('centerCoords').textContent = `${currentAreaData.centerLat.toFixed(4)}, ${currentAreaData.centerLng.toFixed(4)}`;
+            document.getElementById('managerCountText').textContent = `${allManagers.length}/15`;
+            document.getElementById('areaStatusText').textContent = currentAreaData.status ? 'Active' : 'Inactive';
+            document.title = currentAreaData.areaName + ' - Area Detail';
+        }
+
+        function renderMap() {
+            const position = { 
+                lat: parseFloat(currentAreaData.centerLat), 
+                lng: parseFloat(currentAreaData.centerLng) 
+            };
+
+            map = new google.maps.Map(document.getElementById('areaMap'), {
+                zoom: 10,
+                center: position,
+                mapTypeControl: true,
+                streetViewControl: false
+            });
+
+            marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: currentAreaData.areaName,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 10,
+                    fillColor: '#4285F4',
+                    fillOpacity: 1,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 2
+                }
+            });
+
+            circle = new google.maps.Circle({
+                map: map,
+                radius: 50000, // 50km
+                fillColor: '#4285F4',
+                fillOpacity: 0.15,
+                strokeColor: '#4285F4',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                center: position
+            });
+
+            // Add info window
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div style="padding:10px;">
+                        <h3 style="margin:0 0 8px 0;">${currentAreaData.areaName}</h3>
+                        <p style="margin:0; font-size:13px;">
+                            <b>Code:</b> ${currentAreaData.areaCode}<br>
+                            <b>City:</b> ${currentAreaData.city}, ${currentAreaData.state}<br>
+                            <b>Radius:</b> 50 km<br>
+                            <b>Managers:</b> ${allManagers.length}/15
+                        </p>
+                    </div>
+                `
+            });
+
+            marker.addListener('click', () => {
+                infoWindow.open(map, marker);
+            });
+        }
+
+        function renderBuckets() {
+            const grid = document.getElementById('bucketGrid');
+            const managerMap = {};
+            allManagers.forEach(m => {
+                managerMap[m.bucket] = m;
+            });
+
+            grid.innerHTML = BUCKET_LIST.map(bucket => {
+                const manager = managerMap[bucket.id];
+                const isFilled = !!manager;
+                
+                return `
+                    <div class="bucket-card ${isFilled ? 'filled' : 'vacant'}">
+                        <div class="bucket-header">
+                            <div class="bucket-name">${bucket.icon} ${bucket.name}</div>
+                            <span class="bucket-status ${isFilled ? 'status-filled' : 'status-vacant'}">
+                                ${isFilled ? '✓ Filled' : '○ Vacant'}
+                            </span>
+                        </div>
+                        <div style="font-size:12px; color:#888; margin-bottom:10px;">${bucket.desc}</div>
+                        
+                        ${isFilled ? `
+                            <div class="manager-info">
+                                <strong>Name:</strong> ${escapeHtml(manager.name)}<br>
+                                <strong>Phone:</strong> ${escapeHtml(manager.phone)}<br>
+                                <strong>Email:</strong> ${escapeHtml(manager.email)}<br>
+                                <strong>Code:</strong> ${escapeHtml(manager.managerCode || currentAreaCode + '-' + bucket.id)}
+                            </div>
+                            <div class="bucket-actions">
+                                <button class="btn btn-primary btn-sm" onclick="editManager('${manager._id}')">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteManager('${manager._id}')">Remove</button>
+                            </div>
+                        ` : `
+                            <div class="manager-info" style="color:#ff9800;">
+                                No manager assigned yet
+                            </div>
+                            <div class="bucket-actions">
+                                <button class="btn btn-success btn-sm" onclick="addManagerForBucket('${bucket.id}')" style="width:100%;">+ Add Manager</button>
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.addManagerQuick = () => {
+            window.location.href = `managers.html?area=${currentAreaCode}`;
+        };
+
+        window.addManagerForBucket = (bucket) => {
+            window.location.href = `managers.html?area=${currentAreaCode}&bucket=${bucket}`;
+        };
+
+        window.editManager = (id) => {
+            window.location.href = `managers.html?area=${currentAreaCode}&edit=${id}`;
+        };
+
+        window.deleteManager = async (id) => {
+            if (!confirm('Remove this manager from area?')) return;
+            try {
+                await apiCall('/managers/' + id, 'DELETE');
+                showToast('Manager removed');
+                await loadAreaDetail();
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        };
+
+        // Initialize
+        loadAreaDetail();
+    </script>
+</body>
+</html>

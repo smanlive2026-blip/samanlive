@@ -4,6 +4,7 @@ let allCategories = [];
 let allShops = [];
 let allManagers = [];
 let allContent = [];
+let allAreas = []; // Added for Areas
 
 // ========== UTILITY FUNCTIONS ==========
 async function apiCall(endpoint, method = 'GET', data = null) {
@@ -70,31 +71,131 @@ function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 
+// ========== URL PARAM HELPER ==========
+function getUrlParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
+
 // ========== PAGE LOADER ==========
-async function loadPage(pageName) {
+async function loadPage(pageName, btnElement) {
+    // Active class update
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    if (btnElement) {
+        btnElement.classList.add('active');
+    } else if (event && event.target) {
+        event.target.classList.add('active');
+    }
 
     try {
+        // Cleanup previous maps
+        if (window.moduleMap) { window.moduleMap.remove(); window.moduleMap = null; }
+        if (window.shopMap) { window.shopMap.remove(); window.shopMap = null; }
+        if (window.areaMap) { window.areaMap.remove(); window.areaMap = null; }
+
         const res = await fetch(pageName + '.html');
+        if (!res.ok) throw new Error('Page not found');
         const html = await res.text();
         document.getElementById('mainContainer').innerHTML = html;
 
         // Page ke scripts execute karo
-        const scripts = document.getElementById('mainContainer').querySelectorAll('script');
+        const container = document.getElementById('mainContainer');
+        const scripts = container.querySelectorAll('script');
         scripts.forEach(oldScript => {
             const newScript = document.createElement('script');
-            if (oldScript.src) newScript.src = oldScript.src;
-            else newScript.textContent = oldScript.textContent;
+            if (oldScript.src) {
+                newScript.src = oldScript.src;
+            } else {
+                newScript.textContent = oldScript.textContent;
+            }
+            // Remove old script to prevent duplicate
+            oldScript.remove();
             document.body.appendChild(newScript);
         });
+
+        // Update URL without reload
+        if (history.pushState) {
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?page=' + pageName;
+            window.history.pushState({path: newUrl}, '', newUrl);
+        }
     } catch (err) {
-        document.getElementById('mainContainer').innerHTML = `<div class="card"><h2>Error loading ${pageName}</h2></div>`;
+        document.getElementById('mainContainer').innerHTML = `
+            <div class="card" style="text-align:center;padding:60px;">
+                <h2 style="color:#ef4444;">⚠️ Error loading ${pageName}</h2>
+                <p style="color:#64748b;margin-top:10px;">${err.message}</p>
+                <button class="btn btn-primary" onclick="location.reload()" style="margin-top:20px;">Reload Page</button>
+            </div>`;
     }
 }
 
-// Global maps cleanup
+// ========== AREA HELPER FUNCTIONS ==========
+async function loadAllAreas() {
+    try {
+        const data = await apiCall('/areas');
+        allAreas = data || [];
+        return allAreas;
+    } catch (err) {
+        allAreas = [];
+        return [];
+    }
+}
+
+async function loadAreaByCode(areaCode) {
+    try {
+        return await apiCall('/area/' + areaCode);
+    } catch (err) {
+        return null;
+    }
+}
+
+// 15 Bucket List - Global constant
+const BUCKET_LIST = [
+    { id: 'Grocery', name: 'Grocery Manager', icon: '🛒', desc: 'Ration, FMCG, Oil, Masala' },
+    { id: 'Fresh', name: 'Fresh Manager', icon: '🥬', desc: 'Sabzi, Fruit, Dairy, Bakery' },
+    { id: 'Food', name: 'Food Manager', icon: '🍕', desc: 'Restaurant, Tiffin, Cloud Kitchen' },
+    { id: 'Medicine', name: 'Medicine Manager', icon: '💊', desc: 'Dawai, Medical, Surgical' },
+    { id: 'Electronics', name: 'Electronics Manager', icon: '📱', desc: 'Mobile, TV, Fridge, Appliances' },
+    { id: 'Fashion', name: 'Fashion Manager', icon: '👗', desc: 'Kapde, Footwear, Accessories' },
+    { id: 'Home', name: 'Home Manager', icon: '🏠', desc: 'Furniture, Decor, Kitchenware' },
+    { id: 'Hardware', name: 'Hardware Manager', icon: '🔧', desc: 'Cement, Paint, Tools, Electric' },
+    { id: 'Beauty', name: 'Beauty Manager', icon: '💄', desc: 'Cosmetics, Salon, Parlour' },
+    { id: 'Auto', name: 'Auto Manager', icon: '🚗', desc: 'Bike/Car, Parts, Garage, Petrol' },
+    { id: 'Stationery', name: 'Stationery Manager', icon: '📚', desc: 'Books, School, Office Supply' },
+    { id: 'Service', name: 'Service Manager', icon: '⚙️', desc: 'Plumber, Electrician, Carpenter' },
+    { id: 'Meat', name: 'Meat Manager', icon: '🍖', desc: 'Chicken, Mutton, Fish, Eggs' },
+    { id: 'Puja', name: 'Puja Manager', icon: '🪔', desc: 'Agarbatti, Murti, Religious Items' },
+    { id: 'Others', name: 'Others Manager', icon: '🎁', desc: 'Pet, Toy, Gift, Sports' }
+];
+
+function generateManagerCode(areaCode, bucket) {
+    return `${areaCode}-${bucket}`.toUpperCase();
+}
+
+// ========== GLOBAL MAPS CLEANUP ==========
 window.addEventListener('beforeunload', () => {
     if (window.moduleMap) window.moduleMap.remove();
     if (window.shopMap) window.shopMap.remove();
+    if (window.areaMap) window.areaMap.remove();
 });
+
+// ========== INITIALIZE ON LOAD ==========
+document.addEventListener('DOMContentLoaded', () => {
+    // URL se page param pakdo
+    const pageParam = getUrlParam('page') || 'dashboard';
+    const navBtn = document.querySelector(`.nav-btn[onclick*="'${pageParam}'"]`);
+    loadPage(pageParam, navBtn);
+});
+
+// Make functions globally available
+window.loadPage = loadPage;
+window.apiCall = apiCall;
+window.showToast = showToast;
+window.escapeHtml = escapeHtml;
+window.showLoading = showLoading;
+window.filterTable = filterTable;
+window.formatDate = formatDate;
+window.getUrlParam = getUrlParam;
+window.loadAllAreas = loadAllAreas;
+window.loadAreaByCode = loadAreaByCode;
+window.BUCKET_LIST = BUCKET_LIST;
+window.generateManagerCode = generateManagerCode;

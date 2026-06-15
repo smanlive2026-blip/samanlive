@@ -107,6 +107,21 @@ app.get('/area-manager/:page', (req, res) => {
     });
 });
 
+// ==================== AREA SYSTEM ROUTES - NEW ====================
+// Area management pages
+app.get('/areas.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/areas.html'));
+});
+
+app.get('/area-detail.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/area-detail.html'));
+});
+
+app.get('/managers.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/managers.html'));
+});
+// ==================== AREA SYSTEM ROUTES END ====================
+
 // ==================== USER APP ROUTES ====================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
@@ -345,7 +360,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 

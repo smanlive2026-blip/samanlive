@@ -3,17 +3,18 @@
         <div class="stat-card"><h3>TOTAL MANAGERS</h3><div class="stat-value" id="totalManagers">0</div></div>
         <div class="stat-card"><h3>ACTIVE</h3><div class="stat-value" id="activeManagers">0</div></div>
         <div class="stat-card"><h3>PENDING BANNERS</h3><div class="stat-value orange" id="pendingBanners">0</div></div>
+        <div class="stat-card"><h3>CURRENT AREA</h3><div class="stat-value" id="currentAreaName" style="font-size:18px;">All Areas</div></div>
     </div>
 
     <div class="card">
         <div class="card-header">
-            <h2>All Area Managers</h2>
+            <h2 id="managerListTitle">All Area Managers</h2>
             <button class="btn btn-success" onclick="openAddManager()">+ Add New Manager</button>
         </div>
         <div style="overflow-x:auto;">
             <table>
-                <thead><tr><th>Photo</th><th>Name</th><th>Area</th><th>Modules</th><th>Email</th><th>Phone</th><th>Service %</th><th>Status</th><th>Login Link</th><th>Actions</th></tr></thead>
-                <tbody id="managersTable"><tr><td colspan="10" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
+                <thead><tr><th>Photo</th><th>Name</th><th>Area</th><th>Bucket</th><th>Modules</th><th>Email</th><th>Phone</th><th>Service %</th><th>Status</th><th>Login Link</th><th>Actions</th></tr></thead>
+                <tbody id="managersTable"><tr><td colspan="11" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -38,9 +39,11 @@
         <div class="modal-header"><h2 id="managerModalTitle">Add New Manager</h2><button class="close-btn" onclick="closeManagerModal()">×</button></div>
         <form id="managerForm">
             <input type="hidden" id="managerId">
+            <input type="hidden" id="areaCodeHidden">
             <div class="form-grid">
                 <div class="form-group"><label>Full Name *</label><input type="text" id="managerName" required></div>
                 <div class="form-group"><label>Area/City *</label><input type="text" id="managerArea" required></div>
+                <div class="form-group"><label>Bucket *</label><select id="managerBucket" required><option value="">Select Bucket</option></select></div>
                 <div class="form-group"><label>Email *</label><input type="email" id="managerEmail" required></div>
                 <div class="form-group"><label>Phone *</label><input type="text" id="managerPhone" required pattern="[0-9]{10}"></div>
                 <div class="form-group"><label>Service Charge %</label><input type="number" id="managerServiceCharge" value="5" min="0" max="50"></div>
@@ -65,28 +68,75 @@
 <script>
 let selectedModuleIds = [];
 let pendingShops = [];
+let allManagers = [];
+let allModules = [];
+let currentAreaCode = null;
+let currentAreaData = null;
+
+// 15 Bucket List - Fixed
+const BUCKET_LIST = [
+    'Grocery', 'Fresh', 'Food', 'Medicine', 'Electronics', 
+    'Fashion', 'Home', 'Hardware', 'Beauty', 'Auto', 
+    'Stationery', 'Service', 'Meat', 'Puja', 'Others'
+];
+
+// URL se area code pakdo
+function getUrlParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
 
 async function loadManagers() {
     try {
+        currentAreaCode = getUrlParam('area');
+        
         const [managersData, modulesData] = await Promise.all([apiCall('/managers'), apiCall('/modules')]);
         allManagers = managersData || [];
         allModules = modulesData || [];
+        
+        // Agar area filter hai to sirf us area ke manager dikhao
+        if (currentAreaCode) {
+            currentAreaData = await apiCall('/area/' + currentAreaCode);
+            allManagers = allManagers.filter(m => m.areaCode === currentAreaCode);
+            document.getElementById('currentAreaName').textContent = currentAreaData.areaName || currentAreaCode;
+            document.getElementById('managerListTitle').textContent = `Managers - ${currentAreaData.areaName}`;
+        }
+        
         try {
             const bannerData = await apiCall('/admin/pending-banners');
             pendingShops = bannerData.shops || [];
         } catch(e) { pendingShops = []; }
+        
         renderManagers();
         renderBanners();
         renderModuleCheckboxes();
+        loadBucketDropdown();
+        
         document.getElementById('totalManagers').textContent = allManagers.length;
         document.getElementById('activeManagers').textContent = allManagers.filter(m=>m.status).length;
         document.getElementById('pendingBanners').textContent = pendingShops.length;
-    } catch (err) {}
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function loadBucketDropdown() {
+    const bucketSelect = document.getElementById('managerBucket');
+    let availableBuckets = [...BUCKET_LIST];
+    
+    // Agar area selected hai to jo bucket already bani hai use hatao
+    if (currentAreaCode) {
+        const usedBuckets = allManagers.map(m => m.bucket);
+        availableBuckets = BUCKET_LIST.filter(b => !usedBuckets.includes(b));
+    }
+    
+    bucketSelect.innerHTML = '<option value="">Select Bucket</option>' + 
+        availableBuckets.map(b => `<option value="${b}">${b} Manager</option>`).join('');
 }
 
 function renderManagers() {
     const tbody = document.getElementById('managersTable');
-    tbody.innerHTML = allManagers.length === 0 ? '<tr><td colspan="10" style="text-align:center;padding:40px;">No managers</td></tr>' :
+    tbody.innerHTML = allManagers.length === 0 ? '<tr><td colspan="11" style="text-align:center;padding:40px;">No managers</td></tr>' :
         allManagers.map(m => {
             const moduleNames = (m.moduleAccess||[]).map(id => {
                 const mod = allModules.find(x => x._id === id);
@@ -95,7 +145,8 @@ function renderManagers() {
             return `<tr>
                 <td><img src="${m.documents?.photo||'/assets/default-avatar.png'}" class="manager-photo" onerror="this.src='/assets/default-avatar.png'"></td>
                 <td><strong>${escapeHtml(m.name)}</strong></td>
-                <td>${escapeHtml(m.area)}</td>
+                <td>${escapeHtml(m.areaName || m.area)}</td>
+                <td><span class="badge">${escapeHtml(m.bucket || '-')}</span></td>
                 <td style="font-size:12px;">${moduleNames||'-'}</td>
                 <td>${escapeHtml(m.email)}</td>
                 <td>${escapeHtml(m.phone)}</td>
@@ -161,6 +212,18 @@ window.openAddManager = () => {
     document.getElementById('managerForm').reset();
     selectedModuleIds = [];
     renderSelectedModules();
+    
+    // Agar area URL me hai to lock kar do
+    if (currentAreaCode && currentAreaData) {
+        document.getElementById('managerArea').value = currentAreaData.areaName;
+        document.getElementById('managerArea').disabled = true;
+        document.getElementById('areaCodeHidden').value = currentAreaCode;
+        loadBucketDropdown();
+    } else {
+        document.getElementById('managerArea').disabled = false;
+        document.getElementById('areaCodeHidden').value = '';
+    }
+    
     document.getElementById('loginLinkBox').style.display = 'none';
     document.getElementById('managerModal').style.display = 'block';
 };
@@ -170,7 +233,12 @@ window.editManager = (id) => {
     document.getElementById('managerId').value = id;
     document.getElementById('managerModalTitle').textContent = 'Edit Manager';
     document.getElementById('managerName').value = m.name;
-    document.getElementById('managerArea').value = m.area;
+    document.getElementById('managerArea').value = m.areaName || m.area;
+    document.getElementById('managerArea').disabled = true;
+    document.getElementById('areaCodeHidden').value = m.areaCode;
+    document.getElementById('managerBucket').innerHTML = `<option value="${m.bucket}">${m.bucket} Manager</option>`;
+    document.getElementById('managerBucket').value = m.bucket;
+    document.getElementById('managerBucket').disabled = true;
     document.getElementById('managerEmail').value = m.email;
     document.getElementById('managerPhone').value = m.phone;
     document.getElementById('managerServiceCharge').value = m.serviceCharge;
@@ -187,16 +255,26 @@ window.editManager = (id) => {
 document.getElementById('managerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (selectedModuleIds.length === 0) return showToast('Select at least 1 Module!', 'error');
+    
     const id = document.getElementById('managerId').value;
+    const areaCode = document.getElementById('areaCodeHidden').value || currentAreaCode;
+    const bucket = document.getElementById('managerBucket').value;
+    
+    if (!bucket) return showToast('Select Bucket!', 'error');
+    
     const formData = {
         name: document.getElementById('managerName').value,
         area: document.getElementById('managerArea').value,
+        areaCode: areaCode,
+        bucket: bucket,
+        managerCode: areaCode ? `${areaCode}-${bucket}`.toUpperCase() : '',
         email: document.getElementById('managerEmail').value,
         phone: document.getElementById('managerPhone').value,
         serviceCharge: document.getElementById('managerServiceCharge').value,
         status: document.getElementById('managerStatus').value,
         moduleAccess: selectedModuleIds
     };
+    
     try {
         if (id) {
             await apiCall('/managers/' + id, 'PUT', formData);
@@ -210,7 +288,9 @@ document.getElementById('managerForm').addEventListener('submit', async (e) => {
             showToast('Manager created!');
         }
         await loadManagers();
-    } catch (err) {}
+    } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+    }
 });
 
 window.deleteManager = async (id) => {
@@ -244,7 +324,11 @@ window.copyLink = (link) => {
     showToast('Link copied!');
 };
 
-window.closeManagerModal = () => document.getElementById('managerModal').style.display = 'none';
+window.closeManagerModal = () => {
+    document.getElementById('managerModal').style.display = 'none';
+    document.getElementById('managerArea').disabled = false;
+    document.getElementById('managerBucket').disabled = false;
+};
 
 loadManagers();
 </script>
