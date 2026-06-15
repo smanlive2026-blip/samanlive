@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
 
-const Module = require('../models/module');
+const Module = require('../models/Module');
 const Shop = require('../models/Shop');
 const Manager = require('../models/Manager');
 const Content = require('../models/Content');
