@@ -5,8 +5,7 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 const fs = require('fs');
 require('dotenv').config();
-const seedModules = require('../public/seed/module'); // ← FIXED
-
+const seedModules = require('./seed/modules');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
