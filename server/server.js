@@ -77,7 +77,7 @@ app.use('/api', require('./routes/market'));
 
 // ==================== ADMIN PANEL ROUTES ====================
 app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin/admin-panel/index.html'));
+    res.sendFile(path.join(__dirname, '../public/admin-panel/modules.html'));
 });
 
 app.get('/admin-panel', (req, res) => {
@@ -85,7 +85,7 @@ app.get('/admin-panel', (req, res) => {
 });
 
 app.get('/admin/:page', (req, res) => {
-    const filePath = path.join(__dirname, `../public/admin/admin-panel/${req.params.page}.html`);
+    const filePath = path.join(__dirname, `../public/admin-panel/${req.params.page}.html`);
     res.sendFile(filePath, (err) => {
         if (err) res.sendFile(path.join(__dirname, '../public/404.html'));
     });
@@ -93,7 +93,7 @@ app.get('/admin/:page', (req, res) => {
 
 // Module detail page route
 app.get('/module-detail.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin/module-detail.html'));
+    res.sendFile(path.join(__dirname, '../public/admin-panel/module-detail.html'));
 });
 
 // ==================== AREA MANAGER ROUTE ====================
@@ -361,7 +361,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
