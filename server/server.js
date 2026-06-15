@@ -5,7 +5,8 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 const fs = require('fs');
 require('dotenv').config();
-const seedModules = require('./routes/seed/modules'); // ← Ye sahi hogaconst app = express();
+const seedModules = require('./routes/seed/modules'); // ← FIX: yaha enter maar
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ==================== MIDDLEWARE ====================
@@ -360,7 +361,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
