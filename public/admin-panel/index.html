@@ -16,14 +16,20 @@
         </div>
 
         <div class="admin-navbar">
-            <button class="nav-btn active" onclick="loadPage('dashboard')">📊 Dashboard</button>
-            <button class="nav-btn" onclick="loadPage('modules')">📦 Modules</button>
-            <button class="nav-btn" onclick="loadPage('categories')">📂 Categories</button>
-            <button class="nav-btn" onclick="loadPage('shops')">🏪 Shops</button>
-            <button class="nav-btn" onclick="loadPage('managers')">👨‍💼 Managers</button>
-            <button class="nav-btn" onclick="loadPage('content')">📢 Content</button>
-            <button class="nav-btn" onclick="loadPage('api-routes')">🔍 API Routes</button>
-            <button class="nav-btn" onclick="loadPage('settings')">⚙️ Settings</button>
+            <button class="nav-btn active" onclick="loadPage('dashboard', this)">📊 Dashboard</button>
+            <button class="nav-btn" onclick="loadPage('orders', this)">📋 Orders</button>
+            <button class="nav-btn" onclick="loadPage('products', this)">📦 Products</button>
+            <button class="nav-btn" onclick="loadPage('users', this)">👥 Users</button>
+            <button class="nav-btn" onclick="loadPage('shops', this)">🏪 Shops</button>
+            <button class="nav-btn" onclick="loadPage('categories', this)">📂 Categories</button>
+            <button class="nav-btn" onclick="loadPage('modules', this)">🧩 Modules</button>
+            <button class="nav-btn" onclick="loadPage('coupons', this)">🎟️ Coupons</button>
+            <button class="nav-btn" onclick="loadPage('delivery', this)">🚚 Delivery</button>
+            <button class="nav-btn" onclick="loadPage('reports', this)">📈 Reports</button>
+            <button class="nav-btn" onclick="loadPage('managers', this)">👔 Managers</button>
+            <button class="nav-btn" onclick="loadPage('content', this)">📝 Content</button>
+            <button class="nav-btn" onclick="loadPage('api-routes', this)">🔍 API Routes</button>
+            <button class="nav-btn" onclick="loadPage('settings', this)">⚙️ Settings</button>
         </div>
 
         <div id="mainContainer">
@@ -36,7 +42,9 @@
     <script src="assets/admin.js"></script>
     <script>
         // Pehli baar dashboard load karo
-        document.addEventListener('DOMContentLoaded', () => loadPage('dashboard'));
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPage('dashboard', document.querySelector('.nav-btn.active'));
+        });
     </script>
 </body>
 </html>
