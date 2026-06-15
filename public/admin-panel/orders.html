@@ -1,0 +1,127 @@
+<div class="page-header">
+    <h2>📋 Orders Management</h2>
+    <button class="btn btn-primary" onclick="loadOrders()">🔄 Refresh</button>
+</div>
+
+<div class="card">
+    <div style="display:flex;gap:10px;margin-bottom:15px;">
+        <input type="text" id="orderSearch" placeholder="Search..." oninput="searchOrders()" style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+        <select id="statusFilter" onchange="filterByStatus()" style="padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="accepted">Accepted</option>
+            <option value="preparing">Preparing</option>
+            <option value="out_for_delivery">Out for Delivery</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+    </div>
+
+    <table id="ordersTable" style="width:100%;border-collapse:collapse;">
+        <thead>
+            <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">
+                <th style="padding:12px;text-align:left;">Order ID</th>
+                <th style="padding:12px;text-align:left;">User</th>
+                <th style="padding:12px;text-align:left;">Shop</th>
+                <th style="padding:12px;text-align:left;">Items</th>
+                <th style="padding:12px;text-align:left;">Amount</th>
+                <th style="padding:12px;text-align:left;">Status</th>
+                <th style="padding:12px;text-align:left;">Date</th>
+                <th style="padding:12px;text-align:left;">Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<style>
+.status-select { padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; cursor: pointer; }
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-accepted { background: #dbeafe; color: #1e40af; }
+.status-preparing { background: #fce7f3; color: #9f1239; }
+.status-out_for_delivery { background: #e0e7ff; color: #3730a3; }
+.status-delivered { background: #d1fae5; color: #065f46; }
+.status-cancelled { background: #fee2e2; color: #991b1b; }
+</style>
+
+<script>
+let allOrders = [];
+
+async function loadOrders() {
+    const tbody = document.querySelector('#ordersTable tbody');
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;">Loading...</td></tr>`;
+    try {
+        allOrders = await apiCall('/orders') || [];
+        renderOrders(allOrders);
+        showToast(`${allOrders.length} orders loaded`, 'success');
+    } catch(err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#ef4444;">Failed to load</td></tr>`;
+    }
+}
+
+function renderOrders(orders) {
+    const tbody = document.querySelector('#ordersTable tbody');
+    if(orders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;">Koi order nahi mila 😔</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = orders.map(order => `
+        <tr>
+            <td><strong>#${order._id.slice(-6)}</strong></td>
+            <td>${escapeHtml(order.userId?.name || order.userId?.phone || 'Guest')}</td>
+            <td>${escapeHtml(order.shopId?.name || '-')}</td>
+            <td>${order.items?.length || 0} items</td>
+            <td>₹${order.totalAmount || 0}</td>
+            <td>
+                <select onchange="updateStatus('${order._id}', this.value)" class="status-select status-${order.status}">
+                    <option value="pending" ${order.status==='pending'?'selected':''}>Pending</option>
+                    <option value="accepted" ${order.status==='accepted'?'selected':''}>Accepted</option>
+                    <option value="preparing" ${order.status==='preparing'?'selected':''}>Preparing</option>
+                    <option value="out_for_delivery" ${order.status==='out_for_delivery'?'selected':''}>Out for Delivery</option>
+                    <option value="delivered" ${order.status==='delivered'?'selected':''}>Delivered</option>
+                    <option value="cancelled" ${order.status==='cancelled'?'selected':''}>Cancelled</option>
+                </select>
+            </td>
+            <td>${formatDate(order.createdAt)}</td>
+            <td><button onclick="viewOrder('${order._id}')" style="padding:6px 10px;border:none;background:#f1f5f9;border-radius:6px;cursor:pointer;">👁️</button></td>
+        </tr>
+    `).join('');
+}
+
+async function updateStatus(orderId, newStatus) {
+    try {
+        await apiCall(`/orders/${orderId}/status`, 'PUT', { status: newStatus });
+        showToast('Status updated!', 'success');
+        const order = allOrders.find(o => o._id === orderId);
+        if(order) order.status = newStatus;
+    } catch(err) {
+        showToast('Failed to update', 'error');
+    }
+}
+
+function viewOrder(orderId) {
+    const order = allOrders.find(o => o._id === orderId);
+    if(!order) return;
+    const items = order.items?.map(i => `${i.name} x${i.quantity}`).join('\n') || 'No items';
+    alert(`Order #${orderId.slice(-6)}\n\nUser: ${order.userId?.name || 'Guest'}\nShop: ${order.shopId?.name}\nAmount: ₹${order.totalAmount}\n\nItems:\n${items}`);
+}
+
+function searchOrders() {
+    const query = document.getElementById('orderSearch').value.toLowerCase();
+    const filtered = allOrders.filter(o => 
+        o._id.toLowerCase().includes(query) || 
+        o.userId?.name?.toLowerCase().includes(query) ||
+        o.shopId?.name?.toLowerCase().includes(query)
+    );
+    renderOrders(filtered);
+}
+
+function filterByStatus() {
+    const status = document.getElementById('statusFilter').value;
+    if(status === 'all') renderOrders(allOrders);
+    else renderOrders(allOrders.filter(o => o.status === status));
+}
+
+// Auto load on page open
+loadOrders();
+</script>

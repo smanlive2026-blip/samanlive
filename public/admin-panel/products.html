@@ -1,0 +1,244 @@
+<div class="page-header">
+    <h2>🛍️ Products Management</h2>
+    <button class="btn btn-primary" onclick="showAddProductModal()">➕ Add Product</button>
+</div>
+
+<div class="card">
+    <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;">
+        <input type="text" id="productSearch" placeholder="Search Product..." oninput="searchProducts()" style="flex:1;min-width:200px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+        <select id="shopFilter" onchange="filterByShop()" style="padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+            <option value="all">All Shops</option>
+        </select>
+        <select id="stockFilter" onchange="filterByStock()" style="padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+            <option value="all">All Stock</option>
+            <option value="in">In Stock</option>
+            <option value="out">Out of Stock</option>
+        </select>
+    </div>
+
+    <table id="productsTable" style="width:100%;border-collapse:collapse;">
+        <thead>
+            <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">
+                <th style="padding:12px;text-align:left;">Image</th>
+                <th style="padding:12px;text-align:left;">Name</th>
+                <th style="padding:12px;text-align:left;">Shop</th>
+                <th style="padding:12px;text-align:left;">Category</th>
+                <th style="padding:12px;text-align:left;">Price</th>
+                <th style="padding:12px;text-align:left;">Stock</th>
+                <th style="padding:12px;text-align:left;">Status</th>
+                <th style="padding:12px;text-align:left;">Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- Add/Edit Product Modal -->
+<div id="productModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:white;padding:24px;border-radius:12px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;">
+        <h3 id="modalTitle">Add Product</h3>
+        <form id="productForm" onsubmit="saveProduct(event)">
+            <input type="hidden" id="productId">
+            <div style="margin-bottom:12px;">
+                <label style="display:block;margin-bottom:4px;font-weight:500;">Product Name *</label>
+                <input type="text" id="productName" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;margin-bottom:4px;font-weight:500;">Shop *</label>
+                <select id="productShop" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;"></select>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;margin-bottom:4px;font-weight:500;">Category *</label>
+                <select id="productCategory" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;"></select>
+            </div>
+            <div style="display:flex;gap:10px;margin-bottom:12px;">
+                <div style="flex:1;">
+                    <label style="display:block;margin-bottom:4px;font-weight:500;">Price ₹ *</label>
+                    <input type="number" id="productPrice" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+                </div>
+                <div style="flex:1;">
+                    <label style="display:block;margin-bottom:4px;font-weight:500;">MRP ₹</label>
+                    <input type="number" id="productMrp" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+                </div>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;margin-bottom:4px;font-weight:500;">Stock Quantity *</label>
+                <input type="number" id="productStock" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;margin-bottom:4px;font-weight:500;">Description</label>
+                <textarea id="productDesc" rows="3" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;"></textarea>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;margin-bottom:4px;font-weight:500;">Image URL</label>
+                <input type="text" id="productImage" placeholder="https://..." style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button type="submit" style="flex:1;padding:10px;background:#3b82f6;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Save Product</button>
+                <button type="button" onclick="closeProductModal()" style="flex:1;padding:10px;background:#e2e8f0;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.btn-icon { padding: 6px 10px; border: none; background: #f1f5f9; border-radius: 6px; cursor: pointer; margin: 0 2px; }
+.btn-icon:hover { background: #e2e8f0; }
+.badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+</style>
+
+<script>
+let allProducts = [];
+let allShops = [];
+let allCategories = [];
+
+async function loadProducts() {
+    const tbody = document.querySelector('#productsTable tbody');
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;">Loading...</td></tr>`;
+    try {
+        const [products, shops, categories] = await Promise.all([
+            apiCall('/products'),
+            apiCall('/shops'),
+            apiCall('/categories')
+        ]);
+        allProducts = products || [];
+        allShops = shops || [];
+        allCategories = categories || [];
+        populateFilters();
+        renderProducts(allProducts);
+        showToast(`${allProducts.length} products loaded`, 'success');
+    } catch(err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#ef4444;">Failed to load products</td></tr>`;
+    }
+}
+
+function populateFilters() {
+    const shopFilter = document.getElementById('shopFilter');
+    const shopSelect = document.getElementById('productShop');
+    const catSelect = document.getElementById('productCategory');
+    
+    shopFilter.innerHTML = '<option value="all">All Shops</option>' + 
+        allShops.map(s => `<option value="${s._id}">${escapeHtml(s.name)}</option>`).join('');
+    
+    shopSelect.innerHTML = '<option value="">Select Shop</option>' + 
+        allShops.map(s => `<option value="${s._id}">${escapeHtml(s.name)}</option>`).join('');
+    
+    catSelect.innerHTML = '<option value="">Select Category</option>' + 
+        allCategories.map(c => `<option value="${c._id}">${escapeHtml(c.name)}</option>`).join('');
+}
+
+function renderProducts(products) {
+    const tbody = document.querySelector('#productsTable tbody');
+    if(products.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;">Koi product nahi mila 😔</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = products.map(p => `
+        <tr>
+            <td><img src="${p.image || 'https://via.placeholder.com/50'}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;"></td>
+            <td><strong>${escapeHtml(p.name)}</strong></td>
+            <td>${escapeHtml(p.shopId?.name || '-')}</td>
+            <td>${escapeHtml(p.categoryId?.name || '-')}</td>
+            <td>₹${p.price} ${p.mrp ? `<small style="text-decoration:line-through;color:#94a3b8;">₹${p.mrp}</small>` : ''}</td>
+            <td>${p.stock || 0}</td>
+            <td><span class="badge" style="background:${p.stock > 0 ? '#d1fae5' : '#fee2e2'};color:${p.stock > 0 ? '#065f46' : '#991b1b'};">${p.stock > 0 ? 'In Stock' : 'Out of Stock'}</span></td>
+            <td>
+                <button class="btn-icon" onclick="editProduct('${p._id}')" title="Edit">✏️</button>
+                <button class="btn-icon" onclick="deleteProduct('${p._id}')" title="Delete" style="background:#fee2e2;">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function showAddProductModal() {
+    document.getElementById('modalTitle').textContent = 'Add Product';
+    document.getElementById('productForm').reset();
+    document.getElementById('productId').value = '';
+    document.getElementById('productModal').style.display = 'flex';
+}
+
+function closeProductModal() {
+    document.getElementById('productModal').style.display = 'none';
+}
+
+function editProduct(id) {
+    const product = allProducts.find(p => p._id === id);
+    if(!product) return;
+    document.getElementById('modalTitle').textContent = 'Edit Product';
+    document.getElementById('productId').value = product._id;
+    document.getElementById('productName').value = product.name;
+    document.getElementById('productShop').value = product.shopId?._id || product.shopId;
+    document.getElementById('productCategory').value = product.categoryId?._id || product.categoryId;
+    document.getElementById('productPrice').value = product.price;
+    document.getElementById('productMrp').value = product.mrp || '';
+    document.getElementById('productStock').value = product.stock;
+    document.getElementById('productDesc').value = product.description || '';
+    document.getElementById('productImage').value = product.image || '';
+    document.getElementById('productModal').style.display = 'flex';
+}
+
+async function saveProduct(e) {
+    e.preventDefault();
+    const id = document.getElementById('productId').value;
+    const data = {
+        name: document.getElementById('productName').value,
+        shopId: document.getElementById('productShop').value,
+        categoryId: document.getElementById('productCategory').value,
+        price: Number(document.getElementById('productPrice').value),
+        mrp: Number(document.getElementById('productMrp').value) || undefined,
+        stock: Number(document.getElementById('productStock').value),
+        description: document.getElementById('productDesc').value,
+        image: document.getElementById('productImage').value
+    };
+    try {
+        if(id) {
+            await apiCall(`/products/${id}`, 'PUT', data);
+            showToast('Product updated!', 'success');
+        } else {
+            await apiCall('/products', 'POST', data);
+            showToast('Product added!', 'success');
+        }
+        closeProductModal();
+        loadProducts();
+    } catch(err) {
+        showToast('Failed to save', 'error');
+    }
+}
+
+async function deleteProduct(id) {
+    if(!confirm('Delete this product?')) return;
+    try {
+        await apiCall(`/products/${id}`, 'DELETE');
+        showToast('Product deleted!', 'success');
+        loadProducts();
+    } catch(err) {
+        showToast('Failed to delete', 'error');
+    }
+}
+
+function searchProducts() {
+    const query = document.getElementById('productSearch').value.toLowerCase();
+    const filtered = allProducts.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        p.shopId?.name?.toLowerCase().includes(query) ||
+        p.categoryId?.name?.toLowerCase().includes(query)
+    );
+    renderProducts(filtered);
+}
+
+function filterByShop() {
+    const shopId = document.getElementById('shopFilter').value;
+    if(shopId === 'all') renderProducts(allProducts);
+    else renderProducts(allProducts.filter(p => (p.shopId?._id || p.shopId) === shopId));
+}
+
+function filterByStock() {
+    const stock = document.getElementById('stockFilter').value;
+    if(stock === 'all') renderProducts(allProducts);
+    else if(stock === 'in') renderProducts(allProducts.filter(p => p.stock > 0));
+    else renderProducts(allProducts.filter(p => p.stock <= 0));
+}
+
+// Auto load
+loadProducts();
+</script>

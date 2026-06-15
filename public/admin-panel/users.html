@@ -1,0 +1,157 @@
+<div class="page-header">
+    <h2>👥 Users Management</h2>
+    <button class="btn btn-primary" onclick="loadUsers()">🔄 Refresh</button>
+</div>
+
+<div class="card">
+    <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;">
+        <input type="text" id="userSearch" placeholder="Search Name, Phone, Email..." oninput="searchUsers()" style="flex:1;min-width:200px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+        <select id="statusFilter" onchange="filterByStatus()" style="padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+            <option value="all">All Users</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked</option>
+        </select>
+        <select id="roleFilter" onchange="filterByRole()" style="padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+            <option value="all">All Roles</option>
+            <option value="user">User</option>
+            <option value="delivery">Delivery Partner</option>
+            <option value="manager">Manager</option>
+        </select>
+    </div>
+
+    <table id="usersTable" style="width:100%;border-collapse:collapse;">
+        <thead>
+            <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">
+                <th style="padding:12px;text-align:left;">Name</th>
+                <th style="padding:12px;text-align:left;">Phone</th>
+                <th style="padding:12px;text-align:left;">Email</th>
+                <th style="padding:12px;text-align:left;">Role</th>
+                <th style="padding:12px;text-align:left;">Orders</th>
+                <th style="padding:12px;text-align:left;">Status</th>
+                <th style="padding:12px;text-align:left;">Joined</th>
+                <th style="padding:12px;text-align:left;">Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- User Details Modal -->
+<div id="userModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:white;padding:24px;border-radius:12px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;">
+        <h3>User Details</h3>
+        <div id="userDetailsContent"></div>
+        <button onclick="closeUserModal()" style="width:100%;padding:10px;background:#e2e8f0;border:none;border-radius:6px;cursor:pointer;font-weight:600;margin-top:15px;">Close</button>
+    </div>
+</div>
+
+<style>
+.btn-icon { padding: 6px 10px; border: none; background: #f1f5f9; border-radius: 6px; cursor: pointer; margin: 0 2px; }
+.btn-icon:hover { background: #e2e8f0; }
+.badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+.status-active { background: #d1fae5; color: #065f46; }
+.status-blocked { background: #fee2e2; color: #991b1b; }
+.role-user { background: #dbeafe; color: #1e40af; }
+.role-delivery { background: #fef3c7; color: #92400e; }
+.role-manager { background: #fce7f3; color: #9f1239; }
+</style>
+
+<script>
+let allUsers = [];
+
+async function loadUsers() {
+    const tbody = document.querySelector('#usersTable tbody');
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;">Loading...</td></tr>`;
+    try {
+        allUsers = await apiCall('/users') || [];
+        renderUsers(allUsers);
+        showToast(`${allUsers.length} users loaded`, 'success');
+    } catch(err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#ef4444;">Failed to load users</td></tr>`;
+    }
+}
+
+function renderUsers(users) {
+    const tbody = document.querySelector('#usersTable tbody');
+    if(users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;">Koi user nahi mila 😔</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td><strong>${escapeHtml(u.name || 'N/A')}</strong></td>
+            <td>${escapeHtml(u.phone || '-')}</td>
+            <td>${escapeHtml(u.email || '-')}</td>
+            <td><span class="badge role-${u.role || 'user'}">${u.role || 'user'}</span></td>
+            <td>${u.orderCount || 0}</td>
+            <td><span class="badge status-${u.isBlocked ? 'blocked' : 'active'}">${u.isBlocked ? 'Blocked' : 'Active'}</span></td>
+            <td>${formatDate(u.createdAt)}</td>
+            <td>
+                <button class="btn-icon" onclick="viewUser('${u._id}')" title="View">👁️</button>
+                <button class="btn-icon" onclick="toggleBlockUser('${u._id}', ${!u.isBlocked})" title="${u.isBlocked ? 'Unblock' : 'Block'}" style="background:${u.isBlocked ? '#d1fae5' : '#fee2e2'};">${u.isBlocked ? '✅' : '🚫'}</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function viewUser(id) {
+    const user = allUsers.find(u => u._id === id);
+    if(!user) return;
+    const content = `
+        <div style="line-height:1.8;">
+            <p><strong>Name:</strong> ${escapeHtml(user.name || 'N/A')}</p>
+            <p><strong>Phone:</strong> ${escapeHtml(user.phone || '-')}</p>
+            <p><strong>Email:</strong> ${escapeHtml(user.email || '-')}</p>
+            <p><strong>Role:</strong> ${escapeHtml(user.role || 'user')}</p>
+            <p><strong>Status:</strong> ${user.isBlocked ? 'Blocked' : 'Active'}</p>
+            <p><strong>Total Orders:</strong> ${user.orderCount || 0}</p>
+            <p><strong>Wallet Balance:</strong> ₹${user.walletBalance || 0}</p>
+            <p><strong>Joined:</strong> ${formatDate(user.createdAt)}</p>
+            ${user.addresses ? `<p><strong>Addresses:</strong><br>${user.addresses.map(a => `• ${escapeHtml(a.fullAddress)}`).join('<br>')}</p>` : ''}
+        </div>
+    `;
+    document.getElementById('userDetailsContent').innerHTML = content;
+    document.getElementById('userModal').style.display = 'flex';
+}
+
+function closeUserModal() {
+    document.getElementById('userModal').style.display = 'none';
+}
+
+async function toggleBlockUser(id, block) {
+    if(!confirm(block ? 'Block this user?' : 'Unblock this user?')) return;
+    try {
+        await apiCall(`/users/${id}/block`, 'PUT', { isBlocked: block });
+        showToast(block ? 'User blocked!' : 'User unblocked!', 'success');
+        loadUsers();
+    } catch(err) {
+        showToast('Failed to update', 'error');
+    }
+}
+
+function searchUsers() {
+    const query = document.getElementById('userSearch').value.toLowerCase();
+    const filtered = allUsers.filter(u => 
+        u.name?.toLowerCase().includes(query) || 
+        u.phone?.toLowerCase().includes(query) ||
+        u.email?.toLowerCase().includes(query)
+    );
+    renderUsers(filtered);
+}
+
+function filterByStatus() {
+    const status = document.getElementById('statusFilter').value;
+    if(status === 'all') renderUsers(allUsers);
+    else if(status === 'active') renderUsers(allUsers.filter(u => !u.isBlocked));
+    else renderUsers(allUsers.filter(u => u.isBlocked));
+}
+
+function filterByRole() {
+    const role = document.getElementById('roleFilter').value;
+    if(role === 'all') renderUsers(allUsers);
+    else renderUsers(allUsers.filter(u => (u.role || 'user') === role));
+}
+
+// Auto load
+loadUsers();
+</script>
