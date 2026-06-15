@@ -12,6 +12,19 @@ const Content = require('../models/Content');
 const Setting = require('../models/Setting');
 const User = require('../models/User');
 const ShopHistory = require('../models/ShopHistory');
+const Banner = require('../models/banner');
+
+// ==================== MANAGER AUTH MIDDLEWARE ====================
+async function authenticateManager(req, res, next) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'No token' });
+
+    const manager = await Manager.findOne({ loginToken: token });
+    if (!manager) return res.status(401).json({ error: 'Invalid token' });
+
+    req.manager = manager;
+    next();
+}
 
 // ==================== UPLOAD SETUP ====================
 const storage = multer.diskStorage({
@@ -29,7 +42,113 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 } // ← 50MB kiya, pehle 50KB tha
+  limits: { fileSize: 50 * 1024 } // ← 50MB kiya, pehle 50KB tha
+});
+
+// ==================== AREA MANAGER LOGIN ====================
+router.post('/area-manager/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const manager = await Manager.findOne({ email });
+        if (!manager) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        const isMatch = await manager.comparePassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        manager.lastLogin = new Date();
+        await manager.save();
+        res.json({
+            success: true,
+            token: manager.loginToken,
+            manager: manager
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ==================== MANAGER DASHBOARD ====================
+router.get('/manager/dashboard', authenticateManager, async (req, res) => {
+    try {
+        const manager = req.manager;
+        const shops = await Shop.find({
+            areaCode: manager.areaCode,
+            bucket: manager.bucket
+        });
+        const categories = await Module.find({ id: { $in: manager.moduleAccess } });
+
+        res.json({
+            success: true,
+            manager: {
+                name: manager.name,
+                email: manager.email,
+                area: manager.areaName || manager.area,
+                areaCode: manager.areaCode,
+                managerCode: manager.managerCode,
+                bucket: manager.bucket,
+                serviceCharge: manager.serviceCharge,
+                modules: manager.moduleAccess
+            },
+            shops,
+            categories
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ==================== MANAGER SHOP CRUD ====================
+router.post('/manager/shop', authenticateManager, async (req, res) => {
+    try {
+        const manager = req.manager;
+        const shopData = {
+          ...req.body,
+            areaCode: manager.areaCode,
+            areaName: manager.areaName,
+            managerId: manager._id,
+            bucket: manager.bucket,
+            status: 'pending'
+        };
+        const shop = await Shop.create(shopData);
+
+        // Update manager stats
+        manager.totalShopsCreated += 1;
+        await manager.save();
+
+        res.json({ success: true, shop });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.put('/manager/shop/:id', authenticateManager, async (req, res) => {
+    try {
+        const shop = await Shop.findOne({
+            _id: req.params.id,
+            areaCode: req.manager.areaCode
+        });
+        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+
+        Object.assign(shop, req.body);
+        await shop.save();
+        res.json({ success: true, shop });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.delete('/manager/shop/:id', authenticateManager, async (req, res) => {
+    try {
+        await Shop.deleteOne({
+            _id: req.params.id,
+            areaCode: req.manager.areaCode
+        });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ==================== DASHBOARD ====================
@@ -209,8 +328,8 @@ router.get('/shops', async (req, res) => {
     }
 
     const shops = await Shop.find(filter)
-     .populate('managerId', 'name')
-     .sort({ createdAt: -1 });
+    .populate('managerId', 'name')
+    .sort({ createdAt: -1 });
     res.json(shops);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -380,9 +499,9 @@ router.post('/admin/reject-banner/:shopId', async (req, res) => {
 router.get('/admin/shop-history', async (req, res) => {
   try {
     const history = await ShopHistory.find()
-     .populate('managerId', 'name area')
-     .sort({ createdAt: -1 })
-     .limit(100);
+    .populate('managerId', 'name area')
+    .sort({ createdAt: -1 })
+    .limit(100);
     res.json({ success: true, history });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -587,9 +706,7 @@ router.get('/admin/migrate-old-modules', async (req, res) => {
   }
 });
 
-const Banner = require('../models/banner');
-
-// Get all banners
+// ==================== BANNERS ====================
 router.get('/banners', async (req, res) => {
     try {
         const { status, type, placement } = req.query;
@@ -597,21 +714,20 @@ router.get('/banners', async (req, res) => {
         if (status) filter.status = status;
         if (type) filter.type = type;
         if (placement) filter.placement = placement;
-        
+
         const banners = await Banner.find(filter)
-            .populate('createdBy', 'name')
-            .sort({ priority: -1 });
+           .populate('createdBy', 'name')
+           .sort({ priority: -1 });
         res.json(banners);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Create banner
 router.post('/banners', upload.single('image'), async (req, res) => {
     try {
         const bannerData = {
-            ...req.body,
+           ...req.body,
             image: '/' + req.file.path.replace('public/', '').replace(/\\/g, '/'),
             createdBy: req.userId,
             createdByType: 'admin'
@@ -624,7 +740,6 @@ router.post('/banners', upload.single('image'), async (req, res) => {
     }
 });
 
-// Approve banner
 router.put('/banners/:id/approve', async (req, res) => {
     try {
         const banner = await Banner.findByIdAndUpdate(req.params.id, {

@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 const fs = require('fs');
 require('dotenv').config();
+const seedModules = require('./seed/modules'); // ← ADD KIYA
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,9 +36,10 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/samanlive
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 5000
 })
-.then(() => {
+.then(async () => {
     console.log('✅ MongoDB Connected Successfully');
     console.log(`📦 Database: ${mongoose.connection.name}`);
+    await seedModules(); // ← ADD KIYA
 })
 .catch(err => {
     console.error('❌ MongoDB Error:', err);
