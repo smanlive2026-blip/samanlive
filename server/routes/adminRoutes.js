@@ -42,7 +42,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 } // ← 50MB kiya, pehle 50KB tha
+  limits: { fileSize: 50 * 1024 * 1024 } // ← FIX: 50MB kiya
 });
 
 // ==================== AREA MANAGER LOGIN ====================
@@ -104,7 +104,7 @@ router.post('/manager/shop', authenticateManager, async (req, res) => {
     try {
         const manager = req.manager;
         const shopData = {
-          ...req.body,
+         ...req.body,
             areaCode: manager.areaCode,
             areaName: manager.areaName,
             managerId: manager._id,
@@ -152,6 +152,36 @@ router.delete('/manager/shop/:id', authenticateManager, async (req, res) => {
 });
 
 // ==================== DASHBOARD ====================
+router.get('/admin/dashboard', async (req, res) => {
+  try {
+    const [users, shops, modules, content, managers, categories] = await Promise.all([
+      User.countDocuments(),
+      Shop.countDocuments({ status: 'approved' }),
+      Module.countDocuments(), // ← YE AB CHALEGA
+      Content.countDocuments(),
+      Manager.countDocuments(),
+      Module.aggregate([
+        { $unwind: '$categoryDetails' },
+        { $count: 'total' }
+      ])
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        totalUsers: users,
+        totalShops: shops,
+        totalModules: modules,
+        totalCategories: categories[0]?.total || 0,
+        totalContent: content,
+        totalManagers: managers
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/stats', async (req, res) => {
   try {
     const [users, shops, modules, content, managers, categories] = await Promise.all([
@@ -182,10 +212,10 @@ router.get('/stats', async (req, res) => {
 // ==================== MODULES ====================
 router.get('/modules', async (req, res) => {
   try {
-    const modules = await Module.find().sort({ priority: -1 });
-    res.json(modules);
+    const modules = await Module.find().sort({ priority: 1 });
+    res.json({ success: true, modules }); // ← success flag add kiya
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -328,8 +358,8 @@ router.get('/shops', async (req, res) => {
     }
 
     const shops = await Shop.find(filter)
-    .populate('managerId', 'name')
-    .sort({ createdAt: -1 });
+   .populate('managerId', 'name')
+   .sort({ createdAt: -1 });
     res.json(shops);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -499,9 +529,9 @@ router.post('/admin/reject-banner/:shopId', async (req, res) => {
 router.get('/admin/shop-history', async (req, res) => {
   try {
     const history = await ShopHistory.find()
-    .populate('managerId', 'name area')
-    .sort({ createdAt: -1 })
-    .limit(100);
+   .populate('managerId', 'name area')
+   .sort({ createdAt: -1 })
+   .limit(100);
     res.json({ success: true, history });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -716,8 +746,8 @@ router.get('/banners', async (req, res) => {
         if (placement) filter.placement = placement;
 
         const banners = await Banner.find(filter)
-           .populate('createdBy', 'name')
-           .sort({ priority: -1 });
+          .populate('createdBy', 'name')
+          .sort({ priority: -1 });
         res.json(banners);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -727,7 +757,7 @@ router.get('/banners', async (req, res) => {
 router.post('/banners', upload.single('image'), async (req, res) => {
     try {
         const bannerData = {
-           ...req.body,
+          ...req.body,
             image: '/' + req.file.path.replace('public/', '').replace(/\\/g, '/'),
             createdBy: req.userId,
             createdByType: 'admin'
