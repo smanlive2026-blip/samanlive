@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 const fs = require('fs');
 require('dotenv').config();
-const seedModules = require('./seed/modules'); // ← ADD KIYA
+const seedModules = require('./seed/modules'); // ← YE SAHI HAI
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,7 +39,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/samanlive
 .then(async () => {
     console.log('✅ MongoDB Connected Successfully');
     console.log(`📦 Database: ${mongoose.connection.name}`);
-    await seedModules(); // ← ADD KIYA
+    await seedModules(); // ← YE 25 MODULES SEED KAREGA
 })
 .catch(err => {
     console.error('❌ MongoDB Error:', err);
@@ -362,7 +362,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
