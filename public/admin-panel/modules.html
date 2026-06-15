@@ -196,7 +196,7 @@ let allModules = [];
 async function loadModules() {
     showLoading('modulesTable');
     try {
-        const data = await apiCall('/modules');
+        const data = await apiCall('/admin/modules');
         allModules = data.modules || data; // Handle both formats
         document.getElementById('moduleCount').textContent = allModules.length;
         renderModules();
