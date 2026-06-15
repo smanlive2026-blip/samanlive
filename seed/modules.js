@@ -1,11 +1,11 @@
-const Module = require('../models/Module');
+const Module = require('../../server/models/Module');
 const path = require('path');
 const fs = require('fs');
 
 async function seedModules() {
     try {
-        // JSON file se 25 modules load kar
-        const jsonPath = path.join(__dirname, '../public/assets/js/module.json');
+        // JSON file se 25 modules load kar - PATH FIXED
+        const jsonPath = path.join(__dirname, '../assets/js/module.json');
         const jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
         
         const modulesToSeed = jsonData.modules.map(mod => ({

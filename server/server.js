@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 const fs = require('fs');
 require('dotenv').config();
-const seedModules = require('./seed/modules'); // ← YE SAHI HAI
+const seedModules = require('../public/seed/module'); // ← FIXED
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -362,7 +362,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
