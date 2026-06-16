@@ -129,7 +129,7 @@ function renderShops() {
         const module = window.allModules.find(m => (m._id || m.id) === s.moduleId);
         const manager = window.allManagers.find(m => m._id === s.managerId);
         return `<tr>
-            <td><img src="${s.logo || '/assets/logo.png'}" class="shop-logo" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.src='/assets/logo.png'"></td>
+            <td><img src="${s.logo || 'assets/logo.png'}" class="shop-logo" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.src='https://via.placeholder.com/40x40?text=🏪'; this.onerror=null;"></td>
             <td><b>${escapeHtml(s.name)}</b></td>
             <td>${module? module.icon + ' ' + escapeHtml(module.name) : '-'}</td>
             <td>${manager? escapeHtml(manager.name) : '<span class="help-text">Unassigned</span>'}</td>
