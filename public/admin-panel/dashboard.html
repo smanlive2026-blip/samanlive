@@ -75,6 +75,7 @@
 .stat-card.cyan { --card-color: #06b6d4; --card-color-light: #22d3ee; }
 .stat-card.orange { --card-color: #f59e0b; --card-color-light: #fbbf24; }
 .stat-card.pink { --card-color: #ec4899; --card-color-light: #f472b6; }
+.stat-card.red { --card-color: #ef4444; --card-color-light: #f87171; }
 
 .chart-grid {
     display: grid;
@@ -102,8 +103,8 @@
     height: 320px;
 }
 @media (max-width: 768px) {
-  .chart-grid { grid-template-columns: 1fr; }
-  .chart-container { height: 280px; }
+ .chart-grid { grid-template-columns: 1fr; }
+ .chart-container { height: 280px; }
 }
 </style>
 
@@ -121,6 +122,11 @@
             <div class="icon">👥</div>
             <h3>Total Users</h3>
             <div class="stat-value" id="totalUsersCount">0</div>
+        </div>
+        <div class="stat-card red">
+            <div class="icon">🗺️</div>
+            <h3>Total Areas</h3>
+            <div class="stat-value" id="totalAreasCount">0</div>
         </div>
         <div class="stat-card purple">
             <div class="icon">🏪</div>
@@ -151,10 +157,16 @@
 
     <div class="chart-grid">
         <div class="chart-card">
+            <h3>🗺️ Areas by Radius</h3>
+            <div class="chart-container">
+                <canvas id="areaRadiusChart"></canvas>
+            </div>
+        <div class="chart-card">
             <h3>📍 Shops by Area</h3>
             <div class="chart-container">
                 <canvas id="areaChart"></canvas>
             </div>
+        </div>
         <div class="chart-card">
             <h3>📈 Shop Status Distribution</h3>
             <div class="chart-container">
@@ -166,14 +178,14 @@
 
 <script>
 // ========================================
-// DASHBOARD - PREMIUM VERSION
-// Fixed Chart.js destroy bug + Premium UI
+// DASHBOARD - WITH AREAS SUPPORT
 // ========================================
 let areaChartInstance = null;
 let statusChartInstance = null;
+let areaRadiusChartInstance = null;
 
 async function loadDashboard() {
-    // Destroy existing charts first - BUG FIX
+    // Destroy existing charts first
     if (areaChartInstance) {
         areaChartInstance.destroy();
         areaChartInstance = null;
@@ -182,12 +194,17 @@ async function loadDashboard() {
         statusChartInstance.destroy();
         statusChartInstance = null;
     }
+    if (areaRadiusChartInstance) {
+        areaRadiusChartInstance.destroy();
+        areaRadiusChartInstance = null;
+    }
 
     try {
-        const [stats, shops, modules] = await Promise.all([
+        const [stats, shops, modules, areas] = await Promise.all([
             apiCall('/stats'),
             apiCall('/shops'),
-            apiCall('/modules')
+            apiCall('/modules'),
+            apiCall('/areas').catch(() => []) // ← AREAS ADDED
         ]);
 
         window.allModules = modules.modules || modules || [];
@@ -195,6 +212,7 @@ async function loadDashboard() {
 
         // Animate numbers
         animateValue('totalUsersCount', 0, stats.users || 0, 800);
+        animateValue('totalAreasCount', 0, areas.length || 0, 800); // ← AREA COUNT
         animateValue('totalShopsCount', 0, stats.shops || 0, 800);
         animateValue('totalModulesCount', 0, stats.modules || window.allModules.length, 800);
         animateValue('totalCategoriesCount', 0, window.allCategories.length, 800);
@@ -211,6 +229,7 @@ async function loadDashboard() {
         setTimeout(() => {
             renderAreaChart(shops);
             renderStatusChart(shops);
+            renderAreaRadiusChart(areas); // ← NEW CHART
         }, 300);
 
     } catch (err) {
@@ -247,8 +266,8 @@ function renderAreaChart(shops) {
     if (!ctx) return;
 
     const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, '#3b82f6');
-    gradient.addColorStop(1, '#60a5fa');
+    gradient.addColorStop(0, '#8b5cf6');
+    gradient.addColorStop(1, '#a78bfa');
 
     areaChartInstance = new Chart(ctx, {
         type: 'bar',
@@ -292,6 +311,62 @@ function renderAreaChart(shops) {
                         font: { size: 12 }
                     },
                     grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+// NEW: Areas by Radius Chart
+function renderAreaRadiusChart(areas) {
+    const radiusCounts = {};
+    areas.forEach(a => {
+        const radius = a.radius || 50;
+        const range = radius <= 25? '1-25 km' : radius <= 50? '26-50 km' : radius <= 100? '51-100 km' : '100+ km';
+        radiusCounts[range] = (radiusCounts[range] || 0) + 1;
+    });
+
+    const ctx = document.getElementById('areaRadiusChart');
+    if (!ctx) return;
+
+    areaRadiusChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(radiusCounts).length? Object.keys(radiusCounts) : ['No Data'],
+            datasets: [{
+                data: Object.keys(radiusCounts).length? Object.values(radiusCounts) : [0],
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: { size: 13, weight: '600' },
+                        color: '#475569',
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    padding: 12,
+                    borderRadius: 8,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total? ((context.parsed / total) * 100).toFixed(1) : 0;
+                            return ` ${context.label}: ${context.parsed} Areas (${percentage}%)`;
+                        }
+                    }
                 }
             }
         }
