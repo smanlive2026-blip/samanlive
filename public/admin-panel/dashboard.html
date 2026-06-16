@@ -102,8 +102,8 @@
     height: 320px;
 }
 @media (max-width: 768px) {
-   .chart-grid { grid-template-columns: 1fr; }
-   .chart-container { height: 280px; }
+  .chart-grid { grid-template-columns: 1fr; }
+  .chart-container { height: 280px; }
 }
 </style>
 
@@ -155,7 +155,6 @@
             <div class="chart-container">
                 <canvas id="areaChart"></canvas>
             </div>
-        </div>
         <div class="chart-card">
             <h3>📈 Shop Status Distribution</h3>
             <div class="chart-container">
@@ -186,14 +185,14 @@ async function loadDashboard() {
 
     try {
         const [stats, shops, modules] = await Promise.all([
-            apiCall('/stats'), 
-            apiCall('/shops'), 
+            apiCall('/stats'),
+            apiCall('/shops'),
             apiCall('/modules')
         ]);
-        
+
         window.allModules = modules.modules || modules || [];
         window.allCategories = window.allModules.flatMap(m => m.categoryDetails || []);
-        
+
         // Animate numbers
         animateValue('totalUsersCount', 0, stats.users || 0, 800);
         animateValue('totalShopsCount', 0, stats.shops || 0, 800);
@@ -203,9 +202,9 @@ async function loadDashboard() {
         animateValue('pendingShopsCount', 0, shops.filter(s => s.status === 'pending').length, 800);
 
         // Update timestamp
-        document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('en-IN', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('en-IN', {
+            hour: '2-digit',
+            minute: '2-digit'
         });
 
         // Render charts with delay for animation
@@ -213,7 +212,7 @@ async function loadDashboard() {
             renderAreaChart(shops);
             renderStatusChart(shops);
         }, 300);
-        
+
     } catch (err) {
         console.error('Dashboard load error:', err);
         showToast('Failed to load dashboard: ' + err.message, 'error');
@@ -223,11 +222,11 @@ async function loadDashboard() {
 function animateValue(id, start, end, duration) {
     const element = document.getElementById(id);
     if (!element) return;
-    
+
     const range = end - start;
     const increment = range / (duration / 16);
     let current = start;
-    
+
     const timer = setInterval(() => {
         current += increment;
         if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
@@ -243,14 +242,14 @@ function renderAreaChart(shops) {
     shops.forEach(s => {
         if (s.area) areaCounts[s.area] = (areaCounts[s.area] || 0) + 1;
     });
-    
+
     const ctx = document.getElementById('areaChart');
     if (!ctx) return;
-    
+
     const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, '#3b82f6');
     gradient.addColorStop(1, '#60a5fa');
-    
+
     areaChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -280,7 +279,7 @@ function renderAreaChart(shops) {
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { 
+                    ticks: {
                         stepSize: 1,
                         color: '#64748b',
                         font: { size: 12 }
@@ -288,7 +287,7 @@ function renderAreaChart(shops) {
                     grid: { color: '#f1f5f9' }
                 },
                 x: {
-                    ticks: { 
+                    ticks: {
                         color: '#64748b',
                         font: { size: 12 }
                     },
@@ -305,10 +304,10 @@ function renderStatusChart(shops) {
         pending: shops.filter(s => s.status === 'pending').length,
         inactive: shops.filter(s => s.status === 'inactive' || s.status === 'hidden').length
     };
-    
+
     const ctx = document.getElementById('statusChart');
     if (!ctx) return;
-    
+
     statusChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
