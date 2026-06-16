@@ -1,10 +1,14 @@
 const API_BASE = '/api';
-let allModules = [];
-let allCategories = [];
-let allShops = [];
-let allManagers = [];
-let allContent = [];
-let allAreas = []; // Added for Areas
+
+// ========== GLOBAL VARIABLES - WINDOW PE DALO ==========
+// Ab ye kisi bhi file me redeclare nahi honge
+window.allModules = window.allModules || [];
+window.allCategories = window.allCategories || [];
+window.allShops = window.allShops || [];
+window.allManagers = window.allManagers || [];
+window.allContent = window.allContent || [];
+window.allAreas = window.allAreas || [];
+window.allUsers = window.allUsers || [];
 
 // ========== UTILITY FUNCTIONS ==========
 async function apiCall(endpoint, method = 'GET', data = null) {
@@ -77,7 +81,7 @@ function getUrlParam(param) {
     return urlParams.get(param);
 }
 
-// ========== PAGE LOADER ==========
+// ========== PAGE LOADER - FIXED ==========
 async function loadPage(pageName, btnElement) {
     // Active class update
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -98,19 +102,18 @@ async function loadPage(pageName, btnElement) {
         const html = await res.text();
         document.getElementById('mainContainer').innerHTML = html;
 
-        // Page ke scripts execute karo
+        // Page ke scripts execute karo - FIX: eval use kiya duplicate se bachne ke liye
         const container = document.getElementById('mainContainer');
         const scripts = container.querySelectorAll('script');
         scripts.forEach(oldScript => {
-            const newScript = document.createElement('script');
-            if (oldScript.src) {
-                newScript.src = oldScript.src;
-            } else {
-                newScript.textContent = oldScript.textContent;
+            if (!oldScript.src) { // Sirf inline scripts
+                try {
+                    eval(oldScript.textContent);
+                } catch(e) {
+                    console.error('Script eval error:', e);
+                }
             }
-            // Remove old script to prevent duplicate
             oldScript.remove();
-            document.body.appendChild(newScript);
         });
 
         // Update URL without reload
@@ -132,10 +135,10 @@ async function loadPage(pageName, btnElement) {
 async function loadAllAreas() {
     try {
         const data = await apiCall('/areas');
-        allAreas = data || [];
-        return allAreas;
+        window.allAreas = data || [];
+        return window.allAreas;
     } catch (err) {
-        allAreas = [];
+        window.allAreas = [];
         return [];
     }
 }

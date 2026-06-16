@@ -1,15 +1,27 @@
 <div class="content">
-    <h2>📂 All Categories <span id="categoryCount" class="badge badge-info"></span></h2>
+    <h2>📂 All Categories <span id="categoryCount" class="badge badge-info">0</span></h2>
     <div class="action-bar">
-        <input type="text" class="search-box" placeholder="Search 250 categories..." onkeyup="filterTable('categoriesTable', this.value)">
-        <select onchange="filterByModule(this.value)" style="padding:10px;border:2px solid #e2e8f0;border-radius:8px;">
+        <input type="text" class="search-box" placeholder="Search categories..." onkeyup="filterTable('categoriesTable', this.value)">
+        <select id="moduleFilter" onchange="filterByModule(this.value)" style="padding:10px;border:2px solid #e2e8f0;border-radius:8px;min-width:200px;">
             <option value="">All Modules</option>
         </select>
     </div>
     <div style="overflow-x:auto;">
         <table id="categoriesTable">
-            <thead><tr><th>Icon</th><th>Name</th><th>Module</th><th>Group</th><th>Color</th><th>Priority</th><th>Actions</th></tr></thead>
-            <tbody><tr><td colspan="7" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
+            <thead>
+                <tr>
+                    <th>Icon</th>
+                    <th>Name</th>
+                    <th>Module</th>
+                    <th>Group</th>
+                    <th>Color</th>
+                    <th>Priority</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="7" class="loading">Loading categories</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
@@ -24,94 +36,182 @@
         <input type="hidden" id="catModuleId">
         <input type="hidden" id="catIndex">
         <div class="form-grid">
-            <div class="form-group"><label>Name *</label><input type="text" id="catName" required></div>
-            <div class="form-group"><label>Icon *</label><input type="text" id="catIcon" required></div>
-            <div class="form-group"><label>Color *</label><input type="color" id="catColor" required></div>
-            <div class="form-group"><label>Group</label><input type="text" id="catGroup"></div>
+            <div class="form-group">
+                <label>Name *</label>
+                <input type="text" id="catName" required placeholder="e.g. Dairy Products">
+            </div>
+            <div class="form-group">
+                <label>Icon * (Emoji)</label>
+                <input type="text" id="catIcon" required maxlength="2" placeholder="🥛">
+            </div>
+            <div class="form-group">
+                <label>Color *</label>
+                <input type="color" id="catColor" required>
+            </div>
+            <div class="form-group">
+                <label>Group</label>
+                <input type="text" id="catGroup" placeholder="e.g. Fresh">
+            </div>
+            <div class="form-group">
+                <label>Priority</label>
+                <input type="number" id="catPriority" min="0" placeholder="0">
+            </div>
         </div>
-        <div style="display:flex;gap:10px;margin-top:20px;">
-            <button class="btn-primary" onclick="saveCategory()">💾 Save Changes</button>
-            <button class="btn-secondary" onclick="closeCategoryModal()">Cancel</button>
+        <div style="display:flex;gap:10px;margin-top:25px;padding-top:20px;border-top:2px solid #f1f5f9;">
+            <button class="btn btn-primary" id="saveCatBtn" onclick="saveCategory()">💾 Save Changes</button>
+            <button class="btn btn-secondary" onclick="closeCategoryModal()">Cancel</button>
         </div>
     </div>
 </div>
 
 <script>
-let allCategoriesFlat = [];
+// ========================================
+// CATEGORY MANAGEMENT - PROFESSIONAL VERSION
+// Uses window.allModules from admin.js
+// ========================================
 let moduleFilter = '';
 
 async function loadCategories() {
     showLoading('categoriesTable');
     try {
-        allModules = await apiCall('/modules');
-        allCategoriesFlat = [];
-        allModules.forEach(m => {
+        // window.allModules already populated by admin.js or modules page
+        if (!window.allModules || window.allModules.length === 0) {
+            const data = await apiCall('/modules');
+            window.allModules = data.modules || data;
+        }
+        
+        window.allCategories = [];
+        window.allModules.forEach(m => {
             (m.categoryDetails || []).forEach((c, idx) => {
-                allCategoriesFlat.push({...c, moduleId: m._id, moduleName: m.name, moduleIcon: m.icon, catIndex: idx});
+                window.allCategories.push({
+                   ...c,
+                    moduleId: m._id || m.id,
+                    moduleName: m.name,
+                    moduleIcon: m.icon,
+                    catIndex: idx
+                });
             });
         });
-        document.getElementById('categoryCount').textContent = allCategoriesFlat.length;
+        
+        document.getElementById('categoryCount').textContent = window.allCategories.length;
         populateModuleFilter();
         renderCategories();
-    } catch (err) {}
+    } catch (err) {
+        console.error('Load categories error:', err);
+        document.querySelector('#categoriesTable tbody').innerHTML =
+            `<tr><td colspan="7" style="text-align:center;padding:40px;color:#ef4444;">Failed to load categories: ${escapeHtml(err.message)}</td></tr>`;
+    }
 }
 
 function populateModuleFilter() {
-    const select = document.querySelector('select[onchange="filterByModule(this.value)"]');
+    const select = document.getElementById('moduleFilter');
     select.innerHTML = '<option value="">All Modules</option>' + 
-        allModules.map(m => `<option value="${m._id}">${m.icon} ${m.name}</option>`).join('');
+        window.allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
 }
 
 function renderCategories() {
     const tbody = document.querySelector('#categoriesTable tbody');
-    let filtered = moduleFilter ? allCategoriesFlat.filter(c => c.moduleId === moduleFilter) : allCategoriesFlat;
+    
+    if (!window.allCategories || window.allCategories.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No categories found. Add categories from Modules page.</td></tr>';
+        return;
+    }
+
+    let filtered = moduleFilter? window.allCategories.filter(c => c.moduleId === moduleFilter) : window.allCategories;
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No categories in selected module.</td></tr>';
+        return;
+    }
+    
     tbody.innerHTML = filtered.map(c => `
         <tr>
             <td style="font-size:24px;">${c.icon}</td>
             <td><b>${escapeHtml(c.name)}</b></td>
             <td>${c.moduleIcon} ${escapeHtml(c.moduleName)}</td>
-            <td>${escapeHtml(c.group||'-')}</td>
+            <td>${escapeHtml(c.group || '-')}</td>
             <td><span class="color-badge" style="background:${c.color}">${c.color}</span></td>
-            <td>${c.priority||0}</td>
+            <td>${c.priority || 0}</td>
             <td class="actions">
-                <button class="btn-primary btn-sm" onclick="editCategory('${c.moduleId}', ${c.catIndex})">Edit</button>
+                <button class="btn btn-primary btn-sm" onclick="editCategory('${c.moduleId}', ${c.catIndex})">Edit</button>
             </td>
         </tr>`).join('');
 }
 
-window.filterByModule = (val) => { moduleFilter = val; renderCategories(); };
+window.filterByModule = (val) => { 
+    moduleFilter = val; 
+    renderCategories(); 
+};
 
 window.editCategory = (moduleId, catIndex) => {
-    const m = allModules.find(x => x._id === moduleId);
+    const m = window.allModules.find(x => (x._id || x.id) === moduleId);
+    if (!m ||!m.categoryDetails ||!m.categoryDetails[catIndex]) {
+        showToast('Category not found', 'error');
+        return;
+    }
+    
     const c = m.categoryDetails[catIndex];
     document.getElementById('catModuleId').value = moduleId;
     document.getElementById('catIndex').value = catIndex;
-    document.getElementById('catName').value = c.name;
-    document.getElementById('catIcon').value = c.icon;
-    document.getElementById('catColor').value = c.color;
+    document.getElementById('catName').value = c.name || '';
+    document.getElementById('catIcon').value = c.icon || '📦';
+    document.getElementById('catColor').value = c.color || '#6366f1';
     document.getElementById('catGroup').value = c.group || '';
-    document.getElementById('categoryModal').style.display = 'block';
+    document.getElementById('catPriority').value = c.priority || 0;
+    document.getElementById('categoryModal').classList.add('active');
 };
 
 window.saveCategory = async () => {
+    const btn = document.getElementById('saveCatBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
     const moduleId = document.getElementById('catModuleId').value;
     const catIndex = parseInt(document.getElementById('catIndex').value);
-    const m = allModules.find(x => x._id === moduleId);
-    m.categoryDetails[catIndex] = {
-        ...m.categoryDetails[catIndex],
+    const m = window.allModules.find(x => (x._id || x.id) === moduleId);
+    
+    if (!m) {
+        showToast('Module not found', 'error');
+        btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
+        return;
+    }
+
+    const updatedCategory = {
+       ...m.categoryDetails[catIndex],
         name: document.getElementById('catName').value.trim(),
         icon: document.getElementById('catIcon').value.trim(),
         color: document.getElementById('catColor').value,
-        group: document.getElementById('catGroup').value.trim()
+        group: document.getElementById('catGroup').value.trim(),
+        priority: parseInt(document.getElementById('catPriority').value || 0)
     };
+
+    if (!updatedCategory.name ||!updatedCategory.icon) {
+        showToast('Name and Icon are required', 'error');
+        btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
+        return;
+    }
+
+    m.categoryDetails[catIndex] = updatedCategory;
+
     try {
-        await apiCall('/modules/' + moduleId, 'PUT', {categoryDetails: m.categoryDetails});
-        showToast('Category updated!');
+        await apiCall('/modules/' + moduleId, 'PUT', { categoryDetails: m.categoryDetails });
+        showToast('Category updated successfully!');
         closeCategoryModal();
         await loadCategories();
-    } catch (err) {}
+    } catch (err) {
+        showToast('Failed to update category: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
+    }
 };
 
-window.closeCategoryModal = () => document.getElementById('categoryModal').style.display = 'none';
+window.closeCategoryModal = () => {
+    document.getElementById('categoryModal').classList.remove('active');
+};
+
+// Initialize on page load
 loadCategories();
 </script>

@@ -29,19 +29,24 @@
                 <th style="padding:12px;text-align:left;">Action</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+            <tr><td colspan="8" class="loading">Loading products</td></tr>
+        </tbody>
     </table>
 </div>
 
 <!-- Add/Edit Product Modal -->
-<div id="productModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
-    <div style="background:white;padding:24px;border-radius:12px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;">
-        <h3 id="modalTitle">Add Product</h3>
+<div id="productModal" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add Product</h2>
+            <button class="close-btn" onclick="closeProductModal()">×</button>
+        </div>
         <form id="productForm" onsubmit="saveProduct(event)">
             <input type="hidden" id="productId">
             <div style="margin-bottom:12px;">
                 <label style="display:block;margin-bottom:4px;font-weight:500;">Product Name *</label>
-                <input type="text" id="productName" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+                <input type="text" id="productName" required placeholder="e.g. Fresh Apples" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
             </div>
             <div style="margin-bottom:12px;">
                 <label style="display:block;margin-bottom:4px;font-weight:500;">Shop *</label>
@@ -54,61 +59,68 @@
             <div style="display:flex;gap:10px;margin-bottom:12px;">
                 <div style="flex:1;">
                     <label style="display:block;margin-bottom:4px;font-weight:500;">Price ₹ *</label>
-                    <input type="number" id="productPrice" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+                    <input type="number" id="productPrice" required min="0" placeholder="0" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
                 </div>
                 <div style="flex:1;">
                     <label style="display:block;margin-bottom:4px;font-weight:500;">MRP ₹</label>
-                    <input type="number" id="productMrp" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+                    <input type="number" id="productMrp" min="0" placeholder="0" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
                 </div>
             </div>
             <div style="margin-bottom:12px;">
                 <label style="display:block;margin-bottom:4px;font-weight:500;">Stock Quantity *</label>
-                <input type="number" id="productStock" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+                <input type="number" id="productStock" required min="0" placeholder="0" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
             </div>
             <div style="margin-bottom:12px;">
                 <label style="display:block;margin-bottom:4px;font-weight:500;">Description</label>
-                <textarea id="productDesc" rows="3" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;"></textarea>
+                <textarea id="productDesc" rows="3" placeholder="Product description..." style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;"></textarea>
             </div>
             <div style="margin-bottom:12px;">
                 <label style="display:block;margin-bottom:4px;font-weight:500;">Image URL</label>
-                <input type="text" id="productImage" placeholder="https://..." style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+                <input type="text" id="productImage" placeholder="https://..." style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;" oninput="previewProductImage()">
+                <img id="imagePreview" style="display:none;margin-top:8px;max-width:100px;max-height:100px;border-radius:6px;">
             </div>
             <div style="display:flex;gap:10px;margin-top:20px;">
-                <button type="submit" style="flex:1;padding:10px;background:#3b82f6;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Save Product</button>
-                <button type="button" onclick="closeProductModal()" style="flex:1;padding:10px;background:#e2e8f0;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
+                <button type="submit" id="saveProductBtn" class="btn btn-primary" style="flex:1;padding:10px;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Save Product</button>
+                <button type="button" onclick="closeProductModal()" class="btn btn-secondary" style="flex:1;padding:10px;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
             </div>
         </form>
     </div>
 </div>
 
 <style>
-.btn-icon { padding: 6px 10px; border: none; background: #f1f5f9; border-radius: 6px; cursor: pointer; margin: 0 2px; }
-.btn-icon:hover { background: #e2e8f0; }
+.btn-icon { padding: 6px 10px; border: none; background: #f1f5f9; border-radius: 6px; cursor: pointer; margin: 0 2px; transition: 0.2s; }
+.btn-icon:hover { background: #e2e8f0; transform: translateY(-1px); }
 .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; }
 </style>
 
 <script>
-let allProducts = [];
-let allShops = [];
-let allCategories = [];
+// ========================================
+// PRODUCT MANAGEMENT - PROFESSIONAL VERSION
+// Uses window.allProducts, window.allShops, window.allCategories from admin.js
+// ========================================
 
 async function loadProducts() {
     const tbody = document.querySelector('#productsTable tbody');
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;">Loading...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="loading">Loading products</td></tr>`;
+    
     try {
         const [products, shops, categories] = await Promise.all([
             apiCall('/products'),
             apiCall('/shops'),
             apiCall('/categories')
         ]);
-        allProducts = products || [];
-        allShops = shops || [];
-        allCategories = categories || [];
+        
+        window.allProducts = products || [];
+        window.allShops = shops || [];
+        window.allCategories = categories || [];
+        
         populateFilters();
-        renderProducts(allProducts);
-        showToast(`${allProducts.length} products loaded`, 'success');
+        renderProducts(window.allProducts);
+        showToast(`${window.allProducts.length} products loaded`, 'success');
+        
     } catch(err) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#ef4444;">Failed to load products</td></tr>`;
+        console.error('Load products error:', err);
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#ef4444;">Failed to load products: ${escapeHtml(err.message)}</td></tr>`;
     }
 }
 
@@ -118,24 +130,26 @@ function populateFilters() {
     const catSelect = document.getElementById('productCategory');
     
     shopFilter.innerHTML = '<option value="all">All Shops</option>' + 
-        allShops.map(s => `<option value="${s._id}">${escapeHtml(s.name)}</option>`).join('');
+        window.allShops.map(s => `<option value="${s._id}">${escapeHtml(s.name)}</option>`).join('');
     
     shopSelect.innerHTML = '<option value="">Select Shop</option>' + 
-        allShops.map(s => `<option value="${s._id}">${escapeHtml(s.name)}</option>`).join('');
+        window.allShops.map(s => `<option value="${s._id}">${escapeHtml(s.name)}</option>`).join('');
     
     catSelect.innerHTML = '<option value="">Select Category</option>' + 
-        allCategories.map(c => `<option value="${c._id}">${escapeHtml(c.name)}</option>`).join('');
+        window.allCategories.map(c => `<option value="${c._id}">${escapeHtml(c.name)}</option>`).join('');
 }
 
 function renderProducts(products) {
     const tbody = document.querySelector('#productsTable tbody');
+    
     if(products.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;">Koi product nahi mila 😔</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;">No products found 😔</td></tr>`;
         return;
     }
+    
     tbody.innerHTML = products.map(p => `
         <tr>
-            <td><img src="${p.image || 'https://via.placeholder.com/50'}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;"></td>
+            <td><img src="${p.image || 'https://via.placeholder.com/50'}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;" onerror="this.src='https://via.placeholder.com/50'"></td>
             <td><strong>${escapeHtml(p.name)}</strong></td>
             <td>${escapeHtml(p.shopId?.name || '-')}</td>
             <td>${escapeHtml(p.categoryId?.name || '-')}</td>
@@ -150,94 +164,145 @@ function renderProducts(products) {
     `).join('');
 }
 
-function showAddProductModal() {
+window.showAddProductModal = () => {
     document.getElementById('modalTitle').textContent = 'Add Product';
     document.getElementById('productForm').reset();
     document.getElementById('productId').value = '';
-    document.getElementById('productModal').style.display = 'flex';
-}
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('productModal').classList.add('active');
+};
 
-function closeProductModal() {
-    document.getElementById('productModal').style.display = 'none';
-}
+window.closeProductModal = () => {
+    document.getElementById('productModal').classList.remove('active');
+};
 
-function editProduct(id) {
-    const product = allProducts.find(p => p._id === id);
-    if(!product) return;
+window.editProduct = (id) => {
+    const product = window.allProducts.find(p => p._id === id);
+    if(!product) {
+        showToast('Product not found', 'error');
+        return;
+    }
+    
     document.getElementById('modalTitle').textContent = 'Edit Product';
     document.getElementById('productId').value = product._id;
-    document.getElementById('productName').value = product.name;
-    document.getElementById('productShop').value = product.shopId?._id || product.shopId;
-    document.getElementById('productCategory').value = product.categoryId?._id || product.categoryId;
-    document.getElementById('productPrice').value = product.price;
+    document.getElementById('productName').value = product.name || '';
+    document.getElementById('productShop').value = product.shopId?._id || product.shopId || '';
+    document.getElementById('productCategory').value = product.categoryId?._id || product.categoryId || '';
+    document.getElementById('productPrice').value = product.price || 0;
     document.getElementById('productMrp').value = product.mrp || '';
-    document.getElementById('productStock').value = product.stock;
+    document.getElementById('productStock').value = product.stock || 0;
     document.getElementById('productDesc').value = product.description || '';
     document.getElementById('productImage').value = product.image || '';
-    document.getElementById('productModal').style.display = 'flex';
-}
+    
+    if (product.image) {
+        document.getElementById('imagePreview').src = product.image;
+        document.getElementById('imagePreview').style.display = 'block';
+    }
+    
+    document.getElementById('productModal').classList.add('active');
+};
 
-async function saveProduct(e) {
+window.previewProductImage = () => {
+    const url = document.getElementById('productImage').value;
+    const preview = document.getElementById('imagePreview');
+    if (url) {
+        preview.src = url;
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+};
+
+window.saveProduct = async (e) => {
     e.preventDefault();
+    
+    const btn = document.getElementById('saveProductBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
     const id = document.getElementById('productId').value;
     const data = {
-        name: document.getElementById('productName').value,
+        name: document.getElementById('productName').value.trim(),
         shopId: document.getElementById('productShop').value,
         categoryId: document.getElementById('productCategory').value,
         price: Number(document.getElementById('productPrice').value),
         mrp: Number(document.getElementById('productMrp').value) || undefined,
         stock: Number(document.getElementById('productStock').value),
-        description: document.getElementById('productDesc').value,
-        image: document.getElementById('productImage').value
+        description: document.getElementById('productDesc').value.trim(),
+        image: document.getElementById('productImage').value.trim()
     };
+    
+    if (!data.name ||!data.shopId ||!data.categoryId ||!data.price) {
+        showToast('Please fill all required fields', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Save Product';
+        return;
+    }
+    
     try {
         if(id) {
             await apiCall(`/products/${id}`, 'PUT', data);
-            showToast('Product updated!', 'success');
+            showToast('Product updated successfully!', 'success');
         } else {
             await apiCall('/products', 'POST', data);
-            showToast('Product added!', 'success');
+            showToast('Product added successfully!', 'success');
         }
         closeProductModal();
-        loadProducts();
+        await loadProducts();
     } catch(err) {
-        showToast('Failed to save', 'error');
+        console.error('Save error:', err);
+        showToast('Failed to save: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Product';
     }
-}
+};
 
-async function deleteProduct(id) {
-    if(!confirm('Delete this product?')) return;
+window.deleteProduct = async (id) => {
+    if(!confirm('Delete this product? This cannot be undone.')) return;
     try {
         await apiCall(`/products/${id}`, 'DELETE');
-        showToast('Product deleted!', 'success');
-        loadProducts();
+        showToast('Product deleted successfully!', 'success');
+        await loadProducts();
     } catch(err) {
-        showToast('Failed to delete', 'error');
+        showToast('Failed to delete: ' + err.message, 'error');
     }
-}
+};
 
-function searchProducts() {
-    const query = document.getElementById('productSearch').value.toLowerCase();
-    const filtered = allProducts.filter(p => 
+window.searchProducts = () => {
+    const query = document.getElementById('productSearch').value.toLowerCase().trim();
+    if (!query) {
+        renderProducts(window.allProducts);
+        return;
+    }
+    
+    const filtered = window.allProducts.filter(p => 
         p.name.toLowerCase().includes(query) || 
         p.shopId?.name?.toLowerCase().includes(query) ||
         p.categoryId?.name?.toLowerCase().includes(query)
     );
     renderProducts(filtered);
-}
+};
 
-function filterByShop() {
+window.filterByShop = () => {
     const shopId = document.getElementById('shopFilter').value;
-    if(shopId === 'all') renderProducts(allProducts);
-    else renderProducts(allProducts.filter(p => (p.shopId?._id || p.shopId) === shopId));
-}
+    if(shopId === 'all') {
+        renderProducts(window.allProducts);
+    } else {
+        renderProducts(window.allProducts.filter(p => (p.shopId?._id || p.shopId) === shopId));
+    }
+};
 
-function filterByStock() {
+window.filterByStock = () => {
     const stock = document.getElementById('stockFilter').value;
-    if(stock === 'all') renderProducts(allProducts);
-    else if(stock === 'in') renderProducts(allProducts.filter(p => p.stock > 0));
-    else renderProducts(allProducts.filter(p => p.stock <= 0));
-}
+    if(stock === 'all') {
+        renderProducts(window.allProducts);
+    } else if(stock === 'in') {
+        renderProducts(window.allProducts.filter(p => p.stock > 0));
+    } else {
+        renderProducts(window.allProducts.filter(p => p.stock <= 0));
+    }
+};
 
 // Auto load
 loadProducts();

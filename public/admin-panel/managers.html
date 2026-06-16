@@ -1,9 +1,21 @@
 <div class="content">
     <div class="stats-grid">
-        <div class="stat-card"><h3>TOTAL MANAGERS</h3><div class="stat-value" id="totalManagers">0</div></div>
-        <div class="stat-card"><h3>ACTIVE</h3><div class="stat-value" id="activeManagers">0</div></div>
-        <div class="stat-card"><h3>PENDING BANNERS</h3><div class="stat-value orange" id="pendingBanners">0</div></div>
-        <div class="stat-card"><h3>CURRENT AREA</h3><div class="stat-value" id="currentAreaName" style="font-size:18px;">All Areas</div></div>
+        <div class="stat-card">
+            <h3>TOTAL MANAGERS</h3>
+            <div class="stat-value" id="totalManagers">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>ACTIVE</h3>
+            <div class="stat-value" id="activeManagers">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>PENDING BANNERS</h3>
+            <div class="stat-value orange" id="pendingBanners">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>CURRENT AREA</h3>
+            <div class="stat-value" id="currentAreaName" style="font-size:18px;">All Areas</div>
+        </div>
     </div>
 
     <div class="card">
@@ -13,8 +25,24 @@
         </div>
         <div style="overflow-x:auto;">
             <table>
-                <thead><tr><th>Photo</th><th>Name</th><th>Area</th><th>Bucket</th><th>Modules</th><th>Email</th><th>Phone</th><th>Service %</th><th>Status</th><th>Login Link</th><th>Actions</th></tr></thead>
-                <tbody id="managersTable"><tr><td colspan="11" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th>Photo</th>
+                        <th>Name</th>
+                        <th>Area</th>
+                        <th>Bucket</th>
+                        <th>Modules</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Service %</th>
+                        <th>Status</th>
+                        <th>Login Link</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="managersTable">
+                    <tr><td colspan="11" class="loading">Loading managers</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -26,8 +54,19 @@
         </div>
         <div style="overflow-x:auto;">
             <table>
-                <thead><tr><th>Shop</th><th>Manager</th><th>Area</th><th>Banner</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody id="bannerTable"><tr><td colspan="6" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th>Shop</th>
+                        <th>Manager</th>
+                        <th>Area</th>
+                        <th>Banner</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="bannerTable">
+                    <tr><td colspan="6" class="loading">Loading banners</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -36,21 +75,50 @@
 <!-- Add Manager Modal -->
 <div id="managerModal" class="modal">
     <div class="modal-content" style="max-width:800px;">
-        <div class="modal-header"><h2 id="managerModalTitle">Add New Manager</h2><button class="close-btn" onclick="closeManagerModal()">×</button></div>
+        <div class="modal-header">
+            <h2 id="managerModalTitle">Add New Manager</h2>
+            <button class="close-btn" onclick="closeManagerModal()">×</button>
+        </div>
         <form id="managerForm">
             <input type="hidden" id="managerId">
             <input type="hidden" id="areaCodeHidden">
             <div class="form-grid">
-                <div class="form-group"><label>Full Name *</label><input type="text" id="managerName" required></div>
-                <div class="form-group"><label>Area/City *</label><input type="text" id="managerArea" required></div>
-                <div class="form-group"><label>Bucket *</label><select id="managerBucket" required><option value="">Select Bucket</option></select></div>
-                <div class="form-group"><label>Email *</label><input type="email" id="managerEmail" required></div>
-                <div class="form-group"><label>Phone *</label><input type="text" id="managerPhone" required pattern="[0-9]{10}"></div>
-                <div class="form-group"><label>Service Charge %</label><input type="number" id="managerServiceCharge" value="5" min="0" max="50"></div>
-                <div class="form-group"><label>Status</label><select id="managerStatus"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="managerName" required placeholder="e.g. Rahul Sharma">
+                </div>
+                <div class="form-group">
+                    <label>Area/City *</label>
+                    <input type="text" id="managerArea" required placeholder="e.g. Surat City">
+                </div>
+                <div class="form-group">
+                    <label>Bucket *</label>
+                    <select id="managerBucket" required>
+                        <option value="">Select Bucket</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="managerEmail" required placeholder="manager@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Phone *</label>
+                    <input type="text" id="managerPhone" required pattern="[0-9]{10}" placeholder="9876543210">
+                </div>
+                <div class="form-group">
+                    <label>Service Charge %</label>
+                    <input type="number" id="managerServiceCharge" value="5" min="0" max="50">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="managerStatus">
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
                 <div class="form-group full">
                     <label>Module Access * (Select modules)</label>
-                    <input type="text" class="search-module" id="moduleSearch" placeholder="Search..." onkeyup="filterModules()">
+                    <input type="text" class="search-module" id="moduleSearch" placeholder="Search modules..." onkeyup="filterModules()">
                     <div class="module-select-box" id="moduleSelectBox">Loading...</div>
                     <div class="selected-modules" id="selectedModules"></div>
                 </div>
@@ -66,38 +134,31 @@
 </div>
 
 <script>
+// ========================================
+// MANAGER MANAGEMENT - PROFESSIONAL VERSION
+// Uses window.allManagers, window.allModules from admin.js
+// ========================================
 let selectedModuleIds = [];
 let pendingShops = [];
-let allManagers = [];
-let allModules = [];
 let currentAreaCode = null;
 let currentAreaData = null;
-
-// 15 Bucket List - Fixed
-const BUCKET_LIST = [
-    'Grocery', 'Fresh', 'Food', 'Medicine', 'Electronics', 
-    'Fashion', 'Home', 'Hardware', 'Beauty', 'Auto', 
-    'Stationery', 'Service', 'Meat', 'Puja', 'Others'
-];
-
-// URL se area code pakdo
-function getUrlParam(param) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(param);
-}
 
 async function loadManagers() {
     try {
         currentAreaCode = getUrlParam('area');
         
-        const [managersData, modulesData] = await Promise.all([apiCall('/managers'), apiCall('/modules')]);
-        allManagers = managersData || [];
-        allModules = modulesData || [];
+        const [managersData, modulesData] = await Promise.all([
+            apiCall('/managers'), 
+            apiCall('/modules')
+        ]);
         
-        // Agar area filter hai to sirf us area ke manager dikhao
+        window.allManagers = managersData || [];
+        window.allModules = modulesData.modules || modulesData;
+        
+        // Area filter apply karo
         if (currentAreaCode) {
             currentAreaData = await apiCall('/area/' + currentAreaCode);
-            allManagers = allManagers.filter(m => m.areaCode === currentAreaCode);
+            window.allManagers = window.allManagers.filter(m => m.areaCode === currentAreaCode);
             document.getElementById('currentAreaName').textContent = currentAreaData.areaName || currentAreaCode;
             document.getElementById('managerListTitle').textContent = `Managers - ${currentAreaData.areaName}`;
         }
@@ -105,28 +166,34 @@ async function loadManagers() {
         try {
             const bannerData = await apiCall('/admin/pending-banners');
             pendingShops = bannerData.shops || [];
-        } catch(e) { pendingShops = []; }
+        } catch(e) { 
+            pendingShops = []; 
+        }
         
         renderManagers();
         renderBanners();
         renderModuleCheckboxes();
         loadBucketDropdown();
-        
-        document.getElementById('totalManagers').textContent = allManagers.length;
-        document.getElementById('activeManagers').textContent = allManagers.filter(m=>m.status).length;
-        document.getElementById('pendingBanners').textContent = pendingShops.length;
+        updateStats();
     } catch (err) {
-        console.error(err);
+        console.error('Load managers error:', err);
+        showToast('Failed to load managers: ' + err.message, 'error');
     }
+}
+
+function updateStats() {
+    document.getElementById('totalManagers').textContent = window.allManagers.length;
+    document.getElementById('activeManagers').textContent = window.allManagers.filter(m => m.status).length;
+    document.getElementById('pendingBanners').textContent = pendingShops.length;
 }
 
 function loadBucketDropdown() {
     const bucketSelect = document.getElementById('managerBucket');
     let availableBuckets = [...BUCKET_LIST];
     
-    // Agar area selected hai to jo bucket already bani hai use hatao
+    // Area me jo bucket already use hui hai use hatao
     if (currentAreaCode) {
-        const usedBuckets = allManagers.map(m => m.bucket);
+        const usedBuckets = window.allManagers.map(m => m.bucket);
         availableBuckets = BUCKET_LIST.filter(b => !usedBuckets.includes(b));
     }
     
@@ -136,52 +203,69 @@ function loadBucketDropdown() {
 
 function renderManagers() {
     const tbody = document.getElementById('managersTable');
-    tbody.innerHTML = allManagers.length === 0 ? '<tr><td colspan="11" style="text-align:center;padding:40px;">No managers</td></tr>' :
-        allManagers.map(m => {
-            const moduleNames = (m.moduleAccess||[]).map(id => {
-                const mod = allModules.find(x => x._id === id);
-                return mod? mod.icon+' '+mod.name : id;
-            }).slice(0,2).join(', ') + (m.moduleAccess.length>2?` +${m.moduleAccess.length-2}`:'');
-            return `<tr>
-                <td><img src="${m.documents?.photo||'/assets/default-avatar.png'}" class="manager-photo" onerror="this.src='/assets/default-avatar.png'"></td>
-                <td><strong>${escapeHtml(m.name)}</strong></td>
-                <td>${escapeHtml(m.areaName || m.area)}</td>
-                <td><span class="badge">${escapeHtml(m.bucket || '-')}</span></td>
-                <td style="font-size:12px;">${moduleNames||'-'}</td>
-                <td>${escapeHtml(m.email)}</td>
-                <td>${escapeHtml(m.phone)}</td>
-                <td>${m.serviceCharge}%</td>
-                <td><span class="status-badge ${m.status?'status-active':'status-hidden'}">${m.status?'Active':'Inactive'}</span></td>
-                <td><button class="btn btn-secondary btn-sm" onclick="copyLink('${window.location.origin}/area-manager.html?token=${m.loginToken}')">Copy</button></td>
-                <td class="actions">
-                    <button class="btn btn-primary btn-sm" onclick="editManager('${m._id}')">Edit</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteManager('${m._id}')">Delete</button>
-                </td>
-            </tr>`;
-        }).join('');
+    
+    if (window.allManagers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:#94a3b8;">No managers found</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = window.allManagers.map(m => {
+        const moduleNames = (m.moduleAccess || []).map(id => {
+            const mod = window.allModules.find(x => (x._id || x.id) === id);
+            return mod? mod.icon + ' ' + mod.name : id;
+        }).slice(0, 2).join(', ') + (m.moduleAccess.length > 2? ` +${m.moduleAccess.length - 2}` : '');
+        
+        return `<tr>
+            <td><img src="${m.documents?.photo || '/assets/default-avatar.png'}" class="manager-photo" onerror="this.src='/assets/default-avatar.png'"></td>
+            <td><strong>${escapeHtml(m.name)}</strong></td>
+            <td>${escapeHtml(m.areaName || m.area)}</td>
+            <td><span class="badge badge-info">${escapeHtml(m.bucket || '-')}</span></td>
+            <td style="font-size:12px;">${moduleNames || '-'}</td>
+            <td>${escapeHtml(m.email)}</td>
+            <td>${escapeHtml(m.phone)}</td>
+            <td>${m.serviceCharge}%</td>
+            <td><span class="status-badge ${m.status?'status-active':'status-hidden'}">${m.status?'Active':'Inactive'}</span></td>
+            <td><button class="btn btn-secondary btn-sm" onclick="copyLink('${window.location.origin}/area-manager.html?token=${m.loginToken}')">Copy</button></td>
+            <td class="actions">
+                <button class="btn btn-primary btn-sm" onclick="editManager('${m._id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteManager('${m._id}')">Delete</button>
+            </td>
+        </tr>`;
+    }).join('');
 }
 
 function renderBanners() {
     const tbody = document.getElementById('bannerTable');
-    tbody.innerHTML = pendingShops.length === 0 ? '<tr><td colspan="6" style="text-align:center;padding:40px;">No pending banners</td></tr>' :
-        pendingShops.map(s => `<tr>
-            <td><strong>${escapeHtml(s.name)}</strong></td>
-            <td>${escapeHtml(s.managerId?.name||'-')}</td>
-            <td>${escapeHtml(s.area)}</td>
-            <td><img src="${s.banner}" class="banner-thumb" onclick="viewBanner('${s.banner}')"></td>
-            <td><span class="status-badge status-pending">Pending</span></td>
-            <td class="actions">
-                <button class="btn btn-success btn-sm" onclick="approveBanner('${s._id}')">Approve</button>
-                <button class="btn btn-danger btn-sm" onclick="rejectBanner('${s._id}')">Reject</button>
-            </td>
-        </tr>`).join('');
+    
+    if (pendingShops.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">No pending banners</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = pendingShops.map(s => `<tr>
+        <td><strong>${escapeHtml(s.name)}</strong></td>
+        <td>${escapeHtml(s.managerId?.name || '-')}</td>
+        <td>${escapeHtml(s.area)}</td>
+        <td><img src="${s.banner}" class="banner-thumb" onclick="viewBanner('${s.banner}')" style="cursor:pointer;max-width:100px;"></td>
+        <td><span class="status-badge status-pending">Pending</span></td>
+        <td class="actions">
+            <button class="btn btn-success btn-sm" onclick="approveBanner('${s._id}')">Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectBanner('${s._id}')">Reject</button>
+        </td>
+    </tr>`).join('');
 }
 
 function renderModuleCheckboxes() {
-    document.getElementById('moduleSelectBox').innerHTML = allModules.map(m => `
+    const container = document.getElementById('moduleSelectBox');
+    if (!window.allModules || window.allModules.length === 0) {
+        container.innerHTML = '<p style="color:#94a3b8;">No modules available</p>';
+        return;
+    }
+    
+    container.innerHTML = window.allModules.map(m => `
         <div class="module-checkbox">
-            <input type="checkbox" id="mod_${m._id}" value="${m._id}" onchange="toggleModule('${m._id}')">
-            <label for="mod_${m._id}">${m.icon} ${escapeHtml(m.name)}</label>
+            <input type="checkbox" id="mod_${m._id || m.id}" value="${m._id || m.id}" onchange="toggleModule('${m._id || m.id}')">
+            <label for="mod_${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</label>
         </div>`).join('');
 }
 
@@ -194,7 +278,8 @@ window.toggleModule = (id) => {
 
 function renderSelectedModules() {
     document.getElementById('selectedModules').innerHTML = selectedModuleIds.map(id => {
-        const m = allModules.find(x => x._id === id);
+        const m = window.allModules.find(x => (x._id || x.id) === id);
+        if (!m) return '';
         return `<div class="module-tag">${m.icon} ${escapeHtml(m.name)}<span onclick="toggleModule('${id}')">×</span></div>`;
     }).join('');
 }
@@ -202,7 +287,7 @@ function renderSelectedModules() {
 window.filterModules = () => {
     const query = document.getElementById('moduleSearch').value.toLowerCase();
     document.querySelectorAll('.module-checkbox').forEach(box => {
-        box.style.display = box.textContent.toLowerCase().includes(query)? 'flex':'none';
+        box.style.display = box.textContent.toLowerCase().includes(query)? 'flex' : 'none';
     });
 };
 
@@ -213,101 +298,127 @@ window.openAddManager = () => {
     selectedModuleIds = [];
     renderSelectedModules();
     
-    // Agar area URL me hai to lock kar do
+    // Area lock karo agar URL me hai
     if (currentAreaCode && currentAreaData) {
         document.getElementById('managerArea').value = currentAreaData.areaName;
         document.getElementById('managerArea').disabled = true;
         document.getElementById('areaCodeHidden').value = currentAreaCode;
-        loadBucketDropdown();
     } else {
         document.getElementById('managerArea').disabled = false;
         document.getElementById('areaCodeHidden').value = '';
     }
     
+    loadBucketDropdown();
     document.getElementById('loginLinkBox').style.display = 'none';
-    document.getElementById('managerModal').style.display = 'block';
+    document.getElementById('managerModal').classList.add('active');
 };
 
 window.editManager = (id) => {
-    const m = allManagers.find(x => x._id === id);
+    const m = window.allManagers.find(x => x._id === id);
+    if (!m) return showToast('Manager not found', 'error');
+    
     document.getElementById('managerId').value = id;
     document.getElementById('managerModalTitle').textContent = 'Edit Manager';
-    document.getElementById('managerName').value = m.name;
-    document.getElementById('managerArea').value = m.areaName || m.area;
+    document.getElementById('managerName').value = m.name || '';
+    document.getElementById('managerArea').value = m.areaName || m.area || '';
     document.getElementById('managerArea').disabled = true;
-    document.getElementById('areaCodeHidden').value = m.areaCode;
+    document.getElementById('areaCodeHidden').value = m.areaCode || '';
     document.getElementById('managerBucket').innerHTML = `<option value="${m.bucket}">${m.bucket} Manager</option>`;
     document.getElementById('managerBucket').value = m.bucket;
     document.getElementById('managerBucket').disabled = true;
-    document.getElementById('managerEmail').value = m.email;
-    document.getElementById('managerPhone').value = m.phone;
-    document.getElementById('managerServiceCharge').value = m.serviceCharge;
+    document.getElementById('managerEmail').value = m.email || '';
+    document.getElementById('managerPhone').value = m.phone || '';
+    document.getElementById('managerServiceCharge').value = m.serviceCharge || 5;
     document.getElementById('managerStatus').value = m.status;
-    selectedModuleIds = [...(m.moduleAccess||[])];
+    
+    selectedModuleIds = [...(m.moduleAccess || [])];
     renderSelectedModules();
-    setTimeout(() => selectedModuleIds.forEach(id => {
-        const cb = document.getElementById('mod_'+id);
-        if (cb) cb.checked = true;
-    }), 100);
-    document.getElementById('managerModal').style.display = 'block';
+    
+    setTimeout(() => {
+        selectedModuleIds.forEach(modId => {
+            const cb = document.getElementById('mod_' + modId);
+            if (cb) cb.checked = true;
+        });
+    }, 100);
+    
+    document.getElementById('managerModal').classList.add('active');
 };
 
 document.getElementById('managerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (selectedModuleIds.length === 0) return showToast('Select at least 1 Module!', 'error');
+    
+    if (selectedModuleIds.length === 0) {
+        return showToast('Select at least 1 Module!', 'error');
+    }
+    
+    const btn = document.getElementById('saveManagerBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
     
     const id = document.getElementById('managerId').value;
     const areaCode = document.getElementById('areaCodeHidden').value || currentAreaCode;
     const bucket = document.getElementById('managerBucket').value;
     
-    if (!bucket) return showToast('Select Bucket!', 'error');
+    if (!bucket) {
+        showToast('Select Bucket!', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Save Manager';
+        return;
+    }
     
     const formData = {
-        name: document.getElementById('managerName').value,
-        area: document.getElementById('managerArea').value,
+        name: document.getElementById('managerName').value.trim(),
+        area: document.getElementById('managerArea').value.trim(),
         areaCode: areaCode,
         bucket: bucket,
-        managerCode: areaCode ? `${areaCode}-${bucket}`.toUpperCase() : '',
-        email: document.getElementById('managerEmail').value,
-        phone: document.getElementById('managerPhone').value,
-        serviceCharge: document.getElementById('managerServiceCharge').value,
-        status: document.getElementById('managerStatus').value,
+        managerCode: areaCode? `${areaCode}-${bucket}`.toUpperCase() : '',
+        email: document.getElementById('managerEmail').value.trim(),
+        phone: document.getElementById('managerPhone').value.trim(),
+        serviceCharge: parseFloat(document.getElementById('managerServiceCharge').value || 5),
+        status: document.getElementById('managerStatus').value === 'true',
         moduleAccess: selectedModuleIds
     };
     
     try {
         if (id) {
             await apiCall('/managers/' + id, 'PUT', formData);
-            showToast('Manager updated!');
+            showToast('Manager updated successfully!');
             closeManagerModal();
         } else {
             const data = await apiCall('/admin/create-manager', 'POST', formData);
             document.getElementById('loginLinkBox').style.display = 'block';
             document.getElementById('loginLink').value = data.loginLink;
             document.getElementById('tempPassword').textContent = data.tempPassword;
-            showToast('Manager created!');
+            showToast('Manager created successfully!');
         }
         await loadManagers();
     } catch (err) {
         showToast('Error: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Manager';
     }
 });
 
 window.deleteManager = async (id) => {
-    if (!confirm('Delete this manager?')) return;
+    if (!confirm('Delete this manager? All associated data will be removed!')) return;
     try {
         await apiCall('/managers/' + id, 'DELETE');
-        showToast('Manager deleted');
+        showToast('Manager deleted successfully');
         await loadManagers();
-    } catch (err) {}
+    } catch (err) {
+        showToast('Failed to delete: ' + err.message, 'error');
+    }
 };
 
 window.approveBanner = async (id) => {
     try {
         await apiCall('/admin/approve-banner/' + id, 'POST');
-        showToast('Banner approved!');
+        showToast('Banner approved successfully!');
         await loadManagers();
-    } catch (err) {}
+    } catch (err) {
+        showToast('Failed to approve: ' + err.message, 'error');
+    }
 };
 
 window.rejectBanner = async (id) => {
@@ -316,19 +427,26 @@ window.rejectBanner = async (id) => {
         await apiCall('/admin/reject-banner/' + id, 'POST');
         showToast('Banner rejected');
         await loadManagers();
-    } catch (err) {}
+    } catch (err) {
+        showToast('Failed to reject: ' + err.message, 'error');
+    }
 };
 
 window.copyLink = (link) => {
     navigator.clipboard.writeText(link);
-    showToast('Link copied!');
+    showToast('Link copied to clipboard!');
 };
 
 window.closeManagerModal = () => {
-    document.getElementById('managerModal').style.display = 'none';
+    document.getElementById('managerModal').classList.remove('active');
     document.getElementById('managerArea').disabled = false;
     document.getElementById('managerBucket').disabled = false;
 };
 
+window.viewBanner = (url) => {
+    window.open(url, '_blank');
+};
+
+// Initialize
 loadManagers();
 </script>

@@ -1,41 +1,176 @@
 <div class="content">
     <h2>📊 Dashboard</h2>
     <div class="stats-grid">
-        <div class="card stat-card"><h3>Total Users</h3><div class="stat-value" id="totalUsersCount">0</div></div>
-        <div class="card stat-card"><h3>Total Shops</h3><div class="stat-value" id="totalShopsCount">0</div></div>
-        <div class="card stat-card"><h3>Total Modules</h3><div class="stat-value purple" id="totalModulesCount">0</div></div>
-        <div class="card stat-card"><h3>Total Categories</h3><div class="stat-value green" id="totalCategoriesCount">0</div></div>
-        <div class="card stat-card"><h3>Total Content</h3><div class="stat-value cyan" id="totalContentCount">0</div></div>
-        <div class="card stat-card"><h3>Pending Shops</h3><div class="stat-value orange" id="pendingShopsCount">0</div></div>
+        <div class="card stat-card">
+            <h3>Total Users</h3>
+            <div class="stat-value" id="totalUsersCount">0</div>
+        </div>
+        <div class="card stat-card">
+            <h3>Total Shops</h3>
+            <div class="stat-value" id="totalShopsCount">0</div>
+        </div>
+        <div class="card stat-card">
+            <h3>Total Modules</h3>
+            <div class="stat-value purple" id="totalModulesCount">0</div>
+        </div>
+        <div class="card stat-card">
+            <h3>Total Categories</h3>
+            <div class="stat-value green" id="totalCategoriesCount">0</div>
+        </div>
+        <div class="card stat-card">
+            <h3>Total Content</h3>
+            <div class="stat-value cyan" id="totalContentCount">0</div>
+        </div>
+        <div class="card stat-card">
+            <h3>Pending Shops</h3>
+            <div class="stat-value orange" id="pendingShopsCount">0</div>
+        </div>
     </div>
     <div class="chart-grid">
-        <div class="card"><h3>Shops by Area</h3><div class="chart-container"><canvas id="areaChart"></canvas></div></div>
-        <div class="card"><h3>Shop Status</h3><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
+        <div class="card">
+            <h3>Shops by Area</h3>
+            <div class="chart-container">
+                <canvas id="areaChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Shop Status</h3>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
     </div>
 </div>
+
 <script>
+// ========================================
+// DASHBOARD - PROFESSIONAL VERSION
+// Uses window.allModules, window.allCategories from admin.js
+// ========================================
+let areaChartInstance = null;
+let statusChartInstance = null;
+
 async function loadDashboard() {
     try {
         const [stats, shops, modules] = await Promise.all([
-            apiCall('/stats'), apiCall('/shops'), apiCall('/modules')
+            apiCall('/stats'), 
+            apiCall('/shops'), 
+            apiCall('/modules')
         ]);
-        allCategories = modules.flatMap(m => m.categoryDetails || []);
+        
+        window.allModules = modules.modules || modules;
+        window.allCategories = window.allModules.flatMap(m => m.categoryDetails || []);
+        
+        // Update stats cards
         document.getElementById('totalUsersCount').textContent = stats.users || 0;
         document.getElementById('totalShopsCount').textContent = stats.shops || 0;
-        document.getElementById('totalModulesCount').textContent = stats.modules || 0;
-        document.getElementById('totalCategoriesCount').textContent = allCategories.length;
+        document.getElementById('totalModulesCount').textContent = stats.modules || window.allModules.length;
+        document.getElementById('totalCategoriesCount').textContent = window.allCategories.length;
         document.getElementById('totalContentCount').textContent = stats.content || 0;
         document.getElementById('pendingShopsCount').textContent = shops.filter(s => s.status === 'pending').length;
 
-        // Charts render karo
-        const areaCounts = {};
-        shops.forEach(s => { if(s.area) areaCounts[s.area] = (areaCounts[s.area]||0)+1 });
-        new Chart(document.getElementById('areaChart'), {
-            type: 'bar',
-            data: { labels: Object.keys(areaCounts), datasets: [{data: Object.values(areaCounts), backgroundColor: '#3b82f6'}] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-        });
-    } catch (err) { console.error(err); }
+        // Render charts
+        renderAreaChart(shops);
+        renderStatusChart(shops);
+        
+    } catch (err) {
+        console.error('Dashboard load error:', err);
+        showToast('Failed to load dashboard: ' + err.message, 'error');
+    }
 }
+
+function renderAreaChart(shops) {
+    const areaCounts = {};
+    shops.forEach(s => {
+        if (s.area) areaCounts[s.area] = (areaCounts[s.area] || 0) + 1;
+    });
+    
+    // Destroy existing chart
+    if (areaChartInstance) {
+        areaChartInstance.destroy();
+    }
+    
+    const ctx = document.getElementById('areaChart');
+    if (!ctx) return;
+    
+    areaChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(areaCounts),
+            datasets: [{
+                label: 'Shops',
+                data: Object.values(areaCounts),
+                backgroundColor: '#3b82f6',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    padding: 12,
+                    borderRadius: 8
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+}
+
+function renderStatusChart(shops) {
+    const statusCounts = {
+        active: shops.filter(s => s.status === 'active').length,
+        pending: shops.filter(s => s.status === 'pending').length,
+        inactive: shops.filter(s => s.status === 'inactive' || s.status === 'hidden').length
+    };
+    
+    // Destroy existing chart
+    if (statusChartInstance) {
+        statusChartInstance.destroy();
+    }
+    
+    const ctx = document.getElementById('statusChart');
+    if (!ctx) return;
+    
+    statusChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Active', 'Pending', 'Inactive'],
+            datasets: [{
+                data: [statusCounts.active, statusCounts.pending, statusCounts.inactive],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: { size: 13 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    padding: 12,
+                    borderRadius: 8
+                }
+            }
+        }
+    });
+}
+
+// Initialize dashboard
 loadDashboard();
 </script>

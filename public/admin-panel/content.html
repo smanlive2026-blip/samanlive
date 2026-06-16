@@ -1,41 +1,82 @@
 <div class="content content-section">
     <div class="section-header">
         <h2>📢 Ads <span id="adsCount" class="badge badge-info">0</span></h2>
-        <button class="btn-success" onclick="openAddContent('ad')">+ Add New Ad</button>
+        <button class="btn btn-success" onclick="openAddContent('ad')">+ Add New Ad</button>
     </div>
-    <div style="overflow-x:auto;"><table id="adsTable">
-        <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody><tr><td colspan="7" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
-    </table></div>
+    <div style="overflow-x:auto;">
+        <table id="adsTable">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Button</th>
+                    <th>Color</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="7" class="loading">Loading ads</td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div class="content content-section">
     <div class="section-header">
         <h2>🎬 Videos <span id="videosCount" class="badge badge-info">0</span></h2>
-        <button class="btn-success" onclick="openAddContent('video')">+ Add New Video</button>
+        <button class="btn btn-success" onclick="openAddContent('video')">+ Add New Video</button>
     </div>
     <div class="upload-box">
         <p><strong>📤 Direct Video Upload</strong></p>
         <p class="help-text">Select video from system - auto uploads and creates entry</p>
         <input type="file" id="videoUploadFile" accept="video/*">
-        <button class="btn-primary" id="uploadVideoBtn" onclick="uploadVideoFile()">Upload Video</button>
+        <button class="btn btn-primary" id="uploadVideoBtn" onclick="uploadVideoFile()">Upload Video</button>
         <p id="uploadStatus" class="status-text"></p>
     </div>
-    <div style="overflow-x:auto;"><table id="videosTable">
-        <thead><tr><th>Title</th><th>URL</th><th>Preview</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody><tr><td colspan="6" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
-    </table></div>
+    <div style="overflow-x:auto;">
+        <table id="videosTable">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>URL</th>
+                    <th>Preview</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="6" class="loading">Loading videos</td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div class="content content-section">
     <div class="section-header">
         <h2>🎯 Campaigns <span id="campaignsCount" class="badge badge-info">0</span></h2>
-        <button class="btn-success" onclick="openAddContent('campaign')">+ Add New Campaign</button>
+        <button class="btn btn-success" onclick="openAddContent('campaign')">+ Add New Campaign</button>
     </div>
-    <div style="overflow-x:auto;"><table id="campaignsTable">
-        <thead><tr><th>Title</th><th>Description</th><th>Button</th><th>Color</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody><tr><td colspan="7" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
-    </table></div>
+    <div style="overflow-x:auto;">
+        <table id="campaignsTable">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Button</th>
+                    <th>Color</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="7" class="loading">Loading campaigns</td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Content Modal -->
@@ -48,27 +89,34 @@
         <input type="hidden" id="contentEditId">
         <input type="hidden" id="contentEditType">
         <div id="contentModalFields"></div>
-        <div style="display:flex;gap:10px;margin-top:20px;">
-            <button class="btn-primary" id="saveContentBtn" onclick="saveContent()">💾 Save Changes</button>
-            <button class="btn-secondary" onclick="closeContentModal()">Cancel</button>
+        <div style="display:flex;gap:10px;margin-top:25px;padding-top:20px;border-top:2px solid #f1f5f9;">
+            <button class="btn btn-primary" id="saveContentBtn" onclick="saveContent()">💾 Save Changes</button>
+            <button class="btn btn-secondary" onclick="closeContentModal()">Cancel</button>
         </div>
     </div>
 </div>
 
 <script>
+// ========================================
+// CONTENT MANAGEMENT - PROFESSIONAL VERSION
+// Uses window.allContent from admin.js
+// ========================================
+
 async function loadContent() {
     try {
-        allContent = await apiCall('/content');
+        const data = await apiCall('/content');
+        window.allContent = data || [];
         renderContent();
     } catch (err) {
         console.error('Failed to load content:', err);
+        showToast('Failed to load content: ' + err.message, 'error');
     }
 }
 
 function renderContent() {
-    const ads = allContent.filter(c => c.type === 'ad');
-    const videos = allContent.filter(c => c.type === 'video');
-    const campaigns = allContent.filter(c => c.type === 'campaign');
+    const ads = window.allContent.filter(c => c.type === 'ad');
+    const videos = window.allContent.filter(c => c.type === 'video');
+    const campaigns = window.allContent.filter(c => c.type === 'campaign');
 
     document.getElementById('adsCount').textContent = ads.length;
     document.getElementById('videosCount').textContent = videos.length;
@@ -76,7 +124,7 @@ function renderContent() {
 
     // Ads Table
     document.querySelector('#adsTable tbody').innerHTML = ads.length === 0
-       ? '<tr><td colspan="7" style="text-align:center;padding:40px;">No ads found</td></tr>'
+      ? '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No ads found</td></tr>'
         : ads.map(a => `<tr>
             <td><b>${escapeHtml(a.title)}</b></td>
             <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(a.description || '-')}</td>
@@ -85,29 +133,29 @@ function renderContent() {
             <td>${a.priority || 0}</td>
             <td><span class="status-badge status-${a.status}">${a.status}</span></td>
             <td class="actions">
-                <button class="btn-primary btn-sm" onclick="editContent('${a._id}')">Edit</button>
-                <button class="btn-danger btn-sm" onclick="deleteContent('${a._id}')">Delete</button>
+                <button class="btn btn-primary btn-sm" onclick="editContent('${a._id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteContent('${a._id}')">Delete</button>
             </td>
         </tr>`).join('');
 
     // Videos Table
     document.querySelector('#videosTable tbody').innerHTML = videos.length === 0
-       ? '<tr><td colspan="6" style="text-align:center;padding:40px;">No videos found</td></tr>'
+      ? '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">No videos found</td></tr>'
         : videos.map(v => `<tr>
             <td><b>${escapeHtml(v.title)}</b></td>
-            <td><a href="${v.url}" target="_blank" class="btn-secondary btn-sm">View</a></td>
-            <td><video src="${v.url}" class="video-preview" controls onerror="this.style.display='none'"></video></td>
+            <td><a href="${v.url}" target="_blank" class="btn btn-secondary btn-sm">View</a></td>
+            <td><video src="${v.url}" class="video-preview" controls style="max-width:120px;max-height:80px;" onerror="this.style.display='none'"></video></td>
             <td>${v.priority || 0}</td>
             <td><span class="status-badge status-${v.status}">${v.status}</span></td>
             <td class="actions">
-                <button class="btn-primary btn-sm" onclick="editContent('${v._id}')">Edit</button>
-                <button class="btn-danger btn-sm" onclick="deleteContent('${v._id}')">Delete</button>
+                <button class="btn btn-primary btn-sm" onclick="editContent('${v._id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteContent('${v._id}')">Delete</button>
             </td>
         </tr>`).join('');
 
-    // Campaigns Table - FIXED
+    // Campaigns Table
     document.querySelector('#campaignsTable tbody').innerHTML = campaigns.length === 0
-       ? '<tr><td colspan="7" style="text-align:center;padding:40px;">No campaigns found</td></tr>'
+      ? '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No campaigns found</td></tr>'
         : campaigns.map(c => `<tr>
             <td><b>${escapeHtml(c.title)}</b></td>
             <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.description || '-')}</td>
@@ -116,8 +164,8 @@ function renderContent() {
             <td>${c.priority || 0}</td>
             <td><span class="status-badge status-${c.status}">${c.status}</span></td>
             <td class="actions">
-                <button class="btn-primary btn-sm" onclick="editContent('${c._id}')">Edit</button>
-                <button class="btn-danger btn-sm" onclick="deleteContent('${c._id}')">Delete</button>
+                <button class="btn btn-primary btn-sm" onclick="editContent('${c._id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteContent('${c._id}')">Delete</button>
             </td>
         </tr>`).join('');
 }
@@ -127,42 +175,92 @@ window.openAddContent = (type) => {
     document.getElementById('contentEditType').value = type;
     document.getElementById('contentModalTitle').textContent = `Add New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
-    let fields = `<div class="form-grid"><div class="form-group full"><label>Title *</label><input type="text" id="field_content_title" required></div>`;
+    let fields = `<div class="form-grid">
+        <div class="form-group full">
+            <label>Title *</label>
+            <input type="text" id="field_content_title" required placeholder="Enter title">
+        </div>`;
 
     if (type === 'ad' || type === 'campaign') {
-        fields += `<div class="form-group full"><label>Description</label><textarea id="field_content_description" rows="3"></textarea></div>
-            <div class="form-group"><label>Button Text</label><input type="text" id="field_content_buttonText" placeholder="Learn More"></div>
-            <div class="form-group"><label>Button Link</label><input type="text" id="field_content_buttonLink" placeholder="https://..."></div>
-            <div class="form-group"><label>Color</label><input type="color" id="field_content_color" value="#3b82f6"></div>`;
+        fields += `
+            <div class="form-group full">
+                <label>Description</label>
+                <textarea id="field_content_description" rows="3" placeholder="Enter description"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Button Text</label>
+                <input type="text" id="field_content_buttonText" placeholder="Learn More">
+            </div>
+            <div class="form-group">
+                <label>Button Link</label>
+                <input type="text" id="field_content_buttonLink" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>Color</label>
+                <input type="color" id="field_content_color" value="#3b82f6">
+            </div>`;
     }
 
     if (type === 'video') {
-        fields += `<div class="form-group full"><label>Video URL *</label><input type="text" id="field_content_url" placeholder="https://..." required></div>`;
+        fields += `
+            <div class="form-group full">
+                <label>Video URL *</label>
+                <input type="text" id="field_content_url" placeholder="https://..." required>
+            </div>`;
     }
 
-    fields += `<div class="form-group"><label>Priority</label><input type="number" id="field_content_priority" value="0" min="0"></div>
-        <div class="form-group"><label>Status</label><select id="field_content_status"><option value="active">Active</option><option value="hidden">Hidden</option></select></div></div>`;
+    fields += `
+        <div class="form-group">
+            <label>Priority</label>
+            <input type="number" id="field_content_priority" value="0" min="0" placeholder="0">
+        </div>
+        <div class="form-group">
+            <label>Status</label>
+            <select id="field_content_status">
+                <option value="active">Active</option>
+                <option value="hidden">Hidden</option>
+            </select>
+        </div>
+    </div>`;
 
     document.getElementById('contentModalFields').innerHTML = fields;
-    document.getElementById('contentModal').style.display = 'block';
+    document.getElementById('contentModal').classList.add('active');
 };
 
 window.editContent = (id) => {
-    const item = allContent.find(x => x._id === id);
-    if (!item) return;
+    const item = window.allContent.find(x => x._id === id);
+    if (!item) {
+        showToast('Content not found', 'error');
+        return;
+    }
+    
     openAddContent(item.type);
     document.getElementById('contentEditId').value = id;
     document.getElementById('contentModalTitle').textContent = `Edit ${item.type.charAt(0).toUpperCase() + item.type.slice(1)}`;
 
     setTimeout(() => {
         document.getElementById('field_content_title').value = item.title || '';
-        if (document.getElementById('field_content_description')) document.getElementById('field_content_description').value = item.description || '';
-        if (document.getElementById('field_content_buttonText')) document.getElementById('field_content_buttonText').value = item.buttonText || '';
-        if (document.getElementById('field_content_buttonLink')) document.getElementById('field_content_buttonLink').value = item.buttonLink || '';
-        if (document.getElementById('field_content_color')) document.getElementById('field_content_color').value = item.color || '#3b82f6';
-        if (document.getElementById('field_content_url')) document.getElementById('field_content_url').value = item.url || '';
-        if (document.getElementById('field_content_priority')) document.getElementById('field_content_priority').value = item.priority || 0;
-        if (document.getElementById('field_content_status')) document.getElementById('field_content_status').value = item.status || 'active';
+        if (document.getElementById('field_content_description')) {
+            document.getElementById('field_content_description').value = item.description || '';
+        }
+        if (document.getElementById('field_content_buttonText')) {
+            document.getElementById('field_content_buttonText').value = item.buttonText || '';
+        }
+        if (document.getElementById('field_content_buttonLink')) {
+            document.getElementById('field_content_buttonLink').value = item.buttonLink || '';
+        }
+        if (document.getElementById('field_content_color')) {
+            document.getElementById('field_content_color').value = item.color || '#3b82f6';
+        }
+        if (document.getElementById('field_content_url')) {
+            document.getElementById('field_content_url').value = item.url || '';
+        }
+        if (document.getElementById('field_content_priority')) {
+            document.getElementById('field_content_priority').value = item.priority || 0;
+        }
+        if (document.getElementById('field_content_status')) {
+            document.getElementById('field_content_status').value = item.status || 'active';
+        }
     }, 50);
 };
 
@@ -201,13 +299,18 @@ window.saveContent = async () => {
     }
 
     try {
-        if (id) await apiCall('/content/' + id, 'PUT', data);
-        else await apiCall('/content', 'POST', data);
-        showToast(id? 'Updated successfully' : 'Created successfully');
+        if (id) {
+            await apiCall('/content/' + id, 'PUT', data);
+            showToast('Updated successfully!');
+        } else {
+            await apiCall('/content', 'POST', data);
+            showToast('Created successfully!');
+        }
         closeContentModal();
         await loadContent();
     } catch (err) {
-        console.error(err);
+        console.error('Save error:', err);
+        showToast('Failed to save: ' + err.message, 'error');
     } finally {
         btn.disabled = false;
         btn.textContent = '💾 Save Changes';
@@ -215,12 +318,14 @@ window.saveContent = async () => {
 };
 
 window.deleteContent = async (id) => {
-    if (!confirm('Delete this item?')) return;
+    if (!confirm('Delete this item? This cannot be undone.')) return;
     try {
         await apiCall('/content/' + id, 'DELETE');
         showToast('Deleted successfully');
         await loadContent();
-    } catch (err) {}
+    } catch (err) {
+        showToast('Failed to delete: ' + err.message, 'error');
+    }
 };
 
 window.uploadVideoFile = async () => {
@@ -228,14 +333,22 @@ window.uploadVideoFile = async () => {
     const status = document.getElementById('uploadStatus');
     const btn = document.getElementById('uploadVideoBtn');
 
-    if (!fileInput.files[0]) return showToast('Please select a video', 'error');
-    if (fileInput.files[0].size > 50 * 1024 * 1024) return showToast('Video must be less than 50MB', 'error');
+    if (!fileInput.files[0]) {
+        showToast('Please select a video', 'error');
+        return;
+    }
+    
+    if (fileInput.files[0].size > 50 * 1024 * 1024) {
+        showToast('Video must be less than 50MB', 'error');
+        return;
+    }
 
     btn.disabled = true;
     btn.textContent = 'Uploading...';
+    
     const formData = new FormData();
     formData.append('video', fileInput.files[0]);
-    status.textContent = 'Uploading...';
+    status.textContent = 'Uploading video...';
     status.className = 'status-text uploading';
 
     try {
@@ -247,20 +360,33 @@ window.uploadVideoFile = async () => {
             priority: 0,
             status: 'active'
         });
-        showToast('Video uploaded & added');
+        
+        showToast('Video uploaded & added successfully!');
+        status.textContent = '✅ Upload complete!';
+        status.className = 'status-text success';
         fileInput.value = '';
+        
         await loadContent();
-        setTimeout(() => { status.textContent = ''; status.className = 'status-text'; }, 3000);
+        
+        setTimeout(() => {
+            status.textContent = '';
+            status.className = 'status-text';
+        }, 3000);
+        
     } catch (err) {
-        status.textContent = 'Upload failed!';
+        console.error('Upload error:', err);
+        status.textContent = '❌ Upload failed: ' + err.message;
         status.className = 'status-text error';
+        showToast('Upload failed: ' + err.message, 'error');
     } finally {
         btn.disabled = false;
         btn.textContent = 'Upload Video';
     }
 };
 
-window.closeContentModal = () => document.getElementById('contentModal').style.display = 'none';
+window.closeContentModal = () => {
+    document.getElementById('contentModal').classList.remove('active');
+};
 
 // Load on page open
 loadContent();

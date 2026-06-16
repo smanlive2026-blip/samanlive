@@ -140,90 +140,44 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script>
 // ========================================
-// UTILITY FUNCTIONS - MISSING THI YE
-// ========================================
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-function showLoading(tableId) {
-    const tbody = document.querySelector(`#${tableId} tbody`);
-    if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="loading">Loading</td></tr>';
-}
-
-function filterTable(tableId, query) {
-    const table = document.getElementById(tableId);
-    const rows = table.querySelectorAll('tbody tr');
-    const searchTerm = query.toLowerCase();
-
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(searchTerm)? '' : 'none';
-    });
-}
-
-async function apiCall(endpoint, method = 'GET', data = null) {
-    const options = {
-        method,
-        headers: { 'Content-Type': 'application/json' }
-    };
-    if (data) options.body = JSON.stringify(data);
-
-    const res = await fetch(`/api${endpoint}`, options);
-    const result = await res.json();
-
-    if (!res.ok) throw new Error(result.error || 'Request failed');
-    return result;
-}
-
-// ========================================
-// MODULE MANAGEMENT
+// MODULE MANAGEMENT - PROFESSIONAL VERSION
+// Uses window.allModules from admin.js
 // ========================================
 let currentModuleCategories = [];
 let moduleMap, drawnItems, currentDrawnLayer, currentModuleId;
-let allModules = [];
 
 async function loadModules() {
     showLoading('modulesTable');
     try {
         const data = await apiCall('/modules');
-        allModules = data.modules || data; // Handle both formats
-        document.getElementById('moduleCount').textContent = allModules.length;
+        window.allModules = data.modules || data;
+        document.getElementById('moduleCount').textContent = window.allModules.length;
         renderModules();
         populateModuleDropdown();
         initModuleMap();
     } catch (err) {
         console.error('Load modules error:', err);
         document.querySelector('#modulesTable tbody').innerHTML =
-            '<tr><td colspan="9" style="text-align:center;padding:40px;color:#ef4444;">Failed to load modules: ' + err.message + '</td></tr>';
+            `<tr><td colspan="9" style="text-align:center;padding:40px;color:#ef4444;">Failed to load modules: ${escapeHtml(err.message)}</td></tr>`;
     }
 }
 
 function renderModules() {
     const tbody = document.querySelector('#modulesTable tbody');
 
-    if (allModules.length === 0) {
+    if (!window.allModules || window.allModules.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">No modules found. Click "Add New Module" to create one.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = allModules.map(m => {
+    tbody.innerHTML = window.allModules.map(m => {
         const cats = m.categoryDetails || [];
         const catsText = cats.length > 0? cats.slice(0,2).map(c => escapeHtml(c.name)).join(', ') + (cats.length > 2? '...' : '') : '-';
         const areaCount = m.areas? m.areas.filter(a => a.status!== false).length : 0;
+        const moduleId = m._id || m.id;
 
-        return `<tr class="module-row" onclick="toggleModuleAreas('${m._id || m.id}')">
-            <td><span class="expand-icon" id="icon-${m._id || m.id}">▶</span></td>
+        return `<tr class="module-row" onclick="toggleModuleAreas('${moduleId}')">
+            <td><span class="expand-icon" id="icon-${moduleId}">▶</span></td>
             <td style="font-size:24px;">${m.icon || '📦'}</td>
             <td>
                 <b>${escapeHtml(m.name)}</b>
@@ -235,11 +189,11 @@ function renderModules() {
             <td>${m.priority || 0}</td>
             <td><span class="status-badge status-${m.status}">${m.status}</span></td>
             <td onclick="event.stopPropagation()" class="actions">
-                <button class="btn btn-primary btn-sm" onclick="editModule('${m._id || m.id}')">Edit</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteModule('${m._id || m.id}')">Delete</button>
+                <button class="btn btn-primary btn-sm" onclick="editModule('${moduleId}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteModule('${moduleId}')">Delete</button>
             </td>
         </tr>
-        <tr id="areas-${m._id || m.id}" style="display:none;">
+        <tr id="areas-${moduleId}" style="display:none;">
             <td colspan="9">
                 <div class="area-expand">
                     <h4 style="margin-bottom:10px;">Categories:</h4>
@@ -265,7 +219,7 @@ window.toggleModuleAreas = (id) => {
 function populateModuleDropdown() {
     const select = document.getElementById('moduleSelectArea');
     select.innerHTML = '<option value="">-- Select Module --</option>' +
-        allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
+        window.allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
 }
 
 window.openAddModule = () => {
@@ -278,7 +232,7 @@ window.openAddModule = () => {
 };
 
 window.editModule = (id) => {
-    const m = allModules.find(x => (x._id || x.id) === id);
+    const m = window.allModules.find(x => (x._id || x.id) === id);
     if (!m) return showToast('Module not found', 'error');
 
     document.getElementById('moduleEditId').value = id;
@@ -433,7 +387,7 @@ window.closeModuleModal = () => {
 function initModuleMap() {
     if (moduleMap) return;
 
-    moduleMap = L.map('moduleMap').setView([23.0225, 72.5714], 11); // Ahmedabad default
+    moduleMap = L.map('moduleMap').setView([23.0225, 72.5714], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
     }).addTo(moduleMap);
@@ -469,7 +423,7 @@ window.loadModuleArea = () => {
 
     if (!currentModuleId) return;
 
-    const module = allModules.find(m => (m._id || m.id) === currentModuleId);
+    const module = window.allModules.find(m => (m._id || m.id) === currentModuleId);
     if (module && module.areas && module.areas.length > 0) {
         const area = module.areas[0];
         try {
