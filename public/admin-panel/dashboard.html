@@ -1,40 +1,163 @@
+<style>
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.dashboard-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+.dashboard-header.last-updated {
+    font-size: 13px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--card-color) 0%, var(--card-color-light) 100%);
+}
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+}
+.stat-card.icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+    opacity: 0.9;
+}
+.stat-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px 0;
+}
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1;
+}
+.stat-card.blue { --card-color: #3b82f6; --card-color-light: #60a5fa; }
+.stat-card.purple { --card-color: #8b5cf6; --card-color-light: #a78bfa; }
+.stat-card.green { --card-color: #10b981; --card-color-light: #34d399; }
+.stat-card.cyan { --card-color: #06b6d4; --card-color-light: #22d3ee; }
+.stat-card.orange { --card-color: #f59e0b; --card-color-light: #fbbf24; }
+.stat-card.pink { --card-color: #ec4899; --card-color-light: #f472b6; }
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+.chart-card {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+.chart-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.chart-container {
+    position: relative;
+    height: 320px;
+}
+@media (max-width: 768px) {
+   .chart-grid { grid-template-columns: 1fr; }
+   .chart-container { height: 280px; }
+}
+</style>
+
 <div class="content">
-    <h2>📊 Dashboard</h2>
+    <div class="dashboard-header">
+        <h2>📊 Dashboard Analytics</h2>
+        <div class="last-updated">
+            <span>🔄</span>
+            <span id="lastUpdated">Loading...</span>
+        </div>
+    </div>
+
     <div class="stats-grid">
-        <div class="card stat-card">
+        <div class="stat-card blue">
+            <div class="icon">👥</div>
             <h3>Total Users</h3>
             <div class="stat-value" id="totalUsersCount">0</div>
         </div>
-        <div class="card stat-card">
+        <div class="stat-card purple">
+            <div class="icon">🏪</div>
             <h3>Total Shops</h3>
             <div class="stat-value" id="totalShopsCount">0</div>
         </div>
-        <div class="card stat-card">
+        <div class="stat-card green">
+            <div class="icon">📦</div>
             <h3>Total Modules</h3>
-            <div class="stat-value purple" id="totalModulesCount">0</div>
+            <div class="stat-value" id="totalModulesCount">0</div>
         </div>
-        <div class="card stat-card">
+        <div class="stat-card cyan">
+            <div class="icon">📂</div>
             <h3>Total Categories</h3>
-            <div class="stat-value green" id="totalCategoriesCount">0</div>
+            <div class="stat-value" id="totalCategoriesCount">0</div>
         </div>
-        <div class="card stat-card">
+        <div class="stat-card pink">
+            <div class="icon">🎬</div>
             <h3>Total Content</h3>
-            <div class="stat-value cyan" id="totalContentCount">0</div>
+            <div class="stat-value" id="totalContentCount">0</div>
         </div>
-        <div class="card stat-card">
+        <div class="stat-card orange">
+            <div class="icon">⏳</div>
             <h3>Pending Shops</h3>
-            <div class="stat-value orange" id="pendingShopsCount">0</div>
+            <div class="stat-value" id="pendingShopsCount">0</div>
         </div>
     </div>
+
     <div class="chart-grid">
-        <div class="card">
-            <h3>Shops by Area</h3>
+        <div class="chart-card">
+            <h3>📍 Shops by Area</h3>
             <div class="chart-container">
                 <canvas id="areaChart"></canvas>
             </div>
         </div>
-        <div class="card">
-            <h3>Shop Status</h3>
+        <div class="chart-card">
+            <h3>📈 Shop Status Distribution</h3>
             <div class="chart-container">
                 <canvas id="statusChart"></canvas>
             </div>
@@ -44,13 +167,23 @@
 
 <script>
 // ========================================
-// DASHBOARD - PROFESSIONAL VERSION
-// Uses window.allModules, window.allCategories from admin.js
+// DASHBOARD - PREMIUM VERSION
+// Fixed Chart.js destroy bug + Premium UI
 // ========================================
 let areaChartInstance = null;
 let statusChartInstance = null;
 
 async function loadDashboard() {
+    // Destroy existing charts first - BUG FIX
+    if (areaChartInstance) {
+        areaChartInstance.destroy();
+        areaChartInstance = null;
+    }
+    if (statusChartInstance) {
+        statusChartInstance.destroy();
+        statusChartInstance = null;
+    }
+
     try {
         const [stats, shops, modules] = await Promise.all([
             apiCall('/stats'), 
@@ -58,25 +191,51 @@ async function loadDashboard() {
             apiCall('/modules')
         ]);
         
-        window.allModules = modules.modules || modules;
+        window.allModules = modules.modules || modules || [];
         window.allCategories = window.allModules.flatMap(m => m.categoryDetails || []);
         
-        // Update stats cards
-        document.getElementById('totalUsersCount').textContent = stats.users || 0;
-        document.getElementById('totalShopsCount').textContent = stats.shops || 0;
-        document.getElementById('totalModulesCount').textContent = stats.modules || window.allModules.length;
-        document.getElementById('totalCategoriesCount').textContent = window.allCategories.length;
-        document.getElementById('totalContentCount').textContent = stats.content || 0;
-        document.getElementById('pendingShopsCount').textContent = shops.filter(s => s.status === 'pending').length;
+        // Animate numbers
+        animateValue('totalUsersCount', 0, stats.users || 0, 800);
+        animateValue('totalShopsCount', 0, stats.shops || 0, 800);
+        animateValue('totalModulesCount', 0, stats.modules || window.allModules.length, 800);
+        animateValue('totalCategoriesCount', 0, window.allCategories.length, 800);
+        animateValue('totalContentCount', 0, stats.content || 0, 800);
+        animateValue('pendingShopsCount', 0, shops.filter(s => s.status === 'pending').length, 800);
 
-        // Render charts
-        renderAreaChart(shops);
-        renderStatusChart(shops);
+        // Update timestamp
+        document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('en-IN', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+
+        // Render charts with delay for animation
+        setTimeout(() => {
+            renderAreaChart(shops);
+            renderStatusChart(shops);
+        }, 300);
         
     } catch (err) {
         console.error('Dashboard load error:', err);
         showToast('Failed to load dashboard: ' + err.message, 'error');
     }
+}
+
+function animateValue(id, start, end, duration) {
+    const element = document.getElementById(id);
+    if (!element) return;
+    
+    const range = end - start;
+    const increment = range / (duration / 16);
+    let current = start;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+            current = end;
+            clearInterval(timer);
+        }
+        element.textContent = Math.floor(current);
+    }, 16);
 }
 
 function renderAreaChart(shops) {
@@ -85,23 +244,23 @@ function renderAreaChart(shops) {
         if (s.area) areaCounts[s.area] = (areaCounts[s.area] || 0) + 1;
     });
     
-    // Destroy existing chart
-    if (areaChartInstance) {
-        areaChartInstance.destroy();
-    }
-    
     const ctx = document.getElementById('areaChart');
     if (!ctx) return;
+    
+    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, '#3b82f6');
+    gradient.addColorStop(1, '#60a5fa');
     
     areaChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: Object.keys(areaCounts),
+            labels: Object.keys(areaCounts).length? Object.keys(areaCounts) : ['No Data'],
             datasets: [{
                 label: 'Shops',
-                data: Object.values(areaCounts),
-                backgroundColor: '#3b82f6',
-                borderRadius: 6
+                data: Object.keys(areaCounts).length? Object.values(areaCounts) : [0],
+                backgroundColor: gradient,
+                borderRadius: 8,
+                borderSkipped: false
             }]
         },
         options: {
@@ -112,13 +271,28 @@ function renderAreaChart(shops) {
                 tooltip: {
                     backgroundColor: '#1e293b',
                     padding: 12,
-                    borderRadius: 8
+                    borderRadius: 8,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    displayColors: false
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { stepSize: 1 }
+                    ticks: { 
+                        stepSize: 1,
+                        color: '#64748b',
+                        font: { size: 12 }
+                    },
+                    grid: { color: '#f1f5f9' }
+                },
+                x: {
+                    ticks: { 
+                        color: '#64748b',
+                        font: { size: 12 }
+                    },
+                    grid: { display: false }
                 }
             }
         }
@@ -132,11 +306,6 @@ function renderStatusChart(shops) {
         inactive: shops.filter(s => s.status === 'inactive' || s.status === 'hidden').length
     };
     
-    // Destroy existing chart
-    if (statusChartInstance) {
-        statusChartInstance.destroy();
-    }
-    
     const ctx = document.getElementById('statusChart');
     if (!ctx) return;
     
@@ -147,24 +316,38 @@ function renderStatusChart(shops) {
             datasets: [{
                 data: [statusCounts.active, statusCounts.pending, statusCounts.inactive],
                 backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                borderWidth: 0
+                borderWidth: 0,
+                hoverOffset: 8
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '65%',
             plugins: {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        padding: 15,
-                        font: { size: 13 }
+                        padding: 20,
+                        font: { size: 13, weight: '600' },
+                        color: '#475569',
+                        usePointStyle: true,
+                        pointStyle: 'circle'
                     }
                 },
                 tooltip: {
                     backgroundColor: '#1e293b',
                     padding: 12,
-                    borderRadius: 8
+                    borderRadius: 8,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total? ((context.parsed / total) * 100).toFixed(1) : 0;
+                            return ` ${context.label}: ${context.parsed} (${percentage}%)`;
+                        }
+                    }
                 }
             }
         }
@@ -173,4 +356,7 @@ function renderStatusChart(shops) {
 
 // Initialize dashboard
 loadDashboard();
+
+// Auto refresh every 60 seconds
+setInterval(loadDashboard, 60000);
 </script>
