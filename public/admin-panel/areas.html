@@ -7,24 +7,419 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        #map { height: 500px; width: 100%; border-radius: 8px; margin-top: 15px; z-index: 1; }
-       .area-circle-info { background: #e3f2fd; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
-       .radius-locked { color: #ff6b00; font-weight: 600; }
-       .search-results { position: absolute; background: white; border: 1px solid #e2e8f0; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; }
-       .search-result-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
-       .search-result-item:hover { background: #f8fafc; }
-       .search-result-item:last-child { border-bottom: none; }
-       .area-stats-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; z-index: 2000; align-items: center; justify-content: center; }
-       .area-stats-content { background: white; border-radius: 12px; padding: 24px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; }
-       .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0; }
-       .mini-stat { background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; }
-       .mini-stat-value { font-size: 24px; font-weight: 700; color: #0f172a; }
-       .mini-stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
-       .top-search { position: relative; margin-bottom: 20px; }
-       .top-search input { width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 15px; }
-       .top-search input:focus { border-color: #3b82f6; outline: none; }
-        tr.area-row { cursor: pointer; }
-        tr.area-row:hover { background: #f8fafc; }
+        * { box-sizing: border-box; }
+
+        #map {
+            height: 450px;
+            width: 100%;
+            border-radius: 12px;
+            margin-top: 15px;
+            z-index: 1;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 2px solid #e2e8f0;
+        }
+
+      .area-circle-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-top: 12px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+      .radius-locked { color: #fbbf24; font-weight: 700; }
+
+      .search-results {
+            position: absolute;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            max-height: 280px;
+            overflow-y: auto;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            display: none;
+            margin-top: 4px;
+        }
+
+      .search-result-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.2s;
+        }
+
+      .search-result-item:hover {
+            background: #f8fafc;
+            padding-left: 20px;
+        }
+
+      .search-result-item:last-child { border-bottom: none; }
+
+      .area-stats-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+      .area-stats-content {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 750px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+      .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin: 20px 0;
+        }
+
+      .mini-stat {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+
+      .mini-stat:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+      .mini-stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+      .mini-stat-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+      .top-search {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+      .top-search input {
+            width: 100%;
+            padding: 14px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+      .top-search input:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+      .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 1300px;
+        }
+
+        table th {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 12px;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        tr.area-row {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        tr.area-row:hover {
+            background: #f8fafc;
+            transform: scale(1.001);
+        }
+
+        tr.area-row:last-child td {
+            border-bottom: none;
+        }
+
+      .badge {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+      .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+      .status-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+      .status-hidden {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+      .btn-sm {
+            padding: 6px 14px;
+            font-size: 13px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+      .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+      .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+      .btn-secondary {
+            background: #64748b;
+            color: white;
+        }
+
+      .btn-secondary:hover {
+            background: #475569;
+        }
+
+      .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+      .btn-danger:hover {
+            background: #dc2626;
+        }
+
+      .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+      .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+      .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+      .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+      .card-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+      .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1500;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+      .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 1000px;
+            width: 100%;
+            margin: 40px auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+        }
+
+      .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+      .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+      .close-btn {
+            background: #f1f5f9;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+      .close-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+            transform: rotate(90deg);
+        }
+
+      .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+      .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+      .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+      .form-group label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #334155;
+            font-size: 14px;
+        }
+
+      .form-group input,.form-group select {
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+      .form-group input:focus,.form-group select:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+      .form-group input[readonly] {
+            background: #f8fafc;
+            color: #64748b;
+        }
+
+      .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+          .form-grid {
+                grid-template-columns: 1fr;
+            }
+          .modal-content {
+                padding: 20px;
+                margin: 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -45,7 +440,7 @@
                 <h2>All Areas - 50km Zone</h2>
                 <button class="btn btn-success" onclick="openAddArea()">+ Create New Area</button>
             </div>
-            <div style="overflow-x:auto;">
+            <div class="table-container">
                 <table>
                     <thead>
                         <tr>
@@ -61,7 +456,7 @@
                         </tr>
                     </thead>
                     <tbody id="areasTable">
-                        <tr><td colspan="9" style="text-align:center;padding:40px;">Loading...</td></tr>
+                        <tr><td colspan="9" class="loading">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -70,7 +465,7 @@
 
     <!-- Add Area Modal -->
     <div id="areaModal" class="modal">
-        <div class="modal-content" style="max-width:950px;">
+        <div class="modal-content">
             <div class="modal-header">
                 <h2 id="areaModalTitle">Create New Area</h2>
                 <button class="close-btn" onclick="closeAreaModal()">×</button>
@@ -82,7 +477,7 @@
                         <label>Search City / Location *</label>
                         <input type="text" id="citySearch" placeholder="Type: Surat, Mumbai, Delhi, New York..." autocomplete="off">
                         <div id="cityResults" class="search-results"></div>
-                        <small style="color:#64748b;">Search any city worldwide. Click on map to set exact center.</small>
+                        <small style="color:#64748b;margin-top:4px;">Search any city worldwide. Click on map to set exact center.</small>
                     </div>
 
                     <div class="form-group"><label>Area Code *</label><input type="text" id="areaCode" placeholder="AUTO" required style="text-transform:uppercase;" readonly></div>
@@ -104,7 +499,7 @@
                         </div>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary" id="saveAreaBtn" style="width:100%;margin-top:20px;">Save Area</button>
+                <button type="submit" class="btn btn-primary" id="saveAreaBtn" style="width:100%;margin-top:20px;padding:14px;font-size:16px;">Save Area</button>
             </form>
         </div>
     </div>
@@ -112,8 +507,8 @@
     <!-- Area Stats Modal -->
     <div id="areaStatsModal" class="area-stats-modal" onclick="closeAreaStats()">
         <div class="area-stats-content" onclick="event.stopPropagation()">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                <h2 id="statsAreaName">Area Details</h2>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h2 id="statsAreaName" style="margin:0;font-size:22px;font-weight:800;">Area Details</h2>
                 <button class="close-btn" onclick="closeAreaStats()">×</button>
             </div>
             <div id="areaStatsBody">
@@ -163,16 +558,16 @@
 
         function renderAreas(areas) {
             const tbody = document.getElementById('areasTable');
-            tbody.innerHTML = areas.length === 0? '<tr><td colspan="9" style="text-align:center;padding:40px;">No areas created yet</td></tr>' :
+            tbody.innerHTML = areas.length === 0? '<tr><td colspan="9" class="loading">No areas created yet</td></tr>' :
                 areas.map(a => {
                     const managerCount = allManagers.filter(m => m.areaCode === a.areaCode).length;
                     const totalBuckets = 15;
                     return `<tr class="area-row" onclick="showAreaStats('${a._id}')">
-                        <td><strong>${escapeHtml(a.areaCode)}</strong></td>
+                        <td><strong style="color:#3b82f6;">${escapeHtml(a.areaCode)}</strong></td>
                         <td>${escapeHtml(a.areaName)}</td>
                         <td>${escapeHtml(a.city)}</td>
                         <td>${escapeHtml(a.state)}</td>
-                        <td style="font-size:12px;">${a.centerLat.toFixed(4)}, ${a.centerLng.toFixed(4)}</td>
+                        <td style="font-size:12px;color:#64748b;">${a.centerLat.toFixed(4)}, ${a.centerLng.toFixed(4)}</td>
                         <td><span class="badge">50 km</span></td>
                         <td><b>${managerCount}</b>/${totalBuckets}</td>
                         <td><span class="status-badge ${a.status?'status-active':'status-hidden'}">${a.status?'Active':'Inactive'}</span></td>
@@ -228,17 +623,18 @@
                         <div class="mini-stat-label">Products</div>
                     </div>
                 </div>
-                <div style="margin-top:20px;">
-                    <h3 style="margin-bottom:12px;">📍 Location Details</h3>
-                    <p><b>City:</b> ${escapeHtml(area.city)}</p>
-                    <p><b>State:</b> ${escapeHtml(area.state)}</p>
-                    <p><b>Center:</b> ${area.centerLat.toFixed(6)}, ${area.centerLng.toFixed(6)}</p>
-                    <p><b>Coverage:</b> 50 km radius</p>
-                    <p><b>Status:</b> <span class="status-badge ${area.status?'status-active':'status-hidden'}">${area.status?'Active':'Inactive'}</span></p>
-                </div>
-                <div style="margin-top:20px;">
-                    <h3 style="margin-bottom:12px;">👥 Managers (${managers.length}/15)</h3>
-                    ${managers.length > 0? managers.map(m => `<div style="padding:8px;background:#f8fafc;border-radius:6px;margin-bottom:6px;">${escapeHtml(m.name)} - ${escapeHtml(m.email)}</div>`).join('') : '<p style="color:#94a3b8;">No managers assigned yet</p>'}
+                <div style="margin-top:24px;">
+                    <h3 style="margin-bottom:16px;font-size:16px;font-weight:700;">📍 Location Details</h3>
+                    <div style="background:#f8fafc;padding:16px;border-radius:10px;">
+                        <p style="margin:8px 0;"><b>City:</b> ${escapeHtml(area.city)}</p>
+                        <p style="margin:8px 0;"><b>State:</b> ${escapeHtml(area.state)}</p>
+                        <p style="margin:8px 0;"><b>Center:</b> ${area.centerLat.toFixed(6)}, ${area.centerLng.toFixed(6)}</p>
+                        <p style="margin:8px 0;"><b>Coverage:</b> 50 km radius</p>
+                        <p style="margin:8px 0;"><b>Status:</b> <span class="status-badge ${area.status?'status-active':'status-hidden'}">${area.status?'Active':'Inactive'}</span></p>
+                    </div>
+                <div style="margin-top:24px;">
+                    <h3 style="margin-bottom:16px;font-size:16px;font-weight:700;">👥 Managers (${managers.length}/15)</h3>
+                    ${managers.length > 0? managers.map(m => `<div style="padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border-left:3px solid #3b82f6;"><b>${escapeHtml(m.name)}</b><br><small style="color:#64748b;">${escapeHtml(m.email)}</small></div>`).join('') : '<p style="color:#94a3b8;padding:20px;text-align:center;background:#f8fafc;border-radius:8px;">No managers assigned yet</p>'}
                 </div>
             `;
         };
@@ -253,8 +649,11 @@
             document.getElementById('areaForm').reset();
             document.getElementById('areaCode').value = '';
             document.getElementById('areaName').value = '';
-            document.getElementById('areaModal').style.display = 'block';
-            setTimeout(initMap, 300);
+            document.getElementById('areaModal').style.display = 'flex';
+            setTimeout(() => {
+                initMap();
+                setTimeout(() => map.invalidateSize(), 100);
+            }, 300);
         };
 
         function initMap() {
@@ -275,16 +674,13 @@
                 const lat = e.latlng.lat;
                 const lng = e.latlng.lng;
 
-                // Reverse geocode using Nominatim
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`);
                     const data = await res.json();
 
                     const city = data.address.city || data.address.town || data.address.village || data.address.county || 'Unknown';
                     const state = data.address.state || data.address.region || '';
-                    const country = data.address.country || '';
 
-                    // Generate Area Code: CITY + STATE_CODE
                     const cityCode = city.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '');
                     const stateCode = state.substring(0, 2).toUpperCase().replace(/[^A-Z]/g, '');
                     const areaCode = `${cityCode}${stateCode}`;
@@ -305,7 +701,6 @@
             });
         }
 
-        // City Search using Nominatim
         document.getElementById('citySearch').addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
             const query = e.target.value.trim();
@@ -340,10 +735,7 @@
         window.selectCity = async (lat, lng, displayName) => {
             document.getElementById('cityResults').style.display = 'none';
             document.getElementById('citySearch').value = displayName.split(',')[0];
-
             map.setView([lat, lng], 10);
-
-            // Trigger click to set marker
             const event = { latlng: L.latLng(lat, lng) };
             map.fire('click', event);
         };
@@ -390,10 +782,11 @@
             document.getElementById('centerLng').value = a.centerLng;
             document.getElementById('areaStatus').value = a.status;
             document.getElementById('mapCenterText').textContent = `${a.centerLat.toFixed(4)}, ${a.centerLng.toFixed(4)}`;
-            document.getElementById('areaModal').style.display = 'block';
+            document.getElementById('areaModal').style.display = 'flex';
             setTimeout(() => {
                 initMap();
                 updateMapMarker(a.centerLat, a.centerLng);
+                setTimeout(() => map.invalidateSize(), 100);
             }, 300);
         };
 
@@ -454,7 +847,6 @@
             document.getElementById('cityResults').style.display = 'none';
         };
 
-        // Click outside to close search results
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.form-group')) {
                 document.getElementById('cityResults').style.display = 'none';
