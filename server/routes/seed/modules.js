@@ -4,8 +4,16 @@ const fs = require('fs');
 
 async function seedModules() {
     try {
-        // PATH FIXED: modules.json hai, module.json nahi
-        const jsonPath = path.join(__dirname, '../../../public/assets/js/modules.json');
+        // FIXED: process.cwd() use kiya - Render + Local dono pe chalega
+        const jsonPath = path.join(process.cwd(), 'public/assets/js/modules.json');
+        
+        // File exist check - debugging ke liye
+        if (!fs.existsSync(jsonPath)) {
+            console.error('❌ modules.json not found at:', jsonPath);
+            console.error('Current working directory:', process.cwd());
+            return;
+        }
+        
         const jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
         
         const modulesToSeed = jsonData.modules.map(mod => ({
@@ -33,6 +41,7 @@ async function seedModules() {
         console.log(`✅ ${modulesToSeed.length} Modules seeded successfully from JSON`);
     } catch (err) {
         console.error('❌ Module seeding error:', err.message);
+        console.error('Stack:', err.stack);
     }
 }
 
