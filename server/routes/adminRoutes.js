@@ -42,7 +42,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 } // ← FIX: 50MB kiya
+  limits: { fileSize: 50 * 1024 * 1024 }
 });
 
 // ==================== AREA MANAGER LOGIN ====================
@@ -104,7 +104,7 @@ router.post('/manager/shop', authenticateManager, async (req, res) => {
     try {
         const manager = req.manager;
         const shopData = {
-         ...req.body,
+        ...req.body,
             areaCode: manager.areaCode,
             areaName: manager.areaName,
             managerId: manager._id,
@@ -157,7 +157,7 @@ router.get('/admin/dashboard', async (req, res) => {
     const [users, shops, modules, content, managers, categories] = await Promise.all([
       User.countDocuments(),
       Shop.countDocuments({ status: 'approved' }),
-      Module.countDocuments(), // ← YE AB CHALEGA
+      Module.countDocuments(),
       Content.countDocuments(),
       Manager.countDocuments(),
       Module.aggregate([
@@ -213,7 +213,7 @@ router.get('/stats', async (req, res) => {
 router.get('/modules', async (req, res) => {
   try {
     const modules = await Module.find().sort({ priority: 1 });
-    res.json({ success: true, modules }); // ← success flag add kiya
+    res.json({ success: true, modules });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -245,7 +245,7 @@ router.put('/modules/:id', async (req, res) => {
     delete data.id;
     delete data._id;
 
-    const module = await Module.findByIdAndUpdate(req.params.id, data, { new: true });
+    const module = await Module.findByIdAndUpdate(req.params.id, data, { returnDocument: 'after' });
     res.json({ success: true, module });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -285,7 +285,7 @@ router.get('/admin/module/:id', async (req, res) => {
 router.put('/admin/module/:id/areas', async (req, res) => {
   try {
     const { areas } = req.body;
-    await Module.findByIdAndUpdate(req.params.id, { areas });
+    await Module.findByIdAndUpdate(req.params.id, { areas }, { returnDocument: 'after' });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -358,8 +358,8 @@ router.get('/shops', async (req, res) => {
     }
 
     const shops = await Shop.find(filter)
-   .populate('managerId', 'name')
-   .sort({ createdAt: -1 });
+  .populate('managerId', 'name')
+  .sort({ createdAt: -1 });
     res.json(shops);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -369,7 +369,7 @@ router.get('/shops', async (req, res) => {
 router.put('/shops/:id', async (req, res) => {
   try {
     const oldShop = await Shop.findById(req.params.id);
-    const shop = await Shop.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const shop = await Shop.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
 
     // Log history
     if (req.body.status && oldShop.status!== req.body.status) {
@@ -471,7 +471,7 @@ router.put('/managers/:id', upload.fields([
     if (req.files.pan) updateData.documents.pan = '/' + req.files.pan[0].path.replace('public/', '').replace(/\\/g, '/');
     if (req.files.addressProof) updateData.documents.addressProof = '/' + req.files.addressProof[0].path.replace('public/', '').replace(/\\/g, '/');
 
-    const manager = await Manager.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    const manager = await Manager.findByIdAndUpdate(req.params.id, updateData, { returnDocument: 'after' });
     res.json({ success: true, manager });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -506,7 +506,7 @@ router.post('/admin/approve-banner/:shopId', async (req, res) => {
       bannerApproved: true,
       bannerApprovedBy: req.user?._id,
       bannerApprovedAt: new Date()
-    });
+    }, { returnDocument: 'after' });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -518,7 +518,7 @@ router.post('/admin/reject-banner/:shopId', async (req, res) => {
     await Shop.findByIdAndUpdate(req.params.shopId, {
       banner: '',
       bannerApproved: false
-    });
+    }, { returnDocument: 'after' });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -529,9 +529,9 @@ router.post('/admin/reject-banner/:shopId', async (req, res) => {
 router.get('/admin/shop-history', async (req, res) => {
   try {
     const history = await ShopHistory.find()
-   .populate('managerId', 'name area')
-   .sort({ createdAt: -1 })
-   .limit(100);
+  .populate('managerId', 'name area')
+  .sort({ createdAt: -1 })
+  .limit(100);
     res.json({ success: true, history });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -560,7 +560,7 @@ router.post('/content', async (req, res) => {
 
 router.put('/content/:id', async (req, res) => {
   try {
-    const item = await Content.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const item = await Content.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
     res.json({ success: true, item });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -746,8 +746,8 @@ router.get('/banners', async (req, res) => {
         if (placement) filter.placement = placement;
 
         const banners = await Banner.find(filter)
-          .populate('createdBy', 'name')
-          .sort({ priority: -1 });
+         .populate('createdBy', 'name')
+         .sort({ priority: -1 });
         res.json(banners);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -757,7 +757,7 @@ router.get('/banners', async (req, res) => {
 router.post('/banners', upload.single('image'), async (req, res) => {
     try {
         const bannerData = {
-          ...req.body,
+         ...req.body,
             image: '/' + req.file.path.replace('public/', '').replace(/\\/g, '/'),
             createdBy: req.userId,
             createdByType: 'admin'
@@ -776,7 +776,7 @@ router.put('/banners/:id/approve', async (req, res) => {
             status: 'approved',
             approvedBy: req.userId,
             approvedAt: new Date()
-        }, { new: true });
+        }, { returnDocument: 'after' });
         res.json({ success: true, banner });
     } catch (err) {
         res.status(500).json({ error: err.message });
