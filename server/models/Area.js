@@ -29,7 +29,10 @@ const areaSchema = new mongoose.Schema({
     },
     radius: { 
         type: Number, 
-        default: 50 // 50km fixed
+        required: true,
+        default: 50,
+        min: [1, 'Radius must be at least 1 km'],
+        max: [500, 'Radius cannot exceed 500 km']
     },
     status: { 
         type: Boolean, 
@@ -39,8 +42,10 @@ const areaSchema = new mongoose.Schema({
     timestamps: true 
 });
 
-// Index for fast search
+// Indexes for fast search
 areaSchema.index({ areaCode: 1 });
 areaSchema.index({ city: 1, state: 1 });
+areaSchema.index({ status: 1 });
+areaSchema.index({ centerLat: 1, centerLng: 1 });
 
 module.exports = mongoose.model('Area', areaSchema);
