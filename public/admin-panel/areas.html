@@ -5,14 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Area Master - SuperLive</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        #map { height: 450px; width: 100%; border-radius: 8px; margin-top: 15px; }
-        .area-circle-info { background: #e3f2fd; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
-        .radius-locked { color: #ff6b00; font-weight: 600; }
+        #map { height: 500px; width: 100%; border-radius: 8px; margin-top: 15px; z-index: 1; }
+       .area-circle-info { background: #e3f2fd; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
+       .radius-locked { color: #ff6b00; font-weight: 600; }
+       .search-results { position: absolute; background: white; border: 1px solid #e2e8f0; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; }
+       .search-result-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
+       .search-result-item:hover { background: #f8fafc; }
+       .search-result-item:last-child { border-bottom: none; }
+       .area-stats-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; z-index: 2000; align-items: center; justify-content: center; }
+       .area-stats-content { background: white; border-radius: 12px; padding: 24px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; }
+       .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0; }
+       .mini-stat { background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; }
+       .mini-stat-value { font-size: 24px; font-weight: 700; color: #0f172a; }
+       .mini-stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+       .top-search { position: relative; margin-bottom: 20px; }
+       .top-search input { width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 15px; }
+       .top-search input:focus { border-color: #3b82f6; outline: none; }
+        tr.area-row { cursor: pointer; }
+        tr.area-row:hover { background: #f8fafc; }
     </style>
 </head>
 <body>
     <div class="content">
+        <div class="top-search">
+            <input type="text" id="globalAreaSearch" placeholder="🔍 Search Area by Code, City, State..." onkeyup="filterAreas(this.value)">
+        </div>
+
         <div class="stats-grid">
             <div class="stat-card"><h3>TOTAL AREAS</h3><div class="stat-value" id="totalAreas">0</div></div>
             <div class="stat-card"><h3>ACTIVE AREAS</h3><div class="stat-value" id="activeAreas">0</div></div>
@@ -50,7 +70,7 @@
 
     <!-- Add Area Modal -->
     <div id="areaModal" class="modal">
-        <div class="modal-content" style="max-width:900px;">
+        <div class="modal-content" style="max-width:950px;">
             <div class="modal-header">
                 <h2 id="areaModalTitle">Create New Area</h2>
                 <button class="close-btn" onclick="closeAreaModal()">×</button>
@@ -58,28 +78,29 @@
             <form id="areaForm">
                 <input type="hidden" id="areaId">
                 <div class="form-grid">
-                    <div class="form-group full">
-                        <label>Search City *</label>
-                        <input type="text" id="citySearch" placeholder="Type city name: Surat, Mumbai, Delhi..." autocomplete="off">
-                        <div id="cityResults" style="display:none; border:1px solid #ddd; max-height:200px; overflow-y:auto; background:#fff; position:absolute; z-index:1000; width:90%;"></div>
+                    <div class="form-group full" style="position:relative;">
+                        <label>Search City / Location *</label>
+                        <input type="text" id="citySearch" placeholder="Type: Surat, Mumbai, Delhi, New York..." autocomplete="off">
+                        <div id="cityResults" class="search-results"></div>
+                        <small style="color:#64748b;">Search any city worldwide. Click on map to set exact center.</small>
                     </div>
-                    
-                    <div class="form-group"><label>Area Code *</label><input type="text" id="areaCode" placeholder="SURAT" required style="text-transform:uppercase;"></div>
-                    <div class="form-group"><label>Area Name *</label><input type="text" id="areaName" placeholder="Surat 50km Zone" required></div>
+
+                    <div class="form-group"><label>Area Code *</label><input type="text" id="areaCode" placeholder="AUTO" required style="text-transform:uppercase;" readonly></div>
+                    <div class="form-group"><label>Area Name *</label><input type="text" id="areaName" placeholder="Auto-generated" required readonly></div>
                     <div class="form-group"><label>City Name</label><input type="text" id="cityName" readonly></div>
-                    <div class="form-group"><label>State</label><input type="text" id="stateName" readonly></div>
+                    <div class="form-group"><label>State/Province</label><input type="text" id="stateName" readonly></div>
                     <div class="form-group"><label>Centre Latitude</label><input type="text" id="centerLat" readonly></div>
                     <div class="form-group"><label>Centre Longitude</label><input type="text" id="centerLng" readonly></div>
                     <div class="form-group"><label>Radius</label><input type="text" value="50 km" disabled class="radius-locked"></div>
                     <div class="form-group"><label>Status</label><select id="areaStatus"><option value="true">Active</option><option value="false">Inactive</option></select></div>
-                    
+
                     <div class="form-group full">
-                        <label>City Centre - 50km Coverage</label>
+                        <label>Location - 50km Coverage Circle</label>
                         <div id="map"></div>
                         <div class="area-circle-info">
-                            📍 <b>Centre:</b> <span id="mapCenterText">Select city first</span> | 
-                            📏 <b>Radius:</b> <span class="radius-locked">50 km Fixed</span> | 
-                            🎯 Drag marker to adjust centre if needed
+                            📍 <b>Centre:</b> <span id="mapCenterText">Click on map to set</span> |
+                            📏 <b>Radius:</b> <span class="radius-locked">50 km Fixed</span> |
+                            🎯 Click anywhere on map to create 50km zone
                         </div>
                     </div>
                 </div>
@@ -88,35 +109,65 @@
         </div>
     </div>
 
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAP_KEY&libraries=places"></script>
+    <!-- Area Stats Modal -->
+    <div id="areaStatsModal" class="area-stats-modal" onclick="closeAreaStats()">
+        <div class="area-stats-content" onclick="event.stopPropagation()">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h2 id="statsAreaName">Area Details</h2>
+                <button class="close-btn" onclick="closeAreaStats()">×</button>
+            </div>
+            <div id="areaStatsBody">
+                <div class="loading">Loading stats...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let allAreas = [];
+        let allManagers = [];
+        let allUsers = [];
+        let allShops = [];
+        let allProducts = [];
         let map, marker, circle;
-        let autocomplete;
+        let searchTimeout;
 
         async function loadAreas() {
             try {
-                const [areasData, managersData] = await Promise.all([
+                const [areasData, managersData, usersData, shopsData, productsData] = await Promise.all([
                     apiCall('/areas'),
-                    apiCall('/managers')
+                    apiCall('/managers'),
+                    apiCall('/users').catch(() => []),
+                    apiCall('/shops').catch(() => []),
+                    apiCall('/products').catch(() => [])
                 ]);
                 allAreas = areasData || [];
-                renderAreas(allAreas, managersData || []);
-                document.getElementById('totalAreas').textContent = allAreas.length;
-                document.getElementById('activeAreas').textContent = allAreas.filter(a => a.status).length;
-                document.getElementById('totalManagersAll').textContent = (managersData || []).length;
+                allManagers = managersData || [];
+                allUsers = usersData || [];
+                allShops = shopsData || [];
+                allProducts = productsData || [];
+
+                renderAreas(allAreas);
+                updateStats();
             } catch (err) {
                 console.error(err);
+                showToast('Failed to load data: ' + err.message, 'error');
             }
         }
 
-        function renderAreas(areas, managers) {
+        function updateStats() {
+            document.getElementById('totalAreas').textContent = allAreas.length;
+            document.getElementById('activeAreas').textContent = allAreas.filter(a => a.status).length;
+            document.getElementById('totalManagersAll').textContent = allManagers.length;
+        }
+
+        function renderAreas(areas) {
             const tbody = document.getElementById('areasTable');
-            tbody.innerHTML = areas.length === 0 ? '<tr><td colspan="9" style="text-align:center;padding:40px;">No areas created yet</td></tr>' :
+            tbody.innerHTML = areas.length === 0? '<tr><td colspan="9" style="text-align:center;padding:40px;">No areas created yet</td></tr>' :
                 areas.map(a => {
-                    const managerCount = managers.filter(m => m.areaCode === a.areaCode).length;
+                    const managerCount = allManagers.filter(m => m.areaCode === a.areaCode).length;
                     const totalBuckets = 15;
-                    return `<tr>
+                    return `<tr class="area-row" onclick="showAreaStats('${a._id}')">
                         <td><strong>${escapeHtml(a.areaCode)}</strong></td>
                         <td>${escapeHtml(a.areaName)}</td>
                         <td>${escapeHtml(a.city)}</td>
@@ -125,8 +176,7 @@
                         <td><span class="badge">50 km</span></td>
                         <td><b>${managerCount}</b>/${totalBuckets}</td>
                         <td><span class="status-badge ${a.status?'status-active':'status-hidden'}">${a.status?'Active':'Inactive'}</span></td>
-                        <td class="actions">
-                            <button class="btn btn-primary btn-sm" onclick="viewAreaDetail('${a.areaCode}')">Managers</button>
+                        <td class="actions" onclick="event.stopPropagation()">
                             <button class="btn btn-secondary btn-sm" onclick="editArea('${a._id}')">Edit</button>
                             <button class="btn btn-danger btn-sm" onclick="deleteArea('${a._id}', ${managerCount})">Delete</button>
                         </td>
@@ -134,81 +184,196 @@
                 }).join('');
         }
 
+        window.filterAreas = (query) => {
+            const filtered = allAreas.filter(a =>
+                a.areaCode.toLowerCase().includes(query.toLowerCase()) ||
+                a.areaName.toLowerCase().includes(query.toLowerCase()) ||
+                a.city.toLowerCase().includes(query.toLowerCase()) ||
+                a.state.toLowerCase().includes(query.toLowerCase())
+            );
+            renderAreas(filtered);
+        };
+
+        window.showAreaStats = async (areaId) => {
+            const area = allAreas.find(a => a._id === areaId);
+            if (!area) return;
+
+            document.getElementById('statsAreaName').textContent = `${area.areaName} (${area.areaCode})`;
+            document.getElementById('areaStatsModal').style.display = 'flex';
+
+            const managers = allManagers.filter(m => m.areaCode === area.areaCode);
+            const shops = allShops.filter(s => s.areaCode === area.areaCode || s.area === area.city);
+            const users = allUsers.filter(u => u.areaCode === area.areaCode);
+            const products = allProducts.filter(p => {
+                const shop = allShops.find(s => s._id === p.shopId);
+                return shop && (shop.areaCode === area.areaCode || shop.area === area.city);
+            });
+
+            document.getElementById('areaStatsBody').innerHTML = `
+                <div class="stats-row">
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">${managers.length}</div>
+                        <div class="mini-stat-label">Managers</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">${shops.length}</div>
+                        <div class="mini-stat-label">Shops</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">${users.length}</div>
+                        <div class="mini-stat-label">Users</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">${products.length}</div>
+                        <div class="mini-stat-label">Products</div>
+                    </div>
+                </div>
+                <div style="margin-top:20px;">
+                    <h3 style="margin-bottom:12px;">📍 Location Details</h3>
+                    <p><b>City:</b> ${escapeHtml(area.city)}</p>
+                    <p><b>State:</b> ${escapeHtml(area.state)}</p>
+                    <p><b>Center:</b> ${area.centerLat.toFixed(6)}, ${area.centerLng.toFixed(6)}</p>
+                    <p><b>Coverage:</b> 50 km radius</p>
+                    <p><b>Status:</b> <span class="status-badge ${area.status?'status-active':'status-hidden'}">${area.status?'Active':'Inactive'}</span></p>
+                </div>
+                <div style="margin-top:20px;">
+                    <h3 style="margin-bottom:12px;">👥 Managers (${managers.length}/15)</h3>
+                    ${managers.length > 0? managers.map(m => `<div style="padding:8px;background:#f8fafc;border-radius:6px;margin-bottom:6px;">${escapeHtml(m.name)} - ${escapeHtml(m.email)}</div>`).join('') : '<p style="color:#94a3b8;">No managers assigned yet</p>'}
+                </div>
+            `;
+        };
+
+        window.closeAreaStats = () => {
+            document.getElementById('areaStatsModal').style.display = 'none';
+        };
+
         window.openAddArea = () => {
             document.getElementById('areaId').value = '';
             document.getElementById('areaModalTitle').textContent = 'Create New Area';
             document.getElementById('areaForm').reset();
+            document.getElementById('areaCode').value = '';
+            document.getElementById('areaName').value = '';
             document.getElementById('areaModal').style.display = 'block';
             setTimeout(initMap, 300);
         };
 
         function initMap() {
-            const defaultCenter = { lat: 20.5937, lng: 78.9629 }; // India center
-            map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 5,
-                center: defaultCenter,
-                mapTypeControl: false
-            });
+            if (map) {
+                map.remove();
+                map = null;
+            }
 
-            // City search autocomplete
-            const input = document.getElementById('citySearch');
-            autocomplete = new google.maps.places.Autocomplete(input, {
-                types: ['(cities)'],
-                componentRestrictions: { country: 'IN' }
-            });
+            const defaultCenter = [20.5937, 78.9629];
+            map = L.map('map').setView(defaultCenter, 5);
 
-            autocomplete.addListener('place_changed', () => {
-                const place = autocomplete.getPlace();
-                if (!place.geometry) return;
-                
-                const lat = place.geometry.location.lat();
-                const lng = place.geometry.location.lng();
-                const city = place.name;
-                const state = place.address_components.find(c => c.types.includes('administrative_area_level_1'))?.long_name || '';
-                
-                document.getElementById('areaCode').value = city.substring(0, 8).toUpperCase().replace(/\s/g, '');
-                document.getElementById('areaName').value = city + ' 50km Zone';
-                document.getElementById('cityName').value = city;
-                document.getElementById('stateName').value = state;
-                document.getElementById('centerLat').value = lat.toFixed(6);
-                document.getElementById('centerLng').value = lng.toFixed(6);
-                document.getElementById('mapCenterText').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                
-                updateMapMarker(lat, lng);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            map.on('click', async (e) => {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+
+                // Reverse geocode using Nominatim
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`);
+                    const data = await res.json();
+
+                    const city = data.address.city || data.address.town || data.address.village || data.address.county || 'Unknown';
+                    const state = data.address.state || data.address.region || '';
+                    const country = data.address.country || '';
+
+                    // Generate Area Code: CITY + STATE_CODE
+                    const cityCode = city.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '');
+                    const stateCode = state.substring(0, 2).toUpperCase().replace(/[^A-Z]/g, '');
+                    const areaCode = `${cityCode}${stateCode}`;
+
+                    document.getElementById('areaCode').value = areaCode;
+                    document.getElementById('areaName').value = `${city} 50km Zone`;
+                    document.getElementById('cityName').value = city;
+                    document.getElementById('stateName').value = state;
+                    document.getElementById('centerLat').value = lat.toFixed(6);
+                    document.getElementById('centerLng').value = lng.toFixed(6);
+                    document.getElementById('mapCenterText').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+                    updateMapMarker(lat, lng);
+                } catch (err) {
+                    console.error('Geocoding error:', err);
+                    showToast('Failed to get location details', 'error');
+                }
             });
         }
 
+        // City Search using Nominatim
+        document.getElementById('citySearch').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+
+            if (query.length < 3) {
+                document.getElementById('cityResults').style.display = 'none';
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&addressdetails=1`);
+                    const results = await res.json();
+
+                    const resultsDiv = document.getElementById('cityResults');
+                    if (results.length === 0) {
+                        resultsDiv.innerHTML = '<div class="search-result-item">No results found</div>';
+                    } else {
+                        resultsDiv.innerHTML = results.map(r => `
+                            <div class="search-result-item" onclick="selectCity(${r.lat}, ${r.lon}, '${escapeHtml(r.display_name)}')">
+                                📍 ${escapeHtml(r.display_name)}
+                            </div>
+                        `).join('');
+                    }
+                    resultsDiv.style.display = 'block';
+                } catch (err) {
+                    console.error('Search error:', err);
+                }
+            }, 500);
+        });
+
+        window.selectCity = async (lat, lng, displayName) => {
+            document.getElementById('cityResults').style.display = 'none';
+            document.getElementById('citySearch').value = displayName.split(',')[0];
+
+            map.setView([lat, lng], 10);
+
+            // Trigger click to set marker
+            const event = { latlng: L.latLng(lat, lng) };
+            map.fire('click', event);
+        };
+
         function updateMapMarker(lat, lng) {
-            const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
-            map.setCenter(position);
-            map.setZoom(9);
+            const position = [parseFloat(lat), parseFloat(lng)];
+            map.setView(position, 10);
 
-            if (marker) marker.setMap(null);
-            if (circle) circle.setMap(null);
+            if (marker) map.removeLayer(marker);
+            if (circle) map.removeLayer(circle);
 
-            marker = new google.maps.Marker({
-                position: position,
-                map: map,
+            marker = L.marker(position, {
                 draggable: true,
                 title: 'City Centre - Drag to adjust'
-            });
+            }).addTo(map);
 
-            circle = new google.maps.Circle({
-                map: map,
-                radius: 50000, // 50km in meters
-                fillColor: '#4285F4',
+            circle = L.circle(position, {
+                radius: 50000,
+                color: '#3b82f6',
+                fillColor: '#3b82f6',
                 fillOpacity: 0.15,
-                strokeColor: '#4285F4',
-                strokeOpacity: 0.8,
-                strokeWeight: 2
-            });
-            circle.bindTo('center', marker, 'position');
+                weight: 2
+            }).addTo(map);
 
-            marker.addListener('dragend', () => {
-                const newPos = marker.getPosition();
-                document.getElementById('centerLat').value = newPos.lat().toFixed(6);
-                document.getElementById('centerLng').value = newPos.lng().toFixed(6);
-                document.getElementById('mapCenterText').textContent = `${newPos.lat().toFixed(4)}, ${newPos.lng().toFixed(4)}`;
+            marker.on('dragend', async (e) => {
+                const newPos = e.target.getLatLng();
+                document.getElementById('centerLat').value = newPos.lat.toFixed(6);
+                document.getElementById('centerLng').value = newPos.lng.toFixed(6);
+                document.getElementById('mapCenterText').textContent = `${newPos.lat.toFixed(4)}, ${newPos.lng.toFixed(4)}`;
+                circle.setLatLng(newPos);
             });
         }
 
@@ -217,13 +382,14 @@
             document.getElementById('areaId').value = id;
             document.getElementById('areaModalTitle').textContent = 'Edit Area';
             document.getElementById('areaCode').value = a.areaCode;
-            document.getElementById('areaCode').disabled = true;
+            document.getElementById('areaCode').readOnly = true;
             document.getElementById('areaName').value = a.areaName;
             document.getElementById('cityName').value = a.city;
             document.getElementById('stateName').value = a.state;
             document.getElementById('centerLat').value = a.centerLat;
             document.getElementById('centerLng').value = a.centerLng;
             document.getElementById('areaStatus').value = a.status;
+            document.getElementById('mapCenterText').textContent = `${a.centerLat.toFixed(4)}, ${a.centerLng.toFixed(4)}`;
             document.getElementById('areaModal').style.display = 'block';
             setTimeout(() => {
                 initMap();
@@ -245,17 +411,21 @@
                 status: document.getElementById('areaStatus').value === 'true'
             };
 
-            if (!formData.centerLat || !formData.centerLng) {
-                return showToast('Please select a city first!', 'error');
+            if (!formData.centerLat ||!formData.centerLng) {
+                return showToast('Please click on map to set location!', 'error');
+            }
+
+            if (!formData.areaCode) {
+                return showToast('Area Code is required!', 'error');
             }
 
             try {
                 if (id) {
                     await apiCall('/areas/' + id, 'PUT', formData);
-                    showToast('Area updated!');
+                    showToast('Area updated successfully!');
                 } else {
                     await apiCall('/areas', 'POST', formData);
-                    showToast('Area created!');
+                    showToast('Area created successfully!');
                 }
                 closeAreaModal();
                 await loadAreas();
@@ -273,17 +443,23 @@
                 await apiCall('/areas/' + id, 'DELETE');
                 showToast('Area deleted');
                 await loadAreas();
-            } catch (err) {}
-        };
-
-        window.viewAreaDetail = (areaCode) => {
-            window.location.href = `area-detail.html?code=${areaCode}`;
+            } catch (err) {
+                showToast('Failed to delete: ' + err.message, 'error');
+            }
         };
 
         window.closeAreaModal = () => {
             document.getElementById('areaModal').style.display = 'none';
-            document.getElementById('areaCode').disabled = false;
+            document.getElementById('areaCode').readOnly = false;
+            document.getElementById('cityResults').style.display = 'none';
         };
+
+        // Click outside to close search results
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.form-group')) {
+                document.getElementById('cityResults').style.display = 'none';
+            }
+        });
 
         loadAreas();
     </script>

@@ -60,6 +60,9 @@ app.use('/api', require('./routes/adminRoutes'));
 // Manager Routes - Ye hi sab handle karega
 app.use('/api', require('./routes/managerRoutes'));
 
+// Area Routes - YE NAYI LINE ADD KAR ← YAHAN
+app.use('/api', require('./routes/areaRoutes'));
+
 // Market/Public Routes
 app.use('/api', require('./routes/market'));
 
