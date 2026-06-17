@@ -1,10 +1,13 @@
 <div class="content">
     <h2>📂 All Categories <span id="categoryCount" class="badge badge-info">0</span></h2>
     <div class="action-bar">
+        <div style="display:flex;gap:10px;">
+            <button class="btn btn-primary" onclick="openImportCategories()">📥 Import 250 Categories</button>
+            <select id="moduleFilter" onchange="filterByModule(this.value)" style="padding:10px;border:2px solid #e2e8f0;border-radius:8px;min-width:200px;">
+                <option value="">All Modules</option>
+            </select>
+        </div>
         <input type="text" class="search-box" placeholder="Search categories..." onkeyup="filterTable('categoriesTable', this.value)">
-        <select id="moduleFilter" onchange="filterByModule(this.value)" style="padding:10px;border:2px solid #e2e8f0;border-radius:8px;min-width:200px;">
-            <option value="">All Modules</option>
-        </select>
     </div>
     <div style="overflow-x:auto;">
         <table id="categoriesTable">
@@ -23,6 +26,24 @@
                 <tr><td colspan="7" class="loading">Loading categories</td></tr>
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Import Categories Modal -->
+<div id="importModal" class="modal">
+    <div class="modal-content" style="max-width:650px;">
+        <div class="modal-header">
+            <h2>📥 Import User App Categories</h2>
+            <button class="close-btn" onclick="closeImportModal()">×</button>
+        </div>
+        <div style="margin-bottom:20px;">
+            <p style="color:#64748b;margin-bottom:15px;">Ye 250 categories user app se hain. Ye unke <b>Group</b> ke basis pe existing 25 modules me add ho jayengi.</p>
+            <div id="importPreview" style="background:#f8fafc;padding:15px;border-radius:8px;max-height:300px;overflow-y:auto;border:1px solid #e2e8f0;"></div>
+        </div>
+        <div style="display:flex;gap:10px;padding-top:20px;border-top:2px solid #f1f5f9;">
+            <button class="btn btn-primary" id="confirmImportBtn" onclick="importCategories()">✅ Import Now</button>
+            <button class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
+        </div>
     </div>
 </div>
 
@@ -56,7 +77,6 @@
                 <label>Priority</label>
                 <input type="number" id="catPriority" min="0" placeholder="0">
             </div>
-        </div>
         <div style="display:flex;gap:10px;margin-top:25px;padding-top:20px;border-top:2px solid #f1f5f9;">
             <button class="btn btn-primary" id="saveCatBtn" onclick="saveCategory()">💾 Save Changes</button>
             <button class="btn btn-secondary" onclick="closeCategoryModal()">Cancel</button>
@@ -66,25 +86,33 @@
 
 <script>
 // ========================================
-// CATEGORY MANAGEMENT - PROFESSIONAL VERSION
-// Uses window.allModules from admin.js
+// CATEGORY MANAGEMENT + IMPORT
 // ========================================
 let moduleFilter = '';
+
+// Teri 250 categories - yahan pura array daal de
+const CATEGORIES_FALLBACK = [
+  {"id":"grocery","name":"Grocery Store","icon":"🛒","color":"#10b981","group":"Home","desc":"Daily needs & kirana"},
+  {"id":"electronics","name":"Electronics","icon":"📱","color":"#3b82f6","group":"Tech","desc":"Gadgets & devices"},
+  {"id":"clothing","name":"Clothing","icon":"👕","color":"#ec4899","group":"Fashion","desc":"Fashion & apparel"},
+  {"id":"pharmacy","name":"Pharmacy","icon":"💊","color":"#ef4444","group":"Health","desc":"Medicines & health"},
+  {"id":"restaurant","name":"Restaurant","icon":"🍽️","color":"#f59e0b","group":"Food","desc":"Food & dining"},
+  //... baaki 245 categories yahan add kar de
+];
 
 async function loadCategories() {
     showLoading('categoriesTable');
     try {
-        // window.allModules already populated by admin.js or modules page
         if (!window.allModules || window.allModules.length === 0) {
             const data = await apiCall('/modules');
             window.allModules = data.modules || data;
         }
-        
+
         window.allCategories = [];
         window.allModules.forEach(m => {
             (m.categoryDetails || []).forEach((c, idx) => {
                 window.allCategories.push({
-                   ...c,
+                 ...c,
                     moduleId: m._id || m.id,
                     moduleName: m.name,
                     moduleIcon: m.icon,
@@ -92,7 +120,7 @@ async function loadCategories() {
                 });
             });
         });
-        
+
         document.getElementById('categoryCount').textContent = window.allCategories.length;
         populateModuleFilter();
         renderCategories();
@@ -105,25 +133,25 @@ async function loadCategories() {
 
 function populateModuleFilter() {
     const select = document.getElementById('moduleFilter');
-    select.innerHTML = '<option value="">All Modules</option>' + 
+    select.innerHTML = '<option value="">All Modules</option>' +
         window.allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
 }
 
 function renderCategories() {
     const tbody = document.querySelector('#categoriesTable tbody');
-    
+
     if (!window.allCategories || window.allCategories.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No categories found. Add categories from Modules page.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No categories found. Click "Import 250 Categories" to add.</td></tr>';
         return;
     }
 
     let filtered = moduleFilter? window.allCategories.filter(c => c.moduleId === moduleFilter) : window.allCategories;
-    
+
     if (filtered.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No categories in selected module.</td></tr>';
         return;
     }
-    
+
     tbody.innerHTML = filtered.map(c => `
         <tr>
             <td style="font-size:24px;">${c.icon}</td>
@@ -138,18 +166,97 @@ function renderCategories() {
         </tr>`).join('');
 }
 
-window.filterByModule = (val) => { 
-    moduleFilter = val; 
-    renderCategories(); 
+window.filterByModule = (val) => {
+    moduleFilter = val;
+    renderCategories();
 };
 
+// ========================================
+// IMPORT FUNCTIONALITY
+// ========================================
+window.openImportCategories = () => {
+    const preview = document.getElementById('importPreview');
+    const groupCount = {};
+    CATEGORIES_FALLBACK.forEach(cat => {
+        const group = cat.group || 'General';
+        groupCount[group] = (groupCount[group] || 0) + 1;
+    });
+
+    preview.innerHTML = Object.entries(groupCount).map(([group, count]) => {
+        const moduleExists = window.allModules.some(m => m.name.toLowerCase() === group.toLowerCase());
+        return `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #e2e8f0;">
+            <span><b>${group}</b> ${moduleExists? '✅' : '⚠️ Not Found'}</span>
+            <span class="badge badge-info">${count} cats</span>
+        </div>`;
+    }).join('') + '<p style="margin-top:12px;font-size:13px;color:#64748b;">✅ = Module exists | ⚠️ = Module missing, will skip</p>';
+
+    document.getElementById('importModal').classList.add('active');
+};
+
+window.closeImportModal = () => {
+    document.getElementById('importModal').classList.remove('active');
+};
+
+window.importCategories = async () => {
+    const btn = document.getElementById('confirmImportBtn');
+    btn.disabled = true;
+    btn.textContent = 'Importing...';
+
+    let imported = 0;
+    let skipped = 0;
+
+    try {
+        for(const cat of CATEGORIES_FALLBACK) {
+            const groupName = cat.group || 'General';
+            const module = window.allModules.find(m => m.name.toLowerCase() === groupName.toLowerCase());
+
+            if(!module) {
+                skipped++;
+                continue;
+            }
+
+            const exists = (module.categoryDetails || []).some(c => c.name.toLowerCase() === cat.name.toLowerCase());
+            if(exists) {
+                skipped++;
+                continue;
+            }
+
+            const newCat = {
+                id: cat.id,
+                name: cat.name,
+                icon: cat.icon,
+                color: cat.color,
+                group: cat.group,
+                priority: 0
+            };
+
+            const updatedCats = [...(module.categoryDetails || []), newCat];
+            await apiCall('/modules/' + (module._id || module.id), 'PUT', { categoryDetails: updatedCats });
+            imported++;
+        }
+
+        showToast(`✅ Imported: ${imported} | ⏭️ Skipped: ${skipped}`, 'success');
+        closeImportModal();
+        await loadCategories();
+
+    } catch (err) {
+        showToast('Import failed: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '✅ Import Now';
+    }
+};
+
+// ========================================
+// EDIT CATEGORY
+// ========================================
 window.editCategory = (moduleId, catIndex) => {
     const m = window.allModules.find(x => (x._id || x.id) === moduleId);
     if (!m ||!m.categoryDetails ||!m.categoryDetails[catIndex]) {
         showToast('Category not found', 'error');
         return;
     }
-    
+
     const c = m.categoryDetails[catIndex];
     document.getElementById('catModuleId').value = moduleId;
     document.getElementById('catIndex').value = catIndex;
@@ -169,7 +276,7 @@ window.saveCategory = async () => {
     const moduleId = document.getElementById('catModuleId').value;
     const catIndex = parseInt(document.getElementById('catIndex').value);
     const m = window.allModules.find(x => (x._id || x.id) === moduleId);
-    
+
     if (!m) {
         showToast('Module not found', 'error');
         btn.disabled = false;
@@ -178,7 +285,7 @@ window.saveCategory = async () => {
     }
 
     const updatedCategory = {
-       ...m.categoryDetails[catIndex],
+     ...m.categoryDetails[catIndex],
         name: document.getElementById('catName').value.trim(),
         icon: document.getElementById('catIcon').value.trim(),
         color: document.getElementById('catColor').value,
@@ -212,6 +319,5 @@ window.closeCategoryModal = () => {
     document.getElementById('categoryModal').classList.remove('active');
 };
 
-// Initialize on page load
 loadCategories();
 </script>
