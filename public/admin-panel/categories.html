@@ -8,7 +8,6 @@
         </div>
     </div>
 
-    <!-- Modules List -->
     <div id="modulesList" style="display:grid;gap:15px;">
         <div class="loading" style="text-align:center;padding:40px;">Loading modules...</div>
     </div>
@@ -76,10 +75,30 @@
     </div>
 </div>
 
-<!-- FIXED PATH: assets folder me hai file -->
-<script src="./assets/categories-data.js"></script>
-
 <script>
+// ========================================
+// CATEGORIES DATA - DIRECT EMBEDDED
+// ========================================
+window.CATEGORIES_FALLBACK = [
+  {"id":"kirana","name":"Kirana Store","icon":"🏪","color":"#10b981","group":"Grocery"},
+  {"id":"supermarket","name":"Super Market","icon":"🛒","color":"#059669","group":"Grocery"},
+  {"id":"hypermarket","name":"Hyper Market","icon":"🏬","color":"#047857","group":"Grocery"},
+  {"id":"mini_market","name":"Mini Market","icon":"🏪","color":"#10b981","group":"Grocery"},
+  {"id":"general_store","name":"General Store","icon":"🏪","color":"#10b981","group":"Grocery"},
+  {"id":"provision_store","name":"Provision Store","icon":"🛍️","color":"#059669","group":"Grocery"},
+  {"id":"sabzi_mandi","name":"Sabzi Mandi","icon":"🥬","color":"#22c55e","group":"Grocery"},
+  {"id":"fruit_shop","name":"Fruit Shop","icon":"🍎","color":"#f97316","group":"Grocery"},
+  {"id":"dry_fruit","name":"Dry Fruit Shop","icon":"🥜","color":"#a16207","group":"Grocery"},
+  {"id":"organic_store","name":"Organic Store","icon":"🌿","color":"#16a34a","group":"Grocery"},
+  {"id":"milk_dairy","name":"Milk Dairy","icon":"🥛","color":"#3b82f6","group":"Grocery"},
+  {"id":"bakery","name":"Bakery","icon":"🍞","color":"#d97706","group":"Food"},
+  {"id":"cake_shop","name":"Cake Shop","icon":"🎂","color":"#ec4899","group":"Food"},
+  {"id":"sweet_shop","name":"Sweet Shop","icon":"🍬","color":"#f59e0b","group":"Food"},
+  {"id":"mithai_shop","name":"Mithai Shop","icon":"🍡","color":"#f59e0b","group":"Food"}
+  // Bhai yaha apni baaki 993 categories paste kar de categories-data.js se
+  // Format: {"id":"xyz","name":"XYZ","icon":"📦","color":"#000000","group":"ABC"},
+];
+
 // ========================================
 // MODULE + CATEGORY MANAGEMENT
 // ========================================
@@ -103,8 +122,8 @@ async function loadModules() {
 
 function populateCategoryDropdown() {
     const select = document.getElementById('catSelectFromList');
-    if (typeof window.CATEGORIES_FALLBACK === 'undefined' ||!Array.isArray(window.CATEGORIES_FALLBACK)) {
-        select.innerHTML = '<option value="">⚠️ categories-data.js not loaded</option>';
+    if (!window.CATEGORIES_FALLBACK || window.CATEGORIES_FALLBACK.length === 0) {
+        select.innerHTML = '<option value="">⚠️ No categories found</option>';
         return;
     }
 
@@ -152,7 +171,6 @@ function renderModules(searchTerm = '') {
                         <h3 style="margin:0;font-size:18px;">${escapeHtml(m.name)}</h3>
                         <p style="margin:0;color:#64748b;font-size:13px;">${categories.length} categories</p>
                     </div>
-                </div>
                 <div style="display:flex;gap:8px;align-items:center;">
                     <button class="btn btn-success btn-sm" onclick="event.stopPropagation(); openAddCategory('${moduleId}')">➕ Add Category</button>
                     <span style="font-size:20px;transform:rotate(${isExpanded? '180deg' : '0deg'});transition:0.3s;">▼</span>
@@ -325,8 +343,8 @@ window.closeCategoryModal = () => {
 // IMPORT FUNCTIONALITY
 // ========================================
 window.openImportCategories = () => {
-    if (typeof window.CATEGORIES_FALLBACK === 'undefined') {
-        showToast('categories-data.js not loaded. Check file', 'error');
+    if (!window.CATEGORIES_FALLBACK || window.CATEGORIES_FALLBACK.length === 0) {
+        showToast('No categories to import', 'error');
         return;
     }
 
