@@ -2,8 +2,8 @@
 // 1000+ Indian Shop Categories for Admin Panel
 // Total: 1008 categories
 
-const CATEGORIES_FALLBACK = [
-  // FOOD & GROCERY - 150
+window.CATEGORIES_FALLBACK = [
+    // FOOD & GROCERY - 150
   {"id":"kirana","name":"Kirana Store","icon":"🏪","color":"#10b981","group":"Grocery","desc":"General kirana items"},
   {"id":"supermarket","name":"Super Market","icon":"🛒","color":"#059669","group":"Grocery","desc":"Large supermarket"},
   {"id":"hypermarket","name":"Hyper Market","icon":"🏬","color":"#047857","group":"Grocery","desc":"Big hyper market"},

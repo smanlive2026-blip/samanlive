@@ -76,8 +76,8 @@
     </div>
 </div>
 
-<!-- FIX: Sahi path - categories-data.js -->
-<script src="./categories-data.js"></script>
+<!-- FIXED PATH: assets folder me hai file -->
+<script src="./assets/categories-data.js"></script>
 
 <script>
 // ========================================
@@ -103,20 +103,20 @@ async function loadModules() {
 
 function populateCategoryDropdown() {
     const select = document.getElementById('catSelectFromList');
-    if (typeof CATEGORIES_FALLBACK === 'undefined') {
+    if (typeof window.CATEGORIES_FALLBACK === 'undefined' ||!Array.isArray(window.CATEGORIES_FALLBACK)) {
         select.innerHTML = '<option value="">⚠️ categories-data.js not loaded</option>';
         return;
     }
 
     select.innerHTML = '<option value="">-- Choose Category --</option>' +
-        CATEGORIES_FALLBACK.map((c, idx) =>
+        window.CATEGORIES_FALLBACK.map((c, idx) =>
             `<option value="${idx}">${c.icon} ${escapeHtml(c.name)} - ${c.group}</option>`
         ).join('');
 }
 
 function fillCategoryFromList(index) {
     if (index === '') return;
-    const cat = CATEGORIES_FALLBACK[parseInt(index)];
+    const cat = window.CATEGORIES_FALLBACK[parseInt(index)];
     document.getElementById('catName').value = cat.name;
     document.getElementById('catIcon').value = cat.icon;
     document.getElementById('catColor').value = cat.color;
@@ -290,7 +290,7 @@ window.saveCategory = async () => {
         showToast(catIndex === ''? 'Category added!' : 'Category updated!', 'success');
         closeCategoryModal();
         await loadModules();
-        expandedModule = moduleId; // Keep it expanded
+        expandedModule = moduleId;
         renderModules();
     } catch (err) {
         showToast('Failed: ' + err.message, 'error');
@@ -325,14 +325,14 @@ window.closeCategoryModal = () => {
 // IMPORT FUNCTIONALITY
 // ========================================
 window.openImportCategories = () => {
-    if (typeof CATEGORIES_FALLBACK === 'undefined') {
+    if (typeof window.CATEGORIES_FALLBACK === 'undefined') {
         showToast('categories-data.js not loaded. Check file', 'error');
         return;
     }
 
     const preview = document.getElementById('importPreview');
     const groupCount = {};
-    CATEGORIES_FALLBACK.forEach(cat => {
+    window.CATEGORIES_FALLBACK.forEach(cat => {
         const group = cat.group || 'General';
         groupCount[group] = (groupCount[group] || 0) + 1;
     });
@@ -343,7 +343,7 @@ window.openImportCategories = () => {
             <span><b>${group}</b> ${moduleExists? '✅' : '⚠️ Not Found'}</span>
             <span class="badge badge-info">${count} cats</span>
         </div>`;
-    }).join('') + `<p style="margin-top:12px;font-size:13px;color:#64748b;">Total: ${CATEGORIES_FALLBACK.length} categories</p>`;
+    }).join('') + `<p style="margin-top:12px;font-size:13px;color:#64748b;">Total: ${window.CATEGORIES_FALLBACK.length} categories</p>`;
 
     document.getElementById('importModal').classList.add('active');
 };
@@ -361,7 +361,7 @@ window.importCategories = async () => {
     let skipped = 0;
 
     try {
-        for(const cat of CATEGORIES_FALLBACK) {
+        for(const cat of window.CATEGORIES_FALLBACK) {
             const groupName = cat.group || 'General';
             const module = allModulesData.find(m => m.name.toLowerCase() === groupName.toLowerCase());
 
