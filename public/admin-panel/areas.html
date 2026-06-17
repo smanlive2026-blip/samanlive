@@ -19,7 +19,7 @@
             border: 2px solid #e2e8f0;
         }
 
-       .area-circle-info {
+      .area-circle-info {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 14px 18px;
@@ -29,9 +29,9 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
-       .radius-text { color: #fbbf24; font-weight: 700; }
+      .radius-text { color: #fbbf24; font-weight: 700; }
 
-       .search-results {
+      .search-results {
             position: absolute;
             background: white;
             border: 1px solid #e2e8f0;
@@ -45,21 +45,21 @@
             margin-top: 4px;
         }
 
-       .search-result-item {
+      .search-result-item {
             padding: 12px 16px;
             cursor: pointer;
             border-bottom: 1px solid #f1f5f9;
             transition: all 0.2s;
         }
 
-       .search-result-item:hover {
+      .search-result-item:hover {
             background: #f8fafc;
             padding-left: 20px;
         }
 
-       .search-result-item:last-child { border-bottom: none; }
+      .search-result-item:last-child { border-bottom: none; }
 
-       .area-stats-modal {
+      .area-stats-modal {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(15, 23, 42, 0.7);
@@ -76,7 +76,7 @@
             to { opacity: 1; }
         }
 
-       .area-stats-content {
+      .area-stats-content {
             background: white;
             border-radius: 16px;
             padding: 28px;
@@ -93,14 +93,14 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
-       .stats-row {
+      .stats-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 14px;
             margin: 20px 0;
         }
 
-       .mini-stat {
+      .mini-stat {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             padding: 20px;
             border-radius: 12px;
@@ -109,12 +109,12 @@
             transition: transform 0.2s;
         }
 
-       .mini-stat:hover {
+      .mini-stat:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
-       .mini-stat-value {
+      .mini-stat-value {
             font-size: 28px;
             font-weight: 800;
             background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
@@ -123,7 +123,7 @@
             background-clip: text;
         }
 
-       .mini-stat-label {
+      .mini-stat-label {
             font-size: 12px;
             color: #64748b;
             margin-top: 6px;
@@ -132,13 +132,12 @@
             letter-spacing: 0.5px;
         }
 
-        /* SEARCH BAR FIX */
-       .top-search {
+      .top-search {
             position: relative;
             margin-bottom: 24px;
         }
 
-       .top-search input {
+      .top-search input {
             width: 100%;
             padding: 14px 50px 14px 20px;
             border: 2px solid #e2e8f0;
@@ -148,13 +147,13 @@
             background: white;
         }
 
-       .top-search input:focus {
+      .top-search input:focus {
             border-color: #3b82f6;
             outline: none;
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
-       .top-search::after {
+      .top-search::after {
             content: '🔍';
             position: absolute;
             right: 18px;
@@ -164,8 +163,7 @@
             pointer-events: none;
         }
 
-        /* TABLE FIX - PROFESSIONAL */
-       .table-container {
+      .table-container {
             overflow-x: auto;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
@@ -178,26 +176,6 @@
             min-width: 1100px;
         }
 
-        table thead {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        }
-
-        table th {
-            padding: 16px 14px;
-            text-align: left;
-            font-weight: 700;
-            font-size: 11px;
-            color: #475569;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            border-bottom: 2px solid #e2e8f0;
-            white-space: nowrap;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        }
-
         table td {
             padding: 14px 14px;
             border-bottom: 1px solid #f1f5f9;
@@ -206,16 +184,15 @@
             vertical-align: middle;
         }
 
-        /* Column widths - FIXED */
-        table th:nth-child(1), table td:nth-child(1) { width: 110px; }
-        table th:nth-child(2), table td:nth-child(2) { width: 180px; }
-        table th:nth-child(3), table td:nth-child(3) { width: 130px; }
-        table th:nth-child(4), table td:nth-child(4) { width: 130px; }
-        table th:nth-child(5), table td:nth-child(5) { width: 160px; font-family: monospace; font-size: 12px; }
-        table th:nth-child(6), table td:nth-child(6) { width: 90px; text-align: center; }
-        table th:nth-child(7), table td:nth-child(7) { width: 110px; text-align: center; }
-        table th:nth-child(8), table td:nth-child(8) { width: 100px; text-align: center; }
-        table th:nth-child(9), table td:nth-child(9) { width: 160px; }
+        table td:nth-child(1) { width: 110px; }
+        table td:nth-child(2) { width: 180px; }
+        table td:nth-child(3) { width: 130px; }
+        table td:nth-child(4) { width: 130px; }
+        table td:nth-child(5) { width: 160px; font-family: monospace; font-size: 12px; }
+        table td:nth-child(6) { width: 90px; text-align: center; }
+        table td:nth-child(7) { width: 110px; text-align: center; }
+        table td:nth-child(8) { width: 100px; text-align: center; }
+        table td:nth-child(9) { width: 160px; }
 
         tr.area-row {
             cursor: pointer;
@@ -231,7 +208,7 @@
             border-bottom: none;
         }
 
-       .badge {
+      .badge {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             padding: 5px 12px;
@@ -242,7 +219,7 @@
             white-space: nowrap;
         }
 
-       .status-badge {
+      .status-badge {
             padding: 6px 14px;
             border-radius: 20px;
             font-size: 11px;
@@ -252,17 +229,17 @@
             letter-spacing: 0.3px;
         }
 
-       .status-active {
+      .status-active {
             background: #d1fae5;
             color: #065f46;
         }
 
-       .status-hidden {
+      .status-hidden {
             background: #fee2e2;
             color: #991b1b;
         }
 
-       .btn-sm {
+      .btn-sm {
             padding: 7px 14px;
             font-size: 12px;
             border-radius: 6px;
@@ -273,36 +250,36 @@
             white-space: nowrap;
         }
 
-       .btn-primary {
+      .btn-primary {
             background: #3b82f6;
             color: white;
         }
 
-       .btn-primary:hover {
+      .btn-primary:hover {
             background: #2563eb;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
 
-       .btn-secondary {
+      .btn-secondary {
             background: #64748b;
             color: white;
         }
 
-       .btn-secondary:hover {
+      .btn-secondary:hover {
             background: #475569;
         }
 
-       .btn-danger {
+      .btn-danger {
             background: #ef4444;
             color: white;
         }
 
-       .btn-danger:hover {
+      .btn-danger:hover {
             background: #dc2626;
         }
 
-       .btn-success {
+      .btn-success {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             padding: 12px 24px;
@@ -314,18 +291,18 @@
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
-       .btn-success:hover {
+      .btn-success:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
         }
 
-       .actions {
+      .actions {
             display: flex;
             gap: 6px;
             justify-content: flex-start;
         }
 
-       .card-header {
+      .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -334,14 +311,14 @@
             gap: 12px;
         }
 
-       .card-header h2 {
+      .card-header h2 {
             margin: 0;
             font-size: 20px;
             font-weight: 700;
             color: #0f172a;
         }
 
-       .modal {
+      .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -354,7 +331,7 @@
             overflow-y: auto;
         }
 
-       .modal-content {
+      .modal-content {
             background: white;
             border-radius: 16px;
             padding: 32px;
@@ -365,7 +342,7 @@
             animation: slideUp 0.3s;
         }
 
-       .modal-header {
+      .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -374,14 +351,14 @@
             border-bottom: 2px solid #f1f5f9;
         }
 
-       .modal-header h2 {
+      .modal-header h2 {
             margin: 0;
             font-size: 24px;
             font-weight: 800;
             color: #0f172a;
         }
 
-       .close-btn {
+      .close-btn {
             background: #f1f5f9;
             border: none;
             width: 36px;
@@ -393,35 +370,35 @@
             transition: all 0.2s;
         }
 
-       .close-btn:hover {
+      .close-btn:hover {
             background: #e2e8f0;
             color: #0f172a;
             transform: rotate(90deg);
         }
 
-       .form-grid {
+      .form-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
         }
 
-       .form-group {
+      .form-group {
             display: flex;
             flex-direction: column;
         }
 
-       .form-group.full {
+      .form-group.full {
             grid-column: 1 / -1;
         }
 
-       .form-group label {
+      .form-group label {
             font-weight: 600;
             margin-bottom: 6px;
             color: #334155;
             font-size: 14px;
         }
 
-       .form-group input,.form-group select {
+      .form-group input,.form-group select {
             padding: 10px 14px;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
@@ -429,25 +406,25 @@
             transition: all 0.2s;
         }
 
-       .form-group input:focus,.form-group select:focus {
+      .form-group input:focus,.form-group select:focus {
             border-color: #3b82f6;
             outline: none;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-       .form-group input[readonly] {
+      .form-group input[readonly] {
             background: #f8fafc;
             color: #64748b;
         }
 
-       .loading {
+      .loading {
             text-align: center;
             padding: 40px;
             color: #94a3b8;
             font-weight: 600;
         }
 
-       .area-code-text {
+      .area-code-text {
             color: #3b82f6;
             font-weight: 700;
             font-family: monospace;
@@ -455,14 +432,14 @@
         }
 
         @media (max-width: 768px) {
-           .form-grid {
+         .form-grid {
                 grid-template-columns: 1fr;
             }
-           .modal-content {
+         .modal-content {
                 padding: 20px;
                 margin: 20px;
             }
-           .card-header {
+         .card-header {
                 flex-direction: column;
                 align-items: flex-start;
             }
@@ -489,19 +466,6 @@
             </div>
             <div class="table-container">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Area Code</th>
-                            <th>Area Name</th>
-                            <th>City</th>
-                            <th>State</th>
-                            <th>Centre Lat/Lng</th>
-                            <th>Radius</th>
-                            <th>Managers</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
                     <tbody id="areasTable">
                         <tr><td colspan="9" class="loading">Loading...</td></tr>
                     </tbody>
@@ -692,7 +656,6 @@
                         <p style="margin:8px 0;"><b>Coverage:</b> ${radius} km radius</p>
                         <p style="margin:8px 0;"><b>Status:</b> <span class="status-badge ${area.status?'status-active':'status-hidden'}">${area.status?'Active':'Inactive'}</span></p>
                     </div>
-                </div>
                 <div style="margin-top:24px;">
                     <h3 style="margin-bottom:16px;font-size:16px;font-weight:700;">👥 Managers (${managers.length}/15)</h3>
                     ${managers.length > 0? managers.map(m => `<div style="padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border-left:3px solid #3b82f6;"><b>${escapeHtml(m.name)}</b><br><small style="color:#64748b;">${escapeHtml(m.email)}</small></div>`).join('') : '<p style="color:#94a3b8;padding:20px;text-align:center;background:#f8fafc;border-radius:8px;">No managers assigned yet</p>'}
@@ -883,7 +846,7 @@
                 status: document.getElementById('areaStatus').value === 'true'
             };
 
-            if (!formData.centerLat || !formData.centerLng) {
+            if (!formData.centerLat ||!formData.centerLng) {
                 return showToast('Please click on map to set location!', 'error');
             }
 
