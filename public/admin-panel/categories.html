@@ -1,7 +1,7 @@
 <div class="content">
     <h2>📂 All Categories <span id="categoryCount" class="badge badge-info">0</span></h2>
     <div class="action-bar">
-        <div style="display:flex;gap:10px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <button class="btn btn-primary" onclick="openImportCategories()">📥 Import 1008 Categories</button>
             <select id="moduleFilter" onchange="filterByModule(this.value)" style="padding:10px;border:2px solid #e2e8f0;border-radius:8px;min-width:200px;">
                 <option value="">All Modules</option>
@@ -85,16 +85,17 @@
     </div>
 </div>
 
-<!-- YAHAN TERI 1008 SHOPS WALI FILE KA LINK - public/admin-penel/category.js -->
-<script src="./category.js"></script>
+<!-- FIX 1: type="module" add kiya kyunki teri category.js me export default hai -->
+<script type="module">
+import CATEGORIES_FALLBACK from './category.js';
+window.CATEGORIES_FALLBACK = CATEGORIES_FALLBACK;
+</script>
 
 <script>
 // ========================================
 // CATEGORY MANAGEMENT + IMPORT
 // ========================================
 let moduleFilter = '';
-
-// CATEGORIES_FALLBACK ab category.js se aa raha hai
 
 async function loadCategories() {
     showLoading('categoriesTable');
@@ -108,7 +109,7 @@ async function loadCategories() {
         window.allModules.forEach(m => {
             (m.categoryDetails || []).forEach((c, idx) => {
                 window.allCategories.push({
-                  ...c,
+                 ...c,
                     moduleId: m._id || m.id,
                     moduleName: m.name,
                     moduleIcon: m.icon,
@@ -168,12 +169,18 @@ window.filterByModule = (val) => {
 };
 
 // ========================================
-// IMPORT FUNCTIONALITY
+// IMPORT FUNCTIONALITY - FIXED
 // ========================================
 window.openImportCategories = () => {
+    // FIX 2: Check karo ki CATEGORIES_FALLBACK load hua ya nahi
+    if (!window.CATEGORIES_FALLBACK || window.CATEGORIES_FALLBACK.length === 0) {
+        showToast('Categories file not loaded. Check category.js path', 'error');
+        return;
+    }
+
     const preview = document.getElementById('importPreview');
     const groupCount = {};
-    CATEGORIES_FALLBACK.forEach(cat => {
+    window.CATEGORIES_FALLBACK.forEach(cat => {
         const group = cat.group || 'General';
         groupCount[group] = (groupCount[group] || 0) + 1;
     });
@@ -184,7 +191,7 @@ window.openImportCategories = () => {
             <span><b>${group}</b> ${moduleExists? '✅' : '⚠️ Not Found'}</span>
             <span class="badge badge-info">${count} cats</span>
         </div>`;
-    }).join('') + '<p style="margin-top:12px;font-size:13px;color:#64748b;">✅ = Module exists | ⚠️ = Module missing, will skip</p>';
+    }).join('') + `<p style="margin-top:12px;font-size:13px;color:#64748b;">Total: ${window.CATEGORIES_FALLBACK.length} categories | ✅ = Module exists | ⚠️ = Module missing, will skip</p>`;
 
     document.getElementById('importModal').classList.add('active');
 };
@@ -202,7 +209,7 @@ window.importCategories = async () => {
     let skipped = 0;
 
     try {
-        for(const cat of CATEGORIES_FALLBACK) {
+        for(const cat of window.CATEGORIES_FALLBACK) {
             const groupName = cat.group || 'General';
             const module = window.allModules.find(m => m.name.toLowerCase() === groupName.toLowerCase());
 
@@ -281,7 +288,7 @@ window.saveCategory = async () => {
     }
 
     const updatedCategory = {
-      ...m.categoryDetails[catIndex],
+     ...m.categoryDetails[catIndex],
         name: document.getElementById('catName').value.trim(),
         icon: document.getElementById('catIcon').value.trim(),
         color: document.getElementById('catColor').value,
@@ -314,6 +321,35 @@ window.saveCategory = async () => {
 window.closeCategoryModal = () => {
     document.getElementById('categoryModal').classList.remove('active');
 };
+
+// FIX 3: Responsive CSS add kiya
+const style = document.createElement('style');
+style.textContent = `
+@media (max-width: 768px) {
+   .action-bar {
+        flex-direction: column!important;
+    }
+   .action-bar > div {
+        width: 100%;
+    }
+   .search-box {
+        width: 100%!important;
+        margin-top: 10px;
+    }
+    table {
+        font-size: 12px;
+    }
+   .btn-sm {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+   .modal-content {
+        width: 95%!important;
+        margin: 10px;
+    }
+}
+`;
+document.head.appendChild(style);
 
 loadCategories();
 </script>
