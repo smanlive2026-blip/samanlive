@@ -2,7 +2,7 @@
     <h2>📂 All Categories <span id="categoryCount" class="badge badge-info">0</span></h2>
     <div class="action-bar">
         <div style="display:flex;gap:10px;">
-            <button class="btn btn-primary" onclick="openImportCategories()">📥 Import 250 Categories</button>
+            <button class="btn btn-primary" onclick="openImportCategories()">📥 Import 1008 Categories</button>
             <select id="moduleFilter" onchange="filterByModule(this.value)" style="padding:10px;border:2px solid #e2e8f0;border-radius:8px;min-width:200px;">
                 <option value="">All Modules</option>
             </select>
@@ -37,7 +37,7 @@
             <button class="close-btn" onclick="closeImportModal()">×</button>
         </div>
         <div style="margin-bottom:20px;">
-            <p style="color:#64748b;margin-bottom:15px;">Ye 250 categories user app se hain. Ye unke <b>Group</b> ke basis pe existing 25 modules me add ho jayengi.</p>
+            <p style="color:#64748b;margin-bottom:15px;">Ye 1008 categories user app se hain. Ye unke <b>Group</b> ke basis pe existing modules me add ho jayengi.</p>
             <div id="importPreview" style="background:#f8fafc;padding:15px;border-radius:8px;max-height:300px;overflow-y:auto;border:1px solid #e2e8f0;"></div>
         </div>
         <div style="display:flex;gap:10px;padding-top:20px;border-top:2px solid #f1f5f9;">
@@ -77,6 +77,7 @@
                 <label>Priority</label>
                 <input type="number" id="catPriority" min="0" placeholder="0">
             </div>
+        </div>
         <div style="display:flex;gap:10px;margin-top:25px;padding-top:20px;border-top:2px solid #f1f5f9;">
             <button class="btn btn-primary" id="saveCatBtn" onclick="saveCategory()">💾 Save Changes</button>
             <button class="btn btn-secondary" onclick="closeCategoryModal()">Cancel</button>
@@ -84,21 +85,16 @@
     </div>
 </div>
 
+<!-- YAHAN TERI 1008 SHOPS WALI FILE KA LINK - public/admin-penel/category.js -->
+<script src="./category.js"></script>
+
 <script>
 // ========================================
 // CATEGORY MANAGEMENT + IMPORT
 // ========================================
 let moduleFilter = '';
 
-// Teri 250 categories - yahan pura array daal de
-const CATEGORIES_FALLBACK = [
-  {"id":"grocery","name":"Grocery Store","icon":"🛒","color":"#10b981","group":"Home","desc":"Daily needs & kirana"},
-  {"id":"electronics","name":"Electronics","icon":"📱","color":"#3b82f6","group":"Tech","desc":"Gadgets & devices"},
-  {"id":"clothing","name":"Clothing","icon":"👕","color":"#ec4899","group":"Fashion","desc":"Fashion & apparel"},
-  {"id":"pharmacy","name":"Pharmacy","icon":"💊","color":"#ef4444","group":"Health","desc":"Medicines & health"},
-  {"id":"restaurant","name":"Restaurant","icon":"🍽️","color":"#f59e0b","group":"Food","desc":"Food & dining"},
-  //... baaki 245 categories yahan add kar de
-];
+// CATEGORIES_FALLBACK ab category.js se aa raha hai
 
 async function loadCategories() {
     showLoading('categoriesTable');
@@ -112,7 +108,7 @@ async function loadCategories() {
         window.allModules.forEach(m => {
             (m.categoryDetails || []).forEach((c, idx) => {
                 window.allCategories.push({
-                 ...c,
+                  ...c,
                     moduleId: m._id || m.id,
                     moduleName: m.name,
                     moduleIcon: m.icon,
@@ -141,7 +137,7 @@ function renderCategories() {
     const tbody = document.querySelector('#categoriesTable tbody');
 
     if (!window.allCategories || window.allCategories.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No categories found. Click "Import 250 Categories" to add.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No categories found. Click "Import 1008 Categories" to add.</td></tr>';
         return;
     }
 
@@ -285,7 +281,7 @@ window.saveCategory = async () => {
     }
 
     const updatedCategory = {
-     ...m.categoryDetails[catIndex],
+      ...m.categoryDetails[catIndex],
         name: document.getElementById('catName').value.trim(),
         icon: document.getElementById('catIcon').value.trim(),
         color: document.getElementById('catColor').value,
