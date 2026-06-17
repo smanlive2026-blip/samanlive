@@ -1,31 +1,16 @@
 <div class="content">
-    <h2>📂 All Categories <span id="categoryCount" class="badge badge-info">0</span></h2>
-    <div class="action-bar">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <h2>📂 Modules & Categories Management</h2>
+
+    <div class="action-bar" style="margin-bottom:20px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
             <button class="btn btn-primary" onclick="openImportCategories()">📥 Import 1008 Categories</button>
-            <select id="moduleFilter" onchange="filterByModule(this.value)" style="padding:10px;border:2px solid #e2e8f0;border-radius:8px;min-width:200px;">
-                <option value="">All Modules</option>
-            </select>
+            <input type="text" class="search-box" placeholder="Search modules..." onkeyup="filterModules(this.value)" style="min-width:250px;">
         </div>
-        <input type="text" class="search-box" placeholder="Search categories..." onkeyup="filterTable('categoriesTable', this.value)">
     </div>
-    <div style="overflow-x:auto;">
-        <table id="categoriesTable">
-            <thead>
-                <tr>
-                    <th>Icon</th>
-                    <th>Name</th>
-                    <th>Module</th>
-                    <th>Group</th>
-                    <th>Color</th>
-                    <th>Priority</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="7" class="loading">Loading categories</td></tr>
-            </tbody>
-        </table>
+
+    <!-- Modules List -->
+    <div id="modulesList" style="display:grid;gap:15px;">
+        <div class="loading" style="text-align:center;padding:40px;">Loading modules...</div>
     </div>
 </div>
 
@@ -47,31 +32,37 @@
     </div>
 </div>
 
-<!-- Edit Category Modal -->
+<!-- Add/Edit Category Modal -->
 <div id="categoryModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Edit Category</h2>
+            <h2 id="categoryModalTitle">Add Category</h2>
             <button class="close-btn" onclick="closeCategoryModal()">×</button>
         </div>
         <input type="hidden" id="catModuleId">
         <input type="hidden" id="catIndex">
         <div class="form-grid">
             <div class="form-group">
+                <label>Select from 1008 Shops *</label>
+                <select id="catSelectFromList" onchange="fillCategoryFromList(this.value)" style="padding:10px;border:2px solid #e2e8f0;border-radius:8px;">
+                    <option value="">-- Choose Category --</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label>Name *</label>
-                <input type="text" id="catName" required placeholder="e.g. Dairy Products">
+                <input type="text" id="catName" required placeholder="e.g. Kirana Store">
             </div>
             <div class="form-group">
                 <label>Icon * (Emoji)</label>
-                <input type="text" id="catIcon" required maxlength="2" placeholder="🥛">
+                <input type="text" id="catIcon" required maxlength="2" placeholder="🏪">
             </div>
             <div class="form-group">
                 <label>Color *</label>
-                <input type="color" id="catColor" required>
+                <input type="color" id="catColor" required value="#6366f1">
             </div>
             <div class="form-group">
                 <label>Group</label>
-                <input type="text" id="catGroup" placeholder="e.g. Fresh">
+                <input type="text" id="catGroup" placeholder="e.g. Grocery">
             </div>
             <div class="form-group">
                 <label>Priority</label>
@@ -79,119 +70,280 @@
             </div>
         </div>
         <div style="display:flex;gap:10px;margin-top:25px;padding-top:20px;border-top:2px solid #f1f5f9;">
-            <button class="btn btn-primary" id="saveCatBtn" onclick="saveCategory()">💾 Save Changes</button>
+            <button class="btn btn-primary" id="saveCatBtn" onclick="saveCategory()">💾 Save Category</button>
             <button class="btn btn-secondary" onclick="closeCategoryModal()">Cancel</button>
         </div>
     </div>
 </div>
 
-<!-- FIX 1: type="module" add kiya kyunki teri category.js me export default hai -->
-<script type="module">
-import CATEGORIES_FALLBACK from './category.js';
-window.CATEGORIES_FALLBACK = CATEGORIES_FALLBACK;
-</script>
+<!-- FIX: Sahi path - categories-data.js -->
+<script src="./categories-data.js"></script>
 
 <script>
 // ========================================
-// CATEGORY MANAGEMENT + IMPORT
+// MODULE + CATEGORY MANAGEMENT
 // ========================================
-let moduleFilter = '';
+let allModulesData = [];
+let expandedModule = null;
 
-async function loadCategories() {
-    showLoading('categoriesTable');
+async function loadModules() {
+    const container = document.getElementById('modulesList');
+    container.innerHTML = '<div class="loading" style="text-align:center;padding:40px;">Loading modules...</div>';
+
     try {
-        if (!window.allModules || window.allModules.length === 0) {
-            const data = await apiCall('/modules');
-            window.allModules = data.modules || data;
-        }
-
-        window.allCategories = [];
-        window.allModules.forEach(m => {
-            (m.categoryDetails || []).forEach((c, idx) => {
-                window.allCategories.push({
-                 ...c,
-                    moduleId: m._id || m.id,
-                    moduleName: m.name,
-                    moduleIcon: m.icon,
-                    catIndex: idx
-                });
-            });
-        });
-
-        document.getElementById('categoryCount').textContent = window.allCategories.length;
-        populateModuleFilter();
-        renderCategories();
+        const data = await apiCall('/modules');
+        allModulesData = data.modules || data;
+        renderModules();
+        populateCategoryDropdown();
     } catch (err) {
-        console.error('Load categories error:', err);
-        document.querySelector('#categoriesTable tbody').innerHTML =
-            `<tr><td colspan="7" style="text-align:center;padding:40px;color:#ef4444;">Failed to load categories: ${escapeHtml(err.message)}</td></tr>`;
+        console.error('Load modules error:', err);
+        container.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;">Failed to load: ${escapeHtml(err.message)}</div>`;
     }
 }
 
-function populateModuleFilter() {
-    const select = document.getElementById('moduleFilter');
-    select.innerHTML = '<option value="">All Modules</option>' +
-        window.allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
-}
-
-function renderCategories() {
-    const tbody = document.querySelector('#categoriesTable tbody');
-
-    if (!window.allCategories || window.allCategories.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No categories found. Click "Import 1008 Categories" to add.</td></tr>';
+function populateCategoryDropdown() {
+    const select = document.getElementById('catSelectFromList');
+    if (typeof CATEGORIES_FALLBACK === 'undefined') {
+        select.innerHTML = '<option value="">⚠️ categories-data.js not loaded</option>';
         return;
     }
 
-    let filtered = moduleFilter? window.allCategories.filter(c => c.moduleId === moduleFilter) : window.allCategories;
+    select.innerHTML = '<option value="">-- Choose Category --</option>' +
+        CATEGORIES_FALLBACK.map((c, idx) =>
+            `<option value="${idx}">${c.icon} ${escapeHtml(c.name)} - ${c.group}</option>`
+        ).join('');
+}
+
+function fillCategoryFromList(index) {
+    if (index === '') return;
+    const cat = CATEGORIES_FALLBACK[parseInt(index)];
+    document.getElementById('catName').value = cat.name;
+    document.getElementById('catIcon').value = cat.icon;
+    document.getElementById('catColor').value = cat.color;
+    document.getElementById('catGroup').value = cat.group;
+}
+
+function renderModules(searchTerm = '') {
+    const container = document.getElementById('modulesList');
+
+    let filtered = allModulesData;
+    if (searchTerm) {
+        filtered = allModulesData.filter(m =>
+            m.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No categories in selected module.</td></tr>';
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">No modules found</div>';
         return;
     }
 
-    tbody.innerHTML = filtered.map(c => `
-        <tr>
-            <td style="font-size:24px;">${c.icon}</td>
-            <td><b>${escapeHtml(c.name)}</b></td>
-            <td>${c.moduleIcon} ${escapeHtml(c.moduleName)}</td>
-            <td>${escapeHtml(c.group || '-')}</td>
-            <td><span class="color-badge" style="background:${c.color}">${c.color}</span></td>
-            <td>${c.priority || 0}</td>
-            <td class="actions">
-                <button class="btn btn-primary btn-sm" onclick="editCategory('${c.moduleId}', ${c.catIndex})">Edit</button>
-            </td>
-        </tr>`).join('');
+    container.innerHTML = filtered.map(m => {
+        const moduleId = m._id || m.id;
+        const categories = m.categoryDetails || [];
+        const isExpanded = expandedModule === moduleId;
+
+        return `
+        <div class="module-card" style="background:#fff;border:2px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;background:#f8fafc;cursor:pointer;" onclick="toggleModule('${moduleId}')">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="font-size:28px;">${m.icon}</span>
+                    <div>
+                        <h3 style="margin:0;font-size:18px;">${escapeHtml(m.name)}</h3>
+                        <p style="margin:0;color:#64748b;font-size:13px;">${categories.length} categories</p>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button class="btn btn-success btn-sm" onclick="event.stopPropagation(); openAddCategory('${moduleId}')">➕ Add Category</button>
+                    <span style="font-size:20px;transform:rotate(${isExpanded? '180deg' : '0deg'});transition:0.3s;">▼</span>
+                </div>
+            </div>
+
+            ${isExpanded? `
+            <div style="padding:16px;border-top:2px solid #e2e8f0;">
+                ${categories.length === 0?
+                    '<p style="text-align:center;color:#94a3b8;padding:20px;">No categories yet. Click "Add Category" to add.</p>' :
+                    `<div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead>
+                                <tr style="background:#f8fafc;">
+                                    <th style="padding:10px;text-align:left;">Icon</th>
+                                    <th style="padding:10px;text-align:left;">Name</th>
+                                    <th style="padding:10px;text-align:left;">Group</th>
+                                    <th style="padding:10px;text-align:left;">Color</th>
+                                    <th style="padding:10px;text-align:left;">Priority</th>
+                                    <th style="padding:10px;text-align:left;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${categories.map((c, idx) => `
+                                    <tr style="border-bottom:1px solid #e2e8f0;">
+                                        <td style="padding:10px;font-size:22px;">${c.icon}</td>
+                                        <td style="padding:10px;"><b>${escapeHtml(c.name)}</b></td>
+                                        <td style="padding:10px;">${escapeHtml(c.group || '-')}</td>
+                                        <td style="padding:10px;"><span class="color-badge" style="background:${c.color};padding:4px 12px;border-radius:6px;color:#fff;font-size:12px;">${c.color}</span></td>
+                                        <td style="padding:10px;">${c.priority || 0}</td>
+                                        <td style="padding:10px;">
+                                            <button class="btn btn-primary btn-sm" onclick="editCategory('${moduleId}', ${idx})">Edit</button>
+                                            <button class="btn btn-danger btn-sm" onclick="deleteCategory('${moduleId}', ${idx})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`
+                }
+            </div>
+            ` : ''}
+        </div>
+        `;
+    }).join('');
 }
 
-window.filterByModule = (val) => {
-    moduleFilter = val;
-    renderCategories();
+window.toggleModule = (moduleId) => {
+    expandedModule = expandedModule === moduleId? null : moduleId;
+    renderModules(document.querySelector('.search-box').value);
+};
+
+window.filterModules = (val) => {
+    renderModules(val);
 };
 
 // ========================================
-// IMPORT FUNCTIONALITY - FIXED
+// ADD/EDIT/DELETE CATEGORY
+// ========================================
+window.openAddCategory = (moduleId) => {
+    document.getElementById('categoryModalTitle').textContent = 'Add Category to Module';
+    document.getElementById('catModuleId').value = moduleId;
+    document.getElementById('catIndex').value = '';
+    document.getElementById('catName').value = '';
+    document.getElementById('catIcon').value = '📦';
+    document.getElementById('catColor').value = '#6366f1';
+    document.getElementById('catGroup').value = '';
+    document.getElementById('catPriority').value = '0';
+    document.getElementById('catSelectFromList').value = '';
+    document.getElementById('categoryModal').classList.add('active');
+};
+
+window.editCategory = (moduleId, catIndex) => {
+    const m = allModulesData.find(x => (x._id || x.id) === moduleId);
+    if (!m ||!m.categoryDetails ||!m.categoryDetails[catIndex]) {
+        showToast('Category not found', 'error');
+        return;
+    }
+
+    const c = m.categoryDetails[catIndex];
+    document.getElementById('categoryModalTitle').textContent = 'Edit Category';
+    document.getElementById('catModuleId').value = moduleId;
+    document.getElementById('catIndex').value = catIndex;
+    document.getElementById('catName').value = c.name || '';
+    document.getElementById('catIcon').value = c.icon || '📦';
+    document.getElementById('catColor').value = c.color || '#6366f1';
+    document.getElementById('catGroup').value = c.group || '';
+    document.getElementById('catPriority').value = c.priority || 0;
+    document.getElementById('catSelectFromList').value = '';
+    document.getElementById('categoryModal').classList.add('active');
+};
+
+window.saveCategory = async () => {
+    const btn = document.getElementById('saveCatBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    const moduleId = document.getElementById('catModuleId').value;
+    const catIndex = document.getElementById('catIndex').value;
+    const m = allModulesData.find(x => (x._id || x.id) === moduleId);
+
+    if (!m) {
+        showToast('Module not found', 'error');
+        btn.disabled = false;
+        btn.textContent = '💾 Save Category';
+        return;
+    }
+
+    const newCategory = {
+        id: 'cat_' + Date.now(),
+        name: document.getElementById('catName').value.trim(),
+        icon: document.getElementById('catIcon').value.trim(),
+        color: document.getElementById('catColor').value,
+        group: document.getElementById('catGroup').value.trim(),
+        priority: parseInt(document.getElementById('catPriority').value || 0)
+    };
+
+    if (!newCategory.name ||!newCategory.icon) {
+        showToast('Name and Icon are required', 'error');
+        btn.disabled = false;
+        btn.textContent = '💾 Save Category';
+        return;
+    }
+
+    if (!m.categoryDetails) m.categoryDetails = [];
+
+    if (catIndex === '') {
+        m.categoryDetails.push(newCategory);
+    } else {
+        m.categoryDetails[parseInt(catIndex)] = {...m.categoryDetails[parseInt(catIndex)],...newCategory};
+    }
+
+    try {
+        await apiCall('/modules/' + moduleId, 'PUT', { categoryDetails: m.categoryDetails });
+        showToast(catIndex === ''? 'Category added!' : 'Category updated!', 'success');
+        closeCategoryModal();
+        await loadModules();
+        expandedModule = moduleId; // Keep it expanded
+        renderModules();
+    } catch (err) {
+        showToast('Failed: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Save Category';
+    }
+};
+
+window.deleteCategory = async (moduleId, catIndex) => {
+    if (!confirm('Delete this category?')) return;
+
+    const m = allModulesData.find(x => (x._id || x.id) === moduleId);
+    m.categoryDetails.splice(catIndex, 1);
+
+    try {
+        await apiCall('/modules/' + moduleId, 'PUT', { categoryDetails: m.categoryDetails });
+        showToast('Category deleted!', 'success');
+        await loadModules();
+        expandedModule = moduleId;
+        renderModules();
+    } catch (err) {
+        showToast('Failed: ' + err.message, 'error');
+    }
+};
+
+window.closeCategoryModal = () => {
+    document.getElementById('categoryModal').classList.remove('active');
+};
+
+// ========================================
+// IMPORT FUNCTIONALITY
 // ========================================
 window.openImportCategories = () => {
-    // FIX 2: Check karo ki CATEGORIES_FALLBACK load hua ya nahi
-    if (!window.CATEGORIES_FALLBACK || window.CATEGORIES_FALLBACK.length === 0) {
-        showToast('Categories file not loaded. Check category.js path', 'error');
+    if (typeof CATEGORIES_FALLBACK === 'undefined') {
+        showToast('categories-data.js not loaded. Check file', 'error');
         return;
     }
 
     const preview = document.getElementById('importPreview');
     const groupCount = {};
-    window.CATEGORIES_FALLBACK.forEach(cat => {
+    CATEGORIES_FALLBACK.forEach(cat => {
         const group = cat.group || 'General';
         groupCount[group] = (groupCount[group] || 0) + 1;
     });
 
     preview.innerHTML = Object.entries(groupCount).map(([group, count]) => {
-        const moduleExists = window.allModules.some(m => m.name.toLowerCase() === group.toLowerCase());
+        const moduleExists = allModulesData.some(m => m.name.toLowerCase() === group.toLowerCase());
         return `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #e2e8f0;">
             <span><b>${group}</b> ${moduleExists? '✅' : '⚠️ Not Found'}</span>
             <span class="badge badge-info">${count} cats</span>
         </div>`;
-    }).join('') + `<p style="margin-top:12px;font-size:13px;color:#64748b;">Total: ${window.CATEGORIES_FALLBACK.length} categories | ✅ = Module exists | ⚠️ = Module missing, will skip</p>`;
+    }).join('') + `<p style="margin-top:12px;font-size:13px;color:#64748b;">Total: ${CATEGORIES_FALLBACK.length} categories</p>`;
 
     document.getElementById('importModal').classList.add('active');
 };
@@ -209,38 +361,39 @@ window.importCategories = async () => {
     let skipped = 0;
 
     try {
-        for(const cat of window.CATEGORIES_FALLBACK) {
+        for(const cat of CATEGORIES_FALLBACK) {
             const groupName = cat.group || 'General';
-            const module = window.allModules.find(m => m.name.toLowerCase() === groupName.toLowerCase());
+            const module = allModulesData.find(m => m.name.toLowerCase() === groupName.toLowerCase());
 
             if(!module) {
                 skipped++;
                 continue;
             }
 
-            const exists = (module.categoryDetails || []).some(c => c.name.toLowerCase() === cat.name.toLowerCase());
+            if (!module.categoryDetails) module.categoryDetails = [];
+
+            const exists = module.categoryDetails.some(c => c.name.toLowerCase() === cat.name.toLowerCase());
             if(exists) {
                 skipped++;
                 continue;
             }
 
-            const newCat = {
+            module.categoryDetails.push({
                 id: cat.id,
                 name: cat.name,
                 icon: cat.icon,
                 color: cat.color,
                 group: cat.group,
                 priority: 0
-            };
+            });
 
-            const updatedCats = [...(module.categoryDetails || []), newCat];
-            await apiCall('/modules/' + (module._id || module.id), 'PUT', { categoryDetails: updatedCats });
+            await apiCall('/modules/' + (module._id || module.id), 'PUT', { categoryDetails: module.categoryDetails });
             imported++;
         }
 
         showToast(`✅ Imported: ${imported} | ⏭️ Skipped: ${skipped}`, 'success');
         closeImportModal();
-        await loadCategories();
+        await loadModules();
 
     } catch (err) {
         showToast('Import failed: ' + err.message, 'error');
@@ -250,106 +403,26 @@ window.importCategories = async () => {
     }
 };
 
-// ========================================
-// EDIT CATEGORY
-// ========================================
-window.editCategory = (moduleId, catIndex) => {
-    const m = window.allModules.find(x => (x._id || x.id) === moduleId);
-    if (!m ||!m.categoryDetails ||!m.categoryDetails[catIndex]) {
-        showToast('Category not found', 'error');
-        return;
-    }
-
-    const c = m.categoryDetails[catIndex];
-    document.getElementById('catModuleId').value = moduleId;
-    document.getElementById('catIndex').value = catIndex;
-    document.getElementById('catName').value = c.name || '';
-    document.getElementById('catIcon').value = c.icon || '📦';
-    document.getElementById('catColor').value = c.color || '#6366f1';
-    document.getElementById('catGroup').value = c.group || '';
-    document.getElementById('catPriority').value = c.priority || 0;
-    document.getElementById('categoryModal').classList.add('active');
-};
-
-window.saveCategory = async () => {
-    const btn = document.getElementById('saveCatBtn');
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-
-    const moduleId = document.getElementById('catModuleId').value;
-    const catIndex = parseInt(document.getElementById('catIndex').value);
-    const m = window.allModules.find(x => (x._id || x.id) === moduleId);
-
-    if (!m) {
-        showToast('Module not found', 'error');
-        btn.disabled = false;
-        btn.textContent = '💾 Save Changes';
-        return;
-    }
-
-    const updatedCategory = {
-     ...m.categoryDetails[catIndex],
-        name: document.getElementById('catName').value.trim(),
-        icon: document.getElementById('catIcon').value.trim(),
-        color: document.getElementById('catColor').value,
-        group: document.getElementById('catGroup').value.trim(),
-        priority: parseInt(document.getElementById('catPriority').value || 0)
-    };
-
-    if (!updatedCategory.name ||!updatedCategory.icon) {
-        showToast('Name and Icon are required', 'error');
-        btn.disabled = false;
-        btn.textContent = '💾 Save Changes';
-        return;
-    }
-
-    m.categoryDetails[catIndex] = updatedCategory;
-
-    try {
-        await apiCall('/modules/' + moduleId, 'PUT', { categoryDetails: m.categoryDetails });
-        showToast('Category updated successfully!');
-        closeCategoryModal();
-        await loadCategories();
-    } catch (err) {
-        showToast('Failed to update category: ' + err.message, 'error');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '💾 Save Changes';
-    }
-};
-
-window.closeCategoryModal = () => {
-    document.getElementById('categoryModal').classList.remove('active');
-};
-
-// FIX 3: Responsive CSS add kiya
+// RESPONSIVE CSS
 const style = document.createElement('style');
 style.textContent = `
 @media (max-width: 768px) {
-   .action-bar {
-        flex-direction: column!important;
-    }
-   .action-bar > div {
+.action-bar > div {
         width: 100%;
     }
-   .search-box {
+.search-box {
         width: 100%!important;
-        margin-top: 10px;
     }
-    table {
-        font-size: 12px;
-    }
-   .btn-sm {
-        padding: 4px 8px;
-        font-size: 11px;
-    }
-   .modal-content {
+.modal-content {
         width: 95%!important;
         margin: 10px;
+    }
+.module-card h3 {
+        font-size: 16px!important;
     }
 }
 `;
 document.head.appendChild(style);
 
-loadCategories();
+loadModules();
 </script>
