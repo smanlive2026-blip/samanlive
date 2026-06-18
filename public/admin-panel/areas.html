@@ -7,7 +7,51 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #f1f5f9;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+    .content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            max-width: 100%;
+        }
+
+    .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+    .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+    .stat-card h3 {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+    .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+        }
 
         #map {
             height: 450px;
@@ -19,7 +63,7 @@
             border: 2px solid #e2e8f0;
         }
 
-      .area-circle-info {
+    .area-circle-info {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 14px 18px;
@@ -29,9 +73,9 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
-      .radius-text { color: #fbbf24; font-weight: 700; }
+    .radius-text { color: #fbbf24; font-weight: 700; }
 
-      .search-results {
+    .search-results {
             position: absolute;
             background: white;
             border: 1px solid #e2e8f0;
@@ -45,21 +89,21 @@
             margin-top: 4px;
         }
 
-      .search-result-item {
+    .search-result-item {
             padding: 12px 16px;
             cursor: pointer;
             border-bottom: 1px solid #f1f5f9;
             transition: all 0.2s;
         }
 
-      .search-result-item:hover {
+    .search-result-item:hover {
             background: #f8fafc;
             padding-left: 20px;
         }
 
-      .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:last-child { border-bottom: none; }
 
-      .area-stats-modal {
+    .area-stats-modal {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(15, 23, 42, 0.7);
@@ -76,11 +120,11 @@
             to { opacity: 1; }
         }
 
-      .area-stats-content {
+    .area-stats-content {
             background: white;
             border-radius: 16px;
             padding: 28px;
-            max-width: 750px;
+            max-width: 900px;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
@@ -93,14 +137,14 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
-      .stats-row {
+    .stats-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 14px;
             margin: 20px 0;
         }
 
-      .mini-stat {
+    .mini-stat {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             padding: 20px;
             border-radius: 12px;
@@ -109,12 +153,12 @@
             transition: transform 0.2s;
         }
 
-      .mini-stat:hover {
+    .mini-stat:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
-      .mini-stat-value {
+    .mini-stat-value {
             font-size: 28px;
             font-weight: 800;
             background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
@@ -123,7 +167,7 @@
             background-clip: text;
         }
 
-      .mini-stat-label {
+    .mini-stat-label {
             font-size: 12px;
             color: #64748b;
             margin-top: 6px;
@@ -132,12 +176,12 @@
             letter-spacing: 0.5px;
         }
 
-      .top-search {
+    .top-search {
             position: relative;
             margin-bottom: 24px;
         }
 
-      .top-search input {
+    .top-search input {
             width: 100%;
             padding: 14px 50px 14px 20px;
             border: 2px solid #e2e8f0;
@@ -147,13 +191,13 @@
             background: white;
         }
 
-      .top-search input:focus {
+    .top-search input:focus {
             border-color: #3b82f6;
             outline: none;
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
-      .top-search::after {
+    .top-search::after {
             content: '🔍';
             position: absolute;
             right: 18px;
@@ -163,36 +207,38 @@
             pointer-events: none;
         }
 
-      .table-container {
-            overflow-x: auto;
+    .table-container {
             border-radius: 12px;
             border: 1px solid #e2e8f0;
             background: white;
+            overflow: hidden;
         }
 
         table {
             border-collapse: collapse;
             width: 100%;
-            min-width: 1100px;
+        }
+
+        table th {
+            background: #f8fafc;
+            padding: 14px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
         }
 
         table td {
-            padding: 14px 14px;
+            padding: 14px;
             border-bottom: 1px solid #f1f5f9;
             font-size: 14px;
             color: #334155;
             vertical-align: middle;
         }
-
-        table td:nth-child(1) { width: 110px; }
-        table td:nth-child(2) { width: 180px; }
-        table td:nth-child(3) { width: 130px; }
-        table td:nth-child(4) { width: 130px; }
-        table td:nth-child(5) { width: 160px; font-family: monospace; font-size: 12px; }
-        table td:nth-child(6) { width: 90px; text-align: center; }
-        table td:nth-child(7) { width: 110px; text-align: center; }
-        table td:nth-child(8) { width: 100px; text-align: center; }
-        table td:nth-child(9) { width: 160px; }
 
         tr.area-row {
             cursor: pointer;
@@ -208,7 +254,7 @@
             border-bottom: none;
         }
 
-      .badge {
+    .badge {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             padding: 5px 12px;
@@ -219,7 +265,15 @@
             white-space: nowrap;
         }
 
-      .status-badge {
+    .badge-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+    .badge-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+    .status-badge {
             padding: 6px 14px;
             border-radius: 20px;
             font-size: 11px;
@@ -229,17 +283,17 @@
             letter-spacing: 0.3px;
         }
 
-      .status-active {
+    .status-active {
             background: #d1fae5;
             color: #065f46;
         }
 
-      .status-hidden {
+    .status-hidden {
             background: #fee2e2;
             color: #991b1b;
         }
 
-      .btn-sm {
+    .btn-sm {
             padding: 7px 14px;
             font-size: 12px;
             border-radius: 6px;
@@ -250,36 +304,36 @@
             white-space: nowrap;
         }
 
-      .btn-primary {
+    .btn-primary {
             background: #3b82f6;
             color: white;
         }
 
-      .btn-primary:hover {
+    .btn-primary:hover {
             background: #2563eb;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
 
-      .btn-secondary {
+    .btn-secondary {
             background: #64748b;
             color: white;
         }
 
-      .btn-secondary:hover {
+    .btn-secondary:hover {
             background: #475569;
         }
 
-      .btn-danger {
+    .btn-danger {
             background: #ef4444;
             color: white;
         }
 
-      .btn-danger:hover {
+    .btn-danger:hover {
             background: #dc2626;
         }
 
-      .btn-success {
+    .btn-success {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             padding: 12px 24px;
@@ -291,18 +345,18 @@
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
-      .btn-success:hover {
+    .btn-success:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
         }
 
-      .actions {
+    .actions {
             display: flex;
             gap: 6px;
             justify-content: flex-start;
         }
 
-      .card-header {
+    .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -311,14 +365,14 @@
             gap: 12px;
         }
 
-      .card-header h2 {
+    .card-header h2 {
             margin: 0;
             font-size: 20px;
             font-weight: 700;
             color: #0f172a;
         }
 
-      .modal {
+    .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -331,7 +385,7 @@
             overflow-y: auto;
         }
 
-      .modal-content {
+    .modal-content {
             background: white;
             border-radius: 16px;
             padding: 32px;
@@ -342,7 +396,7 @@
             animation: slideUp 0.3s;
         }
 
-      .modal-header {
+    .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -351,14 +405,14 @@
             border-bottom: 2px solid #f1f5f9;
         }
 
-      .modal-header h2 {
+    .modal-header h2 {
             margin: 0;
             font-size: 24px;
             font-weight: 800;
             color: #0f172a;
         }
 
-      .close-btn {
+    .close-btn {
             background: #f1f5f9;
             border: none;
             width: 36px;
@@ -370,35 +424,35 @@
             transition: all 0.2s;
         }
 
-      .close-btn:hover {
+    .close-btn:hover {
             background: #e2e8f0;
             color: #0f172a;
             transform: rotate(90deg);
         }
 
-      .form-grid {
+    .form-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
         }
 
-      .form-group {
+    .form-group {
             display: flex;
             flex-direction: column;
         }
 
-      .form-group.full {
+    .form-group.full {
             grid-column: 1 / -1;
         }
 
-      .form-group label {
+    .form-group label {
             font-weight: 600;
             margin-bottom: 6px;
             color: #334155;
             font-size: 14px;
         }
 
-      .form-group input,.form-group select {
+    .form-group input,.form-group select {
             padding: 10px 14px;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
@@ -406,42 +460,69 @@
             transition: all 0.2s;
         }
 
-      .form-group input:focus,.form-group select:focus {
+    .form-group input:focus,.form-group select:focus {
             border-color: #3b82f6;
             outline: none;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-      .form-group input[readonly] {
+    .form-group input[readonly] {
             background: #f8fafc;
             color: #64748b;
         }
 
-      .loading {
+    .loading {
             text-align: center;
             padding: 40px;
             color: #94a3b8;
             font-weight: 600;
         }
 
-      .area-code-text {
+    .area-code-text {
             color: #3b82f6;
             font-weight: 700;
             font-family: monospace;
             font-size: 13px;
         }
 
+    .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e293b;
+            color: white;
+            padding: 14px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+        }
+
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
         @media (max-width: 768px) {
-         .form-grid {
+        .form-grid {
                 grid-template-columns: 1fr;
             }
-         .modal-content {
+        .modal-content {
                 padding: 20px;
                 margin: 20px;
             }
-         .card-header {
+        .card-header {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+            table {
+                font-size: 12px;
+            }
+            table td, table th {
+                padding: 10px 8px;
             }
         }
     </style>
@@ -466,8 +547,22 @@
             </div>
             <div class="table-container">
                 <table>
+                    <thead>
+                        <tr>
+                            <th>Area Code</th>
+                            <th>Area Name</th>
+                            <th>City</th>
+                            <th>State</th>
+                            <th>Coordinates</th>
+                            <th>Radius</th>
+                            <th>Managers</th>
+                            <th>Live Modules</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
                     <tbody id="areasTable">
-                        <tr><td colspan="9" class="loading">Loading...</td></tr>
+                        <tr><td colspan="10" class="loading">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -535,24 +630,27 @@
         let allUsers = [];
         let allShops = [];
         let allProducts = [];
+        let allModules = [];
         let map, marker, circle;
         let searchTimeout;
         let currentRadius = 50;
 
         async function loadAreas() {
             try {
-                const [areasData, managersData, usersData, shopsData, productsData] = await Promise.all([
+                const [areasData, managersData, usersData, shopsData, productsData, modulesData] = await Promise.all([
                     apiCall('/areas'),
                     apiCall('/managers'),
                     apiCall('/users').catch(() => []),
                     apiCall('/shops').catch(() => []),
-                    apiCall('/products').catch(() => [])
+                    apiCall('/products').catch(() => []),
+                    apiCall('/modules').catch(() => [])
                 ]);
                 allAreas = areasData || [];
                 allManagers = managersData || [];
                 allUsers = usersData || [];
                 allShops = shopsData || [];
                 allProducts = productsData || [];
+                allModules = modulesData.modules || modulesData || [];
 
                 renderAreas(allAreas);
                 updateStats();
@@ -574,23 +672,29 @@
 
         function renderAreas(areas) {
             const tbody = document.getElementById('areasTable');
-            tbody.innerHTML = areas.length === 0? '<tr><td colspan="9" class="loading">No areas created yet</td></tr>' :
+            tbody.innerHTML = areas.length === 0? '<tr><td colspan="10" class="loading">No areas created yet</td></tr>' :
                 areas.map(a => {
                     const managerCount = allManagers.filter(m => m.areaCode === a.areaCode).length;
                     const totalBuckets = 15;
                     const radius = a.radius || 50;
+
+                    // Count modules live in this area
+                    const liveModules = allModules.filter(m => m.activeAreas && m.activeAreas.includes(a.areaCode));
+                    const moduleCount = liveModules.length;
+
                     return `<tr class="area-row" onclick="showAreaStats('${a._id}')">
                         <td><span class="area-code-text">${escapeHtml(a.areaCode)}</span></td>
                         <td>${escapeHtml(a.areaName)}</td>
                         <td>${escapeHtml(a.city)}</td>
                         <td>${escapeHtml(a.state)}</td>
-                        <td>${a.centerLat.toFixed(4)}, ${a.centerLng.toFixed(4)}</td>
+                        <td style="font-family:monospace;font-size:12px;">${a.centerLat.toFixed(4)}, ${a.centerLng.toFixed(4)}</td>
                         <td><span class="badge">${radius} km</span></td>
                         <td><b>${managerCount}</b>/${totalBuckets}</td>
+                        <td><span class="badge ${moduleCount > 0? 'badge-success' : 'badge-warning'}">${moduleCount}</span></td>
                         <td><span class="status-badge ${a.status?'status-active':'status-hidden'}">${a.status?'Active':'Inactive'}</span></td>
                         <td class="actions" onclick="event.stopPropagation()">
                             <button class="btn btn-secondary btn-sm" onclick="editArea('${a._id}')">Edit</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteArea('${a._id}', ${managerCount})">Delete</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteArea('${a._id}', ${managerCount}, ${moduleCount})">Delete</button>
                         </td>
                     </tr>`;
                 }).join('');
@@ -625,6 +729,7 @@
                 const shop = allShops.find(s => s._id === p.shopId);
                 return shop && (shop.areaCode === area.areaCode || shop.area === area.city);
             });
+            const liveModules = allModules.filter(m => m.activeAreas && m.activeAreas.includes(area.areaCode));
 
             const radius = area.radius || 50;
 
@@ -646,6 +751,10 @@
                         <div class="mini-stat-value">${products.length}</div>
                         <div class="mini-stat-label">Products</div>
                     </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">${liveModules.length}</div>
+                        <div class="mini-stat-label">Live Modules</div>
+                    </div>
                 </div>
                 <div style="margin-top:24px;">
                     <h3 style="margin-bottom:16px;font-size:16px;font-weight:700;">📍 Location Details</h3>
@@ -656,6 +765,14 @@
                         <p style="margin:8px 0;"><b>Coverage:</b> ${radius} km radius</p>
                         <p style="margin:8px 0;"><b>Status:</b> <span class="status-badge ${area.status?'status-active':'status-hidden'}">${area.status?'Active':'Inactive'}</span></p>
                     </div>
+                </div>
+                <div style="margin-top:24px;">
+                    <h3 style="margin-bottom:16px;font-size:16px;font-weight:700;">📦 Live Modules (${liveModules.length})</h3>
+                    ${liveModules.length > 0
+                    ? liveModules.map(m => `<div style="padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border-left:3px solid #10b981;"><b>${m.icon} ${escapeHtml(m.name)}</b><br><small style="color:#64748b;">${escapeHtml(m.desc || 'No description')}</small></div>`).join('')
+                        : '<p style="color:#94a3b8;padding:20px;text-align:center;background:#f8fafc;border-radius:8px;">No modules live in this area yet</p>'
+                    }
+                </div>
                 <div style="margin-top:24px;">
                     <h3 style="margin-bottom:16px;font-size:16px;font-weight:700;">👥 Managers (${managers.length}/15)</h3>
                     ${managers.length > 0? managers.map(m => `<div style="padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border-left:3px solid #3b82f6;"><b>${escapeHtml(m.name)}</b><br><small style="color:#64748b;">${escapeHtml(m.email)}</small></div>`).join('') : '<p style="color:#94a3b8;padding:20px;text-align:center;background:#f8fafc;border-radius:8px;">No managers assigned yet</p>'}
@@ -666,6 +783,32 @@
         window.closeAreaStats = () => {
             document.getElementById('areaStatsModal').style.display = 'none';
         };
+
+        // Generate next area code with sequence
+        function generateNextAreaCode(city, state) {
+            const cityCode = city.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '');
+            const stateCode = state.substring(0, 2).toUpperCase().replace(/[^A-Z]/g, '');
+            const baseCode = `${cityCode}${stateCode}`;
+
+            // Find existing areas with same base code
+            const existingAreas = allAreas.filter(a => a.areaCode.startsWith(baseCode));
+
+            if (existingAreas.length === 0) {
+                return `${baseCode}-1`;
+            }
+
+            // Find max sequence number
+            let maxSeq = 0;
+            existingAreas.forEach(a => {
+                const match = a.areaCode.match(new RegExp(`^${baseCode}-(\\d+)$`));
+                if (match) {
+                    const seq = parseInt(match[1]);
+                    if (seq > maxSeq) maxSeq = seq;
+                }
+            });
+
+            return `${baseCode}-${maxSeq + 1}`;
+        }
 
         window.openAddArea = () => {
             document.getElementById('areaId').value = '';
@@ -708,12 +851,12 @@
                     const city = data.address.city || data.address.town || data.address.village || data.address.county || 'Unknown';
                     const state = data.address.state || data.address.region || '';
 
-                    const cityCode = city.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '');
-                    const stateCode = state.substring(0, 2).toUpperCase().replace(/[^A-Z]/g, '');
-                    const areaCode = `${cityCode}${stateCode}`;
+                    const areaCode = generateNextAreaCode(city, state);
+                    const seqMatch = areaCode.match(/-(\d+)$/);
+                    const seq = seqMatch? seqMatch[1] : '1';
 
                     document.getElementById('areaCode').value = areaCode;
-                    document.getElementById('areaName').value = `${city} ${currentRadius}km Zone`;
+                    document.getElementById('areaName').value = `${city} Zone ${seq} - ${currentRadius}km`;
                     document.getElementById('cityName').value = city;
                     document.getElementById('stateName').value = state;
                     document.getElementById('centerLat').value = lat.toFixed(6);
@@ -732,8 +875,11 @@
             currentRadius = parseInt(e.target.value) || 50;
             document.getElementById('radiusDisplay').textContent = `${currentRadius} km`;
             const cityName = document.getElementById('cityName').value;
-            if (cityName) {
-                document.getElementById('areaName').value = `${cityName} ${currentRadius}km Zone`;
+            const areaCode = document.getElementById('areaCode').value;
+            if (cityName && areaCode) {
+                const seqMatch = areaCode.match(/-(\d+)$/);
+                const seq = seqMatch? seqMatch[1] : '1';
+                document.getElementById('areaName').value = `${cityName} Zone ${seq} - ${currentRadius}km`;
             }
             if (circle && map) {
                 circle.setRadius(currentRadius * 1000);
@@ -873,9 +1019,12 @@
             }
         });
 
-        window.deleteArea = async (id, managerCount) => {
+        window.deleteArea = async (id, managerCount, moduleCount) => {
             if (managerCount > 0) {
                 return showToast(`Cannot delete! ${managerCount} managers exist in this area. Delete them first.`, 'error');
+            }
+            if (moduleCount > 0) {
+                return showToast(`Cannot delete! ${moduleCount} modules are live in this area. Remove from modules first.`, 'error');
             }
             if (!confirm('Delete this area? This cannot be undone.')) return;
             try {
@@ -899,6 +1048,21 @@
             }
         });
 
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Initialize on page load
         loadAreas();
     </script>
 </body>

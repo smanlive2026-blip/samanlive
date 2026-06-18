@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modules Management - SAMANLIVE Admin</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: #f1f5f9; padding: 20px; }
@@ -15,6 +13,7 @@
        .badge-info { background: #dbeafe; color: #1e40af; }
        .badge-success { background: #d1fae5; color: #065f46; }
        .badge-danger { background: #fee2e2; color: #991b1b; }
+       .badge-warning { background: #fef3c7; color: #92400e; }
        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
        .btn-success { background: #10b981; color: white; }
@@ -47,8 +46,6 @@
        .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: 0.2s; }
        .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-       .map-container { height: 400px; border-radius: 8px; margin-top: 15px; border: 2px solid #e2e8f0; }
-       .map-controls { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
        .modal.active { display: flex; }
        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; animation: slideIn 0.3s ease; }
@@ -57,6 +54,12 @@
        .close-btn { background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px; color: #64748b; transition: 0.2s; }
        .close-btn:hover { background: #e2e8f0; transform: rotate(90deg); }
        .area-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; }
+       .area-checkbox-list { max-height: 300px; overflow-y: auto; border: 2px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #f8fafc; }
+       .area-checkbox-item { display: flex; align-items: center; padding: 10px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px; transition: 0.2s; }
+       .area-checkbox-item:hover { background: #f1f5f9; border-color: #6366f1; }
+       .area-checkbox-item input[type="checkbox"] { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; }
+       .area-checkbox-item label { margin: 0; cursor: pointer; flex: 1; font-weight: 500; }
+       .area-checkbox-item .area-meta { font-size: 12px; color: #64748b; margin-left: 8px; }
        .toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 14px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; animation: slideInRight 0.3s ease; }
        .toast.success { background: #10b981; }
        .toast.error { background: #ef4444; }
@@ -89,32 +92,17 @@
                     <th>Color</th>
                     <th>Link</th>
                     <th>Categories</th>
+                    <th>Live Areas</th>
                     <th>Priority</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <tr><td colspan="9" class="loading">Loading modules</td></tr>
+                <tr><td colspan="10" class="loading">Loading modules</td></tr>
             </tbody>
         </table>
     </div>
-</div>
-
-<div class="content">
-    <h2>📍 Module Area Mapping</h2>
-    <div class="form-group">
-        <label>Select Module:</label>
-        <select id="moduleSelectArea" onchange="loadModuleArea()">
-            <option value="">-- Select Module --</option>
-        </select>
-    </div>
-    <div class="map-controls">
-        <button class="btn btn-primary" id="saveAreaBtn" onclick="saveModuleArea()">💾 Save Area</button>
-        <button class="btn btn-secondary" onclick="clearModuleDrawing()">🗑️ Clear Drawing</button>
-    </div>
-    <div id="moduleMap" class="map-container"></div>
-    <small style="color:#64748b;display:block;margin-top:10px;">Draw polygon or circle on map to set module service area. Use toolbar on left.</small>
 </div>
 
 <!-- Module Modal -->
@@ -126,9 +114,20 @@
         </div>
         <input type="hidden" id="moduleEditId">
         <div id="moduleModalFields"></div>
+        
+        <h3 style="margin:20px 0 10px;color:#1e293b;font-size:16px;">📍 Active Service Areas</h3>
+        <div class="form-group">
+            <label>Select areas where this module will be live:</label>
+            <div id="areaCheckboxList" class="area-checkbox-list">
+                <div class="loading">Loading areas...</div>
+            </div>
+            <small style="color:#64748b;display:block;margin-top:8px;">Module will only show to users within selected areas</small>
+        </div>
+
         <h3 style="margin:20px 0 10px;color:#1e293b;font-size:16px;">📂 Categories in this Module</h3>
         <div id="moduleCategoriesList"></div>
         <button class="btn btn-success btn-sm" onclick="addCategoryToModule()" style="margin-top:10px;">+ Add Category</button>
+        
         <div style="display:flex;gap:10px;margin-top:25px;padding-top:20px;border-top:2px solid #f1f5f9;">
             <button class="btn btn-primary" id="saveModuleBtn" onclick="saveModule()">💾 Save Module</button>
             <button class="btn btn-secondary" onclick="closeModuleModal()">Cancel</button>
@@ -136,29 +135,29 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script>
 // ========================================
-// MODULE MANAGEMENT - PROFESSIONAL VERSION
-// Uses window.allModules from admin.js
+// MODULE MANAGEMENT - AREA LINKED VERSION
 // ========================================
 let currentModuleCategories = [];
-let moduleMap, drawnItems, currentDrawnLayer, currentModuleId;
+let currentModuleActiveAreas = [];
+let allAreas = [];
 
 async function loadModules() {
     showLoading('modulesTable');
     try {
-        const data = await apiCall('/modules');
-        window.allModules = data.modules || data;
+        const [modulesData, areasData] = await Promise.all([
+            apiCall('/modules'),
+            apiCall('/areas')
+        ]);
+        window.allModules = modulesData.modules || modulesData || [];
+        allAreas = areasData || [];
         document.getElementById('moduleCount').textContent = window.allModules.length;
         renderModules();
-        populateModuleDropdown();
-        initModuleMap();
     } catch (err) {
         console.error('Load modules error:', err);
         document.querySelector('#modulesTable tbody').innerHTML =
-            `<tr><td colspan="9" style="text-align:center;padding:40px;color:#ef4444;">Failed to load modules: ${escapeHtml(err.message)}</td></tr>`;
+            `<tr><td colspan="10" style="text-align:center;padding:40px;color:#ef4444;">Failed to load: ${escapeHtml(err.message)}</td></tr>`;
     }
 }
 
@@ -166,26 +165,29 @@ function renderModules() {
     const tbody = document.querySelector('#modulesTable tbody');
 
     if (!window.allModules || window.allModules.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">No modules found. Click "Add New Module" to create one.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:#94a3b8;">No modules found. Click "Add New Module" to create one.</td></tr>';
         return;
     }
 
     tbody.innerHTML = window.allModules.map(m => {
         const cats = m.categoryDetails || [];
         const catsText = cats.length > 0? cats.slice(0,2).map(c => escapeHtml(c.name)).join(', ') + (cats.length > 2? '...' : '') : '-';
-        const areaCount = m.areas? m.areas.filter(a => a.status!== false).length : 0;
+        const activeAreas = m.activeAreas || [];
+        const areaCount = activeAreas.length;
         const moduleId = m._id || m.id;
+
+        let areaBadge = areaCount === 0 
+            ? '<span class="badge badge-danger">Not Live</span>'
+            : `<span class="badge badge-success">${areaCount} Area${areaCount > 1? 's' : ''}</span>`;
 
         return `<tr class="module-row" onclick="toggleModuleAreas('${moduleId}')">
             <td><span class="expand-icon" id="icon-${moduleId}">▶</span></td>
             <td style="font-size:24px;">${m.icon || '📦'}</td>
-            <td>
-                <b>${escapeHtml(m.name)}</b>
-                ${areaCount > 0? `<br><small style="color:#6366f1;">${areaCount} area${areaCount > 1? 's' : ''}</small>` : ''}
-            </td>
+            <td><b>${escapeHtml(m.name)}</b></td>
             <td><span class="color-badge" style="background:${m.color}">${m.color}</span></td>
             <td>${escapeHtml(m.link || '-')}</td>
             <td><span class="badge badge-info">${cats.length}</span> ${catsText}</td>
+            <td>${areaBadge}</td>
             <td>${m.priority || 0}</td>
             <td><span class="status-badge status-${m.status}">${m.status}</span></td>
             <td onclick="event.stopPropagation()" class="actions">
@@ -194,9 +196,19 @@ function renderModules() {
             </td>
         </tr>
         <tr id="areas-${moduleId}" style="display:none;">
-            <td colspan="9">
+            <td colspan="10">
                 <div class="area-expand">
-                    <h4 style="margin-bottom:10px;">Categories:</h4>
+                    <h4 style="margin-bottom:10px;">📍 Live in Areas:</h4>
+                    ${areaCount > 0 
+                        ? activeAreas.map(code => {
+                            const area = allAreas.find(a => a.areaCode === code);
+                            return area 
+                                ? `<span class="badge badge-success" style="margin:4px;display:inline-block;">${escapeHtml(area.areaName)} (${area.radius}km)</span>`
+                                : `<span class="badge badge-warning" style="margin:4px;display:inline-block;">${code} - Deleted</span>`;
+                          }).join(' ')
+                        : '<span style="color:#94a3b8;">Not live in any area</span>'
+                    }
+                    <h4 style="margin:15px 0 10px;">📂 Categories:</h4>
                     ${cats.length > 0? cats.map(c => `<span class="badge badge-info" style="margin:4px;display:inline-block;">${c.icon} ${escapeHtml(c.name)}</span>`).join(' ') : '<span style="color:#94a3b8;">No categories</span>'}
                 </div>
             </td>
@@ -216,18 +228,14 @@ window.toggleModuleAreas = (id) => {
     }
 };
 
-function populateModuleDropdown() {
-    const select = document.getElementById('moduleSelectArea');
-    select.innerHTML = '<option value="">-- Select Module --</option>' +
-        window.allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
-}
-
 window.openAddModule = () => {
     document.getElementById('moduleEditId').value = '';
     document.getElementById('moduleModalTitle').textContent = 'Add New Module';
     currentModuleCategories = [];
+    currentModuleActiveAreas = [];
     renderModuleForm();
     renderCategoryList();
+    renderAreaCheckboxes();
     document.getElementById('moduleModal').classList.add('active');
 };
 
@@ -238,8 +246,10 @@ window.editModule = (id) => {
     document.getElementById('moduleEditId').value = id;
     document.getElementById('moduleModalTitle').textContent = 'Edit Module';
     currentModuleCategories = [...(m.categoryDetails || [])];
+    currentModuleActiveAreas = [...(m.activeAreas || [])];
     renderModuleForm(m);
     renderCategoryList();
+    renderAreaCheckboxes();
     document.getElementById('moduleModal').classList.add('active');
 };
 
@@ -279,6 +289,39 @@ function renderModuleForm(m = {}) {
             <textarea id="field_desc" rows="2" placeholder="Module description...">${escapeHtml(m.desc || '')}</textarea>
         </div>`;
 }
+
+function renderAreaCheckboxes() {
+    const container = document.getElementById('areaCheckboxList');
+    const activeAreas = allAreas.filter(a => a.status);
+    
+    if (activeAreas.length === 0) {
+        container.innerHTML = '<p style="color:#94a3b8;padding:20px;text-align:center;">No active areas found. Create areas in Area Master first.</p>';
+        return;
+    }
+
+    container.innerHTML = activeAreas.map(area => `
+        <div class="area-checkbox-item">
+            <input type="checkbox" 
+                   id="area_${area.areaCode}" 
+                   value="${area.areaCode}" 
+                   ${currentModuleActiveAreas.includes(area.areaCode) ? 'checked' : ''}
+                   onchange="toggleAreaSelection('${area.areaCode}')">
+            <label for="area_${area.areaCode}">
+                <b>${escapeHtml(area.areaName)}</b>
+                <span class="area-meta">${area.radius}km • ${escapeHtml(area.city)}, ${escapeHtml(area.state)}</span>
+            </label>
+        </div>
+    `).join('');
+}
+
+window.toggleAreaSelection = (areaCode) => {
+    const idx = currentModuleActiveAreas.indexOf(areaCode);
+    if (idx > -1) {
+        currentModuleActiveAreas.splice(idx, 1);
+    } else {
+        currentModuleActiveAreas.push(areaCode);
+    }
+};
 
 function renderCategoryList() {
     const container = document.getElementById('moduleCategoriesList');
@@ -337,7 +380,8 @@ window.saveModule = async () => {
         desc: document.getElementById('field_desc').value.trim(),
         priority: parseInt(document.getElementById('field_priority').value || 0),
         status: document.getElementById('field_status').value,
-        categoryDetails: currentModuleCategories
+        categoryDetails: currentModuleCategories,
+        activeAreas: currentModuleActiveAreas
     };
 
     if (!data.name ||!data.icon ||!data.link) {
@@ -379,122 +423,41 @@ window.deleteModule = async (id) => {
 window.closeModuleModal = () => {
     document.getElementById('moduleModal').classList.remove('active');
     currentModuleCategories = [];
+    currentModuleActiveAreas = [];
 };
 
-// ========================================
-// MAP FUNCTIONS
-// ========================================
-function initModuleMap() {
-    if (moduleMap) return;
-
-    moduleMap = L.map('moduleMap').setView([23.0225, 72.5714], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(moduleMap);
-
-    drawnItems = new L.FeatureGroup();
-    moduleMap.addLayer(drawnItems);
-
-    const drawControl = new L.Control.Draw({
-        draw: {
-            polygon: { shapeOptions: { color: '#6366f1', fillOpacity: 0.3 } },
-            circle: { shapeOptions: { color: '#6366f1', fillOpacity: 0.3 } },
-            rectangle: false,
-            polyline: false,
-            marker: false,
-            circlemarker: false
-        },
-        edit: { featureGroup: drawnItems, remove: true }
+window.filterTable = (tableId, query) => {
+    const q = query.toLowerCase().trim();
+    const rows = document.querySelectorAll(`#${tableId} tbody tr.module-row`);
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+        const nextRow = row.nextElementSibling;
+        if (nextRow && nextRow.id.startsWith('areas-')) {
+            nextRow.style.display = 'none';
+            row.querySelector('.expand-icon').classList.remove('open');
+        }
     });
-    moduleMap.addControl(drawControl);
+};
 
-    moduleMap.on(L.Draw.Event.CREATED, (e) => {
-        drawnItems.clearLayers();
-        currentDrawnLayer = e.layer;
-        drawnItems.addLayer(currentDrawnLayer);
-        showToast('Area drawn. Click Save Area to confirm.', 'success');
-    });
+function showLoading(tableId) {
+    document.querySelector(`#${tableId} tbody`).innerHTML = 
+        `<tr><td colspan="10" class="loading">Loading</td></tr>`;
 }
 
-window.loadModuleArea = () => {
-    currentModuleId = document.getElementById('moduleSelectArea').value;
-    drawnItems.clearLayers();
-    currentDrawnLayer = null;
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
 
-    if (!currentModuleId) return;
-
-    const module = window.allModules.find(m => (m._id || m.id) === currentModuleId);
-    if (module && module.areas && module.areas.length > 0) {
-        const area = module.areas[0];
-        try {
-            if (area.type === 'circle' && area.center) {
-                currentDrawnLayer = L.circle([area.center.lat, area.center.lng], {
-                    radius: area.radius,
-                    color: '#6366f1',
-                    fillOpacity: 0.3
-                });
-                moduleMap.setView([area.center.lat, area.center.lng], 13);
-            } else if (area.type === 'polygon' && area.coordinates) {
-                currentDrawnLayer = L.polygon(area.coordinates, { color: '#6366f1', fillOpacity: 0.3 });
-                moduleMap.fitBounds(currentDrawnLayer.getBounds());
-            }
-            if (currentDrawnLayer) drawnItems.addLayer(currentDrawnLayer);
-        } catch (err) {
-            console.error('Error loading area:', err);
-            showToast('Error loading area', 'error');
-        }
-    }
-};
-
-window.saveModuleArea = async () => {
-    if (!currentModuleId) {
-        showToast('Please select a module first', 'error');
-        return;
-    }
-    if (!currentDrawnLayer) {
-        showToast('Please draw an area on the map first', 'error');
-        return;
-    }
-
-    const btn = document.getElementById('saveAreaBtn');
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-
-    let areaData = { name: 'Service Area', status: true };
-
-    if (currentDrawnLayer instanceof L.Circle) {
-        const center = currentDrawnLayer.getLatLng();
-        areaData = {
-           ...areaData,
-            type: 'circle',
-            center: { lat: center.lat, lng: center.lng },
-            radius: Math.round(currentDrawnLayer.getRadius())
-        };
-    } else if (currentDrawnLayer instanceof L.Polygon) {
-        areaData = {
-           ...areaData,
-            type: 'polygon',
-            coordinates: currentDrawnLayer.getLatLngs()[0].map(p => ({ lat: p.lat, lng: p.lng }))
-        };
-    }
-
-    try {
-        await apiCall('/modules/' + currentModuleId, 'PUT', { areas: [areaData] });
-        showToast('Area saved successfully!');
-        await loadModules();
-    } catch (err) {
-        showToast('Failed to save area: ' + err.message, 'error');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '💾 Save Area';
-    }
-};
-
-window.clearModuleDrawing = () => {
-    drawnItems.clearLayers();
-    currentDrawnLayer = null;
-    showToast('Drawing cleared');
-};
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 
 // Initialize on page load
 loadModules();
