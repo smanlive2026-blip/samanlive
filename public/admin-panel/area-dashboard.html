@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Area Dashboard - SuperLive</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/area.css">
     <style>
-        .area-cards-grid {
+        .area-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: 20px;
+            margin-bottom: 30px;
         }
         .area-card {
             background: white;
@@ -19,16 +18,16 @@
             border-radius: 12px;
             padding: 20px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
         }
         .area-card:hover {
-            border-color: #3b82f6;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            border-color: #6366f1;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(99,102,241,0.15);
         }
         .area-card.active {
-            border-color: #3b82f6;
-            background: #eff6ff;
+            border-color: #10b981;
+            background: #f0fdf4;
         }
         .area-card-header {
             display: flex;
@@ -36,39 +35,30 @@
             align-items: start;
             margin-bottom: 12px;
         }
-        .area-card h3 {
+        .area-code {
             font-size: 18px;
             font-weight: 700;
-            color: #0f172a;
-            margin: 0;
+            color: #1e293b;
         }
-        .area-card-stats {
+        .area-stats {
             display: flex;
-            gap: 16px;
+            gap: 15px;
             margin-top: 12px;
             font-size: 13px;
             color: #64748b;
         }
-        .manager-card {
+        .manager-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 24px;
-            border-radius: 16px;
-            margin-bottom: 24px;
-            display: none;
-        }
-        .manager-card.show {
-            display: block;
-            animation: slideDown 0.3s;
-        }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
         }
         .manager-info {
             display: flex;
             gap: 20px;
-            align-items: start;
+            align-items: center;
+            margin-bottom: 20px;
         }
         .manager-photo {
             width: 80px;
@@ -77,41 +67,28 @@
             border: 3px solid white;
             object-fit: cover;
         }
-        .manager-details h3 {
-            font-size: 22px;
-            margin: 0 0 8px 0;
-        }
-        .manager-details p {
-            margin: 4px 0;
-            opacity: 0.9;
-        }
-        .module-tags {
+        .module-badges {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-top: 16px;
+            margin-top: 15px;
         }
-        .module-tag {
+        .module-badge {
             background: rgba(255,255,255,0.2);
             padding: 6px 14px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: 600;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #94a3b8;
-        }
-        .empty-state h3 {
-            font-size: 20px;
-            margin-bottom: 8px;
-            color: #64748b;
+            backdrop-filter: blur(10px);
         }
         .location-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
         }
         .location-badge.fixed {
             background: #dbeafe;
@@ -121,81 +98,83 @@
             background: #fef3c7;
             color: #92400e;
         }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="content">
-        <h2 style="margin-bottom: 20px;">🗺️ Area Dashboard</h2>
+        <h2>🗺️ Area Dashboard</h2>
         
         <!-- Area Cards Grid -->
-        <div class="area-cards-grid" id="areaCardsGrid">
+        <div id="areaCardsGrid" class="area-grid">
             <div class="loading">Loading areas...</div>
         </div>
 
-        <!-- Manager Card - Hidden by default -->
-        <div class="manager-card" id="managerCard">
+        <!-- Manager Section - Hidden by default -->
+        <div id="managerSection" class="manager-section hidden">
             <div class="manager-info">
-                <img id="managerPhoto" class="manager-photo" src="https://via.placeholder.com/80" alt="Manager">
-                <div class="manager-details">
-                    <h3 id="managerName">-</h3>
-                    <p>📱 <span id="managerPhone">-</span></p>
-                    <p>📧 <span id="managerEmail">-</span></p>
-                    <p>📍 <span id="managerAddress">-</span></p>
-                    <div class="module-tags" id="managerModules"></div>
+                <img id="managerPhoto" src="https://via.placeholder.com/80" class="manager-photo" alt="Manager">
+                <div>
+                    <h3 id="managerName" style="font-size:24px;margin-bottom:8px;">Select an area</h3>
+                    <p id="managerAddress" style="opacity:0.9;margin-bottom:4px;">📍 Address</p>
+                    <p id="managerContact" style="opacity:0.9;">📞 Phone | 📧 Email</p>
                 </div>
             </div>
-            <button class="btn btn-success" style="margin-top: 16px;" onclick="openAssignModule()">+ Assign Module</button>
+            <div>
+                <h4 style="margin-bottom:10px;font-size:16px;">📦 Assigned Modules</h4>
+                <div id="managerModules" class="module-badges">
+                    <span style="opacity:0.7;">No modules assigned</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="openAssignModule()" style="margin-top:15px;background:rgba(255,255,255,0.3);border:1px solid white;">
+                    + Assign Module
+                </button>
+            </div>
         </div>
 
-        <!-- Shops Table -->
-        <div class="card" id="shopsSection" style="display: none;">
-            <div class="card-header">
-                <h2>🏪 Shops in <span id="selectedAreaName">-</span> <span id="areaShopsCount" class="badge badge-info">0</span></h2>
-                <input type="text" class="search-box" placeholder="Search shops..." onkeyup="filterAreaShops(this.value)">
+        <!-- Shops Table - Hidden by default -->
+        <div id="shopsSection" class="content hidden" style="margin-top:0;">
+            <div class="section-header">
+                <h2>🏪 Shops in <span id="selectedAreaName">Area</span> 
+                    <span id="shopsCount" class="badge badge-info">0</span>
+                </h2>
+                <input type="text" class="search-box" placeholder="Search shops..." onkeyup="filterShops(this.value)">
             </div>
-            <div class="table-container">
-                <table>
+            <div style="overflow-x:auto;">
+                <table id="areaShopsTable">
                     <thead>
                         <tr>
                             <th>Logo</th>
-                            <th>Name</th>
+                            <th>Shop Name</th>
                             <th>Location Type</th>
                             <th>Module</th>
-                            <th>Manager</th>
-                            <th>Address</th>
                             <th>Range</th>
                             <th>Priority</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="areaShopsTable">
-                        <tr><td colspan="10" class="loading">Select an area to view shops</td></tr>
+                    <tbody>
+                        <tr><td colspan="8" class="loading">Select an area to view shops</td></tr>
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <div id="emptyState" class="empty-state">
-            <h3>👆 Select an Area Above</h3>
-            <p>Click on any area card to view manager details and shops</p>
         </div>
     </div>
 
     <!-- Assign Module Modal -->
     <div id="assignModuleModal" class="modal">
-        <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-content" style="max-width:600px;">
             <div class="modal-header">
-                <h2>Assign Module to Manager</h2>
+                <h2>Assign Modules to Manager</h2>
                 <button class="close-btn" onclick="closeAssignModule()">×</button>
             </div>
-            <div class="form-group">
-                <label>Select Module</label>
-                <select id="moduleSelectAssign" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
-                    <option value="">-- Select Module --</option>
-                </select>
+            <div id="moduleCheckboxList" style="max-height:400px;overflow-y:auto;">
+                <div class="loading">Loading modules...</div>
             </div>
-            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="saveModuleAssign()">Assign Module</button>
+            <div style="display:flex;gap:10px;margin-top:20px;padding-top:20px;border-top:2px solid #f1f5f9;">
+                <button class="btn btn-primary" onclick="saveModuleAssignment()">💾 Save</button>
+                <button class="btn btn-secondary" onclick="closeAssignModule()">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -223,7 +202,7 @@
                 
                 renderAreaCards();
             } catch (err) {
-                console.error('Load dashboard error:', err);
+                console.error(err);
                 showToast('Failed to load data: ' + err.message, 'error');
             }
         }
@@ -232,33 +211,33 @@
             const grid = document.getElementById('areaCardsGrid');
             
             if (allAreas.length === 0) {
-                grid.innerHTML = '<p style="color:#94a3b8;text-align:center;grid-column:1/-1;">No areas found</p>';
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#94a3b8;">No areas found. Create areas in Area Master first.</div>';
                 return;
             }
 
             grid.innerHTML = allAreas.map(area => {
-                const manager = allManagers.find(m => m.areaCode === area.areaCode);
                 const shopCount = allShops.filter(s => s.areaCode === area.areaCode).length;
-                const moduleCount = allModules.filter(m => m.activeAreas && m.activeAreas.includes(area.areaCode)).length;
+                const managerCount = allManagers.filter(m => m.areaCode === area.areaCode).length;
+                const isActive = area.status;
                 
                 return `
-                    <div class="area-card" onclick="selectArea('${area.areaCode}')" id="card-${area.areaCode}">
+                    <div class="area-card" onclick="selectArea('${area.areaCode}')">
                         <div class="area-card-header">
-                            <h3>${escapeHtml(area.areaName)}</h3>
-                            <span class="status-badge ${area.status ? 'status-active' : 'status-hidden'}">
-                                ${area.status ? 'Active' : 'Inactive'}
+                            <div>
+                                <div class="area-code">${escapeHtml(area.areaCode)}</div>
+                                <div style="font-size:13px;color:#64748b;margin-top:4px;">${escapeHtml(area.areaName)}</div>
+                            </div>
+                            <span class="badge ${isActive ? 'badge-success' : 'badge-danger'}">
+                                ${isActive ? 'Active' : 'Inactive'}
                             </span>
                         </div>
-                        <p style="color: #64748b; font-size: 14px; margin: 0;">
-                            📍 ${escapeHtml(area.city)}, ${escapeHtml(area.state)}
-                        </p>
-                        <p style="color: #64748b; font-size: 13px; margin: 8px 0 0 0; font-family: monospace;">
-                            ${escapeHtml(area.areaCode)} • ${area.radius}km radius
-                        </p>
-                        <div class="area-card-stats">
-                            <span>👤 ${manager ? '1 Manager' : 'No Manager'}</span>
-                            <span>🏪 ${shopCount} Shops</span>
-                            <span>📦 ${moduleCount} Modules</span>
+                        <div style="font-size:13px;color:#64748b;margin:8px 0;">
+                            📍 ${escapeHtml(area.city)}, ${escapeHtml(area.state)}<br>
+                            📏 ${area.radius || 50} km radius
+                        </div>
+                        <div class="area-stats">
+                            <span>🏪 ${shopCount} shops</span>
+                            <span>👥 ${managerCount} managers</span>
                         </div>
                     </div>
                 `;
@@ -268,130 +247,146 @@
         window.selectArea = (areaCode) => {
             selectedAreaCode = areaCode;
             
-            // Update active card
+            // Highlight selected card
             document.querySelectorAll('.area-card').forEach(card => card.classList.remove('active'));
-            document.getElementById(`card-${areaCode}`).classList.add('active');
+            event.currentTarget.classList.add('active');
             
-            // Hide empty state
-            document.getElementById('emptyState').style.display = 'none';
+            // Load manager and shops
+            loadManagerSection(areaCode);
+            loadShopsSection(areaCode);
             
-            // Load manager
-            const area = allAreas.find(a => a.areaCode === areaCode);
-            selectedManager = allManagers.find(m => m.areaCode === areaCode);
+            // Show sections
+            document.getElementById('managerSection').classList.remove('hidden');
+            document.getElementById('shopsSection').classList.remove('hidden');
             
-            if (selectedManager) {
-                renderManagerCard(selectedManager, area);
-                document.getElementById('managerCard').classList.add('show');
-            } else {
-                document.getElementById('managerCard').classList.remove('show');
-                showToast('No manager assigned to this area', 'error');
-            }
-            
-            // Load shops
-            renderAreaShops(areaCode);
-            document.getElementById('shopsSection').style.display = 'block';
-            document.getElementById('selectedAreaName').textContent = area.areaName;
+            // Scroll to manager section
+            document.getElementById('managerSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
-        function renderManagerCard(manager, area) {
-            document.getElementById('managerPhoto').src = manager.photo || 'https://via.placeholder.com/80';
+        function loadManagerSection(areaCode) {
+            const manager = allManagers.find(m => m.areaCode === areaCode);
+            const area = allAreas.find(a => a.areaCode === areaCode);
+            selectedManager = manager;
+            
+            if (!manager) {
+                document.getElementById('managerName').textContent = 'No Manager Assigned';
+                document.getElementById('managerAddress').textContent = '📍 ' + area.city + ', ' + area.state;
+                document.getElementById('managerContact').textContent = 'Assign a manager to this area';
+                document.getElementById('managerPhoto').src = 'https://via.placeholder.com/80?text=No+Manager';
+                document.getElementById('managerModules').innerHTML = '<span style="opacity:0.7;">No manager assigned</span>';
+                return;
+            }
+            
             document.getElementById('managerName').textContent = manager.name;
-            document.getElementById('managerPhone').textContent = manager.phone || '-';
-            document.getElementById('managerEmail').textContent = manager.email || '-';
-            document.getElementById('managerAddress').textContent = manager.address || '-';
+            document.getElementById('managerAddress').textContent = '📍 ' + (manager.address || area.city + ', ' + area.state);
+            document.getElementById('managerContact').textContent = `📞 ${manager.phone || 'N/A'} | 📧 ${manager.email || 'N/A'}`;
+            document.getElementById('managerPhoto').src = manager.photo || 'https://via.placeholder.com/80?text=' + manager.name.charAt(0);
             
-            // Manager ke modules
-            const managerModules = allModules.filter(m => 
-                (manager.activeModules && manager.activeModules.includes(m._id)) ||
-                (m.activeAreas && m.activeAreas.includes(area.areaCode))
-            );
-            
-            document.getElementById('managerModules').innerHTML = managerModules.length > 0
-                ? managerModules.map(m => `<span class="module-tag">${m.icon} ${escapeHtml(m.name)}</span>`).join('')
-                : '<span style="opacity:0.7;">No modules assigned</span>';
+            // Render modules
+            const managerModules = manager.modules || [];
+            if (managerModules.length === 0) {
+                document.getElementById('managerModules').innerHTML = '<span style="opacity:0.7;">No modules assigned</span>';
+            } else {
+                document.getElementById('managerModules').innerHTML = managerModules.map(modId => {
+                    const mod = allModules.find(m => (m._id || m.id) === modId || m.name.toLowerCase() === modId);
+                    return mod ? `<span class="module-badge">${mod.icon} ${escapeHtml(mod.name)}</span>` : '';
+                }).join('');
+            }
         }
 
-        function renderAreaShops(areaCode) {
+        function loadShopsSection(areaCode) {
+            const area = allAreas.find(a => a.areaCode === areaCode);
             const shops = allShops.filter(s => s.areaCode === areaCode);
-            document.getElementById('areaShopsCount').textContent = shops.length;
-            const tbody = document.getElementById('areaShopsTable');
+            
+            document.getElementById('selectedAreaName').textContent = area.areaName;
+            document.getElementById('shopsCount').textContent = shops.length;
+            
+            const tbody = document.querySelector('#areaShopsTable tbody');
             
             if (shops.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:#94a3b8;">No shops in this area</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8;">No shops in this area yet</td></tr>';
                 return;
             }
             
             tbody.innerHTML = shops.map(s => {
                 const module = allModules.find(m => (m._id || m.id) === s.moduleId);
-                const manager = allManagers.find(m => m._id === s.managerId);
                 const locationType = s.locationType || 'fixed';
                 const lastUpdate = s.lastLocationUpdate ? timeAgo(new Date(s.lastLocationUpdate)) : '';
                 
-                return `<tr>
-                    <td><img src="${s.logo || 'assets/logo.png'}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.src='https://via.placeholder.com/40'"></td>
-                    <td><b>${escapeHtml(s.name)}</b></td>
-                    <td>
-                        <span class="badge location-badge ${locationType}">
-                            ${locationType === 'fixed' ? '📍 Fixed' : '🚚 Dynamic'}
-                        </span>
-                        ${locationType === 'dynamic' && lastUpdate ? `<br><small style="color:#64748b;">${lastUpdate}</small>` : ''}
-                    </td>
-                    <td>${module ? module.icon + ' ' + escapeHtml(module.name) : '-'}</td>
-                    <td>${manager ? escapeHtml(manager.name) : '<span class="help-text">Unassigned</span>'}</td>
-                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;font-size:13px;">${escapeHtml(s.address || '-')}</td>
-                    <td>${s.range || 0}m</td>
-                    <td>${s.priority || 0}</td>
-                    <td><span class="status-badge status-${s.status}">${s.status}</span></td>
-                    <td class="actions">
-                        <button class="btn btn-primary btn-sm" onclick="editShopLocation('${s._id}')">Edit</button>
-                    </td>
-                </tr>`;
+                return `
+                    <tr>
+                        <td><img src="${s.logo || 'assets/logo.png'}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.src='https://via.placeholder.com/40?text=🏪'"></td>
+                        <td><b>${escapeHtml(s.shopName || s.name)}</b></td>
+                        <td>
+                            <span class="location-badge ${locationType}">
+                                ${locationType === 'fixed' ? '📍 Fixed' : '🚚 Dynamic'}
+                            </span>
+                            ${locationType === 'dynamic' && lastUpdate ? `<br><small style="color:#64748b;font-size:11px;">${lastUpdate}</small>` : ''}
+                        </td>
+                        <td>${module ? module.icon + ' ' + escapeHtml(module.name) : '-'}</td>
+                        <td>${s.range || 0}m</td>
+                        <td>${s.priority || 0}</td>
+                        <td><span class="status-badge status-${s.status}">${s.status}</span></td>
+                        <td class="actions">
+                            <button class="btn btn-primary btn-sm" onclick="editShop('${s._id}')">Edit</button>
+                        </td>
+                    </tr>
+                `;
             }).join('');
         }
 
         window.openAssignModule = () => {
-            if (!selectedManager) return showToast('No manager selected', 'error');
+            if (!selectedManager) {
+                return showToast('No manager assigned to this area', 'error');
+            }
             
-            const select = document.getElementById('moduleSelectAssign');
-            select.innerHTML = '<option value="">-- Select Module --</option>' +
-                allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
+            const modal = document.getElementById('assignModuleModal');
+            const list = document.getElementById('moduleCheckboxList');
             
-            document.getElementById('assignModuleModal').classList.add('active');
+            list.innerHTML = allModules.map(mod => {
+                const modId = mod._id || mod.id;
+                const isChecked = selectedManager.modules && selectedManager.modules.includes(modId);
+                return `
+                    <div style="display:flex;align-items:center;padding:12px;background:white;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;">
+                        <input type="checkbox" id="mod_${modId}" value="${modId}" ${isChecked ? 'checked' : ''} style="width:18px;height:18px;margin-right:12px;">
+                        <label for="mod_${modId}" style="flex:1;cursor:pointer;margin:0;">
+                            <b>${mod.icon} ${escapeHtml(mod.name)}</b><br>
+                            <small style="color:#64748b;">${escapeHtml(mod.desc || 'No description')}</small>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+            
+            modal.classList.add('active');
         };
 
         window.closeAssignModule = () => {
             document.getElementById('assignModuleModal').classList.remove('active');
         };
 
-        window.saveModuleAssign = async () => {
-            const moduleId = document.getElementById('moduleSelectAssign').value;
-            if (!moduleId) return showToast('Select a module', 'error');
+        window.saveModuleAssignment = async () => {
+            const checkboxes = document.querySelectorAll('#moduleCheckboxList input[type="checkbox"]:checked');
+            const selectedModules = Array.from(checkboxes).map(cb => cb.value);
             
             try {
-                const module = allModules.find(m => (m._id || m.id) === moduleId);
-                const updatedAreas = [...(module.activeAreas || [])];
-                if (!updatedAreas.includes(selectedAreaCode)) {
-                    updatedAreas.push(selectedAreaCode);
-                }
-                
-                await apiCall('/modules/' + moduleId, 'PUT', { activeAreas: updatedAreas });
-                showToast('Module assigned successfully!');
+                await apiCall(`/managers/${selectedManager._id}`, 'PUT', { modules: selectedModules });
+                showToast('Modules assigned successfully!');
                 closeAssignModule();
                 await loadDashboard();
-                selectArea(selectedAreaCode); // Refresh
+                selectArea(selectedAreaCode); // Refresh view
             } catch (err) {
-                showToast('Failed to assign: ' + err.message, 'error');
+                showToast('Failed to assign modules: ' + err.message, 'error');
             }
         };
 
-        window.editShopLocation = (shopId) => {
-            // Redirect to shops.html with shop selected
+        window.editShop = (shopId) => {
+            // Redirect to shops page with edit mode
             window.location.href = `shops.html?edit=${shopId}`;
         };
 
-        window.filterAreaShops = (query) => {
+        window.filterShops = (query) => {
             const q = query.toLowerCase().trim();
-            const rows = document.querySelectorAll('#areaShopsTable tr');
+            const rows = document.querySelectorAll('#areaShopsTable tbody tr');
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(q) ? '' : 'none';
