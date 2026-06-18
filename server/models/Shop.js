@@ -35,6 +35,18 @@ const shopSchema = new mongoose.Schema({
     logo: { type: String, default: '' },
     icon: { type: String, default: '🏪' }, // Shop icon
 
+    // ========== LOCATION TYPE FIELDS - NEW ==========
+    locationType: { 
+        type: String, 
+        enum: ['fixed', 'dynamic'], 
+        default: 'fixed' 
+    },
+    lastLocationUpdate: { 
+        type: Date, 
+        default: Date.now 
+    },
+    // ========== LOCATION TYPE FIELDS END ==========
+
     // Banner Approval System
     bannerApproved: { type: Boolean, default: false },
     bannerApprovedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -79,6 +91,7 @@ shopSchema.index({ phone: 1 });
 shopSchema.index({ managerId: 1 });
 shopSchema.index({ createdAt: -1 });
 shopSchema.index({ isActive: 1 }); // NEW - Active shops filter
+shopSchema.index({ locationType: 1 }); // NEW - Location type filter
 
 // ========== VIRTUALS ==========
 // Virtual for full address

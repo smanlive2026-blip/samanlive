@@ -31,7 +31,8 @@ router.post('/shop/create', auth, async (req, res) => {
             location,
             range,
             icon,
-            banner
+            banner,
+            locationType // NEW
         } = req.body;
 
         // Validation
@@ -62,7 +63,7 @@ router.post('/shop/create', auth, async (req, res) => {
         const shopData = {
             ownerId: req.userId,
             createdBy: req.userId,
-            managerId: null, // ← FIX: User shop me manager nahi hota
+            managerId: null,
             shopName,
             ownerName,
             phone,
@@ -80,7 +81,10 @@ router.post('/shop/create', auth, async (req, res) => {
             banner: banner || '',
             bannerApproved: false,
             status: 'pending',
-            isActive: true
+            isActive: true,
+            // NEW FIELDS
+            locationType: locationType || 'fixed',
+            lastLocationUpdate: new Date()
         };
 
         const shop = new Shop(shopData);
@@ -97,9 +101,9 @@ router.post('/shop/create', auth, async (req, res) => {
         });
         await user.save();
 
-        // Log history - FIX: logAction method use kiya
+        // Log history
         await ShopHistory.logAction({
-            managerId: null, // User ne banaya
+            managerId: null,
             shopId: shop._id,
             shopName: shop.shopName,
             action: 'create',
@@ -159,10 +163,10 @@ router.put('/shop/update', auth, async (req, res) => {
 
         const oldData = shop.toObject();
 
-        // Allowed fields for user update
+        // Allowed fields for user update - NEW FIELDS ADDED
         const allowedFields = [
             'shopName', 'phone', 'email', 'address', 'description',
-            'location', 'range', 'icon', 'banner'
+            'location', 'range', 'icon', 'banner', 'locationType', 'priority', 'status'
         ];
 
         const updateData = {};
@@ -172,12 +176,12 @@ router.put('/shop/update', auth, async (req, res) => {
             }
         });
 
-        // Address merge properly - FIX: null check
+        // Address merge properly
         if (req.body.address) {
             const currentAddress = shop.address? shop.address.toObject() : {};
             updateData.address = {
-               ...currentAddress,
-               ...req.body.address
+              ...currentAddress,
+              ...req.body.address
             };
             if (req.body.address.city) {
                 updateData.area = req.body.address.city;
@@ -200,6 +204,13 @@ router.put('/shop/update', auth, async (req, res) => {
                     parseFloat(req.body.location.coordinates[1])
                 ]
             };
+            // Dynamic shop me location update hua to timestamp bhi update karo
+            updateData.lastLocationUpdate = new Date();
+        }
+
+        // Agar sirf locationType change hua to bhi timestamp update karo
+        if (req.body.locationType && req.body.locationType!== shop.locationType) {
+            updateData.lastLocationUpdate = new Date();
         }
 
         const updatedShop = await Shop.findByIdAndUpdate(
@@ -208,9 +219,9 @@ router.put('/shop/update', auth, async (req, res) => {
             { new: true }
         );
 
-        // Log history - FIX: logAction method use kiya
+        // Log history
         await ShopHistory.logAction({
-            managerId: shop.managerId, // Null bhi ho sakta hai
+            managerId: shop.managerId,
             shopId: shop._id,
             shopName: shop.shopName,
             action: 'edit',
@@ -235,7 +246,7 @@ router.put('/shop/update', auth, async (req, res) => {
 router.get('/shop/:id', async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id)
-           .populate('managerId', 'name phone');
+          .populate('managerId', 'name phone');
 
         if (!shop) {
             return res.status(404).json({ success: false, error: 'Shop not found' });
@@ -292,9 +303,9 @@ router.get('/shops/nearby', async (req, res) => {
         }
 
         const shops = await Shop.find(filter)
-           .populate('managerId', 'name')
-           .limit(parseInt(limit))
-           .select('-banner'); // Banner mat bhejo list me
+          .populate('managerId', 'name')
+          .limit(parseInt(limit))
+          .select('-banner');
 
         res.json({ success: true, shops, count: shops.length });
     } catch (error) {
