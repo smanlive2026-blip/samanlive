@@ -1,104 +1,99 @@
 <div class="content content-section">
     <div class="section-header">
-        <h2>📢 Ads <span id="adsCount" class="badge badge-info">0</span></h2>
-        <button class="btn btn-success" onclick="openAddContent('ad')">+ Add New Ad</button>
+        <h2>📍 Select Area to Manage Content</h2>
+        <button class="btn btn-secondary" onclick="loadContent()" style="display:none;" id="backToAreasBtn">← Back to Areas</button>
     </div>
     
-    <!-- AREA FILTER BUTTONS -->
-    <div id="adsAreaFilter" class="area-filter-row" style="margin-bottom:15px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-sm btn-primary area-filter-btn active" onclick="filterByArea('all','ad')">All Areas</button>
+    <!-- AREA CARDS VIEW -->
+    <div id="areaCardsView" class="area-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:20px;">
+        <div class="loading" style="grid-column:1/-1;text-align:center;padding:40px;">Loading Areas...</div>
     </div>
-    
-    <div style="overflow-x:auto;">
-        <table id="adsTable">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Area</th>
-                    <th>Schedule</th>
-                    <th>Button</th>
-                    <th>Color</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="8" class="loading">Loading ads</td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
 
-<div class="content content-section">
-    <div class="section-header">
-        <h2>🎬 Videos <span id="videosCount" class="badge badge-info">0</span></h2>
-        <button class="btn btn-success" onclick="openAddContent('video')">+ Add New Video</button>
-    </div>
-    
-    <!-- AREA FILTER BUTTONS -->
-    <div id="videosAreaFilter" class="area-filter-row" style="margin-bottom:15px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-sm btn-primary area-filter-btn active" onclick="filterByArea('all','video')">All Areas</button>
-    </div>
-    
-    <div class="upload-box">
-        <p><strong>📤 Direct Video Upload</strong></p>
-        <p class="help-text">Select video from system - auto uploads and creates entry</p>
-        <input type="file" id="videoUploadFile" accept="video/*">
-        <button class="btn btn-primary" id="uploadVideoBtn" onclick="uploadVideoFile()">Upload Video</button>
-        <p id="uploadStatus" class="status-text"></p>
-    </div>
-    <div style="overflow-x:auto;">
-        <table id="videosTable">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Area</th>
-                    <th>Schedule</th>
-                    <th>URL</th>
-                    <th>Preview</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="8" class="loading">Loading videos</td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+    <!-- CONTENT TABLES VIEW - Hidden initially -->
+    <div id="contentTablesView" style="display:none;">
+        <div style="background:#f0f9ff;padding:16px;border-radius:10px;margin-bottom:20px;border-left:4px solid #3b82f6;">
+            <h3 style="margin:0;font-size:18px;" id="selectedAreaTitle">Managing: </h3>
+            <p style="margin:4px 0 0;color:#64748b;font-size:13px;" id="selectedAreaInfo"></p>
+        </div>
 
-<div class="content content-section">
-    <div class="section-header">
-        <h2>🎯 Campaigns <span id="campaignsCount" class="badge badge-info">0</span></h2>
-        <button class="btn btn-success" onclick="openAddContent('campaign')">+ Add New Campaign</button>
-    </div>
-    
-    <!-- AREA FILTER BUTTONS -->
-    <div id="campaignsAreaFilter" class="area-filter-row" style="margin-bottom:15px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-sm btn-primary area-filter-btn active" onclick="filterByArea('all','campaign')">All Areas</button>
-    </div>
-    
-    <div style="overflow-x:auto;">
-        <table id="campaignsTable">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Area</th>
-                    <th>Schedule</th>
-                    <th>Description</th>
-                    <th>Button</th>
-                    <th>Color</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="9" class="loading">Loading campaigns</td></tr>
-            </tbody>
-        </table>
+        <!-- ADS SECTION -->
+        <div class="content content-section" style="margin-top:20px;">
+            <div class="section-header">
+                <h2>📢 Ads <span id="adsCount" class="badge badge-info">0</span></h2>
+                <button class="btn btn-success" onclick="openAddContent('ad')">+ Add New Ad</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table id="adsTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Schedule</th>
+                            <th>Button</th>
+                            <th>Color</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody><tr><td colspan="7" class="loading">Loading ads</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIDEOS SECTION -->
+        <div class="content content-section" style="margin-top:20px;">
+            <div class="section-header">
+                <h2>🎬 Videos <span id="videosCount" class="badge badge-info">0</span></h2>
+                <button class="btn btn-success" onclick="openAddContent('video')">+ Add New Video</button>
+            </div>
+            <div class="upload-box">
+                <p><strong>📤 Direct Video Upload</strong></p>
+                <input type="file" id="videoUploadFile" accept="video/*">
+                <button class="btn btn-primary" id="uploadVideoBtn" onclick="uploadVideoFile()">Upload Video</button>
+                <p id="uploadStatus" class="status-text"></p>
+            </div>
+            <div style="overflow-x:auto;">
+                <table id="videosTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Schedule</th>
+                            <th>URL</th>
+                            <th>Preview</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody><tr><td colspan="7" class="loading">Loading videos</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CAMPAIGNS SECTION -->
+        <div class="content content-section" style="margin-top:20px;">
+            <div class="section-header">
+                <h2>🎯 Campaigns <span id="campaignsCount" class="badge badge-info">0</span></h2>
+                <button class="btn btn-success" onclick="openAddContent('campaign')">+ Add New Campaign</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table id="campaignsTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Schedule</th>
+                            <th>Description</th>
+                            <th>Button</th>
+                            <th>Color</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody><tr><td colspan="8" class="loading">Loading campaigns</td></tr></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -111,6 +106,7 @@
         </div>
         <input type="hidden" id="contentEditId">
         <input type="hidden" id="contentEditType">
+        <input type="hidden" id="selectedAreaCode">
         <div id="contentModalFields"></div>
         <div style="display:flex;gap:10px;margin-top:25px;padding-top:20px;border-top:2px solid #f1f5f9;">
             <button class="btn btn-primary" id="saveContentBtn" onclick="saveContent()">💾 Save Changes</button>
@@ -119,63 +115,150 @@
     </div>
 </div>
 
+<style>
+.area-card {
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+.area-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59,130,246,0.15);
+    transform: translateY(-2px);
+}
+.area-card .area-code {
+    font-size: 18px;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+.area-card .area-name {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 12px;
+}
+.area-card .area-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 8px;
+}
+.area-card .status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+.area-card .content-count {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+}
+.area-card .content-count span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+</style>
+
 <script>
 // ========================================
-// CONTENT MANAGEMENT - AREA WISE VERSION
+// AREA WISE CONTENT MANAGEMENT
 // ========================================
 
 let allAreasList = [];
-let currentAreaFilter = { ad: 'all', video: 'all', campaign: 'all' };
+let selectedArea = null;
+let areaContentCounts = {};
 
-async function loadAreasForContent() {
+async function loadAreaCards() {
     try {
-        const areas = await apiCall('/areas');
-        allAreasList = areas.filter(a => a.status) || []; // Only active areas
-        renderAreaFilters();
+        const [areas, content] = await Promise.all([
+            apiCall('/areas'),
+            apiCall('/content')
+        ]);
+        
+        allAreasList = areas.filter(a => a.status) || [];
+        window.allContent = content || [];
+        
+        // Count content per area
+        areaContentCounts = {};
+        allAreasList.forEach(a => {
+            areaContentCounts[a.areaCode] = {
+                ad: window.allContent.filter(c => c.type === 'ad' && c.areaCode === a.areaCode).length,
+                video: window.allContent.filter(c => c.type === 'video' && c.areaCode === a.areaCode).length,
+                campaign: window.allContent.filter(c => c.type === 'campaign' && c.areaCode === a.areaCode).length
+            };
+        });
+        
+        renderAreaCards();
     } catch (err) {
-        console.error('Failed to load areas:', err);
+        console.error('Failed to load:', err);
+        showToast('Failed to load areas: ' + err.message, 'error');
     }
 }
 
-function renderAreaFilters() {
-    const filterHTML = `<button class="btn btn-sm btn-primary area-filter-btn active" onclick="filterByArea('all','TYPE')">All Areas</button>` +
-        allAreasList.map(a => 
-            `<button class="btn btn-sm btn-secondary area-filter-btn" onclick="filterByArea('${a.areaCode}','TYPE')">
-                ${escapeHtml(a.areaName)} (${a.areaCode})
-            </button>`
-        ).join('');
+function renderAreaCards() {
+    const grid = document.getElementById('areaCardsView');
     
-    document.getElementById('adsAreaFilter').innerHTML = filterHTML.replace(/TYPE/g, 'ad');
-    document.getElementById('videosAreaFilter').innerHTML = filterHTML.replace(/TYPE/g, 'video');
-    document.getElementById('campaignsAreaFilter').innerHTML = filterHTML.replace(/TYPE/g, 'campaign');
+    if (allAreasList.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#94a3b8;">No active areas found. Create areas in area.html first.</div>';
+        return;
+    }
+    
+    grid.innerHTML = allAreasList.map(a => {
+        const counts = areaContentCounts[a.areaCode] || {ad:0, video:0, campaign:0};
+        const total = counts.ad + counts.video + counts.campaign;
+        
+        return `
+            <div class="area-card" onclick="selectArea('${a.areaCode}')">
+                <span class="status-badge status-active">Active</span>
+                <div class="area-code">${escapeHtml(a.areaCode)}</div>
+                <div class="area-name">${escapeHtml(a.areaName)}</div>
+                <div class="area-meta">
+                    <span>📍 ${escapeHtml(a.city)}, ${escapeHtml(a.state)}</span>
+                </div>
+                <div class="area-meta">
+                    <span>📏 ${a.radius} km radius</span>
+                </div>
+                <div class="content-count">
+                    <span>📢 ${counts.ad}</span>
+                    <span>🎬 ${counts.video}</span>
+                    <span>🎯 ${counts.campaign}</span>
+                    <span style="margin-left:auto;font-weight:700;color:#3b82f6;">${total} Total</span>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
-window.filterByArea = (areaCode, type) => {
-    currentAreaFilter[type] = areaCode;
+window.selectArea = (areaCode) => {
+    selectedArea = allAreasList.find(a => a.areaCode === areaCode);
+    if (!selectedArea) return;
     
-    // Update active button
-    const filterDiv = document.getElementById(`${type}sAreaFilter`);
-    filterDiv.querySelectorAll('.area-filter-btn').forEach(btn => {
-        btn.classList.remove('btn-primary', 'active');
-        btn.classList.add('btn-secondary');
-    });
-    event.target.classList.remove('btn-secondary');
-    event.target.classList.add('btn-primary', 'active');
+    document.getElementById('areaCardsView').style.display = 'none';
+    document.getElementById('contentTablesView').style.display = 'block';
+    document.getElementById('backToAreasBtn').style.display = 'inline-block';
+    
+    document.getElementById('selectedAreaTitle').textContent = `Managing: ${selectedArea.areaName} (${selectedArea.areaCode})`;
+    document.getElementById('selectedAreaInfo').textContent = `${selectedArea.city}, ${selectedArea.state} • ${selectedArea.radius} km radius`;
     
     renderContent();
 };
 
-async function loadContent() {
-    try {
-        await loadAreasForContent();
-        const data = await apiCall('/content');
-        window.allContent = data || [];
-        renderContent();
-    } catch (err) {
-        console.error('Failed to load content:', err);
-        showToast('Failed to load content: ' + err.message, 'error');
-    }
-}
+window.loadContent = () => {
+    selectedArea = null;
+    document.getElementById('areaCardsView').style.display = 'grid';
+    document.getElementById('contentTablesView').style.display = 'none';
+    document.getElementById('backToAreasBtn').style.display = 'none';
+    loadAreaCards();
+};
 
 function isContentActive(item) {
     const now = new Date();
@@ -188,10 +271,10 @@ function isContentActive(item) {
 }
 
 function formatSchedule(item) {
-    if (!item.startTime && !item.endTime) return '<span class="badge">Always</span>';
+    if (!item.startTime && !item.endTime) return '<span class="badge badge-success">Always Active</span>';
     
-    const start = item.startTime ? new Date(item.startTime).toLocaleString('en-IN', {dateStyle:'short', timeStyle:'short'}) : 'Start';
-    const end = item.endTime ? new Date(item.endTime).toLocaleString('en-IN', {dateStyle:'short', timeStyle:'short'}) : 'No End';
+    const start = item.startTime ? new Date(item.startTime).toLocaleString('en-IN', {dateStyle:'short', timeStyle:'short'}) : 'Immediate';
+    const end = item.endTime ? new Date(item.endTime).toLocaleString('en-IN', {dateStyle:'short', timeStyle:'short'}) : 'No Expiry';
     
     const active = isContentActive(item);
     const badge = active ? 'badge-success' : 'badge-warning';
@@ -202,20 +285,11 @@ function formatSchedule(item) {
 }
 
 function renderContent() {
-    let ads = window.allContent.filter(c => c.type === 'ad');
-    let videos = window.allContent.filter(c => c.type === 'video');
-    let campaigns = window.allContent.filter(c => c.type === 'campaign');
+    if (!selectedArea) return;
     
-    // Apply area filter
-    if (currentAreaFilter.ad !== 'all') {
-        ads = ads.filter(a => a.areaCode === currentAreaFilter.ad);
-    }
-    if (currentAreaFilter.video !== 'all') {
-        videos = videos.filter(v => v.areaCode === currentAreaFilter.video);
-    }
-    if (currentAreaFilter.campaign !== 'all') {
-        campaigns = campaigns.filter(c => c.areaCode === currentAreaFilter.campaign);
-    }
+    const ads = window.allContent.filter(c => c.type === 'ad' && c.areaCode === selectedArea.areaCode);
+    const videos = window.allContent.filter(c => c.type === 'video' && c.areaCode === selectedArea.areaCode);
+    const campaigns = window.allContent.filter(c => c.type === 'campaign' && c.areaCode === selectedArea.areaCode);
 
     document.getElementById('adsCount').textContent = ads.length;
     document.getElementById('videosCount').textContent = videos.length;
@@ -223,10 +297,9 @@ function renderContent() {
 
     // Ads Table
     document.querySelector('#adsTable tbody').innerHTML = ads.length === 0
-      ? '<tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8;">No ads found</td></tr>'
+      ? '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No ads in this area</td></tr>'
         : ads.map(a => `<tr>
             <td><b>${escapeHtml(a.title)}</b></td>
-            <td><span class="badge badge-info">${escapeHtml(a.areaCode || 'Global')}</span></td>
             <td>${formatSchedule(a)}</td>
             <td>${escapeHtml(a.buttonText || '-')}</td>
             <td><span class="color-badge" style="background:${a.color}">${a.color}</span></td>
@@ -240,10 +313,9 @@ function renderContent() {
 
     // Videos Table
     document.querySelector('#videosTable tbody').innerHTML = videos.length === 0
-      ? '<tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8;">No videos found</td></tr>'
+      ? '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No videos in this area</td></tr>'
         : videos.map(v => `<tr>
             <td><b>${escapeHtml(v.title)}</b></td>
-            <td><span class="badge badge-info">${escapeHtml(v.areaCode || 'Global')}</span></td>
             <td>${formatSchedule(v)}</td>
             <td><a href="${v.url}" target="_blank" class="btn btn-secondary btn-sm">View</a></td>
             <td><video src="${v.url}" class="video-preview" controls style="max-width:120px;max-height:80px;" onerror="this.style.display='none'"></video></td>
@@ -257,10 +329,9 @@ function renderContent() {
 
     // Campaigns Table
     document.querySelector('#campaignsTable tbody').innerHTML = campaigns.length === 0
-      ? '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">No campaigns found</td></tr>'
+      ? '<tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8;">No campaigns in this area</td></tr>'
         : campaigns.map(c => `<tr>
             <td><b>${escapeHtml(c.title)}</b></td>
-            <td><span class="badge badge-info">${escapeHtml(c.areaCode || 'Global')}</span></td>
             <td>${formatSchedule(c)}</td>
             <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.description || '-')}</td>
             <td>${escapeHtml(c.buttonText || '-')}</td>
@@ -275,34 +346,30 @@ function renderContent() {
 }
 
 window.openAddContent = (type) => {
+    if (!selectedArea) {
+        showToast('Please select an area first', 'error');
+        return;
+    }
+    
     document.getElementById('contentEditId').value = '';
     document.getElementById('contentEditType').value = type;
-    document.getElementById('contentModalTitle').textContent = `Add New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-
-    const areaOptions = allAreasList.map(a => 
-        `<option value="${a.areaCode}">${escapeHtml(a.areaName)} (${a.areaCode}) - ${a.city}</option>`
-    ).join('');
+    document.getElementById('selectedAreaCode').value = selectedArea.areaCode;
+    document.getElementById('contentModalTitle').textContent = `Add New ${type.charAt(0).toUpperCase() + type.slice(1)} to ${selectedArea.areaName}`;
 
     let fields = `<div class="form-grid">
+        <div class="form-group full" style="background:#f0f9ff;padding:12px;border-radius:8px;margin-bottom:10px;">
+            <label style="margin:0;color:#1e40af;">📍 Selected Area: <b>${escapeHtml(selectedArea.areaName)} (${selectedArea.areaCode})</b></label>
+        </div>
+        
         <div class="form-group full">
             <label>Title *</label>
             <input type="text" id="field_content_title" required placeholder="Enter title">
         </div>
         
         <div class="form-group">
-            <label>Select Area *</label>
-            <select id="field_content_areaCode" required>
-                <option value="">-- Select Area --</option>
-                <option value="global">🌍 Global (All Areas)</option>
-                ${areaOptions}
-            </select>
-            <small style="color:#64748b;">Select area where this will show</small>
-        </div>
-        
-        <div class="form-group">
             <label>Start Date & Time</label>
             <input type="datetime-local" id="field_content_startTime">
-            <small style="color:#64748b;">Leave empty for immediate</small>
+            <small style="color:#64748b;">Leave empty to start immediately</small>
         </div>
         
         <div class="form-group">
@@ -370,7 +437,6 @@ window.editContent = (id) => {
 
     setTimeout(() => {
         document.getElementById('field_content_title').value = item.title || '';
-        document.getElementById('field_content_areaCode').value = item.areaCode || 'global';
         
         if (item.startTime) {
             document.getElementById('field_content_startTime').value = new Date(item.startTime).toISOString().slice(0,16);
@@ -410,14 +476,13 @@ window.saveContent = async () => {
 
     const type = document.getElementById('contentEditType').value;
     const id = document.getElementById('contentEditId').value;
-    const areaCode = document.getElementById('field_content_areaCode').value;
-    const selectedArea = allAreasList.find(a => a.areaCode === areaCode);
+    const areaCode = document.getElementById('selectedAreaCode').value;
 
     const data = {
         type: type,
         title: document.getElementById('field_content_title').value.trim(),
         areaCode: areaCode,
-        areaName: selectedArea ? selectedArea.areaName : 'Global',
+        areaName: selectedArea.areaName,
         startTime: document.getElementById('field_content_startTime').value || null,
         endTime: document.getElementById('field_content_endTime').value || null,
         description: document.getElementById('field_content_description')?.value.trim() || '',
@@ -431,13 +496,6 @@ window.saveContent = async () => {
 
     if (!data.title) {
         showToast('Title is required', 'error');
-        btn.disabled = false;
-        btn.textContent = '💾 Save Changes';
-        return;
-    }
-
-    if (!data.areaCode) {
-        showToast('Please select an Area', 'error');
         btn.disabled = false;
         btn.textContent = '💾 Save Changes';
         return;
@@ -459,7 +517,10 @@ window.saveContent = async () => {
             showToast('Created successfully!');
         }
         closeContentModal();
-        await loadContent();
+        await loadAreaCards();
+        if (selectedArea) {
+            selectArea(selectedArea.areaCode);
+        }
     } catch (err) {
         console.error('Save error:', err);
         showToast('Failed to save: ' + err.message, 'error');
@@ -474,13 +535,21 @@ window.deleteContent = async (id) => {
     try {
         await apiCall('/content/' + id, 'DELETE');
         showToast('Deleted successfully');
-        await loadContent();
+        await loadAreaCards();
+        if (selectedArea) {
+            selectArea(selectedArea.areaCode);
+        }
     } catch (err) {
         showToast('Failed to delete: ' + err.message, 'error');
     }
 };
 
 window.uploadVideoFile = async () => {
+    if (!selectedArea) {
+        showToast('Please select an area first', 'error');
+        return;
+    }
+    
     const fileInput = document.getElementById('videoUploadFile');
     const status = document.getElementById('uploadStatus');
     const btn = document.getElementById('uploadVideoBtn');
@@ -508,8 +577,8 @@ window.uploadVideoFile = async () => {
         await apiCall('/content', 'POST', {
             type: 'video',
             title: fileInput.files[0].name.split('.')[0],
-            areaCode: 'global',
-            areaName: 'Global',
+            areaCode: selectedArea.areaCode,
+            areaName: selectedArea.areaName,
             url: res.url,
             priority: 0,
             status: 'active'
@@ -520,7 +589,8 @@ window.uploadVideoFile = async () => {
         status.className = 'status-text success';
         fileInput.value = '';
         
-        await loadContent();
+        await loadAreaCards();
+        selectArea(selectedArea.areaCode);
         
         setTimeout(() => {
             status.textContent = '';
@@ -542,17 +612,20 @@ window.closeContentModal = () => {
     document.getElementById('contentModal').classList.remove('active');
 };
 
-// Load on page open
-loadContent();
-</script>
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
 
-<style>
-.area-filter-row .area-filter-btn {
-    padding: 6px 12px;
-    font-size: 13px;
-    border-radius: 6px;
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }
-.area-filter-btn.active {
-    font-weight: 700;
-}
-</style>
+
+// Load on page open
+loadAreaCards();
+</script>
