@@ -221,14 +221,14 @@ body {
 table {
     border-collapse: collapse;
     width: 100%;
-    min-width: 1000px;
-    table-layout: fixed;
+    min-width: 1100px;
+    table-layout: auto;
 }
 
 table th, table td {
-    padding: 12px 8px;
+    padding: 12px 10px;
     font-size: 13px;
-    word-wrap: break-word;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -242,7 +242,6 @@ table th {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 2px solid #e2e8f0;
-    white-space: nowrap;
 }
 
 table td {
@@ -251,16 +250,16 @@ table td {
     vertical-align: middle;
 }
 
-table th:nth-child(1), table td:nth-child(1) { width: 10%; }
-table th:nth-child(2), table td:nth-child(2) { width: 15%; }
-table th:nth-child(3), table td:nth-child(3) { width: 10%; }
-table th:nth-child(4), table td:nth-child(4) { width: 10%; }
-table th:nth-child(5), table td:nth-child(5) { width: 12%; }
-table th:nth-child(6), table td:nth-child(6) { width: 8%; }
-table th:nth-child(7), table td:nth-child(7) { width: 8%; }
-table th:nth-child(8), table td:nth-child(8) { width: 8%; }
-table th:nth-child(9), table td:nth-child(9) { width: 8%; }
-table th:nth-child(10), table td:nth-child(10) { width: 11%; }
+table th:nth-child(1), table td:nth-child(1) { width: 120px; }
+table th:nth-child(2), table td:nth-child(2) { width: 180px; }
+table th:nth-child(3), table td:nth-child(3) { width: 120px; }
+table th:nth-child(4), table td:nth-child(4) { width: 120px; }
+table th:nth-child(5), table td:nth-child(5) { width: 140px; }
+table th:nth-child(6), table td:nth-child(6) { width: 80px; }
+table th:nth-child(7), table td:nth-child(7) { width: 100px; }
+table th:nth-child(8), table td:nth-child(8) { width: 100px; }
+table th:nth-child(9), table td:nth-child(9) { width: 100px; }
+table th:nth-child(10), table td:nth-child(10) { width: 140px; }
 
 tr.area-row {
     cursor: pointer;
@@ -537,14 +536,14 @@ tr.area-row:last-child td {
 }
 
 @media (max-width: 768px) {
-   .form-grid {
+  .form-grid {
         grid-template-columns: 1fr;
     }
-   .modal-content {
+  .modal-content {
         padding: 20px;
         margin: 20px;
     }
-   .card-header {
+  .card-header {
         flex-direction: column;
         align-items: flex-start;
     }
