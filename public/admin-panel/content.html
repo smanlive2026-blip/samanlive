@@ -3,12 +3,19 @@
         <h2>📢 Ads <span id="adsCount" class="badge badge-info">0</span></h2>
         <button class="btn btn-success" onclick="openAddContent('ad')">+ Add New Ad</button>
     </div>
+    
+    <!-- AREA FILTER BUTTONS -->
+    <div id="adsAreaFilter" class="area-filter-row" style="margin-bottom:15px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-sm btn-primary area-filter-btn active" onclick="filterByArea('all','ad')">All Areas</button>
+    </div>
+    
     <div style="overflow-x:auto;">
         <table id="adsTable">
             <thead>
                 <tr>
                     <th>Title</th>
-                    <th>Description</th>
+                    <th>Area</th>
+                    <th>Schedule</th>
                     <th>Button</th>
                     <th>Color</th>
                     <th>Priority</th>
@@ -17,7 +24,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr><td colspan="7" class="loading">Loading ads</td></tr>
+                <tr><td colspan="8" class="loading">Loading ads</td></tr>
             </tbody>
         </table>
     </div>
@@ -28,6 +35,12 @@
         <h2>🎬 Videos <span id="videosCount" class="badge badge-info">0</span></h2>
         <button class="btn btn-success" onclick="openAddContent('video')">+ Add New Video</button>
     </div>
+    
+    <!-- AREA FILTER BUTTONS -->
+    <div id="videosAreaFilter" class="area-filter-row" style="margin-bottom:15px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-sm btn-primary area-filter-btn active" onclick="filterByArea('all','video')">All Areas</button>
+    </div>
+    
     <div class="upload-box">
         <p><strong>📤 Direct Video Upload</strong></p>
         <p class="help-text">Select video from system - auto uploads and creates entry</p>
@@ -40,6 +53,8 @@
             <thead>
                 <tr>
                     <th>Title</th>
+                    <th>Area</th>
+                    <th>Schedule</th>
                     <th>URL</th>
                     <th>Preview</th>
                     <th>Priority</th>
@@ -48,7 +63,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr><td colspan="6" class="loading">Loading videos</td></tr>
+                <tr><td colspan="8" class="loading">Loading videos</td></tr>
             </tbody>
         </table>
     </div>
@@ -59,11 +74,19 @@
         <h2>🎯 Campaigns <span id="campaignsCount" class="badge badge-info">0</span></h2>
         <button class="btn btn-success" onclick="openAddContent('campaign')">+ Add New Campaign</button>
     </div>
+    
+    <!-- AREA FILTER BUTTONS -->
+    <div id="campaignsAreaFilter" class="area-filter-row" style="margin-bottom:15px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-sm btn-primary area-filter-btn active" onclick="filterByArea('all','campaign')">All Areas</button>
+    </div>
+    
     <div style="overflow-x:auto;">
         <table id="campaignsTable">
             <thead>
                 <tr>
                     <th>Title</th>
+                    <th>Area</th>
+                    <th>Schedule</th>
                     <th>Description</th>
                     <th>Button</th>
                     <th>Color</th>
@@ -73,7 +96,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr><td colspan="7" class="loading">Loading campaigns</td></tr>
+                <tr><td colspan="9" class="loading">Loading campaigns</td></tr>
             </tbody>
         </table>
     </div>
@@ -98,12 +121,53 @@
 
 <script>
 // ========================================
-// CONTENT MANAGEMENT - PROFESSIONAL VERSION
-// Uses window.allContent from admin.js
+// CONTENT MANAGEMENT - AREA WISE VERSION
 // ========================================
+
+let allAreasList = [];
+let currentAreaFilter = { ad: 'all', video: 'all', campaign: 'all' };
+
+async function loadAreasForContent() {
+    try {
+        const areas = await apiCall('/areas');
+        allAreasList = areas.filter(a => a.status) || []; // Only active areas
+        renderAreaFilters();
+    } catch (err) {
+        console.error('Failed to load areas:', err);
+    }
+}
+
+function renderAreaFilters() {
+    const filterHTML = `<button class="btn btn-sm btn-primary area-filter-btn active" onclick="filterByArea('all','TYPE')">All Areas</button>` +
+        allAreasList.map(a => 
+            `<button class="btn btn-sm btn-secondary area-filter-btn" onclick="filterByArea('${a.areaCode}','TYPE')">
+                ${escapeHtml(a.areaName)} (${a.areaCode})
+            </button>`
+        ).join('');
+    
+    document.getElementById('adsAreaFilter').innerHTML = filterHTML.replace(/TYPE/g, 'ad');
+    document.getElementById('videosAreaFilter').innerHTML = filterHTML.replace(/TYPE/g, 'video');
+    document.getElementById('campaignsAreaFilter').innerHTML = filterHTML.replace(/TYPE/g, 'campaign');
+}
+
+window.filterByArea = (areaCode, type) => {
+    currentAreaFilter[type] = areaCode;
+    
+    // Update active button
+    const filterDiv = document.getElementById(`${type}sAreaFilter`);
+    filterDiv.querySelectorAll('.area-filter-btn').forEach(btn => {
+        btn.classList.remove('btn-primary', 'active');
+        btn.classList.add('btn-secondary');
+    });
+    event.target.classList.remove('btn-secondary');
+    event.target.classList.add('btn-primary', 'active');
+    
+    renderContent();
+};
 
 async function loadContent() {
     try {
+        await loadAreasForContent();
         const data = await apiCall('/content');
         window.allContent = data || [];
         renderContent();
@@ -113,10 +177,45 @@ async function loadContent() {
     }
 }
 
+function isContentActive(item) {
+    const now = new Date();
+    const start = item.startTime ? new Date(item.startTime) : null;
+    const end = item.endTime ? new Date(item.endTime) : null;
+    
+    if (start && now < start) return false;
+    if (end && now > end) return false;
+    return item.status === 'active';
+}
+
+function formatSchedule(item) {
+    if (!item.startTime && !item.endTime) return '<span class="badge">Always</span>';
+    
+    const start = item.startTime ? new Date(item.startTime).toLocaleString('en-IN', {dateStyle:'short', timeStyle:'short'}) : 'Start';
+    const end = item.endTime ? new Date(item.endTime).toLocaleString('en-IN', {dateStyle:'short', timeStyle:'short'}) : 'No End';
+    
+    const active = isContentActive(item);
+    const badge = active ? 'badge-success' : 'badge-warning';
+    
+    return `<span class="badge ${badge}" style="font-size:11px;">
+        ${start}<br>to ${end}
+    </span>`;
+}
+
 function renderContent() {
-    const ads = window.allContent.filter(c => c.type === 'ad');
-    const videos = window.allContent.filter(c => c.type === 'video');
-    const campaigns = window.allContent.filter(c => c.type === 'campaign');
+    let ads = window.allContent.filter(c => c.type === 'ad');
+    let videos = window.allContent.filter(c => c.type === 'video');
+    let campaigns = window.allContent.filter(c => c.type === 'campaign');
+    
+    // Apply area filter
+    if (currentAreaFilter.ad !== 'all') {
+        ads = ads.filter(a => a.areaCode === currentAreaFilter.ad);
+    }
+    if (currentAreaFilter.video !== 'all') {
+        videos = videos.filter(v => v.areaCode === currentAreaFilter.video);
+    }
+    if (currentAreaFilter.campaign !== 'all') {
+        campaigns = campaigns.filter(c => c.areaCode === currentAreaFilter.campaign);
+    }
 
     document.getElementById('adsCount').textContent = ads.length;
     document.getElementById('videosCount').textContent = videos.length;
@@ -124,10 +223,11 @@ function renderContent() {
 
     // Ads Table
     document.querySelector('#adsTable tbody').innerHTML = ads.length === 0
-      ? '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No ads found</td></tr>'
+      ? '<tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8;">No ads found</td></tr>'
         : ads.map(a => `<tr>
             <td><b>${escapeHtml(a.title)}</b></td>
-            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(a.description || '-')}</td>
+            <td><span class="badge badge-info">${escapeHtml(a.areaCode || 'Global')}</span></td>
+            <td>${formatSchedule(a)}</td>
             <td>${escapeHtml(a.buttonText || '-')}</td>
             <td><span class="color-badge" style="background:${a.color}">${a.color}</span></td>
             <td>${a.priority || 0}</td>
@@ -140,9 +240,11 @@ function renderContent() {
 
     // Videos Table
     document.querySelector('#videosTable tbody').innerHTML = videos.length === 0
-      ? '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">No videos found</td></tr>'
+      ? '<tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8;">No videos found</td></tr>'
         : videos.map(v => `<tr>
             <td><b>${escapeHtml(v.title)}</b></td>
+            <td><span class="badge badge-info">${escapeHtml(v.areaCode || 'Global')}</span></td>
+            <td>${formatSchedule(v)}</td>
             <td><a href="${v.url}" target="_blank" class="btn btn-secondary btn-sm">View</a></td>
             <td><video src="${v.url}" class="video-preview" controls style="max-width:120px;max-height:80px;" onerror="this.style.display='none'"></video></td>
             <td>${v.priority || 0}</td>
@@ -155,9 +257,11 @@ function renderContent() {
 
     // Campaigns Table
     document.querySelector('#campaignsTable tbody').innerHTML = campaigns.length === 0
-      ? '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No campaigns found</td></tr>'
+      ? '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">No campaigns found</td></tr>'
         : campaigns.map(c => `<tr>
             <td><b>${escapeHtml(c.title)}</b></td>
+            <td><span class="badge badge-info">${escapeHtml(c.areaCode || 'Global')}</span></td>
+            <td>${formatSchedule(c)}</td>
             <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.description || '-')}</td>
             <td>${escapeHtml(c.buttonText || '-')}</td>
             <td><span class="color-badge" style="background:${c.color}">${c.color}</span></td>
@@ -175,10 +279,36 @@ window.openAddContent = (type) => {
     document.getElementById('contentEditType').value = type;
     document.getElementById('contentModalTitle').textContent = `Add New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
+    const areaOptions = allAreasList.map(a => 
+        `<option value="${a.areaCode}">${escapeHtml(a.areaName)} (${a.areaCode}) - ${a.city}</option>`
+    ).join('');
+
     let fields = `<div class="form-grid">
         <div class="form-group full">
             <label>Title *</label>
             <input type="text" id="field_content_title" required placeholder="Enter title">
+        </div>
+        
+        <div class="form-group">
+            <label>Select Area *</label>
+            <select id="field_content_areaCode" required>
+                <option value="">-- Select Area --</option>
+                <option value="global">🌍 Global (All Areas)</option>
+                ${areaOptions}
+            </select>
+            <small style="color:#64748b;">Select area where this will show</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Start Date & Time</label>
+            <input type="datetime-local" id="field_content_startTime">
+            <small style="color:#64748b;">Leave empty for immediate</small>
+        </div>
+        
+        <div class="form-group">
+            <label>End Date & Time</label>
+            <input type="datetime-local" id="field_content_endTime">
+            <small style="color:#64748b;">Leave empty for no expiry</small>
         </div>`;
 
     if (type === 'ad' || type === 'campaign') {
@@ -240,6 +370,15 @@ window.editContent = (id) => {
 
     setTimeout(() => {
         document.getElementById('field_content_title').value = item.title || '';
+        document.getElementById('field_content_areaCode').value = item.areaCode || 'global';
+        
+        if (item.startTime) {
+            document.getElementById('field_content_startTime').value = new Date(item.startTime).toISOString().slice(0,16);
+        }
+        if (item.endTime) {
+            document.getElementById('field_content_endTime').value = new Date(item.endTime).toISOString().slice(0,16);
+        }
+        
         if (document.getElementById('field_content_description')) {
             document.getElementById('field_content_description').value = item.description || '';
         }
@@ -271,10 +410,16 @@ window.saveContent = async () => {
 
     const type = document.getElementById('contentEditType').value;
     const id = document.getElementById('contentEditId').value;
+    const areaCode = document.getElementById('field_content_areaCode').value;
+    const selectedArea = allAreasList.find(a => a.areaCode === areaCode);
 
     const data = {
         type: type,
         title: document.getElementById('field_content_title').value.trim(),
+        areaCode: areaCode,
+        areaName: selectedArea ? selectedArea.areaName : 'Global',
+        startTime: document.getElementById('field_content_startTime').value || null,
+        endTime: document.getElementById('field_content_endTime').value || null,
         description: document.getElementById('field_content_description')?.value.trim() || '',
         buttonText: document.getElementById('field_content_buttonText')?.value.trim() || '',
         buttonLink: document.getElementById('field_content_buttonLink')?.value.trim() || '',
@@ -291,7 +436,14 @@ window.saveContent = async () => {
         return;
     }
 
-    if (type === 'video' &&!data.url) {
+    if (!data.areaCode) {
+        showToast('Please select an Area', 'error');
+        btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
+        return;
+    }
+
+    if (type === 'video' && !data.url) {
         showToast('Video URL is required', 'error');
         btn.disabled = false;
         btn.textContent = '💾 Save Changes';
@@ -356,6 +508,8 @@ window.uploadVideoFile = async () => {
         await apiCall('/content', 'POST', {
             type: 'video',
             title: fileInput.files[0].name.split('.')[0],
+            areaCode: 'global',
+            areaName: 'Global',
             url: res.url,
             priority: 0,
             status: 'active'
@@ -391,3 +545,14 @@ window.closeContentModal = () => {
 // Load on page open
 loadContent();
 </script>
+
+<style>
+.area-filter-row .area-filter-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+}
+.area-filter-btn.active {
+    font-weight: 700;
+}
+</style>
