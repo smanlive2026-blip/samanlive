@@ -26,7 +26,7 @@ app.use((req, res, next) => {
 // ==================== ROUTES ====================
 const statsRoutes = require('./routes/stats'); // ← Is line ko yahan la
 app.use('/api', statsRoutes); // ← Is line ko yahan la
-
+app.use('/api/manager', require('./routes/managerRoutes'));
 // Static files serve karo
 app.use(express.static(path.join(__dirname, '../public')));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
