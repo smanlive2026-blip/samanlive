@@ -1,301 +1,437 @@
 const express = require('express');
-const router = express.Router();
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const Area = require('../models/Area');
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
+const User = require('../models/User');
 const Module = require('../models/Module');
-const ShopHistory = require('../models/ShopHistory');
+const router = express.Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'samanlive-area-manager-secret-2026';
-
-// ========================================
-// AUTH MIDDLEWARE - Manager Token Check
-// ========================================
-async function authManager(req, res, next) {
-    const token = req.headers['authorization']?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Token nahi mila' });
+// ========== MIDDLEWARE: Manager Token Verify ==========
+const verifyManagerToken = async (req, res, next) => {
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const manager = await Manager.findById(decoded.id);
-        if (!manager ||!manager.status) {
-            return res.status(401).json({ error: 'Manager inactive ya nahi mila' });
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
         }
+
+        const manager = await Manager.findOne({ loginToken: token, status: true });
+        if (!manager) {
+            return res.status(401).json({ error: 'Invalid or expired token' });
+        }
+
         req.manager = manager;
         next();
     } catch (err) {
-        return res.status(401).json({ error: 'Invalid token' });
+        res.status(500).json({ error: err.message });
     }
-}
+};
 
-// ========================================
-// LOGIN - Email/Password YA LoginToken se
-// ========================================
-router.post('/login', async (req, res) => {
-    const { email, password, loginToken } = req.body;
+// ========== ADMIN ROUTES ==========
 
+// 1. Get All Managers - manager.html ke liye
+router.get('/managers', async (req, res) => {
     try {
-        let manager;
+        const managers = await Manager.find().sort({ createdAt: -1 });
+        res.json(managers);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-        // Method 1: LoginToken se login - Admin se generate hua link
-        if (loginToken) {
-            manager = await Manager.findOne({ loginToken, status: true });
-            if (!manager) return res.status(401).json({ error: 'Invalid ya expired link' });
+// 2. Get Single Manager Detail
+router.get('/managers/:id', async (req, res) => {
+    try {
+        const manager = await Manager.findById(req.params.id);
+        if (!manager) {
+            return res.status(404).json({ error: 'Manager not found' });
         }
-        // Method 2: Email/Password se login
-        else {
-            if (!email ||!password) {
-                return res.status(400).json({ error: 'Email aur Password zaruri hai' });
-            }
-            manager = await Manager.findOne({ email: email.toLowerCase(), status: true });
-            if (!manager) return res.status(401).json({ error: 'Manager nahi mila ya inactive hai' });
+        res.json(manager);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-            const validPass = await bcrypt.compare(password, manager.password);
-            if (!validPass) return res.status(401).json({ error: 'Password galat hai' });
+// 3. Auto Create Manager - Manual sync ke liye bhi
+router.post('/admin/auto-create-manager', async (req, res) => {
+    try {
+        const { areaCode } = req.body;
+
+        if (!areaCode) {
+            return res.status(400).json({ error: 'Area Code required' });
         }
 
-        // Update last login
-        manager.lastLogin = new Date();
+        const existingManager = await Manager.findOne({ areaCode });
+        if (existingManager) {
+            return res.json({ success: true, manager: existingManager, message: 'Manager already exists' });
+        }
+
+        const area = await Area.findOne({ areaCode });
+        if (!area) {
+            return res.status(404).json({ error: 'Area not found' });
+        }
+
+        const loginToken = crypto.randomBytes(32).toString('hex');
+        const tempPassword = 'Auto@' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        const managerData = {
+            name: `${area.areaName} Manager`,
+            areaCode: area.areaCode,
+            areaName: area.areaName,
+            city: area.city,
+            state: area.state,
+            bucket: 'DEFAULT',
+            managerCode: `${area.areaCode}-DEFAULT`,
+            email: `${area.areaCode.toLowerCase()}@autogen.local`,
+            phone: '0000000000',
+            password: hashedPassword,
+            serviceCharge: 5,
+            status: true,
+            moduleAccess: [],
+            autoGenerated: true,
+            loginToken: loginToken,
+            tempPassword: tempPassword,
+            centerLat: area.centerLat,
+            centerLng: area.centerLng,
+            radius: area.radius
+        };
+
+        const manager = new Manager(managerData);
         await manager.save();
 
-        const token = jwt.sign({
-            id: manager._id,
-            email: manager.email,
-            name: manager.name,
-            area: manager.area
-        }, JWT_SECRET, { expiresIn: '7d' });
-
-        res.json({
+        console.log(`✅ Auto Manager created for area: ${area.areaCode}`);
+        res.status(201).json({
             success: true,
-            token,
-            manager: {
-                id: manager._id,
-                name: manager.name,
-                email: manager.email,
-                area: manager.area,
-                serviceCharge: manager.serviceCharge,
-                moduleAccess: manager.moduleAccess
-            }
+            manager,
+            loginLink: `/area-manager.html?token=${loginToken}`,
+            tempPassword: tempPassword
         });
+
     } catch (err) {
+        console.error('Auto create manager error:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// ========================================
-// DASHBOARD - Sirf apne area ki shops
-// ========================================
-router.get('/dashboard', authManager, async (req, res) => {
+// 4. Update Manager - General update
+router.put('/managers/:id', async (req, res) => {
     try {
-        const managerArea = req.manager.area;
+        const updateData = req.body;
 
-        // Apne area ki shops
-        const areaShops = await Shop.find({
-            area: managerArea
-        }).lean();
-
-        // Categories - Module collection se
-        const modules = await Module.find({ status: true });
-        const categories = modules.map(m => ({
-            id: m.id,
-            name: m.name,
-            icon: m.icon
-        }));
-
-        res.json({
-            success: true,
-            area: managerArea,
-            stats: {
-                totalShops: areaShops.length,
-                activeShops: areaShops.filter(s => s.status === 'approved' && s.isActive).length,
-                pendingBanners: areaShops.filter(s => s.banner &&!s.bannerApproved).length
-            },
-            shops: areaShops,
-            categories: categories,
-            modules: req.manager.moduleAccess
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ========================================
-// SHOP CREATE - Manager bana sakta hai apne area me
-// ========================================
-router.post('/shop', authManager, async (req, res) => {
-    try {
-        const managerArea = req.manager.area;
-        const { name, icon, categoryId, phone, address, lat, lng, range, banner } = req.body;
-
-        if (!name ||!categoryId ||!lat ||!lng) {
-            return res.status(400).json({ error: 'Name, Category, Lat, Lng required hai' });
+        // Password update ho raha hai to hash karo
+        if (updateData.password) {
+            updateData.password = await bcrypt.hash(updateData.password, 10);
         }
 
-        // Check if manager has access to this category
-        if (req.manager.moduleAccess && req.manager.moduleAccess.length > 0 &&
-           !req.manager.moduleAccess.includes('all') &&
-           !req.manager.moduleAccess.includes(categoryId)) {
-            return res.status(403).json({ error: 'Is category ka access nahi hai' });
-        }
-
-        const shop = new Shop({
-            ownerId: req.manager._id, // Manager ko owner bana diya
-            ownerName: req.manager.name,
-            createdBy: req.manager._id,
-            managerId: req.manager._id,
-            shopName: name, // name → shopName
-            icon: icon || '🏪',
-            serviceType: categoryId, // categoryId → serviceType
-            phone: phone || req.manager.phone,
-            address: {
-                line1: address || '',
-                city: managerArea,
-                state: '',
-                pincode: ''
-            },
-            location: {
-                type: 'Point',
-                coordinates: [parseFloat(lng), parseFloat(lat)] // [lng, lat]
-            },
-            range: range || 5000,
-            banner: banner || '',
-            bannerApproved: false,
-            area: managerArea,
-            status: 'pending', // Admin approve karega
-            isActive: true
-        });
-
-        await shop.save();
-
-        // Log activity
-        await ShopHistory.create({
-            managerId: req.manager._id,
-            shopId: shop._id,
-            action: 'create',
-            shopName: shop.shopName,
-            area: shop.area,
-            newData: shop.toObject()
-        });
-
-        res.json({ success: true, data: shop });
-    } catch (err) {
-        console.error('Create shop error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ========================================
-// SHOP UPDATE - Sirf apne area ki shop edit kar sakta hai
-// ========================================
-router.put('/shop/:id', authManager, async (req, res) => {
-    try {
-        const shop = await Shop.findById(req.params.id);
-
-        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
-
-        // Check: Shop is manager ke area ki hai ya nahi
-        if (shop.area!== req.manager.area) {
-            return res.status(403).json({ error: 'Ye shop aapke area ki nahi hai' });
-        }
-
-        const oldData = shop.toObject();
-
-        // Allowed fields manager ke liye
-        const { name, phone, address, lat, lng, range, icon, banner, status } = req.body;
-        const updateData = {};
-
-        if (name!== undefined) updateData.shopName = name;
-        if (phone!== undefined) updateData.phone = phone;
-        if (address!== undefined) updateData.address = {...shop.address, line1: address };
-        if (lat!== undefined && lng!== undefined) {
-            updateData.location = {
-                type: 'Point',
-                coordinates: [parseFloat(lng), parseFloat(lat)]
-            };
-        }
-        if (range!== undefined) updateData.range = range;
-        if (icon!== undefined) updateData.icon = icon;
-        if (banner!== undefined) updateData.banner = banner;
-        if (status!== undefined) updateData.status = status;
-
-        // Agar banner change hua to approval reset karo
-        if (banner && banner!== shop.banner) {
-            updateData.bannerApproved = false;
-            updateData.bannerApprovedBy = null;
-            updateData.bannerApprovedAt = null;
-        }
-
-        const updatedShop = await Shop.findByIdAndUpdate(
+        const manager = await Manager.findByIdAndUpdate(
             req.params.id,
             updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!manager) {
+            return res.status(404).json({ error: 'Manager not found' });
+        }
+
+        res.json({ success: true, manager });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 5. Update Manager Modules - Service assign karne ke liye
+router.put('/managers/:id/modules', async (req, res) => {
+    try {
+        const { moduleAccess } = req.body;
+
+        if (!Array.isArray(moduleAccess)) {
+            return res.status(400).json({ error: 'moduleAccess must be an array' });
+        }
+
+        const manager = await Manager.findByIdAndUpdate(
+            req.params.id,
+            { moduleAccess },
             { new: true }
         );
 
-        // Log activity
-        await ShopHistory.create({
-            managerId: req.manager._id,
-            shopId: shop._id,
-            action: 'edit',
-            shopName: shop.shopName,
-            area: shop.area,
-            oldData: oldData,
-            newData: updatedShop.toObject()
-        });
-
-        res.json({ success: true, data: updatedShop });
-    } catch (err) {
-        console.error('Update shop error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ========================================
-// SHOP DELETE - Sirf apne area ki
-// ========================================
-router.delete('/shop/:id', authManager, async (req, res) => {
-    try {
-        const shop = await Shop.findById(req.params.id);
-
-        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
-
-        if (shop.area!== req.manager.area) {
-            return res.status(403).json({ error: 'Ye shop aapke area ki nahi hai' });
+        if (!manager) {
+            return res.status(404).json({ error: 'Manager not found' });
         }
 
-        // Log before delete
-        await ShopHistory.create({
-            managerId: req.manager._id,
-            shopId: shop._id,
-            action: 'delete',
-            shopName: shop.shopName,
-            area: shop.area,
-            oldData: shop.toObject()
-        });
-
-        await Shop.findByIdAndDelete(req.params.id);
-        res.json({ success: true });
+        res.json({ success: true, manager });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// ========================================
-// GET SINGLE SHOP - Detail ke liye
-// ========================================
-router.get('/shop/:id', authManager, async (req, res) => {
+// 6. Reset Manager Password
+router.post('/managers/:id/reset-password', async (req, res) => {
     try {
-        const shop = await Shop.findById(req.params.id);
-
-        if (!shop) return res.status(404).json({ error: 'Shop nahi mili' });
-
-        if (shop.area!== req.manager.area) {
-            return res.status(403).json({ error: 'Ye shop aapke area ki nahi hai' });
+        const manager = await Manager.findById(req.params.id);
+        if (!manager) {
+            return res.status(404).json({ error: 'Manager not found' });
         }
 
-        res.json({ success: true, data: shop });
+        const newPassword = 'Auto@' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const newToken = crypto.randomBytes(32).toString('hex');
+
+        manager.password = hashedPassword;
+        manager.loginToken = newToken;
+        manager.tempPassword = newPassword;
+        await manager.save();
+
+        res.json({
+            success: true,
+            tempPassword: newPassword,
+            loginLink: `/area-manager.html?token=${newToken}`
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
+
+// 7. Delete Manager
+router.delete('/managers/:id', async (req, res) => {
+    try {
+        const manager = await Manager.findById(req.params.id);
+        if (!manager) {
+            return res.status(404).json({ error: 'Manager not found' });
+        }
+
+        const shopCount = await Shop.countDocuments({ managerId: manager._id });
+        if (shopCount > 0) {
+            return res.status(400).json({
+                error: `Cannot delete! ${shopCount} shops are assigned to this manager.`
+            });
+        }
+
+        await Manager.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Manager deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 8. Get All Modules - Service assign karte time dropdown ke liye
+router.get('/modules', async (req, res) => {
+    try {
+        const modules = await Module.find({ status: true }).sort({ name: 1 });
+        res.json({ modules });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========== MANAGER ROUTES - Dashboard Ke Liye ==========
+
+// 9. Manager Login
+router.post('/area-manager/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const manager = await Manager.findOne({ email, status: true });
+        if (!manager) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const isMatch = await bcrypt.compare(password, manager.password);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        res.json({
+            success: true,
+            token: manager.loginToken,
+            manager: {
+                _id: manager._id,
+                name: manager.name,
+                email: manager.email,
+                areaCode: manager.areaCode,
+                areaName: manager.areaName,
+                city: manager.city,
+                bucket: manager.bucket,
+                modules: manager.moduleAccess
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 10. Manager Dashboard Data
+router.get('/manager/dashboard', verifyManagerToken, async (req, res) => {
+    try {
+        const manager = req.manager;
+
+        const [shops, categories, area, allShops] = await Promise.all([
+            Shop.find({ managerId: manager._id }),
+            Module.find({ id: { $in: manager.moduleAccess } }),
+            Area.findOne({ areaCode: manager.areaCode }),
+            Shop.find({}) // Overlap check ke liye sab shops
+        ]);
+
+        res.json({
+            success: true,
+            manager: {
+                _id: manager._id,
+                name: manager.name,
+                areaCode: manager.areaCode,
+                areaName: manager.areaName,
+                city: manager.city,
+                bucket: manager.bucket,
+                managerCode: manager.managerCode,
+                serviceCharge: manager.serviceCharge,
+                modules: manager.moduleAccess,
+                centerLat: area?.centerLat,
+                centerLng: area?.centerLng,
+                radius: area?.radius
+            },
+            shops,
+            categories,
+            area,
+            stats: {
+                totalShops: shops.length,
+                activeShops: shops.filter(s => s.status).length
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 11. Create Shop - Circle Overlap + Category Validation
+router.post('/manager/shop', verifyManagerToken, async (req, res) => {
+    try {
+        const manager = req.manager;
+        const { name, icon, moduleId, phone, address, lat, lng, range, banner } = req.body;
+
+        // Validation 1: Category access check
+        if (!manager.moduleAccess.includes(moduleId)) {
+            return res.status(403).json({ error: 'You dont have access to this category' });
+        }
+
+        // Validation 2: Area circle check
+        const area = await Area.findOne({ areaCode: manager.areaCode });
+        if (!area) {
+            return res.status(404).json({ error: 'Area not found' });
+        }
+
+        const distance = calculateDistance(lat, lng, area.centerLat, area.centerLng);
+
+        if (distance > area.radius) {
+            return res.status(400).json({
+                error: `Shop location is ${distance.toFixed(1)}km away. Must be within ${area.radius}km`
+            });
+        }
+
+        // Validation 3: Overlap check - Dusre area me paas to nahi
+        const allAreas = await Area.find({ status: true, areaCode: { $ne: manager.areaCode } });
+        for (const otherArea of allAreas) {
+            const distToOther = calculateDistance(lat, lng, otherArea.centerLat, otherArea.centerLng);
+            if (distToOther <= otherArea.radius && distToOther < distance) {
+                return res.status(400).json({
+                    error: `This location is closer to ${otherArea.areaName} (${distToOther.toFixed(1)}km)`
+                });
+            }
+        }
+
+        const shop = new Shop({
+            name,
+            icon: icon || '🏪',
+            moduleId,
+            phone,
+            address,
+            lat: parseFloat(lat),
+            lng: parseFloat(lng),
+            range: parseInt(range) || 5000,
+            banner,
+            areaCode: manager.areaCode,
+            managerId: manager._id,
+            city: manager.city,
+            status: true,
+            bannerStatus: 'pending'
+        });
+
+        await shop.save();
+        res.status(201).json({ success: true, shop });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 12. Update Shop
+router.put('/manager/shop/:id', verifyManagerToken, async (req, res) => {
+    try {
+        const manager = req.manager;
+        const shop = await Shop.findOne({ _id: req.params.id, managerId: manager._id });
+
+        if (!shop) {
+            return res.status(404).json({ error: 'Shop not found or access denied' });
+        }
+
+        // Agar location change ho rahi hai to wapas validation
+        if (req.body.lat && req.body.lng) {
+            const area = await Area.findOne({ areaCode: manager.areaCode });
+            const distance = calculateDistance(req.body.lat, req.body.lng, area.centerLat, area.centerLng);
+
+            if (distance > area.radius) {
+                return res.status(400).json({
+                    error: `New location is ${distance.toFixed(1)}km away. Must be within ${area.radius}km`
+                });
+            }
+        }
+
+        Object.assign(shop, req.body);
+        await shop.save();
+
+        res.json({ success: true, shop });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 13. Delete Shop
+router.delete('/manager/shop/:id', verifyManagerToken, async (req, res) => {
+    try {
+        const manager = req.manager;
+        const shop = await Shop.findOneAndDelete({ _id: req.params.id, managerId: manager._id });
+
+        if (!shop) {
+            return res.status(404).json({ error: 'Shop not found or access denied' });
+        }
+
+        res.json({ success: true, message: 'Shop deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 14. Get Manager's Shops - Nearby logic ke sath
+router.get('/manager/shops', verifyManagerToken, async (req, res) => {
+    try {
+        const manager = req.manager;
+        const shops = await Shop.find({ managerId: manager._id }).sort({ createdAt: -1 });
+        res.json({ success: true, shops });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========== HELPER FUNCTION: Haversine Distance ==========
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
 
 module.exports = router;
