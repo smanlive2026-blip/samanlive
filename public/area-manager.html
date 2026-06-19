@@ -80,7 +80,6 @@
         }
         #map { height: 300px; border-radius: 8px; margin-top: 10px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .banner-preview { width: 100%; max-width: 400px; margin-top: 10px; border-radius: 8px; display: none; }
         .area-info { background: #e0e7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .area-info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
         .area-info-row:last-child { margin-bottom: 0; }
@@ -92,6 +91,7 @@
         .service-card:hover { border-color: #6366f1; transform: translateY(-2px); }
         .service-card .icon { font-size: 32px; margin-bottom: 10px; }
         .service-card .name { font-weight: 600; color: #1e293b; }
+        .distance-badge { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
         @media (max-width: 768px) {
             .form-row { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: 1fr; }
@@ -140,7 +140,7 @@
                     <strong>City:</strong> <span id="cityText">-</span>
                 </div>
                 <div class="area-info-row">
-                    <strong>Service Charge:</strong> <span id="serviceChargeText">-</span>%
+                    <strong>Coverage Radius:</strong> <span id="radiusText">-</span> km
                 </div>
             </div>
 
@@ -163,10 +163,11 @@
                 </div>
             </div>
 
-            <!-- DYNAMIC SERVICES SECTION -->
+            <!-- SERVICES SECTION - Future me yaha import link aayega -->
             <div class="card">
                 <div class="card-header">
                     <h2>🛠️ My Services</h2>
+                    <button class="btn btn-small" onclick="alert('Service Import Page Coming Soon!')">+ Import Service</button>
                 </div>
                 <div class="service-cards" id="serviceCards">
                     <p style="color:#94a3b8;text-align:center;grid-column:1/-1;padding:40px;">No services assigned yet</p>
@@ -175,7 +176,7 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h2>📍 My Area Shops</h2>
+                    <h2>📍 Nearby Shops In My Circle</h2>
                     <button class="btn btn-small" onclick="openShopModal()">+ Add New Shop</button>
                 </div>
                 <div style="overflow-x: auto;">
@@ -185,13 +186,14 @@
                                 <th>Icon</th>
                                 <th>Name</th>
                                 <th>Category</th>
-                                <th>Address</th>
+                                <th>Distance</th>
+                                <th>Products</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="shopsTable">
-                            <tr><td colspan="6" style="text-align:center; padding: 40px; color: #94a3b8;">Loading...</td></tr>
+                            <tr><td colspan="7" style="text-align:center; padding: 40px; color: #94a3b8;">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -217,6 +219,7 @@
                         <label>Icon</label>
                         <input type="text" id="shopIcon" placeholder="🏪" maxlength="2">
                     </div>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Category *</label>
@@ -244,17 +247,7 @@
                 <div class="form-group">
                     <label>Select Location on Map *</label>
                     <div id="map"></div>
-                    <small style="color: #64748b;">Map pe click karke shop ki location select karo</small>
-                </div>
-                <div class="form-group">
-                    <label>Service Range (meters)</label>
-                    <input type="number" id="shopRange" value="5000" min="100" max="50000">
-                </div>
-                <div class="form-group">
-                    <label>Shop Banner Image</label>
-                    <input type="file" id="shopBannerInput" accept="image/*" onchange="uploadShopBanner(this)">
-                    <img id="shopBannerPreview" class="banner-preview">
-                    <input type="hidden" id="shopBannerUrl">
+                    <small style="color: #64748b;">Map pe click karke shop ki location select karo. Sirf circle ke andar allow hai.</small>
                 </div>
                 <button type="submit" class="btn">Save Shop</button>
             </form>
@@ -269,9 +262,9 @@
         let managerData = null;
         let map = null;
         let marker = null;
+        let areaCircle = null;
         let categories = [];
 
-        // ========== TOKEN AUTO LOGIN ==========
         if (tokenParam) {
             localStorage.setItem('areaManagerToken', tokenParam);
             token = tokenParam;
@@ -306,17 +299,12 @@
             }
         }
 
-        // ========== CHECK LOGIN ==========
-        if (token) {
-            showDashboard();
-        }
+        if (token) showDashboard();
 
-        // ========== LOGIN ==========
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-
             try {
                 const res = await fetch('/api/area-manager/login', {
                     method: 'POST',
@@ -324,7 +312,6 @@
                     body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
-
                 if (data.success) {
                     token = data.token;
                     localStorage.setItem('areaManagerToken', token);
@@ -338,18 +325,15 @@
             }
         });
 
-        // ========== SHOW DASHBOARD ==========
         async function showDashboard() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             await loadDashboard();
         }
 
-        // ========== LOAD DASHBOARD ==========
         async function loadDashboard() {
             try {
                 const data = await apiCall('/manager/dashboard');
-
                 if (data.success) {
                     managerData = data.manager;
                     document.getElementById('managerName').textContent = managerData.name;
@@ -358,12 +342,10 @@
                     document.getElementById('areaCodeText').textContent = data.manager.areaCode;
                     document.getElementById('managerCodeText').textContent = data.manager.managerCode;
                     document.getElementById('cityText').textContent = data.manager.city;
-                    document.getElementById('serviceChargeText').textContent = data.manager.serviceCharge || '0';
-                    document.getElementById('moduleCount').textContent = (data.manager.modules || []).length;
-
+                    document.getElementById('radiusText').textContent = data.manager.radius || '50';
+                    document.getElementById('moduleCount').textContent = (data.categories || []).length;
                     document.getElementById('totalShops').textContent = data.shops.length;
                     document.getElementById('activeShops').textContent = data.shops.filter(s => s.status).length;
-
                     categories = data.categories || [];
                     renderShops(data.shops);
                     renderServiceCards(data.categories);
@@ -377,7 +359,6 @@
             }
         }
 
-        // ========== RENDER SERVICE CARDS ==========
         function renderServiceCards(cats) {
             const container = document.getElementById('serviceCards');
             if (!cats || cats.length === 0) {
@@ -385,37 +366,27 @@
                 return;
             }
             container.innerHTML = cats.map(c => `
-                <div class="service-card" onclick="filterShopByCategory('${c.id}')">
+                <div class="service-card">
                     <div class="icon">${c.icon || '📦'}</div>
                     <div class="name">${escapeHtml(c.name)}</div>
                 </div>
             `).join('');
         }
 
-        function filterShopByCategory(catId) {
-            // Future: Filter table by category
-            console.log('Filter by:', catId);
-        }
-
-        // ========== RENDER SHOPS ==========
         function renderShops(shops) {
             const tbody = document.getElementById('shopsTable');
             if (shops.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color: #94a3b8;">Koi shop nahi hai. Add karo!</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color: #94a3b8;">Koi shop nahi hai. Add karo!</td></tr>';
                 return;
             }
-
             tbody.innerHTML = shops.map(shop => `
                 <tr>
                     <td style="font-size: 24px;">${shop.icon || '🏪'}</td>
                     <td><strong>${escapeHtml(shop.name)}</strong></td>
                     <td>${getCategoryName(shop.moduleId)}</td>
-                    <td>${escapeHtml(shop.address || '-')}</td>
-                    <td>
-                        <span class="badge ${shop.status? 'badge-success' : 'badge-danger'}">
-                            ${shop.status? 'Active' : 'Inactive'}
-                        </span>
-                    </td>
+                    <td><span class="distance-badge">${shop.distance} km</span></td>
+                    <td>${shop.products?.length || 0} items</td>
+                    <td><span class="badge ${shop.status? 'badge-success' : 'badge-danger'}">${shop.status? 'Active' : 'Inactive'}</span></td>
                     <td>
                         <div class="actions">
                             <button class="btn btn-small" onclick='editShop(${JSON.stringify(shop).replace(/'/g, "&apos;")})'>Edit</button>
@@ -431,14 +402,11 @@
             return cat? cat.name : '-';
         }
 
-        // ========== SHOP MODAL ==========
         function openShopModal(shop = null) {
             document.getElementById('shopModal').classList.add('active');
             document.getElementById('modalTitle').textContent = shop? 'Edit Shop' : 'Add New Shop';
-
             const catSelect = document.getElementById('shopCategory');
             catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
-
             if (shop) {
                 document.getElementById('shopId').value = shop._id;
                 document.getElementById('shopName').value = shop.name;
@@ -448,19 +416,11 @@
                 document.getElementById('shopAddress').value = shop.address || '';
                 document.getElementById('shopLat').value = shop.lat;
                 document.getElementById('shopLng').value = shop.lng;
-                document.getElementById('shopRange').value = shop.range || 5000;
-                document.getElementById('shopBannerUrl').value = shop.banner || '';
-                if(shop.banner) {
-                    document.getElementById('shopBannerPreview').src = shop.banner;
-                    document.getElementById('shopBannerPreview').style.display = 'block';
-                }
                 initMap(shop.lat, shop.lng);
             } else {
                 document.getElementById('shopForm').reset();
                 document.getElementById('shopId').value = '';
-                document.getElementById('shopBannerPreview').style.display = 'none';
-                // Default to area center
-                initMap(managerData.centerLat || 23.0225, managerData.centerLng || 72.5714);
+                initMap(managerData?.centerLat || 23.0225, managerData?.centerLng || 72.5714);
             }
         }
 
@@ -472,42 +432,28 @@
             openShopModal(shop);
         }
 
-        async function uploadShopBanner(input) {
-            if(input.files[0]) {
-                const formData = new FormData();
-                formData.append('file', input.files[0]);
-
-                try {
-                    const res = await fetch('/api/admin/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const data = await res.json();
-
-                    if(data.success) {
-                        document.getElementById('shopBannerUrl').value = data.url;
-                        document.getElementById('shopBannerPreview').src = data.url;
-                        document.getElementById('shopBannerPreview').style.display = 'block';
-                    }
-                } catch(err) {
-                    alert('Banner upload failed!');
-                }
-            }
-        }
-
         function initMap(lat, lng) {
             if (map) map.remove();
-            map = L.map('map').setView([lat, lng], 13);
+            map = L.map('map').setView([lat, lng], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
+            
+            // Area circle dikhao
+            if (managerData) {
+                areaCircle = L.circle([managerData.centerLat, managerData.centerLng], {
+                    radius: managerData.radius * 1000,
+                    color: '#6366f1',
+                    fillColor: '#6366f1',
+                    fillOpacity: 0.1,
+                    weight: 2
+                }).addTo(map);
+            }
+            
             marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-
             marker.on('dragend', function(e) {
                 const pos = e.target.getLatLng();
                 document.getElementById('shopLat').value = pos.lat.toFixed(6);
                 document.getElementById('shopLng').value = pos.lng.toFixed(6);
             });
-
             map.on('click', function(e) {
                 marker.setLatLng(e.latlng);
                 document.getElementById('shopLat').value = e.latlng.lat.toFixed(6);
@@ -524,18 +470,13 @@
                 moduleId: document.getElementById('shopCategory').value,
                 phone: document.getElementById('shopPhone').value,
                 address: document.getElementById('shopAddress').value,
-                lat: document.getElementById('shopLat').value,
-                lng: document.getElementById('shopLng').value,
-                range: document.getElementById('shopRange').value,
-                banner: document.getElementById('shopBannerUrl').value
+                lat: parseFloat(document.getElementById('shopLat').value),
+                lng: parseFloat(document.getElementById('shopLng').value)
             };
-
             try {
                 const url = shopId? `/manager/shop/${shopId}` : '/manager/shop';
                 const method = shopId? 'PUT' : 'POST';
-
                 const data = await apiCall(url, method, shopData);
-
                 if (data.success) {
                     alert(shopId? 'Shop updated!' : 'Shop added!');
                     closeShopModal();
@@ -550,10 +491,8 @@
 
         async function deleteShop(id) {
             if (!confirm('Pakka delete karna hai?')) return;
-
             try {
                 const data = await apiCall(`/manager/shop/${id}`, 'DELETE');
-
                 if (data.success) {
                     alert('Shop deleted!');
                     loadDashboard();
