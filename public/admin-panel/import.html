@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Import - SuperLive Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f1f5f9; padding: 20px; }
+        .content { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        h2 { color: #1e293b; font-size: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .area-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; margin-top: 20px; }
+        .area-card { background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; transition: 0.2s; }
+        .area-card:hover { border-color: #6366f1; box-shadow: 0 4px 12px rgba(99,102,241,0.15); }
+        .area-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
+        .area-code { font-size: 18px; font-weight: 800; color: #1e293b; }
+        .area-name { font-size: 13px; color: #64748b; margin-top: 4px; }
+        .manager-info { font-size: 12px; color: #10b981; font-weight: 600; margin-top: 6px; }
+        .service-list { margin-top: 15px; }
+        .service-item { display: flex; align-items: center; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; transition: 0.2s; }
+        .service-item:hover { background: #f1f5f9; border-color: #6366f1; }
+        .service-item input[type="checkbox"] { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; }
+        .service-item label { margin: 0; cursor: pointer; flex: 1; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        .btn-primary { background: #6366f1; color: white; width: 100%; margin-top: 15px; }
+        .btn-primary:hover { background: #4f46e5; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 14px 20px; border-radius: 8px; z-index: 10000; }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .loading { text-align: center; padding: 40px; color: #94a3b8; grid-column: 1/-1; }
+    </style>
+</head>
+<body>
+<div class="content">
+    <h2>🔄 Service Import Manager <span id="areaCount" class="badge badge-info">0</span></h2>
+    <p style="color:#64748b;margin-bottom:20px;">Har area ke liye services assign karo. Tick karte hi manager ke dashboard me wo service live ho jayegi.</p>
+    
+    <div id="areaGrid" class="area-grid">
+        <div class="loading">Loading areas and services...</div>
+    </div>
+</div>
+
+<script>
+let allAreas = [];
+let allModules = [];
+let allManagers = [];
+
+async function loadData() {
+    try {
+        const [areas, modules, managers] = await Promise.all([
+            apiCall('/areas'),
+            apiCall('/modules'),
+            apiCall('/managers')
+        ]);
+        
+        allAreas = areas.filter(a => a.status) || [];
+        allModules = modules.modules || modules || [];
+        allManagers = managers || [];
+        
+        document.getElementById('areaCount').textContent = allAreas.length;
+        renderAreaCards();
+    } catch (err) {
+        showToast('Failed to load: ' + err.message, 'error');
+    }
+}
+
+function renderAreaCards() {
+    const grid = document.getElementById('areaGrid');
+    
+    if (allAreas.length === 0) {
+        grid.innerHTML = '<div class="loading">No active areas found. Create areas first in Area Master.</div>';
+        return;
+    }
+    
+    grid.innerHTML = allAreas.map(area => {
+        const manager = allManagers.find(m => m.areaCode === area.areaCode);
+        const activeServiceCount = allModules.filter(m => m.activeAreas?.includes(area.areaCode)).length;
+        
+        return `
+            <div class="area-card">
+                <div class="area-header">
+                    <div>
+                        <div class="area-code">${escapeHtml(area.areaCode)}</div>
+                        <div class="area-name">${escapeHtml(area.areaName)}</div>
+                        <div class="manager-info">👤 ${manager ? escapeHtml(manager.name) : 'No Manager'}</div>
+                    </div>
+                    <span class="badge badge-success">${activeServiceCount} Active</span>
+                </div>
+                
+                <div class="service-list">
+                    ${allModules.map(module => {
+                        const isActive = module.activeAreas?.includes(area.areaCode);
+                        return `
+                            <div class="service-item">
+                                <input type="checkbox" 
+                                       id="${area.areaCode}_${module._id}" 
+                                       ${isActive ? 'checked' : ''}
+                                       onchange="toggleService('${area.areaCode}', '${module._id}')">
+                                <label for="${area.areaCode}_${module._id}">
+                                    <span style="font-size:18px;">${module.icon}</span>
+                                    <span>${escapeHtml(module.name)}</span>
+                                </label>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                
+                <button class="btn btn-primary" onclick="saveAreaServices('${area.areaCode}')">
+                    💾 Save Services for ${escapeHtml(area.areaCode)}
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+window.toggleService = (areaCode, moduleId) => {
+    const checkbox = document.getElementById(`${areaCode}_${moduleId}`);
+    const module = allModules.find(m => m._id === moduleId);
+    
+    if (!module.activeAreas) module.activeAreas = [];
+    
+    if (checkbox.checked) {
+        if (!module.activeAreas.includes(areaCode)) {
+            module.activeAreas.push(areaCode);
+        }
+    } else {
+        module.activeAreas = module.activeAreas.filter(a => a !== areaCode);
+    }
+};
+
+window.saveAreaServices = async (areaCode) => {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
+    try {
+        // Update all modules for this area
+        const updates = allModules.map(module => {
+            return apiCall(`/modules/${module._id}`, 'PUT', {
+                activeAreas: module.activeAreas || []
+            });
+        });
+        
+        await Promise.all(updates);
+        showToast(`Services updated for ${areaCode}!`, 'success');
+        
+        // Reload to sync
+        await loadData();
+    } catch (err) {
+        showToast('Failed to save: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = `💾 Save Services for ${areaCode}`;
+    }
+};
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
+
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+loadData();
+</script>
+</body>
+</html>
