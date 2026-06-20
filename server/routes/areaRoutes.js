@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Area = require('../models/Area');
 const Manager = require('../models/Manager');
+const Shop = require('../models/Shop'); // Add karo agar Shop model hai
 const crypto = require('crypto');
 
+// GET all areas
 router.get('/areas', async (req, res) => {
     try {
         const areas = await Area.find().sort({ createdAt: -1 });
@@ -13,6 +15,7 @@ router.get('/areas', async (req, res) => {
     }
 });
 
+// POST create area + auto create manager
 router.post('/areas', async (req, res) => {
     try {
         const area = new Area(req.body);
@@ -40,20 +43,38 @@ router.post('/areas', async (req, res) => {
     }
 });
 
+// PUT update area - Manager bhi update hoga
 router.put('/areas/:id', async (req, res) => {
     try {
         const area = await Area.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        
+        // Update manager with same areaCode
+        await Manager.updateMany(
+            { areaCode: area.areaCode },
+            { 
+                areaName: area.areaName,
+                city: area.city,
+                centerLat: area.centerLat,
+                centerLng: area.centerLng,
+                radius: area.radius
+            }
+        );
+        
         res.json({ success: true, area });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
+// DELETE area
 router.delete('/areas/:id', async (req, res) => {
     try {
         const area = await Area.findById(req.params.id);
-        const managerCount = await Manager.countDocuments({ areaCode: area.areaCode });
+        if (!area) {
+            return res.status(404).json({ error: 'Area not found' });
+        }
         
+        const managerCount = await Manager.countDocuments({ areaCode: area.areaCode });
         if (managerCount > 0) {
             return res.status(400).json({ error: 'Cannot delete. Managers exist in this area.' });
         }
@@ -65,6 +86,7 @@ router.delete('/areas/:id', async (req, res) => {
     }
 });
 
+// GET all managers
 router.get('/managers', async (req, res) => {
     try {
         const managers = await Manager.find().sort({ createdAt: -1 });
@@ -74,8 +96,61 @@ router.get('/managers', async (req, res) => {
     }
 });
 
+// GET manager by login token - FIX
+router.get('/manager-by-token/:token', async (req, res) => {
+    try {
+        const manager = await Manager.findOne({ loginToken: req.params.token });
+        if (!manager) {
+            return res.status(404).json({ error: 'Manager not found' });
+        }
+        res.json({ success: true, manager });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET all shops - FIX kiya
+router.get('/shops', async (req, res) => {
+    try {
+        const shops = await Shop.find().sort({ createdAt: -1 });
+        res.json(shops);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST create shop
+router.post('/shops', async (req, res) => {
+    try {
+        const shop = new Shop(req.body);
+        await shop.save();
+        res.json({ success: true, shop });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// PUT update shop
+router.put('/shops/:id', async (req, res) => {
+    try {
+        const shop = await Shop.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json({ success: true, shop });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// DELETE shop
+router.delete('/shops/:id', async (req, res) => {
+    try {
+        await Shop.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.get('/users', async (req, res) => res.json([]));
-router.get('/shops', async (req, res) => res.json([]));
 router.get('/products', async (req, res) => res.json([]));
 router.get('/modules', async (req, res) => res.json({ modules: [] }));
 
