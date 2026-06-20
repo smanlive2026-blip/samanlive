@@ -19,7 +19,6 @@ router.post('/areas', async (req, res) => {
     try {
         const { areaCode, areaName, city, state, centerLat, centerLng, radius, status } = req.body;
 
-        // Validation
         if (!areaCode || !areaName || !city || !state || !centerLat || !centerLng) {
             return res.status(400).json({ error: 'All fields are required' });
         }
@@ -56,7 +55,6 @@ router.put('/areas/:id', async (req, res) => {
     try {
         const { radius, ...updateData } = req.body;
 
-        // Radius validation
         if (radius !== undefined) {
             const radiusValue = parseInt(radius);
             if (radiusValue < 1 || radiusValue > 500) {
