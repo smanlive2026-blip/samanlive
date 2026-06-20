@@ -124,7 +124,7 @@ router.get('/manager-by-token/:token', async (req, res) => {
     }
 });
 
-// PUT update manager - Admin ke liye
+// PUT update manager by ID - Admin ke liye
 router.put('/managers/:id', async (req, res) => {
     try {
         const manager = await Manager.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -134,6 +134,28 @@ router.put('/managers/:id', async (req, res) => {
         res.json({ success: true, manager });
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+});
+
+// PUT update manager by managerCode - Manager dashboard se profile update ke liye ← NAYA
+router.put('/managers/:managerCode', async (req, res) => {
+    try {
+        const { managerCode } = req.params;
+        const { name, phone, email, photo } = req.body;
+        
+        const manager = await Manager.findOneAndUpdate(
+            { managerCode },
+            { $set: { name, phone, email, photo } },
+            { new: true }
+        );
+        
+        if (!manager) {
+            return res.status(404).json({ success: false, error: 'Manager not found' });
+        }
+        
+        res.json({ success: true, manager });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 

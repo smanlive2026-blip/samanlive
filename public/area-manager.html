@@ -17,6 +17,8 @@
         .btn-danger { background: #ef4444; }
         .btn-danger:hover { background: #dc2626; }
         .btn-small { padding: 8px 16px; font-size: 14px; width: auto; }
+        .btn-outline { background: transparent; border: 2px solid #6366f1; color: #6366f1; }
+        .btn-outline:hover { background: #6366f1; color: white; }
         
         .dashboard { display: block; }
         
@@ -38,7 +40,7 @@
             background: linear-gradient(135deg, #1e293b, #334155); 
             padding: 35px; border-radius: 16px; margin-bottom: 30px;
             border: 1px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            display: flex; gap: 30px; align-items: center;
+            display: flex; gap: 30px; align-items: center; position: relative;
         }
         .profile-avatar {
             width: 110px; height: 110px; border-radius: 50%; 
@@ -46,9 +48,15 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 42px; font-weight: 700; color: white;
             border: 4px solid #6366f1; box-shadow: 0 4px 20px rgba(99,102,241,0.4);
-            flex-shrink: 0; overflow: hidden;
+            flex-shrink: 0; overflow: hidden; cursor: pointer; transition: 0.3s; position: relative;
         }
+        .profile-avatar:hover { transform: scale(1.05); box-shadow: 0 6px 25px rgba(99,102,241,0.6); }
         .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-avatar-edit {
+            position: absolute; bottom: 0; right: 0; background: #6366f1; 
+            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; 
+            justify-content: center; border: 3px solid #1e293b; font-size: 16px;
+        }
         .profile-info { flex: 1; }
         .profile-info h2 { font-size: 30px; color: #f1f5f9; margin-bottom: 8px; }
         .profile-info .role { color: #94a3b8; font-size: 14px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
@@ -61,6 +69,9 @@
         .profile-detail-icon { font-size: 18px; }
         .profile-detail span { color: #64748b; font-size: 12px; display: block; }
         .profile-detail strong { color: #e2e8f0; }
+        .profile-edit-btn {
+            position: absolute; top: 20px; right: 20px;
+        }
         
         .stats-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;
@@ -138,11 +149,19 @@
         .service-card .name { font-weight: 600; color: #f1f5f9; }
         .distance-badge { background: #92400e; color: #fef3c7; padding: 3px 10px; border-radius: 10px; font-size: 11px; }
         
+        .photo-preview { 
+            width: 100px; height: 100px; border-radius: 50%; margin: 10px auto; 
+            background: #0f172a; border: 3px solid #334155; display: flex; align-items: center; 
+            justify-content: center; overflow: hidden; font-size: 36px; color: #64748b;
+        }
+        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+        
         @media (max-width: 768px) {
             .form-row { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: 1fr; }
             .profile-card { flex-direction: column; text-align: center; }
             .profile-details { grid-template-columns: 1fr; }
+            .profile-edit-btn { position: static; margin-top: 15px; }
         }
     </style>
 </head>
@@ -159,7 +178,13 @@
         <div class="container">
             <!-- PROFILE CARD -->
             <div class="profile-card">
-                <div class="profile-avatar" id="managerAvatar">A</div>
+                <div class="profile-edit-btn">
+                    <button class="btn btn-small btn-outline" onclick="openProfileModal()">✏️ Edit Profile</button>
+                </div>
+                <div class="profile-avatar" id="managerAvatar" onclick="openProfileModal()">
+                    A
+                    <div class="profile-avatar-edit">✏️</div>
+                </div>
                 <div class="profile-info">
                     <h2 id="managerFullName">Loading...</h2>
                     <div class="role" id="managerRole">Area Manager</div>
@@ -184,7 +209,6 @@
                                 <span>Location</span>
                                 <strong id="managerLocation">-</strong>
                             </div>
-                        </div>
                         <div class="profile-detail">
                             <div class="profile-detail-icon">🗺️</div>
                             <div>
@@ -249,6 +273,41 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- PROFILE EDIT MODAL -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Edit Profile</h2>
+                <button class="close-btn" onclick="closeProfileModal()">×</button>
+            </div>
+            <form id="profileForm">
+                <div class="photo-preview" id="photoPreview">
+                    <span id="photoPreviewText">A</span>
+                </div>
+                <div class="form-group">
+                    <label>Profile Photo URL</label>
+                    <input type="text" id="profilePhoto" placeholder="https://i.pravatar.cc/300" oninput="updatePhotoPreview(this.value)">
+                    <small style="color: #64748b; font-size: 12px;">Paste image URL ya khali chhod de first letter ke liye</small>
+                </div>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="profileName" required placeholder="Rajesh Kumar">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="profilePhone" placeholder="9876543210">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="profileEmail" placeholder="rajesh@samanlive.com">
+                    </div>
+                </div>
+                <button type="submit" class="btn">💾 Save Profile</button>
+            </form>
         </div>
     </div>
 
@@ -360,26 +419,7 @@
                 
                 const areaShops = allShops.filter(s => s.areaCode === managerData.areaCode);
 
-                // PROFILE CARD RENDER
-                document.getElementById('managerFullName').textContent = managerData.name || 'Manager';
-                document.getElementById('managerRole').textContent = `Area Manager - ${managerData.areaCode}`;
-                document.getElementById('managerPhone').textContent = managerData.phone || 'Not Set';
-                document.getElementById('managerEmail').textContent = managerData.email || 'Not Set';
-                document.getElementById('managerLocation').textContent = `${managerData.areaName || '-'}, ${managerData.city || '-'}${managerData.state ? ', ' + managerData.state : ''}`;
-                document.getElementById('managerRadius').textContent = managerData.radius || '50';
-                
-                // Avatar - Photo ya First Letter
-                const avatarEl = document.getElementById('managerAvatar');
-                if (managerData.photo) {
-                    avatarEl.innerHTML = `<img src="${managerData.photo}" alt="${managerData.name}">`;
-                } else {
-                    const firstLetter = (managerData.name || 'A').charAt(0).toUpperCase();
-                    avatarEl.textContent = firstLetter;
-                }
-                
-                // Header
-                document.getElementById('managerName').textContent = managerData.name;
-                document.getElementById('managerBadge').textContent = managerData.bucket || 'DEFAULT';
+                renderProfile();
                 
                 // Stats
                 document.getElementById('areaCodeText').textContent = managerData.areaCode || '-';
@@ -393,6 +433,29 @@
                 console.error('Dashboard Error:', err);
                 document.body.innerHTML = `<h1 style="text-align:center;padding:50px;color:#ef4444;">❌ Error: ${err.message}</h1>`;
             }
+        }
+
+        function renderProfile() {
+            // PROFILE CARD RENDER
+            document.getElementById('managerFullName').textContent = managerData.name || 'Manager';
+            document.getElementById('managerRole').textContent = `Area Manager - ${managerData.areaCode}`;
+            document.getElementById('managerPhone').textContent = managerData.phone || 'Not Set';
+            document.getElementById('managerEmail').textContent = managerData.email || 'Not Set';
+            document.getElementById('managerLocation').textContent = `${managerData.areaName || '-'}, ${managerData.city || '-'}${managerData.state ? ', ' + managerData.state : ''}`;
+            document.getElementById('managerRadius').textContent = managerData.radius || '50';
+            
+            // Avatar - Photo ya First Letter
+            const avatarEl = document.getElementById('managerAvatar');
+            if (managerData.photo) {
+                avatarEl.innerHTML = `<img src="${managerData.photo}" alt="${managerData.name}"><div class="profile-avatar-edit">✏️</div>`;
+            } else {
+                const firstLetter = (managerData.name || 'A').charAt(0).toUpperCase();
+                avatarEl.innerHTML = `${firstLetter}<div class="profile-avatar-edit">✏️</div>`;
+            }
+            
+            // Header
+            document.getElementById('managerName').textContent = managerData.name;
+            document.getElementById('managerBadge').textContent = managerData.bucket || 'DEFAULT';
         }
 
         function renderServiceCards(cats) {
@@ -438,6 +501,56 @@
             return cat? cat.name : '-';
         }
 
+        // PROFILE EDIT FUNCTIONS
+        function openProfileModal() {
+            document.getElementById('profileModal').classList.add('active');
+            document.getElementById('profileName').value = managerData.name || '';
+            document.getElementById('profilePhone').value = managerData.phone || '';
+            document.getElementById('profileEmail').value = managerData.email || '';
+            document.getElementById('profilePhoto').value = managerData.photo || '';
+            updatePhotoPreview(managerData.photo || '');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+        }
+
+        function updatePhotoPreview(url) {
+            const preview = document.getElementById('photoPreview');
+            const previewText = document.getElementById('photoPreviewText');
+            if (url) {
+                preview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.parentElement.innerHTML='<span>${(managerData.name || 'A').charAt(0)}</span>'">`;
+            } else {
+                const firstLetter = (document.getElementById('profileName').value || managerData.name || 'A').charAt(0).toUpperCase();
+                preview.innerHTML = `<span>${firstLetter}</span>`;
+            }
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const profileData = {
+                name: document.getElementById('profileName').value,
+                phone: document.getElementById('profilePhone').value,
+                email: document.getElementById('profileEmail').value,
+                photo: document.getElementById('profilePhoto').value
+            };
+            
+            try {
+                const data = await apiCall(`/managers/${managerData.managerCode}`, 'PUT', profileData);
+                if (data.success) {
+                    alert('✅ Profile updated successfully!');
+                    managerData = data.manager; // Update local data
+                    renderProfile();
+                    closeProfileModal();
+                } else {
+                    alert(data.error || 'Error updating profile');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        // SHOP FUNCTIONS
         function openShopModal(shop = null) {
             document.getElementById('shopModal').classList.add('active');
             document.getElementById('modalTitle').textContent = shop? 'Edit Shop' : 'Add New Shop';
