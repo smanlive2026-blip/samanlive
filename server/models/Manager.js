@@ -1,110 +1,177 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const express = require('express');
+const Area = require('../models/Area'); // Capital A
+const Manager = require('../models/Manager');
+const User = require('../models/User');
+const Shop = require('../models/Shop');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs'); // <-- Ye add kar
+const router = express.Router();
 
-const managerSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
-  email: { 
-    type: String, 
-    required: true, 
-    unique: true, 
-    lowercase: true, 
-    trim: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
-  },
-  password: { type: String, required: true, minlength: 6 },
-  phone: { type: String, trim: true },
-  
-  // ========== AREA SYSTEM FIELDS ==========
-  area: { type: String, required: true, trim: true }, // Display name - "Surat 50km Zone"
-  areaCode: { type: String, required: true, trim: true, uppercase: true }, // "SURAT" - For filtering
-  areaName: { type: String, required: true, trim: true }, // "Surat 50km Zone" - Full name
-  bucket: { type: String, required: true, trim: true }, // "Grocery", "Fresh", "Food", etc
-  managerCode: { type: String, required: true, unique: true, uppercase: true }, // "SURAT-GROCERY" - Auto generated
-  // ========== AREA SYSTEM FIELDS END ==========
-  
-  serviceCharge: { type: Number, default: 5, min: 0, max: 100 },
-  moduleAccess: [{ type: String }], // Category IDs jo ye manager handle karega
-  loginToken: { type: String, unique: true, sparse: true },
-  tempPassword: { type: String },
-  status: { type: Boolean, default: true },
-  documents: {
-    photo: { type: String, default: '' },
-    aadhar: { type: String, default: '' },
-    pan: { type: String, default: '' },
-    addressProof: { type: String, default: '' }
-  },
-  lastLogin: { type: Date },
-  totalShopsCreated: { type: Number, default: 0 }
-}, { 
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+// Get all areas
+router.get('/areas', async (req, res) => {
+    try {
+        const areas = await Area.find().sort({ createdAt: -1 });
+        res.json(areas);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// ========== INDEXES ==========
-// Email already indexed due to unique: true
-// loginToken already indexed due to unique: true
+// Create area - DYNAMIC RADIUS + AUTO MANAGER
+router.post('/areas', async (req, res) => {
+    try {
+        const { areaCode, areaName, city, state, centerLat, centerLng, radius, status } = req.body;
 
-// Area system indexes
-managerSchema.index({ areaCode: 1 }); // Area filter ke liye
-managerSchema.index({ bucket: 1 }); // Bucket filter ke liye
-managerSchema.index({ areaCode: 1, bucket: 1 }, { unique: true }); // Ek area me ek bucket ka ek hi manager
-managerSchema.index({ managerCode: 1 }); // Manager code search
-managerSchema.index({ area: 1 });
-managerSchema.index({ status: 1 });
-managerSchema.index({ createdAt: -1 });
+        // Validation
+        if (!areaCode || !areaName || !city || !state || !centerLat || !centerLng) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
 
-// ========== MIDDLEWARE ==========
-// Auto generate managerCode before save
-managerSchema.pre('save', function(next) {
-  if (this.areaCode && this.bucket && !this.managerCode) {
-    this.managerCode = `${this.areaCode}-${this.bucket}`.toUpperCase();
-  }
-  next();
+        const radiusValue = parseInt(radius) || 50;
+        if (radiusValue < 1 || radiusValue > 500) {
+            return res.status(400).json({ error: 'Radius must be between 1 and 500 km' });
+        }
+
+        const area = new Area({
+            areaCode: areaCode.toUpperCase(),
+            areaName,
+            city,
+            state,
+            centerLat: parseFloat(centerLat),
+            centerLng: parseFloat(centerLng),
+            radius: radiusValue,
+            status: status !== undefined ? status : true
+        });
+
+        await area.save();
+
+        // ========== AUTO MANAGER CREATE - FIXED ==========
+        try {
+            const existingManager = await Manager.findOne({ 
+                areaCode: area.areaCode, 
+                bucket: 'DEFAULT' 
+            });
+            
+            if (!existingManager) {
+                const tempPassword = crypto.randomBytes(4).toString('hex').toUpperCase();
+                const loginToken = crypto.randomBytes(32).toString('hex');
+                
+                const manager = new Manager({
+                    name: area.areaName + ' Manager',
+                    email: area.areaCode.toLowerCase() + '@autogen.local',
+                    password: tempPassword, // <-- Required field
+                    phone: '9999999999',
+                    area: area.areaName, // <-- Required field
+                    areaCode: area.areaCode,
+                    areaName: area.areaName,
+                    bucket: 'DEFAULT', // <-- Required field
+                    serviceCharge: 5,
+                    moduleAccess: [],
+                    loginToken: loginToken,
+                    tempPassword: tempPassword,
+                    status: true
+                });
+
+                await manager.save();
+                console.log(`✅ Auto Manager created: ${manager.email}`);
+                console.log(`🔗 Login Token: ${loginToken}`);
+                console.log(`🔑 Temp Password: ${tempPassword}`);
+            } else {
+                console.log(`⚠️ Manager already exists for ${area.areaCode}`);
+            }
+        } catch (managerErr) {
+            console.error(`⚠️ Manager auto-create failed:`, managerErr.message);
+        }
+        // ========== AUTO MANAGER CREATE - END ==========
+
+        res.status(201).json({ success: true, area });
+    } catch (err) {
+        if (err.code === 11000) {
+            res.status(400).json({ error: 'Area Code already exists' });
+        } else {
+            res.status(500).json({ error: err.message });
+        }
+    }
 });
 
-// Password hash karne se pehle
-managerSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  try {
-    this.password = await bcrypt.hash(this.password, 10);
-    next();
-  } catch (err) {
-    next(err);
-  }
+// Update area - DYNAMIC RADIUS
+router.put('/areas/:id', async (req, res) => {
+    try {
+        const { radius, ...updateData } = req.body;
+
+        // Radius validation
+        if (radius !== undefined) {
+            const radiusValue = parseInt(radius);
+            if (radiusValue < 1 || radiusValue > 500) {
+                return res.status(400).json({ error: 'Radius must be between 1 and 500 km' });
+            }
+            updateData.radius = radiusValue;
+        }
+
+        const area = await Area.findByIdAndUpdate(
+            req.params.id, 
+            updateData, 
+            { new: true, runValidators: true }
+        );
+
+        if (!area) {
+            return res.status(404).json({ error: 'Area not found' });
+        }
+
+        res.json({ success: true, area });
+    } catch (err) {
+        if (err.code === 11000) {
+            res.status(400).json({ error: 'Area Code already exists' });
+        } else {
+            res.status(500).json({ error: err.message });
+        }
+    }
 });
 
-// ========== METHODS ==========
-// Password check method
-managerSchema.methods.comparePassword = async function(password) {
-  return await bcrypt.compare(password, this.password);
-};
+// Delete area
+router.delete('/areas/:id', async (req, res) => {
+    try {
+        const area = await Area.findById(req.params.id);
+        if (!area) {
+            return res.status(404).json({ error: 'Area not found' });
+        }
 
-// Generate unique login link
-managerSchema.methods.generateLoginToken = function() {
-  this.loginToken = crypto.randomBytes(32).toString('hex');
-  return this.loginToken;
-};
+        // Check if managers exist
+        const managerCount = await Manager.countDocuments({ areaCode: area.areaCode });
+        if (managerCount > 0) {
+            return res.status(400).json({ 
+                error: `Cannot delete! ${managerCount} managers exist in this area. Delete them first.` 
+            });
+        }
 
-// Generate temp password
-managerSchema.methods.generateTempPassword = function() {
-  const tempPass = Math.random().toString(36).slice(-8);
-  this.tempPassword = tempPass;
-  this.password = tempPass; // Will be hashed by pre-save hook
-  return tempPass;
-};
-
-// ========== VIRTUALS ==========
-// Virtual for documents count
-managerSchema.virtual('documentsUploaded').get(function() {
-  if (!this.documents) return 0;
-  return Object.values(this.documents).filter(doc => doc && doc.length > 0).length;
+        await Area.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Area deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Virtual for full manager identifier
-managerSchema.virtual('identifier').get(function() {
-  return `${this.areaCode}-${this.bucket} (${this.name})`;
+// Get area stats - for popup
+router.get('/areas/:id/stats', async (req, res) => {
+    try {
+        const area = await Area.findById(req.params.id);
+        if (!area) {
+            return res.status(404).json({ error: 'Area not found' });
+        }
+
+        const [managers, shops, users] = await Promise.all([
+            Manager.countDocuments({ areaCode: area.areaCode }),
+            Shop.countDocuments({ areaCode: area.areaCode }),
+            User.countDocuments({ areaCode: area.areaCode })
+        ]);
+        
+        res.json({
+            area,
+            stats: { managers, shops, users }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-module.exports = mongoose.models.Manager || mongoose.model('Manager', managerSchema);
+module.exports = router;
