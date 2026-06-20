@@ -3,8 +3,6 @@ const Area = require('../models/Area'); // Capital A
 const Manager = require('../models/Manager');
 const User = require('../models/User');
 const Shop = require('../models/Shop');
-const crypto = require('crypto');
-const bcrypt = require('bcryptjs'); // <-- Ye add kar
 const router = express.Router();
 
 // Get all areas
@@ -17,7 +15,7 @@ router.get('/areas', async (req, res) => {
     }
 });
 
-// Create area - DYNAMIC RADIUS + AUTO MANAGER
+// Create area - DYNAMIC RADIUS
 router.post('/areas', async (req, res) => {
     try {
         const { areaCode, areaName, city, state, centerLat, centerLng, radius, status } = req.body;
@@ -44,45 +42,6 @@ router.post('/areas', async (req, res) => {
         });
 
         await area.save();
-
-        // ========== AUTO MANAGER CREATE - FIXED ==========
-        try {
-            const existingManager = await Manager.findOne({ 
-                areaCode: area.areaCode, 
-                bucket: 'DEFAULT' 
-            });
-            
-            if (!existingManager) {
-                const tempPassword = crypto.randomBytes(4).toString('hex').toUpperCase();
-                const loginToken = crypto.randomBytes(32).toString('hex');
-                
-                const manager = new Manager({
-                    name: area.areaName + ' Manager',
-                    email: area.areaCode.toLowerCase() + '@autogen.local',
-                    password: tempPassword, // <-- Required field
-                    phone: '9999999999',
-                    area: area.areaName, // <-- Required field
-                    areaCode: area.areaCode,
-                    areaName: area.areaName,
-                    bucket: 'DEFAULT', // <-- Required field
-                    serviceCharge: 5,
-                    moduleAccess: [],
-                    loginToken: loginToken,
-                    tempPassword: tempPassword,
-                    status: true
-                });
-
-                await manager.save();
-                console.log(`✅ Auto Manager created: ${manager.email}`);
-                console.log(`🔗 Login Token: ${loginToken}`);
-                console.log(`🔑 Temp Password: ${tempPassword}`);
-            } else {
-                console.log(`⚠️ Manager already exists for ${area.areaCode}`);
-            }
-        } catch (managerErr) {
-            console.error(`⚠️ Manager auto-create failed:`, managerErr.message);
-        }
-        // ========== AUTO MANAGER CREATE - END ==========
 
         res.status(201).json({ success: true, area });
     } catch (err) {
