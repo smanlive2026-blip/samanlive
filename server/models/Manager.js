@@ -1,6 +1,5 @@
 const express = require('express');
-const Area = require('../models/Area'); // Capital A
-const Manager = require('../models/Manager');
+const Area = require('../models/Area');
 const User = require('../models/User');
 const Shop = require('../models/Shop');
 const router = express.Router();
@@ -42,7 +41,6 @@ router.post('/areas', async (req, res) => {
         });
 
         await area.save();
-
         res.status(201).json({ success: true, area });
     } catch (err) {
         if (err.code === 11000) {
@@ -95,14 +93,6 @@ router.delete('/areas/:id', async (req, res) => {
             return res.status(404).json({ error: 'Area not found' });
         }
 
-        // Check if managers exist
-        const managerCount = await Manager.countDocuments({ areaCode: area.areaCode });
-        if (managerCount > 0) {
-            return res.status(400).json({ 
-                error: `Cannot delete! ${managerCount} managers exist in this area. Delete them first.` 
-            });
-        }
-
         await Area.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: 'Area deleted successfully' });
     } catch (err) {
@@ -118,15 +108,14 @@ router.get('/areas/:id/stats', async (req, res) => {
             return res.status(404).json({ error: 'Area not found' });
         }
 
-        const [managers, shops, users] = await Promise.all([
-            Manager.countDocuments({ areaCode: area.areaCode }),
+        const [shops, users] = await Promise.all([
             Shop.countDocuments({ areaCode: area.areaCode }),
             User.countDocuments({ areaCode: area.areaCode })
         ]);
         
         res.json({
             area,
-            stats: { managers, shops, users }
+            stats: { managers: 0, shops, users }
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
