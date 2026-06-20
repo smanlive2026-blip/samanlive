@@ -8,84 +8,84 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #f1f5f9; }
-        .btn {
+       .btn {
             width: 100%; padding: 14px; background: #6366f1; color: white; border: none;
             border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s;
         }
-        .btn:hover { background: #4f46e5; }
-        .btn-danger { background: #ef4444; }
-        .btn-danger:hover { background: #dc2626; }
-        .btn-small { padding: 8px 16px; font-size: 14px; width: auto; }
-        .dashboard { display: block; }
-        .header {
+       .btn:hover { background: #4f46e5; }
+       .btn-danger { background: #ef4444; }
+       .btn-danger:hover { background: #dc2626; }
+       .btn-small { padding: 8px 16px; font-size: 14px; width: auto; }
+       .dashboard { display: block; }
+       .header {
             background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 20px;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .header h1 { font-size: 24px; }
-        .header-right { display: flex; gap: 15px; align-items: center; }
-        .manager-badge { background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 12px; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
-        .stats-grid {
+       .header h1 { font-size: 24px; }
+       .header-right { display: flex; gap: 15px; align-items: center; }
+       .manager-badge { background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 12px; }
+       .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
+       .stats-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;
         }
-        .stat-card {
+       .stat-card {
             background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 10px; }
-        .stat-card .value { font-size: 32px; font-weight: 700; color: #1e293b; }
-        .card {
+       .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 10px; }
+       .stat-card.value { font-size: 32px; font-weight: 700; color: #1e293b; }
+       .card {
             background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 25px;
         }
-        .card-header {
+       .card-header {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
             padding-bottom: 15px; border-bottom: 2px solid #f1f5f9;
         }
-        .card-header h2 { color: #1e293b; font-size: 20px; }
+       .card-header h2 { color: #1e293b; font-size: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
         th { background: #f8fafc; color: #475569; font-weight: 600; }
-        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .badge-success { background: #d1fae5; color: #065f46; }
-        .badge-danger { background: #fee2e2; color: #991b1b; }
-        .badge-warning { background: #fef3c7; color: #92400e; }
-        .actions { display: flex; gap: 8px; }
-        .modal {
+       .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+       .badge-success { background: #d1fae5; color: #065f46; }
+       .badge-danger { background: #fee2e2; color: #991b1b; }
+       .badge-warning { background: #fef3c7; color: #92400e; }
+       .actions { display: flex; gap: 8px; }
+       .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;
         }
-        .modal.active { display: flex; }
-        .modal-content {
+       .modal.active { display: flex; }
+       .modal-content {
             background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;
         }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .modal-header h2 { color: #1e293b; }
-        .close-btn {
+       .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+       .modal-header h2 { color: #1e293b; }
+       .close-btn {
             background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%;
             cursor: pointer; font-size: 20px; color: #64748b;
         }
         #map { height: 300px; border-radius: 8px; margin-top: 10px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; color: #475569; font-weight: 600; }
-        .form-group input,.form-group select,.form-group textarea {
+       .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+       .form-group { margin-bottom: 20px; }
+       .form-group label { display: block; margin-bottom: 8px; color: #475569; font-weight: 600; }
+       .form-group input,.form-group select,.form-group textarea {
             width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;
         }
-        .form-group input:focus,.form-group select:focus { outline: none; border-color: #6366f1; }
-        .area-info { background: #e0e7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .area-info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-        .area-info-row:last-child { margin-bottom: 0; }
-        .service-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
-        .service-card { 
+       .form-group input:focus,.form-group select:focus { outline: none; border-color: #6366f1; }
+       .area-info { background: #e0e7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+       .area-info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+       .area-info-row:last-child { margin-bottom: 0; }
+       .service-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+       .service-card { 
             background: #f8fafc; padding: 20px; border-radius: 12px; text-align: center;
             border: 2px solid #e2e8f0; cursor: pointer; transition: 0.3s;
         }
-        .service-card:hover { border-color: #6366f1; transform: translateY(-2px); }
-        .service-card .icon { font-size: 32px; margin-bottom: 10px; }
-        .service-card .name { font-weight: 600; color: #1e293b; }
-        .distance-badge { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+       .service-card:hover { border-color: #6366f1; transform: translateY(-2px); }
+       .service-card.icon { font-size: 32px; margin-bottom: 10px; }
+       .service-card.name { font-weight: 600; color: #1e293b; }
+       .distance-badge { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
         @media (max-width: 768px) {
-            .form-row { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr; }
+           .form-row { grid-template-columns: 1fr; }
+           .stats-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -191,6 +191,7 @@
                         <label>Icon</label>
                         <input type="text" id="shopIcon" placeholder="🏪" maxlength="2">
                     </div>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Category *</label>
@@ -244,12 +245,9 @@
         const API = '/api';
         async function apiCall(endpoint, method = 'GET', body = null) {
             try {
-                const opts = {
-                    method,
-                    headers: { 'Authorization': `Bearer ${token}` }
-                };
+                const opts = { method };
                 if (body &&!(body instanceof FormData)) {
-                    opts.headers['Content-Type'] = 'application/json';
+                    opts.headers = { 'Content-Type': 'application/json' };
                     opts.body = JSON.stringify(body);
                 } else if (body) {
                     opts.body = body;
@@ -269,25 +267,38 @@
 
         async function loadDashboard() {
             try {
-                const data = await apiCall('/manager/dashboard');
-                if (data.success) {
-                    managerData = data.manager;
-                    document.getElementById('managerName').textContent = managerData.name;
-                    document.getElementById('areaName').textContent = data.manager.areaName;
-                    document.getElementById('managerBadge').textContent = data.manager.bucket || 'Manager';
-                    document.getElementById('areaCodeText').textContent = data.manager.areaCode;
-                    document.getElementById('managerCodeText').textContent = data.manager.managerCode;
-                    document.getElementById('cityText').textContent = data.manager.city;
-                    document.getElementById('radiusText').textContent = data.manager.radius || '50';
-                    document.getElementById('moduleCount').textContent = (data.categories || []).length;
-                    document.getElementById('totalShops').textContent = data.shops.length;
-                    document.getElementById('activeShops').textContent = data.shops.filter(s => s.status).length;
-                    categories = data.categories || [];
-                    renderShops(data.shops);
-                    renderServiceCards(data.categories);
-                } else {
-                    document.body.innerHTML = `<h1 style="text-align:center;padding:50px;color:#ef4444;">❌ ${data.error}</h1>`;
-                }
+                // FIX: Sirf token se manager lao, areaCode ki zarurat nahi
+                const managerRes = await apiCall(`/manager-by-token/${token}`);
+                if (!managerRes.success) throw new Error('Invalid token');
+                
+                managerData = managerRes.manager;
+                
+                // Shops aur modules load karo
+                const [shopsData][modulesData] = await Promise.all([
+                    apiCall('/shops').catch(() => []),
+                    apiCall('/modules').catch(() => ({ modules: [] }))
+                ]);
+
+                const allShops = shopsData || [];
+                categories = modulesData.modules || modulesData || [];
+                
+                // Is area ki shops filter karo
+                const areaShops = allShops.filter(s => s.areaCode === managerData.areaCode);
+
+                // Dashboard render karo
+                document.getElementById('managerName').textContent = managerData.name;
+                document.getElementById('areaName').textContent = managerData.areaName;
+                document.getElementById('managerBadge').textContent = managerData.bucket || 'Manager';
+                document.getElementById('areaCodeText').textContent = managerData.areaCode;
+                document.getElementById('managerCodeText').textContent = managerData.managerCode;
+                document.getElementById('cityText').textContent = managerData.city;
+                document.getElementById('radiusText').textContent = managerData.radius || '50';
+                document.getElementById('moduleCount').textContent = categories.length;
+                document.getElementById('totalShops').textContent = areaShops.length;
+                document.getElementById('activeShops').textContent = areaShops.filter(s => s.isActive).length;
+                
+                renderShops(areaShops);
+                renderServiceCards(categories);
             } catch (err) {
                 document.body.innerHTML = `<h1 style="text-align:center;padding:50px;color:#ef4444;">❌ Error: ${err.message}</h1>`;
             }
@@ -316,11 +327,11 @@
             tbody.innerHTML = shops.map(shop => `
                 <tr>
                     <td style="font-size: 24px;">${shop.icon || '🏪'}</td>
-                    <td><strong>${escapeHtml(shop.name)}</strong></td>
+                    <td><strong>${escapeHtml(shop.shopName)}</strong></td>
                     <td>${getCategoryName(shop.moduleId)}</td>
-                    <td><span class="distance-badge">${shop.distance} km</span></td>
-                    <td>${shop.products?.length || 0} items</td>
-                    <td><span class="badge ${shop.status? 'badge-success' : 'badge-danger'}">${shop.status? 'Active' : 'Inactive'}</span></td>
+                    <td><span class="distance-badge">${shop.distance || 0} km</span></td>
+                    <td>${shop.totalOrders || 0} orders</td>
+                    <td><span class="badge ${shop.isActive? 'badge-success' : 'badge-danger'}">${shop.isActive? 'Active' : 'Inactive'}</span></td>
                     <td>
                         <div class="actions">
                             <button class="btn btn-small" onclick='editShop(${JSON.stringify(shop).replace(/'/g, "&apos;")})'>Edit</button>
@@ -332,7 +343,7 @@
         }
 
         function getCategoryName(id) {
-            const cat = categories.find(c => c.id === id);
+            const cat = categories.find(c => c.id === id || c._id === id);
             return cat? cat.name : '-';
         }
 
@@ -340,17 +351,17 @@
             document.getElementById('shopModal').classList.add('active');
             document.getElementById('modalTitle').textContent = shop? 'Edit Shop' : 'Add New Shop';
             const catSelect = document.getElementById('shopCategory');
-            catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+            catSelect.innerHTML = categories.map(c => `<option value="${c.id || c._id}">${c.icon} ${c.name}</option>`).join('');
             if (shop) {
                 document.getElementById('shopId').value = shop._id;
-                document.getElementById('shopName').value = shop.name;
+                document.getElementById('shopName').value = shop.shopName;
                 document.getElementById('shopIcon').value = shop.icon;
                 document.getElementById('shopCategory').value = shop.moduleId;
                 document.getElementById('shopPhone').value = shop.phone || '';
-                document.getElementById('shopAddress').value = shop.address || '';
-                document.getElementById('shopLat').value = shop.lat;
-                document.getElementById('shopLng').value = shop.lng;
-                initMap(shop.lat, shop.lng);
+                document.getElementById('shopAddress').value = shop.address?.line1 || '';
+                document.getElementById('shopLat').value = shop.location?.coordinates[1] || shop.lat;
+                document.getElementById('shopLng').value = shop.location?.coordinates[0] || shop.lng;
+                initMap(shop.location?.coordinates[1] || shop.lat, shop.location?.coordinates[0] || shop.lng);
             } else {
                 document.getElementById('shopForm').reset();
                 document.getElementById('shopId').value = '';
@@ -373,7 +384,7 @@
             
             if (managerData) {
                 areaCircle = L.circle([managerData.centerLat, managerData.centerLng], {
-                    radius: managerData.radius * 1000,
+                    radius: (managerData.radius || 50) * 1000,
                     color: '#6366f1',
                     fillColor: '#6366f1',
                     fillOpacity: 0.1,
@@ -398,16 +409,30 @@
             e.preventDefault();
             const shopId = document.getElementById('shopId').value;
             const shopData = {
-                name: document.getElementById('shopName').value,
-                icon: document.getElementById('shopIcon').value,
-                moduleId: document.getElementById('shopCategory').value,
+                shopName: document.getElementById('shopName').value,
+                ownerName: managerData.name,
+                ownerId: managerData._id,
                 phone: document.getElementById('shopPhone').value,
-                address: document.getElementById('shopAddress').value,
+                address: {
+                    line1: document.getElementById('shopAddress').value,
+                    city: managerData.city,
+                    state: managerData.state || ''
+                },
+                icon: document.getElementById('shopIcon').value || '🏪',
+                moduleId: document.getElementById('shopCategory').value,
+                categoryId: document.getElementById('shopCategory').value,
+                serviceType: document.getElementById('shopCategory').value,
                 lat: parseFloat(document.getElementById('shopLat').value),
-                lng: parseFloat(document.getElementById('shopLng').value)
+                lng: parseFloat(document.getElementById('shopLng').value),
+                areaCode: managerData.areaCode,
+                areaName: managerData.areaName,
+                bucket: managerData.bucket || 'DEFAULT',
+                status: 'pending',
+                isActive: true
             };
+            
             try {
-                const url = shopId? `/manager/shop/${shopId}` : '/manager/shop';
+                const url = shopId? `/shops/${shopId}` : '/shops';
                 const method = shopId? 'PUT' : 'POST';
                 const data = await apiCall(url, method, shopData);
                 if (data.success) {
@@ -425,7 +450,7 @@
         async function deleteShop(id) {
             if (!confirm('Pakka delete karna hai?')) return;
             try {
-                const data = await apiCall(`/manager/shop/${id}`, 'DELETE');
+                const data = await apiCall(`/shops/${id}`, 'DELETE');
                 if (data.success) {
                     alert('Shop deleted!');
                     loadDashboard();
