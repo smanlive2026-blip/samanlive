@@ -274,7 +274,7 @@
                 managerData = managerRes.manager;
                 
                 // Shops aur modules load karo
-                const [shopsData][modulesData] = await Promise.all([
+                const [shopsData,modulesData] = await Promise.all([
                     apiCall('/shops').catch(() => []),
                     apiCall('/modules').catch(() => ({ modules: [] }))
                 ]);
