@@ -10,6 +10,10 @@
             <div class="stat-label">Models</div>
         </div>
         <div class="stat-card">
+            <div class="stat-value" id="totalFiles">0</div>
+            <div class="stat-label">Project Files</div>
+        </div>
+        <div class="stat-card">
             <div class="stat-value" id="lastUpdate">--:--</div>
             <div class="stat-label">Last Updated</div>
         </div>
@@ -46,6 +50,22 @@
         <h3>🗄️ Database Models</h3>
     </div>
     <div class="models-grid" id="modelsGrid"></div>
+</div>
+
+<div class="content-card">
+    <div class="card-header">
+        <h3>📁 Project Structure</h3>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-copy" onclick="copyTreeStructure()">
+                <span>📋</span> Copy
+            </button>
+            <button class="btn-refresh" onclick="loadApiData()">
+                <span>🔄</span> Refresh
+            </button>
+        </div>
+    <div class="tree-wrapper" id="projectTree">
+        <div class="loading">Loading structure...</div>
+    </div>
 </div>
 
 <!-- Code Editor Modal -->
@@ -154,6 +174,23 @@
     background: #2563eb;
     transform: translateY(-1px);
 }
+.btn-copy {
+    padding: 12px 24px;
+    background: #10b981;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+.btn-copy:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
 .table-wrapper {
     overflow-x: auto;
 }
@@ -248,6 +285,37 @@
     padding: 60px 20px;
     color: #64748b;
 }
+.tree-wrapper {
+    padding: 25px;
+    background: #0f172a;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+.tree-item {
+    padding: 4px 0;
+    color: #cbd5e1;
+    user-select: none;
+}
+.tree-folder {
+    color: #60a5fa;
+    cursor: pointer;
+    font-weight: 600;
+}
+.tree-folder:hover { color: #93c5fd; }
+.tree-file {
+    color: #94a3b8;
+    margin-left: 20px;
+}
+.tree-folder::before { content: '📁 '; }
+.tree-file::before { content: '📄 '; }
+.tree-children {
+    margin-left: 20px;
+    border-left: 1px dashed #334155;
+    padding-left: 15px;
+}
+.hidden { display: none; }
 
 /* Modal Styles */
 #codeModal {
@@ -336,33 +404,46 @@
     let allRoutes = [];
     let currentFile = '';
     let currentRoute = {};
+    let currentProjectTree = [];
 
     window.loadApiData = async function() {
         try {
             const res = await fetch('/api/admin/routes');
             const data = await res.json();
-            
+
             if(!data.success) {
                 throw new Error(data.error || 'Failed to load');
             }
-            
+
             allRoutes = data.routes;
+            currentProjectTree = data.projectTree || [];
 
             document.getElementById('totalRoutes').textContent = data.total;
             document.getElementById('totalModels').textContent = data.models.length;
+            document.getElementById('totalFiles').textContent = countFiles(currentProjectTree);
             document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
             renderRoutes(allRoutes);
+            renderTree(currentProjectTree, document.getElementById('projectTree'));
 
             document.getElementById('modelsGrid').innerHTML = data.models
-             .map(m => `<div class="model-item"><div class="model-name">${m}</div></div>`)
-             .join('');
+            .map(m => `<div class="model-item"><div class="model-name">${m}</div></div>`)
+            .join('');
 
         } catch (err) {
             console.error('Error:', err);
             document.getElementById('routesTableBody').innerHTML =
                 `<tr><td colspan="4" style="color: #f87171; text-align: center; padding: 40px;">Failed to load routes: ${err.message}</td></tr>`;
         }
+    }
+
+    function countFiles(nodes) {
+        let count = 0;
+        nodes.forEach(node => {
+            if (node.type === 'file') count++;
+            if (node.children) count += countFiles(node.children);
+        });
+        return count;
     }
 
     function renderRoutes(routes) {
@@ -383,22 +464,72 @@
         `).join('');
     }
 
+    function renderTree(tree, container) {
+        if (!tree || tree.length === 0) {
+            container.innerHTML = '<div class="loading">No files found</div>';
+            return;
+        }
+
+        function createTreeHTML(nodes) {
+            return nodes.map(node => {
+                if (node.type === 'folder') {
+                    return `
+                        <div class="tree-item tree-folder" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                            ${node.name}
+                        </div>
+                        <div class="tree-children">
+                            ${createTreeHTML(node.children || [])}
+                        </div>
+                    `;
+                } else {
+                    return `<div class="tree-item tree-file">${node.name}</div>`;
+                }
+            }).join('');
+        }
+
+        container.innerHTML = createTreeHTML(tree);
+    }
+
+    window.copyTreeStructure = function() {
+        function generateTextTree(nodes, prefix = '') {
+            let result = '';
+            nodes.forEach((node, index) => {
+                const isLast = index === nodes.length - 1;
+                const connector = isLast? '└── ' : '├── ';
+                const nextPrefix = prefix + (isLast? ' ' : '│ ');
+                result += prefix + connector + node.name + '\n';
+                if (node.type === 'folder' && node.children) {
+                    result += generateTextTree(node.children, nextPrefix);
+                }
+            });
+            return result;
+        }
+
+        const treeText = 'PROJECT_ROOT/\n' + generateTextTree(currentProjectTree);
+        navigator.clipboard.writeText(treeText).then(() => {
+            alert('✅ Structure copied to clipboard!');
+        }).catch(() => {
+            alert('❌ Copy failed. Check console.');
+            console.log(treeText);
+        });
+    }
+
     window.viewCode = async function(route) {
         currentRoute = route;
         currentFile = route.file || 'server.js';
-        
+
         try {
             const res = await fetch('/api/admin/get-route-code', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    file: currentFile, 
-                    path: route.path, 
-                    method: route.methods[0] 
+                body: JSON.stringify({
+                    file: currentFile,
+                    path: route.path,
+                    method: route.methods[0]
                 })
             });
             const data = await res.json();
-            
+
             if(data.success) {
                 document.getElementById('modalTitle').textContent = `${route.methods[0]} ${route.path}`;
                 document.getElementById('modalSubTitle').textContent = `File: ${currentFile}`;
@@ -414,7 +545,7 @@
 
     window.saveCode = async function() {
         if(!confirm('Save changes to ' + currentFile + '? This will update the file directly.')) return;
-        
+
         const code = document.getElementById('codeEditor').value;
         try {
             const res = await fetch('/api/admin/update-route-code', {
@@ -423,10 +554,11 @@
                 body: JSON.stringify({ file: currentFile, code })
             });
             const data = await res.json();
-            
+
             if(data.success) {
                 alert('✅ ' + data.message + '\n\nRestart server to see changes.');
                 closeModal();
+                loadApiData();
             } else {
                 alert('❌ Error: ' + data.error);
             }
@@ -439,7 +571,6 @@
         document.getElementById('codeModal').style.display = 'none';
     }
 
-    // Close on ESC
     document.addEventListener('keydown', (e) => {
         if(e.key === 'Escape') closeModal();
     });

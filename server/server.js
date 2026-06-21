@@ -163,11 +163,40 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ==================== ADMIN API DOCS ROUTE - ALL FILES SCANNER ====================
+// ==================== ADMIN API DOCS ROUTE - UPDATED WITH TREE ====================
 app.get('/api/admin/routes', (req, res) => {
     try {
         const allRoutes = [];
         const routesDir = path.join(__dirname, './routes');
+
+        // Helper function: Project tree scan karne ke liye
+        function scanProjectTree(dir, basePath = '') {
+            const items = [];
+            if (!fs.existsSync(dir)) return items;
+
+            const files = fs.readdirSync(dir);
+            files.forEach(file => {
+                const filePath = path.join(dir, file);
+                const stat = fs.statSync(filePath);
+                const relativePath = path.join(basePath, file);
+
+                if (stat.isDirectory()) {
+                    items.push({
+                        name: file,
+                        type: 'folder',
+                        path: relativePath,
+                        children: scanProjectTree(filePath, relativePath)
+                    });
+                } else {
+                    items.push({
+                        name: file,
+                        type: 'file',
+                        path: relativePath
+                    });
+                }
+            });
+            return items;
+        }
 
         // 1. server.js ke direct routes
         if (app._router && app._router.stack) {
@@ -206,8 +235,10 @@ app.get('/api/admin/routes', (req, res) => {
                         let basePath = '';
                         if (file === 'adminRoutes.js') basePath = '/api/admin';
                         else if (file === 'managerRoutes.js') basePath = '/api/manager';
+                        else if (file === 'areaRoutes.js') basePath = '/api';
                         else if (file === 'userRoutes.js') basePath = '/api/users';
                         else if (file === 'market.js') basePath = '/api/market';
+                        else if (file === 'stats.js') basePath = '/api';
                         else if (file === 'testRoutes.js') basePath = '/api/test';
                         else if (file === 'shop.js') basePath = '/api/shop';
                         else if (file === 'wishlistRoutes.js') basePath = '/api/wishlist';
@@ -245,11 +276,16 @@ app.get('/api/admin/routes', (req, res) => {
             }
         });
 
+        // 3. Project tree scan karo
+        const projectRoot = path.join(__dirname, '..');
+        const projectTree = scanProjectTree(projectRoot);
+
         res.json({
             success: true,
             total: uniqueRoutes.length,
             routes: uniqueRoutes.sort((a, b) => a.path.localeCompare(b.path)),
-            models: mongoose.modelNames()
+            models: mongoose.modelNames(),
+            projectTree: projectTree
         });
     } catch (err) {
         console.error('API Routes Error:', err);
@@ -257,7 +293,8 @@ app.get('/api/admin/routes', (req, res) => {
             success: false,
             error: err.message,
             routes: [],
-            models: []
+            models: [],
+            projectTree: []
         });
     }
 });
@@ -368,7 +405,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+   ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
