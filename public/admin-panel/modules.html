@@ -170,7 +170,7 @@ async function loadModules() {
             apiCall('/modules'),
             apiCall('/areas')
         ]);
-        window.allModules = modulesData || [];
+        window.allModules = modulesData.data || modulesData || [];
         allAreas = areasData || [];
         document.getElementById('moduleCount').textContent = window.allModules.length;
         renderModules();
