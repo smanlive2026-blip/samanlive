@@ -119,11 +119,10 @@ let expandedModule = null;
 
 async function loadModules() {
     const container = document.getElementById('modulesList');
-    if (!container) return;
-    
     container.innerHTML = '<div class="loading" style="text-align:center;padding:40px;">Loading modules...</div>';
 
     try {
+        // Modules + Categories dono API se load karo
         const [moduleData, categoryData] = await Promise.all([
             apiCall('/modules'),
             apiCall('/categories')
@@ -131,6 +130,7 @@ async function loadModules() {
 
         allModulesData = moduleData.modules || moduleData || [];
 
+        // Agar API se categories mili to use karo, warna fallback use karo
         if (categoryData && (categoryData.categories || categoryData.length > 0)) {
             window.CATEGORIES_FALLBACK = categoryData.categories || categoryData;
         }
@@ -145,8 +145,6 @@ async function loadModules() {
 
 function populateCategoryDropdown() {
     const select = document.getElementById('catSelectFromList');
-    if (!select) return;
-    
     if (!window.CATEGORIES_FALLBACK || window.CATEGORIES_FALLBACK.length === 0) {
         select.innerHTML = '<option value="">⚠️ No categories found</option>';
         return;
@@ -169,7 +167,6 @@ function fillCategoryFromList(index) {
 
 function renderModules(searchTerm = '') {
     const container = document.getElementById('modulesList');
-    if (!container) return;
 
     let filtered = allModulesData;
     if (searchTerm) {
@@ -247,8 +244,7 @@ function renderModules(searchTerm = '') {
 
 window.toggleModule = (moduleId) => {
     expandedModule = expandedModule === moduleId? null : moduleId;
-    const searchBox = document.querySelector('.search-box');
-    renderModules(searchBox? searchBox.value : '');
+    renderModules(document.querySelector('.search-box').value);
 };
 
 window.filterModules = (val) => {
@@ -350,8 +346,6 @@ window.deleteCategory = async (moduleId, catIndex) => {
     if (!confirm('Delete this category?')) return;
 
     const m = allModulesData.find(x => (x._id || x.id) === moduleId);
-    if (!m ||!m.categoryDetails) return;
-    
     m.categoryDetails.splice(catIndex, 1);
 
     try {
@@ -370,11 +364,11 @@ window.closeCategoryModal = () => {
 };
 
 // ========================================
-// IMPORT FUNCTIONALITY - CASE INSENSITIVE FIX
+// IMPORT FUNCTIONALITY
 // ========================================
 window.openImportCategories = () => {
     if (!window.CATEGORIES_FALLBACK || window.CATEGORIES_FALLBACK.length === 0) {
-        showToast('No categories found', 'error');
+        showToast('No categories found in database', 'error');
         return;
     }
 
@@ -389,13 +383,10 @@ window.openImportCategories = () => {
     });
 
     preview.innerHTML = Object.entries(groupCount).map(([group, count]) => {
-        // CASE-INSENSITIVE MATCHING + SPACE REMOVE
-        const moduleExists = allModulesData.some(m => {
-            const moduleName = (m.name || '').trim().toLowerCase().replace(/\s+/g, '');
-            const catGroup = group.toLowerCase().replace(/\s+/g, '');
-            return moduleName === catGroup;
-        });
-        
+        const moduleExists = allModulesData.some(m =>
+            m.name.toLowerCase() === group.toLowerCase() ||
+            m.name === group.toUpperCase()
+        );
         return `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #e2e8f0;">
             <span><b>${group}</b> ${moduleExists? '✅' : '⚠️ Module Not Found'}</span>
             <span class="badge badge-info">${count} cats</span>
@@ -416,21 +407,16 @@ window.importCategories = async () => {
 
     let imported = 0;
     let skipped = 0;
-    let notFoundGroups = [];
 
     try {
         for(const cat of window.CATEGORIES_FALLBACK) {
-            const groupName = (cat.group || 'General').trim();
-            
-            // CASE-INSENSITIVE + SPACE REMOVE MATCHING
-            const module = allModulesData.find(m => {
-                const moduleName = (m.name || '').trim().toLowerCase().replace(/\s+/g, '');
-                const catGroup = groupName.toLowerCase().replace(/\s+/g, '');
-                return moduleName === catGroup;
-            });
+            const groupName = cat.group || 'General';
+            const module = allModulesData.find(m =>
+                m.name.toLowerCase() === groupName.toLowerCase() ||
+                m.name === groupName.toUpperCase()
+            );
 
             if(!module) {
-                if (!notFoundGroups.includes(groupName)) notFoundGroups.push(groupName);
                 skipped++;
                 continue;
             }
@@ -455,28 +441,15 @@ window.importCategories = async () => {
                 categoryId: cat._id || cat.id
             });
 
-            try {
-                await apiCall('/modules/' + (module._id || module.id), 'PUT', { 
-                    categoryDetails: module.categoryDetails 
-                });
-                imported++;
-            } catch (apiErr) {
-                console.error(`Failed to update module ${module.name}:`, apiErr);
-                skipped++;
-            }
+            await apiCall('/modules/' + (module._id || module.id), 'PUT', { categoryDetails: module.categoryDetails });
+            imported++;
         }
 
-        if (notFoundGroups.length > 0) {
-            showToast(`✅ Imported: ${imported} | ⏭️ Skipped: ${skipped} | Not Found: ${notFoundGroups.join(', ')}`, 'warning');
-        } else {
-            showToast(`✅ Imported: ${imported} | ⏭️ Skipped: ${skipped}`, 'success');
-        }
-        
+        showToast(`✅ Imported: ${imported} | ⏭️ Skipped: ${skipped}`, 'success');
         closeImportModal();
         await loadModules();
 
     } catch (err) {
-        console.error('Import error:', err);
         showToast('Import failed: ' + err.message, 'error');
     } finally {
         btn.disabled = false;
