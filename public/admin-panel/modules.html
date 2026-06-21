@@ -170,8 +170,10 @@ async function loadModules() {
             apiCall('/modules'),
             apiCall('/areas')
         ]);
-        window.allModules = modulesData.data || modulesData || [];
-        allAreas = areasData || [];
+        // FIX: API string bhej raha hai, usko parse karo
+        window.allModules = typeof modulesData.modules === 'string' ? JSON.parse(modulesData.modules) : (modulesData.modules || modulesData || []);
+        allAreas = typeof areasData.areas === 'string' ? JSON.parse(areasData.areas) : (areasData.areas || areasData || []);
+        
         document.getElementById('moduleCount').textContent = window.allModules.length;
         renderModules();
     } catch (err) {
