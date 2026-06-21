@@ -10,7 +10,8 @@ const Coupon = require('../models/Coupon');
 // ========== MODULES ==========
 router.get('/modules', async (req, res) => {
     try {
-        const modules = await Module.find().sort({ priority: -1 });
+        // Change 1: Sirf active modules bhejo, Change 2: priority 1,2,3 ke hisab se sort
+        const modules = await Module.find({ status: 'active' }).sort({ priority: 1 });
         res.json(modules);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -29,6 +30,7 @@ router.post('/modules', async (req, res) => {
 
 router.put('/modules/:id', async (req, res) => {
     try {
+        // Ye _id se update karega, tere schema me id field alag hai
         const module = await Module.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.json({ success: true, module });
     } catch (err) {

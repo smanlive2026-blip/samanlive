@@ -143,6 +143,26 @@ let currentModuleCategories = [];
 let currentModuleActiveAreas = [];
 let allAreas = [];
 
+// API Helper - Yaha change kar de agar tera base path alag hai
+async function apiCall(url, method = 'GET', body = null) {
+    const options = {
+        method,
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+        }
+    };
+    if (body) options.body = JSON.stringify(body);
+    
+    // IMPORTANT: Agar tera route /api/modules hai toh ye line use kar:
+    const response = await fetch('/api' + url, options);
+    // Agar sirf /modules hai toh ye use kar:
+    // const response = await fetch(url, options);
+    
+    if (!response.ok) throw new Error('API Error: ' + response.status);
+    return await response.json();
+}
+
 async function loadModules() {
     showLoading('modulesTable');
     try {
@@ -150,7 +170,7 @@ async function loadModules() {
             apiCall('/modules'),
             apiCall('/areas')
         ]);
-        window.allModules = modulesData.modules || modulesData || [];
+        window.allModules = modulesData || [];
         allAreas = areasData || [];
         document.getElementById('moduleCount').textContent = window.allModules.length;
         renderModules();
@@ -172,9 +192,9 @@ function renderModules() {
     tbody.innerHTML = window.allModules.map(m => {
         const cats = m.categoryDetails || [];
         const catsText = cats.length > 0? cats.slice(0,2).map(c => escapeHtml(c.name)).join(', ') + (cats.length > 2? '...' : '') : '-';
-        const activeAreas = m.activeAreas || [];
+        const activeAreas = m.areas?.filter(a => a.status).map(a => a.name) || [];
         const areaCount = activeAreas.length;
-        const moduleId = m._id || m.id;
+        const moduleId = m._id; // MongoDB ka _id use karo
 
         let areaBadge = areaCount === 0 
             ? '<span class="badge badge-danger">Not Live</span>'
@@ -200,12 +220,7 @@ function renderModules() {
                 <div class="area-expand">
                     <h4 style="margin-bottom:10px;">📍 Live in Areas:</h4>
                     ${areaCount > 0 
-                        ? activeAreas.map(code => {
-                            const area = allAreas.find(a => a.areaCode === code);
-                            return area 
-                                ? `<span class="badge badge-success" style="margin:4px;display:inline-block;">${escapeHtml(area.areaName)} (${area.radius}km)</span>`
-                                : `<span class="badge badge-warning" style="margin:4px;display:inline-block;">${code} - Deleted</span>`;
-                          }).join(' ')
+                        ? activeAreas.map(areaName => `<span class="badge badge-success" style="margin:4px;display:inline-block;">${escapeHtml(areaName)}</span>`).join(' ')
                         : '<span style="color:#94a3b8;">Not live in any area</span>'
                     }
                     <h4 style="margin:15px 0 10px;">📂 Categories:</h4>
@@ -240,13 +255,13 @@ window.openAddModule = () => {
 };
 
 window.editModule = (id) => {
-    const m = window.allModules.find(x => (x._id || x.id) === id);
+    const m = window.allModules.find(x => x._id === id);
     if (!m) return showToast('Module not found', 'error');
 
     document.getElementById('moduleEditId').value = id;
     document.getElementById('moduleModalTitle').textContent = 'Edit Module';
     currentModuleCategories = [...(m.categoryDetails || [])];
-    currentModuleActiveAreas = [...(m.activeAreas || [])];
+    currentModuleActiveAreas = m.areas?.filter(a => a.status).map(a => a.name) || [];
     renderModuleForm(m);
     renderCategoryList();
     renderAreaCheckboxes();
@@ -292,7 +307,7 @@ function renderModuleForm(m = {}) {
 
 function renderAreaCheckboxes() {
     const container = document.getElementById('areaCheckboxList');
-    const activeAreas = allAreas.filter(a => a.status);
+    const activeAreas = allAreas.filter(a => a.status !== false);
     
     if (activeAreas.length === 0) {
         container.innerHTML = '<p style="color:#94a3b8;padding:20px;text-align:center;">No active areas found. Create areas in Area Master first.</p>';
@@ -302,24 +317,24 @@ function renderAreaCheckboxes() {
     container.innerHTML = activeAreas.map(area => `
         <div class="area-checkbox-item">
             <input type="checkbox" 
-                   id="area_${area.areaCode}" 
-                   value="${area.areaCode}" 
-                   ${currentModuleActiveAreas.includes(area.areaCode) ? 'checked' : ''}
-                   onchange="toggleAreaSelection('${area.areaCode}')">
-            <label for="area_${area.areaCode}">
+                   id="area_${area._id}" 
+                   value="${area.areaName}" 
+                   ${currentModuleActiveAreas.includes(area.areaName) ? 'checked' : ''}
+                   onchange="toggleAreaSelection('${area.areaName}')">
+            <label for="area_${area._id}">
                 <b>${escapeHtml(area.areaName)}</b>
-                <span class="area-meta">${area.radius}km • ${escapeHtml(area.city)}, ${escapeHtml(area.state)}</span>
+                <span class="area-meta">${area.radius || 0}km • ${escapeHtml(area.city || '')}, ${escapeHtml(area.state || '')}</span>
             </label>
         </div>
     `).join('');
 }
 
-window.toggleAreaSelection = (areaCode) => {
-    const idx = currentModuleActiveAreas.indexOf(areaCode);
+window.toggleAreaSelection = (areaName) => {
+    const idx = currentModuleActiveAreas.indexOf(areaName);
     if (idx > -1) {
         currentModuleActiveAreas.splice(idx, 1);
     } else {
-        currentModuleActiveAreas.push(areaCode);
+        currentModuleActiveAreas.push(areaName);
     }
 };
 
@@ -373,6 +388,7 @@ window.saveModule = async () => {
 
     const id = document.getElementById('moduleEditId').value;
     const data = {
+        id: id || 'mod_' + Date.now(), // Naye module ke liye id generate karo
         name: document.getElementById('field_name').value.trim(),
         icon: document.getElementById('field_icon').value.trim(),
         color: document.getElementById('field_color').value,
@@ -381,7 +397,11 @@ window.saveModule = async () => {
         priority: parseInt(document.getElementById('field_priority').value || 0),
         status: document.getElementById('field_status').value,
         categoryDetails: currentModuleCategories,
-        activeAreas: currentModuleActiveAreas
+        areas: currentModuleActiveAreas.map(name => ({
+            name: name,
+            type: 'circle',
+            status: true
+        }))
     };
 
     if (!data.name ||!data.icon ||!data.link) {

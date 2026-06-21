@@ -1,22 +1,10 @@
 const Module = require('../../models/Module');
-const path = require('path');
-const fs = require('fs');
+const seedData = require('./seed-modules.json'); // Ab seed folder se lega
 
 async function seedModules() {
     try {
-        // FIXED: process.cwd() use kiya - Render + Local dono pe chalega
-        const jsonPath = path.join(process.cwd(), 'public/assets/js/modules.json');
-        
-        // File exist check - debugging ke liye
-        if (!fs.existsSync(jsonPath)) {
-            console.error('❌ modules.json not found at:', jsonPath);
-            console.error('Current working directory:', process.cwd());
-            return;
-        }
-        
-        const jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-        
-        const modulesToSeed = jsonData.modules.map(mod => ({
+        // Purana JSON file ka path hata diya, ab direct require kar rahe
+        const modulesToSeed = seedData.map(mod => ({
             id: mod.id,
             name: mod.name,
             icon: mod.icon,
@@ -38,7 +26,7 @@ async function seedModules() {
             );
         }
         
-        console.log(`✅ ${modulesToSeed.length} Modules seeded successfully from JSON`);
+        console.log(`✅ ${modulesToSeed.length} Modules seeded successfully from seed-modules.json`);
     } catch (err) {
         console.error('❌ Module seeding error:', err.message);
         console.error('Stack:', err.stack);
