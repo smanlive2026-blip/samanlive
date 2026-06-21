@@ -3,6 +3,8 @@ const seedData = require('../../database/modules.json'); // Tere modules.json ka
 
 async function seedModules() {
     try {
+        console.log('🔄 Starting module seeding...');
+        
         // modules.json me "modules" key ke andar array hai
         const modulesArray = seedData.modules || seedData;
         
@@ -11,7 +13,7 @@ async function seedModules() {
         }
 
         const modulesToSeed = modulesArray.map(mod => ({
-            _id: mod.id, // MongoDB ke liye _id set karo
+            // _id: mod.id, ❌ YE LINE HATA DI - BSONError ka reason
             id: mod.id,
             name: mod.name,
             icon: mod.icon,
@@ -25,13 +27,12 @@ async function seedModules() {
             categoryDetails: mod.categoryDetails || [] // Existing categories preserve hongi
         }));
 
-        for (const mod of modulesToSeed) {
-            await Module.findOneAndUpdate(
-                { _id: mod._id },
-                { $set: mod },
-                { upsert: true, new: true }
-            );
-        }
+        // Purane modules clear kar do
+        await Module.deleteMany({});
+        console.log('🗑️ Old modules cleared');
+
+        // Naye modules insert kar - _id MongoDB khud banayega
+        await Module.insertMany(modulesToSeed);
         
         console.log(`✅ ${modulesToSeed.length} Modules seeded successfully from modules.json`);
         return { success: true, count: modulesToSeed.length };
