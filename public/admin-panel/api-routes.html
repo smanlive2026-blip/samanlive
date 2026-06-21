@@ -191,12 +191,12 @@
     overflow-y: auto;
 }
 .tree-item {
-    padding: 6px 0;
+    padding: 6px 8px;
     color: #cbd5e1;
     user-select: none;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     border-radius: 4px;
     transition: all 0.15s;
 }
@@ -214,7 +214,7 @@
 .tree-file {
     color: #94a3b8;
     cursor: pointer;
-    margin-left: 22px;
+    margin-left: 24px;
 }
 .tree-file:hover {
     color: #e2e8f0;
@@ -224,11 +224,18 @@
     color: #fff;
 }
 .tree-icon {
-    width: 18px;
+    width: 20px;
     text-align: center;
+    flex-shrink: 0;
+}
+.tree-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .tree-children {
-    margin-left: 22px;
+    margin-left: 24px;
     border-left: 1px solid #334155;
     padding-left: 0;
 }
@@ -239,13 +246,14 @@
     background: #334155;
     border-radius: 3px;
     color: #94a3b8;
-    margin-left: auto;
-    margin-right: 8px;
+    margin-left: 8px;
+    flex-shrink: 0;
 }
 .file-ext.js { background: #f7df1e; color: #000; }
 .file-ext.json { background: #f59e0b; color: #000; }
 .file-ext.html { background: #e34c26; color: #fff; }
 .file-ext.css { background: #264de4; color: #fff; }
+.file-ext.md { background: #083fa1; color: #fff; }
 
 /* Modal Styles */
 #codeModal {
@@ -339,6 +347,7 @@
     let currentFile = '';
     let currentProjectTree = [];
     let originalTree = [];
+    let expandedFolders = new Set(); // Track krega kaunse folder khule hain
 
     window.loadApiData = async function() {
         try {
@@ -386,14 +395,15 @@
         const icons = {
             js: '📄', json: '📋', html: '🌐', css: '🎨', md: '📝',
             png: '🖼️', jpg: '🖼️', jpeg: '🖼️', svg: '🖼️',
-            mp4: '🎬', mp3: '🎵', pdf: '📕', zip: '📦'
+            mp4: '🎬', mp3: '🎵', pdf: '📕', zip: '📦',
+            env: '⚙️', gitignore: '🚫'
         };
         return icons[ext] || '📄';
     }
 
     function getFileExtBadge(filename) {
         const ext = filename.split('.').pop().toLowerCase();
-        if (['js','json','html','css'].includes(ext)) {
+        if (['js','json','html','css','md'].includes(ext)) {
             return `<span class="file-ext ${ext}">${ext}</span>`;
         }
         return '';
@@ -405,23 +415,26 @@
             return;
         }
 
-        function createTreeHTML(nodes) {
+        function createTreeHTML(nodes, parentPath = '') {
             return nodes.map(node => {
+                const fullPath = parentPath ? `${parentPath}/${node.name}` : node.name;
+                const isExpanded = expandedFolders.has(fullPath);
+                
                 if (node.type === 'folder') {
                     return `
-                        <div class="tree-item tree-folder" data-path="${node.path}">
-                            <span class="tree-icon">▶</span>
-                            <span>📁 ${node.name}</span>
+                        <div class="tree-item tree-folder" data-path="${fullPath}">
+                            <span class="tree-icon">${isExpanded ? '▼' : '▶'}</span>
+                            <span class="tree-name">📁 ${node.name}</span>
                         </div>
-                        <div class="tree-children hidden">
-                            ${createTreeHTML(node.children || [])}
+                        <div class="tree-children ${isExpanded ? '' : 'hidden'}">
+                            ${createTreeHTML(node.children || [], fullPath)}
                         </div>
                     `;
                 } else {
                     return `
-                        <div class="tree-item tree-file" data-path="${node.path}" data-name="${node.name}">
+                        <div class="tree-item tree-file" data-path="${fullPath}" data-name="${node.name}">
                             <span class="tree-icon">${getFileIcon(node.name)}</span>
-                            <span>${node.name}</span>
+                            <span class="tree-name">${node.name}</span>
                             ${getFileExtBadge(node.name)}
                         </div>
                     `;
@@ -438,14 +451,18 @@
         document.querySelectorAll('.tree-folder').forEach(folder => {
             folder.onclick = function(e) {
                 e.stopPropagation();
+                const path = this.dataset.path;
                 const children = this.nextElementSibling;
                 const icon = this.querySelector('.tree-icon');
+                
                 if (children.classList.contains('hidden')) {
                     children.classList.remove('hidden');
                     icon.textContent = '▼';
+                    expandedFolders.add(path); // Track karo ki open hai
                 } else {
                     children.classList.add('hidden');
                     icon.textContent = '▶';
+                    expandedFolders.delete(path); // Track se hatao
                 }
             };
         });
@@ -462,13 +479,23 @@
     }
 
     window.expandAll = function() {
-        document.querySelectorAll('.tree-children').forEach(el => el.classList.remove('hidden'));
-        document.querySelectorAll('.tree-folder .tree-icon').forEach(icon => icon.textContent = '▼');
+        // Sab folders ko track me add kar do
+        function addAllPaths(nodes, parentPath = '') {
+            nodes.forEach(node => {
+                const fullPath = parentPath ? `${parentPath}/${node.name}` : node.name;
+                if (node.type === 'folder') {
+                    expandedFolders.add(fullPath);
+                    if (node.children) addAllPaths(node.children, fullPath);
+                }
+            });
+        }
+        addAllPaths(currentProjectTree);
+        renderTree(currentProjectTree, document.getElementById('projectTree'));
     }
 
     window.collapseAll = function() {
-        document.querySelectorAll('.tree-children').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.tree-folder .tree-icon').forEach(icon => icon.textContent = '▶');
+        expandedFolders.clear(); // Sab clear kar do
+        renderTree(currentProjectTree, document.getElementById('projectTree'));
     }
 
     window.copyTreeStructure = function() {
@@ -481,7 +508,7 @@
                 if (!el.classList.contains('tree-item')) continue;
                 
                 const isFolder = el.classList.contains('tree-folder');
-                const nameEl = el.querySelector('span:last-child');
+                const nameEl = el.querySelector('.tree-name');
                 const name = nameEl ? nameEl.textContent.trim() : '';
                 
                 let nextEl = el.nextElementSibling;
@@ -604,8 +631,21 @@
         }
 
         const filtered = filterTree(originalTree);
+        
+        // Search me sab expand kar do
+        expandedFolders.clear();
+        function addAllPaths(nodes, parentPath = '') {
+            nodes.forEach(node => {
+                const fullPath = parentPath ? `${parentPath}/${node.name}` : node.name;
+                if (node.type === 'folder') {
+                    expandedFolders.add(fullPath);
+                    if (node.children) addAllPaths(node.children, fullPath);
+                }
+            });
+        }
+        addAllPaths(filtered);
+        
         renderTree(filtered, document.getElementById('projectTree'));
-        expandAll(); // Search me sab dikha de
     });
 
     loadApiData();
