@@ -1,17 +1,13 @@
 <div class="page-header">
-    <h2>🔍 API Routes & Models Explorer</h2>
+    <h2>📁 Project File Explorer</h2>
     <div class="page-stats">
         <div class="stat-card">
-            <div class="stat-value" id="totalRoutes">0</div>
-            <div class="stat-label">Total Routes</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="totalModels">0</div>
-            <div class="stat-label">Models</div>
-        </div>
-        <div class="stat-card">
             <div class="stat-value" id="totalFiles">0</div>
-            <div class="stat-label">Project Files</div>
+            <div class="stat-label">Total Files</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="totalFolders">0</div>
+            <div class="stat-label">Folders</div>
         </div>
         <div class="stat-card">
             <div class="stat-value" id="lastUpdate">--:--</div>
@@ -22,40 +18,14 @@
 
 <div class="content-card">
     <div class="card-header">
-        <input type="text" id="routeSearch" placeholder="🔍 Search by path, method, file..." class="search-input">
-        <button class="btn-refresh" onclick="loadApiData()">
-            <span>🔄</span> Refresh
-        </button>
-    </div>
-
-    <div class="table-wrapper">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th width="140">Method</th>
-                    <th>Endpoint Path</th>
-                    <th width="180">File</th>
-                    <th width="100">Type</th>
-                </tr>
-            </thead>
-            <tbody id="routesTableBody">
-                <tr><td colspan="4" class="loading">Loading routes...</td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="content-card">
-    <div class="card-header">
-        <h3>🗄️ Database Models</h3>
-    </div>
-    <div class="models-grid" id="modelsGrid"></div>
-</div>
-
-<div class="content-card">
-    <div class="card-header">
-        <h3>📁 Project Structure</h3>
+        <input type="text" id="fileSearch" placeholder="🔍 Search files & folders..." class="search-input">
         <div style="display: flex; gap: 10px;">
+            <button class="btn-action" onclick="expandAll()">
+                <span>📂</span> Expand All
+            </button>
+            <button class="btn-action" onclick="collapseAll()">
+                <span>📁</span> Collapse All
+            </button>
             <button class="btn-copy" onclick="copyTreeStructure()">
                 <span>📋</span> Copy
             </button>
@@ -63,6 +33,7 @@
                 <span>🔄</span> Refresh
             </button>
         </div>
+    </div>
     <div class="tree-wrapper" id="projectTree">
         <div class="loading">Loading structure...</div>
     </div>
@@ -73,7 +44,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <div>
-        <h3 id="modalTitle">Edit Route</h3>
+        <h3 id="modalTitle">Edit File</h3>
         <p id="modalSubTitle" style="margin:5px 0 0 0; color:#94a3b8; font-size:13px;"></p>
       </div>
       <button onclick="closeModal()" class="btn-close">✕ Close</button>
@@ -138,14 +109,11 @@
     justify-content: space-between;
     align-items: center;
     gap: 15px;
-}
-.card-header h3 {
-    color: #e2e8f0;
-    font-size: 18px;
-    margin: 0;
+    flex-wrap: wrap;
 }
 .search-input {
     flex: 1;
+    min-width: 250px;
     padding: 12px 18px;
     background: #1e293b;
     border: 2px solid #334155;
@@ -156,6 +124,24 @@
 .search-input:focus {
     outline: none;
     border-color: #3b82f6;
+}
+.btn-action {
+    padding: 12px 20px;
+    background: #334155;
+    color: #e2e8f0;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    font-size: 13px;
+}
+.btn-action:hover {
+    background: #475569;
+    transform: translateY(-1px);
 }
 .btn-refresh {
     padding: 12px 24px;
@@ -191,95 +177,6 @@
     background: #059669;
     transform: translateY(-1px);
 }
-.table-wrapper {
-    overflow-x: auto;
-}
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-.data-table thead {
-    background: #0f172a;
-}
-.data-table th {
-    padding: 15px 25px;
-    text-align: left;
-    color: #94a3b8;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.data-table td {
-    padding: 16px 25px;
-    border-bottom: 1px solid #334155;
-    color: #cbd5e1;
-}
-.data-table tbody tr {
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.data-table tbody tr:hover {
-    background: #0f172a;
-}
-.method-badge {
-    display: inline-block;
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-right: 5px;
-}
-.method-badge.GET { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-.method-badge.POST { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
-.method-badge.PUT { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-.method-badge.DELETE { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-.path-text {
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
-    color: #e2e8f0;
-}
-.file-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    background: #334155;
-    border-radius: 4px;
-    font-size: 11px;
-    color: #60a5fa;
-    font-family: monospace;
-}
-.type-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    background: #334155;
-    border-radius: 4px;
-    font-size: 11px;
-    color: #94a3b8;
-}
-.models-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    padding: 25px;
-}
-.model-item {
-    background: #0f172a;
-    padding: 16px;
-    border-radius: 8px;
-    border: 1px solid #334155;
-    transition: all 0.2s;
-}
-.model-item:hover {
-    border-color: #3b82f6;
-    transform: translateY(-2px);
-}
-.model-name {
-    font-weight: 600;
-    color: #60a5fa;
-    font-size: 15px;
-}
 .loading {
     text-align: center;
     padding: 60px 20px;
@@ -289,33 +186,66 @@
     padding: 25px;
     background: #0f172a;
     font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 13px;
-    max-height: 500px;
+    font-size: 14px;
+    max-height: 70vh;
     overflow-y: auto;
 }
 .tree-item {
-    padding: 4px 0;
+    padding: 6px 0;
     color: #cbd5e1;
     user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+.tree-item:hover {
+    background: rgba(51, 65, 85, 0.5);
 }
 .tree-folder {
     color: #60a5fa;
     cursor: pointer;
     font-weight: 600;
 }
-.tree-folder:hover { color: #93c5fd; }
+.tree-folder:hover { 
+    color: #93c5fd; 
+}
 .tree-file {
     color: #94a3b8;
-    margin-left: 20px;
+    cursor: pointer;
+    margin-left: 22px;
 }
-.tree-folder::before { content: '📁 '; }
-.tree-file::before { content: '📄 '; }
+.tree-file:hover {
+    color: #e2e8f0;
+}
+.tree-file.active {
+    background: #3b82f6;
+    color: #fff;
+}
+.tree-icon {
+    width: 18px;
+    text-align: center;
+}
 .tree-children {
-    margin-left: 20px;
-    border-left: 1px dashed #334155;
-    padding-left: 15px;
+    margin-left: 22px;
+    border-left: 1px solid #334155;
+    padding-left: 0;
 }
 .hidden { display: none; }
+.file-ext {
+    font-size: 10px;
+    padding: 2px 6px;
+    background: #334155;
+    border-radius: 3px;
+    color: #94a3b8;
+    margin-left: auto;
+    margin-right: 8px;
+}
+.file-ext.js { background: #f7df1e; color: #000; }
+.file-ext.json { background: #f59e0b; color: #000; }
+.file-ext.html { background: #e34c26; color: #fff; }
+.file-ext.css { background: #264de4; color: #fff; }
 
 /* Modal Styles */
 #codeModal {
@@ -397,14 +327,18 @@
 .btn-save:hover {
     background: #059669;
 }
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+}
 </style>
 
 <script>
 (function() {
-    let allRoutes = [];
     let currentFile = '';
-    let currentRoute = {};
     let currentProjectTree = [];
+    let originalTree = [];
 
     window.loadApiData = async function() {
         try {
@@ -415,58 +349,59 @@
                 throw new Error(data.error || 'Failed to load');
             }
 
-            allRoutes = data.routes;
             currentProjectTree = data.projectTree || [];
+            originalTree = JSON.parse(JSON.stringify(currentProjectTree));
 
-            document.getElementById('totalRoutes').textContent = data.total;
-            document.getElementById('totalModels').textContent = data.models.length;
-            document.getElementById('totalFiles').textContent = countFiles(currentProjectTree);
+            const counts = countFilesAndFolders(currentProjectTree);
+            document.getElementById('totalFiles').textContent = counts.files;
+            document.getElementById('totalFolders').textContent = counts.folders;
             document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
-            renderRoutes(allRoutes);
             renderTree(currentProjectTree, document.getElementById('projectTree'));
-
-            document.getElementById('modelsGrid').innerHTML = data.models
-            .map(m => `<div class="model-item"><div class="model-name">${m}</div></div>`)
-            .join('');
 
         } catch (err) {
             console.error('Error:', err);
-            document.getElementById('routesTableBody').innerHTML =
-                `<tr><td colspan="4" style="color: #f87171; text-align: center; padding: 40px;">Failed to load routes: ${err.message}</td></tr>`;
+            document.getElementById('projectTree').innerHTML =
+                `<div class="no-results">Failed to load structure: ${err.message}</div>`;
         }
     }
 
-    function countFiles(nodes) {
-        let count = 0;
-        nodes.forEach(node => {
-            if (node.type === 'file') count++;
-            if (node.children) count += countFiles(node.children);
-        });
-        return count;
+    function countFilesAndFolders(nodes) {
+        let files = 0, folders = 0;
+        function traverse(arr) {
+            arr.forEach(node => {
+                if (node.type === 'file') files++;
+                if (node.type === 'folder') {
+                    folders++;
+                    if (node.children) traverse(node.children);
+                }
+            });
+        }
+        traverse(nodes);
+        return { files, folders };
     }
 
-    function renderRoutes(routes) {
-        const tbody = document.getElementById('routesTableBody');
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const icons = {
+            js: '📄', json: '📋', html: '🌐', css: '🎨', md: '📝',
+            png: '🖼️', jpg: '🖼️', jpeg: '🖼️', svg: '🖼️',
+            mp4: '🎬', mp3: '🎵', pdf: '📕', zip: '📦'
+        };
+        return icons[ext] || '📄';
+    }
 
-        if (routes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="loading">No routes found</td></tr>';
-            return;
+    function getFileExtBadge(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        if (['js','json','html','css'].includes(ext)) {
+            return `<span class="file-ext ${ext}">${ext}</span>`;
         }
-
-        tbody.innerHTML = routes.map(r => `
-            <tr onclick='viewCode(${JSON.stringify(r).replace(/'/g, "&#39;")})'>
-                <td>${r.methods.map(m => `<span class="method-badge ${m}">${m}</span>`).join(' ')}</td>
-                <td><span class="path-text">${r.path}</span></td>
-                <td><span class="file-badge">${r.file || 'server.js'}</span></td>
-                <td><span class="type-badge">${r.path.includes('/admin')? 'Admin' : r.path.includes('/manager')? 'Manager' : 'Public'}</span></td>
-            </tr>
-        `).join('');
+        return '';
     }
 
     function renderTree(tree, container) {
         if (!tree || tree.length === 0) {
-            container.innerHTML = '<div class="loading">No files found</div>';
+            container.innerHTML = '<div class="no-results">No files found</div>';
             return;
         }
 
@@ -474,77 +409,143 @@
             return nodes.map(node => {
                 if (node.type === 'folder') {
                     return `
-                        <div class="tree-item tree-folder" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                            ${node.name}
+                        <div class="tree-item tree-folder" data-path="${node.path}">
+                            <span class="tree-icon">▶</span>
+                            <span>📁 ${node.name}</span>
                         </div>
-                        <div class="tree-children">
+                        <div class="tree-children hidden">
                             ${createTreeHTML(node.children || [])}
                         </div>
                     `;
                 } else {
-                    return `<div class="tree-item tree-file">${node.name}</div>`;
+                    return `
+                        <div class="tree-item tree-file" data-path="${node.path}" data-name="${node.name}">
+                            <span class="tree-icon">${getFileIcon(node.name)}</span>
+                            <span>${node.name}</span>
+                            ${getFileExtBadge(node.name)}
+                        </div>
+                    `;
                 }
             }).join('');
         }
 
         container.innerHTML = createTreeHTML(tree);
+        attachTreeEvents();
+    }
+
+    function attachTreeEvents() {
+        // Folder toggle
+        document.querySelectorAll('.tree-folder').forEach(folder => {
+            folder.onclick = function(e) {
+                e.stopPropagation();
+                const children = this.nextElementSibling;
+                const icon = this.querySelector('.tree-icon');
+                if (children.classList.contains('hidden')) {
+                    children.classList.remove('hidden');
+                    icon.textContent = '▼';
+                } else {
+                    children.classList.add('hidden');
+                    icon.textContent = '▶';
+                }
+            };
+        });
+
+        // File click
+        document.querySelectorAll('.tree-file').forEach(file => {
+            file.onclick = function(e) {
+                e.stopPropagation();
+                document.querySelectorAll('.tree-file').forEach(f => f.classList.remove('active'));
+                this.classList.add('active');
+                openFile(this.dataset.path, this.dataset.name);
+            };
+        });
+    }
+
+    window.expandAll = function() {
+        document.querySelectorAll('.tree-children').forEach(el => el.classList.remove('hidden'));
+        document.querySelectorAll('.tree-folder .tree-icon').forEach(icon => icon.textContent = '▼');
+    }
+
+    window.collapseAll = function() {
+        document.querySelectorAll('.tree-children').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tree-folder .tree-icon').forEach(icon => icon.textContent = '▶');
     }
 
     window.copyTreeStructure = function() {
-        function generateTextTree(nodes, prefix = '') {
+        function generateVisibleTree(container, prefix = '') {
             let result = '';
-            nodes.forEach((node, index) => {
-                const isLast = index === nodes.length - 1;
-                const connector = isLast? '└── ' : '├── ';
-                const nextPrefix = prefix + (isLast? ' ' : '│ ');
-                result += prefix + connector + node.name + '\n';
-                if (node.type === 'folder' && node.children) {
-                    result += generateTextTree(node.children, nextPrefix);
+            const children = Array.from(container.children);
+            
+            for (let i = 0; i < children.length; i++) {
+                const el = children[i];
+                if (!el.classList.contains('tree-item')) continue;
+                
+                const isFolder = el.classList.contains('tree-folder');
+                const nameEl = el.querySelector('span:last-child');
+                const name = nameEl ? nameEl.textContent.trim() : '';
+                
+                let nextEl = el.nextElementSibling;
+                let isHidden = true;
+                if (nextEl && nextEl.classList.contains('tree-children')) {
+                    isHidden = nextEl.classList.contains('hidden');
+                    i++;
                 }
-            });
+                
+                let isLast = true;
+                for (let j = i + 1; j < children.length; j++) {
+                    if (children[j].classList.contains('tree-item')) {
+                        isLast = false;
+                        break;
+                    }
+                }
+                
+                const connector = isLast? '└── ' : '├── ';
+                result += prefix + connector + name + '\n';
+                
+                if (isFolder &&!isHidden && nextEl) {
+                    const newPrefix = prefix + (isLast? '    ' : '│   ');
+                    result += generateVisibleTree(nextEl, newPrefix);
+                }
+            }
             return result;
         }
 
-        const treeText = 'PROJECT_ROOT/\n' + generateTextTree(currentProjectTree);
+        const treeContainer = document.getElementById('projectTree');
+        const treeText = 'PROJECT_ROOT/\n' + generateVisibleTree(treeContainer);
+        
         navigator.clipboard.writeText(treeText).then(() => {
-            alert('✅ Structure copied to clipboard!');
+            alert('✅ Visible structure copied!');
         }).catch(() => {
             alert('❌ Copy failed. Check console.');
             console.log(treeText);
         });
     }
 
-    window.viewCode = async function(route) {
-        currentRoute = route;
-        currentFile = route.file || 'server.js';
-
+    window.openFile = async function(filePath, fileName) {
         try {
             const res = await fetch('/api/admin/get-route-code', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    file: currentFile,
-                    path: route.path,
-                    method: route.methods[0]
-                })
+                body: JSON.stringify({ file: filePath })
             });
             const data = await res.json();
 
             if(data.success) {
-                document.getElementById('modalTitle').textContent = `${route.methods[0]} ${route.path}`;
-                document.getElementById('modalSubTitle').textContent = `File: ${currentFile}`;
+                currentFile = filePath;
+                document.getElementById('modalTitle').textContent = fileName;
+                document.getElementById('modalSubTitle').textContent = `Path: ${filePath}`;
                 document.getElementById('codeEditor').value = data.code;
                 document.getElementById('codeModal').style.display = 'block';
             } else {
                 alert('Error: ' + data.error);
             }
         } catch(err) {
-            alert('Failed to load code: ' + err.message);
+            alert('Failed to load file: ' + err.message);
         }
     }
 
     window.saveCode = async function() {
-        if(!confirm('Save changes to ' + currentFile + '? This will update the file directly.')) return;
+        if(!confirm('Save changes to ' + currentFile + '?')) return;
 
         const code = document.getElementById('codeEditor').value;
         try {
@@ -575,14 +576,36 @@
         if(e.key === 'Escape') closeModal();
     });
 
-    document.getElementById('routeSearch').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const filtered = allRoutes.filter(r =>
-            r.path.toLowerCase().includes(query) ||
-            r.methods.some(m => m.toLowerCase().includes(query)) ||
-            (r.file && r.file.toLowerCase().includes(query))
-        );
-        renderRoutes(filtered);
+    // File search
+    document.getElementById('fileSearch').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (!query) {
+            renderTree(originalTree, document.getElementById('projectTree'));
+            return;
+        }
+
+        function filterTree(nodes) {
+            return nodes.reduce((acc, node) => {
+                if (node.type === 'file') {
+                    if (node.name.toLowerCase().includes(query)) {
+                        acc.push(node);
+                    }
+                } else if (node.type === 'folder') {
+                    const filteredChildren = filterTree(node.children || []);
+                    if (node.name.toLowerCase().includes(query) || filteredChildren.length > 0) {
+                        acc.push({
+                            ...node,
+                            children: filteredChildren
+                        });
+                    }
+                }
+                return acc;
+            }, []);
+        }
+
+        const filtered = filterTree(originalTree);
+        renderTree(filtered, document.getElementById('projectTree'));
+        expandAll(); // Search me sab dikha de
     });
 
     loadApiData();
