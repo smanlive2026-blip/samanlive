@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shop Management - SuperLive</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/admin.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        .location-badge {
+      .location-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -16,20 +16,60 @@
             font-size: 12px;
             font-weight: 600;
         }
-        .location-badge.fixed {
+      .location-badge.fixed {
             background: #dbeafe;
             color: #1e40af;
         }
-        .location-badge.dynamic {
+      .location-badge.dynamic {
             background: #fef3c7;
             color: #92400e;
         }
-        .map-container {
+      .map-container {
             height: 400px;
             border-radius: 8px;
             border: 2px solid #e2e8f0;
             margin-top: 12px;
         }
+      .items-list {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+      .item-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+      .item-row:last-child {
+            border-bottom: none;
+        }
+      .shop-type-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+      .shop-type-badge.product { background: #dbeafe; color: #1e40af; }
+      .shop-type-badge.food { background: #fed7aa; color: #c2410c; }
+      .shop-type-badge.service { background: #e9d5ff; color: #7c3aed; }
+      .shop-type-badge.rental { background: #d1fae5; color: #059669; }
+      .shop-type-badge.fashion { background: #fce7f3; color: #be185d; }
+      .actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+      .btn-success { background: #10b981; color: white; }
+      .btn-success:hover { background: #059669; }
+      .btn-info { background: #0ea5e9; color: white; }
+      .btn-info:hover { background: #0284c7; }
     </style>
 </head>
 <body>
@@ -44,19 +84,18 @@
                     <tr>
                         <th>Logo</th>
                         <th>Name</th>
+                        <th>Type</th>
                         <th>Location Type</th>
                         <th>Module</th>
                         <th>Manager</th>
                         <th>Area Code</th>
-                        <th>Address</th>
-                        <th>Range</th>
-                        <th>Priority</th>
+                        <th>Items</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td colspan="11" class="loading">Loading shops</td></tr>
+                    <tr><td colspan="10" class="loading">Loading shops</td></tr>
                 </tbody>
             </table>
         </div>
@@ -70,9 +109,9 @@
                     <tr>
                         <th>User</th>
                         <th>Shop Name</th>
+                        <th>Type</th>
                         <th>Module</th>
                         <th>Phone</th>
-                        <th>Address</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -107,6 +146,16 @@
                 <input type="text" id="shopPhone" pattern="[0-9]{10}" placeholder="9876543210">
             </div>
             <div class="form-group">
+                <label>Shop Type *</label>
+                <select id="shopType" onchange="updateItemsUI()">
+                    <option value="product">📦 Product - Kirana/Grocery</option>
+                    <option value="food">🍕 Food - Restaurant/Dhaba</option>
+                    <option value="service">🔧 Service - Salon/Plumber</option>
+                    <option value="rental">🏍️ Rental - Bike/Car</option>
+                    <option value="fashion">👕 Fashion - Kapde/Jewelry</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label>Location Type *</label>
                 <select id="locationType">
                     <option value="fixed">📍 Fixed - Permanent Shop</option>
@@ -121,50 +170,52 @@
                 <label>Priority</label>
                 <input type="number" id="shopPriority" value="0" min="0">
             </div>
-            <div class="form-group">
-                <label>Status</label>
-                <select id="shopStatus">
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-            </div>
             <div class="form-group full">
                 <label>Address</label>
                 <input type="text" id="shopAddress" placeholder="Full address">
             </div>
+            <div class="form-group full">
+                <label>Shop Items / Services <span id="itemsLabel"></span></label>
+                <div class="items-list" id="itemsList">
+                    <div style="text-align:center;color:#94a3b8;padding:20px;">No items added yet</div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addItemRow()" style="margin-top:8px;">➕ Add Item</button>
+            </div>
         </div>
         <div class="map-controls">
-            <button class="btn btn-primary" id="saveLocationBtn" onclick="saveShopLocation()">💾 Save Location</button>
+            <button class="btn btn-primary" id="saveLocationBtn" onclick="saveShopLocation()">💾 Save Shop</button>
             <button class="btn btn-secondary" onclick="clearShopMarker()">🗑️ Clear</button>
         </div>
         <div id="shopMap" class="map-container"></div>
         <small style="color:#64748b;display:block;margin-top:10px;">
-            <b>Fixed:</b> Ek baar set karo, hamesha same rahegi | 
+            <b>Fixed:</b> Ek baar set karo, hamesha same rahegi |
             <b>Dynamic:</b> Manager app se daily update karega
         </small>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="assets/admin.js"></script>
     <script>
         // ========================================
-        // SHOP MANAGEMENT - WITH LOCATION TYPE
+        // SHOP MANAGEMENT - WITH SHOP TYPE & ITEMS
         // ========================================
         let shopMap, shopMarker, shopCircle, currentShopLocation = null;
+        let currentItems = [];
 
         async function loadShops() {
             try {
                 const [shopsData, modulesData, managersData, areasData] = await Promise.all([
-                    apiCall('/shops'), 
-                    apiCall('/modules'), 
+                    apiCall('/shops'),
+                    apiCall('/modules'),
                     apiCall('/managers'),
                     apiCall('/areas').catch(() => [])
                 ]);
-                
+
                 window.allShops = shopsData || [];
                 window.allModules = modulesData.modules || modulesData;
                 window.allManagers = managersData || [];
                 window.allAreas = areasData || [];
-                
+
                 renderShops();
                 renderPendingShops();
                 populateShopDropdowns();
@@ -176,39 +227,40 @@
         }
 
         function renderShops() {
-            const shops = window.allShops.filter(s => s.status !== 'pending');
+            const shops = window.allShops.filter(s => s.status!== 'pending');
             document.getElementById('activeShopsCount').textContent = shops.length;
             const tbody = document.querySelector('#shopsTable tbody');
-            
+
             if (shops.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:#94a3b8;">No active shops found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:#94a3b8;">No active shops found</td></tr>';
                 return;
             }
-            
+
             tbody.innerHTML = shops.map(s => {
                 const module = window.allModules.find(m => (m._id || m.id) === s.moduleId);
                 const manager = window.allManagers.find(m => m._id === s.managerId);
                 const locationType = s.locationType || 'fixed';
-                const lastUpdate = s.lastLocationUpdate ? timeAgo(new Date(s.lastLocationUpdate)) : '';
-                
+                const shopType = s.shopType || 'product';
+                const itemsCount = s.items? s.items.length : 0;
+
                 return `<tr>
                     <td><img src="${s.logo || 'assets/logo.png'}" class="shop-logo" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.src='https://via.placeholder.com/40x40?text=🏪'; this.onerror=null;"></td>
-                    <td><b>${escapeHtml(s.name)}</b></td>
+                    <td><b>${escapeHtml(s.shopName || s.name)}</b></td>
+                    <td><span class="shop-type-badge ${shopType}">${shopType}</span></td>
                     <td>
                         <span class="location-badge ${locationType}">
-                            ${locationType === 'fixed' ? '📍 Fixed' : '🚚 Dynamic'}
+                            ${locationType === 'fixed'? '📍 Fixed' : '🚚 Dynamic'}
                         </span>
-                        ${locationType === 'dynamic' && lastUpdate ? `<br><small style="color:#64748b;font-size:11px;">${lastUpdate}</small>` : ''}
                     </td>
                     <td>${module? module.icon + ' ' + escapeHtml(module.name) : '-'}</td>
                     <td>${manager? escapeHtml(manager.name) : '<span class="help-text">Unassigned</span>'}</td>
                     <td><span class="badge badge-info">${escapeHtml(s.areaCode || '-')}</span></td>
-                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;font-size:13px;">${escapeHtml(s.address || '-')}</td>
-                    <td>${s.range || 0}m</td>
-                    <td>${s.priority || 0}</td>
+                    <td>${itemsCount} items</td>
                     <td><span class="status-badge status-${s.status}">${s.status}</span></td>
                     <td class="actions">
-                        <button class="btn btn-primary btn-sm" onclick="editShop('${s._id}')">Edit</button>
+                        <button class="btn btn-success btn-sm" onclick="openDashboard('${s._id}')" title="Owner Dashboard">📊 Dashboard</button>
+                        <button class="btn btn-info btn-sm" onclick="openPublicShop('${s._id}')" title="Public Shop Page">👁️ View</button>
+                        <button class="btn btn-primary btn-sm" onclick="copyLink('${s._id}')" title="Copy Dashboard Link">🔗 Copy</button>
                         <button class="btn btn-danger btn-sm" onclick="deleteShop('${s._id}')">Delete</button>
                     </td>
                 </tr>`;
@@ -219,20 +271,21 @@
             const pending = window.allShops.filter(s => s.status === 'pending');
             document.getElementById('pendingShopsCountTab').textContent = pending.length;
             const tbody = document.querySelector('#pendingShopsTable tbody');
-            
+
             if (pending.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">No pending shops</td></tr>';
                 return;
             }
-            
+
             tbody.innerHTML = pending.map(s => {
                 const module = window.allModules.find(m => (m._id || m.id) === s.moduleId);
+                const shopType = s.shopType || 'product';
                 return `<tr>
                     <td>${escapeHtml(s.createdBy?.name || 'User')}</td>
-                    <td><b>${escapeHtml(s.name)}</b></td>
+                    <td><b>${escapeHtml(s.shopName || s.name)}</b></td>
+                    <td><span class="shop-type-badge ${shopType}">${shopType}</span></td>
                     <td>${module? module.icon + ' ' + escapeHtml(module.name) : '-'}</td>
                     <td>${escapeHtml(s.phone || '-')}</td>
-                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;font-size:13px;">${escapeHtml(s.address || '-')}</td>
                     <td class="actions">
                         <button class="btn btn-success btn-sm" onclick="approveShop('${s._id}')">✅ Approve</button>
                         <button class="btn btn-danger btn-sm" onclick="rejectShop('${s._id}')">❌ Reject</button>
@@ -242,12 +295,60 @@
         }
 
         function populateShopDropdowns() {
-            const activeShops = window.allShops.filter(s => s.status !== 'pending');
+            const activeShops = window.allShops.filter(s => s.status!== 'pending');
             document.getElementById('shopSelectLocation').innerHTML = '<option value="">-- Select Shop --</option>' +
-                activeShops.map(s => `<option value="${s._id}">${escapeHtml(s.name)} (${s.areaCode || 'No Area'})</option>`).join('');
-            
+                activeShops.map(s => `<option value="${s._id}">${escapeHtml(s.shopName || s.name)} (${s.areaCode || 'No Area'})</option>`).join('');
+
             document.getElementById('shopModuleLink').innerHTML = '<option value="">-- Select Module --</option>' +
                 window.allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
+        }
+
+        function updateItemsUI() {
+            const shopType = document.getElementById('shopType').value;
+            const labels = {
+                product: '(Products: Name, Price, Unit)',
+                food: '(Menu: Name, Price, Veg/Non-veg)',
+                service: '(Services: Name, Price, Duration)',
+                rental: '(Items: Name, Price/Hour, Available)',
+                fashion: '(Items: Name, Price, Size, Color)'
+            };
+            document.getElementById('itemsLabel').textContent = labels[shopType] || '';
+            renderItemsList();
+        }
+
+        function renderItemsList() {
+            const list = document.getElementById('itemsList');
+            if (currentItems.length === 0) {
+                list.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">No items added yet</div>';
+                return;
+            }
+
+            const shopType = document.getElementById('shopType').value;
+            list.innerHTML = currentItems.map((item, idx) => `
+                <div class="item-row">
+                    <input type="text" placeholder="Name" value="${escapeHtml(item.name)}" onchange="updateItem(${idx}, 'name', this.value)">
+                    <input type="number" placeholder="Price" value="${item.price}" onchange="updateItem(${idx}, 'price', this.value)">
+                    <input type="text" placeholder="${shopType === 'fashion'? 'Size' : shopType === 'service'? 'Duration' : 'Unit'}"
+                           value="${escapeHtml(item.unit || item.size || item.duration || '')}"
+                           onchange="updateItem(${idx}, '${shopType === 'fashion'? 'size' : shopType === 'service'? 'duration' : 'unit'}', this.value)">
+                    <button class="btn btn-danger btn-sm" onclick="removeItem(${idx})">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function addItemRow() {
+            currentItems.push({ name: '', price: 0, unit: '', available: true });
+            renderItemsList();
+        }
+
+        function updateItem(idx, field, value) {
+            if (field === 'price') value = parseFloat(value) || 0;
+            currentItems[idx][field] = value;
+        }
+
+        function removeItem(idx) {
+            currentItems.splice(idx, 1);
+            renderItemsList();
         }
 
         window.approveShop = async (id) => {
@@ -290,29 +391,56 @@
             showToast('Shop loaded in location manager below');
         };
 
+        // ========== NEW DASHBOARD LINK FUNCTIONS ==========
+        window.openDashboard = (shopId) => {
+            const url = `${window.location.origin}/shop-dashboard.html?shopId=${shopId}`;
+            window.open(url, '_blank');
+        };
+
+        window.openPublicShop = (shopId) => {
+            const url = `${window.location.origin}/shop.html?id=${shopId}`;
+            window.open(url, '_blank');
+        };
+
+        window.copyLink = (shopId) => {
+            const url = `${window.location.origin}/shop-dashboard.html?shopId=${shopId}`;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Dashboard link copied! Share with shop owner', 'success');
+            }).catch(() => {
+                const input = document.createElement('input');
+                input.value = url;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showToast('Dashboard link copied!', 'success');
+            });
+        };
+        // ========== NEW DASHBOARD LINK FUNCTIONS END ==========
+
         function initShopMap() {
             if (shopMap) return;
-            
+
             shopMap = L.map('shopMap').setView([28.6139, 77.2090], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap'
             }).addTo(shopMap);
-            
+
             shopMap.on('click', (e) => {
                 if (shopMarker) shopMap.removeLayer(shopMarker);
                 if (shopCircle) shopMap.removeLayer(shopCircle);
-                
+
                 currentShopLocation = e.latlng;
                 shopMarker = L.marker(e.latlng).addTo(shopMap);
-                
+
                 const range = parseInt(document.getElementById('shopRange').value || 5000);
                 shopCircle = L.circle(e.latlng, {
-                    radius: range, 
-                    color: '#3b82f6', 
+                    radius: range,
+                    color: '#3b82f6',
                     fillOpacity: 0.1,
                     weight: 2
                 }).addTo(shopMap);
-                
+
                 showToast('Location set! Click Save to confirm', 'success');
             });
         }
@@ -321,34 +449,41 @@
             const shopId = document.getElementById('shopSelectLocation').value;
             if (!shopId) {
                 clearShopMarker();
+                currentItems = [];
+                renderItemsList();
                 return;
             }
-            
+
             const shop = window.allShops.find(s => s._id === shopId);
             if (!shop) return;
-            
-            document.getElementById('shopName').value = shop.name || '';
+
+            document.getElementById('shopName').value = shop.shopName || shop.name || '';
             document.getElementById('shopPhone').value = shop.phone || '';
             document.getElementById('shopRange').value = shop.range || 5000;
-            document.getElementById('shopAddress').value = shop.address || '';
+            document.getElementById('shopAddress').value = shop.address?.line1 || shop.address || '';
             document.getElementById('shopModuleLink').value = shop.moduleId || '';
             document.getElementById('locationType').value = shop.locationType || 'fixed';
             document.getElementById('shopPriority').value = shop.priority || 0;
-            document.getElementById('shopStatus').value = shop.status || 'active';
-            
-            if (shop.location?.lat && shop.location?.lng) {
+            document.getElementById('shopType').value = shop.shopType || 'product';
+
+            currentItems = shop.items || [];
+            updateItemsUI();
+
+            if (shop.location?.coordinates && shop.location.coordinates.length === 2) {
+                const lat = shop.location.coordinates[1];
+                const lng = shop.location.coordinates[0];
                 if (shopMarker) shopMap.removeLayer(shopMarker);
                 if (shopCircle) shopMap.removeLayer(shopCircle);
-                
-                currentShopLocation = shop.location;
-                shopMarker = L.marker(shop.location).addTo(shopMap);
-                shopCircle = L.circle(shop.location, {
-                    radius: shop.range || 5000, 
-                    color: '#3b82f6', 
+
+                currentShopLocation = { lat, lng };
+                shopMarker = L.marker([lat, lng]).addTo(shopMap);
+                shopCircle = L.circle([lat, lng], {
+                    radius: shop.range || 5000,
+                    color: '#3b82f6',
                     fillOpacity: 0.1,
                     weight: 2
                 }).addTo(shopMap);
-                shopMap.setView(shop.location, 14);
+                shopMap.setView([lat, lng], 14);
             } else {
                 clearShopMarker();
             }
@@ -358,45 +493,44 @@
             const shopId = document.getElementById('shopSelectLocation').value;
             if (!shopId) return showToast('Please select a shop first', 'error');
             if (!currentShopLocation) return showToast('Click on map to set location', 'error');
-            
+
             const btn = document.getElementById('saveLocationBtn');
             btn.disabled = true;
             btn.textContent = 'Saving...';
-            
-            const locationType = document.getElementById('locationType').value;
-            
+
             const data = {
-                name: document.getElementById('shopName').value.trim(),
+                shopName: document.getElementById('shopName').value.trim(),
                 phone: document.getElementById('shopPhone').value.trim(),
                 range: parseInt(document.getElementById('shopRange').value || 5000),
-                address: document.getElementById('shopAddress').value.trim(),
+                address: { line1: document.getElementById('shopAddress').value.trim() },
                 moduleId: document.getElementById('shopModuleLink').value,
-                locationType: locationType,
+                locationType: document.getElementById('locationType').value,
+                shopType: document.getElementById('shopType').value,
                 priority: parseInt(document.getElementById('shopPriority').value || 0),
-                status: document.getElementById('shopStatus').value,
+                items: currentItems.filter(i => i.name && i.price),
                 location: {
-                    lat: currentShopLocation.lat, 
-                    lng: currentShopLocation.lng
+                    type: 'Point',
+                    coordinates: [currentShopLocation.lng, currentShopLocation.lat]
                 },
                 lastLocationUpdate: new Date().toISOString()
             };
-            
-            if (!data.name) {
+
+            if (!data.shopName) {
                 showToast('Shop name is required', 'error');
                 btn.disabled = false;
-                btn.textContent = '💾 Save Location';
+                btn.textContent = '💾 Save Shop';
                 return;
             }
-            
+
             try {
                 await apiCall('/shops/' + shopId, 'PUT', data);
-                showToast('Shop location saved successfully!');
+                showToast('Shop saved successfully!');
                 await loadShops();
             } catch (err) {
                 showToast('Failed to save: ' + err.message, 'error');
             } finally {
                 btn.disabled = false;
-                btn.textContent = '💾 Save Location';
+                btn.textContent = '💾 Save Shop';
             }
         };
 

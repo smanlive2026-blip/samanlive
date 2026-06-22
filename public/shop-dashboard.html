@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Dashboard - SuperLive</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/theme.css">
+    <style>
+       .dashboard-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+       .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+       .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+       .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+       .stat-label {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+       .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+       .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+       .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+       .tab-content {
+            display: none;
+        }
+       .tab-content.active {
+            display: block;
+        }
+       .items-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+       .items-table th {
+            background: #f8fafc;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+        }
+       .items-table td {
+            padding: 12px;
+            border-top: 1px solid #f1f5f9;
+        }
+       .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+       .btn-primary:hover {
+            background: #2563eb;
+        }
+       .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+       .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+       .form-group label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #475569;
+        }
+       .form-group input,.form-group select,.form-group textarea {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+       .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+       .modal.active {
+            display: flex;
+        }
+       .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+       .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+       .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="padding:20px;max-width:1200px;margin:0 auto;">
+        <div id="loadingState" class="loading" style="text-align:center;padding:60px;">
+            Loading dashboard...
+        </div>
+
+        <div id="dashboardContent" style="display:none;">
+            <div class="dashboard-header">
+                <h1 style="margin:0 0 8px 0;font-size:28px;" id="shopNameTitle">Shop Dashboard</h1>
+                <p style="margin:0;opacity:0.9;" id="shopTypeLabel"></p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalOrders">0</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalItems">0</div>
+                    <div class="stat-label">Total Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="shopRating">0.0</div>
+                    <div class="stat-label">Rating</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="shopStatus">Active</div>
+                    <div class="stat-label">Status</div>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('items')">📦 Items</button>
+                <button class="tab" onclick="switchTab('orders')">📋 Orders</button>
+                <button class="tab" onclick="switchTab('settings')">⚙️ Settings</button>
+            </div>
+
+            <!-- ITEMS TAB -->
+            <div id="itemsTab" class="tab-content active">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h2 style="margin:0;">Shop Items</h2>
+                    <button class="btn-primary" onclick="openAddItemModal()">➕ Add Item</button>
+                </div>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Unit/Size</th>
+                            <th>Available</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                        <tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ORDERS TAB -->
+            <div id="ordersTab" class="tab-content">
+                <h2>Recent Orders</h2>
+                <div id="ordersList" style="text-align:center;padding:40px;color:#94a3b8;">
+                    No orders yet
+                </div>
+            </div>
+
+            <!-- SETTINGS TAB -->
+            <div id="settingsTab" class="tab-content">
+                <h2>Shop Settings</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Shop Name</label>
+                        <input type="text" id="editShopName">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="editShopPhone">
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <input type="text" id="editShopAddress">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="editShopDesc" rows="3"></textarea>
+                    </div>
+                <button class="btn-primary" onclick="saveShopSettings()">💾 Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT ITEM MODAL -->
+    <div id="itemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Item</h2>
+                <button class="close-btn" onclick="closeItemModal()">×</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Item Name *</label>
+                    <input type="text" id="itemName" placeholder="Aashirvaad Atta">
+                </div>
+                <div class="form-group">
+                    <label>Price *</label>
+                    <input type="number" id="itemPrice" placeholder="250">
+                </div>
+                <div class="form-group">
+                    <label>Unit/Size/Duration</label>
+                    <input type="text" id="itemUnit" placeholder="5kg / 30min / L">
+                </div>
+                <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="text" id="itemImage" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="itemDesc" rows="2" placeholder="Item details..."></textarea>
+                </div>
+                <div class="form-group" id="vegField" style="display:none;">
+                    <label>Veg/Non-Veg</label>
+                    <select id="itemVeg">
+                        <option value="true">🟢 Veg</option>
+                        <option value="false">🔴 Non-Veg</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="saveItem()" style="width:100%;">💾 Save Item</button>
+        </div>
+    </div>
+
+    <script src="assets/js/common.js"></script>
+    <script>
+        let currentShop = null;
+        let editingItemIndex = -1;
+
+        async function loadDashboard() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shopId = urlParams.get('shopId');
+
+            if (!shopId) {
+                alert('Shop ID missing! URL should be: /shop-dashboard.html?shopId=XXX');
+                return;
+            }
+
+            try {
+                const shop = await apiCall('/shops/' + shopId);
+                currentShop = shop;
+                renderDashboard(shop);
+            } catch (err) {
+                console.error('Load error:', err);
+                document.getElementById('loadingState').innerHTML = '❌ Failed to load shop';
+            }
+        }
+
+        function renderDashboard(shop) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+
+            document.getElementById('shopNameTitle').textContent = shop.shopName;
+            document.getElementById('shopTypeLabel').textContent = getShopTypeLabel(shop.shopType);
+            document.getElementById('totalOrders').textContent = shop.totalOrders || 0;
+            document.getElementById('totalItems').textContent = shop.items? shop.items.length : 0;
+            document.getElementById('shopRating').textContent = shop.rating || '0.0';
+            document.getElementById('shopStatus').textContent = shop.status;
+
+            // Settings fill
+            document.getElementById('editShopName').value = shop.shopName;
+            document.getElementById('editShopPhone').value = shop.phone;
+            document.getElementById('editShopAddress').value = shop.address?.line1 || '';
+            document.getElementById('editShopDesc').value = shop.description || '';
+
+            renderItems();
+        }
+
+        function getShopTypeLabel(type) {
+            const labels = {
+                product: '📦 Grocery/Product Store',
+                food: '🍕 Restaurant/Dhaba',
+                service: '🔧 Service Provider',
+                rental: '🏍️ Rental Service',
+                fashion: '👕 Fashion Store'
+            };
+            return labels[type] || 'Shop';
+        }
+
+        function renderItems() {
+            const tbody = document.getElementById('itemsTableBody');
+            const items = currentShop.items || [];
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">No items yet. Add your first item!</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map((item, idx) => `
+                <tr>
+                    <td><img src="${item.image || 'https://via.placeholder.com/50x50?text=No'}" style="width:50px;height:50px;border-radius:8px;object-fit:cover;"></td>
+                    <td><b>${escapeHtml(item.name)}</b></td>
+                    <td>₹${item.price}</td>
+                    <td>${item.unit || item.size || item.duration || '-'}</td>
+                    <td>${item.available? '✅ Yes' : '❌ No'}</td>
+                    <td>
+                        <button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="editItem(${idx})">Edit</button>
+                        <button class="btn-primary" style="padding:6px 12px;font-size:12px;background:#ef4444;" onclick="deleteItem(${idx})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        function openAddItemModal() {
+            editingItemIndex = -1;
+            document.getElementById('modalTitle').textContent = 'Add Item';
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemPrice').value = '';
+            document.getElementById('itemUnit').value = '';
+            document.getElementById('itemImage').value = '';
+            document.getElementById('itemDesc').value = '';
+
+            // Show veg field only for food type
+            document.getElementById('vegField').style.display = currentShop.shopType === 'food'? 'block' : 'none';
+
+            document.getElementById('itemModal').classList.add('active');
+        }
+
+        function editItem(idx) {
+            editingItemIndex = idx;
+            const item = currentShop.items[idx];
+            document.getElementById('modalTitle').textContent = 'Edit Item';
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('itemPrice').value = item.price;
+            document.getElementById('itemUnit').value = item.unit || item.size || item.duration || '';
+            document.getElementById('itemImage').value = item.image || '';
+            document.getElementById('itemDesc').value = item.desc || '';
+            document.getElementById('itemVeg').value = item.veg? 'true' : 'false';
+            document.getElementById('vegField').style.display = currentShop.shopType === 'food'? 'block' : 'none';
+            document.getElementById('itemModal').classList.add('active');
+        }
+
+        function closeItemModal() {
+            document.getElementById('itemModal').classList.remove('active');
+        }
+
+        async function saveItem() {
+            const item = {
+                name: document.getElementById('itemName').value.trim(),
+                price: parseFloat(document.getElementById('itemPrice').value) || 0,
+                unit: document.getElementById('itemUnit').value.trim(),
+                image: document.getElementById('itemImage').value.trim(),
+                desc: document.getElementById('itemDesc').value.trim(),
+                available: true
+            };
+
+            if (!item.name ||!item.price) {
+                alert('Name and Price are required!');
+                return;
+            }
+
+            if (currentShop.shopType === 'food') {
+                item.veg = document.getElementById('itemVeg').value === 'true';
+            }
+
+            if (!currentShop.items) currentShop.items = [];
+
+            if (editingItemIndex >= 0) {
+                currentShop.items[editingItemIndex] = item;
+            } else {
+                currentShop.items.push(item);
+            }
+
+            try {
+                await apiCall('/shops/' + currentShop._id, 'PUT', { items: currentShop.items });
+                showToast('Item saved successfully!');
+                closeItemModal();
+                renderItems();
+                document.getElementById('totalItems').textContent = currentShop.items.length;
+            } catch (err) {
+                showToast('Failed to save: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteItem(idx) {
+            if (!confirm('Delete this item?')) return;
+
+            currentShop.items.splice(idx, 1);
+
+            try {
+                await apiCall('/shops/' + currentShop._id, 'PUT', { items: currentShop.items });
+                showToast('Item deleted!');
+                renderItems();
+                document.getElementById('totalItems').textContent = currentShop.items.length;
+            } catch (err) {
+                showToast('Failed to delete: ' + err.message, 'error');
+            }
+        }
+
+        async function saveShopSettings() {
+            const data = {
+                shopName: document.getElementById('editShopName').value.trim(),
+                phone: document.getElementById('editShopPhone').value.trim(),
+                address: { line1: document.getElementById('editShopAddress').value.trim() },
+                description: document.getElementById('editShopDesc').value.trim()
+            };
+
+            try {
+                await apiCall('/shops/' + currentShop._id, 'PUT', data);
+                showToast('Settings saved!');
+                currentShop = {...currentShop,...data };
+                document.getElementById('shopNameTitle').textContent = data.shopName;
+            } catch (err) {
+                showToast('Failed to save: ' + err.message, 'error');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = msg;
+            toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;z-index:9999;';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        // Init
+        loadDashboard();
+    </script>
+</body>
+</html>

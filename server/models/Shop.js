@@ -16,34 +16,34 @@ const shopSchema = new mongoose.Schema({
         pincode: { type: String, default: '' }
     },
 
-    // ========== AREA SYSTEM FIELDS - NEW ==========
-    area: { type: String, default: '' }, // Purana - "Surat 50km Zone"
-    areaCode: { type: String, required: true, uppercase: true, trim: true }, // "SURAT" - Filter ke liye
-    areaName: { type: String, default: '' }, // "Surat 50km Zone" - Display ke liye
-    bucket: { type: String, required: true, trim: true }, // "Grocery", "Fresh" - Manager ka bucket
+    // ========== AREA SYSTEM FIELDS ==========
+    area: { type: String, default: '' },
+    areaCode: { type: String, required: true, uppercase: true, trim: true },
+    areaName: { type: String, default: '' },
+    bucket: { type: String, required: true, trim: true },
     // ========== AREA SYSTEM FIELDS END ==========
 
     location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], default: [0, 0] } // [lng, lat]
+        coordinates: { type: [Number], default: [0, 0] }
     },
     serviceType: { type: String, required: true, trim: true },
-    moduleId: { type: String, default: '' }, // Category ID - grocery, fresh, etc
-    categoryId: { type: String, default: '' }, // Backup - same as moduleId
+    moduleId: { type: String, default: '' },
+    categoryId: { type: String, default: '' },
     description: { type: String, default: '' },
     banner: { type: String, default: '' },
     logo: { type: String, default: '' },
-    icon: { type: String, default: '🏪' }, // Shop icon
+    icon: { type: String, default: '🏪' },
 
-    // ========== LOCATION TYPE FIELDS - NEW ==========
-    locationType: { 
-        type: String, 
-        enum: ['fixed', 'dynamic'], 
-        default: 'fixed' 
+    // ========== LOCATION TYPE FIELDS ==========
+    locationType: {
+        type: String,
+        enum: ['fixed', 'dynamic'],
+        default: 'fixed'
     },
-    lastLocationUpdate: { 
-        type: Date, 
-        default: Date.now 
+    lastLocationUpdate: {
+        type: Date,
+        default: Date.now
     },
     // ========== LOCATION TYPE FIELDS END ==========
 
@@ -65,9 +65,34 @@ const shopSchema = new mongoose.Schema({
     isVerified: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     priority: { type: Number, default: 0 },
+
+    // ========== SHOP TYPE & ITEMS - NEW ==========
+    shopType: {
+        type: String,
+        enum: ['product', 'food', 'service', 'rental', 'fashion'],
+        default: 'product',
+        required: true
+    },
+    items: [{
+        name: { type: String, required: true },
+        price: { type: Number, required: true },
+        image: { type: String, default: '' },
+        unit: { type: String, default: '' }, // kg, piece, hour, day
+        desc: { type: String, default: '' },
+        // Fashion ke liye extra
+        size: { type: String, default: '' },
+        color: { type: String, default: '' },
+        // Food ke liye extra
+        veg: { type: Boolean, default: true },
+        // Service/Rental ke liye
+        duration: { type: String, default: '' }, // 30min, 1hr, 1day
+        available: { type: Boolean, default: true }
+    }],
+    // ========== SHOP TYPE & ITEMS END ==========
+
     rating: { type: Number, default: 0, min: 0, max: 5 },
     totalOrders: { type: Number, default: 0 },
-    range: { type: Number, default: 5000 }, // Service range in meters
+    range: { type: Number, default: 5000 },
     createdAt: { type: Date, default: Date.now }
 }, {
     timestamps: true,
@@ -79,29 +104,28 @@ const shopSchema = new mongoose.Schema({
 shopSchema.index({ location: '2dsphere' });
 shopSchema.index({ status: 1 });
 shopSchema.index({ area: 1 });
-shopSchema.index({ areaCode: 1 }); // NEW - Area filter
-shopSchema.index({ bucket: 1 }); // NEW - Bucket filter
-shopSchema.index({ areaCode: 1, bucket: 1 }); // NEW - Combo filter
-shopSchema.index({ areaCode: 1, status: 1 }); // NEW - Area ke active shops
+shopSchema.index({ areaCode: 1 });
+shopSchema.index({ bucket: 1 });
+shopSchema.index({ areaCode: 1, bucket: 1 });
+shopSchema.index({ areaCode: 1, status: 1 });
 shopSchema.index({ bannerApproved: 1 });
 shopSchema.index({ serviceType: 1 });
-shopSchema.index({ moduleId: 1 }); // NEW - Category filter
-shopSchema.index({ categoryId: 1 }); // NEW - Category filter
+shopSchema.index({ moduleId: 1 });
+shopSchema.index({ categoryId: 1 });
 shopSchema.index({ phone: 1 });
 shopSchema.index({ managerId: 1 });
 shopSchema.index({ createdAt: -1 });
-shopSchema.index({ isActive: 1 }); // NEW - Active shops filter
-shopSchema.index({ locationType: 1 }); // NEW - Location type filter
+shopSchema.index({ isActive: 1 });
+shopSchema.index({ locationType: 1 });
+shopSchema.index({ shopType: 1 }); // NEW - Shop type filter
 
 // ========== VIRTUALS ==========
-// Virtual for full address
 shopSchema.virtual('fullAddress').get(function() {
     const addr = this.address;
     if (!addr.city &&!addr.state) return '';
     return `${addr.line1}, ${addr.city}, ${addr.state} - ${addr.pincode}`.trim().replace(/^,\s*/, '');
 });
 
-// Virtual for coordinates [lat, lng]
 shopSchema.virtual('latlng').get(function() {
     if (!this.location.coordinates || this.location.coordinates.length!== 2) return null;
     return {
@@ -111,12 +135,10 @@ shopSchema.virtual('latlng').get(function() {
 });
 
 // ========== METHODS ==========
-// Check if shop is in manager's area
 shopSchema.methods.isInManagerArea = function(managerAreaCode) {
     return this.areaCode === managerAreaCode;
 };
 
-// Check if shop matches manager's bucket
 shopSchema.methods.matchesManagerBucket = function(managerBucket) {
     return this.bucket === managerBucket;
 };

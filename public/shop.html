@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop - SuperLive</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/theme.css">
+    <style>
+        .shop-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+        .shop-info {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .shop-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        .shop-meta {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .item-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .item-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #f1f5f9;
+        }
+        .item-body {
+            padding: 16px;
+        }
+        .item-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+        .item-desc {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 12px;
+            min-height: 36px;
+        }
+        .item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .item-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #059669;
+        }
+        .item-unit {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .btn-add {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-add:hover {
+            background: #2563eb;
+        }
+        .veg-badge {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid;
+            margin-right: 6px;
+        }
+        .veg-badge.veg {
+            border-color: #059669;
+        }
+        .veg-badge.veg::after {
+            content: '●';
+            color: #059669;
+            font-size: 12px;
+            display: block;
+            text-align: center;
+            line-height: 12px;
+        }
+        .veg-badge.non-veg {
+            border-color: #dc2626;
+        }
+        .veg-badge.non-veg::after {
+            content: '●';
+            color: #dc2626;
+            font-size: 12px;
+            display: block;
+            text-align: center;
+            line-height: 12px;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding: 4px;
+        }
+        .filter-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .filter-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loadingState" class="loading">
+            <div>Loading shop...</div>
+        </div>
+
+        <div id="shopContent" style="display:none;">
+            <div class="shop-header">
+                <div class="shop-info">
+                    <img id="shopLogo" src="" class="shop-logo" alt="Logo">
+                    <div>
+                        <h1 id="shopName" style="margin:0 0 8px 0;font-size:24px;"></h1>
+                        <div id="shopDesc" style="opacity:0.9;font-size:14px;"></div>
+                        <div class="shop-meta">
+                            <span class="badge" id="shopType"></span>
+                            <span class="badge" id="shopRating">⭐ 0.0</span>
+                            <span class="badge" id="shopTiming">🕐 9AM-9PM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="filterBar" class="filter-bar" style="display:none;">
+                <button class="filter-btn active" onclick="filterItems('all')">All</button>
+                <button class="filter-btn" onclick="filterItems('veg')">🟢 Veg</button>
+                <button class="filter-btn" onclick="filterItems('nonveg')">🔴 Non-Veg</button>
+            </div>
+
+            <div id="itemsGrid" class="items-grid"></div>
+            <div id="emptyState" class="empty-state" style="display:none;">
+                <div style="font-size:48px;margin-bottom:16px;">📦</div>
+                <div>No items available yet</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/common.js"></script>
+    <script>
+        let currentShop = null;
+        let allItems = [];
+        let currentFilter = 'all';
+
+        async function loadShop() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shopId = urlParams.get('id');
+            
+            if (!shopId) {
+                document.getElementById('loadingState').innerHTML = '<div class="empty-state">❌ Shop ID missing</div>';
+                return;
+            }
+
+            try {
+                const shop = await apiCall('/shops/' + shopId);
+                currentShop = shop;
+                allItems = shop.items || [];
+                renderShop(shop);
+            } catch (err) {
+                console.error('Load shop error:', err);
+                document.getElementById('loadingState').innerHTML = '<div class="empty-state">❌ Failed to load shop</div>';
+            }
+        }
+
+        function renderShop(shop) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('shopContent').style.display = 'block';
+            
+            document.title = shop.shopName + ' - SuperLive';
+            document.getElementById('shopLogo').src = shop.logo || 'assets/img/shop-placeholder.png';
+            document.getElementById('shopLogo').onerror = function() { this.src = 'https://via.placeholder.com/80x80?text=🏪'; };
+            document.getElementById('shopName').textContent = shop.shopName;
+            document.getElementById('shopDesc').textContent = shop.description || shop.address?.line1 || '';
+            document.getElementById('shopType').textContent = getShopTypeLabel(shop.shopType);
+            document.getElementById('shopRating').textContent = `⭐ ${shop.rating || '0.0'}`;
+
+            // Show filter bar only for food type
+            if (shop.shopType === 'food') {
+                document.getElementById('filterBar').style.display = 'flex';
+            }
+
+            renderItems();
+        }
+
+        function getShopTypeLabel(type) {
+            const labels = {
+                product: '📦 Grocery Store',
+                food: '🍕 Restaurant',
+                service: '🔧 Service Provider',
+                rental: '🏍️ Rental Service',
+                fashion: '👕 Fashion Store'
+            };
+            return labels[type] || 'Shop';
+        }
+
+        function renderItems() {
+            const grid = document.getElementById('itemsGrid');
+            const empty = document.getElementById('emptyState');
+            
+            let filtered = allItems;
+            if (currentFilter === 'veg') {
+                filtered = allItems.filter(i => i.veg === true);
+            } else if (currentFilter === 'nonveg') {
+                filtered = allItems.filter(i => i.veg === false);
+            }
+
+            if (filtered.length === 0) {
+                grid.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            empty.style.display = 'none';
+
+            grid.innerHTML = filtered.map(item => {
+                const img = item.image || 'https://via.placeholder.com/280x180?text=No+Image';
+                const shopType = currentShop.shopType;
+                
+                let extraInfo = '';
+                if (shopType === 'food') {
+                    extraInfo = `<span class="veg-badge ${item.veg? 'veg' : 'non-veg'}"></span>`;
+                } else if (shopType === 'fashion' && item.size) {
+                    extraInfo = `<span class="item-unit">Size: ${item.size}</span>`;
+                } else if (shopType === 'service' && item.duration) {
+                    extraInfo = `<span class="item-unit">${item.duration}</span>`;
+                } else if (item.unit) {
+                    extraInfo = `<span class="item-unit">/${item.unit}</span>`;
+                }
+
+                return `
+                    <div class="item-card">
+                        <img src="${img}" class="item-image" alt="${item.name}" onerror="this.src='https://via.placeholder.com/280x180?text=No+Image'">
+                        <div class="item-body">
+                            <div class="item-name">${extraInfo}${escapeHtml(item.name)}</div>
+                            <div class="item-desc">${escapeHtml(item.desc || '')}</div>
+                            <div class="item-footer">
+                                <div>
+                                    <div class="item-price">₹${item.price}</div>
+                                    ${extraInfo}
+                                </div>
+                                <button class="btn-add" onclick="addToCart('${item.name}', ${item.price})">
+                                    ${shopType === 'service' || shopType === 'rental'? 'Book' : 'Add'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterItems(type) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderItems();
+        }
+
+        function addToCart(name, price) {
+            showToast(`Added ${name} - ₹${price}`, 'success');
+            // TODO: Cart logic yahan add karna
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = msg;
+            toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;z-index:9999;';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        // Init
+        loadShop();
+    </script>
+</body>
+</html>
