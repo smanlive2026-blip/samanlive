@@ -348,7 +348,7 @@
             }
 
             const selectedModule = window.allModules.find(m => m._id === moduleId);
-            const filteredCats = selectedModule?.categoryDetails?.filter(c => c.status) || [];
+            const filteredCats = selectedModule?.categoryDetails || [];
 
             if (filteredCats.length === 0) {
                 categorySelect.innerHTML = '<option value="">-- Is Module Me Category Nahi Hai --</option>';
