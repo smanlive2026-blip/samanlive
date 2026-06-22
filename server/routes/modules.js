@@ -1,18 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const Module = require('../models/Module');
-const Category = require('../models/Category'); // Add kiya
+const Category = require('../models/Category');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const Delivery = require('../models/Delivery');
 const Coupon = require('../models/Coupon');
+const modulesData = require('../seed/seed-modules.json'); // ADDED: JSON file load
 
 // ========== MODULES ==========
 router.get('/modules', async (req, res) => {
     try {
-        const modules = await Module.find({ status: 'active' }).sort({ priority: 1 });
-        res.json(modules);
+        // CHANGED: DB ki jagah JSON file se bhej raha hu
+        res.json(modulesData.modules);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ADDED: Location based modules - naya route
+router.post('/modules/nearby', async (req, res) => {
+    try {
+        const { lat, lng } = req.body;
+        // Abhi filter nahi kar rahe, seedhe JSON bhej rahe
+        res.json(modulesData);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -28,12 +40,11 @@ router.post('/modules', async (req, res) => {
     }
 });
 
-// FIX: $set use kiya taaki sirf bheje hue fields update hon
 router.put('/modules/:id', async (req, res) => {
     try {
         const module = await Module.findByIdAndUpdate(
             req.params.id, 
-            { $set: req.body }, // Yahi fix hai - baaki fields safe rahenge
+            { $set: req.body },
             { new: true, runValidators: true }
         );
         if (!module) return res.status(404).json({ error: 'Module not found' });
@@ -71,10 +82,9 @@ router.get('/categories', async (req, res) => {
 router.post('/categories', async (req, res) => {
     try {
         const category = new Category(req.body);
-        await category.save(); // Hook auto Module.categoryDetails me add kar dega
+        await category.save();
         res.json({ success: true, category });
     } catch (err) {
-        // Duplicate key error handle
         if (err.code === 11000) {
             return res.status(400).json({ error: 'Category with this name already exists' });
         }
@@ -100,7 +110,6 @@ router.delete('/categories/:id', async (req, res) => {
     try {
         const category = await Category.findByIdAndDelete(req.params.id);
         if (!category) return res.status(404).json({ error: 'Category not found' });
-        // Hook auto Module.categoryDetails se hata dega
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });

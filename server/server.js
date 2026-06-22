@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 const fs = require('fs');
 require('dotenv').config();
-const seedModules = require('./routes/seed/modules'); // ← FIX: yaha enter maar
+const seedModules = require('./routes/seed/modules');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -24,8 +24,8 @@ app.use((req, res, next) => {
 });
 
 // ==================== ROUTES ====================
-const statsRoutes = require('./routes/stats'); // ← Is line ko yahan la
-app.use('/api', statsRoutes); // ← Is line ko yahan la
+const statsRoutes = require('./routes/stats');
+app.use('/api', statsRoutes);
 app.use('/api/manager', require('./routes/managerRoutes'));
 // Static files serve karo
 app.use(express.static(path.join(__dirname, '../public')));
@@ -42,7 +42,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/samanlive
 .then(async () => {
     console.log('✅ MongoDB Connected Successfully');
     console.log(`📦 Database: ${mongoose.connection.name}`);
-    await seedModules(); // ← YE 25 MODULES SEED KAREGA
+    await seedModules();
 })
 .catch(err => {
     console.error('❌ MongoDB Error:', err);
@@ -64,11 +64,14 @@ app.use('/api', require('./routes/adminRoutes'));
 // Manager Routes - Ye hi sab handle karega
 app.use('/api', require('./routes/managerRoutes'));
 
-// Area Routes - YE NAYI LINE ADD KAR ← YAHAN
+// Area Routes - YE NAYI LINE ADD KAR
 app.use('/api', require('./routes/areaRoutes'));
 
 // Market/Public Routes
 app.use('/api', require('./routes/market'));
+
+// ADDED: Modules Routes - Ye line add ki tere modules ke liye
+app.use('/api', require('./routes/modules'));
 
 // Shop Routes - User side - TEMP COMMENT: File missing
 // app.use('/api', require('./routes/shop'));
@@ -245,6 +248,7 @@ app.get('/api/admin/routes', (req, res) => {
                         else if (file === 'paymentRoutes.js') basePath = '/api/payment';
                         else if (file === 'notificationRoutes.js') basePath = '/api/notification';
                         else if (file === 'bannerRoutes.js') basePath = '/api/banner';
+                        else if (file === 'modules.js') basePath = '/api'; // ADDED: modules.js ka base path
                         else {
                             // Auto detect: xyzRoutes -> /api/xyz
                             const name = file.replace('Routes.js', '').replace('.js', '').toLowerCase();
@@ -405,7 +409,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-   ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
