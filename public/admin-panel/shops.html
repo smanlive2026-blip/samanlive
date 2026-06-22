@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="assets/admin.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-     .location-badge {
+    .location-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -16,21 +16,21 @@
             font-size: 12px;
             font-weight: 600;
         }
-     .location-badge.fixed {
+    .location-badge.fixed {
             background: #dbeafe;
             color: #1e40af;
         }
-     .location-badge.dynamic {
+    .location-badge.dynamic {
             background: #fef3c7;
             color: #92400e;
         }
-     .map-container {
+    .map-container {
             height: 400px;
             border-radius: 8px;
             border: 2px solid #e2e8f0;
             margin-top: 12px;
         }
-     .items-list {
+    .items-list {
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 12px;
@@ -38,7 +38,7 @@
             max-height: 300px;
             overflow-y: auto;
         }
-     .item-row {
+    .item-row {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr auto;
             gap: 8px;
@@ -46,30 +46,30 @@
             padding: 8px;
             border-bottom: 1px solid #f1f5f9;
         }
-     .item-row:last-child {
+    .item-row:last-child {
             border-bottom: none;
         }
-     .shop-type-badge {
+    .shop-type-badge {
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
         }
-     .shop-type-badge.product { background: #dbeafe; color: #1e40af; }
-     .shop-type-badge.food { background: #fed7aa; color: #c2410c; }
-     .shop-type-badge.service { background: #e9d5ff; color: #7c3aed; }
-     .shop-type-badge.rental { background: #d1fae5; color: #059669; }
-     .shop-type-badge.fashion { background: #fce7f3; color: #be185d; }
-     .actions {
+    .shop-type-badge.product { background: #dbeafe; color: #1e40af; }
+    .shop-type-badge.food { background: #fed7aa; color: #c2410c; }
+    .shop-type-badge.service { background: #e9d5ff; color: #7c3aed; }
+    .shop-type-badge.rental { background: #d1fae5; color: #059669; }
+    .shop-type-badge.fashion { background: #fce7f3; color: #be185d; }
+    .actions {
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
         }
-     .btn-success { background: #10b981; color: white; }
-     .btn-success:hover { background: #059669; }
-     .btn-info { background: #0ea5e9; color: white; }
-     .btn-info:hover { background: #0284c7; }
+    .btn-success { background: #10b981; color: white; }
+    .btn-success:hover { background: #059669; }
+    .btn-info { background: #0ea5e9; color: white; }
+    .btn-info:hover { background: #0284c7; }
     </style>
 </head>
 <body>
@@ -127,7 +127,7 @@
     </div>
 
     <div class="content" style="margin-top:20px;">
-        <h2 id="formTitle">📍 Create New Shop</h2>
+        <h2 id="formTitle">📍 Shop Location Manager</h2>
         <div class="form-grid">
             <div class="form-group">
                 <label>Select Shop <span style="color:#64748b;font-weight:normal;">(Edit ke liye chuno)</span></label>
@@ -191,6 +191,7 @@
                 </div>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="addItemRow()" style="margin-top:8px;">➕ Add Item</button>
             </div>
+        </div>
         <div class="map-controls">
             <button class="btn btn-primary" id="saveLocationBtn" onclick="saveShopLocation()">💾 Save Shop</button>
             <button class="btn btn-secondary" onclick="clearShopForm()">🗑️ Clear Form</button>
@@ -206,7 +207,7 @@
     <script src="assets/admin.js"></script>
     <script>
         // ========================================
-        // SHOP MANAGEMENT - WITH CATEGORY
+        // SHOP MANAGEMENT - WITH CATEGORY SUPPORT
         // ========================================
         let shopMap, shopMarker, shopCircle, currentShopLocation = null;
         let currentItems = [];
@@ -317,9 +318,35 @@
             document.getElementById('shopModuleLink').innerHTML = '<option value="">-- Select Module --</option>' +
                 window.allModules.map(m => `<option value="${m._id || m.id}">${m.icon} ${escapeHtml(m.name)}</option>`).join('');
 
-            document.getElementById('shopCategoryId').innerHTML = '<option value="">-- Select Category --</option>' +
-                window.allCategories.map(c => `<option value="${c._id}">${c.icon} ${escapeHtml(c.name)}</option>`).join('');
+            filterCategoriesByModule();
         }
+
+        function filterCategoriesByModule() {
+            const moduleId = document.getElementById('shopModuleLink').value;
+            const categorySelect = document.getElementById('shopCategoryId');
+
+            if (!moduleId) {
+                categorySelect.innerHTML = '<option value="">-- Pehle Module Select Karo --</option>';
+                return;
+            }
+
+            const filteredCats = window.allCategories.filter(c =>
+                c.moduleId === moduleId && c.status === 'active'
+            );
+
+            if (filteredCats.length === 0) {
+                categorySelect.innerHTML = '<option value="">-- Is Module Me Category Nahi Hai --</option>';
+                return;
+            }
+
+            categorySelect.innerHTML = '<option value="">-- Select Category --</option>' +
+                filteredCats
+                  .sort((a,b) => b.priority - a.priority || a.name.localeCompare(b.name))
+                  .map(c => `<option value="${c._id}">${c.icon} ${escapeHtml(c.name)}</option>`)
+                  .join('');
+        }
+
+        document.getElementById('shopModuleLink')?.addEventListener('change', filterCategoriesByModule);
 
         function updateItemsUI() {
             const shopType = document.getElementById('shopType').value;
@@ -376,6 +403,7 @@
             document.getElementById('saveLocationBtn').textContent = '💾 Create Shop';
             isEditMode = false;
             document.getElementById('shopSelectLocation').scrollIntoView({ behavior: 'smooth' });
+            showToast('Ready to create new shop');
         };
 
         window.approveShop = async (id) => {
@@ -414,9 +442,6 @@
         window.editShop = (id) => {
             document.getElementById('shopSelectLocation').value = id;
             loadShopLocation();
-            document.getElementById('formTitle').textContent = '✏️ Edit Shop';
-            document.getElementById('saveLocationBtn').textContent = '💾 Update Shop';
-            isEditMode = true;
             document.getElementById('shopSelectLocation').scrollIntoView({ behavior: 'smooth' });
             showToast('Shop loaded for editing');
         };
@@ -488,7 +513,12 @@
             document.getElementById('shopRange').value = shop.range || 5000;
             document.getElementById('shopAddress').value = shop.address?.line1 || shop.address || '';
             document.getElementById('shopModuleLink').value = shop.moduleId || '';
-            document.getElementById('shopCategoryId').value = shop.categoryId || '';
+
+            filterCategoriesByModule();
+            setTimeout(() => {
+                document.getElementById('shopCategoryId').value = shop.categoryId || '';
+            }, 100);
+
             document.getElementById('locationType').value = shop.locationType || 'fixed';
             document.getElementById('shopPriority').value = shop.priority || 0;
             document.getElementById('shopType').value = shop.shopType || 'product';
@@ -571,11 +601,9 @@
 
             try {
                 if (isCreate) {
-                    // CREATE NEW SHOP
                     await apiCall('/shops', 'POST', {...data, status: 'active' });
                     showToast('Shop created successfully!');
                 } else {
-                    // UPDATE EXISTING SHOP
                     await apiCall('/shops/' + shopId, 'PUT', data);
                     showToast('Shop updated successfully!');
                 }
@@ -611,8 +639,8 @@
             currentItems = [];
             renderItemsList();
             clearShopMarker();
-            document.getElementById('formTitle').textContent = '📍 Create New Shop';
-            document.getElementById('saveLocationBtn').textContent = '💾 Create Shop';
+            document.getElementById('formTitle').textContent = '📍 Shop Location Manager';
+            document.getElementById('saveLocationBtn').textContent = '💾 Save Shop';
             isEditMode = false;
             showToast('Form cleared');
         };
