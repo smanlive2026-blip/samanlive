@@ -71,7 +71,7 @@ app.use('/api', require('./routes/areaRoutes'));
 app.use('/api', require('./routes/market'));
 
 // ADDED: Modules Routes - Ye line add ki tere modules ke liye
-app.use('/api', require('./routes/modules'));
+app.use('/api', require('./routes/public-modules'));
 
 // Shop Routes - User side - TEMP COMMENT: File missing
 // app.use('/api', require('./routes/shop'));
