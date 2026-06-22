@@ -245,7 +245,7 @@ router.post('/coupons', async (req, res) => {
         const coupon = new Coupon(req.body);
         await coupon.save();
         res.json({ success: true, coupon });
-    } catch (err) { {
+    } catch (err) {  // FIXED: Yahan pe extra { tha
         res.status(500).json({ error: err.message });
     }
 });
