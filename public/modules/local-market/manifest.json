@@ -1,0 +1,26 @@
+{
+  "id": "local-market",
+  "name": "Local Market",
+  "slug": "local-market",
+  "icon": "🛒",
+  "color": "#10b981",
+  "description": "Sabzi, Kirana, Fruits - Local dukane",
+  "routes": {
+    "user_home": "/modules/local-market/index.html",
+    "user_shop_list": "/modules/local-market/user/shops-list.html",
+    "user_shop_detail": "/modules/local-market/shop/view.html?id={shopId}",
+    "admin_home": "/modules/local-market/admin/index.html",
+    "admin_create_shop": "/modules/local-market/admin/create-shop.html",
+    "shop_dashboard": "/modules/local-market/shop/dashboard.html"
+  },
+  "api_endpoints": {
+    "list_shops": "/api/modules/local-market/shops",
+    "create_shop": "/api/modules/local-market/shops",
+    "shop_detail": "/api/modules/local-market/shops/{id}"
+  },
+  "categories": [
+    {"id": "kirana", "name": "Kirana Store", "icon": "🏪"},
+    {"id": "sabzi_mandi", "name": "Sabzi Mandi", "icon": "🥬"},
+    {"id": "fruit_shop", "name": "Fruit Shop", "icon": "🍎"}
+  ]
+}

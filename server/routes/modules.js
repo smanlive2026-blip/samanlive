@@ -23,8 +23,8 @@ router.get('/modules', async (req, res) => {
 router.post('/modules/nearby', async (req, res) => {
     try {
         const { lat, lng } = req.body;
-        // Abhi filter nahi kar rahe, seedhe JSON bhej rahe
-        res.json(modulesData);
+        // CHANGED: modulesData.modules bhej raha hu taaki frontend me direct array mile
+        res.json(modulesData.modules);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -245,7 +245,7 @@ router.post('/coupons', async (req, res) => {
         const coupon = new Coupon(req.body);
         await coupon.save();
         res.json({ success: true, coupon });
-    } catch (err) {
+    } catch (err) { {
         res.status(500).json({ error: err.message });
     }
 });
