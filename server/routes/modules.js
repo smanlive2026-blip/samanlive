@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Module = require('../models/Module');
+const Category = require('../models/Category'); // Add kiya
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
@@ -10,7 +11,6 @@ const Coupon = require('../models/Coupon');
 // ========== MODULES ==========
 router.get('/modules', async (req, res) => {
     try {
-        // Change 1: Sirf active modules bhejo, Change 2: priority 1,2,3 ke hisab se sort
         const modules = await Module.find({ status: 'active' }).sort({ priority: 1 });
         res.json(modules);
     } catch (err) {
@@ -28,10 +28,15 @@ router.post('/modules', async (req, res) => {
     }
 });
 
+// FIX: $set use kiya taaki sirf bheje hue fields update hon
 router.put('/modules/:id', async (req, res) => {
     try {
-        // Ye _id se update karega, tere schema me id field alag hai
-        const module = await Module.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const module = await Module.findByIdAndUpdate(
+            req.params.id, 
+            { $set: req.body }, // Yahi fix hai - baaki fields safe rahenge
+            { new: true, runValidators: true }
+        );
+        if (!module) return res.status(404).json({ error: 'Module not found' });
         res.json({ success: true, module });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -41,6 +46,61 @@ router.put('/modules/:id', async (req, res) => {
 router.delete('/modules/:id', async (req, res) => {
     try {
         await Module.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========== CATEGORIES - NEW SECTION ==========
+router.get('/categories', async (req, res) => {
+    try {
+        const filter = { status: 'active' };
+        if (req.query.moduleId) filter.moduleId = req.query.moduleId;
+        if (req.query.group) filter.group = req.query.group;
+        
+        const categories = await Category.find(filter)
+            .sort({ priority: -1, name: 1 })
+            .populate('moduleId', 'name icon');
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/categories', async (req, res) => {
+    try {
+        const category = new Category(req.body);
+        await category.save(); // Hook auto Module.categoryDetails me add kar dega
+        res.json({ success: true, category });
+    } catch (err) {
+        // Duplicate key error handle
+        if (err.code === 11000) {
+            return res.status(400).json({ error: 'Category with this name already exists' });
+        }
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.put('/categories/:id', async (req, res) => {
+    try {
+        const category = await Category.findByIdAndUpdate(
+            req.params.id,
+            { $set: req.body },
+            { new: true, runValidators: true }
+        );
+        if (!category) return res.status(404).json({ error: 'Category not found' });
+        res.json({ success: true, category });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.delete('/categories/:id', async (req, res) => {
+    try {
+        const category = await Category.findByIdAndDelete(req.params.id);
+        if (!category) return res.status(404).json({ error: 'Category not found' });
+        // Hook auto Module.categoryDetails se hata dega
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -88,7 +148,7 @@ router.post('/products', async (req, res) => {
 
 router.put('/products/:id', async (req, res) => {
     try {
-        const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const product = await Product.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
         res.json({ success: true, product });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -183,7 +243,7 @@ router.post('/coupons', async (req, res) => {
 
 router.put('/coupons/:id', async (req, res) => {
     try {
-        const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const coupon = await Coupon.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
         res.json({ success: true, coupon });
     } catch (err) {
         res.status(500).json({ error: err.message });

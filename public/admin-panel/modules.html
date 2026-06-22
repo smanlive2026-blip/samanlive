@@ -7,71 +7,71 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: #f1f5f9; padding: 20px; }
-       .content { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+      .content { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
         h2 { color: #1e293b; font-size: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-weight: 600; }
-       .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-       .badge-info { background: #dbeafe; color: #1e40af; }
-       .badge-success { background: #d1fae5; color: #065f46; }
-       .badge-danger { background: #fee2e2; color: #991b1b; }
-       .badge-warning { background: #fef3c7; color: #92400e; }
-       .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
-       .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
-       .btn-success { background: #10b981; color: white; }
-       .btn-success:hover { background: #059669; transform: translateY(-1px); }
-       .btn-primary { background: #6366f1; color: white; }
-       .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); }
-       .btn-secondary { background: #64748b; color: white; }
-       .btn-secondary:hover { background: #475569; }
-       .btn-danger { background: #ef4444; color: white; }
-       .btn-danger:hover { background: #dc2626; }
-       .btn-sm { padding: 6px 12px; font-size: 13px; }
-       .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none!important; }
-       .search-box { padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px; width: 300px; font-size: 14px; transition: 0.2s; }
-       .search-box:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+      .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+      .badge-info { background: #dbeafe; color: #1e40af; }
+      .badge-success { background: #d1fae5; color: #065f46; }
+      .badge-danger { background: #fee2e2; color: #991b1b; }
+      .badge-warning { background: #fef3c7; color: #92400e; }
+      .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
+      .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
+      .btn-success { background: #10b981; color: white; }
+      .btn-success:hover { background: #059669; transform: translateY(-1px); }
+      .btn-primary { background: #6366f1; color: white; }
+      .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); }
+      .btn-secondary { background: #64748b; color: white; }
+      .btn-secondary:hover { background: #475569; }
+      .btn-danger { background: #ef4444; color: white; }
+      .btn-danger:hover { background: #dc2626; }
+      .btn-sm { padding: 6px 12px; font-size: 13px; }
+      .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none!important; }
+      .search-box { padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px; width: 300px; font-size: 14px; transition: 0.2s; }
+      .search-box:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
         th { background: #f8fafc; color: #475569; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-       .module-row { cursor: pointer; transition: 0.2s; }
-       .module-row:hover { background: #f8fafc; }
-       .expand-icon { transition: 0.3s; display: inline-block; color: #64748b; }
-       .expand-icon.open { transform: rotate(90deg); }
-       .color-badge { padding: 4px 10px; border-radius: 6px; color: white; font-size: 11px; font-weight: 600; }
-       .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
-       .status-active { background: #d1fae5; color: #065f46; }
-       .status-hidden { background: #f1f5f9; color: #64748b; }
-       .actions { display: flex; gap: 8px; }
-       .area-expand { padding: 20px; background: #f8fafc; }
-       .form-group { margin-bottom: 15px; }
-       .form-group label { display: block; margin-bottom: 6px; color: #475569; font-weight: 600; font-size: 14px; }
-       .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: 0.2s; }
-       .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
-       .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-       .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-       .modal.active { display: flex; }
-       .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; animation: slideIn 0.3s ease; }
+      .module-row { cursor: pointer; transition: 0.2s; }
+      .module-row:hover { background: #f8fafc; }
+      .expand-icon { transition: 0.3s; display: inline-block; color: #64748b; }
+      .expand-icon.open { transform: rotate(90deg); }
+      .color-badge { padding: 4px 10px; border-radius: 6px; color: white; font-size: 11px; font-weight: 600; }
+      .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
+      .status-active { background: #d1fae5; color: #065f46; }
+      .status-hidden { background: #f1f5f9; color: #64748b; }
+      .actions { display: flex; gap: 8px; }
+      .area-expand { padding: 20px; background: #f8fafc; }
+      .form-group { margin-bottom: 15px; }
+      .form-group label { display: block; margin-bottom: 6px; color: #475569; font-weight: 600; font-size: 14px; }
+      .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: 0.2s; }
+      .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+      .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+      .modal.active { display: flex; }
+      .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; animation: slideIn 0.3s ease; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-       .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
-       .close-btn { background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px; color: #64748b; transition: 0.2s; }
-       .close-btn:hover { background: #e2e8f0; transform: rotate(90deg); }
-       .area-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; }
-       .area-checkbox-list { max-height: 300px; overflow-y: auto; border: 2px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #f8fafc; }
-       .area-checkbox-item { display: flex; align-items: center; padding: 10px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px; transition: 0.2s; }
-       .area-checkbox-item:hover { background: #f1f5f9; border-color: #6366f1; }
-       .area-checkbox-item input[type="checkbox"] { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; }
-       .area-checkbox-item label { margin: 0; cursor: pointer; flex: 1; font-weight: 500; }
-       .area-checkbox-item .area-meta { font-size: 12px; color: #64748b; margin-left: 8px; }
-       .toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 14px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; animation: slideInRight 0.3s ease; }
-       .toast.success { background: #10b981; }
-       .toast.error { background: #ef4444; }
+      .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
+      .close-btn { background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px; color: #64748b; transition: 0.2s; }
+      .close-btn:hover { background: #e2e8f0; transform: rotate(90deg); }
+      .area-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; }
+      .area-checkbox-list { max-height: 300px; overflow-y: auto; border: 2px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #f8fafc; }
+      .area-checkbox-item { display: flex; align-items: center; padding: 10px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px; transition: 0.2s; }
+      .area-checkbox-item:hover { background: #f1f5f9; border-color: #6366f1; }
+      .area-checkbox-item input[type="checkbox"] { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; }
+      .area-checkbox-item label { margin: 0; cursor: pointer; flex: 1; font-weight: 500; }
+      .area-checkbox-item.area-meta { font-size: 12px; color: #64748b; margin-left: 8px; }
+      .toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 14px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; animation: slideInRight 0.3s ease; }
+      .toast.success { background: #10b981; }
+      .toast.error { background: #ef4444; }
         @keyframes slideInRight { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
-       .loading { text-align: center; padding: 40px; color: #94a3b8; }
-       .loading::after { content: '...'; animation: dots 1.5s steps(4, end) infinite; }
+      .loading { text-align: center; padding: 40px; color: #94a3b8; }
+      .loading::after { content: '...'; animation: dots 1.5s steps(4, end) infinite; }
         @keyframes dots { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%, 100% { content: '...'; } }
         @media (max-width: 768px) {
-           .form-grid { grid-template-columns: 1fr; }
-           .action-bar { flex-direction: column; align-items: stretch; }
-           .search-box { width: 100%; }
-           .modal-content { padding: 20px; width: 95%; }
+          .form-grid { grid-template-columns: 1fr; }
+          .action-bar { flex-direction: column; align-items: stretch; }
+          .search-box { width: 100%; }
+          .modal-content { padding: 20px; width: 95%; }
         }
     </style>
 </head>
@@ -114,7 +114,7 @@
         </div>
         <input type="hidden" id="moduleEditId">
         <div id="moduleModalFields"></div>
-        
+
         <h3 style="margin:20px 0 10px;color:#1e293b;font-size:16px;">📍 Active Service Areas</h3>
         <div class="form-group">
             <label>Select areas where this module will be live:</label>
@@ -127,7 +127,7 @@
         <h3 style="margin:20px 0 10px;color:#1e293b;font-size:16px;">📂 Categories in this Module</h3>
         <div id="moduleCategoriesList"></div>
         <button class="btn btn-success btn-sm" onclick="addCategoryToModule()" style="margin-top:10px;">+ Add Category</button>
-        
+
         <div style="display:flex;gap:10px;margin-top:25px;padding-top:20px;border-top:2px solid #f1f5f9;">
             <button class="btn btn-primary" id="saveModuleBtn" onclick="saveModule()">💾 Save Module</button>
             <button class="btn btn-secondary" onclick="closeModuleModal()">Cancel</button>
@@ -137,13 +137,13 @@
 
 <script>
 // ========================================
-// MODULE MANAGEMENT - AREA LINKED VERSION
+// MODULE MANAGEMENT - CATEGORY API VERSION
 // ========================================
 let currentModuleCategories = [];
 let currentModuleActiveAreas = [];
 let allAreas = [];
 
-// API Helper - Yaha change kar de agar tera base path alag hai
+// API Helper
 async function apiCall(url, method = 'GET', body = null) {
     const options = {
         method,
@@ -153,13 +153,12 @@ async function apiCall(url, method = 'GET', body = null) {
         }
     };
     if (body) options.body = JSON.stringify(body);
-    
-    // IMPORTANT: Agar tera route /api/modules hai toh ye line use kar:
+
     const response = await fetch('/api' + url, options);
-    // Agar sirf /modules hai toh ye use kar:
-    // const response = await fetch(url, options);
-    
-    if (!response.ok) throw new Error('API Error: ' + response.status);
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'API Error' }));
+        throw new Error(err.error || 'API Error: ' + response.status);
+    }
     return await response.json();
 }
 
@@ -170,10 +169,9 @@ async function loadModules() {
             apiCall('/modules'),
             apiCall('/areas')
         ]);
-        // FIX: API string bhej raha hai, usko parse karo
-        window.allModules = typeof modulesData.modules === 'string' ? JSON.parse(modulesData.modules) : (modulesData.modules || modulesData || []);
-        allAreas = typeof areasData.areas === 'string' ? JSON.parse(areasData.areas) : (areasData.areas || areasData || []);
-        
+        window.allModules = modulesData.modules || modulesData || [];
+        allAreas = areasData.areas || areasData || [];
+
         document.getElementById('moduleCount').textContent = window.allModules.length;
         renderModules();
     } catch (err) {
@@ -196,10 +194,10 @@ function renderModules() {
         const catsText = cats.length > 0? cats.slice(0,2).map(c => escapeHtml(c.name)).join(', ') + (cats.length > 2? '...' : '') : '-';
         const activeAreas = m.areas?.filter(a => a.status).map(a => a.name) || [];
         const areaCount = activeAreas.length;
-        const moduleId = m._id; // MongoDB ka _id use karo
+        const moduleId = m._id;
 
-        let areaBadge = areaCount === 0 
-            ? '<span class="badge badge-danger">Not Live</span>'
+        let areaBadge = areaCount === 0
+           ? '<span class="badge badge-danger">Not Live</span>'
             : `<span class="badge badge-success">${areaCount} Area${areaCount > 1? 's' : ''}</span>`;
 
         return `<tr class="module-row" onclick="toggleModuleAreas('${moduleId}')">
@@ -221,8 +219,8 @@ function renderModules() {
             <td colspan="10">
                 <div class="area-expand">
                     <h4 style="margin-bottom:10px;">📍 Live in Areas:</h4>
-                    ${areaCount > 0 
-                        ? activeAreas.map(areaName => `<span class="badge badge-success" style="margin:4px;display:inline-block;">${escapeHtml(areaName)}</span>`).join(' ')
+                    ${areaCount > 0
+                       ? activeAreas.map(areaName => `<span class="badge badge-success" style="margin:4px;display:inline-block;">${escapeHtml(areaName)}</span>`).join(' ')
                         : '<span style="color:#94a3b8;">Not live in any area</span>'
                     }
                     <h4 style="margin:15px 0 10px;">📂 Categories:</h4>
@@ -309,8 +307,8 @@ function renderModuleForm(m = {}) {
 
 function renderAreaCheckboxes() {
     const container = document.getElementById('areaCheckboxList');
-    const activeAreas = allAreas.filter(a => a.status !== false);
-    
+    const activeAreas = allAreas.filter(a => a.status!== false);
+
     if (activeAreas.length === 0) {
         container.innerHTML = '<p style="color:#94a3b8;padding:20px;text-align:center;">No active areas found. Create areas in Area Master first.</p>';
         return;
@@ -318,10 +316,10 @@ function renderAreaCheckboxes() {
 
     container.innerHTML = activeAreas.map(area => `
         <div class="area-checkbox-item">
-            <input type="checkbox" 
-                   id="area_${area._id}" 
-                   value="${area.areaName}" 
-                   ${currentModuleActiveAreas.includes(area.areaName) ? 'checked' : ''}
+            <input type="checkbox"
+                   id="area_${area._id}"
+                   value="${area.areaName}"
+                   ${currentModuleActiveAreas.includes(area.areaName)? 'checked' : ''}
                    onchange="toggleAreaSelection('${area.areaName}')">
             <label for="area_${area._id}">
                 <b>${escapeHtml(area.areaName)}</b>
@@ -358,28 +356,57 @@ function renderCategoryList() {
         </div>`).join('');
 }
 
-window.addCategoryToModule = () => {
+// ========== FIXED: Ab Category Collection me save hoga ==========
+window.addCategoryToModule = async () => {
+    const moduleId = document.getElementById('moduleEditId').value;
+    const module = window.allModules.find(x => x._id === moduleId);
+
+    if (!moduleId) {
+        showToast('Please save module first before adding categories', 'error');
+        return;
+    }
+
     const name = prompt('Category Name:');
     if (!name ||!name.trim()) return;
 
     const icon = prompt('Icon (emoji):', '📦') || '📦';
     const color = prompt('Color (hex):', '#10b981') || '#10b981';
-    const group = prompt('Group:', 'General') || 'General';
+    const group = prompt('Group:', module.name) || module.name;
 
-    currentModuleCategories.push({
-        id: 'cat_' + Date.now(),
-        name: name.trim(),
-        icon: icon.trim(),
-        color: color.trim(),
-        group: group.trim()
-    });
-    renderCategoryList();
+    try {
+        await apiCall('/categories', 'POST', {
+            name: name.trim(),
+            icon: icon.trim(),
+            color: color.trim(),
+            group: group.trim(),
+            moduleId: moduleId,
+            status: 'active',
+            priority: 0
+        });
+        showToast('Category added successfully!');
+        await loadModules();
+        const updatedModule = window.allModules.find(x => x._id === moduleId);
+        currentModuleCategories = [...(updatedModule.categoryDetails || [])];
+        renderCategoryList();
+    } catch (err) {
+        showToast('Failed to add category: ' + err.message, 'error');
+    }
 };
 
-window.removeCategory = (idx) => {
-    if (confirm('Remove this category?')) {
-        currentModuleCategories.splice(idx, 1);
+window.removeCategory = async (idx) => {
+    if (!confirm('Remove this category?')) return;
+
+    const categoryId = currentModuleCategories[idx].id;
+    try {
+        await apiCall('/categories/' + categoryId, 'DELETE');
+        showToast('Category removed successfully!');
+        await loadModules();
+        const moduleId = document.getElementById('moduleEditId').value;
+        const updatedModule = window.allModules.find(x => x._id === moduleId);
+        currentModuleCategories = [...(updatedModule.categoryDetails || [])];
         renderCategoryList();
+    } catch (err) {
+        showToast('Failed to remove category: ' + err.message, 'error');
     }
 };
 
@@ -390,7 +417,6 @@ window.saveModule = async () => {
 
     const id = document.getElementById('moduleEditId').value;
     const data = {
-        id: id || 'mod_' + Date.now(), // Naye module ke liye id generate karo
         name: document.getElementById('field_name').value.trim(),
         icon: document.getElementById('field_icon').value.trim(),
         color: document.getElementById('field_color').value,
@@ -398,7 +424,6 @@ window.saveModule = async () => {
         desc: document.getElementById('field_desc').value.trim(),
         priority: parseInt(document.getElementById('field_priority').value || 0),
         status: document.getElementById('field_status').value,
-        categoryDetails: currentModuleCategories,
         areas: currentModuleActiveAreas.map(name => ({
             name: name,
             type: 'circle',
@@ -453,7 +478,7 @@ window.filterTable = (tableId, query) => {
     const rows = document.querySelectorAll(`#${tableId} tbody tr.module-row`);
     rows.forEach(row => {
         const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(q) ? '' : 'none';
+        row.style.display = text.includes(q)? '' : 'none';
         const nextRow = row.nextElementSibling;
         if (nextRow && nextRow.id.startsWith('areas-')) {
             nextRow.style.display = 'none';
@@ -463,7 +488,7 @@ window.filterTable = (tableId, query) => {
 };
 
 function showLoading(tableId) {
-    document.querySelector(`#${tableId} tbody`).innerHTML = 
+    document.querySelector(`#${tableId} tbody`).innerHTML =
         `<tr><td colspan="10" class="loading">Loading</td></tr>`;
 }
 
