@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="assets/admin.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-  .location-badge {
+ .location-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -16,21 +16,21 @@
             font-size: 12px;
             font-weight: 600;
         }
-  .location-badge.fixed {
+ .location-badge.fixed {
             background: #dbeafe;
             color: #1e40af;
         }
-  .location-badge.dynamic {
+ .location-badge.dynamic {
             background: #fef3c7;
             color: #92400e;
         }
-  .map-container {
+ .map-container {
             height: 400px;
             border-radius: 8px;
             border: 2px solid #e2e8f0;
             margin-top: 12px;
         }
-  .items-list {
+ .items-list {
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 12px;
@@ -38,7 +38,7 @@
             max-height: 300px;
             overflow-y: auto;
         }
-  .item-row {
+ .item-row {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr auto;
             gap: 8px;
@@ -46,30 +46,30 @@
             padding: 8px;
             border-bottom: 1px solid #f1f5f9;
         }
-  .item-row:last-child {
+ .item-row:last-child {
             border-bottom: none;
         }
-  .shop-type-badge {
+ .shop-type-badge {
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
         }
-  .shop-type-badge.product { background: #dbeafe; color: #1e40af; }
-  .shop-type-badge.food { background: #fed7aa; color: #c2410c; }
-  .shop-type-badge.service { background: #e9d5ff; color: #7c3aed; }
-  .shop-type-badge.rental { background: #d1fae5; color: #059669; }
-  .shop-type-badge.fashion { background: #fce7f3; color: #be185d; }
-  .actions {
+ .shop-type-badge.product { background: #dbeafe; color: #1e40af; }
+ .shop-type-badge.food { background: #fed7aa; color: #c2410c; }
+ .shop-type-badge.service { background: #e9d5ff; color: #7c3aed; }
+ .shop-type-badge.rental { background: #d1fae5; color: #059669; }
+ .shop-type-badge.fashion { background: #fce7f3; color: #be185d; }
+ .actions {
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
         }
-  .btn-success { background: #10b981; color: white; }
-  .btn-success:hover { background: #059669; }
-  .btn-info { background: #0ea5e9; color: white; }
-  .btn-info:hover { background: #0284c7; }
+ .btn-success { background: #10b981; color: white; }
+ .btn-success:hover { background: #059669; }
+ .btn-info { background: #0ea5e9; color: white; }
+ .btn-info:hover { background: #0284c7; }
     </style>
 </head>
 <body>
@@ -80,6 +80,7 @@
                 <input type="text" class="search-box" placeholder="Search shops..." onkeyup="filterTable('shopsTable', this.value)">
                 <button class="btn btn-primary" onclick="createNewShop()">➕ Create New Shop</button>
             </div>
+        </div>
         <div style="overflow-x:auto;">
             <table id="shopsTable">
                 <thead>
@@ -356,9 +357,9 @@
 
             categorySelect.innerHTML = '<option value="">-- Select Category --</option>' +
                 filteredCats
-                .sort((a,b) => (b.priority || 0) - (a.priority || 0) || a.name.localeCompare(b.name))
-                .map(c => `<option value="${c.id}">${c.icon} ${escapeHtml(c.name)}</option>`)
-                .join('');
+               .sort((a,b) => (b.priority || 0) - (a.priority || 0) || a.name.localeCompare(b.name))
+               .map(c => `<option value="${c.id}">${c.icon} ${escapeHtml(c.name)}</option>`)
+               .join('');
         }
 
         document.getElementById('shopModuleLink')?.addEventListener('change', filterCategoriesByModule);
