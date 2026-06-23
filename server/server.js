@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 const fs = require('fs');
 require('dotenv').config();
-// const seedModules = require('./routes/seed/modules'); <-- YE LINE COMMENT/HATA DI
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -23,10 +23,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// ==================== ROUTES ====================
-const statsRoutes = require('./routes/stats');
-app.use('/api', statsRoutes);
-app.use('/api/manager', require('./routes/managerRoutes'));
 // Static files serve karo
 app.use(express.static(path.join(__dirname, '../public')));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
@@ -35,14 +31,13 @@ app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
 app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
 
 // ==================== MONGODB CONNECT ====================
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/samanlive', {
+mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/samanlive', {
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 5000
 })
 .then(async () => {
     console.log('✅ MongoDB Connected Successfully');
     console.log(`📦 Database: ${mongoose.connection.name}`);
-    // await seedModules(); <-- YE LINE BHI COMMENT/HATA DI
 })
 .catch(err => {
     console.error('❌ MongoDB Error:', err);
@@ -57,36 +52,42 @@ mongoose.connection.on('disconnected', () => {
     console.log('⚠️ MongoDB Disconnected');
 });
 
-// ==================== ROUTES ====================
+// ==================== API ROUTES ====================
+// Health Check
+app.get('/api/health', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Server is running',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        mongodb: mongoose.connection.readyState === 1? 'connected' : 'disconnected',
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
 // Admin Routes
 app.use('/api', require('./routes/adminRoutes'));
 
-// Manager Routes - Ye hi sab handle karega
-app.use('/api', require('./routes/managerRoutes'));
+// Manager Routes - Ek hi baar
+app.use('/api/manager', require('./routes/managerRoutes'));
 
-// Area Routes - YE NAYI LINE ADD KAR
+// Area Routes
 app.use('/api', require('./routes/areaRoutes'));
 
-// Local Market Admin Routes - YE LINE ADD KI HAI
+// Local Market Admin Routes
 app.use('/api/local-market', require('./routes/local-market-admin'));
 
 // Market/Public Routes
 app.use('/api', require('./routes/market'));
 
-// ADDED: Modules Routes - Ye line add ki tere modules ke liye
+// Public Modules Routes
 app.use('/api', require('./routes/public-modules'));
 
-// Shop Routes - User side - TEMP COMMENT: File missing
-// app.use('/api', require('./routes/shop'));
+// Stats Routes
+app.use('/api', require('./routes/stats'));
 
-// User Routes - TEMP COMMENT: Files missing
-// app.use('/api', require('./routes/userRoutes'));
-// app.use('/api', require('./routes/wishlistRoutes'));
-// app.use('/api', require('./routes/paymentRoutes'));
-// app.use('/api', require('./routes/notificationRoutes'));
-
-// Banner Routes - TEMP COMMENT: File missing
-// app.use('/api', require('./routes/bannerRoutes'));
+// Shop Routes - User side
+app.use('/api/local-market', require('./routes/shopRoutes'));
 
 // ==================== ADMIN PANEL ROUTES ====================
 app.get('/admin', (req, res) => {
@@ -104,7 +105,6 @@ app.get('/admin/:page', (req, res) => {
     });
 });
 
-// Module detail page route
 app.get('/module-detail.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/admin-panel/module-detail.html'));
 });
@@ -121,8 +121,7 @@ app.get('/area-manager/:page', (req, res) => {
     });
 });
 
-// ==================== AREA SYSTEM ROUTES - NEW ====================
-// Area management pages
+// ==================== AREA SYSTEM ROUTES ====================
 app.get('/areas.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/areas.html'));
 });
@@ -134,7 +133,6 @@ app.get('/area-detail.html', (req, res) => {
 app.get('/managers.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/managers.html'));
 });
-// ==================== AREA SYSTEM ROUTES END ====================
 
 // ==================== USER APP ROUTES ====================
 app.get('/', (req, res) => {
@@ -157,25 +155,12 @@ app.get('/wishlist.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/wishlist.html'));
 });
 
-// ==================== HEALTH CHECK ====================
-app.get('/api/health', (req, res) => {
-    res.json({
-        success: true,
-        message: 'Server is running',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        mongodb: mongoose.connection.readyState === 1? 'connected' : 'disconnected',
-        environment: process.env.NODE_ENV || 'development'
-    });
-});
-
-// ==================== ADMIN API DOCS ROUTE - UPDATED WITH TREE ====================
+// ==================== ADMIN API DOCS ROUTE ====================
 app.get('/api/admin/routes', (req, res) => {
     try {
         const allRoutes = [];
         const routesDir = path.join(__dirname, './routes');
 
-        // Helper function: Project tree scan karne ke liye
         function scanProjectTree(dir, basePath = '') {
             const items = [];
             if (!fs.existsSync(dir)) return items;
@@ -204,7 +189,6 @@ app.get('/api/admin/routes', (req, res) => {
             return items;
         }
 
-        // 1. server.js ke direct routes
         if (app._router && app._router.stack) {
             app._router.stack.forEach(layer => {
                 if (layer.route) {
@@ -220,7 +204,6 @@ app.get('/api/admin/routes', (req, res) => {
             });
         }
 
-        // 2. routes/ folder ki saari files scan karo
         if (fs.existsSync(routesDir)) {
             const files = fs.readdirSync(routesDir);
 
@@ -228,8 +211,6 @@ app.get('/api/admin/routes', (req, res) => {
                 if (file.endsWith('.js')) {
                     const filePath = path.join(routesDir, file);
                     const content = fs.readFileSync(filePath, 'utf8');
-
-                    // Regex se routes nikaalo: router.get('/path',...), router.post(...), etc
                     const routeRegex = /router\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]/g;
                     let match;
 
@@ -237,24 +218,16 @@ app.get('/api/admin/routes', (req, res) => {
                         const method = match[1].toUpperCase();
                         const routePath = match[2];
 
-                        // Base path nikaalo file name se
                         let basePath = '';
                         if (file === 'adminRoutes.js') basePath = '/api/admin';
                         else if (file === 'managerRoutes.js') basePath = '/api/manager';
                         else if (file === 'areaRoutes.js') basePath = '/api';
-                        else if (file === 'userRoutes.js') basePath = '/api/users';
+                        else if (file === 'local-market-admin.js') basePath = '/api/local-market';
+                        else if (file === 'shopRoutes.js') basePath = '/api/local-market';
                         else if (file === 'market.js') basePath = '/api/market';
                         else if (file === 'stats.js') basePath = '/api';
-                        else if (file === 'testRoutes.js') basePath = '/api/test';
-                        else if (file === 'shop.js') basePath = '/api/shop';
-                        else if (file === 'wishlistRoutes.js') basePath = '/api/wishlist';
-                        else if (file === 'paymentRoutes.js') basePath = '/api/payment';
-                        else if (file === 'notificationRoutes.js') basePath = '/api/notification';
-                        else if (file === 'bannerRoutes.js') basePath = '/api/banner';
-                        else if (file === 'modules.js') basePath = '/api'; // ADDED: modules.js ka base path
-                        else if (file === 'local-market-admin.js') basePath = '/api/local-market'; // ADDED: local-market-admin ka base path
+                        else if (file === 'public-modules.js') basePath = '/api';
                         else {
-                            // Auto detect: xyzRoutes -> /api/xyz
                             const name = file.replace('Routes.js', '').replace('.js', '').toLowerCase();
                             basePath = `/api/${name}`;
                         }
@@ -272,7 +245,6 @@ app.get('/api/admin/routes', (req, res) => {
             });
         }
 
-        // Duplicates hatao
         const uniqueRoutes = [];
         const seen = new Set();
 
@@ -284,7 +256,6 @@ app.get('/api/admin/routes', (req, res) => {
             }
         });
 
-        // 3. Project tree scan karo
         const projectRoot = path.join(__dirname, '..');
         const projectTree = scanProjectTree(projectRoot);
 
@@ -308,7 +279,6 @@ app.get('/api/admin/routes', (req, res) => {
 });
 
 // ==================== ROUTE CODE VIEWER + EDITOR ====================
-// Local aur production dono me chalega, lekin save sirf local me
 app.post('/api/admin/get-route-code', express.json(), (req, res) => {
     try {
         const { file } = req.body;
@@ -338,7 +308,6 @@ app.post('/api/admin/get-route-code', express.json(), (req, res) => {
 
 app.post('/api/admin/update-route-code', express.json(), (req, res) => {
     try {
-        // Production me block kar do
         if (process.env.NODE_ENV === 'production') {
             return res.status(403).json({
                 success: false,
@@ -355,11 +324,8 @@ app.post('/api/admin/update-route-code', express.json(), (req, res) => {
             filePath = path.join(__dirname, './routes', file);
         }
 
-        // Backup banao
         const backupPath = filePath + '.backup-' + Date.now();
         fs.copyFileSync(filePath, backupPath);
-
-        // Naya code likho
         fs.writeFileSync(filePath, code);
 
         res.json({
@@ -413,7 +379,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
@@ -432,7 +398,7 @@ process.on('SIGTERM', async () => {
     process.exit(0);
 });
 
-// ==================== START SERVER - SABSE LAST ME ====================
+// ==================== START SERVER ====================
 const server = app.listen(PORT, () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log(`📊 Admin Panel: http://localhost:${PORT}/admin`);

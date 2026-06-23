@@ -1,0 +1,59 @@
+<div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h2 id="formTitle">Add Menu Item</h2>
+    <form id="productForm">
+        <input type="hidden" id="productId">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Dish Name *</label>
+                <input type="text" id="pName" required>
+            </div>
+            <div class="form-group">
+                <label>Category *</label>
+                <select id="pCategory" required>
+                    <option value="starter">Starter</option>
+                    <option value="main-course">Main Course</option>
+                    <option value="bread">Bread/Roti</option>
+                    <option value="rice">Rice/Biryani</option>
+                    <option value="dessert">Dessert</option>
+                    <option value="beverage">Beverage</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Food Type *</label>
+                <select id="pFoodType" required>
+                    <option value="veg">Veg</option>
+                    <option value="non-veg">Non-Veg</option>
+                    <option value="egg">Egg</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Spice Level</label>
+                <select id="pSpice">
+                    <option value="mild">Mild</option>
+                    <option value="medium">Medium</option>
+                    <option value="spicy">Spicy</option>
+                </select>
+            </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Price *</label>
+                <input type="number" id="pPrice" required>
+            </div>
+            <div class="form-group">
+                <label>Preparation Time</label>
+                <input type="text" id="pTime" placeholder="15 mins">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="pDesc" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+            <label><input type="checkbox" id="pAvailable" checked> Available Now</label>
+        </div>
+        <button type="submit" class="btn btn-success">Save Dish</button>
+    </form>
+</div>

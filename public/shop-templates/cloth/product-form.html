@@ -1,0 +1,64 @@
+<div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h2 id="formTitle">Add Clothing Item</h2>
+    <form id="productForm">
+        <input type="hidden" id="productId">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Item Name *</label>
+                <input type="text" id="pName" required>
+            </div>
+            <div class="form-group">
+                <label>Category *</label>
+                <select id="pCategory" required>
+                    <option value="">Select</option>
+                    <option value="men">Men</option>
+                    <option value="women">Women</option>
+                    <option value="kids">Kids</option>
+                    <option value="unisex">Unisex</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Size *</label>
+                <select id="pSize" required>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                    <option value="Free">Free Size</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Color *</label>
+                <input type="text" id="pColor" required>
+            </div>
+            <div class="form-group">
+                <label>Fabric</label>
+                <input type="text" id="pFabric" placeholder="Cotton, Polyester">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>MRP *</label>
+                <input type="number" id="pMrp" required>
+            </div>
+            <div class="form-group">
+                <label>Selling Price *</label>
+                <input type="number" id="pPrice" required>
+            </div>
+            <div class="form-group">
+                <label>Stock *</label>
+                <input type="number" id="pStock" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="pDesc" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Save Item</button>
+    </form>
+</div>

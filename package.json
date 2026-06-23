@@ -33,3 +33,10 @@
   "license": "ISC",
   "type": "commonjs"
 }
+{
+  "scripts": {
+    "seed:types": "node seed/seedShopTypes.js",
+    "seed:admin": "node seed/seedAdmin.js",
+    "seed:all": "node seed/seedShopTypes.js && node seed/seedAdmin.js"
+  }
+}

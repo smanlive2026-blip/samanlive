@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local Market Shops - Admin</title>
-    <link rel="stylesheet" href="assets/admin.css">
+    <link rel="stylesheet" href="../assets/admin.css">
 </head>
 <body>
     <div class="admin-container">
@@ -39,12 +39,13 @@
                             <th>Owner</th>
                             <th>Category</th>
                             <th>Area</th>
+                            <th>Created By</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="shopsTableBody">
-                        <tr><td colspan="6">Loading...</td></tr>
+                        <tr><td colspan="7">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -91,25 +92,30 @@
         </div>
     </div>
 
-    <script src="assets/admin.js"></script>
+    <script src="../assets/admin.js"></script>
     <script>
+        const token = localStorage.getItem('adminToken'); // Admin login ka token
         let allCategories = [];
         let allAreas = [];
 
         async function init() {
+            if(!token) return window.location.href = '/admin/login';
             await loadCategories();
             await loadAreas();
             await loadShops();
         }
 
         async function loadCategories() {
-            const res = await fetch('/api/modules');
+            const res = await fetch('/api/modules', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const modules = await res.json();
             const localMarket = modules.find(m => m.moduleId === 'local-market');
             allCategories = localMarket?.categoryDetails || [];
             
             const catSelect = document.getElementById('shopCategory');
             const filterCat = document.getElementById('filterCategory');
+            catSelect.innerHTML = '<option value="">Select Category</option>';
             allCategories.forEach(cat => {
                 catSelect.innerHTML += `<option value="${cat.slug}">${cat.icon} ${cat.name}</option>`;
                 filterCat.innerHTML += `<option value="${cat.slug}">${cat.name}</option>`;
@@ -117,9 +123,12 @@
         }
 
         async function loadAreas() {
-            const res = await fetch('/api/areas');
+            const res = await fetch('/api/areas', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             allAreas = await res.json();
             const areaSelect = document.getElementById('shopArea');
+            areaSelect.innerHTML = '<option value="">Select Area</option>';
             allAreas.forEach(area => {
                 areaSelect.innerHTML += `<option value="${area._id}">${area.name}</option>`;
             });
@@ -135,12 +144,14 @@
             if(status) url += `status=${status}&`;
             if(search) url += `search=${search}&`;
             
-            const res = await fetch(url);
+            const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const shops = await res.json();
             
             const tbody = document.getElementById('shopsTableBody');
             if(shops.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">No shops found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7">No shops found</td></tr>';
                 return;
             }
             
@@ -150,6 +161,7 @@
                     <td>${shop.ownerName}</td>
                     <td>${shop.category}</td>
                     <td>${shop.areaName || '-'}</td>
+                    <td>${shop.createdByName || 'Admin'}</td>
                     <td><span class="badge badge-${shop.status}">${shop.status}</span></td>
                     <td>
                         <button class="btn-sm btn-info" onclick="editShop('${shop._id}')">Edit</button>
@@ -167,7 +179,9 @@
         }
 
         async function editShop(id) {
-            const res = await fetch(`/api/local-market/shops/${id}`);
+            const res = await fetch(`/api/local-market/shops/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const shop = await res.json();
             document.getElementById('shopId').value = shop._id;
             document.getElementById('shopName').value = shop.shopName;
@@ -181,8 +195,11 @@
         }
 
         async function deleteShop(id) {
-            if(!confirm('Are you sure?')) return;
-            await fetch(`/api/local-market/shops/${id}`, { method: 'DELETE' });
+            if(!confirm('Are you sure? This will delete all products too.')) return;
+            await fetch(`/api/local-market/shops/${id}`, { 
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             loadShops();
         }
 
@@ -203,7 +220,10 @@
             
             await fetch(url, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(data)
             });
             closeModal();
