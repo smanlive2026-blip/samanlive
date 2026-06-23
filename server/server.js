@@ -67,6 +67,9 @@ app.use('/api', require('./routes/managerRoutes'));
 // Area Routes - YE NAYI LINE ADD KAR
 app.use('/api', require('./routes/areaRoutes'));
 
+// Local Market Admin Routes - YE LINE ADD KI HAI
+app.use('/api/local-market', require('./routes/local-market-admin'));
+
 // Market/Public Routes
 app.use('/api', require('./routes/market'));
 
@@ -249,6 +252,7 @@ app.get('/api/admin/routes', (req, res) => {
                         else if (file === 'notificationRoutes.js') basePath = '/api/notification';
                         else if (file === 'bannerRoutes.js') basePath = '/api/banner';
                         else if (file === 'modules.js') basePath = '/api'; // ADDED: modules.js ka base path
+                        else if (file === 'local-market-admin.js') basePath = '/api/local-market'; // ADDED: local-market-admin ka base path
                         else {
                             // Auto detect: xyzRoutes -> /api/xyz
                             const name = file.replace('Routes.js', '').replace('.js', '').toLowerCase();
@@ -409,7 +413,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-  ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+ ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 

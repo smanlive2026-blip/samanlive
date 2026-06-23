@@ -37,7 +37,128 @@
       "status": true,
       "banner": "",
       "areas": [],
-      "categoryDetails": []
+      "categoryDetails": [
+        {
+          "id": "cat001",
+          "name": "Grocery & Kirana",
+          "icon": "🛒",
+          "color": "#10b981",
+          "group": "grocery",
+          "priority": 100
+        },
+        {
+          "id": "cat002",
+          "name": "Food & Restaurant",
+          "icon": "🍛",
+          "color": "#f59e0b",
+          "group": "food",
+          "priority": 95
+        },
+        {
+          "id": "cat003",
+          "name": "Medical & Pharmacy",
+          "icon": "💊",
+          "color": "#ef4444",
+          "group": "medical",
+          "priority": 90
+        },
+        {
+          "id": "cat004",
+          "name": "Electronics",
+          "icon": "📱",
+          "color": "#3b82f6",
+          "group": "electronics",
+          "priority": 88
+        },
+        {
+          "id": "cat005",
+          "name": "Fashion & Clothing",
+          "icon": "👕",
+          "color": "#ec4899",
+          "group": "fashion",
+          "priority": 85
+        },
+        {
+          "id": "cat006",
+          "name": "Home & Furniture",
+          "icon": "🛋️",
+          "color": "#8b5cf6",
+          "group": "home",
+          "priority": 82
+        },
+        {
+          "id": "cat007",
+          "name": "Beauty & Cosmetics",
+          "icon": "💄",
+          "color": "#f43f5e",
+          "group": "beauty",
+          "priority": 80
+        },
+        {
+          "id": "cat008",
+          "name": "Sports & Fitness",
+          "icon": "⚽",
+          "color": "#06b6d4",
+          "group": "sports",
+          "priority": 78
+        },
+        {
+          "id": "cat009",
+          "name": "Automotive",
+          "icon": "🚗",
+          "color": "#64748b",
+          "group": "automotive",
+          "priority": 76
+        },
+        {
+          "id": "cat010",
+          "name": "Kids & Toys",
+          "icon": "🧸",
+          "color": "#f97316",
+          "group": "kids",
+          "priority": 75
+        },
+        {
+          "id": "cat011",
+          "name": "Books & Stationery",
+          "icon": "📚",
+          "color": "#a855f7",
+          "group": "books",
+          "priority": 70
+        },
+        {
+          "id": "cat012",
+          "name": "Services",
+          "icon": "🛠️",
+          "color": "#14b8a6",
+          "group": "service",
+          "priority": 72
+        },
+        {
+          "id": "cat013",
+          "name": "Entertainment",
+          "icon": "🎬",
+          "color": "#eab308",
+          "group": "entertainment",
+          "priority": 68
+        },
+        {
+          "id": "cat014",
+          "name": "Pet Supplies",
+          "icon": "🐕",
+          "color": "#22c55e",
+          "group": "pets",
+          "priority": 65
+        },
+        {
+          "id": "cat015",
+          "name": "Agriculture",
+          "icon": "🌾",
+          "color": "#84cc16",
+          "group": "agriculture",
+          "priority": 60
+        }
+      ]
     },
     {
       "id": "food",

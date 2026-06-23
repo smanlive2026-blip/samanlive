@@ -32,7 +32,7 @@
             <button class="close-btn" onclick="closeCategoryModal()">×</button>
         </div>
         <input type="hidden" id="catModuleId">
-        <input type="hidden" id="catIndex">
+        <input type="hidden" id="catId">
         <div class="form-grid">
             <div class="form-group">
                 <label>Select from Database *</label>
@@ -54,7 +54,7 @@
             </div>
             <div class="form-group">
                 <label>Group</label>
-                <input type="text" id="catGroup" placeholder="e.g. Grocery">
+                <input type="text" id="catGroup" placeholder="e.g. grocery">
             </div>
             <div class="form-group">
                 <label>Priority</label>
@@ -71,20 +71,27 @@
 <script src="assets/categories-data.js"></script>
 <script>
 // ========================================
-// MODULE + CATEGORY MANAGEMENT
+// MODULE + CATEGORY MANAGEMENT - LOCAL MARKET
 // ========================================
 let allModulesData = [];
+let allCategoriesData = [];
 let expandedModule = null;
 
 async function loadModules() {
     const container = document.getElementById('modulesList');
     if (!container) return;
-    
+
     container.innerHTML = '<div class="loading" style="text-align:center;padding:40px;">Loading modules...</div>';
 
     try {
-        const moduleData = await apiCall('/modules');
+        // CHANGED: Local market API se load karo
+        const moduleData = await apiCall('/local-market/categories');
         allModulesData = moduleData.modules || moduleData || [];
+
+        // Categories extract karo for dropdown
+        if(allModulesData[0]) {
+            allCategoriesData = allModulesData[0].categoryDetails || [];
+        }
 
         renderModules();
         renderCategoriesGrid();
@@ -99,14 +106,14 @@ function renderCategoriesGrid() {
     const container = document.getElementById('categoriesGridByGroup');
     if (!container) return;
 
-    if (!window.CATEGORIES_FALLBACK || window.CATEGORIES_FALLBACK.length === 0) {
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">No categories found in categories-data.js</div>';
+    if (!allCategoriesData || allCategoriesData.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">No categories found</div>';
         return;
     }
 
     // Group by 'group' field
     const grouped = {};
-    window.CATEGORIES_FALLBACK.forEach(cat => {
+    allCategoriesData.forEach(cat => {
         const group = cat.group || 'General';
         if (!grouped[group]) grouped[group] = [];
         grouped[group].push(cat);
@@ -134,25 +141,26 @@ function renderCategoriesGrid() {
 function populateCategoryDropdown() {
     const select = document.getElementById('catSelectFromList');
     if (!select) return;
-    
-    if (!window.CATEGORIES_FALLBACK || window.CATEGORIES_FALLBACK.length === 0) {
+
+    if (!allCategoriesData || allCategoriesData.length === 0) {
         select.innerHTML = '<option value="">⚠️ No categories found</option>';
         return;
     }
 
     select.innerHTML = '<option value="">-- Choose Category --</option>' +
-        window.CATEGORIES_FALLBACK.map((c, idx) =>
+        allCategoriesData.map((c, idx) =>
             `<option value="${idx}">${c.icon} ${escapeHtml(c.name)} - ${c.group}</option>`
         ).join('');
 }
 
 function fillCategoryFromList(index) {
     if (index === '') return;
-    const cat = window.CATEGORIES_FALLBACK[parseInt(index)];
+    const cat = allCategoriesData[parseInt(index)];
     document.getElementById('catName').value = cat.name;
     document.getElementById('catIcon').value = cat.icon;
     document.getElementById('catColor').value = cat.color;
     document.getElementById('catGroup').value = cat.group;
+    document.getElementById('catPriority').value = cat.priority || 0;
 }
 
 function renderModules(searchTerm = '') {
@@ -185,7 +193,6 @@ function renderModules(searchTerm = '') {
                         <h3 style="margin:0;font-size:18px;">${escapeHtml(m.name)}</h3>
                         <p style="margin:0;color:#64748b;font-size:13px;">${categories.length} categories</p>
                     </div>
-                </div>
                 <div style="display:flex;gap:8px;align-items:center;">
                     <button class="btn btn-success btn-sm" onclick="event.stopPropagation(); openAddCategory('${moduleId}')">➕ Add Category</button>
                     <span style="font-size:20px;transform:rotate(${isExpanded? '180deg' : '0deg'});transition:0.3s;">▼</span>
@@ -217,8 +224,8 @@ function renderModules(searchTerm = '') {
                                         <td style="padding:10px;"><span class="color-badge" style="background:${c.color};padding:4px 12px;border-radius:6px;color:#fff;font-size:12px;">${c.color}</span></td>
                                         <td style="padding:10px;">${c.priority || 0}</td>
                                         <td style="padding:10px;">
-                                            <button class="btn btn-primary btn-sm" onclick="editCategory('${moduleId}', ${idx})">Edit</button>
-                                            <button class="btn btn-danger btn-sm" onclick="deleteCategory('${moduleId}', ${idx})">Delete</button>
+                                            <button class="btn btn-primary btn-sm" onclick="editCategory('${moduleId}', '${c.id}')">Edit</button>
+                                            <button class="btn btn-danger btn-sm" onclick="deleteCategory('${moduleId}', '${c.id}')">Delete</button>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -244,12 +251,12 @@ window.filterModules = (val) => {
 };
 
 // ========================================
-// ADD/EDIT/DELETE CATEGORY - PERMANENT SAVE
+// ADD/EDIT/DELETE CATEGORY - PERMANENT SAVE TO JSON
 // ========================================
 window.openAddCategory = (moduleId) => {
     document.getElementById('categoryModalTitle').textContent = 'Add Category to Module';
     document.getElementById('catModuleId').value = moduleId;
-    document.getElementById('catIndex').value = '';
+    document.getElementById('catId').value = '';
     document.getElementById('catName').value = '';
     document.getElementById('catIcon').value = '📦';
     document.getElementById('catColor').value = '#6366f1';
@@ -259,17 +266,22 @@ window.openAddCategory = (moduleId) => {
     document.getElementById('categoryModal').classList.add('active');
 };
 
-window.editCategory = (moduleId, catIndex) => {
+window.editCategory = (moduleId, catId) => {
     const m = allModulesData.find(x => (x._id || x.id) === moduleId);
-    if (!m ||!m.categoryDetails ||!m.categoryDetails[catIndex]) {
+    if (!m ||!m.categoryDetails) {
+        showToast('Module not found', 'error');
+        return;
+    }
+
+    const c = m.categoryDetails.find(cat => cat.id === catId);
+    if (!c) {
         showToast('Category not found', 'error');
         return;
     }
 
-    const c = m.categoryDetails[catIndex];
     document.getElementById('categoryModalTitle').textContent = 'Edit Category';
     document.getElementById('catModuleId').value = moduleId;
-    document.getElementById('catIndex').value = catIndex;
+    document.getElementById('catId').value = catId;
     document.getElementById('catName').value = c.name || '';
     document.getElementById('catIcon').value = c.icon || '📦';
     document.getElementById('catColor').value = c.color || '#6366f1';
@@ -285,18 +297,9 @@ window.saveCategory = async () => {
     btn.textContent = 'Saving...';
 
     const moduleId = document.getElementById('catModuleId').value;
-    const catIndex = document.getElementById('catIndex').value;
-    const m = allModulesData.find(x => (x._id || x.id) === moduleId);
-
-    if (!m) {
-        showToast('Module not found', 'error');
-        btn.disabled = false;
-        btn.textContent = '💾 Save Category';
-        return;
-    }
+    const catId = document.getElementById('catId').value;
 
     const newCategory = {
-        id: 'cat_' + Date.now(),
         name: document.getElementById('catName').value.trim(),
         icon: document.getElementById('catIcon').value.trim(),
         color: document.getElementById('catColor').value,
@@ -311,17 +314,16 @@ window.saveCategory = async () => {
         return;
     }
 
-    if (!m.categoryDetails) m.categoryDetails = [];
-
-    if (catIndex === '') {
-        m.categoryDetails.push(newCategory);
-    } else {
-        m.categoryDetails[parseInt(catIndex)] = {...m.categoryDetails[parseInt(catIndex)],...newCategory};
-    }
-
     try {
-        await apiCall('/modules/' + moduleId, 'PUT', { categoryDetails: m.categoryDetails });
-        showToast(catIndex === ''? 'Category added & saved!' : 'Category updated & saved!', 'success');
+        if (catId === '') {
+            // ADD NEW
+            await apiCall('/local-market/categories', 'POST', newCategory);
+            showToast('Category added & saved!', 'success');
+        } else {
+            // UPDATE EXISTING
+            await apiCall('/local-market/categories/' + catId, 'PUT', newCategory);
+            showToast('Category updated & saved!', 'success');
+        }
         closeCategoryModal();
         await loadModules();
         expandedModule = moduleId;
@@ -334,16 +336,11 @@ window.saveCategory = async () => {
     }
 };
 
-window.deleteCategory = async (moduleId, catIndex) => {
+window.deleteCategory = async (moduleId, catId) => {
     if (!confirm('Delete this category? This will be permanent.')) return;
 
-    const m = allModulesData.find(x => (x._id || x.id) === moduleId);
-    if (!m ||!m.categoryDetails) return;
-    
-    m.categoryDetails.splice(catIndex, 1);
-
     try {
-        await apiCall('/modules/' + moduleId, 'PUT', { categoryDetails: m.categoryDetails });
+        await apiCall('/local-market/categories/' + catId, 'DELETE');
         showToast('Category deleted permanently!', 'success');
         await loadModules();
         expandedModule = moduleId;
