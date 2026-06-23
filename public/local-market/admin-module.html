@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Local Market Categories - Admin</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+       .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+       .btn { padding: 6px 12px; margin: 2px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Local Market Categories Control</h2>
+    <button class="btn" onclick="loadCategories()">Refresh</button>
+    <table id="catTable">
+        <thead>
+            <tr>
+                <th>Icon</th>
+                <th>Name</th>
+                <th>Priority</th>
+                <th>Show In App</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+<script>
+async function loadCategories() {
+    const res = await fetch('/api/local-market/categories');
+    const cats = await res.json();
+    const tbody = document.querySelector('#catTable tbody');
+    tbody.innerHTML = '';
+
+    cats.sort((a,b) => b.priority - a.priority).forEach(cat => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${cat.icon}</td>
+                <td>${cat.name}</td>
+                <td><input type="number" value="${cat.priority}" onchange="updateCat('${cat._id}', 'priority', this.value)"></td>
+                <td><input type="checkbox" ${cat.showInApp? 'checked' : ''} onchange="updateCat('${cat._id}', 'showInApp', this.checked)"></td>
+                <td>
+                    <select onchange="updateCat('${cat._id}', 'status', this.value)">
+                        <option value="active" ${cat.status==='active'?'selected':''}>Active</option>
+                        <option value="inactive" ${cat.status==='inactive'?'selected':''}>Inactive</option>
+                    </select>
+                </td>
+                <td><button class="btn" onclick="saveCat('${cat._id}')">Save</button></td>
+            </tr>
+        `;
+    });
+}
+
+async function updateCat(id, field, value) {
+    await fetch(`/api/local-market/categories/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ [field]: field === 'priority'? parseInt(value) : value })
+    });
+}
+
+function saveCat(id) {
+    alert('Updated!');
+    loadCategories();
+}
+
+loadCategories();
+</script>
+</body>
+</html>
