@@ -1,6 +1,6 @@
-const Shop = require('../models/Shop');
-const User = require('../models/User');
-const ShopType = require('../models/ShopType');
+const Shop = require('../../server/models/Shop');
+const User = require('../../server/models/User');
+const ShopType = require('../../server/models/ShopType');
 
 // @desc    Get all shops - Admin only
 const getAllShops = async (req, res) => {

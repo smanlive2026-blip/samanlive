@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../middleware/auth');
-const shopCtrl = require('../controllers/shopController'); // <-- Bas 2 dot, 3 nahi
+const shopCtrl = require('../../public/controllers/shopController'); // <-- 3 dot sahi hai
 
 // Admin Routes - Sabhi shop dekhega
 router.get('/shops', verifyToken, isAdmin, shopCtrl.getAllShops);
