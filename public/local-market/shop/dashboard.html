@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Dashboard - SAMANLIVE</title>
+    <link rel="stylesheet" href="/local-market/assets/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="shop-container">
+        <!-- Header - Common for all -->
+        <div class="shop-header">
+            <div>
+                <h1 id="shopName">Loading...</h1>
+                <p id="shopTypeLabel" class="text-muted"></p>
+            </div>
+            <span class="badge" id="shopStatus">Inactive</span>
+        </div>
+
+        <!-- Stats Grid - Dynamic by shop-core.js -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h3 id="stat1Value">0</h3>
+                <p id="stat1Label">Total Items</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat2Value">0</h3>
+                <p id="stat2Label">Loading...</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat3Value">0</h3>
+                <p id="stat3Label">Today Orders</p>
+            </div>
+        </div>
+
+        <!-- Action Bar - Dynamic buttons -->
+        <div class="action-bar" id="actionBar">
+            <button class="btn btn-primary" id="addProductBtn">
+                <i class="fa fa-plus"></i> <span id="addBtnText">Add Product</span>
+            </button>
+            <button class="btn btn-secondary" onclick="loadOrders()">
+                <i class="fa fa-list"></i> View Orders
+            </button>
+            <!-- Restaurant ka Open/Close button yaha add hoga dynamically -->
+        </div>
+
+        <!-- Content Area - Table headers dynamic -->
+        <div class="content-area">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead id="tableHead">
+                        <!-- Headers shop-core.js se aayenge -->
+                    </thead>
+                    <tbody id="productTableBody">
+                        <tr>
+                            <td colspan="10" class="text-center">Loading products...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Container for Product Forms -->
+    <div id="modalContainer"></div>
+
+    <!-- Loader -->
+    <div id="loader" class="loader-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Core JS - Ye sab handle karega -->
+    <script src="/local-market/assets/js/shop-core.js"></script>
+    <script>
+        // URL se shopId aur type nikalo
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        const shopType = urlParams.get('type'); // kirana, cloth, medical, restaurant
+
+        if (!shopId ||!shopType) {
+            alert('Invalid shop URL. shopId and type required');
+            window.location.href = '/local-market/my-shops';
+        } else {
+            // shop-core.js ka main function call karo
+            // Ye function shop type dekh ke stats, table, form sab set karega
+            initDashboard(shopType, shopId);
+        }
+
+        // Add Product button ka handler
+        document.getElementById('addProductBtn').onclick = function() {
+            const formTemplate = shopType === 'restaurant'? 'menu-form' : 'product-form';
+            loadTemplate(formTemplate, shopType);
+        };
+    </script>
+</body>
+</html>
