@@ -76,4 +76,5 @@ productSchema.pre('save', function(next) {
     next();
 });
 
-module.exports = mongoose.model('Product', productSchema);
+// Bas ye line change hai 👇
+module.exports = mongoose.models.Product || mongoose.model('Product', productSchema);

@@ -102,4 +102,5 @@ shopSchema.pre('findOneAndUpdate', function(next) {
     next();
 });
 
-module.exports = mongoose.model('Shop', shopSchema);
+// Bas ye line change hai 👇
+module.exports = mongoose.models.Shop || mongoose.model('Shop', shopSchema);

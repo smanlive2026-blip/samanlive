@@ -32,4 +32,5 @@ const shopTypeSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('ShopType', shopTypeSchema);
+// Bas ye line change hai 👇
+module.exports = mongoose.models.ShopType || mongoose.model('ShopType', shopTypeSchema);
