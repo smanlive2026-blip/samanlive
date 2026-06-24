@@ -388,14 +388,13 @@ let newShopData = null;
 const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant'];
 
 window.addEventListener('DOMContentLoaded', async () => {
-    // ✅ FAKE USER - Login ki zarurat nahi
+    // ✅ NO LOGIN - Direct fake user
     currentUser = {
-        _id: 'guest-' + Date.now(),
         name: 'Shop Owner',
         email: 'owner@shop.com'
     };
 
-    // Check if user already has shop
+    // Check if user already has shop from localStorage
     const existingShopId = localStorage.getItem('myShopId');
     if (existingShopId) {
         try {
@@ -410,6 +409,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             }
         } catch(e) {
             console.log('No existing shop');
+            localStorage.removeItem('myShopId');
         }
     }
 
@@ -466,8 +466,8 @@ function getShopLocation() {
             document.getElementById('shopLng').value = lng;
 
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-    .then(r => r.json())
-    .then(data => {
+   .then(r => r.json())
+   .then(data => {
                 const city = data.address.city || data.address.town || data.address.village || 'Surat';
                 const state = data.address.state || 'Gujarat';
                 const pincode = data.address.postcode || '';
@@ -479,7 +479,7 @@ function getShopLocation() {
                 status.className = 'location-coords success';
                 status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
             })
-    .catch(() => {
+   .catch(() => {
                 document.getElementById('shopCity').value = 'Surat';
                 document.getElementById('shopState').value = 'Gujarat';
                 status.className = 'location-coords success';
@@ -526,10 +526,10 @@ async function submitShop() {
         'stationery': 'product'
     };
 
+    // ✅ FIXED: ownerId aur approvedBy hata diya - Backend khud handle karega
     const shopData = {
         shopName: document.getElementById('shopName').value.trim(),
         ownerName: currentUser.name,
-        ownerId: currentUser._id,
         phone: document.getElementById('shopPhone').value.trim(),
         email: currentUser.email || '',
         address: {
@@ -553,8 +553,6 @@ async function submitShop() {
         status: 'approved',
         isVerified: true,
         isActive: true,
-        approvedBy: currentUser._id,
-        approvedAt: new Date(),
         locationType: 'fixed',
         location: {
             type: 'Point',
@@ -570,6 +568,7 @@ async function submitShop() {
     }
 
     try {
+        // ✅ FIXED: Authorization header hata diya
         const res = await fetch('/api/local-market/shops', {
             method: 'POST',
             headers: {
@@ -580,9 +579,8 @@ async function submitShop() {
         const data = await res.json();
 
         if (data._id) {
-            // ✅ KEY FIX: Fake token set kar de shop owner ke liye
+            // ✅ Success - Token set kar de dashboard access ke liye
             localStorage.setItem('userToken', 'shop-owner-' + data._id);
-            localStorage.setItem('shopOwnerId', data.ownerId);
             localStorage.setItem('myShopId', data._id);
 
             newShopData = data;
