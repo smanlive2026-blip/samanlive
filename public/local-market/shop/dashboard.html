@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="/local-market/assets/css/common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ✅ Back button ke liye extra CSS */
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; }
+        .shop-container { max-width: 1200px; margin: 0 auto; }
         .shop-header {
             display: flex;
             justify-content: space-between;
@@ -33,22 +34,108 @@
             font-size: 14px;
             color: #334155;
         }
-        .back-btn:hover {
-            background: #e2e8f0;
-        }
+        .back-btn:hover { background: #e2e8f0; }
         .badge {
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
-            background: #dcfce7;
-            color: #166534;
+            text-transform: uppercase;
         }
+        .badge.approved { background: #dcfce7; color: #166534; }
+        .badge.pending { background: #fef3c7; color: #92400e; }
+        .badge.rejected { background: #fee2e2; color: #991b1b; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 28px;
+            color: #667eea;
+        }
+        .stat-card p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            padding: 0 20px 20px 20px;
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary { background: #10b981; color: white; }
+        .btn-primary:hover { background: #059669; }
+        .btn-secondary { background: #e2e8f0; color: #334155; }
+        .btn-secondary:hover { background: #cbd5e1; }
+        .content-area {
+            background: white;
+            margin: 0 20px 20px 20px;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #e2e8f0;
+            color: #475569;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .text-center { text-align: center; }
+        .text-muted { color: #64748b; }
+        .loader-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .info-row { display: flex; gap: 24px; margin-bottom: 12px; }
+        .info-item { font-size: 14px; }
+        .info-label { color: #64748b; }
+        .info-value { font-weight: 600; color: #1e293b; }
     </style>
 </head>
 <body>
     <div class="shop-container">
-        <!-- ✅ Header Updated - Back button add kiya -->
+        <!-- Header -->
         <div class="shop-header">
             <div class="header-left">
                 <button class="back-btn" onclick="window.location.href='/local-market/create-shop.html'">
@@ -56,12 +143,13 @@
                 </button>
                 <div>
                     <h1 id="shopName" style="margin:0;font-size:20px;">Loading...</h1>
-                    <p id="shopTypeLabel" class="text-muted" style="margin:0;font-size:13px;color:#64748b;"></p>
+                    <p id="shopTypeLabel" class="text-muted" style="margin:0;font-size:13px;"></p>
                 </div>
-            <span class="badge" id="shopStatus">Inactive</span>
+            </div>
+            <span class="badge" id="shopStatus">Loading</span>
         </div>
 
-        <!-- Stats Grid - Dynamic by shop-core.js -->
+        <!-- Stats Grid -->
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
                 <h3 id="stat1Value">0</h3>
@@ -69,15 +157,34 @@
             </div>
             <div class="stat-card">
                 <h3 id="stat2Value">0</h3>
-                <p id="stat2Label">Loading...</p>
+                <p id="stat2Label">Total Orders</p>
             </div>
             <div class="stat-card">
                 <h3 id="stat3Value">0</h3>
-                <p id="stat3Label">Today Orders</p>
+                <p id="stat3Label">Rating</p>
             </div>
         </div>
 
-        <!-- Action Bar - Dynamic buttons -->
+        <!-- Shop Info Card -->
+        <div class="content-area" id="shopInfoCard" style="display:none">
+            <h3 style="margin-top:0">Shop Information</h3>
+            <div class="info-row">
+                <div class="info-item">
+                    <span class="info-label">Phone:</span>
+                    <span class="info-value" id="shopPhone">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Range:</span>
+                    <span class="info-value" id="shopRange">- KM</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Address:</span>
+                    <span class="info-value" id="shopAddress">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Bar -->
         <div class="action-bar" id="actionBar">
             <button class="btn btn-primary" id="addProductBtn">
                 <i class="fa fa-plus"></i> <span id="addBtnText">Add Product</span>
@@ -85,19 +192,24 @@
             <button class="btn btn-secondary" onclick="loadOrders()">
                 <i class="fa fa-list"></i> View Orders
             </button>
-            <!-- Restaurant ka Open/Close button yaha add hoga dynamically -->
         </div>
 
-        <!-- Content Area - Table headers dynamic -->
+        <!-- Content Area -->
         <div class="content-area">
+            <h3 style="margin-top:0">Products / Items</h3>
             <div class="table-responsive">
                 <table class="data-table">
                     <thead id="tableHead">
-                        <!-- Headers shop-core.js se aayenge -->
+                        <tr>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Unit</th>
+                            <th>Status</th>
+                        </tr>
                     </thead>
                     <tbody id="productTableBody">
                         <tr>
-                            <td colspan="10" class="text-center">Loading products...</td>
+                            <td colspan="4" class="text-center text-muted">No items yet. Click "Add Product" to start.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -105,35 +217,123 @@
         </div>
     </div>
 
-    <!-- Modal Container for Product Forms -->
+    <!-- Modal Container -->
     <div id="modalContainer"></div>
 
     <!-- Loader -->
-    <div id="loader" class="loader-overlay" style="display: none;">
+    <div id="loader" class="loader-overlay">
         <div class="spinner"></div>
     </div>
 
-    <!-- Core JS - Ye sab handle karega -->
-    <script src="/local-market/assets/js/shop-core.js"></script>
     <script>
-        // URL se shopId aur type nikalo
         const urlParams = new URLSearchParams(window.location.search);
         const shopId = urlParams.get('shopId');
-        const shopType = urlParams.get('type'); // kirana, cloth, medical, restaurant
+        const shopType = urlParams.get('type');
+        const token = localStorage.getItem('userToken');
+        let currentShop = null;
 
-        if (!shopId || !shopType) {
-            alert('Invalid shop URL. shopId and type required');
-            window.location.href = '/local-market/create-shop.html'; // ✅ Fallback create-shop pe bheja
-        } else {
-            // shop-core.js ka main function call karo
-            initDashboard(shopType, shopId);
+        if (!shopId || !token) {
+            alert('Invalid access. Please login again.');
+            window.location.href = '/login.html';
         }
 
-        // Add Product button ka handler
-        document.getElementById('addProductBtn').onclick = function() {
-            const formTemplate = shopType === 'restaurant' ? 'menu-form' : 'product-form';
-            loadTemplate(formTemplate, shopType);
+        // Shop Type Labels
+        const shopTypeLabels = {
+            'product': 'Product Store',
+            'food': 'Restaurant / Food',
+            'service': 'Service Provider',
+            'rental': 'Rental Shop',
+            'fashion': 'Fashion / Cloth'
         };
+
+        // Load Shop Data
+        async function loadShopData() {
+            try {
+                const res = await fetch(`/api/local-market/shops/${shopId}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const shop = await res.json();
+
+                if (!shop._id) {
+                    alert('Shop not found');
+                    window.location.href = '/local-market/create-shop.html';
+                    return;
+                }
+
+                currentShop = shop;
+
+                // Update Header
+                document.getElementById('shopName').innerText = shop.shopName;
+                document.getElementById('shopTypeLabel').innerText = shopTypeLabels[shop.shopType] || shop.shopType;
+                
+                const statusEl = document.getElementById('shopStatus');
+                statusEl.innerText = shop.status.toUpperCase();
+                statusEl.className = 'badge ' + shop.status;
+
+                // Update Stats
+                document.getElementById('stat1Value').innerText = shop.items ? shop.items.length : 0;
+                document.getElementById('stat2Value').innerText = shop.totalOrders || 0;
+                document.getElementById('stat3Value').innerText = shop.rating ? shop.rating.toFixed(1) : '0.0';
+
+                // Update Shop Info
+                document.getElementById('shopPhone').innerText = shop.phone || '-';
+                document.getElementById('shopRange').innerText = (shop.range / 1000) + ' KM';
+                document.getElementById('shopAddress').innerText = shop.address?.line1 || '-';
+                document.getElementById('shopInfoCard').style.display = 'block';
+
+                // Update Add Button Text
+                const btnTexts = {
+                    'food': 'Add Menu Item',
+                    'service': 'Add Service',
+                    'rental': 'Add Rental Item',
+                    'fashion': 'Add Product',
+                    'product': 'Add Product'
+                };
+                document.getElementById('addBtnText').innerText = btnTexts[shop.shopType] || 'Add Item';
+
+                // Load Items
+                loadItems(shop.items || []);
+
+                document.getElementById('loader').style.display = 'none';
+
+            } catch (err) {
+                console.error(err);
+                alert('Failed to load shop: ' + err.message);
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        // Load Items Table
+        function loadItems(items) {
+            const tbody = document.getElementById('productTableBody');
+            
+            if (!items || items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No items yet. Click "Add Product" to start.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>₹${item.price}</td>
+                    <td>${item.unit || '-'}</td>
+                    <td>${item.available ? '<span style="color:#10b981">Available</span>' : '<span style="color:#ef4444">Unavailable</span>'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Add Product Handler
+        document.getElementById('addProductBtn').onclick = function() {
+            alert('Add Product feature coming soon! Backend route ready hai, UI banao.');
+        };
+
+        // Load Orders Handler
+        function loadOrders() {
+            alert('Orders section coming soon!');
+        }
+
+        // Init
+        loadShopData();
     </script>
 </body>
 </html>
