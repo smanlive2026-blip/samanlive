@@ -7,13 +7,13 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-       .area-grid {
+     .area-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-       .area-card {
+     .area-card {
             background: white;
             border: 2px solid #e2e8f0;
             border-radius: 12px;
@@ -21,60 +21,60 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-       .area-card:hover {
+     .area-card:hover {
             border-color: #6366f1;
             transform: translateY(-4px);
             box-shadow: 0 8px 16px rgba(99,102,241,0.15);
         }
-       .area-card.active {
+     .area-card.active {
             border-color: #10b981;
             background: #f0fdf4;
         }
-       .area-card-header {
+     .area-card-header {
             display: flex;
             justify-content: space-between;
             align-items: start;
             margin-bottom: 12px;
         }
-       .area-code {
+     .area-code {
             font-size: 18px;
             font-weight: 700;
             color: #1e293b;
         }
-       .area-stats {
+     .area-stats {
             display: flex;
             gap: 15px;
             margin-top: 12px;
             font-size: 13px;
             color: #64748b;
         }
-       .manager-section {
+     .manager-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 25px;
             border-radius: 12px;
             margin-bottom: 25px;
         }
-       .manager-info {
+     .manager-info {
             display: flex;
             gap: 20px;
             align-items: center;
             margin-bottom: 20px;
         }
-       .manager-photo {
+     .manager-photo {
             width: 80px;
             height: 80px;
             border-radius: 50%;
             border: 3px solid white;
             object-fit: cover;
         }
-       .module-badges {
+     .module-badges {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-top: 15px;
         }
-       .module-badge {
+     .module-badge {
             background: rgba(255,255,255,0.2);
             padding: 6px 14px;
             border-radius: 20px;
@@ -82,7 +82,7 @@
             font-weight: 600;
             backdrop-filter: blur(10px);
         }
-       .location-badge {
+     .location-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -91,21 +91,21 @@
             font-size: 12px;
             font-weight: 600;
         }
-       .location-badge.fixed {
+     .location-badge.fixed {
             background: #dbeafe;
             color: #1e40af;
         }
-       .location-badge.dynamic {
+     .location-badge.dynamic {
             background: #fef3c7;
             color: #92400e;
         }
-       .hidden { display: none; }
-       .shop-address {
+     .hidden { display: none; }
+     .shop-address {
             font-size: 11px;
             color: #64748b;
             margin-top: 4px;
         }
-       .view-map-btn {
+     .view-map-btn {
             background: #3b82f6;
             color: white;
             border: none;
@@ -115,7 +115,7 @@
             cursor: pointer;
             margin-left: 6px;
         }
-       .view-map-btn:hover {
+     .view-map-btn:hover {
             background: #2563eb;
         }
     </style>
@@ -221,6 +221,15 @@
                 allModules = modulesData.modules || modulesData || [];
                 
                 renderAreaCards();
+
+                // Auto-select area from localStorage if exists
+                const savedArea = localStorage.getItem('currentAreaCode');
+                if (savedArea && allAreas.find(a => a.areaCode === savedArea)) {
+                    setTimeout(() => {
+                        const card = document.querySelector(`.area-card[onclick*="${savedArea}"]`);
+                        if (card) card.click();
+                    }, 300);
+                }
             } catch (err) {
                 console.error(err);
                 showToast('Failed to load data: ' + err.message, 'error');
@@ -236,7 +245,7 @@
             }
 
             grid.innerHTML = allAreas.map(area => {
-                const shopCount = allShops.filter(s => s.areaCode === area.areaCode).length;
+                const shopCount = allShops.filter(s => s.areaCode === area.areaCode && s.status !== 'pending').length;
                 const managerCount = allManagers.filter(m => m.areaCode === area.areaCode).length;
                 const isActive = area.status;
                 
@@ -266,6 +275,10 @@
 
         window.selectArea = (areaCode, event) => {
             selectedAreaCode = areaCode;
+            
+            // ✅ FIX: Save to localStorage
+            localStorage.setItem('currentAreaCode', areaCode);
+            localStorage.setItem('currentAreaName', allAreas.find(a => a.areaCode === areaCode)?.areaName || areaCode);
             
             // Highlight selected card
             document.querySelectorAll('.area-card').forEach(card => card.classList.remove('active'));
@@ -318,7 +331,7 @@
 
         function loadShopsSection(areaCode) {
             const area = allAreas.find(a => a.areaCode === areaCode);
-            const shops = allShops.filter(s => s.areaCode === areaCode);
+            const shops = allShops.filter(s => s.areaCode === areaCode && s.status !== 'pending');
             
             document.getElementById('selectedAreaName').textContent = area.areaName;
             document.getElementById('shopsCount').textContent = shops.length;
