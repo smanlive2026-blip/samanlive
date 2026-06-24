@@ -42,9 +42,11 @@
             font-weight: 600;
             text-transform: uppercase;
         }
+        .badge.active { background: #dcfce7; color: #166534; }
         .badge.approved { background: #dcfce7; color: #166534; }
         .badge.pending { background: #fef3c7; color: #92400e; }
         .badge.rejected { background: #fee2e2; color: #991b1b; }
+        .badge.inactive { background: #e5e7eb; color: #374151; }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -71,6 +73,7 @@
             display: flex;
             gap: 12px;
             padding: 0 20px 20px 20px;
+            flex-wrap: wrap;
         }
         .btn {
             padding: 12px 20px;
@@ -84,6 +87,8 @@
         .btn-primary:hover { background: #059669; }
         .btn-secondary { background: #e2e8f0; color: #334155; }
         .btn-secondary:hover { background: #cbd5e1; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
         .content-area {
             background: white;
             margin: 0 20px 20px 20px;
@@ -127,10 +132,21 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .info-row { display: flex; gap: 24px; margin-bottom: 12px; }
+        .info-row { display: flex; gap: 24px; margin-bottom: 12px; flex-wrap: wrap; }
         .info-item { font-size: 14px; }
         .info-label { color: #64748b; }
         .info-value { font-weight: 600; color: #1e293b; }
+        .table-responsive { overflow-x: auto; }
+        .item-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .item-badge.veg { background: #dcfce7; color: #166534; }
+        .item-badge.non-veg { background: #fee2e2; color: #991b1b; }
+        .item-badge.available { background: #dcfce7; color: #166534; }
+        .item-badge.unavailable { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
@@ -138,7 +154,7 @@
         <!-- Header -->
         <div class="shop-header">
             <div class="header-left">
-                <button class="back-btn" onclick="window.location.href='/local-market/create-shop.html'">
+                <button class="back-btn" onclick="window.history.back()">
                     <i class="fa fa-arrow-left"></i>
                 </button>
                 <div>
@@ -160,7 +176,7 @@
                 <p id="stat2Label">Total Orders</p>
             </div>
             <div class="stat-card">
-                <h3 id="stat3Value">0</h3>
+                <h3 id="stat3Value">0.0</h3>
                 <p id="stat3Label">Rating</p>
             </div>
         </div>
@@ -181,6 +197,10 @@
                     <span class="info-label">Address:</span>
                     <span class="info-value" id="shopAddress">-</span>
                 </div>
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value" id="shopOpenStatus">-</span>
+                </div>
             </div>
         </div>
 
@@ -192,11 +212,14 @@
             <button class="btn btn-secondary" onclick="loadOrders()">
                 <i class="fa fa-list"></i> View Orders
             </button>
+            <button class="btn btn-secondary" onclick="editShopInfo()">
+                <i class="fa fa-edit"></i> Edit Shop
+            </button>
         </div>
 
         <!-- Content Area -->
         <div class="content-area">
-            <h3 style="margin-top:0">Products / Items</h3>
+            <h3 style="margin-top:0" id="itemsTitle">Products / Items</h3>
             <div class="table-responsive">
                 <table class="data-table">
                     <thead id="tableHead">
@@ -205,11 +228,12 @@
                             <th>Price</th>
                             <th>Unit</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="productTableBody">
                         <tr>
-                            <td colspan="4" class="text-center text-muted">No items yet. Click "Add Product" to start.</td>
+                            <td colspan="5" class="text-center text-muted">Loading items...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -231,6 +255,7 @@
         const shopType = urlParams.get('type');
         const token = localStorage.getItem('userToken');
         let currentShop = null;
+        let currentShopType = '';
 
         if (!shopId || !token) {
             alert('Invalid access. Please login again.');
@@ -239,11 +264,28 @@
 
         // Shop Type Labels
         const shopTypeLabels = {
+            'kirana': 'Kirana Store',
+            'cloth': 'Cloth Store',
+            'medical': 'Medical Store',
+            'restaurant': 'Restaurant',
             'product': 'Product Store',
             'food': 'Restaurant / Food',
             'service': 'Service Provider',
             'rental': 'Rental Shop',
             'fashion': 'Fashion / Cloth'
+        };
+
+        // Table Headers by Shop Type
+        const tableHeaders = {
+            'kirana': ['Name', 'Weight', 'MRP', 'Price', 'Stock', 'Actions'],
+            'cloth': ['Name', 'Size', 'Color', 'Price', 'Stock', 'Actions'],
+            'medical': ['Name', 'Company', 'Batch', 'Expiry', 'Price', 'Actions'],
+            'restaurant': ['Name', 'Type', 'Spice', 'Time', 'Price', 'Actions'],
+            'product': ['Name', 'Price', 'Unit', 'Status', 'Actions'],
+            'food': ['Name', 'Price', 'Type', 'Status', 'Actions'],
+            'service': ['Name', 'Price', 'Duration', 'Status', 'Actions'],
+            'rental': ['Name', 'Price/Hour', 'Available', 'Status', 'Actions'],
+            'fashion': ['Name', 'Size', 'Color', 'Price', 'Actions']
         };
 
         // Load Shop Data
@@ -261,38 +303,49 @@
                 }
 
                 currentShop = shop;
+                currentShopType = shop.shopType || 'product';
 
                 // Update Header
                 document.getElementById('shopName').innerText = shop.shopName;
-                document.getElementById('shopTypeLabel').innerText = shopTypeLabels[shop.shopType] || shop.shopType;
+                document.getElementById('shopTypeLabel').innerText = shopTypeLabels[currentShopType] || currentShopType;
                 
                 const statusEl = document.getElementById('shopStatus');
                 statusEl.innerText = shop.status.toUpperCase();
                 statusEl.className = 'badge ' + shop.status;
 
                 // Update Stats
-                document.getElementById('stat1Value').innerText = shop.items ? shop.items.length : 0;
+                const items = shop.items || shop.products || [];
+                document.getElementById('stat1Value').innerText = items.length;
                 document.getElementById('stat2Value').innerText = shop.totalOrders || 0;
                 document.getElementById('stat3Value').innerText = shop.rating ? shop.rating.toFixed(1) : '0.0';
 
                 // Update Shop Info
-                document.getElementById('shopPhone').innerText = shop.phone || '-';
+                document.getElementById('shopPhone').innerText = shop.phone || shop.mobile || '-';
                 document.getElementById('shopRange').innerText = (shop.range / 1000) + ' KM';
-                document.getElementById('shopAddress').innerText = shop.address?.line1 || '-';
+                document.getElementById('shopAddress').innerText = shop.address?.line1 || shop.address || '-';
+                document.getElementById('shopOpenStatus').innerText = shop.isOpen ? '🟢 Open' : '🔴 Closed';
                 document.getElementById('shopInfoCard').style.display = 'block';
 
                 // Update Add Button Text
                 const btnTexts = {
+                    'kirana': 'Add Product',
+                    'cloth': 'Add Garment',
+                    'medical': 'Add Medicine',
+                    'restaurant': 'Add Menu Item',
                     'food': 'Add Menu Item',
                     'service': 'Add Service',
                     'rental': 'Add Rental Item',
                     'fashion': 'Add Product',
                     'product': 'Add Product'
                 };
-                document.getElementById('addBtnText').innerText = btnTexts[shop.shopType] || 'Add Item';
+                document.getElementById('addBtnText').innerText = btnTexts[currentShopType] || 'Add Item';
+                document.getElementById('itemsTitle').innerText = btnTexts[currentShopType]?.replace('Add ', '') + 's' || 'Products / Items';
+
+                // Update Table Headers
+                updateTableHeaders();
 
                 // Load Items
-                loadItems(shop.items || []);
+                loadItems(items);
 
                 document.getElementById('loader').style.display = 'none';
 
@@ -303,33 +356,160 @@
             }
         }
 
+        // Update Table Headers based on shop type
+        function updateTableHeaders() {
+            const headers = tableHeaders[currentShopType] || tableHeaders['product'];
+            const thead = document.getElementById('tableHead');
+            thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+        }
+
         // Load Items Table
         function loadItems(items) {
             const tbody = document.getElementById('productTableBody');
+            const headers = tableHeaders[currentShopType] || tableHeaders['product'];
             
             if (!items || items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No items yet. Click "Add Product" to start.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="${headers.length}" class="text-center text-muted">No items yet. Click "Add" to start.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = items.map(item => `
-                <tr>
-                    <td>${item.name}</td>
-                    <td>₹${item.price}</td>
-                    <td>${item.unit || '-'}</td>
-                    <td>${item.available ? '<span style="color:#10b981">Available</span>' : '<span style="color:#ef4444">Unavailable</span>'}</td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = items.map(item => renderItemRow(item, currentShopType)).join('');
+        }
+
+        // Render Item Row based on shop type
+        function renderItemRow(item, type) {
+            switch(type) {
+                case 'kirana':
+                    return `<tr>
+                        <td>${item.name}</td>
+                        <td>${item.weight} ${item.unit}</td>
+                        <td>₹${item.mrp || item.price}</td>
+                        <td>₹${item.price}</td>
+                        <td>${item.stock}</td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
+                        </td>
+                    </tr>`;
+                
+                case 'cloth':
+                case 'fashion':
+                    return `<tr>
+                        <td>${item.name}</td>
+                        <td>${item.size || '-'}</td>
+                        <td>${item.color || '-'}</td>
+                        <td>₹${item.price}</td>
+                        <td>${item.stock}</td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
+                        </td>
+                    </tr>`;
+                
+                case 'medical':
+                    return `<tr>
+                        <td>${item.name}</td>
+                        <td>${item.company || '-'}</td>
+                        <td>${item.batch || '-'}</td>
+                        <td>${item.expiry || '-'}</td>
+                        <td>₹${item.price}</td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
+                        </td>
+                    </tr>`;
+                
+                case 'restaurant':
+                case 'food':
+                    return `<tr>
+                        <td>${item.name}</td>
+                        <td><span class="item-badge ${item.foodType === 'veg' ? 'veg' : 'non-veg'}">${item.foodType || 'veg'}</span></td>
+                        <td>${item.spiceLevel || 'Medium'}</td>
+                        <td>${item.prepTime || '-'} min</td>
+                        <td>₹${item.price}</td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
+                        </td>
+                    </tr>`;
+                
+                case 'service':
+                    return `<tr>
+                        <td>${item.name}</td>
+                        <td>₹${item.price}</td>
+                        <td>${item.duration || '-'} min</td>
+                        <td><span class="item-badge ${item.available ? 'available' : 'unavailable'}">${item.available ? 'Available' : 'Unavailable'}</span></td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
+                        </td>
+                    </tr>`;
+                
+                case 'rental':
+                    return `<tr>
+                        <td>${item.name}</td>
+                        <td>₹${item.price}/hr</td>
+                        <td><span class="item-badge ${item.available ? 'available' : 'unavailable'}">${item.available ? 'Yes' : 'No'}</span></td>
+                        <td><span class="item-badge ${item.available ? 'available' : 'unavailable'}">${item.available ? 'Available' : 'Unavailable'}</span></td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
+                        </td>
+                    </tr>`;
+                
+                default: // product
+                    return `<tr>
+                        <td>${item.name}</td>
+                        <td>₹${item.price}</td>
+                        <td>${item.unit || '-'}</td>
+                        <td><span class="item-badge ${item.available ? 'available' : 'unavailable'}">${item.available ? 'Available' : 'Unavailable'}</span></td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
+                        </td>
+                    </tr>`;
+            }
         }
 
         // Add Product Handler
         document.getElementById('addProductBtn').onclick = function() {
-            alert('Add Product feature coming soon! Backend route ready hai, UI banao.');
+            // Redirect to specific template form
+            const templateTypes = ['kirana', 'cloth', 'medical', 'restaurant'];
+            if (templateTypes.includes(currentShopType)) {
+                window.location.href = `/local-market/shop-templates/${currentShopType}/add-product.html?shopId=${shopId}`;
+            } else {
+                alert('Add Product form coming soon! Use specific template for ' + currentShopType);
+            }
         };
+
+        // Edit Shop Info
+        function editShopInfo() {
+            window.location.href = `/local-market/edit-shop.html?shopId=${shopId}`;
+        }
 
         // Load Orders Handler
         function loadOrders() {
-            alert('Orders section coming soon!');
+            window.location.href = `/local-market/orders.html?shopId=${shopId}`;
+        }
+
+        // Edit Item
+        function editItem(itemId) {
+            alert('Edit item: ' + itemId + ' - Feature coming soon!');
+        }
+
+        // Delete Item
+        async function deleteItem(itemId) {
+            if (!confirm('Delete this item?')) return;
+            try {
+                await fetch(`/api/local-market/products/${itemId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                alert('Item deleted!');
+                loadShopData();
+            } catch (err) {
+                alert('Failed to delete: ' + err.message);
+            }
         }
 
         // Init
