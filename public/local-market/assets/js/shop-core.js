@@ -1,10 +1,8 @@
 // ===== SAMANLIVE SHOP CORE JS =====
-// Common functions for dashboard + user-view
-// Updated for Live Shop Schema: product, food, service, rental, fashion
+// Updated: Auth removed from read APIs - NO LOGIN NEEDED
 
-// Shop Type Config - Tere live schema ke hisaab se
 const SHOP_CONFIG = {
-    product: { // Kirana / General Product
+    product: {
         stats: [
             { label: 'Total Products', key: 'totalProducts' },
             { label: 'Low Stock Items', key: 'lowStock' },
@@ -15,7 +13,7 @@ const SHOP_CONFIG = {
         formTemplate: 'product-form',
         fields: ['name', 'price', 'unit', 'stock', 'desc', 'image', 'available']
     },
-    fashion: { // Cloth / Fashion
+    fashion: {
         stats: [
             { label: 'Total Items', key: 'totalProducts' },
             { label: 'Total Variants', key: 'totalVariants' },
@@ -26,7 +24,7 @@ const SHOP_CONFIG = {
         formTemplate: 'product-form',
         fields: ['name', 'size', 'color', 'price', 'desc', 'image', 'available']
     },
-    food: { // Restaurant / Food
+    food: {
         stats: [
             { label: 'Menu Items', key: 'totalProducts' },
             { label: 'Active Orders', key: 'activeOrders' },
@@ -38,7 +36,7 @@ const SHOP_CONFIG = {
         fields: ['name', 'veg', 'price', 'desc', 'image', 'available', 'duration'],
         extraButtons: ['toggleShopStatus']
     },
-    service: { // Medical / Doctor / Salon
+    service: {
         stats: [
             { label: 'Total Services', key: 'totalProducts' },
             { label: 'Active Bookings', key: 'activeOrders' },
@@ -49,7 +47,7 @@ const SHOP_CONFIG = {
         formTemplate: 'product-form',
         fields: ['name', 'duration', 'price', 'desc', 'image', 'available']
     },
-    rental: { // Bike / Car / Equipment Rental
+    rental: {
         stats: [
             { label: 'Total Items', key: 'totalProducts' },
             { label: 'Active Rentals', key: 'activeOrders' },
@@ -107,14 +105,10 @@ async function initDashboard(shopType, shopId) {
     showLoader(false);
 }
 
-// ===== LOAD SHOP DATA =====
+// ===== LOAD SHOP DATA - NO AUTH =====
 async function loadShopData(shopId) {
     try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`/api/local-market/shops/${shopId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
+        const res = await fetch(`/api/local-market/shops/${shopId}`);
         if (!res.ok) throw new Error('Shop not found');
 
         currentShopData = await res.json();
@@ -123,21 +117,18 @@ async function loadShopData(shopId) {
 
         const statusEl = document.getElementById('shopStatus');
         statusEl.textContent = currentShopData.status;
-        statusEl.className = `badge ${currentShopData.status === 'approved'? 'badge-success' : 'badge-warning'}`;
+        statusEl.className = `badge ${currentShopData.status}`;
 
     } catch (err) {
         alert('Error loading shop: ' + err.message);
-        window.location.href = '/local-market/my-shops';
+        window.location.href = '/local-market.html';
     }
 }
 
-// ===== LOAD STATS =====
+// ===== LOAD STATS - NO AUTH =====
 async function loadDashboardStats(shopId, shopType) {
     try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`/api/local-market/shops/${shopId}/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(`/api/local-market/shops/${shopId}/stats`);
         const stats = await res.json();
         const config = SHOP_CONFIG[shopType];
 
@@ -149,18 +140,15 @@ async function loadDashboardStats(shopId, shopType) {
     }
 }
 
-// ===== LOAD PRODUCTS =====
+// ===== LOAD PRODUCTS - NO AUTH =====
 async function loadProducts(shopId, shopType) {
     try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`/api/local-market/shops/${shopId}/products`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(`/api/local-market/shops/${shopId}/products`);
         const products = await res.json();
         renderProductTable(products, shopType);
     } catch (err) {
         document.getElementById('productTableBody').innerHTML =
-            '<tr><td colspan="10" class="text-center">Error loading products</td></tr>';
+            '<tr><td colspan="10" class="text-center">No products found</td></tr>';
     }
 }
 
@@ -168,7 +156,7 @@ async function loadProducts(shopId, shopType) {
 function renderProductTable(products, shopType) {
     const tbody = document.getElementById('productTableBody');
 
-    if (products.length === 0) {
+    if (!products || products.length === 0) {
         tbody.innerHTML = '<tr><td colspan="10" class="text-center">No products found</td></tr>';
         return;
     }
@@ -177,7 +165,7 @@ function renderProductTable(products, shopType) {
         let cells = '';
 
         switch(shopType) {
-            case 'product': // Kirana
+            case 'product':
                 cells = `
                     <td>${p.name}</td>
                     <td>₹${p.price}</td>
@@ -186,7 +174,7 @@ function renderProductTable(products, shopType) {
                     <td>${p.available!== false? '<i class="fa fa-check text-success"></i>' : '<i class="fa fa-times text-danger"></i>'}</td>
                 `;
                 break;
-            case 'fashion': // Cloth
+            case 'fashion':
                 cells = `
                     <td>${p.name}</td>
                     <td>${p.size || '-'}</td>
@@ -195,7 +183,7 @@ function renderProductTable(products, shopType) {
                     <td>${p.available!== false? '<i class="fa fa-check text-success"></i>' : '<i class="fa fa-times text-danger"></i>'}</td>
                 `;
                 break;
-            case 'food': // Restaurant
+            case 'food':
                 cells = `
                     <td>${p.name}</td>
                     <td><span class="badge ${p.veg!== false? 'badge-success' : 'badge-danger'}">${p.veg!== false? 'Veg' : 'Non-Veg'}</span></td>
@@ -203,7 +191,7 @@ function renderProductTable(products, shopType) {
                     <td>${p.available!== false? '<i class="fa fa-check text-success"></i>' : '<i class="fa fa-times text-danger"></i>'}</td>
                 `;
                 break;
-            case 'service': // Medical/Service
+            case 'service':
                 cells = `
                     <td>${p.name}</td>
                     <td>${p.duration || '-'}</td>
@@ -211,7 +199,7 @@ function renderProductTable(products, shopType) {
                     <td>${p.available!== false? '<i class="fa fa-check text-success"></i>' : '<i class="fa fa-times text-danger"></i>'}</td>
                 `;
                 break;
-            case 'rental': // Rental
+            case 'rental':
                 cells = `
                     <td>${p.name}</td>
                     <td>${p.duration || '-'}</td>
@@ -243,9 +231,8 @@ async function loadTemplate(templateName, shopType) {
         const res = await fetch(`/shop-templates/${shopType}/${templateName}.html`);
         const html = await res.text();
         document.getElementById('modalContainer').innerHTML = html;
-        document.getElementById('modalContainer').style.display = 'block';
+        document.getElementById('modalContainer').style.display = 'flex';
 
-        // Form submit handler attach karo
         const form = document.getElementById('productForm');
         if (form) {
             form.onsubmit = (e) => saveProduct(e, shopType);
@@ -261,16 +248,15 @@ function closeModal() {
     document.getElementById('modalContainer').innerHTML = '';
 }
 
-// ===== SAVE PRODUCT =====
+// ===== SAVE PRODUCT - AUTH RAKHA HAI WRITE KE LIYE =====
 async function saveProduct(e, shopType) {
     e.preventDefault();
     showLoader(true);
 
-    const productId = document.getElementById('productId').value;
+    const productId = document.getElementById('productId')? document.getElementById('productId').value : '';
     const config = SHOP_CONFIG[shopType];
     const productData = { shopId: currentShopId };
 
-    // Form se data nikalo
     config.fields.forEach(field => {
         const el = document.getElementById('p' + field.charAt(0).toUpperCase() + field.slice(1));
         if (el) {
@@ -309,7 +295,7 @@ async function saveProduct(e, shopType) {
     showLoader(false);
 }
 
-// ===== EDIT PRODUCT =====
+// ===== EDIT PRODUCT - AUTH RAKHA HAI =====
 async function editProduct(productId) {
     showLoader(true);
     try {
@@ -321,7 +307,6 @@ async function editProduct(productId) {
 
         await loadTemplate(SHOP_CONFIG[currentShopType].formTemplate, currentShopType);
 
-        // Form fill karo
         document.getElementById('productId').value = product._id;
         document.getElementById('formTitle').textContent = 'Edit Product';
 
@@ -343,7 +328,7 @@ async function editProduct(productId) {
     showLoader(false);
 }
 
-// ===== DELETE PRODUCT =====
+// ===== DELETE PRODUCT - AUTH RAKHA HAI =====
 async function deleteProduct(productId) {
     if (!confirm('Delete this product?')) return;
 
@@ -366,7 +351,7 @@ async function deleteProduct(productId) {
     showLoader(false);
 }
 
-// ===== TOGGLE SHOP STATUS =====
+// ===== TOGGLE SHOP STATUS - AUTH RAKHA HAI =====
 async function toggleShopStatus() {
     const newStatus =!currentShopData.isOpen;
     showLoader(true);
@@ -405,7 +390,7 @@ function showLoader(show) {
     if (loader) loader.style.display = show? 'flex' : 'none';
 }
 
-// ===== USER VIEW FUNCTIONS =====
+// ===== USER VIEW FUNCTIONS - NO AUTH =====
 async function initUserView(shopId, shopType) {
     currentShopId = shopId;
     currentShopType = shopType;
