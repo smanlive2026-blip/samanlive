@@ -5,9 +5,9 @@ const { verifyToken } = require('../middleware/auth');
 const router = express.Router();
 
 // ========================================
-// POST /api/auth/login-phone - BINA MIDDLEWARE
+// POST /api/auth/login-phone - PUBLIC ROUTE
 // ========================================
-router.post('/login-phone', async (req, res) => {  // ✅ verifyToken hata de yaha se
+router.post('/login-phone', async (req, res) => {
     try {
         const { phone, name } = req.body;
         
@@ -78,9 +78,9 @@ router.post('/login-phone', async (req, res) => {  // ✅ verifyToken hata de ya
 });
 
 // ========================================
-// GET /api/auth/me - SIRF ISME verifyToken LAGEGA
+// GET /api/auth/me - PROTECTED ROUTE
 // ========================================
-router.get('/me', verifyToken, async (req, res) => { // ✅ Yaha sahi hai
+router.get('/me', verifyToken, async (req, res) => {
     try {
         res.json({ 
             success: true, 
@@ -107,4 +107,4 @@ router.get('/me', verifyToken, async (req, res) => { // ✅ Yaha sahi hai
     }
 });
 
-module.exports = router;
+module.exports = router;s
