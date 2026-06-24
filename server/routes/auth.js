@@ -1,13 +1,14 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { verifyToken } = require('../middleware/auth');
+// ✅ Ye line change kar - auth.js hata ke authenticateToken.js se utha
+const { authenticateToken } = require('../middleware/authenticateToken'); 
 const router = express.Router();
 
 // ========================================
-// POST /api/auth/login-phone - PUBLIC ROUTE
+// POST /api/auth/login-phone - PUBLIC - KOI MIDDLEWARE NAHI
 // ========================================
-router.post('/login-phone', async (req, res) => {
+router.post('/login-phone', async (req, res) => { // ✅ Yaha kuch mat lagana
     try {
         const { phone, name } = req.body;
         
@@ -42,9 +43,10 @@ router.post('/login-phone', async (req, res) => {
             await user.save();
         }
 
+        // ✅ Token me userId use kar raha kyunki middleware me decoded.userId ya decoded.id check ho raha
         const token = jwt.sign(
-            { userId: user._id, phone: user.phone }, 
-            process.env.JWT_SECRET,
+            { id: user._id, type: 'user' }, 
+            process.env.JWT_SECRET || 'samanlive_secret_key_2026_change_this',
             { expiresIn: '30d' }
         );
 
@@ -78,9 +80,9 @@ router.post('/login-phone', async (req, res) => {
 });
 
 // ========================================
-// GET /api/auth/me - PROTECTED ROUTE
+// GET /api/auth/me - PROTECTED - Yaha middleware lagega
 // ========================================
-router.get('/me', verifyToken, async (req, res) => {
+router.get('/me', authenticateToken, async (req, res) => { // ✅ Yaha sahi hai
     try {
         res.json({ 
             success: true, 
