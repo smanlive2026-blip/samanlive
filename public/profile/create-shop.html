@@ -466,8 +466,8 @@ function getShopLocation() {
             document.getElementById('shopLng').value = lng;
 
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-   .then(r => r.json())
-   .then(data => {
+  .then(r => r.json())
+  .then(data => {
                 const city = data.address.city || data.address.town || data.address.village || 'Surat';
                 const state = data.address.state || 'Gujarat';
                 const pincode = data.address.postcode || '';
@@ -479,7 +479,7 @@ function getShopLocation() {
                 status.className = 'location-coords success';
                 status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
             })
-   .catch(() => {
+  .catch(() => {
                 document.getElementById('shopCity').value = 'Surat';
                 document.getElementById('shopState').value = 'Gujarat';
                 status.className = 'location-coords success';
@@ -526,7 +526,7 @@ async function submitShop() {
         'stationery': 'product'
     };
 
-    // ✅ FIXED: ownerId aur approvedBy hata diya - Backend khud handle karega
+    // ✅ UPDATED: ownerId aur approvedBy hata diya - Backend khud handle karega
     const shopData = {
         shopName: document.getElementById('shopName').value.trim(),
         ownerName: currentUser.name,
@@ -568,7 +568,7 @@ async function submitShop() {
     }
 
     try {
-        // ✅ FIXED: Authorization header hata diya
+        // ✅ UPDATED: Authorization header hata diya, sirf Content-Type
         const res = await fetch('/api/local-market/shops', {
             method: 'POST',
             headers: {
@@ -576,9 +576,10 @@ async function submitShop() {
             },
             body: JSON.stringify(shopData)
         });
+
         const data = await res.json();
 
-        if (data._id) {
+        if (res.ok && data._id) {
             // ✅ Success - Token set kar de dashboard access ke liye
             localStorage.setItem('userToken', 'shop-owner-' + data._id);
             localStorage.setItem('myShopId', data._id);
@@ -589,14 +590,17 @@ async function submitShop() {
             document.getElementById('formFields').style.display = 'none';
             document.getElementById('infoBanner').style.display = 'none';
             document.getElementById('submitBtn').style.display = 'none';
+
+            // Scroll to success box
+            document.getElementById('successBox').scrollIntoView({ behavior: 'smooth' });
         } else {
-            alert('Error: ' + (data.error || data.msg || JSON.stringify(data)));
+            alert('Error: ' + (data.error || data.details || data.msg || 'Failed to create shop'));
             btn.textContent = 'Create My Shop - Go Live Now';
             btn.disabled = false;
         }
     } catch (err) {
         console.error(err);
-        alert('Failed to create shop. Try again.');
+        alert('Failed to create shop. Check your connection and try again.');
         btn.textContent = 'Create My Shop - Go Live Now';
         btn.disabled = false;
     }

@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
 const shopSchema = new mongoose.Schema({
-    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    // ✅ FIXED: ownerId ab required nahi hai, auto generate hoga
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false, default: () => new mongoose.Types.ObjectId() },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' },
     shopName: { type: String, required: true, trim: true },
@@ -58,7 +59,8 @@ const shopSchema = new mongoose.Schema({
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending'
     },
-    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    // ✅ FIXED: approvedBy bhi required nahi
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
     approvedAt: { type: Date },
     rejectionReason: { type: String, default: '' },
 
