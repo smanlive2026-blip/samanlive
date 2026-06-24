@@ -385,7 +385,7 @@ let myShopData = null;
 let newShopData = null;
 
 // Template types that have specific dashboards
-const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant'];
+const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant', 'service', 'rental'];
 
 window.addEventListener('DOMContentLoaded', async () => {
     // ✅ NO LOGIN - Direct fake user
@@ -426,7 +426,9 @@ function loadModules() {
         {id: 'electronics', name: 'Electronics Shop', icon: '📱'},
         {id: 'hardware', name: 'Hardware Store', icon: '🔧'},
         {id: 'salon', name: 'Salon/Beauty Parlour', icon: '💇'},
-        {id: 'stationery', name: 'Stationery Shop', icon: '🎓'}
+        {id: 'stationery', name: 'Stationery Shop', icon: '🎓'},
+        {id: 'service', name: 'Service Provider', icon: '🔧'},
+        {id: 'rental', name: 'Rental Shop', icon: '🚗'}
     ];
 
     shopTypes.forEach(m => {
@@ -466,8 +468,8 @@ function getShopLocation() {
             document.getElementById('shopLng').value = lng;
 
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-  .then(r => r.json())
-  .then(data => {
+ .then(r => r.json())
+ .then(data => {
                 const city = data.address.city || data.address.town || data.address.village || 'Surat';
                 const state = data.address.state || 'Gujarat';
                 const pincode = data.address.postcode || '';
@@ -479,7 +481,7 @@ function getShopLocation() {
                 status.className = 'location-coords success';
                 status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
             })
-  .catch(() => {
+ .catch(() => {
                 document.getElementById('shopCity').value = 'Surat';
                 document.getElementById('shopState').value = 'Gujarat';
                 status.className = 'location-coords success';
@@ -523,7 +525,9 @@ async function submitShop() {
         'electronics': 'product',
         'hardware': 'product',
         'salon': 'service',
-        'stationery': 'product'
+        'stationery': 'product',
+        'service': 'service',
+        'rental': 'rental'
     };
 
     // ✅ UPDATED: ownerId aur approvedBy hata diya - Backend khud handle karega

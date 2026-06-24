@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Menu Item - SAMANLIVE</title>
+    <link rel="stylesheet" href="/local-market/assets/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+       .form-container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+       .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+       .form-header h2 {
+            margin: 0;
+            font-size: 24px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+       .back-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #334155;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+       .back-btn:hover { background: #e2e8f0; transform: translateX(-2px); }
+       .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+       .form-group {
+            margin-bottom: 16px;
+        }
+       .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+       .form-group input,
+       .form-group select,
+       .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+       .form-group input:focus,
+       .form-group select:focus,
+       .form-group textarea:focus {
+            outline: none;
+            border-color: #fa709a;
+            box-shadow: 0 0 0 3px rgba(250,112,154,0.1);
+        }
+       .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+       .food-type-picker {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+       .food-type-option {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+       .food-type-option.veg {
+            border-color: #16a34a;
+            color: #16a34a;
+        }
+       .food-type-option.veg.selected {
+            background: #16a34a;
+            color: white;
+        }
+       .food-type-option.non-veg {
+            border-color: #dc2626;
+            color: #dc2626;
+        }
+       .food-type-option.non-veg.selected {
+            background: #dc2626;
+            color: white;
+        }
+       .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+       .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+       .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 600;
+            color: #475569;
+        }
+       .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+       .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16,185,129,0.4);
+        }
+       .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        @media (max-width: 768px) {
+           .form-row { grid-template-columns: 1fr; }
+           .form-container { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-header">
+            <h2><i class="fa fa-utensils"></i> <span id="formTitle">Add Menu Item</span></h2>
+            <button class="back-btn" onclick="goBack()">
+                <i class="fa fa-arrow-left"></i> Back
+            </button>
+        </div>
+
+        <form id="productForm">
+            <input type="hidden" id="productId">
+            <input type="hidden" id="shopId">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Dish Name *</label>
+                    <input type="text" id="pName" placeholder="e.g. Butter Chicken" required>
+                </div>
+                <div class="form-group">
+                    <label>Category *</label>
+                    <select id="pCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="Starter">Starter</option>
+                        <option value="Main Course">Main Course</option>
+                        <option value="Breads">Breads</option>
+                        <option value="Rice & Biryani">Rice & Biryani</option>
+                        <option value="Dessert">Dessert</option>
+                        <option value="Beverages">Beverages</option>
+                        <option value="Snacks">Snacks</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Food Type *</label>
+                <div class="food-type-picker">
+                    <div class="food-type-option veg selected" data-type="veg" onclick="selectFoodType('veg')">
+                        <i class="fa fa-leaf"></i> Veg
+                    </div>
+                    <div class="food-type-option non-veg" data-type="non-veg" onclick="selectFoodType('non-veg')">
+                        <i class="fa fa-drumstick-bite"></i> Non-Veg
+                    </div>
+                </div>
+                <input type="hidden" id="pFoodType" value="veg">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Price (₹) *</label>
+                    <input type="number" id="pPrice" step="0.01" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Preparation Time (mins)</label>
+                    <input type="number" id="pPrepTime" placeholder="e.g. 15">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="pDescription" placeholder="Brief description of the dish..."></textarea>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="pAvailable" checked>
+                <label for="pAvailable">Available for Orders</label>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <i class="fa fa-save"></i> Save Menu Item
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        const itemId = urlParams.get('itemId');
+        const token = localStorage.getItem('userToken');
+        let isEdit = false;
+        let selectedFoodType = 'veg';
+
+        if (!shopId) {
+            alert('Invalid shop link');
+            window.location.href = '/local-market/create-shop.html';
+        }
+
+        document.getElementById('shopId').value = shopId;
+
+        // Load existing item if editing
+        if (itemId) {
+            isEdit = true;
+            document.getElementById('formTitle').innerText = 'Edit Menu Item';
+            loadItemData(itemId);
+        }
+
+        function goBack() {
+            window.location.href = `/local-market/shop-templates/restaurant/dashboard.html?shopId=${shopId}`;
+        }
+
+        function selectFoodType(type) {
+            selectedFoodType = type;
+            document.getElementById('pFoodType').value = type;
+            document.querySelectorAll('.food-type-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.querySelector(`.food-type-option.${type}`).classList.add('selected');
+        }
+
+        async function loadItemData(id) {
+            try {
+                const res = await fetch(`/api/local-market/products/${id}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const item = await res.json();
+
+                document.getElementById('productId').value = item._id;
+                document.getElementById('pName').value = item.name || '';
+                document.getElementById('pCategory').value = item.category || '';
+                document.getElementById('pPrice').value = item.price || '';
+                document.getElementById('pPrepTime').value = item.prepTime || '';
+                document.getElementById('pDescription').value = item.description || '';
+                document.getElementById('pAvailable').checked = item.available !== false;
+                
+                if (item.foodType) {
+                    selectFoodType(item.foodType);
+                }
+            } catch (err) {
+                alert('Failed to load menu item: ' + err.message);
+            }
+        }
+
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+
+            const productData = {
+                shopId: shopId,
+                name: document.getElementById('pName').value.trim(),
+                category: document.getElementById('pCategory').value,
+                foodType: document.getElementById('pFoodType').value,
+                price: parseFloat(document.getElementById('pPrice').value),
+                prepTime: parseInt(document.getElementById('pPrepTime').value) || 0,
+                description: document.getElementById('pDescription').value.trim(),
+                available: document.getElementById('pAvailable').checked
+            };
+
+            try {
+                const url = isEdit
+                   ? `/api/local-market/products/${itemId}`
+                    : '/api/local-market/products';
+
+                const method = isEdit? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(productData)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(isEdit? '✅ Menu item updated successfully!' : '✅ Menu item added successfully!');
+                    goBack();
+                } else {
+                    alert('Error: ' + (data.error || data.message || 'Failed to save'));
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa fa-save"></i> Save Menu Item';
+                }
+            } catch (err) {
+                alert('Failed to save: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-save"></i> Save Menu Item';
+            }
+        });
+    </script>
+</body>
+</html>

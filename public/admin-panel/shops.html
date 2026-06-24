@@ -182,6 +182,9 @@
     <script src="assets/admin.js"></script>
     <script>
         let allShopsFiltered = [];
+        
+        // Template types that have specific dashboards
+        const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant', 'service', 'rental'];
 
         async function loadShops() {
             try {
@@ -352,8 +355,16 @@
         window.openDashboard = (shopId) => {
             const shop = window.allShops.find(s => s._id === shopId);
             if (!shop) return alert('Shop not found');
-            const url = `${window.location.origin}/local-market/shop/dashboard.html?shopId=${shopId}&type=${shop.shopType}`;
-            window.open(url, '_blank');
+            
+            // ✅ UPDATED: Check if specific template exists
+            const shopType = shop.serviceType || shop.shopType;
+            if (SPECIFIC_TEMPLATES.includes(shopType)) {
+                const url = `${window.location.origin}/local-market/shop-templates/${shopType}/dashboard.html?shopId=${shopId}`;
+                window.open(url, '_blank');
+            } else {
+                const url = `${window.location.origin}/local-market/shop/dashboard.html?shopId=${shopId}&type=${shop.shopType}`;
+                window.open(url, '_blank');
+            }
         };
 
         window.openPublicShop = (shopId) => {
