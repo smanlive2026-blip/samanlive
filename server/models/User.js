@@ -379,4 +379,6 @@ userSchema.pre('save', function(next) {
     next();
 });
 
-module.exports = mongoose.models.User || mongoose.model('User', userSchema);
+// ✅ FIXED: Bas ye 2 line change ki hai - purane wala cache pattern hata diya
+const User = mongoose.model('User', userSchema);
+module.exports = User;
