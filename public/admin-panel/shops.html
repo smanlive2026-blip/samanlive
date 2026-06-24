@@ -244,7 +244,7 @@
 
                 return `
                     <div class="shop-card ${isPending ? 'pending' : ''}">
-                        ${isPending ? '<div class="pending-ribbon">⏳ Pending</div>' : ''}
+                        ${isPending ? '<div class="pending-ribbon">⏳ Pending Approval</div>' : ''}
                         <div class="shop-card-header">
                             <img src="${s.logo || 'https://via.placeholder.com/60?text=🏪'}" class="shop-logo" onerror="this.src='https://via.placeholder.com/60?text=🏪'">
                             <div class="shop-info">
@@ -280,6 +280,9 @@
                         </div>
                         ` : `
                         <div class="actions">
+                            <button class="btn btn-success btn-sm" onclick="openDashboard('${s._id}')" title="Owner Dashboard">
+                                <i class="fa fa-tachometer-alt"></i> Dashboard
+                            </button>
                             <button class="btn btn-info btn-sm" onclick="openPublicShop('${s._id}')" title="Public View">
                                 <i class="fa fa-eye"></i> View
                             </button>
@@ -287,10 +290,10 @@
                                 <i class="fa fa-link"></i> Copy
                             </button>
                             <button class="btn btn-warning btn-sm" onclick="toggleShopStatus('${s._id}', ${s.isActive})" title="${s.isActive ? 'Deactivate' : 'Activate'}">
-                                <i class="fa fa-power-off"></i> ${s.isActive ? 'Off' : 'On'}
+                                <i class="fa fa-power-off"></i>
                             </button>
                             <button class="btn btn-danger btn-sm" onclick="deleteShop('${s._id}')">
-                                <i class="fa fa-trash"></i> Delete
+                                <i class="fa fa-trash"></i>
                             </button>
                         </div>
                         `}
@@ -344,6 +347,13 @@
             } catch (err) {
                 showToast('Failed: ' + err.message, 'error');
             }
+        };
+
+        window.openDashboard = (shopId) => {
+            const shop = window.allShops.find(s => s._id === shopId);
+            if (!shop) return alert('Shop not found');
+            const url = `${window.location.origin}/local-market/shop/dashboard.html?shopId=${shopId}&type=${shop.shopType}`;
+            window.open(url, '_blank');
         };
 
         window.openPublicShop = (shopId) => {
