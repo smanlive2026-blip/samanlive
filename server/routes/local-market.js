@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Shop = require('../models/Shop'); // Tera wala schema
 const Order = require('../models/Order');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authenticateToken');
 
 // ===== SHOP DETAILS =====
 router.get('/shops/:id', async (req, res) => {
