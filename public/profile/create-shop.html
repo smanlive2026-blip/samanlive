@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Create Shop - SAMANLIVE</title>
 <link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 .create-shop-page {
     min-height: 100vh;
@@ -19,8 +20,10 @@
     top: 0;
     z-index: 100;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
 }
-.header-bar.back-btn {
+.back-btn {
     background: rgba(255,255,255,0.2);
     border: none;
     color: white;
@@ -29,6 +32,9 @@
     cursor: pointer;
     font-size: 14px;
     margin-right: 12px;
+}
+.back-btn:hover {
+    background: rgba(255,255,255,0.3);
 }
 .header-bar h1 {
     display: inline-block;
@@ -132,10 +138,22 @@
     font-size: 14px;
     font-weight: 600;
 }
+.get-location-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 .location-coords {
     font-size: 13px;
     color: #64748b;
     margin-top: 8px;
+}
+.location-coords.success {
+    color: #10b981;
+    font-weight: 600;
+}
+.location-coords.error {
+    color: #ef4444;
+    font-weight: 600;
 }
 .submit-btn {
     width: 100%;
@@ -186,14 +204,14 @@
     width: 100%;
 }
 @media (max-width: 768px) {
-  .form-container {
+ .form-container {
         margin: 16px;
         padding: 20px;
     }
-  .form-row {
+ .form-row {
         grid-template-columns: 1fr;
     }
-  .icon-picker {
+ .icon-picker {
         grid-template-columns: repeat(4, 1fr);
     }
 }
@@ -272,7 +290,7 @@
         <div class="location-box">
             <div class="location-header">
                 <h3>📍 Shop Location *</h3>
-                <button class="get-location-btn" onclick="getShopLocation()">Get Location</button>
+                <button class="get-location-btn" onclick="getShopLocation()" id="locBtn">Get Location</button>
             </div>
             <div class="location-coords" id="locationCoords">
                 Location required. Click "Get Location" to set shop GPS.
@@ -368,12 +386,16 @@ document.getElementById('iconPicker').addEventListener('click', (e) => {
 });
 
 function getShopLocation() {
-    const btn = document.querySelector('.get-location-btn');
+    const btn = document.getElementById('locBtn');
+    const status = document.getElementById('locationCoords');
     btn.textContent = 'Getting...';
     btn.disabled = true;
+    status.className = 'location-coords';
+    status.textContent = '📍 Fetching your location...';
 
     if (!navigator.geolocation) {
-        alert('Geolocation not supported');
+        status.className = 'location-coords error';
+        status.textContent = '❌ Geolocation not supported by your browser';
         btn.textContent = 'Get Location';
         btn.disabled = false;
         return;
@@ -385,20 +407,22 @@ function getShopLocation() {
             const lng = position.coords.longitude;
             document.getElementById('shopLat').value = lat;
             document.getElementById('shopLng').value = lng;
-            document.getElementById('locationCoords').innerHTML = `
-                <strong>Lat:</strong> ${lat.toFixed(6)}<br>
-                <strong>Lng:</strong> ${lng.toFixed(6)}
-            `;
-            btn.textContent = 'Get Location';
+            status.className = 'location-coords success';
+            status.innerHTML = `✅ Location captured!<br><strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
+            btn.textContent = 'Location Set ✓';
             btn.disabled = false;
-            alert('✅ Shop location captured!');
         },
         (error) => {
-            alert('Location access denied. Please enable location.');
+            status.className = 'location-coords error';
+            let msg = 'Location access denied. ';
+            if (error.code === 1) msg += 'Please enable location permission.';
+            else if (error.code === 2) msg += 'Position unavailable.';
+            else if (error.code === 3) msg += 'Request timeout.';
+            status.textContent = '❌ ' + msg;
             btn.textContent = 'Get Location';
             btn.disabled = false;
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
 }
 
@@ -423,6 +447,7 @@ async function submitShop() {
         icon: selectedIcon,
         color: '#10b981',
         status: 'active',
+        isActive: true,
         location: {
             type: 'Point',
             coordinates: [parseFloat(lng), parseFloat(lat)]
@@ -450,11 +475,10 @@ async function submitShop() {
         if (data._id) {
             document.getElementById('successMsg').style.display = 'block';
             setTimeout(() => {
-                // ✅ FIX 1: Dashboard URL + query params
                 window.location.href = `/local-market/dashboard.html?shopId=${data._id}&type=${shopData.shopType}`;
             }, 1500);
         } else {
-            alert('Error: ' + (data.msg || 'Failed to create shop'));
+            alert('Error: ' + (data.error || 'Failed to create shop'));
             btn.textContent = 'Create My Shop - Go Live Now';
             btn.disabled = false;
         }
@@ -467,7 +491,6 @@ async function submitShop() {
 
 function goToDashboard() {
     if (myShopData) {
-        // ✅ FIX 2: myShopData use kiya, data/shopData nahi
         window.location.href = `/local-market/dashboard.html?shopId=${myShopData._id}&type=${myShopData.shopType}`;
     }
 }
