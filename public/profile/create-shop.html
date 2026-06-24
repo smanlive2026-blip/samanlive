@@ -3,10 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Create Shop - SAMANLIVE</title>
+<title>My Shops - SAMANLIVE</title>
 <link rel="stylesheet" href="/assets/css/main.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f1f5f9;
+}
 .create-shop-page {
     min-height: 100vh;
     background: #f1f5f9;
@@ -20,6 +26,11 @@
     top: 0;
     z-index: 100;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.header-left {
     display: flex;
     align-items: center;
 }
@@ -41,11 +52,55 @@
     font-size: 20px;
     margin: 0;
 }
+.add-shop-btn {
+    background: rgba(255,255,255,0.2);
+    border: 2px solid white;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+.add-shop-btn:hover {
+    background: white;
+    color: #667eea;
+}
+.tabs {
+    display: flex;
+    background: white;
+    margin: 0 20px;
+    border-radius: 12px 12px 0 0;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.tab-btn {
+    flex: 1;
+    padding: 16px;
+    border: none;
+    background: white;
+    font-size: 15px;
+    font-weight: 700;
+    color: #64748b;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+}
+.tab-btn.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    background: #f8fafc;
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
 .form-container {
-    margin: 20px;
+    margin: 0 20px 20px 20px;
     background: white;
     padding: 24px;
-    border-radius: 16px;
+    border-radius: 0 0 16px 16px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 .info-banner {
@@ -229,33 +284,114 @@
 .btn-copy:hover {
     background: #eef2ff;
 }
-.already-shop {
-    text-align: center;
-    padding: 40px 20px;
+.shops-container {
+    margin: 0 20px 20px 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
-.already-shop h2 {
+.shop-card {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+    border: 2px solid #e2e8f0;
+}
+.shop-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    border-color: #667eea;
+}
+.shop-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.shop-icon {
+    font-size: 48px;
+}
+.shop-details h3 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
     color: #1e293b;
-    margin-bottom: 12px;
 }
-.already-shop p {
+.shop-details p {
+    margin: 0;
+    font-size: 13px;
     color: #64748b;
-    margin-bottom: 20px;
 }
-.goto-dashboard-btn {
+.shop-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: #dcfce7;
+    color: #166534;
+    margin-top: 6px;
+    display: inline-block;
+}
+.shop-actions {
+    display: flex;
+    gap: 8px;
+}
+.btn-go {
     background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
     border: none;
-    padding: 14px 24px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-go:hover {
+    opacity: 0.9;
+}
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+.empty-state i {
+    font-size: 64px;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+}
+.empty-state h3 {
+    margin: 0 0 8px 0;
+    color: #475569;
+    font-size: 20px;
+}
+.empty-state p {
+    margin: 0 0 20px 0;
+    color: #94a3b8;
+    font-size: 14px;
+}
+.create-first-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    padding: 14px 28px;
     border-radius: 12px;
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
-    width: 100%;
 }
 @media (max-width: 768px) {
-.form-container {
-        margin: 16px;
+.form-container,.shops-container {
+        margin: 0 16px 16px 16px;
         padding: 20px;
+    }
+.tabs {
+        margin: 0 16px;
     }
 .form-row {
         grid-template-columns: 1fr;
@@ -263,158 +399,186 @@
 .icon-picker {
         grid-template-columns: repeat(4, 1fr);
     }
+.shop-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+.shop-actions {
+        width: 100%;
+        margin-top: 12px;
+    }
+.btn-go {
+        width: 100%;
+        justify-content: center;
+    }
 }
 </style>
 </head>
 <body>
 <div class="create-shop-page">
     <div class="header-bar">
-        <button class="back-btn" onclick="window.location.href='/profile.html'">← Back</button>
-        <h1>Create Shop</h1>
+        <div class="header-left">
+            <button class="back-btn" onclick="window.location.href='/profile.html'">← Back</button>
+            <h1>My Shops</h1>
+        </div>
+        <button class="add-shop-btn" onclick="showTab('create')">
+            <i class="fa fa-plus"></i> New Shop
+        </button>
     </div>
 
-    <div class="form-container" id="shopFormContainer">
-        <div class="success-msg" id="successMsg">✅ Shop Created Successfully! Your shop is now LIVE.</div>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('list')">
+            <i class="fa fa-store"></i> My Shops
+        </button>
+        <button class="tab-btn" onclick="showTab('create')">
+            <i class="fa fa-plus"></i> Create New
+        </button>
+    </div>
 
-        <!-- Success Box with Buttons -->
-        <div class="success-box" id="successBox">
-            <h3>🎉 Shop Created Successfully!</h3>
-            <p id="successShopName">Your shop is now LIVE and ready.</p>
-            <div class="success-actions">
-                <button class="btn-dashboard" onclick="goToNewDashboard()">
-                    <i class="fa fa-tachometer-alt"></i> Go to Dashboard
-                </button>
-                <button class="btn-copy" onclick="copyShopLink()">
-                    <i class="fa fa-copy"></i> Copy Customer Link
+    <!-- TAB 1: MY SHOPS LIST -->
+    <div id="listTab" class="tab-content active">
+        <div class="shops-container" id="shopsContainer">
+            <div class="empty-state" id="emptyState">
+                <i class="fa fa-store"></i>
+                <h3>No Shops Yet</h3>
+                <p>Create your first shop to get started</p>
+                <button class="create-first-btn" onclick="showTab('create')">
+                    <i class="fa fa-plus"></i> Create First Shop
                 </button>
             </div>
         </div>
+    </div>
 
-        <div class="info-banner" id="infoBanner">
-            <strong>Great News:</strong> Aapki shop turant active ho jayegi. Koi approval ka wait nahi karna.
-        </div>
+    <!-- TAB 2: CREATE SHOP FORM -->
+    <div id="createTab" class="tab-content">
+        <div class="form-container">
+            <div class="success-msg" id="successMsg">✅ Shop Created Successfully! Your shop is now LIVE.</div>
 
-        <div id="formFields">
-            <div class="form-group">
-                <label>Shop Name *</label>
-                <input type="text" id="shopName" placeholder="Example: Sharma Kirana Store">
-            </div>
-
-            <div class="form-group">
-                <label>Shop Category *</label>
-                <select id="shopModule" required>
-                    <option value="">Select Shop Type</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Shop Icon *</label>
-                <div class="icon-picker" id="iconPicker">
-                    <div class="icon-option selected" data-icon="🏪">🏪</div>
-                    <div class="icon-option" data-icon="🛒">🛒</div>
-                    <div class="icon-option" data-icon="🍕">🍕</div>
-                    <div class="icon-option" data-icon="💊">💊</div>
-                    <div class="icon-option" data-icon="🔧">🔧</div>
-                    <div class="icon-option" data-icon="👗">👗</div>
-                    <div class="icon-option" data-icon="📱">📱</div>
-                    <div class="icon-option" data-icon="💇">💇</div>
-                    <div class="icon-option" data-icon="🚗">🚗</div>
-                    <div class="icon-option" data-icon="🏠">🏠</div>
-                    <div class="icon-option" data-icon="🎓">🎓</div>
-                    <div class="icon-option" data-icon="⚡">⚡</div>
+            <div class="success-box" id="successBox">
+                <h3>🎉 Shop Created Successfully!</h3>
+                <p id="successShopName">Your shop is now LIVE and ready.</p>
+                <div class="success-actions">
+                    <button class="btn-dashboard" onclick="showTab('list'); loadMyShops();">
+                        <i class="fa fa-store"></i> View All My Shops
+                    </button>
+                    <button class="btn-copy" onclick="copyShopLink()">
+                        <i class="fa fa-copy"></i> Copy Customer Link
+                    </button>
                 </div>
             </div>
 
-            <div class="form-row">
+            <div class="info-banner" id="infoBanner">
+                <strong>Great News:</strong> Aapki shop turant active ho jayegi. Kitni bhi shops bana sakte ho.
+            </div>
+
+            <div id="formFields">
                 <div class="form-group">
-                    <label>Contact Phone *</label>
-                    <input type="tel" id="shopPhone" placeholder="10 digit mobile" maxlength="10">
+                    <label>Shop Name *</label>
+                    <input type="text" id="shopName" placeholder="Example: Sharma Kirana Store">
                 </div>
+
                 <div class="form-group">
-                    <label>Service Range *</label>
-                    <select id="shopRange">
-                        <option value="1000">1 KM</option>
-                        <option value="2000">2 KM</option>
-                        <option value="5000" selected>5 KM</option>
-                        <option value="10000">10 KM</option>
+                    <label>Shop Category *</label>
+                    <select id="shopModule" required>
+                        <option value="">Select Shop Type</option>
                     </select>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label>Shop Address *</label>
-                <textarea id="shopAddress" placeholder="Complete shop address with landmark"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Shop Description</label>
-                <textarea id="shopDesc" placeholder="What services/products you offer?"></textarea>
-            </div>
-
-            <div class="location-box">
-                <div class="location-header">
-                    <h3>📍 Shop Location *</h3>
-                    <button class="get-location-btn" onclick="getShopLocation()" id="locBtn">Get Location</button>
+                <div class="form-group">
+                    <label>Shop Icon *</label>
+                    <div class="icon-picker" id="iconPicker">
+                        <div class="icon-option selected" data-icon="🏪">🏪</div>
+                        <div class="icon-option" data-icon="🛒">🛒</div>
+                        <div class="icon-option" data-icon="🍕">🍕</div>
+                        <div class="icon-option" data-icon="💊">💊</div>
+                        <div class="icon-option" data-icon="🔧">🔧</div>
+                        <div class="icon-option" data-icon="👗">👗</div>
+                        <div class="icon-option" data-icon="📱">📱</div>
+                        <div class="icon-option" data-icon="💇">💇</div>
+                        <div class="icon-option" data-icon="🚗">🚗</div>
+                        <div class="icon-option" data-icon="🏠">🏠</div>
+                        <div class="icon-option" data-icon="🎓">🎓</div>
+                        <div class="icon-option" data-icon="⚡">⚡</div>
+                    </div>
                 </div>
-                <div class="location-coords" id="locationCoords">
-                    Location required. Click "Get Location" to set shop GPS.
-                </div>
-                <input type="hidden" id="shopLat">
-                <input type="hidden" id="shopLng">
-                <input type="hidden" id="shopCity">
-                <input type="hidden" id="shopState">
-                <input type="hidden" id="shopPincode">
-            </div>
 
-            <button class="submit-btn" onclick="submitShop()" id="submitBtn">Create My Shop - Go Live Now</button>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contact Phone *</label>
+                        <input type="tel" id="shopPhone" placeholder="10 digit mobile" maxlength="10">
+                    </div>
+                    <div class="form-group">
+                        <label>Service Range *</label>
+                        <select id="shopRange">
+                            <option value="1000">1 KM</option>
+                            <option value="2000">2 KM</option>
+                            <option value="5000" selected>5 KM</option>
+                            <option value="10000">10 KM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Shop Address *</label>
+                    <textarea id="shopAddress" placeholder="Complete shop address with landmark"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Shop Description</label>
+                    <textarea id="shopDesc" placeholder="What services/products you offer?"></textarea>
+                </div>
+
+                <div class="location-box">
+                    <div class="location-header">
+                        <h3>📍 Shop Location *</h3>
+                        <button class="get-location-btn" onclick="getShopLocation()" id="locBtn">Get Location</button>
+                    </div>
+                    <div class="location-coords" id="locationCoords">
+                        Location required. Click "Get Location" to set shop GPS.
+                    </div>
+                    <input type="hidden" id="shopLat">
+                    <input type="hidden" id="shopLng">
+                    <input type="hidden" id="shopCity">
+                    <input type="hidden" id="shopState">
+                    <input type="hidden" id="shopPincode">
+                </div>
+
+                <button class="submit-btn" onclick="submitShop()" id="submitBtn">Create My Shop - Go Live Now</button>
+            </div>
         </div>
-    </div>
-
-    <div class="form-container already-shop" id="alreadyShop" style="display:none">
-        <h2>✅ You Already Have a Shop</h2>
-        <p id="myShopName">Your shop is active and running.</p>
-        <button class="goto-dashboard-btn" onclick="goToDashboard()">Go to My Shop Dashboard</button>
     </div>
 </div>
 
 <script>
 let currentUser = null;
 let selectedIcon = '🏪';
-let allModules = [];
-let myShopData = null;
 let newShopData = null;
 
-// Template types that have specific dashboards
 const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant', 'service', 'rental', 'common'];
 
 window.addEventListener('DOMContentLoaded', async () => {
-    // ✅ NO LOGIN - Direct fake user
     currentUser = {
         name: 'Shop Owner',
         email: 'owner@shop.com'
     };
-
-    // Check if user already has shop from localStorage
-    const existingShopId = localStorage.getItem('myShopId');
-    if (existingShopId) {
-        try {
-            const shopRes = await fetch('/api/local-market/shops/' + existingShopId);
-            const shop = await shopRes.json();
-            if (shop._id) {
-                myShopData = shop;
-                document.getElementById('shopFormContainer').style.display = 'none';
-                document.getElementById('alreadyShop').style.display = 'block';
-                document.getElementById('myShopName').innerText = `Your shop "${myShopData.shopName}" is ${myShopData.status}.`;
-                return;
-            }
-        } catch(e) {
-            console.log('No existing shop');
-            localStorage.removeItem('myShopId');
-        }
-    }
-
     loadModules();
+    await loadMyShops();
 });
+
+function showTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    if (tab === 'list') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('listTab').classList.add('active');
+        loadMyShops();
+    } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('createTab').classList.add('active');
+        resetForm();
+    }
+}
 
 function loadModules() {
     const select = document.getElementById('shopModule');
@@ -532,7 +696,6 @@ async function submitShop() {
         'common': 'product'
     };
 
-    // ✅ UPDATED: ownerId aur approvedBy hata diya - Backend khud handle karega
     const shopData = {
         shopName: document.getElementById('shopName').value.trim(),
         ownerName: currentUser.name,
@@ -574,7 +737,6 @@ async function submitShop() {
     }
 
     try {
-        // ✅ UPDATED: Authorization header hata diya, sirf Content-Type
         const res = await fetch('/api/local-market/shops', {
             method: 'POST',
             headers: {
@@ -586,9 +748,12 @@ async function submitShop() {
         const data = await res.json();
 
         if (res.ok && data._id) {
-            // ✅ Success - Token set kar de dashboard access ke liye
             localStorage.setItem('userToken', 'shop-owner-' + data._id);
-            localStorage.setItem('myShopId', data._id);
+
+            // Save to my shops list
+            let myShops = JSON.parse(localStorage.getItem('myShopsList') || '[]');
+            myShops.push({id: data._id, name: data.shopName, type: data.serviceType});
+            localStorage.setItem('myShopsList', JSON.stringify(myShops));
 
             newShopData = data;
             document.getElementById('successBox').style.display = 'block';
@@ -596,8 +761,6 @@ async function submitShop() {
             document.getElementById('formFields').style.display = 'none';
             document.getElementById('infoBanner').style.display = 'none';
             document.getElementById('submitBtn').style.display = 'none';
-
-            // Scroll to success box
             document.getElementById('successBox').scrollIntoView({ behavior: 'smooth' });
         } else {
             alert('Error: ' + (data.error || data.details || data.msg || 'Failed to create shop'));
@@ -612,26 +775,71 @@ async function submitShop() {
     }
 }
 
-function goToDashboard() {
-    if (myShopData) {
-        const shopType = myShopData.serviceType || myShopData.shopType;
-        if (SPECIFIC_TEMPLATES.includes(shopType)) {
-            window.location.href = `/shop-templates/${shopType}/dashboard.html?shopId=${myShopData._id}`;
-        } else {
-            window.location.href = `/shop-templates/${shopType}/dashboard.html?shopId=${myShopData._id}`;
+async function loadMyShops() {
+    const container = document.getElementById('shopsContainer');
+    const emptyState = document.getElementById('emptyState');
+
+    let myShops = JSON.parse(localStorage.getItem('myShopsList') || '[]');
+
+    if (myShops.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    emptyState.style.display = 'none';
+    container.innerHTML = '';
+
+    for (const shop of myShops) {
+        try {
+            const res = await fetch('/api/local-market/shops/' + shop.id);
+            const shopData = await res.json();
+
+            if (shopData._id) {
+                const shopType = shopData.serviceType || shopData.shopType;
+                const dashboardUrl = `/shop-templates/${shopType}/dashboard.html?shopId=${shopData._id}`;
+
+                const card = document.createElement('div');
+                card.className = 'shop-card';
+                card.innerHTML = `
+                    <div class="shop-info">
+                        <div class="shop-icon">${shopData.icon || '🏪'}</div>
+                        <div class="shop-details">
+                            <h3>${shopData.shopName}</h3>
+                            <p>${shopData.address?.city || 'Surat'} • ${shopData.serviceType}</p>
+                            <span class="shop-badge">${shopData.status}</span>
+                        </div>
+                    <div class="shop-actions">
+                        <button class="btn-go" onclick="window.location.href='${dashboardUrl}'">
+                            <i class="fa fa-tachometer-alt"></i> Dashboard
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        } catch(e) {
+            console.log('Shop not found:', shop.id);
         }
     }
 }
 
-function goToNewDashboard() {
-    if (newShopData) {
-        const shopType = newShopData.serviceType || newShopData.shopType;
-        if (SPECIFIC_TEMPLATES.includes(shopType)) {
-            window.location.href = `/shop-templates/${shopType}/dashboard.html?shopId=${newShopData._id}`;
-        } else {
-            window.location.href = `/shop-templates/${shopType}/dashboard.html?shopId=${newShopData._id}`;
-        }
-    }
+function resetForm() {
+    document.getElementById('shopName').value = '';
+    document.getElementById('shopModule').value = '';
+    document.getElementById('shopPhone').value = '';
+    document.getElementById('shopAddress').value = '';
+    document.getElementById('shopDesc').value = '';
+    document.getElementById('shopLat').value = '';
+    document.getElementById('shopLng').value = '';
+    document.getElementById('locationCoords').className = 'location-coords';
+    document.getElementById('locationCoords').textContent = 'Location required. Click "Get Location" to set shop GPS.';
+    document.getElementById('locBtn').textContent = 'Get Location';
+    document.getElementById('locBtn').disabled = false;
+    document.getElementById('formFields').style.display = 'block';
+    document.getElementById('infoBanner').style.display = 'block';
+    document.getElementById('submitBtn').style.display = 'block';
+    document.getElementById('successBox').style.display = 'none';
+    document.getElementById('submitBtn').textContent = 'Create My Shop - Go Live Now';
+    document.getElementById('submitBtn').disabled = false;
 }
 
 function copyShopLink() {
