@@ -7,146 +7,280 @@
     <link rel="stylesheet" href="/local-market/assets/css/common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; }
-        .shop-container { max-width: 1200px; margin: 0 auto; }
+        body { 
+            margin: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .shop-container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 20px;
+        }
+        
+        /* Header - Glass Effect */
         .shop-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 20px;
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            padding: 20px 24px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         }
         .header-left {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
         }
         .back-btn {
             background: #f1f5f9;
             border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
+            padding: 10px 14px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 14px;
             color: #334155;
+            transition: all 0.2s;
         }
-        .back-btn:hover { background: #e2e8f0; }
+        .back-btn:hover { background: #e2e8f0; transform: translateX(-2px); }
+        
+        .shop-title-wrap h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .shop-type-label {
+            margin: 4px 0 0 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+        
         .badge {
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 20px;
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .badge.active { background: #dcfce7; color: #166534; }
-        .badge.approved { background: #dcfce7; color: #166534; }
+        .badge.active, .badge.approved { background: #dcfce7; color: #166534; }
         .badge.pending { background: #fef3c7; color: #92400e; }
         .badge.rejected { background: #fee2e2; color: #991b1b; }
         .badge.inactive { background: #e5e7eb; color: #374151; }
+
+        /* Stats Grid - Modern Cards */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 16px;
-            padding: 20px;
+            margin-bottom: 20px;
         }
         .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        .stat-card .stat-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            opacity: 0.9;
         }
         .stat-card h3 {
-            margin: 0 0 8px 0;
-            font-size: 28px;
-            color: #667eea;
+            margin: 0 0 6px 0;
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         .stat-card p {
             margin: 0;
             color: #64748b;
             font-size: 14px;
+            font-weight: 600;
         }
+
+        /* Shop Info Card */
+        .content-area {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .content-area h3 {
+            margin: 0 0 16px 0;
+            font-size: 18px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-row { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; 
+        }
+        .info-item { 
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+        .info-label { 
+            color: #64748b; 
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .info-value { 
+            font-weight: 700; 
+            color: #1e293b;
+            font-size: 15px;
+        }
+
+        /* Action Bar */
         .action-bar {
             display: flex;
             gap: 12px;
-            padding: 0 20px 20px 20px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
         }
         .btn {
-            padding: 12px 20px;
+            padding: 14px 24px;
             border: none;
-            border-radius: 8px;
-            font-weight: 600;
+            border-radius: 12px;
+            font-weight: 700;
             cursor: pointer;
             font-size: 14px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-        .btn-primary { background: #10b981; color: white; }
-        .btn-primary:hover { background: #059669; }
-        .btn-secondary { background: #e2e8f0; color: #334155; }
-        .btn-secondary:hover { background: #cbd5e1; }
-        .btn-danger { background: #ef4444; color: white; }
-        .btn-danger:hover { background: #dc2626; }
-        .content-area {
-            background: white;
-            margin: 0 20px 20px 20px;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        .btn-primary { 
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
         }
+        .btn-primary:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16,185,129,0.4);
+        }
+        .btn-secondary { 
+            background: rgba(255,255,255,0.95);
+            color: #334155;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { background: white; transform: translateY(-2px); }
+        .btn-danger { 
+            background: #ef4444; 
+            color: white;
+            box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+        }
+        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
+
+        /* Table */
         .data-table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0 8px;
         }
         .data-table th {
             text-align: left;
-            padding: 12px;
-            border-bottom: 2px solid #e2e8f0;
+            padding: 12px 16px;
             color: #475569;
-            font-size: 13px;
+            font-size: 12px;
             text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
         .data-table td {
-            padding: 12px;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 16px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .text-center { text-align: center; }
-        .text-muted { color: #64748b; }
+        .data-table td:first-child {
+            border-left: 1px solid #e2e8f0;
+            border-radius: 10px 0 0 10px;
+        }
+        .data-table td:last-child {
+            border-right: 1px solid #e2e8f0;
+            border-radius: 0 10px 10px 0;
+        }
+        .data-table tr:hover td {
+            background: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .empty-state i {
+            font-size: 64px;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+        .empty-state h4 {
+            margin: 0 0 8px 0;
+            color: #475569;
+            font-size: 18px;
+        }
+        .empty-state p {
+            margin: 0 0 20px 0;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .table-responsive { overflow-x: auto; }
+        .item-badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .item-badge.veg { background: #dcfce7; color: #166534; }
+        .item-badge.non-veg { background: #fee2e2; color: #991b1b; }
+        .item-badge.available { background: #dcfce7; color: #166534; }
+        .item-badge.unavailable { background: #fee2e2; color: #991b1b; }
+
         .loader-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.9);
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 9999;
         }
         .spinner {
-            border: 4px solid #f3f4f6;
-            border-top: 4px solid #667eea;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .info-row { display: flex; gap: 24px; margin-bottom: 12px; flex-wrap: wrap; }
-        .info-item { font-size: 14px; }
-        .info-label { color: #64748b; }
-        .info-value { font-weight: 600; color: #1e293b; }
-        .table-responsive { overflow-x: auto; }
-        .item-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .item-badge.veg { background: #dcfce7; color: #166534; }
-        .item-badge.non-veg { background: #fee2e2; color: #991b1b; }
-        .item-badge.available { background: #dcfce7; color: #166534; }
-        .item-badge.unavailable { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
@@ -157,9 +291,9 @@
                 <button class="back-btn" onclick="window.history.back()">
                     <i class="fa fa-arrow-left"></i>
                 </button>
-                <div>
-                    <h1 id="shopName" style="margin:0;font-size:20px;">Loading...</h1>
-                    <p id="shopTypeLabel" class="text-muted" style="margin:0;font-size:13px;"></p>
+                <div class="shop-title-wrap">
+                    <h1 id="shopName">Loading...</h1>
+                    <p id="shopTypeLabel" class="shop-type-label"></p>
                 </div>
             </div>
             <span class="badge" id="shopStatus">Loading</span>
@@ -168,14 +302,17 @@
         <!-- Stats Grid -->
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
+                <div class="stat-icon">📦</div>
                 <h3 id="stat1Value">0</h3>
                 <p id="stat1Label">Total Items</p>
             </div>
             <div class="stat-card">
+                <div class="stat-icon">🛒</div>
                 <h3 id="stat2Value">0</h3>
                 <p id="stat2Label">Total Orders</p>
             </div>
             <div class="stat-card">
+                <div class="stat-icon">⭐</div>
                 <h3 id="stat3Value">0.0</h3>
                 <p id="stat3Label">Rating</p>
             </div>
@@ -183,22 +320,22 @@
 
         <!-- Shop Info Card -->
         <div class="content-area" id="shopInfoCard" style="display:none">
-            <h3 style="margin-top:0">Shop Information</h3>
+            <h3><i class="fa fa-info-circle"></i> Shop Information</h3>
             <div class="info-row">
                 <div class="info-item">
-                    <span class="info-label">Phone:</span>
+                    <span class="info-label">Phone</span>
                     <span class="info-value" id="shopPhone">-</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Range:</span>
+                    <span class="info-label">Range</span>
                     <span class="info-value" id="shopRange">- KM</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Address:</span>
+                    <span class="info-label">Address</span>
                     <span class="info-value" id="shopAddress">-</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Status:</span>
+                    <span class="info-label">Status</span>
                     <span class="info-value" id="shopOpenStatus">-</span>
                 </div>
             </div>
@@ -219,7 +356,7 @@
 
         <!-- Content Area -->
         <div class="content-area">
-            <h3 style="margin-top:0" id="itemsTitle">Products / Items</h3>
+            <h3 id="itemsTitle"><i class="fa fa-box"></i> Products / Items</h3>
             <div class="table-responsive">
                 <table class="data-table">
                     <thead id="tableHead">
@@ -233,7 +370,16 @@
                     </thead>
                     <tbody id="productTableBody">
                         <tr>
-                            <td colspan="5" class="text-center text-muted">Loading items...</td>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <i class="fa fa-box-open"></i>
+                                    <h4>No Products Yet</h4>
+                                    <p>Start by adding your first product to the shop</p>
+                                    <button class="btn btn-primary" onclick="document.getElementById('addProductBtn').click()">
+                                        <i class="fa fa-plus"></i> Add First Product
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -348,7 +494,7 @@
                     'product': 'Add Product'
                 };
                 document.getElementById('addBtnText').innerText = btnTexts[currentShopType] || 'Add Item';
-                document.getElementById('itemsTitle').innerText = btnTexts[currentShopType]?.replace('Add ', '') + 's' || 'Products / Items';
+                document.getElementById('itemsTitle').innerHTML = '<i class="fa fa-box"></i> ' + (btnTexts[currentShopType]?.replace('Add ', '') + 's' || 'Products / Items');
 
                 // Update Table Headers
                 updateTableHeaders();
@@ -378,7 +524,18 @@
             const headers = tableHeaders[currentShopType] || tableHeaders['product'];
             
             if (!items || items.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${headers.length}" class="text-center text-muted">No items yet. Click "Add" to start.</td></tr>`;
+                tbody.innerHTML = `<tr>
+                    <td colspan="${headers.length}">
+                        <div class="empty-state">
+                            <i class="fa fa-box-open"></i>
+                            <h4>No Products Yet</h4>
+                            <p>Start by adding your first product to the shop</p>
+                            <button class="btn btn-primary" onclick="document.getElementById('addProductBtn').click()">
+                                <i class="fa fa-plus"></i> Add First Product
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
                 return;
             }
 
