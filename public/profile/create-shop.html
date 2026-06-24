@@ -285,10 +285,10 @@
     border-radius: 0 0 16px 16px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
-.shops-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+.shops-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 .shop-card {
     background: #f8fafc;
@@ -296,20 +296,24 @@
     border-radius: 12px;
     border: 2px solid #e2e8f0;
     transition: all 0.3s;
-    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 .shop-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
     border-color: #667eea;
 }
 .shop-icon {
-    font-size: 40px;
-    margin-bottom: 12px;
-    text-align: center;
+    font-size: 36px;
+    flex-shrink: 0;
+}
+.shop-details {
+    flex: 1;
+    min-width: 0;
 }
 .shop-details h3 {
-    margin: 0 0 6px 0;
+    margin: 0 0 4px 0;
     font-size: 16px;
     color: #1e293b;
     white-space: nowrap;
@@ -317,7 +321,7 @@
     text-overflow: ellipsis;
 }
 .shop-details p {
-    margin: 0 0 8px 0;
+    margin: 0 0 6px 0;
     font-size: 12px;
     color: #64748b;
 }
@@ -330,7 +334,6 @@
     background: #dcfce7;
     color: #166534;
     display: inline-block;
-    margin-bottom: 12px;
 }
 .btn-go {
     background: linear-gradient(135deg, #667eea, #764ba2);
@@ -341,11 +344,10 @@
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    width: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 6px;
+    flex-shrink: 0;
 }
 .btn-go:hover {
     opacity: 0.9;
@@ -353,7 +355,6 @@
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    grid-column: 1 / -1;
 }
 .empty-state i {
     font-size: 64px;
@@ -394,8 +395,14 @@
 .icon-picker {
         grid-template-columns: repeat(4, 1fr);
     }
-.shops-grid {
-        grid-template-columns: 1fr;
+.shop-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+.btn-go {
+        width: 100%;
+        justify-content: center;
     }
 }
 </style>
@@ -424,7 +431,7 @@
     <!-- TAB 1: MY SHOPS LIST -->
     <div id="listTab" class="tab-content active">
         <div class="shops-container">
-            <div class="shops-grid" id="shopsGrid">
+            <div class="shops-list" id="shopsList">
                 <div class="empty-state" id="emptyState">
                     <i class="fa fa-store"></i>
                     <h3>No Shops Yet</h3>
@@ -765,20 +772,20 @@ async function submitShop() {
 }
 
 async function loadMyShops() {
-    const grid = document.getElementById('shopsGrid');
+    const list = document.getElementById('shopsList');
     const emptyState = document.getElementById('emptyState');
 
     let myShops = JSON.parse(localStorage.getItem('myShopsList') || '[]');
 
     if (myShops.length === 0) {
-        grid.innerHTML = '';
-        grid.appendChild(emptyState);
+        list.innerHTML = '';
+        list.appendChild(emptyState);
         emptyState.style.display = 'block';
         return;
     }
 
     emptyState.style.display = 'none';
-    grid.innerHTML = '';
+    list.innerHTML = '';
 
     for (const shop of myShops) {
         try {
@@ -802,7 +809,7 @@ async function loadMyShops() {
                         <i class="fa fa-tachometer-alt"></i> Dashboard
                     </button>
                 `;
-                grid.appendChild(card);
+                list.appendChild(card);
             }
         } catch(e) {
             console.log('Shop not found:', shop.id);
