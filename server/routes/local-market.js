@@ -1,9 +1,43 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const Shop = require('../models/Shop'); // Tera wala schema
+const Shop = require('../models/Shop');
 const Order = require('../models/Order');
 const auth = require('../middleware/authenticateToken');
+
+// ✅ NEW: CREATE SHOP - Frontend se call ho raha hai
+router.post('/shops', auth, async (req, res) => {
+    try {
+        const shopData = {
+            ...req.body,
+            ownerId: req.user.id,
+            createdBy: req.user.id,
+            status: 'active', // Turant active
+            isActive: true
+        };
+        
+        const shop = new Shop(shopData);
+        await shop.save();
+        res.status(201).json(shop);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// ✅ NEW: GET MY SHOPS - Check karne ke liye user ki shop hai ya nahi
+router.get('/my-shops', auth, async (req, res) => {
+    try {
+        const shops = await Shop.find({ 
+            $or: [
+                { ownerId: req.user.id },
+                { createdBy: req.user.id }
+            ]
+        });
+        res.json(shops);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // ===== SHOP DETAILS =====
 router.get('/shops/:id', async (req, res) => {
@@ -26,7 +60,7 @@ router.get('/shops/:shopId/stats', auth, async (req, res) => {
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
-        if (!isOwner &&!isManager && req.user.role!== 'admin') {
+        if (!isOwner && !isManager && req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -46,13 +80,13 @@ router.get('/shops/:shopId/stats', auth, async (req, res) => {
 
         // Shop type specific stats
         switch(shop.shopType) {
-            case 'product': // Kirana
+            case 'kirana': // Kirana
                 stats.lowStock = products.filter(p => p.stock && p.stock < 10).length;
                 break;
-            case 'fashion': // Cloth
+            case 'cloth': // Cloth
                 stats.totalVariants = products.length;
                 break;
-            case 'food': // Restaurant
+            case 'restaurant': // Restaurant
                 stats.activeOrders = await Order.countDocuments({
                     shopId: shop._id,
                     status: { $in: ['pending', 'preparing'] }
@@ -80,7 +114,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         const products = (shop.items || []).map((item, index) => ({
-            _id: item._id || index, // MongoDB subdoc id
+            _id: item._id || index,
             ...item.toObject ? item.toObject() : item
         }));
 
@@ -108,7 +142,7 @@ router.get('/products/:shopId/:productId', auth, async (req, res) => {
 // ===== CREATE PRODUCT - Push to items[] =====
 router.post('/products', auth, async (req, res) => {
     try {
-        const { shopId,...productData } = req.body;
+        const { shopId, ...productData } = req.body;
 
         const shop = await Shop.findById(shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
@@ -117,7 +151,7 @@ router.post('/products', auth, async (req, res) => {
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
-        if (!isOwner &&!isManager && req.user.role!== 'admin') {
+        if (!isOwner && !isManager && req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -140,7 +174,7 @@ router.put('/products/:shopId/:productId', auth, async (req, res) => {
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
-        if (!isOwner &&!isManager && req.user.role!== 'admin') {
+        if (!isOwner && !isManager && req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -165,7 +199,7 @@ router.delete('/products/:shopId/:productId', auth, async (req, res) => {
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
-        if (!isOwner &&!isManager && req.user.role!== 'admin') {
+        if (!isOwner && !isManager && req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -187,7 +221,7 @@ router.put('/shops/:id', auth, async (req, res) => {
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
-        if (!isOwner &&!isManager && req.user.role!== 'admin') {
+        if (!isOwner && !isManager && req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -206,12 +240,12 @@ router.get('/nearby', async (req, res) => {
     try {
         const { lat, lng, radius = 5000, type } = req.query;
 
-        if (!lat ||!lng) {
+        if (!lat || !lng) {
             return res.status(400).json({ error: 'lat and lng required' });
         }
 
         const query = {
-            status: 'approved',
+            status: 'active', // ✅ 'approved' ki jagah 'active'
             isActive: true,
             location: {
                 $near: {

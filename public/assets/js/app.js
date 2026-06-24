@@ -261,7 +261,7 @@ function renderShops() {
         shopsEl.innerHTML = `
             <div class="shops-grid">
                 ${doubleShops.map(service => `
-                    <div class="shop-card">
+                    <div class="shop-card" onclick="window.location.href='/local-market/dashboard.html?shopId=${service._id}&type=${service.shopType}'">
                         <div class="shop-icon">${service.icon}</div>
                         <div class="shop-name">${service.name}</div>
                         ${service.distance? `<small style="color:#10b981;font-size:11px;">${service.distance}m</small>` : ''}
@@ -302,19 +302,19 @@ function renderVideos() {
 // ========================================
 let topAdIndex = 0;
 function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI - space add kiya
+    const slides = document.querySelectorAll('#topAdsContainer .ad-slide'); // FIXED BY AI - space add kiya
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     topAdIndex = idx;
 }
 function nextTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#topAdsContainer .ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex + 1) % slides.length;
     showTopAd(topAdIndex);
 }
 function prevTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#topAdsContainer .ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
     showTopAd(topAdIndex);
@@ -325,19 +325,19 @@ function prevTopAd() {
 // ========================================
 let campaignIndex = 0;
 function showCampaign(idx) {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI - space add kiya
+    const slides = document.querySelectorAll('#campaignContainer .ad-slide'); // FIXED BY AI - space add kiya
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     campaignIndex = idx;
 }
 function nextCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#campaignContainer .ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     campaignIndex = (campaignIndex + 1) % slides.length;
     showCampaign(campaignIndex);
 }
 function prevCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#campaignContainer .ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
     showCampaign(campaignIndex);
@@ -348,19 +348,19 @@ function prevCampaign() {
 // ========================================
 let shopIndex = 0;
 function showShop(idx) {
-    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     shopIndex = idx;
 }
 function nextShop() {
-    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
     if(slides.length === 0) return;
     shopIndex = (shopIndex + 1) % slides.length;
     showShop(shopIndex);
 }
 function prevShop() {
-    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
     if(slides.length === 0) return;
     shopIndex = (shopIndex - 1 + slides.length) % slides.length;
     showShop(shopIndex);
@@ -372,19 +372,19 @@ function goToShop(idx) { showShop(idx); }
 // ========================================
 let videoIndex = 0;
 function showVideo(idx) {
-    const slides = document.querySelectorAll('#videosContent.nearby-slide');
+    const slides = document.querySelectorAll('#videosContent .nearby-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     videoIndex = idx;
 }
 function nextVideo() {
-    const slides = document.querySelectorAll('#videosContent.nearby-slide');
+    const slides = document.querySelectorAll('#videosContent .nearby-slide');
     if(slides.length === 0) return;
     videoIndex = (videoIndex + 1) % slides.length;
     showVideo(videoIndex);
 }
 function prevVideo() {
-    const slides = document.querySelectorAll('#videosContent.nearby-slide');
+    const slides = document.querySelectorAll('#videosContent .nearby-slide');
     if(slides.length === 0) return;
     videoIndex = (videoIndex - 1 + slides.length) % slides.length;
     showVideo(videoIndex);
@@ -410,7 +410,7 @@ document.addEventListener('click', function(e) {
 });
 
 function openVideoModal(url, shopId) { // MODIFIED BY AI - shopId parameter add
-    const shop = nearbyServices.find(s => s.id === shopId); // ADDED BY AI
+    const shop = nearbyServices.find(s => s._id === shopId); // ADDED BY AI - _id use kiya
     const oldModal = document.getElementById('videoModal');
     if(oldModal) oldModal.remove();
 
@@ -437,10 +437,10 @@ function openVideoModal(url, shopId) { // MODIFIED BY AI - shopId parameter add
             ${shop? `
             <div style="background:white;padding:12px;border-radius:0 0 10px 10px;display:flex;justify-content:space-between;align-items:center;">
                 <div>
-                    <div style="font-weight:700;color:#1e40af;">${shop.name}</div>
+                    <div style="font-weight:700;color:#1e40af;">${shop.shopName || shop.name}</div>
                     <div style="font-size:12px;color:#64748b;">${shop.address || 'Location'}</div>
                 </div>
-                <button onclick="window.location.href='/shop/${shop.id}'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">Visit Shop</button>
+                <button onclick="window.location.href='/local-market/dashboard.html?shopId=${shop._id}&type=${shop.shopType}'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">Visit Shop</button>
             </div>
             ` : ''}
         </div>
@@ -864,5 +864,5 @@ function goToProfilePage() {
         openLoginModal();
         return;
     }
-window.location.href = '/profile.html'; // public/profile.html khulega
+    window.location.href = '/profile.html'; // public/profile.html khulega
 }

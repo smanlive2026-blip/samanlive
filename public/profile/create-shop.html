@@ -186,14 +186,14 @@
     width: 100%;
 }
 @media (max-width: 768px) {
-   .form-container {
+  .form-container {
         margin: 16px;
         padding: 20px;
     }
-   .form-row {
+  .form-row {
         grid-template-columns: 1fr;
     }
-   .icon-picker {
+  .icon-picker {
         grid-template-columns: repeat(4, 1fr);
     }
 }
@@ -422,7 +422,7 @@ async function submitShop() {
         range: parseInt(document.getElementById('shopRange').value),
         icon: selectedIcon,
         color: '#10b981',
-        status: 'active', // <-- Yaha active kar diya
+        status: 'active',
         location: {
             type: 'Point',
             coordinates: [parseFloat(lng), parseFloat(lat)]
@@ -450,7 +450,8 @@ async function submitShop() {
         if (data._id) {
             document.getElementById('successMsg').style.display = 'block';
             setTimeout(() => {
-                window.location.href = `/shop/dashboard/${data._id}`;
+                // ✅ FIX 1: Dashboard URL + query params
+                window.location.href = `/local-market/dashboard.html?shopId=${data._id}&type=${shopData.shopType}`;
             }, 1500);
         } else {
             alert('Error: ' + (data.msg || 'Failed to create shop'));
@@ -466,7 +467,8 @@ async function submitShop() {
 
 function goToDashboard() {
     if (myShopData) {
-        window.location.href = `/shop/dashboard/${myShopData._id}`;
+        // ✅ FIX 2: myShopData use kiya, data/shopData nahi
+        window.location.href = `/local-market/dashboard.html?shopId=${myShopData._id}&type=${myShopData.shopType}`;
     }
 }
 </script>

@@ -6,15 +6,58 @@
     <title>Shop Dashboard - SAMANLIVE</title>
     <link rel="stylesheet" href="/local-market/assets/css/common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ✅ Back button ke liye extra CSS */
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .back-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #334155;
+        }
+        .back-btn:hover {
+            background: #e2e8f0;
+        }
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #dcfce7;
+            color: #166534;
+        }
+    </style>
 </head>
 <body>
     <div class="shop-container">
-        <!-- Header - Common for all -->
+        <!-- ✅ Header Updated - Back button add kiya -->
         <div class="shop-header">
-            <div>
-                <h1 id="shopName">Loading...</h1>
-                <p id="shopTypeLabel" class="text-muted"></p>
-            </div>
+            <div class="header-left">
+                <button class="back-btn" onclick="window.location.href='/local-market/create-shop.html'">
+                    <i class="fa fa-arrow-left"></i>
+                </button>
+                <div>
+                    <h1 id="shopName" style="margin:0;font-size:20px;">Loading...</h1>
+                    <p id="shopTypeLabel" class="text-muted" style="margin:0;font-size:13px;color:#64748b;"></p>
+                </div>
             <span class="badge" id="shopStatus">Inactive</span>
         </div>
 
@@ -78,18 +121,17 @@
         const shopId = urlParams.get('shopId');
         const shopType = urlParams.get('type'); // kirana, cloth, medical, restaurant
 
-        if (!shopId ||!shopType) {
+        if (!shopId || !shopType) {
             alert('Invalid shop URL. shopId and type required');
-            window.location.href = '/local-market/my-shops';
+            window.location.href = '/local-market/create-shop.html'; // ✅ Fallback create-shop pe bheja
         } else {
             // shop-core.js ka main function call karo
-            // Ye function shop type dekh ke stats, table, form sab set karega
             initDashboard(shopType, shopId);
         }
 
         // Add Product button ka handler
         document.getElementById('addProductBtn').onclick = function() {
-            const formTemplate = shopType === 'restaurant'? 'menu-form' : 'product-form';
+            const formTemplate = shopType === 'restaurant' ? 'menu-form' : 'product-form';
             loadTemplate(formTemplate, shopType);
         };
     </script>
