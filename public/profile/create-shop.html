@@ -204,14 +204,14 @@
     width: 100%;
 }
 @media (max-width: 768px) {
- .form-container {
+.form-container {
         margin: 16px;
         padding: 20px;
     }
- .form-row {
+.form-row {
         grid-template-columns: 1fr;
     }
- .icon-picker {
+.icon-picker {
         grid-template-columns: repeat(4, 1fr);
     }
 }
@@ -297,6 +297,9 @@
             </div>
             <input type="hidden" id="shopLat">
             <input type="hidden" id="shopLng">
+            <input type="hidden" id="shopCity">
+            <input type="hidden" id="shopState">
+            <input type="hidden" id="shopPincode">
         </div>
 
         <button class="submit-btn" onclick="submitShop()" id="submitBtn">Create My Shop - Go Live Now</button>
@@ -344,7 +347,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 myShopData = myShops[0];
                 document.getElementById('shopFormContainer').style.display = 'none';
                 document.getElementById('alreadyShop').style.display = 'block';
-                document.getElementById('myShopName').innerText = `Your shop "${myShopData.shopName}" is active and running.`;
+                document.getElementById('myShopName').innerText = `Your shop "${myShopData.shopName}" is ${myShopData.status}.`;
                 return;
             }
 
@@ -360,7 +363,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 function loadModules() {
     const select = document.getElementById('shopModule');
-    // Filter sirf shop types
     const shopTypes = [
         {id: 'kirana', name: 'Kirana/Grocery Store', icon: '🛒'},
         {id: 'cloth', name: 'Cloth/Garment Shop', icon: '👗'},
@@ -407,8 +409,29 @@ function getShopLocation() {
             const lng = position.coords.longitude;
             document.getElementById('shopLat').value = lat;
             document.getElementById('shopLng').value = lng;
-            status.className = 'location-coords success';
-            status.innerHTML = `✅ Location captured!<br><strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
+
+            // Reverse geocode to get city/state
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+       .then(r => r.json())
+       .then(data => {
+                const city = data.address.city || data.address.town || data.address.village || 'Surat';
+                const state = data.address.state || 'Gujarat';
+                const pincode = data.address.postcode || '';
+
+                document.getElementById('shopCity').value = city;
+                document.getElementById('shopState').value = state;
+                document.getElementById('shopPincode').value = pincode;
+
+                status.className = 'location-coords success';
+                status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
+            })
+       .catch(() => {
+                document.getElementById('shopCity').value = 'Surat';
+                document.getElementById('shopState').value = 'Gujarat';
+                status.className = 'location-coords success';
+                status.innerHTML = `✅ Location captured!<br><strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
+            });
+
             btn.textContent = 'Location Set ✓';
             btn.disabled = false;
         },
@@ -434,27 +457,60 @@ async function submitShop() {
     const token = localStorage.getItem('userToken');
     const lat = document.getElementById('shopLat').value;
     const lng = document.getElementById('shopLng').value;
+    const city = document.getElementById('shopCity').value || 'Surat';
+    const state = document.getElementById('shopState').value || 'Gujarat';
+    const pincode = document.getElementById('shopPincode').value || '';
+    const shopModule = document.getElementById('shopModule').value;
+
+    // Schema enum ke hisab se shopType map kar
+    const shopTypeMap = {
+        'kirana': 'product',
+        'cloth': 'fashion',
+        'medical': 'product',
+        'restaurant': 'food',
+        'electronics': 'product',
+        'hardware': 'product',
+        'salon': 'service',
+        'stationery': 'product'
+    };
 
     const shopData = {
         shopName: document.getElementById('shopName').value.trim(),
         ownerName: currentUser.name,
-        mobile: document.getElementById('shopPhone').value.trim(),
-        category: document.getElementById('shopModule').value,
-        shopType: document.getElementById('shopModule').value,
-        address: document.getElementById('shopAddress').value.trim(),
+        ownerId: currentUser._id, // ✅ Required
+        phone: document.getElementById('shopPhone').value.trim(), // ✅ Required
+        email: currentUser.email || '',
+        address: {
+            line1: document.getElementById('shopAddress').value.trim(),
+            line2: '',
+            city: city,
+            state: state,
+            pincode: pincode
+        },
+        areaCode: city.toUpperCase().replace(/\s/g, '') + '01', // ✅ Required
+        bucket: 'GENERAL', // ✅ Required
+        area: city,
+        areaName: city,
+        serviceType: shopModule, // ✅ Required
+        shopType: shopTypeMap[shopModule] || 'product', // ✅ Required enum
         description: document.getElementById('shopDesc').value.trim(),
         range: parseInt(document.getElementById('shopRange').value),
         icon: selectedIcon,
-        color: '#10b981',
-        status: 'active',
+        logo: '',
+        banner: '',
+        status: 'approved', // ✅ Approval bypass - turant approved
+        isVerified: true, // ✅ Turant verified
         isActive: true,
+        approvedBy: currentUser._id, // ✅ Self approved
+        approvedAt: new Date(),
+        locationType: 'fixed',
         location: {
             type: 'Point',
             coordinates: [parseFloat(lng), parseFloat(lat)]
         }
     };
 
-    if (!shopData.shopName ||!shopData.category ||!shopData.mobile ||!shopData.address ||!lat ||!lng) {
+    if (!shopData.shopName ||!shopData.serviceType ||!shopData.phone ||!shopData.address.line1 ||!lat ||!lng) {
         alert('Please fill all required fields including location!');
         btn.textContent = 'Create My Shop - Go Live Now';
         btn.disabled = false;
@@ -474,15 +530,17 @@ async function submitShop() {
 
         if (data._id) {
             document.getElementById('successMsg').style.display = 'block';
+            document.getElementById('successMsg').textContent = '✅ Shop Created Successfully! Your shop is now LIVE.';
             setTimeout(() => {
                 window.location.href = `/local-market/dashboard.html?shopId=${data._id}&type=${shopData.shopType}`;
             }, 1500);
         } else {
-            alert('Error: ' + (data.error || 'Failed to create shop'));
+            alert('Error: ' + (data.error || data.msg || JSON.stringify(data)));
             btn.textContent = 'Create My Shop - Go Live Now';
             btn.disabled = false;
         }
     } catch (err) {
+        console.error(err);
         alert('Failed to create shop. Try again.');
         btn.textContent = 'Create My Shop - Go Live Now';
         btn.disabled = false;
