@@ -7,12 +7,6 @@
 <link rel="stylesheet" href="/assets/css/main.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-* { box-sizing: border-box; }
-body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f1f5f9;
-}
 .create-shop-page {
     min-height: 100vh;
     background: #f1f5f9;
@@ -226,6 +220,15 @@ body {
     opacity: 0.6;
     cursor: not-allowed;
 }
+.success-msg {
+    background: #d1fae5;
+    color: #065f46;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    text-align: center;
+    display: none;
+}
 .success-box {
     background: #d1fae5;
     border: 2px solid #10b981;
@@ -304,6 +307,7 @@ body {
     align-items: center;
     gap: 16px;
     flex: 1;
+    min-width: 0;
 }
 .shop-icon {
     font-size: 48px;
@@ -311,11 +315,15 @@ body {
 }
 .shop-details {
     flex: 1;
+    min-width: 0;
 }
 .shop-details h3 {
     margin: 0 0 4px 0;
     font-size: 18px;
     color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .shop-details p {
     margin: 0;
@@ -400,7 +408,7 @@ body {
     }
 .shop-card {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
         gap: 16px;
     }
 .shop-actions {
@@ -451,6 +459,9 @@ body {
     <!-- TAB 2: CREATE SHOP FORM -->
     <div id="createTab" class="tab-content">
         <div class="form-container">
+            <div class="success-msg" id="successMsg">✅ Shop Created Successfully! Your shop is now LIVE.</div>
+
+            <!-- Success Box with Buttons -->
             <div class="success-box" id="successBox">
                 <h3>🎉 Shop Created Successfully!</h3>
                 <p id="successShopName">Your shop is now LIVE and ready.</p>
@@ -549,6 +560,7 @@ body {
 <script>
 let currentUser = null;
 let selectedIcon = '🏪';
+let allModules = [];
 let newShopData = null;
 
 const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant', 'service', 'rental', 'common'];
@@ -747,7 +759,6 @@ async function submitShop() {
         if (res.ok && data._id) {
             localStorage.setItem('userToken', 'shop-owner-' + data._id);
 
-            // Save to my shops list
             let myShops = JSON.parse(localStorage.getItem('myShopsList') || '[]');
             myShops.push({id: data._id, name: data.shopName, type: data.serviceType});
             localStorage.setItem('myShopsList', JSON.stringify(myShops));
@@ -805,7 +816,6 @@ async function loadMyShops() {
                             <p>${shopData.address?.city || 'Surat'} • ${shopData.serviceType}</p>
                             <span class="shop-badge">${shopData.status}</span>
                         </div>
-                    </div>
                     <div class="shop-actions">
                         <button class="btn-go" onclick="window.location.href='${dashboardUrl}'">
                             <i class="fa fa-tachometer-alt"></i> Dashboard
