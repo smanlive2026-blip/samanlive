@@ -252,10 +252,13 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const shopId = urlParams.get('shopId');
-        const shopType = urlParams.get('type');
+        const shopTypeParam = urlParams.get('type');
         const token = localStorage.getItem('userToken');
         let currentShop = null;
         let currentShopType = '';
+
+        // Template types that have specific dashboards
+        const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant'];
 
         if (!shopId || !token) {
             alert('Invalid access. Please login again.');
@@ -275,12 +278,12 @@
             'fashion': 'Fashion / Cloth'
         };
 
-        // Table Headers by Shop Type
+        // Table Headers by Shop Type - Updated per MANIFEST
         const tableHeaders = {
-            'kirana': ['Name', 'Weight', 'MRP', 'Price', 'Stock', 'Actions'],
-            'cloth': ['Name', 'Size', 'Color', 'Price', 'Stock', 'Actions'],
-            'medical': ['Name', 'Company', 'Batch', 'Expiry', 'Price', 'Actions'],
-            'restaurant': ['Name', 'Type', 'Spice', 'Time', 'Price', 'Actions'],
+            'kirana': ['Product', 'Weight', 'MRP', 'Selling Price', 'Stock', 'Actions'],
+            'cloth': ['Item', 'Category', 'Size', 'Color', 'Fabric', 'Price', 'Stock', 'Actions'],
+            'medical': ['Medicine', 'Company', 'Batch No', 'Expiry', 'MRP', 'Stock', 'Actions'],
+            'restaurant': ['Dish Name', 'Category', 'Type', 'Price', 'Available', 'Actions'],
             'product': ['Name', 'Price', 'Unit', 'Status', 'Actions'],
             'food': ['Name', 'Price', 'Type', 'Status', 'Actions'],
             'service': ['Name', 'Price', 'Duration', 'Status', 'Actions'],
@@ -303,9 +306,15 @@
                 }
 
                 currentShop = shop;
-                currentShopType = shop.shopType || 'product';
+                currentShopType = shop.shopType || shopTypeParam || 'product';
 
-                // Update Header
+                // KEY UPDATE: Redirect to specific template if exists
+                if (SPECIFIC_TEMPLATES.includes(currentShopType)) {
+                    window.location.replace(`/local-market/shop-templates/${currentShopType}/dashboard.html?shopId=${shopId}`);
+                    return;
+                }
+
+                // Continue as fallback generic dashboard
                 document.getElementById('shopName').innerText = shop.shopName;
                 document.getElementById('shopTypeLabel').innerText = shopTypeLabels[currentShopType] || currentShopType;
                 
@@ -321,8 +330,8 @@
 
                 // Update Shop Info
                 document.getElementById('shopPhone').innerText = shop.phone || shop.mobile || '-';
-                document.getElementById('shopRange').innerText = (shop.range / 1000) + ' KM';
-                document.getElementById('shopAddress').innerText = shop.address?.line1 || shop.address || '-';
+                document.getElementById('shopRange').innerText = shop.range ? (shop.range / 1000) + ' KM' : '- KM';
+                document.getElementById('shopAddress').innerText = shop.address?.line1 || shop.address || shop.area || '-';
                 document.getElementById('shopOpenStatus').innerText = shop.isOpen ? '🟢 Open' : '🔴 Closed';
                 document.getElementById('shopInfoCard').style.display = 'block';
 
@@ -382,10 +391,10 @@
                 case 'kirana':
                     return `<tr>
                         <td>${item.name}</td>
-                        <td>${item.weight} ${item.unit}</td>
+                        <td>${item.weight || '-'} ${item.unit || ''}</td>
                         <td>₹${item.mrp || item.price}</td>
                         <td>₹${item.price}</td>
-                        <td>${item.stock}</td>
+                        <td>${item.stock || 0}</td>
                         <td>
                             <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
                             <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
@@ -396,10 +405,12 @@
                 case 'fashion':
                     return `<tr>
                         <td>${item.name}</td>
+                        <td>${item.category || '-'}</td>
                         <td>${item.size || '-'}</td>
                         <td>${item.color || '-'}</td>
+                        <td>${item.fabric || '-'}</td>
                         <td>₹${item.price}</td>
-                        <td>${item.stock}</td>
+                        <td>${item.stock || 0}</td>
                         <td>
                             <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
                             <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
@@ -413,6 +424,7 @@
                         <td>${item.batch || '-'}</td>
                         <td>${item.expiry || '-'}</td>
                         <td>₹${item.price}</td>
+                        <td>${item.stock || 0}</td>
                         <td>
                             <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
                             <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
@@ -423,10 +435,10 @@
                 case 'food':
                     return `<tr>
                         <td>${item.name}</td>
+                        <td>${item.category || '-'}</td>
                         <td><span class="item-badge ${item.foodType === 'veg' ? 'veg' : 'non-veg'}">${item.foodType || 'veg'}</span></td>
-                        <td>${item.spiceLevel || 'Medium'}</td>
-                        <td>${item.prepTime || '-'} min</td>
                         <td>₹${item.price}</td>
+                        <td><span class="item-badge ${item.available !== false ? 'available' : 'unavailable'}">${item.available !== false ? 'Yes' : 'No'}</span></td>
                         <td>
                             <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
                             <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
@@ -462,7 +474,7 @@
                         <td>${item.name}</td>
                         <td>₹${item.price}</td>
                         <td>${item.unit || '-'}</td>
-                        <td><span class="item-badge ${item.available ? 'available' : 'unavailable'}">${item.available ? 'Available' : 'Unavailable'}</span></td>
+                        <td><span class="item-badge ${item.available !== false ? 'available' : 'unavailable'}">${item.available !== false ? 'Available' : 'Unavailable'}</span></td>
                         <td>
                             <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Edit</button>
                             <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">Delete</button>
@@ -473,12 +485,10 @@
 
         // Add Product Handler
         document.getElementById('addProductBtn').onclick = function() {
-            // Redirect to specific template form
-            const templateTypes = ['kirana', 'cloth', 'medical', 'restaurant'];
-            if (templateTypes.includes(currentShopType)) {
-                window.location.href = `/local-market/shop-templates/${currentShopType}/add-product.html?shopId=${shopId}`;
+            if (SPECIFIC_TEMPLATES.includes(currentShopType)) {
+                window.location.href = `/local-market/shop-templates/${currentShopType}/product-form.html?shopId=${shopId}`;
             } else {
-                alert('Add Product form coming soon! Use specific template for ' + currentShopType);
+                alert('Add Product form for ' + currentShopType + ' coming soon!');
             }
         };
 

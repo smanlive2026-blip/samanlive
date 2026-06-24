@@ -276,7 +276,7 @@
     <div class="form-container" id="shopFormContainer">
         <div class="success-msg" id="successMsg">✅ Shop Created Successfully! Your shop is now LIVE.</div>
 
-        <!-- Success Box with Buttons - NEW -->
+        <!-- Success Box with Buttons -->
         <div class="success-box" id="successBox">
             <h3>🎉 Shop Created Successfully!</h3>
             <p id="successShopName">Your shop is now LIVE and ready.</p>
@@ -382,7 +382,10 @@ let currentUser = null;
 let selectedIcon = '🏪';
 let allModules = [];
 let myShopData = null;
-let newShopData = null; // NEW - Store newly created shop data
+let newShopData = null;
+
+// Template types that have specific dashboards
+const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant'];
 
 window.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('userToken');
@@ -478,8 +481,8 @@ function getShopLocation() {
 
             // Reverse geocode to get city/state
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-      .then(r => r.json())
-      .then(data => {
+     .then(r => r.json())
+     .then(data => {
                 const city = data.address.city || data.address.town || data.address.village || 'Surat';
                 const state = data.address.state || 'Gujarat';
                 const pincode = data.address.postcode || '';
@@ -491,7 +494,7 @@ function getShopLocation() {
                 status.className = 'location-coords success';
                 status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
             })
-      .catch(() => {
+     .catch(() => {
                 document.getElementById('shopCity').value = 'Surat';
                 document.getElementById('shopState').value = 'Gujarat';
                 status.className = 'location-coords success';
@@ -543,8 +546,8 @@ async function submitShop() {
     const shopData = {
         shopName: document.getElementById('shopName').value.trim(),
         ownerName: currentUser.name,
-        ownerId: currentUser._id, // ✅ Required
-        phone: document.getElementById('shopPhone').value.trim(), // ✅ Required
+        ownerId: currentUser._id,
+        phone: document.getElementById('shopPhone').value.trim(),
         email: currentUser.email || '',
         address: {
             line1: document.getElementById('shopAddress').value.trim(),
@@ -553,21 +556,21 @@ async function submitShop() {
             state: state,
             pincode: pincode
         },
-        areaCode: city.toUpperCase().replace(/\s/g, '') + '01', // ✅ Required
-        bucket: 'GENERAL', // ✅ Required
+        areaCode: city.toUpperCase().replace(/\s/g, '') + '01',
+        bucket: 'GENERAL',
         area: city,
         areaName: city,
-        serviceType: shopModule, // ✅ Required
-        shopType: shopTypeMap[shopModule] || 'product', // ✅ Required enum
+        serviceType: shopModule,
+        shopType: shopTypeMap[shopModule] || 'product',
         description: document.getElementById('shopDesc').value.trim(),
         range: parseInt(document.getElementById('shopRange').value),
         icon: selectedIcon,
         logo: '',
         banner: '',
-        status: 'approved', // ✅ Approval bypass - turant approved
-        isVerified: true, // ✅ Turant verified
+        status: 'approved',
+        isVerified: true,
         isActive: true,
-        approvedBy: currentUser._id, // ✅ Self approved
+        approvedBy: currentUser._id,
         approvedAt: new Date(),
         locationType: 'fixed',
         location: {
@@ -595,8 +598,7 @@ async function submitShop() {
         const data = await res.json();
 
         if (data._id) {
-            // NEW - Show success box instead of redirect
-            newShopData = data; // Store for button clicks
+            newShopData = data;
             document.getElementById('successBox').style.display = 'block';
             document.getElementById('successShopName').textContent = `"${data.shopName}" is now LIVE!`;
             document.getElementById('formFields').style.display = 'none';
@@ -617,21 +619,34 @@ async function submitShop() {
 
 function goToDashboard() {
     if (myShopData) {
-        window.location.href = `/local-market/shop/dashboard.html?shopId=${myShopData._id}&type=${myShopData.shopType}`;
+        const shopType = myShopData.serviceType || myShopData.shopType;
+        // Redirect to specific template if exists, else generic
+        if (SPECIFIC_TEMPLATES.includes(shopType)) {
+            window.location.href = `/local-market/shop-templates/${shopType}/dashboard.html?shopId=${myShopData._id}`;
+        } else {
+            window.location.href = `/local-market/shop/dashboard.html?shopId=${myShopData._id}&type=${shopType}`;
+        }
     }
 }
 
-// NEW - Go to newly created shop dashboard
+// Go to newly created shop dashboard - UPDATED
 function goToNewDashboard() {
     if (newShopData) {
-        window.location.href = `/local-market/shop/dashboard.html?shopId=${newShopData._id}&type=${newShopData.shopType}`;
+        const shopType = newShopData.serviceType || newShopData.shopType;
+        // Redirect to specific template if exists, else generic
+        if (SPECIFIC_TEMPLATES.includes(shopType)) {
+            window.location.href = `/local-market/shop-templates/${shopType}/dashboard.html?shopId=${newShopData._id}`;
+        } else {
+            window.location.href = `/local-market/shop/dashboard.html?shopId=${newShopData._id}&type=${shopType}`;
+        }
     }
 }
 
-// NEW - Copy customer link to clipboard
+// Copy customer link to clipboard
 function copyShopLink() {
     if (newShopData) {
-        const link = `${window.location.origin}/local-market/shop/user-view.html?shopId=${newShopData._id}&type=${newShopData.shopType}`;
+        const shopType = newShopData.serviceType || newShopData.shopType;
+        const link = `${window.location.origin}/local-market/shop/user-view.html?shopId=${newShopData._id}&type=${shopType}`;
         navigator.clipboard.writeText(link).then(() => {
             alert('✅ Customer link copied!\n\n' + link + '\n\nShare this with your customers.');
         }).catch(() => {

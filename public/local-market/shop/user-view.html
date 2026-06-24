@@ -38,6 +38,8 @@
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .loader { text-align: center; padding: 60px 20px; }
         .error-box { background: #fee2e2; color: #991b1b; padding: 20px; border-radius: 12px; margin: 20px; text-align: center; }
+        .prescription-badge { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px; }
+        .expiry-warning { color: #dc2626; font-size: 12px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -96,11 +98,12 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const shopId = urlParams.get('shopId');
-        const shopType = urlParams.get('type');
+        const shopTypeParam = urlParams.get('type');
 
         let allProducts = [];
         let cart = JSON.parse(localStorage.getItem('cart_' + shopId) || '[]');
         let currentShop = null;
+        let currentShopType = '';
 
         if (!shopId) {
             document.body.innerHTML = '<div class="error-box"><h2>❌ Shop Not Found</h2><p>Invalid shop link</p><button class="btn btn-primary" onclick="window.location.href=\'/local-market.html\'">Go to Market</button></div>';
@@ -122,6 +125,7 @@
                 
                 const shop = await res.json();
                 currentShop = shop;
+                currentShopType = shop.shopType || shopTypeParam || 'product';
                 
                 document.getElementById('shopName').textContent = shop.shopName || 'Unnamed Shop';
                 document.getElementById('shopDesc').textContent = shop.description || 'Welcome to our shop';
@@ -165,7 +169,7 @@
             }
         }
 
-        // Render Products
+        // Render Products - Updated for 4 specific types
         function renderProducts(products) {
             const grid = document.getElementById('productGrid');
             
@@ -177,21 +181,22 @@
             grid.innerHTML = products.map(p => {
                 const discount = p.mrp && p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
                 const isAvailable = p.available !== false && (p.stock === undefined || p.stock > 0);
+                const isExpiringSoon = p.expiry && isExpiringWithinDays(p.expiry, 30);
                 
                 return `
                     <div class="product-card" data-name="${p.name.toLowerCase()}" data-category="${p.category || ''}">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
                             <h3 style="margin: 0; font-size: 16px; color: #1e293b;">${escapeHtml(p.name)}</h3>
-                            ${p.veg !== undefined ? `<span class="${p.veg ? 'veg' : 'non-veg'}-badge veg-badge" title="${p.veg ? 'Veg' : 'Non-Veg'}"></span>` : ''}
+                            <div style="display:flex;gap:4px;align-items:center;">
+                                ${p.foodType ? `<span class="${p.foodType === 'veg' ? 'veg' : 'non-veg'}-badge veg-badge" title="${p.foodType}"></span>` : ''}
+                                ${p.prescription ? `<span class="prescription-badge">Rx</span>` : ''}
+                            </div>
                         </div>
                         
-                        ${shopType === 'fashion' ? `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">${p.size || ''} ${p.color ? '| ' + p.color : ''} ${p.fabric ? '| ' + p.fabric : ''}</p>` : ''}
-                        ${shopType === 'service' ? `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">Duration: ${p.duration || '-'}</p>` : ''}
-                        ${shopType === 'product' ? `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">${p.unit || ''} ${p.stock ? '| Stock: ' + p.stock : ''}</p>` : ''}
-                        ${shopType === 'food' ? `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">${p.category || ''} ${p.duration ? '| ' + p.duration + ' mins' : ''}</p>` : ''}
-                        ${shopType === 'rental' ? `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">Duration: ${p.duration || '-'}</p>` : ''}
+                        ${renderProductDetails(p, currentShopType)}
                         
                         ${p.description ? `<p style="color: #64748b; font-size: 13px; margin: 8px 0;">${escapeHtml(p.description)}</p>` : ''}
+                        ${isExpiringSoon ? `<p class="expiry-warning">⚠️ Expires soon: ${p.expiry}</p>` : ''}
                         
                         <div style="margin: 12px 0;">
                             <span class="product-price">₹${p.price}</span>
@@ -211,6 +216,45 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        // Render product details based on shop type - Per MANIFEST
+        function renderProductDetails(p, type) {
+            switch(type) {
+                case 'cloth':
+                case 'fashion':
+                    return `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">
+                        ${p.category || ''} ${p.size ? '| ' + p.size : ''} ${p.color ? '| ' + p.color : ''} ${p.fabric ? '| ' + p.fabric : ''}
+                    </p>`;
+                
+                case 'kirana':
+                    return `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">
+                        ${p.brand ? p.brand + ' | ' : ''}${p.weight || ''} ${p.unit || ''} ${p.expiry ? '| Exp: ' + p.expiry : ''}
+                    </p>`;
+                
+                case 'medical':
+                    return `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">
+                        ${p.company || ''} ${p.batch ? '| Batch: ' + p.batch : ''} ${p.packSize ? '| ' + p.packSize : ''} ${p.type ? '| ' + p.type : ''}
+                    </p>`;
+                
+                case 'restaurant':
+                case 'food':
+                    return `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">
+                        ${p.category || ''} ${p.spiceLevel ? '| ' + p.spiceLevel : ''} ${p.prepTime ? '| ' + p.prepTime + ' mins' : ''}
+                    </p>`;
+                
+                case 'service':
+                    return `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">Duration: ${p.duration || '-'}</p>`;
+                
+                case 'product':
+                    return `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">${p.unit || ''} ${p.stock ? '| Stock: ' + p.stock : ''}</p>`;
+                
+                case 'rental':
+                    return `<p style="color: #64748b; font-size: 14px; margin: 4px 0;">Duration: ${p.duration || '-'}</p>`;
+                
+                default:
+                    return '';
+            }
         }
 
         // Load Categories
@@ -233,6 +277,16 @@
             });
             
             renderProducts(filtered);
+        }
+
+        // Check if expiry is within X days
+        function isExpiringWithinDays(expiryDate, days) {
+            if (!expiryDate) return false;
+            const expiry = new Date(expiryDate);
+            const today = new Date();
+            const diffTime = expiry - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= days && diffDays >= 0;
         }
 
         // Cart Functions
@@ -262,7 +316,6 @@
             const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
             const items = cart.map(i => `${i.name} x${i.qty} = ₹${i.price * i.qty}`).join('\n');
             alert(`Cart Items:\n\n${items}\n\nTotal: ₹${total}`);
-            // Uncomment below to redirect to checkout
             // window.location.href = `/local-market/checkout.html?shopId=${shopId}`;
         }
 
