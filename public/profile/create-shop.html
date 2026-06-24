@@ -385,7 +385,7 @@ let myShopData = null;
 let newShopData = null;
 
 // Template types that have specific dashboards
-const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant', 'service', 'rental'];
+const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant', 'service', 'rental', 'common'];
 
 window.addEventListener('DOMContentLoaded', async () => {
     // ✅ NO LOGIN - Direct fake user
@@ -428,7 +428,8 @@ function loadModules() {
         {id: 'salon', name: 'Salon/Beauty Parlour', icon: '💇'},
         {id: 'stationery', name: 'Stationery Shop', icon: '🎓'},
         {id: 'service', name: 'Service Provider', icon: '🔧'},
-        {id: 'rental', name: 'Rental Shop', icon: '🚗'}
+        {id: 'rental', name: 'Rental Shop', icon: '🚗'},
+        {id: 'common', name: 'Common Shop - General', icon: '🏪'}
     ];
 
     shopTypes.forEach(m => {
@@ -468,8 +469,8 @@ function getShopLocation() {
             document.getElementById('shopLng').value = lng;
 
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
- .then(r => r.json())
- .then(data => {
+.then(r => r.json())
+.then(data => {
                 const city = data.address.city || data.address.town || data.address.village || 'Surat';
                 const state = data.address.state || 'Gujarat';
                 const pincode = data.address.postcode || '';
@@ -481,7 +482,7 @@ function getShopLocation() {
                 status.className = 'location-coords success';
                 status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
             })
- .catch(() => {
+.catch(() => {
                 document.getElementById('shopCity').value = 'Surat';
                 document.getElementById('shopState').value = 'Gujarat';
                 status.className = 'location-coords success';
@@ -527,7 +528,8 @@ async function submitShop() {
         'salon': 'service',
         'stationery': 'product',
         'service': 'service',
-        'rental': 'rental'
+        'rental': 'rental',
+        'common': 'product'
     };
 
     // ✅ UPDATED: ownerId aur approvedBy hata diya - Backend khud handle karega
@@ -614,9 +616,9 @@ function goToDashboard() {
     if (myShopData) {
         const shopType = myShopData.serviceType || myShopData.shopType;
         if (SPECIFIC_TEMPLATES.includes(shopType)) {
-            window.location.href = `/local-market/shop-templates/${shopType}/dashboard.html?shopId=${myShopData._id}`;
+            window.location.href = `/shop-templates/${shopType}/dashboard.html?shopId=${myShopData._id}`;
         } else {
-            window.location.href = `/local-market/shop/dashboard.html?shopId=${myShopData._id}&type=${shopType}`;
+            window.location.href = `/shop-templates/${shopType}/dashboard.html?shopId=${myShopData._id}`;
         }
     }
 }
@@ -625,9 +627,9 @@ function goToNewDashboard() {
     if (newShopData) {
         const shopType = newShopData.serviceType || newShopData.shopType;
         if (SPECIFIC_TEMPLATES.includes(shopType)) {
-            window.location.href = `/local-market/shop-templates/${shopType}/dashboard.html?shopId=${newShopData._id}`;
+            window.location.href = `/shop-templates/${shopType}/dashboard.html?shopId=${newShopData._id}`;
         } else {
-            window.location.href = `/local-market/shop/dashboard.html?shopId=${newShopData._id}&type=${shopType}`;
+            window.location.href = `/shop-templates/${shopType}/dashboard.html?shopId=${newShopData._id}`;
         }
     }
 }
@@ -635,7 +637,7 @@ function goToNewDashboard() {
 function copyShopLink() {
     if (newShopData) {
         const shopType = newShopData.serviceType || newShopData.shopType;
-        const link = `${window.location.origin}/local-market/shop/user-view.html?shopId=${newShopData._id}&type=${shopType}`;
+        const link = `${window.location.origin}/shop-templates/${shopType}/user-view.html?shopId=${newShopData._id}`;
         navigator.clipboard.writeText(link).then(() => {
             alert('✅ Customer link copied!\n\n' + link + '\n\nShare this with your customers.');
         }).catch(() => {
