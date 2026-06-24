@@ -65,6 +65,9 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Auth Routes - LOGIN/OTP KE LIYE - NAYA ADD KIYA
+app.use('/api/auth', require('./routes/auth'));
+
 // Admin Routes
 app.use('/api', require('./routes/adminRoutes'));
 
@@ -227,6 +230,7 @@ app.get('/api/admin/routes', (req, res) => {
                         else if (file === 'market.js') basePath = '/api/market';
                         else if (file === 'stats.js') basePath = '/api';
                         else if (file === 'public-modules.js') basePath = '/api';
+                        else if (file === 'auth.js') basePath = '/api/auth';
                         else {
                             const name = file.replace('Routes.js', '').replace('.js', '').toLowerCase();
                             basePath = `/api/${name}`;
@@ -379,7 +383,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
