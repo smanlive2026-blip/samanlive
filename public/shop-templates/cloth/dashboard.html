@@ -3,41 +3,465 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloth Store Dashboard</title>
-    <link rel="stylesheet" href="/local-market/assets/shop.css">
+    <title>Cloth Shop Dashboard - SAMANLIVE</title>
+    <link rel="stylesheet" href="/local-market/assets/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            margin: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100vh;
+        }
+        .shop-container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 20px;
+        }
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .back-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #334155;
+            transition: all 0.2s;
+        }
+        .back-btn:hover { background: #e2e8f0; transform: translateX(-2px); }
+        .shop-title-wrap h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .shop-type-label {
+            margin: 4px 0 0 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge.active, .badge.approved { background: #dcfce7; color: #166534; }
+        .badge.pending { background: #fef3c7; color: #92400e; }
+        .badge.rejected { background: #fee2e2; color: #991b1b; }
+        .badge.inactive { background: #e5e7eb; color: #374151; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        .stat-card .stat-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            opacity: 0.9;
+        }
+        .stat-card h3 {
+            margin: 0 0 6px 0;
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .content-area {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .content-area h3 {
+            margin: 0 0 16px 0;
+            font-size: 18px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary { 
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+        .btn-primary:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16,185,129,0.4);
+        }
+        .btn-secondary { 
+            background: rgba(255,255,255,0.95);
+            color: #334155;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { background: white; transform: translateY(-2px); }
+        .btn-danger { 
+            background: #ef4444; 
+            color: white;
+            box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+        }
+        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
+
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 12px 16px;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .data-table td {
+            padding: 16px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .data-table td:first-child {
+            border-left: 1px solid #e2e8f0;
+            border-radius: 10px 0 0 10px;
+        }
+        .data-table td:last-child {
+            border-right: 1px solid #e2e8f0;
+            border-radius: 0 10px 10px 0;
+        }
+        .data-table tr:hover td {
+            background: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .empty-state i {
+            font-size: 64px;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+        .empty-state h4 {
+            margin: 0 0 8px 0;
+            color: #475569;
+            font-size: 18px;
+        }
+        .empty-state p {
+            margin: 0 0 20px 0;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .table-responsive { overflow-x: auto; }
+        .size-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            background: #e0e7ff;
+            color: #3730a3;
+            margin: 2px;
+            display: inline-block;
+        }
+        .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 2px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .loader-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
 <body>
     <div class="shop-container">
         <div class="shop-header">
-            <h1 id="shopName">Loading...</h1>
-            <span class="badge" id="shopStatus"></span>
+            <div class="header-left">
+                <button class="back-btn" onclick="window.history.back()">
+                    <i class="fa fa-arrow-left"></i>
+                </button>
+                <div class="shop-title-wrap">
+                    <h1 id="shopName">Loading...</h1>
+                    <p class="shop-type-label">Cloth Store</p>
+                </div>
+            </div>
+            <span class="badge" id="shopStatus">Loading</span>
         </div>
-        
+
         <div class="stats-grid">
-            <div class="stat-card"><h3 id="totalProducts">0</h3><p>Total Items</p></div>
-            <div class="stat-card"><h3 id="totalVariants">0</h3><p>Total Variants</p></div>
-            <div class="stat-card"><h3 id="todayOrders">0</h3><p>Today Orders</p></div>
+            <div class="stat-card">
+                <div class="stat-icon">👗</div>
+                <h3 id="totalItems">0</h3>
+                <p>Total Items</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <h3 id="totalStock">0</h3>
+                <p>Total Stock</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <h3 id="todayOrders">0</h3>
+                <p>Today Orders</p>
+            </div>
         </div>
 
         <div class="action-bar">
-            <button class="btn btn-primary" onclick="loadTemplate('product-form')">+ Add Clothing Item</button>
-            <button class="btn btn-secondary" onclick="loadOrders()">View Orders</button>
+            <button class="btn btn-primary" id="addProductBtn">
+                <i class="fa fa-plus"></i> Add Garment
+            </button>
+            <button class="btn btn-secondary" onclick="loadOrders()">
+                <i class="fa fa-list"></i> View Orders
+            </button>
+            <button class="btn btn-secondary" onclick="editShopInfo()">
+                <i class="fa fa-edit"></i> Edit Shop
+            </button>
         </div>
 
         <div class="content-area">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Item</th><th>Category</th><th>Size</th><th>Color</th><th>Fabric</th><th>Price</th><th>Stock</th><th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="productTableBody"></tbody>
-            </table>
+            <h3><i class="fa fa-tshirt"></i> Garments</h3>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Size</th>
+                            <th>Color</th>
+                            <th>Fabric</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productTableBody">
+                        <tr>
+                            <td colspan="8">
+                                <div class="empty-state">
+                                    <i class="fa fa-tshirt"></i>
+                                    <h4>No Garments Yet</h4>
+                                    <p>Start by adding your first garment to the shop</p>
+                                    <button class="btn btn-primary" onclick="document.getElementById('addProductBtn').click()">
+                                        <i class="fa fa-plus"></i> Add First Garment
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-    
-    <div id="modalContainer"></div>
-    <script src="/local-market/assets/shop-core.js"></script>
-    <script>initDashboard('cloth');</script>
+
+    <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        let currentShop = null;
+
+        if (!shopId) {
+            alert('Invalid shop link');
+            window.location.href = '/local-market/create-shop.html';
+        }
+
+        async function loadShopData() {
+            try {
+                const res = await fetch(`/api/local-market/shops/${shopId}`);
+                const shop = await res.json();
+
+                if (!shop._id) {
+                    alert('Shop not found');
+                    window.location.href = '/local-market/create-shop.html';
+                    return;
+                }
+
+                currentShop = shop;
+                document.getElementById('shopName').innerText = shop.shopName;
+                
+                const statusEl = document.getElementById('shopStatus');
+                statusEl.innerText = shop.status.toUpperCase();
+                statusEl.className = 'badge ' + shop.status;
+
+                const items = shop.items || shop.products || [];
+                const totalStock = items.reduce((sum, i) => sum + (i.stock || 0), 0);
+                
+                document.getElementById('totalItems').innerText = items.length;
+                document.getElementById('totalStock').innerText = totalStock;
+                document.getElementById('todayOrders').innerText = shop.todayOrders || 0;
+
+                loadItems(items);
+                document.getElementById('loader').style.display = 'none';
+
+            } catch (err) {
+                console.error(err);
+                alert('Failed to load shop: ' + err.message);
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        function loadItems(items) {
+            const tbody = document.getElementById('productTableBody');
+            
+            if (!items || items.length === 0) {
+                tbody.innerHTML = `<tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="fa fa-tshirt"></i>
+                            <h4>No Garments Yet</h4>
+                            <p>Start by adding your first garment to the shop</p>
+                            <button class="btn btn-primary" onclick="document.getElementById('addProductBtn').click()">
+                                <i class="fa fa-plus"></i> Add First Garment
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = items.map(item => {
+                const sizes = (item.sizes || [item.size]).filter(Boolean);
+                const colors = (item.colors || [item.color]).filter(Boolean);
+                
+                return `
+                <tr>
+                    <td><strong>${item.name}</strong></td>
+                    <td>${item.category || '-'}</td>
+                    <td>${sizes.map(s => `<span class="size-badge">${s}</span>`).join('')}</td>
+                    <td>${colors.map(c => `<span class="color-dot" style="background:${c.toLowerCase()}" title="${c}"></span>`).join('')}</td>
+                    <td>${item.fabric || '-'}</td>
+                    <td><strong>₹${item.price}</strong></td>
+                    <td>${item.stock || 0}</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;font-size:12px;">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;font-size:12px;">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('addProductBtn').onclick = function() {
+            window.location.href = `/local-market/shop-templates/cloth/product-form.html?shopId=${shopId}`;
+        };
+
+        function editShopInfo() {
+            window.location.href = `/local-market/edit-shop.html?shopId=${shopId}`;
+        }
+
+        function loadOrders() {
+            window.location.href = `/local-market/orders.html?shopId=${shopId}`;
+        }
+
+        function editItem(itemId) {
+            window.location.href = `/local-market/shop-templates/cloth/product-form.html?shopId=${shopId}&itemId=${itemId}`;
+        }
+
+        async function deleteItem(itemId) {
+            if (!confirm('Delete this item?')) return;
+            try {
+                await fetch(`/api/local-market/products/${itemId}`, {
+                    method: 'DELETE'
+                });
+                alert('Item deleted!');
+                loadShopData();
+            } catch (err) {
+                alert('Failed to delete: ' + err.message);
+            }
+        }
+
+        loadShopData();
+    </script>
 </body>
 </html>
