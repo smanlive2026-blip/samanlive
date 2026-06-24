@@ -69,7 +69,7 @@ body {
 .tabs {
     display: flex;
     background: white;
-    margin: 0 20px;
+    margin: 20px 20px 0 20px;
     border-radius: 12px 12px 0 0;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -226,15 +226,6 @@ body {
     opacity: 0.6;
     cursor: not-allowed;
 }
-.success-msg {
-    background: #d1fae5;
-    color: #065f46;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    text-align: center;
-    display: none;
-}
 .success-box {
     background: #d1fae5;
     border: 2px solid #10b981;
@@ -301,6 +292,7 @@ body {
     align-items: center;
     transition: all 0.3s;
     border: 2px solid #e2e8f0;
+    width: 100%;
 }
 .shop-card:hover {
     transform: translateY(-2px);
@@ -311,9 +303,14 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
+    flex: 1;
 }
 .shop-icon {
     font-size: 48px;
+    flex-shrink: 0;
+}
+.shop-details {
+    flex: 1;
 }
 .shop-details h3 {
     margin: 0 0 4px 0;
@@ -339,6 +336,7 @@ body {
 .shop-actions {
     display: flex;
     gap: 8px;
+    flex-shrink: 0;
 }
 .btn-go {
     background: linear-gradient(135deg, #667eea, #764ba2);
@@ -352,6 +350,7 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
 }
 .btn-go:hover {
     opacity: 0.9;
@@ -402,10 +401,10 @@ body {
 .shop-card {
         flex-direction: column;
         align-items: flex-start;
+        gap: 16px;
     }
 .shop-actions {
         width: 100%;
-        margin-top: 12px;
     }
 .btn-go {
         width: 100%;
@@ -452,8 +451,6 @@ body {
     <!-- TAB 2: CREATE SHOP FORM -->
     <div id="createTab" class="tab-content">
         <div class="form-container">
-            <div class="success-msg" id="successMsg">✅ Shop Created Successfully! Your shop is now LIVE.</div>
-
             <div class="success-box" id="successBox">
                 <h3>🎉 Shop Created Successfully!</h3>
                 <p id="successShopName">Your shop is now LIVE and ready.</p>
@@ -808,6 +805,7 @@ async function loadMyShops() {
                             <p>${shopData.address?.city || 'Surat'} • ${shopData.serviceType}</p>
                             <span class="shop-badge">${shopData.status}</span>
                         </div>
+                    </div>
                     <div class="shop-actions">
                         <button class="btn-go" onclick="window.location.href='${dashboardUrl}'">
                             <i class="fa fa-tachometer-alt"></i> Dashboard
