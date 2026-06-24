@@ -180,6 +180,55 @@
     text-align: center;
     display: none;
 }
+.success-box {
+    background: #d1fae5;
+    border: 2px solid #10b981;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    text-align: center;
+    display: none;
+}
+.success-box h3 {
+    color: #065f46;
+    margin: 0 0 12px 0;
+    font-size: 20px;
+}
+.success-box p {
+    color: #065f46;
+    margin: 0 0 16px 0;
+    font-size: 14px;
+}
+.success-actions {
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+}
+.btn-dashboard {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+}
+.btn-copy {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+}
+.btn-copy:hover {
+    background: #eef2ff;
+}
 .already-shop {
     text-align: center;
     padding: 40px 20px;
@@ -227,82 +276,98 @@
     <div class="form-container" id="shopFormContainer">
         <div class="success-msg" id="successMsg">✅ Shop Created Successfully! Your shop is now LIVE.</div>
 
-        <div class="info-banner">
+        <!-- Success Box with Buttons - NEW -->
+        <div class="success-box" id="successBox">
+            <h3>🎉 Shop Created Successfully!</h3>
+            <p id="successShopName">Your shop is now LIVE and ready.</p>
+            <div class="success-actions">
+                <button class="btn-dashboard" onclick="goToNewDashboard()">
+                    <i class="fa fa-tachometer-alt"></i> Go to Dashboard
+                </button>
+                <button class="btn-copy" onclick="copyShopLink()">
+                    <i class="fa fa-copy"></i> Copy Customer Link
+                </button>
+            </div>
+        </div>
+
+        <div class="info-banner" id="infoBanner">
             <strong>Great News:</strong> Aapki shop turant active ho jayegi. Koi approval ka wait nahi karna.
         </div>
 
-        <div class="form-group">
-            <label>Shop Name *</label>
-            <input type="text" id="shopName" placeholder="Example: Sharma Kirana Store">
-        </div>
-
-        <div class="form-group">
-            <label>Shop Category *</label>
-            <select id="shopModule" required>
-                <option value="">Select Shop Type</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>Shop Icon *</label>
-            <div class="icon-picker" id="iconPicker">
-                <div class="icon-option selected" data-icon="🏪">🏪</div>
-                <div class="icon-option" data-icon="🛒">🛒</div>
-                <div class="icon-option" data-icon="🍕">🍕</div>
-                <div class="icon-option" data-icon="💊">💊</div>
-                <div class="icon-option" data-icon="🔧">🔧</div>
-                <div class="icon-option" data-icon="👗">👗</div>
-                <div class="icon-option" data-icon="📱">📱</div>
-                <div class="icon-option" data-icon="💇">💇</div>
-                <div class="icon-option" data-icon="🚗">🚗</div>
-                <div class="icon-option" data-icon="🏠">🏠</div>
-                <div class="icon-option" data-icon="🎓">🎓</div>
-                <div class="icon-option" data-icon="⚡">⚡</div>
-            </div>
-        </div>
-
-        <div class="form-row">
+        <div id="formFields">
             <div class="form-group">
-                <label>Contact Phone *</label>
-                <input type="tel" id="shopPhone" placeholder="10 digit mobile" maxlength="10">
+                <label>Shop Name *</label>
+                <input type="text" id="shopName" placeholder="Example: Sharma Kirana Store">
             </div>
+
             <div class="form-group">
-                <label>Service Range *</label>
-                <select id="shopRange">
-                    <option value="1000">1 KM</option>
-                    <option value="2000">2 KM</option>
-                    <option value="5000" selected>5 KM</option>
-                    <option value="10000">10 KM</option>
+                <label>Shop Category *</label>
+                <select id="shopModule" required>
+                    <option value="">Select Shop Type</option>
                 </select>
             </div>
-        </div>
 
-        <div class="form-group">
-            <label>Shop Address *</label>
-            <textarea id="shopAddress" placeholder="Complete shop address with landmark"></textarea>
-        </div>
-
-        <div class="form-group">
-            <label>Shop Description</label>
-            <textarea id="shopDesc" placeholder="What services/products you offer?"></textarea>
-        </div>
-
-        <div class="location-box">
-            <div class="location-header">
-                <h3>📍 Shop Location *</h3>
-                <button class="get-location-btn" onclick="getShopLocation()" id="locBtn">Get Location</button>
+            <div class="form-group">
+                <label>Shop Icon *</label>
+                <div class="icon-picker" id="iconPicker">
+                    <div class="icon-option selected" data-icon="🏪">🏪</div>
+                    <div class="icon-option" data-icon="🛒">🛒</div>
+                    <div class="icon-option" data-icon="🍕">🍕</div>
+                    <div class="icon-option" data-icon="💊">💊</div>
+                    <div class="icon-option" data-icon="🔧">🔧</div>
+                    <div class="icon-option" data-icon="👗">👗</div>
+                    <div class="icon-option" data-icon="📱">📱</div>
+                    <div class="icon-option" data-icon="💇">💇</div>
+                    <div class="icon-option" data-icon="🚗">🚗</div>
+                    <div class="icon-option" data-icon="🏠">🏠</div>
+                    <div class="icon-option" data-icon="🎓">🎓</div>
+                    <div class="icon-option" data-icon="⚡">⚡</div>
+                </div>
             </div>
-            <div class="location-coords" id="locationCoords">
-                Location required. Click "Get Location" to set shop GPS.
-            </div>
-            <input type="hidden" id="shopLat">
-            <input type="hidden" id="shopLng">
-            <input type="hidden" id="shopCity">
-            <input type="hidden" id="shopState">
-            <input type="hidden" id="shopPincode">
-        </div>
 
-        <button class="submit-btn" onclick="submitShop()" id="submitBtn">Create My Shop - Go Live Now</button>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Contact Phone *</label>
+                    <input type="tel" id="shopPhone" placeholder="10 digit mobile" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label>Service Range *</label>
+                    <select id="shopRange">
+                        <option value="1000">1 KM</option>
+                        <option value="2000">2 KM</option>
+                        <option value="5000" selected>5 KM</option>
+                        <option value="10000">10 KM</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Shop Address *</label>
+                <textarea id="shopAddress" placeholder="Complete shop address with landmark"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Shop Description</label>
+                <textarea id="shopDesc" placeholder="What services/products you offer?"></textarea>
+            </div>
+
+            <div class="location-box">
+                <div class="location-header">
+                    <h3>📍 Shop Location *</h3>
+                    <button class="get-location-btn" onclick="getShopLocation()" id="locBtn">Get Location</button>
+                </div>
+                <div class="location-coords" id="locationCoords">
+                    Location required. Click "Get Location" to set shop GPS.
+                </div>
+                <input type="hidden" id="shopLat">
+                <input type="hidden" id="shopLng">
+                <input type="hidden" id="shopCity">
+                <input type="hidden" id="shopState">
+                <input type="hidden" id="shopPincode">
+            </div>
+
+            <button class="submit-btn" onclick="submitShop()" id="submitBtn">Create My Shop - Go Live Now</button>
+        </div>
     </div>
 
     <div class="form-container already-shop" id="alreadyShop" style="display:none">
@@ -317,6 +382,7 @@ let currentUser = null;
 let selectedIcon = '🏪';
 let allModules = [];
 let myShopData = null;
+let newShopData = null; // NEW - Store newly created shop data
 
 window.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('userToken');
@@ -412,8 +478,8 @@ function getShopLocation() {
 
             // Reverse geocode to get city/state
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-       .then(r => r.json())
-       .then(data => {
+      .then(r => r.json())
+      .then(data => {
                 const city = data.address.city || data.address.town || data.address.village || 'Surat';
                 const state = data.address.state || 'Gujarat';
                 const pincode = data.address.postcode || '';
@@ -425,7 +491,7 @@ function getShopLocation() {
                 status.className = 'location-coords success';
                 status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
             })
-       .catch(() => {
+      .catch(() => {
                 document.getElementById('shopCity').value = 'Surat';
                 document.getElementById('shopState').value = 'Gujarat';
                 status.className = 'location-coords success';
@@ -529,11 +595,13 @@ async function submitShop() {
         const data = await res.json();
 
         if (data._id) {
-            document.getElementById('successMsg').style.display = 'block';
-            document.getElementById('successMsg').textContent = '✅ Shop Created Successfully! Your shop is now LIVE.';
-            setTimeout(() => {
-                window.location.href = `/local-market/dashboard.html?shopId=${data._id}&type=${shopData.shopType}`;
-            }, 1500);
+            // NEW - Show success box instead of redirect
+            newShopData = data; // Store for button clicks
+            document.getElementById('successBox').style.display = 'block';
+            document.getElementById('successShopName').textContent = `"${data.shopName}" is now LIVE!`;
+            document.getElementById('formFields').style.display = 'none';
+            document.getElementById('infoBanner').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
         } else {
             alert('Error: ' + (data.error || data.msg || JSON.stringify(data)));
             btn.textContent = 'Create My Shop - Go Live Now';
@@ -549,7 +617,26 @@ async function submitShop() {
 
 function goToDashboard() {
     if (myShopData) {
-        window.location.href = `/local-market/dashboard.html?shopId=${myShopData._id}&type=${myShopData.shopType}`;
+        window.location.href = `/local-market/shop/dashboard.html?shopId=${myShopData._id}&type=${myShopData.shopType}`;
+    }
+}
+
+// NEW - Go to newly created shop dashboard
+function goToNewDashboard() {
+    if (newShopData) {
+        window.location.href = `/local-market/shop/dashboard.html?shopId=${newShopData._id}&type=${newShopData.shopType}`;
+    }
+}
+
+// NEW - Copy customer link to clipboard
+function copyShopLink() {
+    if (newShopData) {
+        const link = `${window.location.origin}/local-market/shop/user-view.html?shopId=${newShopData._id}&type=${newShopData.shopType}`;
+        navigator.clipboard.writeText(link).then(() => {
+            alert('✅ Customer link copied!\n\n' + link + '\n\nShare this with your customers.');
+        }).catch(() => {
+            prompt('Copy this link:', link);
+        });
     }
 }
 </script>
