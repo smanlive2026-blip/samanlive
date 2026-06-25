@@ -245,15 +245,18 @@
     padding: 20px;
     border-radius: 16px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    width: calc(100% - 40px);
+    box-sizing: border-box;
 }
 .shops-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    width: 100%;
 }
 .shop-card {
     background: #f8fafc;
-    padding: 16px;
+    padding: 16px 20px;
     border-radius: 12px;
     border: 2px solid #e2e8f0;
     transition: all 0.3s;
@@ -262,6 +265,8 @@
     gap: 16px;
     cursor: pointer;
     flex-direction: row;
+    width: 100%;
+    box-sizing: border-box;
 }
 .shop-card:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.12);
@@ -334,6 +339,7 @@
    .form-container,.shops-container {
         margin: 16px;
         padding: 20px;
+        width: calc(100% - 32px);
     }
    .form-row {
         grid-template-columns: 1fr;
@@ -341,4 +347,10 @@
    .icon-picker {
         grid-template-columns: repeat(4, 1fr);
     }
+   .shop-card {
+        padding: 14px 16px;
+    }
+   .shop-icon {
+        font-size: 32px;
+   }
 }
