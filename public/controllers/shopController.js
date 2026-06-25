@@ -52,15 +52,12 @@ const getMyShops = async (req, res) => {
   }
 };
 
-// @desc    Get public shops by location - NEW
+// @desc    Get public shops by location - UPDATED
 const getPublicShops = async (req, res) => {
   try {
     const { lat, lng, radius = 5000, shopType, categoryId, serviceType } = req.query;
 
-    let query = { 
-      status: 'approved', 
-      isActive: true 
-    };
+    let query = {};
 
     if (lat && lng) {
       query.location = {
@@ -201,7 +198,7 @@ const deleteShop = async (req, res) => {
       });
     }
     
-    if (req.user && shop.ownerId && shop.ownerId.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (req.user && shop.ownerId.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({ 
         success: false, 
         message: 'Not authorized to delete this shop' 
