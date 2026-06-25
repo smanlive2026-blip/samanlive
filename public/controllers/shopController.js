@@ -52,33 +52,41 @@ const getMyShops = async (req, res) => {
   }
 };
 
-// @desc    Get public shops by location - UPDATED
+// @desc    Get public shops by location - ✅ FIXED
 const getPublicShops = async (req, res) => {
   try {
     const { lat, lng, radius = 5000, shopType, categoryId, serviceType } = req.query;
 
-    let query = {};
+    // ✅ Base query: sirf approved aur active shops
+    let query = { 
+      status: 'approved', 
+      isActive: true 
+    };
 
-    if (lat && lng) {
+    // ✅ Geo query: lat/lng valid ho tabhi lagao
+    if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
       query.location = {
         $near: {
           $geometry: {
             type: 'Point',
-            coordinates: [parseFloat(lng), parseFloat(lat)]
+            coordinates: [parseFloat(lng), parseFloat(lat)] // LNG pehle, LAT baad me
           },
-          $maxDistance: parseInt(radius)
+          $maxDistance: parseInt(radius) || 5000
         }
       };
     }
 
+    // Filters
     if (shopType) query.shopType = shopType;
     if (categoryId) query.categoryId = categoryId;
     if (serviceType) query.serviceType = serviceType;
 
+    console.log('Public Shops Query:', JSON.stringify(query)); // Debug ke liye
+
     const shops = await Shop.find(query)
-      .select('-ownerId -approvedBy -rejectionReason')
+      .select('-ownerId -approvedBy -rejectionReason -email')
       .limit(50)
-      .sort({ priority: -1, rating: -1 });
+      .sort({ priority: -1, rating: -1, createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -86,6 +94,7 @@ const getPublicShops = async (req, res) => {
       data: shops
     });
   } catch (error) {
+    console.error('Get public shops error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Server Error', 
@@ -132,6 +141,17 @@ const createShop = async (req, res) => {
     req.body.approvedBy = req.body.ownerId;
     req.body.approvedByName = 'System';
     
+    // ✅ Ensure location is properly formatted
+    if (req.body.location && req.body.location.coordinates) {
+      req.body.location = {
+        type: 'Point',
+        coordinates: [
+          parseFloat(req.body.location.coordinates[0]), // lng
+          parseFloat(req.body.location.coordinates[1])  // lat
+        ]
+      };
+    }
+    
     const shop = await Shop.create(req.body);
     
     res.status(201).json({
@@ -166,6 +186,17 @@ const updateShop = async (req, res) => {
         success: false, 
         message: 'Not authorized to update this shop' 
       });
+    }
+    
+    // ✅ Ensure location is properly formatted on update
+    if (req.body.location && req.body.location.coordinates) {
+      req.body.location = {
+        type: 'Point',
+        coordinates: [
+          parseFloat(req.body.location.coordinates[0]), // lng
+          parseFloat(req.body.location.coordinates[1])  // lat
+        ]
+      };
     }
     
     shop = await Shop.findByIdAndUpdate(req.params.id, req.body, {

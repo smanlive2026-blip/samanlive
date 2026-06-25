@@ -26,7 +26,7 @@ const shopSchema = new mongoose.Schema({
 
     location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], default: [0, 0] }
+        coordinates: { type: [Number], default: [0, 0] } // [lng, lat] format
     },
     serviceType: { type: String, required: true, trim: true },
     moduleId: { type: String, default: '' },
@@ -103,6 +103,7 @@ const shopSchema = new mongoose.Schema({
 });
 
 // ========== INDEXES ==========
+// ✅ CRITICAL: 2dsphere index for geo queries
 shopSchema.index({ location: '2dsphere' });
 shopSchema.index({ status: 1 });
 shopSchema.index({ area: 1 });
