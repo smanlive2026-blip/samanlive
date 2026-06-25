@@ -27,7 +27,6 @@ const getAllShops = async (req, res) => {
 // @desc    Get logged in user's shops
 const getMyShops = async (req, res) => {
   try {
-    // ✅ FIXED: req.user check kiya, nahi to empty array
     const userId = req.user ? req.user.id : null;
     if (!userId) {
       return res.status(200).json({
@@ -39,6 +38,51 @@ const getMyShops = async (req, res) => {
 
     const shops = await Shop.find({ ownerId: userId });
     
+    res.status(200).json({
+      success: true,
+      count: shops.length,
+      data: shops
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server Error', 
+      error: error.message 
+    });
+  }
+};
+
+// @desc    Get public shops by location - NEW
+const getPublicShops = async (req, res) => {
+  try {
+    const { lat, lng, radius = 5000, shopType, categoryId, serviceType } = req.query;
+
+    let query = { 
+      status: 'approved', 
+      isActive: true 
+    };
+
+    if (lat && lng) {
+      query.location = {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(lng), parseFloat(lat)]
+          },
+          $maxDistance: parseInt(radius)
+        }
+      };
+    }
+
+    if (shopType) query.shopType = shopType;
+    if (categoryId) query.categoryId = categoryId;
+    if (serviceType) query.serviceType = serviceType;
+
+    const shops = await Shop.find(query)
+      .select('-ownerId -approvedBy -rejectionReason')
+      .limit(50)
+      .sort({ priority: -1, rating: -1 });
+
     res.status(200).json({
       success: true,
       count: shops.length,
@@ -82,18 +126,15 @@ const getShopById = async (req, res) => {
 // @desc    Create new shop
 const createShop = async (req, res) => {
   try {
-    // ✅ FIXED: ownerId auto generate agar req.user nahi hai
     if (req.user && req.user.id) {
       req.body.ownerId = req.user.id;
     } else {
       req.body.ownerId = new mongoose.Types.ObjectId();
     }
 
-    // ✅ FIXED: approvedBy bhi set kar de
     req.body.approvedBy = req.body.ownerId;
     req.body.approvedByName = 'System';
     
-    // ShopType validation hata diya kyunki ab serviceType string hai
     const shop = await Shop.create(req.body);
     
     res.status(201).json({
@@ -123,7 +164,6 @@ const updateShop = async (req, res) => {
       });
     }
     
-    // ✅ FIXED: Auth check skip agar req.user nahi hai
     if (req.user && shop.ownerId && shop.ownerId.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({ 
         success: false, 
@@ -161,7 +201,6 @@ const deleteShop = async (req, res) => {
       });
     }
     
-    // ✅ FIXED: Auth check skip agar req.user nahi hai
     if (req.user && shop.ownerId && shop.ownerId.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({ 
         success: false, 
@@ -187,6 +226,7 @@ const deleteShop = async (req, res) => {
 module.exports = {
   getAllShops,
   getMyShops,
+  getPublicShops,
   getShopById,
   createShop,
   updateShop,

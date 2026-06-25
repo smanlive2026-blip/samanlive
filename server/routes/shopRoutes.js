@@ -1,14 +1,16 @@
 const express = require('express');
 const router = express.Router();
-// ✅ auth.js ki jagah authenticateToken.js se import kar
 const { authenticateToken, requireAdmin } = require('../middleware/authenticateToken'); 
-const shopCtrl = require('../../public/controllers/shopController'); // <-- 3 dot sahi hai
+const shopCtrl = require('../../public/controllers/shopController');
 
 // Admin Routes - Sabhi shop dekhega
 router.get('/shops', authenticateToken, requireAdmin, shopCtrl.getAllShops);
 
 // User Routes - Apni shop dekhega  
 router.get('/my-shops', authenticateToken, shopCtrl.getMyShops);
+
+// Public Route - Location ke hisab se shops
+router.get('/public-shops', shopCtrl.getPublicShops);
 
 // Public Route - Koi bhi shop detail dekh sakta hai
 router.get('/shops/:id', shopCtrl.getShopById);
