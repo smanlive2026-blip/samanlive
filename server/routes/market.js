@@ -1,32 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
-
-// Database Path
-const dbPath = path.join(__dirname, '../database/modules.json');
-
-// ========================================
-// DB HELPER FUNCTIONS
-// ========================================
-function readDB() {
-    try {
-        return JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-    } catch (err) {
-        console.error('DB Read Error:', err);
-        return { marketCategories: [], shops: [], areas: [], modules: [] };
-    }
-}
-
-function writeDB(data) {
-    try {
-        fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-        return true;
-    } catch (err) {
-        console.error('DB Write Error:', err);
-        return false;
-    }
-}
+const Shop = require('../models/Shop');
+const mongoose = require('mongoose');
 
 // ========================================
 // LOCATION HELPERS
@@ -41,7 +16,7 @@ function getDistance(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// NAYA: Point in Polygon check - Ye add kar
+// NAYA: Point in Polygon check
 function isPointInPolygon(point, vs) {
     let x = point.lat, y = point.lng;
     let inside = false;
@@ -55,338 +30,236 @@ function isPointInPolygon(point, vs) {
 }
 
 // ========================================
-// PUBLIC APIs - FRONTEND KE LIYE
+// PUBLIC APIs - FRONTEND KE LIYE - MONGODB WALE
 // ========================================
 
-// 1. Saari Market Categories Dedo - AREA + STATUS FILTER ADD KIYA
-router.get('/categories', (req, res) => {
-    const db = readDB();
-    const city = req.query.city; //?city=surat ya?city=ahmedabad
-
-    let categories = db.marketCategories || [];
-
-    // Sirf active categories
-    categories = categories.filter(c => c.status!== false);
-
-    // Area filter - Agar city bheji hai
-    if (city) {
-        const area = db.areas.find(a => a.name.toLowerCase().includes(city.toLowerCase()));
-        if (area) {
-            categories = categories.filter(c =>
-              !c.area || c.area.length === 0 || c.area.includes(area.id)
-            );
-        }
+// 1. Saari Market Categories - Abhi JSON se, baad me MongoDB kar denge
+router.get('/categories', async (req, res) => {
+    try {
+        // TODO: Isko bhi MongoDB me convert karna hai
+        res.json([]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    res.json(categories);
 });
 
 // 2. Specific Category Ki Details
-router.get('/category/:id', (req, res) => {
-    const db = readDB();
-    const category = db.marketCategories.find(c => c.id === req.params.id);
-
-    if (!category) {
-        return res.status(404).json({ error: 'Category nahi mili' });
-    }
-
-    res.json(category);
-});
-
-// 3. Category Ke Hisaab Se Shops - Location Filter Ke Saath - BANNER ADD KIYA
-router.get('/shops', (req, res) => {
-    const db = readDB();
-    const categoryId = req.query.category;
-    const userLat = parseFloat(req.query.lat);
-    const userLng = parseFloat(req.query.lng);
-
-    let shops = db.shops.filter(s => s.status);
-
-    // Category filter
-    if (categoryId) {
-        shops = shops.filter(s => s.categoryId === categoryId);
-    }
-
-    // Location filter - Agar user ka lat/lng mila
-    if (userLat && userLng) {
-        shops = shops.map(s => {
-            if (s.lat && s.lng) {
-                const dist = getDistance(userLat, userLng, s.lat, s.lng);
-                s.distance = Math.round(dist);
-                s.distanceKm = (dist/1000).toFixed(1);
-                s.inRange = dist <= (s.range || 5000); // Default 5km
-            } else {
-                s.distance = 999999;
-                s.distanceKm = 'N/A';
-                s.inRange = false;
-            }
-            return s;
-        }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
-    } else {
-        shops = shops.sort((a, b) => a.priority - b.priority);
-    }
-
-    // BANNER FIELD ENSURE KARO - AGAR NAHI HAI TO EMPTY STRING
-    shops = shops.map(shop => ({
-   ...shop,
-        banner: shop.banner || ''
-    }));
-
-    res.json(shops);
-});
-
-// 3.1. CATEGORY ID SE SHOPS - MODULE PAGE KE LIYE - NEW ROUTE ADD KIYA
-router.get('/shops/:categoryId', (req, res) => {
-    const db = readDB();
-    const { categoryId } = req.params;
-    const userLat = parseFloat(req.query.lat);
-    const userLng = parseFloat(req.query.lng);
-
-    let shops = db.shops.filter(s =>
-        s.categoryId === categoryId &&
-        s.status!== false
-    );
-
-    // Location filter
-    if (userLat && userLng) {
-        shops = shops.map(s => {
-            if (s.lat && s.lng) {
-                const dist = getDistance(userLat, userLng, s.lat, s.lng);
-                s.distance = Math.round(dist);
-                s.distanceKm = (dist/1000).toFixed(1);
-                s.inRange = dist <= (s.range || 5000);
-            } else {
-                s.distance = 999999;
-                s.distanceKm = 'N/A';
-                s.inRange = false;
-            }
-            return s;
-        }).filter(s => s.inRange).sort((a, b) => a.distance - b.distance);
-    } else {
-        shops = shops.sort((a, b) => a.priority - b.priority);
-    }
-
-    // BANNER FIELD ENSURE KARO
-    shops = shops.map(shop => ({
-   ...shop,
-        banner: shop.banner || ''
-    }));
-
-    res.json(shops);
-});
-
-// 4. Single Shop Ki Details - BANNER ADD KIYA
-router.get('/shop/:id', (req, res) => {
-    const db = readDB();
-    const shop = db.shops.find(s => s.id === req.params.id);
-
-    if (!shop) {
-        return res.status(404).json({ error: 'Shop nahi mili' });
-    }
-
-    // BANNER FIELD ENSURE KARO
-    const shopData = {
-   ...shop,
-        banner: shop.banner || ''
-    };
-
-    res.json(shopData);
-});
-
-// ========================================
-// NAYA ROUTE: MODULES NEARBY - AREA WISE FILTER
-// ========================================
-router.post('/modules/nearby', (req, res) => {
+router.get('/category/:id', async (req, res) => {
     try {
-        const db = readDB();
-        const { lat, lng } = req.body;
+        res.status(404).json({ error: 'Category nahi mili' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-        let modules = db.modules || [];
+// 3. NEARBY SHOPS - MAIN FIX YAHI HAI
+router.get('/nearby', async (req, res) => {
+    try {
+        const { lat, lng, radius = 5000, shopType, categoryId } = req.query;
 
-        // Sirf active modules
-        modules = modules.filter(m => m.status === 'active' || m.status === true);
+        let query = {
+            status: { $in: ['approved', 'active'] }, // ✅ Purani + nayi shops
+            isActive: true
+        };
 
-        // Agar GPS nahi mila, sab bhej do
-        if (!lat ||!lng) {
-            return res.json({ success: true, modules: modules.sort((a, b) => (a.priority || 0) - (b.priority || 0)) });
+        if (lat && lng &&!isNaN(parseFloat(lat)) &&!isNaN(parseFloat(lng))) {
+            query.location = {
+                $near: {
+                    $geometry: {
+                        type: 'Point',
+                        coordinates: [parseFloat(lng), parseFloat(lat)] // lng, lat
+                    },
+                    $maxDistance: parseInt(radius) || 5000
+                }
+            };
         }
 
-        // Filter karo: areas check karo
-        const filteredModules = modules.filter(module => {
-            // Agar module me koi area nahi = sabko dikhao
-            if (!module.areas || module.areas.length === 0) return true;
+        if (shopType) query.shopType = shopType;
+        if (categoryId) query.categoryId = categoryId;
 
-            // Check karo kya user kisi area me hai
-            return module.areas.some(area => {
-                if (!area.status) return false; // Disabled area skip karo
+        console.log('Market.js Nearby Query:', JSON.stringify(query));
 
-                if (area.type === 'circle' && area.center) {
-                    const distance = getDistance(
-                        lat, lng,
-                        area.center.lat, area.center.lng
+        const shops = await Shop.find(query)
+          .select('-ownerId -approvedBy -rejectionReason -email')
+          .limit(50)
+          .sort({ priority: -1, rating: -1, createdAt: -1 });
+
+        let shopsWithDistance = shops;
+        if (lat && lng) {
+            shopsWithDistance = shops.map(shop => {
+                const shopObj = shop.toObject();
+                if (shop.location && shop.location.coordinates) {
+                    const dist = getDistance(
+                        parseFloat(lat),
+                        parseFloat(lng),
+                        shop.location.coordinates[1],
+                        shop.location.coordinates[0]
                     );
-                    return distance <= area.radius;
-                } else if (area.type === 'polygon' && area.coordinates) {
-                    return isPointInPolygon({ lat, lng }, area.coordinates);
+                    shopObj.distance = Math.round(dist);
+                    shopObj.distanceKm = (dist/1000).toFixed(1);
                 }
-                return false;
+                shopObj.banner = shopObj.banner || '';
+                return shopObj;
             });
-        });
+        }
 
-        res.json({
+        res.status(200).json({
             success: true,
-            modules: filteredModules.sort((a, b) => (a.priority || 0) - (b.priority || 0))
+            count: shopsWithDistance.length,
+            data: shopsWithDistance
         });
     } catch (err) {
-        console.error('Modules Nearby Error:', err);
-        res.status(500).json({ success: false, error: err.message });
+        console.error('Market nearby error:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: err.message
+        });
+    }
+});
+
+// 4. SHOPS BY QUERY - MONGODB
+router.get('/shops', async (req, res) => {
+    try {
+        const { category, lat, lng, shopType } = req.query;
+
+        let query = {
+            status: { $in: ['approved', 'active'] },
+            isActive: true
+        };
+
+        if (category) query.categoryId = category;
+        if (shopType) query.shopType = shopType;
+
+        let shops = await Shop.find(query)
+          .select('-ownerId -approvedBy -rejectionReason -email')
+          .limit(50)
+          .sort({ priority: -1, createdAt: -1 });
+
+        if (lat && lng) {
+            shops = shops.map(s => {
+                const shopObj = s.toObject();
+                if (s.location && s.location.coordinates) {
+                    const dist = getDistance(
+                        parseFloat(lat),
+                        parseFloat(lng),
+                        s.location.coordinates[1],
+                        s.location.coordinates[0]
+                    );
+                    shopObj.distance = Math.round(dist);
+                    shopObj.distanceKm = (dist/1000).toFixed(1);
+                    shopObj.inRange = dist <= (s.range || 5000);
+                } else {
+                    shopObj.inRange = false;
+                }
+                shopObj.banner = shopObj.banner || '';
+                return shopObj;
+            }).filter(s => s.inRange!== false);
+        }
+
+        res.json(shops);
+    } catch (err) {
+        console.error('Market shops error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 5. SHOPS BY CATEGORY ID - MONGODB
+router.get('/shops/:categoryId', async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+        const { lat, lng } = req.query;
+
+        let shops = await Shop.find({
+            categoryId: categoryId,
+            status: { $in: ['approved', 'active'] },
+            isActive: true
+        })
+      .select('-ownerId -approvedBy -rejectionReason -email')
+      .limit(50)
+      .sort({ priority: -1, createdAt: -1 });
+
+        if (lat && lng) {
+            shops = shops.map(s => {
+                const shopObj = s.toObject();
+                if (s.location && s.location.coordinates) {
+                    const dist = getDistance(
+                        parseFloat(lat),
+                        parseFloat(lng),
+                        s.location.coordinates[1],
+                        s.location.coordinates[0]
+                    );
+                    shopObj.distance = Math.round(dist);
+                    shopObj.distanceKm = (dist/1000).toFixed(1);
+                    shopObj.inRange = dist <= (s.range || 5000);
+                } else {
+                    shopObj.inRange = false;
+                }
+                shopObj.banner = shopObj.banner || '';
+                return shopObj;
+            }).filter(s => s.inRange!== false);
+        }
+
+        res.json(shops);
+    } catch (err) {
+        console.error('Shops by category error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 6. SINGLE SHOP DETAILS - MONGODB
+router.get('/shop/:id', async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.id).select('-ownerId -approvedBy -rejectionReason');
+
+        if (!shop) {
+            return res.status(404).json({ error: 'Shop nahi mili' });
+        }
+
+        const shopData = {
+          ...shop.toObject(),
+            banner: shop.banner || ''
+        };
+
+        res.json(shopData);
+    } catch (err) {
+        console.error('Shop detail error:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
 // ========================================
-// ADMIN APIs - CONTROL PANEL KE LIYE
+// ADMIN APIs - ABHI JSON WALE HI REHNE DE
 // ========================================
+// TODO: Baad me inko bhi MongoDB me convert karna hai
+// Abhi ke liye comment kar diya kyunki modules.json nahi hai
 
-// 1. Nayi Category Add Karo - GROUP, AREA, STATUS, DESC ADD KIYA
 router.post('/admin/category', (req, res) => {
-    const db = readDB();
-    const { name, icon, color, group, area, status, desc } = req.body;
-
-    if (!name ||!icon) {
-        return res.status(400).json({ error: 'Name aur Icon zaruri hai' });
-    }
-
-    const newCategory = {
-        id: name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
-        name,
-        icon,
-        color: color || '#6366f1',
-        group: group || 'General',
-        area: area || [], // ["area-1", "area-2"] ya [] for all areas
-        status: status!== false, // default true
-        desc: desc || ''
-    };
-
-    if (!db.marketCategories) db.marketCategories = [];
-    db.marketCategories.push(newCategory);
-
-    if (writeDB(db)) {
-        res.json({ success: true, data: newCategory });
-    } else {
-        res.status(500).json({ error: 'Save nahi hua' });
-    }
+    res.status(503).json({ error: 'Admin API temporarily disabled. Use Shop model directly.' });
 });
 
-// 2. Category Update Karo - GROUP, AREA, STATUS UPDATE SUPPORT
 router.put('/admin/category/:id', (req, res) => {
-    const db = readDB();
-    const idx = db.marketCategories.findIndex(c => c.id === req.params.id);
-
-    if (idx === -1) {
-        return res.status(404).json({ error: 'Category nahi mili' });
-    }
-
-    db.marketCategories[idx] = {...db.marketCategories[idx],...req.body };
-
-    if (writeDB(db)) {
-        res.json({ success: true, data: db.marketCategories[idx] });
-    } else {
-        res.status(500).json({ error: 'Update nahi hua' });
-    }
+    res.status(503).json({ error: 'Admin API temporarily disabled.' });
 });
 
-// 3. Category Delete Karo
 router.delete('/admin/category/:id', (req, res) => {
-    const db = readDB();
-    const initialLength = db.marketCategories.length;
-    db.marketCategories = db.marketCategories.filter(c => c.id!== req.params.id);
-
-    if (db.marketCategories.length === initialLength) {
-        return res.status(404).json({ error: 'Category nahi mili' });
-    }
-
-    if (writeDB(db)) {
-        res.json({ success: true });
-    } else {
-        res.status(500).json({ error: 'Delete nahi hua' });
-    }
+    res.status(503).json({ error: 'Admin API temporarily disabled.' });
 });
 
-// 4. Saari Categories - Admin Ke Liye - STATUS FILTER NAHI
 router.get('/admin/categories', (req, res) => {
-    const db = readDB();
-    res.json(db.marketCategories || []);
+    res.json([]);
 });
 
-// 5. Shop Add Karo - Category Ke Saath - BANNER SUPPORT ADD KIYA
 router.post('/admin/shop', (req, res) => {
-    const db = readDB();
-    const { name, icon, color, categoryId, lat, lng, range, address, phone, banner } = req.body;
-
-    if (!name ||!categoryId) {
-        return res.status(400).json({ error: 'Name aur Category zaruri hai' });
-    }
-
-    const newShop = {
-        id: 'shop-' + Date.now(),
-        name,
-        icon: icon || '🏪',
-        color: color || '#6366f1',
-        categoryId,
-        lat: lat || null,
-        lng: lng || null,
-        range: range || 5000,
-        address: address || '',
-        phone: phone || '',
-        banner: banner || '', // BANNER FIELD ADD KIYA
-        status: true,
-        priority: db.shops.length + 1,
-        createdAt: new Date().toISOString()
-    };
-
-    if (!db.shops) db.shops = [];
-    db.shops.push(newShop);
-
-    if (writeDB(db)) {
-        res.json({ success: true, data: newShop });
-    } else {
-        res.status(500).json({ error: 'Save nahi hua' });
-    }
+    res.status(503).json({ error: 'Use /api/local-market/shops POST instead' });
 });
 
-// 6. Shop Update Karo
 router.put('/admin/shop/:id', (req, res) => {
-    const db = readDB();
-    const idx = db.shops.findIndex(s => s.id === req.params.id);
-
-    if (idx === -1) {
-        return res.status(404).json({ error: 'Shop nahi mili' });
-    }
-
-    db.shops[idx] = {...db.shops[idx],...req.body };
-
-    if (writeDB(db)) {
-        res.json({ success: true, data: db.shops[idx] });
-    } else {
-        res.status(500).json({ error: 'Update nahi hua' });
-    }
+    res.status(503).json({ error: 'Use /api/local-market/shops/:id PUT instead' });
 });
 
-// 7. Shop Delete Karo
 router.delete('/admin/shop/:id', (req, res) => {
-    const db = readDB();
-    const initialLength = db.shops.length;
-    db.shops = db.shops.filter(s => s.id!== req.params.id);
-
-    if (db.shops.length === initialLength) {
-        return res.status(404).json({ error: 'Shop nahi mili' });
-    }
-
-    if (writeDB(db)) {
-        res.json({ success: true });
-    } else {
-        res.status(500).json({ error: 'Delete nahi hua' });
-    }
+    res.status(503).json({ error: 'Use /api/local-market/shops/:id DELETE instead' });
 });
 
 module.exports = router;
