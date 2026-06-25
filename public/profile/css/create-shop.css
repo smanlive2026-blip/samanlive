@@ -249,46 +249,44 @@
     box-sizing: border-box;
 }
 .shops-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
     width: 100%;
 }
 .shop-card {
     background: #f8fafc;
-    padding: 12px 16px;
+    padding: 12px;
     border-radius: 12px;
     border: 2px solid #e2e8f0;
     transition: all 0.3s;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    flex-direction: column;
     cursor: pointer;
-    flex-direction: row;
-    width: 100%;
-    box-sizing: border-box;
-    justify-content: flex-start;
+    text-align: center;
+    min-height: 120px;
 }
 .shop-card:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.12);
     border-color: #667eea;
     background: #eef2ff;
+    transform: translateY(-2px);
 }
 .shop-card:active {
     transform: scale(0.98);
 }
 .shop-icon {
     font-size: 32px;
-    flex-shrink: 0;
+    margin-bottom: 6px;
 }
 .shop-details {
-    flex: 1;
-    min-width: 0;
-    text-align: left;
+    width: 100%;
 }
 .shop-details h3 {
-    margin: 0 0 2px 0;
-    font-size: 15px;
+    margin: 0 0 4px 0;
+    font-size: 13px;
     color: #1e293b;
     white-space: nowrap;
     overflow: hidden;
@@ -297,13 +295,16 @@
 }
 .shop-details p {
     margin: 0 0 4px 0;
-    font-size: 12px;
+    font-size: 10px;
     color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .shop-badge {
-    padding: 3px 8px;
-    border-radius: 10px;
-    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 8px;
     font-weight: 700;
     text-transform: uppercase;
     background: #dcfce7;
@@ -313,6 +314,7 @@
 .empty-state {
     text-align: center;
     padding: 60px 20px;
+    grid-column: 1 / -1;
 }
 .empty-state i {
     font-size: 64px;
@@ -351,17 +353,21 @@
    .icon-picker {
         grid-template-columns: repeat(4, 1fr);
     }
-   .shop-card {
-        padding: 10px 12px;
+   .shops-list {
+        grid-template-columns: repeat(2, 1fr);
         gap: 10px;
+    }
+   .shop-card {
+        padding: 10px;
+        min-height: 100px;
     }
    .shop-icon {
         font-size: 28px;
    }
    .shop-details h3 {
-        font-size: 14px;
+        font-size: 12px;
    }
    .shop-details p {
-        font-size: 11px;
+        font-size: 9px;
    }
 }
