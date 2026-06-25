@@ -10,9 +10,11 @@ let nearbyVideos = [];
 let allCampaigns = [];
 let siteSettings = {};
 let userLocation = null;
+let locationWatchId = null; // ✅ NAYA: Watch ID store karne ke liye
+let lastFetchedLocation = null; // ✅ NAYA: Last location track karne ke liye
 
 // ========================================
-// GET USER LOCATION
+// GET USER LOCATION - AUTO UPDATE WALA
 // ========================================
 function getUserLocation() {
     return new Promise((resolve) => {
@@ -22,13 +24,11 @@ function getUserLocation() {
             return;
         }
 
+        // ✅ Pehle ek baar current location le lo
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                userLocation = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
-                console.log('User Location:', userLocation);
+                updateUserLocation(position);
+                startWatchingLocation(); // ✅ Fir watch start kar do
                 resolve(userLocation);
             },
             (error) => {
@@ -37,12 +37,114 @@ function getUserLocation() {
             },
             {
                 enableHighAccuracy: true,
-                timeout: 5000,
+                timeout: 10000,
                 maximumAge: 0
             }
         );
     });
 }
+
+// ✅ NAYA FUNCTION: Location watch start karo
+function startWatchingLocation() {
+    if (locationWatchId!== null) return; // Already watching
+
+    locationWatchId = navigator.geolocation.watchPosition(
+        (position) => {
+            const newLat = position.coords.latitude;
+            const newLng = position.coords.longitude;
+
+            // ✅ Sirf tab update karo jab 100 meter se zyada move kiya ho
+            if (lastFetchedLocation) {
+                const distance = calculateDistance(
+                    lastFetchedLocation.lat,
+                    lastFetchedLocation.lng,
+                    newLat,
+                    newLng
+                );
+
+                if (distance < 0.1) { // 100 meter se kam hai to ignore
+                    console.log('User moved less than 100m, skipping update');
+                    return;
+                }
+            }
+
+            console.log('📍 Location updated! User moved:', position.coords);
+            updateUserLocation(position);
+            reloadNearbyData(); // ✅ Nayi location pe data reload karo
+        },
+        (error) => {
+            console.error('Location watch error:', error);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0 // Cache mat karo, fresh location lo
+        }
+    );
+}
+
+// ✅ NAYA FUNCTION: User location update karo
+function updateUserLocation(position) {
+    userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+    };
+    lastFetchedLocation = {...userLocation };
+    console.log('User Location Updated:', userLocation);
+}
+
+// ✅ NAYA FUNCTION: Distance calculate karo - Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in km
+}
+
+// ✅ NAYA FUNCTION: Nayi location pe shops reload karo
+async function reloadNearbyData() {
+    if (!userLocation) return;
+
+    console.log('🔄 Reloading nearby data for new location...');
+
+    try {
+        // Shops reload karo
+        const shopsRes = await fetch(`/api/public-shops?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
+        if(shopsRes.ok) {
+            const shopsData = await shopsRes.json();
+            nearbyServices = shopsData.data || shopsData;
+            renderShops();
+            renderFamousShops();
+            console.log('✅ Shops updated:', nearbyServices.length);
+        }
+
+        // Modules reload karo
+        const modulesRes = await fetch('/api/modules/nearby', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat: userLocation.lat, lng: userLocation.lng })
+        });
+        if(modulesRes.ok) {
+            const modulesData = await modulesRes.json();
+            allModules = modulesData.modules || [];
+            renderServices();
+            console.log('✅ Modules updated:', allModules.length);
+        }
+    } catch(e) {
+        console.error('Failed to reload nearby data:', e);
+    }
+}
+
+// ✅ Page close hone pe watch band kar do
+window.addEventListener('beforeunload', () => {
+    if (locationWatchId!== null) {
+        navigator.geolocation.clearWatch(locationWatchId);
+    }
+});
 
 // ========================================
 // LOAD DATA FROM SERVER - WITH LOCATION - FIXED CRASH
@@ -57,36 +159,36 @@ async function loadAllData() {
             const adsRes = await fetch('/api/ads');
             if(adsRes.ok) allAds = await adsRes.json();
             else allAds = [];
-        } catch(e) { 
-            console.log('Ads API failed:', e); 
-            allAds = []; 
+        } catch(e) {
+            console.log('Ads API failed:', e);
+            allAds = [];
         }
 
         try {
             const videosRes = await fetch('/api/videos');
             if(videosRes.ok) nearbyVideos = await videosRes.json();
             else nearbyVideos = [];
-        } catch(e) { 
-            console.log('Videos API failed:', e); 
-            nearbyVideos = []; 
+        } catch(e) {
+            console.log('Videos API failed:', e);
+            nearbyVideos = [];
         }
 
         try {
             const campaignsRes = await fetch('/api/campaigns');
             if(campaignsRes.ok) allCampaigns = await campaignsRes.json();
             else allCampaigns = [];
-        } catch(e) { 
-            console.log('Campaigns API failed:', e); 
-            allCampaigns = []; 
+        } catch(e) {
+            console.log('Campaigns API failed:', e);
+            allCampaigns = [];
         }
 
         try {
             const settingsRes = await fetch('/api/settings');
             if(settingsRes.ok) siteSettings = await settingsRes.json();
             else siteSettings = {};
-        } catch(e) { 
-            console.log('Settings API failed:', e); 
-            siteSettings = {}; 
+        } catch(e) {
+            console.log('Settings API failed:', e);
+            siteSettings = {};
         }
 
         // MODULES KO GPS KE SAATH LOAD KARO - YAHI CHANGE HAI
@@ -103,9 +205,9 @@ async function loadAllData() {
                 } else {
                     allModules = [];
                 }
-            } catch(e) { 
-                console.log('Modules nearby API failed:', e); 
-                allModules = []; 
+            } catch(e) {
+                console.log('Modules nearby API failed:', e);
+                allModules = [];
             }
 
             // Shops bhi GPS ke saath load karo - CHANGE KIYA
@@ -117,9 +219,9 @@ async function loadAllData() {
                 } else {
                     nearbyServices = [];
                 }
-            } catch(e) { 
-                console.log('Shops API failed:', e); 
-                nearbyServices = []; 
+            } catch(e) {
+                console.log('Shops API failed:', e);
+                nearbyServices = [];
             }
         } else {
             // Location nahi mili to purana tarika - CHANGE KIYA
@@ -131,9 +233,9 @@ async function loadAllData() {
                 } else {
                     allModules = [];
                 }
-            } catch(e) { 
-                console.log('Modules API failed:', e); 
-                allModules = []; 
+            } catch(e) {
+                console.log('Modules API failed:', e);
+                allModules = [];
             }
 
             try {
@@ -144,9 +246,9 @@ async function loadAllData() {
                 } else {
                     nearbyServices = [];
                 }
-            } catch(e) { 
-                console.log('Public shops API failed:', e); 
-                nearbyServices = []; 
+            } catch(e) {
+                console.log('Public shops API failed:', e);
+                nearbyServices = [];
             }
         }
 
