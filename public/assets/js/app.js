@@ -97,6 +97,7 @@ async function loadAllData() {
         renderTopAds();
         renderCampaigns();
         renderShops();
+        renderFamousShops(); // NAYA ADD KIYA - Famous shops render
         renderVideos();
         updateLogo();
 
@@ -273,6 +274,42 @@ function renderShops() {
 }
 
 // ========================================
+// RENDER FAMOUS SHOPS - NAYA FUNCTION - AREA KI APPROVED SHOPS
+// ========================================
+function renderFamousShops() {
+    // User ke area ki shops filter karo - jo approved hain aur active hain
+    const areaShops = nearbyServices.filter(shop =>
+        shop.status === 'approved' &&
+        shop.isActive!== false // false nahi hai to active maan lo
+    ).sort((a, b) => {
+        // Distance se sort - najdeek wali pehle
+        return (a.distance || 9999) - (b.distance || 9999);
+    });
+
+    const doubleShops = [...areaShops,...areaShops];
+    const famousShopsEl = document.getElementById('famousShopsContent');
+
+    if(areaShops.length === 0) {
+        if(famousShopsEl) famousShopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">⭐ Aapke area me abhi koi famous shop nahi hai</p>';
+        return;
+    }
+
+    if(famousShopsEl) {
+        famousShopsEl.innerHTML = `
+            <div class="shops-grid">
+                ${doubleShops.map(service => `
+                    <div class="shop-card" onclick="window.location.href='/local-market/dashboard.html?shopId=${service._id}&type=${service.shopType}'">
+                        <div class="shop-icon">${service.icon}</div>
+                        <div class="shop-name">${service.name}</div>
+                        ${service.distance? `<small style="color:#f59e0b;font-size:11px;">⭐ ${service.distance}m</small>` : '<small style="color:#f59e0b;font-size:11px;">⭐ Famous</small>'}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+}
+
+// ========================================
 // RENDER VIDEOS - TRAIN SCROLL + SHOP LINK - MODIFIED BY AI
 // ========================================
 function renderVideos() {
@@ -302,19 +339,19 @@ function renderVideos() {
 // ========================================
 let topAdIndex = 0;
 function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer .ad-slide'); // FIXED BY AI - space add kiya
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI - space add kiya
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     topAdIndex = idx;
 }
 function nextTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer .ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex + 1) % slides.length;
     showTopAd(topAdIndex);
 }
 function prevTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer .ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
     showTopAd(topAdIndex);
@@ -325,19 +362,19 @@ function prevTopAd() {
 // ========================================
 let campaignIndex = 0;
 function showCampaign(idx) {
-    const slides = document.querySelectorAll('#campaignContainer .ad-slide'); // FIXED BY AI - space add kiya
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI - space add kiya
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     campaignIndex = idx;
 }
 function nextCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer .ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     campaignIndex = (campaignIndex + 1) % slides.length;
     showCampaign(campaignIndex);
 }
 function prevCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer .ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI
     if(slides.length === 0) return;
     campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
     showCampaign(campaignIndex);
@@ -348,19 +385,19 @@ function prevCampaign() {
 // ========================================
 let shopIndex = 0;
 function showShop(idx) {
-    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     shopIndex = idx;
 }
 function nextShop() {
-    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
     if(slides.length === 0) return;
     shopIndex = (shopIndex + 1) % slides.length;
     showShop(shopIndex);
 }
 function prevShop() {
-    const slides = document.querySelectorAll('#shopsContent .nearby-slide');
+    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
     if(slides.length === 0) return;
     shopIndex = (shopIndex - 1 + slides.length) % slides.length;
     showShop(shopIndex);
@@ -372,19 +409,19 @@ function goToShop(idx) { showShop(idx); }
 // ========================================
 let videoIndex = 0;
 function showVideo(idx) {
-    const slides = document.querySelectorAll('#videosContent .nearby-slide');
+    const slides = document.querySelectorAll('#videosContent.nearby-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     videoIndex = idx;
 }
 function nextVideo() {
-    const slides = document.querySelectorAll('#videosContent .nearby-slide');
+    const slides = document.querySelectorAll('#videosContent.nearby-slide');
     if(slides.length === 0) return;
     videoIndex = (videoIndex + 1) % slides.length;
     showVideo(videoIndex);
 }
 function prevVideo() {
-    const slides = document.querySelectorAll('#videosContent .nearby-slide');
+    const slides = document.querySelectorAll('#videosContent.nearby-slide');
     if(slides.length === 0) return;
     videoIndex = (videoIndex - 1 + slides.length) % slides.length;
     showVideo(videoIndex);
@@ -793,7 +830,8 @@ async function submitCreateShop() {
 function startTrainSliding() {
     const containers = [
         document.getElementById('shopsContent'),
-        document.getElementById('videosContent')
+        document.getElementById('videosContent'),
+        document.getElementById('famousShopsContent') // NAYA ADD KIYA
     ];
 
     containers.forEach(container => {
