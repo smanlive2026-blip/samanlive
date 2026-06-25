@@ -45,51 +45,109 @@ function getUserLocation() {
 }
 
 // ========================================
-// LOAD DATA FROM SERVER - WITH LOCATION - UPDATED
+// LOAD DATA FROM SERVER - WITH LOCATION - FIXED CRASH
 // ========================================
 async function loadAllData() {
     try {
         // Pehle location try karo
         await getUserLocation();
 
-        // Baaki APIs normal load karo
-        const [adsRes, videosRes, campaignsRes, settingsRes] = await Promise.all([
-            fetch('/api/ads'),
-            fetch('/api/videos'),
-            fetch('/api/campaigns'),
-            fetch('/api/settings')
-        ]);
+        // Baaki APIs alag-alag load karo taaki ek fail ho to bhi baaki chale
+        try {
+            const adsRes = await fetch('/api/ads');
+            if(adsRes.ok) allAds = await adsRes.json();
+            else allAds = [];
+        } catch(e) { 
+            console.log('Ads API failed:', e); 
+            allAds = []; 
+        }
 
-        allAds = await adsRes.json();
-        nearbyVideos = await videosRes.json();
-        allCampaigns = await campaignsRes.json();
-        siteSettings = await settingsRes.json();
+        try {
+            const videosRes = await fetch('/api/videos');
+            if(videosRes.ok) nearbyVideos = await videosRes.json();
+            else nearbyVideos = [];
+        } catch(e) { 
+            console.log('Videos API failed:', e); 
+            nearbyVideos = []; 
+        }
+
+        try {
+            const campaignsRes = await fetch('/api/campaigns');
+            if(campaignsRes.ok) allCampaigns = await campaignsRes.json();
+            else allCampaigns = [];
+        } catch(e) { 
+            console.log('Campaigns API failed:', e); 
+            allCampaigns = []; 
+        }
+
+        try {
+            const settingsRes = await fetch('/api/settings');
+            if(settingsRes.ok) siteSettings = await settingsRes.json();
+            else siteSettings = {};
+        } catch(e) { 
+            console.log('Settings API failed:', e); 
+            siteSettings = {}; 
+        }
 
         // MODULES KO GPS KE SAATH LOAD KARO - YAHI CHANGE HAI
         if(userLocation) {
-            // Naya route: /api/modules/nearby - Area-wise modules
-            const modulesRes = await fetch('/api/modules/nearby', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lat: userLocation.lat, lng: userLocation.lng })
-            });
-            const modulesData = await modulesRes.json();
-            allModules = modulesData.modules || [];
+            try {
+                const modulesRes = await fetch('/api/modules/nearby', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat: userLocation.lat, lng: userLocation.lng })
+                });
+                if(modulesRes.ok) {
+                    const modulesData = await modulesRes.json();
+                    allModules = modulesData.modules || [];
+                } else {
+                    allModules = [];
+                }
+            } catch(e) { 
+                console.log('Modules nearby API failed:', e); 
+                allModules = []; 
+            }
 
             // Shops bhi GPS ke saath load karo - CHANGE KIYA
-            const shopsRes = await fetch(`/api/public-shops?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
-            const shopsData = await shopsRes.json();
-            nearbyServices = shopsData.data || shopsData;
+            try {
+                const shopsRes = await fetch(`/api/public-shops?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
+                if(shopsRes.ok) {
+                    const shopsData = await shopsRes.json();
+                    nearbyServices = shopsData.data || shopsData;
+                } else {
+                    nearbyServices = [];
+                }
+            } catch(e) { 
+                console.log('Shops API failed:', e); 
+                nearbyServices = []; 
+            }
         } else {
             // Location nahi mili to purana tarika - CHANGE KIYA
-            const [modulesRes, shopsRes] = await Promise.all([
-                fetch('/api/modules'),
-                fetch('/api/public-shops')
-            ]);
-            const modulesData = await modulesRes.json();
-            const shopsData = await shopsRes.json();
-            allModules = modulesData.modules || modulesData;
-            nearbyServices = shopsData.data || shopsData;
+            try {
+                const modulesRes = await fetch('/api/modules');
+                if(modulesRes.ok) {
+                    const modulesData = await modulesRes.json();
+                    allModules = modulesData.modules || modulesData;
+                } else {
+                    allModules = [];
+                }
+            } catch(e) { 
+                console.log('Modules API failed:', e); 
+                allModules = []; 
+            }
+
+            try {
+                const shopsRes = await fetch('/api/public-shops');
+                if(shopsRes.ok) {
+                    const shopsData = await shopsRes.json();
+                    nearbyServices = shopsData.data || shopsData;
+                } else {
+                    nearbyServices = [];
+                }
+            } catch(e) { 
+                console.log('Public shops API failed:', e); 
+                nearbyServices = []; 
+            }
         }
 
         console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', nearbyServices.length);
@@ -105,6 +163,10 @@ async function loadAllData() {
 
     } catch(e) {
         console.error('Failed to load data:', e);
+        // Fir bhi render kar de jo mil gaya
+        renderShops();
+        renderFamousShops();
+        renderServices();
     }
 }
 
@@ -817,7 +879,6 @@ async function submitCreateShop() {
             alert('✅ Shop ban gayi! Ab admin se approval milega.\n\nAbhi status: Pending');
             currentUser.hasShop = true;
             closeCreateShopModal();
-            closeProfileModal();
         } else {
             alert('Error: ' + data.error);
         }
