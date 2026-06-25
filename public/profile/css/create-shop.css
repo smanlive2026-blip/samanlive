@@ -261,6 +261,7 @@
     align-items: center;
     gap: 16px;
     cursor: pointer;
+    flex-direction: row;
 }
 .shop-card:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.12);
@@ -272,7 +273,6 @@
 }
 .shop-icon {
     font-size: 36px;
-    flex-shrink: 0;
 }
 .shop-details {
     flex: 1;
