@@ -5,17 +5,18 @@ const Shop = require('../models/Shop');
 const Order = require('../models/Order');
 const auth = require('../middleware/authenticateToken');
 
-// ✅ FIXED: CREATE SHOP - status approved hona chahiye
+// ✅ FIXED: CREATE SHOP - status approved hona chahiye + Logo support
 router.post('/shops', auth, async (req, res) => {
     try {
         const shopData = {
-            ...req.body,
+           ...req.body,
             ownerId: req.user.id,
             createdBy: req.user.id,
             status: 'approved', // ✅ FIXED: 'active' ki jagah 'approved'
-            isActive: true
+            isActive: true,
+            logo: req.body.logo || '' // ✅ Logo field added
         };
-        
+
         const shop = new Shop(shopData);
         await shop.save();
         res.status(201).json(shop);
@@ -27,7 +28,7 @@ router.post('/shops', auth, async (req, res) => {
 // ✅ NEW: GET MY SHOPS - Check karne ke liye user ki shop hai ya nahi
 router.get('/my-shops', auth, async (req, res) => {
     try {
-        const shops = await Shop.find({ 
+        const shops = await Shop.find({
             $or: [
                 { ownerId: req.user.id },
                 { createdBy: req.user.id }
@@ -46,15 +47,15 @@ router.get('/public', async (req, res) => {
 
         let query = {
             // ✅ LINE CHANGE: Purani 'active' shops bhi include karo
-            status: { $in: ['approved', 'active'] }, 
+            status: { $in: ['approved', 'active'] },
             isActive: true
         };
 
-        if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
+        if (lat && lng &&!isNaN(parseFloat(lat)) &&!isNaN(parseFloat(lng))) {
             query.location = {
                 $near: {
-                    $geometry: { 
-                        type: 'Point', 
+                    $geometry: {
+                        type: 'Point',
                         coordinates: [parseFloat(lng), parseFloat(lat)] // LNG pehle
                     },
                     $maxDistance: parseInt(radius) || 5000
@@ -69,9 +70,9 @@ router.get('/public', async (req, res) => {
         console.log('Public Shops Query:', JSON.stringify(query));
 
         const shops = await Shop.find(query)
-            .select('-ownerId -approvedBy -rejectionReason -email')
-            .limit(50)
-            .sort({ priority: -1, rating: -1, createdAt: -1 });
+           .select('-ownerId -approvedBy -rejectionReason -email')
+           .limit(50)
+           .sort({ priority: -1, rating: -1, createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -80,10 +81,10 @@ router.get('/public', async (req, res) => {
         });
     } catch (err) {
         console.error('Get public shops error:', err);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Server Error', 
-            error: err.message 
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: err.message
         });
     }
 });
@@ -91,8 +92,12 @@ router.get('/public', async (req, res) => {
 // ===== SHOP DETAILS - Ye /public ke BAAD aana chahiye =====
 router.get('/shops/:id', async (req, res) => {
     try {
-        const shop = await Shop.findById(req.params.id);
+        const shop = await Shop.findById(req.params.id).lean();
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
+
+        // ✅ Ensure logo field exists
+        if (!shop.logo) shop.logo = '';
+
         res.json(shop);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -109,7 +114,7 @@ router.get('/shops/:shopId/stats', auth, async (req, res) => {
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
-        if (!isOwner && !isManager && req.user.role !== 'admin') {
+        if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -164,7 +169,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
 
         const products = (shop.items || []).map((item, index) => ({
             _id: item._id || index,
-            ...item.toObject ? item.toObject() : item
+           ...item.toObject? item.toObject() : item
         }));
 
         res.json(products);
@@ -191,7 +196,7 @@ router.get('/products/:shopId/:productId', auth, async (req, res) => {
 // ===== CREATE PRODUCT - Push to items[] =====
 router.post('/products', auth, async (req, res) => {
     try {
-        const { shopId, ...productData } = req.body;
+        const { shopId,...productData } = req.body;
 
         const shop = await Shop.findById(shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
@@ -200,7 +205,7 @@ router.post('/products', auth, async (req, res) => {
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
-        if (!isOwner && !isManager && req.user.role !== 'admin') {
+        if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -223,7 +228,7 @@ router.put('/products/:shopId/:productId', auth, async (req, res) => {
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
-        if (!isOwner && !isManager && req.user.role !== 'admin') {
+        if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -248,7 +253,7 @@ router.delete('/products/:shopId/:productId', auth, async (req, res) => {
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
-        if (!isOwner && !isManager && req.user.role !== 'admin') {
+        if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -261,7 +266,7 @@ router.delete('/products/:shopId/:productId', auth, async (req, res) => {
     }
 });
 
-// ===== UPDATE SHOP =====
+// ===== UPDATE SHOP - Logo support added =====
 router.put('/shops/:id', auth, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id);
@@ -270,7 +275,7 @@ router.put('/shops/:id', auth, async (req, res) => {
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
-        if (!isOwner && !isManager && req.user.role !== 'admin') {
+        if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -280,9 +285,14 @@ router.put('/shops/:id', auth, async (req, res) => {
                 type: 'Point',
                 coordinates: [
                     parseFloat(req.body.location.coordinates[0]), // lng
-                    parseFloat(req.body.location.coordinates[1])  // lat
+                    parseFloat(req.body.location.coordinates[1]) // lat
                 ]
             };
+        }
+
+        // ✅ Logo update support
+        if (req.body.logo!== undefined) {
+            req.body.logo = req.body.logo;
         }
 
         Object.assign(shop, req.body);
@@ -300,7 +310,7 @@ router.get('/nearby', async (req, res) => {
     try {
         const { lat, lng, radius = 5000, type } = req.query;
 
-        if (!lat || !lng) {
+        if (!lat ||!lng) {
             return res.status(400).json({ error: 'lat and lng required' });
         }
 

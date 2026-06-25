@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shop - SAMANLIVE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100vh;
+        }
+       .loading-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 9999;
+        }
+       .loading-screen i {
+            font-size: 50px;
+            color: #a8edea;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+       .loading-screen p { color: #64748b; font-weight: 600; }
+
+       .shop-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+
+       .shop-hero {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            margin: 16px;
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+       .shop-logo-wrap {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 16px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+       .shop-logo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+       .shop-logo-wrap.icon-fallback {
+            font-size: 50px;
+        }
+       .shop-name {
+            font-size: 26px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+       .shop-city {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 600;
+        }
+       .shop-status {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+       .shop-status.open { background: #dcfce7; color: #166534; }
+       .shop-status.closed { background: #fee2e2; color: #991b1b; }
+
+       .info-card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            margin: 16px;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+       .info-card h3 {
+            font-size: 16px;
+            color: #1e293b;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+       .info-card p {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+       .info-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+       .info-row:last-child { border-bottom: none; }
+       .info-row i {
+            width: 24px;
+            color: #a8edea;
+            font-size: 18px;
+        }
+       .info-row span {
+            flex: 1;
+            font-size: 14px;
+            color: #334155;
+            font-weight: 600;
+        }
+
+       .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 0 16px;
+        }
+       .product-card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+       .product-card:active { transform: scale(0.98); }
+       .product-img {
+            width: 100%;
+            height: 160px;
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+       .product-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+       .product-info {
+            padding: 12px;
+        }
+       .product-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+       .product-price {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+       .product-sizes {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+       .size-tag {
+            padding: 2px 6px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #475569;
+        }
+
+       .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            padding: 16px;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+       .call-btn {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 6px 20px rgba(37,211,102,0.4);
+            transition: all 0.2s;
+        }
+       .call-btn:active { transform: scale(0.98); }
+
+       .share-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            color: #1e293b;
+            font-size: 18px;
+            z-index: 10;
+        }
+
+       .empty-products {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+       .empty-products i {
+            font-size: 60px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        @media (min-width: 768px) {
+           .products-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingScreen" class="loading-screen">
+        <i class="fa fa-spinner"></i>
+        <p>Loading Shop...</p>
+    </div>
+
+    <div class="shop-container" id="shopContainer" style="display: none;">
+        <button class="share-btn" onclick="shareShop()">
+            <i class="fa fa-share-alt"></i>
+        </button>
+
+        <div class="shop-hero">
+            <div class="shop-logo-wrap" id="logoWrap">
+                <div class="icon-fallback">👗</div>
+            </div>
+            <div class="shop-name" id="shopName">Shop Name</div>
+            <div class="shop-city" id="shopCity">City</div>
+            <span class="shop-status open" id="shopStatus">OPEN NOW</span>
+        </div>
+
+        <div class="info-card">
+            <h3><i class="fa fa-info-circle"></i> About</h3>
+            <p id="shopDesc">Welcome to our cloth store!</p>
+        </div>
+
+        <div class="info-card">
+            <h3><i class="fa fa-store"></i> Shop Info</h3>
+            <div class="info-row">
+                <i class="fa fa-phone"></i>
+                <span id="shopPhone">-</span>
+            </div>
+            <div class="info-row">
+                <i class="fa fa-map-marker-alt"></i>
+                <span id="shopAddress">-</span>
+            </div>
+            <div class="info-row">
+                <i class="fa fa-truck"></i>
+                <span>Delivery within <b id="shopRange">5</b> KM</span>
+            </div>
+            <div class="info-row">
+                <i class="fa fa-clock"></i>
+                <span id="shopHours">Mon-Sat: 10AM - 9PM</span>
+            </div>
+        </div>
+
+        <div style="padding: 0 16px; margin: 24px 0 16px;">
+            <h3 style="font-size: 18px; color: #1e293b; margin: 0;"><i class="fa fa-tshirt"></i> Our Collection</h3>
+        </div>
+
+        <div class="products-grid" id="productsGrid">
+            <div class="empty-products">
+                <i class="fa fa-tshirt"></i>
+                <p>No items available yet</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-bar" id="bottomBar" style="display: none;">
+        <button class="call-btn" onclick="callShop()">
+            <i class="fa fa-phone"></i> Call Shop Now
+        </button>
+    </div>
+
+    <script>
+        let shopData = null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+
+        if (!shopId) {
+            alert('Invalid shop link');
+            window.location.href = '/';
+        }
+
+        async function loadShop() {
+            try {
+                const res = await fetch(`/api/local-market/shops/${shopId}`);
+                shopData = await res.json();
+
+                if (!shopData._id) {
+                    alert('Shop not found');
+                    window.location.href = '/';
+                    return;
+                }
+
+                renderShop();
+                loadProducts();
+
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('shopContainer').style.display = 'block';
+                document.getElementById('bottomBar').style.display = 'block';
+
+            } catch (err) {
+                console.error(err);
+                alert('Failed to load shop');
+                document.getElementById('loadingScreen').style.display = 'none';
+            }
+        }
+
+        function renderShop() {
+            // Logo ya Icon
+            const logoWrap = document.getElementById('logoWrap');
+            if (shopData.logo) {
+                logoWrap.innerHTML = `<img src="${shopData.logo}" alt="${shopData.shopName}">`;
+            } else {
+                logoWrap.innerHTML = `<div class="icon-fallback">${shopData.icon || '👗'}</div>`;
+            }
+
+            document.getElementById('shopName').textContent = shopData.shopName;
+            document.getElementById('shopCity').textContent = shopData.address?.city || '';
+            document.getElementById('shopDesc').textContent = shopData.description || 'Welcome to our cloth store! We offer quality garments at best prices.';
+            document.getElementById('shopPhone').textContent = shopData.phone || 'Not available';
+            document.getElementById('shopAddress').textContent = `${shopData.address?.line1 || ''}, ${shopData.address?.city || ''}`;
+            document.getElementById('shopRange').textContent = (shopData.range / 1000) || 5;
+
+            // Status
+            const statusEl = document.getElementById('shopStatus');
+            if (shopData.isActive && shopData.status === 'approved') {
+                statusEl.textContent = 'OPEN NOW';
+                statusEl.className = 'shop-status open';
+            } else {
+                statusEl.textContent = 'CLOSED';
+                statusEl.className = 'shop-status closed';
+            }
+
+            document.title = shopData.shopName + ' - SAMANLIVE';
+        }
+
+        async function loadProducts() {
+            try {
+                const items = shopData.items || shopData.products || [];
+                const grid = document.getElementById('productsGrid');
+
+                if (items.length === 0) {
+                    grid.innerHTML = `
+                        <div class="empty-products">
+                            <i class="fa fa-tshirt"></i>
+                            <p>No items available yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = items.map(item => {
+                    const img = item.images?.[0] || item.image || '';
+                    const sizes = (item.sizes || [item.size]).filter(Boolean);
+
+                    return `
+                        <div class="product-card">
+                            <div class="product-img">
+                                ${img? `<img src="${img}" alt="${item.name}">` : '👗'}
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">${item.name}</div>
+                                <div class="product-price">₹${item.price}</div>
+                                ${sizes.length > 0? `
+                                    <div class="product-sizes">
+                                        ${sizes.slice(0, 4).map(s => `<span class="size-tag">${s}</span>`).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error('Failed to load products:', err);
+            }
+        }
+
+        function callShop() {
+            if (shopData?.phone) {
+                window.location.href = `tel:${shopData.phone}`;
+            } else {
+                alert('Phone number not available');
+            }
+        }
+
+        function shareShop() {
+            const url = window.location.href;
+            if (navigator.share) {
+                navigator.share({
+                    title: shopData.shopName,
+                    text: `Check out ${shopData.shopName} on SAMANLIVE`,
+                    url: url
+                });
+            } else {
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Shop link copied!');
+                });
+            }
+        }
+
+        loadShop();
+    </script>
+</body>
+</html>

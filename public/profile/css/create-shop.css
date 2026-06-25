@@ -281,6 +281,12 @@
     font-size: 32px;
     margin-bottom: 6px;
 }
+.shop-icon img {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+}
 .shop-details {
     width: 100%;
 }
@@ -341,6 +347,63 @@
     font-weight: 700;
     cursor: pointer;
 }
+
+/* ===== SHOP LOGO UPLOAD STYLES ===== */
+.logo-upload-box {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #f8fafc;
+}
+.logo-upload-box:hover {
+    border-color: #667eea;
+    background: #eef2ff;
+}
+.logo-preview {
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.logo-preview i {
+    font-size: 48px;
+    color: #94a3b8;
+}
+.logo-preview p {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+}
+.logo-preview img {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.btn-remove-logo {
+    margin-top: 12px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.btn-remove-logo:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
 @media (max-width: 768px) {
    .form-container,.shops-container {
         margin: 16px;
@@ -364,10 +427,21 @@
    .shop-icon {
         font-size: 28px;
    }
+   .shop-icon img {
+        width: 36px;
+        height: 36px;
+   }
    .shop-details h3 {
         font-size: 12px;
    }
    .shop-details p {
         font-size: 9px;
    }
+   .logo-preview img {
+        max-width: 150px;
+        max-height: 150px;
+    }
+    .logo-preview i {
+        font-size: 40px;
+    }
 }

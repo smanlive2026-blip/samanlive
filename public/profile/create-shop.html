@@ -55,7 +55,26 @@
             </div>
 
             <div class="form-group">
-                <label>Shop Icon *</label>
+                <label>Shop Logo/Photo <span style="font-weight: 400; color: #64748b;">(Optional)</span></label>
+                <div class="logo-upload-box">
+                    <input type="file" id="shopLogoInput" accept="image/*" style="display: none;" onchange="previewLogo(event)">
+                    <div class="logo-preview" id="logoPreview" onclick="document.getElementById('shopLogoInput').click()">
+                        <i class="fa fa-camera"></i>
+                        <p>Upload Shop Photo</p>
+                        <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
+                    </div>
+                    <button type="button" class="btn-remove-logo" id="removeLogoBtn" style="display: none;" onclick="removeLogo()">
+                        <i class="fa fa-trash"></i> Remove Photo
+                    </button>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 16px 0; color: #94a3b8; font-size: 14px; font-weight: 600;">
+                — OR SELECT ICON BELOW —
+            </div>
+
+            <div class="form-group">
+                <label>Select Shop Icon * <span style="font-size: 12px; color: #666;">(Used if no photo uploaded)</span></label>
                 <div class="icon-picker" id="iconPicker">
                     <div class="icon-option selected" data-icon="🏪">🏪</div>
                     <div class="icon-option" data-icon="🛒">🛒</div>
@@ -135,6 +154,7 @@ let currentUser = null;
 let selectedIcon = '🏪';
 let allModules = [];
 let newShopData = null;
+let uploadedLogoBase64 = null;
 
 const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant', 'service', 'rental', 'common'];
 
@@ -193,6 +213,37 @@ document.getElementById('iconPicker').addEventListener('click', (e) => {
         selectedIcon = e.target.dataset.icon;
     }
 });
+
+function previewLogo(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+        alert('Image size should be less than 2MB');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        uploadedLogoBase64 = e.target.result;
+        document.getElementById('logoPreview').innerHTML = `<img src="${uploadedLogoBase64}" alt="Shop Logo">`;
+        document.getElementById('removeLogoBtn').style.display = 'inline-block';
+        document.getElementById('iconPicker').style.opacity = '0.3';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+    uploadedLogoBase64 = null;
+    document.getElementById('shopLogoInput').value = '';
+    document.getElementById('logoPreview').innerHTML = `
+        <i class="fa fa-camera"></i>
+        <p>Upload Shop Photo</p>
+        <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
+    `;
+    document.getElementById('removeLogoBtn').style.display = 'none';
+    document.getElementById('iconPicker').style.opacity = '1';
+}
 
 function getShopLocation() {
     const btn = document.getElementById('locBtn');
@@ -302,7 +353,7 @@ async function submitShop() {
         description: document.getElementById('shopDesc').value.trim(),
         range: parseInt(document.getElementById('shopRange').value),
         icon: selectedIcon,
-        logo: '',
+        logo: uploadedLogoBase64 || '',
         banner: '',
         status: 'approved',
         isVerified: true,
@@ -388,7 +439,12 @@ async function loadMyShops() {
                 card.className = 'shop-card';
                 card.onclick = () => window.location.href = dashboardUrl;
                 card.innerHTML = `
-                    <div class="shop-icon">${shopData.icon || '🏪'}</div>
+                    <div class="shop-icon">
+                        ${shopData.logo? 
+                            `<img src="${shopData.logo}" alt="${shopData.shopName}">` : 
+                            shopData.icon || '🏪'
+                        }
+                    </div>
                     <div class="shop-details">
                         <h3>${shopData.shopName}</h3>
                         <p>${shopData.address?.city || 'Surat'} • ${shopData.serviceType}</p>
@@ -422,6 +478,7 @@ function resetForm() {
     document.getElementById('successBox').style.display = 'none';
     document.getElementById('submitBtn').textContent = 'Create My Shop - Go Live Now';
     document.getElementById('submitBtn').disabled = false;
+    removeLogo();
 }
 
 function copyShopLink() {

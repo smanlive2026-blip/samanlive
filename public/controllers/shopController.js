@@ -7,8 +7,8 @@ const mongoose = require('mongoose');
 const getAllShops = async (req, res) => {
   try {
     const shops = await Shop.find({})
-      .populate('ownerId', 'name email')
-      .populate('serviceType');
+     .populate('ownerId', 'name email')
+     .populate('serviceType');
     
     res.status(200).json({
       success: true,
@@ -27,7 +27,7 @@ const getAllShops = async (req, res) => {
 // @desc    Get logged in user's shops
 const getMyShops = async (req, res) => {
   try {
-    const userId = req.user ? req.user.id : null;
+    const userId = req.user? req.user.id : null;
     if (!userId) {
       return res.status(200).json({
         success: true,
@@ -36,7 +36,12 @@ const getMyShops = async (req, res) => {
       });
     }
 
-    const shops = await Shop.find({ ownerId: userId });
+    const shops = await Shop.find({ 
+      $or: [
+        { ownerId: userId },
+        { createdBy: userId }
+      ]
+    });
     
     res.status(200).json({
       success: true,
@@ -52,19 +57,19 @@ const getMyShops = async (req, res) => {
   }
 };
 
-// @desc    Get public shops by location - ✅ FIXED
+// @desc    Get public shops by location - ✅ FIXED: Logo included + status fix
 const getPublicShops = async (req, res) => {
   try {
     const { lat, lng, radius = 5000, shopType, categoryId, serviceType } = req.query;
 
-    // ✅ Base query: sirf approved aur active shops
-    let query = { 
-      status: 'approved', 
-      isActive: true 
+    // ✅ Base query: approved aur active dono status wali shops
+    let query = {
+      status: { $in: ['approved', 'active'] }, // ✅ Purani shops bhi dikhegi
+      isActive: true
     };
 
     // ✅ Geo query: lat/lng valid ho tabhi lagao
-    if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
+    if (lat && lng &&!isNaN(parseFloat(lat)) &&!isNaN(parseFloat(lng))) {
       query.location = {
         $near: {
           $geometry: {
@@ -84,9 +89,9 @@ const getPublicShops = async (req, res) => {
     console.log('Public Shops Query:', JSON.stringify(query)); // Debug ke liye
 
     const shops = await Shop.find(query)
-      .select('-ownerId -approvedBy -rejectionReason -email')
-      .limit(50)
-      .sort({ priority: -1, rating: -1, createdAt: -1 });
+     .select('-ownerId -approvedBy -rejectionReason -email')
+     .limit(50)
+     .sort({ priority: -1, rating: -1, createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -103,11 +108,12 @@ const getPublicShops = async (req, res) => {
   }
 };
 
-// @desc    Get single shop by ID
+// @desc    Get single shop by ID - ✅ Logo ensure
 const getShopById = async (req, res) => {
   try {
     const shop = await Shop.findById(req.params.id)
-      .populate('ownerId', 'name email phone');
+     .populate('ownerId', 'name email phone')
+     .lean();
     
     if (!shop) {
       return res.status(404).json({ 
@@ -115,6 +121,9 @@ const getShopById = async (req, res) => {
         message: 'Shop not found' 
       });
     }
+
+    // ✅ Ensure logo field exists
+    if (!shop.logo) shop.logo = '';
     
     res.status(200).json({
       success: true,
@@ -129,7 +138,7 @@ const getShopById = async (req, res) => {
   }
 };
 
-// @desc    Create new shop
+// @desc    Create new shop - ✅ Logo support
 const createShop = async (req, res) => {
   try {
     if (req.user && req.user.id) {
@@ -141,13 +150,16 @@ const createShop = async (req, res) => {
     req.body.approvedBy = req.body.ownerId;
     req.body.approvedByName = 'System';
     
+    // ✅ Ensure logo field
+    if (req.body.logo === undefined) req.body.logo = '';
+    
     // ✅ Ensure location is properly formatted
     if (req.body.location && req.body.location.coordinates) {
       req.body.location = {
         type: 'Point',
         coordinates: [
           parseFloat(req.body.location.coordinates[0]), // lng
-          parseFloat(req.body.location.coordinates[1])  // lat
+          parseFloat(req.body.location.coordinates[1]) // lat
         ]
       };
     }
@@ -169,7 +181,7 @@ const createShop = async (req, res) => {
   }
 };
 
-// @desc    Update shop
+// @desc    Update shop - ✅ Logo support
 const updateShop = async (req, res) => {
   try {
     let shop = await Shop.findById(req.params.id);
@@ -181,7 +193,7 @@ const updateShop = async (req, res) => {
       });
     }
     
-    if (req.user && shop.ownerId && shop.ownerId.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (req.user && shop.ownerId && shop.ownerId.toString()!== req.user.id && req.user.role!== 'admin') {
       return res.status(401).json({ 
         success: false, 
         message: 'Not authorized to update this shop' 
@@ -194,9 +206,14 @@ const updateShop = async (req, res) => {
         type: 'Point',
         coordinates: [
           parseFloat(req.body.location.coordinates[0]), // lng
-          parseFloat(req.body.location.coordinates[1])  // lat
+          parseFloat(req.body.location.coordinates[1]) // lat
         ]
       };
+    }
+
+    // ✅ Logo update support
+    if (req.body.logo!== undefined) {
+      req.body.logo = req.body.logo;
     }
     
     shop = await Shop.findByIdAndUpdate(req.params.id, req.body, {
@@ -229,7 +246,7 @@ const deleteShop = async (req, res) => {
       });
     }
     
-    if (req.user && shop.ownerId.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (req.user && shop.ownerId.toString()!== req.user.id && req.user.role!== 'admin') {
       return res.status(401).json({ 
         success: false, 
         message: 'Not authorized to delete this shop' 

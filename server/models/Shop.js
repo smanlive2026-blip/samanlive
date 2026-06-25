@@ -33,7 +33,7 @@ const shopSchema = new mongoose.Schema({
     categoryId: { type: String, default: '' },
     description: { type: String, default: '' },
     banner: { type: String, default: '' },
-    logo: { type: String, default: '' },
+    logo: { type: String, default: '' }, // ✅ Base64 logo
     icon: { type: String, default: '🏪' },
 
     // ========== LOCATION TYPE FIELDS ==========
@@ -64,14 +64,14 @@ const shopSchema = new mongoose.Schema({
     approvedAt: { type: Date },
     rejectionReason: { type: String, default: '' },
 
-    isVerified: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: true },
     isActive: { type: Boolean, default: true },
     priority: { type: Number, default: 0 },
 
     // ========== SHOP TYPE & ITEMS - NEW ==========
     shopType: {
         type: String,
-        enum: ['product', 'food', 'service', 'rental', 'fashion'],
+        enum: ['product', 'food', 'service', 'rental', 'fashion', 'common'], // ✅ 'common' added
         default: 'product',
         required: true
     },
@@ -88,7 +88,13 @@ const shopSchema = new mongoose.Schema({
         veg: { type: Boolean, default: true },
         // Service/Rental ke liye
         duration: { type: String, default: '' }, // 30min, 1hr, 1day
-        available: { type: Boolean, default: true }
+        available: { type: Boolean, default: true },
+        // Medical ke liye extra
+        company: { type: String, default: '' },
+        batch: { type: String, default: '' },
+        expiry: { type: String, default: '' },
+        mrp: { type: Number, default: 0 },
+        stock: { type: Number, default: 0 }
     }],
     // ========== SHOP TYPE & ITEMS END ==========
 
