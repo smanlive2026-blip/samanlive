@@ -15,132 +15,116 @@
             <button class="back-btn" onclick="window.location.href='/profile.html'">← Back</button>
             <h1>My Shops</h1>
         </div>
-        <button class="add-shop-btn" onclick="showTab('create')">
+        <button class="add-shop-btn" id="newShopBtn" onclick="toggleCreateForm()">
             <i class="fa fa-plus"></i> New Shop
         </button>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('list')">
-            <i class="fa fa-store"></i> My Shops
-        </button>
-        <button class="tab-btn" onclick="showTab('create')">
-            <i class="fa fa-plus"></i> Create New
-        </button>
-    </div>
+    <!-- CREATE FORM - By default hidden -->
+    <div id="createFormSection" class="form-container" style="display: none;">
+        <div class="success-msg" id="successMsg">✅ Shop Created Successfully! Your shop is now LIVE.</div>
 
-    <!-- TAB 1: MY SHOPS LIST -->
-    <div id="listTab" class="tab-content active">
-        <div class="shops-container">
-            <div class="shops-list" id="shopsList">
-                <div class="empty-state" id="emptyState">
-                    <i class="fa fa-store"></i>
-                    <h3>No Shops Yet</h3>
-                    <p>Create your first shop to get started</p>
-                    <button class="create-first-btn" onclick="showTab('create')">
-                        <i class="fa fa-plus"></i> Create First Shop
-                    </button>
+        <div class="success-box" id="successBox">
+            <h3>🎉 Shop Created Successfully!</h3>
+            <p id="successShopName">Your shop is now LIVE and ready.</p>
+            <div class="success-actions">
+                <button class="btn-dashboard" onclick="hideCreateForm(); loadMyShops();">
+                    <i class="fa fa-store"></i> View All My Shops
+                </button>
+                <button class="btn-copy" onclick="copyShopLink()">
+                    <i class="fa fa-copy"></i> Copy Customer Link
+                </button>
+            </div>
+        </div>
+
+        <div class="info-banner" id="infoBanner">
+            <strong>Great News:</strong> Aapki shop turant active ho jayegi. Kitni bhi shops bana sakte ho.
+        </div>
+
+        <div id="formFields">
+            <div class="form-group">
+                <label>Shop Name *</label>
+                <input type="text" id="shopName" placeholder="Example: Sharma Kirana Store">
+            </div>
+
+            <div class="form-group">
+                <label>Shop Category *</label>
+                <select id="shopModule" required>
+                    <option value="">Select Shop Type</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Shop Icon *</label>
+                <div class="icon-picker" id="iconPicker">
+                    <div class="icon-option selected" data-icon="🏪">🏪</div>
+                    <div class="icon-option" data-icon="🛒">🛒</div>
+                    <div class="icon-option" data-icon="🍕">🍕</div>
+                    <div class="icon-option" data-icon="💊">💊</div>
+                    <div class="icon-option" data-icon="🔧">🔧</div>
+                    <div class="icon-option" data-icon="👗">👗</div>
+                    <div class="icon-option" data-icon="📱">📱</div>
+                    <div class="icon-option" data-icon="💇">💇</div>
+                    <div class="icon-option" data-icon="🚗">🚗</div>
+                    <div class="icon-option" data-icon="🏠">🏠</div>
+                    <div class="icon-option" data-icon="🎓">🎓</div>
+                    <div class="icon-option" data-icon="⚡">⚡</div>
                 </div>
             </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Contact Phone *</label>
+                    <input type="tel" id="shopPhone" placeholder="10 digit mobile" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label>Service Range *</label>
+                    <select id="shopRange">
+                        <option value="1000">1 KM</option>
+                        <option value="2000">2 KM</option>
+                        <option value="5000" selected>5 KM</option>
+                        <option value="10000">10 KM</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Shop Address *</label>
+                <textarea id="shopAddress" placeholder="Complete shop address with landmark"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Shop Description</label>
+                <textarea id="shopDesc" placeholder="What services/products you offer?"></textarea>
+            </div>
+
+            <div class="location-box">
+                <div class="location-header">
+                    <h3>📍 Shop Location *</h3>
+                    <button class="get-location-btn" onclick="getShopLocation()" id="locBtn">Get Location</button>
+                </div>
+                <div class="location-coords" id="locationCoords">
+                    Location required. Click "Get Location" to set shop GPS.
+                </div>
+                <input type="hidden" id="shopLat">
+                <input type="hidden" id="shopLng">
+                <input type="hidden" id="shopCity">
+                <input type="hidden" id="shopState">
+                <input type="hidden" id="shopPincode">
+            </div>
+
+            <button class="submit-btn" onclick="submitShop()" id="submitBtn">Create My Shop - Go Live Now</button>
+            <button class="btn-copy" onclick="hideCreateForm()" style="margin-top: 10px;">Cancel</button>
         </div>
     </div>
 
-    <!-- TAB 2: CREATE SHOP FORM -->
-    <div id="createTab" class="tab-content">
-        <div class="form-container">
-            <div class="success-msg" id="successMsg">✅ Shop Created Successfully! Your shop is now LIVE.</div>
-
-            <!-- Success Box with Buttons -->
-            <div class="success-box" id="successBox">
-                <h3>🎉 Shop Created Successfully!</h3>
-                <p id="successShopName">Your shop is now LIVE and ready.</p>
-                <div class="success-actions">
-                    <button class="btn-dashboard" onclick="showTab('list'); loadMyShops();">
-                        <i class="fa fa-store"></i> View All My Shops
-                    </button>
-                    <button class="btn-copy" onclick="copyShopLink()">
-                        <i class="fa fa-copy"></i> Copy Customer Link
-                    </button>
-                </div>
-            </div>
-
-            <div class="info-banner" id="infoBanner">
-                <strong>Great News:</strong> Aapki shop turant active ho jayegi. Kitni bhi shops bana sakte ho.
-            </div>
-
-            <div id="formFields">
-                <div class="form-group">
-                    <label>Shop Name *</label>
-                    <input type="text" id="shopName" placeholder="Example: Sharma Kirana Store">
-                </div>
-
-                <div class="form-group">
-                    <label>Shop Category *</label>
-                    <select id="shopModule" required>
-                        <option value="">Select Shop Type</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Shop Icon *</label>
-                    <div class="icon-picker" id="iconPicker">
-                        <div class="icon-option selected" data-icon="🏪">🏪</div>
-                        <div class="icon-option" data-icon="🛒">🛒</div>
-                        <div class="icon-option" data-icon="🍕">🍕</div>
-                        <div class="icon-option" data-icon="💊">💊</div>
-                        <div class="icon-option" data-icon="🔧">🔧</div>
-                        <div class="icon-option" data-icon="👗">👗</div>
-                        <div class="icon-option" data-icon="📱">📱</div>
-                        <div class="icon-option" data-icon="💇">💇</div>
-                        <div class="icon-option" data-icon="🚗">🚗</div>
-                        <div class="icon-option" data-icon="🏠">🏠</div>
-                        <div class="icon-option" data-icon="🎓">🎓</div>
-                        <div class="icon-option" data-icon="⚡">⚡</div>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Contact Phone *</label>
-                        <input type="tel" id="shopPhone" placeholder="10 digit mobile" maxlength="10">
-                    </div>
-                    <div class="form-group">
-                        <label>Service Range *</label>
-                        <select id="shopRange">
-                            <option value="1000">1 KM</option>
-                            <option value="2000">2 KM</option>
-                            <option value="5000" selected>5 KM</option>
-                            <option value="10000">10 KM</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Shop Address *</label>
-                    <textarea id="shopAddress" placeholder="Complete shop address with landmark"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Shop Description</label>
-                    <textarea id="shopDesc" placeholder="What services/products you offer?"></textarea>
-                </div>
-
-                <div class="location-box">
-                    <div class="location-header">
-                        <h3>📍 Shop Location *</h3>
-                        <button class="get-location-btn" onclick="getShopLocation()" id="locBtn">Get Location</button>
-                    </div>
-                    <div class="location-coords" id="locationCoords">
-                        Location required. Click "Get Location" to set shop GPS.
-                    </div>
-                    <input type="hidden" id="shopLat">
-                    <input type="hidden" id="shopLng">
-                    <input type="hidden" id="shopCity">
-                    <input type="hidden" id="shopState">
-                    <input type="hidden" id="shopPincode">
-                </div>
-
-                <button class="submit-btn" onclick="submitShop()" id="submitBtn">Create My Shop - Go Live Now</button>
+    <!-- SHOPS LIST - Always visible -->
+    <div id="shopsListSection" class="shops-container">
+        <div class="shops-list" id="shopsList">
+            <div class="empty-state" id="emptyState">
+                <i class="fa fa-store"></i>
+                <h3>No Shops Yet</h3>
+                <p>Click + New Shop to create your first shop</p>
             </div>
         </div>
     </div>
@@ -163,19 +147,22 @@ window.addEventListener('DOMContentLoaded', async () => {
     await loadMyShops();
 });
 
-function showTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-    if (tab === 'list') {
-        document.querySelectorAll('.tab-btn')[0].classList.add('active');
-        document.getElementById('listTab').classList.add('active');
-        loadMyShops();
-    } else {
-        document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        document.getElementById('createTab').classList.add('active');
+function toggleCreateForm() {
+    const formSection = document.getElementById('createFormSection');
+    const btn = document.getElementById('newShopBtn');
+    if (formSection.style.display === 'none') {
+        formSection.style.display = 'block';
+        btn.innerHTML = '<i class="fa fa-times"></i> Close';
         resetForm();
+        window.scrollTo(0, 0);
+    } else {
+        hideCreateForm();
     }
+}
+
+function hideCreateForm() {
+    document.getElementById('createFormSection').style.display = 'none';
+    document.getElementById('newShopBtn').innerHTML = '<i class="fa fa-plus"></i> New Shop';
 }
 
 function loadModules() {
@@ -399,6 +386,7 @@ async function loadMyShops() {
 
                 const card = document.createElement('div');
                 card.className = 'shop-card';
+                card.onclick = () => window.location.href = dashboardUrl;
                 card.innerHTML = `
                     <div class="shop-icon">${shopData.icon || '🏪'}</div>
                     <div class="shop-details">
@@ -406,9 +394,7 @@ async function loadMyShops() {
                         <p>${shopData.address?.city || 'Surat'} • ${shopData.serviceType}</p>
                         <span class="shop-badge">${shopData.status}</span>
                     </div>
-                    <button class="btn-go" onclick="window.location.href='${dashboardUrl}'">
-                        <i class="fa fa-tachometer-alt"></i> Dashboard
-                    </button>
+                    <i class="fa fa-chevron-right" style="color: #94a3b8;"></i>
                 `;
                 list.appendChild(card);
             }
