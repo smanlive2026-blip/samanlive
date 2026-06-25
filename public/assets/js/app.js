@@ -76,18 +76,20 @@ async function loadAllData() {
             const modulesData = await modulesRes.json();
             allModules = modulesData.modules || [];
 
-            // Shops bhi GPS ke saath load karo
-            const shopsRes = await fetch(`/api/shops?lat=${userLocation.lat}&lng=${userLocation.lng}`);
-            nearbyServices = await shopsRes.json();
+            // Shops bhi GPS ke saath load karo - CHANGE KIYA
+            const shopsRes = await fetch(`/api/public-shops?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
+            const shopsData = await shopsRes.json();
+            nearbyServices = shopsData.data || shopsData;
         } else {
-            // Location nahi mili to purana tarika
+            // Location nahi mili to purana tarika - CHANGE KIYA
             const [modulesRes, shopsRes] = await Promise.all([
                 fetch('/api/modules'),
-                fetch('/api/shops')
+                fetch('/api/public-shops')
             ]);
             const modulesData = await modulesRes.json();
-            allModules = modulesData.modules || modulesData; // Backend se array ya object aa sakta hai
-            nearbyServices = await shopsRes.json();
+            const shopsData = await shopsRes.json();
+            allModules = modulesData.modules || modulesData;
+            nearbyServices = shopsData.data || shopsData;
         }
 
         console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', nearbyServices.length);
@@ -264,7 +266,7 @@ function renderShops() {
                 ${doubleShops.map(service => `
                     <div class="shop-card" onclick="window.location.href='/local-market/dashboard.html?shopId=${service._id}&type=${service.shopType}'">
                         <div class="shop-icon">${service.icon}</div>
-                        <div class="shop-name">${service.name}</div>
+                        <div class="shop-name">${service.shopName || service.name}</div>
                         ${service.distance? `<small style="color:#10b981;font-size:11px;">${service.distance}m</small>` : ''}
                     </div>
                 `).join('')}
@@ -300,7 +302,7 @@ function renderFamousShops() {
                 ${doubleShops.map(service => `
                     <div class="shop-card" onclick="window.location.href='/local-market/dashboard.html?shopId=${service._id}&type=${service.shopType}'">
                         <div class="shop-icon">${service.icon}</div>
-                        <div class="shop-name">${service.name}</div>
+                        <div class="shop-name">${service.shopName || service.name}</div>
                         ${service.distance? `<small style="color:#f59e0b;font-size:11px;">⭐ ${service.distance}m</small>` : '<small style="color:#f59e0b;font-size:11px;">⭐ Famous</small>'}
                     </div>
                 `).join('')}
