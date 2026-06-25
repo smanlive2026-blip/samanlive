@@ -39,13 +39,14 @@ router.get('/my-shops', auth, async (req, res) => {
     }
 });
 
-// ✅ FIXED: PUBLIC SHOPS - Ye route add kiya, /nearby ki jagah /public
+// ✅ FIXED: PUBLIC SHOPS - Purani 'active' shops bhi dikhegi
 router.get('/public', async (req, res) => {
     try {
         const { lat, lng, radius = 5000, shopType, categoryId, serviceType } = req.query;
 
         let query = {
-            status: 'approved', // ✅ Sirf approved shops
+            // ✅ LINE CHANGE: Purani 'active' shops bhi include karo
+            status: { $in: ['approved', 'active'] }, 
             isActive: true
         };
 
@@ -304,7 +305,7 @@ router.get('/nearby', async (req, res) => {
         }
 
         const query = {
-            status: 'approved', // ✅ FIXED: 'active' ki jagah 'approved'
+            status: { $in: ['approved', 'active'] }, // ✅ FIXED: 'active' bhi include karo
             isActive: true,
             location: {
                 $near: {

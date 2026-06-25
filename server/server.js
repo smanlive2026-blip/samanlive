@@ -38,6 +38,20 @@ mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://
 .then(async () => {
     console.log('✅ MongoDB Connected Successfully');
     console.log(`📦 Database: ${mongoose.connection.name}`);
+
+    // ✅ AUTO-MIGRATION: Purani shops ko 'active' se 'approved' me convert karo
+    try {
+        const Shop = require('./models/Shop');
+        const result = await Shop.updateMany(
+            { status: 'active' },
+            { $set: { status: 'approved' } }
+        );
+        if (result.modifiedCount > 0) {
+            console.log(`🔄 Auto-migrated ${result.modifiedCount} shops from 'active' to 'approved'`);
+        }
+    } catch (err) {
+        console.log('⚠️ Migration skipped:', err.message);
+    }
 })
 .catch(err => {
     console.error('❌ MongoDB Error:', err);
@@ -383,7 +397,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
