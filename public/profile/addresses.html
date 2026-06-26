@@ -606,7 +606,7 @@ async function saveAddress() {
 
     try {
         const url = editingAddressId
-         ? `/api/user/addresses/${editingAddressId}`
+       ? `/api/user/addresses/${editingAddressId}`
             : '/api/user/addresses';
         const method = editingAddressId? 'PUT' : 'POST';
 
