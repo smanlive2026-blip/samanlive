@@ -243,15 +243,28 @@
     font-size: 15px;
     color: #1e293b;
 }
-.get-location-btn {
+/* ✅ NAYA: Auto status badge */
+.auto-badge {
     background: #10b981;
     color: white;
-    border: none;
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: 8px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.auto-badge.pulse {
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
 }
 .location-coords {
     font-size: 13px;
@@ -260,6 +273,14 @@
 .location-coords.success {
     color: #10b981;
     font-weight: 600;
+}
+.location-info {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 8px;
+    padding: 8px;
+    background: #e0f2fe;
+    border-radius: 6px;
 }
 .checkbox-group {
     display: flex;
@@ -294,13 +315,13 @@
 }
 
 @media (max-width: 768px) {
-  .addresses-container {
+ .addresses-container {
         margin: 16px;
     }
-  .form-row {
+ .form-row {
         grid-template-columns: 1fr;
     }
-  .add-address-btn {
+ .add-address-btn {
         left: 16px;
         right: 16px;
     }
@@ -383,10 +404,17 @@
             <div class="location-box">
                 <div class="location-header">
                     <h3>📍 GPS Location</h3>
-                    <button class="get-location-btn" onclick="getAddressLocation()">Get GPS</button>
+                    <!-- ✅ NAYA: Auto badge, button hata diya -->
+                    <div class="auto-badge">
+                        <span class="pulse"></span>
+                        AUTO SYNC
+                    </div>
                 </div>
                 <div class="location-coords" id="locationCoords">
-                    GPS location optional but recommended for accurate delivery
+                    Loading your current location...
+                </div>
+                <div class="location-info">
+                    💡 Your location is automatically updated from your device every 30 seconds
                 </div>
                 <input type="hidden" id="addressLat">
                 <input type="hidden" id="addressLng">
@@ -415,11 +443,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     await loadAddresses();
-
-    // ✅ NAYA: Auto fill current location agar available ho
-    if (window.currentUserLocation) {
-        console.log('✅ Global location available:', window.currentUserLocation);
-    }
 });
 
 async function loadAddresses() {
@@ -514,8 +537,11 @@ function openAddressModal(addressId = null) {
         document.getElementById('setDefault').checked = false;
         document.getElementById('addressLat').value = '';
         document.getElementById('addressLng').value = '';
-        document.getElementById('locationCoords').innerHTML = 'GPS location optional but recommended for accurate delivery';
+        document.getElementById('locationCoords').innerHTML = 'Loading your current location...';
         document.getElementById('locationCoords').classList.remove('success');
+
+        // ✅ NAYA: Auto fill current location
+        autoFillLocation();
     }
 
     document.getElementById('addressModal').classList.add('active');
@@ -525,14 +551,10 @@ function closeAddressModal() {
     document.getElementById('addressModal').classList.remove('active');
 }
 
-// ✅ UPDATED: Ab window.LocationManager use karega
-async function getAddressLocation() {
-    const btn = document.querySelector('.get-location-btn');
+// ✅ NAYA: Auto fill location from global
+function autoFillLocation() {
     const coordsEl = document.getElementById('locationCoords');
-    btn.textContent = 'Getting...';
-    btn.disabled = true;
 
-    // Pehle check karo global location hai ya nahi
     if (window.currentUserLocation) {
         const lat = window.currentUserLocation.lat;
         const lng = window.currentUserLocation.lng;
@@ -543,39 +565,20 @@ async function getAddressLocation() {
             <strong>Lng:</strong> ${lng.toFixed(6)}
         `;
         coordsEl.classList.add('success');
-        btn.textContent = 'Get GPS';
-        btn.disabled = false;
-        alert('✅ GPS location captured from current location!');
-        return;
-    }
-
-    // Agar global nahi hai to manual fetch karo
-    if (!window.LocationManager) {
-        alert('Location system not loaded. Please refresh page.');
-        btn.textContent = 'Get GPS';
-        btn.disabled = false;
-        return;
-    }
-
-    const loc = await window.LocationManager.getManual();
-
-    if (loc) {
-        document.getElementById('addressLat').value = loc.lat;
-        document.getElementById('addressLng').value = loc.lng;
-        coordsEl.innerHTML = `
-            <strong>Lat:</strong> ${loc.lat.toFixed(6)}<br>
-            <strong>Lng:</strong> ${loc.lng.toFixed(6)}
-        `;
-        coordsEl.classList.add('success');
-        alert('✅ GPS location captured!');
     } else {
-        alert('❌ Location access denied. Please enable location permission.');
-        coordsEl.classList.remove('success');
+        coordsEl.innerHTML = '⏳ Waiting for location... Make sure GPS is enabled';
+        // 2 sec baad fir check karo
+        setTimeout(() => {
+            if (window.currentUserLocation) {
+                autoFillLocation();
+            } else {
+                coordsEl.innerHTML = '❌ Location not available. Please enable GPS in app settings';
+            }
+        }, 2000);
     }
-
-    btn.textContent = 'Get GPS';
-    btn.disabled = false;
 }
+
+// ✅ PURANA getAddressLocation() function HATA DIYA
 
 async function saveAddress() {
     const btn = document.getElementById('saveBtn');
@@ -611,7 +614,7 @@ async function saveAddress() {
 
     try {
         const url = editingAddressId
-          ? `/api/user/addresses/${editingAddressId}`
+        ? `/api/user/addresses/${editingAddressId}`
             : '/api/user/addresses';
         const method = editingAddressId? 'PUT' : 'POST';
 

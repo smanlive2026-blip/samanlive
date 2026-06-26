@@ -121,15 +121,28 @@
     font-size: 16px;
     color: #1e293b;
 }
-.get-location-btn {
+/* ✅ NAYA: Auto status badge */
+.auto-badge {
     background: #10b981;
     color: white;
-    border: none;
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.auto-badge.pulse {
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
 }
 .location-coords {
     font-size: 13px;
@@ -139,6 +152,14 @@
 .location-coords.success {
     color: #10b981;
     font-weight: 600;
+}
+.location-info {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 8px;
+    padding: 8px;
+    background: #e0f2fe;
+    border-radius: 6px;
 }
 .save-btn {
     width: 100%;
@@ -166,7 +187,7 @@
     display: none;
 }
 @media (max-width: 768px) {
- .form-container {
+.form-container {
         margin: 16px;
         padding: 20px;
     }
@@ -232,10 +253,17 @@
         <div class="location-box">
             <div class="location-header">
                 <h3>📍 Current Location</h3>
-                <button class="get-location-btn" onclick="getCurrentLocation()">Get Location</button>
+                <!-- ✅ NAYA: Auto badge, button hata diya -->
+                <div class="auto-badge">
+                    <span class="pulse"></span>
+                    AUTO SYNC
+                </div>
             </div>
             <div class="location-coords" id="locationCoords">
-                Location not set. Click "Get Location" to set.
+                Loading your current location...
+            </div>
+            <div class="location-info">
+                💡 Your location is automatically updated from your device every 30 seconds
             </div>
             <input type="hidden" id="userLat">
             <input type="hidden" id="userLng">
@@ -273,12 +301,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/';
     }
 
-    // ✅ NAYA: Global location se auto fill
-    setTimeout(() => {
-        if (window.currentUserLocation &&!document.getElementById('userLat').value) {
-            updateLocationUI(window.currentUserLocation.lat, window.currentUserLocation.lng, true);
-        }
-    }, 1000);
+    // ✅ NAYA: Auto fill location from global
+    autoFillLocation();
 });
 
 function loadUserData() {
@@ -295,6 +319,27 @@ function loadUserData() {
         const lat = currentUser.location.coordinates[1];
         const lng = currentUser.location.coordinates[0];
         updateLocationUI(lat, lng, false);
+    }
+}
+
+// ✅ NAYA: Auto fill location from global
+function autoFillLocation() {
+    const coordsEl = document.getElementById('locationCoords');
+
+    if (window.currentUserLocation) {
+        const lat = window.currentUserLocation.lat;
+        const lng = window.currentUserLocation.lng;
+        updateLocationUI(lat, lng, true);
+    } else {
+        coordsEl.innerHTML = '⏳ Waiting for location... Make sure GPS is enabled';
+        // 2 sec baad fir check karo
+        setTimeout(() => {
+            if (window.currentUserLocation) {
+                autoFillLocation();
+            } else {
+                coordsEl.innerHTML = '❌ Location not available. Please enable GPS in app settings';
+            }
+        }, 2000);
     }
 }
 
@@ -322,45 +367,7 @@ function handlePicChange(event) {
     }
 }
 
-// ✅ UPDATED: Ab window.LocationManager use karega
-async function getCurrentLocation() {
-    const btn = document.querySelector('.get-location-btn');
-    const coordsEl = document.getElementById('locationCoords');
-    btn.textContent = 'Getting...';
-    btn.disabled = true;
-
-    // Pehle check karo global location hai ya nahi
-    if (window.currentUserLocation) {
-        const lat = window.currentUserLocation.lat;
-        const lng = window.currentUserLocation.lng;
-        updateLocationUI(lat, lng, true);
-        btn.textContent = 'Get Location';
-        btn.disabled = false;
-        alert('✅ Location updated from current location!');
-        return;
-    }
-
-    // Agar global nahi hai to manual fetch karo
-    if (!window.LocationManager) {
-        alert('Location system not loaded. Please refresh page.');
-        btn.textContent = 'Get Location';
-        btn.disabled = false;
-        return;
-    }
-
-    const loc = await window.LocationManager.getManual();
-
-    if (loc) {
-        updateLocationUI(loc.lat, loc.lng, false);
-        alert('✅ Location captured successfully!');
-    } else {
-        alert('❌ Location access denied. Please enable location permission.');
-        coordsEl.classList.remove('success');
-    }
-
-    btn.textContent = 'Get Location';
-    btn.disabled = false;
-}
+// ✅ PURANA getCurrentLocation() function HATA DIYA
 
 async function saveDetails() {
     const btn = document.getElementById('saveBtn');
