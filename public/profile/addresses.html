@@ -243,7 +243,6 @@
     font-size: 15px;
     color: #1e293b;
 }
-/* ✅ NAYA: Auto status badge */
 .auto-badge {
     background: #10b981;
     color: white;
@@ -315,13 +314,13 @@
 }
 
 @media (max-width: 768px) {
- .addresses-container {
+.addresses-container {
         margin: 16px;
     }
- .form-row {
+.form-row {
         grid-template-columns: 1fr;
     }
- .add-address-btn {
+.add-address-btn {
         left: 16px;
         right: 16px;
     }
@@ -404,12 +403,10 @@
             <div class="location-box">
                 <div class="location-header">
                     <h3>📍 GPS Location</h3>
-                    <!-- ✅ NAYA: Auto badge, button hata diya -->
                     <div class="auto-badge">
                         <span class="pulse"></span>
                         AUTO SYNC
                     </div>
-                </div>
                 <div class="location-coords" id="locationCoords">
                     Loading your current location...
                 </div>
@@ -539,8 +536,6 @@ function openAddressModal(addressId = null) {
         document.getElementById('addressLng').value = '';
         document.getElementById('locationCoords').innerHTML = 'Loading your current location...';
         document.getElementById('locationCoords').classList.remove('success');
-
-        // ✅ NAYA: Auto fill current location
         autoFillLocation();
     }
 
@@ -551,7 +546,6 @@ function closeAddressModal() {
     document.getElementById('addressModal').classList.remove('active');
 }
 
-// ✅ NAYA: Auto fill location from global
 function autoFillLocation() {
     const coordsEl = document.getElementById('locationCoords');
 
@@ -567,7 +561,6 @@ function autoFillLocation() {
         coordsEl.classList.add('success');
     } else {
         coordsEl.innerHTML = '⏳ Waiting for location... Make sure GPS is enabled';
-        // 2 sec baad fir check karo
         setTimeout(() => {
             if (window.currentUserLocation) {
                 autoFillLocation();
@@ -577,8 +570,6 @@ function autoFillLocation() {
         }, 2000);
     }
 }
-
-// ✅ PURANA getAddressLocation() function HATA DIYA
 
 async function saveAddress() {
     const btn = document.getElementById('saveBtn');
@@ -614,7 +605,7 @@ async function saveAddress() {
 
     try {
         const url = editingAddressId
-        ? `/api/user/addresses/${editingAddressId}`
+          ? `/api/user/addresses/${editingAddressId}`
             : '/api/user/addresses';
         const method = editingAddressId? 'PUT' : 'POST';
 
