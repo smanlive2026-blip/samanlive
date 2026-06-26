@@ -433,7 +433,6 @@ let currentUser = null;
 let allAddresses = [];
 let editingAddressId = null;
 
-// Load addresses
 window.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('userToken');
     if (!token) {
@@ -496,7 +495,7 @@ function renderAddresses() {
     `).join('');
 }
 
-function openAddressModal(addressId = null) {
+window.openAddressModal = function(addressId = null) {
     editingAddressId = addressId;
     document.getElementById('modalTitle').textContent = addressId? 'Edit Address' : 'Add New Address';
 
@@ -543,7 +542,7 @@ function openAddressModal(addressId = null) {
     document.getElementById('addressModal').classList.add('active');
 }
 
-function closeAddressModal() {
+window.closeAddressModal = function() {
     document.getElementById('addressModal').classList.remove('active');
 }
 
@@ -572,7 +571,7 @@ function autoFillLocation() {
     }
 }
 
-async function saveAddress() {
+window.saveAddress = async function() {
     const btn = document.getElementById('saveBtn');
     btn.textContent = 'Saving...';
     btn.disabled = true;
@@ -606,7 +605,7 @@ async function saveAddress() {
 
     try {
         const url = editingAddressId
-       ? `/api/user/addresses/${editingAddressId}`
+      ? `/api/user/addresses/${editingAddressId}`
             : '/api/user/addresses';
         const method = editingAddressId? 'PUT' : 'POST';
 
@@ -635,11 +634,11 @@ async function saveAddress() {
     btn.disabled = false;
 }
 
-function editAddress(addressId) {
+window.editAddress = function(addressId) {
     openAddressModal(addressId);
 }
 
-async function deleteAddress(addressId) {
+window.deleteAddress = async function(addressId) {
     if (!confirm('Delete this address?')) return;
 
     const token = localStorage.getItem('userToken');
@@ -658,7 +657,7 @@ async function deleteAddress(addressId) {
     }
 }
 
-async function setDefaultAddress(addressId) {
+window.setDefaultAddress = async function(addressId) {
     const token = localStorage.getItem('userToken');
     try {
         const res = await fetch(`/api/user/addresses/${addressId}/default`, {
