@@ -10,90 +10,114 @@ let nearbyVideos = [];
 let allCampaigns = [];
 let siteSettings = {};
 let userLocation = null;
-let locationWatchId = null; // ✅ NAYA: Watch ID store karne ke liye
-let lastFetchedLocation = null; // ✅ NAYA: Last location track karne ke liye
+let locationIntervalId = null; // ✅ NAYA: setInterval ID
+let lastFetchedLocation = null;
 
 // ========================================
-// GET USER LOCATION - AUTO UPDATE WALA
+// LOCATION MANAGER - GLOBAL SINGLETON
 // ========================================
-function getUserLocation() {
-    return new Promise((resolve) => {
-        if(!navigator.geolocation) {
-            console.log('Geolocation not supported');
-            resolve(null);
-            return;
+window.LocationManager = {
+    // 30 sec me auto update
+    updateInterval: 30000,
+
+    // Manual location fetch - details.html, addresses.html, create-shop.html use karenge
+    getManual: function() {
+        return new Promise((resolve) => {
+            if(!navigator.geolocation) {
+                console.log('Geolocation not supported');
+                resolve(null);
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const loc = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    window.currentUserLocation = loc;
+                    userLocation = loc;
+                    lastFetchedLocation = {...loc};
+                    console.log('📍 Manual Location:', loc);
+                    resolve(loc);
+                },
+                (error) => {
+                    console.log('Location access denied:', error);
+                    resolve(null);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        });
+    },
+
+    // Auto update start karo
+    startAutoUpdate: function() {
+        if (locationIntervalId!== null) return; // Already running
+
+        console.log('🚀 Location auto-update started - every 30 sec');
+        // Pehli baar turant le lo
+        this.fetchAndUpdate();
+        // Fir har 30 sec me
+        locationIntervalId = setInterval(() => {
+            this.fetchAndUpdate();
+        }, this.updateInterval);
+    },
+
+    // Stop auto update
+    stopAutoUpdate: function() {
+        if (locationIntervalId!== null) {
+            clearInterval(locationIntervalId);
+            locationIntervalId = null;
+            console.log('⏹️ Location auto-update stopped');
         }
+    },
 
-        // ✅ Pehle ek baar current location le lo
+    // Fetch + Update + Reload
+    fetchAndUpdate: function() {
+        if(!navigator.geolocation) return;
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                updateUserLocation(position);
-                startWatchingLocation(); // ✅ Fir watch start kar do
-                resolve(userLocation);
+                const newLoc = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                // ✅ 100m wala check hata diya - har 30 sec me update
+                window.currentUserLocation = newLoc;
+                userLocation = newLoc;
+                lastFetchedLocation = {...newLoc};
+
+                console.log('📍 Auto Location Updated:', newLoc);
+                reloadNearbyData(); // Shops/modules reload
             },
             (error) => {
-                console.log('Location access denied or failed:', error);
-                resolve(null);
+                console.error('Auto location error:', error.message);
             },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            }
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
         );
+    }
+};
+
+// Global access ke liye
+window.currentUserLocation = null;
+
+// ========================================
+// GET USER LOCATION - NAYA VERSION
+// ========================================
+function getUserLocation() {
+    return new Promise(async (resolve) => {
+        const loc = await window.LocationManager.getManual();
+        if (loc) {
+            window.LocationManager.startAutoUpdate(); // Auto update chalu karo
+        }
+        resolve(loc);
     });
 }
 
-// ✅ NAYA FUNCTION: Location watch start karo
-function startWatchingLocation() {
-    if (locationWatchId!== null) return; // Already watching
+// ✅ PURANA startWatchingLocation() HATA DIYA
+// ✅ PURANA updateUserLocation() HATA DIYA - ab LocationManager me hai
 
-    locationWatchId = navigator.geolocation.watchPosition(
-        (position) => {
-            const newLat = position.coords.latitude;
-            const newLng = position.coords.longitude;
-
-            // ✅ Sirf tab update karo jab 100 meter se zyada move kiya ho
-            if (lastFetchedLocation) {
-                const distance = calculateDistance(
-                    lastFetchedLocation.lat,
-                    lastFetchedLocation.lng,
-                    newLat,
-                    newLng
-                );
-
-                if (distance < 0.1) { // 100 meter se kam hai to ignore
-                    console.log('User moved less than 100m, skipping update');
-                    return;
-                }
-            }
-
-            console.log('📍 Location updated! User moved:', position.coords);
-            updateUserLocation(position);
-            reloadNearbyData(); // ✅ Nayi location pe data reload karo
-        },
-        (error) => {
-            console.error('Location watch error:', error);
-        },
-        {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 0 // Cache mat karo, fresh location lo
-        }
-    );
-}
-
-// ✅ NAYA FUNCTION: User location update karo
-function updateUserLocation(position) {
-    userLocation = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude
-    };
-    lastFetchedLocation = {...userLocation };
-    console.log('User Location Updated:', userLocation);
-}
-
-// ✅ NAYA FUNCTION: Distance calculate karo - Haversine formula
+// ✅ NAYA FUNCTION: Distance calculate karo - Abhi rakha hai future use ke liye
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth radius in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -139,15 +163,13 @@ async function reloadNearbyData() {
     }
 }
 
-// ✅ Page close hone pe watch band kar do
+// ✅ Page close hone pe interval band kar do
 window.addEventListener('beforeunload', () => {
-    if (locationWatchId!== null) {
-        navigator.geolocation.clearWatch(locationWatchId);
-    }
+    window.LocationManager.stopAutoUpdate();
 });
 
 // ========================================
-// LOAD DATA FROM SERVER - WITH LOCATION - FIXED CRASH
+// LOAD DATA FROM SERVER - WITH LOCATION - SAME AS BEFORE
 // ========================================
 async function loadAllData() {
     try {
@@ -191,7 +213,7 @@ async function loadAllData() {
             siteSettings = {};
         }
 
-        // MODULES KO GPS KE SAATH LOAD KARO - YAHI CHANGE HAI
+        // MODULES KO GPS KE SAATH LOAD KARO
         if(userLocation) {
             try {
                 const modulesRes = await fetch('/api/modules/nearby', {
@@ -210,7 +232,7 @@ async function loadAllData() {
                 allModules = [];
             }
 
-            // Shops bhi GPS ke saath load karo - CHANGE KIYA
+            // Shops bhi GPS ke saath load karo
             try {
                 const shopsRes = await fetch(`/api/public-shops?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
                 if(shopsRes.ok) {
@@ -224,7 +246,7 @@ async function loadAllData() {
                 nearbyServices = [];
             }
         } else {
-            // Location nahi mili to purana tarika - CHANGE KIYA
+            // Location nahi mili to purana tarika
             try {
                 const modulesRes = await fetch('/api/modules');
                 if(modulesRes.ok) {
@@ -259,13 +281,12 @@ async function loadAllData() {
         renderTopAds();
         renderCampaigns();
         renderShops();
-        renderFamousShops(); // NAYA ADD KIYA - Famous shops render
+        renderFamousShops();
         renderVideos();
         updateLogo();
 
     } catch(e) {
         console.error('Failed to load data:', e);
-        // Fir bhi render kar de jo mil gaya
         renderShops();
         renderFamousShops();
         renderServices();
@@ -336,12 +357,12 @@ function sortModulesByUsage(modules) {
 // ========================================
 // RENDER SERVICES - 54 MODULES - SMART SORTED + DISTANCE
 // ========================================
-function renderServices(filteredModules = null) { /* ADDED BY AI - SEARCH FIX: filteredModules parameter add kiya */
-    const modulesToRender = filteredModules || allModules; /* ADDED BY AI - SEARCH FIX */
+function renderServices(filteredModules = null) {
+    const modulesToRender = filteredModules || allModules;
     const sortedModules = sortModulesByUsage(modulesToRender);
     const gridEl = document.getElementById('serviceGrid');
 
-    if(modulesToRender.length === 0) { /* ADDED BY AI - SEARCH FIX: allModules ki jagah modulesToRender */
+    if(modulesToRender.length === 0) {
         if(gridEl) gridEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Koi service nahi mili</p>';
         return;
     }
@@ -412,10 +433,9 @@ function renderCampaigns() {
 }
 
 // ========================================
-// RENDER SHOPS - TRAIN SCROLL + DISTANCE - FIXED BY AI
+// RENDER SHOPS - TRAIN SCROLL + DISTANCE
 // ========================================
 function renderShops() {
-    // FIXED BY AI - Train effect ke liye double kar diya + slide hata diya
     const doubleShops = [...nearbyServices,...nearbyServices];
     const shopsEl = document.getElementById('shopsContent');
 
@@ -440,15 +460,13 @@ function renderShops() {
 }
 
 // ========================================
-// RENDER FAMOUS SHOPS - NAYA FUNCTION - AREA KI APPROVED SHOPS
+// RENDER FAMOUS SHOPS - AREA KI APPROVED SHOPS
 // ========================================
 function renderFamousShops() {
-    // User ke area ki shops filter karo - jo approved hain aur active hain
     const areaShops = nearbyServices.filter(shop =>
         shop.status === 'approved' &&
-        shop.isActive!== false // false nahi hai to active maan lo
+        shop.isActive!== false
     ).sort((a, b) => {
-        // Distance se sort - najdeek wali pehle
         return (a.distance || 9999) - (b.distance || 9999);
     });
 
@@ -476,10 +494,9 @@ function renderFamousShops() {
 }
 
 // ========================================
-// RENDER VIDEOS - TRAIN SCROLL + SHOP LINK - MODIFIED BY AI
+// RENDER VIDEOS - TRAIN SCROLL + SHOP LINK
 // ========================================
 function renderVideos() {
-    // MODIFIED BY AI - Train effect ke liye double kar diya
     const doubleVideos = [...nearbyVideos,...nearbyVideos];
 
     const videosEl = document.getElementById('videosContent');
@@ -501,46 +518,46 @@ function renderVideos() {
 }
 
 // ========================================
-// SLIDER LOGIC - TOP ADS - FIXED BY AI
+// SLIDER LOGIC - TOP ADS
 // ========================================
 let topAdIndex = 0;
 function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI - space add kiya
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     topAdIndex = idx;
 }
 function nextTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex + 1) % slides.length;
     showTopAd(topAdIndex);
 }
 function prevTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
     showTopAd(topAdIndex);
 }
 
 // ========================================
-// SLIDER LOGIC - CAMPAIGNS - FIXED BY AI
+// SLIDER LOGIC - CAMPAIGNS
 // ========================================
 let campaignIndex = 0;
 function showCampaign(idx) {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI - space add kiya
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     campaignIndex = idx;
 }
 function nextCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
     if(slides.length === 0) return;
     campaignIndex = (campaignIndex + 1) % slides.length;
     showCampaign(campaignIndex);
 }
 function prevCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED BY AI
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
     if(slides.length === 0) return;
     campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
     showCampaign(campaignIndex);
@@ -595,25 +612,25 @@ function prevVideo() {
 function goToVideo(idx) { showVideo(idx); }
 
 // ========================================
-// AUTO SLIDE - SHOPS/VIDEOS HATA DIYA AB TRAIN HAI - FIXED BY AI
+// AUTO SLIDE - SHOPS/VIDEOS HATA DIYA AB TRAIN HAI
 // ========================================
 setInterval(nextTopAd, 5000);
 setInterval(nextCampaign, 6000);
 
 // ========================================
-// VIDEO CLICK - FULLSCREEN MODAL + SHOP LINK - MODIFIED BY AI
+// VIDEO CLICK - FULLSCREEN MODAL + SHOP LINK
 // ========================================
 document.addEventListener('click', function(e) {
     const videoCard = e.target.closest('.video-card');
     if (videoCard) {
         const videoUrl = videoCard.dataset.videoUrl;
-        const shopId = videoCard.dataset.shopId; // MODIFIED BY AI
-        openVideoModal(videoUrl, shopId); // MODIFIED BY AI
+        const shopId = videoCard.dataset.shopId;
+        openVideoModal(videoUrl, shopId);
     }
 });
 
-function openVideoModal(url, shopId) { // MODIFIED BY AI - shopId parameter add
-    const shop = nearbyServices.find(s => s._id === shopId); // ADDED BY AI - _id use kiya
+function openVideoModal(url, shopId) {
+    const shop = nearbyServices.find(s => s._id === shopId);
     const oldModal = document.getElementById('videoModal');
     if(oldModal) oldModal.remove();
 
@@ -647,7 +664,7 @@ function openVideoModal(url, shopId) { // MODIFIED BY AI - shopId parameter add
             </div>
             ` : ''}
         </div>
-    `; // MODIFIED BY AI - Shop info + button add kiya
+    `;
     document.body.appendChild(modal);
 
     modal.addEventListener('click', function(e) {
@@ -661,7 +678,7 @@ function closeVideoModal() {
 }
 
 // ========================================
-// SEARCH FUNCTIONALITY - ADDED BY AI
+// SEARCH FUNCTIONALITY
 // ========================================
 const searchInput = document.getElementById('searchInput');
 if(searchInput) {
@@ -669,10 +686,8 @@ if(searchInput) {
         const searchTerm = e.target.value.toLowerCase().trim();
 
         if(searchTerm === '') {
-            // Search khali hai to sab modules dikhao
             renderServices();
         } else {
-            // Filter modules by name
             const filtered = allModules.filter(module =>
                 module.name.toLowerCase().includes(searchTerm)
             );
@@ -704,7 +719,7 @@ document.addEventListener('gesturestart', function(e) {
 loadAllData();
 
 // ========================================
-// USER AUTH + PROFILE SYSTEM - NAYA ADD KIYA
+// USER AUTH + PROFILE SYSTEM
 // ========================================
 let currentUser = null;
 let scannedUserData = null;
@@ -742,7 +757,7 @@ function updateProfileAvatar() {
     const avatar = document.querySelector('.profile-avatar');
     if (currentUser) {
         avatar.innerHTML = `<img src="${currentUser.profilePic || '/assets/default-avatar.png'}" alt="Profile">`;
-        avatar.onclick = goToProfilePage; // CHANGE 1: YAHAN BADLA
+        avatar.onclick = goToProfilePage;
     } else {
         avatar.innerHTML = 'P';
         avatar.onclick = openLoginModal;
@@ -929,13 +944,12 @@ function logout() {
 }
 
 // ========================================
-// SHOP CREATION SYSTEM - NAYA ADD KIYA
+// SHOP CREATION SYSTEM
 // ========================================
 function showCreateShop() {
     if (!currentUser) return alert('Pehle login karo bhai');
     if (currentUser.hasShop) return alert('Tumhari shop already hai!');
 
-    // Modules dropdown fill kar
     const select = document.getElementById('shopModuleSelect');
     select.innerHTML = '<option value="">Select Service Type</option>';
     allModules.forEach(m => {
@@ -990,13 +1004,13 @@ async function submitCreateShop() {
 }
 
 // ========================================
-// AUTO TRAIN SLIDING + DRAG SUPPORT - UPDATED BY AI
+// AUTO TRAIN SLIDING + DRAG SUPPORT
 // ========================================
 function startTrainSliding() {
     const containers = [
         document.getElementById('shopsContent'),
         document.getElementById('videosContent'),
-        document.getElementById('famousShopsContent') // NAYA ADD KIYA
+        document.getElementById('famousShopsContent')
     ];
 
     containers.forEach(container => {
@@ -1008,7 +1022,6 @@ function startTrainSliding() {
         let startX;
         let scrollLeft;
 
-        // Mouse events - Desktop ke liye
         container.addEventListener('mousedown', (e) => {
             isDown = true;
             container.classList.add('dragging');
@@ -1067,5 +1080,5 @@ function goToProfilePage() {
         openLoginModal();
         return;
     }
-    window.location.href = '/profile.html'; // public/profile.html khulega
+    window.location.href = '/profile.html';
 }

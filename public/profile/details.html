@@ -136,6 +136,10 @@
     color: #64748b;
     margin-top: 8px;
 }
+.location-coords.success {
+    color: #10b981;
+    font-weight: 600;
+}
 .save-btn {
     width: 100%;
     background: linear-gradient(135deg, #667eea, #764ba2);
@@ -162,7 +166,7 @@
     display: none;
 }
 @media (max-width: 768px) {
-   .form-container {
+ .form-container {
         margin: 16px;
         padding: 20px;
     }
@@ -268,6 +272,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         window.location.href = '/';
     }
+
+    // ✅ NAYA: Global location se auto fill
+    setTimeout(() => {
+        if (window.currentUserLocation &&!document.getElementById('userLat').value) {
+            updateLocationUI(window.currentUserLocation.lat, window.currentUserLocation.lng, true);
+        }
+    }, 1000);
 });
 
 function loadUserData() {
@@ -283,13 +294,20 @@ function loadUserData() {
     if (currentUser.location?.coordinates) {
         const lat = currentUser.location.coordinates[1];
         const lng = currentUser.location.coordinates[0];
-        document.getElementById('userLat').value = lat;
-        document.getElementById('userLng').value = lng;
-        document.getElementById('locationCoords').innerHTML = `
-            <strong>Lat:</strong> ${lat.toFixed(6)}<br>
-            <strong>Lng:</strong> ${lng.toFixed(6)}
-        `;
+        updateLocationUI(lat, lng, false);
     }
+}
+
+function updateLocationUI(lat, lng, isAuto = false) {
+    document.getElementById('userLat').value = lat;
+    document.getElementById('userLng').value = lng;
+    const coordsEl = document.getElementById('locationCoords');
+    coordsEl.innerHTML = `
+        <strong>Lat:</strong> ${lat.toFixed(6)}<br>
+        <strong>Lng:</strong> ${lng.toFixed(6)}
+        ${isAuto? '<br><small style="color:#10b981;">✅ Auto-updated from current location</small>' : ''}
+    `;
+    coordsEl.classList.add('success');
 }
 
 function handlePicChange(event) {
@@ -304,39 +322,44 @@ function handlePicChange(event) {
     }
 }
 
-function getCurrentLocation() {
+// ✅ UPDATED: Ab window.LocationManager use karega
+async function getCurrentLocation() {
     const btn = document.querySelector('.get-location-btn');
+    const coordsEl = document.getElementById('locationCoords');
     btn.textContent = 'Getting...';
     btn.disabled = true;
 
-    if (!navigator.geolocation) {
-        alert('Geolocation not supported');
+    // Pehle check karo global location hai ya nahi
+    if (window.currentUserLocation) {
+        const lat = window.currentUserLocation.lat;
+        const lng = window.currentUserLocation.lng;
+        updateLocationUI(lat, lng, true);
+        btn.textContent = 'Get Location';
+        btn.disabled = false;
+        alert('✅ Location updated from current location!');
+        return;
+    }
+
+    // Agar global nahi hai to manual fetch karo
+    if (!window.LocationManager) {
+        alert('Location system not loaded. Please refresh page.');
         btn.textContent = 'Get Location';
         btn.disabled = false;
         return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            document.getElementById('userLat').value = lat;
-            document.getElementById('userLng').value = lng;
-            document.getElementById('locationCoords').innerHTML = `
-                <strong>Lat:</strong> ${lat.toFixed(6)}<br>
-                <strong>Lng:</strong> ${lng.toFixed(6)}
-            `;
-            btn.textContent = 'Get Location';
-            btn.disabled = false;
-            alert('✅ Location captured successfully!');
-        },
-        (error) => {
-            alert('Location access denied. Please enable location permission.');
-            btn.textContent = 'Get Location';
-            btn.disabled = false;
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-    );
+    const loc = await window.LocationManager.getManual();
+
+    if (loc) {
+        updateLocationUI(loc.lat, loc.lng, false);
+        alert('✅ Location captured successfully!');
+    } else {
+        alert('❌ Location access denied. Please enable location permission.');
+        coordsEl.classList.remove('success');
+    }
+
+    btn.textContent = 'Get Location';
+    btn.disabled = false;
 }
 
 async function saveDetails() {

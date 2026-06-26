@@ -257,6 +257,10 @@
     font-size: 13px;
     color: #64748b;
 }
+.location-coords.success {
+    color: #10b981;
+    font-weight: 600;
+}
 .checkbox-group {
     display: flex;
     align-items: center;
@@ -290,13 +294,13 @@
 }
 
 @media (max-width: 768px) {
-   .addresses-container {
+  .addresses-container {
         margin: 16px;
     }
-   .form-row {
+  .form-row {
         grid-template-columns: 1fr;
     }
-   .add-address-btn {
+  .add-address-btn {
         left: 16px;
         right: 16px;
     }
@@ -411,6 +415,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     await loadAddresses();
+
+    // ✅ NAYA: Auto fill current location agar available ho
+    if (window.currentUserLocation) {
+        console.log('✅ Global location available:', window.currentUserLocation);
+    }
 });
 
 async function loadAddresses() {
@@ -490,6 +499,7 @@ function openAddressModal(addressId = null) {
                 <strong>Lat:</strong> ${addr.location.coordinates[1].toFixed(6)}<br>
                 <strong>Lng:</strong> ${addr.location.coordinates[0].toFixed(6)}
             `;
+            document.getElementById('locationCoords').classList.add('success');
         }
     } else {
         document.getElementById('addressId').value = '';
@@ -505,6 +515,7 @@ function openAddressModal(addressId = null) {
         document.getElementById('addressLat').value = '';
         document.getElementById('addressLng').value = '';
         document.getElementById('locationCoords').innerHTML = 'GPS location optional but recommended for accurate delivery';
+        document.getElementById('locationCoords').classList.remove('success');
     }
 
     document.getElementById('addressModal').classList.add('active');
@@ -514,39 +525,56 @@ function closeAddressModal() {
     document.getElementById('addressModal').classList.remove('active');
 }
 
-function getAddressLocation() {
+// ✅ UPDATED: Ab window.LocationManager use karega
+async function getAddressLocation() {
     const btn = document.querySelector('.get-location-btn');
+    const coordsEl = document.getElementById('locationCoords');
     btn.textContent = 'Getting...';
     btn.disabled = true;
 
-    if (!navigator.geolocation) {
-        alert('Geolocation not supported');
+    // Pehle check karo global location hai ya nahi
+    if (window.currentUserLocation) {
+        const lat = window.currentUserLocation.lat;
+        const lng = window.currentUserLocation.lng;
+        document.getElementById('addressLat').value = lat;
+        document.getElementById('addressLng').value = lng;
+        coordsEl.innerHTML = `
+            <strong>Lat:</strong> ${lat.toFixed(6)}<br>
+            <strong>Lng:</strong> ${lng.toFixed(6)}
+        `;
+        coordsEl.classList.add('success');
+        btn.textContent = 'Get GPS';
+        btn.disabled = false;
+        alert('✅ GPS location captured from current location!');
+        return;
+    }
+
+    // Agar global nahi hai to manual fetch karo
+    if (!window.LocationManager) {
+        alert('Location system not loaded. Please refresh page.');
         btn.textContent = 'Get GPS';
         btn.disabled = false;
         return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            document.getElementById('addressLat').value = lat;
-            document.getElementById('addressLng').value = lng;
-            document.getElementById('locationCoords').innerHTML = `
-                <strong>Lat:</strong> ${lat.toFixed(6)}<br>
-                <strong>Lng:</strong> ${lng.toFixed(6)}
-            `;
-            btn.textContent = 'Get GPS';
-            btn.disabled = false;
-            alert('✅ GPS location captured!');
-        },
-        (error) => {
-            alert('Location access denied. Please enable location.');
-            btn.textContent = 'Get GPS';
-            btn.disabled = false;
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-    );
+    const loc = await window.LocationManager.getManual();
+
+    if (loc) {
+        document.getElementById('addressLat').value = loc.lat;
+        document.getElementById('addressLng').value = loc.lng;
+        coordsEl.innerHTML = `
+            <strong>Lat:</strong> ${loc.lat.toFixed(6)}<br>
+            <strong>Lng:</strong> ${loc.lng.toFixed(6)}
+        `;
+        coordsEl.classList.add('success');
+        alert('✅ GPS location captured!');
+    } else {
+        alert('❌ Location access denied. Please enable location permission.');
+        coordsEl.classList.remove('success');
+    }
+
+    btn.textContent = 'Get GPS';
+    btn.disabled = false;
 }
 
 async function saveAddress() {
@@ -583,7 +611,7 @@ async function saveAddress() {
 
     try {
         const url = editingAddressId
-           ? `/api/user/addresses/${editingAddressId}`
+          ? `/api/user/addresses/${editingAddressId}`
             : '/api/user/addresses';
         const method = editingAddressId? 'PUT' : 'POST';
 
