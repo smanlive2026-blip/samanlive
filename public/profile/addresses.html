@@ -407,6 +407,7 @@
                         <span class="pulse"></span>
                         AUTO SYNC
                     </div>
+                </div>
                 <div class="location-coords" id="locationCoords">
                     Loading your current location...
                 </div>
@@ -605,7 +606,7 @@ async function saveAddress() {
 
     try {
         const url = editingAddressId
-          ? `/api/user/addresses/${editingAddressId}`
+         ? `/api/user/addresses/${editingAddressId}`
             : '/api/user/addresses';
         const method = editingAddressId? 'PUT' : 'POST';
 
