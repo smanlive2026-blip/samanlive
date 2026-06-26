@@ -10,18 +10,16 @@ let nearbyVideos = [];
 let allCampaigns = [];
 let siteSettings = {};
 let userLocation = null;
-let locationIntervalId = null; // ✅ NAYA: setInterval ID
+let locationIntervalId = null;
 let lastFetchedLocation = null;
 
 // ========================================
 // LOCATION MANAGER - GLOBAL SINGLETON
 // ========================================
 window.LocationManager = {
-    // 30 sec me auto update
     updateInterval: 30000,
-    isRequesting: false, // ✅ NAYA: Multiple request prevent karo
+    isRequesting: false,
 
-    // Manual location fetch - details.html, addresses.html, create-shop.html use karenge
     getManual: function() {
         return new Promise((resolve) => {
             if(this.isRequesting) {
@@ -60,20 +58,16 @@ window.LocationManager = {
         });
     },
 
-    // Auto update start karo
     startAutoUpdate: function() {
-        if (locationIntervalId!== null) return; // Already running
+        if (locationIntervalId!== null) return;
 
         console.log('🚀 Location auto-update started - every 30 sec');
-        // Pehli baar turant le lo
         this.fetchAndUpdate();
-        // Fir har 30 sec me
         locationIntervalId = setInterval(() => {
             this.fetchAndUpdate();
         }, this.updateInterval);
     },
 
-    // Stop auto update
     stopAutoUpdate: function() {
         if (locationIntervalId!== null) {
             clearInterval(locationIntervalId);
@@ -82,7 +76,6 @@ window.LocationManager = {
         }
     },
 
-    // Fetch + Update + Reload
     fetchAndUpdate: function() {
         if(!navigator.geolocation) return;
 
@@ -93,21 +86,12 @@ window.LocationManager = {
                     lng: position.coords.longitude
                 };
 
-                // ✅ Check karo 100m se jyada move hua ya nahi - abhi comment kiya hai
-                // if(lastFetchedLocation) {
-                // const dist = calculateDistance(lastFetchedLocation.lat, lastFetchedLocation.lng, newLoc.lat, newLoc.lng);
-                // if(dist < 0.1) { // 100 meter
-                // console.log('📍 Location not changed significantly:', dist * 1000, 'meters');
-                // return;
-                // }
-                // }
-
                 window.currentUserLocation = newLoc;
                 userLocation = newLoc;
                 lastFetchedLocation = {...newLoc};
 
                 console.log('📍 Auto Location Updated:', newLoc);
-                reloadNearbyData(); // Shops/modules reload
+                reloadNearbyData();
             },
             (error) => {
                 console.error('Auto location error:', error.message);
@@ -116,19 +100,17 @@ window.LocationManager = {
         );
     },
 
-    // ✅ NAYA: Permission status check karo
     checkPermission: async function() {
         if (!navigator.permissions) return 'unknown';
         try {
             const result = await navigator.permissions.query({ name: 'geolocation' });
-            return result.state; // 'granted', 'denied', 'prompt'
+            return result.state;
         } catch (e) {
             return 'unknown';
         }
     }
 };
 
-// Global access ke liye
 window.currentUserLocation = null;
 
 // ========================================
@@ -138,32 +120,29 @@ function getUserLocation() {
     return new Promise(async (resolve) => {
         const loc = await window.LocationManager.getManual();
         if (loc) {
-            window.LocationManager.startAutoUpdate(); // Auto update chalu karo
+            window.LocationManager.startAutoUpdate();
         }
         resolve(loc);
     });
 }
 
-// ✅ Distance calculate karo - Abhi rakha hai future use ke liye
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth radius in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
               Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
               Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c; // Distance in km
+    return R * c;
 }
 
-// ✅ NAYA FUNCTION: Nayi location pe shops reload karo
 async function reloadNearbyData() {
     if (!userLocation) return;
 
     console.log('🔄 Reloading nearby data for new location...');
 
     try {
-        // Shops reload karo
         const shopsRes = await fetch(`/api/public-shops?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
         if(shopsRes.ok) {
             const shopsData = await shopsRes.json();
@@ -173,7 +152,6 @@ async function reloadNearbyData() {
             console.log('✅ Shops updated:', nearbyServices.length);
         }
 
-        // Modules reload karo
         const modulesRes = await fetch('/api/modules/nearby', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -190,20 +168,17 @@ async function reloadNearbyData() {
     }
 }
 
-// ✅ Page close hone pe interval band kar do
 window.addEventListener('beforeunload', () => {
     window.LocationManager.stopAutoUpdate();
 });
 
 // ========================================
-// LOAD DATA FROM SERVER - WITH LOCATION - SAME AS BEFORE
+// LOAD DATA FROM SERVER - WITH LOCATION
 // ========================================
 async function loadAllData() {
     try {
-        // Pehle location try karo
         await getUserLocation();
 
-        // Baaki APIs alag-alag load karo taaki ek fail ho to bhi baaki chale
         try {
             const adsRes = await fetch('/api/ads');
             if(adsRes.ok) allAds = await adsRes.json();
@@ -240,7 +215,6 @@ async function loadAllData() {
             siteSettings = {};
         }
 
-        // MODULES KO GPS KE SAATH LOAD KARO
         if(userLocation) {
             try {
                 const modulesRes = await fetch('/api/modules/nearby', {
@@ -259,7 +233,6 @@ async function loadAllData() {
                 allModules = [];
             }
 
-            // Shops bhi GPS ke saath load karo
             try {
                 const shopsRes = await fetch(`/api/public-shops?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
                 if(shopsRes.ok) {
@@ -273,7 +246,6 @@ async function loadAllData() {
                 nearbyServices = [];
             }
         } else {
-            // Location nahi mili to purana tarika
             try {
                 const modulesRes = await fetch('/api/modules');
                 if(modulesRes.ok) {
@@ -303,7 +275,6 @@ async function loadAllData() {
 
         console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', nearbyServices.length);
 
-        // Render everything
         renderServices();
         renderTopAds();
         renderCampaigns();
@@ -591,7 +562,7 @@ function prevCampaign() {
 }
 
 // ========================================
-// SLIDER LOGIC - SHOPS - ABHI BHI RAKHA HAI BUT USE NAHI HOGA
+// SLIDER LOGIC - SHOPS
 // ========================================
 let shopIndex = 0;
 function showShop(idx) {
@@ -615,7 +586,7 @@ function prevShop() {
 function goToShop(idx) { showShop(idx); }
 
 // ========================================
-// SLIDER LOGIC - VIDEOS - ABHI BHI RAKHA HAI BUT USE NAHI HOGA
+// SLIDER LOGIC - VIDEOS
 // ========================================
 let videoIndex = 0;
 function showVideo(idx) {
@@ -746,11 +717,9 @@ document.addEventListener('gesturestart', function(e) {
 loadAllData();
 
 // ========================================
-// USER AUTH + PROFILE SYSTEM
+// USER AUTH + PROFILE SYSTEM - PERMANENT LOGIN
 // ========================================
 let currentUser = null;
-let scannedUserData = null;
-let html5QrcodeScanner = null;
 
 // CHECK IF LOGGED IN ON PAGE LOAD
 window.addEventListener('DOMContentLoaded', () => {
@@ -799,7 +768,7 @@ function closeLoginModal() {
     document.getElementById('loginModal').style.display = 'none';
 }
 
-// PHONE LOGIN
+// PHONE LOGIN - PERMANENT
 async function loginWithPhone() {
     const phone = document.getElementById('loginPhone').value.trim();
     const name = document.getElementById('loginName').value.trim();
@@ -820,7 +789,7 @@ async function loginWithPhone() {
             currentUser = data.user;
             closeLoginModal();
             updateProfileAvatar();
-            alert('Login Success! 🎉');
+            alert('Login Success! 🎉 Ab permanent login hai.');
         } else {
             alert('Login failed: ' + data.error);
         }
@@ -834,7 +803,7 @@ function loginWithGoogle() {
     alert('Google Login setup ho raha hai. Abhi phone se login karo 🙏');
 }
 
-// PROFILE MODAL
+// PROFILE MODAL - SIMPLIFIED
 function openProfileModal() {
     if (!currentUser) return openLoginModal();
 
@@ -845,30 +814,7 @@ function openProfileModal() {
 }
 function closeProfileModal() {
     document.getElementById('profileModal').style.display = 'none';
-    document.getElementById('qrCodeBox').style.display = 'none';
     document.getElementById('detailsForm').style.display = 'none';
-}
-
-// SHOW QR CODE
-function showUserQR() {
-    const qrBox = document.getElementById('qrCodeBox');
-    if (qrBox.style.display === 'none') {
-        qrBox.style.display = 'block';
-        generateQRCode(currentUser.qrCodeData);
-    } else {
-        qrBox.style.display = 'none';
-    }
-}
-
-// GENERATE QR
-function generateQRCode(text) {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js';
-    script.onload = () => {
-        const canvas = document.getElementById('qrCanvas');
-        QRCode.toCanvas(canvas, text, { width: 200, margin: 2 });
-    };
-    document.head.appendChild(script);
 }
 
 // SHOW DETAILS FORM
@@ -918,118 +864,6 @@ async function updateUserDetails() {
     }
 }
 
-// QR SCANNER
-function openQRScanner() {
-    if (!currentUser) return alert('Pehle login karo bhai');
-    document.getElementById('qrScannerModal').style.display = 'flex';
-
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/html5-qrcode';
-    script.onload = () => {
-        if (html5QrcodeScanner) html5QrcodeScanner.clear();
-        html5QrcodeScanner = new Html5QrcodeScanner("qrReader", { fps: 10, qrbox: 250 });
-        html5QrcodeScanner.render(onScanSuccess);
-    };
-    document.head.appendChild(script);
-}
-
-function onScanSuccess(decodedText) {
-    try {
-        scannedUserData = JSON.parse(decodedText);
-        document.getElementById('scannedUserName').textContent = `${scannedUserData.name} - ${scannedUserData.userId}`;
-        document.getElementById('scanResult').style.display = 'block';
-    } catch (err) {
-        alert('Invalid QR Code');
-    }
-}
-
-function closeQRScanner() {
-    document.getElementById('qrScannerModal').style.display = 'none';
-    document.getElementById('scanResult').style.display = 'none';
-    if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear();
-    }
-}
-
-function handleBuy() {
-    alert(`BUY: ${scannedUserData.name} se kharidna hai 🛒\nUser ID: ${scannedUserData.userId}`);
-    closeQRScanner();
-}
-
-function handleSell() {
-    alert(`SELL: ${scannedUserData.name} ko bechna hai 📦\nUser ID: ${scannedUserData.userId}`);
-    closeQRScanner();
-}
-
-// LOGOUT
-function logout() {
-    localStorage.removeItem('userToken');
-    currentUser = null;
-    updateProfileAvatar();
-    closeProfileModal();
-    alert('Logged out successfully!');
-}
-
-// ========================================
-// SHOP CREATION SYSTEM
-// ========================================
-function showCreateShop() {
-    if (!currentUser) return alert('Pehle login karo bhai');
-    if (currentUser.hasShop) return alert('Tumhari shop already hai!');
-
-    const select = document.getElementById('shopModuleSelect');
-    select.innerHTML = '<option value="">Select Service Type</option>';
-    allModules.forEach(m => {
-        select.innerHTML += `<option value="${m.id}">${m.icon} ${m.name}</option>`;
-    });
-
-    document.getElementById('createShopModal').style.display = 'flex';
-}
-
-function closeCreateShopModal() {
-    document.getElementById('createShopModal').style.display = 'none';
-}
-
-async function submitCreateShop() {
-    const token = localStorage.getItem('userToken');
-    const shopData = {
-        name: document.getElementById('shopNameInput').value.trim(),
-        moduleId: document.getElementById('shopModuleSelect').value,
-        phone: document.getElementById('shopPhoneInput').value.trim(),
-        address: document.getElementById('shopAddressInput').value.trim(),
-        range: parseInt(document.getElementById('shopRangeInput').value) || 5000,
-        icon: document.getElementById('shopIconInput').value || '🏪',
-        color: '#10b981',
-        priority: 1
-    };
-
-    if (!shopData.name ||!shopData.moduleId ||!shopData.phone ||!shopData.address) {
-        return alert('Sab fields bharo bhai!');
-    }
-
-    try {
-        const res = await fetch('/api/shop/create', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-            },
-         body: JSON.stringify(shopData)
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            alert('✅ Shop ban gayi! Ab admin se approval milega.\n\nAbhi status: Pending');
-            currentUser.hasShop = true;
-            closeCreateShopModal();
-        } else {
-            alert('Error: ' + data.error);
-        }
-    } catch (err) {
-        alert('Shop create failed. Server check karo.');
-    }
-}
-
 // ========================================
 // AUTO TRAIN SLIDING + DRAG SUPPORT
 // ========================================
@@ -1070,11 +904,10 @@ function startTrainSliding() {
             if (!isDown) return;
             e.preventDefault();
             const x = e.pageX - container.offsetLeft;
-            const walk = (x - startX) * 2; // scroll speed 2x
+            const walk = (x - startX) * 2;
             container.scrollLeft = scrollLeft - walk;
         });
 
-        // Touch events - Mobile ke liye
         container.addEventListener('touchstart', (e) => {
             isDown = true;
             container.classList.add('dragging');
@@ -1096,11 +929,10 @@ function startTrainSliding() {
     });
 }
 
-// Page load ke baad train chalu karo
 setTimeout(startTrainSliding, 2000);
 
 // ========================================
-// PROFILE PAGE REDIRECT - ADDED FOR NEW PROFILE SYSTEM
+// PROFILE PAGE REDIRECT
 // ========================================
 function goToProfilePage() {
     if (!currentUser) {
