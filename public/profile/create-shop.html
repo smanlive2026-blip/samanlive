@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="./css/create-shop.css">
 <style>
-/* ✅ NAYA: Location Type Toggle */
+/* ✅ Location Type Toggle */
 .location-type-toggle {
     display: flex;
     gap: 10px;
@@ -45,6 +45,29 @@
     padding: 8px;
     background: #f8fafc;
     border-radius: 6px;
+}
+/* ✅ NAYA: Auto status badge */
+.auto-badge {
+    background: #10b981;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.auto-badge.pulse {
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
 }
 </style>
 </head>
@@ -178,10 +201,17 @@
 
                 <div class="location-header" style="margin-top: 12px;">
                     <h3 id="locationTitle">📍 Shop GPS Location *</h3>
-                    <button class="get-location-btn" onclick="getShopLocation()" id="locBtn">Get Location</button>
+                    <!-- ✅ NAYA: Auto badge, button hata diya -->
+                    <div class="auto-badge">
+                        <span class="pulse"></span>
+                        AUTO SYNC
+                    </div>
                 </div>
                 <div class="location-coords" id="locationCoords">
-                    Location required. Click "Get Location" to set shop GPS.
+                    Loading your current location...
+                </div>
+                <div class="location-info">
+                    💡 Your location is automatically captured from your device and updates every 30 seconds
                 </div>
                 <input type="hidden" id="shopLat">
                 <input type="hidden" id="shopLng">
@@ -234,6 +264,7 @@ function toggleCreateForm() {
         btn.innerHTML = '<i class="fa fa-times"></i> Close';
         resetForm();
         window.scrollTo(0, 0);
+        autoFillLocation(); // ✅ NAYA: Form open hote hi location auto fill
     } else {
         hideCreateForm();
     }
@@ -324,45 +355,24 @@ function selectLocationType(type) {
     }
 }
 
-// ✅ UPDATED: Ab window.LocationManager use karega
-async function getShopLocation() {
-    const btn = document.getElementById('locBtn');
-    const status = document.getElementById('locationCoords');
-    btn.textContent = 'Getting...';
-    btn.disabled = true;
-    status.className = 'location-coords';
-    status.textContent = '📍 Fetching your location...';
+// ✅ NAYA: Auto fill location from global
+function autoFillLocation() {
+    const coordsEl = document.getElementById('locationCoords');
 
-    // Pehle check karo global location hai ya nahi
     if (window.currentUserLocation) {
         const lat = window.currentUserLocation.lat;
         const lng = window.currentUserLocation.lng;
         updateShopLocationUI(lat, lng, true);
-        btn.textContent = 'Location Set ✓';
-        btn.disabled = false;
-        return;
-    }
-
-    // Agar global nahi hai to manual fetch karo
-    if (!window.LocationManager) {
-        status.className = 'location-coords error';
-        status.textContent = '❌ Location system not loaded. Refresh page.';
-        btn.textContent = 'Get Location';
-        btn.disabled = false;
-        return;
-    }
-
-    const loc = await window.LocationManager.getManual();
-
-    if (loc) {
-        updateShopLocationUI(loc.lat, loc.lng, false);
-        btn.textContent = 'Location Set ✓';
-        btn.disabled = false;
     } else {
-        status.className = 'location-coords error';
-        status.textContent = '❌ Location access denied. Enable permission.';
-        btn.textContent = 'Get Location';
-        btn.disabled = false;
+        coordsEl.innerHTML = '⏳ Waiting for location... Make sure GPS is enabled';
+        // 2 sec baad fir check karo
+        setTimeout(() => {
+            if (window.currentUserLocation) {
+                autoFillLocation();
+            } else {
+                coordsEl.innerHTML = '❌ Location not available. Please enable GPS in app settings';
+            }
+        }, 2000);
     }
 }
 
@@ -373,8 +383,8 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
 
     // Reverse geocoding for city/state
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-   .then(r => r.json())
-   .then(data => {
+  .then(r => r.json())
+  .then(data => {
         const city = data.address.city || data.address.town || data.address.village || 'Surat';
         const state = data.address.state || 'Gujarat';
         const pincode = data.address.postcode || '';
@@ -386,13 +396,15 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
         status.className = 'location-coords success';
         status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}${isAuto? '<br><small>Auto-updated from current location</small>' : ''}`;
     })
-   .catch(() => {
+  .catch(() => {
         document.getElementById('shopCity').value = 'Surat';
         document.getElementById('shopState').value = 'Gujarat';
         status.className = 'location-coords success';
         status.innerHTML = `✅ Location captured!<br><strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}${isAuto? '<br><small>Auto-updated</small>' : ''}`;
     });
 }
+
+// ✅ PURANA getShopLocation() function HATA DIYA
 
 async function submitShop() {
     const btn = document.getElementById('submitBtn');
@@ -558,9 +570,7 @@ function resetForm() {
     document.getElementById('shopLat').value = '';
     document.getElementById('shopLng').value = '';
     document.getElementById('locationCoords').className = 'location-coords';
-    document.getElementById('locationCoords').textContent = 'Location required. Click "Get Location" to set shop GPS.';
-    document.getElementById('locBtn').textContent = 'Get Location';
-    document.getElementById('locBtn').disabled = false;
+    document.getElementById('locationCoords').textContent = 'Loading your current location...';
     document.getElementById('formFields').style.display = 'block';
     document.getElementById('infoBanner').style.display = 'block';
     document.getElementById('submitBtn').style.display = 'block';
@@ -569,6 +579,7 @@ function resetForm() {
     document.getElementById('submitBtn').disabled = false;
     removeLogo();
     selectLocationType('fixed'); // Reset to fixed
+    autoFillLocation(); // Auto fill on reset
 }
 
 function copyShopLink() {
