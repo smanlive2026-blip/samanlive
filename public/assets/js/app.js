@@ -19,15 +19,24 @@ let lastFetchedLocation = null;
 window.LocationManager = {
     // 30 sec me auto update
     updateInterval: 30000,
+    isRequesting: false, // ✅ NAYA: Multiple request prevent karo
 
     // Manual location fetch - details.html, addresses.html, create-shop.html use karenge
     getManual: function() {
         return new Promise((resolve) => {
+            if(this.isRequesting) {
+                console.log('⚠️ Location request already in progress');
+                resolve(window.currentUserLocation);
+                return;
+            }
+
             if(!navigator.geolocation) {
                 console.log('Geolocation not supported');
                 resolve(null);
                 return;
             }
+
+            this.isRequesting = true;
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const loc = {
@@ -38,10 +47,12 @@ window.LocationManager = {
                     userLocation = loc;
                     lastFetchedLocation = {...loc};
                     console.log('📍 Manual Location:', loc);
+                    this.isRequesting = false;
                     resolve(loc);
                 },
                 (error) => {
-                    console.log('Location access denied:', error);
+                    console.log('Location access denied:', error.message);
+                    this.isRequesting = false;
                     resolve(null);
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -82,7 +93,15 @@ window.LocationManager = {
                     lng: position.coords.longitude
                 };
 
-                // ✅ 100m wala check hata diya - har 30 sec me update
+                // ✅ Check karo 100m se jyada move hua ya nahi - abhi comment kiya hai
+                // if(lastFetchedLocation) {
+                // const dist = calculateDistance(lastFetchedLocation.lat, lastFetchedLocation.lng, newLoc.lat, newLoc.lng);
+                // if(dist < 0.1) { // 100 meter
+                // console.log('📍 Location not changed significantly:', dist * 1000, 'meters');
+                // return;
+                // }
+                // }
+
                 window.currentUserLocation = newLoc;
                 userLocation = newLoc;
                 lastFetchedLocation = {...newLoc};
@@ -95,6 +114,17 @@ window.LocationManager = {
             },
             { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
         );
+    },
+
+    // ✅ NAYA: Permission status check karo
+    checkPermission: async function() {
+        if (!navigator.permissions) return 'unknown';
+        try {
+            const result = await navigator.permissions.query({ name: 'geolocation' });
+            return result.state; // 'granted', 'denied', 'prompt'
+        } catch (e) {
+            return 'unknown';
+        }
     }
 };
 
@@ -114,10 +144,7 @@ function getUserLocation() {
     });
 }
 
-// ✅ PURANA startWatchingLocation() HATA DIYA
-// ✅ PURANA updateUserLocation() HATA DIYA - ab LocationManager me hai
-
-// ✅ NAYA FUNCTION: Distance calculate karo - Abhi rakha hai future use ke liye
+// ✅ Distance calculate karo - Abhi rakha hai future use ke liye
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth radius in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -987,7 +1014,7 @@ async function submitCreateShop() {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
             },
-            body: JSON.stringify(shopData)
+         body: JSON.stringify(shopData)
         });
         const data = await res.json();
 
