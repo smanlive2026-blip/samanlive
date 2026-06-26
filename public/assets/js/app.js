@@ -12,6 +12,7 @@ let siteSettings = {};
 let userLocation = null;
 let locationIntervalId = null;
 let lastFetchedLocation = null;
+let currentUser = null;
 
 // ========================================
 // LOCATION MANAGER - GLOBAL SINGLETON
@@ -928,6 +929,8 @@ function startTrainSliding() {
         });
     });
 }
+// Export for other pages
+window.getCurrentUser = () => currentUser;
 
 setTimeout(startTrainSliding, 2000);
 

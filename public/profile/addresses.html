@@ -605,7 +605,7 @@ window.saveAddress = async function() {
 
     try {
         const url = editingAddressId
-     ? `/api/user/addresses/${editingAddressId}`
+    ? `/api/user/addresses/${editingAddressId}`
             : '/api/user/addresses';
         const method = editingAddressId? 'PUT' : 'POST';
 
@@ -674,5 +674,6 @@ window.setDefaultAddress = async function(addressId) {
     }
 }
 </script>
+<script src="./js/addresses.js"></script>
 </body>
 </html>
