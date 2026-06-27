@@ -144,7 +144,7 @@ async function reloadNearbyData() {
     console.log('🔄 Reloading nearby data for new location...');
 
     try {
-        const shopsRes = await fetch(`/api/public-shops?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
+        const shopsRes = await fetch(`/api/local-market/public?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
         if(shopsRes.ok) {
             const shopsData = await shopsRes.json();
             nearbyServices = shopsData.data || shopsData;
@@ -235,7 +235,7 @@ async function loadAllData() {
             }
 
             try {
-                const shopsRes = await fetch(`/api/public-shops?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
+                const shopsRes = await fetch(`/api/local-market/public?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
                 if(shopsRes.ok) {
                     const shopsData = await shopsRes.json();
                     nearbyServices = shopsData.data || shopsData;
@@ -261,7 +261,7 @@ async function loadAllData() {
             }
 
             try {
-                const shopsRes = await fetch('/api/public-shops');
+                const shopsRes = await fetch('/api/local-market/public');
                 if(shopsRes.ok) {
                     const shopsData = await shopsRes.json();
                     nearbyServices = shopsData.data || shopsData;
