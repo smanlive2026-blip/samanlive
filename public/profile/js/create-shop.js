@@ -1,5 +1,5 @@
 // ========================================
-// MY SHOPS - CREATE SHOP LOGIC
+// MY SHOPS - CREATE SHOP LOGIC - FIXED VERSION
 // app.js se LocationManager + currentUser use karega
 // ========================================
 
@@ -13,20 +13,16 @@ const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant', 'service
 // PAGE LOAD - Init
 // ========================================
 window.addEventListener('DOMContentLoaded', async () => {
-    // app.js se user check karo
-    if (window.currentUser) {
-        currentUser = window.currentUser;
-    } else {
-        // Agar app.js me nahi mila to local se
+    // Fallback user agar app.js se nahi mila
+    if (!window.currentUser) {
         const token = localStorage.getItem('userToken');
         if (token) {
             await fetchUserData(token);
         } else {
-            currentUser = {
+            window.currentUser = {
                 name: 'Shop Owner',
                 email: 'owner@shop.com'
             };
-            window.currentUser = currentUser;
         }
     }
 
@@ -42,11 +38,14 @@ async function fetchUserData(token) {
         });
         const data = await res.json();
         if (data.success) {
-            currentUser = data.user;
             window.currentUser = data.user;
         }
     } catch (err) {
         console.log('User fetch failed');
+        window.currentUser = {
+            name: 'Shop Owner',
+            email: 'owner@shop.com'
+        };
     }
 }
 
@@ -170,7 +169,7 @@ function selectLocationType(type) {
 }
 
 // ========================================
-// AUTO FILL LOCATION - app.js se
+// AUTO FILL LOCATION - app.js se ya direct GPS
 // ========================================
 function autoFillLocation() {
     const coordsEl = document.getElementById('locationCoords');
@@ -179,15 +178,24 @@ function autoFillLocation() {
         const lat = window.currentUserLocation.lat;
         const lng = window.currentUserLocation.lng;
         updateShopLocationUI(lat, lng, true);
+    } else if (navigator.geolocation) {
+        coordsEl.innerHTML = '⏳ Getting your location...';
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                window.currentUserLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                updateShopLocationUI(position.coords.latitude, position.coords.longitude, true);
+            },
+            (error) => {
+                coordsEl.innerHTML = '❌ Location not available. Please enable GPS';
+                console.log('Location error:', error.message);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
     } else {
-        coordsEl.innerHTML = '⏳ Waiting for location... Make sure GPS is enabled';
-        setTimeout(() => {
-            if (window.currentUserLocation) {
-                autoFillLocation();
-            } else {
-                coordsEl.innerHTML = '❌ Location not available. Please enable GPS in app settings';
-            }
-        }, 2000);
+        coordsEl.innerHTML = '❌ GPS not supported in this browser';
     }
 }
 
@@ -197,8 +205,8 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
     const status = document.getElementById('locationCoords');
 
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-      .then(r => r.json())
-      .then(data => {
+     .then(r => r.json())
+     .then(data => {
             const city = data.address.city || data.address.town || data.address.village || 'Surat';
             const state = data.address.state || 'Gujarat';
             const pincode = data.address.postcode || '';
@@ -210,7 +218,7 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
             status.className = 'location-coords success';
             status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}${isAuto? '<br><small>Auto-updated from current location</small>' : ''}`;
         })
-      .catch(() => {
+     .catch(() => {
             document.getElementById('shopCity').value = 'Surat';
             document.getElementById('shopState').value = 'Gujarat';
             status.className = 'location-coords success';
