@@ -153,17 +153,7 @@ async function reloadNearbyData() {
             console.log('✅ Shops updated:', nearbyServices.length);
         }
 
-        const modulesRes = await fetch('/api/modules/nearby', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lat: userLocation.lat, lng: userLocation.lng })
-        });
-        if(modulesRes.ok) {
-            const modulesData = await modulesRes.json();
-            allModules = modulesData.modules || [];
-            renderServices();
-            console.log('✅ Modules updated:', allModules.length);
-        }
+        // ✅ MODULES SE LOCATION HATA DIYA - Ab refresh pe modules reload nahi honge
     } catch(e) {
         console.error('Failed to reload nearby data:', e);
     }
@@ -216,24 +206,21 @@ async function loadAllData() {
             siteSettings = {};
         }
 
-        if(userLocation) {
-            try {
-                const modulesRes = await fetch('/api/modules/nearby', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lat: userLocation.lat, lng: userLocation.lng })
-                });
-                if(modulesRes.ok) {
-                    const modulesData = await modulesRes.json();
-                    allModules = modulesData.modules || [];
-                } else {
-                    allModules = [];
-                }
-            } catch(e) {
-                console.log('Modules nearby API failed:', e);
+        // ✅ MODULES SE LOCATION HATA DIYA - Hamesha sab modules load honge
+        try {
+            const modulesRes = await fetch('/api/modules');
+            if(modulesRes.ok) {
+                const modulesData = await modulesRes.json();
+                allModules = modulesData.modules || modulesData;
+            } else {
                 allModules = [];
             }
+        } catch(e) {
+            console.log('Modules API failed:', e);
+            allModules = [];
+        }
 
+        if(userLocation) {
             try {
                 const shopsRes = await fetch(`/api/local-market/public?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
                 if(shopsRes.ok) {
@@ -247,19 +234,6 @@ async function loadAllData() {
                 nearbyServices = [];
             }
         } else {
-            try {
-                const modulesRes = await fetch('/api/modules');
-                if(modulesRes.ok) {
-                    const modulesData = await modulesRes.json();
-                    allModules = modulesData.modules || modulesData;
-                } else {
-                    allModules = [];
-                }
-            } catch(e) {
-                console.log('Modules API failed:', e);
-                allModules = [];
-            }
-
             try {
                 const shopsRes = await fetch('/api/local-market/public');
                 if(shopsRes.ok) {
@@ -372,7 +346,6 @@ function renderServices(filteredModules = null) {
                 <a href="${module.link}" onclick="saveModuleClick('${module.id}')">
                     <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
                     <p>${module.name}</p>
-                    ${module.distance? `<small style="color:#10b981;font-size:11px;">${module.distance} km</small>` : ''}
                 </a>
             </div>
         `).join('');
