@@ -1,18 +1,18 @@
 // ========================================
-// SAMANLIVE - HOMEPAGE JAVASCRIPT - LOCATION BASED
+// SAMANLIVE - HOMEPAGE JAVASCRIPT - ALL SHOPS LIVE
 // ========================================
 
 // Global variables
 let allModules = [];
 let allAds = [];
-let nearbyServices = [];
+let allServices = []; // ← nearbyServices se naam badla
 let nearbyVideos = [];
 let allCampaigns = [];
 let siteSettings = {};
-let userLocation = null;
+let userLocation = null; // ← Ab sirf tracking ke liye
 
 // ========================================
-// GET USER LOCATION
+// GET USER LOCATION - AB SIRF INFO KE LIYE
 // ========================================
 function getUserLocation() {
     return new Promise((resolve) => {
@@ -30,14 +30,12 @@ function getUserLocation() {
                 };
                 window.currentUserLocation = userLocation;
                 console.log('User Location:', userLocation);
-                // Save for next time
                 localStorage.setItem('lastUserLat', userLocation.lat);
                 localStorage.setItem('lastUserLng', userLocation.lng);
                 resolve(userLocation);
             },
             (error) => {
                 console.log('Location access denied or failed:', error);
-                // Try last saved location
                 const lastLat = localStorage.getItem('lastUserLat');
                 const lastLng = localStorage.getItem('lastUserLng');
                 if(lastLat && lastLng) {
@@ -56,11 +54,11 @@ function getUserLocation() {
 }
 
 // ========================================
-// LOAD DATA FROM SERVER - WITH LOCATION + FALLBACK
+// LOAD DATA FROM SERVER - SAB SHOPS LIVE
 // ========================================
 async function loadAllData() {
     try {
-        // Pehle location try karo
+        // Location optional hai ab
         await getUserLocation();
 
         // Baaki APIs normal load karo
@@ -76,47 +74,26 @@ async function loadAllData() {
         allCampaigns = await campaignsRes.json();
         siteSettings = await settingsRes.json();
 
-        // MODULES + SHOPS GPS KE SAATH LOAD KARO
-        const lat = userLocation?.lat || 0;
-        const lng = userLocation?.lng || 0;
+        // ✅ MODULES - Hamesha sab load honge, location filter nahi
+        const modulesRes = await fetch('/api/modules');
+        const modulesData = await modulesRes.json();
+        allModules = modulesData.modules || modulesData;
 
+        // ✅ SHOPS - LOCATION FILTER HATA DIYA, SAB SHOPS LOAD HONGI
+        const shopsRes = await fetch('/api/local-market/public');
+        const shopsData = await shopsRes.json();
+        allServices = shopsData.data || shopsData;
+
+        // Location mili to header me dikha do, par shops filter nahi karni
         if(userLocation) {
-            // Modules nearby
-            const modulesRes = await fetch('/api/modules/nearby', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lat: userLocation.lat, lng: userLocation.lng })
-            });
-            const modulesData = await modulesRes.json();
-            allModules = modulesData.modules || [];
-
-            // Shops nearby - 5km radius
-            const shopsRes = await fetch(`/api/local-market/nearby?lat=${lat}&lng=${lng}&radius=5000`);
-            const shopsData = await shopsRes.json();
-            nearbyServices = shopsData.data || [];
-
             showUserLocationInHeader();
-            document.querySelector('.nearby-header h2').textContent = '📍 Near You';
+            document.querySelector('.nearby-header h2').textContent = '⭐ All Shops';
         } else {
-            // ✅ Location nahi mili - Backend fallback handle karega
-            const [modulesRes, shopsRes] = await Promise.all([
-                fetch('/api/modules'),
-                fetch(`/api/local-market/nearby?lat=0&lng=0&radius=999999`)
-            ]);
-            const modulesData = await modulesRes.json();
-            allModules = modulesData.modules || modulesData;
-
-            const shopsData = await shopsRes.json();
-            nearbyServices = shopsData.data || [];
-
-            // ✅ Fallback aya to popup dikha
-            if(shopsData.fallback) {
-                showLocationPopup();
-                document.querySelector('.nearby-header h2').textContent = '⭐ Popular Shops';
-            }
+            showLocationPopup();
+            document.querySelector('.nearby-header h2').textContent = '⭐ All Shops';
         }
 
-        console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', nearbyServices.length);
+        console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', allServices.length);
 
         // Render everything
         renderServices();
@@ -132,14 +109,14 @@ async function loadAllData() {
     }
 }
 
-// ✅ Location Popup - Naya function
+// ✅ Location Popup - Sirf info ke liye
 function showLocationPopup() {
     if(document.getElementById('locPopup')) return;
 
     const popup = document.createElement('div');
     popup.id = 'locPopup';
     popup.style.cssText = `position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1e40af;color:white;padding:12px 20px;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2);font-size:14px;`;
-    popup.innerHTML = `📍 Location enable karein for nearby shops <button onclick="this.parentElement.remove()" style="margin-left:10px;background:white;color:#1e40af;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-weight:600;">OK</button>`;
+    popup.innerHTML = `📍 Location enable karein for better experience <button onclick="this.parentElement.remove()" style="margin-left:10px;background:white;color:#1e40af;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-weight:600;">OK</button>`;
     document.body.appendChild(popup);
     setTimeout(() => popup.remove(), 6000);
 }
@@ -155,7 +132,6 @@ function showUserLocationInHeader() {
         locDiv.innerHTML = `📍 <span id="userCity">Detecting...</span>`;
         header.querySelector('.search-box')?.insertAdjacentElement('afterend', locDiv);
 
-        // Reverse geocode kar ke city name nikal le
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
        .then(r => r.json())
        .then(data => {
@@ -229,7 +205,7 @@ function sortModulesByUsage(modules) {
 }
 
 // ========================================
-// RENDER SERVICES - 54 MODULES - SMART SORTED + DISTANCE
+// RENDER SERVICES - 54 MODULES - SMART SORTED
 // ========================================
 function renderServices(filteredModules = null) {
     const modulesToRender = filteredModules || allModules;
@@ -247,7 +223,6 @@ function renderServices(filteredModules = null) {
                 <a href="${module.link}" onclick="saveModuleClick('${module.id}')">
                     <div class="service-icon" style="background: linear-gradient(135deg, ${module.color}, ${module.color}dd);">${module.icon}</div>
                     <p>${module.name}</p>
-                    ${module.distance? `<small style="color:#10b981;font-size:11px;">${module.distance} km</small>` : ''}
                 </a>
             </div>
         `).join('');
@@ -307,14 +282,14 @@ function renderCampaigns() {
 }
 
 // ========================================
-// RENDER SHOPS - TRAIN SCROLL + DISTANCE
+// RENDER SHOPS - SAB SHOPS LIVE
 // ========================================
 function renderShops() {
-    const doubleShops = [...nearbyServices,...nearbyServices];
+    const doubleShops = [...allServices,...allServices];
     const shopsEl = document.getElementById('shopsContent');
 
-    if(nearbyServices.length === 0) {
-        if(shopsEl) shopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Koi shop nahi mili</p>';
+    if(allServices.length === 0) {
+        if(shopsEl) shopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Abhi koi shop nahi hai</p>';
         return;
     }
 
@@ -325,7 +300,7 @@ function renderShops() {
                     <div class="shop-card" onclick="window.location.href='/local-market/dashboard.html?shopId=${service._id}&type=${service.shopType}'">
                         <div class="shop-icon">${service.icon || '🏪'}</div>
                         <div class="shop-name">${service.shopName || service.name}</div>
-                        ${service.distance? `<small style="color:#10b981;font-size:11px;">${service.distanceKm || service.distance}m</small>` : ''}
+                        ${service.address? `<small style="color:#64748b;font-size:11px;">${service.address}</small>` : ''}
                     </div>
                 `).join('')}
             </div>
@@ -422,7 +397,7 @@ document.addEventListener('click', function(e) {
 });
 
 function openVideoModal(url, shopId) {
-    const shop = nearbyServices.find(s => s._id === shopId);
+    const shop = allServices.find(s => s._id === shopId);
     const oldModal = document.getElementById('videoModal');
     if(oldModal) oldModal.remove();
 
@@ -528,7 +503,6 @@ function startTrainSliding() {
         let startX;
         let scrollLeft;
 
-        // Mouse events - Desktop ke liye
         container.addEventListener('mousedown', (e) => {
             isDown = true;
             container.classList.add('dragging');
@@ -554,7 +528,6 @@ function startTrainSliding() {
             container.scrollLeft = scrollLeft - walk;
         });
 
-        // Touch events - Mobile ke liye
         container.addEventListener('touchstart', (e) => {
             isDown = true;
             container.classList.add('dragging');
@@ -576,5 +549,4 @@ function startTrainSliding() {
     });
 }
 
-// Page load ke baad train chalu karo
 setTimeout(startTrainSliding, 2000);

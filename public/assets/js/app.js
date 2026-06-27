@@ -1,21 +1,21 @@
 // ========================================
-// SAMANLIVE - DYNAMIC JAVASCRIPT - LOCATION BASED
+// SAMANLIVE - DYNAMIC JAVASCRIPT - ALL SHOPS LIVE
 // ========================================
 
 // Global variables
 let allModules = [];
 let allAds = [];
-let nearbyServices = [];
+let allServices = []; // ← nearbyServices ka naam badal diya
 let nearbyVideos = [];
 let allCampaigns = [];
 let siteSettings = {};
-let userLocation = null;
+let userLocation = null; // ← Location ab sirf tracking ke liye, filter nahi
 let locationIntervalId = null;
 let lastFetchedLocation = null;
-let currentUser = null; // ← Sirf yahi ek baar rahega
+let currentUser = null;
 
 // ========================================
-// LOCATION MANAGER - GLOBAL SINGLETON
+// LOCATION MANAGER - AB SIRF USER TRACKING KE LIYE
 // ========================================
 window.LocationManager = {
     updateInterval: 30000,
@@ -92,7 +92,7 @@ window.LocationManager = {
                 lastFetchedLocation = {...newLoc};
 
                 console.log('📍 Auto Location Updated:', newLoc);
-                reloadNearbyData();
+                // ✅ Ab location update pe shops reload nahi hongi
             },
             (error) => {
                 console.error('Auto location error:', error.message);
@@ -138,24 +138,21 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
+// ✅ RELOAD NEARBY DATA - AB SIRF SAB SHOPS LOAD HONGI, LOCATION FILTER NAHI
 async function reloadNearbyData() {
-    if (!userLocation) return;
-
-    console.log('🔄 Reloading nearby data for new location...');
+    console.log('🔄 Reloading all shops...');
 
     try {
-        const shopsRes = await fetch(`/api/local-market/public?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
+        const shopsRes = await fetch(`/api/local-market/public`);
         if(shopsRes.ok) {
             const shopsData = await shopsRes.json();
-            nearbyServices = shopsData.data || shopsData;
+            allServices = shopsData.data || shopsData;
             renderShops();
             renderFamousShops();
-            console.log('✅ Shops updated:', nearbyServices.length);
+            console.log('✅ All Shops updated:', allServices.length);
         }
-
-        // ✅ MODULES SE LOCATION HATA DIYA - Ab refresh pe modules reload nahi honge
     } catch(e) {
-        console.error('Failed to reload nearby data:', e);
+        console.error('Failed to reload shops:', e);
     }
 }
 
@@ -164,7 +161,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 // ========================================
-// LOAD DATA FROM SERVER - WITH LOCATION
+// LOAD DATA FROM SERVER - SAB SHOPS LIVE
 // ========================================
 async function loadAllData() {
     try {
@@ -206,7 +203,7 @@ async function loadAllData() {
             siteSettings = {};
         }
 
-        // ✅ MODULES SE LOCATION HATA DIYA - Hamesha sab modules load honge
+        // ✅ MODULES - Hamesha sab load honge
         try {
             const modulesRes = await fetch('/api/modules');
             if(modulesRes.ok) {
@@ -220,35 +217,21 @@ async function loadAllData() {
             allModules = [];
         }
 
-        if(userLocation) {
-            try {
-                const shopsRes = await fetch(`/api/local-market/public?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
-                if(shopsRes.ok) {
-                    const shopsData = await shopsRes.json();
-                    nearbyServices = shopsData.data || shopsData;
-                } else {
-                    nearbyServices = [];
-                }
-            } catch(e) {
-                console.log('Shops API failed:', e);
-                nearbyServices = [];
+        // ✅ SHOPS - LOCATION FILTER HATA DIYA, SAB SHOPS LOAD HONGI
+        try {
+            const shopsRes = await fetch('/api/local-market/public');
+            if(shopsRes.ok) {
+                const shopsData = await shopsRes.json();
+                allServices = shopsData.data || shopsData;
+            } else {
+                allServices = [];
             }
-        } else {
-            try {
-                const shopsRes = await fetch('/api/local-market/public');
-                if(shopsRes.ok) {
-                    const shopsData = await shopsRes.json();
-                    nearbyServices = shopsData.data || shopsData;
-                } else {
-                    nearbyServices = [];
-                }
-            } catch(e) {
-                console.log('Public shops API failed:', e);
-                nearbyServices = [];
-            }
+        } catch(e) {
+            console.log('Public shops API failed:', e);
+            allServices = [];
         }
 
-        console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', nearbyServices.length);
+        console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', allServices.length);
 
         renderServices();
         renderTopAds();
@@ -328,7 +311,7 @@ function sortModulesByUsage(modules) {
 }
 
 // ========================================
-// RENDER SERVICES - 54 MODULES - SMART SORTED + DISTANCE
+// RENDER SERVICES - 54 MODULES - SMART SORTED
 // ========================================
 function renderServices(filteredModules = null) {
     const modulesToRender = filteredModules || allModules;
@@ -405,14 +388,14 @@ function renderCampaigns() {
 }
 
 // ========================================
-// RENDER SHOPS - TRAIN SCROLL + DISTANCE
+// RENDER SHOPS - SAB SHOPS LIVE
 // ========================================
 function renderShops() {
-    const doubleShops = [...nearbyServices,...nearbyServices];
+    const doubleShops = [...allServices,...allServices];
     const shopsEl = document.getElementById('shopsContent');
 
-    if(nearbyServices.length === 0) {
-        if(shopsEl) shopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Aapke aas-paas koi shop nahi mili</p>';
+    if(allServices.length === 0) {
+        if(shopsEl) shopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Abhi koi shop nahi hai</p>';
         return;
     }
 
@@ -432,10 +415,10 @@ function renderShops() {
 }
 
 // ========================================
-// RENDER FAMOUS SHOPS - AREA KI APPROVED SHOPS
+// RENDER FAMOUS SHOPS - SAB APPROVED SHOPS
 // ========================================
 function renderFamousShops() {
-    const areaShops = nearbyServices.filter(shop =>
+    const areaShops = allServices.filter(shop =>
         shop.status === 'approved' &&
         shop.isActive!== false
     ).sort((a, b) => {
@@ -446,7 +429,7 @@ function renderFamousShops() {
     const famousShopsEl = document.getElementById('famousShopsContent');
 
     if(areaShops.length === 0) {
-        if(famousShopsEl) famousShopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">⭐ Aapke area me abhi koi famous shop nahi hai</p>';
+        if(famousShopsEl) famousShopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">⭐ Abhi koi famous shop nahi hai</p>';
         return;
     }
 
@@ -554,7 +537,7 @@ document.addEventListener('click', function(e) {
 });
 
 function openVideoModal(url, shopId) {
-    const shop = nearbyServices.find(s => s._id === shopId);
+    const shop = allServices.find(s => s._id === shopId);
     const oldModal = document.getElementById('videoModal');
     if(oldModal) oldModal.remove();
 
