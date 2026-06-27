@@ -7,8 +7,8 @@ const mongoose = require('mongoose');
 const getAllShops = async (req, res) => {
   try {
     const shops = await Shop.find({})
-   .populate('ownerId', 'name email')
-   .populate('serviceType');
+  .populate('ownerId', 'name email')
+  .populate('serviceType');
 
     res.status(200).json({
       success: true,
@@ -57,22 +57,44 @@ const getMyShops = async (req, res) => {
   }
 };
 
-// @desc Get public shops by location - ✅ FIXED: Proper Range + LocationType Filter
+// @desc Get public shops by location - ✅ UPDATED: Location deny pe bhi shops dikhegi
 const getPublicShops = async (req, res) => {
   try {
     const { lat, lng, radius = 10000, shopType, categoryId, serviceType } = req.query;
 
-    // Validation
-    if (!lat ||!lng || isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid lat and lng required'
+    const userLat = parseFloat(lat);
+    const userLng = parseFloat(lng);
+
+    // ✅ FALLBACK: Lat/Lng invalid ya 0,0 hai to popular shops bhej do
+    if (!lat ||!lng || isNaN(userLat) || isNaN(userLng) || (userLat === 0 && userLng === 0)) {
+      console.log('📍 No location - sending popular shops');
+
+      let popularQuery = {
+        status: { $in: ['approved', 'active'] },
+        isActive: true
+      };
+
+      if (shopType) popularQuery.shopType = shopType;
+      if (categoryId) popularQuery.categoryId = categoryId;
+      if (serviceType) popularQuery.serviceType = serviceType;
+
+      const popularShops = await Shop.find(popularQuery)
+    .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+    .limit(20)
+    .select('-ownerId -approvedBy -rejectionReason -email -phone')
+    .lean();
+
+      return res.status(200).json({
+        success: true,
+        count: popularShops.length,
+        userLocation: null,
+        fallback: true,
+        message: 'Showing popular shops',
+        data: popularShops
       });
     }
 
-    const userLat = parseFloat(lat);
-    const userLng = parseFloat(lng);
-    const maxRadius = parseInt(radius) || 10000; // 10km max search
+    const maxRadius = parseInt(radius) || 10000;
 
     // Step 1: Broad area me sab shops nikalo
     let query = {
@@ -97,9 +119,9 @@ const getPublicShops = async (req, res) => {
     console.log('🔍 Searching within', maxRadius, 'meters from', userLat, userLng);
 
     const shops = await Shop.find(query)
-   .select('-ownerId -approvedBy -rejectionReason -email')
-   .limit(100)
-   .lean();
+  .select('-ownerId -approvedBy -rejectionReason -email -phone')
+  .limit(100)
+  .lean();
 
     // Step 2: Har shop ka distance nikal ke uske range se check karo
     const filteredShops = shops.filter(shop => {
@@ -122,12 +144,9 @@ const getPublicShops = async (req, res) => {
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       const distanceMeters = R * c;
 
-      // ✅ Main Fix: Shop ke apne range se compare
-      // Fixed shop: default 5000m agar range nahi hai
       const shopRange = shop.range || 5000;
       const isInRange = distanceMeters <= shopRange;
 
-      // Distance add kar do response me
       shop.distance = Math.round(distanceMeters);
       shop.distanceKm = (distanceMeters / 1000).toFixed(2);
 
@@ -138,7 +157,6 @@ const getPublicShops = async (req, res) => {
       return isInRange;
     });
 
-    // Distance ke hisaab se sort
     filteredShops.sort((a, b) => a.distance - b.distance);
 
     console.log(`✅ Returning ${filteredShops.length} shops out of ${shops.length}`);
@@ -147,6 +165,7 @@ const getPublicShops = async (req, res) => {
       success: true,
       count: filteredShops.length,
       userLocation: { lat: userLat, lng: userLng },
+      fallback: false,
       data: filteredShops
     });
 
@@ -164,8 +183,8 @@ const getPublicShops = async (req, res) => {
 const getShopById = async (req, res) => {
   try {
     const shop = await Shop.findById(req.params.id)
-   .populate('ownerId', 'name email phone')
-   .lean();
+  .populate('ownerId', 'name email phone')
+  .lean();
 
     if (!shop) {
       return res.status(404).json({
@@ -286,7 +305,6 @@ const updateShop = async (req, res) => {
       const userRole = req.user?.role || 'user';
       const newRange = parseInt(req.body.range);
 
-      // ✅ ADMIN/AREA MANAGER CHECK: Yahi pe logic daalna
       if (userRole!== 'admin' && userRole!== 'area_manager' && newRange > 5000) {
         return res.status(403).json({
           success: false,
@@ -401,5 +419,5 @@ module.exports = {
   createShop,
   updateShop,
   deleteShop,
-  updateShopLocation // ✅ Add this
+  updateShopLocation
 };

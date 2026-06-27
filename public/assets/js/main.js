@@ -30,11 +30,21 @@ function getUserLocation() {
                 };
                 window.currentUserLocation = userLocation;
                 console.log('User Location:', userLocation);
+                // Save for next time
+                localStorage.setItem('lastUserLat', userLocation.lat);
+                localStorage.setItem('lastUserLng', userLocation.lng);
                 resolve(userLocation);
             },
             (error) => {
                 console.log('Location access denied or failed:', error);
-                resolve(null);
+                // Try last saved location
+                const lastLat = localStorage.getItem('lastUserLat');
+                const lastLng = localStorage.getItem('lastUserLng');
+                if(lastLat && lastLng) {
+                    userLocation = { lat: parseFloat(lastLat), lng: parseFloat(lastLng) };
+                    console.log('Using last location:', userLocation);
+                }
+                resolve(userLocation);
             },
             {
                 enableHighAccuracy: true,
@@ -46,7 +56,7 @@ function getUserLocation() {
 }
 
 // ========================================
-// LOAD DATA FROM SERVER - WITH LOCATION
+// LOAD DATA FROM SERVER - WITH LOCATION + FALLBACK
 // ========================================
 async function loadAllData() {
     try {
@@ -67,6 +77,9 @@ async function loadAllData() {
         siteSettings = await settingsRes.json();
 
         // MODULES + SHOPS GPS KE SAATH LOAD KARO
+        const lat = userLocation?.lat || 0;
+        const lng = userLocation?.lng || 0;
+
         if(userLocation) {
             // Modules nearby
             const modulesRes = await fetch('/api/modules/nearby', {
@@ -78,19 +91,29 @@ async function loadAllData() {
             allModules = modulesData.modules || [];
 
             // Shops nearby - 5km radius
-            const shopsRes = await fetch(`/api/local-market/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
-            nearbyServices = await shopsRes.json();
+            const shopsRes = await fetch(`/api/local-market/nearby?lat=${lat}&lng=${lng}&radius=5000`);
+            const shopsData = await shopsRes.json();
+            nearbyServices = shopsData.data || [];
 
             showUserLocationInHeader();
+            document.querySelector('.nearby-header h2').textContent = '📍 Near You';
         } else {
-            // Location nahi mili to sab dikha de
+            // ✅ Location nahi mili - Backend fallback handle karega
             const [modulesRes, shopsRes] = await Promise.all([
                 fetch('/api/modules'),
-                fetch('/api/local-market/nearby?lat=0&lng=0&radius=999999')
+                fetch(`/api/local-market/nearby?lat=0&lng=0&radius=999999`)
             ]);
             const modulesData = await modulesRes.json();
             allModules = modulesData.modules || modulesData;
-            nearbyServices = await shopsRes.json();
+
+            const shopsData = await shopsRes.json();
+            nearbyServices = shopsData.data || [];
+
+            // ✅ Fallback aya to popup dikha
+            if(shopsData.fallback) {
+                showLocationPopup();
+                document.querySelector('.nearby-header h2').textContent = '⭐ Popular Shops';
+            }
         }
 
         console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', nearbyServices.length);
@@ -105,27 +128,40 @@ async function loadAllData() {
 
     } catch(e) {
         console.error('Failed to load data:', e);
+        document.getElementById('shopsContent').innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">Error loading shops</p>';
     }
+}
+
+// ✅ Location Popup - Naya function
+function showLocationPopup() {
+    if(document.getElementById('locPopup')) return;
+
+    const popup = document.createElement('div');
+    popup.id = 'locPopup';
+    popup.style.cssText = `position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1e40af;color:white;padding:12px 20px;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2);font-size:14px;`;
+    popup.innerHTML = `📍 Location enable karein for nearby shops <button onclick="this.parentElement.remove()" style="margin-left:10px;background:white;color:#1e40af;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-weight:600;">OK</button>`;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 6000);
 }
 
 // Header me location dikhane ke liye
 function showUserLocationInHeader() {
     const headerLocation = document.querySelector('.location-display');
     if (!headerLocation && userLocation) {
-        const header = document.querySelector('.header');
+        const header = document.querySelector('.header-container');
         const locDiv = document.createElement('div');
         locDiv.className = 'location-display';
-        locDiv.style.cssText = 'font-size:12px;color:#64748b;display:flex;align-items:center;gap:4px;';
+        locDiv.style.cssText = 'font-size:12px;color:#e0e7ff;display:flex;align-items:center;gap:4px;margin-left:10px;';
         locDiv.innerHTML = `📍 <span id="userCity">Detecting...</span>`;
-        header.querySelector('.header-left')?.appendChild(locDiv);
+        header.querySelector('.search-box')?.insertAdjacentElement('afterend', locDiv);
 
         // Reverse geocode kar ke city name nikal le
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
-         .then(r => r.json())
-         .then(data => {
+       .then(r => r.json())
+       .then(data => {
                 document.getElementById('userCity').textContent = data.address.city || data.address.town || data.address.village || 'Your Area';
             })
-         .catch(() => {
+       .catch(() => {
                 document.getElementById('userCity').textContent = 'Your Area';
             });
     }
@@ -278,7 +314,7 @@ function renderShops() {
     const shopsEl = document.getElementById('shopsContent');
 
     if(nearbyServices.length === 0) {
-        if(shopsEl) shopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Aapke aas-paas koi shop nahi mili</p>';
+        if(shopsEl) shopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Koi shop nahi mili</p>';
         return;
     }
 
@@ -289,7 +325,7 @@ function renderShops() {
                     <div class="shop-card" onclick="window.location.href='/local-market/dashboard.html?shopId=${service._id}&type=${service.shopType}'">
                         <div class="shop-icon">${service.icon || '🏪'}</div>
                         <div class="shop-name">${service.shopName || service.name}</div>
-                        ${service.distance? `<small style="color:#10b981;font-size:11px;">${service.distance}m</small>` : ''}
+                        ${service.distance? `<small style="color:#10b981;font-size:11px;">${service.distanceKm || service.distance}m</small>` : ''}
                     </div>
                 `).join('')}
             </div>
