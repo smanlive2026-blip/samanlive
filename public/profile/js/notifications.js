@@ -1,10 +1,13 @@
 // ========================================
-// NOTIFICATIONS - IN-APP + PUSH LOGIC
+// NOTIFICATIONS - ADMIN/AREA MANAGER READY
 // app.js se currentUser + LocationManager use karega
 // ========================================
 
 let allNotifications = [];
+let filteredNotifications = [];
 let unreadCount = 0;
+let currentFilter = 'all';
+let counts = { all: 0, order: 0, delivery: 0, promo: 0, area: 0, system: 0, admin: 0 };
 
 // ========================================
 // PAGE LOAD - Init
@@ -20,7 +23,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (window.currentUser) {
         currentUser = window.currentUser;
     } else {
-        // Agar app.js me nahi mila to API se
         try {
             const res = await fetch('/api/auth/me', {
                 headers: { 'Authorization': 'Bearer ' + token }
@@ -56,8 +58,9 @@ async function loadNotifications() {
         const data = await res.json();
         if (data.success) {
             allNotifications = data.notifications || [];
+            updateCounts();
             updateUnreadCount();
-            renderNotifications();
+            filterNotifications(currentFilter);
         } else {
             showEmptyState();
         }
@@ -68,21 +71,59 @@ async function loadNotifications() {
 }
 
 // ========================================
+// UPDATE COUNTS - Filter tabs ke liye
+// ========================================
+function updateCounts() {
+    counts = { all: 0, order: 0, delivery: 0, promo: 0, area: 0, system: 0, admin: 0 };
+    
+    allNotifications.forEach(n => {
+        counts.all++;
+        if (counts[n.type] !== undefined) {
+            counts[n.type]++;
+        }
+    });
+
+    // UI update
+    document.getElementById('countAll').textContent = counts.all;
+    document.getElementById('countOrder').textContent = counts.order;
+    document.getElementById('countDelivery').textContent = counts.delivery;
+    document.getElementById('countPromo').textContent = counts.promo;
+    document.getElementById('countArea').textContent = counts.area;
+    document.getElementById('countSystem').textContent = counts.system;
+}
+
+// ========================================
 // UPDATE UNREAD COUNT
 // ========================================
 function updateUnreadCount() {
-    unreadCount = allNotifications.filter(n =>!n.read).length;
+    unreadCount = allNotifications.filter(n => !n.read).length;
     const badge = document.getElementById('unreadBadge');
     if (badge) {
         badge.textContent = unreadCount;
-        badge.style.display = unreadCount > 0? 'inline-block' : 'none';
+        badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+    }
+}
+
+// ========================================
+// FILTER NOTIFICATIONS
+// ========================================
+window.filterNotifications = function(type) {
+    currentFilter = type;
+    
+    // Tab active state
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`[data-filter="${type}"]`).classList.add('active');
+
+    // Filter logic
+    if (type === 'all') {
+        filteredNotifications = [...allNotifications];
+    } else {
+        filteredNotifications = allNotifications.filter(n => n.type === type);
     }
 
-    // Header me bhi update karo
-    const headerCount = document.querySelector('.notification-count');
-    if (headerCount) {
-        headerCount.textContent = `${allNotifications.length} notifications`;
-    }
+    renderNotifications();
 }
 
 // ========================================
@@ -91,31 +132,45 @@ function updateUnreadCount() {
 function renderNotifications() {
     const container = document.getElementById('notificationsContainer');
 
-    if (allNotifications.length === 0) {
+    if (filteredNotifications.length === 0) {
         showEmptyState();
         return;
     }
 
-    // Sort: Unread first, then by date
-    const sorted = [...allNotifications].sort((a, b) => {
-        if (a.read!== b.read) return a.read? 1 : -1;
+    // Sort: Unread first, then priority, then by date
+    const sorted = [...filteredNotifications].sort((a, b) => {
+        if (a.read !== b.read) return a.read ? 1 : -1;
+        if (a.priority !== b.priority) {
+            const priorityOrder = { high: 0, medium: 1, low: 2 };
+            return (priorityOrder[a.priority] || 3) - (priorityOrder[b.priority] || 3);
+        }
         return new Date(b.createdAt) - new Date(a.createdAt);
     });
 
     container.innerHTML = sorted.map(notif => `
-        <div class="notification-item ${!notif.read? 'unread' : ''}">
-            <div class="notification-main" onclick="handleNotificationClick('${notif._id}')">
-                <div class="notification-icon ${getNotificationType(notif.type)}">
-                    ${getNotificationIcon(notif.type)}
-                </div>
-                <div class="notification-content">
-                    <div class="notification-title">${notif.title}</div>
-                    <div class="notification-text">${notif.message}</div>
-                    <div class="notification-time">${formatTime(notif.createdAt)}</div>
-                </div>
-                ${!notif.read? '<div class="unread-dot"></div>' : ''}
+        <div class="notification-item ${!notif.read ? 'unread' : ''} ${notif.priority ? 'priority-' + notif.priority : ''}" onclick="handleNotificationClick('${notif._id}')">
+            <div class="notification-icon ${getNotificationType(notif.type)}">
+                ${getNotificationIcon(notif.type)}
             </div>
-            <button class="delete-notif-btn" onclick="deleteNotification('${notif._id}', event)">🗑️</button>
+            <div class="notification-content">
+                <div class="notification-header">
+                    <div class="notification-title">${notif.title}</div>
+                    ${notif.priority && notif.priority !== 'low' ? `<span class="priority-tag ${notif.priority}">${notif.priority}</span>` : ''}
+                </div>
+                <div class="notification-text">${notif.message}</div>
+                <div class="notification-meta">
+                    <div class="notification-time">🕐 ${formatTime(notif.createdAt)}</div>
+                    ${notif.source ? `<div class="notification-source">${getSourceIcon(notif.source)} ${formatSource(notif.source)}</div>` : ''}
+                </div>
+                ${notif.actionUrl ? `
+                    <div class="notification-actions">
+                        <button class="action-btn btn-primary" onclick="event.stopPropagation(); window.location.href='${notif.actionUrl}'">
+                            ${notif.actionText || 'View'}
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+            <button class="delete-btn" onclick="deleteNotification('${notif._id}', event)">×</button>
         </div>
     `).join('');
 }
@@ -130,15 +185,39 @@ function getNotificationIcon(type) {
         'shop': '🏪',
         'payment': '💳',
         'delivery': '🚚',
-        'system': '🔔',
+        'system': '⚙️',
         'chat': '💬',
-        'offer': '🏷️'
+        'offer': '🏷️',
+        'area': '📍',
+        'admin': '👑'
     };
     return icons[type] || '🔔';
 }
 
 function getNotificationType(type) {
-    return `notif-${type}`;
+    return type;
+}
+
+function getSourceIcon(source) {
+    const icons = {
+        'admin': '👑',
+        'area_manager': '🗺️',
+        'system': '⚙️',
+        'user': '👤',
+        'shop': '🏪'
+    };
+    return icons[source] || '🔔';
+}
+
+function formatSource(source) {
+    const names = {
+        'admin': 'Admin',
+        'area_manager': 'Area Manager',
+        'system': 'System',
+        'user': 'User',
+        'shop': 'Shop'
+    };
+    return names[source] || source;
 }
 
 // ========================================
@@ -154,19 +233,20 @@ function formatTime(dateString) {
 
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
 
     return date.toLocaleDateString('en-IN', {
         day: 'numeric',
-        month: 'short'
+        month: 'short',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
     });
 }
 
 // ========================================
 // HANDLE NOTIFICATION CLICK
 // ========================================
-async function handleNotificationClick(notificationId) {
+window.handleNotificationClick = async function(notificationId) {
     const notif = allNotifications.find(n => n._id === notificationId);
     if (!notif) return;
 
@@ -175,7 +255,12 @@ async function handleNotificationClick(notificationId) {
         await markAsRead(notificationId);
     }
 
-    // Navigate based on type
+    // Navigate based on type or actionUrl
+    if (notif.actionUrl) {
+        window.location.href = notif.actionUrl;
+        return;
+    }
+
     switch(notif.type) {
         case 'order':
             window.location.href = `/order-details.html?orderId=${notif.data?.orderId}`;
@@ -195,6 +280,10 @@ async function handleNotificationClick(notificationId) {
             break;
         case 'chat':
             window.location.href = `/chat.html?userId=${notif.data?.userId}`;
+            break;
+        case 'area':
+        case 'admin':
+            showNotificationDetails(notif);
             break;
         default:
             showNotificationDetails(notif);
@@ -217,7 +306,8 @@ async function markAsRead(notificationId) {
         if (notif) {
             notif.read = true;
             updateUnreadCount();
-            renderNotifications();
+            updateCounts();
+            filterNotifications(currentFilter);
         }
     } catch (err) {
         console.error('Failed to mark as read:', err);
@@ -227,7 +317,12 @@ async function markAsRead(notificationId) {
 // ========================================
 // MARK ALL AS READ
 // ========================================
-async function markAllAsRead() {
+window.markAllAsRead = async function() {
+    if (unreadCount === 0) {
+        showToast('All notifications already read');
+        return;
+    }
+
     if (!confirm('Mark all notifications as read?')) return;
 
     const token = localStorage.getItem('userToken');
@@ -241,7 +336,7 @@ async function markAllAsRead() {
         if (data.success) {
             allNotifications.forEach(n => n.read = true);
             updateUnreadCount();
-            renderNotifications();
+            filterNotifications(currentFilter);
             showToast('✅ All marked as read');
         }
     } catch (err) {
@@ -252,7 +347,7 @@ async function markAllAsRead() {
 // ========================================
 // DELETE NOTIFICATION
 // ========================================
-async function deleteNotification(notificationId, event) {
+window.deleteNotification = async function(notificationId, event) {
     if (event) event.stopPropagation();
     if (!confirm('Delete this notification?')) return;
 
@@ -265,38 +360,14 @@ async function deleteNotification(notificationId, event) {
         const data = await res.json();
 
         if (data.success) {
-            allNotifications = allNotifications.filter(n => n._id!== notificationId);
+            allNotifications = allNotifications.filter(n => n._id !== notificationId);
+            updateCounts();
             updateUnreadCount();
-            renderNotifications();
+            filterNotifications(currentFilter);
             showToast('Notification deleted');
         }
     } catch (err) {
         showToast('Failed to delete');
-    }
-}
-
-// ========================================
-// CLEAR ALL NOTIFICATIONS
-// ========================================
-async function clearAllNotifications() {
-    if (!confirm('Clear all notifications? This cannot be undone.')) return;
-
-    const token = localStorage.getItem('userToken');
-    try {
-        const res = await fetch('/api/notifications/clear-all', {
-            method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            allNotifications = [];
-            updateUnreadCount();
-            renderNotifications();
-            showToast('✅ All notifications cleared');
-        }
-    } catch (err) {
-        showToast('Failed to clear notifications');
     }
 }
 
@@ -314,8 +385,25 @@ function showNotificationDetails(notif) {
                     <button onclick="this.closest('.notif-detail-modal').remove()">×</button>
                 </div>
                 <div class="modal-body">
-                    <p style="margin-bottom:16px;line-height:1.6;">${notif.message}</p>
-                    <small style="color:#64748b;">${new Date(notif.createdAt).toLocaleString('en-IN')}</small>
+                    <div style="margin-bottom:16px;">
+                        <span class="notification-icon ${getNotificationType(notif.type)}" style="width:60px;height:60px;font-size:32px;margin-bottom:12px;">
+                            ${getNotificationIcon(notif.type)}
+                        </span>
+                    </div>
+                    <p style="margin-bottom:16px;line-height:1.6;font-size:15px;color:#475569;">${notif.message}</p>
+                    <div style="padding-top:16px;border-top:1px solid #f1f5f9;">
+                        <small style="color:#64748b;display:block;margin-bottom:4px;">
+                            🕐 ${new Date(notif.createdAt).toLocaleString('en-IN')}
+                        </small>
+                        ${notif.source ? `<small style="color:#64748b;display:block;">
+                            ${getSourceIcon(notif.source)} From: ${formatSource(notif.source)}
+                        </small>` : ''}
+                    </div>
+                    ${notif.actionUrl ? `
+                        <button class="action-btn btn-primary" style="width:100%;margin-top:16px;padding:12px;" onclick="window.location.href='${notif.actionUrl}'">
+                            ${notif.actionText || 'View Details'}
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         </div>
@@ -335,19 +423,33 @@ function setupNotificationListener() {
         // Agar naye notifications aaye to toast
         if (allNotifications.length > oldCount) {
             const newCount = allNotifications.length - oldCount;
-            showToast(`🔔 ${newCount} new notification${newCount > 1? 's' : ''}`);
+            showToast(`🔔 ${newCount} new notification${newCount > 1 ? 's' : ''}`);
+            
+            // Browser notification bhi
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('SAMANLIVE', {
+                    body: `You have ${newCount} new notification${newCount > 1 ? 's' : ''}`,
+                    icon: '/assets/images/logo.png'
+                });
+            }
         }
     }, 30000);
 
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+
     // Agar Socket.io use karna hai to:
-    // if (window.io) {
-    // const socket = io();
-    // socket.on(`notification:${window.currentUser._id}`, (data) => {
-    // allNotifications.unshift(data);
-    // updateUnreadCount();
-    // renderNotifications();
-    // showToast('🔔 ' + data.title);
-    // });
+    // if (window.io && window.currentUser) {
+    //     const socket = io();
+    //     socket.on(`notification:${window.currentUser._id}`, (data) => {
+    //         allNotifications.unshift(data);
+    //         updateCounts();
+    //         updateUnreadCount();
+    //         filterNotifications(currentFilter);
+    //         showToast('🔔 ' + data.title);
+    //     });
     // }
 }
 
@@ -355,10 +457,11 @@ function setupNotificationListener() {
 // EMPTY STATE
 // ========================================
 function showEmptyState() {
+    const filterName = currentFilter === 'all' ? '' : ` in ${currentFilter}`;
     document.getElementById('notificationsContainer').innerHTML = `
         <div class="empty-state">
             <div class="icon">🔔</div>
-            <h2>No Notifications</h2>
+            <h2>No Notifications${filterName}</h2>
             <p>You're all caught up! New notifications will appear here.</p>
         </div>
     `;
@@ -408,82 +511,7 @@ style.textContent = `
         from { opacity: 1; transform: translateX(-50%) translateY(0); }
         to { opacity: 0; transform: translateX(-50%) translateY(20px); }
     }
-  .notification-item {
-        position: relative;
-        display: flex;
-        align-items: start;
-        gap: 12px;
-        padding: 16px;
-        border-bottom: 1px solid #f1f5f9;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-  .notification-item:hover {
-        background: #f8fafc;
-    }
-  .notification-item.unread {
-        background: #f0f9ff;
-        border-left: 3px solid #667eea;
-    }
-  .notification-main {
-        flex: 1;
-        display: flex;
-        gap: 12px;
-    }
-  .notification-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-        background: #eef2ff;
-        flex-shrink: 0;
-    }
-  .notification-content {
-        flex: 1;
-    }
-  .notification-title {
-        font-size: 15px;
-        font-weight: 600;
-        color: #1e293b;
-        margin-bottom: 4px;
-    }
-  .notification-text {
-        font-size: 13px;
-        color: #64748b;
-        line-height: 1.5;
-        margin-bottom: 6px;
-    }
-  .notification-time {
-        font-size: 12px;
-        color: #94a3b8;
-    }
-  .unread-dot {
-        width: 10px;
-        height: 10px;
-        background: #667eea;
-        border-radius: 50%;
-        flex-shrink: 0;
-        margin-top: 4px;
-    }
-  .delete-notif-btn {
-        background: #fee2e2;
-        border: none;
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 18px;
-        flex-shrink: 0;
-        opacity: 0;
-        transition: opacity 0.2s;
-    }
-  .notification-item:hover.delete-notif-btn {
-        opacity: 1;
-    }
-  .modal-overlay {
+    .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
@@ -495,36 +523,46 @@ style.textContent = `
         align-items: center;
         justify-content: center;
         padding: 20px;
+        animation: fadeIn 0.2s;
     }
-  .modal-box {
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .modal-box {
         background: white;
-        border-radius: 16px;
+        border-radius: 20px;
         width: 100%;
         max-width: 500px;
+        animation: slideUp 0.3s;
     }
-  .modal-header {
+    .modal-header {
         padding: 20px 24px;
         border-bottom: 1px solid #f1f5f9;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
-  .modal-header h3 {
+    .modal-header h3 {
         margin: 0;
         font-size: 18px;
-        color: #1e293b;
+        color: #0f172a;
     }
-  .modal-header button {
+    .modal-header button {
         background: #f1f5f9;
         border: none;
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         cursor: pointer;
-        font-size: 20px;
+        font-size: 24px;
         color: #64748b;
+        transition: all 0.2s;
     }
-  .modal-body {
+    .modal-header button:hover {
+        background: #e2e8f0;
+    }
+    .modal-body {
         padding: 24px;
     }
 `;
