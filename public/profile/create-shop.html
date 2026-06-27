@@ -58,7 +58,7 @@
     align-items: center;
     gap: 6px;
 }
-.auto-badge.pulse {
+.pulse {
     width: 8px;
     height: 8px;
     background: white;
@@ -68,6 +68,13 @@
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
+}
+/* ✅ Range input - admin only note */
+.admin-only-note {
+    font-size: 11px;
+    color: #f59e0b;
+    margin-top: 4px;
+    font-weight: 600;
 }
 </style>
 </head>
@@ -166,7 +173,13 @@
                         <option value="2000">2 KM</option>
                         <option value="5000" selected>5 KM</option>
                         <option value="10000">10 KM</option>
+                        <option value="15000">15 KM</option>
+                        <option value="20000">20 KM</option>
                     </select>
+                    <!-- ✅ ADMIN/AREA MANAGER ONLY: Range edit ka code yaha daalna -->
+                    <div class="admin-only-note" id="rangeNote" style="display:none;">
+                        ⚠️ Only Admin/Area Manager can increase range above 5KM
+                    </div>
                 </div>
             </div>
 
@@ -196,12 +209,11 @@
                 </div>
 
                 <div class="location-note" id="locationTypeNote">
-                    <strong>Fixed:</strong> Shop ek hi jagah rahegi. Customers ko exact location dikhegi.
+                    <strong>Fixed:</strong> Shop ek hi jagah rahegi. 5KM circle me sabko dikhegi by default.
                 </div>
 
                 <div class="location-header" style="margin-top: 12px;">
                     <h3 id="locationTitle">📍 Shop GPS Location *</h3>
-                    <!-- ✅ NAYA: Auto badge, button hata diya -->
                     <div class="auto-badge">
                         <span class="pulse"></span>
                         AUTO SYNC
@@ -253,7 +265,8 @@ let locationWatchId = null;
 if (!window.currentUser) {
     window.currentUser = {
         name: 'Shop Owner',
-        email: 'owner@shop.com'
+        email: 'owner@shop.com',
+        role: 'user' // ✅ ADMIN/AREA MANAGER CHECK KE LIYE: 'admin' ya 'area_manager' set karna
     };
 }
 
@@ -269,7 +282,34 @@ window.addEventListener('DOMContentLoaded', async () => {
     loadModules();
     await loadMyShops();
     startLocationTracking();
+    checkAdminAccess(); // ✅ Admin check
 });
+
+// ========================================
+// ✅ ADMIN/AREA MANAGER CHECK - Range control
+// ========================================
+function checkAdminAccess() {
+    const userRole = window.currentUser?.role || 'user';
+    const rangeSelect = document.getElementById('shopRange');
+    const rangeNote = document.getElementById('rangeNote');
+
+    // ✅ YAHI PE ADMIN/AREA MANAGER KA CODE DALNA
+    // Agar current user admin ya area_manager nahi hai to range limit karo
+    if (userRole!== 'admin' && userRole!== 'area_manager') {
+        // Normal user sirf 5KM tak select kar sakta hai
+        rangeSelect.value = '5000';
+        Array.from(rangeSelect.options).forEach(opt => {
+            if (parseInt(opt.value) > 5000) {
+                opt.disabled = true;
+                opt.text = opt.text + ' (Admin Only)';
+            }
+        });
+        rangeNote.style.display = 'block';
+    } else {
+        rangeNote.style.display = 'none';
+        console.log('✅ Admin/Area Manager access: Full range control enabled');
+    }
+}
 
 // ========================================
 // LOCATION TRACKING - AUTO EVERY 30 SEC
@@ -411,7 +451,7 @@ function selectLocationType(type) {
     const titleEl = document.getElementById('locationTitle');
 
     if (type === 'fixed') {
-        noteEl.innerHTML = '<strong>Fixed:</strong> Shop ek hi jagah rahegi. Customers ko exact location dikhegi.';
+        noteEl.innerHTML = '<strong>Fixed:</strong> Shop ek hi jagah rahegi. 5KM circle me sabko dikhegi by default.';
         titleEl.textContent = '📍 Shop GPS Location *';
     } else {
         noteEl.innerHTML = '<strong>Dynamic:</strong> Shop owner ke saath move karegi. Real-time location update hogi (30 sec).';
@@ -447,8 +487,8 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
     const status = document.getElementById('locationCoords');
 
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
- .then(r => r.json())
- .then(data => {
+.then(r => r.json())
+.then(data => {
         const city = data.address.city || data.address.town || data.address.village || 'Surat';
         const state = data.address.state || 'Gujarat';
         const pincode = data.address.postcode || '';
@@ -460,7 +500,7 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
         status.className = 'location-coords success';
         status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}${isAuto? '<br><small>Auto-updated from current location</small>' : ''}`;
     })
- .catch(() => {
+.catch(() => {
         document.getElementById('shopCity').value = 'Surat';
         document.getElementById('shopState').value = 'Gujarat';
         status.className = 'location-coords success';
@@ -483,6 +523,7 @@ async function submitShop() {
     const pincode = document.getElementById('shopPincode').value || '';
     const shopModule = document.getElementById('shopModule').value;
     const locationType = document.getElementById('shopLocationType').value;
+    const range = parseInt(document.getElementById('shopRange').value);
 
     const shopTypeMap = {
         'kirana': 'product',
@@ -517,14 +558,14 @@ async function submitShop() {
         serviceType: shopModule,
         shopType: shopTypeMap[shopModule] || 'product',
         description: document.getElementById('shopDesc').value.trim(),
-        range: parseInt(document.getElementById('shopRange').value),
+        range: range, // ✅ Meters me: 5000 = 5KM
         icon: selectedIcon,
         logo: uploadedLogoBase64 || '',
         banner: '',
         status: 'approved',
         isVerified: true,
         isActive: true,
-        locationType: locationType,
+        locationType: locationType, // ✅ fixed ya dynamic
         location: {
             type: 'Point',
             coordinates: [parseFloat(lng), parseFloat(lat)]
@@ -634,6 +675,7 @@ function resetForm() {
     document.getElementById('shopDesc').value = '';
     document.getElementById('shopLat').value = '';
     document.getElementById('shopLng').value = '';
+    document.getElementById('shopRange').value = '5000';
     document.getElementById('locationCoords').className = 'location-coords';
     document.getElementById('locationCoords').textContent = 'Loading your current location...';
     document.getElementById('formFields').style.display = 'block';

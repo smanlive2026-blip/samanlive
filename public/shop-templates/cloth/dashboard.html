@@ -6,6 +6,7 @@
     <title>Cloth Shop Dashboard - SAMANLIVE</title>
     <link rel="stylesheet" href="/local-market/assets/css/common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { 
             margin: 0; 
@@ -249,7 +250,7 @@
             z-index: 9999;
         }
         .spinner {
-            border: 4px solid rgba(255,255,255,0.3);
+            border: 4px solid rgba(255,255,0.3);
             border-top: 4px solid white;
             border-radius: 50%;
             width: 50px;
@@ -257,6 +258,49 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* ✅ Dynamic location indicator */
+        .location-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #dcfce7;
+            color: #166534;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .location-status.inactive {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* ✅ Map styles */
+        .map-container {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .shop-map-icon {
+            background: none;
+            border: none;
+        }
     </style>
 </head>
 <body>
@@ -268,8 +312,12 @@
                 </button>
                 <div class="shop-title-wrap">
                     <h1 id="shopName">Loading...</h1>
-                    <p class="shop-type-label">Cloth Store</p>
+                    <p class="shop-type-label">
+                        Cloth Store 
+                        <span id="locationTypeBadge"></span>
+                    </p>
                 </div>
+            </div>
             <span class="badge" id="shopStatus">Loading</span>
         </div>
 
@@ -289,6 +337,18 @@
                 <h3 id="todayOrders">0</h3>
                 <p>Today Orders</p>
             </div>
+        </div>
+
+        <!-- ✅ NEW: Map Container -->
+        <div class="map-container">
+            <h3 style="margin: 0 0 12px 0; font-size: 18px; color: #1e293b;">
+                <i class="fa fa-map-marker-alt"></i> Shop Coverage Area
+                <small id="rangeText" style="font-weight: normal; color: #64748b; font-size: 14px;"></small>
+            </h3>
+            <div id="shopMapContainer" style="width: 100%; height: 250px; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; cursor: pointer;" onclick="expandMap()"></div>
+            <p style="font-size: 12px; color: #64748b; margin-top: 8px; text-align: center;">
+                <i class="fa fa-info-circle"></i> Click map to expand • <span id="locationUpdateText">Static location</span>
+            </p>
         </div>
 
         <div class="action-bar">
@@ -342,10 +402,16 @@
         <div class="spinner"></div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const shopId = urlParams.get('shopId');
         let currentShop = null;
+        let locationInterval = null;
+        let shopMap = null;
+        let shopMarker = null;
+        let rangeCircle = null;
+        let lastSentLocation = null;
 
         if (!shopId) {
             alert('Invalid shop link');
@@ -370,6 +436,21 @@
                 statusEl.innerText = shop.status.toUpperCase();
                 statusEl.className = 'badge ' + shop.status;
 
+                // ✅ Show location type badge
+                const locationBadge = document.getElementById('locationTypeBadge');
+                const rangeText = document.getElementById('rangeText');
+                const locationUpdateText = document.getElementById('locationUpdateText');
+                
+                if (shop.locationType === 'dynamic') {
+                    locationBadge.innerHTML = `<span class="location-status"><span class="pulse-dot"></span>Dynamic Location</span>`;
+                    rangeText.textContent = `(${shop.range/1000} KM Radius)`;
+                    locationUpdateText.textContent = 'Updates every 50m movement';
+                } else {
+                    locationBadge.innerHTML = `<span class="location-status inactive">Static Location</span>`;
+                    rangeText.textContent = `(${shop.range/1000} KM Radius)`;
+                    locationUpdateText.textContent = 'Fixed location';
+                }
+
                 const items = shop.items || shop.products || [];
                 const totalStock = items.reduce((sum, i) => sum + (i.stock || 0), 0);
                 
@@ -380,11 +461,187 @@
                 loadItems(items);
                 document.getElementById('loader').style.display = 'none';
 
+                // ✅ Initialize map
+                initShopMap();
+
+                // ✅ Start dynamic location tracking if needed
+                startDynamicLocationTracking();
+
             } catch (err) {
                 console.error(err);
                 alert('Failed to load shop: ' + err.message);
                 document.getElementById('loader').style.display = 'none';
             }
+        }
+
+        // ✅ Initialize map with circle
+        function initShopMap() {
+            if (!currentShop.location ||!currentShop.location.coordinates) return;
+
+            const [lng, lat] = currentShop.location.coordinates;
+            const range = currentShop.range || 5000;
+
+            shopMap = L.map('shopMapContainer').setView([lat, lng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(shopMap);
+
+            // Shop marker
+            shopMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    html: `<div style="font-size: 24px;">${currentShop.icon || '👗'}</div>`,
+                    className: 'shop-map-icon',
+                    iconSize: [30, 30]
+                })
+            }).addTo(shopMap).bindPopup(`<b>${currentShop.shopName}</b><br>Range: ${range/1000} KM`);
+
+            // Range circle
+            rangeCircle = L.circle([lat, lng], {
+                color: '#10b981',
+                fillColor: '#10b981',
+                fillOpacity: 0.1,
+                radius: range
+            }).addTo(shopMap);
+        }
+
+        // ✅ Expand map full screen
+        function expandMap() {
+            if (!shopMap) return;
+
+            const modal = document.createElement('div');
+            modal.id = 'mapModal';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.9); z-index: 9999; display: flex;
+                align-items: center; justify-content: center;
+            `;
+            modal.innerHTML = `
+                <div style="position: relative; width: 95%; max-width: 1000px; height: 80%;">
+                    <button onclick="closeMapModal()" style="position: absolute; top: -40px; right: 0; background: white; border: none; font-size: 30px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 10000;">×</button>
+                    <div id="expandedMap" style="width: 100%; height: 100%; border-radius: 12px;"></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            const [lng, lat] = currentShop.location.coordinates;
+            const expandedMap = L.map('expandedMap').setView([lat, lng], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(expandedMap);
+            L.marker([lat, lng], {
+                icon: L.divIcon({
+                    html: `<div style="font-size: 32px;">${currentShop.icon || '👗'}</div>`,
+                    className: 'shop-map-icon',
+                    iconSize: [40, 40]
+                })
+            }).addTo(expandedMap).bindPopup(`<b>${currentShop.shopName}</b><br>Range: ${currentShop.range/1000} KM`).openPopup();
+            L.circle([lat, lng], {
+                color: '#10b981',
+                fillColor: '#10b981',
+                fillOpacity: 0.15,
+                radius: currentShop.range || 5000
+            }).addTo(expandedMap);
+
+            modal.onclick = (e) => { if (e.target === modal) closeMapModal(); };
+        }
+
+        function closeMapModal() {
+            const modal = document.getElementById('mapModal');
+            if (modal) modal.remove();
+        }
+
+        // ✅ Dynamic location tracking - 50m update
+        function startDynamicLocationTracking() {
+            if (!currentShop || currentShop.locationType!== 'dynamic') {
+                console.log('📍 Shop is static, no location tracking needed');
+                return;
+            }
+
+            if (locationInterval) clearInterval(locationInterval);
+
+            console.log('🚶 Starting dynamic location tracking for shop:', currentShop.shopName);
+
+            // Update immediately once
+            updateShopLocation();
+
+            // Then update every 30 seconds
+            locationInterval = setInterval(updateShopLocation, 30000);
+        }
+
+        function updateShopLocation() {
+            if (!navigator.geolocation) {
+                console.error('Geolocation not supported');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const newLat = pos.coords.latitude;
+                    const newLng = pos.coords.longitude;
+
+                    // Check if moved 50m from last sent location
+                    if (lastSentLocation) {
+                        const distance = calculateDistance(
+                            lastSentLocation.lat, lastSentLocation.lng,
+                            newLat, newLng
+                        );
+                        if (distance < 50) return; // Skip if less than 50m
+                    }
+
+                    console.log('📍 Location changed:', newLat, newLng);
+                    lastSentLocation = { lat: newLat, lng: newLng };
+
+                    // Update backend
+                    await updateShopLocationToServer(newLng, newLat);
+
+                    // Update map
+                    if (shopMap && shopMarker && rangeCircle) {
+                        shopMarker.setLatLng([newLat, newLng]);
+                        rangeCircle.setLatLng([newLat, newLng]);
+                        shopMap.setView([newLat, newLng]);
+                    }
+                },
+                (err) => {
+                    console.error('Geolocation error:', err);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        async function updateShopLocationToServer(lng, lat) {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+
+                const res = await fetch(`/api/local-market/shops/${shopId}/update-location`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        coordinates: [lng, lat]
+                    })
+                });
+
+                if (res.ok) {
+                    console.log('✅ Location synced to server');
+                    // Update local data
+                    currentShop.location.coordinates = [lng, lat];
+                }
+            } catch (err) {
+                console.error('Location sync failed:', err);
+            }
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // meters
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
         }
 
         function loadItems(items) {
@@ -460,6 +717,11 @@
                 alert('Failed to delete: ' + err.message);
             }
         }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (locationInterval) clearInterval(locationInterval);
+        });
 
         loadShopData();
     </script>

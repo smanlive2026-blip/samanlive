@@ -1,5 +1,5 @@
 // ===== SAMANLIVE SHOP CORE JS =====
-// Updated: Auth removed from read APIs - NO LOGIN NEEDED
+// Updated: Map + Dynamic Location + 50m Auto Update + Circle Visualization
 
 const SHOP_CONFIG = {
     product: {
@@ -63,6 +63,11 @@ const SHOP_CONFIG = {
 let currentShopId = null;
 let currentShopType = null;
 let currentShopData = null;
+let shopMap = null;
+let shopMarker = null;
+let rangeCircle = null;
+let locationWatchId = null;
+let lastSentLocation = null;
 
 // ===== DASHBOARD INIT =====
 async function initDashboard(shopType, shopId) {
@@ -102,6 +107,14 @@ async function initDashboard(shopType, shopId) {
     await loadDashboardStats(shopId, shopType);
     await loadProducts(shopId, shopType);
 
+    // ✅ 6. Map initialize karo
+    initShopMap();
+
+    // ✅ 7. Dynamic location tracking start karo agar shop dynamic hai
+    if (currentShopData.locationType === 'dynamic') {
+        startDynamicLocationTracking();
+    }
+
     showLoader(false);
 }
 
@@ -118,6 +131,12 @@ async function loadShopData(shopId) {
         const statusEl = document.getElementById('shopStatus');
         statusEl.textContent = currentShopData.status;
         statusEl.className = `badge ${currentShopData.status}`;
+
+        // ✅ Dynamic location badge
+        if (currentShopData.locationType === 'dynamic') {
+            const badge = `<span class="location-badge dynamic"><i class="fa fa-walking"></i> Dynamic</span>`;
+            document.getElementById('shopTypeLabel').insertAdjacentHTML('afterend', badge);
+        }
 
     } catch (err) {
         alert('Error loading shop: ' + err.message);
@@ -224,6 +243,184 @@ function renderProductTable(products, shopType) {
     }).join('');
 }
 
+// ✅ ===== MAP INITIALIZE - Chota map dashboard me =====
+function initShopMap() {
+    if (!currentShopData.location ||!currentShopData.location.coordinates) return;
+
+    const [lng, lat] = currentShopData.location.coordinates;
+    const range = currentShopData.range || 5000; // meters
+
+    // Map container banao agar nahi hai
+    if (!document.getElementById('shopMapContainer')) {
+        const mapHTML = `
+            <div class="map-container" style="margin-top: 20px;">
+                <h3 style="margin-bottom: 10px;">
+                    <i class="fa fa-map-marker-alt"></i> Shop Coverage Area
+                    <small style="font-weight: normal; color: #64748b;">(${range/1000} KM Radius)</small>
+                </h3>
+                <div id="shopMapContainer" style="width: 100%; height: 250px; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; cursor: pointer;" onclick="expandMap()"></div>
+                <p style="font-size: 12px; color: #64748b; margin-top: 8px; text-align: center;">
+                    <i class="fa fa-info-circle"></i> Click map to expand • ${currentShopData.locationType === 'dynamic'? 'Updates every 50m' : 'Fixed location'}
+                </p>
+            </div>
+        `;
+        document.querySelector('.content-area').insertAdjacentHTML('afterend', mapHTML);
+    }
+
+    // Leaflet map init
+    shopMap = L.map('shopMapContainer').setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(shopMap);
+
+    // Shop marker
+    shopMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+            html: `<div style="font-size: 24px;">${currentShopData.icon || '🏪'}</div>`,
+            className: 'shop-map-icon',
+            iconSize: [30, 30]
+        })
+    }).addTo(shopMap).bindPopup(`<b>${currentShopData.shopName}</b><br>Range: ${range/1000} KM`);
+
+    // Range circle
+    rangeCircle = L.circle([lat, lng], {
+        color: '#10b981',
+        fillColor: '#10b981',
+        fillOpacity: 0.1,
+        radius: range
+    }).addTo(shopMap);
+}
+
+// ✅ ===== EXPAND MAP - Full screen =====
+function expandMap() {
+    if (!shopMap) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'mapModal';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.9); z-index: 9999; display: flex;
+        align-items: center; justify-content: center;
+    `;
+    modal.innerHTML = `
+        <div style="position: relative; width: 95%; max-width: 1000px; height: 80%;">
+            <button onclick="closeMapModal()" style="position: absolute; top: -40px; right: 0; background: white; border: none; font-size: 30px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 10000;">×</button>
+            <div id="expandedMap" style="width: 100%; height: 100%; border-radius: 12px;"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Expanded map
+    const [lng, lat] = currentShopData.location.coordinates;
+    const expandedMap = L.map('expandedMap').setView([lat, lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(expandedMap);
+    L.marker([lat, lng], {
+        icon: L.divIcon({
+            html: `<div style="font-size: 32px;">${currentShopData.icon || '🏪'}</div>`,
+            className: 'shop-map-icon',
+            iconSize: [40, 40]
+        })
+    }).addTo(expandedMap).bindPopup(`<b>${currentShopData.shopName}</b><br>Range: ${currentShopData.range/1000} KM`).openPopup();
+    L.circle([lat, lng], {
+        color: '#10b981',
+        fillColor: '#10b981',
+        fillOpacity: 0.15,
+        radius: currentShopData.range || 5000
+    }).addTo(expandedMap);
+
+    modal.onclick = (e) => { if (e.target === modal) closeMapModal(); };
+}
+
+function closeMapModal() {
+    const modal = document.getElementById('mapModal');
+    if (modal) modal.remove();
+}
+
+// ✅ ===== DYNAMIC LOCATION TRACKING - 50m update =====
+function startDynamicLocationTracking() {
+    if (!navigator.geolocation) {
+        console.log('Geolocation not supported');
+        return;
+    }
+
+    console.log('🚶 Starting dynamic location tracking for shop:', currentShopData.shopName);
+
+    // Watch position - updates when moved 50m
+    locationWatchId = navigator.geolocation.watchPosition(
+        async (position) => {
+            const newLat = position.coords.latitude;
+            const newLng = position.coords.longitude;
+
+            // Check if moved 50m from last sent location
+            if (lastSentLocation) {
+                const distance = calculateDistance(
+                    lastSentLocation.lat, lastSentLocation.lng,
+                    newLat, newLng
+                );
+                if (distance < 50) return; // Skip if less than 50m
+            }
+
+            console.log('📍 Location changed:', newLat, newLng);
+            lastSentLocation = { lat: newLat, lng: newLng };
+
+            // Update backend
+            await updateShopLocationToServer(newLng, newLat);
+
+            // Update map
+            if (shopMap && shopMarker && rangeCircle) {
+                shopMarker.setLatLng([newLat, newLng]);
+                rangeCircle.setLatLng([newLat, newLng]);
+                shopMap.setView([newLat, newLng]);
+            }
+        },
+        (error) => console.log('Location watch error:', error.message),
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
+
+async function updateShopLocationToServer(lng, lat) {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/local-market/shops/${currentShopId}/update-location`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ coordinates: [lng, lat] })
+        });
+
+        if (res.ok) {
+            console.log('✅ Location synced to server');
+            // Update local data
+            currentShopData.location.coordinates = [lng, lat];
+        }
+    } catch (err) {
+        console.error('Location sync failed:', err);
+    }
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
+});
+
 // ===== LOAD TEMPLATE MODAL =====
 async function loadTemplate(templateName, shopType) {
     showLoader(true);
@@ -270,7 +467,7 @@ async function saveProduct(e, shopType) {
     try {
         const token = localStorage.getItem('token');
         const url = productId
-          ? `/api/local-market/products/${currentShopId}/${productId}`
+         ? `/api/local-market/products/${currentShopId}/${productId}`
             : '/api/local-market/products';
         const method = productId? 'PUT' : 'POST';
 
