@@ -3,15 +3,16 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Shop = require('../models/Shop');
 const Order = require('../models/Order');
-const auth = require('../middleware/authenticateToken');
+// ✅ Fix: Destructure karke import kiya
+const { authenticateToken } = require('../middleware/authenticateToken');
 
 // ✅ CREATE SHOP - Frontend se call ho raha hai
-router.post('/shops', auth, async (req, res) => {
+router.post('/shops', authenticateToken, async (req, res) => {
     try {
         const shopData = {
-           ...req.body,
-            ownerId: req.user.id,
-            createdBy: req.user.id,
+          ...req.body,
+            ownerId: req.userId, // ✅ req.userId use kiya
+            createdBy: req.userId,
             status: 'active', // Turant active
             isActive: true,
             // ✅ Ensure defaults
@@ -31,12 +32,12 @@ router.post('/shops', auth, async (req, res) => {
 });
 
 // ✅ GET MY SHOPS - Check karne ke liye user ki shop hai ya nahi
-router.get('/my-shops', auth, async (req, res) => {
+router.get('/my-shops', authenticateToken, async (req, res) => {
     try {
         const shops = await Shop.find({
             $or: [
-                { ownerId: req.user.id },
-                { createdBy: req.user.id }
+                { ownerId: req.userId },
+                { createdBy: req.userId }
             ]
         });
         res.json(shops);
@@ -45,7 +46,74 @@ router.get('/my-shops', auth, async (req, res) => {
     }
 });
 
-// ===== SHOP DETAILS =====
+// ✅ PUBLIC SHOPS - Frontend ke liye simple endpoint - UPAR MOVE KIYA
+router.get('/public', async (req, res) => {
+    try {
+        const { shopType, categoryId, serviceType } = req.query;
+
+        let query = {
+            status: { $in: ['approved', 'active'] }, // ✅ Purani-nayi dono
+            isActive: true
+        };
+
+        if (shopType) query.shopType = shopType;
+        if (categoryId) query.categoryId = categoryId;
+        if (serviceType) query.serviceType = serviceType;
+
+        const shops = await Shop.find(query)
+      .select('-ownerId -approvedBy -rejectionReason -email -phone')
+      .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+      .limit(100)
+      .lean();
+
+        res.json({
+            success: true,
+            count: shops.length,
+            data: shops
+        });
+
+    } catch (err) {
+        console.error('❌ Public shops error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ===== NEARBY SHOPS - ✅ LOCATION FILTER HATA DIYA, SAB SHOPS RETURN KAREGA
+router.get('/nearby', async (req, res) => {
+    try {
+        const { type } = req.query;
+
+        // ✅ Base query - sab approved + active shops
+        let query = {
+            status: { $in: ['active', 'approved'] },
+            isActive: true
+        };
+
+        if (type) query.shopType = type;
+
+        console.log('🔍 Fetching ALL shops - No location filter');
+
+        const shops = await Shop.find(query)
+      .select('-ownerId -approvedBy -rejectionReason -email')
+      .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+      .limit(100)
+      .lean();
+
+        console.log(`✅ Returning ${shops.length} shops`);
+
+        res.json({
+            success: true,
+            count: shops.length,
+            data: shops
+        });
+
+    } catch (err) {
+        console.error('❌ Nearby shops error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ===== SHOP DETAILS ===== YE AB /public KE BAAD HAI
 router.get('/shops/:id', async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id);
@@ -57,16 +125,16 @@ router.get('/shops/:id', async (req, res) => {
 });
 
 // ===== DASHBOARD STATS =====
-router.get('/shops/:shopId/stats', auth, async (req, res) => {
+router.get('/shops/:shopId/stats', authenticateToken, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         // Verify owner/manager
-        const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isOwner = shop.ownerId?.toString() === req.userId || shop.createdBy?.toString() === req.userId;
+        const isManager = shop.managerId?.toString() === req.userId;
 
-        if (!isOwner &&!isManager && req.user.role!== 'admin') {
+        if (!isOwner &&!isManager && req.user?.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -121,7 +189,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
 
         const products = (shop.items || []).map((item, index) => ({
             _id: item._id || index,
-           ...item.toObject? item.toObject() : item
+          ...item.toObject? item.toObject() : item
         }));
 
         res.json(products);
@@ -131,7 +199,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
 });
 
 // ===== GET SINGLE PRODUCT =====
-router.get('/products/:shopId/:productId', auth, async (req, res) => {
+router.get('/products/:shopId/:productId', authenticateToken, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
@@ -146,7 +214,7 @@ router.get('/products/:shopId/:productId', auth, async (req, res) => {
 });
 
 // ===== CREATE PRODUCT - Push to items[] =====
-router.post('/products', auth, async (req, res) => {
+router.post('/products', authenticateToken, async (req, res) => {
     try {
         const { shopId,...productData } = req.body;
 
@@ -154,10 +222,10 @@ router.post('/products', auth, async (req, res) => {
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         // Verify ownership
-        const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isOwner = shop.ownerId?.toString() === req.userId || shop.createdBy?.toString() === req.userId;
+        const isManager = shop.managerId?.toString() === req.userId;
 
-        if (!isOwner &&!isManager && req.user.role!== 'admin') {
+        if (!isOwner &&!isManager && req.user?.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -172,15 +240,15 @@ router.post('/products', auth, async (req, res) => {
 });
 
 // ===== UPDATE PRODUCT - Update in items[] =====
-router.put('/products/:shopId/:productId', auth, async (req, res) => {
+router.put('/products/:shopId/:productId', authenticateToken, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
-        const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isOwner = shop.ownerId?.toString() === req.userId || shop.createdBy?.toString() === req.userId;
+        const isManager = shop.managerId?.toString() === req.userId;
 
-        if (!isOwner &&!isManager && req.user.role!== 'admin') {
+        if (!isOwner &&!isManager && req.user?.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -197,15 +265,15 @@ router.put('/products/:shopId/:productId', auth, async (req, res) => {
 });
 
 // ===== DELETE PRODUCT - Remove from items[] =====
-router.delete('/products/:shopId/:productId', auth, async (req, res) => {
+router.delete('/products/:shopId/:productId', authenticateToken, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
-        const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isOwner = shop.ownerId?.toString() === req.userId || shop.createdBy?.toString() === req.userId;
+        const isManager = shop.managerId?.toString() === req.userId;
 
-        if (!isOwner &&!isManager && req.user.role!== 'admin') {
+        if (!isOwner &&!isManager && req.user?.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -219,15 +287,15 @@ router.delete('/products/:shopId/:productId', auth, async (req, res) => {
 });
 
 // ===== UPDATE SHOP =====
-router.put('/shops/:id', auth, async (req, res) => {
+router.put('/shops/:id', authenticateToken, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
-        const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isOwner = shop.ownerId?.toString() === req.userId || shop.createdBy?.toString() === req.userId;
+        const isManager = shop.managerId?.toString() === req.userId;
 
-        if (!isOwner &&!isManager && req.user.role!== 'admin') {
+        if (!isOwner &&!isManager && req.user?.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -267,56 +335,21 @@ router.put('/shops/:id', auth, async (req, res) => {
     }
 });
 
-// ===== NEARBY SHOPS - ✅ LOCATION FILTER HATA DIYA, SAB SHOPS RETURN KAREGA
-router.get('/nearby', async (req, res) => {
-    try {
-        const { type } = req.query;
-
-        // ✅ Base query - sab approved + active shops
-        let query = {
-            status: { $in: ['active', 'approved'] },
-            isActive: true
-        };
-
-        if (type) query.shopType = type;
-
-        console.log('🔍 Fetching ALL shops - No location filter');
-
-        const shops = await Shop.find(query)
-       .select('-ownerId -approvedBy -rejectionReason -email')
-       .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-       .limit(100)
-       .lean();
-
-        console.log(`✅ Returning ${shops.length} shops`);
-
-        res.json({
-            success: true,
-            count: shops.length,
-            data: shops
-        });
-
-    } catch (err) {
-        console.error('❌ Nearby shops error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
 // ✅ Dynamic shop location update - 50m tracking ke liye
-router.put('/shops/:id/update-location', auth, async (req, res) => {
+router.put('/shops/:id/update-location', authenticateToken, async (req, res) => {
     try {
-        const { coordinates } = req.body; // [lng][lat]
+        const { coordinates } = req.body; // [lng, lat]
 
         if (!coordinates || coordinates.length!== 2) {
-            return res.status(400).json({ error: 'coordinates [lng][lat] required' });
+            return res.status(400).json({ error: 'coordinates [lng, lat] required' });
         }
 
         const shop = await Shop.findById(req.params.id);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         // Verify owner
-        const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        if (!isOwner && req.user.role!== 'admin') {
+        const isOwner = shop.ownerId?.toString() === req.userId || shop.createdBy?.toString() === req.userId;
+        if (!isOwner && req.user?.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -342,38 +375,6 @@ router.put('/shops/:id/update-location', auth, async (req, res) => {
         });
     } catch (err) {
         console.error('Update location error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ✅ PUBLIC SHOPS - Frontend ke liye simple endpoint
-router.get('/public', async (req, res) => {
-    try {
-        const { shopType, categoryId, serviceType } = req.query;
-
-        let query = {
-            status: { $in: ['approved', 'active'] },
-            isActive: true
-        };
-
-        if (shopType) query.shopType = shopType;
-        if (categoryId) query.categoryId = categoryId;
-        if (serviceType) query.serviceType = serviceType;
-
-        const shops = await Shop.find(query)
-       .select('-ownerId -approvedBy -rejectionReason -email -phone')
-       .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-       .limit(100)
-       .lean();
-
-        res.json({
-            success: true,
-            count: shops.length,
-            data: shops
-        });
-
-    } catch (err) {
-        console.error('❌ Public shops error:', err);
         res.status(500).json({ error: err.message });
     }
 });
