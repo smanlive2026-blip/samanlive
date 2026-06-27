@@ -2,153 +2,519 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Shop View - SAMANLIVE</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #f8fafc; }
-        .loading { text-align: center; padding: 60px 20px; color: #64748b; }
-        .loading-spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        body { background: #f1f5f9; padding-bottom: 80px; }
+        button { cursor: pointer; border: none; }
+
+        /* Loading */
+       .loading { text-align: center; padding: 60px 20px; color: #64748b; }
+       .loading-spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .shop-header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px 20px; }
-        .shop-logo-wrap { width: 90px; height: 90px; border-radius: 16px; background: white; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 40px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
-        .shop-logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
-        .shop-name { font-size: 26px; font-weight: 800; text-align: center; margin-bottom: 6px; }
-        .shop-city { text-align: center; opacity: 0.9; font-size: 14px; }
-        .shop-type-badge { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; display: inline-block; margin-top: 8px; }
-        
-        .shop-info { background: white; margin: 15px; border-radius: 16px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-        .info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
-        .info-row:last-child { margin-bottom: 0; }
-        .info-icon { font-size: 20px; }
-        .info-text { flex: 1; }
-        .info-label { font-size: 12px; color: #64748b; }
-        .info-value { font-size: 15px; font-weight: 600; color: #1e293b; }
-        
-        .products-section { padding: 0 15px 20px; }
-        .section-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 15px; padding: 0 5px; }
-        .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .product-card { background: white; border-radius: 14px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .product-img { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; background: #f1f5f9; }
-        .product-name { font-weight: 600; font-size: 14px; margin: 8px 0 4px; color: #1e293b; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .product-price { color: #1e40af; font-weight: 700; font-size: 16px; }
-        .no-products { text-align: center; padding: 40px 20px; color: #94a3b8; grid-column: 1 / -1; }
-        
-        .back-btn { position: fixed; top: 15px; left: 15px; background: rgba(255,255,255,0.9); border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        /* Header Banner */
+       .shop-banner { position: relative; height: 180px; background: linear-gradient(135deg, #667eea, #764ba2); }
+       .shop-banner img { width: 100%; height: 100%; object-fit: cover; opacity: 0.3; }
+       .banner-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); }
+
+        /* Shop Info Card */
+       .shop-card { background: white; margin: -30px 15px; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); position: relative; z-index: 10; }
+       .shop-top { display: flex; gap: 15px; margin-bottom: 15px; }
+       .shop-logo { width: 70px; height: 70px; border-radius: 14px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 32px; overflow: hidden; flex-shrink: 0; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+       .shop-logo img { width: 100%; height: 100%; object-fit: cover; }
+       .shop-details { flex: 1; }
+       .shop-name { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+       .shop-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+       .badge { background: #f1f5f9; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; color: #475569; }
+       .badge.green { background: #dcfce7; color: #166534; }
+       .rating { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: #f59e0b; }
+
+        /* Action Buttons */
+       .shop-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
+       .action-btn { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 12px; text-align: center; font-size: 11px; font-weight: 600; color: #475569; }
+       .action-btn:active { background: #e2e8f0; }
+       .action-icon { font-size: 20px; margin-bottom: 4px; }
+
+        /* Info Section */
+       .info-section { background: white; margin: 0 15px 15px; border-radius: 16px; padding: 18px; }
+       .info-row { display: flex; gap: 12px; margin-bottom: 14px; }
+       .info-row:last-child { margin-bottom: 0; }
+       .info-icon { font-size: 18px; }
+       .info-label { font-size: 11px; color: #64748b; margin-bottom: 2px; }
+       .info-value { font-size: 14px; font-weight: 600; color: #0f172a; }
+
+        /* Search & Filter */
+       .search-bar { background: white; margin: 0 15px 15px; border-radius: 14px; padding: 12px; display: flex; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+       .search-input { flex: 1; border: none; outline: none; font-size: 15px; }
+       .filter-chips { display: flex; gap: 8px; overflow-x: auto; padding: 0 15px 15px; }
+       .chip { background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #475569; white-space: nowrap; }
+       .chip.active { background: #667eea; color: white; border-color: #667eea; }
+
+        /* Products */
+       .products-section { padding: 0 15px; }
+       .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+       .section-title { font-size: 18px; font-weight: 800; color: #0f172a; }
+       .sort-btn { font-size: 13px; color: #667eea; font-weight: 600; }
+       .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+       .product-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.06); position: relative; }
+       .product-img-wrap { position: relative; width: 100%; height: 140px; background: #f8fafc; }
+       .product-img { width: 100%; height: 100%; object-fit: cover; }
+       .discount-badge { position: absolute; top: 8px; left: 8px; background: #ef4444; color: white; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+       .wishlist-btn { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; background: rgba(255,255,255,0.95); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+       .product-body { padding: 10px; }
+       .product-name { font-weight: 600; font-size: 13px; color: #0f172a; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+       .product-rating { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #64748b; margin-bottom: 6px; }
+       .price-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
+       .price { font-size: 17px; font-weight: 800; color: #0f172a; }
+       .mrp { font-size: 13px; color: #94a3b8; text-decoration: line-through; }
+       .add-btn { width: 100%; background: #667eea; color: white; padding: 9px; border-radius: 10px; font-weight: 700; font-size: 13px; }
+       .add-btn:active { background: #5568d3; }
+       .qty-control { display: flex; align-items: center; gap: 12px; justify-content: center; }
+       .qty-btn { width: 32px; height: 32px; border-radius: 8px; background: #f1f5f9; font-size: 18px; font-weight: 700; color: #667eea; }
+       .qty-value { font-weight: 700; font-size: 15px; min-width: 20px; text-align: center; }
+
+        /* Bottom Cart Bar */
+       .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); padding: 12px 15px; display: flex; align-items: center; gap: 12px; z-index: 100; }
+       .cart-info { flex: 1; }
+       .cart-count { font-size: 13px; color: #64748b; }
+       .cart-total { font-size: 18px; font-weight: 800; color: #0f172a; }
+       .checkout-btn { background: #667eea; color: white; padding: 14px 28px; border-radius: 12px; font-weight: 700; font-size: 15px; }
+
+        /* Cart Sidebar */
+       .cart-sidebar { position: fixed; top: 0; right: -100%; width: 100%; max-width: 400px; height: 100%; background: white; z-index: 1000; transition: right 0.3s; overflow-y: auto; }
+       .cart-sidebar.open { right: 0; }
+       .cart-header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white; z-index: 10; }
+       .cart-title { font-size: 20px; font-weight: 800; }
+       .close-cart { font-size: 28px; color: #64748b; }
+       .cart-items { padding: 15px; }
+       .cart-item { display: flex; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 12px; margin-bottom: 12px; }
+       .cart-item-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; }
+       .cart-item-body { flex: 1; }
+       .cart-item-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+       .cart-item-price { font-weight: 700; color: #667eea; }
+       .cart-item-qty { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+
+        /* Bill Details */
+       .bill-section { padding: 15px; border-top: 1px solid #e2e8f0; }
+       .bill-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+       .bill-label { color: #64748b; }
+       .bill-value { font-weight: 600; color: #0f172a; }
+       .bill-total { border-top: 2px solid #e2e8f0; padding-top: 10px; margin-top: 10px; }
+       .bill-total.bill-value { font-size: 18px; font-weight: 800; }
+
+        /* Checkout */
+       .checkout-section { padding: 15px; }
+       .checkout-btn-full { width: 100%; background: #10b981; color: white; padding: 16px; border-radius: 12px; font-weight: 700; font-size: 16px; margin-top: 15px; }
+
+        /* Back Button */
+       .back-btn { position: fixed; top: 15px; left: 15px; background: rgba(255,255,255,0.95); width: 40px; height: 40px; border-radius: 50%; font-size: 20px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+
+        /* Empty State */
+       .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+       .empty-icon { font-size: 60px; margin-bottom: 15px; }
+
+        /* Overlay */
+       .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+       .overlay.show { display: block; }
     </style>
 </head>
 <body>
     <button class="back-btn" onclick="window.history.back()">←</button>
-    
+
     <div id="loading" class="loading">
         <div class="loading-spinner"></div>
         Loading shop...
     </div>
-    
+
     <div id="shopContainer" style="display:none;">
-        <div class="shop-header">
-            <div class="shop-logo-wrap" id="shopLogo"></div>
-            <div class="shop-name" id="shopName"></div>
-            <div class="shop-city">
-                <span id="shopAddress"></span>
-                <div><span class="shop-type-badge" id="shopType"></span></div>
+        <!-- Banner -->
+        <div class="shop-banner">
+            <img id="shopBanner" src="" alt="">
+            <div class="banner-overlay"></div>
+        </div>
+
+        <!-- Shop Card -->
+        <div class="shop-card">
+            <div class="shop-top">
+                <div class="shop-logo" id="shopLogo"></div>
+                <div class="shop-details">
+                    <div class="shop-name" id="shopName"></div>
+                    <div class="shop-meta">
+                        <span class="rating">⭐ <span id="shopRating">4.5</span></span>
+                        <span class="badge" id="shopType"></span>
+                        <span class="badge green" id="shopStatus">Open</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="shop-actions">
+                <button class="action-btn" onclick="callShop()">
+                    <div class="action-icon">📞</div>
+                    Call
+                </button>
+                <button class="action-btn" onclick="shareShop()">
+                    <div class="action-icon">📤</div>
+                    Share
+                </button>
+                <button class="action-btn" onclick="openMap()">
+                    <div class="action-icon">📍</div>
+                    Direction
+                </button>
+                <button class="action-btn" onclick="showReviews()">
+                    <div class="action-icon">⭐</div>
+                    Reviews
+                </button>
             </div>
         </div>
-        
-        <div class="shop-info" id="shopInfo"></div>
-        
+
+        <!-- Info -->
+        <div class="info-section" id="shopInfo"></div>
+
+        <!-- Search -->
+        <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search products...">
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-chips" id="categoryChips"></div>
+
+        <!-- Products -->
         <div class="products-section">
-            <div class="section-title">Products</div>
+            <div class="section-header">
+                <div class="section-title">Products</div>
+                <button class="sort-btn" onclick="showSortOptions()">Sort ⇅</button>
+            </div>
             <div class="product-grid" id="productGrid"></div>
         </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div class="overlay" id="overlay" onclick="closeCart()"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <div class="cart-title">Your Cart</div>
+            <button class="close-cart" onclick="closeCart()">×</button>
+        </div>
+        <div class="cart-items" id="cartItems"></div>
+        <div class="bill-section" id="billSection"></div>
+        <div class="checkout-section">
+            <button class="checkout-btn-full" onclick="proceedCheckout()">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <!-- Bottom Cart Bar -->
+    <div class="cart-bar" id="cartBar" style="display:none;">
+        <div class="cart-info">
+            <div class="cart-count" id="cartCount">0 items</div>
+            <div class="cart-total" id="cartTotal">₹0</div>
+        </div>
+        <button class="checkout-btn" onclick="openCart()">View Cart</button>
     </div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const shopId = params.get('shopId');
-        
+        let shopData = null;
+        let allProducts = [];
+        let cart = JSON.parse(localStorage.getItem('samanlive_cart_' + shopId) || '{}');
+        let wishlist = JSON.parse(localStorage.getItem('samanlive_wishlist') || '[]');
+        let currentFilter = 'all';
+
         async function loadShop() {
             if(!shopId) {
                 document.getElementById('loading').innerHTML = 'Shop ID missing';
                 return;
             }
-            
+
             try {
-                // ✅ FINAL FIX: /shop/ hata ke /public use kiya - ye route 100% kaam karta hai
                 const res = await fetch(`/api/local-market/public`);
                 const data = await res.json();
-                
-                console.log('API Response:', data);
-                
+
                 if(!data.success) throw new Error(data.message || 'Failed to fetch shops');
-                
+
                 const shops = data.data || data;
-                const shop = shops.find(s => s._id === shopId);
-                
-                if(!shop) throw new Error('Shop not found in database');
-                
-                // Header
-                document.getElementById('shopName').textContent = shop.shopName || shop.name;
-                document.getElementById('shopAddress').textContent = shop.address || shop.city || 'Location';
-                document.getElementById('shopType').textContent = (shop.shopType || 'general').toUpperCase();
-                document.getElementById('shopLogo').innerHTML = shop.logo ? 
-                    `<img src="${shop.logo}" alt="Logo">` : 
-                    (shop.icon || '🏪');
-                
-                // Info
-                let infoHTML = '';
-                if(shop.phone) {
-                    infoHTML += `<div class="info-row">
-                        <div class="info-icon">📞</div>
-                        <div class="info-text">
-                            <div class="info-label">Phone</div>
-                            <div class="info-value">${shop.phone}</div>
-                        </div>
-                    </div>`;
-                }
-                if(shop.timing) {
-                    infoHTML += `<div class="info-row">
-                        <div class="info-icon">🕐</div>
-                        <div class="info-text">
-                            <div class="info-label">Timing</div>
-                            <div class="info-value">${shop.timing}</div>
-                        </div>
-                    </div>`;
-                }
-                if(shop.description) {
-                    infoHTML += `<div class="info-row">
-                        <div class="info-icon">📝</div>
-                        <div class="info-text">
-                            <div class="info-label">About</div>
-                            <div class="info-value">${shop.description}</div>
-                        </div>
-                    </div>`;
-                }
-                document.getElementById('shopInfo').innerHTML = infoHTML || '<div style="text-align:center;color:#94a3b8;">No additional info</div>';
-                
-                // Products
-                const products = shop.products || [];
-                if(products.length === 0) {
-                    document.getElementById('productGrid').innerHTML = '<div class="no-products">No products available yet</div>';
-                } else {
-                    document.getElementById('productGrid').innerHTML = products.map(p => `
-                        <div class="product-card">
-                            <img src="${p.image || '/assets/placeholder.png'}" class="product-img" onerror="this.src='/assets/placeholder.png'">
-                            <div class="product-name">${p.name}</div>
-                            <div class="product-price">₹${p.price}</div>
-                        </div>
-                    `).join('');
-                }
-                
+                shopData = shops.find(s => s._id === shopId);
+
+                if(!shopData) throw new Error('Shop not found');
+
+                allProducts = shopData.products || [];
+
+                renderShop();
+                renderProducts();
+                updateCartUI();
+
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('shopContainer').style.display = 'block';
-                
+
             } catch(e) {
                 console.error('Error:', e);
                 document.getElementById('loading').innerHTML = `Failed to load shop<br><small style="color:#ef4444;">${e.message}</small><br><br><button onclick="location.reload()" style="padding:8px 16px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;">Retry</button>`;
             }
         }
+
+        function renderShop() {
+            document.getElementById('shopName').textContent = shopData.shopName || shopData.name;
+            document.getElementById('shopType').textContent = (shopData.shopType || 'general').toUpperCase();
+            document.getElementById('shopRating').textContent = shopData.rating || '4.5';
+            document.getElementById('shopLogo').innerHTML = shopData.logo?
+                `<img src="${shopData.logo}" alt="Logo">` :
+                (shopData.icon || '🏪');
+
+            if(shopData.banner) {
+                document.getElementById('shopBanner').src = shopData.banner;
+            }
+
+            // Info
+            let infoHTML = '';
+            if(shopData.address) {
+                infoHTML += `<div class="info-row">
+                    <div class="info-icon">📍</div>
+                    <div class="info-text">
+                        <div class="info-label">Address</div>
+                        <div class="info-value">${shopData.address}</div>
+                    </div>
+                </div>`;
+            }
+            if(shopData.timing) {
+                infoHTML += `<div class="info-row">
+                    <div class="info-icon">🕐</div>
+                    <div class="info-text">
+                        <div class="info-label">Timing</div>
+                        <div class="info-value">${shopData.timing}</div>
+                    </div>
+                </div>`;
+            }
+            if(shopData.description) {
+                infoHTML += `<div class="info-row">
+                    <div class="info-icon">📝</div>
+                    <div class="info-text">
+                        <div class="info-label">About</div>
+                        <div class="info-value">${shopData.description}</div>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('shopInfo').innerHTML = infoHTML;
+
+            // Categories
+            const categories = [...new Set(allProducts.map(p => p.category || 'General'))];
+            document.getElementById('categoryChips').innerHTML = `
+                <button class="chip ${currentFilter==='all'?'active':''}" onclick="filterProducts('all')">All</button>
+                ${categories.map(cat => `<button class="chip ${currentFilter===cat?'active':''}" onclick="filterProducts('${cat}')">${cat}</button>`).join('')}
+            `;
+        }
+
+        function renderProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = allProducts;
+
+            if(currentFilter!== 'all') {
+                filtered = filtered.filter(p => (p.category || 'General') === currentFilter);
+            }
+            if(searchTerm) {
+                filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm));
+            }
+
+            if(filtered.length === 0) {
+                document.getElementById('productGrid').innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div>No products found</div></div>';
+                return;
+            }
+
+            document.getElementById('productGrid').innerHTML = filtered.map(p => {
+                const qty = cart[p._id] || 0;
+                const discount = p.mrp && p.price < p.mrp? Math.round((p.mrp - p.price) / p.mrp * 100) : 0;
+                const isWishlisted = wishlist.includes(p._id);
+
+                return `
+                    <div class="product-card">
+                        <div class="product-img-wrap">
+                            <img src="${p.image || '/assets/placeholder.png'}" class="product-img" onerror="this.src='/assets/placeholder.png'">
+                            ${discount > 0? `<div class="discount-badge">${discount}% OFF</div>` : ''}
+                            <button class="wishlist-btn" onclick="toggleWishlist('${p._id}')">${isWishlisted?'❤️':'🤍'}</button>
+                        </div>
+                        <div class="product-body">
+                            <div class="product-name">${p.name}</div>
+                            <div class="product-rating">⭐ ${p.rating || '4.2'} | ${p.reviews || 0} reviews</div>
+                            <div class="price-row">
+                                <span class="price">₹${p.price}</span>
+                                ${p.mrp? `<span class="mrp">₹${p.mrp}</span>` : ''}
+                            </div>
+                            ${qty === 0?
+                                `<button class="add-btn" onclick="addToCart('${p._id}')">ADD</button>` :
+                                `<div class="qty-control">
+                                    <button class="qty-btn" onclick="updateQty('${p._id}', -1)">-</button>
+                                    <span class="qty-value">${qty}</span>
+                                    <button class="qty-btn" onclick="updateQty('${p._id}', 1)">+</button>
+                                </div>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addToCart(productId) {
+            cart[productId] = 1;
+            saveCart();
+            renderProducts();
+            updateCartUI();
+        }
+
+        function updateQty(productId, delta) {
+            cart[productId] = (cart[productId] || 0) + delta;
+            if(cart[productId] <= 0) delete cart[productId];
+            saveCart();
+            renderProducts();
+            updateCartUI();
+            renderCartItems();
+        }
+
+        function saveCart() {
+            localStorage.setItem('samanlive_cart_' + shopId, JSON.stringify(cart));
+        }
+
+        function updateCartUI() {
+            const items = Object.keys(cart).length;
+            if(items === 0) {
+                document.getElementById('cartBar').style.display = 'none';
+                return;
+            }
+
+            let total = 0;
+            let count = 0;
+            Object.entries(cart).forEach(([id, qty]) => {
+                const p = allProducts.find(prod => prod._id === id);
+                if(p) {
+                    total += p.price * qty;
+                    count += qty;
+                }
+            });
+
+            document.getElementById('cartCount').textContent = `${count} item${count>1?'s':''}`;
+            document.getElementById('cartTotal').textContent = `₹${total}`;
+            document.getElementById('cartBar').style.display = 'flex';
+        }
+
+        function openCart() {
+            renderCartItems();
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('cartSidebar').classList.add('open');
+        }
+
+        function closeCart() {
+            document.getElementById('overlay').classList.remove('show');
+            document.getElementById('cartSidebar').classList.remove('open');
+        }
+
+        function renderCartItems() {
+            const items = Object.entries(cart);
+            if(items.length === 0) {
+                document.getElementById('cartItems').innerHTML = '<div class="empty-state"><div class="empty-icon">🛒</div><div>Cart is empty</div></div>';
+                document.getElementById('billSection').innerHTML = '';
+                return;
+            }
+
+            let subtotal = 0;
+            document.getElementById('cartItems').innerHTML = items.map(([id, qty]) => {
+                const p = allProducts.find(prod => prod._id === id);
+                if(!p) return '';
+                subtotal += p.price * qty;
+                return `
+                    <div class="cart-item">
+                        <img src="${p.image || '/assets/placeholder.png'}" class="cart-item-img">
+                        <div class="cart-item-body">
+                            <div class="cart-item-name">${p.name}</div>
+                            <div class="cart-item-price">₹${p.price}</div>
+                            <div class="cart-item-qty">
+                                <button class="qty-btn" onclick="updateQty('${id}', -1)">-</button>
+                                <span class="qty-value">${qty}</span>
+                                <button class="qty-btn" onclick="updateQty('${id}', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const delivery = subtotal > 500? 0 : 40;
+            const tax = Math.round(subtotal * 0.05);
+            const total = subtotal + delivery + tax;
+
+            document.getElementById('billSection').innerHTML = `
+                <div class="bill-row">
+                    <span class="bill-label">Item Total</span>
+                    <span class="bill-value">₹${subtotal}</span>
+                </div>
+                <div class="bill-row">
+                    <span class="bill-label">Delivery Fee</span>
+                    <span class="bill-value">${delivery===0?'FREE':`₹${delivery}`}</span>
+                </div>
+                <div class="bill-row">
+                    <span class="bill-label">Tax & Charges</span>
+                    <span class="bill-value">₹${tax}</span>
+                </div>
+                <div class="bill-row bill-total">
+                    <span class="bill-label">To Pay</span>
+                    <span class="bill-value">₹${total}</span>
+                </div>
+            `;
+        }
+
+        function toggleWishlist(productId) {
+            const idx = wishlist.indexOf(productId);
+            if(idx > -1) wishlist.splice(idx, 1);
+            else wishlist.push(productId);
+            localStorage.setItem('samanlive_wishlist', JSON.stringify(wishlist));
+            renderProducts();
+        }
+
+        function filterProducts(cat) {
+            currentFilter = cat;
+            renderShop();
+            renderProducts();
+        }
+
+        function proceedCheckout() {
+            alert('Checkout feature coming soon! 🚀\n\nCart items: ' + Object.keys(cart).length);
+        }
+
+        function callShop() {
+            if(shopData.phone) window.location.href = `tel:${shopData.phone}`;
+            else alert('Phone number not available');
+        }
+
+        function shareShop() {
+            if(navigator.share) {
+                navigator.share({
+                    title: shopData.shopName,
+                    text: `Check out ${shopData.shopName} on SAMANLIVE`,
+                    url: window.location.href
+                });
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copied!');
+            }
+        }
+
+        function openMap() {
+            if(shopData.lat && shopData.lng) {
+                window.open(`https://www.google.com/maps?q=${shopData.lat},${shopData.lng}`);
+            } else {
+                alert('Location not available');
+            }
+        }
+
+        function showReviews() {
+            alert('Reviews feature coming soon! ⭐');
+        }
+
+        function showSortOptions() {
+            alert('Sort: Price Low-High, Popular, Newest');
+        }
+
+        document.getElementById('searchInput').addEventListener('input', renderProducts);
+
         loadShop();
     </script>
 </body>
