@@ -3,7 +3,6 @@
 // app.js se currentUser + LocationManager use karega
 // ========================================
 
-let currentUser = null;
 let allNotifications = [];
 let unreadCount = 0;
 
@@ -343,7 +342,7 @@ function setupNotificationListener() {
     // Agar Socket.io use karna hai to:
     // if (window.io) {
     // const socket = io();
-    // socket.on(`notification:${currentUser._id}`, (data) => {
+    // socket.on(`notification:${window.currentUser._id}`, (data) => {
     // allNotifications.unshift(data);
     // updateUnreadCount();
     // renderNotifications();
@@ -409,7 +408,7 @@ style.textContent = `
         from { opacity: 1; transform: translateX(-50%) translateY(0); }
         to { opacity: 0; transform: translateX(-50%) translateY(20px); }
     }
-   .notification-item {
+  .notification-item {
         position: relative;
         display: flex;
         align-items: start;
@@ -419,19 +418,19 @@ style.textContent = `
         cursor: pointer;
         transition: background 0.2s;
     }
-   .notification-item:hover {
+  .notification-item:hover {
         background: #f8fafc;
     }
-   .notification-item.unread {
+  .notification-item.unread {
         background: #f0f9ff;
         border-left: 3px solid #667eea;
     }
-   .notification-main {
+  .notification-main {
         flex: 1;
         display: flex;
         gap: 12px;
     }
-   .notification-icon {
+  .notification-icon {
         width: 44px;
         height: 44px;
         border-radius: 12px;
@@ -442,26 +441,26 @@ style.textContent = `
         background: #eef2ff;
         flex-shrink: 0;
     }
-   .notification-content {
+  .notification-content {
         flex: 1;
     }
-   .notification-title {
+  .notification-title {
         font-size: 15px;
         font-weight: 600;
         color: #1e293b;
         margin-bottom: 4px;
     }
-   .notification-text {
+  .notification-text {
         font-size: 13px;
         color: #64748b;
         line-height: 1.5;
         margin-bottom: 6px;
     }
-   .notification-time {
+  .notification-time {
         font-size: 12px;
         color: #94a3b8;
     }
-   .unread-dot {
+  .unread-dot {
         width: 10px;
         height: 10px;
         background: #667eea;
@@ -469,7 +468,7 @@ style.textContent = `
         flex-shrink: 0;
         margin-top: 4px;
     }
-   .delete-notif-btn {
+  .delete-notif-btn {
         background: #fee2e2;
         border: none;
         width: 36px;
@@ -481,10 +480,10 @@ style.textContent = `
         opacity: 0;
         transition: opacity 0.2s;
     }
-   .notification-item:hover.delete-notif-btn {
+  .notification-item:hover.delete-notif-btn {
         opacity: 1;
     }
-   .modal-overlay {
+  .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
@@ -497,25 +496,25 @@ style.textContent = `
         justify-content: center;
         padding: 20px;
     }
-   .modal-box {
+  .modal-box {
         background: white;
         border-radius: 16px;
         width: 100%;
         max-width: 500px;
     }
-   .modal-header {
+  .modal-header {
         padding: 20px 24px;
         border-bottom: 1px solid #f1f5f9;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
-   .modal-header h3 {
+  .modal-header h3 {
         margin: 0;
         font-size: 18px;
         color: #1e293b;
     }
-   .modal-header button {
+  .modal-header button {
         background: #f1f5f9;
         border: none;
         width: 32px;
@@ -525,7 +524,7 @@ style.textContent = `
         font-size: 20px;
         color: #64748b;
     }
-   .modal-body {
+  .modal-body {
         padding: 24px;
     }
 `;

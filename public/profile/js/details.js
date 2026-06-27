@@ -3,7 +3,6 @@
 // app.js se LocationManager + currentUser use karega
 // ========================================
 
-let currentUser = null;
 let newProfilePic = null;
 
 // ========================================
@@ -48,19 +47,19 @@ window.addEventListener('DOMContentLoaded', async () => {
 // LOAD USER DATA - Form me fill karo
 // ========================================
 function loadUserData() {
-    document.getElementById('userName').value = currentUser.name || '';
-    document.getElementById('userEmail').value = currentUser.email || '';
-    document.getElementById('userPhone').value = currentUser.phone || '';
-    document.getElementById('userAddress').value = currentUser.address?.street || '';
-    document.getElementById('userCity').value = currentUser.address?.city || '';
-    document.getElementById('userPincode').value = currentUser.address?.pincode || '';
-    document.getElementById('userLang').value = currentUser.language || 'hi';
-    document.getElementById('userProfilePic').src = currentUser.profilePic || '/assets/default-avatar.png';
+    document.getElementById('userName').value = window.currentUser.name || '';
+    document.getElementById('userEmail').value = window.currentUser.email || '';
+    document.getElementById('userPhone').value = window.currentUser.phone || '';
+    document.getElementById('userAddress').value = window.currentUser.address?.street || '';
+    document.getElementById('userCity').value = window.currentUser.address?.city || '';
+    document.getElementById('userPincode').value = window.currentUser.address?.pincode || '';
+    document.getElementById('userLang').value = window.currentUser.language || 'hi';
+    document.getElementById('userProfilePic').src = window.currentUser.profilePic || '/assets/default-avatar.png';
 
     // Agar purani location hai to dikha do
-    if (currentUser.location?.coordinates) {
-        const lat = currentUser.location.coordinates[1];
-        const lng = currentUser.location.coordinates[0];
+    if (window.currentUser.location?.coordinates) {
+        const lat = window.currentUser.location.coordinates[1];
+        const lng = window.currentUser.location.coordinates[0];
         updateLocationUI(lat, lng, false);
     }
 }

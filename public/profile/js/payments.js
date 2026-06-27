@@ -3,7 +3,6 @@
 // app.js se currentUser use karega
 // ========================================
 
-let currentUser = null;
 let allPayments = [];
 let selectedPaymentType = 'upi';
 
@@ -160,12 +159,12 @@ function closePaymentModal() {
 
 function resetModalForm() {
     document.getElementById('upiId').value = '';
-    document.getElementById('upiName').value = currentUser?.name || '';
+    document.getElementById('upiName').value = window.currentUser?.name || '';
     document.getElementById('cardNumber').value = '';
-    document.getElementById('cardName').value = currentUser?.name || '';
+    document.getElementById('cardName').value = window.currentUser?.name || '';
     document.getElementById('cardExpiry').value = '';
     document.getElementById('cardCvv').value = '';
-    document.getElementById('walletPhone').value = currentUser?.phone || '';
+    document.getElementById('walletPhone').value = window.currentUser?.phone || '';
     document.getElementById('setDefaultPayment').checked = false;
 }
 
@@ -238,7 +237,7 @@ async function savePayment() {
         paymentData.phone = document.getElementById('walletPhone').value.trim();
         paymentData.name = paymentData.walletType.charAt(0).toUpperCase() + paymentData.walletType.slice(1) + ' Wallet';
         
-        if (!paymentData.phone || paymentData.phone.length !== 10) {
+        if (!paymentData.phone || paymentData.phone.length!== 10) {
             alert('Please enter valid 10 digit mobile number!');
             btn.textContent = 'Save Payment Method';
             btn.disabled = false;

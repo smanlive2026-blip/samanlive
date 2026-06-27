@@ -3,7 +3,6 @@
 // app.js se currentUser use karega
 // ========================================
 
-let currentUser = null;
 let userSettings = {};
 
 // ========================================
@@ -139,9 +138,9 @@ function toggleDarkMode(enabled) {
 // CHANGE PASSWORD
 // ========================================
 function changePassword() {
-    if (!currentUser) return;
+    if (!window.currentUser) return;
 
-    const phone = currentUser.phone;
+    const phone = window.currentUser.phone;
     if (confirm(`Change Password\n\nOTP will be sent to ${phone}\n\nContinue?`)) {
         // API call for OTP
         sendPasswordResetOTP(phone);

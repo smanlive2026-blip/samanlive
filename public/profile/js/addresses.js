@@ -3,7 +3,6 @@
 // app.js se LocationManager + currentUser use karega
 // ========================================
 
-let currentUser = null;
 let allAddresses = [];
 let editingAddressId = null;
 
@@ -222,7 +221,7 @@ window.saveAddress = async function() {
 
     try {
         const url = editingAddressId
-           ? `/api/user/addresses/${editingAddressId}`
+         ? `/api/user/addresses/${editingAddressId}`
             : '/api/user/addresses';
         const method = editingAddressId? 'PUT' : 'POST';
 

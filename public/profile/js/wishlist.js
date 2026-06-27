@@ -3,7 +3,6 @@
 // app.js se currentUser use karega
 // ========================================
 
-let currentUser = null;
 let allWishlistItems = [];
 
 // ========================================

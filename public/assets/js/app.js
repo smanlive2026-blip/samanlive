@@ -12,7 +12,7 @@ let siteSettings = {};
 let userLocation = null;
 let locationIntervalId = null;
 let lastFetchedLocation = null;
-let currentUser = null;
+let currentUser = null; // ← Sirf yahi ek baar rahega
 
 // ========================================
 // LOCATION MANAGER - GLOBAL SINGLETON
@@ -563,54 +563,6 @@ function prevCampaign() {
 }
 
 // ========================================
-// SLIDER LOGIC - SHOPS
-// ========================================
-let shopIndex = 0;
-function showShop(idx) {
-    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
-    slides.forEach(s => s.classList.remove('active'));
-    if(slides[idx]) slides[idx].classList.add('active');
-    shopIndex = idx;
-}
-function nextShop() {
-    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
-    if(slides.length === 0) return;
-    shopIndex = (shopIndex + 1) % slides.length;
-    showShop(shopIndex);
-}
-function prevShop() {
-    const slides = document.querySelectorAll('#shopsContent.nearby-slide');
-    if(slides.length === 0) return;
-    shopIndex = (shopIndex - 1 + slides.length) % slides.length;
-    showShop(shopIndex);
-}
-function goToShop(idx) { showShop(idx); }
-
-// ========================================
-// SLIDER LOGIC - VIDEOS
-// ========================================
-let videoIndex = 0;
-function showVideo(idx) {
-    const slides = document.querySelectorAll('#videosContent.nearby-slide');
-    slides.forEach(s => s.classList.remove('active'));
-    if(slides[idx]) slides[idx].classList.add('active');
-    videoIndex = idx;
-}
-function nextVideo() {
-    const slides = document.querySelectorAll('#videosContent.nearby-slide');
-    if(slides.length === 0) return;
-    videoIndex = (videoIndex + 1) % slides.length;
-    showVideo(videoIndex);
-}
-function prevVideo() {
-    const slides = document.querySelectorAll('#videosContent.nearby-slide');
-    if(slides.length === 0) return;
-    videoIndex = (videoIndex - 1 + slides.length) % slides.length;
-    showVideo(videoIndex);
-}
-function goToVideo(idx) { showVideo(idx); }
-
-// ========================================
 // AUTO SLIDE - SHOPS/VIDEOS HATA DIYA AB TRAIN HAI
 // ========================================
 setInterval(nextTopAd, 5000);
@@ -720,7 +672,6 @@ loadAllData();
 // ========================================
 // USER AUTH + PROFILE SYSTEM - PERMANENT LOGIN
 // ========================================
-let currentUser = null;
 
 // CHECK IF LOGGED IN ON PAGE LOAD
 window.addEventListener('DOMContentLoaded', () => {
@@ -740,6 +691,7 @@ async function fetchUserData(token) {
         const data = await res.json();
         if (data.success) {
             currentUser = data.user;
+            window.currentUser = data.user;
             updateProfileAvatar();
         } else {
             localStorage.removeItem('userToken');
@@ -752,6 +704,8 @@ async function fetchUserData(token) {
 // UPDATE PROFILE AVATAR
 function updateProfileAvatar() {
     const avatar = document.querySelector('.profile-avatar');
+    if (!avatar) return;
+
     if (currentUser) {
         avatar.innerHTML = `<img src="${currentUser.profilePic || '/assets/default-avatar.png'}" alt="Profile">`;
         avatar.onclick = goToProfilePage;
@@ -788,6 +742,7 @@ async function loginWithPhone() {
         if (data.success) {
             localStorage.setItem('userToken', data.token);
             currentUser = data.user;
+            window.currentUser = data.user;
             closeLoginModal();
             updateProfileAvatar();
             alert('Login Success! 🎉 Ab permanent login hai.');
@@ -856,6 +811,7 @@ async function updateUserDetails() {
         const result = await res.json();
         if (result.success) {
             currentUser = result.user;
+            window.currentUser = result.user;
             alert('Details Updated! ✅');
             closeProfileModal();
             updateProfileAvatar();
@@ -931,6 +887,7 @@ function startTrainSliding() {
 }
 // Export for other pages
 window.getCurrentUser = () => currentUser;
+window.currentUser = currentUser;
 
 setTimeout(startTrainSliding, 2000);
 

@@ -28,6 +28,7 @@ function getUserLocation() {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 };
+                window.currentUserLocation = userLocation;
                 console.log('User Location:', userLocation);
                 resolve(userLocation);
             },
@@ -79,7 +80,7 @@ async function loadAllData() {
             // Shops nearby - 5km radius
             const shopsRes = await fetch(`/api/local-market/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
             nearbyServices = await shopsRes.json();
-            
+
             showUserLocationInHeader();
         } else {
             // Location nahi mili to sab dikha de
@@ -117,14 +118,14 @@ function showUserLocationInHeader() {
         locDiv.style.cssText = 'font-size:12px;color:#64748b;display:flex;align-items:center;gap:4px;';
         locDiv.innerHTML = `📍 <span id="userCity">Detecting...</span>`;
         header.querySelector('.header-left')?.appendChild(locDiv);
-        
+
         // Reverse geocode kar ke city name nikal le
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
-          .then(r => r.json())
-          .then(data => {
+         .then(r => r.json())
+         .then(data => {
                 document.getElementById('userCity').textContent = data.address.city || data.address.town || data.address.village || 'Your Area';
             })
-          .catch(() => {
+         .catch(() => {
                 document.getElementById('userCity').textContent = 'Your Area';
             });
     }

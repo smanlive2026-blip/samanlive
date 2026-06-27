@@ -3,9 +3,7 @@
 // app.js se LocationManager + currentUser use karega
 // ========================================
 
-let currentUser = null;
 let selectedIcon = '🏪';
-let allModules = [];
 let newShopData = null;
 let uploadedLogoBase64 = null;
 
@@ -28,6 +26,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 name: 'Shop Owner',
                 email: 'owner@shop.com'
             };
+            window.currentUser = currentUser;
         }
     }
 
@@ -92,6 +91,7 @@ function loadModules() {
         {id: 'common', name: 'Common Shop - General', icon: '🏪'}
     ];
 
+    select.innerHTML = '<option value="">-- Select Shop Type --</option>';
     shopTypes.forEach(m => {
         select.innerHTML += `<option value="${m.id}">${m.icon} ${m.name}</option>`;
     });
@@ -120,7 +120,7 @@ function previewLogo(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024) {
+    if (file.size > 2 * 1024 * 1024) {
         alert('Image size should be less than 2MB');
         return;
     }
@@ -197,8 +197,8 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
     const status = document.getElementById('locationCoords');
 
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-       .then(r => r.json())
-       .then(data => {
+      .then(r => r.json())
+      .then(data => {
             const city = data.address.city || data.address.town || data.address.village || 'Surat';
             const state = data.address.state || 'Gujarat';
             const pincode = data.address.postcode || '';
@@ -210,7 +210,7 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
             status.className = 'location-coords success';
             status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}${isAuto? '<br><small>Auto-updated from current location</small>' : ''}`;
         })
-       .catch(() => {
+      .catch(() => {
             document.getElementById('shopCity').value = 'Surat';
             document.getElementById('shopState').value = 'Gujarat';
             status.className = 'location-coords success';
@@ -243,9 +243,9 @@ async function submitShop() {
 
     const shopData = {
         shopName: document.getElementById('shopName').value.trim(),
-        ownerName: currentUser.name,
+        ownerName: window.currentUser.name,
         phone: document.getElementById('shopPhone').value.trim(),
-        email: currentUser.email || '',
+        email: window.currentUser.email || '',
         address: {
             line1: document.getElementById('shopAddress').value.trim(),
             line2: '',

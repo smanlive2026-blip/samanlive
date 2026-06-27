@@ -3,8 +3,6 @@
 // app.js se currentUser use karega
 // ========================================
 
-let currentUser = null;
-
 // ========================================
 // PAGE LOAD - Init
 // ========================================
@@ -141,7 +139,7 @@ function searchFAQ() {
 // CONTACT ACTIONS - Live Chat, Call, Email, WhatsApp
 // ========================================
 function startChat() {
-    const userInfo = currentUser ? `\n\nUser: ${currentUser.name}\nPhone: ${currentUser.phone}` : '';
+    const userInfo = window.currentUser ? `\n\nUser: ${window.currentUser.name}\nPhone: ${window.currentUser.phone}` : '';
     alert(`💬 Live Chat\n\nConnecting you to our support team...${userInfo}\n\nFeature coming soon! We'll notify you when live chat is available.`);
     
     // Track event - future use
@@ -156,12 +154,12 @@ function callSupport() {
 }
 
 function openEmail() {
-    const subject = currentUser 
-        ? `Support Request from ${currentUser.name}` 
+    const subject = window.currentUser 
+        ? `Support Request from ${window.currentUser.name}` 
         : 'Support Request';
     
-    const body = currentUser 
-        ? `Hi Support Team,%0D%0A%0D%0AI need help with:%0D%0A%0D%0A%0D%0AUser Details:%0D%0AName: ${currentUser.name}%0D%0APhone: ${currentUser.phone}%0D%0AEmail: ${currentUser.email || 'N/A'}%0D%0A%0D%0AThanks!`
+    const body = window.currentUser 
+        ? `Hi Support Team,%0D%0A%0D%0AI need help with:%0D%0A%0D%0A%0D%0AUser Details:%0D%0AName: ${window.currentUser.name}%0D%0APhone: ${window.currentUser.phone}%0D%0AEmail: ${window.currentUser.email || 'N/A'}%0D%0A%0D%0AThanks!`
         : `Hi Support Team,%0D%0A%0D%0AI need help with:%0D%0A%0D%0A%0D%0AThanks!`;
     
     window.location.href = `mailto:support@samanlive.com?subject=${encodeURIComponent(subject)}&body=${body}`;
@@ -169,8 +167,8 @@ function openEmail() {
 }
 
 function openWhatsApp() {
-    const userInfo = currentUser 
-        ? `\n\nMy Details:\nName: ${currentUser.name}\nPhone: ${currentUser.phone}`
+    const userInfo = window.currentUser 
+        ? `\n\nMy Details:\nName: ${window.currentUser.name}\nPhone: ${window.currentUser.phone}`
         : '';
     
     const message = `Hi, I need help with SAMANLIVE${userInfo}`;
@@ -191,7 +189,7 @@ function trackSupportEvent(eventType) {
             },
             body: JSON.stringify({
                 event: eventType,
-                userId: currentUser?._id || 'guest',
+                userId: window.currentUser?._id || 'guest',
                 timestamp: new Date().toISOString()
             })
         });
