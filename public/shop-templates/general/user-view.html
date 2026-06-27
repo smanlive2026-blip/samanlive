@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop View - SAMANLIVE</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f8fafc; }
+        .loading { text-align: center; padding: 60px 20px; color: #64748b; }
+        .loading-spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .shop-header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px 20px; }
+        .shop-logo-wrap { width: 90px; height: 90px; border-radius: 16px; background: white; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 40px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+        .shop-logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .shop-name { font-size: 26px; font-weight: 800; text-align: center; margin-bottom: 6px; }
+        .shop-city { text-align: center; opacity: 0.9; font-size: 14px; }
+        .shop-type-badge { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; display: inline-block; margin-top: 8px; }
+        
+        .shop-info { background: white; margin: 15px; border-radius: 16px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .info-row:last-child { margin-bottom: 0; }
+        .info-icon { font-size: 20px; }
+        .info-text { flex: 1; }
+        .info-label { font-size: 12px; color: #64748b; }
+        .info-value { font-size: 15px; font-weight: 600; color: #1e293b; }
+        
+        .products-section { padding: 0 15px 20px; }
+        .section-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 15px; padding: 0 5px; }
+        .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .product-card { background: white; border-radius: 14px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .product-img { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; background: #f1f5f9; }
+        .product-name { font-weight: 600; font-size: 14px; margin: 8px 0 4px; color: #1e293b; }
+        .product-price { color: #1e40af; font-weight: 700; font-size: 16px; }
+        .no-products { text-align: center; padding: 40px 20px; color: #94a3b8; }
+        
+        .back-btn { position: fixed; top: 15px; left: 15px; background: rgba(255,255,255,0.9); border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="window.history.back()">←</button>
+    
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        Loading shop...
+    </div>
+    
+    <div id="shopContainer" style="display:none;">
+        <div class="shop-header">
+            <div class="shop-logo-wrap" id="shopLogo"></div>
+            <div class="shop-name" id="shopName"></div>
+            <div class="shop-city">
+                <span id="shopAddress"></span>
+                <div><span class="shop-type-badge" id="shopType"></span></div>
+            </div>
+        </div>
+        
+        <div class="shop-info" id="shopInfo"></div>
+        
+        <div class="products-section">
+            <div class="section-title">Products</div>
+            <div class="product-grid" id="productGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const shopId = params.get('shopId');
+        
+        async function loadShop() {
+            if(!shopId) {
+                document.getElementById('loading').innerHTML = 'Shop ID missing';
+                return;
+            }
+            
+            try {
+                const res = await fetch(`/api/local-market/shops/${shopId}`);
+                const data = await res.json();
+                
+                if(!data.success) throw new Error(data.message || 'Shop not found');
+                const shop = data.shop;
+                
+                // Header
+                document.getElementById('shopName').textContent = shop.shopName || shop.name;
+                document.getElementById('shopAddress').textContent = shop.address || shop.city || 'Location';
+                document.getElementById('shopType').textContent = shop.shopType.toUpperCase();
+                document.getElementById('shopLogo').innerHTML = shop.logo ? 
+                    `<img src="${shop.logo}" alt="Logo">` : 
+                    (shop.icon || '🏪');
+                
+                // Info
+                let infoHTML = '';
+                if(shop.phone) {
+                    infoHTML += `<div class="info-row">
+                        <div class="info-icon">📞</div>
+                        <div class="info-text">
+                            <div class="info-label">Phone</div>
+                            <div class="info-value">${shop.phone}</div>
+                        </div>
+                    </div>`;
+                }
+                if(shop.timing) {
+                    infoHTML += `<div class="info-row">
+                        <div class="info-icon">🕐</div>
+                        <div class="info-text">
+                            <div class="info-label">Timing</div>
+                            <div class="info-value">${shop.timing}</div>
+                        </div>
+                    </div>`;
+                }
+                if(shop.description) {
+                    infoHTML += `<div class="info-row">
+                        <div class="info-icon">📝</div>
+                        <div class="info-text">
+                            <div class="info-label">About</div>
+                            <div class="info-value">${shop.description}</div>
+                        </div>
+                    </div>`;
+                }
+                document.getElementById('shopInfo').innerHTML = infoHTML || '<div style="text-align:center;color:#94a3b8;">No additional info</div>';
+                
+                // Products
+                const products = shop.products || [];
+                if(products.length === 0) {
+                    document.getElementById('productGrid').innerHTML = '<div class="no-products">No products available yet</div>';
+                } else {
+                    document.getElementById('productGrid').innerHTML = products.map(p => `
+                        <div class="product-card">
+                            <img src="${p.image || '/assets/placeholder.png'}" class="product-img" onerror="this.src='/assets/placeholder.png'">
+                            <div class="product-name">${p.name}</div>
+                            <div class="product-price">₹${p.price}</div>
+                        </div>
+                    `).join('');
+                }
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('shopContainer').style.display = 'block';
+                
+            } catch(e) {
+                console.error(e);
+                document.getElementById('loading').innerHTML = `Failed to load shop<br><small style="color:#ef4444;">${e.message}</small>`;
+            }
+        }
+        loadShop();
+    </script>
+</body>
+</html>

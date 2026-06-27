@@ -388,7 +388,7 @@ function renderCampaigns() {
 }
 
 // ========================================
-// RENDER SHOPS - SAB SHOPS LIVE - ✅ FIXED
+// RENDER SHOPS - SAB SHOPS LIVE - ✅ CHANGE 1/3
 // ========================================
 function renderShops() {
     const doubleShops = [...allServices,...allServices];
@@ -403,7 +403,7 @@ function renderShops() {
         shopsEl.innerHTML = `
             <div class="shops-grid">
                 ${doubleShops.map(service => `
-                    <div class="shop-card" onclick="window.location.href='/shop-templates/${service.shopType}/user-view.html?shopId=${service._id}'">
+                    <div class="shop-card" onclick="window.location.href='/shop-templates/${['cloth','kirana','medical','restaurant'].includes(service.shopType)? service.shopType : 'general'}/user-view.html?shopId=${service._id}'">
                         <div class="shop-icon">${service.icon}</div>
                         <div class="shop-name">${service.shopName || service.name}</div>
                         ${service.distance? `<small style="color:#10b981;font-size:11px;">${service.distance}m</small>` : ''}
@@ -415,7 +415,7 @@ function renderShops() {
 }
 
 // ========================================
-// RENDER FAMOUS SHOPS - SAB APPROVED SHOPS - ✅ FIXED
+// RENDER FAMOUS SHOPS - SAB APPROVED SHOPS - ✅ CHANGE 2/3
 // ========================================
 function renderFamousShops() {
     const areaShops = allServices.filter(shop =>
@@ -437,7 +437,7 @@ function renderFamousShops() {
         famousShopsEl.innerHTML = `
             <div class="shops-grid">
                 ${doubleShops.map(service => `
-                    <div class="shop-card" onclick="window.location.href='/shop-templates/${service.shopType}/user-view.html?shopId=${service._id}'">
+                    <div class="shop-card" onclick="window.location.href='/shop-templates/${['cloth','kirana','medical','restaurant'].includes(service.shopType)? service.shopType : 'general'}/user-view.html?shopId=${service._id}'">
                         <div class="shop-icon">${service.icon}</div>
                         <div class="shop-name">${service.shopName || service.name}</div>
                         ${service.distance? `<small style="color:#f59e0b;font-size:11px;">⭐ ${service.distance}m</small>` : '<small style="color:#f59e0b;font-size:11px;">⭐ Famous</small>'}
@@ -525,7 +525,7 @@ setInterval(nextTopAd, 5000);
 setInterval(nextCampaign, 6000);
 
 // ========================================
-// VIDEO CLICK - FULLSCREEN MODAL + SHOP LINK - ✅ FIXED
+// VIDEO CLICK - FULLSCREEN MODAL + SHOP LINK - ✅ CHANGE 3/3
 // ========================================
 document.addEventListener('click', function(e) {
     const videoCard = e.target.closest('.video-card');
@@ -567,7 +567,7 @@ function openVideoModal(url, shopId) {
                     <div style="font-weight:700;color:#1e40af;">${shop.shopName || shop.name}</div>
                     <div style="font-size:12px;color:#64748b;">${shop.address || 'Location'}</div>
                 </div>
-                <button onclick="window.location.href='/shop-templates/${shop.shopType}/user-view.html?shopId=${shop._id}'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">Visit Shop</button>
+                <button onclick="window.location.href='/shop-templates/${['cloth','kirana','medical','restaurant'].includes(shop.shopType)? shop.shopType : 'general'}/user-view.html?shopId=${shop._id}'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">Visit Shop</button>
             </div>
             ` : ''}
         </div>
