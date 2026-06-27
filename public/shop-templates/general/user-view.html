@@ -75,16 +75,18 @@
             }
             
             try {
-                // ✅ API ROUTE FIX - shops ki jagah shop
-                const res = await fetch(`/api/local-market/shop/${shopId}`);
+                // ✅ FINAL FIX: /shop/ hata ke /public use kiya - ye route 100% kaam karta hai
+                const res = await fetch(`/api/local-market/public`);
                 const data = await res.json();
                 
                 console.log('API Response:', data);
                 
-                if(!data.success) throw new Error(data.message || 'Shop not found');
+                if(!data.success) throw new Error(data.message || 'Failed to fetch shops');
                 
-                // Backend se data.shop ya data.data dono ho sakta hai
-                const shop = data.shop || data.data;
+                const shops = data.data || data;
+                const shop = shops.find(s => s._id === shopId);
+                
+                if(!shop) throw new Error('Shop not found in database');
                 
                 // Header
                 document.getElementById('shopName').textContent = shop.shopName || shop.name;
