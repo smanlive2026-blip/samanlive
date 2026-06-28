@@ -1,0 +1,15 @@
+<!-- Link: /logos/samanlive-radar.svg -->  
+<!-- Use: <img src="/logos/samanlive-radar.svg" height="40"> -->
+<svg width="165" height="40" viewBox="0 0 165 40" xmlns="http://www.w3.org/2000/svg">
+  <text x="25" y="28" font-family="Arial Black, sans-serif" font-size="22" font-weight="900" fill="#334155">SAMNLIVE</text>
+  
+  <!-- Radar Animation - Tracking Concept -->
+  <g transform="translate(12, 20)">
+    <circle r="10" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.3"/>
+    <circle r="6" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.5"/>
+    <path d="M0 0 L0 -10" stroke="#3b82f6" stroke-width="2" stroke-linecap="round">
+      <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <circle r="2" fill="#3b82f6"/>
+  </g>
+</svg>

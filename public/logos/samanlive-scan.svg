@@ -1,0 +1,17 @@
+<!-- Link: /logos/samanlive-scan.svg -->  
+<!-- Use: <img src="/logos/samanlive-scan.svg" height="40"> -->
+<svg width="170" height="40" viewBox="0 0 170 40" xmlns="http://www.w3.org/2000/svg">
+  <text x="0" y="28" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#1e293b">SAMN</text>
+  <text x="70" y="28" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#0ea5e9">LIVE</text>
+  
+  <!-- Scanner Line Animation - Product Track Ho Raha -->
+  <rect x="0" y="32" width="140" height="2" fill="#e2e8f0" rx="1"/>
+  <rect x="0" y="32" width="20" height="2" fill="#0ea5e9" rx="1">
+    <animate attributeName="x" values="0;120;0" dur="2s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- Check Icon -->
+  <path d="M152 16 L156 20 L164 12" stroke="#22c55e" stroke-width="3" fill="none" stroke-linecap="round">
+    <animate attributeName="opacity" values="0;1;1;0" dur="2s" repeatCount="indefinite"/>
+  </path>
+</svg>

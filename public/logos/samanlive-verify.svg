@@ -1,0 +1,14 @@
+<!-- Link: /logos/samanlive-verify.svg -->  
+<!-- Use: <img src="/logos/samanlive-verify.svg" height="40"> -->
+<svg width="180" height="40" viewBox="0 0 180 40" xmlns="http://www.w3.org/2000/svg">
+  <text x="0" y="28" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#3b82f6">SAMN</text>
+  <text x="70" y="28" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#10b981">LIVE</text>
+  
+  <!-- Shield + Check - Fake Product Detector -->
+  <g transform="translate(148, 8)">
+    <path d="M0 0 L12 0 L12 10 L6 16 L0 10 Z" fill="#22c55e">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M3 6 L5 8 L9 4" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

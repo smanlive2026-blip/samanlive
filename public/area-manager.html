@@ -263,7 +263,11 @@
     <div class="dashboard" id="dashboard">
         <div class="header">
             <div class="header-content">
-                <h1><i class="fas fa-store"></i> Area Manager Dashboard</h1>
+                <!-- LOGO ADDED HERE - BAS YE 1 DIV ADD KIYA HAI -->
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img src="/logos/samanlive-pulse.svg" height="45" alt="SAMNLIVE">
+                    <h1>Area Manager Dashboard</h1>
+                </div>
                 <div class="header-right">
                     <span id="managerName"></span>
                     <span class="manager-badge" id="managerBadge">-</span>
@@ -691,31 +695,7 @@
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('profileSaveBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-            const profileData = {
-                name: document.getElementById('profileName').value,
-                phone: document.getElementById('profilePhone').value,
-                email: document.getElementById('profileEmail').value,
-                photo: document.getElementById('profilePhotoBase64').value || managerData.photo
-            };
-
-            try {
-                const data = await apiCall(`/manager/update-profile?token=${token}`, 'PUT', profileData);
-                if (data.success) {
-                    alert('✅ Profile updated successfully!');
-                    managerData = data.manager;
-                    renderProfile();
-                    closeProfileModal();
-                } else {
-                    alert(data.error || 'Error updating profile');
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-save"></i> Save Profile';
+                        btn.innerHTML = '<i class="fas fa-save"></i> Save Profile';
             }
         });
 
