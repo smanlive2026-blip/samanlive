@@ -4,9 +4,10 @@ const Manager = require('../models/Manager');
 const Area = require('../models/Area');
 const Shop = require('../models/Shop');
 
-// ========== MIDDLEWARE: Manager Token Verify - Dashboard ke liye use hoga future me ==========
+// ========== MIDDLEWARE: Manager Token Verify ==========
 const verifyManagerToken = async (req, res, next) => {
     try {
+        // ✅ Header + Query dono se token support
         const token = req.headers.authorization?.split(' ')[1] || req.query.token;
         if (!token) {
             return res.status(401).json({ error: 'No token provided' });
@@ -24,7 +25,19 @@ const verifyManagerToken = async (req, res, next) => {
     }
 };
 
-// ========== 1. GET /api/manager/dashboard - Public for now ==========
+// ========== Helper: Haversine Distance ==========
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// ========== 1. GET /api/manager/dashboard - FIXED ✅ ==========
 router.get('/dashboard', async (req, res) => {
     try {
         const { areaCode } = req.query;
@@ -36,19 +49,48 @@ router.get('/dashboard', async (req, res) => {
         const area = await Area.findOne({ areaCode });
         if (!area) return res.status(404).json({ error: 'Area not found' });
 
-        // Circle ke andar ki shops nikaalo
-        const allShops = await Shop.find({ status: true });
+        console.log('Area:', areaCode, '| Center:', area.centerLat, area.centerLng, '| Radius:', area.radius);
+
+        // ✅ STEP 1: areaCode se filter - Fast + Accurate
+        const allShops = await Shop.find({
+            areaCode: areaCode,
+            isActive: true,
+            status: 'approved'
+        }).lean();
+
+        console.log('Total shops in area:', allShops.length);
+
+        // ✅ STEP 2: Geo filter + lat/lng fix
         const nearbyShops = allShops.filter(shop => {
-            if (!shop.lat ||!shop.lng) return false;
-            const distance = getDistance(
-                area.centerLat, area.centerLng,
-                shop.lat, shop.lng
-            );
-            return distance <= area.radius;
-        }).map(shop => ({
-           ...shop.toObject(),
-            distance: getDistance(area.centerLat, area.centerLng, shop.lat, shop.lng).toFixed(2)
-        }));
+            // Coordinates validate karo
+            if (!shop.location?.coordinates || shop.location.coordinates.length!== 2) {
+                return false;
+            }
+            if (shop.location.coordinates[0] === 0 && shop.location.coordinates[1] === 0) {
+                return false;
+            }
+
+            const shopLng = shop.location.coordinates[0]; // longitude
+            const shopLat = shop.location.coordinates[1]; // latitude
+
+            const distance = getDistance(area.centerLat, area.centerLng, shopLat, shopLng);
+
+            // ✅ Shop-centric circle: Manager radius + Shop range
+            const maxDistanceKm = area.radius + (shop.range || 5000) / 1000;
+            return distance <= maxDistanceKm;
+
+        }).map(shop => {
+            const shopLng = shop.location.coordinates[0];
+            const shopLat = shop.location.coordinates[1];
+            return {
+            ...shop,
+                distance: getDistance(area.centerLat, area.centerLng, shopLat, shopLng).toFixed(2),
+                lat: shopLat, // ← Frontend ke liye
+                lng: shopLng // ← Frontend ke liye
+            };
+        }).sort((a, b) => a.distance - b.distance);
+
+        console.log('Shops in circle:', nearbyShops.length);
 
         res.json({
             success: true,
@@ -77,7 +119,45 @@ router.get('/dashboard', async (req, res) => {
     }
 });
 
-// ========== 2. PUT /api/manager/update-profile - Profile update ke liye ✅ ==========
+// ========== 2. GET /api/manager/shops - Token protected ==========
+router.get('/shops', verifyManagerToken, async (req, res) => {
+    try {
+        const manager = req.manager;
+        const area = await Area.findOne({ areaCode: manager.areaCode });
+        if (!area) return res.status(404).json({ success: false, error: 'Area not found' });
+
+        const shops = await Shop.find({
+            areaCode: manager.areaCode,
+            isActive: true,
+            status: 'approved'
+        }).lean();
+
+        const shopsWithDistance = shops.map(shop => {
+            let distance = null;
+            if (shop.location?.coordinates && shop.location.coordinates[0]!== 0) {
+                distance = getDistance(
+                    area.centerLat,
+                    area.centerLng,
+                    shop.location.coordinates[1],
+                    shop.location.coordinates[0]
+                ).toFixed(2);
+            }
+            return {
+            ...shop,
+                distance: distance? parseFloat(distance) : null,
+                lat: shop.location?.coordinates[1] || null,
+                lng: shop.location?.coordinates[0] || null
+            };
+        }).sort((a, b) => (a.distance || 9999) - (b.distance || 9999));
+
+        res.json({ success: true, shops: shopsWithDistance, total: shopsWithDistance.length });
+    } catch (err) {
+        console.error('Shops error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ========== 3. PUT /api/manager/update-profile ==========
 router.put('/update-profile', async (req, res) => {
     try {
         const { token } = req.query;
@@ -92,7 +172,6 @@ router.put('/update-profile', async (req, res) => {
         if (phone) manager.phone = phone.trim();
         if (email) manager.email = email.toLowerCase().trim();
         if (photo) {
-            // Base64 500KB limit = ~375KB actual image
             if (photo.length > 500000) {
                 return res.status(400).json({ error: 'Photo too large. Use image under 300KB' });
             }
@@ -107,7 +186,7 @@ router.put('/update-profile', async (req, res) => {
     }
 });
 
-// ========== 3. GET /api/manager/by-token/:token - Login ke baad manager data ==========
+// ========== 4. GET /api/manager/by-token/:token ==========
 router.get('/by-token/:token', async (req, res) => {
     try {
         const { token } = req.params;
@@ -123,16 +202,48 @@ router.get('/by-token/:token', async (req, res) => {
     }
 });
 
-// ========== Helper: Haversine Distance ==========
-function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
+// ========== 5. PUT /api/manager/shops/:id - Update shop ==========
+router.put('/shops/:id', verifyManagerToken, async (req, res) => {
+    try {
+        const manager = req.manager;
+        const shop = await Shop.findById(req.params.id);
+
+        if (!shop) {
+            return res.status(404).json({ error: 'Shop not found' });
+        }
+
+        // ✅ Validation: Shop manager ke area me hai?
+        if (shop.areaCode!== manager.areaCode) {
+            return res.status(403).json({ error: 'Access Denied: Shop not in your area' });
+        }
+
+        // ✅ Sirf allowed fields update karo
+        const allowedUpdates = {
+            shopName: req.body.shopName,
+            icon: req.body.icon,
+            serviceType: req.body.serviceType,
+            categoryId: req.body.categoryId,
+            phone: req.body.phone,
+            address: req.body.address,
+            range: parseInt(req.body.range),
+            isActive: req.body.isActive,
+            description: req.body.description
+        };
+
+        Object.keys(allowedUpdates).forEach(key => {
+            if (allowedUpdates[key] === undefined) delete allowedUpdates[key];
+        });
+
+        const updatedShop = await Shop.findByIdAndUpdate(
+            req.params.id,
+            allowedUpdates,
+            { new: true, runValidators: true }
+        );
+
+        res.json({ success: true, shop: updatedShop, message: 'Shop updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 module.exports = router;
