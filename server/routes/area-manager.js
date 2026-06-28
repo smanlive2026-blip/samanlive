@@ -28,7 +28,7 @@ const verifyManagerToken = async (req, res, next) => {
     }
 };
 
-// ========== ADMIN ROUTES ==========
+// ========== ADMIN ROUTES - INKO TOUCH NAHI KIYA ==========
 
 // 1. Get All Managers - manager.html ke liye
 router.get('/managers', async (req, res) => {
@@ -225,7 +225,7 @@ router.get('/modules', async (req, res) => {
     }
 });
 
-// ========== MANAGER ROUTES - Dashboard Ke Liye ==========
+// ========== MANAGER ROUTES - DASHBOARD KE LIYE ==========
 
 // 9. Manager Login
 router.post('/area-manager/login', async (req, res) => {
@@ -266,11 +266,10 @@ router.get('/manager/dashboard', verifyManagerToken, async (req, res) => {
     try {
         const manager = req.manager;
 
-        const [shops, categories, area, allShops] = await Promise.all([
+        const [shops, categories, area] = await Promise.all([
             Shop.find({ managerId: manager._id }),
             Module.find({ id: { $in: manager.moduleAccess } }),
-            Area.findOne({ areaCode: manager.areaCode }),
-            Shop.find({}) // Overlap check ke liye sab shops
+            Area.findOne({ areaCode: manager.areaCode })
         ]);
 
         res.json({
@@ -294,7 +293,7 @@ router.get('/manager/dashboard', verifyManagerToken, async (req, res) => {
             area,
             stats: {
                 totalShops: shops.length,
-                activeShops: shops.filter(s => s.status).length
+                activeShops: shops.filter(s => s.isActive).length
             }
         });
     } catch (err) {
@@ -302,120 +301,119 @@ router.get('/manager/dashboard', verifyManagerToken, async (req, res) => {
     }
 });
 
-// 11. Create Shop - Circle Overlap + Category Validation
-router.post('/manager/shop', verifyManagerToken, async (req, res) => {
-    try {
-        const manager = req.manager;
-        const { name, icon, moduleId, phone, address, lat, lng, range, banner } = req.body;
+// ❌ 11. CREATE SHOP ROUTE HATAYA - Area Manager shop create nahi karega
+// User hi create-shop.html se banayega
 
-        // Validation 1: Category access check
-        if (!manager.moduleAccess.includes(moduleId)) {
-            return res.status(403).json({ error: 'You dont have access to this category' });
-        }
-
-        // Validation 2: Area circle check
-        const area = await Area.findOne({ areaCode: manager.areaCode });
-        if (!area) {
-            return res.status(404).json({ error: 'Area not found' });
-        }
-
-        const distance = calculateDistance(lat, lng, area.centerLat, area.centerLng);
-
-        if (distance > area.radius) {
-            return res.status(400).json({
-                error: `Shop location is ${distance.toFixed(1)}km away. Must be within ${area.radius}km`
-            });
-        }
-
-        // Validation 3: Overlap check - Dusre area me paas to nahi
-        const allAreas = await Area.find({ status: true, areaCode: { $ne: manager.areaCode } });
-        for (const otherArea of allAreas) {
-            const distToOther = calculateDistance(lat, lng, otherArea.centerLat, otherArea.centerLng);
-            if (distToOther <= otherArea.radius && distToOther < distance) {
-                return res.status(400).json({
-                    error: `This location is closer to ${otherArea.areaName} (${distToOther.toFixed(1)}km)`
-                });
-            }
-        }
-
-        const shop = new Shop({
-            name,
-            icon: icon || '🏪',
-            moduleId,
-            phone,
-            address,
-            lat: parseFloat(lat),
-            lng: parseFloat(lng),
-            range: parseInt(range) || 5000,
-            banner,
-            areaCode: manager.areaCode,
-            managerId: manager._id,
-            city: manager.city,
-            status: true,
-            bannerStatus: 'pending'
-        });
-
-        await shop.save();
-        res.status(201).json({ success: true, shop });
-
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// 12. Update Shop
+// ✅ 12. UPDATE SHOP - SIRF ALLOWED FIELDS, SHOP-CENTRIC CIRCLE VALIDATION
 router.put('/manager/shop/:id', verifyManagerToken, async (req, res) => {
     try {
         const manager = req.manager;
-        const shop = await Shop.findOne({ _id: req.params.id, managerId: manager._id });
+        const shop = await Shop.findById(req.params.id);
 
         if (!shop) {
-            return res.status(404).json({ error: 'Shop not found or access denied' });
+            return res.status(404).json({ error: 'Shop not found' });
         }
 
-        // Agar location change ho rahi hai to wapas validation
-        if (req.body.lat && req.body.lng) {
-            const area = await Area.findOne({ areaCode: manager.areaCode });
-            const distance = calculateDistance(req.body.lat, req.body.lng, area.centerLat, area.centerLng);
-
-            if (distance > area.radius) {
-                return res.status(400).json({
-                    error: `New location is ${distance.toFixed(1)}km away. Must be within ${area.radius}km`
-                });
-            }
+        // ✅ VALIDATION 1: Ye shop manager ke circle me hai ya nahi?
+        const area = await Area.findOne({ areaCode: manager.areaCode });
+        if (!area) {
+            return res.status(404).json({ error: 'Manager area not found' });
         }
 
-        Object.assign(shop, req.body);
-        await shop.save();
+        const distanceToShop = calculateDistance(
+            area.centerLat,
+            area.centerLng,
+            shop.location.coordinates[1],
+            shop.location.coordinates[0]
+        ) * 1000; // meters me convert
 
-        res.json({ success: true, shop });
+        // ✅ SHOP-CENTRIC CIRCLE LOGIC: Manager.radius + Shop.range
+        const maxAllowedDistance = (area.radius * 1000) + (shop.range || 5000);
+
+        if (distanceToShop > maxAllowedDistance) {
+            return res.status(403).json({
+                error: 'Access Denied: This shop is outside your coverage area',
+                distance: (distanceToShop / 1000).toFixed(2) + ' km',
+                maxAllowed: (maxAllowedDistance / 1000).toFixed(2) + ' km'
+            });
+        }
+
+        // ✅ VALIDATION 2: Sirf allowed fields update karo
+        const allowedUpdates = {
+            shopName: req.body.shopName,
+            icon: req.body.icon,
+            serviceType: req.body.serviceType,
+            categoryId: req.body.categoryId,
+            phone: req.body.phone,
+            address: req.body.address,
+            range: parseInt(req.body.range),
+            isActive: req.body.isActive,
+            description: req.body.description
+        };
+
+        // Undefined fields hatao
+        Object.keys(allowedUpdates).forEach(key => {
+            if (allowedUpdates[key] === undefined) delete allowedUpdates[key];
+        });
+
+        // ❌ ye fields update nahi honge: ownerId, location, lat, lng, managerId, areaCode
+
+        const updatedShop = await Shop.findByIdAndUpdate(
+            req.params.id,
+            allowedUpdates,
+            { new: true, runValidators: true }
+        );
+
+        res.json({ success: true, shop: updatedShop, message: 'Shop updated successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// 13. Delete Shop
-router.delete('/manager/shop/:id', verifyManagerToken, async (req, res) => {
-    try {
-        const manager = req.manager;
-        const shop = await Shop.findOneAndDelete({ _id: req.params.id, managerId: manager._id });
+// ❌ 13. DELETE SHOP ROUTE HATAYA - Area Manager delete nahi kar sakta
 
-        if (!shop) {
-            return res.status(404).json({ error: 'Shop not found or access denied' });
-        }
-
-        res.json({ success: true, message: 'Shop deleted' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// 14. Get Manager's Shops - Nearby logic ke sath
+// ✅ 14. GET MANAGER'S SHOPS - SHOP-CENTRIC CIRCLE LOGIC WITH CORNER CASE
 router.get('/manager/shops', verifyManagerToken, async (req, res) => {
     try {
         const manager = req.manager;
-        const shops = await Shop.find({ managerId: manager._id }).sort({ createdAt: -1 });
-        res.json({ success: true, shops });
+        const area = await Area.findOne({ areaCode: manager.areaCode });
+
+        if (!area) {
+            return res.status(404).json({ error: 'Manager area not found' });
+        }
+
+        // Sabhi active shops nikalo
+        const allShops = await Shop.find({ isActive: true });
+
+        // ✅ SHOP-CENTRIC CIRCLE LOGIC: Manager.circle + Shop.range
+        const shopsInCircle = allShops.filter(shop => {
+            if (!shop.location ||!shop.location.coordinates) return false;
+
+            const distanceToShop = calculateDistance(
+                area.centerLat,
+                area.centerLng,
+                shop.location.coordinates[1],
+                shop.location.coordinates[0]
+            ) * 1000; // meters
+
+            // Manager radius (meters) + Shop range (meters) = Total coverage
+            const maxDistance = (area.radius * 1000) + (shop.range || 5000);
+
+            return distanceToShop <= maxDistance;
+        }).map(shop => {
+            const dist = calculateDistance(
+                area.centerLat,
+                area.centerLng,
+                shop.location.coordinates[1],
+                shop.location.coordinates[0]
+            );
+            return {
+              ...shop.toObject(),
+                distance: dist.toFixed(2) // km me
+            };
+        }).sort((a, b) => a.distance - b.distance); // Nearest first
+
+        res.json({ success: true, shops: shopsInCircle, total: shopsInCircle.length });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -431,7 +429,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    return R * c; // km me
 }
 
 module.exports = router;
