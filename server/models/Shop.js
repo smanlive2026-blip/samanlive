@@ -4,7 +4,15 @@ const shopSchema = new mongoose.Schema({
     // ✅ FIXED: ownerId ab required nahi hai, auto generate hoga
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false, default: () => new mongoose.Types.ObjectId() },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' },
+    managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' }, // Old single manager - backward compatibility
+
+    // ✅ NAYA: Multiple Area Managers Support
+    managerCodes: {
+        type: [String], // ["SURAGU-1-DEFAULT", "SURAGU-2-DEFAULT"]
+        default: [],
+        index: true
+    },
+
     shopName: { type: String, required: true, trim: true },
     ownerName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
@@ -123,6 +131,7 @@ shopSchema.index({ moduleId: 1 });
 shopSchema.index({ categoryId: 1 });
 shopSchema.index({ phone: 1 });
 shopSchema.index({ managerId: 1 });
+shopSchema.index({ managerCodes: 1 }); // ✅ NAYA: Multi-manager search ke liye
 shopSchema.index({ createdAt: -1 });
 shopSchema.index({ isActive: 1 });
 shopSchema.index({ locationType: 1 });
@@ -150,6 +159,25 @@ shopSchema.methods.isInManagerArea = function(managerAreaCode) {
 
 shopSchema.methods.matchesManagerBucket = function(managerBucket) {
     return this.bucket === managerBucket;
+};
+
+// ✅ NAYA: Check if manager has access
+shopSchema.methods.hasManagerAccess = function(managerCode) {
+    return this.managerCodes.includes(managerCode);
+};
+
+// ✅ NAYA: Add manager to shop
+shopSchema.methods.addManager = function(managerCode) {
+    if (!this.managerCodes.includes(managerCode)) {
+        this.managerCodes.push(managerCode);
+    }
+    return this.save();
+};
+
+// ✅ NAYA: Remove manager from shop
+shopSchema.methods.removeManager = function(managerCode) {
+    this.managerCodes = this.managerCodes.filter(code => code!== managerCode);
+    return this.save();
 };
 
 module.exports = mongoose.models.Shop || mongoose.model('Shop', shopSchema);

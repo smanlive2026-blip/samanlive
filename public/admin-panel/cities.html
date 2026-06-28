@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cities - Area Managers</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f1f5f9; }
+        .content { padding: 20px; max-width: 1600px; margin: 0 auto; }
+
+        .header {
+            background: white; padding: 20px 24px; border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .header h1 { font-size: 24px; color: #1e293b; font-weight: 800; }
+        .btn-back {
+            padding: 10px 20px; background: #6366f1; color: white; border: none;
+            border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.3s;
+        }
+        .btn-back:hover { background: #4f46e5; }
+
+        .stats-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; margin-bottom: 24px;
+        }
+        .stat-box {
+            background: white; padding: 18px; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .stat-box h3 { color: #64748b; font-size: 12px; margin-bottom: 6px; }
+        .stat-box .val { font-size: 26px; font-weight: 800; color: #1e293b; }
+
+        .city-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 18px;
+        }
+        .city-card {
+            background: white; padding: 24px; border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08); cursor: pointer;
+            transition: 0.3s; border: 2px solid transparent;
+        }
+        .city-card:hover {
+            transform: translateY(-6px); border-color: #6366f1;
+            box-shadow: 0 12px 28px rgba(99,102,241,0.2);
+        }
+        .city-card h3 {
+            font-size: 20px; color: #1e293b; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .city-meta {
+            display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap;
+        }
+        .meta-badge {
+            background: #e0e7ff; color: #4338ca; padding: 6px 12px;
+            border-radius: 20px; font-size: 13px; font-weight: 600;
+        }
+
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 20px; width: 90%;
+            max-width: 900px; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #f1f5f9;
+        }
+        .modal-header h2 { color: #1e293b; font-size: 22px; }
+        .close-btn {
+            background: #f1f5f9; border: none; width: 38px; height: 38px; border-radius: 50%;
+            cursor: pointer; font-size: 22px; color: #64748b; transition: 0.3s;
+        }
+        .close-btn:hover { background: #e2e8f0; }
+
+        .manager-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+        .manager-card {
+            background: #f8fafc; padding: 18px; border-radius: 14px;
+            border: 2px solid #e2e8f0; transition: 0.3s;
+        }
+        .manager-card:hover { border-color: #6366f1; background: white; }
+        .manager-card h3 { font-size: 16px; color: #1e293b; margin-bottom: 10px; }
+        .manager-info { font-size: 13px; color: #64748b; line-height: 1.8; }
+        .manager-info b { color: #1e293b; }
+        .btn-copy {
+            width: 100%; padding: 10px; margin-top: 12px; background: #10b981;
+            color: white; border: none; border-radius: 8px; font-weight: 600;
+            cursor: pointer; transition: 0.3s;
+        }
+        .btn-copy:hover { background: #059669; }
+
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: #94a3b8;
+            background: white; border-radius: 16px;
+        }
+        .empty-state h3 { font-size: 20px; margin-bottom: 8px; }
+
+        .loading {
+            text-align: center; padding: 40px; color: #64748b;
+        }
+        .spinner {
+            border: 3px solid #e2e8f0; border-top: 3px solid #6366f1;
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin 1s linear infinite; margin: 0 auto 16px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .toast {
+            position: fixed; top: 20px; right: 20px; padding: 16px 24px;
+            background: #10b981; color: white; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000;
+            font-weight: 600; animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="header">
+            <h1>🏙️ City Wise Area Managers</h1>
+            <button class="btn-back" onclick="window.location.href='/manager.html'">← Back to Managers</button>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-box">
+                <h3>TOTAL CITIES</h3>
+                <div class="val" id="totalCities">0</div>
+            </div>
+            <div class="stat-box">
+                <h3>TOTAL MANAGERS</h3>
+                <div class="val" id="totalManagers">0</div>
+            </div>
+            <div class="stat-box">
+                <h3>TOTAL AREAS</h3>
+                <div class="val" id="totalAreas">0</div>
+            </div>
+            <div class="stat-box">
+                <h3>AVG MANAGERS/CITY</h3>
+                <div class="val" id="avgManagers">0</div>
+            </div>
+        </div>
+
+        <div id="citiesContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading cities...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- City Managers Modal -->
+    <div id="cityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalCityName">City Managers</h2>
+                <button class="close-btn" onclick="closeCityModal()">×</button>
+            </div>
+            <div id="cityManagersList"></div>
+        </div>
+    </div>
+
+    <script>
+        let allAreas = [];
+        let allManagers = [];
+        let allShops = [];
+
+        // ========== LOAD DATA ==========
+        async function loadData() {
+            try {
+                const [areasRes, managersRes, shopsRes] = await Promise.all([
+                    fetch('/api/areas'),
+                    fetch('/api/managers'),
+                    fetch('/api/shops').catch(() => ({ json: () => [] }))
+                ]);
+
+                allAreas = await areasRes.json();
+                allManagers = await managersRes.json();
+                allShops = await shopsRes.json();
+
+                renderCities();
+                updateStats();
+
+            } catch (err) {
+                console.error('Load error:', err);
+                document.getElementById('citiesContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>❌ Failed to Load</h3>
+                        <p>${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ========== GROUP BY CITY ==========
+        function getCityWiseManagers() {
+            const cityMap = {};
+
+            allManagers.forEach(m => {
+                const area = allAreas.find(a => a.areaCode === m.areaCode);
+                const city = m.city || area?.city || 'Unknown';
+                const state = area?.state || '';
+
+                if (!cityMap[city]) {
+                    cityMap[city] = {
+                        city: city,
+                        state: state,
+                        managers: [],
+                        totalShops: 0
+                    };
+                }
+
+                const managerShops = allShops.filter(s => 
+                    s.managerCode === (m.managerCode || m.areaCode + '-DEFAULT')
+                ).length;
+
+                cityMap[city].managers.push({
+                    managerId: m._id,
+                    managerCode: m.managerCode || m.areaCode + '-DEFAULT',
+                    managerName: m.name,
+                    areaCode: m.areaCode,
+                    areaName: area?.areaName || m.areaName || '-',
+                    radius: area?.radius || 50,
+                    email: m.email,
+                    phone: m.phone || '-',
+                    status: m.status,
+                    shopCount: managerShops,
+                    autoGenerated: m.autoGenerated || m.email.includes('autogen')
+                });
+
+                cityMap[city].totalShops += managerShops;
+            });
+
+            return cityMap;
+        }
+
+        // ========== RENDER CITIES ==========
+        function renderCities() {
+            const cityMap = getCityWiseManagers();
+            const container = document.getElementById('citiesContainer');
+
+            if (Object.keys(cityMap).length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>📭 Koi City Nahi Mili</h3>
+                        <p>Pehle area.html me area banao</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="city-grid">
+                    ${Object.values(cityMap).map(cityData => `
+                        <div class="city-card" onclick="openCityModal('${cityData.city}')">
+                            <h3>📍 ${cityData.city}</h3>
+                            <p style="color:#64748b;font-size:14px;margin-bottom:12px;">
+                                ${cityData.state || ''}
+                            </p>
+                            <div class="city-meta">
+                                <span class="meta-badge">
+                                    👥 ${cityData.managers.length} Managers
+                                </span>
+                                <span class="meta-badge">
+                                    🏪 ${cityData.totalShops} Shops
+                                </span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // ========== OPEN CITY MODAL ==========
+        window.openCityModal = (city) => {
+            const cityMap = getCityWiseManagers();
+            const cityData = cityMap[city];
+            if (!cityData) return;
+
+            document.getElementById('modalCityName').textContent = `${city} - ${cityData.managers.length} Managers`;
+            document.getElementById('cityManagersList').innerHTML = `
+                <div class="manager-grid">
+                    ${cityData.managers.map(m => `
+                        <div class="manager-card">
+                            <h3>${escapeHtml(m.managerName)}</h3>
+                            <div class="manager-info">
+                                <div>Code: <b>${escapeHtml(m.managerCode)}</b></div>
+                                <div>Area: <b>${escapeHtml(m.areaName)}</b></div>
+                                <div>Area Code: <b>${escapeHtml(m.areaCode)}</b></div>
+                                <div>Radius: <b>${m.radius} km</b></div>
+                                <div>Shops: <b>${m.shopCount}</b></div>
+                                <div>Status: <b style="color:${m.status ? '#10b981' : '#ef4444'}">
+                                    ${m.status ? '✅ Active' : '❌ Inactive'}
+                                </b></div>
+                                ${m.autoGenerated ? '<div>🤖 <b>Auto Generated</b></div>' : ''}
+                            </div>
+                            <button class="btn-copy" onclick="copyManagerCode('${m.managerCode}')">
+                                📋 Copy Manager Code
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('cityModal').classList.add('active');
+        };
+
+        window.closeCityModal = () => {
+            document.getElementById('cityModal').classList.remove('active');
+        };
+
+        // ========== COPY MANAGER CODE ==========
+        window.copyManagerCode = (code) => {
+            navigator.clipboard.writeText(code);
+            showToast('✅ Manager Code Copied: ' + code);
+        };
+
+        // ========== UPDATE STATS ==========
+        function updateStats() {
+            const cityMap = getCityWiseManagers();
+            const totalCities = Object.keys(cityMap).length;
+            const totalManagers = allManagers.length;
+            const totalAreas = allAreas.length;
+            const avgManagers = totalCities > 0 ? (totalManagers / totalCities).toFixed(1) : 0;
+
+            document.getElementById('totalCities').textContent = totalCities;
+            document.getElementById('totalManagers').textContent = totalManagers;
+            document.getElementById('totalAreas').textContent = totalAreas;
+            document.getElementById('avgManagers').textContent = avgManagers;
+        }
+
+        // ========== UTILS ==========
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Close modal on outside click
+        document.getElementById('cityModal').addEventListener('click', (e) => {
+            if (e.target.id === 'cityModal') closeCityModal();
+        });
+
+        // ========== INIT ==========
+        loadData();
+        setInterval(loadData, 30000); // Auto refresh every 30 sec
+    </script>
+</body>
+</html>
