@@ -44,6 +44,14 @@ function authenticateToken(req, res, next) {
                 req.manager = manager;
                 req.userId = manager._id;
                 req.userType = 'manager';
+                // ✅ NAYA: managerCode add kiya for multi-manager access
+                req.user = {
+                    id: manager._id,
+                    role: 'area_manager',
+                    managerCode: manager.managerCode || manager.areaCode + '-DEFAULT',
+                    email: manager.email,
+                    name: manager.name
+                };
             } else {
                 const user = await User.findById(decoded.id || decoded.userId).select('-password');
                 if (!user) {
@@ -54,7 +62,14 @@ function authenticateToken(req, res, next) {
                 }
                 req.user = user;
                 req.userId = user._id;
-                req.userType = 'user';
+                req.userType = user.role === 'admin'? 'admin' : 'user';
+                // ✅ NAYA: user object normalize kiya
+                req.user = {
+                    id: user._id,
+                    role: user.role || 'user',
+                    email: user.email,
+                    name: user.name
+                };
             }
 
             req.tokenData = decoded;
