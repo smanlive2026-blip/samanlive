@@ -15,10 +15,10 @@ router.post('/shops', authenticateToken, async (req, res) => {
         }
 
         const shopData = {
-           ...restBody,
+          ...restBody,
             ownerId: req.userId,
             createdBy: req.userId,
-            managerCodes: managerCodes, // ✅ Multiple managers
+            managerCodes: managerCodes,
             status: 'active',
             isActive: true,
             locationType: req.body.locationType || 'fixed',
@@ -126,7 +126,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
 
         const products = (shop.items || []).map((item, index) => ({
             _id: item._id || index,
-           ...item.toObject? item.toObject() : item
+          ...item.toObject? item.toObject() : item
         }));
 
         res.json(products);
@@ -146,7 +146,7 @@ router.get('/products/:shopId/:productId', authenticateToken, async (req, res) =
 
         res.json(product);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(400).json({ error: err.message });
     }
 });
 
@@ -298,9 +298,9 @@ router.get('/nearby', async (req, res) => {
         console.log('🔍 Fetching within', maxRadius, 'meters');
 
         const shops = await Shop.find(query)
-       .select('-ownerId -approvedBy -rejectionReason -email')
-       .limit(100)
-       .lean();
+     .select('-ownerId -approvedBy -rejectionReason -email')
+     .limit(100)
+     .lean();
 
         const filteredShops = shops.filter(shop => {
             if (!shop.location?.coordinates || shop.location.coordinates.length!== 2) {
@@ -388,6 +388,73 @@ router.put('/shops/:id/update-location', authenticateToken, async (req, res) => 
         });
     } catch (err) {
         console.error('Update location error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// ✅ NAYA: PUBLIC SHOPS - Sab shops without location filter
+// ========================================
+router.get('/public', async (req, res) => {
+    try {
+        const shops = await Shop.find({
+            status: 'active',
+            isActive: true
+        })
+    .select('-ownerId -approvedBy -rejectionReason -email')
+    .lean();
+
+        res.json({
+            success: true,
+            count: shops.length,
+            data: shops
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========================================
+// ✅ NAYA: TOP RATED PRODUCTS - 6 LINES KE LIYE 24 PRODUCTS
+// ========================================
+router.get('/top-rated-products', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 24;
+
+        const shops = await Shop.find({
+            status: 'active',
+            isActive: true,
+            'items.0': { $exists: true }
+        }).lean();
+
+        let allProducts = [];
+
+        shops.forEach(shop => {
+            (shop.items || []).forEach(item => {
+                allProducts.push({
+                    _id: item._id || new mongoose.Types.ObjectId(),
+                    name: item.name || 'Product',
+                    price: item.price || 0,
+                    image: item.image || item.images?.[0] || '/assets/default-product.png',
+                    shopId: shop._id,
+                    shopName: shop.shopName,
+                    shopType: shop.shopType,
+                    rating: item.rating || shop.rating || 4.5,
+                    totalOrders: item.totalOrders || 0,
+                    description: item.description || ''
+                });
+            });
+        });
+
+        // Rating + orders ke hisaab se sort
+        allProducts.sort((a, b) => {
+            if (b.rating!== a.rating) return b.rating - a.rating;
+            return (b.totalOrders || 0) - (a.totalOrders || 0);
+        });
+
+        res.json(allProducts.slice(0, limit));
+    } catch (err) {
+        console.error('Top rated products error:', err);
         res.status(500).json({ error: err.message });
     }
 });

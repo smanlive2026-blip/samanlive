@@ -1,21 +1,22 @@
 // ========================================
-// SAMANLIVE - DYNAMIC JAVASCRIPT - ALL SHOPS LIVE
+// SAMANLIVE - DYNAMIC JAVASCRIPT - UPDATED
 // ========================================
 
 // Global variables
 let allModules = [];
 let allAds = [];
-let allServices = []; // ← nearbyServices ka naam badal diya
+let allServices = [];
 let nearbyVideos = [];
 let allCampaigns = [];
 let siteSettings = {};
-let userLocation = null; // ← Location ab sirf tracking ke liye, filter nahi
+let userLocation = null;
 let locationIntervalId = null;
 let lastFetchedLocation = null;
 let currentUser = null;
+let allProducts = []; // ✅ NAYA: Top products ke liye
 
 // ========================================
-// LOCATION MANAGER - AB SIRF USER TRACKING KE LIYE
+// LOCATION MANAGER - SAB SAME
 // ========================================
 window.LocationManager = {
     updateInterval: 30000,
@@ -61,7 +62,6 @@ window.LocationManager = {
 
     startAutoUpdate: function() {
         if (locationIntervalId!== null) return;
-
         console.log('🚀 Location auto-update started - every 30 sec');
         this.fetchAndUpdate();
         locationIntervalId = setInterval(() => {
@@ -79,20 +79,16 @@ window.LocationManager = {
 
     fetchAndUpdate: function() {
         if(!navigator.geolocation) return;
-
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const newLoc = {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 };
-
                 window.currentUserLocation = newLoc;
                 userLocation = newLoc;
                 lastFetchedLocation = {...newLoc};
-
                 console.log('📍 Auto Location Updated:', newLoc);
-                // ✅ Ab location update pe shops reload nahi hongi
             },
             (error) => {
                 console.error('Auto location error:', error.message);
@@ -115,7 +111,7 @@ window.LocationManager = {
 window.currentUserLocation = null;
 
 // ========================================
-// GET USER LOCATION - NAYA VERSION
+// GET USER LOCATION
 // ========================================
 function getUserLocation() {
     return new Promise(async (resolve) => {
@@ -138,21 +134,28 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-// ✅ RELOAD NEARBY DATA - AB SIRF SAB SHOPS LOAD HONGI, LOCATION FILTER NAHI
+// ✅ RELOAD NEARBY DATA - AB PRODUCTS BHI
 async function reloadNearbyData() {
-    console.log('🔄 Reloading all shops...');
+    console.log('🔄 Reloading all shops & products...');
 
     try {
         const shopsRes = await fetch(`/api/local-market/public`);
         if(shopsRes.ok) {
             const shopsData = await shopsRes.json();
             allServices = shopsData.data || shopsData;
-            renderShops();
-            renderFamousShops();
+            renderSixLineShops(); // ✅ 6 LINE SHOPS
             console.log('✅ All Shops updated:', allServices.length);
         }
+
+        // ✅ TOP PRODUCTS LOAD
+        const productsRes = await fetch(`/api/products/top-rated`);
+        if(productsRes.ok) {
+            allProducts = await productsRes.json();
+            renderSixLineProducts(); // ✅ 6 LINE PRODUCTS
+            console.log('✅ Top Products updated:', allProducts.length);
+        }
     } catch(e) {
-        console.error('Failed to reload shops:', e);
+        console.error('Failed to reload:', e);
     }
 }
 
@@ -161,7 +164,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 // ========================================
-// LOAD DATA FROM SERVER - SAB SHOPS LIVE
+// LOAD DATA FROM SERVER
 // ========================================
 async function loadAllData() {
     try {
@@ -203,7 +206,6 @@ async function loadAllData() {
             siteSettings = {};
         }
 
-        // ✅ MODULES - Hamesha sab load honge
         try {
             const modulesRes = await fetch('/api/modules');
             if(modulesRes.ok) {
@@ -217,7 +219,7 @@ async function loadAllData() {
             allModules = [];
         }
 
-        // ✅ SHOPS - LOCATION FILTER HATA DIYA, SAB SHOPS LOAD HONGI
+        // ✅ SHOPS LOAD
         try {
             const shopsRes = await fetch('/api/local-market/public');
             if(shopsRes.ok) {
@@ -231,20 +233,33 @@ async function loadAllData() {
             allServices = [];
         }
 
-        console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', allServices.length);
+        // ✅ TOP PRODUCTS LOAD - NAYA
+        try {
+            const productsRes = await fetch('/api/products/top-rated?limit=24');
+            if(productsRes.ok) {
+                allProducts = await productsRes.json();
+            } else {
+                allProducts = [];
+            }
+        } catch(e) {
+            console.log('Top products API failed:', e);
+            allProducts = [];
+        }
+
+        console.log('SAMANLIVE Loaded! Modules:', allModules.length, 'Shops:', allServices.length, 'Products:', allProducts.length);
 
         renderServices();
         renderTopAds();
         renderCampaigns();
-        renderShops();
-        renderFamousShops();
+        renderSixLineShops(); // ✅ 6 LINE
+        renderSixLineProducts(); // ✅ 6 LINE NAYA
         renderVideos();
         updateLogo();
 
     } catch(e) {
         console.error('Failed to load data:', e);
-        renderShops();
-        renderFamousShops();
+        renderSixLineShops();
+        renderSixLineProducts();
         renderServices();
     }
 }
@@ -286,7 +301,7 @@ function updateLogo() {
 }
 
 // ========================================
-// SMART SORT - USER JISKO JYADA TOUCH KARE VO UPAR
+// SMART SORT
 // ========================================
 function getModuleClicks() {
     const clicks = localStorage.getItem('samanlive_module_clicks');
@@ -311,7 +326,7 @@ function sortModulesByUsage(modules) {
 }
 
 // ========================================
-// RENDER SERVICES - 54 MODULES - SMART SORTED
+// RENDER SERVICES
 // ========================================
 function renderServices(filteredModules = null) {
     const modulesToRender = filteredModules || allModules;
@@ -336,7 +351,7 @@ function renderServices(filteredModules = null) {
 }
 
 // ========================================
-// RENDER TOP ADS - 54 OFFERS, 4 PER SLIDE
+// RENDER TOP ADS
 // ========================================
 function renderTopAds() {
     const topAdChunks = [];
@@ -362,7 +377,7 @@ function renderTopAds() {
 }
 
 // ========================================
-// RENDER CAMPAIGNS - 52 CAMPAIGNS, 4 PER SLIDE
+// RENDER CAMPAIGNS
 // ========================================
 function renderCampaigns() {
     const campaignChunks = [];
@@ -388,72 +403,100 @@ function renderCampaigns() {
 }
 
 // ========================================
-// RENDER SHOPS - SAB SHOPS LIVE - ✅ CHANGE 1/3
+// ✅ RENDER SHOPS - 6 LINE CAROUSEL + EMPTY STATE
 // ========================================
-function renderShops() {
-    const doubleShops = [...allServices,...allServices];
-    const shopsEl = document.getElementById('shopsContent');
+function renderSixLineShops() {
+    const container = document.getElementById('shopsContent');
+    if (!container) return;
 
-    if(allServices.length === 0) {
-        if(shopsEl) shopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">📍 Abhi koi shop nahi hai</p>';
+    if (!allServices || allServices.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🏪</div>
+                <p>No shops available in your area</p>
+            </div>
+        `;
         return;
     }
 
-    if(shopsEl) {
-        shopsEl.innerHTML = `
-            <div class="shops-grid">
-                ${doubleShops.map(service => `
-                    <div class="shop-card" onclick="window.location.href='/shop-templates/${['cloth','kirana','medical','restaurant'].includes(service.shopType)? service.shopType : 'general'}/user-view.html?shopId=${service._id}'">
-                        <div class="shop-icon">${service.icon}</div>
-                        <div class="shop-name">${service.shopName || service.name}</div>
-                        ${service.distance? `<small style="color:#10b981;font-size:11px;">${service.distance}m</small>` : ''}
-                    </div>
-                `).join('')}
-            </div>
-        `;
+    container.innerHTML = '';
+    const shopsPerLine = 4;
+    const totalLines = 6;
+
+    for (let i = 0; i < totalLines; i++) {
+        const row = document.createElement('div');
+        row.className = 'carousel-item';
+        const startIdx = i * shopsPerLine;
+        const lineShops = allServices.slice(startIdx, startIdx + shopsPerLine);
+
+        if (lineShops.length === 0) continue;
+
+        lineShops.forEach(shop => {
+            const shopType = ['cloth','kirana','medical','restaurant'].includes(shop.shopType)? shop.shopType : 'general';
+            row.innerHTML += `
+                <div class="shop-card" onclick="window.location.href='/shop-templates/${shopType}/user-view.html?shopId=${shop._id}'">
+                    <div class="shop-icon">${shop.icon || '🏪'}</div>
+                    <div class="shop-name">${shop.shopName || shop.name}</div>
+                    ${shop.distance? `<small style="color:#10b981;font-size:11px;">${shop.distance}m</small>` : ''}
+                </div>
+            `;
+        });
+        container.appendChild(row);
     }
 }
 
 // ========================================
-// RENDER FAMOUS SHOPS - SAB APPROVED SHOPS - ✅ CHANGE 2/3
+// ✅ RENDER TOP PRODUCTS - 6 LINE CAROUSEL + EMPTY STATE - NAYA
 // ========================================
-function renderFamousShops() {
-    const areaShops = allServices.filter(shop =>
-        shop.status === 'approved' &&
-        shop.isActive!== false
-    ).sort((a, b) => {
-        return (a.distance || 9999) - (b.distance || 9999);
-    });
+function renderSixLineProducts() {
+    const container = document.getElementById('topProductsContent');
+    if (!container) return;
 
-    const doubleShops = [...areaShops,...areaShops];
-    const famousShopsEl = document.getElementById('famousShopsContent');
-
-    if(areaShops.length === 0) {
-        if(famousShopsEl) famousShopsEl.innerHTML = '<p style="text-align:center;color:#64748b;padding:40px;">⭐ Abhi koi famous shop nahi hai</p>';
+    if (!allProducts || allProducts.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📦</div>
+                <p>No top rated products yet</p>
+            </div>
+        `;
         return;
     }
 
-    if(famousShopsEl) {
-        famousShopsEl.innerHTML = `
-            <div class="shops-grid">
-                ${doubleShops.map(service => `
-                    <div class="shop-card" onclick="window.location.href='/shop-templates/${['cloth','kirana','medical','restaurant'].includes(service.shopType)? service.shopType : 'general'}/user-view.html?shopId=${service._id}'">
-                        <div class="shop-icon">${service.icon}</div>
-                        <div class="shop-name">${service.shopName || service.name}</div>
-                        ${service.distance? `<small style="color:#f59e0b;font-size:11px;">⭐ ${service.distance}m</small>` : '<small style="color:#f59e0b;font-size:11px;">⭐ Famous</small>'}
-                    </div>
-                `).join('')}
-            </div>
-        `;
+    container.innerHTML = '';
+    const productsPerLine = 4;
+    const totalLines = 6;
+
+    for (let i = 0; i < totalLines; i++) {
+        const row = document.createElement('div');
+        row.className = 'carousel-item';
+        const startIdx = i * productsPerLine;
+        const lineProducts = allProducts.slice(startIdx, startIdx + productsPerLine);
+
+        if (lineProducts.length === 0) continue;
+
+        lineProducts.forEach(product => {
+            row.innerHTML += `
+                <div class="product-card" onclick="openProduct('${product._id}')">
+                    <img src="${product.image || '/assets/default-product.png'}" alt="${product.name}">
+                    <h4>${product.name}</h4>
+                    <p class="product-price">₹${product.price}</p>
+                    <p class="product-rating">⭐ ${product.rating || 0}</p>
+                </div>
+            `;
+        });
+        container.appendChild(row);
     }
 }
 
+function openProduct(productId) {
+    window.location.href = `/product.html?id=${productId}`;
+}
+
 // ========================================
-// RENDER VIDEOS - TRAIN SCROLL + SHOP LINK
+// RENDER VIDEOS
 // ========================================
 function renderVideos() {
     const doubleVideos = [...nearbyVideos,...nearbyVideos];
-
     const videosEl = document.getElementById('videosContent');
     if(videosEl) {
         videosEl.innerHTML = `
@@ -473,7 +516,7 @@ function renderVideos() {
 }
 
 // ========================================
-// SLIDER LOGIC - TOP ADS
+// SLIDER LOGIC
 // ========================================
 let topAdIndex = 0;
 function showTopAd(idx) {
@@ -488,16 +531,7 @@ function nextTopAd() {
     topAdIndex = (topAdIndex + 1) % slides.length;
     showTopAd(topAdIndex);
 }
-function prevTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
-    if(slides.length === 0) return;
-    topAdIndex = (topAdIndex - 1 + slides.length) % slides.length;
-    showTopAd(topAdIndex);
-}
 
-// ========================================
-// SLIDER LOGIC - CAMPAIGNS
-// ========================================
 let campaignIndex = 0;
 function showCampaign(idx) {
     const slides = document.querySelectorAll('#campaignContainer.ad-slide');
@@ -511,21 +545,12 @@ function nextCampaign() {
     campaignIndex = (campaignIndex + 1) % slides.length;
     showCampaign(campaignIndex);
 }
-function prevCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
-    if(slides.length === 0) return;
-    campaignIndex = (campaignIndex - 1 + slides.length) % slides.length;
-    showCampaign(campaignIndex);
-}
 
-// ========================================
-// AUTO SLIDE - SHOPS/VIDEOS HATA DIYA AB TRAIN HAI
-// ========================================
 setInterval(nextTopAd, 5000);
 setInterval(nextCampaign, 6000);
 
 // ========================================
-// VIDEO CLICK - FULLSCREEN MODAL + SHOP LINK - ✅ CHANGE 3/3
+// VIDEO MODAL
 // ========================================
 document.addEventListener('click', function(e) {
     const videoCard = e.target.closest('.video-card');
@@ -543,18 +568,7 @@ function openVideoModal(url, shopId) {
 
     const modal = document.createElement('div');
     modal.id = 'videoModal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.95);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    `;
+    modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center;`;
     modal.innerHTML = `
         <div style="position:relative;width:90%;max-width:900px;">
             <button onclick="closeVideoModal()" style="position:absolute;top:-40px;right:0;background:#fff;border:none;font-size:30px;width:40px;height:40px;border-radius:50%;cursor:pointer;z-index:10000;">×</button>
@@ -573,7 +587,6 @@ function openVideoModal(url, shopId) {
         </div>
     `;
     document.body.appendChild(modal);
-
     modal.addEventListener('click', function(e) {
         if(e.target === modal) closeVideoModal();
     });
@@ -585,21 +598,39 @@ function closeVideoModal() {
 }
 
 // ========================================
-// SEARCH FUNCTIONALITY
+// ✅ MODERN SEARCH FUNCTIONALITY
 // ========================================
+function performSearch() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    if(searchTerm === '') {
+        renderServices();
+        renderSixLineShops();
+        renderSixLineProducts();
+    } else {
+        const filteredModules = allModules.filter(module =>
+            module.name.toLowerCase().includes(searchTerm)
+        );
+        const filteredShops = allServices.filter(shop =>
+            (shop.shopName || shop.name).toLowerCase().includes(searchTerm)
+        );
+        const filteredProducts = allProducts.filter(product =>
+            product.name.toLowerCase().includes(searchTerm)
+        );
+        renderServices(filteredModules);
+        allServices = filteredShops;
+        renderSixLineShops();
+        allProducts = filteredProducts;
+        renderSixLineProducts();
+    }
+}
+
 const searchInput = document.getElementById('searchInput');
 if(searchInput) {
     searchInput.addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase().trim();
-
-        if(searchTerm === '') {
-            renderServices();
-        } else {
-            const filtered = allModules.filter(module =>
-                module.name.toLowerCase().includes(searchTerm)
-            );
-            renderServices(filtered);
-        }
+        performSearch();
+    });
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') performSearch();
     });
 }
 
@@ -621,15 +652,8 @@ document.addEventListener('gesturestart', function(e) {
 });
 
 // ========================================
-// INIT - Page load pe sab load karo
+// USER AUTH + PROFILE SYSTEM
 // ========================================
-loadAllData();
-
-// ========================================
-// USER AUTH + PROFILE SYSTEM - PERMANENT LOGIN
-// ========================================
-
-// CHECK IF LOGGED IN ON PAGE LOAD
 window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('userToken');
     if (token) {
@@ -638,7 +662,6 @@ window.addEventListener('DOMContentLoaded', () => {
     updateProfileAvatar();
 });
 
-// FETCH USER DATA
 async function fetchUserData(token) {
     try {
         const res = await fetch('/api/auth/me', {
@@ -657,11 +680,9 @@ async function fetchUserData(token) {
     }
 }
 
-// UPDATE PROFILE AVATAR
 function updateProfileAvatar() {
     const avatar = document.querySelector('.profile-avatar');
     if (!avatar) return;
-
     if (currentUser) {
         avatar.innerHTML = `<img src="${currentUser.profilePic || '/assets/default-avatar.png'}" alt="Profile">`;
         avatar.onclick = goToProfilePage;
@@ -671,7 +692,6 @@ function updateProfileAvatar() {
     }
 }
 
-// LOGIN MODAL
 function openLoginModal() {
     document.getElementById('loginModal').style.display = 'flex';
 }
@@ -679,11 +699,9 @@ function closeLoginModal() {
     document.getElementById('loginModal').style.display = 'none';
 }
 
-// PHONE LOGIN - PERMANENT
 async function loginWithPhone() {
     const phone = document.getElementById('loginPhone').value.trim();
     const name = document.getElementById('loginName').value.trim();
-
     if (!phone || phone.length!== 10) return alert('Valid 10 digit phone dalo');
     if (!name) return alert('Name dalo');
 
@@ -694,14 +712,13 @@ async function loginWithPhone() {
             body: JSON.stringify({ phone, name })
         });
         const data = await res.json();
-
         if (data.success) {
             localStorage.setItem('userToken', data.token);
             currentUser = data.user;
             window.currentUser = data.user;
             closeLoginModal();
             updateProfileAvatar();
-            alert('Login Success! 🎉 Ab permanent login hai.');
+            alert('Login Success! 🎉');
         } else {
             alert('Login failed: ' + data.error);
         }
@@ -710,15 +727,12 @@ async function loginWithPhone() {
     }
 }
 
-// GOOGLE LOGIN - Baad me Firebase add karenge
 function loginWithGoogle() {
     alert('Google Login setup ho raha hai. Abhi phone se login karo 🙏');
 }
 
-// PROFILE MODAL - SIMPLIFIED
 function openProfileModal() {
     if (!currentUser) return openLoginModal();
-
     document.getElementById('profileName').textContent = currentUser.name;
     document.getElementById('userUniqueId').textContent = currentUser.userId;
     document.getElementById('profilePic').src = currentUser.profilePic || '/assets/default-avatar.png';
@@ -729,7 +743,6 @@ function closeProfileModal() {
     document.getElementById('detailsForm').style.display = 'none';
 }
 
-// SHOW DETAILS FORM
 function showDetailsForm() {
     const form = document.getElementById('detailsForm');
     if (form.style.display === 'none') {
@@ -744,7 +757,6 @@ function showDetailsForm() {
     }
 }
 
-// UPDATE DETAILS
 async function updateUserDetails() {
     const token = localStorage.getItem('userToken');
     const data = {
@@ -777,19 +789,26 @@ async function updateUserDetails() {
     }
 }
 
+function goToProfilePage() {
+    if (!currentUser) {
+        openLoginModal();
+        return;
+    }
+    window.location.href = '/profile.html';
+}
+
 // ========================================
-// AUTO TRAIN SLIDING + DRAG SUPPORT
+// AUTO TRAIN SLIDING
 // ========================================
 function startTrainSliding() {
     const containers = [
         document.getElementById('shopsContent'),
         document.getElementById('videosContent'),
-        document.getElementById('famousShopsContent')
+        document.getElementById('topProductsContent')
     ];
 
     containers.forEach(container => {
         if (!container) return;
-
         container.classList.add('auto-train');
 
         let isDown = false;
@@ -841,19 +860,13 @@ function startTrainSliding() {
         });
     });
 }
-// Export for other pages
+
 window.getCurrentUser = () => currentUser;
 window.currentUser = currentUser;
 
 setTimeout(startTrainSliding, 2000);
 
 // ========================================
-// PROFILE PAGE REDIRECT
+// INIT
 // ========================================
-function goToProfilePage() {
-    if (!currentUser) {
-        openLoginModal();
-        return;
-    }
-    window.location.href = '/profile.html';
-}
+loadAllData();
