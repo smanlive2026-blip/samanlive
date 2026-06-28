@@ -347,7 +347,8 @@ router.put('/manager/update-profile', async (req, res) => {
 // User hi create-shop.html se banayega
 
 // ✅ 12. UPDATE SHOP - SIRF ALLOWED FIELDS, SHOP-CENTRIC CIRCLE VALIDATION
-router.put('/manager/shop/:id', verifyManagerToken, async (req, res) => {
+// ✅ FIXED: Route name changed from '/manager/shop/:id' to '/manager/shops/:id'
+router.put('/manager/shops/:id', verifyManagerToken, async (req, res) => {
     try {
         const manager = req.manager;
         const shop = await Shop.findById(req.params.id);
@@ -450,7 +451,7 @@ router.get('/manager/shops', verifyManagerToken, async (req, res) => {
                 shop.location.coordinates[0]
             );
             return {
-             ...shop.toObject(),
+               ...shop.toObject(),
                 distance: dist.toFixed(2) // km me
             };
         }).sort((a, b) => a.distance - b.distance); // Nearest first
