@@ -699,7 +699,7 @@
             };
 
             try {
-                const data = await apiCall(`/managers/${managerData.managerCode}`, 'PUT', profileData);
+               const data = await apiCall(`/manager/update-profile?token=${token}`, 'PUT', profileData);
                 if (data.success) {
                     alert('✅ Profile updated successfully!');
                     managerData = data.manager;

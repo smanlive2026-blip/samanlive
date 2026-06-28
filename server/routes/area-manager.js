@@ -301,6 +301,48 @@ router.get('/manager/dashboard', verifyManagerToken, async (req, res) => {
     }
 });
 
+// 10.1. Manager By Token - Dashboard load ke liye
+router.get('/manager-by-token/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const manager = await Manager.findOne({ loginToken: token, status: true });
+
+        if (!manager) {
+            return res.status(404).json({ success: false, error: 'Invalid token' });
+        }
+
+        res.json({ success: true, manager });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ✅ 10.2. UPDATE MANAGER PROFILE - TOKEN SE - NAYA ROUTE
+router.put('/manager/update-profile', async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) return res.status(400).json({ error: 'Token required' });
+
+        // Token se manager dhoondo
+        const manager = await Manager.findOne({ loginToken: token, status: true });
+        if (!manager) return res.status(404).json({ error: 'Invalid token' });
+
+        const { name, phone, email, photo } = req.body;
+
+        // Update karo - sirf allowed fields
+        if (name) manager.name = name;
+        if (phone) manager.phone = phone;
+        if (email) manager.email = email;
+        if (photo) manager.photo = photo; // Base64 string
+
+        await manager.save();
+
+        res.json({ success: true, manager });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ❌ 11. CREATE SHOP ROUTE HATAYA - Area Manager shop create nahi karega
 // User hi create-shop.html se banayega
 
@@ -408,7 +450,7 @@ router.get('/manager/shops', verifyManagerToken, async (req, res) => {
                 shop.location.coordinates[0]
             );
             return {
-              ...shop.toObject(),
+             ...shop.toObject(),
                 distance: dist.toFixed(2) // km me
             };
         }).sort((a, b) => a.distance - b.distance); // Nearest first
