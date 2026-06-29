@@ -28,7 +28,7 @@ window.currentUserLocation = null;
 // ========================================
 window.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('userToken');
-    if (token &&!window.currentUser._id) {
+    if (token && !window.currentUser._id) {
         await fetchUserData(token);
     }
     loadModules();
@@ -65,6 +65,8 @@ async function loadAreaManagers() {
         allAreas = await areasRes.json();
         allManagers = await managersRes.json();
         console.log('✅ Loaded:', allAreas.length, 'areas,', allManagers.length, 'managers');
+        console.log('📊 Managers Data:', allManagers);
+        console.log('📊 Areas Data:', allAreas);
     } catch (err) {
         console.error('Failed to load managers:', err);
     }
@@ -78,7 +80,7 @@ function checkAdminAccess() {
     const rangeSelect = document.getElementById('shopRange');
     const rangeNote = document.getElementById('rangeNote');
 
-    if (userRole!== 'admin' && userRole!== 'area_manager') {
+    if (userRole !== 'admin' && userRole !== 'area_manager') {
         rangeSelect.value = '5000';
         Array.from(rangeSelect.options).forEach(opt => {
             if (parseInt(opt.value) > 5000) {
@@ -285,7 +287,12 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
        .then(r => r.json())
        .then(data => {
-            const city = data.address.city || data.address.town || data.address.village || 'Surat';
+            // ✅ FIX: Hindi to English conversion
+            let city = data.address.city || data.address.town || data.address.village || 'Surat';
+            if (city === 'सूरत' || city === 'सुरत') {
+                city = 'Surat';
+            }
+            
             const state = data.address.state || 'Gujarat';
             const pincode = data.address.postcode || '';
 
@@ -316,23 +323,46 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
 }
 
 // ========================================
-// LOAD CITY MANAGERS
+// LOAD CITY MANAGERS - FIXED HINDI/ENGLISH
 // ========================================
 function loadCityManagers(city) {
     const managerList = document.getElementById('managerList');
     const countText = document.getElementById('managerCountText');
+    
+    console.log('🔍 Searching managers for city:', city);
+    console.log('📊 Total managers loaded:', allManagers.length);
+    console.log('📊 Total areas loaded:', allAreas.length);
 
+    // ✅ FIX: Hindi + English + flexible matching
+    const cityLower = city.toLowerCase().trim();
+    const cityHindi = 'सूरत';
+    const cityEnglish = 'surat';
+    
     const cityManagers = allManagers.filter(m => {
         const area = allAreas.find(a => a.areaCode === m.areaCode);
-        const managerCity = m.city || area?.city || 'Unknown';
-        return managerCity.toLowerCase() === city.toLowerCase();
+        
+        // Check manager.city, area.city, area.areaName - sab jagah dekho
+        const managerCity = (m.city || area?.city || area?.areaName || '').toLowerCase().trim();
+        
+        const isMatch = managerCity === cityLower || 
+                       managerCity === cityHindi || 
+                       managerCity === cityEnglish ||
+                       managerCity.includes(cityLower) ||
+                       cityLower.includes(managerCity);
+        
+        if (isMatch) {
+            console.log('✅ Manager matched:', m.name, 'City:', managerCity, 'Code:', m.managerCode || m.areaCode);
+        }
+        return isMatch;
     });
+
+    console.log('✅ Found managers:', cityManagers.length, cityManagers);
 
     if (cityManagers.length === 0) {
         managerList.innerHTML = `
             <p style="text-align:center;color:#f59e0b;padding:20px;">
                 ⚠️ No area managers found in ${city}.<br>
-                <small>Contact admin to create managers for this city.</small>
+                <small>DB Check: ${allManagers.length} total managers exist. Check console for details.</small>
             </p>
         `;
         countText.textContent = 'No managers available';
@@ -346,13 +376,15 @@ function loadCityManagers(city) {
     managerList.innerHTML = cityManagers.map(m => {
         const area = allAreas.find(a => a.areaCode === m.areaCode);
         const managerCode = m.managerCode || m.areaCode + '-DEFAULT';
+        const managerCity = m.city || area?.city || area?.areaName || city;
+        
         return `
             <div class="manager-item" onclick="toggleManagerSelect('${managerCode}', this)">
                 <input type="checkbox" id="mgr_${managerCode}" value="${managerCode}">
                 <div class="manager-item-info">
                     <div class="manager-item-name">${escapeHtml(m.name)}</div>
                     <div class="manager-item-meta">
-                        Code: <b>${managerCode}</b> • Area: ${escapeHtml(area?.areaName || m.areaCode)} • ${area?.radius || 50}KM
+                        Code: <b>${managerCode}</b> • City: ${escapeHtml(managerCity)} • ${area?.radius || 50}KM
                     </div>
                 </div>
             </div>
@@ -364,7 +396,7 @@ function loadCityManagers(city) {
 
 function toggleManagerSelect(managerCode, element) {
     const checkbox = document.getElementById(`mgr_${managerCode}`);
-    checkbox.checked =!checkbox.checked;
+    checkbox.checked = !checkbox.checked;
 
     if (checkbox.checked) {
         element.classList.add('selected');
@@ -373,7 +405,7 @@ function toggleManagerSelect(managerCode, element) {
         }
     } else {
         element.classList.remove('selected');
-        selectedManagerCodes = selectedManagerCodes.filter(c => c!== managerCode);
+        selectedManagerCodes = selectedManagerCodes.filter(c => c !== managerCode);
     }
 
     document.getElementById('shopManagerCodes').value = JSON.stringify(selectedManagerCodes);
@@ -386,7 +418,7 @@ function toggleSelectAllManagers() {
     const allChecked = Array.from(checkboxes).every(cb => cb.checked);
 
     checkboxes.forEach(cb => {
-        cb.checked =!allChecked;
+        cb.checked = !allChecked;
         const item = cb.closest('.manager-item');
         if (!allChecked) {
             item.classList.add('selected');
@@ -409,7 +441,7 @@ function toggleSelectAllManagers() {
 function updateManagerCountText() {
     const count = selectedManagerCodes.length;
     document.getElementById('managerCountText').textContent =
-        count === 0? 'No managers selected' : `${count} Manager${count > 1? 's' : ''} Selected`;
+        count === 0 ? 'No managers selected' : `${count} Manager${count > 1 ? 's' : ''} Selected`;
 }
 
 // ========================================
@@ -481,7 +513,7 @@ async function submitShop() {
 
     console.log('📤 Sending Shop Data:', shopData);
 
-    if (!shopData.shopName ||!shopData.serviceType ||!shopData.phone ||!shopData.address.line1 ||!lat ||!lng) {
+    if (!shopData.shopName || !shopData.serviceType || !shopData.phone || !shopData.address.line1 || !lat || !lng) {
         alert('Please fill all required fields including location!');
         btn.textContent = 'Create My Shop - Go Live Now';
         btn.disabled = false;
@@ -558,7 +590,7 @@ async function loadMyShops() {
                 card.onclick = () => window.location.href = dashboardUrl;
                 card.innerHTML = `
                     <div class="shop-icon">
-                        ${shopData.logo?
+                        ${shopData.logo ?
                             `<img src="${shopData.logo}" alt="${shopData.shopName}">` :
                             shopData.icon || '🏪'
                         }
@@ -566,7 +598,7 @@ async function loadMyShops() {
                     <div class="shop-details">
                         <h3>${shopData.shopName}</h3>
                         <p>${shopData.address?.city || 'Surat'} • ${shopData.serviceType}</p>
-                        <span class="shop-badge">${shopData.status} ${shopData.locationType === 'dynamic'? '• 🚶 Moving' : ''}</span>
+                        <span class="shop-badge">${shopData.status} ${shopData.locationType === 'dynamic' ? '• 🚶 Moving' : ''}</span>
                     </div>
                     <i class="fa fa-chevron-right" style="color: #94a3b8; margin-left: auto;"></i>
                 `;
