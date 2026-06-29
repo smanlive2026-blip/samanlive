@@ -755,7 +755,7 @@ function updateManagerCountText() {
 }
 
 // ========================================
-// SUBMIT SHOP
+// SUBMIT SHOP - ✅ FIXED WITH DEBUG LOGS
 // ========================================
 async function submitShop() {
     const btn = document.getElementById('submitBtn');
@@ -770,6 +770,9 @@ async function submitShop() {
     const shopModule = document.getElementById('shopModule').value;
     const locationType = document.getElementById('shopLocationType').value;
     const range = parseInt(document.getElementById('shopRange').value);
+
+    // ✅ DEBUG: Console me check karo kya ja raha hai
+    console.log('🔍 Final Manager Codes Before Submit:', selectedManagerCodes);
 
     if (selectedManagerCodes.length === 0) {
         alert('⚠️ Please select at least one Area Manager!');
@@ -826,7 +829,10 @@ async function submitShop() {
         managerCodes: selectedManagerCodes // ✅ ARRAY OF MANAGERS
     };
 
-    if (!shopData.shopName || !shopData.serviceType || !shopData.phone || !shopData.address.line1 || !lat || !lng) {
+    // ✅ DEBUG: Payload console me print karo
+    console.log('📤 Sending Shop Data:', shopData);
+
+    if (!shopData.shopName ||!shopData.serviceType ||!shopData.phone ||!shopData.address.line1 ||!lat ||!lng) {
         alert('Please fill all required fields including location!');
         btn.textContent = 'Create My Shop - Go Live Now';
         btn.disabled = false;
@@ -843,6 +849,9 @@ async function submitShop() {
         });
 
         const data = await res.json();
+        
+        // ✅ DEBUG: Response console me check karo
+        console.log('📥 Server Response:', data);
 
         if (res.ok && data._id) {
             localStorage.setItem('userToken', 'shop-owner-' + data._id);
@@ -906,7 +915,7 @@ async function loadMyShops() {
                             shopData.icon || '🏪'
                         }
                     </div>
-                    <div class="shop-details">
+                        <div class="shop-details">
                         <h3>${shopData.shopName}</h3>
                         <p>${shopData.address?.city || 'Surat'} • ${shopData.serviceType}</p>
                         <span class="shop-badge">${shopData.status} ${shopData.locationType === 'dynamic' ? '• 🚶 Moving' : ''}</span>
