@@ -1,7 +1,9 @@
+// ========================================
+// Shop Model - shop-create.html, area-manager.html, user-view.html sab ke liye
+// ========================================
 const mongoose = require('mongoose');
 
 const shopSchema = new mongoose.Schema({
-    // ✅ FIXED: ownerId ab required nahi hai, auto generate hoga
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false, default: () => new mongoose.Types.ObjectId() },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' }, // Old single manager - backward compatibility
@@ -9,8 +11,8 @@ const shopSchema = new mongoose.Schema({
     // ✅ NAYA: Multiple Area Managers Support
     managerCodes: {
         type: [String], // ["SURAGU-1-DEFAULT", "SURAGU-2-DEFAULT"]
-        default: [],
-        index: true
+        default: []
+        // ❌ index: true hataya - neeche schema.index() use kar rahe hain
     },
 
     shopName: { type: String, required: true, trim: true },
@@ -67,7 +69,6 @@ const shopSchema = new mongoose.Schema({
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending'
     },
-    // ✅ FIXED: approvedBy bhi required nahi
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
     approvedAt: { type: Date },
     rejectionReason: { type: String, default: '' },
@@ -79,7 +80,7 @@ const shopSchema = new mongoose.Schema({
     // ========== SHOP TYPE & ITEMS - NEW ==========
     shopType: {
         type: String,
-        enum: ['product', 'food', 'service', 'rental', 'fashion', 'common'], // ✅ 'common' added
+        enum: ['product', 'food', 'service', 'rental', 'fashion', 'common'],
         default: 'product',
         required: true
     },
@@ -87,17 +88,13 @@ const shopSchema = new mongoose.Schema({
         name: { type: String, required: true },
         price: { type: Number, required: true },
         image: { type: String, default: '' },
-        unit: { type: String, default: '' }, // kg, piece, hour, day
+        unit: { type: String, default: '' },
         desc: { type: String, default: '' },
-        // Fashion ke liye extra
         size: { type: String, default: '' },
         color: { type: String, default: '' },
-        // Food ke liye extra
         veg: { type: Boolean, default: true },
-        // Service/Rental ke liye
-        duration: { type: String, default: '' }, // 30min, 1hr, 1day
+        duration: { type: String, default: '' },
         available: { type: Boolean, default: true },
-        // Medical ke liye extra
         company: { type: String, default: '' },
         batch: { type: String, default: '' },
         expiry: { type: String, default: '' },
@@ -117,7 +114,6 @@ const shopSchema = new mongoose.Schema({
 });
 
 // ========== INDEXES ==========
-// ✅ CRITICAL: 2dsphere index for geo queries
 shopSchema.index({ location: '2dsphere' });
 shopSchema.index({ status: 1 });
 shopSchema.index({ area: 1 });
@@ -131,11 +127,11 @@ shopSchema.index({ moduleId: 1 });
 shopSchema.index({ categoryId: 1 });
 shopSchema.index({ phone: 1 });
 shopSchema.index({ managerId: 1 });
-shopSchema.index({ managerCodes: 1 }); // ✅ NAYA: Multi-manager search ke liye
+shopSchema.index({ managerCodes: 1 }); // ✅ Yahi rakha, upar se hataya
 shopSchema.index({ createdAt: -1 });
 shopSchema.index({ isActive: 1 });
 shopSchema.index({ locationType: 1 });
-shopSchema.index({ shopType: 1 }); // NEW - Shop type filter
+shopSchema.index({ shopType: 1 });
 
 // ========== VIRTUALS ==========
 shopSchema.virtual('fullAddress').get(function() {
@@ -161,12 +157,10 @@ shopSchema.methods.matchesManagerBucket = function(managerBucket) {
     return this.bucket === managerBucket;
 };
 
-// ✅ NAYA: Check if manager has access
 shopSchema.methods.hasManagerAccess = function(managerCode) {
     return this.managerCodes.includes(managerCode);
 };
 
-// ✅ NAYA: Add manager to shop
 shopSchema.methods.addManager = function(managerCode) {
     if (!this.managerCodes.includes(managerCode)) {
         this.managerCodes.push(managerCode);
@@ -174,7 +168,6 @@ shopSchema.methods.addManager = function(managerCode) {
     return this.save();
 };
 
-// ✅ NAYA: Remove manager from shop
 shopSchema.methods.removeManager = function(managerCode) {
     this.managerCodes = this.managerCodes.filter(code => code!== managerCode);
     return this.save();
