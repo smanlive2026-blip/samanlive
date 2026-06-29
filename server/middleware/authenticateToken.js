@@ -30,11 +30,10 @@ function authenticateToken(req, res, next) {
         }
 
         try {
-            // Token me type check karo - admin, manager, ya user
             const userType = decoded.type || 'user';
 
             if (userType === 'manager') {
-                const manager = await Manager.findById(decoded.id).select('-password');
+                const manager = await Manager.findById(decoded.id || decoded.userId).select('-password');
                 if (!manager ||!manager.status) {
                     return res.status(403).json({
                         success: false,
@@ -44,14 +43,10 @@ function authenticateToken(req, res, next) {
                 req.manager = manager;
                 req.userId = manager._id;
                 req.userType = 'manager';
-                // ✅ NAYA: managerCode add kiya for multi-manager access
-                req.user = {
-                    id: manager._id,
-                    role: 'area_manager',
-                    managerCode: manager.managerCode || manager.areaCode + '-DEFAULT',
-                    email: manager.email,
-                    name: manager.name
-                };
+                req.user = manager; // ✅ Full object rakho
+                // Extra fields
+                req.user.role = 'area_manager';
+                req.user.managerCode = manager.managerCode || manager.areaCode + '-DEFAULT';
             } else {
                 const user = await User.findById(decoded.id || decoded.userId).select('-password');
                 if (!user) {
@@ -60,16 +55,9 @@ function authenticateToken(req, res, next) {
                         error: 'User not found'
                     });
                 }
-                req.user = user;
+                req.user = user; // ✅ FIX: Full user object rakho, overwrite mat karo
                 req.userId = user._id;
                 req.userType = user.role === 'admin'? 'admin' : 'user';
-                // ✅ NAYA: user object normalize kiya
-                req.user = {
-                    id: user._id,
-                    role: user.role || 'user',
-                    email: user.email,
-                    name: user.name
-                };
             }
 
             req.tokenData = decoded;
@@ -106,7 +94,6 @@ const requireManager = (req, res, next) => {
     next();
 };
 
-// Professional export
 module.exports = {
     authenticateToken,
     requireAdmin,

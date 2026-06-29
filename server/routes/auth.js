@@ -1,18 +1,17 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-// ✅ Ye line change kar - auth.js hata ke authenticateToken.js se utha
-const { authenticateToken } = require('../middleware/authenticateToken'); 
+const { authenticateToken } = require('../middleware/authenticateToken');
 const router = express.Router();
 
 // ========================================
-// POST /api/auth/login-phone - PUBLIC - KOI MIDDLEWARE NAHI
+// POST /api/auth/login-phone - PUBLIC
 // ========================================
-router.post('/login-phone', async (req, res) => { // ✅ Yaha kuch mat lagana
+router.post('/login-phone', async (req, res) => {
     try {
         const { phone, name } = req.body;
-        
-        if(!phone || phone.length !== 10) {
+
+        if(!phone || phone.length!== 10) {
             return res.status(400).json({ success: false, error: 'Valid 10 digit phone dalo' });
         }
         if(!name || name.trim() === '') {
@@ -20,13 +19,13 @@ router.post('/login-phone', async (req, res) => { // ✅ Yaha kuch mat lagana
         }
 
         let user = await User.findOne({ phone });
-        
+
         if(!user) {
             const dummyEmail = phone + '@samanlive.local';
             const dummyPassword = 'OTP_LOGIN_' + Date.now();
-            
-            user = await User.create({ 
-                phone, 
+
+            user = await User.create({
+                phone,
                 name: name.trim(),
                 email: dummyEmail,
                 password: dummyPassword,
@@ -43,16 +42,16 @@ router.post('/login-phone', async (req, res) => { // ✅ Yaha kuch mat lagana
             await user.save();
         }
 
-        // ✅ Token me userId use kar raha kyunki middleware me decoded.userId ya decoded.id check ho raha
+        // ✅ FIX: Dono id aur userId bhejo taaki kabhi issue na aaye
         const token = jwt.sign(
-            { id: user._id, type: 'user' }, 
+            { id: user._id, userId: user._id, type: 'user' },
             process.env.JWT_SECRET || 'samanlive_secret_key_2026_change_this',
             { expiresIn: '30d' }
         );
 
-        res.json({ 
-            success: true, 
-            token, 
+        res.json({
+            success: true,
+            token,
             user: {
                 _id: user._id,
                 name: user.name,
@@ -60,10 +59,10 @@ router.post('/login-phone', async (req, res) => { // ✅ Yaha kuch mat lagana
                 email: user.email,
                 userId: 'SL' + user._id.toString().slice(-6).toUpperCase(),
                 profilePic: user.avatar || '/assets/default-avatar.png',
-                qrCodeData: JSON.stringify({ 
-                    phone: user.phone, 
-                    name: user.name, 
-                    userId: 'SL' + user._id.toString().slice(-6).toUpperCase() 
+                qrCodeData: JSON.stringify({
+                    phone: user.phone,
+                    name: user.name,
+                    userId: 'SL' + user._id.toString().slice(-6).toUpperCase()
                 }),
                 hasShop: false,
                 language: user.preferences?.language || 'hi'
@@ -80,12 +79,12 @@ router.post('/login-phone', async (req, res) => { // ✅ Yaha kuch mat lagana
 });
 
 // ========================================
-// GET /api/auth/me - PROTECTED - Yaha middleware lagega
+// GET /api/auth/me - PROTECTED
 // ========================================
-router.get('/me', authenticateToken, async (req, res) => { // ✅ Yaha sahi hai
+router.get('/me', authenticateToken, async (req, res) => {
     try {
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             user: {
                 _id: req.user._id,
                 name: req.user.name,
@@ -93,10 +92,10 @@ router.get('/me', authenticateToken, async (req, res) => { // ✅ Yaha sahi hai
                 email: req.user.email,
                 userId: 'SL' + req.user._id.toString().slice(-6).toUpperCase(),
                 profilePic: req.user.avatar || '/assets/default-avatar.png',
-                qrCodeData: JSON.stringify({ 
-                    phone: req.user.phone, 
-                    name: req.user.name, 
-                    userId: 'SL' + req.user._id.toString().slice(-6).toUpperCase() 
+                qrCodeData: JSON.stringify({
+                    phone: req.user.phone,
+                    name: req.user.name,
+                    userId: 'SL' + req.user._id.toString().slice(-6).toUpperCase()
                 }),
                 hasShop: false,
                 language: req.user.preferences?.language || 'hi',
