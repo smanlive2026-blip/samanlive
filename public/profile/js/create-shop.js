@@ -1,36 +1,44 @@
 // ========================================
-// MY SHOPS - CREATE SHOP LOGIC - FIXED VERSION
-// app.js se LocationManager + currentUser use karega
+// MY SHOPS - CREATE SHOP LOGIC - FINAL FIXED
 // ========================================
 
 let selectedIcon = '🏪';
 let newShopData = null;
 let uploadedLogoBase64 = null;
+let selectedManagerCodes = [];
+let allManagers = [];
+let allAreas = [];
+let locationWatchId = null;
+let detectedCity = null;
 
 const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant', 'service', 'rental', 'common'];
 
+if (!window.currentUser) {
+    window.currentUser = {
+        name: 'Shop Owner',
+        email: 'owner@shop.com',
+        role: 'user'
+    };
+}
+
+window.currentUserLocation = null;
+
 // ========================================
-// PAGE LOAD - Init
+// PAGE LOAD
 // ========================================
 window.addEventListener('DOMContentLoaded', async () => {
-    // Fallback user agar app.js se nahi mila
-    if (!window.currentUser) {
-        const token = localStorage.getItem('userToken');
-        if (token) {
-            await fetchUserData(token);
-        } else {
-            window.currentUser = {
-                name: 'Shop Owner',
-                email: 'owner@shop.com'
-            };
-        }
+    const token = localStorage.getItem('userToken');
+    if (token &&!window.currentUser._id) {
+        await fetchUserData(token);
     }
-
     loadModules();
+    await loadAreaManagers();
     await loadMyShops();
+    startLocationTracking();
+    checkAdminAccess();
+    initIconPicker();
 });
 
-// Fetch user if needed
 async function fetchUserData(token) {
     try {
         const res = await fetch('/api/auth/me', {
@@ -42,11 +50,84 @@ async function fetchUserData(token) {
         }
     } catch (err) {
         console.log('User fetch failed');
-        window.currentUser = {
-            name: 'Shop Owner',
-            email: 'owner@shop.com'
-        };
     }
+}
+
+// ========================================
+// LOAD MANAGERS & AREAS
+// ========================================
+async function loadAreaManagers() {
+    try {
+        const [areasRes, managersRes] = await Promise.all([
+            fetch('/api/areas'),
+            fetch('/api/managers')
+        ]);
+        allAreas = await areasRes.json();
+        allManagers = await managersRes.json();
+        console.log('✅ Loaded:', allAreas.length, 'areas,', allManagers.length, 'managers');
+    } catch (err) {
+        console.error('Failed to load managers:', err);
+    }
+}
+
+// ========================================
+// ADMIN CHECK
+// ========================================
+function checkAdminAccess() {
+    const userRole = window.currentUser?.role || 'user';
+    const rangeSelect = document.getElementById('shopRange');
+    const rangeNote = document.getElementById('rangeNote');
+
+    if (userRole!== 'admin' && userRole!== 'area_manager') {
+        rangeSelect.value = '5000';
+        Array.from(rangeSelect.options).forEach(opt => {
+            if (parseInt(opt.value) > 5000) {
+                opt.disabled = true;
+                opt.text = opt.text + ' (Admin Only)';
+            }
+        });
+        rangeNote.style.display = 'block';
+    } else {
+        rangeNote.style.display = 'none';
+    }
+}
+
+// ========================================
+// LOCATION TRACKING
+// ========================================
+function startLocationTracking() {
+    if (!navigator.geolocation) {
+        document.getElementById('locationCoords').innerHTML = '❌ GPS not supported';
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            window.currentUserLocation = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            console.log('📍 Location captured:', window.currentUserLocation);
+        },
+        (error) => {
+            console.log('Location error:', error.message);
+            document.getElementById('locationCoords').innerHTML = '❌ Please enable GPS';
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    locationWatchId = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                window.currentUserLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+            },
+            (error) => console.log('Auto location error:', error.message),
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        );
+    }, 30000);
 }
 
 // ========================================
@@ -72,7 +153,7 @@ function hideCreateForm() {
 }
 
 // ========================================
-// LOAD MODULES - Shop Types
+// LOAD MODULES
 // ========================================
 function loadModules() {
     const select = document.getElementById('shopModule');
@@ -90,7 +171,6 @@ function loadModules() {
         {id: 'common', name: 'Common Shop - General', icon: '🏪'}
     ];
 
-    select.innerHTML = '<option value="">-- Select Shop Type --</option>';
     shopTypes.forEach(m => {
         select.innerHTML += `<option value="${m.id}">${m.icon} ${m.name}</option>`;
     });
@@ -99,7 +179,7 @@ function loadModules() {
 // ========================================
 // ICON PICKER
 // ========================================
-document.addEventListener('DOMContentLoaded', () => {
+function initIconPicker() {
     const iconPicker = document.getElementById('iconPicker');
     if (iconPicker) {
         iconPicker.addEventListener('click', (e) => {
@@ -110,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
+}
 
 // ========================================
 // LOGO UPLOAD
@@ -147,7 +227,7 @@ function removeLogo() {
 }
 
 // ========================================
-// LOCATION TYPE - Fixed vs Dynamic
+// LOCATION TYPE
 // ========================================
 function selectLocationType(type) {
     document.getElementById('shopLocationType').value = type;
@@ -160,7 +240,7 @@ function selectLocationType(type) {
     const titleEl = document.getElementById('locationTitle');
 
     if (type === 'fixed') {
-        noteEl.innerHTML = '<strong>Fixed:</strong> Shop ek hi jagah rahegi. Customers ko exact location dikhegi.';
+        noteEl.innerHTML = '<strong>Fixed:</strong> Shop ek hi jagah rahegi. 5KM circle me sabko dikhegi by default.';
         titleEl.textContent = '📍 Shop GPS Location *';
     } else {
         noteEl.innerHTML = '<strong>Dynamic:</strong> Shop owner ke saath move karegi. Real-time location update hogi (30 sec).';
@@ -169,33 +249,31 @@ function selectLocationType(type) {
 }
 
 // ========================================
-// AUTO FILL LOCATION - app.js se ya direct GPS
+// AUTO FILL LOCATION + CITY DETECT
 // ========================================
 function autoFillLocation() {
     const coordsEl = document.getElementById('locationCoords');
+    const cityBox = document.getElementById('cityDetectedBox');
 
     if (window.currentUserLocation) {
         const lat = window.currentUserLocation.lat;
         const lng = window.currentUserLocation.lng;
         updateShopLocationUI(lat, lng, true);
-    } else if (navigator.geolocation) {
-        coordsEl.innerHTML = '⏳ Getting your location...';
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                window.currentUserLocation = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
-                updateShopLocationUI(position.coords.latitude, position.coords.longitude, true);
-            },
-            (error) => {
-                coordsEl.innerHTML = '❌ Location not available. Please enable GPS';
-                console.log('Location error:', error.message);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
     } else {
-        coordsEl.innerHTML = '❌ GPS not supported in this browser';
+        coordsEl.innerHTML = '⏳ Waiting for location... Make sure GPS is enabled';
+        cityBox.style.display = 'flex';
+        document.getElementById('detectedCityName').textContent = 'Detecting your city...';
+        document.getElementById('detectedCityMeta').textContent = 'GPS se location fetch ho rahi hai';
+
+        setTimeout(() => {
+            if (window.currentUserLocation) {
+                autoFillLocation();
+            } else {
+                coordsEl.innerHTML = '❌ Location not available. Please enable GPS';
+                document.getElementById('detectedCityName').textContent = 'Location Not Found';
+                document.getElementById('detectedCityMeta').textContent = 'Please enable GPS and refresh';
+            }
+        }, 2000);
     }
 }
 
@@ -205,8 +283,8 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
     const status = document.getElementById('locationCoords');
 
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-     .then(r => r.json())
-     .then(data => {
+       .then(r => r.json())
+       .then(data => {
             const city = data.address.city || data.address.town || data.address.village || 'Surat';
             const state = data.address.state || 'Gujarat';
             const pincode = data.address.postcode || '';
@@ -216,14 +294,122 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
             document.getElementById('shopPincode').value = pincode;
 
             status.className = 'location-coords success';
-            status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}${isAuto? '<br><small>Auto-updated from current location</small>' : ''}`;
+            status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}${isAuto? '<br><small>Auto-updated</small>' : ''}`;
+
+            detectedCity = city;
+            document.getElementById('cityDetectedBox').style.display = 'flex';
+            document.getElementById('detectedCityName').textContent = `📍 ${city}`;
+            document.getElementById('detectedCityMeta').textContent = `${state} • Loading managers...`;
+
+            loadCityManagers(city);
         })
-     .catch(() => {
-            document.getElementById('shopCity').value = 'Surat';
+       .catch(() => {
+            const city = 'Surat';
+            document.getElementById('shopCity').value = city;
             document.getElementById('shopState').value = 'Gujarat';
             status.className = 'location-coords success';
-            status.innerHTML = `✅ Location captured!<br><strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}${isAuto? '<br><small>Auto-updated</small>' : ''}`;
+            status.innerHTML = `✅ Location captured!<br><strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
+
+            detectedCity = city;
+            loadCityManagers(city);
         });
+}
+
+// ========================================
+// LOAD CITY MANAGERS
+// ========================================
+function loadCityManagers(city) {
+    const managerList = document.getElementById('managerList');
+    const countText = document.getElementById('managerCountText');
+
+    const cityManagers = allManagers.filter(m => {
+        const area = allAreas.find(a => a.areaCode === m.areaCode);
+        const managerCity = m.city || area?.city || 'Unknown';
+        return managerCity.toLowerCase() === city.toLowerCase();
+    });
+
+    if (cityManagers.length === 0) {
+        managerList.innerHTML = `
+            <p style="text-align:center;color:#f59e0b;padding:20px;">
+                ⚠️ No area managers found in ${city}.<br>
+                <small>Contact admin to create managers for this city.</small>
+            </p>
+        `;
+        countText.textContent = 'No managers available';
+        document.getElementById('detectedCityMeta').textContent = 'No managers found in this city';
+        return;
+    }
+
+    document.getElementById('detectedCityMeta').textContent = `${cityManagers.length} Area Managers available`;
+    countText.textContent = `${cityManagers.length} Managers Found - Select multiple`;
+
+    managerList.innerHTML = cityManagers.map(m => {
+        const area = allAreas.find(a => a.areaCode === m.areaCode);
+        const managerCode = m.managerCode || m.areaCode + '-DEFAULT';
+        return `
+            <div class="manager-item" onclick="toggleManagerSelect('${managerCode}', this)">
+                <input type="checkbox" id="mgr_${managerCode}" value="${managerCode}">
+                <div class="manager-item-info">
+                    <div class="manager-item-name">${escapeHtml(m.name)}</div>
+                    <div class="manager-item-meta">
+                        Code: <b>${managerCode}</b> • Area: ${escapeHtml(area?.areaName || m.areaCode)} • ${area?.radius || 50}KM
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    selectedManagerCodes = [];
+}
+
+function toggleManagerSelect(managerCode, element) {
+    const checkbox = document.getElementById(`mgr_${managerCode}`);
+    checkbox.checked =!checkbox.checked;
+
+    if (checkbox.checked) {
+        element.classList.add('selected');
+        if (!selectedManagerCodes.includes(managerCode)) {
+            selectedManagerCodes.push(managerCode);
+        }
+    } else {
+        element.classList.remove('selected');
+        selectedManagerCodes = selectedManagerCodes.filter(c => c!== managerCode);
+    }
+
+    document.getElementById('shopManagerCodes').value = JSON.stringify(selectedManagerCodes);
+    updateManagerCountText();
+    console.log('✅ Selected Managers:', selectedManagerCodes);
+}
+
+function toggleSelectAllManagers() {
+    const checkboxes = document.querySelectorAll('.manager-item input[type="checkbox"]');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+    checkboxes.forEach(cb => {
+        cb.checked =!allChecked;
+        const item = cb.closest('.manager-item');
+        if (!allChecked) {
+            item.classList.add('selected');
+            if (!selectedManagerCodes.includes(cb.value)) {
+                selectedManagerCodes.push(cb.value);
+            }
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+
+    if (allChecked) {
+        selectedManagerCodes = [];
+    }
+
+    document.getElementById('shopManagerCodes').value = JSON.stringify(selectedManagerCodes);
+    updateManagerCountText();
+}
+
+function updateManagerCountText() {
+    const count = selectedManagerCodes.length;
+    document.getElementById('managerCountText').textContent =
+        count === 0? 'No managers selected' : `${count} Manager${count > 1? 's' : ''} Selected`;
 }
 
 // ========================================
@@ -241,6 +427,16 @@ async function submitShop() {
     const pincode = document.getElementById('shopPincode').value || '';
     const shopModule = document.getElementById('shopModule').value;
     const locationType = document.getElementById('shopLocationType').value;
+    const range = parseInt(document.getElementById('shopRange').value);
+
+    console.log('🔍 Final Manager Codes Before Submit:', selectedManagerCodes);
+
+    if (selectedManagerCodes.length === 0) {
+        alert('⚠️ Please select at least one Area Manager!');
+        btn.textContent = 'Create My Shop - Go Live Now';
+        btn.disabled = false;
+        return;
+    }
 
     const shopTypeMap = {
         'kirana': 'product', 'cloth': 'fashion', 'medical': 'product',
@@ -268,7 +464,7 @@ async function submitShop() {
         serviceType: shopModule,
         shopType: shopTypeMap[shopModule] || 'product',
         description: document.getElementById('shopDesc').value.trim(),
-        range: parseInt(document.getElementById('shopRange').value),
+        range: range,
         icon: selectedIcon,
         logo: uploadedLogoBase64 || '',
         banner: '',
@@ -279,8 +475,11 @@ async function submitShop() {
         location: {
             type: 'Point',
             coordinates: [parseFloat(lng), parseFloat(lat)]
-        }
+        },
+        managerCodes: selectedManagerCodes
     };
+
+    console.log('📤 Sending Shop Data:', shopData);
 
     if (!shopData.shopName ||!shopData.serviceType ||!shopData.phone ||!shopData.address.line1 ||!lat ||!lng) {
         alert('Please fill all required fields including location!');
@@ -297,6 +496,7 @@ async function submitShop() {
         });
 
         const data = await res.json();
+        console.log('📥 Server Response:', data);
 
         if (res.ok && data._id) {
             localStorage.setItem('userToken', 'shop-owner-' + data._id);
@@ -307,7 +507,7 @@ async function submitShop() {
 
             newShopData = data;
             document.getElementById('successBox').style.display = 'block';
-            document.getElementById('successShopName').textContent = `"${data.shopName}" is now LIVE!`;
+            document.getElementById('successShopName').textContent = `"${data.shopName}" is now LIVE in ${city}!`;
             document.getElementById('formFields').style.display = 'none';
             document.getElementById('infoBanner').style.display = 'none';
             document.getElementById('submitBtn').style.display = 'none';
@@ -389,6 +589,11 @@ function resetForm() {
     document.getElementById('shopDesc').value = '';
     document.getElementById('shopLat').value = '';
     document.getElementById('shopLng').value = '';
+    document.getElementById('shopRange').value = '5000';
+    document.getElementById('shopCity').value = '';
+    document.getElementById('shopState').value = '';
+    document.getElementById('shopPincode').value = '';
+    document.getElementById('shopManagerCodes').value = '';
     document.getElementById('locationCoords').className = 'location-coords';
     document.getElementById('locationCoords').textContent = 'Loading your current location...';
     document.getElementById('formFields').style.display = 'block';
@@ -397,6 +602,13 @@ function resetForm() {
     document.getElementById('successBox').style.display = 'none';
     document.getElementById('submitBtn').textContent = 'Create My Shop - Go Live Now';
     document.getElementById('submitBtn').disabled = false;
+    document.getElementById('cityDetectedBox').style.display = 'none';
+    document.getElementById('managerList').innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;">Detecting your city first...</p>';
+    document.getElementById('managerCountText').textContent = 'Loading managers...';
+    selectedManagerCodes = [];
+    selectedIcon = '🏪';
+    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector('.icon-option[data-icon="🏪"]').classList.add('selected');
     removeLogo();
     selectLocationType('fixed');
     autoFillLocation();
@@ -415,4 +627,10 @@ function copyShopLink() {
             prompt('Copy this link:', link);
         });
     }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
 }
