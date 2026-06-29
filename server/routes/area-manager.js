@@ -1,3 +1,7 @@
+// ========================================
+// Ye API area-manager.html ke dashboard ke liye bani hai
+// area-manager.html -> GET /api/manager/shops, GET /api/manager-by-token/:token
+// ========================================
 const express = require('express');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
@@ -28,7 +32,7 @@ const verifyManagerToken = async (req, res, next) => {
     }
 };
 
-// ========== ADMIN ROUTES - INKO TOUCH NAHI KIYA ==========
+// ========== ADMIN ROUTES - manager.html ke liye ==========
 
 // 1. Get All Managers - manager.html ke liye
 router.get('/managers', async (req, res) => {
@@ -120,7 +124,6 @@ router.put('/managers/:id', async (req, res) => {
     try {
         const updateData = req.body;
 
-        // Password update ho raha hai to hash karo
         if (updateData.password) {
             updateData.password = await bcrypt.hash(updateData.password, 10);
         }
@@ -216,6 +219,7 @@ router.delete('/managers/:id', async (req, res) => {
 });
 
 // 8. Get All Modules - Service assign karte time dropdown ke liye
+// Ye API area-manager.html aur manager.html dono ke liye hai
 router.get('/modules', async (req, res) => {
     try {
         const modules = await Module.find({ status: true }).sort({ name: 1 });
@@ -225,7 +229,7 @@ router.get('/modules', async (req, res) => {
     }
 });
 
-// ========== MANAGER ROUTES - DASHBOARD KE LIYE ==========
+// ========== MANAGER ROUTES - area-manager.html DASHBOARD KE LIYE ==========
 
 // 9. Manager Login
 router.post('/area-manager/login', async (req, res) => {
@@ -267,7 +271,7 @@ router.get('/manager/dashboard', verifyManagerToken, async (req, res) => {
         const manager = req.manager;
 
         const [shops, categories, area] = await Promise.all([
-            Shop.find({ managerId: manager._id }),
+            Shop.find({ managerCodes: manager.managerCode }), // ✅ managerCode se filter
             Module.find({ id: { $in: manager.moduleAccess } }),
             Area.findOne({ areaCode: manager.areaCode })
         ]);
@@ -302,6 +306,7 @@ router.get('/manager/dashboard', verifyManagerToken, async (req, res) => {
 });
 
 // 10.1. Manager By Token - Dashboard load ke liye
+// Ye API area-manager.html ke initial load ke liye hai
 router.get('/manager-by-token/:token', async (req, res) => {
     try {
         const { token } = req.params;
@@ -317,23 +322,22 @@ router.get('/manager-by-token/:token', async (req, res) => {
     }
 });
 
-// ✅ 10.2. UPDATE MANAGER PROFILE - TOKEN SE - NAYA ROUTE
+// 10.2. UPDATE MANAGER PROFILE - TOKEN SE
+// Ye API area-manager.html me profile edit ke liye hai
 router.put('/manager/update-profile', async (req, res) => {
     try {
         const { token } = req.query;
         if (!token) return res.status(400).json({ error: 'Token required' });
 
-        // Token se manager dhoondo
         const manager = await Manager.findOne({ loginToken: token, status: true });
         if (!manager) return res.status(404).json({ error: 'Invalid token' });
 
         const { name, phone, email, photo } = req.body;
 
-        // Update karo - sirf allowed fields
         if (name) manager.name = name;
         if (phone) manager.phone = phone;
         if (email) manager.email = email;
-        if (photo) manager.photo = photo; // Base64 string
+        if (photo) manager.photo = photo;
 
         await manager.save();
 
@@ -343,11 +347,8 @@ router.put('/manager/update-profile', async (req, res) => {
     }
 });
 
-// ❌ 11. CREATE SHOP ROUTE HATAYA - Area Manager shop create nahi karega
-// User hi create-shop.html se banayega
-
-// ✅ 12. UPDATE SHOP - SIRF ALLOWED FIELDS, SHOP-CENTRIC CIRCLE VALIDATION
-// ✅ FIXED: Route name changed from '/manager/shop/:id' to '/manager/shops/:id'
+// 12. UPDATE SHOP - SIRF ALLOWED FIELDS
+// Ye API area-manager.html me shop edit ke liye hai
 router.put('/manager/shops/:id', verifyManagerToken, async (req, res) => {
     try {
         const manager = req.manager;
@@ -357,31 +358,14 @@ router.put('/manager/shops/:id', verifyManagerToken, async (req, res) => {
             return res.status(404).json({ error: 'Shop not found' });
         }
 
-        // ✅ VALIDATION 1: Ye shop manager ke circle me hai ya nahi?
-        const area = await Area.findOne({ areaCode: manager.areaCode });
-        if (!area) {
-            return res.status(404).json({ error: 'Manager area not found' });
-        }
-
-        const distanceToShop = calculateDistance(
-            area.centerLat,
-            area.centerLng,
-            shop.location.coordinates[1],
-            shop.location.coordinates[0]
-        ) * 1000; // meters me convert
-
-        // ✅ SHOP-CENTRIC CIRCLE LOGIC: Manager.radius + Shop.range
-        const maxAllowedDistance = (area.radius * 1000) + (shop.range || 5000);
-
-        if (distanceToShop > maxAllowedDistance) {
+        // ✅ VALIDATION: Ye shop manager ke pass hai ya nahi?
+        if (!shop.managerCodes.includes(manager.managerCode)) {
             return res.status(403).json({
-                error: 'Access Denied: This shop is outside your coverage area',
-                distance: (distanceToShop / 1000).toFixed(2) + ' km',
-                maxAllowed: (maxAllowedDistance / 1000).toFixed(2) + ' km'
+                error: 'Access Denied: This shop is not assigned to you'
             });
         }
 
-        // ✅ VALIDATION 2: Sirf allowed fields update karo
+        // ✅ Sirf allowed fields update karo
         const allowedUpdates = {
             shopName: req.body.shopName,
             icon: req.body.icon,
@@ -394,12 +378,9 @@ router.put('/manager/shops/:id', verifyManagerToken, async (req, res) => {
             description: req.body.description
         };
 
-        // Undefined fields hatao
         Object.keys(allowedUpdates).forEach(key => {
             if (allowedUpdates[key] === undefined) delete allowedUpdates[key];
         });
-
-        // ❌ ye fields update nahi honge: ownerId, location, lat, lng, managerId, areaCode
 
         const updatedShop = await Shop.findByIdAndUpdate(
             req.params.id,
@@ -413,50 +394,42 @@ router.put('/manager/shops/:id', verifyManagerToken, async (req, res) => {
     }
 });
 
-// ❌ 13. DELETE SHOP ROUTE HATAYA - Area Manager delete nahi kar sakta
-
-// ✅ 14. GET MANAGER'S SHOPS - SHOP-CENTRIC CIRCLE LOGIC WITH CORNER CASE
+// ✅ 14. GET MANAGER'S SHOPS - FIXED: managerCodes se filter karo
+// Ye API area-manager.html ke dashboard me shops list ke liye hai
 router.get('/manager/shops', verifyManagerToken, async (req, res) => {
     try {
         const manager = req.manager;
         const area = await Area.findOne({ areaCode: manager.areaCode });
 
-        if (!area) {
-            return res.status(404).json({ error: 'Manager area not found' });
-        }
+        // ✅ NAYA LOGIC: managerCode se direct filter karo, distance se nahi
+        const shops = await Shop.find({
+            managerCodes: manager.managerCode, // ✅ Array me search karega
+            isActive: true,
+            status: { $in: ['approved', 'active'] }
+        }).sort({ createdAt: -1 });
 
-        // Sabhi active shops nikalo
-        const allShops = await Shop.find({ isActive: true });
-
-        // ✅ SHOP-CENTRIC CIRCLE LOGIC: Manager.circle + Shop.range
-        const shopsInCircle = allShops.filter(shop => {
-            if (!shop.location ||!shop.location.coordinates) return false;
-
-            const distanceToShop = calculateDistance(
-                area.centerLat,
-                area.centerLng,
-                shop.location.coordinates[1],
-                shop.location.coordinates[0]
-            ) * 1000; // meters
-
-            // Manager radius (meters) + Shop range (meters) = Total coverage
-            const maxDistance = (area.radius * 1000) + (shop.range || 5000);
-
-            return distanceToShop <= maxDistance;
-        }).map(shop => {
-            const dist = calculateDistance(
-                area.centerLat,
-                area.centerLng,
-                shop.location.coordinates[1],
-                shop.location.coordinates[0]
-            );
+        // Distance calculate karo display ke liye
+        const shopsWithDistance = shops.map(shop => {
+            let distance = 0;
+            if (area && shop.location?.coordinates) {
+                distance = calculateDistance(
+                    area.centerLat,
+                    area.centerLng,
+                    shop.location.coordinates[1],
+                    shop.location.coordinates[0]
+                );
+            }
             return {
-               ...shop.toObject(),
-                distance: dist.toFixed(2) // km me
+              ...shop.toObject(),
+                distance: distance.toFixed(2) // km me
             };
-        }).sort((a, b) => a.distance - b.distance); // Nearest first
+        });
 
-        res.json({ success: true, shops: shopsInCircle, total: shopsInCircle.length });
+        res.json({
+            success: true,
+            shops: shopsWithDistance,
+            total: shopsWithDistance.length
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -464,7 +437,7 @@ router.get('/manager/shops', verifyManagerToken, async (req, res) => {
 
 // ========== HELPER FUNCTION: Haversine Distance ==========
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth radius in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
@@ -472,7 +445,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // km me
+    return R * c;
 }
 
 module.exports = router;

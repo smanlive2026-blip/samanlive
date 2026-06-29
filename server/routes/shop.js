@@ -1,3 +1,7 @@
+// ========================================
+// Ye API shop-create.html ke form submit ke liye bani hai
+// shop-create.html -> POST /api/local-market/shops
+// ========================================
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
@@ -5,16 +9,28 @@ const Shop = require('../models/Shop');
 const Order = require('../models/Order');
 const auth = require('../middleware/authenticateToken');
 
-// ✅ FIXED: CREATE SHOP - status approved hona chahiye + Logo support
+// ✅ FIXED: CREATE SHOP - managerCodes explicitly save karo
+// Ye API shop-create.html ke liye hai - User shop create karta hai
 router.post('/shops', auth, async (req, res) => {
     try {
+        const { managerCodes,...restData } = req.body;
+
+        // ✅ Validation: managerCodes required hai
+        if (!managerCodes ||!Array.isArray(managerCodes) || managerCodes.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Please select at least one Area Manager'
+            });
+        }
+
         const shopData = {
-           ...req.body,
+           ...restData,
+            managerCodes: managerCodes, // ✅ Explicitly save karo
             ownerId: req.user.id,
             createdBy: req.user.id,
-            status: 'approved', // ✅ FIXED: 'active' ki jagah 'approved'
+            status: 'approved',
             isActive: true,
-            logo: req.body.logo || '' // ✅ Logo field added
+            logo: req.body.logo || ''
         };
 
         const shop = new Shop(shopData);
@@ -25,7 +41,8 @@ router.post('/shops', auth, async (req, res) => {
     }
 });
 
-// ✅ NEW: GET MY SHOPS - Check karne ke liye user ki shop hai ya nahi
+// ✅ GET MY SHOPS - User apni shops check karne ke liye
+// Ye API profile.html ya user dashboard ke liye hai
 router.get('/my-shops', auth, async (req, res) => {
     try {
         const shops = await Shop.find({
@@ -40,13 +57,13 @@ router.get('/my-shops', auth, async (req, res) => {
     }
 });
 
-// ✅ FIXED: PUBLIC SHOPS - Purani 'active' shops bhi dikhegi
+// ✅ PUBLIC SHOPS - Customer app/website ke liye
+// Ye API user-view.html ya public shop listing ke liye hai
 router.get('/public', async (req, res) => {
     try {
         const { lat, lng, radius = 5000, shopType, categoryId, serviceType } = req.query;
 
         let query = {
-            // ✅ LINE CHANGE: Purani 'active' shops bhi include karo
             status: { $in: ['approved', 'active'] },
             isActive: true
         };
@@ -89,13 +106,13 @@ router.get('/public', async (req, res) => {
     }
 });
 
-// ===== SHOP DETAILS - Ye /public ke BAAD aana chahiye =====
+// ===== SHOP DETAILS - Public shop details ke liye =====
+// Ye API user-view.html me single shop details ke liye hai
 router.get('/shops/:id', async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id).lean();
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
-        // ✅ Ensure logo field exists
         if (!shop.logo) shop.logo = '';
 
         res.json(shop);
@@ -104,13 +121,13 @@ router.get('/shops/:id', async (req, res) => {
     }
 });
 
-// ===== DASHBOARD STATS =====
+// ===== DASHBOARD STATS - Shop dashboard ke liye =====
+// Ye API shop-templates/*/dashboard.html ke liye hai
 router.get('/shops/:shopId/stats', auth, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
-        // Verify owner/manager
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
@@ -132,15 +149,14 @@ router.get('/shops/:shopId/stats', auth, async (req, res) => {
             todayOrders
         };
 
-        // Shop type specific stats
         switch(shop.shopType) {
-            case 'kirana': // Kirana
+            case 'kirana':
                 stats.lowStock = products.filter(p => p.stock && p.stock < 10).length;
                 break;
-            case 'cloth': // Cloth
+            case 'cloth':
                 stats.totalVariants = products.length;
                 break;
-            case 'restaurant': // Restaurant
+            case 'restaurant':
                 stats.activeOrders = await Order.countDocuments({
                     shopId: shop._id,
                     status: { $in: ['pending', 'preparing'] }
@@ -161,7 +177,8 @@ router.get('/shops/:shopId/stats', auth, async (req, res) => {
     }
 });
 
-// ===== GET PRODUCTS - From items[] array =====
+// ===== GET PRODUCTS - Shop products list ke liye =====
+// Ye API shop-templates/*/dashboard.html aur user-view.html ke liye hai
 router.get('/shops/:shopId/products', async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
@@ -178,7 +195,8 @@ router.get('/shops/:shopId/products', async (req, res) => {
     }
 });
 
-// ===== GET SINGLE PRODUCT =====
+// ===== GET SINGLE PRODUCT - Product edit ke liye =====
+// Ye API shop-templates/*/dashboard.html me edit product ke liye hai
 router.get('/products/:shopId/:productId', auth, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
@@ -193,7 +211,8 @@ router.get('/products/:shopId/:productId', auth, async (req, res) => {
     }
 });
 
-// ===== CREATE PRODUCT - Push to items[] =====
+// ===== CREATE PRODUCT - Product add karne ke liye =====
+// Ye API shop-templates/*/dashboard.html me add product ke liye hai
 router.post('/products', auth, async (req, res) => {
     try {
         const { shopId,...productData } = req.body;
@@ -201,7 +220,6 @@ router.post('/products', auth, async (req, res) => {
         const shop = await Shop.findById(shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
-        // Verify ownership
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
         const isManager = shop.managerId?.toString() === req.user.id;
 
@@ -219,7 +237,8 @@ router.post('/products', auth, async (req, res) => {
     }
 });
 
-// ===== UPDATE PRODUCT - Update in items[] =====
+// ===== UPDATE PRODUCT - Product update ke liye =====
+// Ye API shop-templates/*/dashboard.html me edit product ke liye hai
 router.put('/products/:shopId/:productId', auth, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
@@ -244,7 +263,8 @@ router.put('/products/:shopId/:productId', auth, async (req, res) => {
     }
 });
 
-// ===== DELETE PRODUCT - Remove from items[] =====
+// ===== DELETE PRODUCT - Product delete ke liye =====
+// Ye API shop-templates/*/dashboard.html me delete product ke liye hai
 router.delete('/products/:shopId/:productId', auth, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
@@ -266,7 +286,8 @@ router.delete('/products/:shopId/:productId', auth, async (req, res) => {
     }
 });
 
-// ===== UPDATE SHOP - Logo support added =====
+// ===== UPDATE SHOP - Shop edit karne ke liye =====
+// Ye API area-manager.html aur shop dashboard se shop edit ke liye hai
 router.put('/shops/:id', auth, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id);
@@ -279,18 +300,16 @@ router.put('/shops/:id', auth, async (req, res) => {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        // ✅ Ensure location is properly formatted on update
         if (req.body.location && req.body.location.coordinates) {
             req.body.location = {
                 type: 'Point',
                 coordinates: [
-                    parseFloat(req.body.location.coordinates[0]), // lng
-                    parseFloat(req.body.location.coordinates[1]) // lat
+                    parseFloat(req.body.location.coordinates[0]),
+                    parseFloat(req.body.location.coordinates[1])
                 ]
             };
         }
 
-        // ✅ Logo update support
         if (req.body.logo!== undefined) {
             req.body.logo = req.body.logo;
         }
@@ -305,7 +324,8 @@ router.put('/shops/:id', auth, async (req, res) => {
     }
 });
 
-// ===== NEARBY SHOPS - Purana route, rakh sakta hai =====
+// ===== NEARBY SHOPS - Customer app ke liye =====
+// Ye API customer app me nearby shops dikhane ke liye hai
 router.get('/nearby', async (req, res) => {
     try {
         const { lat, lng, radius = 5000, type } = req.query;
@@ -315,7 +335,7 @@ router.get('/nearby', async (req, res) => {
         }
 
         const query = {
-            status: { $in: ['approved', 'active'] }, // ✅ FIXED: 'active' bhi include karo
+            status: { $in: ['approved', 'active'] },
             isActive: true,
             location: {
                 $near: {
