@@ -5,13 +5,31 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken'); // ✅ NAYA: JWT import
 const Shop = require('../models/Shop');
 const Order = require('../models/Order');
 const auth = require('../middleware/authenticateToken');
 
-// ✅ FIXED: CREATE SHOP - managerCodes explicitly save karo
+const JWT_SECRET = process.env.JWT_SECRET || 'samanlive_secret_key_2026_change_this'; // ✅ NAYA
+
+// ✅ FIXED: CREATE SHOP - Auth optional, bina login bhi shop banegi
 // Ye API shop-create.html ke liye hai - User shop create karta hai
-router.post('/shops', auth, async (req, res) => {
+router.post('/shops', async (req, res) => { // ✅ auth hata diya
+    let userId = null;
+
+    // Token hai to user nikalo, nahi to null - shop phir bhi banegi
+    const authHeader = req.headers['authorization'];
+    if (authHeader) {
+        try {
+            const token = authHeader.split(' ')[1];
+            const decoded = jwt.verify(token, JWT_SECRET);
+            userId = decoded.id || decoded.userId;
+        } catch (err) {
+            // Invalid token - ignore karo, shop phir bhi ban jaye
+            console.log('Token invalid, creating shop without owner');
+        }
+    }
+
     try {
         const { managerCodes,...restData } = req.body;
 
@@ -26,10 +44,11 @@ router.post('/shops', auth, async (req, res) => {
         const shopData = {
            ...restData,
             managerCodes: managerCodes, // ✅ Explicitly save karo
-            ownerId: req.user.id,
-            createdBy: req.user.id,
-            status: 'approved',
+            ownerId: userId, // ✅ Null bhi chalega
+            createdBy: userId,
+            status: 'approved', // ✅ Force approved
             isActive: true,
+            isVerified: true,
             logo: req.body.logo || ''
         };
 
