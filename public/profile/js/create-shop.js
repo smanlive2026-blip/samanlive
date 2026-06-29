@@ -5,7 +5,7 @@
 let selectedIcon = '🏪';
 let newShopData = null;
 let uploadedLogoBase64 = null;
-let selectedManagerCodes = [];
+let selectedManagerCodes = []; // ← GLOBAL ARRAY: submitShop() me use hoga
 let allManagers = [];
 let allAreas = [];
 let locationWatchId = null;
@@ -24,19 +24,46 @@ if (!window.currentUser) {
 window.currentUserLocation = null;
 
 // ========================================
+// ✅ GLOBAL FUNCTION: toggleManager()
+// USED IN: HTML checkbox onchange + onclick
+// PURPOSE: Manager select/deselect karna
+// ========================================
+window.toggleManager = function(managerCode) {
+    console.log('🔄 Toggle Manager Called:', managerCode);
+    const idx = selectedManagerCodes.indexOf(managerCode);
+    const checkbox = document.getElementById(`mgr_${managerCode}`);
+    const item = checkbox?.closest('.manager-item');
+
+    if (idx > -1) {
+        selectedManagerCodes.splice(idx, 1);
+        if (checkbox) checkbox.checked = false;
+        if (item) item.classList.remove('selected');
+    } else {
+        selectedManagerCodes.push(managerCode);
+        if (checkbox) checkbox.checked = true;
+        if (item) item.classList.add('selected');
+    }
+
+    console.log('✅ Selected Managers:', selectedManagerCodes);
+    updateManagerCountText();
+    document.getElementById('shopManagerCodes').value = JSON.stringify(selectedManagerCodes);
+}
+
+// ========================================
 // PAGE LOAD
+// USED IN: DOMContentLoaded event
 // ========================================
 window.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('userToken');
-    if (token && !window.currentUser._id) {
+    if (token &&!window.currentUser._id) {
         await fetchUserData(token);
     }
-    loadModules();
-    await loadAreaManagers();
-    await loadMyShops();
-    startLocationTracking();
-    checkAdminAccess();
-    initIconPicker();
+    loadModules(); // ← Modules dropdown load karta hai
+    await loadAreaManagers(); // ← Managers + Areas fetch karta hai
+    await loadMyShops(); // ← User ki purani shops load karta hai
+    startLocationTracking(); // ← GPS location auto fetch
+    checkAdminAccess(); // ← Admin hai ya nahi check
+    initIconPicker(); // ← Icon select wala UI
 });
 
 async function fetchUserData(token) {
@@ -55,6 +82,7 @@ async function fetchUserData(token) {
 
 // ========================================
 // LOAD MANAGERS & AREAS
+// USED IN: DOMContentLoaded
 // ========================================
 async function loadAreaManagers() {
     try {
@@ -65,8 +93,6 @@ async function loadAreaManagers() {
         allAreas = await areasRes.json();
         allManagers = await managersRes.json();
         console.log('✅ Loaded:', allAreas.length, 'areas,', allManagers.length, 'managers');
-        console.log('📊 Managers Data:', allManagers);
-        console.log('📊 Areas Data:', allAreas);
     } catch (err) {
         console.error('Failed to load managers:', err);
     }
@@ -74,13 +100,14 @@ async function loadAreaManagers() {
 
 // ========================================
 // ADMIN CHECK
+// USED IN: DOMContentLoaded
 // ========================================
 function checkAdminAccess() {
     const userRole = window.currentUser?.role || 'user';
     const rangeSelect = document.getElementById('shopRange');
     const rangeNote = document.getElementById('rangeNote');
 
-    if (userRole !== 'admin' && userRole !== 'area_manager') {
+    if (userRole!== 'admin' && userRole!== 'area_manager') {
         rangeSelect.value = '5000';
         Array.from(rangeSelect.options).forEach(opt => {
             if (parseInt(opt.value) > 5000) {
@@ -96,6 +123,7 @@ function checkAdminAccess() {
 
 // ========================================
 // LOCATION TRACKING
+// USED IN: DOMContentLoaded
 // ========================================
 function startLocationTracking() {
     if (!navigator.geolocation) {
@@ -134,6 +162,7 @@ function startLocationTracking() {
 
 // ========================================
 // FORM TOGGLE
+// USED IN: HTML button onclick="toggleCreateForm()"
 // ========================================
 function toggleCreateForm() {
     const formSection = document.getElementById('createFormSection');
@@ -156,6 +185,7 @@ function hideCreateForm() {
 
 // ========================================
 // LOAD MODULES
+// USED IN: DOMContentLoaded
 // ========================================
 function loadModules() {
     const select = document.getElementById('shopModule');
@@ -180,6 +210,7 @@ function loadModules() {
 
 // ========================================
 // ICON PICKER
+// USED IN: DOMContentLoaded
 // ========================================
 function initIconPicker() {
     const iconPicker = document.getElementById('iconPicker');
@@ -196,12 +227,13 @@ function initIconPicker() {
 
 // ========================================
 // LOGO UPLOAD
+// USED IN: HTML input onchange="previewLogo(event)"
 // ========================================
 function previewLogo(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 2 * 1024) {
         alert('Image size should be less than 2MB');
         return;
     }
@@ -230,6 +262,7 @@ function removeLogo() {
 
 // ========================================
 // LOCATION TYPE
+// USED IN: HTML button onclick="selectLocationType('fixed/dynamic')"
 // ========================================
 function selectLocationType(type) {
     document.getElementById('shopLocationType').value = type;
@@ -252,6 +285,7 @@ function selectLocationType(type) {
 
 // ========================================
 // AUTO FILL LOCATION + CITY DETECT
+// USED IN: toggleCreateForm()
 // ========================================
 function autoFillLocation() {
     const coordsEl = document.getElementById('locationCoords');
@@ -285,14 +319,14 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
     const status = document.getElementById('locationCoords');
 
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-       .then(r => r.json())
-       .then(data => {
+      .then(r => r.json())
+      .then(data => {
             // ✅ FIX: Hindi to English conversion
             let city = data.address.city || data.address.town || data.address.village || 'Surat';
             if (city === 'सूरत' || city === 'सुरत') {
                 city = 'Surat';
             }
-            
+
             const state = data.address.state || 'Gujarat';
             const pincode = data.address.postcode || '';
 
@@ -308,9 +342,9 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
             document.getElementById('detectedCityName').textContent = `📍 ${city}`;
             document.getElementById('detectedCityMeta').textContent = `${state} • Loading managers...`;
 
-            loadCityManagers(city);
+            loadCityManagers(city); // ← Managers load karo
         })
-       .catch(() => {
+      .catch(() => {
             const city = 'Surat';
             document.getElementById('shopCity').value = city;
             document.getElementById('shopState').value = 'Gujarat';
@@ -324,32 +358,30 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
 
 // ========================================
 // LOAD CITY MANAGERS - FIXED HINDI/ENGLISH
+// USED IN: updateShopLocationUI()
 // ========================================
 function loadCityManagers(city) {
     const managerList = document.getElementById('managerList');
     const countText = document.getElementById('managerCountText');
-    
+
     console.log('🔍 Searching managers for city:', city);
     console.log('📊 Total managers loaded:', allManagers.length);
-    console.log('📊 Total areas loaded:', allAreas.length);
 
     // ✅ FIX: Hindi + English + flexible matching
     const cityLower = city.toLowerCase().trim();
     const cityHindi = 'सूरत';
     const cityEnglish = 'surat';
-    
+
     const cityManagers = allManagers.filter(m => {
         const area = allAreas.find(a => a.areaCode === m.areaCode);
-        
-        // Check manager.city, area.city, area.areaName - sab jagah dekho
         const managerCity = (m.city || area?.city || area?.areaName || '').toLowerCase().trim();
-        
-        const isMatch = managerCity === cityLower || 
-                       managerCity === cityHindi || 
+
+        const isMatch = managerCity === cityLower ||
+                       managerCity === cityHindi ||
                        managerCity === cityEnglish ||
                        managerCity.includes(cityLower) ||
                        cityLower.includes(managerCity);
-        
+
         if (isMatch) {
             console.log('✅ Manager matched:', m.name, 'City:', managerCity, 'Code:', m.managerCode || m.areaCode);
         }
@@ -373,14 +405,18 @@ function loadCityManagers(city) {
     document.getElementById('detectedCityMeta').textContent = `${cityManagers.length} Area Managers available`;
     countText.textContent = `${cityManagers.length} Managers Found - Select multiple`;
 
+    // ✅ FIX: onclick me toggleManager() call + event.stopPropagation()
     managerList.innerHTML = cityManagers.map(m => {
         const area = allAreas.find(a => a.areaCode === m.areaCode);
         const managerCode = m.managerCode || m.areaCode + '-DEFAULT';
         const managerCity = m.city || area?.city || area?.areaName || city;
-        
+
         return `
-            <div class="manager-item" onclick="toggleManagerSelect('${managerCode}', this)">
-                <input type="checkbox" id="mgr_${managerCode}" value="${managerCode}">
+            <div class="manager-item" onclick="toggleManager('${managerCode}')">
+                <input type="checkbox"
+                       id="mgr_${managerCode}"
+                       value="${managerCode}"
+                       onclick="event.stopPropagation(); toggleManager('${managerCode}')">
                 <div class="manager-item-info">
                     <div class="manager-item-name">${escapeHtml(m.name)}</div>
                     <div class="manager-item-meta">
@@ -391,41 +427,29 @@ function loadCityManagers(city) {
         `;
     }).join('');
 
-    selectedManagerCodes = [];
+    selectedManagerCodes = []; // Reset
 }
 
-function toggleManagerSelect(managerCode, element) {
-    const checkbox = document.getElementById(`mgr_${managerCode}`);
-    checkbox.checked = !checkbox.checked;
-
-    if (checkbox.checked) {
-        element.classList.add('selected');
-        if (!selectedManagerCodes.includes(managerCode)) {
-            selectedManagerCodes.push(managerCode);
-        }
-    } else {
-        element.classList.remove('selected');
-        selectedManagerCodes = selectedManagerCodes.filter(c => c !== managerCode);
-    }
-
-    document.getElementById('shopManagerCodes').value = JSON.stringify(selectedManagerCodes);
-    updateManagerCountText();
-    console.log('✅ Selected Managers:', selectedManagerCodes);
-}
-
+// ========================================
+// TOGGLE SELECT ALL MANAGERS
+// USED IN: HTML button onclick="toggleSelectAllManagers()"
+// ========================================
 function toggleSelectAllManagers() {
     const checkboxes = document.querySelectorAll('.manager-item input[type="checkbox"]');
     const allChecked = Array.from(checkboxes).every(cb => cb.checked);
 
     checkboxes.forEach(cb => {
-        cb.checked = !allChecked;
+        const managerCode = cb.value;
         const item = cb.closest('.manager-item');
+
         if (!allChecked) {
+            cb.checked = true;
             item.classList.add('selected');
-            if (!selectedManagerCodes.includes(cb.value)) {
-                selectedManagerCodes.push(cb.value);
+            if (!selectedManagerCodes.includes(managerCode)) {
+                selectedManagerCodes.push(managerCode);
             }
         } else {
+            cb.checked = false;
             item.classList.remove('selected');
         }
     });
@@ -436,16 +460,18 @@ function toggleSelectAllManagers() {
 
     document.getElementById('shopManagerCodes').value = JSON.stringify(selectedManagerCodes);
     updateManagerCountText();
+    console.log('✅ Selected Managers:', selectedManagerCodes);
 }
 
 function updateManagerCountText() {
     const count = selectedManagerCodes.length;
     document.getElementById('managerCountText').textContent =
-        count === 0 ? 'No managers selected' : `${count} Manager${count > 1 ? 's' : ''} Selected`;
+        count === 0? 'No managers selected' : `${count} Manager${count > 1? 's' : ''} Selected`;
 }
 
 // ========================================
 // SUBMIT SHOP
+// USED IN: HTML button onclick="submitShop()"
 // ========================================
 async function submitShop() {
     const btn = document.getElementById('submitBtn');
@@ -461,7 +487,7 @@ async function submitShop() {
     const locationType = document.getElementById('shopLocationType').value;
     const range = parseInt(document.getElementById('shopRange').value);
 
-    console.log('🔍 Final Manager Codes Before Submit:', selectedManagerCodes);
+    console.log('🔍 Final Manager Codes Before Submit:', selectedManagerCodes); // ← DEBUG
 
     if (selectedManagerCodes.length === 0) {
         alert('⚠️ Please select at least one Area Manager!');
@@ -508,12 +534,12 @@ async function submitShop() {
             type: 'Point',
             coordinates: [parseFloat(lng), parseFloat(lat)]
         },
-        managerCodes: selectedManagerCodes
+        managerCodes: selectedManagerCodes // ← YE SABSE IMPORTANT HAI
     };
 
-    console.log('📤 Sending Shop Data:', shopData);
+    console.log('📤 Sending Shop Data:', shopData); // ← DEBUG
 
-    if (!shopData.shopName || !shopData.serviceType || !shopData.phone || !shopData.address.line1 || !lat || !lng) {
+    if (!shopData.shopName ||!shopData.serviceType ||!shopData.phone ||!shopData.address.line1 ||!lat ||!lng) {
         alert('Please fill all required fields including location!');
         btn.textContent = 'Create My Shop - Go Live Now';
         btn.disabled = false;
@@ -528,7 +554,7 @@ async function submitShop() {
         });
 
         const data = await res.json();
-        console.log('📥 Server Response:', data);
+        console.log('📥 Server Response:', data); // ← DEBUG
 
         if (res.ok && data._id) {
             localStorage.setItem('userToken', 'shop-owner-' + data._id);
@@ -559,6 +585,7 @@ async function submitShop() {
 
 // ========================================
 // LOAD MY SHOPS
+// USED IN: DOMContentLoaded
 // ========================================
 async function loadMyShops() {
     const list = document.getElementById('shopsList');
@@ -590,7 +617,7 @@ async function loadMyShops() {
                 card.onclick = () => window.location.href = dashboardUrl;
                 card.innerHTML = `
                     <div class="shop-icon">
-                        ${shopData.logo ?
+                        ${shopData.logo?
                             `<img src="${shopData.logo}" alt="${shopData.shopName}">` :
                             shopData.icon || '🏪'
                         }
@@ -598,7 +625,7 @@ async function loadMyShops() {
                     <div class="shop-details">
                         <h3>${shopData.shopName}</h3>
                         <p>${shopData.address?.city || 'Surat'} • ${shopData.serviceType}</p>
-                        <span class="shop-badge">${shopData.status} ${shopData.locationType === 'dynamic' ? '• 🚶 Moving' : ''}</span>
+                        <span class="shop-badge">${shopData.status} ${shopData.locationType === 'dynamic'? '• 🚶 Moving' : ''}</span>
                     </div>
                     <i class="fa fa-chevron-right" style="color: #94a3b8; margin-left: auto;"></i>
                 `;
@@ -612,6 +639,7 @@ async function loadMyShops() {
 
 // ========================================
 // RESET FORM
+// USED IN: toggleCreateForm() + hideCreateForm()
 // ========================================
 function resetForm() {
     document.getElementById('shopName').value = '';
@@ -648,6 +676,7 @@ function resetForm() {
 
 // ========================================
 // COPY SHOP LINK
+// USED IN: HTML button onclick="copyShopLink()"
 // ========================================
 function copyShopLink() {
     if (newShopData) {
