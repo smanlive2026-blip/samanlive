@@ -270,7 +270,6 @@
     <div class="dashboard" id="dashboard">
         <div class="header">
             <div class="header-content">
-                <!-- LOGO FIXED: flex-shrink: 0 + white-space: nowrap -->
                 <div class="header-left">
                     <img src="/logos/samanlive-pulse.svg" height="45" alt="SAMNLIVE" style="flex-shrink: 0;">
                     <h1>Area Manager Dashboard</h1>
@@ -428,6 +427,7 @@
                         <label>Email Address</label>
                         <input type="email" id="profileEmail" placeholder="rajesh@samanlive.com">
                     </div>
+                </div>
                 <div class="form-group">
                     <label>Area Name <small style="color: var(--text-muted);">(Auto-filled, cannot change)</small></label>
                     <input type="text" id="profileAreaName" disabled>
@@ -469,6 +469,7 @@
                         <label>Phone</label>
                         <input type="text" id="shopPhone" placeholder="9876543210">
                     </div>
+                </div>
                 <div class="form-group">
                     <label>Address</label>
                     <textarea id="shopAddress" rows="2" placeholder="Full address"></textarea>
@@ -506,6 +507,7 @@
                         <label>Longitude</label>
                         <input type="text" id="shopLng" disabled>
                     </div>
+                </div>
                 <small style="color: var(--text-muted); display: block; margin-bottom: 15px;">
                     <i class="fas fa-map-marker-alt"></i> Location cannot be changed by Area Manager
                 </small>
@@ -528,15 +530,24 @@
         let categories = [];
 
         const API = '/api';
+        
+        // ✅ FIXED: apiCall function me Authorization header add kiya
         async function apiCall(endpoint, method = 'GET', body = null) {
             try {
-                const opts = { method };
+                const opts = { 
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${token}` // ✅ Token header me bhejo
+                    }
+                };
+                
                 if (body && !(body instanceof FormData)) {
-                    opts.headers = { 'Content-Type': 'application/json' };
+                    opts.headers['Content-Type'] = 'application/json';
                     opts.body = JSON.stringify(body);
                 } else if (body) {
                     opts.body = body;
                 }
+                
                 const res = await fetch(API + endpoint, opts);
                 const text = await res.text();
                 let data;
@@ -564,9 +575,12 @@
                 
                 if (!managerRes.success) throw new Error(managerRes.error || 'Invalid token');
                 managerData = managerRes.manager;
+                
+                console.log('👤 Manager Data:', managerData);
+                console.log('🏷️ Manager Code:', managerData.managerCode); // ✅ Debug log
 
                 const [shopsData, modulesData] = await Promise.all([
-                    apiCall(`/manager/shops?token=${token}`).catch(err => {
+                    apiCall(`/manager/shops`).catch(err => { // ✅ Token query se hata diya
                         console.error('Shops API Error:', err);
                         return { shops: [] };
                     }),
@@ -575,6 +589,8 @@
                         return { modules: [] };
                     })
                 ]);
+
+                console.log('📦 Shops API Response:', shopsData); // ✅ Debug log
 
                 const areaShops = shopsData.shops || shopsData || [];
                 categories = modulesData.modules || modulesData || [];
