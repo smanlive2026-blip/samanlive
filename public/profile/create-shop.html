@@ -1,370 +1,296 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>My Shops - SAMANLIVE</title>
-<link rel="stylesheet" href="/assets/css/main.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="./css/create-shop.css">
-<style>
-.location-type-toggle {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 16px;
-    background: #f1f5f9;
-    padding: 6px;
-    border-radius: 10px;
-}
-.location-type-btn {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: transparent;
-    color: #64748b;
-}
-.location-type-btn.active {
-    background: #667eea;
-    color: white;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-.location-coords.success {
-    color: #10b981;
-    font-weight: 600;
-}
-.location-note {
-    font-size: 12px;
-    color: #64748b;
-    margin-top: 8px;
-    padding: 8px;
-    background: #f8fafc;
-    border-radius: 6px;
-}
-.auto-badge {
-    background: #10b981;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-.pulse {
-    width: 8px;
-    height: 8px;
-    background: white;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-}
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-}
-.admin-only-note {
-    font-size: 11px;
-    color: #f59e0b;
-    margin-top: 4px;
-    font-weight: 600;
-}
-.manager-select-box {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 16px;
-    margin-top: 8px;
-}
-.manager-select-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-.manager-select-header h4 {
-    font-size: 14px;
-    color: #1e293b;
-    margin: 0;
-}
-.select-all-btn {
-    font-size: 12px;
-    color: #667eea;
-    background: none;
-    border: none;
-    font-weight: 600;
-    cursor: pointer;
-}
-.manager-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-height: 280px;
-    overflow-y: auto;
-}
-.manager-item {
-    background: white;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-.manager-item:hover {
-    border-color: #c7d2fe;
-}
-.manager-item.selected {
-    border-color: #667eea;
-    background: #eef2ff;
-}
-.manager-item input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-}
-.manager-item-info {
-    flex: 1;
-}
-.manager-item-name {
-    font-weight: 700;
-    font-size: 14px;
-    color: #1e293b;
-}
-.manager-item-meta {
-    font-size: 12px;
-    color: #64748b;
-    margin-top: 2px;
-}
-.city-detected-box {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    padding: 16px;
-    border-radius: 12px;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.city-detected-box i {
-    font-size: 24px;
-}
-.city-detected-info h3 {
-    margin: 0;
-    font-size: 16px;
-}
-.city-detected-info p {
-    margin: 4px 0 0 0;
-    font-size: 13px;
-    opacity: 0.9;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Create Shop - SAMANLIVE</title>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; padding: 20px; }
+      .create-shop-page { max-width: 900px; margin: 0 auto; }
+      .header-bar { background: white; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+      .header-left { display: flex; align-items: center; gap: 12px; }
+      .back-btn { background: none; border: none; font-size: 16px; color: #667eea; cursor: pointer; font-weight: 600; }
+      .header-bar h1 { font-size: 20px; color: #1e293b; }
+      .add-shop-btn { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+      .form-container { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+      .form-group { margin-bottom: 20px; }
+      .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #334155; font-size: 14px; }
+      .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; }
+      .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline: none; border-color: #667eea; }
+      .form-group textarea { min-height: 80px; resize: vertical; }
+      .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .info-banner { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #78350f; }
+      .success-box { background: #d1fae5; border: 2px solid #10b981; border-radius: 12px; padding: 24px; text-align: center; display: none; margin-bottom: 20px; }
+      .success-box h3 { color: #065f46; margin-bottom: 8px; }
+      .success-box p { color: #047857; margin-bottom: 20px; }
+      .success-actions { display: flex; gap: 12px; justify-content: center; }
+      .btn-dashboard { background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+      .btn-copy { background: #f59e0b; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+      .city-detected-box { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 16px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+      .city-detected-box i { font-size: 24px; }
+      .city-detected-info h3 { margin: 0; font-size: 16px; }
+      .city-detected-info p { margin: 4px 0 0; font-size: 13px; opacity: 0.9; }
+      .logo-upload-box { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; }
+      .logo-preview { width: 120px; height: 120px; border: 2px solid #e2e8f0; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; margin: 0 auto 12px; background: #f8fafc; }
+      .logo-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+      .logo-preview i { font-size: 32px; color: #94a3b8; margin-bottom: 8px; }
+      .logo-preview p { font-size: 14px; color: #64748b; font-weight: 600; }
+      .btn-remove-logo { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+      .icon-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      .icon-option { width: 50px; height: 50px; border: 2px solid #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; transition: all 0.2s; }
+      .icon-option:hover,.icon-option.selected { border-color: #667eea; background: #eef2ff; transform: scale(1.1); }
+      .location-type-toggle { display: flex; gap: 10px; margin-bottom: 16px; background: #f1f5f9; padding: 6px; border-radius: 10px; }
+      .location-type-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; background: transparent; color: #64748b; }
+      .location-type-btn.active { background: #667eea; color: white; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); }
+      .location-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-top: 8px; }
+      .location-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+      .location-header h3 { font-size: 14px; color: #1e293b; margin: 0; }
+      .auto-badge { background: #10b981; color: white; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+      .pulse { width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+      .location-coords { background: white; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 13px; color: #475569; margin-bottom: 8px; }
+      .location-coords.success { color: #10b981; font-weight: 600; background: #d1fae5; }
+      .location-info { font-size: 12px; color: #64748b; line-height: 1.6; }
+      .location-note { font-size: 12px; color: #64748b; margin-top: 8px; padding: 8px; background: #f8fafc; border-radius: 6px; }
+      .admin-only-note { font-size: 11px; color: #f59e0b; margin-top: 4px; font-weight: 600; }
+      .manager-select-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-top: 8px; }
+      .manager-select-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+      .manager-select-header h4 { font-size: 14px; color: #1e293b; margin: 0; }
+      .select-all-btn { font-size: 12px; color: #667eea; background: none; border: none; font-weight: 600; cursor: pointer; }
+      .manager-list { display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; }
+      .manager-item { background: white; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
+      .manager-item:hover { border-color: #c7d2fe; }
+      .manager-item.selected { border-color: #667eea; background: #eef2ff; }
+      .manager-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+      .manager-item-info { flex: 1; }
+      .manager-item-name { font-weight: 700; font-size: 14px; color: #1e293b; }
+      .manager-item-meta { font-size: 12px; color: #64748b; margin-top: 2px; }
+      .submit-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 20px; transition: all 0.2s; }
+      .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
+      .submit-btn:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
+      .btn-copy-cancel { width: 100%; padding: 14px; background: #64748b; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+      .shops-container { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+      .shops-list { display: flex; flex-direction: column; gap: 12px; }
+      .shop-card { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: all 0.2s; }
+      .shop-card:hover { border-color: #667eea; background: #eef2ff; transform: translateX(4px); }
+      .shop-icon { width: 50px; height: 50px; border-radius: 12px; background: white; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; overflow: hidden; }
+      .shop-icon img { width: 100%; height: 100%; object-fit: cover; }
+      .shop-details { flex: 1; }
+      .shop-details h3 { font-size: 16px; color: #1e293b; margin-bottom: 4px; }
+      .shop-details p { font-size: 13px; color: #64748b; margin: 0; }
+      .shop-badge { background: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-top: 6px; display: inline-block; }
+      .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+      .empty-state i { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+      .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: #64748b; }
+      .empty-state p { font-size: 14px; }
+      .toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; border-radius: 8px; color: white; font-weight: 600; z-index: 9999; animation: slideIn 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+      .toast.success { background: #10b981; }
+      .toast.error { background: #ef4444; }
+        @keyframes slideIn { from { transform: translateX(400px); } to { transform: translateX(0); } }
+        @media (max-width: 768px) {.form-row { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
-<div class="create-shop-page">
-    <div class="header-bar">
-        <div class="header-left">
-            <button class="back-btn" onclick="window.location.href='/profile.html'">← Back</button>
-            <h1>My Shops</h1>
-        </div>
-        <button class="add-shop-btn" id="newShopBtn" onclick="toggleCreateForm()">
-            <i class="fa fa-plus"></i> New Shop
-        </button>
-    </div>
-
-    <!-- CREATE FORM - By default hidden -->
-    <div id="createFormSection" class="form-container" style="display: none;">
-        <div class="success-msg" id="successMsg">✅ Shop Created Successfully! Your shop is now LIVE.</div>
-
-        <div class="success-box" id="successBox">
-            <h3>🎉 Shop Created Successfully!</h3>
-            <p id="successShopName">Your shop is now LIVE and ready.</p>
-            <div class="success-actions">
-                <button class="btn-dashboard" onclick="hideCreateForm(); loadMyShops();">
-                    <i class="fa fa-store"></i> View All My Shops
-                </button>
-                <button class="btn-copy" onclick="copyShopLink()">
-                    <i class="fa fa-copy"></i> Copy Customer Link
-                </button>
+    <div class="create-shop-page">
+        <div class="header-bar">
+            <div class="header-left">
+                <button class="back-btn" onclick="window.location.href='/profile.html'">← Back</button>
+                <h1>My Shops</h1>
             </div>
+            <button class="add-shop-btn" id="newShopBtn" onclick="toggleCreateForm()">
+                <i class="fa fa-plus"></i> New Shop
+            </button>
         </div>
 
-        <div class="info-banner" id="infoBanner">
-            <strong>Great News:</strong> Aapki shop turant active ho jayegi. Kitni bhi shops bana sakte ho.
-        </div>
-
-        <div id="formFields">
-            <!-- Auto Detected City Box -->
-            <div class="city-detected-box" id="cityDetectedBox" style="display:none;">
-                <i class="fa fa-map-marker-alt"></i>
-                <div class="city-detected-info">
-                    <h3 id="detectedCityName">Detecting your city...</h3>
-                    <p id="detectedCityMeta">GPS se location fetch ho rahi hai</p>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Shop Name *</label>
-                <input type="text" id="shopName" placeholder="Example: Sharma Kirana Store">
-            </div>
-
-            <div class="form-group">
-                <label>Shop Category *</label>
-                <select id="shopModule" required>
-                    <option value="">Select Shop Type</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Shop Logo/Photo <span style="font-weight: 400; color: #64748b;">(Optional)</span></label>
-                <div class="logo-upload-box">
-                    <input type="file" id="shopLogoInput" accept="image/*" style="display: none;" onchange="previewLogo(event)">
-                    <div class="logo-preview" id="logoPreview" onclick="document.getElementById('shopLogoInput').click()">
-                        <i class="fa fa-camera"></i>
-                        <p>Upload Shop Photo</p>
-                        <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
-                    </div>
-                    <button type="button" class="btn-remove-logo" id="removeLogoBtn" style="display: none;" onclick="removeLogo()">
-                        <i class="fa fa-trash"></i> Remove Photo
+        <!-- CREATE FORM -->
+        <div id="createFormSection" class="form-container" style="display: none;">
+            <div class="success-box" id="successBox">
+                <h3>🎉 Shop Created Successfully!</h3>
+                <p id="successShopName">Your shop is now LIVE and ready.</p>
+                <div class="success-actions">
+                    <button class="btn-dashboard" onclick="hideCreateForm(); loadMyShops();">
+                        <i class="fa fa-store"></i> View All My Shops
+                    </button>
+                    <button class="btn-copy" onclick="copyShopLink()">
+                        <i class="fa fa-copy"></i> Copy Customer Link
                     </button>
                 </div>
             </div>
 
-            <div style="text-align: center; margin: 16px 0; color: #94a3b8; font-size: 14px; font-weight: 600;">
-                — OR SELECT ICON BELOW —
+            <div class="info-banner" id="infoBanner">
+                <strong>Great News:</strong> Aapki shop turant active ho jayegi. Kitni bhi shops bana sakte ho.
             </div>
 
-            <div class="form-group">
-                <label>Select Shop Icon * <span style="font-size: 12px; color: #666;">(Used if no photo uploaded)</span></label>
-                <div class="icon-picker" id="iconPicker">
-                    <div class="icon-option selected" data-icon="🏪">🏪</div>
-                    <div class="icon-option" data-icon="🛒">🛒</div>
-                    <div class="icon-option" data-icon="🍕">🍕</div>
-                    <div class="icon-option" data-icon="💊">💊</div>
-                    <div class="icon-option" data-icon="🔧">🔧</div>
-                    <div class="icon-option" data-icon="👗">👗</div>
-                    <div class="icon-option" data-icon="📱">📱</div>
-                    <div class="icon-option" data-icon="💇">💇</div>
-                    <div class="icon-option" data-icon="🚗">🚗</div>
-                    <div class="icon-option" data-icon="🏠">🏠</div>
-                    <div class="icon-option" data-icon="🎓">🎓</div>
-                    <div class="icon-option" data-icon="⚡">⚡</div>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Contact Phone *</label>
-                    <input type="tel" id="shopPhone" placeholder="10 digit mobile" maxlength="10">
-                </div>
-                <div class="form-group">
-                    <label>Service Range *</label>
-                    <select id="shopRange">
-                        <option value="1000">1 KM</option>
-                        <option value="2000">2 KM</option>
-                        <option value="5000" selected>5 KM</option>
-                        <option value="10000">10 KM</option>
-                        <option value="15000">15 KM</option>
-                        <option value="20000">20 KM</option>
-                    </select>
-                    <div class="admin-only-note" id="rangeNote" style="display:none;">
-                        ⚠️ Only Admin/Area Manager can increase range above 5KM
+            <div id="formFields">
+                <!-- Auto Detected City Box -->
+                <div class="city-detected-box" id="cityDetectedBox" style="display:none;">
+                    <i class="fa fa-map-marker-alt"></i>
+                    <div class="city-detected-info">
+                        <h3 id="detectedCityName">Detecting your city...</h3>
+                        <p id="detectedCityMeta">GPS se location fetch ho rahi hai</p>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label>Shop Address *</label>
-                <textarea id="shopAddress" placeholder="Complete shop address with landmark"></textarea>
-            </div>
+                <div class="form-group">
+                    <label>Shop Name *</label>
+                    <input type="text" id="shopName" placeholder="Example: Sharma Kirana Store">
+                </div>
 
-            <div class="form-group">
-                <label>Shop Description</label>
-                <textarea id="shopDesc" placeholder="What services/products you offer?"></textarea>
-            </div>
+                <div class="form-group">
+                    <label>Shop Category *</label>
+                    <select id="shopModule" required>
+                        <option value="">Select Shop Type</option>
+                    </select>
+                </div>
 
-            <!-- Area Manager Multi-Select -->
-            <div class="form-group">
-                <label>Select Area Managers * <span style="font-weight: 400; color: #64748b;">(Multiple select)</span></label>
-                <div class="manager-select-box" id="managerSelectBox">
-                    <div class="manager-select-header">
-                        <h4 id="managerCountText">Loading managers...</h4>
-                        <button type="button" class="select-all-btn" onclick="toggleSelectAllManagers()">
-                            Select All
+                <div class="form-group">
+                    <label>Shop Logo/Photo <span style="font-weight: 400; color: #64748b;">(Optional)</span></label>
+                    <div class="logo-upload-box">
+                        <input type="file" id="shopLogoInput" accept="image/*" style="display: none;" onchange="previewLogo(event)">
+                        <div class="logo-preview" id="logoPreview" onclick="document.getElementById('shopLogoInput').click()">
+                            <i class="fa fa-camera"></i>
+                            <p>Upload Shop Photo</p>
+                            <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
+                        </div>
+                        <button type="button" class="btn-remove-logo" id="removeLogoBtn" style="display: none;" onclick="removeLogo()">
+                            <i class="fa fa-trash"></i> Remove Photo
                         </button>
                     </div>
-                    <div class="manager-list" id="managerList">
-                        <p style="text-align:center;color:#94a3b8;padding:20px;">Detecting your city first...</p>
+                </div>
+
+                <div style="text-align: center; margin: 16px 0; color: #94a3b8; font-size: 14px; font-weight: 600;">
+                    — OR SELECT ICON BELOW —
+                </div>
+
+                <div class="form-group">
+                    <label>Select Shop Icon * <span style="font-size: 12px; color: #666;">(Used if no photo uploaded)</span></label>
+                    <div class="icon-picker" id="iconPicker">
+                        <div class="icon-option selected" data-icon="🏪">🏪</div>
+                        <div class="icon-option" data-icon="🛒">🛒</div>
+                        <div class="icon-option" data-icon="🍕">🍕</div>
+                        <div class="icon-option" data-icon="💊">💊</div>
+                        <div class="icon-option" data-icon="🔧">🔧</div>
+                        <div class="icon-option" data-icon="👗">👗</div>
+                        <div class="icon-option" data-icon="📱">📱</div>
+                        <div class="icon-option" data-icon="💇">💇</div>
+                        <div class="icon-option" data-icon="🚗">🚗</div>
+                        <div class="icon-option" data-icon="🏠">🏠</div>
+                        <div class="icon-option" data-icon="🎓">🎓</div>
+                        <div class="icon-option" data-icon="⚡">⚡</div>
                     </div>
-                    <div class="location-note">
-                        💡 Shop in managers ke dashboard me live dikhegi. Multiple managers select kar sakte ho.
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contact Phone *</label>
+                        <input type="tel" id="shopPhone" placeholder="10 digit mobile" maxlength="10">
                     </div>
+                    <div class="form-group">
+                        <label>Service Range *</label>
+                        <select id="shopRange">
+                            <option value="1000">1 KM</option>
+                            <option value="2000">2 KM</option>
+                            <option value="5000" selected>5 KM</option>
+                            <option value="10000">10 KM</option>
+                            <option value="15000">15 KM</option>
+                            <option value="20000">20 KM</option>
+                        </select>
+                        <div class="admin-only-note" id="rangeNote" style="display:none;">
+                            ⚠️ Only Admin/Area Manager can increase range above 5KM
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Shop Address *</label>
+                    <textarea id="shopAddress" placeholder="Complete shop address with landmark"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Shop Description</label>
+                    <textarea id="shopDesc" placeholder="What services/products you offer?"></textarea>
+                </div>
+
+                <!-- Area Manager Multi-Select -->
+                <div class="form-group">
+                    <label>Select Area Managers * <span style="font-weight: 400; color: #64748b;">(Multiple select)</span></label>
+                    <div class="manager-select-box" id="managerSelectBox">
+                        <div class="manager-select-header">
+                            <h4 id="managerCountText">Loading managers...</h4>
+                            <button type="button" class="select-all-btn" onclick="toggleSelectAllManagers()">
+                                Select All
+                            </button>
+                        </div>
+                        <div class="manager-list" id="managerList">
+                            <p style="text-align:center;color:#94a3b8;padding:20px;">Detecting your city first...</p>
+                        </div>
+                        <div class="location-note">
+                            💡 Shop in managers ke dashboard me live dikhegi. Multiple managers select kar sakte ho.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location Type Selection -->
+                <div class="location-box">
+                    <div class="location-header">
+                        <h3>📍 Shop Location Type *</h3>
+                    </div>
+
+                    <div class="location-type-toggle">
+                        <button type="button" class="location-type-btn active" data-type="fixed" onclick="selectLocationType('fixed')">
+                            📍 Fixed Location
+                        </button>
+                        <button type="button" class="location-type-btn" data-type="dynamic" onclick="selectLocationType('dynamic')">
+                            🚶 Dynamic (Moving)
+                        </button>
+                    </div>
+
+                    <div class="location-note" id="locationTypeNote">
+                        <strong>Fixed:</strong> Shop ek hi jagah rahegi. 5KM circle me sabko dikhegi by default.
+                    </div>
+
+                    <div class="location-header" style="margin-top: 12px;">
+                        <h3 id="locationTitle">📍 Shop GPS Location *</h3>
+                        <div class="auto-badge">
+                            <span class="pulse"></span>
+                            AUTO SYNC
+                        </div>
+                    </div>
+                    <div class="location-coords" id="locationCoords">
+                        Loading your current location...
+                    </div>
+                    <div class="location-info">
+                        💡 Your location is automatically captured from your device and updates every 30 seconds
+                    </div>
+                    <input type="hidden" id="shopLat">
+                    <input type="hidden" id="shopLng">
+                    <input type="hidden" id="shopCity">
+                    <input type="hidden" id="shopState">
+                    <input type="hidden" id="shopPincode">
+                    <input type="hidden" id="shopLocationType" value="fixed">
+                    <input type="hidden" id="shopManagerCodes">
+                </div>
+
+                <button class="submit-btn" onclick="submitShop()" id="submitBtn">Create My Shop - Go Live Now</button>
+                <button class="btn-copy-cancel" onclick="hideCreateForm()">Cancel</button>
+            </div>
+        </div>
+
+        <!-- SHOPS LIST -->
+        <div id="shopsListSection" class="shops-container">
+            <div class="shops-list" id="shopsList">
+                <div class="empty-state" id="emptyState">
+                    <i class="fa fa-store"></i>
+                    <h3>No Shops Yet</h3>
+                    <p>Click + New Shop to create your first shop</p>
                 </div>
             </div>
-
-            <!-- Location Type Selection -->
-            <div class="location-box">
-                <div class="location-header">
-                    <h3>📍 Shop Location Type *</h3>
-                </div>
-
-                <div class="location-type-toggle">
-                    <button type="button" class="location-type-btn active" data-type="fixed" onclick="selectLocationType('fixed')">
-                        📍 Fixed Location
-                    </button>
-                    <button type="button" class="location-type-btn" data-type="dynamic" onclick="selectLocationType('dynamic')">
-                        🚶 Dynamic (Moving)
-                    </button>
-                </div>
-
-                <div class="location-note" id="locationTypeNote">
-                    <strong>Fixed:</strong> Shop ek hi jagah rahegi. 5KM circle me sabko dikhegi by default.
-                </div>
-
-                <div class="location-header" style="margin-top: 12px;">
-                    <h3 id="locationTitle">📍 Shop GPS Location *</h3>
-                    <div class="auto-badge">
-                        <span class="pulse"></span>
-                        AUTO SYNC
-                    </div>
-                <div class="location-coords" id="locationCoords">
-                    Loading your current location...
-                </div>
-                <div class="location-info">
-                    💡 Your location is automatically captured from your device and updates every 30 seconds
-                </div>
-                <input type="hidden" id="shopLat">
-                <input type="hidden" id="shopLng">
-                <input type="hidden" id="shopCity">
-                <input type="hidden" id="shopState">
-                <input type="hidden" id="shopPincode">
-                <input type="hidden" id="shopLocationType" value="fixed">
-                <input type="hidden" id="shopManagerCodes">
-            </div>
-
-            <button class="submit-btn" onclick="submitShop()" id="submitBtn">Create My Shop - Go Live Now</button>
-            <button class="btn-copy" onclick="hideCreateForm()" style="margin-top: 10px;">Cancel</button>
         </div>
     </div>
 
-    <!-- SHOPS LIST - Always visible -->
-    <div id="shopsListSection" class="shops-container">
-        <div class="shops-list" id="shopsList">
-            <div class="empty-state" id="emptyState">
-                <i class="fa fa-store"></i>
-                <h3>No Shops Yet</h3>
-                <p>Click + New Shop to create your first shop</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="./js/create-shop.js"></script>
+    <script src="./js/create-shop.js"></script>
 </body>
 </html>

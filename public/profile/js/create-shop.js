@@ -25,8 +25,6 @@ window.currentUserLocation = null;
 
 // ========================================
 // ✅ GLOBAL FUNCTION: toggleManager()
-// USED IN: HTML checkbox onchange + onclick
-// PURPOSE: Manager select/deselect karna
 // ========================================
 window.toggleManager = function(managerCode) {
     console.log('🔄 Toggle Manager Called:', managerCode);
@@ -51,19 +49,18 @@ window.toggleManager = function(managerCode) {
 
 // ========================================
 // PAGE LOAD
-// USED IN: DOMContentLoaded event
 // ========================================
 window.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('userToken');
     if (token &&!window.currentUser._id) {
         await fetchUserData(token);
     }
-    loadModules(); // ← Modules dropdown load karta hai
-    await loadAreaManagers(); // ← Managers + Areas fetch karta hai
-    await loadMyShops(); // ← User ki purani shops load karta hai
-    startLocationTracking(); // ← GPS location auto fetch
-    checkAdminAccess(); // ← Admin hai ya nahi check
-    initIconPicker(); // ← Icon select wala UI
+    loadModules();
+    await loadAreaManagers();
+    await loadMyShops();
+    startLocationTracking();
+    checkAdminAccess();
+    initIconPicker();
 });
 
 async function fetchUserData(token) {
@@ -82,7 +79,6 @@ async function fetchUserData(token) {
 
 // ========================================
 // LOAD MANAGERS & AREAS
-// USED IN: DOMContentLoaded
 // ========================================
 async function loadAreaManagers() {
     try {
@@ -100,7 +96,6 @@ async function loadAreaManagers() {
 
 // ========================================
 // ADMIN CHECK
-// USED IN: DOMContentLoaded
 // ========================================
 function checkAdminAccess() {
     const userRole = window.currentUser?.role || 'user';
@@ -123,7 +118,6 @@ function checkAdminAccess() {
 
 // ========================================
 // LOCATION TRACKING
-// USED IN: DOMContentLoaded
 // ========================================
 function startLocationTracking() {
     if (!navigator.geolocation) {
@@ -162,7 +156,6 @@ function startLocationTracking() {
 
 // ========================================
 // FORM TOGGLE
-// USED IN: HTML button onclick="toggleCreateForm()"
 // ========================================
 function toggleCreateForm() {
     const formSection = document.getElementById('createFormSection');
@@ -185,7 +178,6 @@ function hideCreateForm() {
 
 // ========================================
 // LOAD MODULES
-// USED IN: DOMContentLoaded
 // ========================================
 function loadModules() {
     const select = document.getElementById('shopModule');
@@ -210,7 +202,6 @@ function loadModules() {
 
 // ========================================
 // ICON PICKER
-// USED IN: DOMContentLoaded
 // ========================================
 function initIconPicker() {
     const iconPicker = document.getElementById('iconPicker');
@@ -227,13 +218,12 @@ function initIconPicker() {
 
 // ========================================
 // LOGO UPLOAD
-// USED IN: HTML input onchange="previewLogo(event)"
 // ========================================
 function previewLogo(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024) {
+    if (file.size > 2 * 1024 * 1024) {
         alert('Image size should be less than 2MB');
         return;
     }
@@ -262,7 +252,6 @@ function removeLogo() {
 
 // ========================================
 // LOCATION TYPE
-// USED IN: HTML button onclick="selectLocationType('fixed/dynamic')"
 // ========================================
 function selectLocationType(type) {
     document.getElementById('shopLocationType').value = type;
@@ -285,7 +274,6 @@ function selectLocationType(type) {
 
 // ========================================
 // AUTO FILL LOCATION + CITY DETECT
-// USED IN: toggleCreateForm()
 // ========================================
 function autoFillLocation() {
     const coordsEl = document.getElementById('locationCoords');
@@ -319,9 +307,8 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
     const status = document.getElementById('locationCoords');
 
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-      .then(r => r.json())
-      .then(data => {
-            // ✅ FIX: Hindi to English conversion
+    .then(r => r.json())
+    .then(data => {
             let city = data.address.city || data.address.town || data.address.village || 'Surat';
             if (city === 'सूरत' || city === 'सुरत') {
                 city = 'Surat';
@@ -342,9 +329,9 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
             document.getElementById('detectedCityName').textContent = `📍 ${city}`;
             document.getElementById('detectedCityMeta').textContent = `${state} • Loading managers...`;
 
-            loadCityManagers(city); // ← Managers load karo
+            loadCityManagers(city);
         })
-      .catch(() => {
+    .catch(() => {
             const city = 'Surat';
             document.getElementById('shopCity').value = city;
             document.getElementById('shopState').value = 'Gujarat';
@@ -357,8 +344,7 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
 }
 
 // ========================================
-// LOAD CITY MANAGERS - FIXED HINDI/ENGLISH
-// USED IN: updateShopLocationUI()
+// LOAD CITY MANAGERS - ✅ FIXED: undefined filter
 // ========================================
 function loadCityManagers(city) {
     const managerList = document.getElementById('managerList');
@@ -367,12 +353,17 @@ function loadCityManagers(city) {
     console.log('🔍 Searching managers for city:', city);
     console.log('📊 Total managers loaded:', allManagers.length);
 
-    // ✅ FIX: Hindi + English + flexible matching
     const cityLower = city.toLowerCase().trim();
     const cityHindi = 'सूरत';
     const cityEnglish = 'surat';
 
+    // ✅ FIX: undefined wale managers skip karo
     const cityManagers = allManagers.filter(m => {
+        // Skip invalid areaCode
+        if (!m.areaCode || m.areaCode === 'undefined' || m.areaCode.trim() === '') {
+            return false;
+        }
+
         const area = allAreas.find(a => a.areaCode === m.areaCode);
         const managerCity = (m.city || area?.city || area?.areaName || '').toLowerCase().trim();
 
@@ -383,7 +374,7 @@ function loadCityManagers(city) {
                        cityLower.includes(managerCity);
 
         if (isMatch) {
-            console.log('✅ Manager matched:', m.name, 'City:', managerCity, 'Code:', m.managerCode || m.areaCode);
+            console.log('✅ Manager matched:', m.name, 'City:', managerCity, 'AreaCode:', m.areaCode);
         }
         return isMatch;
     });
@@ -405,7 +396,6 @@ function loadCityManagers(city) {
     document.getElementById('detectedCityMeta').textContent = `${cityManagers.length} Area Managers available`;
     countText.textContent = `${cityManagers.length} Managers Found - Select multiple`;
 
-    // ✅ FIX: onclick me toggleManager() call + event.stopPropagation()
     managerList.innerHTML = cityManagers.map(m => {
         const area = allAreas.find(a => a.areaCode === m.areaCode);
         const managerCode = m.managerCode || m.areaCode + '-DEFAULT';
@@ -427,12 +417,11 @@ function loadCityManagers(city) {
         `;
     }).join('');
 
-    selectedManagerCodes = []; // Reset
+    selectedManagerCodes = [];
 }
 
 // ========================================
 // TOGGLE SELECT ALL MANAGERS
-// USED IN: HTML button onclick="toggleSelectAllManagers()"
 // ========================================
 function toggleSelectAllManagers() {
     const checkboxes = document.querySelectorAll('.manager-item input[type="checkbox"]');
@@ -470,8 +459,7 @@ function updateManagerCountText() {
 }
 
 // ========================================
-// SUBMIT SHOP
-// USED IN: HTML button onclick="submitShop()"
+// SUBMIT SHOP - ✅ 100% FIXED
 // ========================================
 async function submitShop() {
     const btn = document.getElementById('submitBtn');
@@ -487,14 +475,37 @@ async function submitShop() {
     const locationType = document.getElementById('shopLocationType').value;
     const range = parseInt(document.getElementById('shopRange').value);
 
-    console.log('🔍 Final Manager Codes Before Submit:', selectedManagerCodes); // ← DEBUG
+    // ✅ STEP 1: Filter undefined/empty managers
+    const validManagers = selectedManagerCodes.filter(code =>
+        code &&!code.includes('undefined') && code.trim()!== ''
+    );
 
-    if (selectedManagerCodes.length === 0) {
-        alert('⚠️ Please select at least one Area Manager!');
+    console.log('🔍 Valid Managers:', validManagers);
+
+    if (validManagers.length === 0) {
+        alert('⚠️ Please select at least one valid Area Manager!');
         btn.textContent = 'Create My Shop - Go Live Now';
         btn.disabled = false;
         return;
     }
+
+    // ✅ STEP 2: Manager code se areaCode nikalo - AREA.HTML LOGIC
+    // "SURAGU-2-DEFAULT" → "SURAGU-2"
+    const firstManagerCode = validManagers[0];
+    const areaCode = firstManagerCode.replace('-DEFAULT', '').trim();
+
+    // ✅ STEP 3: Area aur Manager details nikalo
+    const selectedManagerData = allManagers.find(m =>
+        (m.managerCode || m.areaCode + '-DEFAULT') === firstManagerCode
+    );
+    const areaData = allAreas.find(a => a.areaCode === areaCode);
+
+    const areaName = areaData?.areaName || selectedManagerData?.name || `${city} Zone`;
+    const bucket = selectedManagerData?.bucket || 'DEFAULT';
+
+    console.log('✅ Extracted areaCode:', areaCode);
+    console.log('✅ Extracted areaName:', areaName);
+    console.log('✅ Extracted bucket:', bucket);
 
     const shopTypeMap = {
         'kirana': 'product', 'cloth': 'fashion', 'medical': 'product',
@@ -515,10 +526,11 @@ async function submitShop() {
             state: state,
             pincode: pincode
         },
-        areaCode: city.toUpperCase().replace(/\s/g, '') + '01',
-        bucket: 'GENERAL',
-        area: city,
-        areaName: city,
+        // ✅ FIXED: Manager se nikala hua exact areaCode
+        areaCode: areaCode,
+        bucket: bucket,
+        area: areaCode,
+        areaName: areaName,
         serviceType: shopModule,
         shopType: shopTypeMap[shopModule] || 'product',
         description: document.getElementById('shopDesc').value.trim(),
@@ -534,10 +546,10 @@ async function submitShop() {
             type: 'Point',
             coordinates: [parseFloat(lng), parseFloat(lat)]
         },
-        managerCodes: selectedManagerCodes // ← YE SABSE IMPORTANT HAI
+        managerCodes: validManagers
     };
 
-    console.log('📤 Sending Shop Data:', shopData); // ← DEBUG
+    console.log('📤 Final Shop Data:', shopData);
 
     if (!shopData.shopName ||!shopData.serviceType ||!shopData.phone ||!shopData.address.line1 ||!lat ||!lng) {
         alert('Please fill all required fields including location!');
@@ -549,12 +561,15 @@ async function submitShop() {
     try {
         const res = await fetch('/api/local-market/shops', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('userToken')
+            },
             body: JSON.stringify(shopData)
         });
 
         const data = await res.json();
-        console.log('📥 Server Response:', data); // ← DEBUG
+        console.log('📥 Server Response:', data);
 
         if (res.ok && data._id) {
             localStorage.setItem('userToken', 'shop-owner-' + data._id);
@@ -565,7 +580,7 @@ async function submitShop() {
 
             newShopData = data;
             document.getElementById('successBox').style.display = 'block';
-            document.getElementById('successShopName').textContent = `"${data.shopName}" is now LIVE in ${city}!`;
+            document.getElementById('successShopName').textContent = `"${data.shopName}" is now LIVE in ${areaName}!`;
             document.getElementById('formFields').style.display = 'none';
             document.getElementById('infoBanner').style.display = 'none';
             document.getElementById('submitBtn').style.display = 'none';
@@ -585,7 +600,6 @@ async function submitShop() {
 
 // ========================================
 // LOAD MY SHOPS
-// USED IN: DOMContentLoaded
 // ========================================
 async function loadMyShops() {
     const list = document.getElementById('shopsList');
@@ -594,21 +608,23 @@ async function loadMyShops() {
     let myShops = JSON.parse(localStorage.getItem('myShopsList') || '[]');
 
     if (myShops.length === 0) {
-        list.innerHTML = '';
-        list.appendChild(emptyState);
-        emptyState.style.display = 'block';
+        if (list) list.innerHTML = '';
+        if (emptyState) {
+            if (list) list.appendChild(emptyState);
+            emptyState.style.display = 'block';
+        }
         return;
     }
 
-    emptyState.style.display = 'none';
-    list.innerHTML = '';
+    if (emptyState) emptyState.style.display = 'none';
+    if (list) list.innerHTML = '';
 
     for (const shop of myShops) {
         try {
             const res = await fetch('/api/local-market/shops/' + shop.id);
             const shopData = await res.json();
 
-            if (shopData._id) {
+            if (shopData._id && list) {
                 const shopType = shopData.serviceType || shopData.shopType;
                 const dashboardUrl = `/shop-templates/${shopType}/dashboard.html?shopId=${shopData._id}`;
 
@@ -639,7 +655,6 @@ async function loadMyShops() {
 
 // ========================================
 // RESET FORM
-// USED IN: toggleCreateForm() + hideCreateForm()
 // ========================================
 function resetForm() {
     document.getElementById('shopName').value = '';
@@ -676,7 +691,6 @@ function resetForm() {
 
 // ========================================
 // COPY SHOP LINK
-// USED IN: HTML button onclick="copyShopLink()"
 // ========================================
 function copyShopLink() {
     if (newShopData) {
