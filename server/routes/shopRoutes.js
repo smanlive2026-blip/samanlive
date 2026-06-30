@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Shop = require('../models/Shop');
 const Order = require('../models/Order');
+const Manager = require('../models/Manager'); // ✅ ADDED: Manager model import
 // ✅ Fix: Destructure karke import kiya
 const { authenticateToken } = require('../middleware/authenticateToken');
 
@@ -10,7 +11,7 @@ const { authenticateToken } = require('../middleware/authenticateToken');
 router.post('/shops', authenticateToken, async (req, res) => {
     try {
         const shopData = {
-          ...req.body,
+           ...req.body,
             ownerId: req.userId, // ✅ req.userId use kiya
             createdBy: req.userId,
             status: 'active', // Turant active
@@ -18,12 +19,13 @@ router.post('/shops', authenticateToken, async (req, res) => {
             // ✅ Ensure defaults
             locationType: req.body.locationType || 'fixed',
             range: req.body.range || 5000, // 5KM default
-            lastLocationUpdate: req.body.locationType === 'dynamic'? new Date() : null
+            lastLocationUpdate: req.body.locationType === 'dynamic'? new Date() : null,
+            managerCodes: req.body.managerCodes || [] // ✅ ADDED: Manager codes array
         };
 
         const shop = new Shop(shopData);
         await shop.save();
-        console.log(`✅ Shop created: ${shop.shopName} [${shop.locationType}] Range: ${shop.range}m`);
+        console.log(`✅ Shop created: ${shop.shopName} [${shop.locationType}] Range: ${shop.range}m Managers: ${shop.managerCodes?.length || 0}`);
         res.status(201).json(shop);
     } catch (err) {
         console.error('Create shop error:', err);
@@ -46,6 +48,27 @@ router.get('/my-shops', authenticateToken, async (req, res) => {
     }
 });
 
+// ✅ ASSIGNED MANAGERS FETCH KARNE KA ROUTE - NAYA ROUTE
+router.get('/shops/:shopId/managers', async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.shopId);
+        if (!shop) {
+            return res.status(404).json({ success: false, error: 'Shop not found' });
+        }
+
+        // Shop ke managerCodes array se sare managers nikalo
+        const managers = await Manager.find({
+            managerCode: { $in: shop.managerCodes || [] },
+            status: true
+        }).select('name managerCode phone email photo areaCode city');
+
+        res.json({ success: true, managers });
+    } catch (err) {
+        console.error('Get managers error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // ✅ PUBLIC SHOPS - Frontend ke liye simple endpoint - UPAR MOVE KIYA
 router.get('/public', async (req, res) => {
     try {
@@ -61,10 +84,10 @@ router.get('/public', async (req, res) => {
         if (serviceType) query.serviceType = serviceType;
 
         const shops = await Shop.find(query)
-      .select('-ownerId -approvedBy -rejectionReason -email -phone')
-      .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-      .limit(100)
-      .lean();
+           .select('-ownerId -approvedBy -rejectionReason -email -phone')
+           .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+           .limit(100)
+           .lean();
 
         res.json({
             success: true,
@@ -94,10 +117,10 @@ router.get('/nearby', async (req, res) => {
         console.log('🔍 Fetching ALL shops - No location filter');
 
         const shops = await Shop.find(query)
-      .select('-ownerId -approvedBy -rejectionReason -email')
-      .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-      .limit(100)
-      .lean();
+           .select('-ownerId -approvedBy -rejectionReason -email')
+           .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+           .limit(100)
+           .lean();
 
         console.log(`✅ Returning ${shops.length} shops`);
 
@@ -189,7 +212,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
 
         const products = (shop.items || []).map((item, index) => ({
             _id: item._id || index,
-          ...item.toObject? item.toObject() : item
+           ...item.toObject? item.toObject() : item
         }));
 
         res.json(products);
