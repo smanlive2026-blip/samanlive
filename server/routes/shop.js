@@ -1,20 +1,20 @@
 // ========================================
+// FILE: routes/shop.js - FINAL UPDATED CODE
 // Ye API shop-create.html ke form submit ke liye bani hai
 // shop-create.html -> POST /api/local-market/shops
 // ========================================
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken'); // ✅ NAYA: JWT import
+const jwt = require('jsonwebtoken');
 const Shop = require('../models/Shop');
 const Order = require('../models/Order');
 const auth = require('../middleware/authenticateToken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'samanlive_secret_key_2026_change_this'; // ✅ NAYA
+const JWT_SECRET = process.env.JWT_SECRET || 'samanlive_secret_key_2026_change_this';
 
-// ✅ FIXED: CREATE SHOP - Auth optional, bina login bhi shop banegi
-// Ye API shop-create.html ke liye hai - User shop create karta hai
-router.post('/shops', async (req, res) => { // ✅ auth hata diya
+// ✅ FIXED: CREATE SHOP - areaCode + managerCodes dono save honge
+router.post('/shops', async (req, res) => {
     let userId = null;
 
     // Token hai to user nikalo, nahi to null - shop phir bhi banegi
@@ -25,15 +25,14 @@ router.post('/shops', async (req, res) => { // ✅ auth hata diya
             const decoded = jwt.verify(token, JWT_SECRET);
             userId = decoded.id || decoded.userId;
         } catch (err) {
-            // Invalid token - ignore karo, shop phir bhi ban jaye
             console.log('Token invalid, creating shop without owner');
         }
     }
 
     try {
-        const { managerCodes,...restData } = req.body;
+        const { managerCodes, areaCode,...restData } = req.body;
 
-        // ✅ Validation: managerCodes required hai
+        // ✅ Validation 1: managerCodes required hai
         if (!managerCodes ||!Array.isArray(managerCodes) || managerCodes.length === 0) {
             return res.status(400).json({
                 success: false,
@@ -41,27 +40,49 @@ router.post('/shops', async (req, res) => { // ✅ auth hata diya
             });
         }
 
+        // ✅ Validation 2: areaCode required hai - YE MISSING THA
+        if (!areaCode || areaCode.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                error: 'Area code is required. Please select a valid area.'
+            });
+        }
+
         const shopData = {
            ...restData,
-            managerCodes: managerCodes, // ✅ Explicitly save karo
-            ownerId: userId, // ✅ Null bhi chalega
+            managerCodes: managerCodes,
+            areaCode: areaCode.trim(), // ✅ EXPLICITLY SAVE KAR RAHA HAI
+            ownerId: userId,
             createdBy: userId,
-            status: 'approved', // ✅ Force approved
+            status: 'approved',
             isActive: true,
             isVerified: true,
-            logo: req.body.logo || ''
+            logo: req.body.logo || '',
+            createdAt: new Date()
         };
+
+        console.log('📤 Creating shop:', shopData.shopName, '| areaCode:', shopData.areaCode, '| managers:', shopData.managerCodes);
 
         const shop = new Shop(shopData);
         await shop.save();
-        res.status(201).json(shop);
+
+        console.log('✅ Shop created successfully:', shop.shopName, '| ID:', shop._id, '| areaCode:', shop.areaCode);
+
+        res.status(201).json({
+            success: true,
+            shop: shop,
+            _id: shop._id
+        });
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        console.error('❌ Shop create error:', err);
+        res.status(400).json({
+            success: false,
+            error: err.message
+        });
     }
 });
 
 // ✅ GET MY SHOPS - User apni shops check karne ke liye
-// Ye API profile.html ya user dashboard ke liye hai
 router.get('/my-shops', auth, async (req, res) => {
     try {
         const shops = await Shop.find({
@@ -69,7 +90,7 @@ router.get('/my-shops', auth, async (req, res) => {
                 { ownerId: req.user.id },
                 { createdBy: req.user.id }
             ]
-        });
+        }).sort({ createdAt: -1 });
         res.json(shops);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -77,7 +98,6 @@ router.get('/my-shops', auth, async (req, res) => {
 });
 
 // ✅ PUBLIC SHOPS - Customer app/website ke liye
-// Ye API user-view.html ya public shop listing ke liye hai
 router.get('/public', async (req, res) => {
     try {
         const { lat, lng, radius = 5000, shopType, categoryId, serviceType } = req.query;
@@ -92,7 +112,7 @@ router.get('/public', async (req, res) => {
                 $near: {
                     $geometry: {
                         type: 'Point',
-                        coordinates: [parseFloat(lng), parseFloat(lat)] // LNG pehle
+                        coordinates: [parseFloat(lng), parseFloat(lat)]
                     },
                     $maxDistance: parseInt(radius) || 5000
                 }
@@ -126,7 +146,6 @@ router.get('/public', async (req, res) => {
 });
 
 // ===== SHOP DETAILS - Public shop details ke liye =====
-// Ye API user-view.html me single shop details ke liye hai
 router.get('/shops/:id', async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id).lean();
@@ -141,7 +160,6 @@ router.get('/shops/:id', async (req, res) => {
 });
 
 // ===== DASHBOARD STATS - Shop dashboard ke liye =====
-// Ye API shop-templates/*/dashboard.html ke liye hai
 router.get('/shops/:shopId/stats', auth, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
@@ -197,7 +215,6 @@ router.get('/shops/:shopId/stats', auth, async (req, res) => {
 });
 
 // ===== GET PRODUCTS - Shop products list ke liye =====
-// Ye API shop-templates/*/dashboard.html aur user-view.html ke liye hai
 router.get('/shops/:shopId/products', async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
@@ -215,7 +232,6 @@ router.get('/shops/:shopId/products', async (req, res) => {
 });
 
 // ===== GET SINGLE PRODUCT - Product edit ke liye =====
-// Ye API shop-templates/*/dashboard.html me edit product ke liye hai
 router.get('/products/:shopId/:productId', auth, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
@@ -231,7 +247,6 @@ router.get('/products/:shopId/:productId', auth, async (req, res) => {
 });
 
 // ===== CREATE PRODUCT - Product add karne ke liye =====
-// Ye API shop-templates/*/dashboard.html me add product ke liye hai
 router.post('/products', auth, async (req, res) => {
     try {
         const { shopId,...productData } = req.body;
@@ -257,7 +272,6 @@ router.post('/products', auth, async (req, res) => {
 });
 
 // ===== UPDATE PRODUCT - Product update ke liye =====
-// Ye API shop-templates/*/dashboard.html me edit product ke liye hai
 router.put('/products/:shopId/:productId', auth, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
@@ -283,7 +297,6 @@ router.put('/products/:shopId/:productId', auth, async (req, res) => {
 });
 
 // ===== DELETE PRODUCT - Product delete ke liye =====
-// Ye API shop-templates/*/dashboard.html me delete product ke liye hai
 router.delete('/products/:shopId/:productId', auth, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
@@ -306,7 +319,6 @@ router.delete('/products/:shopId/:productId', auth, async (req, res) => {
 });
 
 // ===== UPDATE SHOP - Shop edit karne ke liye =====
-// Ye API area-manager.html aur shop dashboard se shop edit ke liye hai
 router.put('/shops/:id', auth, async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id);
@@ -344,7 +356,6 @@ router.put('/shops/:id', auth, async (req, res) => {
 });
 
 // ===== NEARBY SHOPS - Customer app ke liye =====
-// Ye API customer app me nearby shops dikhane ke liye hai
 router.get('/nearby', async (req, res) => {
     try {
         const { lat, lng, radius = 5000, type } = req.query;
