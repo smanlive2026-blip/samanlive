@@ -27,7 +27,7 @@ router.post('/shops', authenticateToken, async (req, res) => {
         }
 
         const shopData = {
-           ...restData,
+         ...restData,
             ownerId: req.userId,
             createdBy: req.userId,
             areaCode: areaCode.trim().toUpperCase(),
@@ -176,10 +176,10 @@ router.get('/public', async (req, res) => {
         if (serviceType) query.serviceType = serviceType;
 
         const shops = await Shop.find(query)
-           .select('-ownerId -approvedBy -rejectionReason -email -phone')
-           .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-           .limit(100)
-           .lean();
+         .select('-ownerId -approvedBy -rejectionReason -email -phone')
+         .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+         .limit(100)
+         .lean();
 
         res.json({
             success: true,
@@ -208,10 +208,10 @@ router.get('/nearby', async (req, res) => {
         console.log('🔍 Fetching ALL shops - No location filter');
 
         const shops = await Shop.find(query)
-           .select('-ownerId -approvedBy -rejectionReason -email')
-           .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-           .limit(100)
-           .lean();
+         .select('-ownerId -approvedBy -rejectionReason -email')
+         .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+         .limit(100)
+         .lean();
 
         console.log(`✅ Returning ${shops.length} shops`);
 
@@ -301,7 +301,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
 
         const products = (shop.items || []).map((item, index) => ({
             _id: item._id || index,
-           ...item.toObject? item.toObject() : item
+         ...item.toObject? item.toObject() : item
         }));
 
         res.json(products);
