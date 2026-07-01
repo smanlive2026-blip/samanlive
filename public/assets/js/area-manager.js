@@ -78,7 +78,7 @@ async function loadDashboard() {
 
         // 2. Load shops & categories parallel
         const [shopsData, modulesData] = await Promise.all([
-            apiCall(`/manager/shops`).catch(err => {
+            apiCall(`/local-market/manager/shops`).catch(err => {
                 console.error('Shops API Error:', err);
                 return { shops: [] };
             }),
@@ -116,7 +116,7 @@ async function loadAvailableShops() {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading available shops...</td></tr>';
 
     try {
-        const res = await apiCall(`/manager/available-shops`);
+        const res = await apiCall(`/local-market/manager/available-shops`);
         console.log('📦 Available Shops Response:', res);
 
         availableShops = res.shops || res || [];
@@ -173,7 +173,7 @@ async function claimShop(shopId, shopName) {
     if (!confirmClaim) return;
 
     try {
-        const res = await apiCall('/manager/claim-shop', 'POST', {
+        const res = await apiCall('/local-market/manager/claim-shop', 'POST', {
             shopId: shopId
         });
 
@@ -419,7 +419,7 @@ document.getElementById('shopForm').addEventListener('submit', async (e) => {
     };
 
     try {
-        const data = await apiCall(`/manager/shops/${shopId}`, 'PUT', shopData);
+        const data = await apiCall(`/local-market/manager/shops/${shopId}`, 'PUT', shopData);
         if (data.success) {
             alert('✅ Shop updated successfully!');
             closeShopModal();

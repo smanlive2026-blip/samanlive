@@ -49,7 +49,7 @@ router.post('/shops', async (req, res) => {
         }
 
         const shopData = {
-        ...restData,
+           ...restData,
             managerCodes: managerCodes,
             areaCode: areaCode.trim().toUpperCase(),
             ownerId: userId,
@@ -156,6 +156,82 @@ router.get('/manager/available-shops', auth, async (req, res) => {
     }
 });
 
+// ✅ CLAIM SHOP - Area Manager ke liye - NAYA ROUTE
+router.post('/manager/claim-shop', auth, async (req, res) => {
+    try {
+        const { shopId } = req.body;
+
+        const manager = await Manager.findById(req.user.id);
+        if (!manager) {
+            return res.status(403).json({ success: false, error: 'Manager not found' });
+        }
+
+        const shop = await Shop.findById(shopId);
+        if (!shop) {
+            return res.status(404).json({ success: false, error: 'Shop not found' });
+        }
+
+        // Check if shop is available for this manager
+        if (!shop.availableForManagers.includes(manager.managerCode)) {
+            return res.status(403).json({ success: false, error: 'Shop not available for you' });
+        }
+
+        // Check if already claimed
+        if (shop.claimedBy) {
+            return res.status(400).json({ success: false, error: 'Shop already claimed' });
+        }
+
+        // Claim the shop
+        shop.claimedBy = manager.managerCode;
+        shop.claimedAt = new Date();
+        shop.controlledBy = manager.managerCode;
+        shop.status = 'active';
+        shop.isVerified = true;
+
+        await shop.save();
+
+        console.log(`✅ Shop claimed: ${shop.shopName} by ${manager.managerCode}`);
+        res.json({ success: true, shop });
+    } catch (err) {
+        console.error('Claim shop error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ✅ UPDATE SHOP - Manager ke liye
+router.put('/manager/shops/:shopId', auth, async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.shopId);
+        if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
+
+        const manager = await Manager.findById(req.user.id);
+        if (!manager) return res.status(403).json({ success: false, error: 'Manager not found' });
+
+        // Check if manager owns this shop
+        if (shop.claimedBy!== manager.managerCode && shop.controlledBy!== manager.managerCode) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        if (req.body.location && req.body.location.coordinates) {
+            req.body.location = {
+                type: 'Point',
+                coordinates: [
+                    parseFloat(req.body.location.coordinates[0]),
+                    parseFloat(req.body.location.coordinates[1])
+                ]
+            };
+        }
+
+        Object.assign(shop, req.body);
+        shop.updatedAt = new Date();
+        await shop.save();
+
+        res.json({ success: true, shop });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
 // ✅ GET MY SHOPS - User apni shops check karne ke liye
 router.get('/my-shops', auth, async (req, res) => {
     try {
@@ -200,9 +276,9 @@ router.get('/public', async (req, res) => {
         console.log('Public Shops Query:', JSON.stringify(query));
 
         const shops = await Shop.find(query)
-        .select('-ownerId -approvedBy -rejectionReason -email')
-        .limit(50)
-        .sort({ priority: -1, rating: -1, createdAt: -1 });
+           .select('-ownerId -approvedBy -rejectionReason -email')
+           .limit(50)
+           .sort({ priority: -1, rating: -1, createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -296,7 +372,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
 
         const products = (shop.items || []).map((item, index) => ({
             _id: item._id || index,
-        ...item.toObject? item.toObject() : item
+           ...item.toObject? item.toObject() : item
         }));
 
         res.json(products);
