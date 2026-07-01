@@ -8,9 +8,9 @@ const shopSchema = new mongoose.Schema({
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' }, // Old single manager - backward compatibility
 
-    // ✅ NAYA: Multiple Area Managers Support
+    // ✅ Multiple Area Managers Support
     managerCodes: {
-        type: [String], // ["SURAGU-1-DEFAULT", "SURAGU-2-DEFAULT"]
+        type: [String], // ["SL01", "SL02"]
         default: []
     },
 
@@ -65,20 +65,20 @@ const shopSchema = new mongoose.Schema({
     // Status System
     status: {
         type: String,
-        enum: ['pending', 'approved', 'rejected'],
-        default: 'pending'
+        enum: ['pending', 'approved', 'rejected', 'active'],
+        default: 'active' // ✅ LIVE ON CREATE
     },
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
     approvedAt: { type: Date },
     rejectionReason: { type: String, default: '' },
 
-    isVerified: { type: Boolean, default: false }, // ✅ Changed to false - Manager verify karega
+    isVerified: { type: Boolean, default: true }, // ✅ LIVE ON CREATE
     isActive: { type: Boolean, default: true },
     priority: { type: Number, default: 0 },
 
-    // ========== CLAIM SYSTEM FIELDS - NEW ✅ ==========
+    // ========== CLAIM SYSTEM FIELDS - FIXED ✅ ==========
     availableForManagers: {
-        type: [String], // ["SURAGU-1-DEFAULT", "SURAGU-2-DEFAULT"]
+        type: [String], // ["SL01", "SL02"]
         default: []
     },
     assignedManagerCode: {
@@ -94,8 +94,7 @@ const shopSchema = new mongoose.Schema({
         default: null
     },
     claimedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Manager',
+        type: String, // ✅ FIXED: ObjectId se String
         default: null
     },
     claimedAt: {
@@ -103,13 +102,12 @@ const shopSchema = new mongoose.Schema({
         default: null
     },
     controlledBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Manager',
+        type: String, // ✅ FIXED: ObjectId se String
         default: null
     },
     // ========== CLAIM SYSTEM FIELDS END ==========
 
-    // ========== SHOP TYPE & ITEMS - NEW ==========
+    // ========== SHOP TYPE & ITEMS ==========
     shopType: {
         type: String,
         enum: ['product', 'food', 'service', 'rental', 'fashion', 'common'],
@@ -165,7 +163,7 @@ shopSchema.index({ isActive: 1 });
 shopSchema.index({ locationType: 1 });
 shopSchema.index({ shopType: 1 });
 
-// ✅ NEW INDEXES FOR CLAIM SYSTEM
+// ✅ CLAIM SYSTEM INDEXES
 shopSchema.index({ claimedBy: 1 });
 shopSchema.index({ controlledBy: 1 });
 shopSchema.index({ availableForManagers: 1 });
@@ -211,17 +209,17 @@ shopSchema.methods.removeManager = function(managerCode) {
     return this.save();
 };
 
-// ✅ NEW METHOD: Check if shop is available for claim
+// ✅ Check if shop is available for claim
 shopSchema.methods.isAvailableForClaim = function() {
-    return this.claimedBy === null && this.status === 'pending';
+    return this.claimedBy === null && this.status === 'active';
 };
 
-// ✅ NEW METHOD: Claim shop
-shopSchema.methods.claimBy = function(managerId) {
-    this.claimedBy = managerId;
+// ✅ Claim shop - FIXED: managerCode string leta hai
+shopSchema.methods.claimBy = function(managerCode) {
+    this.claimedBy = managerCode; // String save hoga
     this.claimedAt = new Date();
-    this.controlledBy = managerId;
-    this.status = 'approved';
+    this.controlledBy = managerCode; // String save hoga
+    this.status = 'active'; // Already active
     this.isVerified = true;
     return this.save();
 };
