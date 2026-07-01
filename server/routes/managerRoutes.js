@@ -1,96 +1,52 @@
 const express = require('express');
 const router = express.Router();
+const Shop = require('../models/Shop');
 const Manager = require('../models/Manager');
 const Area = require('../models/Area');
-const Shop = require('../models/Shop');
 
 // ========== MIDDLEWARE: Manager Token Verify ==========
-const verifyManagerToken = async (req, res, next) => {
+const authManager = async (req, res, next) => {
     try {
-        // ✅ Header + Query dono se token support
-        const token = req.headers.authorization?.split(' ')[1] || req.query.token;
+        const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+
+        console.log('🔑 AuthManager Token Received:', token); // Debug
+
         if (!token) {
-            return res.status(401).json({ error: 'No token provided' });
+            return res.status(401).json({ success: false, error: 'No token provided' });
         }
 
-        const manager = await Manager.findOne({ loginToken: token, status: true });
+        // ✅ Status check temporarily hataya debug ke liye
+        const manager = await Manager.findOne({ loginToken: token });
+
+        console.log('🔍 AuthManager Found:', manager?.managerCode, '| Status:', manager?.status); // Debug
+
         if (!manager) {
-            return res.status(401).json({ error: 'Invalid or expired token' });
+            return res.status(403).json({ success: false, error: 'Manager not found' });
         }
 
         req.manager = manager;
         next();
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('❌ AuthManager Error:', err);
+        res.status(401).json({ success: false, error: 'Auth failed: ' + err.message });
     }
 };
 
-// ========== Helper: Haversine Distance ==========
-function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-
-// ========== 1. GET /api/manager/dashboard - FIXED ✅ ==========
-router.get('/dashboard', async (req, res) => {
+// ========== ROUTE 1: Manager Dashboard Data - Profile + Shops ==========
+router.get('/dashboard', authManager, async (req, res) => {
     try {
-        const { areaCode } = req.query;
-        if (!areaCode) return res.status(400).json({ error: 'areaCode required' });
+        const manager = req.manager;
+        console.log('📊 Dashboard Load:', manager.name, '| AreaCode:', manager.areaCode);
 
-        const manager = await Manager.findOne({ areaCode });
-        if (!manager) return res.status(404).json({ error: 'Manager not found for this area' });
+        const area = await Area.findOne({ areaCode: manager.areaCode });
 
-        const area = await Area.findOne({ areaCode });
-        if (!area) return res.status(404).json({ error: 'Area not found' });
+        // AREA CODE SE DIRECT FILTER - Fast + Accurate
+        const shops = await Shop.find({
+            areaCode: manager.areaCode,
+            isActive: true
+        }).sort({ createdAt: -1 }).lean();
 
-        console.log('Area:', areaCode, '| Center:', area.centerLat, area.centerLng, '| Radius:', area.radius);
-
-        // ✅ STEP 1: areaCode se filter - Fast + Accurate
-        const allShops = await Shop.find({
-            areaCode: areaCode,
-            isActive: true,
-            status: 'approved'
-        }).lean();
-
-        console.log('Total shops in area:', allShops.length);
-
-        // ✅ STEP 2: Geo filter + lat/lng fix
-        const nearbyShops = allShops.filter(shop => {
-            // Coordinates validate karo
-            if (!shop.location?.coordinates || shop.location.coordinates.length!== 2) {
-                return false;
-            }
-            if (shop.location.coordinates[0] === 0 && shop.location.coordinates[1] === 0) {
-                return false;
-            }
-
-            const shopLng = shop.location.coordinates[0]; // longitude
-            const shopLat = shop.location.coordinates[1]; // latitude
-
-            const distance = getDistance(area.centerLat, area.centerLng, shopLat, shopLng);
-
-            // ✅ Shop-centric circle: Manager radius + Shop range
-            const maxDistanceKm = area.radius + (shop.range || 5000) / 1000;
-            return distance <= maxDistanceKm;
-
-        }).map(shop => {
-            const shopLng = shop.location.coordinates[0];
-            const shopLat = shop.location.coordinates[1];
-            return {
-            ...shop,
-                distance: getDistance(area.centerLat, area.centerLng, shopLat, shopLng).toFixed(2),
-                lat: shopLat, // ← Frontend ke liye
-                lng: shopLng // ← Frontend ke liye
-            };
-        }).sort((a, b) => a.distance - b.distance);
-
-        console.log('Shops in circle:', nearbyShops.length);
+        console.log('✅ Found shops:', shops.length);
 
         res.json({
             success: true,
@@ -100,97 +56,105 @@ router.get('/dashboard', async (req, res) => {
                 email: manager.email,
                 phone: manager.phone,
                 photo: manager.photo,
-                areaName: area.areaName,
-                areaCode: area.areaCode,
-                city: area.city,
-                state: area.state,
+                areaName: area?.areaName || manager.areaName,
+                areaCode: manager.areaCode,
+                city: area?.city || manager.city,
+                state: area?.state || manager.state,
                 managerCode: manager.managerCode,
-                radius: area.radius,
-                centerLat: area.centerLat,
-                centerLng: area.centerLng,
+                radius: area?.radius || 50,
+                centerLat: area?.centerLat,
+                centerLng: area?.centerLng,
                 serviceCharge: manager.serviceCharge
             },
-            shops: nearbyShops
+            shops: shops,
+            stats: {
+                totalShops: shops.length,
+                activeShops: shops.filter(s => s.isActive).length
+            }
         });
 
     } catch (err) {
-        console.error('Dashboard error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ========== 2. GET /api/manager/shops - Token protected ==========
-router.get('/shops', verifyManagerToken, async (req, res) => {
-    try {
-        const manager = req.manager;
-        const area = await Area.findOne({ areaCode: manager.areaCode });
-        if (!area) return res.status(404).json({ success: false, error: 'Area not found' });
-
-        const shops = await Shop.find({
-            areaCode: manager.areaCode,
-            isActive: true,
-            status: 'approved'
-        }).lean();
-
-        const shopsWithDistance = shops.map(shop => {
-            let distance = null;
-            if (shop.location?.coordinates && shop.location.coordinates[0]!== 0) {
-                distance = getDistance(
-                    area.centerLat,
-                    area.centerLng,
-                    shop.location.coordinates[1],
-                    shop.location.coordinates[0]
-                ).toFixed(2);
-            }
-            return {
-            ...shop,
-                distance: distance? parseFloat(distance) : null,
-                lat: shop.location?.coordinates[1] || null,
-                lng: shop.location?.coordinates[0] || null
-            };
-        }).sort((a, b) => (a.distance || 9999) - (b.distance || 9999));
-
-        res.json({ success: true, shops: shopsWithDistance, total: shopsWithDistance.length });
-    } catch (err) {
-        console.error('Shops error:', err);
+        console.error('❌ Dashboard error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// ========== 3. PUT /api/manager/update-profile ==========
-router.put('/update-profile', async (req, res) => {
+// ========== ROUTE 2: Manager Ke Area Ki Shops - SABSE IMPORTANT ==========
+router.get('/shops', authManager, async (req, res) => {
     try {
-        const { token } = req.query;
-        if (!token) return res.status(400).json({ error: 'Token required' });
+        const manager = req.manager;
+        console.log('🔍 Manager Shops:', manager.name, '| AreaCode:', manager.areaCode);
 
-        const manager = await Manager.findOne({ loginToken: token, status: true });
-        if (!manager) return res.status(404).json({ error: 'Invalid token' });
+        // ✅ AREA CODE SE DIRECT FILTER
+        const shops = await Shop.find({
+            areaCode: manager.areaCode,
+            isActive: true,
+            status: { $in: ['active', 'approved'] }
+        }).sort({ createdAt: -1 }).lean();
 
-        const { name, phone, email, photo } = req.body;
+        console.log('✅ Found shops:', shops.length);
 
-        if (name) manager.name = name.trim();
-        if (phone) manager.phone = phone.trim();
-        if (email) manager.email = email.toLowerCase().trim();
-        if (photo) {
-            if (photo.length > 500000) {
-                return res.status(400).json({ error: 'Photo too large. Use image under 300KB' });
-            }
-            manager.photo = photo;
-        }
+        res.json({
+            success: true,
+            shops: shops,
+            areaCode: manager.areaCode,
+            count: shops.length
+        });
 
-        await manager.save();
-        res.json({ success: true, manager });
     } catch (err) {
-        console.error('❌ Profile Update Error:', err);
-        res.status(500).json({ error: err.message });
+        console.error('❌ Manager shops error:', err);
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// ========== 4. GET /api/manager/by-token/:token ==========
+// ========== ROUTE 3: Available Shops For Claim ==========
+router.get('/available-shops', authManager, async (req, res) => {
+    try {
+        const manager = req.manager;
+
+        const shops = await Shop.find({
+            areaCode: manager.areaCode,
+            managerCodes: manager.managerCode,
+            claimedBy: null,
+            status: { $in: ['active', 'approved'] },
+            isActive: true,
+            module: 'local-market'
+        }).lean();
+
+        res.json({ success: true, shops: shops });
+
+    } catch (err) {
+        console.error('❌ Available shops error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ========== ROUTE 4: Token Verify - Dashboard Load Ke Liye ==========
+router.post('/verify-token', async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) {
+            return res.json({ success: false, error: 'Token required' });
+        }
+
+        const manager = await Manager.findOne({ loginToken: token });
+
+        if (!manager) {
+            return res.json({ success: false, error: 'Invalid token' });
+        }
+
+        res.json({ success: true, manager: manager });
+
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ========== ROUTE 5: Get Manager By Token - GET Request Ke Liye ==========
 router.get('/by-token/:token', async (req, res) => {
     try {
         const { token } = req.params;
-        const manager = await Manager.findOne({ loginToken: token, status: true });
+        const manager = await Manager.findOne({ loginToken: token });
 
         if (!manager) {
             return res.status(404).json({ success: false, error: 'Invalid token' });
@@ -202,47 +166,99 @@ router.get('/by-token/:token', async (req, res) => {
     }
 });
 
-// ========== 5. PUT /api/manager/shops/:id - Update shop ==========
-router.put('/shops/:id', verifyManagerToken, async (req, res) => {
+// ========== ROUTE 6: Update Manager Profile ==========
+router.put('/update-profile', async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) return res.status(400).json({ success: false, error: 'Token required' });
+
+        const manager = await Manager.findOne({ loginToken: token });
+        if (!manager) return res.status(404).json({ success: false, error: 'Invalid token' });
+
+        const { name, phone, email, photo } = req.body;
+
+        if (name) manager.name = name.trim();
+        if (phone) manager.phone = phone.trim();
+        if (email) manager.email = email.toLowerCase().trim();
+        if (photo) {
+            if (photo.length > 500000) {
+                return res.status(400).json({ success: false, error: 'Photo too large. Use image under 300KB' });
+            }
+            manager.photo = photo;
+        }
+
+        await manager.save();
+        res.json({ success: true, manager });
+    } catch (err) {
+        console.error('❌ Profile Update Error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ========== ROUTE 7: Shop Update - Manager Edit Kar Sakta Hai ==========
+router.put('/shops/:id', authManager, async (req, res) => {
     try {
         const manager = req.manager;
-        const shop = await Shop.findById(req.params.id);
+        const shopId = req.params.id;
 
+        const shop = await Shop.findById(shopId);
         if (!shop) {
-            return res.status(404).json({ error: 'Shop not found' });
+            return res.status(404).json({ success: false, error: 'Shop not found' });
         }
 
-        // ✅ Validation: Shop manager ke area me hai?
+        // Security: Sirf apne area ki shop edit kar sakta hai
         if (shop.areaCode!== manager.areaCode) {
-            return res.status(403).json({ error: 'Access Denied: Shop not in your area' });
+            return res.status(403).json({ success: false, error: 'You can only edit shops in your area' });
         }
 
-        // ✅ Sirf allowed fields update karo
-        const allowedUpdates = {
-            shopName: req.body.shopName,
-            icon: req.body.icon,
-            serviceType: req.body.serviceType,
-            categoryId: req.body.categoryId,
-            phone: req.body.phone,
-            address: req.body.address,
-            range: parseInt(req.body.range),
-            isActive: req.body.isActive,
-            description: req.body.description
-        };
-
-        Object.keys(allowedUpdates).forEach(key => {
-            if (allowedUpdates[key] === undefined) delete allowedUpdates[key];
-        });
+        // Location, areaCode, ownerId change nahi kar sakta
+        const { location, areaCode, ownerId, managerCodes, claimedBy,...updateData } = req.body;
 
         const updatedShop = await Shop.findByIdAndUpdate(
-            req.params.id,
-            allowedUpdates,
+            shopId,
+            { $set: updateData },
             { new: true, runValidators: true }
         );
 
-        res.json({ success: true, shop: updatedShop, message: 'Shop updated successfully' });
+        res.json({ success: true, shop: updatedShop });
+
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('❌ Shop update error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ========== ROUTE 8: Claim Shop ==========
+router.post('/claim-shop', authManager, async (req, res) => {
+    try {
+        const manager = req.manager;
+        const { shopId } = req.body;
+
+        if (!shopId) {
+            return res.status(400).json({ success: false, error: 'Shop ID required' });
+        }
+
+        const shop = await Shop.findById(shopId);
+        if (!shop) {
+            return res.status(404).json({ success: false, error: 'Shop not found' });
+        }
+
+        if (shop.areaCode!== manager.areaCode) {
+            return res.status(403).json({ success: false, error: 'Shop not in your area' });
+        }
+
+        if (shop.claimedBy) {
+            return res.status(400).json({ success: false, error: 'Shop already claimed' });
+        }
+
+        shop.claimedBy = manager.managerCode;
+        await shop.save();
+
+        res.json({ success: true, message: 'Shop claimed successfully', shop });
+
+    } catch (err) {
+        console.error('❌ Claim shop error:', err);
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
