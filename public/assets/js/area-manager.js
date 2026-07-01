@@ -1,5 +1,6 @@
 // ========================================
 // AREA MANAGER DASHBOARD - CLAIM SYSTEM READY
+// File: /public/assets/js/area-manager.js
 // ========================================
 
 let currentManager = null;
@@ -164,7 +165,7 @@ function renderAvailableShops(shops) {
 }
 
 // ========================================
-// ✅ NEW: CLAIM SHOP FUNCTION
+// ✅ NEW: CLAIM SHOP FUNCTION - FIXED
 // ========================================
 async function claimShop(shopId, shopName) {
     const confirmClaim = confirm(`Are you sure you want to claim "${shopName}"?\n\nOnce claimed, this shop will appear in your "My Claimed Shops" section and you can manage it.`);
@@ -173,8 +174,7 @@ async function claimShop(shopId, shopName) {
 
     try {
         const res = await apiCall('/manager/claim-shop', 'POST', {
-            shopId: shopId,
-            managerCode: currentManager.managerCode
+            shopId: shopId
         });
 
         if (res.success) {
@@ -193,7 +193,7 @@ async function claimShop(shopId, shopName) {
 // ✅ NEW: VIEW SHOP DETAILS
 // ========================================
 function viewShopDetails(shop) {
-    alert(`📋 Shop Details:\n\nName: ${shop.shopName}\nOwner: ${shop.ownerName}\nPhone: ${shop.phone}\nAddress: ${shop.address?.line1 || shop.address}\nType: ${getCategoryName(shop.serviceType)}\nStatus: ${shop.status}`);
+    alert(`📋 Shop Details:\n\nName: ${shop.shopName}\nOwner: ${shop.ownerName || 'N/A'}\nPhone: ${shop.phone || 'N/A'}\nAddress: ${shop.address?.line1 || shop.address || 'N/A'}\nType: ${getCategoryName(shop.serviceType)}\nStatus: ${shop.status}`);
 }
 
 // ========================================
