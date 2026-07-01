@@ -17,7 +17,7 @@ let availableShops = []; // ✅ Unclaimed shops
 let categories = [];
 
 const urlParams = new URLSearchParams(window.location.search);
-const token = urlParams.get('token');
+const token = urlParams.get('token') || localStorage.getItem('managerToken');
 
 if (!token) {
     document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:20px;"><i class="fas fa-exclamation-triangle" style="font-size:64px;color:#ef4444;"></i><h1 style="color:#ef4444;">Invalid Access Link</h1><p style="color:#64748b;">Contact Admin for valid link</p></div>';
@@ -76,12 +76,18 @@ async function loadDashboard() {
 
         // 1. Load manager data + stats
         const dashboardRes = await apiCall(`/manager/dashboard`);
-        console.log('Dashboard response:', dashboardRes);
+        console.log('📦 Dashboard API Response:', dashboardRes);
 
-        if (!dashboardRes.success) throw new Error(dashboardRes.error || 'Invalid token');
+        // ✅ CRITICAL FIX: Pehle success check karo
+        if (!dashboardRes.success) {
+            throw new Error(dashboardRes.error || 'Invalid token');
+        }
 
         currentManager = dashboardRes.manager;
-        currentManager.currentShopCount = dashboardRes.stats.totalShops;
+        
+        // ✅ FIX: stats undefined hone se bachao
+        const stats = dashboardRes.stats || { totalShops: 0, activeShops: 0 };
+        currentManager.currentShopCount = stats.totalShops;
         currentManager.maxShops = dashboardRes.manager.maxShops || 10;
 
         console.log('👤 Manager Data:', currentManager);
@@ -106,7 +112,7 @@ async function loadDashboard() {
 
         // 3. Render everything
         renderProfile();
-        renderStats(dashboardRes.stats);
+        renderStats(stats);
         renderShops(managerShops);
         renderServiceCards(categories);
         updateShopLimitUI();
@@ -115,8 +121,21 @@ async function loadDashboard() {
         loadAvailableShops();
 
     } catch (err) {
-        console.error('Dashboard Error:', err);
-        document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:20px;padding:20px;text-align:center;"><i class="fas fa-exclamation-triangle" style="font-size:64px;color:#ef4444;"></i><h1 style="color:#ef4444;">Error Loading Dashboard</h1><p style="color:#64748b;max-width:600px;">${err.message}</p><p style="color:#64748b;font-size:14px;">Check console (F12) for details.</p><button onclick="location.reload()" class="btn" style="margin-top:20px;">Retry</button></div>`;
+        console.error('❌ Dashboard Error:', err);
+        
+        // ✅ Better error handling
+        const errorMsg = err.message.includes('Manager not found') || err.message.includes('Invalid token') 
+           ? 'Session expired. Please login again.' 
+            : err.message;
+            
+        document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:20px;padding:20px;text-align:center;">
+            <i class="fas fa-exclamation-triangle" style="font-size:64px;color:#ef4444;"></i>
+            <h1 style="color:#ef4444;">Error Loading Dashboard</h1>
+            <p style="color:#64748b;max-width:600px;">${errorMsg}</p>
+            <p style="color:#64748b;font-size:14px;">Check console (F12) for details.</p>
+            <button onclick="location.reload()" class="btn" style="margin-top:20px;">Retry</button>
+            <button onclick="window.location.href='/login.html'" class="btn btn-outline" style="margin-top:10px;">Go to Login</button>
+        </div>`;
     }
 }
 
@@ -125,13 +144,16 @@ async function loadDashboard() {
 // ========================================
 function updateShopLimitUI() {
     const limitText = `${currentManager.currentShopCount} / ${currentManager.maxShops}`;
-    document.getElementById('shopLimitText').textContent = limitText;
+    const limitEl = document.getElementById('shopLimitText');
+    if (limitEl) limitEl.textContent = limitText;
 
     // Disable button if limit reached
     const createBtn = document.getElementById('createShopBtn');
-    if (currentManager.currentShopCount >= currentManager.maxShops) {
+    if (createBtn && currentManager.currentShopCount >= currentManager.maxShops) {
         createBtn.disabled = true;
         createBtn.innerHTML = '<i class="fas fa-ban"></i> Limit Reached';
+        const badge = document.getElementById('shopLimitBadge');
+        if (badge) badge.classList.add('limit-reached');
     }
 }
 
@@ -144,48 +166,55 @@ function openCreateShopModal() {
         return;
     }
     document.getElementById('createShopModal').classList.add('active');
-    document.getElementById('createShopAddress').value = currentManager?.areaName || '';
+    const addressEl = document.getElementById('createShopAddress');
+    if (addressEl) addressEl.value = currentManager?.areaName || '';
 }
 
 function closeCreateShopModal() {
     document.getElementById('createShopModal').classList.remove('active');
-    document.getElementById('createShopForm').reset();
+    const form = document.getElementById('createShopForm');
+    if (form) form.reset();
 }
 
 // Create Shop Form Submit
-document.getElementById('createShopForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+    const createForm = document.getElementById('createShopForm');
+    if (createForm) {
+        createForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-    const btn = document.getElementById('createShopSaveBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+            const btn = document.getElementById('createShopSaveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
 
-    try {
-        const res = await apiCall('/manager/create-shop', {
-            method: 'POST',
-            body: JSON.stringify({
-                shopName: document.getElementById('createShopName').value,
-                shopType: document.getElementById('createShopType').value,
-                contact: document.getElementById('createShopPhone').value,
-                email: document.getElementById('createShopEmail').value,
-                address: document.getElementById('createShopAddress').value,
-                icon: document.getElementById('createShopIcon').value,
-                range: document.getElementById('createShopRange').value
-            })
+            try {
+                const res = await apiCall('/manager/create-shop', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        shopName: document.getElementById('createShopName').value,
+                        shopType: document.getElementById('createShopType').value,
+                        contact: document.getElementById('createShopPhone').value,
+                        email: document.getElementById('createShopEmail').value,
+                        address: document.getElementById('createShopAddress').value,
+                        icon: document.getElementById('createShopIcon').value,
+                        range: document.getElementById('createShopRange').value
+                    })
+                });
+
+                if (res.success) {
+                    alert('✅ Shop created successfully!\n\nYou can now edit this shop from "My Claimed Shops" section.');
+                    closeCreateShopModal();
+                    loadDashboard(); // Refresh everything
+                } else {
+                    alert('❌ Error: ' + res.error);
+                }
+            } catch (err) {
+                alert('❌ Failed to create shop: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
+            }
         });
-
-        if (res.success) {
-            alert('✅ Shop created successfully!\n\nYou can now edit this shop from "My Claimed Shops" section.');
-            closeCreateShopModal();
-            loadDashboard(); // Refresh everything
-        } else {
-            alert('❌ Error: ' + res.error);
-        }
-    } catch (err) {
-        alert('❌ Failed to create shop: ' + err.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
     }
 });
 
@@ -194,6 +223,8 @@ document.getElementById('createShopForm').addEventListener('submit', async (e) =
 // ========================================
 async function loadAvailableShops() {
     const tbody = document.getElementById('availableShopsTable');
+    if (!tbody) return;
+    
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading available shops...</td></tr>';
 
     try {
@@ -216,6 +247,7 @@ async function loadAvailableShops() {
 // ========================================
 function renderAvailableShops(shops) {
     const tbody = document.getElementById('availableShopsTable');
+    if (!tbody) return;
 
     if (shops.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>No available shops in your area right now.</p><p style="font-size:12px;color:#94a3b8;margin-top:8px;">All shops are either claimed or not in your area.</p></div></td></tr>';
@@ -281,6 +313,8 @@ function viewShopDetails(shop) {
 // RENDER PROFILE
 // ========================================
 function renderProfile() {
+    if (!currentManager) return;
+    
     document.getElementById('managerName').textContent = currentManager.name || 'Manager';
     document.getElementById('managerBadge').textContent = currentManager.bucket || 'DEFAULT';
     document.getElementById('managerFullName').textContent = currentManager.name || 'Manager Name';
@@ -309,8 +343,11 @@ function renderStats(stats) {
     const totalShops = stats?.totalShops || managerShops.length;
     const activeShops = stats?.activeShops || managerShops.filter(s => s.isActive).length;
 
-    document.getElementById('totalShops').textContent = totalShops;
-    document.getElementById('activeShops').textContent = activeShops;
+    const totalEl = document.getElementById('totalShops');
+    const activeEl = document.getElementById('activeShops');
+    
+    if (totalEl) totalEl.textContent = totalShops;
+    if (activeEl) activeEl.textContent = activeShops;
 
     console.log('📊 Stats:', { totalShops, activeShops });
 }
@@ -320,6 +357,8 @@ function renderStats(stats) {
 // ========================================
 function renderShops(shops) {
     const tbody = document.getElementById('shopsTable');
+    if (!tbody) return;
+    
     if (shops.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>You haven\'t claimed any shops yet.</p><p style="font-size:12px;color:#94a3b8;margin-top:8px;">Create new shops or claim from "Available Shops" section above.</p></div></td></tr>';
         return;
@@ -357,6 +396,8 @@ function renderShops(shops) {
 // ========================================
 function renderServiceCards(cats) {
     const container = document.getElementById('serviceCards');
+    if (!container) return;
+    
     if (!cats || cats.length === 0) {
         container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No services assigned yet. Contact admin.</p></div>';
         return;
@@ -413,37 +454,42 @@ function previewProfilePhoto(event) {
     reader.readAsDataURL(file);
 }
 
-document.getElementById('profileForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('profileSaveBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+document.addEventListener('DOMContentLoaded', () => {
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('profileSaveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-    const profileData = {
-        name: document.getElementById('profileName').value,
-        phone: document.getElementById('profilePhone').value,
-        email: document.getElementById('profileEmail').value,
-        photo: document.getElementById('profilePhotoBase64').value || currentManager.photo
-    };
+            const profileData = {
+                name: document.getElementById('profileName').value,
+                phone: document.getElementById('profilePhone').value,
+                email: document.getElementById('profileEmail').value,
+                photo: document.getElementById('profilePhotoBase64').value || currentManager.photo
+            };
 
-    try {
-        const data = await apiCall(`/manager/update-profile`, {
-            method: 'PUT',
-            body: JSON.stringify(profileData)
+            try {
+                const data = await apiCall(`/manager/update-profile`, {
+                    method: 'PUT',
+                    body: JSON.stringify(profileData)
+                });
+                if (data.success) {
+                    alert('✅ Profile updated successfully!');
+                    currentManager = data.manager;
+                    renderProfile();
+                    closeProfileModal();
+                } else {
+                    alert(data.error || 'Error updating profile');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Profile';
+            }
         });
-        if (data.success) {
-            alert('✅ Profile updated successfully!');
-            currentManager = data.manager;
-            renderProfile();
-            closeProfileModal();
-        } else {
-            alert(data.error || 'Error updating profile');
-        }
-    } catch (err) {
-        alert('Error: ' + err.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i> Save Profile';
     }
 });
 
@@ -455,7 +501,9 @@ function openShopModal(shop = null) {
     document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Shop Details';
 
     const catSelect = document.getElementById('shopCategory');
-    catSelect.innerHTML = categories.map(c => `<option value="${c.id || c._id}">${c.icon} ${c.name}</option>`).join('');
+    if (catSelect) {
+        catSelect.innerHTML = categories.map(c => `<option value="${c.id || c._id}">${c.icon} ${c.name}</option>`).join('');
+    }
 
     if (shop) {
         document.getElementById('shopId').value = shop._id;
@@ -480,45 +528,50 @@ function editShop(shop) {
     openShopModal(shop);
 }
 
-document.getElementById('shopForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('shopSaveBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+document.addEventListener('DOMContentLoaded', () => {
+    const shopForm = document.getElementById('shopForm');
+    if (shopForm) {
+        shopForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('shopSaveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
 
-    const shopId = document.getElementById('shopId').value;
+            const shopId = document.getElementById('shopId').value;
 
-    const shopData = {
-        shopName: document.getElementById('shopName').value,
-        icon: document.getElementById('shopIcon').value || '🏪',
-        serviceType: document.getElementById('shopCategory').value,
-        categoryId: document.getElementById('shopCategory').value,
-        phone: document.getElementById('shopPhone').value,
-        address: {
-            line1: document.getElementById('shopAddress').value
-        },
-        range: parseInt(document.getElementById('shopRange').value),
-        isActive: document.getElementById('shopStatus').value === 'true',
-        description: document.getElementById('shopDesc').value
-    };
+            const shopData = {
+                shopName: document.getElementById('shopName').value,
+                icon: document.getElementById('shopIcon').value || '🏪',
+                serviceType: document.getElementById('shopCategory').value,
+                categoryId: document.getElementById('shopCategory').value,
+                phone: document.getElementById('shopPhone').value,
+                address: {
+                    line1: document.getElementById('shopAddress').value
+                },
+                range: parseInt(document.getElementById('shopRange').value),
+                isActive: document.getElementById('shopStatus').value === 'true',
+                description: document.getElementById('shopDesc').value
+            };
 
-    try {
-        const data = await apiCall(`/manager/shops/${shopId}`, {
-            method: 'PUT',
-            body: JSON.stringify(shopData)
+            try {
+                const data = await apiCall(`/manager/shops/${shopId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(shopData)
+                });
+                if (data.success) {
+                    alert('✅ Shop updated successfully!');
+                    closeShopModal();
+                    loadDashboard();
+                } else {
+                    alert(data.error || 'Error updating shop');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Update Shop';
+            }
         });
-        if (data.success) {
-            alert('✅ Shop updated successfully!');
-            closeShopModal();
-            loadDashboard();
-        } else {
-            alert(data.error || 'Error updating shop');
-        }
-    } catch (err) {
-        alert('Error: ' + err.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i> Update Shop';
     }
 });
 
@@ -553,3 +606,16 @@ window.onclick = function (event) {
         event.target.classList.remove('active');
     }
 }
+
+// Export functions for HTML onclick
+window.openProfileModal = openProfileModal;
+window.closeProfileModal = closeProfileModal;
+window.previewProfilePhoto = previewProfilePhoto;
+window.openCreateShopModal = openCreateShopModal;
+window.closeCreateShopModal = closeCreateShopModal;
+window.loadAvailableShops = loadAvailableShops;
+window.claimShop = claimShop;
+window.viewShopDetails = viewShopDetails;
+window.editShop = editShop;
+window.openShopModal = openShopModal;
+window.closeShopModal = closeShopModal;
