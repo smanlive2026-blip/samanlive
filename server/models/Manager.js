@@ -78,6 +78,12 @@ const managerSchema = new mongoose.Schema({
     },
     radius: { 
         type: Number 
+    },
+    // ✅ NEW: Max shops limit - Admin set karega
+    maxShops: { 
+        type: Number, 
+        default: 10,
+        min: 1
     }
 }, {
     timestamps: true // ← Ye add kiya: createdAt + updatedAt auto banenge

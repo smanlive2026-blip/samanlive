@@ -9,16 +9,15 @@ const authManager = async (req, res, next) => {
     try {
         const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
 
-        console.log('🔑 AuthManager Token Received:', token); // Debug
+        console.log('🔑 AuthManager Token Received:', token);
 
         if (!token) {
             return res.status(401).json({ success: false, error: 'No token provided' });
         }
 
-        // ✅ Status check temporarily hataya debug ke liye
         const manager = await Manager.findOne({ loginToken: token });
 
-        console.log('🔍 AuthManager Found:', manager?.managerCode, '| Status:', manager?.status); // Debug
+        console.log('🔍 AuthManager Found:', manager?.managerCode, '| Status:', manager?.status);
 
         if (!manager) {
             return res.status(403).json({ success: false, error: 'Manager not found' });
@@ -64,7 +63,8 @@ router.get('/dashboard', authManager, async (req, res) => {
                 radius: area?.radius || 50,
                 centerLat: area?.centerLat,
                 centerLng: area?.centerLng,
-                serviceCharge: manager.serviceCharge
+                serviceCharge: manager.serviceCharge,
+                maxShops: manager.maxShops || 10 // ✅ NEW: Shop limit
             },
             shops: shops,
             stats: {
@@ -207,12 +207,12 @@ router.put('/shops/:id', authManager, async (req, res) => {
         }
 
         // Security: Sirf apne area ki shop edit kar sakta hai
-        if (shop.areaCode!== manager.areaCode) {
+        if (shop.areaCode !== manager.areaCode) {
             return res.status(403).json({ success: false, error: 'You can only edit shops in your area' });
         }
 
         // Location, areaCode, ownerId change nahi kar sakta
-        const { location, areaCode, ownerId, managerCodes, claimedBy,...updateData } = req.body;
+        const { location, areaCode, ownerId, managerCodes, claimedBy, ...updateData } = req.body;
 
         const updatedShop = await Shop.findByIdAndUpdate(
             shopId,
@@ -243,7 +243,7 @@ router.post('/claim-shop', authManager, async (req, res) => {
             return res.status(404).json({ success: false, error: 'Shop not found' });
         }
 
-        if (shop.areaCode!== manager.areaCode) {
+        if (shop.areaCode !== manager.areaCode) {
             return res.status(403).json({ success: false, error: 'Shop not in your area' });
         }
 
@@ -258,6 +258,96 @@ router.post('/claim-shop', authManager, async (req, res) => {
 
     } catch (err) {
         console.error('❌ Claim shop error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ========== ROUTE 9: Manager Se Nayi Shop Create Karna - NEW ✅ ==========
+router.post('/create-shop', authManager, async (req, res) => {
+    try {
+        const manager = req.manager;
+        const { shopName, shopType, contact, email, address, icon, range } = req.body;
+
+        console.log('🏪 Create Shop Request:', manager.name, '| Shop:', shopName);
+
+        // ✅ Check 1: Manager ka shop limit check kar
+        const currentShopCount = await Shop.countDocuments({
+            areaCode: manager.areaCode,
+            isActive: true
+        });
+
+        const maxShops = manager.maxShops || 10; // Default 10
+        if (currentShopCount >= maxShops) {
+            return res.status(403).json({
+                success: false,
+                error: `Shop limit reached. Max allowed: ${maxShops}. Contact admin to increase limit.`
+            });
+        }
+
+        // ✅ Check 2: Same naam ki shop already to nahi
+        const existingShop = await Shop.findOne({
+            shopName: shopName.trim(),
+            areaCode: manager.areaCode
+        });
+
+        if (existingShop) {
+            return res.status(400).json({
+                success: false,
+                error: 'Shop with this name already exists in your area'
+            });
+        }
+
+        // ✅ Check 3: Area details nikal
+        const area = await Area.findOne({ areaCode: manager.areaCode });
+
+        // ✅ Shop Create Karo - Auto fill hoga
+        const newShop = new Shop({
+            shopName: shopName.trim(),
+            shopType: shopType || 'General Store',
+            contact: contact,
+            email: email,
+            address: { line1: address },
+            icon: icon || '🏪',
+            range: range || 5000,
+
+            // Auto fields - Manager ke hisaab se
+            areaCode: manager.areaCode,
+            areaName: area?.areaName || manager.areaName,
+            city: area?.city || manager.city,
+            state: area?.state || manager.state,
+            managerCodes: manager.managerCode,
+            claimedBy: manager.managerCode, // Auto claimed
+
+            // Location - Area ka center use karo
+            location: {
+                type: 'Point',
+                coordinates: [
+                    area?.centerLng || manager.centerLng || 72.8311,
+                    area?.centerLat || manager.centerLat || 20.3974
+                ]
+            },
+
+            module: 'local-market',
+            status: 'approved', // Direct approved
+            isActive: true,
+            createdBy: manager._id,
+            ownerId: null // Manager baad me owner assign karega
+        });
+
+        await newShop.save();
+
+        console.log('✅ New shop created by manager:', manager.name, '| Shop:', shopName, '| Total:', currentShopCount + 1);
+
+        res.json({
+            success: true,
+            message: 'Shop created successfully',
+            shop: newShop,
+            currentCount: currentShopCount + 1,
+            maxShops: maxShops
+        });
+
+    } catch (err) {
+        console.error('❌ Create shop error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 });

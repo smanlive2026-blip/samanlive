@@ -30,6 +30,9 @@ app.use('/logos', express.static(path.join(__dirname, '../public/logos')));
 app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
 app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
 
+// ✅ NEW: Shop templates static serve karo - CSS/JS ke liye
+app.use('/shop-templates', express.static(path.join(__dirname, '../public/shop-templates')));
+
 // ==================== MONGODB CONNECT ====================
 mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/samanlive', {
     maxPoolSize: 10,
@@ -160,8 +163,50 @@ app.get('/local-market.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/local-market.html'));
 });
 
+// ✅ OLD: Shop detail page
 app.get('/shop/:id', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/shop-detail.html'));
+});
+
+// ✅ NEW: SHOP DASHBOARD - TEMPLATE BASED ✅
+app.get('/shop/:id/dashboard', async (req, res) => {
+    try {
+        const Shop = require('./models/Shop');
+        const shop = await Shop.findById(req.params.id);
+        
+        if (!shop) {
+            return res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
+        }
+        
+        // shopType ke hisaab se template serve karo
+        // "Kirana" -> "kirana", "General Store" -> "general", etc
+        const shopTypeMap = {
+            'General Store': 'general',
+            'Kirana': 'kirana',
+            'Medical': 'medical',
+            'Restaurant': 'restaurant',
+            'Cloth': 'cloth'
+        };
+        
+        const templateFolder = shopTypeMap[shop.shopType] || shop.shopType?.toLowerCase() || 'general';
+        const templatePath = path.join(__dirname, `../public/shop-templates/${templateFolder}/dashboard.html`);
+        
+        console.log(`🏪 Loading template: ${templateFolder} for shop: ${shop.shopName}`);
+        
+        // Agar template exist nahi karta to general wala bhej do
+        res.sendFile(templatePath, (err) => {
+            if (err) {
+                console.log(`⚠️ Template ${templateFolder} not found, serving general`);
+                const fallbackPath = path.join(__dirname, '../public/shop-templates/general/dashboard.html');
+                res.sendFile(fallbackPath, (err2) => {
+                    if (err2) res.status(404).send('Shop template not found');
+                });
+            }
+        });
+    } catch (err) {
+        console.error('❌ Shop dashboard error:', err);
+        res.status(500).send('Error loading shop dashboard');
+    }
 });
 
 app.get('/profile.html', (req, res) => {
@@ -397,7 +442,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
- ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 

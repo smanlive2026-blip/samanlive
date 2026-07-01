@@ -1,11 +1,19 @@
 // ========================================
-// AREA MANAGER DASHBOARD - CLAIM SYSTEM READY
+// AREA MANAGER DASHBOARD - CREATE SHOP READY
 // File: /public/assets/js/area-manager.js
+// ========================================
+// ROUTES USED:
+// POST /api/manager/create-shop - Nayi shop create karne ke liye
+// GET /api/manager/shops - Manager ki shops list ke liye
+// GET /api/manager/dashboard - Manager profile + stats ke liye
+// GET /api/manager/available-shops - Claim karne wali shops ke liye
+// PUT /api/manager/shops/:id - Shop edit karne ke liye
+// File: routes/managerRoutes.js me sab routes hain
 // ========================================
 
 let currentManager = null;
 let managerShops = [];
-let availableShops = []; // ✅ NEW: Unclaimed shops
+let availableShops = []; // ✅ Unclaimed shops
 let categories = [];
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -21,20 +29,20 @@ const API = '/api';
 // ========================================
 // API CALL HELPER
 // ========================================
-async function apiCall(endpoint, method = 'GET', body = null) {
+async function apiCall(endpoint, options = {}) {
     try {
         const opts = {
-            method,
+            method: options.method || 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         };
 
-        if (body &&!(body instanceof FormData)) {
+        if (options.body &&!(options.body instanceof FormData)) {
             opts.headers['Content-Type'] = 'application/json';
-            opts.body = JSON.stringify(body);
-        } else if (body) {
-            opts.body = body;
+            opts.body = options.body;
+        } else if (options.body) {
+            opts.body = options.body;
         }
 
         const res = await fetch(API + endpoint, opts);
@@ -66,19 +74,22 @@ async function loadDashboard() {
     try {
         console.log('Loading dashboard with token:', token);
 
-        // 1. Load manager data
-        const managerRes = await apiCall(`/manager-by-token/${token}`);
-        console.log('Manager response:', managerRes);
+        // 1. Load manager data + stats
+        const dashboardRes = await apiCall(`/manager/dashboard`);
+        console.log('Dashboard response:', dashboardRes);
 
-        if (!managerRes.success) throw new Error(managerRes.error || 'Invalid token');
-        currentManager = managerRes.manager;
+        if (!dashboardRes.success) throw new Error(dashboardRes.error || 'Invalid token');
+
+        currentManager = dashboardRes.manager;
+        currentManager.currentShopCount = dashboardRes.stats.totalShops;
+        currentManager.maxShops = dashboardRes.manager.maxShops || 10;
 
         console.log('👤 Manager Data:', currentManager);
         console.log('🏷️ Manager Code:', currentManager.managerCode);
 
         // 2. Load shops & categories parallel
         const [shopsData, modulesData] = await Promise.all([
-            apiCall(`/local-market/manager/shops`).catch(err => {
+            apiCall(`/manager/shops`).catch(err => {
                 console.error('Shops API Error:', err);
                 return { shops: [] };
             }),
@@ -95,9 +106,10 @@ async function loadDashboard() {
 
         // 3. Render everything
         renderProfile();
-        renderStats();
+        renderStats(dashboardRes.stats);
         renderShops(managerShops);
         renderServiceCards(categories);
+        updateShopLimitUI();
 
         // ✅ Load available shops on page load
         loadAvailableShops();
@@ -109,14 +121,83 @@ async function loadDashboard() {
 }
 
 // ========================================
-// ✅ NEW: LOAD AVAILABLE SHOPS FOR CLAIM
+// ✅ UPDATE SHOP LIMIT UI
+// ========================================
+function updateShopLimitUI() {
+    const limitText = `${currentManager.currentShopCount} / ${currentManager.maxShops}`;
+    document.getElementById('shopLimitText').textContent = limitText;
+
+    // Disable button if limit reached
+    const createBtn = document.getElementById('createShopBtn');
+    if (currentManager.currentShopCount >= currentManager.maxShops) {
+        createBtn.disabled = true;
+        createBtn.innerHTML = '<i class="fas fa-ban"></i> Limit Reached';
+    }
+}
+
+// ========================================
+// ✅ CREATE SHOP FUNCTIONS - NEW
+// ========================================
+function openCreateShopModal() {
+    if (currentManager.currentShopCount >= currentManager.maxShops) {
+        alert(`Shop limit reached! Max allowed: ${currentManager.maxShops}\n\nContact admin to increase limit.`);
+        return;
+    }
+    document.getElementById('createShopModal').classList.add('active');
+    document.getElementById('createShopAddress').value = currentManager?.areaName || '';
+}
+
+function closeCreateShopModal() {
+    document.getElementById('createShopModal').classList.remove('active');
+    document.getElementById('createShopForm').reset();
+}
+
+// Create Shop Form Submit
+document.getElementById('createShopForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn = document.getElementById('createShopSaveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+    try {
+        const res = await apiCall('/manager/create-shop', {
+            method: 'POST',
+            body: JSON.stringify({
+                shopName: document.getElementById('createShopName').value,
+                shopType: document.getElementById('createShopType').value,
+                contact: document.getElementById('createShopPhone').value,
+                email: document.getElementById('createShopEmail').value,
+                address: document.getElementById('createShopAddress').value,
+                icon: document.getElementById('createShopIcon').value,
+                range: document.getElementById('createShopRange').value
+            })
+        });
+
+        if (res.success) {
+            alert('✅ Shop created successfully!\n\nYou can now edit this shop from "My Claimed Shops" section.');
+            closeCreateShopModal();
+            loadDashboard(); // Refresh everything
+        } else {
+            alert('❌ Error: ' + res.error);
+        }
+    } catch (err) {
+        alert('❌ Failed to create shop: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
+    }
+});
+
+// ========================================
+// ✅ LOAD AVAILABLE SHOPS FOR CLAIM
 // ========================================
 async function loadAvailableShops() {
     const tbody = document.getElementById('availableShopsTable');
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading available shops...</td></tr>';
 
     try {
-        const res = await apiCall(`/local-market/manager/available-shops`);
+        const res = await apiCall(`/manager/available-shops`);
         console.log('📦 Available Shops Response:', res);
 
         availableShops = res.shops || res || [];
@@ -131,7 +212,7 @@ async function loadAvailableShops() {
 }
 
 // ========================================
-// ✅ NEW: RENDER AVAILABLE SHOPS TABLE
+// ✅ RENDER AVAILABLE SHOPS TABLE
 // ========================================
 function renderAvailableShops(shops) {
     const tbody = document.getElementById('availableShopsTable');
@@ -165,7 +246,7 @@ function renderAvailableShops(shops) {
 }
 
 // ========================================
-// ✅ NEW: CLAIM SHOP FUNCTION - FIXED
+// ✅ CLAIM SHOP FUNCTION
 // ========================================
 async function claimShop(shopId, shopName) {
     const confirmClaim = confirm(`Are you sure you want to claim "${shopName}"?\n\nOnce claimed, this shop will appear in your "My Claimed Shops" section and you can manage it.`);
@@ -173,14 +254,14 @@ async function claimShop(shopId, shopName) {
     if (!confirmClaim) return;
 
     try {
-        const res = await apiCall('/local-market/manager/claim-shop', 'POST', {
-            shopId: shopId
+        const res = await apiCall('/manager/claim-shop', {
+            method: 'POST',
+            body: JSON.stringify({ shopId: shopId })
         });
 
         if (res.success) {
             alert(`✅ "${shopName}" claimed successfully!\n\nYou can now manage this shop from "My Claimed Shops" section.`);
-            // Refresh both tables
-            loadDashboard();
+            loadDashboard(); // Refresh both tables
         } else {
             alert('❌ Error: ' + (res.error || 'Failed to claim shop'));
         }
@@ -190,7 +271,7 @@ async function claimShop(shopId, shopName) {
 }
 
 // ========================================
-// ✅ NEW: VIEW SHOP DETAILS
+// ✅ VIEW SHOP DETAILS
 // ========================================
 function viewShopDetails(shop) {
     alert(`📋 Shop Details:\n\nName: ${shop.shopName}\nOwner: ${shop.ownerName || 'N/A'}\nPhone: ${shop.phone || 'N/A'}\nAddress: ${shop.address?.line1 || shop.address || 'N/A'}\nType: ${getCategoryName(shop.serviceType)}\nStatus: ${shop.status}`);
@@ -224,9 +305,9 @@ function renderProfile() {
 // ========================================
 // RENDER STATS
 // ========================================
-function renderStats() {
-    const totalShops = managerShops.length;
-    const activeShops = managerShops.filter(s => s.isActive).length;
+function renderStats(stats) {
+    const totalShops = stats?.totalShops || managerShops.length;
+    const activeShops = stats?.activeShops || managerShops.filter(s => s.isActive).length;
 
     document.getElementById('totalShops').textContent = totalShops;
     document.getElementById('activeShops').textContent = activeShops;
@@ -240,13 +321,13 @@ function renderStats() {
 function renderShops(shops) {
     const tbody = document.getElementById('shopsTable');
     if (shops.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>You haven\'t claimed any shops yet.</p><p style="font-size:12px;color:#94a3b8;margin-top:8px;">Claim shops from "Available Shops" section above.</p></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>You haven\'t claimed any shops yet.</p><p style="font-size:12px;color:#94a3b8;margin-top:8px;">Create new shops or claim from "Available Shops" section above.</p></div></td></tr>';
         return;
     }
     tbody.innerHTML = shops.map(shop => {
         const distance = shop.distance || calculateDistance(
-            currentManager.location?.coordinates[1] || currentManager.lat,
-            currentManager.location?.coordinates[0] || currentManager.lng,
+            currentManager.centerLat,
+            currentManager.centerLng,
             shop.location?.coordinates[1] || shop.lat,
             shop.location?.coordinates[0] || shop.lng
         ).toFixed(1);
@@ -346,7 +427,10 @@ document.getElementById('profileForm').addEventListener('submit', async (e) => {
     };
 
     try {
-        const data = await apiCall(`/manager/update-profile`, 'PUT', profileData);
+        const data = await apiCall(`/manager/update-profile`, {
+            method: 'PUT',
+            body: JSON.stringify(profileData)
+        });
         if (data.success) {
             alert('✅ Profile updated successfully!');
             currentManager = data.manager;
@@ -419,7 +503,10 @@ document.getElementById('shopForm').addEventListener('submit', async (e) => {
     };
 
     try {
-        const data = await apiCall(`/local-market/manager/shops/${shopId}`, 'PUT', shopData);
+        const data = await apiCall(`/manager/shops/${shopId}`, {
+            method: 'PUT',
+            body: JSON.stringify(shopData)
+        });
         if (data.success) {
             alert('✅ Shop updated successfully!');
             closeShopModal();
