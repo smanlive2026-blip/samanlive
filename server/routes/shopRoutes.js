@@ -5,13 +5,13 @@ const Shop = require('../models/Shop');
 const Order = require('../models/Order');
 const Manager = require('../models/Manager');
 const { authenticateToken } = require('../middleware/authenticateToken');
+const authManager = require('../middleware/authManager');
 
 // ✅ CREATE SHOP - LIVE ON CREATE + areaCode + managerCodes
 router.post('/shops', authenticateToken, async (req, res) => {
     try {
         const { areaCode, managerCodes,...restData } = req.body;
 
-        // ✅ Validation 1: areaCode required
         if (!areaCode || areaCode.trim() === '') {
             return res.status(400).json({
                 success: false,
@@ -19,7 +19,6 @@ router.post('/shops', authenticateToken, async (req, res) => {
             });
         }
 
-        // ✅ Validation 2: managerCodes required
         if (!managerCodes ||!Array.isArray(managerCodes) || managerCodes.length === 0) {
             return res.status(400).json({
                 success: false,
@@ -28,14 +27,15 @@ router.post('/shops', authenticateToken, async (req, res) => {
         }
 
         const shopData = {
-         ...restData,
+           ...restData,
             ownerId: req.userId,
             createdBy: req.userId,
             areaCode: areaCode.trim().toUpperCase(),
-            managerCodes: managerCodes, // ✅ Array save - Manager ko dikhegi
-            status: 'active', // ✅ DIRECT LIVE
-            isActive: true, // ✅ ACTIVE
-            isVerified: true, // ✅ VERIFIED
+            managerCodes: managerCodes,
+            status: 'active',
+            isActive: true,
+            isVerified: true,
+            module: 'local-market',
             locationType: req.body.locationType || 'fixed',
             range: req.body.range || 5000,
             lastLocationUpdate: req.body.locationType === 'dynamic'? new Date() : null,
@@ -79,27 +79,28 @@ router.get('/my-shops', authenticateToken, async (req, res) => {
 });
 
 // ✅ GET SHOPS FOR AREA MANAGER - CLAIMED + AVAILABLE
-router.get('/manager/shops', authenticateToken, async (req, res) => {
+router.get('/manager/shops', authManager, async (req, res) => {
     try {
-        const manager = await Manager.findById(req.userId);
+        const manager = req.manager;
         if (!manager) {
             return res.status(403).json({ success: false, error: 'Manager not found' });
         }
 
         const managerCode = manager.managerCode;
-        console.log('📍 Fetching shops for manager:', managerCode);
+        const areaCode = manager.areaCode;
+        console.log('📍 Fetching shops for manager:', managerCode, '| Area:', areaCode);
 
-        // 1. Claimed shops - jo is manager ne claim ki hain
         const claimedShops = await Shop.find({
             claimedBy: managerCode,
             module: 'local-market'
         }).lean();
 
-        // 2. Available shops - jo is manager ke area me hain aur pending hain
         const availableShops = await Shop.find({
-            managerCodes: managerCode, // ✅ Is array me managerCode hai
-            claimedBy: null, // ✅ Abhi claim nahi hui
-            status: 'active', // ✅ Live shops
+            areaCode: areaCode,
+            managerCodes: managerCode,
+            claimedBy: null,
+            status: 'active',
+            isActive: true,
             module: 'local-market'
         }).lean();
 
@@ -114,19 +115,22 @@ router.get('/manager/shops', authenticateToken, async (req, res) => {
 });
 
 // ✅ GET AVAILABLE SHOPS FOR CLAIM
-router.get('/manager/available-shops', authenticateToken, async (req, res) => {
+router.get('/manager/available-shops', authManager, async (req, res) => {
     try {
-        const manager = await Manager.findById(req.userId);
+        const manager = req.manager;
         if (!manager) {
             return res.status(403).json({ success: false, error: 'Manager not found' });
         }
 
         const managerCode = manager.managerCode;
+        const areaCode = manager.areaCode;
 
         const shops = await Shop.find({
+            areaCode: areaCode,
             managerCodes: managerCode,
             claimedBy: null,
             status: 'active',
+            isActive: true,
             module: 'local-market'
         }).populate('area', 'name').lean();
 
@@ -172,10 +176,10 @@ router.get('/public', async (req, res) => {
         if (serviceType) query.serviceType = serviceType;
 
         const shops = await Shop.find(query)
-         .select('-ownerId -approvedBy -rejectionReason -email -phone')
-         .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-         .limit(100)
-         .lean();
+           .select('-ownerId -approvedBy -rejectionReason -email -phone')
+           .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+           .limit(100)
+           .lean();
 
         res.json({
             success: true,
@@ -204,10 +208,10 @@ router.get('/nearby', async (req, res) => {
         console.log('🔍 Fetching ALL shops - No location filter');
 
         const shops = await Shop.find(query)
-         .select('-ownerId -approvedBy -rejectionReason -email')
-         .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-         .limit(100)
-         .lean();
+           .select('-ownerId -approvedBy -rejectionReason -email')
+           .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+           .limit(100)
+           .lean();
 
         console.log(`✅ Returning ${shops.length} shops`);
 
@@ -297,7 +301,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
 
         const products = (shop.items || []).map((item, index) => ({
             _id: item._id || index,
-         ...item.toObject? item.toObject() : item
+           ...item.toObject? item.toObject() : item
         }));
 
         res.json(products);
