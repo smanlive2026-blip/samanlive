@@ -85,8 +85,8 @@ app.use('/api/auth', require('./routes/auth'));
 // Admin Routes
 app.use('/api', require('./routes/adminRoutes'));
 
-// Manager Routes - FUTURE KE LIYE COMMENTED ✅
-// app.use('/api/manager', require('./routes/managerRoutes'));
+// Manager Routes - ✅ UNCOMMENTED: Ab active hai
+app.use('/api/manager', require('./routes/managerRoutes'));
 
 // Area Routes
 app.use('/api', require('./routes/areaRoutes'));
@@ -397,7 +397,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-   ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
