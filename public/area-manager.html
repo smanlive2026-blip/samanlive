@@ -57,7 +57,6 @@ Agar styling change karni hai to area-manager.css file edit karo
                                 <span>Email</span>
                                 <strong id="managerEmail">-</strong>
                             </div>
-                        </div>
                         <div class="profile-detail">
                             <div class="profile-detail-icon"><i class="fas fa-map-marker-alt"></i></div>
                             <div>
@@ -107,13 +106,51 @@ Agar styling change karni hai to area-manager.css file edit karo
                 </div>
             </div>
 
+            <!-- ✅ NEW SECTION: AVAILABLE SHOPS FOR CLAIM -->
             <div class="card">
                 <div class="card-header">
-                    <h2><i class="fas fa-map-pin"></i> Shops In My Circle (View & Edit Only)</h2>
+                    <h2><i class="fas fa-store"></i> Available Shops in Your Area</h2>
+                    <button class="btn btn-small" onclick="loadAvailableShops()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
                 </div>
                 <div class="info-note">
                     <i class="fas fa-info-circle"></i>
-                    <span>Ye sabhi shops aapke area circle me aati hain. Aap inko edit kar sakte hain lekin delete nahi.</span>
+                    <span>Ye shops aapke area me hain aur abhi kisi ne claim nahi ki. Aap inko apne dashboard me add kar sakte hain.</span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Icon</th>
+                                <th>Shop Name</th>
+                                <th>Owner</th>
+                                <th>Category</th>
+                                <th>Address</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="availableShopsTable">
+                            <tr><td colspan="8" style="text-align:center; padding: 60px;">
+                                <div class="empty-state">
+                                    <i class="fas fa-store"></i>
+                                    <p>Click "Refresh" to load available shops</p>
+                                </div>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-map-pin"></i> My Claimed Shops (View & Edit Only)</h2>
+                </div>
+                <div class="info-note">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Ye shops aapne claim ki hain. Aap inko edit kar sakte hain lekin delete nahi.</span>
                 </div>
                 <div style="overflow-x: auto;">
                     <table>
@@ -205,6 +242,7 @@ Agar styling change karni hai to area-manager.css file edit karo
                         <label>Icon</label>
                         <input type="text" id="shopIcon" placeholder="🏪" maxlength="2">
                     </div>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Category *</label>
@@ -214,6 +252,7 @@ Agar styling change karni hai to area-manager.css file edit karo
                         <label>Phone</label>
                         <input type="text" id="shopPhone" placeholder="9876543210">
                     </div>
+                </div>
                 <div class="form-group">
                     <label>Address</label>
                     <textarea id="shopAddress" rows="2" placeholder="Full address"></textarea>
@@ -237,7 +276,6 @@ Agar styling change karni hai to area-manager.css file edit karo
                             <option value="false">Inactive</option>
                         </select>
                     </div>
-                </div>
                 <div class="form-group">
                     <label>Description</label>
                     <textarea id="shopDesc" rows="3" placeholder="Shop description"></textarea>

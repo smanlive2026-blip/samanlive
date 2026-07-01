@@ -42,6 +42,7 @@ function authenticateToken(req, res, next) {
                 }
                 req.manager = manager;
                 req.userId = manager._id;
+                req.managerId = manager._id; // ✅ ADDED: Claim system ke liye easy access
                 req.userType = 'manager';
                 req.user = manager; // ✅ Full object rakho
                 // Extra fields
@@ -94,8 +95,56 @@ const requireManager = (req, res, next) => {
     next();
 };
 
+// ✅ NEW: Shop Owner or Claimed Manager middleware
+const requireShopAccess = async (req, res, next) => {
+    try {
+        const Shop = require('../models/Shop');
+        const shopId = req.params.shopId || req.params.id;
+
+        if (!shopId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Shop ID required'
+            });
+        }
+
+        const shop = await Shop.findById(shopId);
+        if (!shop) {
+            return res.status(404).json({
+                success: false,
+                error: 'Shop not found'
+            });
+        }
+
+        const isOwner = shop.ownerId?.toString() === req.userId.toString() ||
+                       shop.createdBy?.toString() === req.userId.toString();
+
+        const isClaimedManager = req.userType === 'manager' &&
+                                shop.controlledBy?.toString() === req.managerId.toString();
+
+        const isAdmin = req.userType === 'admin' || req.user?.role === 'admin';
+
+        if (!isOwner &&!isClaimedManager &&!isAdmin) {
+            return res.status(403).json({
+                success: false,
+                error: 'Access denied. You do not control this shop.'
+            });
+        }
+
+        req.shop = shop; // Shop object attach kar diya
+        next();
+    } catch (error) {
+        console.error('Shop access middleware error:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Access check failed'
+        });
+    }
+};
+
 module.exports = {
     authenticateToken,
     requireAdmin,
-    requireManager
+    requireManager,
+    requireShopAccess // ✅ NEW: Export kiya
 };

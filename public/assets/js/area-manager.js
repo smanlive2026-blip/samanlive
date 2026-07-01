@@ -1,10 +1,10 @@
 // ========================================
-// AREA MANAGER DASHBOARD - COMPLETE JS
-// Matches area-manager.html IDs
+// AREA MANAGER DASHBOARD - CLAIM SYSTEM READY
 // ========================================
 
 let currentManager = null;
 let managerShops = [];
+let availableShops = []; // ✅ NEW: Unclaimed shops
 let categories = [];
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -75,7 +75,7 @@ async function loadDashboard() {
         console.log('👤 Manager Data:', currentManager);
         console.log('🏷️ Manager Code:', currentManager.managerCode);
 
-        // 2. Load shops & categories parallel - ✅ YAHI LINE CHANGE KI HAI
+        // 2. Load shops & categories parallel
         const [shopsData, modulesData] = await Promise.all([
             apiCall(`/manager/shops`).catch(err => {
                 console.error('Shops API Error:', err);
@@ -98,6 +98,9 @@ async function loadDashboard() {
         renderShops(managerShops);
         renderServiceCards(categories);
 
+        // ✅ Load available shops on page load
+        loadAvailableShops();
+
     } catch (err) {
         console.error('Dashboard Error:', err);
         document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:20px;padding:20px;text-align:center;"><i class="fas fa-exclamation-triangle" style="font-size:64px;color:#ef4444;"></i><h1 style="color:#ef4444;">Error Loading Dashboard</h1><p style="color:#64748b;max-width:600px;">${err.message}</p><p style="color:#64748b;font-size:14px;">Check console (F12) for details.</p><button onclick="location.reload()" class="btn" style="margin-top:20px;">Retry</button></div>`;
@@ -105,14 +108,100 @@ async function loadDashboard() {
 }
 
 // ========================================
+// ✅ NEW: LOAD AVAILABLE SHOPS FOR CLAIM
+// ========================================
+async function loadAvailableShops() {
+    const tbody = document.getElementById('availableShopsTable');
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading available shops...</td></tr>';
+
+    try {
+        const res = await apiCall(`/manager/available-shops`);
+        console.log('📦 Available Shops Response:', res);
+
+        availableShops = res.shops || res || [];
+        renderAvailableShops(availableShops);
+
+    } catch (err) {
+        console.error('Error loading available shops:', err);
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 40px; color: #ef4444;">
+            <i class="fas fa-exclamation-circle"></i> Error: ${err.message}
+        </td></tr>`;
+    }
+}
+
+// ========================================
+// ✅ NEW: RENDER AVAILABLE SHOPS TABLE
+// ========================================
+function renderAvailableShops(shops) {
+    const tbody = document.getElementById('availableShopsTable');
+
+    if (shops.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>No available shops in your area right now.</p><p style="font-size:12px;color:#94a3b8;margin-top:8px;">All shops are either claimed or not in your area.</p></div></td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = shops.map(shop => `
+        <tr>
+            <td style="font-size: 28px;">${shop.logo? `<img src="${shop.logo}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">` : shop.icon || '🏪'}</td>
+            <td><strong>${escapeHtml(shop.shopName)}</strong></td>
+            <td>${escapeHtml(shop.ownerName || 'N/A')}</td>
+            <td>${getCategoryName(shop.serviceType || shop.categoryId)}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(shop.address?.line1 || shop.address || '')}">${escapeHtml(shop.address?.line1 || shop.address || 'N/A')}</td>
+            <td>${escapeHtml(shop.phone || 'N/A')}</td>
+            <td><span class="badge badge-warning"><i class="fas fa-clock" style="font-size:8px;"></i> Pending</span></td>
+            <td>
+                <div class="actions">
+                    <button class="btn btn-small btn-success" onclick='claimShop("${shop._id}", "${escapeHtml(shop.shopName)}")'>
+                        <i class="fas fa-check-circle"></i> Claim
+                    </button>
+                    <button class="btn btn-small btn-outline" onclick='viewShopDetails(${JSON.stringify(shop).replace(/'/g, "&apos;")})'>
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ========================================
+// ✅ NEW: CLAIM SHOP FUNCTION
+// ========================================
+async function claimShop(shopId, shopName) {
+    const confirmClaim = confirm(`Are you sure you want to claim "${shopName}"?\n\nOnce claimed, this shop will appear in your "My Claimed Shops" section and you can manage it.`);
+
+    if (!confirmClaim) return;
+
+    try {
+        const res = await apiCall('/manager/claim-shop', 'POST', {
+            shopId: shopId,
+            managerCode: currentManager.managerCode
+        });
+
+        if (res.success) {
+            alert(`✅ "${shopName}" claimed successfully!\n\nYou can now manage this shop from "My Claimed Shops" section.`);
+            // Refresh both tables
+            loadDashboard();
+        } else {
+            alert('❌ Error: ' + (res.error || 'Failed to claim shop'));
+        }
+    } catch (err) {
+        alert('❌ Error: ' + err.message);
+    }
+}
+
+// ========================================
+// ✅ NEW: VIEW SHOP DETAILS
+// ========================================
+function viewShopDetails(shop) {
+    alert(`📋 Shop Details:\n\nName: ${shop.shopName}\nOwner: ${shop.ownerName}\nPhone: ${shop.phone}\nAddress: ${shop.address?.line1 || shop.address}\nType: ${getCategoryName(shop.serviceType)}\nStatus: ${shop.status}`);
+}
+
+// ========================================
 // RENDER PROFILE
 // ========================================
 function renderProfile() {
-    // Header
     document.getElementById('managerName').textContent = currentManager.name || 'Manager';
     document.getElementById('managerBadge').textContent = currentManager.bucket || 'DEFAULT';
-
-    // Profile Card
     document.getElementById('managerFullName').textContent = currentManager.name || 'Manager Name';
     document.getElementById('managerRole').textContent = 'Area Manager';
     document.getElementById('managerAreaName').textContent = currentManager.areaName || currentManager.areaCode || '-';
@@ -120,12 +209,9 @@ function renderProfile() {
     document.getElementById('managerEmail').textContent = currentManager.email || 'Not Set';
     document.getElementById('managerLocation').textContent = `${currentManager.city || '-'}, ${currentManager.state || '-'}`;
     document.getElementById('managerRadius').textContent = currentManager.radius || '50';
-
-    // Stats
     document.getElementById('areaCodeText').textContent = currentManager.areaCode || '-';
     document.getElementById('managerCodeText').textContent = currentManager.managerCode || '-';
 
-    // Avatar
     const avatarEl = document.getElementById('managerAvatar');
     if (currentManager.photo) {
         avatarEl.innerHTML = `<img src="${currentManager.photo}" alt="${currentManager.name}"><div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`;
@@ -149,16 +235,14 @@ function renderStats() {
 }
 
 // ========================================
-// RENDER SHOPS TABLE
+// RENDER SHOPS TABLE - MY CLAIMED SHOPS
 // ========================================
 function renderShops(shops) {
     const tbody = document.getElementById('shopsTable');
-
     if (shops.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>Aapke circle me koi shop nahi hai.</p><p style="font-size:12px;color:#64748b;margin-top:8px;">Manager Code: <b>' + currentManager.managerCode + '</b></p></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>You haven\'t claimed any shops yet.</p><p style="font-size:12px;color:#94a3b8;margin-top:8px;">Claim shops from "Available Shops" section above.</p></div></td></tr>';
         return;
     }
-
     tbody.innerHTML = shops.map(shop => {
         const distance = shop.distance || calculateDistance(
             currentManager.location?.coordinates[1] || currentManager.lat,

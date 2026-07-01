@@ -1,52 +1,79 @@
-const express = require('express');
-const router = express.Router();
-const mongoose = require('mongoose');
 const Shop = require('../models/Shop');
-const Order = require('../models/Order');
-const auth = require('../middleware/authenticateToken');
+const Manager = require('../models/Manager');
+const Area = require('../models/Area');
 
-// ✅ CREATE SHOP - Frontend se call ho raha hai
-router.post('/shops', auth, async (req, res) => {
+// ========================================
+// CREATE SHOP - Claim System Ready
+// ========================================
+exports.createShop = async (req, res) => {
     try {
         const shopData = {
-           ...req.body,
+         ...req.body,
             ownerId: req.user.id,
             createdBy: req.user.id,
-            status: 'approved',
+
+            // ✅ CLAIM SYSTEM FIELDS
+            status: 'pending', // Manager claim karke approve karega
             isActive: true,
+            isVerified: false, // Manager verify karega
             logo: req.body.logo || '',
             locationType: req.body.locationType || 'fixed',
             range: req.body.range || 5000,
-            lastLocationUpdate: req.body.locationType === 'dynamic'? new Date() : null
+            lastLocationUpdate: req.body.locationType === 'dynamic'? new Date() : null,
+
+            // ✅ CLAIM SYSTEM SPECIFIC
+            availableForManagers: req.body.managerCodes || [],
+            assignedManagerCode: req.body.managerCodes?.[0] || null,
+            assignedManagerName: req.body.assignedManagerName || null,
+            assignedManagerPhone: req.body.assignedManagerPhone || null,
+            claimedBy: null,
+            claimedAt: null,
+            controlledBy: null
         };
+
+        // Location format fix
+        if (req.body.location && req.body.location.coordinates) {
+            shopData.location = {
+                type: 'Point',
+                coordinates: [
+                    parseFloat(req.body.location.coordinates[0]),
+                    parseFloat(req.body.location.coordinates[1])
+                ]
+            };
+        }
 
         const shop = new Shop(shopData);
         await shop.save();
-        console.log(`✅ Shop created: ${shop.shopName} [${shop.locationType}] Range: ${shop.range}m`);
+
+        console.log(`✅ Shop created: ${shop.shopName} | Area: ${shop.areaCode} | Status: ${shop.status}`);
         res.status(201).json(shop);
     } catch (err) {
         console.error('Create shop error:', err);
         res.status(400).json({ error: err.message });
     }
-});
+};
 
-// ✅ GET MY SHOPS - Check karne ke liye user ki shop hai ya nahi
-router.get('/my-shops', auth, async (req, res) => {
+// ========================================
+// GET MY SHOPS - User ki shops
+// ========================================
+exports.getMyShops = async (req, res) => {
     try {
         const shops = await Shop.find({
             $or: [
                 { ownerId: req.user.id },
                 { createdBy: req.user.id }
             ]
-        });
+        }).sort({ createdAt: -1 });
         res.json(shops);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-// ✅ FIXED: PUBLIC SHOPS - LOCATION FILTER HATA DIYA, SAB SHOPS LIVE
-router.get('/public', async (req, res) => {
+// ========================================
+// GET PUBLIC SHOPS - User app ke liye
+// ========================================
+exports.getPublicShops = async (req, res) => {
     try {
         const { shopType, categoryId, serviceType } = req.query;
 
@@ -59,12 +86,10 @@ router.get('/public', async (req, res) => {
         if (categoryId) query.categoryId = categoryId;
         if (serviceType) query.serviceType = serviceType;
 
-        console.log('🔍 Fetching ALL public shops - No location filter');
-
         const shops = await Shop.find(query)
-           .select('-ownerId -approvedBy -rejectionReason -email -phone')
-           .limit(100)
-           .sort({ rating: -1, totalOrders: -1, createdAt: -1 });
+         .select('-ownerId -approvedBy -rejectionReason -email -phone')
+         .limit(100)
+         .sort({ rating: -1, totalOrders: -1, createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -79,36 +104,96 @@ router.get('/public', async (req, res) => {
             error: err.message
         });
     }
-});
+};
 
-// ===== SHOP DETAILS - Ye /public ke BAAD aana chahiye =====
-router.get('/shops/:id', async (req, res) => {
+// ========================================
+// GET SHOP BY ID
+// ========================================
+exports.getShopById = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id).lean();
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         if (!shop.logo) shop.logo = '';
-
         res.json(shop);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-// ===== DASHBOARD STATS =====
-router.get('/shops/:shopId/stats', auth, async (req, res) => {
+// ========================================
+// UPDATE SHOP
+// ========================================
+exports.updateShop = async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.id);
+        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+
+        const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
+
+        if (!isOwner &&!isManager && req.user.role!== 'admin') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        if (req.body.location && req.body.location.coordinates) {
+            req.body.location = {
+                type: 'Point',
+                coordinates: [
+                    parseFloat(req.body.location.coordinates[0]),
+                    parseFloat(req.body.location.coordinates[1])
+                ]
+            };
+        }
+
+        Object.assign(shop, req.body);
+        shop.updatedAt = new Date();
+        await shop.save();
+
+        res.json(shop);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
+// ========================================
+// DELETE SHOP
+// ========================================
+exports.deleteShop = async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.id);
+        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+
+        const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
+
+        if (!isOwner && req.user.role!== 'admin') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        await Shop.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Shop deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// ========================================
+// GET SHOP STATS
+// ========================================
+exports.getShopStats = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
 
         const products = shop.items || [];
+        const Order = require('../models/Order');
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -148,27 +233,29 @@ router.get('/shops/:shopId/stats', auth, async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-// ===== GET PRODUCTS - From items[] array =====
-router.get('/shops/:shopId/products', async (req, res) => {
+// ========================================
+// PRODUCTS CRUD - Items Array
+// ========================================
+
+exports.getProducts = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         const products = (shop.items || []).map((item, index) => ({
             _id: item._id || index,
-           ...item.toObject? item.toObject() : item
+        ...item.toObject? item.toObject() : item
         }));
 
         res.json(products);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-// ===== GET SINGLE PRODUCT =====
-router.get('/products/:shopId/:productId', auth, async (req, res) => {
+exports.getProductById = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
@@ -180,10 +267,9 @@ router.get('/products/:shopId/:productId', auth, async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-// ===== CREATE PRODUCT - Push to items[] =====
-router.post('/products', auth, async (req, res) => {
+exports.createProduct = async (req, res) => {
     try {
         const { shopId,...productData } = req.body;
 
@@ -191,7 +277,7 @@ router.post('/products', auth, async (req, res) => {
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
@@ -205,16 +291,15 @@ router.post('/products', auth, async (req, res) => {
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
-});
+};
 
-// ===== UPDATE PRODUCT - Update in items[] =====
-router.put('/products/:shopId/:productId', auth, async (req, res) => {
+exports.updateProduct = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
@@ -230,16 +315,15 @@ router.put('/products/:shopId/:productId', auth, async (req, res) => {
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
-});
+};
 
-// ===== DELETE PRODUCT - Remove from items[] =====
-router.delete('/products/:shopId/:productId', auth, async (req, res) => {
+exports.deleteProduct = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
@@ -252,51 +336,14 @@ router.delete('/products/:shopId/:productId', auth, async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-// ===== UPDATE SHOP - Logo support added =====
-router.put('/shops/:id', auth, async (req, res) => {
-    try {
-        const shop = await Shop.findById(req.params.id);
-        if (!shop) return res.status(404).json({ error: 'Shop not found' });
-
-        const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
-
-        if (!isOwner &&!isManager && req.user.role!== 'admin') {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-
-        if (req.body.location && req.body.location.coordinates) {
-            req.body.location = {
-                type: 'Point',
-                coordinates: [
-                    parseFloat(req.body.location.coordinates[0]),
-                    parseFloat(req.body.location.coordinates[1])
-                ]
-            };
-        }
-
-        if (req.body.logo!== undefined) {
-            req.body.logo = req.body.logo;
-        }
-
-        Object.assign(shop, req.body);
-        shop.updatedAt = new Date();
-        await shop.save();
-
-        res.json(shop);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-
-// ✅ FIXED: NEARBY SHOPS - AB YE BHI SAB SHOPS RETURN KAREGA, LOCATION FILTER NAHI
-router.get('/nearby', async (req, res) => {
+// ========================================
+// NEARBY SHOPS
+// ========================================
+exports.getNearbyShops = async (req, res) => {
     try {
         const { type } = req.query;
-
-        console.log('🔍 Fetching ALL shops from /nearby - No location filter');
 
         let query = {
             status: { $in: ['approved', 'active'] },
@@ -306,12 +353,10 @@ router.get('/nearby', async (req, res) => {
         if (type) query.shopType = type;
 
         const shops = await Shop.find(query)
-       .select('-ownerId -approvedBy -rejectionReason -email')
-       .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-       .limit(100)
-       .lean();
-
-        console.log(`✅ Returning ${shops.length} shops from /nearby`);
+      .select('-ownerId -approvedBy -rejectionReason -email')
+      .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+      .limit(100)
+      .lean();
 
         res.json({
             success: true,
@@ -323,6 +368,4 @@ router.get('/nearby', async (req, res) => {
         console.error('❌ Nearby shops error:', err);
         res.status(500).json({ error: err.message });
     }
-});
-
-module.exports = router;
+};

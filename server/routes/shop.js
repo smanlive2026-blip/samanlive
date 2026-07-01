@@ -1,5 +1,5 @@
 // ========================================
-// FILE: routes/shop.js - FINAL UPDATED CODE
+// FILE: routes/shop.js - FINAL UPDATED CODE WITH CLAIM SYSTEM
 // Ye API shop-create.html ke form submit ke liye bani hai
 // shop-create.html -> POST /api/local-market/shops
 // ========================================
@@ -13,7 +13,7 @@ const auth = require('../middleware/authenticateToken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'samanlive_secret_key_2026_change_this';
 
-// ✅ FIXED: CREATE SHOP - areaCode + managerCodes dono save honge
+// ✅ FIXED: CREATE SHOP - CLAIM SYSTEM READY
 router.post('/shops', async (req, res) => {
     let userId = null;
 
@@ -49,24 +49,39 @@ router.post('/shops', async (req, res) => {
         }
 
         const shopData = {
-           ...restData,
+      ...restData,
             managerCodes: managerCodes,
             areaCode: areaCode.trim(), // ✅ EXPLICITLY SAVE KAR RAHA HAI
             ownerId: userId,
             createdBy: userId,
-            status: 'approved',
+
+            // ✅ CLAIM SYSTEM FIELDS - STATUS PENDING
+            status: 'pending', // Manager claim karke approve karega
             isActive: true,
-            isVerified: true,
+            isVerified: false, // Manager verify karega claim ke baad
+
+            // ✅ CLAIM SYSTEM SPECIFIC FIELDS
+            availableForManagers: managerCodes, // In managers ko shop dikhegi
+            assignedManagerCode: managerCodes[0] || null, // Primary manager
+            assignedManagerName: restData.assignedManagerName || null,
+            assignedManagerPhone: restData.assignedManagerPhone || null,
+            claimedBy: null, // Abhi kisi ne claim nahi ki
+            claimedAt: null,
+            controlledBy: null,
+
             logo: req.body.logo || '',
+            locationType: req.body.locationType || 'fixed',
+            range: req.body.range || 5000,
+            lastLocationUpdate: req.body.locationType === 'dynamic'? new Date() : null,
             createdAt: new Date()
         };
 
-        console.log('📤 Creating shop:', shopData.shopName, '| areaCode:', shopData.areaCode, '| managers:', shopData.managerCodes);
+        console.log('📤 Creating shop:', shopData.shopName, '| areaCode:', shopData.areaCode, '| status:', shopData.status, '| managers:', shopData.managerCodes);
 
         const shop = new Shop(shopData);
         await shop.save();
 
-        console.log('✅ Shop created successfully:', shop.shopName, '| ID:', shop._id, '| areaCode:', shop.areaCode);
+        console.log('✅ Shop created successfully:', shop.shopName, '| ID:', shop._id, '| areaCode:', shop.areaCode, '| Status:', shop.status);
 
         res.status(201).json({
             success: true,
@@ -126,9 +141,9 @@ router.get('/public', async (req, res) => {
         console.log('Public Shops Query:', JSON.stringify(query));
 
         const shops = await Shop.find(query)
-           .select('-ownerId -approvedBy -rejectionReason -email')
-           .limit(50)
-           .sort({ priority: -1, rating: -1, createdAt: -1 });
+      .select('-ownerId -approvedBy -rejectionReason -email')
+      .limit(50)
+      .sort({ priority: -1, rating: -1, createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -166,7 +181,7 @@ router.get('/shops/:shopId/stats', auth, async (req, res) => {
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
@@ -222,7 +237,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
 
         const products = (shop.items || []).map((item, index) => ({
             _id: item._id || index,
-           ...item.toObject? item.toObject() : item
+      ...item.toObject? item.toObject() : item
         }));
 
         res.json(products);
@@ -255,7 +270,7 @@ router.post('/products', auth, async (req, res) => {
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
@@ -278,7 +293,7 @@ router.put('/products/:shopId/:productId', auth, async (req, res) => {
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
@@ -303,7 +318,7 @@ router.delete('/products/:shopId/:productId', auth, async (req, res) => {
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
@@ -325,7 +340,7 @@ router.put('/shops/:id', auth, async (req, res) => {
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
             return res.status(403).json({ error: 'Access denied' });

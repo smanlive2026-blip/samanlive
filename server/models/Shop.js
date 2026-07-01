@@ -12,7 +12,6 @@ const shopSchema = new mongoose.Schema({
     managerCodes: {
         type: [String], // ["SURAGU-1-DEFAULT", "SURAGU-2-DEFAULT"]
         default: []
-        // ❌ index: true hataya - neeche schema.index() use kar rahe hain
     },
 
     shopName: { type: String, required: true, trim: true },
@@ -73,9 +72,42 @@ const shopSchema = new mongoose.Schema({
     approvedAt: { type: Date },
     rejectionReason: { type: String, default: '' },
 
-    isVerified: { type: Boolean, default: true },
+    isVerified: { type: Boolean, default: false }, // ✅ Changed to false - Manager verify karega
     isActive: { type: Boolean, default: true },
     priority: { type: Number, default: 0 },
+
+    // ========== CLAIM SYSTEM FIELDS - NEW ✅ ==========
+    availableForManagers: {
+        type: [String], // ["SURAGU-1-DEFAULT", "SURAGU-2-DEFAULT"]
+        default: []
+    },
+    assignedManagerCode: {
+        type: String,
+        default: null
+    },
+    assignedManagerName: {
+        type: String,
+        default: null
+    },
+    assignedManagerPhone: {
+        type: String,
+        default: null
+    },
+    claimedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Manager',
+        default: null
+    },
+    claimedAt: {
+        type: Date,
+        default: null
+    },
+    controlledBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Manager',
+        default: null
+    },
+    // ========== CLAIM SYSTEM FIELDS END ==========
 
     // ========== SHOP TYPE & ITEMS - NEW ==========
     shopType: {
@@ -127,11 +159,17 @@ shopSchema.index({ moduleId: 1 });
 shopSchema.index({ categoryId: 1 });
 shopSchema.index({ phone: 1 });
 shopSchema.index({ managerId: 1 });
-shopSchema.index({ managerCodes: 1 }); // ✅ Yahi rakha, upar se hataya
+shopSchema.index({ managerCodes: 1 });
 shopSchema.index({ createdAt: -1 });
 shopSchema.index({ isActive: 1 });
 shopSchema.index({ locationType: 1 });
 shopSchema.index({ shopType: 1 });
+
+// ✅ NEW INDEXES FOR CLAIM SYSTEM
+shopSchema.index({ claimedBy: 1 });
+shopSchema.index({ controlledBy: 1 });
+shopSchema.index({ availableForManagers: 1 });
+shopSchema.index({ areaCode: 1, claimedBy: 1, status: 1 });
 
 // ========== VIRTUALS ==========
 shopSchema.virtual('fullAddress').get(function() {
@@ -170,6 +208,21 @@ shopSchema.methods.addManager = function(managerCode) {
 
 shopSchema.methods.removeManager = function(managerCode) {
     this.managerCodes = this.managerCodes.filter(code => code!== managerCode);
+    return this.save();
+};
+
+// ✅ NEW METHOD: Check if shop is available for claim
+shopSchema.methods.isAvailableForClaim = function() {
+    return this.claimedBy === null && this.status === 'pending';
+};
+
+// ✅ NEW METHOD: Claim shop
+shopSchema.methods.claimBy = function(managerId) {
+    this.claimedBy = managerId;
+    this.claimedAt = new Date();
+    this.controlledBy = managerId;
+    this.status = 'approved';
+    this.isVerified = true;
     return this.save();
 };
 
