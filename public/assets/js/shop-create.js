@@ -239,7 +239,7 @@ function updateCreateShopManagerCountText() {
 }
 
 // ========================================
-// SUBMIT SHOP - ✅ FIXED: Match with managerShopCreate.js
+// SUBMIT SHOP - ✅ FIXED: Purane system wala dashboard link
 // ========================================
 function initCreateShopForm() {
     const createForm = document.getElementById('createShopForm');
@@ -297,7 +297,8 @@ function initCreateShopForm() {
             // ✅ Backend {success: true, shop: newShop, currentCount, maxShops} bhejta hai
             if (res.success && res.shop) {
                 const shopId = res.shop._id;
-                const shopLink = `${window.location.origin}/shop-dashboard.html?shopId=${shopId}`;
+                const shopType = res.shop.serviceType || res.shop.shopType || shopModule || 'common'; // ✅ shopType nikala
+                const shopLink = `${window.location.origin}/shop-templates/${shopType}/dashboard.html?shopId=${shopId}`; // ✅ PURANA SYSTEM WALA LINK
 
                 // ✅ Clipboard me copy
                 navigator.clipboard.writeText(shopLink).then(() => {

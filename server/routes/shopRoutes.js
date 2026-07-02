@@ -7,6 +7,85 @@ const Manager = require('../models/Manager');
 const { authenticateToken } = require('../middleware/authenticateToken');
 const authManager = require('../middleware/authManager');
 
+// ✅ CREATE SHOP V2 - Manager se create hone wala - NAYA ROUTE
+router.post('/manager/create-shop-v2', authenticateToken, async (req, res) => {
+    try {
+        const { shopName, shopType, contact, email, address, icon, range } = req.body;
+        const manager = req.user;
+
+        if (!shopName ||!shopType ||!contact ||!address) {
+            return res.status(400).json({
+                success: false,
+                error: 'Required fields missing: shopName, shopType, contact, address'
+            });
+        }
+
+        // Manager ka count check karo
+        if (manager.currentShopCount >= manager.maxShops) {
+            return res.status(400).json({
+                success: false,
+                error: `Shop limit reached! Max allowed: ${manager.maxShops}`
+            });
+        }
+
+        const shopData = {
+            shopName: shopName.trim(),
+            serviceType: shopType,
+            shopType: shopType,
+            ownerName: manager.name,
+            ownerId: req.userId,
+            createdBy: req.userId,
+            areaCode: manager.areaCode,
+            managerCodes: [manager.managerCode],
+            contact: contact,
+            email: email || manager.email || '',
+            address: {
+                line1: address,
+                city: manager.city || 'Surat',
+                state: manager.state || 'Gujarat',
+                pincode: manager.pincode || '395007'
+            },
+            icon: icon || '🏪',
+            range: parseInt(range) || 5000,
+            status: 'active',
+            isActive: true,
+            isVerified: true,
+            module: 'local-market',
+            locationType: 'fixed',
+            location: {
+                type: 'Point',
+                coordinates: [72.8311, 21.1702] // Default Surat
+            },
+            createdAt: new Date()
+        };
+
+        console.log(`📤 Creating shop via V2: ${shopData.shopName} | areaCode: ${shopData.areaCode}`);
+
+        const shop = new Shop(shopData);
+        await shop.save();
+
+        // Manager ka count update karo
+        await Manager.findByIdAndUpdate(manager._id, {
+            $inc: { currentShopCount: 1 }
+        });
+
+        console.log(`✅ Shop created LIVE: ${shop.shopName} | ID: ${shop._id}`);
+
+        res.status(201).json({
+            success: true,
+            shop: shop,
+            currentCount: manager.currentShopCount + 1,
+            maxShops: manager.maxShops
+        });
+    } catch (err) {
+        console.error('❌ Create shop V2 error:', err);
+        res.status(400).json({
+            success: false,
+            error: err.message
+        });
+    }
+});
+
 // ✅ CREATE SHOP - LIVE ON CREATE + areaCode + managerCodes
 router.post('/shops', authenticateToken, async (req, res) => {
     try {
@@ -27,7 +106,7 @@ router.post('/shops', authenticateToken, async (req, res) => {
         }
 
         const shopData = {
-         ...restData,
+        ...restData,
             ownerId: req.userId,
             createdBy: req.userId,
             areaCode: areaCode.trim().toUpperCase(),
@@ -176,10 +255,10 @@ router.get('/public', async (req, res) => {
         if (serviceType) query.serviceType = serviceType;
 
         const shops = await Shop.find(query)
-         .select('-ownerId -approvedBy -rejectionReason -email -phone')
-         .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-         .limit(100)
-         .lean();
+        .select('-ownerId -approvedBy -rejectionReason -email -phone')
+        .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+        .limit(100)
+        .lean();
 
         res.json({
             success: true,
@@ -208,10 +287,10 @@ router.get('/nearby', async (req, res) => {
         console.log('🔍 Fetching ALL shops - No location filter');
 
         const shops = await Shop.find(query)
-         .select('-ownerId -approvedBy -rejectionReason -email')
-         .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-         .limit(100)
-         .lean();
+        .select('-ownerId -approvedBy -rejectionReason -email')
+        .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+        .limit(100)
+        .lean();
 
         console.log(`✅ Returning ${shops.length} shops`);
 
@@ -301,7 +380,7 @@ router.get('/shops/:shopId/products', async (req, res) => {
 
         const products = (shop.items || []).map((item, index) => ({
             _id: item._id || index,
-         ...item.toObject? item.toObject() : item
+        ...item.toObject? item.toObject() : item
         }));
 
         res.json(products);
