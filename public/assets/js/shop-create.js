@@ -239,7 +239,7 @@ function updateCreateShopManagerCountText() {
 }
 
 // ========================================
-// SUBMIT SHOP - ✅ FIXED: Purane system wala dashboard link
+// SUBMIT SHOP - ✅ FIXED: shopId wala dashboard link
 // ========================================
 function initCreateShopForm() {
     const createForm = document.getElementById('createShopForm');
@@ -255,7 +255,7 @@ function initCreateShopForm() {
         // ✅ GET VALUES + SANITIZE PHONE
         const shopName = document.getElementById('createShopName').value.trim();
         const ownerName = document.getElementById('createShopOwnerName').value.trim();
-        const phoneNumber = document.getElementById('createShopPhone').value.trim().replace(/\D/g, ''); // ✅ Remove spaces/dashes
+        const phoneNumber = document.getElementById('createShopPhone').value.trim().replace(/\D/g, '');
         const shopModule = document.getElementById('createShopModule').value;
         const shopAddress = document.getElementById('createShopAddress').value.trim();
         const range = parseInt(document.getElementById('createShopRange').value);
@@ -276,8 +276,8 @@ function initCreateShopForm() {
         // ✅ BACKEND /manager/create-shop-v2 YEHI 7 FIELDS EXPECT KARTA HAI
         const shopData = {
             shopName: shopName,
-            shopType: shopModule, // Backend 'shopType' expect karta hai
-            contact: phoneNumber, // Backend 'contact' expect karta hai, 'phone' nahi
+            shopType: shopModule,
+            contact: phoneNumber,
             email: document.getElementById('createShopEmail').value.trim() || '',
             address: shopAddress,
             icon: createShopSelectedIcon,
@@ -289,16 +289,16 @@ function initCreateShopForm() {
         try {
             const res = await window.apiCall('/manager/create-shop-v2', {
                 method: 'POST',
-                body: shopData // ✅ FIXED: Stringify mat kar, apiCall karega
+                body: shopData
             });
 
             console.log('📥 Backend Response:', res);
 
             // ✅ Backend {success: true, shop: newShop, currentCount, maxShops} bhejta hai
             if (res.success && res.shop) {
-                const shopId = res.shop._id;
-                const shopType = res.shop.serviceType || res.shop.shopType || shopModule || 'common'; // ✅ shopType nikala
-                const shopLink = `${window.location.origin}/shop-templates/${shopType}/dashboard.html?shopId=${shopId}`; // ✅ PURANA SYSTEM WALA LINK
+                const shopId = res.shop._id; // ✅ shopId nikala
+                const shopType = res.shop.serviceType || res.shop.shopType || shopModule || 'common';
+                const shopLink = `${window.location.origin}/shop-templates/${shopType}/dashboard.html?shopId=${shopId}`; // ✅ shopId ke saath link
 
                 // ✅ Clipboard me copy
                 navigator.clipboard.writeText(shopLink).then(() => {
