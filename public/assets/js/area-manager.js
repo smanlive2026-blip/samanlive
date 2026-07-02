@@ -8,7 +8,7 @@ let managerShops = [];
 let availableShops = [];
 let categories = [];
 
-// ✅ CREATE SHOP VARIABLES - From old shop.html
+// CREATE SHOP VARIABLES
 let selectedIcon = '🏪';
 let uploadedLogoBase64 = null;
 let selectedManagerCodes = [];
@@ -33,9 +33,7 @@ async function apiCall(endpoint, options = {}) {
     try {
         const opts = {
             method: options.method || 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         };
 
         if (options.body &&!(options.body instanceof FormData)) {
@@ -79,19 +77,15 @@ async function loadDashboard() {
         const dashboardRes = await apiCall(`/manager/dashboard`);
         console.log('📦 Dashboard API Response:', dashboardRes);
 
-        if (!dashboardRes.success) {
-            throw new Error(dashboardRes.error || 'Invalid token');
-        }
+        if (!dashboardRes.success) throw new Error(dashboardRes.error || 'Invalid token');
 
         currentManager = dashboardRes.manager;
-
         const stats = dashboardRes.stats || { totalShops: 0, activeShops: 0 };
         currentManager.currentShopCount = stats.totalShops;
         currentManager.maxShops = dashboardRes.manager.maxShops || 10;
 
         console.log('👤 Manager Data:', currentManager);
 
-        // Load shops & categories parallel
         const [shopsData, modulesData] = await Promise.all([
             apiCall(`/manager/shops`).catch(err => {
                 console.error('Shops API Error:', err);
@@ -118,7 +112,7 @@ async function loadDashboard() {
     } catch (err) {
         console.error('❌ Dashboard Error:', err);
         const errorMsg = err.message.includes('Manager not found') || err.message.includes('Invalid token')
-       ? 'Session expired. Please login again.'
+     ? 'Session expired. Please login again.'
             : err.message;
 
         document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:20px;padding:20px;text-align:center;">
@@ -148,7 +142,7 @@ function updateShopLimitUI() {
 }
 
 // ========================================
-// CREATE SHOP FUNCTIONS - FIXED
+// CREATE SHOP FUNCTIONS - MAIN
 // ========================================
 function openCreateShopModal() {
     if (currentManager.currentShopCount >= currentManager.maxShops) {
@@ -236,9 +230,7 @@ function startLocationTracking() {
             };
             console.log('📍 Location captured:', window.currentUserLocation);
         },
-        (error) => {
-            console.log('Location error:', error.message);
-        },
+        (error) => console.log('Location error:', error.message),
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
 
@@ -290,9 +282,7 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
 .then(r => r.json())
 .then(data => {
             let city = data.address.city || data.address.town || data.address.village || currentManager.city || 'Surat';
-            if (city === 'सूरत' || city === 'सुरत') {
-                city = 'Surat';
-            }
+            if (city === 'सूरत' || city === 'सुरत') city = 'Surat';
 
             const state = data.address.state || currentManager.state || 'Gujarat';
             const pincode = data.address.postcode || '';
@@ -312,7 +302,6 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
             document.getElementById('createShopDetectedCityName').textContent = `📍 ${city}`;
             document.getElementById('createShopDetectedCityMeta').textContent = `${state} • Auto-selected Manager`;
 
-            // ✅ AUTO CURRENT MANAGER - Koi list nahi dikhegi
             selectedManagerCodes = [currentManager.managerCode];
             document.getElementById('createShopManagerCodes').value = JSON.stringify(selectedManagerCodes);
         })
@@ -347,7 +336,6 @@ function loadShopModules() {
             moduleSelect.appendChild(option);
         });
     } else {
-        // Fallback options
         const fallback = [
             {id: 'kirana', name: 'Kirana/Grocery Store', icon: '🛒'},
             {id: 'cloth', name: 'Cloth/Garment Shop', icon: '👗'},
@@ -391,21 +379,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const shopModule = document.getElementById('createShopType').value;
             const range = parseInt(document.getElementById('createShopRange').value);
 
-            // ✅ AUTO CURRENT MANAGER
             selectedManagerCodes = [currentManager.managerCode];
 
             const shopTypeMap = {
-                'kirana': 'product',
-                'cloth': 'fashion',
-                'medical': 'product',
-                'restaurant': 'food',
-                'electronics': 'product',
-                'hardware': 'product',
-                'salon': 'service',
-                'stationery': 'product',
-                'service': 'service',
-                'rental': 'rental',
-                'common': 'product'
+                'kirana': 'product', 'cloth': 'fashion', 'medical': 'product',
+                'restaurant': 'food', 'electronics': 'product', 'hardware': 'product',
+                'salon': 'service', 'stationery': 'product', 'service': 'service',
+                'rental': 'rental', 'common': 'product'
             };
 
             const shopData = {
@@ -732,151 +712,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ========================================
 // SHOP EDIT MODAL
-// ========================================
-function openShopModal(shop = null) {
-    document.getElementById('shopModal').classList.add('active');
-    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Shop Details';
-
-    const catSelect = document.getElementById('shopCategory');
-    if (catSelect) {
-        catSelect.innerHTML = categories.map(c => `<option value="${c.id || c._id}">${c.icon} ${c.name}</option>`).join('');
-    }
-
-    if (shop) {
-        document.getElementById('shopId').value = shop._id;
-        document.getElementById('shopName').value = shop.shopName;
-        document.getElementById('shopIcon').value = shop.icon || '🏪';
-        document.getElementById('shopCategory').value = shop.serviceType || shop.categoryId;
-        document.getElementById('shopPhone').value = shop.phone || '';
-        document.getElementById('shopAddress').value = shop.address?.line1 || shop.address || '';
-        document.getElementById('shopRange').value = shop.range || 5000;
-        document.getElementById('shopStatus').value = shop.isActive? 'true' : 'false';
-        document.getElementById('shopDesc').value = shop.description || '';
-        document.getElementById('shopLat').value = shop.location?.coordinates[1] || shop.lat || '';
-        document.getElementById('shopLng').value = shop.location?.coordinates[0] || shop.lng || '';
-    }
-}
-
-function closeShopModal() {
-    document.getElementById('shopModal').classList.remove('active');
-}
-
-function editShop(shop) {
-    openShopModal(shop);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const shopForm = document.getElementById('shopForm');
-    if (shopForm) {
-        shopForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('shopSaveBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-
-            const shopId = document.getElementById('shopId').value;
-
-            const shopData = {
-                shopName: document.getElementById('shopName').value,
-                icon: document.getElementById('shopIcon').value || '🏪',
-                serviceType: document.getElementById('shopCategory').value,
-                categoryId: document.getElementById('shopCategory').value,
-                phone: document.getElementById('shopPhone').value,
-                address: {
-                    line1: document.getElementById('shopAddress').value
-                },
-                range: parseInt(document.getElementById('shopRange').value),
-                isActive: document.getElementById('shopStatus').value === 'true',
-                description: document.getElementById('shopDesc').value
-            };
-
-            try {
-                const data = await apiCall(`/manager/shops/${shopId}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(shopData)
-                });
-                if (data.success) {
-                    alert('✅ Shop updated successfully!');
-                    closeShopModal();
-                    loadDashboard();
-                } else {
-                    alert(data.error || 'Error updating shop');
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-save"></i> Update Shop';
-            }
-        });
-    }
-});
-
-// ========================================
-// RESET FORM
-// ========================================
-function resetCreateShopForm() {
-    document.getElementById('createShopName').value = '';
-    document.getElementById('createShopType').value = '';
-    document.getElementById('createShopPhone').value = '';
-    document.getElementById('createShopEmail').value = '';
-    document.getElementById('createShopAddress').value = '';
-    document.getElementById('createShopDesc').value = '';
-    document.getElementById('createShopLat').value = '';
-    document.getElementById('createShopLng').value = '';
-    document.getElementById('createShopRange').value = '5000';
-    document.getElementById('createShopCity').value = '';
-    document.getElementById('createShopState').value = '';
-    document.getElementById('createShopPincode').value = '';
-    document.getElementById('createShopManagerCodes').value = '';
-    document.getElementById('createShopLocationCoords').className = 'location-coords';
-    document.getElementById('createShopLocationCoords').textContent = 'Loading your current location...';
-    const cityBox = document.getElementById('createShopCityBox');
-    if (cityBox) cityBox.style.display = 'none';
-
-    selectedManagerCodes = [currentManager.managerCode];
-    selectedIcon = '🏪';
-    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
-    document.querySelector('.icon-option[data-icon="🏪"]').classList.add('selected');
-    removeLogo();
-    autoFillLocation();
-}
-
-// ========================================
-// UTILITIES
-// ========================================
-function getCategoryName(id) {
-    const cat = categories.find(c => c.id === id || c._id === id || c.name === id);
-    return cat? cat.name : id || '-';
-}
-
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    if (!lat1 ||!lon1 ||!lat2 ||!lon2) return 0;
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text || '';
-    return div.innerHTML;
-}
-
-window.onclick = function (event) {
-    if (event.target.classList.contains('modal')) {
-        event.target.classList.remove('active');
-    }
-}
-
-// Export functions
-// ========================================
-// SHOP EDIT MODAL - Continue
 // ========================================
 function openShopModal(shop = null) {
     document.getElementById('shopModal').classList.add('active');
