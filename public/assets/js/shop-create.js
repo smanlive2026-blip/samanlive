@@ -239,7 +239,7 @@ function updateCreateShopManagerCountText() {
 }
 
 // ========================================
-// SUBMIT SHOP - ✅ PHONE SANITIZE + FORCE VALUES
+// SUBMIT SHOP - ✅ FIXED: Remove JSON.stringify
 // ========================================
 function initCreateShopForm() {
     const createForm = document.getElementById('createShopForm');
@@ -333,7 +333,7 @@ function initCreateShopForm() {
         try {
             const res = await window.apiCall('/manager/create-shop', {
                 method: 'POST',
-                body: JSON.stringify(shopData)
+                body: shopData // ✅ FIXED: Stringify mat kar, apiCall karega
             });
 
             console.log('📥 Backend Response:', res);

@@ -22,20 +22,27 @@ if (!token) {
 const API = '/api';
 
 // ========================================
-// API CALL HELPER - Global export
+// API CALL HELPER - ✅ FIXED: Auto stringify + Content-Type
 // ========================================
 async function apiCall(endpoint, options = {}) {
     try {
         const opts = {
             method: options.method || 'GET',
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                ...options.headers 
+            }
         };
 
-        if (options.body && !(options.body instanceof FormData)) {
-            opts.headers['Content-Type'] = 'application/json';
-            opts.body = options.body;
-        } else if (options.body) {
-            opts.body = options.body;
+        // ✅ FIX: Agar body object hai to JSON.stringify kar + Content-Type set kar
+        if (options.body) {
+            if (options.body instanceof FormData) {
+                opts.body = options.body;
+                // FormData ke liye Content-Type mat set kar, browser khud karega
+            } else {
+                opts.headers['Content-Type'] = 'application/json';
+                opts.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+            }
         }
 
         const res = await fetch(API + endpoint, opts);
@@ -47,7 +54,7 @@ async function apiCall(endpoint, options = {}) {
             console.error('Server Response:', text);
             throw new Error('Server error: Invalid JSON response');
         }
-        if (!res.ok) throw new Error(data.error || 'API Error');
+        if (!res.ok) throw new Error(data.error || data.message || 'API Error');
         return data;
     } catch (err) {
         console.error('API Error:', err);
@@ -303,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const data = await apiCall(`/manager/update-profile`, {
                     method: 'PUT',
-                    body: JSON.stringify(profileData)
+                    body: profileData // ✅ Object bhej, apiCall stringify karega
                 });
                 if (data.success) {
                     alert('✅ Profile updated successfully!');
@@ -386,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const data = await apiCall(`/manager/shops/${shopId}`, {
                     method: 'PUT',
-                    body: JSON.stringify(shopData)
+                    body: shopData // ✅ Object bhej, apiCall stringify karega
                 });
                 if (data.success) {
                     alert('✅ Shop updated successfully!');
