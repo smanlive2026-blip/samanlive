@@ -9,7 +9,6 @@ Agar logic change karna hai to area-manager.js file edit karo
 ROUTES USED:
 - POST /api/manager/create-shop - Nayi shop create karne ke liye
 - GET /api/manager/shops - Manager ki shops list ke liye  
-- GET /api/manager/available-shops - Claim karne wali shops ke liye
 - PUT /api/manager/shops/:id - Shop edit karne ke liye
 File: routes/managerRoutes.js me sab routes hain
 
@@ -61,7 +60,6 @@ File: routes/managerRoutes.js me sab routes hain
                                 <span>Phone</span>
                                 <strong id="managerPhone">-</strong>
                             </div>
-                        </div>
                         <div class="profile-detail">
                             <div class="profile-detail-icon"><i class="fas fa-envelope"></i></div>
                             <div>
@@ -75,7 +73,6 @@ File: routes/managerRoutes.js me sab routes hain
                                 <span>Location</span>
                                 <strong id="managerLocation">-</strong>
                             </div>
-                        </div>
                         <div class="profile-detail">
                             <div class="profile-detail-icon"><i class="fas fa-circle-notch"></i></div>
                             <div>
@@ -118,7 +115,7 @@ File: routes/managerRoutes.js me sab routes hain
                 </div>
             </div>
 
-            <!-- ✅ CREATE SHOP SECTION - YAHI SE SHOP BANEGI -->
+            <!-- ✅ CREATE SHOP SECTION -->
             <div class="card">
                 <div class="card-header">
                     <h2><i class="fas fa-plus-circle"></i> Create New Shop</h2>
@@ -128,7 +125,7 @@ File: routes/managerRoutes.js me sab routes hain
                 </div>
                 <div class="info-note">
                     <i class="fas fa-info-circle"></i>
-                    <span>Aap apne area me nayi shop create kar sakte hain. Shop create hote hi active ho jayegi aur aap usko edit kar payenge.</span>
+                    <span>Aap apne area me nayi shop create kar sakte hain. Shop create hote hi active ho jayegi.</span>
                 </div>
                 <div class="create-shop-actions">
                     <button class="btn btn-primary btn-large" onclick="openCreateShopModal()" id="createShopBtn">
@@ -137,51 +134,14 @@ File: routes/managerRoutes.js me sab routes hain
                 </div>
             </div>
 
-            <!-- ✅ AVAILABLE SHOPS FOR CLAIM -->
+            <!-- ✅ MY CREATED SHOPS - Claim nahi, Direct Create -->
             <div class="card">
                 <div class="card-header">
-                    <h2><i class="fas fa-store"></i> Available Shops in Your Area</h2>
-                    <button class="btn btn-small" onclick="loadAvailableShops()">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
+                    <h2><i class="fas fa-store"></i> My Created Shops</h2>
                 </div>
                 <div class="info-note">
                     <i class="fas fa-info-circle"></i>
-                    <span>Ye shops aapke area me hain aur abhi kisi ne claim nahi ki. Aap inko apne dashboard me add kar sakte hain.</span>
-                </div>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Icon</th>
-                                <th>Shop Name</th>
-                                <th>Owner</th>
-                                <th>Category</th>
-                                <th>Address</th>
-                                <th>Phone</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="availableShopsTable">
-                            <tr><td colspan="8" style="text-align:center; padding: 60px;">
-                                <div class="empty-state">
-                                    <i class="fas fa-store"></i>
-                                    <p>Click "Refresh" to load available shops</p>
-                                </div>
-                            </td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h2><i class="fas fa-map-pin"></i> My Claimed Shops (View & Edit Only)</h2>
-                </div>
-                <div class="info-note">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Ye shops aapne claim ki hain. Aap inko edit kar sakte hain lekin delete nahi.</span>
+                    <span>Ye shops aapne create ki hain. Aap inko edit kar sakte hain. Location shop dashboard se update hogi.</span>
                 </div>
                 <div style="overflow-x: auto;">
                     <table>
@@ -190,7 +150,7 @@ File: routes/managerRoutes.js me sab routes hain
                                 <th>Icon</th>
                                 <th>Name</th>
                                 <th>Category</th>
-                                <th>Distance</th>
+                                <th>Owner</th>
                                 <th>Range</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -252,7 +212,7 @@ File: routes/managerRoutes.js me sab routes hain
         </div>
     </div>
 
-    <!-- CREATE SHOP MODAL - YAHI SE SHOP BANEGI -->
+    <!-- CREATE SHOP MODAL - SIMPLIFIED, NO GPS -->
     <div class="modal" id="createShopModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -261,21 +221,17 @@ File: routes/managerRoutes.js me sab routes hain
             </div>
             <div class="info-note">
                 <i class="fas fa-info-circle"></i>
-                <span>Shop aapke area me create hogi. Location aur area auto-fill ho jayenge.</span>
+                <span>Shop aapke area me create hogi. Location baad me shop dashboard se update kar sakte hain.</span>
             </div>
             <form id="createShopForm">
-                <!-- Auto Detected City Box -->
-                <div class="city-detected-box" id="createShopCityBox" style="display:none;">
-                    <i class="fa fa-map-marker-alt"></i>
-                    <div class="city-detected-info">
-                        <h3 id="createShopDetectedCityName">Detecting your city...</h3>
-                        <p id="createShopDetectedCityMeta">GPS se location fetch ho rahi hai</p>
-                    </div>
-                </div>
-
                 <div class="form-group">
                     <label>Shop Name * <small style="color: var(--text-muted);">(Unique hona chahiye)</small></label>
                     <input type="text" id="createShopName" required placeholder="Rajesh General Store">
+                </div>
+
+                <div class="form-group">
+                    <label>Owner Name *</label>
+                    <input type="text" id="createShopOwnerName" required placeholder="Shop Owner Full Name">
                 </div>
 
                 <div class="form-group">
@@ -353,29 +309,6 @@ File: routes/managerRoutes.js me sab routes hain
                     <textarea id="createShopDesc" rows="2" placeholder="What services/products you offer?"></textarea>
                 </div>
 
-                <!-- Location Box -->
-                <div class="location-box">
-                    <div class="location-header">
-                        <h3>📍 Shop GPS Location *</h3>
-                        <div class="auto-badge">
-                            <span class="pulse"></span>
-                            AUTO SYNC
-                        </div>
-                    </div>
-                    <div class="location-coords" id="createShopLocationCoords">
-                        Loading your current location...
-                    </div>
-                    <div class="location-info">
-                        💡 Your location is automatically captured from your device
-                    </div>
-                    <input type="hidden" id="createShopLat">
-                    <input type="hidden" id="createShopLng">
-                    <input type="hidden" id="createShopCity">
-                    <input type="hidden" id="createShopState">
-                    <input type="hidden" id="createShopPincode">
-                    <input type="hidden" id="createShopManagerCodes">
-                </div>
-
                 <button type="submit" class="btn btn-primary" id="createShopSaveBtn">
                     <i class="fas fa-plus"></i> Create Shop
                 </button>
@@ -392,7 +325,7 @@ File: routes/managerRoutes.js me sab routes hain
             </div>
             <div class="info-note">
                 <i class="fas fa-exclamation-triangle"></i>
-                <span>You can edit shop details but cannot delete. Owner ID cannot be changed.</span>
+                <span>You can edit shop details but cannot delete. Location update from shop dashboard.</span>
             </div>
             <form id="shopForm">
                 <input type="hidden" id="shopId">
@@ -438,7 +371,6 @@ File: routes/managerRoutes.js me sab routes hain
                             <option value="false">Inactive</option>
                         </select>
                     </div>
-                </div>
                 <div class="form-group">
                     <label>Description</label>
                     <textarea id="shopDesc" rows="3" placeholder="Shop description"></textarea>
@@ -452,9 +384,8 @@ File: routes/managerRoutes.js me sab routes hain
                         <label>Longitude</label>
                         <input type="text" id="shopLng" disabled>
                     </div>
-                </div>
                 <small style="color: var(--text-muted); display: block; margin-bottom: 15px;">
-                    <i class="fas fa-map-marker-alt"></i> Location cannot be changed by Area Manager
+                    <i class="fas fa-map-marker-alt"></i> Location can be updated from Shop Dashboard
                 </small>
                 <button type="submit" class="btn" id="shopSaveBtn"><i class="fas fa-save"></i> Update Shop</button>
             </form>
