@@ -1,16 +1,15 @@
 // ========================================
-// AREA MANAGER DASHBOARD - FINAL JS
+// AREA MANAGER DASHBOARD - CLEAN VERSION
 // File: /public/assets/js/area-manager.js
-// No Claim System - Direct Shop Create Only
+// Only Dashboard + Profile + Shop List + Edit
+// Shop Create logic moved to shop-create.js
 // ========================================
 
 let currentManager = null;
 let managerShops = [];
 let categories = [];
-
-// CREATE SHOP VARIABLES
-let selectedIcon = '🏪';
-let uploadedLogoBase64 = null;
+let allManagers = [];
+let allAreas = [];
 
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token') || localStorage.getItem('managerToken');
@@ -23,7 +22,7 @@ if (!token) {
 const API = '/api';
 
 // ========================================
-// API CALL HELPER
+// API CALL HELPER - Global export
 // ========================================
 async function apiCall(endpoint, options = {}) {
     try {
@@ -32,7 +31,7 @@ async function apiCall(endpoint, options = {}) {
             headers: { 'Authorization': `Bearer ${token}` }
         };
 
-        if (options.body &&!(options.body instanceof FormData)) {
+        if (options.body && !(options.body instanceof FormData)) {
             opts.headers['Content-Type'] = 'application/json';
             opts.body = options.body;
         } else if (options.body) {
@@ -56,13 +55,15 @@ async function apiCall(endpoint, options = {}) {
     }
 }
 
+// Export for shop-create.js
+window.apiCall = apiCall;
+
 // ========================================
 // PAGE LOAD
 // ========================================
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Area Manager Dashboard Loading...');
     await loadDashboard();
-    initIconPicker();
 });
 
 async function loadDashboard() {
@@ -81,7 +82,7 @@ async function loadDashboard() {
 
         console.log('👤 Manager Data:', currentManager);
 
-        const [shopsData, modulesData] = await Promise.all([
+        const [shopsData, modulesData, areasRes, managersRes] = await Promise.all([
             apiCall(`/manager/shops`).catch(err => {
                 console.error('Shops API Error:', err);
                 return { shops: [] };
@@ -89,19 +90,28 @@ async function loadDashboard() {
             apiCall('/modules').catch(err => {
                 console.error('Modules API Error:', err);
                 return { modules: [] };
-            })
+            }),
+            fetch('/api/areas').then(r => r.json()).catch(() => []),
+            fetch('/api/managers').then(r => r.json()).catch(() => [])
         ]);
 
         console.log('📦 Shops API Response:', shopsData);
 
         managerShops = shopsData.shops || shopsData || [];
         categories = modulesData.modules || modulesData || [];
+        allAreas = areasRes || [];
+        allManagers = managersRes || [];
 
         renderProfile();
         renderStats(stats);
         renderShops(managerShops);
         renderServiceCards(categories);
         updateShopLimitUI();
+
+        // ✅ Initialize shop-create module
+        if (typeof initShopCreateModule === 'function') {
+            initShopCreateModule(allManagers, allAreas, categories, currentManager);
+        }
 
     } catch (err) {
         console.error('❌ Dashboard Error:', err);
@@ -117,6 +127,9 @@ async function loadDashboard() {
         </div>`;
     }
 }
+
+// Export for shop-create.js
+window.loadDashboard = loadDashboard;
 
 // ========================================
 // UPDATE SHOP LIMIT UI
@@ -134,207 +147,6 @@ function updateShopLimitUI() {
         if (badge) badge.classList.add('limit-reached');
     }
 }
-
-// ========================================
-// CREATE SHOP FUNCTIONS - SIMPLIFIED
-// ========================================
-function openCreateShopModal() {
-    if (currentManager.currentShopCount >= currentManager.maxShops) {
-        alert(`Shop limit reached! Max allowed: ${currentManager.maxShops}\n\nContact admin to increase limit.`);
-        return;
-    }
-    document.getElementById('createShopModal').classList.add('active');
-    resetCreateShopForm();
-    loadShopModules();
-}
-
-function closeCreateShopModal() {
-    document.getElementById('createShopModal').classList.remove('active');
-    const form = document.getElementById('createShopForm');
-    if (form) form.reset();
-    removeLogo();
-}
-
-// ========================================
-// ICON PICKER
-// ========================================
-function initIconPicker() {
-    const iconPicker = document.getElementById('iconPicker');
-    if (iconPicker) {
-        iconPicker.addEventListener('click', (e) => {
-            if (e.target.classList.contains('icon-option')) {
-                document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
-                e.target.classList.add('selected');
-                selectedIcon = e.target.dataset.icon;
-            }
-        });
-    }
-}
-
-// ========================================
-// LOGO UPLOAD
-// ========================================
-function previewLogo(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-        alert('Image size should be less than 2MB');
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        uploadedLogoBase64 = e.target.result;
-        document.getElementById('logoPreview').innerHTML = `<img src="${uploadedLogoBase64}" alt="Shop Logo">`;
-        document.getElementById('removeLogoBtn').style.display = 'inline-block';
-        document.getElementById('iconPicker').style.opacity = '0.3';
-    };
-    reader.readAsDataURL(file);
-}
-
-function removeLogo() {
-    uploadedLogoBase64 = null;
-    const logoInput = document.getElementById('shopLogoInput');
-    if (logoInput) logoInput.value = '';
-    document.getElementById('logoPreview').innerHTML = `
-        <i class="fa fa-camera"></i>
-        <p>Upload Shop Photo</p>
-        <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
-    `;
-    document.getElementById('removeLogoBtn').style.display = 'none';
-    document.getElementById('iconPicker').style.opacity = '1';
-}
-
-// ========================================
-// LOAD SHOP MODULES
-// ========================================
-function loadShopModules() {
-    const moduleSelect = document.getElementById('createShopType');
-    if (!moduleSelect) return;
-
-    moduleSelect.innerHTML = '<option value="">Select Shop Type</option>';
-
-    if (categories && categories.length > 0) {
-        categories.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat.name || cat.id;
-            option.textContent = `${cat.icon || '📦'} ${cat.name}`;
-            moduleSelect.appendChild(option);
-        });
-    } else {
-        const fallback = [
-            {id: 'kirana', name: 'Kirana/Grocery Store', icon: '🛒'},
-            {id: 'cloth', name: 'Cloth/Garment Shop', icon: '👗'},
-            {id: 'medical', name: 'Medical Store', icon: '💊'},
-            {id: 'restaurant', name: 'Restaurant/Cafe', icon: '🍕'},
-            {id: 'electronics', name: 'Electronics Shop', icon: '📱'},
-            {id: 'hardware', name: 'Hardware Store', icon: '🔧'},
-            {id: 'salon', name: 'Salon/Beauty Parlour', icon: '💇'},
-            {id: 'stationery', name: 'Stationery Shop', icon: '🎓'},
-            {id: 'service', name: 'Service Provider', icon: '🔧'},
-            {id: 'rental', name: 'Rental Shop', icon: '🚗'},
-            {id: 'common', name: 'Common Shop - General', icon: '🏪'}
-        ];
-        fallback.forEach(m => {
-            const option = document.createElement('option');
-            option.value = m.id;
-            option.textContent = `${m.icon} ${m.name}`;
-            moduleSelect.appendChild(option);
-        });
-    }
-}
-
-// ========================================
-// SUBMIT SHOP - SIMPLE VERSION NO GPS
-// ========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const createForm = document.getElementById('createShopForm');
-    if (createForm) {
-        createForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const btn = document.getElementById('createShopSaveBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
-
-            const shopModule = document.getElementById('createShopType').value;
-            const range = parseInt(document.getElementById('createShopRange').value);
-
-            const shopTypeMap = {
-                'kirana': 'product', 'cloth': 'fashion', 'medical': 'product',
-                'restaurant': 'food', 'electronics': 'product', 'hardware': 'product',
-                'salon': 'service', 'stationery': 'product', 'service': 'service',
-                'rental': 'rental', 'common': 'product'
-            };
-
-            // ✅ SIMPLE SHOP DATA - No location needed
-            const shopData = {
-                shopName: document.getElementById('createShopName').value.trim(),
-                ownerName: document.getElementById('createShopOwnerName').value.trim(),
-                phone: document.getElementById('createShopPhone').value.trim(),
-                email: document.getElementById('createShopEmail').value.trim() || '',
-                address: {
-                    line1: document.getElementById('createShopAddress').value.trim() || currentManager.areaName,
-                    line2: '',
-                    city: currentManager.city,
-                    state: currentManager.state,
-                    pincode: currentManager.pincode || ''
-                },
-                areaCode: currentManager.areaCode,
-                bucket: currentManager.bucket,
-                area: currentManager.areaCode,
-                areaName: currentManager.areaName,
-                serviceType: shopTypeMap[shopModule] || 'product',
-                shopType: shopTypeMap[shopModule] || 'product',
-                description: document.getElementById('createShopDesc').value.trim() || `Shop created by Area Manager: ${currentManager.name}`,
-                range: range,
-                icon: selectedIcon,
-                logo: uploadedLogoBase64 || '',
-                banner: '',
-                status: 'approved',
-                isVerified: true,
-                isActive: true,
-                locationType: 'fixed',
-                // ✅ Default location from manager - update later from shop dashboard
-                location: {
-                    type: 'Point',
-                    coordinates: [currentManager.centerLng, currentManager.centerLat]
-                },
-                managerCodes: [currentManager.managerCode]
-            };
-
-            console.log('📤 Creating Shop:', shopData);
-
-            if (!shopData.shopName ||!shopData.phone ||!shopModule ||!shopData.ownerName) {
-                alert('Please fill Shop Name, Owner Name, Phone Number and Shop Type!');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
-                return;
-            }
-
-            try {
-                const res = await apiCall('/manager/create-shop', {
-                    method: 'POST',
-                    body: JSON.stringify(shopData)
-                });
-
-                if (res.success) {
-                    alert('✅ Shop created successfully!\n\nShop is now active. Location can be updated from shop dashboard.');
-                    closeCreateShopModal();
-                    loadDashboard();
-                } else {
-                    alert('❌ Error: ' + res.error);
-                }
-            } catch (err) {
-                alert('❌ Failed to create shop: ' + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
-            }
-        });
-    }
-});
 
 // ========================================
 // RENDER PROFILE
@@ -594,26 +406,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ========================================
-// RESET FORM
-// ========================================
-function resetCreateShopForm() {
-    document.getElementById('createShopName').value = '';
-    document.getElementById('createShopOwnerName').value = '';
-    document.getElementById('createShopType').value = '';
-    document.getElementById('createShopPhone').value = '';
-    document.getElementById('createShopEmail').value = '';
-    document.getElementById('createShopAddress').value = '';
-    document.getElementById('createShopDesc').value = '';
-    document.getElementById('createShopRange').value = '5000';
-
-    selectedIcon = '🏪';
-    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
-    const defaultIcon = document.querySelector('.icon-option[data-icon="🏪"]');
-    if (defaultIcon) defaultIcon.classList.add('selected');
-    removeLogo();
-}
-
-// ========================================
 // UTILITIES
 // ========================================
 function getCategoryName(id) {
@@ -637,9 +429,7 @@ window.onclick = function (event) {
 window.openProfileModal = openProfileModal;
 window.closeProfileModal = closeProfileModal;
 window.previewProfilePhoto = previewProfilePhoto;
-window.openCreateShopModal = openCreateShopModal;
-window.closeCreateShopModal = closeCreateShopModal;
-window.previewLogo = previewLogo;
-window.removeLogo = removeLogo;
 window.editShop = editShop;
 window.closeShopModal = closeShopModal;
+
+console.log('✅ area-manager.js loaded - Shop create logic moved to shop-create.js');

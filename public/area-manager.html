@@ -60,6 +60,7 @@ File: routes/managerRoutes.js me sab routes hain
                                 <span>Phone</span>
                                 <strong id="managerPhone">-</strong>
                             </div>
+                        </div>
                         <div class="profile-detail">
                             <div class="profile-detail-icon"><i class="fas fa-envelope"></i></div>
                             <div>
@@ -73,6 +74,7 @@ File: routes/managerRoutes.js me sab routes hain
                                 <span>Location</span>
                                 <strong id="managerLocation">-</strong>
                             </div>
+                        </div>
                         <div class="profile-detail">
                             <div class="profile-detail-icon"><i class="fas fa-circle-notch"></i></div>
                             <div>
@@ -134,7 +136,7 @@ File: routes/managerRoutes.js me sab routes hain
                 </div>
             </div>
 
-            <!-- ✅ MY CREATED SHOPS - Claim nahi, Direct Create -->
+            <!-- ✅ MY CREATED SHOPS -->
             <div class="card">
                 <div class="card-header">
                     <h2><i class="fas fa-store"></i> My Created Shops</h2>
@@ -212,7 +214,7 @@ File: routes/managerRoutes.js me sab routes hain
         </div>
     </div>
 
-    <!-- CREATE SHOP MODAL - SIMPLIFIED, NO GPS -->
+    <!-- CREATE SHOP MODAL -->
     <div class="modal" id="createShopModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -338,6 +340,7 @@ File: routes/managerRoutes.js me sab routes hain
                         <label>Icon</label>
                         <input type="text" id="shopIcon" placeholder="🏪" maxlength="2">
                     </div>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Category *</label>
@@ -371,6 +374,7 @@ File: routes/managerRoutes.js me sab routes hain
                             <option value="false">Inactive</option>
                         </select>
                     </div>
+                </div>
                 <div class="form-group">
                     <label>Description</label>
                     <textarea id="shopDesc" rows="3" placeholder="Shop description"></textarea>
@@ -384,6 +388,7 @@ File: routes/managerRoutes.js me sab routes hain
                         <label>Longitude</label>
                         <input type="text" id="shopLng" disabled>
                     </div>
+                </div>
                 <small style="color: var(--text-muted); display: block; margin-bottom: 15px;">
                     <i class="fas fa-map-marker-alt"></i> Location can be updated from Shop Dashboard
                 </small>
@@ -394,5 +399,6 @@ File: routes/managerRoutes.js me sab routes hain
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="/assets/js/area-manager.js"></script>
+    <script src="/assets/js/shop-create.js"></script>
 </body>
 </html>
