@@ -3,32 +3,45 @@ const Manager = require('../models/Manager');
 const Area = require('../models/Area');
 
 // ========================================
-// CREATE SHOP - Claim System Ready
+// CREATE SHOP - Manager ke liye Auto Approved
 // ========================================
 exports.createShop = async (req, res) => {
-    try {
-        const shopData = {
-         ...req.body,
-            ownerId: req.user.id,
-            createdBy: req.user.id,
+    console.log('=== SHOP CREATE REQUEST ===');
+    console.log('Headers:', req.headers['content-type']);
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+    console.log('User:', req.user?.id, req.user?.managerCode);
+    console.log('==========================');
 
-            // ✅ CLAIM SYSTEM FIELDS
-            status: 'pending', // Manager claim karke approve karega
+    try {
+        const manager = req.user; // managerAuth se aata hai
+
+        const shopData = {
+           ...req.body,
+            ownerId: manager._id,
+            createdBy: manager._id,
+            managerId: manager._id, // ✅ Manager ka ID
+            managerCodes: [manager.managerCode], // ✅ Manager code array
+
+            // ✅ AUTO APPROVED - Manager khud bana raha hai
+            status: 'approved', // pending nahi, direct approved
             isActive: true,
-            isVerified: false, // Manager verify karega
+            isVerified: true, // Manager ne verify kar diya
+            approvedBy: manager._id, // Manager ne khud approve kiya
+            approvedAt: new Date(),
+
             logo: req.body.logo || '',
             locationType: req.body.locationType || 'fixed',
             range: req.body.range || 5000,
             lastLocationUpdate: req.body.locationType === 'dynamic'? new Date() : null,
 
-            // ✅ CLAIM SYSTEM SPECIFIC
-            availableForManagers: req.body.managerCodes || [],
-            assignedManagerCode: req.body.managerCodes?.[0] || null,
-            assignedManagerName: req.body.assignedManagerName || null,
-            assignedManagerPhone: req.body.assignedManagerPhone || null,
-            claimedBy: null,
-            claimedAt: null,
-            controlledBy: null
+            // ✅ CLAIM SYSTEM - Auto claimed by creator manager
+            availableForManagers: [manager.managerCode],
+            assignedManagerCode: manager.managerCode,
+            assignedManagerName: manager.name,
+            assignedManagerPhone: manager.phone,
+            claimedBy: manager.managerCode, // ✅ Auto claimed
+            claimedAt: new Date(),
+            controlledBy: manager.managerCode // ✅ Auto controlled
         };
 
         // Location format fix
@@ -45,23 +58,43 @@ exports.createShop = async (req, res) => {
         const shop = new Shop(shopData);
         await shop.save();
 
-        console.log(`✅ Shop created: ${shop.shopName} | Area: ${shop.areaCode} | Status: ${shop.status}`);
-        res.status(201).json(shop);
+        // ✅ Manager ka shop count update kar
+        await Manager.findByIdAndUpdate(manager._id, {
+            $inc: { currentShopCount: 1 }
+        });
+
+        console.log(`✅ Shop created: ${shop.shopName} | ID: ${shop._id} | Area: ${shop.areaCode} | Status: ${shop.status}`);
+
+        // ✅ FIXED: success flag ke saath response bhejo
+        res.status(201).json({
+            success: true,
+            message: 'Shop created successfully',
+            shop: shop,
+            shopId: shop._id,
+            shopLink: `${req.protocol}://${req.get('host')}/shop-dashboard.html?shopId=${shop._id}`
+        });
+
     } catch (err) {
         console.error('Create shop error:', err);
-        res.status(400).json({ error: err.message });
+        res.status(400).json({
+            success: false,
+            error: err.message,
+            receivedData: req.body // Debug ke liye
+        });
     }
 };
 
 // ========================================
-// GET MY SHOPS - User ki shops
+// GET MY SHOPS - Manager ki shops
 // ========================================
 exports.getMyShops = async (req, res) => {
     try {
         const shops = await Shop.find({
             $or: [
                 { ownerId: req.user.id },
-                { createdBy: req.user.id }
+                { createdBy: req.user.id },
+                { managerId: req.user.id },
+                { controlledBy: req.user.managerCode } // ✅ Manager code se bhi
             ]
         }).sort({ createdAt: -1 });
         res.json(shops);
@@ -87,9 +120,9 @@ exports.getPublicShops = async (req, res) => {
         if (serviceType) query.serviceType = serviceType;
 
         const shops = await Shop.find(query)
-         .select('-ownerId -approvedBy -rejectionReason -email -phone')
-         .limit(100)
-         .sort({ rating: -1, totalOrders: -1, createdAt: -1 });
+           .select('-ownerId -approvedBy -rejectionReason -email -phone')
+           .limit(100)
+           .sort({ rating: -1, totalOrders: -1, createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -115,9 +148,9 @@ exports.getShopById = async (req, res) => {
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
         if (!shop.logo) shop.logo = '';
-        res.json(shop);
+        res.json({ success: true, shop }); // ✅ success flag add kiya
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -127,13 +160,13 @@ exports.getShopById = async (req, res) => {
 exports.updateShop = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id);
-        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+        if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy === req.user.managerCode;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
         if (req.body.location && req.body.location.coordinates) {
@@ -150,9 +183,9 @@ exports.updateShop = async (req, res) => {
         shop.updatedAt = new Date();
         await shop.save();
 
-        res.json(shop);
+        res.json({ success: true, shop, message: 'Shop updated successfully' });
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ success: false, error: err.message });
     }
 };
 
@@ -162,18 +195,26 @@ exports.updateShop = async (req, res) => {
 exports.deleteShop = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id);
-        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+        if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
 
         if (!isOwner && req.user.role!== 'admin') {
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
         await Shop.findByIdAndDelete(req.params.id);
+
+        // Manager ka count kam kar
+        if (shop.managerId) {
+            await Manager.findByIdAndUpdate(shop.managerId, {
+                $inc: { currentShopCount: -1 }
+            });
+        }
+
         res.json({ success: true, message: 'Shop deleted successfully' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -183,13 +224,13 @@ exports.deleteShop = async (req, res) => {
 exports.getShopStats = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
-        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+        if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy === req.user.managerCode;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
         const products = shop.items || [];
@@ -229,9 +270,9 @@ exports.getShopStats = async (req, res) => {
                 break;
         }
 
-        res.json(stats);
+        res.json({ success: true, stats });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -242,30 +283,30 @@ exports.getShopStats = async (req, res) => {
 exports.getProducts = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
-        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+        if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
 
         const products = (shop.items || []).map((item, index) => ({
             _id: item._id || index,
-        ...item.toObject? item.toObject() : item
+           ...item.toObject? item.toObject() : item
         }));
 
-        res.json(products);
+        res.json({ success: true, products });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ success: false, error: err.message });
     }
 };
 
 exports.getProductById = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
-        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+        if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
 
         const product = shop.items.id(req.params.productId);
-        if (!product) return res.status(404).json({ error: 'Product not found' });
+        if (!product) return res.status(404).json({ success: false, error: 'Product not found' });
 
-        res.json(product);
+        res.json({ success: true, product });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -274,67 +315,67 @@ exports.createProduct = async (req, res) => {
         const { shopId,...productData } = req.body;
 
         const shop = await Shop.findById(shopId);
-        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+        if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy === req.user.managerCode;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
         shop.items.push(productData);
         await shop.save();
 
         const newProduct = shop.items[shop.items.length - 1];
-        res.status(201).json(newProduct);
+        res.status(201).json({ success: true, product: newProduct });
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ success: false, error: err.message });
     }
 };
 
 exports.updateProduct = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
-        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+        if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy === req.user.managerCode;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
         const product = shop.items.id(req.params.productId);
-        if (!product) return res.status(404).json({ error: 'Product not found' });
+        if (!product) return res.status(404).json({ success: false, error: 'Product not found' });
 
         Object.assign(product, req.body);
         await shop.save();
 
-        res.json(product);
+        res.json({ success: true, product });
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ success: false, error: err.message });
     }
 };
 
 exports.deleteProduct = async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
-        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+        if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
 
         const isOwner = shop.ownerId?.toString() === req.user.id || shop.createdBy?.toString() === req.user.id;
-        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy?.toString() === req.user.id;
+        const isManager = shop.managerId?.toString() === req.user.id || shop.controlledBy === req.user.managerCode;
 
         if (!isOwner &&!isManager && req.user.role!== 'admin') {
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
         shop.items.pull({ _id: req.params.productId });
         await shop.save();
 
-        res.json({ message: 'Product deleted successfully' });
+        res.json({ success: true, message: 'Product deleted successfully' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -353,10 +394,10 @@ exports.getNearbyShops = async (req, res) => {
         if (type) query.shopType = type;
 
         const shops = await Shop.find(query)
-      .select('-ownerId -approvedBy -rejectionReason -email')
-      .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-      .limit(100)
-      .lean();
+           .select('-ownerId -approvedBy -rejectionReason -email')
+           .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
+           .limit(100)
+           .lean();
 
         res.json({
             success: true,
@@ -366,6 +407,6 @@ exports.getNearbyShops = async (req, res) => {
 
     } catch (err) {
         console.error('❌ Nearby shops error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ success: false, error: err.message });
     }
 };

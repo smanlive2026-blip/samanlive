@@ -20,7 +20,7 @@ function initShopCreateModule(managers, areas, categories, currentManager) {
     createShopAllAreas = areas || [];
     createShopCategories = categories || [];
     window.createShopCurrentManager = currentManager;
-    
+
     console.log('✅ Shop Create Module Initialized', currentManager);
     initCreateShopIconPicker();
     initCreateShopForm();
@@ -60,7 +60,7 @@ function initCreateShopIconPicker() {
     if (iconPicker) {
         const newPicker = iconPicker.cloneNode(true);
         iconPicker.parentNode.replaceChild(newPicker, iconPicker);
-        
+
         newPicker.addEventListener('click', (e) => {
             if (e.target.classList.contains('icon-option')) {
                 newPicker.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
@@ -79,7 +79,7 @@ window.previewCreateShopLogo = function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 2 * 1024) {
         alert('Image size should be less than 2MB');
         event.target.value = '';
         return;
@@ -134,14 +134,14 @@ function loadCreateShopModules() {
         {id: 'rental', name: 'Rental Shop', icon: '🚗'},
         {id: 'common', name: 'Common Shop - General', icon: '🏪'}
     ];
-    
+
     shopTemplates.forEach(m => {
         const option = document.createElement('option');
         option.value = m.id;
         option.textContent = `${m.icon} ${m.name}`;
         moduleSelect.appendChild(option);
     });
-    
+
     console.log('✅ Loaded Shop Templates:', shopTemplates.length);
 }
 
@@ -150,7 +150,7 @@ function loadCreateShopModules() {
 // ========================================
 function autoFillCreateShopArea() {
     const manager = window.createShopCurrentManager;
-    
+
     if (!manager ||!manager.managerCode) {
         console.error('❌ Manager data not found!', manager);
         alert('⚠️ Session expired! Please reload page.');
@@ -169,10 +169,10 @@ function autoFillCreateShopArea() {
     document.getElementById('createShopCity').value = city;
     document.getElementById('createShopState').value = state;
     document.getElementById('createShopPincode').value = pincode;
-    
+
     createShopSelectedManagerCodes = [managerCode];
     document.getElementById('createShopManagerCodes').value = JSON.stringify(createShopSelectedManagerCodes);
-    
+
     // ✅ Fix undefined issue
     const cityBox = document.getElementById('createShopCityBox');
     if (cityBox) {
@@ -180,18 +180,18 @@ function autoFillCreateShopArea() {
         document.getElementById('createShopDetectedCityName').textContent = `📍 ${city}`;
         document.getElementById('createShopDetectedCityMeta').textContent = `${name} • ${managerCode} (Auto-connected)`;
     }
-    
+
     const managerList = document.getElementById('createShopManagerList');
     const countText = document.getElementById('createShopManagerCountText');
     const selectAllBtn = document.querySelector('.select-all-btn');
-    
+
     if (managerList) {
         managerList.innerHTML = `
             <div class="manager-item selected" style="cursor: default; background: #eef2ff; border-color: #667eea; pointer-events: none;">
                 <input type="checkbox" checked disabled>
                 <div class="manager-item-info">
                     <div class="manager-item-name">
-                        ${escapeHtml(name)} 
+                        ${escapeHtml(name)}
                         <span style="color:#10b981;font-size:11px;font-weight:700;">(You)</span>
                     </div>
                     <div class="manager-item-meta">
@@ -207,7 +207,7 @@ function autoFillCreateShopArea() {
     if (selectAllBtn) {
         selectAllBtn.style.display = 'none';
     }
-    
+
     console.log('✅ Auto-connected with fallbacks:', { city, state, pincode, bucket, managerCode, name });
 }
 
@@ -239,12 +239,12 @@ function updateCreateShopManagerCountText() {
 }
 
 // ========================================
-// SUBMIT SHOP - ✅ FIXED: Remove JSON.stringify
+// SUBMIT SHOP - ✅ FIXED: Match with managerRoutes.js
 // ========================================
 function initCreateShopForm() {
     const createForm = document.getElementById('createShopForm');
     if (!createForm) return;
-    
+
     createForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -273,62 +273,18 @@ function initCreateShopForm() {
         if (!shopAddress) return showError('Shop Address dalna zaroori hai!', 'createShopAddress', btn);
         if (!manager?.managerCode) return showError('Session expired! Page reload karo.', null, btn);
 
-        const shopTypeMap = {
-            'kirana': 'product', 'cloth': 'fashion', 'medical': 'product',
-            'restaurant': 'food', 'electronics': 'product', 'hardware': 'product',
-            'salon': 'service', 'stationery': 'product', 'service': 'service',
-            'rental': 'rental', 'common': 'product'
-        };
-
-        // ✅ FORCE FALLBACKS - Undefined kabhi nahi jayega
-        const areaCode = manager.areaCode || manager.managerCode.split('-')[0] || 'SURAGU-3';
-        const areaData = createShopAllAreas.find(a => a.areaCode === areaCode);
-        const areaName = areaData?.areaName || manager.name || manager.city || 'Surat';
-        const bucket = manager.bucket || 'DEFAULT';
-        const city = manager.city || 'Surat';
-        const state = manager.state || 'Gujarat';
-        const pincode = manager.pincode || '395007';
-        const centerLng = parseFloat(manager.centerLng) || 72.8311;
-        const centerLat = parseFloat(manager.centerLat) || 21.1702;
-
+        // ✅ BACKEND /manager/create-shop YEHI 7 FIELDS EXPECT KARTA HAI
         const shopData = {
             shopName: shopName,
-            ownerName: ownerName,
-            phone: phoneNumber, // ✅ Sanitized - only digits
+            shopType: shopModule, // Backend 'shopType' expect karta hai
+            contact: phoneNumber, // Backend 'contact' expect karta hai, 'phone' nahi
             email: document.getElementById('createShopEmail').value.trim() || '',
             address: shopAddress,
-            city: city,
-            state: state,
-            pincode: pincode,
-            areaCode: areaCode,
-            bucket: bucket,
-            area: areaCode,
-            areaName: areaName,
-            serviceType: shopModule, // ✅ Kirana/cloth/etc
-            shopType: shopTypeMap[shopModule] || 'product',
-            description: document.getElementById('createShopDesc').value.trim() || `Shop created by ${manager.name || 'Manager'}`,
-            range: range,
             icon: createShopSelectedIcon,
-            logo: createShopUploadedLogoBase64 || '',
-            banner: '',
-            status: 'approved',
-            isVerified: true,
-            isActive: true,
-            locationType: 'fixed',
-            location: {
-                type: 'Point',
-                coordinates: [centerLng, centerLat]
-            },
-            managerCodes: [manager.managerCode]
+            range: range
         };
 
-        console.log('📤 FINAL PAYLOAD - 4 Required Fields Check:', {
-            serviceType: shopData.serviceType,
-            bucket: shopData.bucket,
-            phone: shopData.phone,
-            ownerName: shopData.ownerName
-        });
-        console.log('📤 FULL PAYLOAD:', shopData);
+        console.log('📤 FINAL PAYLOAD for /manager/create-shop:', shopData);
 
         try {
             const res = await window.apiCall('/manager/create-shop', {
@@ -338,8 +294,21 @@ function initCreateShopForm() {
 
             console.log('📥 Backend Response:', res);
 
-            if (res.success) {
-                alert(`✅ Shop created successfully!\n\nShop "${shopData.shopName}" is now LIVE in ${areaName}!`);
+            // ✅ Backend {success: true, shop: newShop, currentCount, maxShops} bhejta hai
+            if (res.success && res.shop) {
+                const shopId = res.shop._id;
+                const shopLink = `${window.location.origin}/shop-dashboard.html?shopId=${shopId}`;
+
+                // ✅ Clipboard me copy
+                navigator.clipboard.writeText(shopLink).then(() => {
+                    console.log('✅ Shop link copied:', shopLink);
+                }).catch(err => {
+                    console.log('⚠️ Clipboard copy failed:', err);
+                });
+
+                const msg = `✅ Shop created successfully!\n\nShop: "${res.shop.shopName}"\nShops: ${res.currentCount}/${res.maxShops}\n\nDashboard Link:\n${shopLink}\n\n(Link copied to clipboard)`;
+
+                alert(msg);
                 closeCreateShopModal();
                 window.loadDashboard();
             } else {
