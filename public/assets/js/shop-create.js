@@ -73,13 +73,13 @@ function initCreateShopIconPicker() {
 }
 
 // ========================================
-// LOGO UPLOAD
+// LOGO UPLOAD - ✅ FIXED: 2MB check
 // ========================================
 window.previewCreateShopLogo = function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024) {
+    if (file.size > 2 * 1024 * 1024) { // ✅ 2MB = 2097152 bytes
         alert('Image size should be less than 2MB');
         event.target.value = '';
         return;
@@ -239,7 +239,7 @@ function updateCreateShopManagerCountText() {
 }
 
 // ========================================
-// SUBMIT SHOP - ✅ FIXED: Match with managerRoutes.js
+// SUBMIT SHOP - ✅ FIXED: Match with managerShopCreate.js
 // ========================================
 function initCreateShopForm() {
     const createForm = document.getElementById('createShopForm');
@@ -273,7 +273,7 @@ function initCreateShopForm() {
         if (!shopAddress) return showError('Shop Address dalna zaroori hai!', 'createShopAddress', btn);
         if (!manager?.managerCode) return showError('Session expired! Page reload karo.', null, btn);
 
-        // ✅ BACKEND /manager/create-shop YEHI 7 FIELDS EXPECT KARTA HAI
+        // ✅ BACKEND /manager/create-shop-v2 YEHI 7 FIELDS EXPECT KARTA HAI
         const shopData = {
             shopName: shopName,
             shopType: shopModule, // Backend 'shopType' expect karta hai
@@ -284,7 +284,7 @@ function initCreateShopForm() {
             range: range
         };
 
-        console.log('📤 FINAL PAYLOAD for /manager/create-shop:', shopData);
+        console.log('📤 FINAL PAYLOAD for /manager/create-shop-v2:', shopData);
 
         try {
             const res = await window.apiCall('/manager/create-shop-v2', {

@@ -87,6 +87,48 @@ body {
     background: #059669;
 }
 
+/* ✅ NAYA: Copy Link Button */
+.btn-link {
+    padding: 6px 12px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-link:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* ✅ NAYA: Edit Button */
+.btn-edit {
+    padding: 6px 12px;
+    background: #f59e0b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-edit:hover {
+    background: #d97706;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
 /* Header */
 .header {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
@@ -368,6 +410,25 @@ tr:last-child td { border-bottom: none; }
     border-radius: 12px; 
     font-size: 12px; 
     font-weight: 600;
+}
+
+/* ✅ NAYA: Status Badge for Table */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.status-badge.active {
+    background: #d1fae5;
+    color: #065f46;
+}
+.status-badge.inactive {
+    background: #fee2e2;
+    color: #991b1b;
 }
 
 /* Modal */
@@ -748,5 +809,12 @@ tr:last-child td { border-bottom: none; }
     .shop-limit-badge { width: 100%; justify-content: center; }
     .icon-picker {
         grid-template-columns: repeat(4, 1fr);
+    }
+    .actions {
+        flex-direction: column;
+    }
+    .btn-link, .btn-edit {
+        width: 100%;
+        justify-content: center;
     }
 }

@@ -7,10 +7,10 @@ Agar styling change karni hai to area-manager.css file edit karo
 Agar logic change karna hai to area-manager.js file edit karo
 
 ROUTES USED:
-- POST /api/manager/create-shop - Nayi shop create karne ke liye
+- POST /api/manager/create-shop-v2 - Nayi shop create karne ke liye
 - GET /api/manager/shops - Manager ki shops list ke liye  
 - PUT /api/manager/shops/:id - Shop edit karne ke liye
-File: routes/managerRoutes.js me sab routes hain
+File: routes/managerShopCreate.js me sab routes hain
 
 -->
 <!DOCTYPE html>
@@ -144,7 +144,7 @@ File: routes/managerRoutes.js me sab routes hain
                 </div>
                 <div class="info-note">
                     <i class="fas fa-info-circle"></i>
-                    <span>Ye shops aapne create ki hain. Aap inko edit kar sakte hain. Location shop dashboard se update hogi.</span>
+                    <span>Ye shops aapne create ki hain. Aap inko edit kar sakte hain aur dashboard link owner ko bhej sakte hain.</span>
                 </div>
                 <div style="overflow-x: auto;">
                     <table>
@@ -222,135 +222,137 @@ File: routes/managerRoutes.js me sab routes hain
                 <h2><i class="fas fa-plus-circle"></i> Create New Shop</h2>
                 <button class="close-btn" onclick="closeCreateShopModal()">×</button>
             </div>
-            <div class="info-note">
-                <i class="fas fa-info-circle"></i>
-                <span>Shop aapke area me create hogi. Location baad me shop dashboard se update kar sakte hain.</span>
-            </div>
-            <form id="createShopForm">
-                
-                <!-- ✅ Auto Detected City Box -->
-                <div class="city-detected-box" id="createShopCityBox" style="display:none;">
-                    <i class="fa fa-map-marker-alt"></i>
-                    <div class="city-detected-info">
-                        <h3 id="createShopDetectedCityName">Detecting your city...</h3>
-                        <p id="createShopDetectedCityMeta">Auto-selected from your area</p>
-                    </div>
+            <div class="modal-body">
+                <div class="info-note">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Shop aapke area me create hogi. Location baad me shop dashboard se update kar sakte hain.</span>
                 </div>
-
-                <div class="form-group">
-                    <label>Shop Name * <small style="color: var(--text-muted);">(Unique hona chahiye)</small></label>
-                    <input type="text" id="createShopName" required placeholder="Rajesh General Store">
-                </div>
-
-                <div class="form-group">
-                    <label>Owner Name *</label>
-                    <input type="text" id="createShopOwnerName" required placeholder="Shop Owner Full Name">
-                </div>
-
-                <div class="form-group">
-                    <label>Shop Category *</label>
-                    <select id="createShopModule" required>
-                        <option value="">Select Shop Category</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Shop Logo/Photo <span style="font-weight: 400; color: #64748b;">(Optional)</span></label>
-                    <div class="logo-upload-box">
-                        <input type="file" id="createShopLogoInput" accept="image/*" style="display: none;" onchange="previewCreateShopLogo(event)">
-                        <div class="logo-preview" id="createShopLogoPreview" onclick="document.getElementById('createShopLogoInput').click()">
-                            <i class="fa fa-camera"></i>
-                            <p>Upload Shop Photo</p>
-                            <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
+                <form id="createShopForm">
+                    
+                    <!-- ✅ Auto Detected City Box -->
+                    <div class="city-detected-box" id="createShopCityBox" style="display:none;">
+                        <i class="fa fa-map-marker-alt"></i>
+                        <div class="city-detected-info">
+                            <h3 id="createShopDetectedCityName">Detecting your city...</h3>
+                            <p id="createShopDetectedCityMeta">Auto-selected from your area</p>
                         </div>
-                        <button type="button" class="btn-remove-logo" id="createShopRemoveLogoBtn" style="display: none;" onclick="removeCreateShopLogo()">
-                            <i class="fa fa-trash"></i> Remove Photo
-                        </button>
                     </div>
-                </div>
 
-                <div style="text-align: center; margin: 16px 0; color: #94a3b8; font-size: 14px; font-weight: 600;">
-                    — OR SELECT ICON BELOW —
-                </div>
-
-                <div class="form-group">
-                    <label>Select Shop Icon * <span style="font-size: 12px; color: #666;">(Used if no photo uploaded)</span></label>
-                    <div class="icon-picker" id="createShopIconPicker">
-                        <div class="icon-option selected" data-icon="🏪">🏪</div>
-                        <div class="icon-option" data-icon="🛒">🛒</div>
-                        <div class="icon-option" data-icon="🍕">🍕</div>
-                        <div class="icon-option" data-icon="💊">💊</div>
-                        <div class="icon-option" data-icon="🔧">🔧</div>
-                        <div class="icon-option" data-icon="👗">👗</div>
-                        <div class="icon-option" data-icon="📱">📱</div>
-                        <div class="icon-option" data-icon="💇">💇</div>
-                        <div class="icon-option" data-icon="🚗">🚗</div>
-                        <div class="icon-option" data-icon="🏠">🏠</div>
-                        <div class="icon-option" data-icon="🎓">🎓</div>
-                        <div class="icon-option" data-icon="⚡">⚡</div>
-                    </div>
-                </div>
-
-                <div class="form-row">
                     <div class="form-group">
-                        <label>Contact Number *</label>
-                        <input type="text" id="createShopPhone" required placeholder="9876543210" maxlength="10">
+                        <label>Shop Name * <small style="color: var(--text-muted);">(Unique hona chahiye)</small></label>
+                        <input type="text" id="createShopName" required placeholder="Rajesh General Store">
                     </div>
+
                     <div class="form-group">
-                        <label>Service Range *</label>
-                        <select id="createShopRange" required>
-                            <option value="1000">1 KM</option>
-                            <option value="2000">2 KM</option>
-                            <option value="5000" selected>5 KM</option>
-                            <option value="10000">10 KM</option>
+                        <label>Owner Name *</label>
+                        <input type="text" id="createShopOwnerName" required placeholder="Shop Owner Full Name">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Shop Category *</label>
+                        <select id="createShopModule" required>
+                            <option value="">Select Shop Category</option>
                         </select>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="createShopEmail" placeholder="shop@example.com">
-                </div>
-
-                <div class="form-group">
-                    <label>Address *</label>
-                    <textarea id="createShopAddress" rows="2" required placeholder="Full shop address"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Shop Description</label>
-                    <textarea id="createShopDesc" rows="2" placeholder="What services/products you offer?"></textarea>
-                </div>
-
-                <!-- ✅ Area Manager - AUTO-CONNECTED -->
-                <div class="form-group">
-                    <label>Connected Area Manager <span style="font-weight: 400; color: #10b981;">(Auto-connected)</span></label>
-                    <div class="manager-select-box">
-                        <div class="manager-select-header">
-                            <h4 id="createShopManagerCountText">1 Manager Auto-connected</h4>
-                            <button type="button" class="select-all-btn" onclick="toggleSelectAllCreateShopManagers()" style="display:none;">
-                                Select All
+                    <div class="form-group">
+                        <label>Shop Logo/Photo <span style="font-weight: 400; color: #64748b;">(Optional)</span></label>
+                        <div class="logo-upload-box">
+                            <input type="file" id="createShopLogoInput" accept="image/*" style="display: none;" onchange="previewCreateShopLogo(event)">
+                            <div class="logo-preview" id="createShopLogoPreview" onclick="document.getElementById('createShopLogoInput').click()">
+                                <i class="fa fa-camera"></i>
+                                <p>Upload Shop Photo</p>
+                                <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
+                            </div>
+                            <button type="button" class="btn-remove-logo" id="createShopRemoveLogoBtn" style="display: none;" onclick="removeCreateShopLogo()">
+                                <i class="fa fa-trash"></i> Remove Photo
                             </button>
                         </div>
-                        <div class="manager-list" id="createShopManagerList">
-                            <p style="text-align:center;color:#64748b;padding:20px;">Loading your manager info...</p>
-                        </div>
-                        <div class="location-note" style="background:#d1fae5;border-left:3px solid #10b981;">
-                            ✅ Shop will be automatically connected to your Area Manager account
+                    </div>
+
+                    <div style="text-align: center; margin: 16px 0; color: #94a3b8; font-size: 14px; font-weight: 600;">
+                        — OR SELECT ICON BELOW —
+                    </div>
+
+                    <div class="form-group">
+                        <label>Select Shop Icon * <span style="font-size: 12px; color: #666;">(Used if no photo uploaded)</span></label>
+                        <div class="icon-picker" id="createShopIconPicker">
+                            <div class="icon-option selected" data-icon="🏪">🏪</div>
+                            <div class="icon-option" data-icon="🛒">🛒</div>
+                            <div class="icon-option" data-icon="🍕">🍕</div>
+                            <div class="icon-option" data-icon="💊">💊</div>
+                            <div class="icon-option" data-icon="🔧">🔧</div>
+                            <div class="icon-option" data-icon="👗">👗</div>
+                            <div class="icon-option" data-icon="📱">📱</div>
+                            <div class="icon-option" data-icon="💇">💇</div>
+                            <div class="icon-option" data-icon="🚗">🚗</div>
+                            <div class="icon-option" data-icon="🏠">🏠</div>
+                            <div class="icon-option" data-icon="🎓">🎓</div>
+                            <div class="icon-option" data-icon="⚡">⚡</div>
                         </div>
                     </div>
-                </div>
 
-                <!-- ✅ Hidden Fields -->
-                <input type="hidden" id="createShopCity">
-                <input type="hidden" id="createShopState">
-                <input type="hidden" id="createShopPincode">
-                <input type="hidden" id="createShopManagerCodes">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Contact Number *</label>
+                            <input type="text" id="createShopPhone" required placeholder="9876543210" maxlength="10">
+                        </div>
+                        <div class="form-group">
+                            <label>Service Range *</label>
+                            <select id="createShopRange" required>
+                                <option value="1000">1 KM</option>
+                                <option value="2000">2 KM</option>
+                                <option value="5000" selected>5 KM</option>
+                                <option value="10000">10 KM</option>
+                            </select>
+                        </div>
+                    </div>
 
-                <button type="submit" class="btn btn-primary" id="createShopSaveBtn">
-                    <i class="fas fa-plus"></i> Create Shop
-                </button>
-            </form>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="createShopEmail" placeholder="shop@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Address *</label>
+                        <textarea id="createShopAddress" rows="2" required placeholder="Full shop address"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Shop Description</label>
+                        <textarea id="createShopDesc" rows="2" placeholder="What services/products you offer?"></textarea>
+                    </div>
+
+                    <!-- ✅ Area Manager - AUTO-CONNECTED -->
+                    <div class="form-group">
+                        <label>Connected Area Manager <span style="font-weight: 400; color: #10b981;">(Auto-connected)</span></label>
+                        <div class="manager-select-box">
+                            <div class="manager-select-header">
+                                <h4 id="createShopManagerCountText">1 Manager Auto-connected</h4>
+                                <button type="button" class="select-all-btn" onclick="toggleSelectAllCreateShopManagers()" style="display:none;">
+                                    Select All
+                                </button>
+                            </div>
+                            <div class="manager-list" id="createShopManagerList">
+                                <p style="text-align:center;color:#64748b;padding:20px;">Loading your manager info...</p>
+                            </div>
+                            <div class="location-note" style="background:#d1fae5;border-left:3px solid #10b981;">
+                                ✅ Shop will be automatically connected to your Area Manager account
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ✅ Hidden Fields -->
+                    <input type="hidden" id="createShopCity">
+                    <input type="hidden" id="createShopState">
+                    <input type="hidden" id="createShopPincode">
+                    <input type="hidden" id="createShopManagerCodes">
+
+                    <button type="submit" class="btn btn-primary" id="createShopSaveBtn">
+                        <i class="fas fa-plus"></i> Create Shop
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -410,7 +412,6 @@ File: routes/managerRoutes.js me sab routes hain
                             <option value="false">Inactive</option>
                         </select>
                     </div>
-                </div>
                 <div class="form-group">
                     <label>Description</label>
                     <textarea id="shopDesc" rows="3" placeholder="Shop description"></textarea>

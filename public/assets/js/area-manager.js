@@ -197,7 +197,7 @@ function renderStats(stats) {
 }
 
 // ========================================
-// RENDER SHOPS TABLE
+// ✅ RENDER SHOPS TABLE - COPY LINK BUTTON ADDED
 // ========================================
 function renderShops(shops) {
     const tbody = document.getElementById('shopsTable');
@@ -219,13 +219,33 @@ function renderShops(shops) {
                     <i class="fas fa-circle" style="font-size:8px;"></i> ${shop.isActive? 'Active' : 'Inactive'}
                 </span></td>
                 <td>
-                    <button class="btn btn-small" onclick='editShop(${JSON.stringify(shop).replace(/'/g, "&apos;")})'>
-                        <i class="fas fa-edit"></i> Edit
-                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-small btn-link" onclick="copyShopLink('${shop._id}', '${escapeHtml(shop.shopName)}')" title="Copy Dashboard Link">
+                            <i class="fas fa-link"></i> Link
+                        </button>
+                        <button class="btn btn-small" onclick='editShop(${JSON.stringify(shop).replace(/'/g, "&apos;")})' title="Edit Shop">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
     }).join('');
+}
+
+// ========================================
+// ✅ COPY SHOP DASHBOARD LINK - NAYA FUNCTION
+// ========================================
+window.copyShopLink = function(shopId, shopName) {
+    const shopLink = `${window.location.origin}/shop-dashboard.html?shopId=${shopId}`;
+    
+    navigator.clipboard.writeText(shopLink).then(() => {
+        alert(`✅ Dashboard link copied!\n\nShop: ${shopName}\n\nLink: ${shopLink}\n\nAb ye link shop owner ko bhej do.`);
+        console.log('📋 Shop Dashboard Link:', shopLink);
+    }).catch(err => {
+        console.error('❌ Clipboard copy failed:', err);
+        prompt('Copy this link:', shopLink);
+    });
 }
 
 // ========================================
