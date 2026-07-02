@@ -75,7 +75,7 @@ window.previewCreateShopLogo = function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024) {
+    if (file.size > 2 * 1024 * 1024) {
         alert('Image size should be less than 2MB');
         event.target.value = '';
         return;
