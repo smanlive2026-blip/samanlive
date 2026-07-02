@@ -1,7 +1,7 @@
 // ========================================
-// SHOP CREATE MODULE - PROFESSIONAL FORM
+// SHOP CREATE MODULE - CATEGORY BASED
 // File: /public/assets/js/shop-create.js
-// Used by: area-manager.html
+// Match with old create-shop.html
 // ========================================
 
 let createShopSelectedIcon = '🏪';
@@ -36,7 +36,7 @@ window.openCreateShopModal = function() {
     }
     document.getElementById('createShopModal').classList.add('active');
     resetCreateShopForm();
-    loadCreateShopModules();
+    loadCreateShopModules(); // ✅ Category load karega
     autoFillCreateShopArea();
 }
 
@@ -99,22 +99,23 @@ window.removeCreateShopLogo = function() {
 }
 
 // ========================================
-// LOAD SHOP MODULES
+// LOAD SHOP MODULES - ✅ CATEGORY BASED
 // ========================================
 function loadCreateShopModules() {
-    const moduleSelect = document.getElementById('createShopType');
+    const moduleSelect = document.getElementById('createShopModule'); // ✅ shopModule not shopType
     if (!moduleSelect) return;
 
-    moduleSelect.innerHTML = '<option value="">Select Shop Type</option>';
+    moduleSelect.innerHTML = '<option value="">Select Shop Category</option>';
 
     if (createShopCategories && createShopCategories.length > 0) {
         createShopCategories.forEach(cat => {
             const option = document.createElement('option');
-            option.value = cat.name || cat.id;
+            option.value = cat.id || cat.name; // ✅ Use ID for template matching
             option.textContent = `${cat.icon || '📦'} ${cat.name}`;
             moduleSelect.appendChild(option);
         });
     } else {
+        // ✅ Fallback - Same as purana form
         const fallback = [
             {id: 'kirana', name: 'Kirana/Grocery Store', icon: '🛒'},
             {id: 'cloth', name: 'Cloth/Garment Shop', icon: '👗'},
@@ -270,7 +271,7 @@ function updateCreateShopManagerCountText() {
 }
 
 // ========================================
-// SUBMIT SHOP - FINAL
+// SUBMIT SHOP - ✅ CATEGORY BASED
 // ========================================
 function initCreateShopForm() {
     const createForm = document.getElementById('createShopForm');
@@ -283,7 +284,7 @@ function initCreateShopForm() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
 
-        const shopModule = document.getElementById('createShopType').value;
+        const shopModule = document.getElementById('createShopModule').value; // ✅ shopModule
         const range = parseInt(document.getElementById('createShopRange').value);
 
         const shopTypeMap = {
@@ -333,7 +334,7 @@ function initCreateShopForm() {
             bucket: bucket,
             area: areaCode,
             areaName: areaName,
-            serviceType: shopTypeMap[shopModule] || 'product',
+            serviceType: shopModule, // ✅ Use category ID directly
             shopType: shopTypeMap[shopModule] || 'product',
             description: document.getElementById('createShopDesc').value.trim() || `Shop created by Area Manager: ${manager.name}`,
             range: range,
@@ -354,7 +355,7 @@ function initCreateShopForm() {
         console.log('📤 Creating Shop:', shopData);
 
         if (!shopData.shopName || !shopData.phone || !shopModule || !ownerName || !shopAddress) {
-            alert('Please fill Shop Name, Owner Name, Phone Number, Shop Type and Address!');
+            alert('Please fill Shop Name, Owner Name, Phone Number, Shop Category and Address!');
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
             return;
@@ -367,7 +368,7 @@ function initCreateShopForm() {
             });
 
             if (res.success) {
-                alert(`✅ Shop created successfully!\n\nShop "${shopData.shopName}" is now LIVE in ${areaName}!\n\nLocation can be updated from shop dashboard.`);
+                alert(`✅ Shop created successfully!\n\nShop "${shopData.shopName}" is now LIVE in ${areaName}!`);
                 closeCreateShopModal();
                 window.loadDashboard(); // Reload dashboard
             } else {
@@ -389,7 +390,7 @@ function initCreateShopForm() {
 function resetCreateShopForm() {
     document.getElementById('createShopName').value = '';
     document.getElementById('createShopOwnerName').value = '';
-    document.getElementById('createShopType').value = '';
+    document.getElementById('createShopModule').value = ''; // ✅ shopModule
     document.getElementById('createShopPhone').value = '';
     document.getElementById('createShopEmail').value = '';
     document.getElementById('createShopAddress').value = '';
@@ -409,4 +410,4 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-console.log('✅ shop-create.js loaded');
+console.log('✅ shop-create.js loaded - Category based');

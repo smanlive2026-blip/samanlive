@@ -67,14 +67,12 @@ File: routes/managerRoutes.js me sab routes hain
                                 <span>Email</span>
                                 <strong id="managerEmail">-</strong>
                             </div>
-                        </div>
                         <div class="profile-detail">
                             <div class="profile-detail-icon"><i class="fas fa-map-marker-alt"></i></div>
                             <div>
                                 <span>Location</span>
                                 <strong id="managerLocation">-</strong>
                             </div>
-                        </div>
                         <div class="profile-detail">
                             <div class="profile-detail-icon"><i class="fas fa-circle-notch"></i></div>
                             <div>
@@ -214,7 +212,7 @@ File: routes/managerRoutes.js me sab routes hain
         </div>
     </div>
 
-    <!-- CREATE SHOP MODAL -->
+    <!-- CREATE SHOP MODAL - ✅ FINAL FIXED -->
     <div class="modal" id="createShopModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -226,6 +224,16 @@ File: routes/managerRoutes.js me sab routes hain
                 <span>Shop aapke area me create hogi. Location baad me shop dashboard se update kar sakte hain.</span>
             </div>
             <form id="createShopForm">
+                
+                <!-- ✅ Auto Detected City Box -->
+                <div class="city-detected-box" id="createShopCityBox" style="display:none;">
+                    <i class="fa fa-map-marker-alt"></i>
+                    <div class="city-detected-info">
+                        <h3 id="createShopDetectedCityName">Detecting your city...</h3>
+                        <p id="createShopDetectedCityMeta">Auto-selected from your area</p>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Shop Name * <small style="color: var(--text-muted);">(Unique hona chahiye)</small></label>
                     <input type="text" id="createShopName" required placeholder="Rajesh General Store">
@@ -237,22 +245,22 @@ File: routes/managerRoutes.js me sab routes hain
                 </div>
 
                 <div class="form-group">
-                    <label>Shop Type *</label>
-                    <select id="createShopType" required>
-                        <option value="">Select Shop Type</option>
+                    <label>Shop Category *</label>
+                    <select id="createShopModule" required>
+                        <option value="">Select Shop Category</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label>Shop Logo/Photo <span style="font-weight: 400; color: #64748b;">(Optional)</span></label>
                     <div class="logo-upload-box">
-                        <input type="file" id="shopLogoInput" accept="image/*" style="display: none;" onchange="previewLogo(event)">
-                        <div class="logo-preview" id="logoPreview" onclick="document.getElementById('shopLogoInput').click()">
+                        <input type="file" id="createShopLogoInput" accept="image/*" style="display: none;" onchange="previewCreateShopLogo(event)">
+                        <div class="logo-preview" id="createShopLogoPreview" onclick="document.getElementById('createShopLogoInput').click()">
                             <i class="fa fa-camera"></i>
                             <p>Upload Shop Photo</p>
                             <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
                         </div>
-                        <button type="button" class="btn-remove-logo" id="removeLogoBtn" style="display: none;" onclick="removeLogo()">
+                        <button type="button" class="btn-remove-logo" id="createShopRemoveLogoBtn" style="display: none;" onclick="removeCreateShopLogo()">
                             <i class="fa fa-trash"></i> Remove Photo
                         </button>
                     </div>
@@ -264,7 +272,7 @@ File: routes/managerRoutes.js me sab routes hain
 
                 <div class="form-group">
                     <label>Select Shop Icon * <span style="font-size: 12px; color: #666;">(Used if no photo uploaded)</span></label>
-                    <div class="icon-picker" id="iconPicker">
+                    <div class="icon-picker" id="createShopIconPicker">
                         <div class="icon-option selected" data-icon="🏪">🏪</div>
                         <div class="icon-option" data-icon="🛒">🛒</div>
                         <div class="icon-option" data-icon="🍕">🍕</div>
@@ -310,6 +318,31 @@ File: routes/managerRoutes.js me sab routes hain
                     <label>Shop Description</label>
                     <textarea id="createShopDesc" rows="2" placeholder="What services/products you offer?"></textarea>
                 </div>
+
+                <!-- ✅ Area Manager Multi-Select -->
+                <div class="form-group">
+                    <label>Select Area Managers * <span style="font-weight: 400; color: #64748b;">(Multiple select)</span></label>
+                    <div class="manager-select-box">
+                        <div class="manager-select-header">
+                            <h4 id="createShopManagerCountText">Loading managers...</h4>
+                            <button type="button" class="select-all-btn" onclick="toggleSelectAllCreateShopManagers()">
+                                Select All
+                            </button>
+                        </div>
+                        <div class="manager-list" id="createShopManagerList">
+                            <p style="text-align:center;color:#94a3b8;padding:20px;">Detecting your city first...</p>
+                        </div>
+                        <div class="location-note">
+                            💡 Shop in managers ke dashboard me live dikhegi. Multiple managers select kar sakte ho.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✅ Hidden Fields -->
+                <input type="hidden" id="createShopCity">
+                <input type="hidden" id="createShopState">
+                <input type="hidden" id="createShopPincode">
+                <input type="hidden" id="createShopManagerCodes">
 
                 <button type="submit" class="btn btn-primary" id="createShopSaveBtn">
                     <i class="fas fa-plus"></i> Create Shop
