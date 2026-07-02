@@ -197,7 +197,7 @@ function renderStats(stats) {
 }
 
 // ========================================
-// ✅ RENDER SHOPS TABLE - COPY LINK BUTTON ADDED
+// ✅ RENDER SHOPS TABLE - FIXED LINK
 // ========================================
 function renderShops(shops) {
     const tbody = document.getElementById('shopsTable');
@@ -220,7 +220,7 @@ function renderShops(shops) {
                 </span></td>
                 <td>
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-small btn-link" onclick="copyShopLink('${shop._id}', '${escapeHtml(shop.shopName)}')" title="Copy Dashboard Link">
+                        <button class="btn btn-small btn-link" onclick="copyShopLink('${shop._id}', '${shop.serviceType || shop.shopType || 'common'}', '${escapeHtml(shop.shopName)}')" title="Copy Dashboard Link">
                             <i class="fas fa-link"></i> Link
                         </button>
                         <button class="btn btn-small" onclick='editShop(${JSON.stringify(shop).replace(/'/g, "&apos;")})' title="Edit Shop">
@@ -234,10 +234,12 @@ function renderShops(shops) {
 }
 
 // ========================================
-// ✅ COPY SHOP DASHBOARD LINK - NAYA FUNCTION
+// ✅ COPY SHOP DASHBOARD LINK - FIXED
 // ========================================
-window.copyShopLink = function(shopId, shopName) {
-    const shopLink = `${window.location.origin}/shop-dashboard.html?shopId=${shopId}`;
+window.copyShopLink = function(shopId, shopType, shopName) {
+    // ✅ shopType add kiya - ab sahi template wala dashboard khulega
+    const finalShopType = shopType || 'common';
+    const shopLink = `${window.location.origin}/shop-templates/${finalShopType}/dashboard.html?shopId=${shopId}`;
     
     navigator.clipboard.writeText(shopLink).then(() => {
         alert(`✅ Dashboard link copied!\n\nShop: ${shopName}\n\nLink: ${shopLink}\n\nAb ye link shop owner ko bhej do.`);
