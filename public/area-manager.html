@@ -39,6 +39,7 @@ File: routes/managerRoutes.js me sab routes hain
         </div>
 
         <div class="container">
+            <!-- ✅ PROFILE CARD - FIXED DIV STRUCTURE -->
             <div class="profile-card">
                 <div class="profile-edit-btn">
                     <button class="btn btn-small btn-outline" onclick="openProfileModal()">
@@ -67,12 +68,14 @@ File: routes/managerRoutes.js me sab routes hain
                                 <span>Email</span>
                                 <strong id="managerEmail">-</strong>
                             </div>
+                        </div>
                         <div class="profile-detail">
                             <div class="profile-detail-icon"><i class="fas fa-map-marker-alt"></i></div>
                             <div>
                                 <span>Location</span>
                                 <strong id="managerLocation">-</strong>
                             </div>
+                        </div>
                         <div class="profile-detail">
                             <div class="profile-detail-icon"><i class="fas fa-circle-notch"></i></div>
                             <div>
@@ -212,7 +215,7 @@ File: routes/managerRoutes.js me sab routes hain
         </div>
     </div>
 
-    <!-- CREATE SHOP MODAL - ✅ FINAL FIXED -->
+    <!-- CREATE SHOP MODAL - ✅ AUTO-CONNECTED MANAGER -->
     <div class="modal" id="createShopModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -319,21 +322,21 @@ File: routes/managerRoutes.js me sab routes hain
                     <textarea id="createShopDesc" rows="2" placeholder="What services/products you offer?"></textarea>
                 </div>
 
-                <!-- ✅ Area Manager Multi-Select -->
+                <!-- ✅ Area Manager - AUTO-CONNECTED -->
                 <div class="form-group">
-                    <label>Select Area Managers * <span style="font-weight: 400; color: #64748b;">(Multiple select)</span></label>
+                    <label>Connected Area Manager <span style="font-weight: 400; color: #10b981;">(Auto-connected)</span></label>
                     <div class="manager-select-box">
                         <div class="manager-select-header">
-                            <h4 id="createShopManagerCountText">Loading managers...</h4>
-                            <button type="button" class="select-all-btn" onclick="toggleSelectAllCreateShopManagers()">
+                            <h4 id="createShopManagerCountText">1 Manager Auto-connected</h4>
+                            <button type="button" class="select-all-btn" onclick="toggleSelectAllCreateShopManagers()" style="display:none;">
                                 Select All
                             </button>
                         </div>
                         <div class="manager-list" id="createShopManagerList">
-                            <p style="text-align:center;color:#94a3b8;padding:20px;">Detecting your city first...</p>
+                            <p style="text-align:center;color:#64748b;padding:20px;">Loading your manager info...</p>
                         </div>
-                        <div class="location-note">
-                            💡 Shop in managers ke dashboard me live dikhegi. Multiple managers select kar sakte ho.
+                        <div class="location-note" style="background:#d1fae5;border-left:3px solid #10b981;">
+                            ✅ Shop will be automatically connected to your Area Manager account
                         </div>
                     </div>
                 </div>
