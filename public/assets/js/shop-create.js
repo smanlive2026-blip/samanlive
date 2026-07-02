@@ -3,17 +3,6 @@
 // File: /public/assets/js/shop-create.js
 // Match with old create-shop.html
 // ========================================
-//
-// DEPENDENCIES:
-// - HTML: /area-manager.html (Modal + Form IDs)
-// - CSS:  /public/assets/css/area-manager.css (Styling)
-// - JS:   /public/assets/js/area-manager.js (Calls initShopCreateModule, provides apiCall)
-// - API:  POST /api/manager/create-shop (Backend: routes/managerRoutes.js)
-// - TEMPLATES: /shop-templates/{kirana|cloth|medical|...}/dashboard.html
-//
-// USED BY: area-manager.html
-// EXPORTS TO: window.openCreateShopModal, window.closeCreateShopModal
-// ========================================
 
 let createShopSelectedIcon = '🏪';
 let createShopUploadedLogoBase64 = null;
@@ -32,7 +21,7 @@ function initShopCreateModule(managers, areas, categories, currentManager) {
     createShopCategories = categories || [];
     window.createShopCurrentManager = currentManager;
     
-    console.log('✅ Shop Create Module Initialized');
+    console.log('✅ Shop Create Module Initialized', currentManager);
     initCreateShopIconPicker();
     initCreateShopForm();
 }
@@ -49,7 +38,7 @@ window.openCreateShopModal = function() {
     resetCreateShopForm();
     loadCreateShopModules();
     autoFillCreateShopArea();
-    initCreateShopIconPicker(); // ✅ Re-init on modal open
+    initCreateShopIconPicker();
 }
 
 window.closeCreateShopModal = function() {
@@ -60,12 +49,11 @@ window.closeCreateShopModal = function() {
 }
 
 // ========================================
-// ICON PICKER - ✅ FIXED: Proper re-init
+// ICON PICKER
 // ========================================
 function initCreateShopIconPicker() {
     const iconPicker = document.getElementById('createShopIconPicker');
     if (iconPicker) {
-        // Remove old listeners by cloning
         const newPicker = iconPicker.cloneNode(true);
         iconPicker.parentNode.replaceChild(newPicker, iconPicker);
         
@@ -81,14 +69,13 @@ function initCreateShopIconPicker() {
 }
 
 // ========================================
-// LOGO UPLOAD - ✅ FIXED: 2MB check + pointerEvents
+// LOGO UPLOAD
 // ========================================
 window.previewCreateShopLogo = function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // ✅ FIXED: 2 * 1024 * 1024 = 2MB, pehle 2*1024 = 2KB tha
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 2 * 1024) {
         alert('Image size should be less than 2MB');
         event.target.value = '';
         return;
@@ -101,7 +88,7 @@ window.previewCreateShopLogo = function(event) {
         document.getElementById('createShopRemoveLogoBtn').style.display = 'inline-block';
         const iconPicker = document.getElementById('createShopIconPicker');
         iconPicker.style.opacity = '0.3';
-        iconPicker.style.pointerEvents = 'none'; // ✅ Disable icons when photo uploaded
+        iconPicker.style.pointerEvents = 'none';
     };
     reader.readAsDataURL(file);
 }
@@ -118,11 +105,11 @@ window.removeCreateShopLogo = function() {
     document.getElementById('createShopRemoveLogoBtn').style.display = 'none';
     const iconPicker = document.getElementById('createShopIconPicker');
     iconPicker.style.opacity = '1';
-    iconPicker.style.pointerEvents = 'auto'; // ✅ Re-enable icons
+    iconPicker.style.pointerEvents = 'auto';
 }
 
 // ========================================
-// LOAD SHOP MODULES - ✅ ONLY SHOP TEMPLATES
+// LOAD SHOP MODULES
 // ========================================
 function loadCreateShopModules() {
     const moduleSelect = document.getElementById('createShopModule');
@@ -155,7 +142,7 @@ function loadCreateShopModules() {
 }
 
 // ========================================
-// AUTO FILL AREA DATA - ✅ Current Manager Only
+// AUTO FILL AREA DATA
 // ========================================
 function autoFillCreateShopArea() {
     const manager = window.createShopCurrentManager;
@@ -169,11 +156,9 @@ function autoFillCreateShopArea() {
     document.getElementById('createShopState').value = manager.state || 'Gujarat';
     document.getElementById('createShopPincode').value = manager.pincode || '';
     
-    // ✅ FIXED: Sirf current manager
     createShopSelectedManagerCodes = [manager.managerCode];
     document.getElementById('createShopManagerCodes').value = JSON.stringify(createShopSelectedManagerCodes);
     
-    // Show city box with current manager info
     const cityBox = document.getElementById('createShopCityBox');
     if (cityBox) {
         cityBox.style.display = 'flex';
@@ -181,7 +166,6 @@ function autoFillCreateShopArea() {
         document.getElementById('createShopDetectedCityMeta').textContent = `${manager.name} • ${manager.managerCode} (Auto-connected)`;
     }
     
-    // ✅ FIXED: Sirf current manager dikhao
     const managerList = document.getElementById('createShopManagerList');
     const countText = document.getElementById('createShopManagerCountText');
     const selectAllBtn = document.querySelector('.select-all-btn');
@@ -213,16 +197,13 @@ function autoFillCreateShopArea() {
 }
 
 // ========================================
-// LOAD CITY MANAGERS - ✅ DISABLED
+// DISABLED FUNCTIONS
 // ========================================
 function loadCreateShopCityManagers(city) {
     console.log('✅ Skipped: Auto-connected to current manager only');
     return;
 }
 
-// ========================================
-// TOGGLE MANAGER - ✅ DISABLED
-// ========================================
 window.toggleCreateShopManager = function(managerCode) {
     console.log('⚠️ Manager selection disabled. Auto-connected to current manager.');
     alert('Shop will be auto-connected to your account.\n\nManager: ' + window.createShopCurrentManager.name);
@@ -243,7 +224,7 @@ function updateCreateShopManagerCountText() {
 }
 
 // ========================================
-// SUBMIT SHOP - ✅ CURRENT MANAGER ONLY
+// SUBMIT SHOP - ✅ FIXED: Proper Validation
 // ========================================
 function initCreateShopForm() {
     const createForm = document.getElementById('createShopForm');
@@ -258,6 +239,43 @@ function initCreateShopForm() {
 
         const shopModule = document.getElementById('createShopModule').value;
         const range = parseInt(document.getElementById('createShopRange').value);
+        const phoneNumber = document.getElementById('createShopPhone').value.trim();
+        const shopAddress = document.getElementById('createShopAddress').value.trim();
+        const ownerName = document.getElementById('createShopOwnerName').value.trim();
+        const shopName = document.getElementById('createShopName').value.trim();
+        const manager = window.createShopCurrentManager;
+
+        // ✅ VALIDATION - Pehle check karo
+        if (!shopName) {
+            alert('❌ Please enter Shop Name');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
+            return;
+        }
+        if (!ownerName) {
+            alert('❌ Please enter Owner Name');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
+            return;
+        }
+        if (!phoneNumber || phoneNumber.length !== 10) {
+            alert('❌ Please enter valid 10-digit Phone Number');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
+            return;
+        }
+        if (!shopModule) {
+            alert('❌ Please select Shop Category');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
+            return;
+        }
+        if (!shopAddress) {
+            alert('❌ Please enter Shop Address');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
+            return;
+        }
 
         const shopTypeMap = {
             'kirana': 'product', 'cloth': 'fashion', 'medical': 'product',
@@ -266,34 +284,26 @@ function initCreateShopForm() {
             'rental': 'rental', 'common': 'product'
         };
 
-        const phoneNumber = document.getElementById('createShopPhone').value.trim();
-        const shopAddress = document.getElementById('createShopAddress').value.trim();
-        const ownerName = document.getElementById('createShopOwnerName').value.trim();
-        const manager = window.createShopCurrentManager;
-
-        // ✅ FIXED: Sirf current manager use karo
         const validManagers = [manager.managerCode];
-
-        // Extract area details from current manager
         const areaCode = manager.areaCode || manager.managerCode.replace('-DEFAULT', '').trim();
         const areaData = createShopAllAreas.find(a => a.areaCode === areaCode);
         const areaName = areaData?.areaName || manager.name || manager.city;
-        const bucket = manager.bucket || 'DEFAULT';
+        const bucket = manager.bucket || 'DEFAULT'; // ✅ Fallback to DEFAULT
 
         const shopData = {
-            shopName: document.getElementById('createShopName').value.trim(),
-            ownerName: ownerName,
-            phone: phoneNumber,
+            shopName: shopName,
+            ownerName: ownerName, // ✅ Required
+            phone: phoneNumber, // ✅ Required
             email: document.getElementById('createShopEmail').value.trim() || '',
             address: shopAddress,
-            city: manager.city,
-            state: manager.state,
+            city: manager.city || 'Surat',
+            state: manager.state || 'Gujarat',
             pincode: manager.pincode || '',
             areaCode: areaCode,
-            bucket: bucket,
+            bucket: bucket, // ✅ Required
             area: areaCode,
             areaName: areaName,
-            serviceType: shopModule,
+            serviceType: shopModule, // ✅ Required
             shopType: shopTypeMap[shopModule] || 'product',
             description: document.getElementById('createShopDesc').value.trim() || `Shop created by Area Manager: ${manager.name}`,
             range: range,
@@ -312,13 +322,6 @@ function initCreateShopForm() {
         };
 
         console.log('📤 Creating Shop:', shopData);
-
-        if (!shopData.shopName || !shopData.phone || !shopModule || !ownerName || !shopAddress) {
-            alert('Please fill Shop Name, Owner Name, Phone Number, Shop Category and Address!');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
-            return;
-        }
 
         try {
             const res = await window.apiCall('/manager/create-shop', {
