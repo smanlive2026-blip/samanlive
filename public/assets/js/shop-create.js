@@ -3,6 +3,17 @@
 // File: /public/assets/js/shop-create.js
 // Match with old create-shop.html
 // ========================================
+//
+// DEPENDENCIES:
+// - HTML: /area-manager.html (Modal + Form IDs)
+// - CSS:  /public/assets/css/area-manager.css (Styling)
+// - JS:   /public/assets/js/area-manager.js (Calls initShopCreateModule, provides apiCall)
+// - API:  POST /api/manager/create-shop (Backend: routes/managerRoutes.js)
+// - TEMPLATES: /shop-templates/{kirana|cloth|medical|...}/dashboard.html
+//
+// USED BY: area-manager.html
+// EXPORTS TO: window.openCreateShopModal, window.closeCreateShopModal
+// ========================================
 
 let createShopSelectedIcon = '🏪';
 let createShopUploadedLogoBase64 = null;
@@ -99,43 +110,38 @@ window.removeCreateShopLogo = function() {
 }
 
 // ========================================
-// LOAD SHOP MODULES - ✅ CATEGORY BASED
+// LOAD SHOP MODULES - ✅ FIXED: ONLY SHOP TEMPLATES, NO API
 // ========================================
 function loadCreateShopModules() {
-    const moduleSelect = document.getElementById('createShopModule'); // ✅ shopModule not shopType
+    const moduleSelect = document.getElementById('createShopModule');
     if (!moduleSelect) return;
 
     moduleSelect.innerHTML = '<option value="">Select Shop Category</option>';
 
-    if (createShopCategories && createShopCategories.length > 0) {
-        createShopCategories.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat.id || cat.name; // ✅ Use ID for template matching
-            option.textContent = `${cat.icon || '📦'} ${cat.name}`;
-            moduleSelect.appendChild(option);
-        });
-    } else {
-        // ✅ Fallback - Same as purana form
-        const fallback = [
-            {id: 'kirana', name: 'Kirana/Grocery Store', icon: '🛒'},
-            {id: 'cloth', name: 'Cloth/Garment Shop', icon: '👗'},
-            {id: 'medical', name: 'Medical Store', icon: '💊'},
-            {id: 'restaurant', name: 'Restaurant/Cafe', icon: '🍕'},
-            {id: 'electronics', name: 'Electronics Shop', icon: '📱'},
-            {id: 'hardware', name: 'Hardware Store', icon: '🔧'},
-            {id: 'salon', name: 'Salon/Beauty Parlour', icon: '💇'},
-            {id: 'stationery', name: 'Stationery Shop', icon: '🎓'},
-            {id: 'service', name: 'Service Provider', icon: '🔧'},
-            {id: 'rental', name: 'Rental Shop', icon: '🚗'},
-            {id: 'common', name: 'Common Shop - General', icon: '🏪'}
-        ];
-        fallback.forEach(m => {
-            const option = document.createElement('option');
-            option.value = m.id;
-            option.textContent = `${m.icon} ${m.name}`;
-            moduleSelect.appendChild(option);
-        });
-    }
+    // ✅ HARDCODED SHOP TEMPLATES - API ignore karo
+    // Ye folders hain: /shop-templates/kirana/, /shop-templates/cloth/, etc
+    const shopTemplates = [
+        {id: 'kirana', name: 'Kirana/Grocery Store', icon: '🛒'},
+        {id: 'cloth', name: 'Cloth/Garment Shop', icon: '👗'},
+        {id: 'medical', name: 'Medical Store', icon: '💊'},
+        {id: 'restaurant', name: 'Restaurant/Cafe', icon: '🍕'},
+        {id: 'electronics', name: 'Electronics Shop', icon: '📱'},
+        {id: 'hardware', name: 'Hardware Store', icon: '🔧'},
+        {id: 'salon', name: 'Salon/Beauty Parlour', icon: '💇'},
+        {id: 'stationery', name: 'Stationery Shop', icon: '🎓'},
+        {id: 'service', name: 'Service Provider', icon: '🔧'},
+        {id: 'rental', name: 'Rental Shop', icon: '🚗'},
+        {id: 'common', name: 'Common Shop - General', icon: '🏪'}
+    ];
+    
+    shopTemplates.forEach(m => {
+        const option = document.createElement('option');
+        option.value = m.id; // ✅ kirana, cloth, medical - yehi backend ko jayega
+        option.textContent = `${m.icon} ${m.name}`;
+        moduleSelect.appendChild(option);
+    });
+    
+    console.log('✅ Loaded Shop Templates:', shopTemplates.length);
 }
 
 // ========================================
@@ -334,7 +340,7 @@ function initCreateShopForm() {
             bucket: bucket,
             area: areaCode,
             areaName: areaName,
-            serviceType: shopModule, // ✅ Use category ID directly
+            serviceType: shopModule, // ✅ Use category ID directly: kirana, cloth, etc
             shopType: shopTypeMap[shopModule] || 'product',
             description: document.getElementById('createShopDesc').value.trim() || `Shop created by Area Manager: ${manager.name}`,
             range: range,
@@ -410,4 +416,4 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-console.log('✅ shop-create.js loaded - Category based');
+console.log('✅ shop-create.js loaded - Category based - Shop Templates Only');
