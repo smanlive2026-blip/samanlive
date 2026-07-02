@@ -30,6 +30,10 @@ function initShopCreateModule(managers, areas, categories, currentManager) {
 // OPEN MODAL
 // ========================================
 window.openCreateShopModal = function() {
+    if (!window.createShopCurrentManager) {
+        alert('Session expired! Please reload page.');
+        return;
+    }
     if (window.createShopCurrentManager.currentShopCount >= window.createShopCurrentManager.maxShops) {
         alert(`Shop limit reached! Max allowed: ${window.createShopCurrentManager.maxShops}\n\nContact admin to increase limit.`);
         return;
@@ -142,28 +146,39 @@ function loadCreateShopModules() {
 }
 
 // ========================================
-// AUTO FILL AREA DATA
+// AUTO FILL AREA DATA - ✅ UNDEFINED FIX
 // ========================================
 function autoFillCreateShopArea() {
     const manager = window.createShopCurrentManager;
-    if (!manager) {
-        console.error('❌ Manager data not found!');
-        alert('⚠️ Manager data not found! Please reload page.');
+    
+    if (!manager ||!manager.managerCode) {
+        console.error('❌ Manager data not found!', manager);
+        alert('⚠️ Session expired! Please reload page.');
         return;
     }
 
-    document.getElementById('createShopCity').value = manager.city || 'Surat';
-    document.getElementById('createShopState').value = manager.state || 'Gujarat';
-    document.getElementById('createShopPincode').value = manager.pincode || '';
+    // ✅ HARD FALLBACKS - Undefined kabhi nahi jayega
+    const city = manager.city || 'Surat';
+    const state = manager.state || 'Gujarat';
+    const pincode = manager.pincode || '395007';
+    const bucket = manager.bucket || 'DEFAULT';
+    const managerCode = manager.managerCode || 'SURAGU-3-DEFAULT';
+    const name = manager.name || 'Area Manager';
+    const radius = manager.radius || 50;
+
+    document.getElementById('createShopCity').value = city;
+    document.getElementById('createShopState').value = state;
+    document.getElementById('createShopPincode').value = pincode;
     
-    createShopSelectedManagerCodes = [manager.managerCode];
+    createShopSelectedManagerCodes = [managerCode];
     document.getElementById('createShopManagerCodes').value = JSON.stringify(createShopSelectedManagerCodes);
     
+    // ✅ Fix undefined issue
     const cityBox = document.getElementById('createShopCityBox');
     if (cityBox) {
         cityBox.style.display = 'flex';
-        document.getElementById('createShopDetectedCityName').textContent = `📍 ${manager.city}`;
-        document.getElementById('createShopDetectedCityMeta').textContent = `${manager.name} • ${manager.managerCode} (Auto-connected)`;
+        document.getElementById('createShopDetectedCityName').textContent = `📍 ${city}`;
+        document.getElementById('createShopDetectedCityMeta').textContent = `${name} • ${managerCode} (Auto-connected)`;
     }
     
     const managerList = document.getElementById('createShopManagerList');
@@ -176,11 +191,11 @@ function autoFillCreateShopArea() {
                 <input type="checkbox" checked disabled>
                 <div class="manager-item-info">
                     <div class="manager-item-name">
-                        ${escapeHtml(manager.name)} 
+                        ${escapeHtml(name)} 
                         <span style="color:#10b981;font-size:11px;font-weight:700;">(You)</span>
                     </div>
                     <div class="manager-item-meta">
-                        Code: <b>${manager.managerCode}</b> • City: ${escapeHtml(manager.city)} • ${manager.radius || 50}KM • Auto-connected
+                        Code: <b>${managerCode}</b> • City: ${escapeHtml(city)} • ${radius}KM • Auto-connected
                     </div>
                 </div>
             </div>
@@ -193,7 +208,7 @@ function autoFillCreateShopArea() {
         selectAllBtn.style.display = 'none';
     }
     
-    console.log('✅ Auto-connected to:', manager.managerCode, manager.name);
+    console.log('✅ Auto-connected with fallbacks:', { city, state, pincode, bucket, managerCode, name });
 }
 
 // ========================================
@@ -219,12 +234,12 @@ function updateCreateShopManagerCountText() {
     const count = createShopSelectedManagerCodes.length;
     const countEl = document.getElementById('createShopManagerCountText');
     if (countEl) {
-        countEl.textContent = count === 0 ? 'No managers selected' : `1 Manager Auto-connected`;
+        countEl.textContent = count === 0? 'No managers selected' : `1 Manager Auto-connected`;
     }
 }
 
 // ========================================
-// SUBMIT SHOP - ✅ FIXED: Proper Validation
+// SUBMIT SHOP - ✅ PHONE SANITIZE + FORCE VALUES
 // ========================================
 function initCreateShopForm() {
     const createForm = document.getElementById('createShopForm');
@@ -237,45 +252,26 @@ function initCreateShopForm() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
 
-        const shopModule = document.getElementById('createShopModule').value;
-        const range = parseInt(document.getElementById('createShopRange').value);
-        const phoneNumber = document.getElementById('createShopPhone').value.trim();
-        const shopAddress = document.getElementById('createShopAddress').value.trim();
-        const ownerName = document.getElementById('createShopOwnerName').value.trim();
+        // ✅ GET VALUES + SANITIZE PHONE
         const shopName = document.getElementById('createShopName').value.trim();
+        const ownerName = document.getElementById('createShopOwnerName').value.trim();
+        const phoneNumber = document.getElementById('createShopPhone').value.trim().replace(/\D/g, ''); // ✅ Remove spaces/dashes
+        const shopModule = document.getElementById('createShopModule').value;
+        const shopAddress = document.getElementById('createShopAddress').value.trim();
+        const range = parseInt(document.getElementById('createShopRange').value);
         const manager = window.createShopCurrentManager;
 
-        // ✅ VALIDATION - Pehle check karo
-        if (!shopName) {
-            alert('❌ Please enter Shop Name');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
-            return;
+        console.log('🔍 RAW Values:', { shopName, ownerName, phoneNumber, shopModule, shopAddress, range });
+
+        // ✅ STRICT VALIDATION
+        if (!shopName) return showError('Shop Name dalna zaroori hai!', 'createShopName', btn);
+        if (!ownerName) return showError('Owner Name dalna zaroori hai!', 'createShopOwnerName', btn);
+        if (!phoneNumber || phoneNumber.length!== 10) {
+            return showError('10 digit Phone Number dalna zaroori hai!', 'createShopPhone', btn);
         }
-        if (!ownerName) {
-            alert('❌ Please enter Owner Name');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
-            return;
-        }
-        if (!phoneNumber || phoneNumber.length !== 10) {
-            alert('❌ Please enter valid 10-digit Phone Number');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
-            return;
-        }
-        if (!shopModule) {
-            alert('❌ Please select Shop Category');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
-            return;
-        }
-        if (!shopAddress) {
-            alert('❌ Please enter Shop Address');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
-            return;
-        }
+        if (!shopModule) return showError('Shop Category select karna zaroori hai!', 'createShopModule', btn);
+        if (!shopAddress) return showError('Shop Address dalna zaroori hai!', 'createShopAddress', btn);
+        if (!manager?.managerCode) return showError('Session expired! Page reload karo.', null, btn);
 
         const shopTypeMap = {
             'kirana': 'product', 'cloth': 'fashion', 'medical': 'product',
@@ -284,28 +280,33 @@ function initCreateShopForm() {
             'rental': 'rental', 'common': 'product'
         };
 
-        const validManagers = [manager.managerCode];
-        const areaCode = manager.areaCode || manager.managerCode.replace('-DEFAULT', '').trim();
+        // ✅ FORCE FALLBACKS - Undefined kabhi nahi jayega
+        const areaCode = manager.areaCode || manager.managerCode.split('-')[0] || 'SURAGU-3';
         const areaData = createShopAllAreas.find(a => a.areaCode === areaCode);
-        const areaName = areaData?.areaName || manager.name || manager.city;
-        const bucket = manager.bucket || 'DEFAULT'; // ✅ Fallback to DEFAULT
+        const areaName = areaData?.areaName || manager.name || manager.city || 'Surat';
+        const bucket = manager.bucket || 'DEFAULT';
+        const city = manager.city || 'Surat';
+        const state = manager.state || 'Gujarat';
+        const pincode = manager.pincode || '395007';
+        const centerLng = parseFloat(manager.centerLng) || 72.8311;
+        const centerLat = parseFloat(manager.centerLat) || 21.1702;
 
         const shopData = {
             shopName: shopName,
-            ownerName: ownerName, // ✅ Required
-            phone: phoneNumber, // ✅ Required
+            ownerName: ownerName,
+            phone: phoneNumber, // ✅ Sanitized - only digits
             email: document.getElementById('createShopEmail').value.trim() || '',
             address: shopAddress,
-            city: manager.city || 'Surat',
-            state: manager.state || 'Gujarat',
-            pincode: manager.pincode || '',
+            city: city,
+            state: state,
+            pincode: pincode,
             areaCode: areaCode,
-            bucket: bucket, // ✅ Required
+            bucket: bucket,
             area: areaCode,
             areaName: areaName,
-            serviceType: shopModule, // ✅ Required
+            serviceType: shopModule, // ✅ Kirana/cloth/etc
             shopType: shopTypeMap[shopModule] || 'product',
-            description: document.getElementById('createShopDesc').value.trim() || `Shop created by Area Manager: ${manager.name}`,
+            description: document.getElementById('createShopDesc').value.trim() || `Shop created by ${manager.name || 'Manager'}`,
             range: range,
             icon: createShopSelectedIcon,
             logo: createShopUploadedLogoBase64 || '',
@@ -316,12 +317,18 @@ function initCreateShopForm() {
             locationType: 'fixed',
             location: {
                 type: 'Point',
-                coordinates: [manager.centerLng || 72.8311, manager.centerLat || 21.1702]
+                coordinates: [centerLng, centerLat]
             },
-            managerCodes: validManagers
+            managerCodes: [manager.managerCode]
         };
 
-        console.log('📤 Creating Shop:', shopData);
+        console.log('📤 FINAL PAYLOAD - 4 Required Fields Check:', {
+            serviceType: shopData.serviceType,
+            bucket: shopData.bucket,
+            phone: shopData.phone,
+            ownerName: shopData.ownerName
+        });
+        console.log('📤 FULL PAYLOAD:', shopData);
 
         try {
             const res = await window.apiCall('/manager/create-shop', {
@@ -329,21 +336,32 @@ function initCreateShopForm() {
                 body: JSON.stringify(shopData)
             });
 
+            console.log('📥 Backend Response:', res);
+
             if (res.success) {
                 alert(`✅ Shop created successfully!\n\nShop "${shopData.shopName}" is now LIVE in ${areaName}!`);
                 closeCreateShopModal();
                 window.loadDashboard();
             } else {
-                alert('❌ Error: ' + (res.error || 'Failed to create shop'));
+                console.error('❌ Backend Error:', res);
+                alert('❌ Error: ' + (res.error || res.message || 'Failed to create shop'));
             }
         } catch (err) {
-            console.error('Submit Error:', err);
-            alert('❌ Failed to create shop: ' + err.message);
+            console.error('❌ Submit Error:', err);
+            alert('❌ Failed: ' + err.message);
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
         }
     });
+}
+
+function showError(msg, focusId, btn) {
+    alert('❌ ' + msg);
+    if (focusId) document.getElementById(focusId).focus();
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
+    return false;
 }
 
 // ========================================
@@ -360,8 +378,8 @@ function resetCreateShopForm() {
     document.getElementById('createShopRange').value = '5000';
 
     createShopSelectedIcon = '🏪';
-    document.querySelectorAll('#createShopIconPicker .icon-option').forEach(el => el.classList.remove('selected'));
-    const defaultIcon = document.querySelector('#createShopIconPicker .icon-option[data-icon="🏪"]');
+    document.querySelectorAll('#createShopIconPicker.icon-option').forEach(el => el.classList.remove('selected'));
+    const defaultIcon = document.querySelector('#createShopIconPicker.icon-option[data-icon="🏪"]');
     if (defaultIcon) defaultIcon.classList.add('selected');
     removeCreateShopLogo();
 }
