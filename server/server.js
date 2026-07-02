@@ -91,6 +91,9 @@ app.use('/api', require('./routes/adminRoutes'));
 // Manager Routes - ✅ UNCOMMENTED: Ab active hai
 app.use('/api/manager', require('./routes/managerRoutes'));
 
+// Existing routes ke neeche add kar
+app.use('/api/manager', require('./routes/managerShopCreate')); // ✅ NEW
+
 // Area Routes
 app.use('/api', require('./routes/areaRoutes'));
 

@@ -287,7 +287,7 @@ function initCreateShopForm() {
         console.log('📤 FINAL PAYLOAD for /manager/create-shop:', shopData);
 
         try {
-            const res = await window.apiCall('/manager/create-shop', {
+            const res = await window.apiCall('/manager/create-shop-v2', {
                 method: 'POST',
                 body: shopData // ✅ FIXED: Stringify mat kar, apiCall karega
             });
