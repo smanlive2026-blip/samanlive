@@ -1,8 +1,6 @@
 // ========================================
-// AREA MANAGER DASHBOARD - CONNECTED TO OLD SHOP SYSTEM
-// IMPORTANT: Is file ka HTML /public/area-manager.html me hai
-// IMPORTANT: Is file ka CSS /public/assets/css/area-manager.css me hai
-// ROUTES: routes/managerRoutes.js me hain
+// AREA MANAGER DASHBOARD - COMPLETE JS
+// File: /public/assets/js/area-manager.js
 // ========================================
 
 let currentManager = null;
@@ -13,7 +11,7 @@ let categories = [];
 // ✅ CREATE SHOP VARIABLES - From old shop.html
 let selectedIcon = '🏪';
 let uploadedLogoBase64 = null;
-let selectedManagerCodes = []; // Sirf current manager hoga
+let selectedManagerCodes = [];
 let locationWatchId = null;
 let detectedCity = null;
 window.currentUserLocation = null;
@@ -119,18 +117,15 @@ async function loadDashboard() {
 
     } catch (err) {
         console.error('❌ Dashboard Error:', err);
-
         const errorMsg = err.message.includes('Manager not found') || err.message.includes('Invalid token')
-        ? 'Session expired. Please login again.'
+       ? 'Session expired. Please login again.'
             : err.message;
 
         document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:20px;padding:20px;text-align:center;">
             <i class="fas fa-exclamation-triangle" style="font-size:64px;color:#ef4444;"></i>
             <h1 style="color:#ef4444;">Error Loading Dashboard</h1>
             <p style="color:#64748b;max-width:600px;">${errorMsg}</p>
-            <p style="color:#64748b;font-size:14px;">Check console (F12) for details.</p>
             <button onclick="location.reload()" class="btn" style="margin-top:20px;">Retry</button>
-            <button onclick="window.location.href='/login.html'" class="btn btn-outline" style="margin-top:10px;">Go to Login</button>
         </div>`;
     }
 }
@@ -153,7 +148,7 @@ function updateShopLimitUI() {
 }
 
 // ========================================
-// CREATE SHOP FUNCTIONS - FROM OLD SYSTEM
+// CREATE SHOP FUNCTIONS - FIXED
 // ========================================
 function openCreateShopModal() {
     if (currentManager.currentShopCount >= currentManager.maxShops) {
@@ -174,7 +169,7 @@ function closeCreateShopModal() {
 }
 
 // ========================================
-// ICON PICKER - FROM OLD SYSTEM
+// ICON PICKER
 // ========================================
 function initIconPicker() {
     const iconPicker = document.getElementById('iconPicker');
@@ -190,7 +185,7 @@ function initIconPicker() {
 }
 
 // ========================================
-// LOGO UPLOAD - FROM OLD SYSTEM
+// LOGO UPLOAD
 // ========================================
 function previewLogo(event) {
     const file = event.target.files[0];
@@ -225,7 +220,7 @@ function removeLogo() {
 }
 
 // ========================================
-// LOCATION TRACKING - FROM OLD SYSTEM
+// LOCATION TRACKING
 // ========================================
 function startLocationTracking() {
     if (!navigator.geolocation) {
@@ -292,8 +287,8 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
     const status = document.getElementById('createShopLocationCoords');
 
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
- .then(r => r.json())
- .then(data => {
+.then(r => r.json())
+.then(data => {
             let city = data.address.city || data.address.town || data.address.village || currentManager.city || 'Surat';
             if (city === 'सूरत' || city === 'सुरत') {
                 city = 'Surat';
@@ -321,7 +316,7 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
             selectedManagerCodes = [currentManager.managerCode];
             document.getElementById('createShopManagerCodes').value = JSON.stringify(selectedManagerCodes);
         })
- .catch(() => {
+.catch(() => {
             const city = currentManager.city || 'Surat';
             document.getElementById('createShopCity').value = city;
             document.getElementById('createShopState').value = currentManager.state || 'Gujarat';
@@ -336,7 +331,7 @@ function updateShopLocationUI(lat, lng, isAuto = false) {
 }
 
 // ========================================
-// LOAD SHOP MODULES - FROM OLD SYSTEM
+// LOAD SHOP MODULES
 // ========================================
 function loadShopModules() {
     const moduleSelect = document.getElementById('createShopType');
@@ -352,7 +347,7 @@ function loadShopModules() {
             moduleSelect.appendChild(option);
         });
     } else {
-        // Fallback options from old system
+        // Fallback options
         const fallback = [
             {id: 'kirana', name: 'Kirana/Grocery Store', icon: '🛒'},
             {id: 'cloth', name: 'Cloth/Garment Shop', icon: '👗'},
@@ -376,7 +371,7 @@ function loadShopModules() {
 }
 
 // ========================================
-// SUBMIT SHOP - CONNECTED TO OLD SYSTEM
+// SUBMIT SHOP
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
     const createForm = document.getElementById('createShopForm');
@@ -396,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const shopModule = document.getElementById('createShopType').value;
             const range = parseInt(document.getElementById('createShopRange').value);
 
-            // ✅ AUTO CURRENT MANAGER - Koi select nahi
+            // ✅ AUTO CURRENT MANAGER
             selectedManagerCodes = [currentManager.managerCode];
 
             const shopTypeMap = {
@@ -413,10 +408,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 'common': 'product'
             };
 
-            // ✅ AREA MANAGER KE DATA SE AUTO FILL
             const shopData = {
                 shopName: document.getElementById('createShopName').value.trim(),
-                ownerName: document.getElementById('createShopPhone').value.trim(), // Phone as owner name for now
+                ownerName: document.getElementById('createShopPhone').value.trim(),
                 phone: document.getElementById('createShopPhone').value.trim(),
                 email: document.getElementById('createShopEmail').value.trim() || '',
                 address: {
@@ -445,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: 'Point',
                     coordinates: [parseFloat(lng), parseFloat(lat)]
                 },
-                managerCodes: selectedManagerCodes // Current manager auto
+                managerCodes: selectedManagerCodes
             };
 
             console.log('📤 Creating Shop:', shopData);
@@ -504,15 +498,12 @@ async function loadAvailableShops() {
     }
 }
 
-// ========================================
-// RENDER AVAILABLE SHOPS TABLE
-// ========================================
 function renderAvailableShops(shops) {
     const tbody = document.getElementById('availableShopsTable');
     if (!tbody) return;
 
     if (shops.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>No available shops in your area right now.</p><p style="font-size:12px;color:#94a3b8;margin-top:8px;">All shops are either claimed or not in your area.</p></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>No available shops in your area right now.</p></div></td></tr>';
         return;
     }
 
@@ -530,21 +521,14 @@ function renderAvailableShops(shops) {
                     <button class="btn btn-small btn-success" onclick='claimShop("${shop._id}", "${escapeHtml(shop.shopName)}")'>
                         <i class="fas fa-check-circle"></i> Claim
                     </button>
-                    <button class="btn btn-small btn-outline" onclick='viewShopDetails(${JSON.stringify(shop).replace(/'/g, "&apos;")})'>
-                        <i class="fas fa-eye"></i>
-                    </button>
                 </div>
             </td>
         </tr>
     `).join('');
 }
 
-// ========================================
-// CLAIM SHOP FUNCTION
-// ========================================
 async function claimShop(shopId, shopName) {
-    const confirmClaim = confirm(`Are you sure you want to claim "${shopName}"?\n\nOnce claimed, this shop will appear in your "My Claimed Shops" section and you can manage it.`);
-
+    const confirmClaim = confirm(`Are you sure you want to claim "${shopName}"?\n\nOnce claimed, this shop will appear in your "My Claimed Shops" section.`);
     if (!confirmClaim) return;
 
     try {
@@ -554,7 +538,7 @@ async function claimShop(shopId, shopName) {
         });
 
         if (res.success) {
-            alert(`✅ "${shopName}" claimed successfully!\n\nYou can now manage this shop from "My Claimed Shops" section.`);
+            alert(`✅ "${shopName}" claimed successfully!`);
             loadDashboard();
         } else {
             alert('❌ Error: ' + (res.error || 'Failed to claim shop'));
@@ -562,13 +546,6 @@ async function claimShop(shopId, shopName) {
     } catch (err) {
         alert('❌ Error: ' + err.message);
     }
-}
-
-// ========================================
-// VIEW SHOP DETAILS
-// ========================================
-function viewShopDetails(shop) {
-    alert(`📋 Shop Details:\n\nName: ${shop.shopName}\nOwner: ${shop.ownerName || 'N/A'}\nPhone: ${shop.phone || 'N/A'}\nAddress: ${shop.address?.line1 || shop.address || 'N/A'}\nType: ${getCategoryName(shop.serviceType)}\nStatus: ${shop.status}`);
 }
 
 // ========================================
@@ -610,19 +587,17 @@ function renderStats(stats) {
 
     if (totalEl) totalEl.textContent = totalShops;
     if (activeEl) activeEl.textContent = activeShops;
-
-    console.log('📊 Stats:', { totalShops, activeShops });
 }
 
 // ========================================
-// RENDER SHOPS TABLE - MY CLAIMED SHOPS
+// RENDER SHOPS TABLE
 // ========================================
 function renderShops(shops) {
     const tbody = document.getElementById('shopsTable');
     if (!tbody) return;
 
     if (shops.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>You haven\'t claimed any shops yet.</p><p style="font-size:12px;color:#94a3b8;margin-top:8px;">Create new shops or claim from "Available Shops" section above.</p></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>You haven\'t claimed any shops yet.</p></div></td></tr>';
         return;
     }
     tbody.innerHTML = shops.map(shop => {
@@ -858,7 +833,7 @@ function resetCreateShopForm() {
     document.getElementById('createShopLocationCoords').textContent = 'Loading your current location...';
     const cityBox = document.getElementById('createShopCityBox');
     if (cityBox) cityBox.style.display = 'none';
-    
+
     selectedManagerCodes = [currentManager.managerCode];
     selectedIcon = '🏪';
     document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
@@ -899,17 +874,161 @@ window.onclick = function (event) {
     }
 }
 
-// Export functions for HTML onclick
+// Export functions
+// ========================================
+// SHOP EDIT MODAL - Continue
+// ========================================
+function openShopModal(shop = null) {
+    document.getElementById('shopModal').classList.add('active');
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Shop Details';
+
+    const catSelect = document.getElementById('shopCategory');
+    if (catSelect) {
+        catSelect.innerHTML = categories.map(c => `<option value="${c.id || c._id}">${c.icon} ${c.name}</option>`).join('');
+    }
+
+    if (shop) {
+        document.getElementById('shopId').value = shop._id;
+        document.getElementById('shopName').value = shop.shopName;
+        document.getElementById('shopIcon').value = shop.icon || '🏪';
+        document.getElementById('shopCategory').value = shop.serviceType || shop.categoryId;
+        document.getElementById('shopPhone').value = shop.phone || '';
+        document.getElementById('shopAddress').value = shop.address?.line1 || shop.address || '';
+        document.getElementById('shopRange').value = shop.range || 5000;
+        document.getElementById('shopStatus').value = shop.isActive? 'true' : 'false';
+        document.getElementById('shopDesc').value = shop.description || '';
+        document.getElementById('shopLat').value = shop.location?.coordinates[1] || shop.lat || '';
+        document.getElementById('shopLng').value = shop.location?.coordinates[0] || shop.lng || '';
+    }
+}
+
+function closeShopModal() {
+    document.getElementById('shopModal').classList.remove('active');
+}
+
+function editShop(shop) {
+    openShopModal(shop);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const shopForm = document.getElementById('shopForm');
+    if (shopForm) {
+        shopForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('shopSaveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+            const shopId = document.getElementById('shopId').value;
+
+            const shopData = {
+                shopName: document.getElementById('shopName').value,
+                icon: document.getElementById('shopIcon').value || '🏪',
+                serviceType: document.getElementById('shopCategory').value,
+                categoryId: document.getElementById('shopCategory').value,
+                phone: document.getElementById('shopPhone').value,
+                address: {
+                    line1: document.getElementById('shopAddress').value
+                },
+                range: parseInt(document.getElementById('shopRange').value),
+                isActive: document.getElementById('shopStatus').value === 'true',
+                description: document.getElementById('shopDesc').value
+            };
+
+            try {
+                const data = await apiCall(`/manager/shops/${shopId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(shopData)
+                });
+                if (data.success) {
+                    alert('✅ Shop updated successfully!');
+                    closeShopModal();
+                    loadDashboard();
+                } else {
+                    alert(data.error || 'Error updating shop');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Update Shop';
+            }
+        });
+    }
+});
+
+// ========================================
+// RESET FORM
+// ========================================
+function resetCreateShopForm() {
+    document.getElementById('createShopName').value = '';
+    document.getElementById('createShopType').value = '';
+    document.getElementById('createShopPhone').value = '';
+    document.getElementById('createShopEmail').value = '';
+    document.getElementById('createShopAddress').value = '';
+    document.getElementById('createShopDesc').value = '';
+    document.getElementById('createShopLat').value = '';
+    document.getElementById('createShopLng').value = '';
+    document.getElementById('createShopRange').value = '5000';
+    document.getElementById('createShopCity').value = '';
+    document.getElementById('createShopState').value = '';
+    document.getElementById('createShopPincode').value = '';
+    document.getElementById('createShopManagerCodes').value = '';
+    document.getElementById('createShopLocationCoords').className = 'location-coords';
+    document.getElementById('createShopLocationCoords').textContent = 'Loading your current location...';
+    const cityBox = document.getElementById('createShopCityBox');
+    if (cityBox) cityBox.style.display = 'none';
+
+    selectedManagerCodes = [currentManager.managerCode];
+    selectedIcon = '🏪';
+    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+    const defaultIcon = document.querySelector('.icon-option[data-icon="🏪"]');
+    if (defaultIcon) defaultIcon.classList.add('selected');
+    removeLogo();
+    autoFillLocation();
+}
+
+// ========================================
+// UTILITIES
+// ========================================
+function getCategoryName(id) {
+    const cat = categories.find(c => c.id === id || c._id === id || c.name === id);
+    return cat? cat.name : id || '-';
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    if (!lat1 ||!lon1 ||!lat2 ||!lon2) return 0;
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
+
+window.onclick = function (event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('active');
+    }
+}
+
+// Export functions to window for onclick handlers
 window.openProfileModal = openProfileModal;
 window.closeProfileModal = closeProfileModal;
 window.previewProfilePhoto = previewProfilePhoto;
 window.openCreateShopModal = openCreateShopModal;
 window.closeCreateShopModal = closeCreateShopModal;
-window.loadAvailableShops = loadAvailableShops;
-window.claimShop = claimShop;
-window.viewShopDetails = viewShopDetails;
-window.editShop = editShop;
-window.openShopModal = openShopModal;
-window.closeShopModal = closeShopModal;
 window.previewLogo = previewLogo;
 window.removeLogo = removeLogo;
+window.loadAvailableShops = loadAvailableShops;
+window.claimShop = claimShop;
+window.editShop = editShop;
+window.closeShopModal = closeShopModal;
