@@ -49,6 +49,7 @@ window.openCreateShopModal = function() {
     resetCreateShopForm();
     loadCreateShopModules();
     autoFillCreateShopArea();
+    initCreateShopIconPicker(); // ✅ Re-init on modal open
 }
 
 window.closeCreateShopModal = function() {
@@ -59,30 +60,37 @@ window.closeCreateShopModal = function() {
 }
 
 // ========================================
-// ICON PICKER
+// ICON PICKER - ✅ FIXED: Proper re-init
 // ========================================
 function initCreateShopIconPicker() {
     const iconPicker = document.getElementById('createShopIconPicker');
     if (iconPicker) {
-        iconPicker.addEventListener('click', (e) => {
+        // Remove old listeners by cloning
+        const newPicker = iconPicker.cloneNode(true);
+        iconPicker.parentNode.replaceChild(newPicker, iconPicker);
+        
+        newPicker.addEventListener('click', (e) => {
             if (e.target.classList.contains('icon-option')) {
-                document.querySelectorAll('#createShopIconPicker .icon-option').forEach(el => el.classList.remove('selected'));
+                newPicker.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
                 e.target.classList.add('selected');
                 createShopSelectedIcon = e.target.dataset.icon;
+                console.log('✅ Icon selected:', createShopSelectedIcon);
             }
         });
     }
 }
 
 // ========================================
-// LOGO UPLOAD
+// LOGO UPLOAD - ✅ FIXED: 2MB check + pointerEvents
 // ========================================
 window.previewCreateShopLogo = function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024) {
+    // ✅ FIXED: 2 * 1024 * 1024 = 2MB, pehle 2*1024 = 2KB tha
+    if (file.size > 2 * 1024 * 1024) {
         alert('Image size should be less than 2MB');
+        event.target.value = '';
         return;
     }
 
@@ -91,7 +99,9 @@ window.previewCreateShopLogo = function(event) {
         createShopUploadedLogoBase64 = e.target.result;
         document.getElementById('createShopLogoPreview').innerHTML = `<img src="${createShopUploadedLogoBase64}" alt="Shop Logo">`;
         document.getElementById('createShopRemoveLogoBtn').style.display = 'inline-block';
-        document.getElementById('createShopIconPicker').style.opacity = '0.3';
+        const iconPicker = document.getElementById('createShopIconPicker');
+        iconPicker.style.opacity = '0.3';
+        iconPicker.style.pointerEvents = 'none'; // ✅ Disable icons when photo uploaded
     };
     reader.readAsDataURL(file);
 }
@@ -106,7 +116,9 @@ window.removeCreateShopLogo = function() {
         <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
     `;
     document.getElementById('createShopRemoveLogoBtn').style.display = 'none';
-    document.getElementById('createShopIconPicker').style.opacity = '1';
+    const iconPicker = document.getElementById('createShopIconPicker');
+    iconPicker.style.opacity = '1';
+    iconPicker.style.pointerEvents = 'auto'; // ✅ Re-enable icons
 }
 
 // ========================================
@@ -143,7 +155,7 @@ function loadCreateShopModules() {
 }
 
 // ========================================
-// AUTO FILL AREA DATA - ✅ FIXED: Current Manager Only
+// AUTO FILL AREA DATA - ✅ Current Manager Only
 // ========================================
 function autoFillCreateShopArea() {
     const manager = window.createShopCurrentManager;
@@ -157,7 +169,7 @@ function autoFillCreateShopArea() {
     document.getElementById('createShopState').value = manager.state || 'Gujarat';
     document.getElementById('createShopPincode').value = manager.pincode || '';
     
-    // ✅ FIXED: Sirf current manager, koi aur nahi
+    // ✅ FIXED: Sirf current manager
     createShopSelectedManagerCodes = [manager.managerCode];
     document.getElementById('createShopManagerCodes').value = JSON.stringify(createShopSelectedManagerCodes);
     
@@ -169,7 +181,7 @@ function autoFillCreateShopArea() {
         document.getElementById('createShopDetectedCityMeta').textContent = `${manager.name} • ${manager.managerCode} (Auto-connected)`;
     }
     
-    // ✅ FIXED: Sirf current manager dikhao, baaki sab hide
+    // ✅ FIXED: Sirf current manager dikhao
     const managerList = document.getElementById('createShopManagerList');
     const countText = document.getElementById('createShopManagerCountText');
     const selectAllBtn = document.querySelector('.select-all-btn');
@@ -204,7 +216,6 @@ function autoFillCreateShopArea() {
 // LOAD CITY MANAGERS - ✅ DISABLED
 // ========================================
 function loadCreateShopCityManagers(city) {
-    // ✅ Kuch mat karo - current manager already selected hai
     console.log('✅ Skipped: Auto-connected to current manager only');
     return;
 }
@@ -213,14 +224,12 @@ function loadCreateShopCityManagers(city) {
 // TOGGLE MANAGER - ✅ DISABLED
 // ========================================
 window.toggleCreateShopManager = function(managerCode) {
-    // ✅ Disable kar diya - current manager fixed hai
     console.log('⚠️ Manager selection disabled. Auto-connected to current manager.');
     alert('Shop will be auto-connected to your account.\n\nManager: ' + window.createShopCurrentManager.name);
     return;
 }
 
 window.toggleSelectAllCreateShopManagers = function() {
-    // ✅ Disable kar diya
     console.log('⚠️ Manager selection disabled. Auto-connected to current manager.');
     return;
 }
@@ -299,7 +308,7 @@ function initCreateShopForm() {
                 type: 'Point',
                 coordinates: [manager.centerLng || 72.8311, manager.centerLat || 21.1702]
             },
-            managerCodes: validManagers // ✅ Sirf current manager
+            managerCodes: validManagers
         };
 
         console.log('📤 Creating Shop:', shopData);
