@@ -75,7 +75,6 @@ File: routes/managerRoutes.js me sab routes hain
                                 <span>Location</span>
                                 <strong id="managerLocation">-</strong>
                             </div>
-                        </div>
                         <div class="profile-detail">
                             <div class="profile-detail-icon"><i class="fas fa-circle-notch"></i></div>
                             <div>
@@ -252,7 +251,7 @@ File: routes/managerRoutes.js me sab routes hain
         </div>
     </div>
 
-    <!-- CREATE SHOP MODAL - NEW -->
+    <!-- CREATE SHOP MODAL - UPDATED WITH OLD SYSTEM -->
     <div class="modal" id="createShopModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -264,40 +263,68 @@ File: routes/managerRoutes.js me sab routes hain
                 <span>Shop aapke area me create hogi. Location aur area auto-fill ho jayenge.</span>
             </div>
             <form id="createShopForm">
+                <!-- Auto Detected City Box -->
+                <div class="city-detected-box" id="createShopCityBox" style="display:none;">
+                    <i class="fa fa-map-marker-alt"></i>
+                    <div class="city-detected-info">
+                        <h3 id="createShopDetectedCityName">Detecting your city...</h3>
+                        <p id="createShopDetectedCityMeta">GPS se location fetch ho rahi hai</p>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Shop Name * <small style="color: var(--text-muted);">(Unique hona chahiye)</small></label>
                     <input type="text" id="createShopName" required placeholder="Rajesh General Store">
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Shop Type *</label>
-                        <select id="createShopType" required>
-                            <option value="General Store">General Store</option>
-                            <option value="Grocery">Grocery</option>
-                            <option value="Medical">Medical</option>
-                            <option value="Electronics">Electronics</option>
-                            <option value="Clothing">Clothing</option>
-                            <option value="Restaurant">Restaurant</option>
-                            <option value="Other">Other</option>
-                        </select>
+
+                <div class="form-group">
+                    <label>Shop Type *</label>
+                    <select id="createShopType" required>
+                        <option value="">Select Shop Type</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Shop Logo/Photo <span style="font-weight: 400; color: #64748b;">(Optional)</span></label>
+                    <div class="logo-upload-box">
+                        <input type="file" id="shopLogoInput" accept="image/*" style="display: none;" onchange="previewLogo(event)">
+                        <div class="logo-preview" id="logoPreview" onclick="document.getElementById('shopLogoInput').click()">
+                            <i class="fa fa-camera"></i>
+                            <p>Upload Shop Photo</p>
+                            <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
+                        </div>
+                        <button type="button" class="btn-remove-logo" id="removeLogoBtn" style="display: none;" onclick="removeLogo()">
+                            <i class="fa fa-trash"></i> Remove Photo
+                        </button>
                     </div>
+                </div>
+
+                <div style="text-align: center; margin: 16px 0; color: #94a3b8; font-size: 14px; font-weight: 600;">
+                    — OR SELECT ICON BELOW —
+                </div>
+
+                <div class="form-group">
+                    <label>Select Shop Icon * <span style="font-size: 12px; color: #666;">(Used if no photo uploaded)</span></label>
+                    <div class="icon-picker" id="iconPicker">
+                        <div class="icon-option selected" data-icon="🏪">🏪</div>
+                        <div class="icon-option" data-icon="🛒">🛒</div>
+                        <div class="icon-option" data-icon="🍕">🍕</div>
+                        <div class="icon-option" data-icon="💊">💊</div>
+                        <div class="icon-option" data-icon="🔧">🔧</div>
+                        <div class="icon-option" data-icon="👗">👗</div>
+                        <div class="icon-option" data-icon="📱">📱</div>
+                        <div class="icon-option" data-icon="💇">💇</div>
+                        <div class="icon-option" data-icon="🚗">🚗</div>
+                        <div class="icon-option" data-icon="🏠">🏠</div>
+                        <div class="icon-option" data-icon="🎓">🎓</div>
+                        <div class="icon-option" data-icon="⚡">⚡</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
                     <div class="form-group">
                         <label>Contact Number *</label>
-                        <input type="text" id="createShopPhone" required placeholder="9876543210">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="createShopEmail" placeholder="shop@example.com">
-                </div>
-                <div class="form-group">
-                    <label>Address</label>
-                    <textarea id="createShopAddress" rows="2" placeholder="Full shop address"></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Icon (Emoji)</label>
-                        <input type="text" id="createShopIcon" placeholder="🏪" maxlength="2" value="🏪">
+                        <input type="text" id="createShopPhone" required placeholder="9876543210" maxlength="10">
                     </div>
                     <div class="form-group">
                         <label>Service Range *</label>
@@ -309,6 +336,45 @@ File: routes/managerRoutes.js me sab routes hain
                         </select>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="createShopEmail" placeholder="shop@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Address *</label>
+                    <textarea id="createShopAddress" rows="2" required placeholder="Full shop address"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Shop Description</label>
+                    <textarea id="createShopDesc" rows="2" placeholder="What services/products you offer?"></textarea>
+                </div>
+
+                <!-- Location Box -->
+                <div class="location-box">
+                    <div class="location-header">
+                        <h3>📍 Shop GPS Location *</h3>
+                        <div class="auto-badge">
+                            <span class="pulse"></span>
+                            AUTO SYNC
+                        </div>
+                    </div>
+                    <div class="location-coords" id="createShopLocationCoords">
+                        Loading your current location...
+                    </div>
+                    <div class="location-info">
+                        💡 Your location is automatically captured from your device
+                    </div>
+                    <input type="hidden" id="createShopLat">
+                    <input type="hidden" id="createShopLng">
+                    <input type="hidden" id="createShopCity">
+                    <input type="hidden" id="createShopState">
+                    <input type="hidden" id="createShopPincode">
+                    <input type="hidden" id="createShopManagerCodes">
+                </div>
+
                 <button type="submit" class="btn btn-primary" id="createShopSaveBtn">
                     <i class="fas fa-plus"></i> Create Shop
                 </button>
@@ -372,7 +438,6 @@ File: routes/managerRoutes.js me sab routes hain
                             <option value="false">Inactive</option>
                         </select>
                     </div>
-                </div>
                 <div class="form-group">
                     <label>Description</label>
                     <textarea id="shopDesc" rows="3" placeholder="Shop description"></textarea>
@@ -386,7 +451,6 @@ File: routes/managerRoutes.js me sab routes hain
                         <label>Longitude</label>
                         <input type="text" id="shopLng" disabled>
                     </div>
-                </div>
                 <small style="color: var(--text-muted); display: block; margin-bottom: 15px;">
                     <i class="fas fa-map-marker-alt"></i> Location cannot be changed by Area Manager
                 </small>

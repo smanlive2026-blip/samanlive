@@ -1,20 +1,22 @@
 // ========================================
-// AREA MANAGER DASHBOARD - CREATE SHOP READY
-// File: /public/assets/js/area-manager.js
-// ========================================
-// ROUTES USED:
-// POST /api/manager/create-shop - Nayi shop create karne ke liye
-// GET /api/manager/shops - Manager ki shops list ke liye
-// GET /api/manager/dashboard - Manager profile + stats ke liye
-// GET /api/manager/available-shops - Claim karne wali shops ke liye
-// PUT /api/manager/shops/:id - Shop edit karne ke liye
-// File: routes/managerRoutes.js me sab routes hain
+// AREA MANAGER DASHBOARD - CONNECTED TO OLD SHOP SYSTEM
+// IMPORTANT: Is file ka HTML /public/area-manager.html me hai
+// IMPORTANT: Is file ka CSS /public/assets/css/area-manager.css me hai
+// ROUTES: routes/managerRoutes.js me hain
 // ========================================
 
 let currentManager = null;
 let managerShops = [];
-let availableShops = []; // ✅ Unclaimed shops
+let availableShops = [];
 let categories = [];
+
+// ✅ CREATE SHOP VARIABLES - From old shop.html
+let selectedIcon = '🏪';
+let uploadedLogoBase64 = null;
+let selectedManagerCodes = []; // Sirf current manager hoga
+let locationWatchId = null;
+let detectedCity = null;
+window.currentUserLocation = null;
 
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token') || localStorage.getItem('managerToken');
@@ -68,32 +70,30 @@ async function apiCall(endpoint, options = {}) {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Area Manager Dashboard Loading...');
     await loadDashboard();
+    initIconPicker();
+    startLocationTracking();
 });
 
 async function loadDashboard() {
     try {
         console.log('Loading dashboard with token:', token);
 
-        // 1. Load manager data + stats
         const dashboardRes = await apiCall(`/manager/dashboard`);
         console.log('📦 Dashboard API Response:', dashboardRes);
 
-        // ✅ CRITICAL FIX: Pehle success check karo
         if (!dashboardRes.success) {
             throw new Error(dashboardRes.error || 'Invalid token');
         }
 
         currentManager = dashboardRes.manager;
-        
-        // ✅ FIX: stats undefined hone se bachao
+
         const stats = dashboardRes.stats || { totalShops: 0, activeShops: 0 };
         currentManager.currentShopCount = stats.totalShops;
         currentManager.maxShops = dashboardRes.manager.maxShops || 10;
 
         console.log('👤 Manager Data:', currentManager);
-        console.log('🏷️ Manager Code:', currentManager.managerCode);
 
-        // 2. Load shops & categories parallel
+        // Load shops & categories parallel
         const [shopsData, modulesData] = await Promise.all([
             apiCall(`/manager/shops`).catch(err => {
                 console.error('Shops API Error:', err);
@@ -110,24 +110,20 @@ async function loadDashboard() {
         managerShops = shopsData.shops || shopsData || [];
         categories = modulesData.modules || modulesData || [];
 
-        // 3. Render everything
         renderProfile();
         renderStats(stats);
         renderShops(managerShops);
         renderServiceCards(categories);
         updateShopLimitUI();
-
-        // ✅ Load available shops on page load
         loadAvailableShops();
 
     } catch (err) {
         console.error('❌ Dashboard Error:', err);
-        
-        // ✅ Better error handling
-        const errorMsg = err.message.includes('Manager not found') || err.message.includes('Invalid token') 
-           ? 'Session expired. Please login again.' 
+
+        const errorMsg = err.message.includes('Manager not found') || err.message.includes('Invalid token')
+        ? 'Session expired. Please login again.'
             : err.message;
-            
+
         document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:20px;padding:20px;text-align:center;">
             <i class="fas fa-exclamation-triangle" style="font-size:64px;color:#ef4444;"></i>
             <h1 style="color:#ef4444;">Error Loading Dashboard</h1>
@@ -140,14 +136,13 @@ async function loadDashboard() {
 }
 
 // ========================================
-// ✅ UPDATE SHOP LIMIT UI
+// UPDATE SHOP LIMIT UI
 // ========================================
 function updateShopLimitUI() {
     const limitText = `${currentManager.currentShopCount} / ${currentManager.maxShops}`;
     const limitEl = document.getElementById('shopLimitText');
     if (limitEl) limitEl.textContent = limitText;
 
-    // Disable button if limit reached
     const createBtn = document.getElementById('createShopBtn');
     if (createBtn && currentManager.currentShopCount >= currentManager.maxShops) {
         createBtn.disabled = true;
@@ -158,7 +153,7 @@ function updateShopLimitUI() {
 }
 
 // ========================================
-// ✅ CREATE SHOP FUNCTIONS - NEW
+// CREATE SHOP FUNCTIONS - FROM OLD SYSTEM
 // ========================================
 function openCreateShopModal() {
     if (currentManager.currentShopCount >= currentManager.maxShops) {
@@ -166,17 +161,223 @@ function openCreateShopModal() {
         return;
     }
     document.getElementById('createShopModal').classList.add('active');
-    const addressEl = document.getElementById('createShopAddress');
-    if (addressEl) addressEl.value = currentManager?.areaName || '';
+    resetCreateShopForm();
+    autoFillLocation();
+    loadShopModules();
 }
 
 function closeCreateShopModal() {
     document.getElementById('createShopModal').classList.remove('active');
     const form = document.getElementById('createShopForm');
     if (form) form.reset();
+    removeLogo();
 }
 
-// Create Shop Form Submit
+// ========================================
+// ICON PICKER - FROM OLD SYSTEM
+// ========================================
+function initIconPicker() {
+    const iconPicker = document.getElementById('iconPicker');
+    if (iconPicker) {
+        iconPicker.addEventListener('click', (e) => {
+            if (e.target.classList.contains('icon-option')) {
+                document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+                e.target.classList.add('selected');
+                selectedIcon = e.target.dataset.icon;
+            }
+        });
+    }
+}
+
+// ========================================
+// LOGO UPLOAD - FROM OLD SYSTEM
+// ========================================
+function previewLogo(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+        alert('Image size should be less than 2MB');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        uploadedLogoBase64 = e.target.result;
+        document.getElementById('logoPreview').innerHTML = `<img src="${uploadedLogoBase64}" alt="Shop Logo">`;
+        document.getElementById('removeLogoBtn').style.display = 'inline-block';
+        document.getElementById('iconPicker').style.opacity = '0.3';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+    uploadedLogoBase64 = null;
+    const logoInput = document.getElementById('shopLogoInput');
+    if (logoInput) logoInput.value = '';
+    document.getElementById('logoPreview').innerHTML = `
+        <i class="fa fa-camera"></i>
+        <p>Upload Shop Photo</p>
+        <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
+    `;
+    document.getElementById('removeLogoBtn').style.display = 'none';
+    document.getElementById('iconPicker').style.opacity = '1';
+}
+
+// ========================================
+// LOCATION TRACKING - FROM OLD SYSTEM
+// ========================================
+function startLocationTracking() {
+    if (!navigator.geolocation) {
+        console.log('❌ GPS not supported');
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            window.currentUserLocation = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            console.log('📍 Location captured:', window.currentUserLocation);
+        },
+        (error) => {
+            console.log('Location error:', error.message);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    locationWatchId = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                window.currentUserLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+            },
+            (error) => console.log('Auto location error:', error.message),
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        );
+    }, 30000);
+}
+
+// ========================================
+// AUTO FILL LOCATION + CITY DETECT
+// ========================================
+function autoFillLocation() {
+    const coordsEl = document.getElementById('createShopLocationCoords');
+    const cityBox = document.getElementById('createShopCityBox');
+
+    if (window.currentUserLocation) {
+        const lat = window.currentUserLocation.lat;
+        const lng = window.currentUserLocation.lng;
+        updateShopLocationUI(lat, lng, true);
+    } else {
+        if (coordsEl) coordsEl.innerHTML = '⏳ Waiting for location... Make sure GPS is enabled';
+        if (cityBox) cityBox.style.display = 'flex';
+
+        setTimeout(() => {
+            if (window.currentUserLocation) {
+                autoFillLocation();
+            } else {
+                if (coordsEl) coordsEl.innerHTML = '❌ Location not available. Please enable GPS';
+            }
+        }, 2000);
+    }
+}
+
+function updateShopLocationUI(lat, lng, isAuto = false) {
+    document.getElementById('createShopLat').value = lat;
+    document.getElementById('createShopLng').value = lng;
+    const status = document.getElementById('createShopLocationCoords');
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+ .then(r => r.json())
+ .then(data => {
+            let city = data.address.city || data.address.town || data.address.village || currentManager.city || 'Surat';
+            if (city === 'सूरत' || city === 'सुरत') {
+                city = 'Surat';
+            }
+
+            const state = data.address.state || currentManager.state || 'Gujarat';
+            const pincode = data.address.postcode || '';
+
+            document.getElementById('createShopCity').value = city;
+            document.getElementById('createShopState').value = state;
+            document.getElementById('createShopPincode').value = pincode;
+
+            if (status) {
+                status.className = 'location-coords success';
+                status.innerHTML = `✅ Location captured!<br><strong>City:</strong> ${city} | <strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}${isAuto? '<br><small>Auto-updated</small>' : ''}`;
+            }
+
+            detectedCity = city;
+            const cityBox = document.getElementById('createShopCityBox');
+            if (cityBox) cityBox.style.display = 'flex';
+            document.getElementById('createShopDetectedCityName').textContent = `📍 ${city}`;
+            document.getElementById('createShopDetectedCityMeta').textContent = `${state} • Auto-selected Manager`;
+
+            // ✅ AUTO CURRENT MANAGER - Koi list nahi dikhegi
+            selectedManagerCodes = [currentManager.managerCode];
+            document.getElementById('createShopManagerCodes').value = JSON.stringify(selectedManagerCodes);
+        })
+ .catch(() => {
+            const city = currentManager.city || 'Surat';
+            document.getElementById('createShopCity').value = city;
+            document.getElementById('createShopState').value = currentManager.state || 'Gujarat';
+            if (status) {
+                status.className = 'location-coords success';
+                status.innerHTML = `✅ Location captured!<br><strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
+            }
+            detectedCity = city;
+            selectedManagerCodes = [currentManager.managerCode];
+            document.getElementById('createShopManagerCodes').value = JSON.stringify(selectedManagerCodes);
+        });
+}
+
+// ========================================
+// LOAD SHOP MODULES - FROM OLD SYSTEM
+// ========================================
+function loadShopModules() {
+    const moduleSelect = document.getElementById('createShopType');
+    if (!moduleSelect) return;
+
+    moduleSelect.innerHTML = '<option value="">Select Shop Type</option>';
+
+    if (categories && categories.length > 0) {
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.name || cat.id;
+            option.textContent = `${cat.icon || '📦'} ${cat.name}`;
+            moduleSelect.appendChild(option);
+        });
+    } else {
+        // Fallback options from old system
+        const fallback = [
+            {id: 'kirana', name: 'Kirana/Grocery Store', icon: '🛒'},
+            {id: 'cloth', name: 'Cloth/Garment Shop', icon: '👗'},
+            {id: 'medical', name: 'Medical Store', icon: '💊'},
+            {id: 'restaurant', name: 'Restaurant/Cafe', icon: '🍕'},
+            {id: 'electronics', name: 'Electronics Shop', icon: '📱'},
+            {id: 'hardware', name: 'Hardware Store', icon: '🔧'},
+            {id: 'salon', name: 'Salon/Beauty Parlour', icon: '💇'},
+            {id: 'stationery', name: 'Stationery Shop', icon: '🎓'},
+            {id: 'service', name: 'Service Provider', icon: '🔧'},
+            {id: 'rental', name: 'Rental Shop', icon: '🚗'},
+            {id: 'common', name: 'Common Shop - General', icon: '🏪'}
+        ];
+        fallback.forEach(m => {
+            const option = document.createElement('option');
+            option.value = m.id;
+            option.textContent = `${m.icon} ${m.name}`;
+            moduleSelect.appendChild(option);
+        });
+    }
+}
+
+// ========================================
+// SUBMIT SHOP - CONNECTED TO OLD SYSTEM
+// ========================================
 document.addEventListener('DOMContentLoaded', () => {
     const createForm = document.getElementById('createShopForm');
     if (createForm) {
@@ -187,24 +388,85 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
 
+            const lat = document.getElementById('createShopLat').value || currentManager.centerLat;
+            const lng = document.getElementById('createShopLng').value || currentManager.centerLng;
+            const city = document.getElementById('createShopCity').value || currentManager.city;
+            const state = document.getElementById('createShopState').value || currentManager.state;
+            const pincode = document.getElementById('createShopPincode').value || '';
+            const shopModule = document.getElementById('createShopType').value;
+            const range = parseInt(document.getElementById('createShopRange').value);
+
+            // ✅ AUTO CURRENT MANAGER - Koi select nahi
+            selectedManagerCodes = [currentManager.managerCode];
+
+            const shopTypeMap = {
+                'kirana': 'product',
+                'cloth': 'fashion',
+                'medical': 'product',
+                'restaurant': 'food',
+                'electronics': 'product',
+                'hardware': 'product',
+                'salon': 'service',
+                'stationery': 'product',
+                'service': 'service',
+                'rental': 'rental',
+                'common': 'product'
+            };
+
+            // ✅ AREA MANAGER KE DATA SE AUTO FILL
+            const shopData = {
+                shopName: document.getElementById('createShopName').value.trim(),
+                ownerName: document.getElementById('createShopPhone').value.trim(), // Phone as owner name for now
+                phone: document.getElementById('createShopPhone').value.trim(),
+                email: document.getElementById('createShopEmail').value.trim() || '',
+                address: {
+                    line1: document.getElementById('createShopAddress').value.trim() || currentManager.areaName,
+                    line2: '',
+                    city: city,
+                    state: state,
+                    pincode: pincode
+                },
+                areaCode: currentManager.areaCode,
+                bucket: currentManager.bucket,
+                area: currentManager.areaCode,
+                areaName: currentManager.areaName,
+                serviceType: shopTypeMap[shopModule] || 'product',
+                shopType: shopTypeMap[shopModule] || 'product',
+                description: document.getElementById('createShopDesc').value.trim() || `Shop created by Area Manager: ${currentManager.name}`,
+                range: range,
+                icon: selectedIcon,
+                logo: uploadedLogoBase64 || '',
+                banner: '',
+                status: 'approved',
+                isVerified: true,
+                isActive: true,
+                locationType: 'fixed',
+                location: {
+                    type: 'Point',
+                    coordinates: [parseFloat(lng), parseFloat(lat)]
+                },
+                managerCodes: selectedManagerCodes // Current manager auto
+            };
+
+            console.log('📤 Creating Shop:', shopData);
+
+            if (!shopData.shopName ||!shopData.phone ||!shopModule) {
+                alert('Please fill Shop Name, Phone Number and Shop Type!');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
+                return;
+            }
+
             try {
                 const res = await apiCall('/manager/create-shop', {
                     method: 'POST',
-                    body: JSON.stringify({
-                        shopName: document.getElementById('createShopName').value,
-                        shopType: document.getElementById('createShopType').value,
-                        contact: document.getElementById('createShopPhone').value,
-                        email: document.getElementById('createShopEmail').value,
-                        address: document.getElementById('createShopAddress').value,
-                        icon: document.getElementById('createShopIcon').value,
-                        range: document.getElementById('createShopRange').value
-                    })
+                    body: JSON.stringify(shopData)
                 });
 
                 if (res.success) {
-                    alert('✅ Shop created successfully!\n\nYou can now edit this shop from "My Claimed Shops" section.');
+                    alert('✅ Shop created successfully!\n\nShop abhi active ho gayi hai. Aap isko "My Claimed Shops" me edit kar sakte hain.');
                     closeCreateShopModal();
-                    loadDashboard(); // Refresh everything
+                    loadDashboard();
                 } else {
                     alert('❌ Error: ' + res.error);
                 }
@@ -219,12 +481,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ========================================
-// ✅ LOAD AVAILABLE SHOPS FOR CLAIM
+// LOAD AVAILABLE SHOPS FOR CLAIM
 // ========================================
 async function loadAvailableShops() {
     const tbody = document.getElementById('availableShopsTable');
     if (!tbody) return;
-    
+
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading available shops...</td></tr>';
 
     try {
@@ -243,7 +505,7 @@ async function loadAvailableShops() {
 }
 
 // ========================================
-// ✅ RENDER AVAILABLE SHOPS TABLE
+// RENDER AVAILABLE SHOPS TABLE
 // ========================================
 function renderAvailableShops(shops) {
     const tbody = document.getElementById('availableShopsTable');
@@ -278,7 +540,7 @@ function renderAvailableShops(shops) {
 }
 
 // ========================================
-// ✅ CLAIM SHOP FUNCTION
+// CLAIM SHOP FUNCTION
 // ========================================
 async function claimShop(shopId, shopName) {
     const confirmClaim = confirm(`Are you sure you want to claim "${shopName}"?\n\nOnce claimed, this shop will appear in your "My Claimed Shops" section and you can manage it.`);
@@ -293,7 +555,7 @@ async function claimShop(shopId, shopName) {
 
         if (res.success) {
             alert(`✅ "${shopName}" claimed successfully!\n\nYou can now manage this shop from "My Claimed Shops" section.`);
-            loadDashboard(); // Refresh both tables
+            loadDashboard();
         } else {
             alert('❌ Error: ' + (res.error || 'Failed to claim shop'));
         }
@@ -303,7 +565,7 @@ async function claimShop(shopId, shopName) {
 }
 
 // ========================================
-// ✅ VIEW SHOP DETAILS
+// VIEW SHOP DETAILS
 // ========================================
 function viewShopDetails(shop) {
     alert(`📋 Shop Details:\n\nName: ${shop.shopName}\nOwner: ${shop.ownerName || 'N/A'}\nPhone: ${shop.phone || 'N/A'}\nAddress: ${shop.address?.line1 || shop.address || 'N/A'}\nType: ${getCategoryName(shop.serviceType)}\nStatus: ${shop.status}`);
@@ -314,7 +576,7 @@ function viewShopDetails(shop) {
 // ========================================
 function renderProfile() {
     if (!currentManager) return;
-    
+
     document.getElementById('managerName').textContent = currentManager.name || 'Manager';
     document.getElementById('managerBadge').textContent = currentManager.bucket || 'DEFAULT';
     document.getElementById('managerFullName').textContent = currentManager.name || 'Manager Name';
@@ -345,7 +607,7 @@ function renderStats(stats) {
 
     const totalEl = document.getElementById('totalShops');
     const activeEl = document.getElementById('activeShops');
-    
+
     if (totalEl) totalEl.textContent = totalShops;
     if (activeEl) activeEl.textContent = activeShops;
 
@@ -358,7 +620,7 @@ function renderStats(stats) {
 function renderShops(shops) {
     const tbody = document.getElementById('shopsTable');
     if (!tbody) return;
-    
+
     if (shops.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 60px;"><div class="empty-state"><i class="fas fa-store-slash"></i><p>You haven\'t claimed any shops yet.</p><p style="font-size:12px;color:#94a3b8;margin-top:8px;">Create new shops or claim from "Available Shops" section above.</p></div></td></tr>';
         return;
@@ -397,7 +659,7 @@ function renderShops(shops) {
 function renderServiceCards(cats) {
     const container = document.getElementById('serviceCards');
     if (!container) return;
-    
+
     if (!cats || cats.length === 0) {
         container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No services assigned yet. Contact admin.</p></div>';
         return;
@@ -576,6 +838,36 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ========================================
+// RESET FORM
+// ========================================
+function resetCreateShopForm() {
+    document.getElementById('createShopName').value = '';
+    document.getElementById('createShopType').value = '';
+    document.getElementById('createShopPhone').value = '';
+    document.getElementById('createShopEmail').value = '';
+    document.getElementById('createShopAddress').value = '';
+    document.getElementById('createShopDesc').value = '';
+    document.getElementById('createShopLat').value = '';
+    document.getElementById('createShopLng').value = '';
+    document.getElementById('createShopRange').value = '5000';
+    document.getElementById('createShopCity').value = '';
+    document.getElementById('createShopState').value = '';
+    document.getElementById('createShopPincode').value = '';
+    document.getElementById('createShopManagerCodes').value = '';
+    document.getElementById('createShopLocationCoords').className = 'location-coords';
+    document.getElementById('createShopLocationCoords').textContent = 'Loading your current location...';
+    const cityBox = document.getElementById('createShopCityBox');
+    if (cityBox) cityBox.style.display = 'none';
+    
+    selectedManagerCodes = [currentManager.managerCode];
+    selectedIcon = '🏪';
+    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector('.icon-option[data-icon="🏪"]').classList.add('selected');
+    removeLogo();
+    autoFillLocation();
+}
+
+// ========================================
 // UTILITIES
 // ========================================
 function getCategoryName(id) {
@@ -619,3 +911,5 @@ window.viewShopDetails = viewShopDetails;
 window.editShop = editShop;
 window.openShopModal = openShopModal;
 window.closeShopModal = closeShopModal;
+window.previewLogo = previewLogo;
+window.removeLogo = removeLogo;
