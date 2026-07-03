@@ -1,5 +1,5 @@
 // ========================================
-// FILE: routes/manager.js - COMPLETE CODE WITH CLAIM SYSTEM
+// FILE: routes/manager.js - COMPLETE CODE WITH CLAIM SYSTEM + REDIRECT
 // ========================================
 const express = require('express');
 const router = express.Router();
@@ -7,6 +7,46 @@ const Shop = require('../models/Shop'); // Apna Shop model ka path
 const Manager = require('../models/Manager'); // Apna Manager model
 const Area = require('../models/Area'); // Apna Area model
 const authManager = require('../middleware/authManager'); // Middleware
+
+// ========================================
+// ✅ ROUTE 0: OLD LINK REDIRECT HANDLER - NAYA ADD KIYA
+// /shop-dashboard.html?shopId=xxx ko pakdo aur sahi template pe bhejo
+// ========================================
+router.get('/shop-dashboard.html', async (req, res) => {
+    try {
+        const shopId = req.query.shopId;
+        
+        if (!shopId) {
+            return res.status(400).send(`
+                <h1>Error: Shop ID missing</h1>
+                <p>Please provide shopId in URL</p>
+            `);
+        }
+
+        // DB se shop nikalo
+        const shop = await Shop.findById(shopId).lean();
+        
+        if (!shop) {
+            return res.status(404).send(`
+                <h1>Shop Not Found</h1>
+                <p>No shop exists with ID: ${shopId}</p>
+            `);
+        }
+
+        // shopType nikalo
+        const shopType = shop.serviceType || shop.shopType || 'common';
+        
+        // Sahi template pe redirect kar do
+        const redirectUrl = `/shop-templates/${shopType}/dashboard.html?shopId=${shopId}`;
+        console.log('🔄 Redirecting old link:', req.originalUrl, '->', redirectUrl);
+        
+        return res.redirect(301, redirectUrl); // 301 = Permanent redirect
+        
+    } catch (err) {
+        console.error('❌ Dashboard redirect error:', err);
+        return res.status(500).send('Server error: ' + err.message);
+    }
+});
 
 // ✅ ROUTE 1: Manager ke CLAIMED shops - UPDATED FOR CLAIM SYSTEM
 router.get('/manager/shops', authManager, async (req, res) => {
