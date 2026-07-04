@@ -4,33 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Shop - SAMANLIVE</title>
+    <link rel="stylesheet" href="/local-market/assets/css/common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); min-height: 100vh; padding: 20px; }
-       .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); overflow: hidden; }
-       .header { padding: 20px; border-bottom: 2px solid #f1f5f9; display: flex; align-items: center; gap: 16px; }
-       .header h1 { margin: 0; font-size: 22px; color: #1e293b; }
-       .back-btn { background: #f1f5f9; border: none; padding: 10px 14px; border-radius: 10px; cursor: pointer; }
-       .form-body { padding: 24px; }
-       .form-group { margin-bottom: 20px; }
-       .form-group label { display: block; font-weight: 700; color: #334155; margin-bottom: 8px; font-size: 14px; }
-       .form-group input,.form-group textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; box-sizing: border-box; }
-       .form-group input:focus,.form-group textarea:focus { outline: none; border-color: #10b981; }
-       .upload-wrap { display: flex; gap: 20px; margin-bottom: 20px; }
-       .upload-box { flex: 1; text-align: center; }
-       .upload-box img { width: 100%; height: 150px; object-fit: cover; border-radius: 12px; border: 2px dashed #cbd5e1; margin-bottom: 8px; }
-       .upload-box.logo-preview { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 8px; }
-       .btn-upload { background: #f1f5f9; border: 2px solid #e2e8f0; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 700; width: 100%; }
-       .btn-save { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 14px 28px; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; width: 100%; }
-       .btn-save:hover { transform: translateY(-2px); }
-       .loader { display: none; text-align: center; padding: 40px; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+      .container { max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); overflow: hidden; }
+      .header { padding: 20px; border-bottom: 2px solid #f1f5f9; display: flex; align-items: center; gap: 16px; }
+      .header h1 { margin: 0; font-size: 22px; color: #1e293b; }
+      .back-btn { background: #f1f5f9; border: none; padding: 10px 14px; border-radius: 10px; cursor: pointer; }
+      .form-body { padding: 24px; }
+      .form-group { margin-bottom: 20px; }
+      .form-group label { display: block; font-weight: 700; color: #334155; margin-bottom: 8px; font-size: 14px; }
+      .form-group input,.form-group textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; box-sizing: border-box; }
+      .form-group input:focus,.form-group textarea:focus { outline: none; border-color: #10b981; }
+      .upload-wrap { display: flex; gap: 20px; margin-bottom: 20px; }
+      .upload-box { flex: 1; text-align: center; }
+      .upload-box img { width: 100%; height: 150px; object-fit: cover; border-radius: 12px; border: 2px dashed #cbd5e1; margin-bottom: 8px; }
+      .upload-box.logo-preview { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 8px; }
+      .btn-upload { background: #f1f5f9; border: 2px solid #e2e8f0; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 700; width: 100%; }
+      .btn-save { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 14px 28px; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; width: 100%; }
+      .loader { display: none; text-align: center; padding: 40px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <button class="back-btn" onclick="history.back()"><i class="fa fa-arrow-left"></i></button>
-            <h1><i class="fa fa-edit"></i> Edit Shop Profile</h1>
+            <h1 id="pageTitle"><i class="fa fa-edit"></i> Edit Shop Profile</h1>
         </div>
 
         <div class="loader" id="loader"><i class="fa fa-spinner fa-spin" style="font-size:32px;"></i></div>
@@ -53,22 +53,22 @@
 
             <div class="form-group">
                 <label>Shop Name *</label>
-                <input type="text" id="shopName" placeholder="Enter Shop Name">
+                <input type="text" id="shopName">
             </div>
 
             <div class="form-group">
                 <label>Owner Name *</label>
-                <input type="text" id="ownerName" placeholder="Enter Owner Name">
+                <input type="text" id="ownerName">
             </div>
 
             <div class="form-group">
                 <label>Shop Address</label>
-                <textarea id="shopAddress" rows="3" placeholder="Full Shop Address"></textarea>
+                <textarea id="shopAddress" rows="3"></textarea>
             </div>
 
             <div class="form-group">
                 <label>Shop Description</label>
-                <textarea id="shopDesc" rows="3" placeholder="About your shop"></textarea>
+                <textarea id="shopDesc" rows="3"></textarea>
             </div>
 
             <button class="btn-save" onclick="saveShop()"><i class="fa fa-save"></i> Save Changes</button>
@@ -81,8 +81,6 @@ const shopId = urlParams.get('shopId');
 let currentShop = {};
 let coverFile = null;
 let logoFile = null;
-
-if(!shopId) alert('Invalid Shop');
 
 document.getElementById('coverInput').onchange = e => {
     coverFile = e.target.files[0];
@@ -99,6 +97,7 @@ async function loadShop(){
         const res = await fetch(`/api/local-market/shops/${shopId}`);
         currentShop = await res.json();
 
+        document.getElementById('pageTitle').innerHTML = `<i class="fa fa-edit"></i> Edit ${currentShop.shopName}`;
         document.getElementById('shopName').value = currentShop.shopName || '';
         document.getElementById('ownerName').value = currentShop.ownerName || '';
         document.getElementById('shopAddress').value = currentShop.address || '';
@@ -115,7 +114,7 @@ async function loadShop(){
 }
 
 async function saveShop(){
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('userToken');
     if(!token) return alert('Login required');
 
     const formData = new FormData();
@@ -135,7 +134,8 @@ async function saveShop(){
         const data = await res.json();
         if(res.ok){
             alert('Shop Updated Successfully!');
-            window.location.href = `/shop-template/cloth/dashboard.html?shopId=${shopId}`;
+            // Wapas usi template ke dashboard pe bhej dega
+            window.location.href = `/local-market/shop-templates/${currentShop.shopType}/dashboard.html?shopId=${shopId}`;
         } else {
             alert(data.message || 'Update failed');
         }

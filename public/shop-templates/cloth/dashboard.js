@@ -304,7 +304,7 @@ function loadItems(items) {
 }
 
 document.getElementById('addProductBtn').onclick = function() { window.location.href = `/shop-templates/cloth/product-form.html?shopId=${shopId}`; };
-function editShopInfo() { window.location.href = `/local-market/edit-shop.html?shopId=${shopId}`; }
+function editShopInfo() { window.location.href = `/local-market/shop/edit-shop.html?shopId=${shopId}`; }
 function loadOrders() { window.location.href = `/local-market/orders.html?shopId=${shopId}`; }
 function editItem(itemId) { window.location.href = `/shop-templates/cloth/product-form.html?shopId=${shopId}&itemId=${itemId}`; }
 
