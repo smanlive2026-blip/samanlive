@@ -1,33 +1,146 @@
-const express = require('express');
-const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const Product = require('../../../../models/Product'); // 4 baar upar jana padega
+const API = '/api/library';
+let allProducts = [];
+let allCategories = [];
+let selectedCategory = '';
 
-const storage = multer.diskStorage({
-    destination: './public/local-market/assets/library/', // PHOTOS YAHI SAVE HONGI
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage });
-
-router.get('/products', async (req, res) => {
-    const page = parseInt(req.query.page) || 1; const limit = parseInt(req.query.limit) || 50;
-    const search = req.query.search || ''; const category = req.query.category || '';
-    let query = {}; if(search) query.name = { $regex: search, $options: 'i' }; if(category) query.category = category;
-    const products = await Product.find(query).skip((page-1)*limit).limit(limit);
-    const total = await Product.countDocuments(query);
-    res.json({ products, total });
+document.addEventListener('DOMContentLoaded', () => {
+    loadCategories();
+    loadProducts();
+    document.getElementById('searchInput').addEventListener('input', handleSearch);
 });
 
-router.get('/categories', async (req, res) => {
-    const categories = await Product.aggregate([{ $group: { _id: "$category", count: { $sum: 1 }}}]);
-    res.json(categories.map(c => ({ _id: c._id, name: c._id, count: c.count })));
-});
+// ========== LOAD CATEGORIES ==========
+async function loadCategories() {
+    try {
+        const res = await fetch(`${API}/categories`);
+        allCategories = await res.json();
+        renderCategories();
+    } catch(err) {
+        console.error(err);
+    }
+}
 
-router.post('/add-product', upload.array('photos', 10), async (req, res) => {
-    const photos = req.files.map(f => `/local-market/assets/library/${f.filename}`);
-    const newProduct = new Product({ name: req.body.name, category: req.body.category, brand: req.body.brand, photos });
-    await newProduct.save(); res.json({ success: true });
-});
+function renderCategories() {
+    const container = document.getElementById('categoryList');
+    container.innerHTML = `<div class="category-item">
+        <div class="category-header ${selectedCategory === ''? 'active' : ''}" onclick="filterByCategory('')">
+            All Categories <span>${allCategories.reduce((a,b)=>a+b.count,0)}</span>
+        </div>
+    </div>` +
+    allCategories.map(cat => `
+        <div class="category-item">
+            <div class="category-header ${selectedCategory === cat._id? 'active' : ''}" onclick="filterByCategory('${cat._id}')">
+                ${cat.name} <span>${cat.count}</span>
+            </div>
+        </div>
+    `).join('');
+}
 
-module.exports = router;
+window.filterByCategory = (catId) => {
+    selectedCategory = catId;
+    renderCategories();
+    loadProducts();
+}
+
+// ========== LOAD PRODUCTS ==========
+async function loadProducts() {
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = `<div class="loader">Loading...</div>`;
+
+    try {
+        const search = document.getElementById('searchInput').value;
+        const url = `${API}/products?search=${search}&category=${selectedCategory}&limit=100`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        allProducts = data.products || [];
+        document.getElementById('totalCount').textContent = `${data.total} Products`;
+        renderProducts();
+    } catch(err) {
+        grid.innerHTML = `<div class="loader" style="color:red;">Error loading</div>`;
+    }
+}
+
+function renderProducts() {
+    const grid = document.getElementById('productGrid');
+    if(allProducts.length === 0) {
+        grid.innerHTML = `<div class="loader">No products found 😔</div>`;
+        return;
+    }
+
+    grid.innerHTML = allProducts.map(p => `
+        <div class="product-card">
+            <img src="${p.image || 'https://via.placeholder.com/240x160'}" onerror="this.src='https://via.placeholder.com/240x160'">
+            <h3 title="${p.name}">${p.name}</h3>
+            <p>${p.brand || ''} • ${p.categoryId?.name || ''}</p>
+            <span class="photo-count">${p.photos?.length || 1} Photos</span>
+            <button onclick="selectProduct('${p._id}')">Select for Shop</button>
+        </div>
+    `).join('');
+}
+
+function handleSearch() {
+    clearTimeout(window.searchTimeout);
+    window.searchTimeout = setTimeout(loadProducts, 500);
+}
+
+// ========== ADD/EDIT MASTER PRODUCT ==========
+window.openAddProductModal = async () => {
+    document.getElementById('libModalTitle').textContent = 'Add Master Product';
+    document.getElementById('addProductForm').reset();
+    document.getElementById('libProductId').value = '';
+
+    // Load categories in dropdown
+    const catSelect = document.getElementById('prodCategory');
+    const res = await fetch('/api/categories'); // tumhara main category api
+    const cats = await res.json();
+    catSelect.innerHTML = '<option value="">Select Category</option>' + cats.map(c=>`<option value="${c._id}">${c.name}</option>`).join('');
+
+    document.getElementById('addProductModal').style.display = 'flex';
+}
+
+window.closeAddProductModal = () => {
+    document.getElementById('addProductModal').style.display = 'none';
+}
+
+window.saveLibraryProduct = async () => {
+    const form = document.getElementById('addProductForm');
+    const formData = new FormData();
+    formData.append('name', document.getElementById('prodName').value);
+    formData.append('category', document.getElementById('prodCategory').value);
+    formData.append('brand', document.getElementById('prodBrand').value);
+    formData.append('description', document.getElementById('prodDesc').value);
+
+    const files = document.getElementById('prodPhotos').files;
+    for(let i=0; i<files.length; i++) {
+        formData.append('photos', files[i]);
+    }
+
+    try {
+        const res = await fetch(`${API}/add-product`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        if(data.success) {
+            alert('Master Product Added!');
+            closeAddProductModal();
+            loadProducts();
+            loadCategories();
+        }
+    } catch(err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+// ========== SELECT PRODUCT FOR ADMIN ==========
+window.selectProduct = (productId) => {
+    const product = allProducts.find(p => p._id === productId);
+    if(!product) return;
+
+    // Parent window ko message bhejo - Admin page sun raha hai
+    window.parent.postMessage({
+        type: 'SELECT_MASTER_PRODUCT',
+        product: product
+    }, '*');
+}
