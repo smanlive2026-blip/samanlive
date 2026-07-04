@@ -11,20 +11,37 @@
 </head>
 <body>
     <div class="shop-container">
-        <div class="shop-header">
-            <div class="header-left">
-                <button class="back-btn" onclick="window.history.back()">
-                    <i class="fa fa-arrow-left"></i>
+        <!-- SHOP COVER + PROFILE -->
+        <div class="shop-profile-card">
+            <div class="cover-photo-wrap">
+                <img id="shopCover" src="https://via.placeholder.com/1400x250/f1f5f9/94a3b8?text=Add+Shop+Cover" alt="Cover">
+                <button class="btn-upload-cover" onclick="document.getElementById('coverUpload').click()">
+                    <i class="fa fa-camera"></i>
                 </button>
-                <div class="shop-title-wrap">
-                    <h1 id="shopName">Loading...</h1>
-                    <p class="shop-type-label">
-                        Cloth Store 
-                        <span id="locationTypeBadge" class="badge-type">Fixed</span>
-                    </p>
+                <input type="file" id="coverUpload" accept="image/*" style="display:none">
+            </div>
+            <div class="shop-header">
+                <div class="header-left">
+                    <div class="shop-logo-wrap">
+                        <img id="shopLogo" src="https://ui-avatars.com/api/?name=Shop" alt="Logo">
+                        <button class="btn-upload-logo" onclick="document.getElementById('logoUpload').click()">
+                            <i class="fa fa-camera"></i>
+                        </button>
+                        <input type="file" id="logoUpload" accept="image/*" style="display:none">
+                    </div>
+                    <div class="shop-title-wrap">
+                        <h1 id="shopName">Loading...</h1>
+                        <p class="shop-type-label">
+                            Owner: <span id="ownerName">-</span> • 
+                            <span id="locationTypeBadge" class="badge-type">Fixed</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-secondary" onclick="editShopInfo()"><i class="fa fa-edit"></i> Edit Profile</button>
+                    <span class="badge" id="shopStatus">Active</span>
                 </div>
             </div>
-            <span class="badge" id="shopStatus">Active</span>
         </div>
 
         <div class="stats-grid">
@@ -34,6 +51,7 @@
             <div class="stat-card"><div class="stat-icon">⭐</div><h3 id="shopRating">4.5</h3><p>Shop Rating</p></div>
         </div>
 
+        <!-- MAP CHOTA KAR DIYA -->
         <div class="map-container">
             <div class="map-header">
                 <h3><i class="fa fa-map-marker-alt"></i> Shop Location</h3>
@@ -41,7 +59,7 @@
                     <i class="fa fa-edit"></i> Edit Location
                 </button>
             </div>
-            <div id="shopMapContainer"></div>
+            <div id="shopMapContainer"></div> <!-- Height 180px in CSS -->
             <p class="map-info">
                 <i class="fa fa-info-circle"></i> 
                 <span id="locationUpdateText">Fixed Location</span> • 
@@ -52,7 +70,6 @@
         <div class="action-bar">
             <button class="btn btn-primary" id="addProductBtn"><i class="fa fa-plus"></i> Add Garment</button>
             <button class="btn btn-secondary" onclick="loadOrders()"><i class="fa fa-list"></i> View Orders</button>
-            <button class="btn btn-secondary" onclick="editShopInfo()"><i class="fa fa-edit"></i> Edit Shop</button>
             <button class="btn btn-warning" onclick="openManagersModal()"><i class="fa fa-users"></i> Managers (<span id="assignedManagerCount">0</span>)</button>
         </div>
 
@@ -60,69 +77,34 @@
             <h3><i class="fa fa-tshirt"></i> Garments</h3>
             <div class="table-responsive">
                 <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Category</th>
-                            <th>Size</th>
-                            <th>Color</th>
-                            <th>Fabric</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="productTableBody">
-                        <tr>
-                            <td colspan="8">
-                                <div class="empty-state">
-                                    <i class="fa fa-tshirt"></i>
-                                    <h4>No Garments Yet</h4>
-                                    <p>Start by adding your first garment to the shop</p>
-                                    <button class="btn btn-primary" onclick="document.getElementById('addProductBtn').click()">
-                                        <i class="fa fa-plus"></i> Add First Garment
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <thead><tr><th>Item</th><th>Category</th><th>Size</th><th>Color</th><th>Fabric</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
+                    <tbody id="productTableBody"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- LOCATION MODAL -->
+    <!-- LOCATION MODAL - CURRENT LOCATION WALA -->
     <div id="locationModal" class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-header">
-                <h2><i class="fa fa-location-dot"></i> Update Shop Location</h2>
-                <button onclick="closeLocationModal()">×</button>
-            </div>
+            <div class="modal-header"><h2><i class="fa fa-location-dot"></i> Update Shop Location</h2><button onclick="closeLocationModal()">×</button></div>
             <div class="modal-body">
                 <label class="section-title">Location Type *</label>
                 <div class="location-type-selector">
-                    <button type="button" class="type-btn active" data-type="fixed" onclick="setLocationType('fixed')">
-                        <i class="fa fa-store"></i> Fixed Shop
-                    </button>
-                    <button type="button" class="type-btn" data-type="dynamic" onclick="setLocationType('dynamic')">
-                        <i class="fa fa-truck-moving"></i> Mobile Shop
-                    </button>
+                    <button type="button" class="type-btn active" data-type="fixed" onclick="setLocationType('fixed')"><i class="fa fa-store"></i> Fixed Shop</button>
+                    <button type="button" class="type-btn" data-type="dynamic" onclick="setLocationType('dynamic')"><i class="fa fa-truck-moving"></i> Mobile Shop</button>
                 </div>
 
                 <div id="fixedFields">
-                    <label>Set on Map</label>
+                    <label>Set on Map - Your Current Location</label>
                     <div id="locationPickerMap"></div>
                     <small>Pin ko drag karke exact location set kare</small>
                 </div>
 
                 <div id="dynamicFields" style="display:none;">
                     <label>Live Tracking</label>
-                    <button class="btn btn-live" onclick="startLiveLocation()">
-                        <i class="fa fa-satellite-dish"></i> Start Live Location
-                    </button>
-                    <button class="btn btn-stop" onclick="stopLiveLocation()">
-                        <i class="fa fa-stop-circle"></i> Stop Live Location
-                    </button>
+                    <button class="btn btn-live" onclick="startLiveLocation()"><i class="fa fa-satellite-dish"></i> Start Live Location</button>
+                    <button class="btn btn-stop" onclick="stopLiveLocation()"><i class="fa fa-stop-circle"></i> Stop Live Location</button>
                     <p><b>Current:</b> <span id="currentLatLng">Not Started</span></p>
                 </div>
 
@@ -139,20 +121,7 @@
     </div>
 
     <!-- MANAGER MODAL -->
-    <div id="managersModal" class="modal-overlay">
-        <div class="modal-box sm">
-            <div class="modal-header">
-                <h2><i class="fa fa-users"></i> Assigned Managers</h2>
-                <button onclick="closeManagersModal()">×</button>
-            </div>
-            <div id="managersListContainer" class="modal-body">
-                <div style="text-align:center; padding:40px;">
-                    <i class="fa fa-spinner fa-spin" style="font-size:32px; color:#94a3b8;"></i>
-                    <p style="color:#64748b; margin-top:12px;">Loading managers...</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div id="managersModal" class="modal-overlay"><div class="modal-box sm"><div class="modal-header"><h2><i class="fa fa-users"></i> Assigned Managers</h2><button onclick="closeManagersModal()">×</button></div><div id="managersListContainer" class="modal-body"></div></div></div>
 
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 

@@ -30,7 +30,12 @@ async function loadShopData() {
 
         currentShop = shop;
         document.getElementById('shopName').innerText = shop.shopName;
+        document.getElementById('ownerName').innerText = shop.ownerName || 'Owner';
         
+        // Profile + Cover set
+        if(shop.logo) document.getElementById('shopLogo').src = shop.logo;
+        if(shop.coverPhoto) document.getElementById('shopCover').src = shop.coverPhoto;
+
         const statusEl = document.getElementById('shopStatus');
         statusEl.innerText = shop.status.toUpperCase();
         statusEl.className = 'badge ' + shop.status;
@@ -67,6 +72,7 @@ async function loadShopData() {
         initShopMap();
         startDynamicLocationTracking();
         loadShopManagers();
+        initUploads(); // Photo upload init
 
     } catch (err) {
         console.error(err);
@@ -75,11 +81,47 @@ async function loadShopData() {
     }
 }
 
+// ===== PHOTO UPLOAD =====
+function initUploads(){
+    document.getElementById('logoUpload').onchange = e => uploadPhoto(e, 'logo');
+    document.getElementById('coverUpload').onchange = e => uploadPhoto(e, 'coverPhoto');
+}
+
+async function uploadPhoto(e, field){
+    const file = e.target.files[0];
+    if(!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('field', field);
+    
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/local-market/shops/${shopId}/upload`, {
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + token},
+            body: formData
+        });
+        const data = await res.json();
+        if(data.success){
+            if(field == 'logo') document.getElementById('shopLogo').src = data.url;
+            if(field == 'coverPhoto') document.getElementById('shopCover').src = data.url;
+            alert('Photo Updated!');
+        }
+    } catch(err){ alert('Upload failed: ' + err.message); }
+}
+
 // ===== LOCATION MODAL FUNCTIONS =====
 function openLocationModal(){
     document.getElementById('locationModal').style.display = 'flex';
     setLocationType(locationType);
-    setTimeout(initPickerMap, 300);
+    // Modal khulte hi current location le
+    navigator.geolocation.getCurrentPosition(pos => {
+        let lat = pos.coords.latitude, lng = pos.coords.longitude;
+        initPickerMap(lat, lng); 
+    }, ()=> {
+        let [lng, lat] = currentShop.location?.coordinates || [72.8311, 21.1702];
+        initPickerMap(lat, lng);
+    });
 }
 function closeLocationModal(){
     document.getElementById('locationModal').style.display = 'none';
@@ -94,16 +136,11 @@ function setLocationType(type){
     document.getElementById('dynamicFields').style.display = type=='dynamic' ? 'block' : 'none';
 }
 
-function initPickerMap(){
+function initPickerMap(lat, lng){
     if(pickerMap) pickerMap.remove();
-    const [lng, lat] = currentShop.location?.coordinates || [72.8311, 21.1702];
-    pickerMap = L.map('locationPickerMap').setView([lat, lng], 15);
+    pickerMap = L.map('locationPickerMap').setView([lat, lng], 16);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pickerMap);
     pickerMarker = L.marker([lat, lng], {draggable: true}).addTo(pickerMap);
-    pickerMarker.on('dragend', e => {
-        let latlng = e.target.getLatLng();
-        console.log("New Pin:", latlng.lat, latlng.lng);
-    })
 }
 
 function startLiveLocation(){
@@ -139,7 +176,6 @@ async function saveLocation(){
         });
         if(res.ok){
             alert("Location Updated Successfully!");
-            locationType = locationType;
             loadShopData();
             closeLocationModal();
         }
@@ -197,6 +233,7 @@ function initShopMap() {
     const [lng, lat] = currentShop.location.coordinates;
     const range = currentShop.range || 5000;
 
+    if(shopMap) shopMap.remove();
     shopMap = L.map('shopMapContainer').setView([lat, lng], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(shopMap);
 
@@ -207,25 +244,9 @@ function initShopMap() {
     rangeCircle = L.circle([lat, lng], {color: '#10b981', fillColor: '#10b981', fillOpacity: 0.1, radius: range}).addTo(shopMap);
 }
 
-function expandMap() {
-    const modal = document.createElement('div');
-    modal.id = 'mapModal';
-    modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center;`;
-    modal.innerHTML = `<div style="position: relative; width: 95%; max-width: 1000px; height: 80%;"><button onclick="closeMapModal()" style="position: absolute; top: -40px; right: 0; background: white; border: none; font-size: 30px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer;">×</button><div id="expandedMap" style="width: 100%; height: 100%; border-radius: 12px;"></div></div>`;
-    document.body.appendChild(modal);
-    const [lng, lat] = currentShop.location.coordinates;
-    const expandedMap = L.map('expandedMap').setView([lat, lng], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(expandedMap);
-    L.marker([lat, lng]).addTo(expandedMap).bindPopup(`<b>${currentShop.shopName}</b>`).openPopup();
-    L.circle([lat, lng], {color: '#10b981', fillOpacity: 0.15, radius: currentShop.range}).addTo(expandedMap);
-    modal.onclick = (e) => { if (e.target === modal) closeMapModal(); };
-}
-function closeMapModal() { document.getElementById('mapModal')?.remove(); }
-
 function startDynamicLocationTracking() {
     if (locationInterval) clearInterval(locationInterval);
     if (currentShop.locationType !== 'dynamic') return;
-    console.log('🚶 Starting dynamic location tracking');
     updateShopLocation();
     locationInterval = setInterval(updateShopLocation, 30000);
 }
