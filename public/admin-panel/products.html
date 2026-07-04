@@ -180,7 +180,7 @@ tr:hover { background: #f8fafc; }
             <h2><i class="fas fa-book-open"></i> Product Library</h2>
             <button class="close-btn" onclick="closeProductLibrary()">×</button>
         </div>
-        <iframe src="/local-market/library/index.html" style="flex:1; width:100%; border:none;"></iframe>
+        <iframe id="libraryFrame" src="/local-market/library/index.html" style="flex:1; width:100%; border:none;"></iframe>
     </div>
 </div>
 
@@ -416,7 +416,7 @@ window.filterByStock = () => {
     renderProducts(window.allProducts.filter(p => p.stock <= 0));
 };
 
-// ========== PRODUCT LIBRARY ==========
+// ========== PRODUCT LIBRARY CONNECTION ==========
 window.openProductLibrary = () => {
     document.getElementById('libraryPopup').classList.add('active');
 };
@@ -424,14 +424,16 @@ window.closeProductLibrary = () => {
     document.getElementById('libraryPopup').classList.remove('active');
 };
 
+// YE SUNTA HAI LIBRARY SE DATA
 window.addEventListener('message', (event) => {
     if(event.data.type === 'ADD_FROM_LIBRARY') {
         const product = event.data;
         showAddProductModal();
-        document.getElementById('productName').value = product.name;
-        document.getElementById('productImage').value = product.photos[0] || '';
+        document.getElementById('productName').value = product.name || '';
+        document.getElementById('productImage').value = product.photos?.[0] || '';
+        document.getElementById('productDesc').value = product.description || '';
         previewProductImage();
-        showToast(`Selected: ${product.name}`, 'success');
+        showToast(`✅ Selected: ${product.name}`, 'success');
         closeProductLibrary();
     }
 });
