@@ -9,18 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="dashboard.css">
     <style>
-        .btn-edit-location {
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            margin-left: 8px;
-            transition: all 0.2s;
-        }
-        .btn-edit-location:hover { background: #e2e8f0; transform: translateY(-1px); }
+        /* SIRF MODAL + MAP KI CSS RAKHI. BUTTON WALI HATA DI */
         .map-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .map-header h3 { margin: 0; display: flex; align-items: center; gap: 8px; }
         #locationPickerMap { height: 250px; border-radius: 10px; margin: 10px 0; }
@@ -89,7 +78,7 @@
             <div class="map-header">
                 <h3><i class="fa fa-map-marker-alt"></i> Shop Location</h3>
                 <div>
-                    <button class="btn-edit-location" onclick="toggleMap()">
+                    <button class="btn-edit-location" id="mapToggleBtn" onclick="toggleMap()"> <!-- ID ADD KI -->
                         <i class="fa fa-eye" id="mapToggleIcon"></i> <span id="mapToggleText">Hide</span>
                     </button>
                     <button class="btn-edit-location" onclick="openLocationModal()">
@@ -162,6 +151,14 @@
 
     <!-- MANAGER MODAL -->
     <div id="managersModal" class="modal-overlay"><div class="modal-box sm"><div class="modal-header"><h2><i class="fa fa-users"></i> Assigned Managers</h2><button onclick="closeManagersModal()">×</button></div><div id="managersListContainer" class="modal-body"></div></div></div>
+
+    <!-- CONTACT MODAL -->
+    <div id="managerContactModal" class="modal-overlay">
+        <div class="modal-box sm">
+            <div class="modal-header"><h2><i class="fa fa-phone"></i> Contact Manager</h2><button onclick="closeContactModal()">×</button></div>
+            <div id="managerContactBody" class="modal-body"></div>
+        </div>
+    </div>
 
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 

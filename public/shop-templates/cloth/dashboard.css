@@ -196,13 +196,13 @@ body {
     gap: 8px;
 }
 
-/* ===== BUTTONS WITH SOLID COLOR ===== */
-#mapToggleBtn { /* Hide/Show button - PURPLE */
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 10px;
+/* ===== BUTTONS WITH SOLID COLOR - FORCE COLOR ===== */
+#mapToggleBtn { 
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 16px !important;
+    border-radius: 10px !important;
     cursor: pointer;
     font-weight: 700;
     font-size: 13px;
@@ -216,14 +216,15 @@ body {
 #mapToggleBtn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(139,92,246,0.5);
+    background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
 }
 
-.btn-edit-location { /* Edit Location button - BLUE */
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 10px;
+.btn-edit-location { 
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 16px !important;
+    border-radius: 10px !important;
     cursor: pointer;
     font-weight: 700;
     font-size: 13px;
@@ -237,6 +238,7 @@ body {
 .btn-edit-location:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(59,130,246,0.5);
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
 }
 
 #shopMapContainer, #locationPickerMap {
