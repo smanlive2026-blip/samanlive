@@ -8,6 +8,39 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .btn-edit-location {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 8px;
+            transition: all 0.2s;
+        }
+        .btn-edit-location:hover { background: #e2e8f0; transform: translateY(-1px); }
+        .map-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .map-header h3 { margin: 0; display: flex; align-items: center; gap: 8px; }
+        #locationPickerMap { height: 250px; border-radius: 10px; margin: 10px 0; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; }
+        .modal-box { background: white; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #e2e8f0; }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: flex-end; }
+        .location-type-selector { display: flex; gap: 12px; margin: 12px 0; }
+        .type-btn { flex: 1; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; background: white; cursor: pointer; font-weight: 600; }
+        .type-btn.active { border-color: #10b981; background: #ecfdf5; color: #059669; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+        .form-group input { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; }
+        .btn { padding: 12px 20px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        .btn-secondary { background: #f1f5f9; color: #334155; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-live { background: #10b981; color: white; width: 100%; margin-bottom: 8px; }
+        .btn-stop { background: #ef4444; color: white; width: 100%; }
+    </style>
 </head>
 <body>
     <div class="shop-container">
@@ -51,20 +84,28 @@
             <div class="stat-card"><div class="stat-icon">⭐</div><h3 id="shopRating">4.5</h3><p>Shop Rating</p></div>
         </div>
 
-        <!-- MAP CHOTA KAR DIYA -->
+        <!-- MAP COLLAPSIBLE KAR DIYA -->
         <div class="map-container">
             <div class="map-header">
                 <h3><i class="fa fa-map-marker-alt"></i> Shop Location</h3>
-                <button class="btn-edit-location" onclick="openLocationModal()">
-                    <i class="fa fa-edit"></i> Edit Location
-                </button>
+                <div>
+                    <button class="btn-edit-location" onclick="toggleMap()">
+                        <i class="fa fa-eye" id="mapToggleIcon"></i> <span id="mapToggleText">Hide</span>
+                    </button>
+                    <button class="btn-edit-location" onclick="openLocationModal()">
+                        <i class="fa fa-edit"></i> Edit Location
+                    </button>
+                </div>
             </div>
-            <div id="shopMapContainer"></div> <!-- Height 180px in CSS -->
-            <p class="map-info">
-                <i class="fa fa-info-circle"></i> 
-                <span id="locationUpdateText">Fixed Location</span> • 
-                <span id="rangeText">Delivery Range: 5 KM</span>
-            </p>
+            
+            <div id="mapWrapper">
+                <div id="shopMapContainer"></div> <!-- Height 180px in CSS -->
+                <p class="map-info">
+                    <i class="fa fa-info-circle"></i> 
+                    <span id="locationUpdateText">Fixed Location</span> • 
+                    <span id="rangeText">Delivery Range: 5 KM</span>
+                </p>
+            </div>
         </div>
 
         <div class="action-bar">
@@ -84,7 +125,7 @@
         </div>
     </div>
 
-    <!-- LOCATION MODAL - CURRENT LOCATION WALA -->
+    <!-- LOCATION MODAL -->
     <div id="locationModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header"><h2><i class="fa fa-location-dot"></i> Update Shop Location</h2><button onclick="closeLocationModal()">×</button></div>
@@ -96,9 +137,8 @@
                 </div>
 
                 <div id="fixedFields">
-                    <label>Set on Map - Your Current Location</label>
+                    <label>Set on Map - Pin ko drag karke location set kare</label>
                     <div id="locationPickerMap"></div>
-                    <small>Pin ko drag karke exact location set kare</small>
                 </div>
 
                 <div id="dynamicFields" style="display:none;">

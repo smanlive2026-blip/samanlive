@@ -11,10 +11,31 @@ let pickerMap = null;
 let pickerMarker = null;
 let locationType = 'fixed';
 let liveWatchId = null;
+let isMapVisible = true; // NAYA: Map visible hai ya nahi
 
 if (!shopId) {
     alert('Invalid shop link');
     window.location.href = '/local-market/create-shop.html';
+}
+
+// ===== NAYA FUNCTION: MAP HIDE/SHOW =====
+function toggleMap() {
+    const wrapper = document.getElementById('mapWrapper');
+    const icon = document.getElementById('mapToggleIcon');
+    const text = document.getElementById('mapToggleText');
+    
+    isMapVisible = !isMapVisible;
+    
+    if(isMapVisible){
+        wrapper.style.display = 'block';
+        icon.className = 'fa fa-eye';
+        text.innerText = 'Hide';
+        setTimeout(() => { if(shopMap) shopMap.invalidateSize(); }, 100); // map reload
+    } else {
+        wrapper.style.display = 'none';
+        icon.className = 'fa fa-eye-slash';
+        text.innerText = 'Show';
+    }
 }
 
 async function loadShopData() {
@@ -95,7 +116,7 @@ async function uploadPhoto(e, field){
     formData.append('field', field);
     
     try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('userToken'); // FIX: userToken
         const res = await fetch(`/api/local-market/shops/${shopId}/upload`, {
             method: 'POST',
             headers: {'Authorization': 'Bearer ' + token},
@@ -157,6 +178,7 @@ function stopLiveLocation(){
     document.getElementById('currentLatLng').innerText = 'Stopped';
 }
 
+// ===== UPDATED: SAVE LOCATION AB ACTUALLY KAAM KAREGA =====
 async function saveLocation(){
     let range = document.getElementById('deliveryRange').value * 1000;
     let address = document.getElementById('shopAddress').value;
@@ -166,9 +188,16 @@ async function saveLocation(){
         let latlng = pickerMarker.getLatLng();
         coords = [latlng.lng, latlng.lat];
     }
+    if(locationType === 'dynamic' && liveWatchId){
+        let latlngText = document.getElementById('currentLatLng').innerText;
+        if(latlngText !== 'Starting...' && latlngText !== 'Stopped'){
+            let [lat, lng] = latlngText.split(', ');
+            coords = [parseFloat(lng), parseFloat(lat)];
+        }
+    }
     
     try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('userToken'); // FIX: userToken
         const res = await fetch(`/api/local-market/shops/${shopId}/update-location`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
@@ -178,6 +207,8 @@ async function saveLocation(){
             alert("Location Updated Successfully!");
             loadShopData();
             closeLocationModal();
+        } else {
+            alert("Failed to save location");
         }
     } catch(err){ alert("Failed to save: " + err.message); }
 }
@@ -272,7 +303,7 @@ function updateShopLocation() {
 
 async function updateShopLocationToServer(lng, lat) {
     try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('userToken'); // FIX: userToken
         if (!token) return;
         await fetch(`/api/local-market/shops/${shopId}/update-location`, {
             method: 'PUT',

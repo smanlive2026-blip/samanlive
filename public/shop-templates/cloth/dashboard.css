@@ -519,3 +519,57 @@ body {
     border-radius: 50%;
     object-fit: cover;
 }
+/* MAP HIDE/SHOW BUTTON */
+#mapWrapper {
+    transition: all 0.3s ease;
+}
+.btn-edit-location {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    margin-left: 8px;
+}
+.btn-edit-location:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59,130,246,0.4);
+}
+
+/* COLOR DOTS FOR CLOTH */
+.color-dot {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #e2e8f0;
+    margin-right: 4px;
+}
+.size-badge {
+    background: #e2e8f0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 4px;
+}
+
+.contact-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+.btn-call { background: #dbeafe; color: #1e40af; }
+.btn-whatsapp { background: #dcfce7; color: #166534; }
