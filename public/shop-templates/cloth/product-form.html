@@ -1,64 +1,118 @@
+<style>
+.modal-content {
+    background: #fff; padding: 24px; border-radius: 16px; width: 95%; max-width: 850px;
+    max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    font-family: 'Poppins', sans-serif;
+}
+.close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; color: #999; }
+.close:hover { color: #000; }
+h2 { margin-bottom: 20px; color: #0d6efd; font-size: 22px; }
+.form-row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.form-group { flex: 1; min-width: 180px; display: flex; flex-direction: column; }
+.form-group label { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #333; }
+.form-group input,.form-group select,.form-group textarea {
+    padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none;
+}
+.form-group input:focus,.form-group select:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.1); }
+.size-row { align-items: center; background: #f8f9fa; padding: 10px; border-radius: 10px; margin-bottom: 10px; }
+.btn { padding: 12px 20px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 15px; }
+.btn-success { background: linear-gradient(90deg, #0d6efd, #0dcaf0); color: #fff; width: 100%; margin-top: 10px; }
+.btn-secondary { background: #e9ecef; color: #333; padding: 8px 14px; font-size: 13px; margin-bottom: 16px; }
+.btn-remove { background: #ff4d4d; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+.section-title { font-size: 16px; font-weight: 700; color: #0d6efd; margin: 20px 0 10px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+input[readonly] { background: #f1f1f1; }
+</style>
+
 <div class="modal-content">
     <span class="close" onclick="closeModal()">&times;</span>
-    <h2 id="formTitle">Add Clothing Item</h2>
-    <form id="productForm">
+    <h2 id="formTitle">Add Clothing Item - SamanLive</h2>
+    <form id="productForm" enctype="multipart/form-data">
         <input type="hidden" id="productId">
+
+        <div class="section-title">1. Basic Details</div>
         <div class="form-row">
-            <div class="form-group">
-                <label>Item Name *</label>
-                <input type="text" id="pName" required>
-            </div>
-            <div class="form-group">
-                <label>Category *</label>
-                <select id="pCategory" required>
-                    <option value="">Select</option>
-                    <option value="men">Men</option>
-                    <option value="women">Women</option>
-                    <option value="kids">Kids</option>
-                    <option value="unisex">Unisex</option>
-                </select>
-            </div>
+            <div class="form-group"><label>Item Name *</label><input type="text" id="pName" required></div>
+            <div class="form-group"><label>Brand</label><input type="text" id="pBrand"></div>
+            <div class="form-group"><label>SKU Code</label><input type="text" id="pSku"></div>
         </div>
         <div class="form-row">
-            <div class="form-group">
-                <label>Size *</label>
-                <select id="pSize" required>
-                    <option value="XS">XS</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                    <option value="Free">Free Size</option>
-                </select>
+            <div class="form-group"><label>Category *</label>
+                <select id="pCategory" required><option value="">Select</option><option>Men</option><option>Women</option><option>Kids</option><option>Unisex</option></select>
             </div>
-            <div class="form-group">
-                <label>Color *</label>
-                <input type="text" id="pColor" required>
+            <div class="form-group"><label>Sub-Category</label><input type="text" id="pSubCategory" placeholder="Shirt, Jeans, Saree"></div>
+            <div class="form-group"><label>Fabric</label><input type="text" id="pFabric"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Gender</label>
+                <select id="pGender"><option>Unisex</option><option>Male</option><option>Female</option></select>
             </div>
-            <div class="form-group">
-                <label>Fabric</label>
-                <input type="text" id="pFabric" placeholder="Cotton, Polyester">
+            <div class="form-group"><label>Occasion</label><input type="text" id="pOccasion" placeholder="Casual, Party, Office"></div>
+            <div class="form-group"><label>Season</label><input type="text" id="pSeason" placeholder="Summer, Winter"></div>
+        </div>
+
+        <div class="section-title">2. Price & Tax</div>
+        <div class="form-row">
+            <div class="form-group"><label>MRP *</label><input type="number" id="pMrp" required></div>
+            <div class="form-group"><label>Selling Price *</label><input type="number" id="pPrice" required></div>
+            <div class="form-group"><label>Discount %</label><input type="text" id="pDiscount" readonly></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>GST %</label><input type="number" id="pGst" placeholder="12, 18"></div>
+            <div class="form-group"><label>HNS Code</label><input type="text" id="pHsn" placeholder="6109.10"></div>
+        </div>
+
+        <div class="section-title">3. Images & Media</div>
+        <div class="form-group"><label>Product Images * <small>Max 5, pehli cover</small></label>
+            <input type="file" id="pImages" accept="image/*" multiple required>
+            <div id="imagePreview" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;"></div>
+        </div>
+        <div class="form-group"><label>Product Video URL</label><input type="text" id="pVideo" placeholder="YouTube / Drive link"></div>
+
+        <div class="section-title">4. Variants - Size, Color, Stock</div>
+        <div id="sizeStockWrapper">
+            <div class="form-row size-row">
+                <div class="form-group"><select class="pSize" required><option value="">Size</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>Free</option></select></div>
+                <div class="form-group"><input type="text" class="pColor" placeholder="Color" required></div>
+                <div class="form-group"><input type="number" class="pStock" placeholder="Stock" min="0" required></div>
+                <button type="button" class="btn-remove" onclick="removeRow(this)">X</button>
+            </div>
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addSizeRow()">+ Add More Variant</button>
+
+        <div class="section-title">5. Shipping & Dimensions</div>
+        <div class="form-row">
+            <div class="form-group"><label>Weight in grams</label><input type="number" id="pWeight"></div>
+            <div class="form-group"><label>Length cm</label><input type="number" id="pLength"></div>
+            <div class="form-group"><label>Breadth cm</label><input type="number" id="pBreadth"></div>
+            <div class="form-group"><label>Height cm</label><input type="number" id="pHeight"></div>
+        </div>
+
+        <div class="section-title">6. SEO & Policy</div>
+        <div class="form-row">
+            <div class="form-group"><label>Product Tags</label><input type="text" id="pTags" placeholder="comma se alag kare"></div>
+            <div class="form-group"><label>Status</label>
+                <select id="pStatus"><option value="active">Active</option><option value="draft">Draft</option><option value="outofstock">Out of Stock</option></select>
             </div>
         </div>
         <div class="form-row">
-            <div class="form-group">
-                <label>MRP *</label>
-                <input type="number" id="pMrp" required>
-            </div>
-            <div class="form-group">
-                <label>Selling Price *</label>
-                <input type="number" id="pPrice" required>
-            </div>
-            <div class="form-group">
-                <label>Stock *</label>
-                <input type="number" id="pStock" required>
-            </div>
+            <div class="form-group"><label>Return Policy Days</label><input type="number" id="pReturn" value="7"></div>
+            <div class="form-group"><label>Warranty</label><input type="text" id="pWarranty" placeholder="No Warranty"></div>
         </div>
-        <div class="form-group">
-            <label>Description</label>
-            <textarea id="pDesc" rows="3"></textarea>
-        </div>
+        <div class="form-group"><label>Description</label><textarea id="pDesc" rows="3"></textarea></div>
+
         <button type="submit" class="btn btn-success">Save Item</button>
     </form>
 </div>
+
+<script>
+// Discount
+['pMrp','pPrice'].forEach(id=>document.getElementById(id).oninput=()=>{
+  let mrp=+pMrp.value, price=+pPrice.value;
+  if(mrp>0) pDiscount.value=Math.round(((mrp-price)/mrp)*100)+'%';
+});
+// Add Row
+function addSizeRow(){ let w=sizeStockWrapper; let r=w.children[0].cloneNode(true); r.querySelectorAll('input,select').forEach(i=>i.value=''); w.appendChild(r); }
+function removeRow(btn){ if(document.querySelectorAll('.size-row').length>1) btn.parentElement.remove(); }
+// Image Preview
+pImages.onchange=e=>{ imagePreview.innerHTML=''; [...e.target.files].slice(0,5).forEach(f=>{ let img=document.createElement('img'); img.src=URL.createObjectURL(f); img.style="width:60px;height:60px;object-fit:cover;border-radius:6px;"; imagePreview.appendChild(img); }) }
+</script>
