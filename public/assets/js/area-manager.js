@@ -34,11 +34,9 @@ async function apiCall(endpoint, options = {}) {
             }
         };
 
-        // ✅ FIX: Agar body object hai to JSON.stringify kar + Content-Type set kar
         if (options.body) {
             if (options.body instanceof FormData) {
                 opts.body = options.body;
-                // FormData ke liye Content-Type mat set kar, browser khud karega
             } else {
                 opts.headers['Content-Type'] = 'application/json';
                 opts.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
@@ -62,7 +60,6 @@ async function apiCall(endpoint, options = {}) {
     }
 }
 
-// Export for shop-create.js
 window.apiCall = apiCall;
 
 // ========================================
@@ -78,8 +75,6 @@ async function loadDashboard() {
         console.log('Loading dashboard with token:', token);
 
         const dashboardRes = await apiCall(`/manager/dashboard`);
-        console.log('📦 Dashboard API Response:', dashboardRes);
-
         if (!dashboardRes.success) throw new Error(dashboardRes.error || 'Invalid token');
 
         currentManager = dashboardRes.manager;
@@ -87,22 +82,12 @@ async function loadDashboard() {
         currentManager.currentShopCount = stats.totalShops;
         currentManager.maxShops = dashboardRes.manager.maxShops || 10;
 
-        console.log('👤 Manager Data:', currentManager);
-
         const [shopsData, modulesData, areasRes, managersRes] = await Promise.all([
-            apiCall(`/manager/shops`).catch(err => {
-                console.error('Shops API Error:', err);
-                return { shops: [] };
-            }),
-            apiCall('/modules').catch(err => {
-                console.error('Modules API Error:', err);
-                return { modules: [] };
-            }),
+            apiCall(`/manager/shops`).catch(err => ({ shops: [] })),
+            apiCall('/modules').catch(err => ({ modules: [] })),
             fetch('/api/areas').then(r => r.json()).catch(() => []),
             fetch('/api/managers').then(r => r.json()).catch(() => [])
         ]);
-
-        console.log('📦 Shops API Response:', shopsData);
 
         managerShops = shopsData.shops || shopsData || [];
         categories = modulesData.modules || modulesData || [];
@@ -115,7 +100,6 @@ async function loadDashboard() {
         renderServiceCards(categories);
         updateShopLimitUI();
 
-        // ✅ Initialize shop-create module
         if (typeof initShopCreateModule === 'function') {
             initShopCreateModule(allManagers, allAreas, categories, currentManager);
         }
@@ -135,7 +119,6 @@ async function loadDashboard() {
     }
 }
 
-// Export for shop-create.js
 window.loadDashboard = loadDashboard;
 
 // ========================================
@@ -197,7 +180,7 @@ function renderStats(stats) {
 }
 
 // ========================================
-// ✅ RENDER SHOPS TABLE - FIXED LINK
+// RENDER SHOPS TABLE
 // ========================================
 function renderShops(shops) {
     const tbody = document.getElementById('shopsTable');
@@ -233,19 +216,13 @@ function renderShops(shops) {
     }).join('');
 }
 
-// ========================================
-// ✅ COPY SHOP DASHBOARD LINK - FIXED
-// ========================================
 window.copyShopLink = function(shopId, shopType, shopName) {
-    // ✅ shopType add kiya - ab sahi template wala dashboard khulega
     const finalShopType = shopType || 'common';
     const shopLink = `${window.location.origin}/shop-templates/${finalShopType}/dashboard.html?shopId=${shopId}`;
     
     navigator.clipboard.writeText(shopLink).then(() => {
         alert(`✅ Dashboard link copied!\n\nShop: ${shopName}\n\nLink: ${shopLink}\n\nAb ye link shop owner ko bhej do.`);
-        console.log('📋 Shop Dashboard Link:', shopLink);
     }).catch(err => {
-        console.error('❌ Clipboard copy failed:', err);
         prompt('Copy this link:', shopLink);
     });
 }
@@ -332,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const data = await apiCall(`/manager/update-profile`, {
                     method: 'PUT',
-                    body: profileData // ✅ Object bhej, apiCall stringify karega
+                    body: profileData
                 });
                 if (data.success) {
                     alert('✅ Profile updated successfully!');
@@ -415,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const data = await apiCall(`/manager/shops/${shopId}`, {
                     method: 'PUT',
-                    body: shopData // ✅ Object bhej, apiCall stringify karega
+                    body: shopData
                 });
                 if (data.success) {
                     alert('✅ Shop updated successfully!');
@@ -454,11 +431,34 @@ window.onclick = function (event) {
     }
 }
 
+// ========== NAYE 4 FUNCTION YAHI ADD KIYE ==========
+function openProductLibrary() {
+    document.getElementById('libraryPopup').classList.add('active');
+}
+function closeProductLibrary() {
+    document.getElementById('libraryPopup').classList.remove('active');
+}
+function openOrderView() { alert('Order View - Coming Soon'); }
+function openManagerPanel() { alert('Manager Panel - Coming Soon'); }
+
+window.addEventListener('message', (event) => {
+    if(event.data.type === 'ADD_FROM_LIBRARY') {
+        console.log('Product Selected:', event.data);
+        alert(`Selected: ${event.data.name}`);
+        closeProductLibrary();
+    }
+});
+// ========== END NAYE FUNCTION ==========
+
 // Export functions to window for onclick handlers
 window.openProfileModal = openProfileModal;
 window.closeProfileModal = closeProfileModal;
 window.previewProfilePhoto = previewProfilePhoto;
 window.editShop = editShop;
 window.closeShopModal = closeShopModal;
+window.openProductLibrary = openProductLibrary; // NAYA
+window.closeProductLibrary = closeProductLibrary; // NAYA
+window.openOrderView = openOrderView; // NAYA
+window.openManagerPanel = openManagerPanel; // NAYA
 
 console.log('✅ area-manager.js loaded - Shop create logic moved to shop-create.js');
