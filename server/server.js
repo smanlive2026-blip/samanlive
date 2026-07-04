@@ -100,6 +100,8 @@ app.use('/api', require('./routes/areaRoutes'));
 // Local Market Admin Routes - CONFLICT KE LIYE COMMENTED ✅
 // app.use('/api/local-market', require('./routes/local-market-admin'));
 
+app.use('/api/library', require('./routes/api/library'));
+
 // Market/Public Routes
 app.use('/api', require('./routes/market'));
 
