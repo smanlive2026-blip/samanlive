@@ -99,15 +99,25 @@ td { padding: 12px; border-bottom: 1px solid var(--border); }
 
 <script>
 const API = '/api';
-const token = localStorage.getItem('token') || 'demo-token';
 let allProducts = [], allCategories = [];
 
+// ✅ FIXED: Token + Error Handling
 async function apiCall(endpoint, method = 'GET', body = null) {
-    const opts = { method, headers: { 'Authorization': `Bearer ${token}` } };
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('token') || localStorage.getItem('managerToken') || '';
+    const opts = { 
+        method, 
+        headers: { 
+            'Authorization': `Bearer ${token}` 
+        } 
+    };
     if(body) {opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body);}
-    const res = await fetch(API + endpoint, opts);
-    if(!res.ok) throw new Error(await res.text());
-    return res.json();
+    
+    const res = await fetch(API + endpoint, opts); 
+    const text = await res.text();
+    console.log(`API ${endpoint}:`, res.status, text); // debug
+    
+    if(!res.ok) throw new Error(`Status ${res.status}: ${text}`);
+    return JSON.parse(text);
 }
 
 function showToast(msg, type='success') {
@@ -121,15 +131,19 @@ function showToast(msg, type='success') {
 async function loadProducts() {
     try {
         const [res, cats] = await Promise.all([
-            apiCall('/master-products'), // Master products
-            apiCall('/modules') // ✅ CHANGED: ab modules se category aayegi
+            apiCall('/master-products'), 
+            apiCall('/modules') 
         ]);
         allProducts = res || [];
-        allCategories = cats.modules || cats || []; // modules array
+        allCategories = Array.isArray(cats) ? cats : cats.modules || []; // dono format handle
 
-        document.getElementById('productCategory').innerHTML =
-            '<option value="">Select Category</option>' +
-            allCategories.map(c=>`<option value="${c._id}">${c.icon || '📦'} ${c.name}</option>`).join('');
+        if(allCategories.length === 0){
+            document.getElementById('productCategory').innerHTML = '<option value="">No categories found. Add in Modules first</option>';
+        } else {
+            document.getElementById('productCategory').innerHTML =
+                '<option value="">Select Category</option>' +
+                allCategories.map(c=>`<option value="${c._id}">${c.icon || '📦'} ${c.name}</option>`).join('');
+        }
 
         renderProducts(allProducts);
     } catch(err) {
@@ -196,6 +210,10 @@ window.handleImageUpload = (e) => {
 
 window.saveProduct = async (e) => {
     e.preventDefault();
+    const btn = document.getElementById('saveProductBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
     const data = {
         name: document.getElementById('productName').value,
         categoryId: document.getElementById('productCategory').value,
@@ -216,6 +234,9 @@ window.saveProduct = async (e) => {
         loadProducts();
     } catch(err) {
         showToast('Error: '+err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Save Product';
     }
 }
 
