@@ -100,8 +100,6 @@ app.use('/api', require('./routes/areaRoutes'));
 // Local Market Admin Routes - CONFLICT KE LIYE COMMENTED ✅
 // app.use('/api/local-market', require('./routes/local-market-admin'));
 
-app.use('/api/library', require('./routes/api/library'));
-
 // Market/Public Routes
 app.use('/api', require('./routes/market'));
 
@@ -113,6 +111,10 @@ app.use('/api', require('./routes/stats'));
 
 // Shop Routes - User side
 app.use('/api/local-market', require('./routes/shopRoutes'));
+
+// ✅ NEW: MASTER PRODUCT + CATEGORY ROUTES ADDED
+app.use('/api/master-products', require('./routes/api/master-product'));
+app.use('/api/categories', require('./routes/api/category'));
 
 // ==================== ADMIN PANEL ROUTES ====================
 app.get('/admin', (req, res) => {
@@ -178,11 +180,11 @@ app.get('/shop/:id/dashboard', async (req, res) => {
     try {
         const Shop = require('./models/Shop');
         const shop = await Shop.findById(req.params.id);
-        
+
         if (!shop) {
             return res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
         }
-        
+
         // shopType ke hisaab se template serve karo
         // "Kirana" -> "kirana", "General Store" -> "general", etc
         const shopTypeMap = {
@@ -192,12 +194,12 @@ app.get('/shop/:id/dashboard', async (req, res) => {
             'Restaurant': 'restaurant',
             'Cloth': 'cloth'
         };
-        
+
         const templateFolder = shopTypeMap[shop.shopType] || shop.shopType?.toLowerCase() || 'general';
         const templatePath = path.join(__dirname, `../public/shop-templates/${templateFolder}/dashboard.html`);
-        
+
         console.log(`🏪 Loading template: ${templateFolder} for shop: ${shop.shopName}`);
-        
+
         // Agar template exist nahi karta to general wala bhej do
         res.sendFile(templatePath, (err) => {
             if (err) {
@@ -295,6 +297,8 @@ app.get('/api/admin/routes', (req, res) => {
                         else if (file === 'stats.js') basePath = '/api';
                         else if (file === 'public-modules.js') basePath = '/api';
                         else if (file === 'auth.js') basePath = '/api/auth';
+                        else if (file === 'master-product.js') basePath = '/api/master-products'; // ✅ NEW
+                        else if (file === 'category.js') basePath = '/api/categories'; // ✅ NEW
                         else {
                             const name = file.replace('Routes.js', '').replace('.js', '').toLowerCase();
                             basePath = `/api/${name}`;
@@ -447,7 +451,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         success: false,
         error: err.message || 'Something went wrong!',
-       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 
