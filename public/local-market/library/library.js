@@ -1,120 +1,129 @@
+const API = '/api';
+const token = localStorage.getItem('adminToken') || localStorage.getItem('token') || localStorage.getItem('managerToken') || '';
 let allProducts = [];
-const limit = 50;
-let selectedCategory = null;
+let allCategories = [];
+let selectedCategory = 'all';
 
+// PAGE LOAD
 document.addEventListener('DOMContentLoaded', () => {
     loadCategories();
     loadProducts();
-    document.getElementById('searchInput').addEventListener('keyup', (e) => loadProducts(1, e.target.value));
+    document.getElementById('searchInput').addEventListener('input', filterProducts);
 });
 
-// ========== LOAD CATEGORIES ==========
+// 1. LOAD CATEGORIES FROM MODULES
 async function loadCategories() {
     try {
-        const res = await fetch('/api/library/categories'); //. hata diya
-        const allCategories = await res.json();
-        let html = '';
-        allCategories.forEach(cat => {
-            html += `<div class="category-item">
-                <div class="category-header" onclick="this.nextElementSibling.classList.toggle('open')">
-                    <span>${cat.name} (${cat.count})</span><i class="fa fa-chevron-down"></i>
-                </div>
-                <div class="category-products">
-                    <div class="product-sub-item" onclick="filterByCategory('${cat._id}')">All ${cat.name}</div> <!-- _id bhejo -->
-                </div>
-            </div>`;
+        const res = await fetch(API + '/modules', {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
-        document.getElementById('categoryList').innerHTML = html;
+        const data = await res.json();
+        allCategories = data.modules || data || [];
+        
+        document.getElementById('categoryList').innerHTML = 
+            `<div class="cat-item active" onclick="selectCategory('all')">All Categories</div>` +
+            allCategories.map(c => 
+                `<div class="cat-item" onclick="selectCategory('${c._id || c.id}')">
+                    ${c.icon || '📦'} ${c.name}
+                </div>`
+            ).join('');
+
+        // Dropdown bhi bhar de
+        document.getElementById('prodCategory').innerHTML =
+            '<option value="">Select Category</option>' +
+            allCategories.map(c => `<option value="${c._id || c.id}">${c.name}</option>`).join('');
+
+    } catch(err) { console.error(err) }
+}
+
+// 2. LOAD PRODUCTS
+async function loadProducts() {
+    try {
+        const res = await fetch(API + '/master-products', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        allProducts = await res.json();
+        document.getElementById('totalCount').textContent = `${allProducts.length} Products`;
+        renderProducts(allProducts);
     } catch(err) {
-        console.log(err);
+        document.getElementById('productGrid').innerHTML = 'Error loading products';
     }
 }
 
-function filterByCategory(catId) {
-    selectedCategory = catId;
-    loadProducts(1);
+// 3. RENDER PRODUCTS
+function renderProducts(products) {
+    if(products.length === 0) {
+        document.getElementById('productGrid').innerHTML = '<p>No products found</p>';
+        return;
+    }
+    document.getElementById('productGrid').innerHTML = products.map(p => {
+        const cat = allCategories.find(c => c._id === p.categoryId || c.id === p.categoryId);
+        return `
+        <div class="product-card" onclick='selectProduct(${JSON.stringify(p)})'>
+            <img src="${p.image || 'https://via.placeholder.com/200'}">
+            <div class="info">
+                <h3>${p.name}</h3>
+                <p>${p.brand || ''}</p>
+                <span class="cat-badge">${cat?.name || ''}</span>
+            </div>
+            <button class="btn-select">Select</button>
+        </div>`
+    }).join('');
 }
 
-// ========== LOAD PRODUCTS ==========
-async function loadProducts(page = 1, search = '') {
-    let url = `/api/library/products?page=${page}&limit=${limit}`; //. hata diya
-    if(search) url += `&search=${encodeURIComponent(search)}`;
-    if(selectedCategory) url += `&category=${selectedCategory}`;
-
-    const res = await fetch(url);
-    const data = await res.json();
-    allProducts = data.products;
-    displayProducts(data.products);
-    document.getElementById('totalCount').innerText = `${data.total} Products`;
-}
-
-function displayProducts(products) {
-    let html = '';
-    products.forEach(p => {
-        html += `<div class="product-card">
-            <img src="${p.image || p.photos?.[0] || '/placeholder.jpg'}" alt="${p.name}">
-            <h3>${p.name}</h3>
-            <p>${p.categoryId?.name || ''} • ${p.brand || 'No Brand'}</p>
-            <div class="photo-count"><i class="fa fa-images"></i> ${p.photos?.length || 1} Photos</div>
-            <button onclick='selectProduct("${p._id}")'><i class="fa fa-check"></i> Select</button>
-        </div>`;
-    });
-    document.getElementById('productGrid').innerHTML = html || 'No products';
-}
-
-// ========== SELECT PRODUCT FOR ADMIN ==========
-function selectProduct(productId) {
-    const product = allProducts.find(p => p._id === productId);
-    if(!product) return;
-
-    // Admin wala yehi type sun raha hai
+// 4. SELECT PRODUCT - YEH SABSE ZARURI HAI
+function selectProduct(product) {
     window.parent.postMessage({
         type: 'SELECT_MASTER_PRODUCT',
-        product: product
+        product: {
+            name: product.name,
+            brand: product.brand,
+            categoryId: product.categoryId,
+            image: product.image
+        }
     }, '*');
 }
 
-// ========== ADD MASTER PRODUCT ==========
-function openAddProductModal() {
-    document.getElementById('addProductModal').style.display = 'flex';
-    loadCategoryDropdown(); // dropdown bhi bhar de
-}
-function closeAddProductModal() {
-    document.getElementById('addProductModal').style.display = 'none';
-}
-
-async function loadCategoryDropdown() {
-    const res = await fetch('/api/categories'); // main category list
-    const cats = await res.json();
-    document.getElementById('prodCategory').innerHTML =
-        '<option value="">Select Category</option>' +
-        cats.map(c=>`<option value="${c._id}">${c.name}</option>`).join('');
+// 5. SEARCH + CATEGORY FILTER
+function selectCategory(catId) {
+    selectedCategory = catId;
+    document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
+    event.target.classList.add('active');
+    filterProducts();
 }
 
-async function saveProduct() {
-    const formData = new FormData();
-    formData.append('name', document.getElementById('prodName').value);
-    formData.append('category', document.getElementById('prodCategory').value);
-    formData.append('brand', document.getElementById('prodBrand').value);
-    formData.append('description', document.getElementById('prodDesc')?.value || '');
+function filterProducts() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    let filtered = allProducts.filter(p => p.name.toLowerCase().includes(q));
+    if(selectedCategory !== 'all') {
+        filtered = filtered.filter(p => p.categoryId === selectedCategory);
+    }
+    renderProducts(filtered);
+}
 
-    const files = document.getElementById('prodPhotos').files;
-    for(let i=0; i<files.length; i++) formData.append('photos', files[i]);
+// 6. ADD PRODUCT MODAL
+window.openAddProductModal = () => {
+    document.getElementById('addProductModal').classList.add('active');
+}
+window.closeAddProductModal = () => {
+    document.getElementById('addProductModal').classList.remove('active');
+}
 
-    const res = await fetch('/api/library/add-product', { method: 'POST', body: formData });
-    if(res.ok) {
-        alert('Master Product Added!');
+window.saveLibraryProduct = async () => {
+    const data = {
+        name: document.getElementById('prodName').value,
+        categoryId: document.getElementById('prodCategory').value,
+        brand: document.getElementById('prodBrand').value,
+        description: document.getElementById('prodDesc').value,
+    };
+    try {
+        await fetch(API + '/master-products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(data)
+        });
+        alert('✅ Product Added');
         closeAddProductModal();
         loadProducts();
-        loadCategories();
-    } else {
-        alert('Error adding product');
-    }
-}
-
-// Modal ke bahar click karne se band ho
-window.onclick = function(event) {
-    if (event.target.id == 'addProductModal') {
-        closeAddProductModal();
-    }
+    } catch(err) { alert('Error: '+err.message) }
 }
