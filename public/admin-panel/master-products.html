@@ -142,7 +142,7 @@ async function loadProducts() {
         } else {
             document.getElementById('productCategory').innerHTML =
                 '<option value="">Select Category</option>' +
-                allCategories.map(c=>`<option value="${c._id}">${c.icon || '📦'} ${c.name}</option>`).join('');
+                allCategories.map(c=>`<option value="${c._id || c.id}">${c.icon || '📦'} ${c.name}</option>`).join(''); // ✅ _id || id
         }
 
         renderProducts(allProducts);
@@ -157,17 +157,19 @@ function renderProducts(products) {
         document.querySelector('#productsTable tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No products found</td></tr>';
         return;
     }
-    document.querySelector('#productsTable tbody').innerHTML = products.map(p=>`
+    document.querySelector('#productsTable tbody').innerHTML = products.map(p=>{
+        const cat = allCategories.find(c => c._id === p.categoryId || c.id === p.categoryId);
+        return `
         <tr>
             <td><img src="${p.image||'https://via.placeholder.com/50'}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;"></td>
             <td><strong>${p.name}</strong></td>
             <td>${p.brand || '-'}</td>
-            <td>${p.category?.name || '-'}</td>
+            <td>${cat?.name || '-'}</td>
             <td>
                 <button class="btn-icon" onclick="editProduct('${p._id}')" title="Edit">✏️</button>
                 <button class="btn-icon" onclick="deleteProduct('${p._id}')" title="Delete">🗑️</button>
             </td>
-        </tr>`).join('');
+        </tr>`}).join('');
 }
 
 window.showAddProductModal = () => {
