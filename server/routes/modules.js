@@ -10,25 +10,25 @@ const User = require('../models/User');
 const Delivery = require('../models/Delivery');
 const Coupon = require('../models/Coupon');
 
-// ✅ CHANGE KIYA: Nayi file read karega ab
+// ✅ Nayi file read karega
 const shopCategoriesData = require('../seed/seed-shop-categories.json');
 const localMarketCategoriesPath = path.join(__dirname, '../../public/local-market/shopCategories.json');
 
 // ========== MODULES ==========
-// ✅ YE AB SHOP WALI 15 CATEGORY DEGA
+// ✅ FIX: object me wrap kiya taaki frontend me cats.modules mile
 router.get('/modules', async (req, res) => {
     try {
-        res.json(shopCategoriesData.modules);
+        res.json({ modules: shopCategoriesData.modules });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// ✅ YE BHI WAHI DEGA
+// ✅ FIX: yaha bhi object me wrap
 router.post('/modules/nearby', async (req, res) => {
     try {
         const { lat, lng } = req.body;
-        res.json(shopCategoriesData.modules);
+        res.json({ modules: shopCategoriesData.modules });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -68,7 +68,6 @@ router.delete('/modules/:id', async (req, res) => {
 });
 
 // ========== LOCAL MARKET CATEGORIES - FOR ADMIN PANEL ==========
-// GET - Sab local market categories dikhao admin me
 router.get('/local-market/categories', (req, res) => {
     try {
         const data = fs.readFileSync(localMarketCategoriesPath, 'utf8');
@@ -92,7 +91,6 @@ router.get('/local-market/categories', (req, res) => {
     }
 });
 
-// PUT - Local market category update karo
 router.put('/local-market/categories/:catId', (req, res) => {
     try {
         const data = JSON.parse(fs.readFileSync(localMarketCategoriesPath, 'utf8'));
@@ -114,7 +112,6 @@ router.put('/local-market/categories/:catId', (req, res) => {
     }
 });
 
-// POST - Nayi local market category add karo
 router.post('/local-market/categories', (req, res) => {
     try {
         const data = JSON.parse(fs.readFileSync(localMarketCategoriesPath, 'utf8'));
@@ -141,7 +138,6 @@ router.post('/local-market/categories', (req, res) => {
     }
 });
 
-// DELETE - Local market category delete karo
 router.delete('/local-market/categories/:catId', (req, res) => {
     try {
         const data = JSON.parse(fs.readFileSync(localMarketCategoriesPath, 'utf8'));

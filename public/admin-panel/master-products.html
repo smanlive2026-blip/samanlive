@@ -74,7 +74,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     if(body) {opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body);}
     const res = await fetch(API + endpoint, opts);
     const data = await res.json();
-    if(!res.ok) throw new Error(data.message || 'API Error');
+    if(!res.ok) throw new Error(data.message || data.error || 'API Error');
     return data;
 }
 
@@ -87,13 +87,20 @@ async function loadProducts() {
         allProducts = res.products || res || [];
         allCategories = cats.modules || cats || [];
 
-        document.getElementById('productCategory').innerHTML =
-            '<option value="">Select Category</option>' +
-            allCategories.map(c=>`<option value="${c._id}">${c.icon || '📦'} ${c.name}</option>`).join('');
+        // ✅ FIX: Agar category nahi aayi to message dikha de
+        if(allCategories.length === 0){
+            document.getElementById('productCategory').innerHTML = '<option value="">No categories found</option>';
+        } else {
+            document.getElementById('productCategory').innerHTML =
+                '<option value="">Select Category</option>' +
+                allCategories.map(c=>`<option value="${c._id || c.id}">${c.icon || '📦'} ${c.name}</option>`).join('');
+        }
 
         renderProducts();
     } catch(err) {
-        alert('Error: '+err.message);
+        console.error(err);
+        alert('Error loading data: '+err.message);
+        document.getElementById('productCategory').innerHTML = '<option value="">Error loading</option>';
     }
 }
 
@@ -104,7 +111,7 @@ function renderProducts() {
         return;
     }
     tbody.innerHTML = allProducts.map(p=>{
-        const cat = allCategories.find(c => c._id === p.categoryId);
+        const cat = allCategories.find(c => (c._id || c.id) === p.categoryId);
         return `<tr>
             <td><img src="${p.image||'https://via.placeholder.com/50'}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;"></td>
             <td><strong>${p.name}</strong></td>
