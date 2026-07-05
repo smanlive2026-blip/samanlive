@@ -9,22 +9,26 @@ const Product = require('../models/Product');
 const User = require('../models/User');
 const Delivery = require('../models/Delivery');
 const Coupon = require('../models/Coupon');
-const modulesData = require('../seed/seed-modules.json');
+
+// ✅ CHANGE KIYA: Nayi file read karega ab
+const shopCategoriesData = require('../seed/seed-shop-categories.json');
 const localMarketCategoriesPath = path.join(__dirname, '../../public/local-market/shopCategories.json');
 
 // ========== MODULES ==========
+// ✅ YE AB SHOP WALI 15 CATEGORY DEGA
 router.get('/modules', async (req, res) => {
     try {
-        res.json(modulesData.modules);
+        res.json(shopCategoriesData.modules);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
+// ✅ YE BHI WAHI DEGA
 router.post('/modules/nearby', async (req, res) => {
     try {
         const { lat, lng } = req.body;
-        res.json(modulesData.modules);
+        res.json(shopCategoriesData.modules);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -69,7 +73,6 @@ router.get('/local-market/categories', (req, res) => {
     try {
         const data = fs.readFileSync(localMarketCategoriesPath, 'utf8');
         const json = JSON.parse(data);
-        // Admin panel ko modules format me chahiye
         const localMarketModule = {
             _id: 'local_market_module',
             name: 'Local Market',
@@ -94,10 +97,7 @@ router.put('/local-market/categories/:catId', (req, res) => {
     try {
         const data = JSON.parse(fs.readFileSync(localMarketCategoriesPath, 'utf8'));
         const catIndex = data.categories.findIndex(c => c._id === req.params.catId);
-
         if (catIndex === -1) return res.status(404).json({ error: 'Category not found' });
-
-        // Update fields from admin
         data.categories[catIndex] = {
             ...data.categories[catIndex],
             name: req.body.name || data.categories[catIndex].name,
@@ -107,7 +107,6 @@ router.put('/local-market/categories/:catId', (req, res) => {
             priority: req.body.priority !== undefined ? parseInt(req.body.priority) : data.categories[catIndex].priority
         };
         data.lastUpdated = new Date().toISOString().split('T')[0];
-
         fs.writeFileSync(localMarketCategoriesPath, JSON.stringify(data, null, 2));
         res.json({ success: true, category: data.categories[catIndex] });
     } catch (err) {
@@ -133,10 +132,8 @@ router.post('/local-market/categories', (req, res) => {
             showInApp: true,
             color: req.body.color || '#6366f1'
         };
-
         data.categories.push(newCat);
         data.lastUpdated = new Date().toISOString().split('T')[0];
-
         fs.writeFileSync(localMarketCategoriesPath, JSON.stringify(data, null, 2));
         res.json({ success: true, category: newCat });
     } catch (err) {
@@ -149,12 +146,9 @@ router.delete('/local-market/categories/:catId', (req, res) => {
     try {
         const data = JSON.parse(fs.readFileSync(localMarketCategoriesPath, 'utf8'));
         const catIndex = data.categories.findIndex(c => c._id === req.params.catId);
-
         if (catIndex === -1) return res.status(404).json({ error: 'Category not found' });
-
         data.categories.splice(catIndex, 1);
         data.lastUpdated = new Date().toISOString().split('T')[0];
-
         fs.writeFileSync(localMarketCategoriesPath, JSON.stringify(data, null, 2));
         res.json({ success: true });
     } catch (err) {
@@ -168,10 +162,7 @@ router.get('/categories', async (req, res) => {
         const filter = { status: 'active' };
         if (req.query.moduleId) filter.moduleId = req.query.moduleId;
         if (req.query.group) filter.group = req.query.group;
-        
-        const categories = await Category.find(filter)
-            .sort({ priority: -1, name: 1 })
-            .populate('moduleId', 'name icon');
+        const categories = await Category.find(filter).sort({ priority: -1, name: 1 }).populate('moduleId', 'name icon');
         res.json(categories);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -193,11 +184,7 @@ router.post('/categories', async (req, res) => {
 
 router.put('/categories/:id', async (req, res) => {
     try {
-        const category = await Category.findByIdAndUpdate(
-            req.params.id,
-            { $set: req.body },
-            { new: true, runValidators: true }
-        );
+        const category = await Category.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true, runValidators: true });
         if (!category) return res.status(404).json({ error: 'Category not found' });
         res.json({ success: true, category });
     } catch (err) {
@@ -364,28 +351,14 @@ router.get('/reports', async (req, res) => {
         const period = req.query.period || 'week';
         const now = new Date();
         let startDate;
-        
         if (period === 'today') startDate = new Date(now.setHours(0,0,0,0));
         else if (period === 'week') startDate = new Date(now.setDate(now.getDate() - 7));
         else if (period === 'month') startDate = new Date(now.setMonth(now.getMonth() - 1));
         else startDate = new Date(0);
-
         const orders = await Order.find({ createdAt: { $gte: startDate } });
         const users = await User.countDocuments({ createdAt: { $gte: startDate } });
-        
         const revenue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-        
-        res.json({
-            stats: {
-                revenue,
-                orders: orders.length,
-                users,
-                avgRating: 4.5,
-                revenueChange: 12,
-                ordersChange: 8,
-                usersChange: 15
-            }
-        });
+        res.json({ stats: { revenue, orders: orders.length, users, avgRating: 4.5, revenueChange: 12, ordersChange: 8, usersChange: 15 } });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
