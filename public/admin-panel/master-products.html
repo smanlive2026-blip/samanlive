@@ -5,15 +5,18 @@
 <title>Products Management - SAMANLIVE</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-:root {--primary:#10b981;--border:#e2e8f0;--bg:#f8fafc;--text:#1e293b;}
+:root {--primary:#10b981;--danger:#ef4444;--border:#e2e8f0;--bg:#f8fafc;--text:#1e293b;}
 *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
 body{background:var(--bg);padding:20px}
-.page-header{display:flex;justify-content:space-between;margin-bottom:20px}
-.btn{padding:10px 20px;background:var(--primary);color:white;border:none;border-radius:8px;cursor:pointer}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.btn{padding:10px 20px;background:var(--primary);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600}
+.btn-danger{background:var(--danger)}
 .card{background:white;padding:20px;border-radius:12px;border:1px solid var(--border)}
-table{width:100%;border-collapse:collapse} th{background:#f8fafc;padding:12px;text-align:left} td{padding:12px;border-bottom:1px solid var(--border)}
+table{width:100%;border-collapse:collapse} th{background:#f8fafc;padding:12px;text-align:left;font-size:13px} td{padding:12px;border-bottom:1px solid var(--border);font-size:14px}
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center}
-.modal.active{display:flex} .modal-content{background:white;padding:30px;border-radius:16px;width:90%;max-width:500px}
+.modal.active{display:flex} .modal-content{background:white;padding:30px;border-radius:16px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto}
+.form-group{margin:12px 0} .form-group label{display:block;margin-bottom:6px;font-weight:600;font-size:14px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px}
 </style>
 </head>
 <body>
@@ -26,26 +29,38 @@ table{width:100%;border-collapse:collapse} th{background:#f8fafc;padding:12px;te
 <div class="card">
     <table id="productsTable">
         <thead><tr><th>Image</th><th>Name</th><th>Brand</th><th>Category</th><th>Action</th></tr></thead>
-        <tbody><tr><td colspan="5">Loading...</td></tr></tbody>
+        <tbody><tr><td colspan="5" style="text-align:center">Loading...</td></tr></tbody>
     </table>
 </div>
 
 <div id="productModal" class="modal">
     <div class="modal-content">
-        <h2 id="modalTitle">Add Master Product</h2>
+        <h2 id="modalTitle"><i class="fas fa-plus"></i> Add Master Product</h2>
         <form id="productForm" onsubmit="saveProduct(event)">
             <input type="hidden" id="productId">
-            <div style="margin:12px 0"><label>Category *</label>
-                <select id="productCategory" required style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;">
-                    <option value="">Loading categories...</option>
-                </select>
+            <div class="form-group">
+                <label>Category *</label>
+                <select id="productCategory" required><option value="">Loading categories...</option></select>
             </div>
-            <div style="margin:12px 0"><label>Product Name *</label>
-                <input type="text" id="productName" required style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;">
+            <div class="form-group">
+                <label>Product Name *</label>
+                <input type="text" id="productName" required>
             </div>
-            <button type="submit" class="btn" style="width:100%">Save Product</button>
+            <div class="form-group">
+                <label>Brand</label>
+                <input type="text" id="productBrand" placeholder="e.g. Nestle, Amul">
+            </div>
+            <div class="form-group">
+                <label>Image URL</label>
+                <input type="text" id="productImage" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="productDesc" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn" style="width:100%" id="saveBtn"><i class="fas fa-save"></i> Save Product</button>
         </form>
-        <button onclick="closeProductModal()" style="margin-top:10px">Close</button>
+        <button onclick="closeProductModal()" style="margin-top:10px;width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;background:white;cursor:pointer">Cancel</button>
     </div>
 </div>
 
@@ -57,43 +72,100 @@ let allProducts = [], allCategories = [];
 async function apiCall(endpoint, method = 'GET', body = null) {
     const opts = { method, headers: { 'Authorization': `Bearer ${token}` } };
     if(body) {opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body);}
-    const res = await fetch(API + endpoint, opts); 
-    return res.json();
+    const res = await fetch(API + endpoint, opts);
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.message || 'API Error');
+    return data;
 }
 
 async function loadProducts() {
-    const [res, cats] = await Promise.all([
-        apiCall('/master-products'), 
-        apiCall('/modules') // ✅ YAHI SE CATEGORY
-    ]);
-    allProducts = res || [];
-    allCategories = cats.modules || cats || [];
+    try {
+        const [res, cats] = await Promise.all([
+            apiCall('/master-products'), 
+            apiCall('/modules')
+        ]);
+        allProducts = res.products || res || [];
+        allCategories = cats.modules || cats || [];
 
-    document.getElementById('productCategory').innerHTML =
-        '<option value="">Select Category</option>' +
-        allCategories.map(c=>`<option value="${c._id}">${c.icon || '📦'} ${c.name}</option>`).join('');
+        document.getElementById('productCategory').innerHTML =
+            '<option value="">Select Category</option>' +
+            allCategories.map(c=>`<option value="${c._id}">${c.icon || '📦'} ${c.name}</option>`).join('');
 
-    document.querySelector('#productsTable tbody').innerHTML = allProducts.map(p=>{
-        const cat = allCategories.find(c => c._id === p.categoryId);
-        return `<tr>
-            <td><img src="${p.image||'https://via.placeholder.com/50'}" style="width:50px;height:50px;border-radius:6px;"></td>
-            <td>${p.name}</td><td>${p.brand || '-'}</td><td>${cat?.name || '-'}</td>
-            <td><button onclick="editProduct('${p._id}')">Edit</button></td>
-        </tr>`}).join('');
+        renderProducts();
+    } catch(err) {
+        alert('Error: '+err.message);
+    }
 }
 
-window.showAddProductModal = () => { document.getElementById('productModal').classList.add('active'); }
+function renderProducts() {
+    const tbody = document.querySelector('#productsTable tbody');
+    if(allProducts.length === 0){
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">No products yet</td></tr>';
+        return;
+    }
+    tbody.innerHTML = allProducts.map(p=>{
+        const cat = allCategories.find(c => c._id === p.categoryId);
+        return `<tr>
+            <td><img src="${p.image||'https://via.placeholder.com/50'}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;"></td>
+            <td><strong>${p.name}</strong></td>
+            <td>${p.brand || '-'}</td>
+            <td>${cat?.name || '-'}</td>
+            <td>
+                <button onclick='editProduct(${JSON.stringify(p)})' style="padding:6px 10px;border:none;background:#3b82f6;color:white;border-radius:6px;cursor:pointer"><i class="fas fa-edit"></i></button>
+                <button onclick='deleteProduct("${p._id}")' style="padding:6px 10px;border:none;background:var(--danger);color:white;border-radius:6px;cursor:pointer"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`
+    }).join('');
+}
+
+window.showAddProductModal = () => { 
+    document.getElementById('productForm').reset();
+    document.getElementById('productId').value = '';
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus"></i> Add Master Product';
+    document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Save Product';
+    document.getElementById('productModal').classList.add('active'); 
+}
 window.closeProductModal = () => { document.getElementById('productModal').classList.remove('active'); }
+
+window.editProduct = (p) => {
+    document.getElementById('productId').value = p._id;
+    document.getElementById('productName').value = p.name;
+    document.getElementById('productBrand').value = p.brand || '';
+    document.getElementById('productImage').value = p.image || '';
+    document.getElementById('productDesc').value = p.description || '';
+    document.getElementById('productCategory').value = p.categoryId;
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Product';
+    document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Update Product';
+    document.getElementById('productModal').classList.add('active');
+}
 
 window.saveProduct = async (e) => {
     e.preventDefault();
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
+    const id = document.getElementById('productId').value;
     const data = {
         name: document.getElementById('productName').value,
+        brand: document.getElementById('productBrand').value,
+        image: document.getElementById('productImage').value,
+        description: document.getElementById('productDesc').value,
         categoryId: document.getElementById('productCategory').value
     };
-    await apiCall('/master-products','POST',data);
-    alert('✅ Saved');
-    closeProductModal(); loadProducts();
+    
+    try {
+        if(id) await apiCall('/master-products/'+id,'PUT',data);
+        else await apiCall('/master-products','POST',data);
+        alert('✅ Saved Successfully');
+        closeProductModal(); loadProducts();
+    } catch(err) { alert('Error: '+err.message); }
+    finally { btn.disabled = false; }
+}
+
+window.deleteProduct = async (id) => {
+    if(!confirm('Delete this product?')) return;
+    await apiCall('/master-products/'+id,'DELETE');
+    loadProducts();
 }
 
 document.addEventListener('DOMContentLoaded', loadProducts);
