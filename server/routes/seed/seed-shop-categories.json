@@ -1,3 +1,5 @@
+//seed-shop-categories.json  file 
+
 {
   "modules": [
     { "_id": "shop_kirana", "name": "Kirana & Grocery", "icon": "🛒" },

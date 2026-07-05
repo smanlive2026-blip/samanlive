@@ -11,7 +11,7 @@ const Delivery = require('../models/Delivery');
 const Coupon = require('../models/Coupon');
 
 // ✅ Nayi file read karega
-const shopCategoriesData = require('../seed/seed-shop-categories.json');
+const shopCategoriesData = JSON.parse(fs.readFileSync(path.join(__dirname, '../seed/seed-shop-categories.json'), 'utf8'));
 const localMarketCategoriesPath = path.join(__dirname, '../../public/local-market/shopCategories.json');
 
 // ========== MODULES ==========
