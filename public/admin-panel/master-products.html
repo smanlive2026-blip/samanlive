@@ -59,7 +59,9 @@ td { padding: 12px; border-bottom: 1px solid var(--border); }
 
             <div style="margin-bottom:12px;">
                 <label>Category *</label>
-                <select id="productCategory" required style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;"></select>
+                <select id="productCategory" required style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;">
+                    <option value="">Loading categories...</option>
+                </select>
             </div>
             <div style="margin-bottom:12px;">
                 <label>Product Name *</label>
@@ -103,7 +105,7 @@ let allProducts = [], allCategories = [];
 async function apiCall(endpoint, method = 'GET', body = null) {
     const opts = { method, headers: { 'Authorization': `Bearer ${token}` } };
     if(body) {opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body);}
-    const res = await fetch(API + endpoint, opts); 
+    const res = await fetch(API + endpoint, opts);
     if(!res.ok) throw new Error(await res.text());
     return res.json();
 }
@@ -111,7 +113,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 function showToast(msg, type='success') {
     const t=document.getElementById('toast');
     t.textContent=msg;
-    t.style.borderLeft = type==='error' ? '4px solid #ef4444' : '4px solid #10b981';
+    t.style.borderLeft = type==='error'? '4px solid #ef4444' : '4px solid #10b981';
     t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'),3000);
 }
@@ -119,18 +121,20 @@ function showToast(msg, type='success') {
 async function loadProducts() {
     try {
         const [res, cats] = await Promise.all([
-            apiCall('/master-products'), // ✅ CHANGED: ab master-products se data aayega
-            apiCall('/categories')
+            apiCall('/master-products'), // Master products
+            apiCall('/modules') // ✅ CHANGED: ab modules se category aayegi
         ]);
         allProducts = res || [];
-        allCategories = cats || [];
-        
-        document.getElementById('productCategory').innerHTML = 
-            allCategories.map(c=>`<option value="${c._id}">${c.name}</option>`).join('');
-            
+        allCategories = cats.modules || cats || []; // modules array
+
+        document.getElementById('productCategory').innerHTML =
+            '<option value="">Select Category</option>' +
+            allCategories.map(c=>`<option value="${c._id}">${c.icon || '📦'} ${c.name}</option>`).join('');
+
         renderProducts(allProducts);
     } catch(err) {
         showToast('Error: '+err.message, 'error');
+        document.getElementById('productCategory').innerHTML = '<option value="">Error loading categories</option>';
     }
 }
 
@@ -202,13 +206,13 @@ window.saveProduct = async (e) => {
     try {
         const id = document.getElementById('productId').value;
         if(id){
-            await apiCall(`/master-products/${id}`,'PUT',data); // ✅ CHANGED
+            await apiCall(`/master-products/${id}`,'PUT',data);
             showToast('✅ Updated Successfully');
         } else {
-            await apiCall('/master-products','POST',data); // ✅ CHANGED
+            await apiCall('/master-products','POST',data);
             showToast('✅ Added Successfully');
         }
-        closeProductModal(); 
+        closeProductModal();
         loadProducts();
     } catch(err) {
         showToast('Error: '+err.message, 'error');
@@ -218,7 +222,7 @@ window.saveProduct = async (e) => {
 window.deleteProduct = async (id) => {
     if(confirm('Delete this product?')) {
         try {
-            await apiCall(`/master-products/${id}`,'DELETE'); // ✅ CHANGED
+            await apiCall(`/master-products/${id}`,'DELETE');
             showToast('🗑️ Deleted');
             loadProducts();
         } catch(err) {
@@ -245,7 +249,7 @@ window.addEventListener('message', (event) => {
         document.getElementById('productBrand').value = p.brand || '';
         document.getElementById('productCategory').value = p.categoryId || '';
         document.getElementById('productImage').value = p.image || p.images?.[0] || '';
-        showToast(`Selected: ${p.name}`); 
+        showToast(`Selected: ${p.name}`);
         closeProductLibrary();
     }
 });

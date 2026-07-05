@@ -112,9 +112,8 @@ app.use('/api', require('./routes/stats'));
 // Shop Routes - User side
 app.use('/api/local-market', require('./routes/shopRoutes'));
 
-// ✅ NEW: MASTER PRODUCT + CATEGORY ROUTES ADDED
+// ✅ NEW: MASTER PRODUCT 
 app.use('/api/master-products', require('./routes/api/master-product'));
-app.use('/api/categories', require('./routes/api/category'));
 
 // ==================== ADMIN PANEL ROUTES ====================
 app.get('/admin', (req, res) => {
