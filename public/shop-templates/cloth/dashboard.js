@@ -11,14 +11,14 @@ let pickerMap = null;
 let pickerMarker = null;
 let locationType = 'fixed';
 let liveWatchId = null;
-let isMapVisible = true; // NAYA: Map visible hai ya nahi
+let isMapVisible = true;
 
 if (!shopId) {
     alert('Invalid shop link');
     window.location.href = '/local-market/create-shop.html';
 }
 
-// ===== NAYA FUNCTION: MAP HIDE/SHOW =====
+// ===== MAP HIDE/SHOW =====
 function toggleMap() {
     const wrapper = document.getElementById('mapWrapper');
     const icon = document.getElementById('mapToggleIcon');
@@ -30,12 +30,17 @@ function toggleMap() {
         wrapper.style.display = 'block';
         icon.className = 'fa fa-eye';
         text.innerText = 'Hide';
-        setTimeout(() => { if(shopMap) shopMap.invalidateSize(); }, 100); // map reload
+        setTimeout(() => { if(shopMap) shopMap.invalidateSize(); }, 100);
     } else {
         wrapper.style.display = 'none';
         icon.className = 'fa fa-eye-slash';
         text.innerText = 'Show';
     }
+}
+
+// Token helper
+function getToken(){
+    return localStorage.getItem('userToken') || localStorage.getItem('token') || '';
 }
 
 async function loadShopData() {
@@ -53,7 +58,6 @@ async function loadShopData() {
         document.getElementById('shopName').innerText = shop.shopName;
         document.getElementById('ownerName').innerText = shop.ownerName || 'Owner';
         
-        // Profile + Cover set
         if(shop.logo) document.getElementById('shopLogo').src = shop.logo;
         if(shop.coverPhoto) document.getElementById('shopCover').src = shop.coverPhoto;
 
@@ -68,11 +72,11 @@ async function loadShopData() {
         
         if (locationType === 'dynamic') {
             locationBadge.innerText = 'Mobile';
-            rangeText.textContent = `Delivery Range: ${shop.range/1000} KM`;
+            rangeText.textContent = `Delivery Range: ${(shop.range/1000).toFixed(1)} KM`;
             locationUpdateText.textContent = 'Live Tracking ON';
         } else {
             locationBadge.innerText = 'Fixed';
-            rangeText.textContent = `Delivery Range: ${shop.range/1000} KM`;
+            rangeText.textContent = `Delivery Range: ${(shop.range/1000).toFixed(1)} KM`;
             locationUpdateText.textContent = 'Fixed Location';
         }
 
@@ -93,7 +97,7 @@ async function loadShopData() {
         initShopMap();
         startDynamicLocationTracking();
         loadShopManagers();
-        initUploads(); // Photo upload init
+        initUploads();
 
     } catch (err) {
         console.error(err);
@@ -116,7 +120,7 @@ async function uploadPhoto(e, field){
     formData.append('field', field);
     
     try {
-        const token = localStorage.getItem('userToken'); // FIX: userToken
+        const token = getToken();
         const res = await fetch(`/api/local-market/shops/${shopId}/upload`, {
             method: 'POST',
             headers: {'Authorization': 'Bearer ' + token},
@@ -124,18 +128,19 @@ async function uploadPhoto(e, field){
         });
         const data = await res.json();
         if(data.success){
-            if(field == 'logo') document.getElementById('shopLogo').src = data.url;
-            if(field == 'coverPhoto') document.getElementById('shopCover').src = data.url;
+            if(field == 'logo') document.getElementById('shopLogo').src = data.url + '?t=' + Date.now();
+            if(field == 'coverPhoto') document.getElementById('shopCover').src = data.url + '?t=' + Date.now();
             alert('Photo Updated!');
+        } else {
+            alert(data.message || 'Upload failed');
         }
     } catch(err){ alert('Upload failed: ' + err.message); }
 }
 
-// ===== LOCATION MODAL FUNCTIONS =====
+// ===== LOCATION MODAL =====
 function openLocationModal(){
     document.getElementById('locationModal').style.display = 'flex';
     setLocationType(locationType);
-    // Modal khulte hi current location le
     navigator.geolocation.getCurrentPosition(pos => {
         let lat = pos.coords.latitude, lng = pos.coords.longitude;
         initPickerMap(lat, lng); 
@@ -178,11 +183,10 @@ function stopLiveLocation(){
     document.getElementById('currentLatLng').innerText = 'Stopped';
 }
 
-// ===== UPDATED: SAVE LOCATION AB ACTUALLY KAAM KAREGA =====
 async function saveLocation(){
     let range = document.getElementById('deliveryRange').value * 1000;
     let address = document.getElementById('shopAddress').value;
-    let coords = currentShop.location.coordinates;
+    let coords = currentShop.location?.coordinates || [72.8311, 21.1702];
 
     if(locationType === 'fixed' && pickerMarker){
         let latlng = pickerMarker.getLatLng();
@@ -197,7 +201,7 @@ async function saveLocation(){
     }
     
     try {
-        const token = localStorage.getItem('userToken'); // FIX: userToken
+        const token = getToken();
         const res = await fetch(`/api/local-market/shops/${shopId}/update-location`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
@@ -212,8 +216,8 @@ async function saveLocation(){
         }
     } catch(err){ alert("Failed to save: " + err.message); }
 }
-// ===== LOCATION MODAL END =====
 
+// ===== MANAGERS =====
 async function loadShopManagers() {
     try {
         const res = await fetch(`/api/local-market/shops/${shopId}/managers`);
@@ -259,6 +263,7 @@ function showManagerContact(manager) {
 }
 function closeContactModal() { document.getElementById('managerContactModal').style.display = 'none'; }
 
+// ===== MAP =====
 function initShopMap() {
     if (!currentShop.location || !currentShop.location.coordinates) return;
     const [lng, lat] = currentShop.location.coordinates;
@@ -270,7 +275,7 @@ function initShopMap() {
 
     shopMarker = L.marker([lat, lng], {
         icon: L.divIcon({html: `<div style="font-size: 24px;">${currentShop.icon || '👗'}</div>`, className: 'shop-map-icon', iconSize: [30, 30]})
-    }).addTo(shopMap).bindPopup(`<b>${currentShop.shopName}</b><br>Range: ${range/1000} KM`);
+    }).addTo(shopMap).bindPopup(`<b>${currentShop.shopName}</b><br>Range: ${(range/1000).toFixed(1)} KM`);
 
     rangeCircle = L.circle([lat, lng], {color: '#10b981', fillColor: '#10b981', fillOpacity: 0.1, radius: range}).addTo(shopMap);
 }
@@ -303,7 +308,7 @@ function updateShopLocation() {
 
 async function updateShopLocationToServer(lng, lat) {
     try {
-        const token = localStorage.getItem('userToken'); // FIX: userToken
+        const token = getToken();
         if (!token) return;
         await fetch(`/api/local-market/shops/${shopId}/update-location`, {
             method: 'PUT',
@@ -321,6 +326,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+// ===== PRODUCTS =====
 function loadItems(items) {
     const tbody = document.getElementById('productTableBody');
     if (!items || items.length === 0) {
@@ -330,21 +336,33 @@ function loadItems(items) {
     tbody.innerHTML = items.map(item => {
         const sizes = (item.sizes || [item.size]).filter(Boolean);
         const colors = (item.colors || [item.color]).filter(Boolean);
-        return `<tr><td><strong>${item.name}</strong></td><td>${item.category}</td><td>${sizes.map(s => `<span class="size-badge">${s}</span>`).join('')}</td><td>${colors.map(c => `<span class="color-dot" style="background:${c.toLowerCase()}"></span>`).join('')}</td><td>${item.fabric}</td><td><strong>₹${item.price}</strong></td><td>${item.stock}</td><td><button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;"><i class="fa fa-edit"></i></button><button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;"><i class="fa fa-trash"></i></button></td></tr>`;
+        return `<tr><td><strong>${item.name}</strong></td><td>${item.category}</td><td>${sizes.map(s => `<span class="size-badge">${s}</span>`).join('')}</td><td>${colors.map(c => `<span class="color-dot" style="background:${c.toLowerCase()}"></span>`).join('')}</td><td>${item.fabric || '-'}</td><td><strong>₹${item.price}</strong></td><td>${item.stock}</td><td><button class="btn btn-secondary" onclick="editItem('${item._id}')" style="padding:6px 12px;"><i class="fa fa-edit"></i></button><button class="btn btn-danger" onclick="deleteItem('${item._id}')" style="padding:6px 12px;"><i class="fa fa-trash"></i></button></td></tr>`;
     }).join('');
 }
 
-document.getElementById('addProductBtn').onclick = function() { window.location.href = `/shop-templates/cloth/product-form.html?shopId=${shopId}`; };
+document.getElementById('addProductBtn').onclick = function() { 
+    window.location.href = `/shop-templates/cloth/product-form.html?shopId=${shopId}`; 
+};
 function editShopInfo() { window.location.href = `/local-market/shop/edit-shop.html?shopId=${shopId}`; }
 function loadOrders() { window.location.href = `/local-market/orders.html?shopId=${shopId}`; }
 function editItem(itemId) { window.location.href = `/shop-templates/cloth/product-form.html?shopId=${shopId}&itemId=${itemId}`; }
 
 async function deleteItem(itemId) {
     if (!confirm('Delete this item?')) return;
-    try { await fetch(`/api/local-market/products/${itemId}`, {method: 'DELETE'}); alert('Item deleted!'); loadShopData(); } 
-    catch (err) { alert('Failed to delete: ' + err.message); }
+    try { 
+        const token = getToken();
+        await fetch(`/api/local-market/products/${itemId}`, {
+            method: 'DELETE',
+            headers: {'Authorization': 'Bearer ' + token}
+        }); 
+        alert('Item deleted!'); 
+        loadShopData(); 
+    } catch (err) { alert('Failed to delete: ' + err.message); }
 }
 
-window.addEventListener('beforeunload', () => { if (locationInterval) clearInterval(locationInterval); if(liveWatchId) navigator.geolocation.clearWatch(liveWatchId); });
+window.addEventListener('beforeunload', () => { 
+    if (locationInterval) clearInterval(locationInterval); 
+    if(liveWatchId) navigator.geolocation.clearWatch(liveWatchId); 
+});
 
 loadShopData();

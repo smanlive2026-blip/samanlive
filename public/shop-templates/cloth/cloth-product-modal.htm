@@ -1,12 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Add Clothing Item - SAMANLIVE</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-body { background: #f4f7f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
 .modal-content {
     background: #fff; padding: 24px; border-radius: 16px; width: 95%; max-width: 850px;
     max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
@@ -31,15 +23,12 @@ h2 { margin-bottom: 20px; color: #0d6efd; font-size: 22px; }
 input[readonly] { background: #f1f1f1; }
 .quick-select { border: 2px solid #0d6efd; background: #e7f1ff; }
 </style>
-</head>
-<body>
 
 <div class="modal-content">
-    <span class="close" onclick="window.history.back()">&times;</span>
+    <span class="close" onclick="closeModal()">&times;</span>
     <h2 id="formTitle">Add Clothing Item - SamanLive</h2>
     <form id="productForm" enctype="multipart/form-data">
         <input type="hidden" id="productId">
-        <input type="hidden" id="shopId">
 
         <div class="section-title">0. Quick Add - Select Product</div>
         <div class="form-row">
@@ -128,10 +117,6 @@ input[readonly] { background: #f1f1f1; }
 
 <script src="ready-products-cloth.js"></script>
 <script>
-const urlParams = new URLSearchParams(window.location.search);
-document.getElementById('shopId').value = urlParams.get('shopId');
-const itemId = urlParams.get('itemId');
-
 // Load Dropdown
 window.onload = () => {
   let sel = document.getElementById('quickProductSelect');
@@ -141,8 +126,6 @@ window.onload = () => {
     opt.text = p.name + " - " + p.category;
     sel.appendChild(opt);
   })
-
-  if(itemId) loadProductForEdit(itemId); // Edit mode
 }
 
 // On Select - Auto Fill
@@ -160,6 +143,7 @@ document.getElementById('quickProductSelect').onchange = function() {
   pPrice.value = p.price;
   pGst.value = p.gst;
 
+  // Auto Image Preview
   imagePreview.innerHTML = `<img src="${p.image}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #0d6efd;">`;
   pDiscount.oninput();
 }
@@ -172,20 +156,14 @@ document.getElementById('quickProductSelect').onchange = function() {
 // Add Row
 function addSizeRow(){ let w=sizeStockWrapper; let r=w.children[0].cloneNode(true); r.querySelectorAll('input,select').forEach(i=>i.value=''); w.appendChild(r); }
 function removeRow(btn){ if(document.querySelectorAll('.size-row').length>1) btn.parentElement.remove(); }
-// Image Preview
-pImages.onchange=e=>{ imagePreview.innerHTML=''; [...e.target.files].slice(0,5).forEach(f=>{ let img=document.createElement('img'); img.src=URL.createObjectURL(f); img.style="width:60px;height:60px;object-fit:cover;border-radius:6px;"; imagePreview.appendChild(img); }) }
-
-// Form Submit
-productForm.onsubmit = async (e) => {
-  e.preventDefault();
-  alert("Form ready hai. Ab API call jodna hai yaha");
-  // yaha fetch /api/local-market/products/add ka code likhna hai
-}
-
-async function loadProductForEdit(id){
-    // yaha edit ke liye product data load hoga
-    document.getElementById('formTitle').innerText = "Edit Clothing Item";
+// Image Preview for upload
+pImages.onchange=e=>{
+  imagePreview.innerHTML='';
+  [...e.target.files].slice(0,5).forEach(f=>{
+    let img=document.createElement('img');
+    img.src=URL.createObjectURL(f);
+    img.style="width:60px;height:60px;object-fit:cover;border-radius:6px;";
+    imagePreview.appendChild(img);
+  })
 }
 </script>
-</body>
-</html>

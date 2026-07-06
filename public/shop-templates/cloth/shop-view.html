@@ -12,7 +12,7 @@
             background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
             min-height: 100vh;
         }
-       .loading-screen {
+      .loading-screen {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(255,255,255,0.95);
@@ -24,21 +24,21 @@
             gap: 20px;
             z-index: 9999;
         }
-       .loading-screen i {
+      .loading-screen i {
             font-size: 50px;
             color: #a8edea;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-       .loading-screen p { color: #64748b; font-weight: 600; }
+      .loading-screen p { color: #64748b; font-weight: 600; }
 
-       .shop-container {
+      .shop-container {
             max-width: 600px;
             margin: 0 auto;
             padding-bottom: 100px;
         }
 
-       .shop-hero {
+      .shop-hero {
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(10px);
             margin: 16px;
@@ -47,7 +47,7 @@
             text-align: center;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         }
-       .shop-logo-wrap {
+      .shop-logo-wrap {
             width: 100px;
             height: 100px;
             margin: 0 auto 16px;
@@ -59,26 +59,26 @@
             align-items: center;
             justify-content: center;
         }
-       .shop-logo-wrap img {
+      .shop-logo-wrap img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-       .shop-logo-wrap.icon-fallback {
+      .shop-logo-wrap.icon-fallback {
             font-size: 50px;
         }
-       .shop-name {
+      .shop-name {
             font-size: 26px;
             font-weight: 800;
             color: #1e293b;
             margin-bottom: 6px;
         }
-       .shop-city {
+      .shop-city {
             font-size: 14px;
             color: #64748b;
             font-weight: 600;
         }
-       .shop-status {
+      .shop-status {
             display: inline-block;
             margin-top: 12px;
             padding: 6px 16px;
@@ -87,10 +87,10 @@
             font-weight: 700;
             text-transform: uppercase;
         }
-       .shop-status.open { background: #dcfce7; color: #166534; }
-       .shop-status.closed { background: #fee2e2; color: #991b1b; }
+      .shop-status.open { background: #dcfce7; color: #166534; }
+      .shop-status.closed { background: #fee2e2; color: #991b1b; }
 
-       .info-card {
+      .info-card {
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(10px);
             margin: 16px;
@@ -98,7 +98,7 @@
             padding: 20px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         }
-       .info-card h3 {
+      .info-card h3 {
             font-size: 16px;
             color: #1e293b;
             margin-bottom: 12px;
@@ -106,48 +106,49 @@
             align-items: center;
             gap: 8px;
         }
-       .info-card p {
+      .info-card p {
             color: #64748b;
             font-size: 14px;
             line-height: 1.6;
             margin: 0;
         }
-       .info-row {
+      .info-row {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 12px 0;
             border-bottom: 1px solid #f1f5f9;
         }
-       .info-row:last-child { border-bottom: none; }
-       .info-row i {
+      .info-row:last-child { border-bottom: none; }
+      .info-row i {
             width: 24px;
             color: #a8edea;
             font-size: 18px;
         }
-       .info-row span {
+      .info-row span {
             flex: 1;
             font-size: 14px;
             color: #334155;
             font-weight: 600;
         }
 
-       .products-grid {
+      .products-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
             padding: 0 16px;
         }
-       .product-card {
+      .product-card {
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(10px);
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 4px 16px rgba(0,0,0,0.08);
             transition: all 0.3s;
+            cursor: pointer;
         }
-       .product-card:active { transform: scale(0.98); }
-       .product-img {
+      .product-card:active { transform: scale(0.98); }
+      .product-img {
             width: 100%;
             height: 160px;
             background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
@@ -156,15 +157,15 @@
             justify-content: center;
             font-size: 40px;
         }
-       .product-img img {
+      .product-img img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-       .product-info {
+      .product-info {
             padding: 12px;
         }
-       .product-name {
+      .product-name {
             font-size: 14px;
             font-weight: 700;
             color: #1e293b;
@@ -173,20 +174,20 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-       .product-price {
+      .product-price {
             font-size: 18px;
             font-weight: 800;
             background: linear-gradient(135deg, #a8edea, #fed6e3);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-       .product-sizes {
+      .product-sizes {
             display: flex;
             gap: 4px;
             margin-top: 8px;
             flex-wrap: wrap;
         }
-       .size-tag {
+      .size-tag {
             padding: 2px 6px;
             background: #f1f5f9;
             border-radius: 4px;
@@ -195,7 +196,7 @@
             color: #475569;
         }
 
-       .bottom-bar {
+      .bottom-bar {
             position: fixed;
             bottom: 0;
             left: 0;
@@ -206,7 +207,7 @@
             box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
             z-index: 100;
         }
-       .call-btn {
+      .call-btn {
             width: 100%;
             max-width: 600px;
             margin: 0 auto;
@@ -225,9 +226,9 @@
             box-shadow: 0 6px 20px rgba(37,211,102,0.4);
             transition: all 0.2s;
         }
-       .call-btn:active { transform: scale(0.98); }
+      .call-btn:active { transform: scale(0.98); }
 
-       .share-btn {
+      .share-btn {
             position: fixed;
             top: 20px;
             right: 20px;
@@ -244,20 +245,20 @@
             z-index: 10;
         }
 
-       .empty-products {
+      .empty-products {
             grid-column: 1 / -1;
             text-align: center;
             padding: 60px 20px;
             color: #94a3b8;
         }
-       .empty-products i {
+      .empty-products i {
             font-size: 60px;
             margin-bottom: 16px;
             opacity: 0.5;
         }
 
         @media (min-width: 768px) {
-           .products-grid { grid-template-columns: repeat(3, 1fr); }
+          .products-grid { grid-template-columns: repeat(3, 1fr); }
         }
     </style>
 </head>
@@ -360,7 +361,6 @@
         }
 
         function renderShop() {
-            // Logo ya Icon
             const logoWrap = document.getElementById('logoWrap');
             if (shopData.logo) {
                 logoWrap.innerHTML = `<img src="${shopData.logo}" alt="${shopData.shopName}">`;
@@ -369,13 +369,14 @@
             }
 
             document.getElementById('shopName').textContent = shopData.shopName;
-            document.getElementById('shopCity').textContent = shopData.address?.city || '';
+            document.getElementById('shopCity').textContent = shopData.address || 'Ahmedabad, Gujarat';
             document.getElementById('shopDesc').textContent = shopData.description || 'Welcome to our cloth store! We offer quality garments at best prices.';
             document.getElementById('shopPhone').textContent = shopData.phone || 'Not available';
-            document.getElementById('shopAddress').textContent = `${shopData.address?.line1 || ''}, ${shopData.address?.city || ''}`;
-            document.getElementById('shopRange').textContent = (shopData.range / 1000) || 5;
+            document.getElementById('shopAddress').textContent = shopData.address || 'Address not updated';
 
-            // Status
+            const rangeKm = shopData.range? (shopData.range / 1000).toFixed(1) : 5;
+            document.getElementById('shopRange').textContent = rangeKm;
+
             const statusEl = document.getElementById('shopStatus');
             if (shopData.isActive && shopData.status === 'approved') {
                 statusEl.textContent = 'OPEN NOW';
@@ -408,7 +409,7 @@
                     const sizes = (item.sizes || [item.size]).filter(Boolean);
 
                     return `
-                        <div class="product-card">
+                        <div class="product-card" onclick="inquireProduct('${item.name.replace(/'/g, "\\'")}')">
                             <div class="product-img">
                                 ${img? `<img src="${img}" alt="${item.name}">` : '👗'}
                             </div>
@@ -428,6 +429,13 @@
             } catch (err) {
                 console.error('Failed to load products:', err);
             }
+        }
+
+        function inquireProduct(productName){
+            if(!shopData?.phone) return alert('Phone number not available');
+            const phone = shopData.phone.replace(/[^0-9]/g, '');
+            const msg = `Hi ${shopData.shopName}, I want to know about "${productName}". Price and stock available?`;
+            window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function callShop() {
