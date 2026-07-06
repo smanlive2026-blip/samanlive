@@ -1,5 +1,3 @@
-Shope creat.js     
-
 // ========================================
 // FILE: routes/managerShopCreate.js - DEDICATED SHOP CREATE FOR MANAGER
 // Match with /public/assets/js/shop-create.js
