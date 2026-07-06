@@ -91,6 +91,8 @@ app.use('/api', require('./routes/adminRoutes'));
 // ✅ NEW: Category Master Routes
 app.use('/api/admin', require('./routes/admin'));
 
+app.use('/api/admin', require('./routes/adminCategoryMaster'));
+
 // Manager Routes - ✅ UNCOMMENTED: Ab active hai
 app.use('/api/manager', require('./routes/managerRoutes'));
 
