@@ -783,4 +783,10 @@ router.put('/banners/:id/approve', async (req, res) => {
     }
 });
 
+// SAARI SHOPS FOR ADMIN
+router.get('/shops/all', authAdmin, async (req, res) => {
+    const shops = await Shop.find({isActive: true}).sort({createdAt: -1});
+    res.json({success: true, shops});
+})
+
 module.exports = router;
