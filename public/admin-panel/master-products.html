@@ -25,9 +25,7 @@ td{padding: 12px; border-bottom: 1px solid var(--border);} .product-img{width: 5
 </head>
 <body>
 <div class="container">
-    <div class="page-header">
-        <h2><i class="fas fa-layer-group"></i> Category Master - Product Templates</h2>
-    </div>
+    <div class="page-header"><h2><i class="fas fa-layer-group"></i> Category Master - Product Templates</h2></div>
 
     <div class="card" id="templatePage">
         <h3>12 Shop Templates</h3>
@@ -60,7 +58,8 @@ td{padding: 12px; border-bottom: 1px solid var(--border);} .product-img{width: 5
 </div>
 
 <script>
-const API = 'https://samanlive.onrender.com/api/admin';
+// ✅ FIX: Relative URL use kiya. /api/admin se direct hit karega
+const API = '/api/admin'; 
 const TEMPLATES = ['kirana','cloth','medical','restaurant','electronics','hardware','salon','stationery','service','rental','common','grocery'];
 let selectedCategory = null;
 
@@ -69,15 +68,15 @@ async function apiCall(endpoint, method = 'GET', body = null) {
         const opts = { method, headers: {'Content-Type': 'application/json'} };
         if(body) opts.body = JSON.stringify(body);
         const res = await fetch(API + endpoint, opts);
+        if(!res.ok) throw new Error('API Error: ' + res.status);
         return await res.json();
     }catch(e){
-        alert('API Error: ' + e.message);
-        return {success:false}
+        console.error(e);
+        document.getElementById('templateList').innerHTML = `<p style="color:red">API Error: ${e.message}. Check console</p>`;
     }
 }
 
 function loadTemplates(){
-    console.log("Loading templates...");
     document.getElementById('templateList').innerHTML = TEMPLATES.map(t=>`
         <div class="template-card" onclick="openTemplate('${t}')">
             <i class="fas fa-store" style="font-size:30px;color:var(--primary)"></i>
@@ -122,7 +121,6 @@ window.closeModal = () => {document.getElementById('productModal').classList.rem
 
 window.saveTemplateProduct = async (e) => {
     e.preventDefault();
-    // ✅ YEHI SABSE BADI GALTI THI. "category" 2 baar tha
     const data = {
         category: selectedCategory, 
         name: document.getElementById('pName').value, 
@@ -142,8 +140,8 @@ window.deleteTemplateProduct = async (id) => {
     openTemplate(selectedCategory);
 }
 
-// ✅ YE LINE SABSE IMPORTANT HAI
-document.addEventListener('DOMContentLoaded', loadTemplates);
+// ✅ Sabse important
+window.onload = loadTemplates;
 </script>
 </body>
 </html>
