@@ -2,70 +2,203 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shop Products - SAMANLIVE</title>
+<title>Shop Products Manager - SAMANLIVE</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {--primary:#10b981;--danger:#ef4444;--border:#e2e8f0;--bg:#f8fafc;}
-*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
-body{background:var(--bg);padding:20px}
-.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-.btn{padding:10px 20px;background:var(--primary);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600}
-.btn:disabled{opacity:0.5;cursor:not-allowed}
-.card{background:white;padding:20px;border-radius:12px;border:1px solid var(--border);margin-bottom:20px}
-.shop-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:15px}
-.shop-card{padding:15px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:0.2s}
-.shop-card:hover{border-color:var(--primary)} .shop-card.active{border-color:var(--primary);background:#ecfdf5}
-table{width:100%;border-collapse:collapse} th{background:#f8fafc;padding:12px;text-align:left;font-size:13px} td{padding:12px;border-bottom:1px solid var(--border);font-size:14px}
-.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center}
-.modal.active{display:flex} .modal-content{background:white;padding:30px;border-radius:16px;width:90%;max-width:500px}
-.form-group{margin:12px 0} .form-group label{display:block;margin-bottom:6px;font-weight:600;font-size:14px}
-.form-group input,.form-group textarea{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px}
-.badge{display:inline-block;padding:4px 8px;background:#d1fae5;color:#065f46;border-radius:6px;font-size:12px;font-weight:600}
+:root {
+    --primary: #6366f1; --primary-dark: #4f46e5;
+    --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+    --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #1e293b;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins', sans-serif}
+body{
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh; padding: 20px; color: var(--text);
+}
+.container{max-width: 1400px; margin: 0 auto;}
+
+.page-header{
+    background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+    padding: 20px 30px; border-radius: 20px; margin-bottom: 25px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1); animation: slideDown 0.5s ease;
+}
+.page-header h2{font-size: 24px; font-weight: 700; color: var(--primary-dark);}
+.page-header h2 i{margin-right: 10px;}
+
+.btn{
+    padding: 12px 24px; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600;
+    transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+.btn:hover{transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);}
+.btn:disabled{opacity: 0.5; cursor: not-allowed; transform: none;}
+.btn-secondary{background: #64748b; box-shadow: 0 4px 15px rgba(100,116,139,0.2);}
+.btn-danger{background: linear-gradient(135deg, var(--danger), #dc2626);}
+.btn-success{background: linear-gradient(135deg, var(--success), #059669);}
+
+.card{
+    background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+    padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);
+    margin-bottom: 25px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); animation: fadeIn 0.6s ease;
+}
+.card h3{font-size: 18px; font-weight: 600; margin-bottom: 20px; color: var(--text);}
+
+.shop-grid{display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;}
+.shop-card{
+    padding: 20px; background: white; border: 2px solid var(--border); border-radius: 16px;
+    cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden;
+}
+.shop-card::before{
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--success)); transform: scaleX(0);
+    transition: transform 0.3s;
+}
+.shop-card:hover{border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(99,102,241,0.2);}
+.shop-card:hover::before{transform: scaleX(1);}
+.shop-card.active{border-color: var(--primary); background: linear-gradient(135deg, #eef2ff, #e0e7ff);}
+.shop-card h4{font-size: 16px; font-weight: 600; margin-bottom: 8px;}
+.shop-card p{font-size: 13px; color: #64748b; margin: 4px 0;}
+.shop-card .badge{margin-top: 8px;}
+
+.product-stats{display: flex; gap: 15px; margin-bottom: 20px;}
+.stat-box{
+    flex: 1; padding: 15px; background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    border-radius: 12px; text-align: center;
+}
+.stat-box h4{font-size: 24px; font-weight: 700; color: var(--primary);}
+.stat-box p{font-size: 12px; color: #64748b;}
+
+table{width: 100%; border-collapse: collapse;}
+thead{background: linear-gradient(135deg, var(--primary), var(--primary-dark));}
+th{padding: 14px; text-align: left; font-size: 13px; font-weight: 600; color: white;}
+td{padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px;}
+tr:hover{background: #f8fafc;}
+.product-img{width: 50px; height: 50px; border-radius: 10px; object-fit: cover; border: 2px solid var(--border);}
+
+.action-btn{padding: 8px 10px; border: none; border-radius: 8px; cursor: pointer; margin-right: 5px; transition: 0.2s;}
+.action-btn:hover{transform: scale(1.1);}
+.btn-edit{background: #3b82f6; color: white;}
+.btn-delete{background: var(--danger); color: white;}
+
+.modal{display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(5px);}
+.modal.active{display: flex; animation: fadeIn 0.3s;}
+.modal-content{
+    background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 550px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.3s;
+}
+.modal-content h2{margin-bottom: 20px; color: var(--primary-dark);}
+
+.form-group{margin: 15px 0;}
+.form-group label{display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;}
+.form-group input, .form-group textarea{
+    width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px;
+    font-size: 14px; transition: 0.2s;
+}
+.form-group input:focus, .form-group textarea:focus{border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,0.1);}
+
+.badge{display: inline-block; padding: 6px 12px; background: #d1fae5; color: #065f46; border-radius: 20px; font-size: 12px; font-weight: 600;}
+.loading{text-align: center; padding: 40px; color: #64748b;}
+
+@keyframes fadeIn{from{opacity:0} to{opacity:1}}
+@keyframes slideDown{from{opacity:0; transform: translateY(-20px)} to{opacity:1; transform: translateY(0)}}
+@keyframes slideUp{from{opacity:0; transform: translateY(20px)} to{opacity:1; transform: translateY(0)}}
 </style>
 </head>
 <body>
 
-<div class="page-header">
-    <h2>🏪 Shop Products Manager</h2>
-    <button class="btn" onclick="showAddProductModal()" id="addProductBtn" disabled><i class="fas fa-plus"></i> Add Product</button>
-</div>
-
-<div class="card">
-    <h3 style="margin-bottom:15px">Step 1: Select Shop</h3>
-    <div id="shopList" class="shop-grid"><p>Loading shops...</p></div>
-</div>
-
-<div class="card" id="productSection" style="display:none">
-    <div style="display:flex;justify-content:space-between;margin-bottom:15px">
-        <h3>Step 2: Products of <span id="selectedShopName" class="badge"></span></h3>
-        <button class="btn" style="background:#64748b" onclick="deselectShop()"><i class="fas fa-arrow-left"></i> Back</button>
+<div class="container">
+    <div class="page-header">
+        <h2><i class="fas fa-store"></i> Shop Products Manager</h2>
+        <button class="btn" onclick="showAddProductModal()" id="addProductBtn" disabled>
+            <i class="fas fa-plus"></i> Add Product
+        </button>
     </div>
-    <table id="productsTable">
-        <thead><tr><th>Image</th><th>Name</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
-        <tbody><tr><td colspan="5" style="text-align:center">No products</td></tr></tbody>
-    </table>
+
+    <!-- STEP 1: SHOP LIST -->
+    <div class="card">
+        <h3><i class="fas fa-list"></i> Step 1: Select Your Shop</h3>
+        <div id="shopList" class="shop-grid">
+            <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading shops...</div>
+        </div>
+    </div>
+
+    <!-- STEP 2: PRODUCT LIST -->
+    <div class="card" id="productSection" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3><i class="fas fa-box"></i> Products of <span id="selectedShopName" class="badge"></span></h3>
+            <button class="btn btn-secondary" onclick="deselectShop()">
+                <i class="fas fa-arrow-left"></i> Change Shop
+            </button>
+        </div>
+        
+        <div class="product-stats">
+            <div class="stat-box">
+                <h4 id="totalProducts">0</h4>
+                <p>Total Products</p>
+            </div>
+            <div class="stat-box">
+                <h4 id="inStockProducts">0</h4>
+                <p>In Stock</p>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="productsTable">
+                <thead>
+                    <tr><th>Image</th><th>Product</th><th>Price</th><th>Stock</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody><tr><td colspan="6" class="loading">Select a shop to view products</td></tr></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
+<!-- PRODUCT MODAL -->
 <div id="productModal" class="modal">
     <div class="modal-content">
-        <h2 id="modalTitle"><i class="fas fa-plus"></i> Add Product</h2>
+        <h2 id="modalTitle"><i class="fas fa-plus"></i> Add New Product</h2>
         <form id="productForm" onsubmit="saveProduct(event)">
             <input type="hidden" id="productId">
-            <div class="form-group"><label>Name *</label><input type="text" id="productName" required></div>
-            <div class="form-group"><label>Category</label><input type="text" id="productCategory"></div>
-            <div class="form-group"><label>Price ₹ *</label><input type="number" id="productPrice" step="0.01" required></div>
-            <div class="form-group"><label>Stock *</label><input type="number" id="productStock" required></div>
-            <div class="form-group"><label>Image URL</label><input type="text" id="productImage"></div>
-            <button type="submit" class="btn" style="width:100%" id="saveBtn"><i class="fas fa-save"></i> Save</button>
+            <div class="form-group">
+                <label>Product Name *</label>
+                <input type="text" id="productName" placeholder="e.g. Amul Milk 500ml" required>
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <input type="text" id="productCategory" placeholder="e.g. Dairy, Grocery">
+            </div>
+            <div class="form-group">
+                <label>Price ₹ *</label>
+                <input type="number" id="productPrice" step="0.01" placeholder="25.00" required>
+            </div>
+            <div class="form-group">
+                <label>Stock Quantity *</label>
+                <input type="number" id="productStock" placeholder="100" required>
+            </div>
+            <div class="form-group">
+                <label>Image URL</label>
+                <input type="text" id="productImage" placeholder="https://...">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button type="submit" class="btn btn-success" style="flex:1" id="saveBtn">
+                    <i class="fas fa-save"></i> Save Product
+                </button>
+                <button type="button" onclick="closeProductModal()" class="btn btn-secondary" style="flex:1">
+                    Cancel
+                </button>
+            </div>
         </form>
-        <button onclick="closeProductModal()" style="margin-top:10px;width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;background:white;cursor:pointer">Cancel</button>
     </div>
 </div>
 
 <script>
-const API = '/manager';
+const API = '/api/manager'; // ✅ IMPORTANT: /api/manager
 const token = localStorage.getItem('managerToken') || localStorage.getItem('token') || '';
 let selectedShopId = null;
+let allProducts = [];
 
 async function apiCall(endpoint, method = 'GET', body = null) {
     const opts = { method, headers: { 'Authorization': `Bearer ${token}` } };
@@ -76,13 +209,17 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 
 async function loadShops() {
     const res = await apiCall('/my-shops');
-    if(res.success){
+    if(res.success && res.shops.length){
         document.getElementById('shopList').innerHTML = res.shops.map(shop=>`
             <div class="shop-card" onclick="selectShop('${shop._id}', '${shop.shopName}')">
-                <h3>${shop.icon || '🏪'} ${shop.shopName}</h3>
-                <p style="font-size:12px;color:#64748b">${shop.address?.line1 || '-'}</p>
+                <h4>${shop.icon || '🏪'} ${shop.shopName}</h4>
+                <p><i class="fas fa-location-dot"></i> ${shop.address?.line1 || '-'}</p>
+                <p><i class="fas fa-city"></i> ${shop.city || 'Surat'}</p>
+                <span class="badge">${shop.shopType}</span>
             </div>
         `).join('');
+    } else {
+        document.getElementById('shopList').innerHTML = '<div class="loading">No shops found. Create a shop first!</div>';
     }
 }
 
@@ -93,23 +230,44 @@ async function selectShop(shopId, shopName) {
     document.getElementById('addProductBtn').disabled = false;
     document.querySelectorAll('.shop-card').forEach(c=>c.classList.remove('active'));
     event.currentTarget.classList.add('active');
+    
     const res = await apiCall(`/shop/${shopId}/products`);
+    allProducts = res.products || [];
+    
+    document.getElementById('totalProducts').innerText = allProducts.length;
+    document.getElementById('inStockProducts').innerText = allProducts.filter(p=>p.stock>0).length;
+    
     const tbody = document.querySelector('#productsTable tbody');
-    tbody.innerHTML = res.products.length ? res.products.map(p=>`
+    tbody.innerHTML = allProducts.length ? allProducts.map(p=>`
         <tr>
-            <td><img src="${p.image}" style="width:50px;height:50px;border-radius:6px"></td>
-            <td><strong>${p.name}</strong><br><small>${p.category}</small></td>
-            <td>₹${p.price}</td><td>${p.stock}</td>
+            <td><img src="${p.image || 'https://via.placeholder.com/50'}" class="product-img"></td>
+            <td><strong>${p.name}</strong><br><small style="color:#64748b">${p.category || 'General'}</small></td>
+            <td><strong>₹${p.price}</strong></td>
+            <td>${p.stock}</td>
+            <td><span class="badge" style="background:${p.stock>0?'#d1fae5':'#fee2e2'};color:${p.stock>0?'#065f46':'#991b1b'}">${p.stock>0?'In Stock':'Out of Stock'}</span></td>
             <td>
-                <button onclick='editProduct(${JSON.stringify(p)})' style="padding:6px;background:#3b82f6;color:white;border:none;border-radius:6px"><i class="fas fa-edit"></i></button>
-                <button onclick='deleteProduct("${p._id}")' style="padding:6px;background:var(--danger);color:white;border:none;border-radius:6px"><i class="fas fa-trash"></i></button>
+                <button onclick='editProduct(${JSON.stringify(p)})' class="action-btn btn-edit"><i class="fas fa-edit"></i></button>
+                <button onclick='deleteProduct("${p._id}")' class="action-btn btn-delete"><i class="fas fa-trash"></i></button>
             </td>
-        </tr>`).join('') : '<tr><td colspan="5" style="text-align:center">No products</td></tr>';
+        </tr>`).join('') : '<tr><td colspan="6" class="loading">No products yet. Add your first product!</td></tr>';
+    
+    window.scrollTo({top: document.getElementById('productSection').offsetTop - 20, behavior: 'smooth'});
 }
 
-function deselectShop(){selectedShopId=null;document.getElementById('productSection').style.display='none';document.getElementById('addProductBtn').disabled=true;}
+function deselectShop(){
+    selectedShopId=null;
+    document.getElementById('productSection').style.display='none';
+    document.getElementById('addProductBtn').disabled=true;
+    document.querySelectorAll('.shop-card').forEach(c=>c.classList.remove('active'));
+}
 
-window.showAddProductModal = () => {document.getElementById('productForm').reset();document.getElementById('productId').value='';document.getElementById('productModal').classList.add('active');}
+window.showAddProductModal = () => {
+    if(!selectedShopId) return alert('Pehle shop select karo');
+    document.getElementById('productForm').reset();
+    document.getElementById('productId').value='';
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus"></i> Add New Product';
+    document.getElementById('productModal').classList.add('active');
+}
 window.closeProductModal = () => {document.getElementById('productModal').classList.remove('active');}
 
 window.editProduct = (p) => {
@@ -119,23 +277,38 @@ window.editProduct = (p) => {
     document.getElementById('productPrice').value=p.price;
     document.getElementById('productStock').value=p.stock;
     document.getElementById('productImage').value=p.image;
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Product';
     document.getElementById('productModal').classList.add('active');
 }
 
 window.saveProduct = async (e) => {
     e.preventDefault();
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
     const id = document.getElementById('productId').value;
-    const data = {name:productName.value,category:productCategory.value,price:productPrice.value,stock:productStock.value,image:productImage.value};
+    const data = {
+        name: productName.value, 
+        category: productCategory.value, 
+        price: productPrice.value, 
+        stock: productStock.value, 
+        image: productImage.value
+    };
+    
     const endpoint = id ? `/shop/${selectedShopId}/product/${id}` : `/shop/${selectedShopId}/add-product`;
     const method = id ? 'PUT' : 'POST';
+    
     await apiCall(endpoint, method, data);
-    alert('✅ Saved');
-    closeProductModal(); selectShop(selectedShopId, selectedShopName.innerText);
+    alert('✅ Saved Successfully!');
+    closeProductModal(); 
+    selectShop(selectedShopId, selectedShopName.innerText);
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Product';
 }
 
 window.deleteProduct = async (id) => {
-    if(!confirm('Delete?')) return;
+    if(!confirm('Are you sure you want to delete this product?')) return;
     await apiCall(`/shop/${selectedShopId}/product/${id}`, 'DELETE');
+    alert('🗑️ Deleted');
     selectShop(selectedShopId, selectedShopName.innerText);
 }
 
