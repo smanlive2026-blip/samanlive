@@ -10,17 +10,26 @@
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins', sans-serif}
 body{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh;}
 .container{max-width: 1400px; margin: 0 auto;}
-.page-header{background: rgba(255,255,255,0.95); padding: 20px 30px; border-radius: 20px; margin-bottom: 25px;}
-.btn{padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;}
-.card{background: rgba(255,255,255,0.95); padding: 25px; border-radius: 20px;}
+.page-header{background: rgba(255,255,255,0.95); padding: 20px 30px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);}
+.page-header h2{color: #1e293b;}
+.page-header p{color: #64748b; margin-top: 5px;}
+.btn{padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.3s;}
+.btn:hover{background: var(--primary-dark);}
+.card{background: rgba(255,255,255,0.95); padding: 25px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);}
 .template-grid{display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;}
-.template-card{padding: 25px; background: white; border: 2px solid var(--border); border-radius: 16px; cursor: pointer; text-align: center;}
-.template-card:hover{border-color: var(--primary);}
-table{width: 100%; border-collapse: collapse;} th{background: var(--primary); color: white; padding: 12px;}
-td{padding: 12px; border-bottom: 1px solid var(--border);} .product-img{width: 50px; height: 50px; border-radius: 8px; object-fit: cover;}
+.template-card{padding: 25px; background: white; border: 2px solid var(--border); border-radius: 16px; cursor: pointer; text-align: center; transition: 0.3s;}
+.template-card:hover{border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 10px 20px rgba(99,102,241,0.2);}
+.template-card h4{margin-top:10px;text-transform:capitalize; color: #334155;}
+table{width: 100%; border-collapse: collapse; margin-top:20px} 
+th{background: var(--primary); color: white; padding: 12px; text-align: left;}
+td{padding: 12px; border-bottom: 1px solid var(--border);} 
+.product-img{width: 50px; height: 50px; border-radius: 8px; object-fit: cover;}
 .modal{display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;}
-.modal.active{display: flex;} .modal-content{background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 600px;}
-.form-group{margin: 15px 0;} .form-group input{width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px;}
+.modal.active{display: flex;} 
+.modal-content{background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 600px;}
+.form-group{margin: 15px 0;} 
+.form-group label{display:block; margin-bottom: 5px; font-weight: 600;}
+.form-group input{width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px;}
 </style>
 </head>
 <body>
@@ -36,13 +45,13 @@ td{padding: 12px; border-bottom: 1px solid var(--border);} .product-img{width: 5
     </div>
 
     <div class="card" id="productSection" style="display:none">
-        <div style="display:flex;justify-content:space-between">
+        <div style="display:flex;justify-content:space-between; align-items: center;">
             <h3><span id="selectedTemplateName"></span> Template Products</h3>
             <button class="btn" onclick="showAddProductModal()"><i class="fas fa-plus"></i> Add Product to Template</button>
         </div>
-        <table id="productsTable" style="margin-top:20px">
+        <table id="productsTable">
             <thead><tr><th>Image</th><th>Product Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
-            <tbody></tbody>
+            <tbody><tr><td colspan="6" style="text-align:center">No products yet</td></tr></tbody>
         </table>
     </div>
 </div>
@@ -55,10 +64,10 @@ td{padding: 12px; border-bottom: 1px solid var(--border);} .product-img{width: 5
             <div class="form-group"><label>Sub Category</label><input type="text" id="pCat" placeholder="Aata, Dal, Oil"></div>
             <div class="form-group"><label>Price ₹ *</label><input type="number" id="pPrice" step="0.01" required></div>
             <div class="form-group"><label>Stock *</label><input type="number" id="pStock" required></div>
-            <div class="form-group"><label>Image URL</label><input type="text" id="pImage"></div>
+            <div class="form-group"><label>Image URL</label><input type="text" id="pImage" placeholder="https://..."></div>
             <button type="submit" class="btn" style="width:100%">Save to Template</button>
         </form>
-        <button onclick="closeModal()" style="margin-top:10px;width:100%;padding:10px;">Cancel</button>
+        <button onclick="closeModal()" style="margin-top:10px;width:100%;padding:10px; background: #64748b; color:white; border:none; border-radius:10px; cursor:pointer;">Cancel</button>
     </div>
 </div>
 
@@ -68,17 +77,21 @@ const TEMPLATES = ['kirana', 'cloth', 'medical', 'restaurant', 'electronics', 'h
 let selectedCategory = null;
 
 async function apiCall(endpoint, method = 'GET', body = null) {
-    const opts = { method, headers: {'Content-Type': 'application/json'} };
-    if(body) opts.body = JSON.stringify(body);
-    const res = await fetch(API + endpoint, opts);
-    return res.json();
+    try{
+        const opts = { method, headers: {'Content-Type': 'application/json'} };
+        if(body) opts.body = JSON.stringify(body);
+        const res = await fetch(API + endpoint, opts);
+        return res.json();
+    }catch(e){
+        alert('API Error: ' + e.message);
+    }
 }
 
 function loadTemplates(){
     document.getElementById('templateList').innerHTML = TEMPLATES.map(t=>`
         <div class="template-card" onclick="openTemplate('${t}')">
             <i class="fas fa-store" style="font-size:30px;color:var(--primary)"></i>
-            <h4 style="margin-top:10px;text-transform:capitalize">${t}</h4>
+            <h4>${t}</h4>
         </div>
     `).join('');
 }
@@ -91,36 +104,58 @@ async function openTemplate(category){
     
     const res = await apiCall(`/category-master/${category}`);
     const products = res.products || [];
+    
+    if(products.length === 0){
+        document.querySelector('#productsTable tbody').innerHTML = `<tr><td colspan="6" style="text-align:center">Is template me abhi koi product nahi hai</td></tr>`;
+        return;
+    }
+
     document.querySelector('#productsTable tbody').innerHTML = products.map(p=>`
         <tr>
-            <td><img src="${p.image || 'https://via.placeholder.com/50'}" class="product-img"></td>
+            <td><img src="${p.image || 'https://via.placeholder.com/50'}" class="product-img" onerror="this.src='https://via.placeholder.com/50'"></td>
             <td><strong>${p.name}</strong></td>
             <td>${p.category || '-'}</td>
             <td>₹${p.price}</td>
             <td>${p.stock}</td>
-            <td><button onclick="deleteTemplateProduct('${p._id}')" class="btn" style="background:var(--danger)">Delete</button></td>
+            <td><button onclick="deleteTemplateProduct('${p._id}')" class="btn" style="background:var(--danger); padding: 8px 12px;">Delete</button></td>
         </tr>
     `).join('');
 }
 
-window.showAddProductModal = () => {document.getElementById('productForm').reset(); document.getElementById('productModal').classList.add('active');}
+window.showAddProductModal = () => {
+    document.getElementById('productForm').reset(); 
+    document.getElementById('productModal').classList.add('active');
+}
 window.closeModal = () => {document.getElementById('productModal').classList.remove('active');}
 
 window.saveTemplateProduct = async (e) => {
     e.preventDefault();
-    const data = {category: selectedCategory, name:pName.value, category:pCat.value, price:pPrice.value, stock:pStock.value, image:pImage.value};
-    await apiCall('/category-master/add-product', 'POST', data);
-    alert('✅ Product added to template');
-    closeModal(); openTemplate(selectedCategory);
+    // ✅ FIX: category 2 baar nahi bhej raha ab
+    const data = {
+        category: selectedCategory, 
+        name: pName.value, 
+        category: pCat.value || 'General', // ye sub category hai
+        price: pPrice.value, 
+        stock: pStock.value, 
+        image: pImage.value
+    };
+    const res = await apiCall('/category-master/add-product', 'POST', data);
+    if(res.success){
+        alert('✅ Product added to template');
+        closeModal(); 
+        openTemplate(selectedCategory);
+    } else {
+        alert('Error: ' + res.error);
+    }
 }
 
 window.deleteTemplateProduct = async (id) => {
-    if(!confirm('Delete?')) return;
+    if(!confirm('Delete this product from template?')) return;
     await apiCall(`/category-master/product/${id}`, 'DELETE');
     openTemplate(selectedCategory);
 }
 
-window.onload = loadTemplates;
+document.addEventListener('DOMContentLoaded', loadTemplates); // ✅ Ye pakka chalega
 </script>
 </body>
 </html>
