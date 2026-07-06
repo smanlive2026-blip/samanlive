@@ -6,39 +6,27 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {--primary: #6366f1; --primary-dark: #4f46e5; --success: #10b981; --danger: #ef4444; --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #1e293b;}
+:root {--primary: #6366f1; --primary-dark: #4f46e5; --success: #10b981; --danger: #ef4444; --border: #e2e8f0; --text: #1e293b;}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins', sans-serif}
 body{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: var(--text);}
 .container{max-width: 1400px; margin: 0 auto;}
-.page-header{background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 20px 30px; border-radius: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.1);}
+.page-header{background: rgba(255,255,255,0.95); padding: 20px 30px; border-radius: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;}
 .page-header h2{font-size: 24px; font-weight: 700; color: var(--primary-dark);}
-.btn{padding: 12px 24px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px;}
+.btn{padding: 12px 24px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600;}
 .btn:disabled{opacity: 0.5; cursor: not-allowed;}
-.btn-secondary{background: #64748b;}
-.btn-danger{background: linear-gradient(135deg, var(--danger), #dc2626);}
-.card{background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 25px; border-radius: 20px; margin-bottom: 25px;}
-.card h3{font-size: 18px; font-weight: 600; margin-bottom: 20px;}
+.card{background: rgba(255,255,255,0.95); padding: 25px; border-radius: 20px; margin-bottom: 25px;}
 .shop-grid{display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;}
-.shop-card{padding: 20px; background: white; border: 2px solid var(--border); border-radius: 16px; cursor: pointer; transition: all 0.3s;}
-.shop-card:hover{border-color: var(--primary); transform: translateY(-5px);}
+.shop-card{padding: 20px; background: white; border: 2px solid var(--border); border-radius: 16px; cursor: pointer;}
 .shop-card.active{border-color: var(--primary); background: #eef2ff;}
-table{width: 100%; border-collapse: collapse;}
-thead{background: linear-gradient(135deg, var(--primary), var(--primary-dark));}
-th{padding: 14px; text-align: left; font-size: 13px; font-weight: 600; color: white;}
-td{padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px;}
+table{width: 100%; border-collapse: collapse;} thead{background: var(--primary);}
+th{padding: 14px; text-align: left; color: white;} td{padding: 14px; border-bottom: 1px solid var(--border);}
 .product-img{width: 50px; height: 50px; border-radius: 10px; object-fit: cover;}
 .action-btn{padding: 8px 10px; border: none; border-radius: 8px; cursor: pointer; margin-right: 5px;}
-.btn-edit{background: #3b82f6; color: white;}
-.btn-delete{background: var(--danger); color: white;}
+.btn-edit{background: #3b82f6; color: white;} .btn-delete{background: var(--danger); color: white;}
 .modal{display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;}
-.modal.active{display: flex;}
-.modal-content{background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 550px;}
-.form-group{margin: 15px 0;}
-.form-group label{display: block; margin-bottom: 8px; font-weight: 600;}
-.form-group input{width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px;}
+.modal.active{display: flex;} .modal-content{background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 550px;}
+.form-group{margin: 15px 0;} .form-group input{width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px;}
 .badge{padding: 6px 12px; background: #d1fae5; color: #065f46; border-radius: 20px; font-size: 12px; font-weight: 600;}
-.loader{text-align:center;padding:40px;color:#64748b}
-.error-box{background:#fee2e2;color:#991b1b;padding:15px;border-radius:10px}
 </style>
 </head>
 <body>
@@ -50,14 +38,14 @@ td{padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px;}
     </div>
 
     <div class="card">
-        <h3><i class="fas fa-list"></i> Step 1: Select Any Shop</h3>
-        <div id="shopList" class="shop-grid"><div class="loader">Loading shops...</div></div>
+        <h3>Step 1: Select Any Shop</h3>
+        <div id="shopList" class="shop-grid">Loading shops...</div>
     </div>
 
     <div class="card" id="productSection" style="display:none">
         <div style="display:flex;justify-content:space-between;margin-bottom:20px">
             <h3>Step 2: Products of <span id="selectedShopName" class="badge"></span></h3>
-            <button class="btn btn-secondary" onclick="deselectShop()"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn" onclick="deselectShop()">Back</button>
         </div>
         <table id="productsTable">
             <thead><tr><th>Image</th><th>Product</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
@@ -68,7 +56,7 @@ td{padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px;}
 
 <div id="productModal" class="modal">
     <div class="modal-content">
-        <h2 id="modalTitle"><i class="fas fa-plus"></i> Add Product</h2>
+        <h2 id="modalTitle">Add Product</h2>
         <form id="productForm" onsubmit="saveProduct(event)">
             <input type="hidden" id="productId">
             <div class="form-group"><label>Name *</label><input type="text" id="productName" required></div>
@@ -78,138 +66,62 @@ td{padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px;}
             <div class="form-group"><label>Image URL</label><input type="text" id="productImage"></div>
             <button type="submit" class="btn" style="width:100%">Save Product</button>
         </form>
-        <button onclick="closeProductModal()" style="margin-top:10px;width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;background:white;cursor:pointer">Cancel</button>
+        <button onclick="closeProductModal()" style="margin-top:10px;width:100%;padding:10px;">Cancel</button>
     </div>
 </div>
 
 <script>
-const API = window.location.origin + '/api/admin';
+// HARDBALL - DIRECT URL
+const API = 'https://samanlive.onrender.com/api/admin';
 let selectedShopId = null;
 let selectedShopName = '';
 
 async function apiCall(endpoint, method = 'GET', body = null) {
-    try {
-        const opts = { method, headers: {} };
-        if(body) {opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body);}
-        const res = await fetch(API + endpoint, opts);
-        if(!res.ok) throw new Error('API Error: ' + res.status);
-        return await res.json();
-    } catch(err) {
-        console.error(err);
-        alert('API Error: ' + err.message);
-        return {success: false};
-    }
+    const opts = { method, headers: {'Content-Type': 'application/json'} };
+    if(body) opts.body = JSON.stringify(body);
+    const res = await fetch(API + endpoint, opts);
+    return res.json();
 }
 
-// ADMIN: SAARI SHOPS
 async function loadShops() {
-    const shopListDiv = document.getElementById('shopList');
-    try {
-        const res = await apiCall('/admin/shops/all');
-        if(res.success && res.shops && res.shops.length > 0){
-            shopListDiv.innerHTML = res.shops.map(shop=>`
-                <div class="shop-card" onclick="selectShop('${shop._id}', '${shop.shopName}', event)">
-                    <h4>${shop.icon || '🏪'} ${shop.shopName}</h4>
-                    <p style="font-size:12px;color:#64748b">${shop.address?.line1 || '-'}</p>
-                    <span class="badge">${shop.city || 'N/A'}</span>
-                </div>
-            `).join('');
-        } else {
-            shopListDiv.innerHTML = '<div class="error-box">Koi shop nahi mili ya API se data nahi aaya</div>';
-        }
-    } catch(err) {
-        shopListDiv.innerHTML = '<div class="error-box">Error: ' + err.message + '</div>';
-    }
+    const res = await apiCall('/shops/all');
+    document.getElementById('shopList').innerHTML = res.shops.map(shop=>`
+        <div class="shop-card" onclick="selectShop('${shop._id}', '${shop.shopName}', event)">
+            <h4>${shop.icon || '🏪'} ${shop.shopName}</h4>
+            <p>${shop.address?.line1 || '-'}</p>
+            <span class="badge">${shop.city || 'N/A'}</span>
+        </div>
+    `).join('');
 }
 
 async function selectShop(shopId, shopName, event) {
-    selectedShopId = shopId;
-    selectedShopName = shopName;
+    selectedShopId = shopId; selectedShopName = shopName;
     document.getElementById('selectedShopName').innerText = shopName;
     document.getElementById('productSection').style.display = 'block';
     document.getElementById('addProductBtn').disabled = false;
     document.querySelectorAll('.shop-card').forEach(c=>c.classList.remove('active'));
     event.currentTarget.classList.add('active');
-
-    const tbody = document.querySelector('#productsTable tbody');
-    tbody.innerHTML = '<tr><td colspan="5">Loading products...</td></tr>';
-
     const res = await apiCall(`/shop/${shopId}/products`);
-    if(res.success && res.products.length > 0) {
-        tbody.innerHTML = res.products.map(p=>`
-            <tr>
-                <td><img src="${p.image || 'https://via.placeholder.com/50'}" class="product-img" onerror="this.src='https://via.placeholder.com/50'"></td>
-                <td><strong>${p.name}</strong><br><small>${p.category || '-'}</small></td>
-                <td>₹${p.price}</td><td>${p.stock}</td>
-                <td>
-                    <button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="action-btn btn-edit"><i class="fas fa-edit"></i></button>
-                    <button onclick='deleteProduct("${p._id}")' class="action-btn btn-delete"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>`).join('');
-    } else {
-        tbody.innerHTML = '<tr><td colspan="5">No products found</td></tr>';
-    }
+    document.querySelector('#productsTable tbody').innerHTML = res.products.map(p=>`
+        <tr>
+            <td><img src="${p.image || 'https://via.placeholder.com/50'}" class="product-img"></td>
+            <td><strong>${p.name}</strong></td>
+            <td>₹${p.price}</td><td>${p.stock}</td>
+            <td>
+                <button onclick='editProduct(${JSON.stringify(p)})' class="action-btn btn-edit">Edit</button>
+                <button onclick='deleteProduct("${p._id}")' class="action-btn btn-delete">Del</button>
+            </td>
+        </tr>`).join('');
 }
 
-function deselectShop(){
-    selectedShopId=null;
-    document.getElementById('productSection').style.display='none';
-    document.getElementById('addProductBtn').disabled=true;
-    document.querySelectorAll('.shop-card').forEach(c=>c.classList.remove('active'));
-}
+function deselectShop(){selectedShopId=null;document.getElementById('productSection').style.display='none';document.getElementById('addProductBtn').disabled=true;}
+window.showAddProductModal = () => {document.getElementById('productForm').reset();document.getElementById('productId').value='';document.getElementById('productModal').classList.add('active');}
+window.closeProductModal = () => {document.getElementById('productModal').classList.remove('active');}
+window.editProduct = (p) => {document.getElementById('productId').value=p._id;document.getElementById('productName').value=p.name;document.getElementById('productCategory').value=p.category;document.getElementById('productPrice').value=p.price;document.getElementById('productStock').value=p.stock;document.getElementById('productImage').value=p.image;document.getElementById('productModal').classList.add('active');}
+window.saveProduct = async (e) => {e.preventDefault();const id = document.getElementById('productId').value;const data = {name:productName.value,category:productCategory.value,price:productPrice.value,stock:productStock.value,image:productImage.value};const endpoint = id? `/shop/${selectedShopId}/product/${id}` : `/shop/${selectedShopId}/add-product`;const method = id? 'PUT' : 'POST';await apiCall(endpoint, method, data);alert('Saved');closeProductModal(); selectShop(selectedShopId, selectedShopName, {currentTarget: document.querySelector('.shop-card.active')});}
+window.deleteProduct = async (id) => {if(!confirm('Delete?')) return;await apiCall(`/shop/${selectedShopId}/product/${id}`, 'DELETE');selectShop(selectedShopId, selectedShopName, {currentTarget: document.querySelector('.shop-card.active')});}
 
-window.showAddProductModal = () => {
-    document.getElementById('productForm').reset();
-    document.getElementById('productId').value='';
-    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus"></i> Add Product';
-    document.getElementById('productModal').classList.add('active');
-}
-
-window.closeProductModal = () => {
-    document.getElementById('productModal').classList.remove('active');
-}
-
-window.editProduct = (p) => {
-    document.getElementById('productId').value=p._id;
-    document.getElementById('productName').value=p.name;
-    document.getElementById('productCategory').value=p.category;
-    document.getElementById('productPrice').value=p.price;
-    document.getElementById('productStock').value=p.stock;
-    document.getElementById('productImage').value=p.image;
-    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Product';
-    document.getElementById('productModal').classList.add('active');
-}
-
-window.saveProduct = async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('productId').value;
-    const data = {
-        name:productName.value,
-        category:productCategory.value,
-        price:parseFloat(productPrice.value),
-        stock:parseInt(productStock.value),
-        image:productImage.value
-    };
-    const endpoint = id? `/shop/${selectedShopId}/product/${id}` : `/shop/${selectedShopId}/add-product`;
-    const method = id? 'PUT' : 'POST';
-    const res = await apiCall(endpoint, method, data);
-    if(res.success) {
-        alert('✅ Saved');
-        closeProductModal(); 
-        selectShop(selectedShopId, selectedShopName, {currentTarget: document.querySelector('.shop-card.active')});
-    }
-}
-
-window.deleteProduct = async (id) => {
-    if(!confirm('Are you sure to delete this product?')) return;
-    const res = await apiCall(`/shop/${selectedShopId}/product/${id}`, 'DELETE');
-    if(res.success) {
-        alert('✅ Deleted');
-        selectShop(selectedShopId, selectedShopName, {currentTarget: document.querySelector('.shop-card.active')});
-    }
-}
-
-window.onload = () => { setTimeout(loadShops, 1000); }
+setTimeout(loadShops, 3000); // 3 sec delay
 </script>
 </body>
 </html>
