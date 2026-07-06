@@ -104,7 +104,7 @@ router.post('/manager/shop', authenticateManager, async (req, res) => {
     try {
         const manager = req.manager;
         const shopData = {
-        ...req.body,
+       ...req.body,
             areaCode: manager.areaCode,
             areaName: manager.areaName,
             managerId: manager._id,
@@ -358,8 +358,8 @@ router.get('/shops', async (req, res) => {
     }
 
     const shops = await Shop.find(filter)
-  .populate('managerId', 'name')
-  .sort({ createdAt: -1 });
+ .populate('managerId', 'name')
+ .sort({ createdAt: -1 });
     res.json(shops);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -529,9 +529,9 @@ router.post('/admin/reject-banner/:shopId', async (req, res) => {
 router.get('/admin/shop-history', async (req, res) => {
   try {
     const history = await ShopHistory.find()
-  .populate('managerId', 'name area')
-  .sort({ createdAt: -1 })
-  .limit(100);
+ .populate('managerId', 'name area')
+ .sort({ createdAt: -1 })
+ .limit(100);
     res.json({ success: true, history });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -746,8 +746,8 @@ router.get('/banners', async (req, res) => {
         if (placement) filter.placement = placement;
 
         const banners = await Banner.find(filter)
-         .populate('createdBy', 'name')
-         .sort({ priority: -1 });
+        .populate('createdBy', 'name')
+        .sort({ priority: -1 });
         res.json(banners);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -757,7 +757,7 @@ router.get('/banners', async (req, res) => {
 router.post('/banners', upload.single('image'), async (req, res) => {
     try {
         const bannerData = {
-         ...req.body,
+        ...req.body,
             image: '/' + req.file.path.replace('public/', '').replace(/\\/g, '/'),
             createdBy: req.userId,
             createdByType: 'admin'
@@ -785,10 +785,10 @@ router.put('/banners/:id/approve', async (req, res) => {
 
 // ==================== ADMIN: SHOP PRODUCT MANAGER ====================
 
-// 1. SAARI SHOPS LANE KE LIYE
-router.get('/shops/all', async (req, res) => {
+// 1. SAARI SHOPS LANE KE LIYE - FIX: isActive hata diya
+router.get('/admin/shops/all', async (req, res) => {
     try {
-        const shops = await Shop.find({isActive: true}).sort({createdAt: -1});
+        const shops = await Shop.find({}).sort({createdAt: -1}); // <-- YAHI CHANGE HAI
         res.json({success: true, shops});
     } catch (err) {
         res.status(500).json({success: false, error: err.message});

@@ -95,7 +95,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 
 // ADMIN: SAARI SHOPS
 async function loadShops() {
-    const res = await apiCall('/shops/all');
+    const res = await apiCall('/admin/shops/all');
     if(res.success){
         document.getElementById('shopList').innerHTML = res.shops.map(shop=>`
             <div class="shop-card" onclick="selectShop('${shop._id}', '${shop.shopName}')">
