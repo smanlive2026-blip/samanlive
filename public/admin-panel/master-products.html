@@ -37,6 +37,8 @@ td{padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px;}
 .form-group label{display: block; margin-bottom: 8px; font-weight: 600;}
 .form-group input{width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px;}
 .badge{padding: 6px 12px; background: #d1fae5; color: #065f46; border-radius: 20px; font-size: 12px; font-weight: 600;}
+.loader{text-align:center;padding:40px;color:#64748b}
+.error-box{background:#fee2e2;color:#991b1b;padding:15px;border-radius:10px}
 </style>
 </head>
 <body>
@@ -49,7 +51,7 @@ td{padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px;}
 
     <div class="card">
         <h3><i class="fas fa-list"></i> Step 1: Select Any Shop</h3>
-        <div id="shopList" class="shop-grid"><p>Loading shops...</p></div>
+        <div id="shopList" class="shop-grid"><div class="loader">Loading shops...</div></div>
     </div>
 
     <div class="card" id="productSection" style="display:none">
@@ -82,32 +84,45 @@ td{padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px;}
 
 <script>
 const API = window.location.origin + '/api/admin';
-const token = ''; // ADMIN ME TOKEN NAHI
 let selectedShopId = null;
 let selectedShopName = '';
 
 async function apiCall(endpoint, method = 'GET', body = null) {
-    const opts = { method, headers: {} };
-    if(body) {opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body);}
-    const res = await fetch(API + endpoint, opts);
-    return res.json();
+    try {
+        const opts = { method, headers: {} };
+        if(body) {opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body);}
+        const res = await fetch(API + endpoint, opts);
+        if(!res.ok) throw new Error('API Error: ' + res.status);
+        return await res.json();
+    } catch(err) {
+        console.error(err);
+        alert('API Error: ' + err.message);
+        return {success: false};
+    }
 }
 
 // ADMIN: SAARI SHOPS
 async function loadShops() {
-    const res = await apiCall('/admin/shops/all');
-    if(res.success){
-        document.getElementById('shopList').innerHTML = res.shops.map(shop=>`
-            <div class="shop-card" onclick="selectShop('${shop._id}', '${shop.shopName}')">
-                <h4>${shop.icon || '🏪'} ${shop.shopName}</h4>
-                <p style="font-size:12px;color:#64748b">${shop.address?.line1 || '-'}</p>
-                <span class="badge">${shop.city}</span>
-            </div>
-        `).join('');
+    const shopListDiv = document.getElementById('shopList');
+    try {
+        const res = await apiCall('/admin/shops/all');
+        if(res.success && res.shops && res.shops.length > 0){
+            shopListDiv.innerHTML = res.shops.map(shop=>`
+                <div class="shop-card" onclick="selectShop('${shop._id}', '${shop.shopName}', event)">
+                    <h4>${shop.icon || '🏪'} ${shop.shopName}</h4>
+                    <p style="font-size:12px;color:#64748b">${shop.address?.line1 || '-'}</p>
+                    <span class="badge">${shop.city || 'N/A'}</span>
+                </div>
+            `).join('');
+        } else {
+            shopListDiv.innerHTML = '<div class="error-box">Koi shop nahi mili ya API se data nahi aaya</div>';
+        }
+    } catch(err) {
+        shopListDiv.innerHTML = '<div class="error-box">Error: ' + err.message + '</div>';
     }
 }
 
-async function selectShop(shopId, shopName) {
+async function selectShop(shopId, shopName, event) {
     selectedShopId = shopId;
     selectedShopName = shopName;
     document.getElementById('selectedShopName').innerText = shopName;
@@ -116,24 +131,43 @@ async function selectShop(shopId, shopName) {
     document.querySelectorAll('.shop-card').forEach(c=>c.classList.remove('active'));
     event.currentTarget.classList.add('active');
 
-    const res = await apiCall(`/shop/${shopId}/products`);
     const tbody = document.querySelector('#productsTable tbody');
-    tbody.innerHTML = res.products.length? res.products.map(p=>`
-        <tr>
-            <td><img src="${p.image || 'https://via.placeholder.com/50'}" class="product-img"></td>
-            <td><strong>${p.name}</strong><br><small>${p.category || '-'}</small></td>
-            <td>₹${p.price}</td><td>${p.stock}</td>
-            <td>
-                <button onclick='editProduct(${JSON.stringify(p)})' class="action-btn btn-edit"><i class="fas fa-edit"></i></button>
-                <button onclick='deleteProduct("${p._id}")' class="action-btn btn-delete"><i class="fas fa-trash"></i></button>
-            </td>
-        </tr>`).join('') : '<tr><td colspan="5">No products</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5">Loading products...</td></tr>';
+
+    const res = await apiCall(`/shop/${shopId}/products`);
+    if(res.success && res.products.length > 0) {
+        tbody.innerHTML = res.products.map(p=>`
+            <tr>
+                <td><img src="${p.image || 'https://via.placeholder.com/50'}" class="product-img" onerror="this.src='https://via.placeholder.com/50'"></td>
+                <td><strong>${p.name}</strong><br><small>${p.category || '-'}</small></td>
+                <td>₹${p.price}</td><td>${p.stock}</td>
+                <td>
+                    <button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="action-btn btn-edit"><i class="fas fa-edit"></i></button>
+                    <button onclick='deleteProduct("${p._id}")' class="action-btn btn-delete"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`).join('');
+    } else {
+        tbody.innerHTML = '<tr><td colspan="5">No products found</td></tr>';
+    }
 }
 
-function deselectShop(){selectedShopId=null;document.getElementById('productSection').style.display='none';document.getElementById('addProductBtn').disabled=true;}
+function deselectShop(){
+    selectedShopId=null;
+    document.getElementById('productSection').style.display='none';
+    document.getElementById('addProductBtn').disabled=true;
+    document.querySelectorAll('.shop-card').forEach(c=>c.classList.remove('active'));
+}
 
-window.showAddProductModal = () => {document.getElementById('productForm').reset();document.getElementById('productId').value='';document.getElementById('productModal').classList.add('active');}
-window.closeProductModal = () => {document.getElementById('productModal').classList.remove('active');}
+window.showAddProductModal = () => {
+    document.getElementById('productForm').reset();
+    document.getElementById('productId').value='';
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus"></i> Add Product';
+    document.getElementById('productModal').classList.add('active');
+}
+
+window.closeProductModal = () => {
+    document.getElementById('productModal').classList.remove('active');
+}
 
 window.editProduct = (p) => {
     document.getElementById('productId').value=p._id;
@@ -142,27 +176,40 @@ window.editProduct = (p) => {
     document.getElementById('productPrice').value=p.price;
     document.getElementById('productStock').value=p.stock;
     document.getElementById('productImage').value=p.image;
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Product';
     document.getElementById('productModal').classList.add('active');
 }
 
 window.saveProduct = async (e) => {
     e.preventDefault();
     const id = document.getElementById('productId').value;
-    const data = {name:productName.value,category:productCategory.value,price:productPrice.value,stock:productStock.value,image:productImage.value};
+    const data = {
+        name:productName.value,
+        category:productCategory.value,
+        price:parseFloat(productPrice.value),
+        stock:parseInt(productStock.value),
+        image:productImage.value
+    };
     const endpoint = id? `/shop/${selectedShopId}/product/${id}` : `/shop/${selectedShopId}/add-product`;
     const method = id? 'PUT' : 'POST';
-    await apiCall(endpoint, method, data);
-    alert('✅ Saved');
-    closeProductModal(); selectShop(selectedShopId, selectedShopName);
+    const res = await apiCall(endpoint, method, data);
+    if(res.success) {
+        alert('✅ Saved');
+        closeProductModal(); 
+        selectShop(selectedShopId, selectedShopName, {currentTarget: document.querySelector('.shop-card.active')});
+    }
 }
 
 window.deleteProduct = async (id) => {
-    if(!confirm('Delete?')) return;
-    await apiCall(`/shop/${selectedShopId}/product/${id}`, 'DELETE');
-    selectShop(selectedShopId, selectedShopName);
+    if(!confirm('Are you sure to delete this product?')) return;
+    const res = await apiCall(`/shop/${selectedShopId}/product/${id}`, 'DELETE');
+    if(res.success) {
+        alert('✅ Deleted');
+        selectShop(selectedShopId, selectedShopName, {currentTarget: document.querySelector('.shop-card.active')});
+    }
 }
 
-setTimeout(loadShops, 500);
+window.onload = () => { setTimeout(loadShops, 1000); }
 </script>
 </body>
 </html>
