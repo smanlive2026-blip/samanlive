@@ -149,4 +149,79 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
     }
 });
 
+const Product = require('../models/Product'); // upar require kar lena
+
+// 1. MANAGER KI SAARI SHOPS
+router.get('/my-shops', authManager, async (req, res) => {
+    try {
+        const shops = await Shop.find({ 
+            assignedManagerCode: req.managerCode,
+            isActive: true 
+        }).sort({ createdAt: -1 });
+        res.json({ success: true, shops });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 2. KISI SHOP KE PRODUCT LIST
+router.get('/shop/:shopId/products', authManager, async (req, res) => {
+    try {
+        const shop = await Shop.findOne({_id: req.params.shopId, assignedManagerCode: req.manager.managerCode});
+        if(!shop) return res.status(403).json({success:false, error: 'Shop not found'});
+        
+        const products = await Product.find({ shopId: req.params.shopId }).sort({ createdAt: -1 });
+        res.json({ success: true, products });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 3. PRODUCT ADD
+router.post('/shop/:shopId/add-product', authManager, async (req, res) => {
+    try {
+        const { name, price, stock, category, image, description } = req.body;
+        const shop = await Shop.findOne({_id: req.params.shopId, assignedManagerCode: req.manager.managerCode});
+        if(!shop) return res.status(403).json({success:false, error: 'Shop not found'});
+
+        const product = new Product({
+            shopId: req.params.shopId,
+            shopName: shop.shopName,
+            name, price, stock, category,
+            image: image || 'https://via.placeholder.com/150',
+            description: description || '',
+            status: 'active',
+            createdBy: req.manager._id
+        });
+        await product.save();
+        res.json({ success: true, message: 'Product added', product });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 4. PRODUCT UPDATE
+router.put('/shop/:shopId/product/:id', authManager, async (req, res) => {
+    try {
+        const product = await Product.findOneAndUpdate(
+            {_id: req.params.id, shopId: req.params.shopId},
+            req.body,
+            {new: true}
+        );
+        res.json({ success: true, product });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 5. PRODUCT DELETE
+router.delete('/shop/:shopId/product/:id', authManager, async (req, res) => {
+    try {
+        await Product.findOneAndDelete({_id: req.params.id, shopId: req.params.shopId});
+        res.json({ success: true, message: 'Deleted' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 module.exports = router;
