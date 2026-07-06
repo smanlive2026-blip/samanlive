@@ -81,7 +81,7 @@ td{padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px;}
 </div>
 
 <script>
-const API = '/api/admin';
+const API = window.location.origin + '/api/admin';
 const token = ''; // ADMIN ME TOKEN NAHI
 let selectedShopId = null;
 let selectedShopName = '';
@@ -162,7 +162,7 @@ window.deleteProduct = async (id) => {
     selectShop(selectedShopId, selectedShopName);
 }
 
-document.addEventListener('DOMContentLoaded', loadShops);
+setTimeout(loadShops, 500);
 </script>
 </body>
 </html>
