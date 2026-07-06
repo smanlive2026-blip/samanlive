@@ -131,6 +131,19 @@ const shopSchema = new mongoose.Schema({
         mrp: { type: Number, default: 0 },
         stock: { type: Number, default: 0 }
     }],
+    // ========== ADMIN PRODUCT MANAGER KE LIYE NAYA FIELD ==========
+    products: {
+        type: [{
+            _id: { type: mongoose.Schema.Types.ObjectId },
+            name: { type: String },
+            category: { type: String },
+            price: { type: Number },
+            stock: { type: Number },
+            image: { type: String }
+        }],
+        default: []
+    },
+    // ========== END ==========
     // ========== SHOP TYPE & ITEMS END ==========
 
     rating: { type: Number, default: 0, min: 0, max: 5 },

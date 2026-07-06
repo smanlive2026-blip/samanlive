@@ -6,11 +6,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-    --primary: #6366f1; --primary-dark: #4f46e5;
-    --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
-    --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #1e293b;
-}
+:root {--primary: #6366f1; --primary-dark: #4f46e5; --success: #10b981; --danger: #ef4444; --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #1e293b;}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins', sans-serif}
 body{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: var(--text);}
 .container{max-width: 1400px; margin: 0 auto;}
@@ -85,12 +81,13 @@ td{padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px;}
 </div>
 
 <script>
-const API = '/api/admin'; // ✅ ADMIN ROUTE
-const token = localStorage.getItem('adminToken') || localStorage.getItem('token') || '';
+const API = '/api/admin';
+const token = ''; // ADMIN ME TOKEN NAHI
 let selectedShopId = null;
+let selectedShopName = '';
 
 async function apiCall(endpoint, method = 'GET', body = null) {
-    const opts = { method, headers: { 'Authorization': `Bearer ${token}` } };
+    const opts = { method, headers: {} };
     if(body) {opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body);}
     const res = await fetch(API + endpoint, opts);
     return res.json();
@@ -98,7 +95,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 
 // ADMIN: SAARI SHOPS
 async function loadShops() {
-    const res = await apiCall('/shops/all'); // ✅ admin wala route
+    const res = await apiCall('/shops/all');
     if(res.success){
         document.getElementById('shopList').innerHTML = res.shops.map(shop=>`
             <div class="shop-card" onclick="selectShop('${shop._id}', '${shop.shopName}')">
@@ -112,18 +109,19 @@ async function loadShops() {
 
 async function selectShop(shopId, shopName) {
     selectedShopId = shopId;
+    selectedShopName = shopName;
     document.getElementById('selectedShopName').innerText = shopName;
     document.getElementById('productSection').style.display = 'block';
     document.getElementById('addProductBtn').disabled = false;
     document.querySelectorAll('.shop-card').forEach(c=>c.classList.remove('active'));
     event.currentTarget.classList.add('active');
-    
+
     const res = await apiCall(`/shop/${shopId}/products`);
     const tbody = document.querySelector('#productsTable tbody');
-    tbody.innerHTML = res.products.length ? res.products.map(p=>`
+    tbody.innerHTML = res.products.length? res.products.map(p=>`
         <tr>
             <td><img src="${p.image || 'https://via.placeholder.com/50'}" class="product-img"></td>
-            <td><strong>${p.name}</strong></td>
+            <td><strong>${p.name}</strong><br><small>${p.category || '-'}</small></td>
             <td>₹${p.price}</td><td>${p.stock}</td>
             <td>
                 <button onclick='editProduct(${JSON.stringify(p)})' class="action-btn btn-edit"><i class="fas fa-edit"></i></button>
@@ -151,17 +149,17 @@ window.saveProduct = async (e) => {
     e.preventDefault();
     const id = document.getElementById('productId').value;
     const data = {name:productName.value,category:productCategory.value,price:productPrice.value,stock:productStock.value,image:productImage.value};
-    const endpoint = id ? `/shop/${selectedShopId}/product/${id}` : `/shop/${selectedShopId}/add-product`;
-    const method = id ? 'PUT' : 'POST';
+    const endpoint = id? `/shop/${selectedShopId}/product/${id}` : `/shop/${selectedShopId}/add-product`;
+    const method = id? 'PUT' : 'POST';
     await apiCall(endpoint, method, data);
     alert('✅ Saved');
-    closeProductModal(); selectShop(selectedShopId, selectedShopName.innerText);
+    closeProductModal(); selectShop(selectedShopId, selectedShopName);
 }
 
 window.deleteProduct = async (id) => {
     if(!confirm('Delete?')) return;
     await apiCall(`/shop/${selectedShopId}/product/${id}`, 'DELETE');
-    selectShop(selectedShopId, selectedShopName.innerText);
+    selectShop(selectedShopId, selectedShopName);
 }
 
 document.addEventListener('DOMContentLoaded', loadShops);

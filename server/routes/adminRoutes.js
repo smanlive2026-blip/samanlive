@@ -783,4 +783,74 @@ router.put('/banners/:id/approve', async (req, res) => {
     }
 });
 
+// ==================== ADMIN: SHOP PRODUCT MANAGER ====================
+
+// 1. SAARI SHOPS LANE KE LIYE
+router.get('/shops/all', async (req, res) => {
+    try {
+        const shops = await Shop.find({isActive: true}).sort({createdAt: -1});
+        res.json({success: true, shops});
+    } catch (err) {
+        res.status(500).json({success: false, error: err.message});
+    }
+})
+
+// 2. EK SHOP KE PRODUCTS LANE KE LIYE
+router.get('/shop/:shopId/products', async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.shopId);
+        if(!shop) return res.status(404).json({success: false, error: 'Shop not found'});
+        res.json({success: true, products: shop.products || []});
+    } catch (err) {
+        res.status(500).json({success: false, error: err.message});
+    }
+})
+
+// 3. PRODUCT ADD KARNA
+router.post('/shop/:shopId/add-product', async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.shopId);
+        if(!shop) return res.status(404).json({success: false, error: 'Shop not found'});
+
+        req.body._id = new mongoose.Types.ObjectId();
+        shop.products = shop.products || [];
+        shop.products.push(req.body);
+        await shop.save();
+        res.json({success: true, product: req.body});
+    } catch (err) {
+        res.status(500).json({success: false, error: err.message});
+    }
+})
+
+// 4. PRODUCT UPDATE KARNA
+router.put('/shop/:shopId/product/:productId', async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.shopId);
+        if(!shop) return res.status(404).json({success: false, error: 'Shop not found'});
+
+        const idx = shop.products.findIndex(p => p._id == req.params.productId);
+        if(idx === -1) return res.status(404).json({success: false, error: 'Product not found'});
+
+        shop.products[idx] = {...shop.products[idx].toObject(),...req.body};
+        await shop.save();
+        res.json({success: true});
+    } catch (err) {
+        res.status(500).json({success: false, error: err.message});
+    }
+})
+
+// 5. PRODUCT DELETE KARNA
+router.delete('/shop/:shopId/product/:productId', async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.shopId);
+        if(!shop) return res.status(404).json({success: false, error: 'Shop not found'});
+
+        shop.products = shop.products.filter(p => p._id!= req.params.productId);
+        await shop.save();
+        res.json({success: true});
+    } catch (err) {
+        res.status(500).json({success: false, error: err.message});
+    }
+})
+
 module.exports = router;
