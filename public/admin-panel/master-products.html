@@ -6,132 +6,108 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {--primary: #6366f1; --primary-dark: #4f46e5; --danger: #ef4444; --success: #22c55e; --border: #e2e8f0;}
+:root {--primary: #6366f1; --danger: #ef4444; --success: #22c55e; --border: #e2e8f0;}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins', sans-serif}
 body{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh;}
 .container{max-width: 1400px; margin: 0 auto;}
-.page-header{background: rgba(255,255,255,0.95); padding: 20px 30px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);}
-.btn{padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.3s;}
-.btn:hover{background: var(--primary-dark);}.btn-success{background: var(--success);}
-.card{background: rgba(255,255,255,0.95); padding: 25px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);}
+.page-header{background: rgba(255,255,255,0.95); padding: 20px 30px; border-radius: 20px; margin-bottom: 25px;}
+.btn{padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;}
+.card{background: rgba(255,255,255,0.95); padding: 25px; border-radius: 20px; margin-bottom: 25px;}
 .template-grid{display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;}
-.template-card{padding: 25px; background: white; border: 2px solid var(--border); border-radius: 16px; cursor: pointer; text-align: center; transition: 0.3s;}
-.template-card:hover{border-color: var(--primary); transform: translateY(-5px);}
-table{width: 100%; border-collapse: collapse;}
-th{background: var(--primary); color: white; padding: 12px; text-align: left;}
-td{padding: 12px; border-bottom: 1px solid var(--border);}
-.product-img{width: 50px; height: 50px; border-radius: 8px; object-fit: cover;}
+.template-card{padding: 25px; background: white; border: 2px solid var(--border); border-radius: 16px; cursor: pointer; text-align: center;}
+.template-card:hover{border-color: var(--primary);}
+table{width: 100%; border-collapse: collapse;} th{background: var(--primary); color: white; padding: 12px;}
+td{padding: 12px; border-bottom: 1px solid var(--border);} .product-img{width: 50px; height: 50px; border-radius: 8px;}
 .modal{display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;}
-.modal.active{display: flex;}
-.modal-content{background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 600px;}
-.form-group{margin: 15px 0;}
-.form-group label{display:block; margin-bottom: 5px; font-weight: 600;}
-.form-group input{width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px;}
-.back-btn{background: #64748b; margin-bottom: 15px;}
+.modal.active{display: flex;} .modal-content{background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 600px;}
+.form-group{margin: 15px 0;} .form-group input{width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px;}
 </style>
 </head>
 <body>
 <div class="container">
     <div class="page-header">
         <h2><i class="fas fa-layer-group"></i> Category Master - Product Templates</h2>
-        <p>Yaha se 12 shop type ke default products manage karo. Nayi shop bante hi ye product auto mil jayenge</p>
     </div>
 
-    <!-- PAGE 1: 12 TEMPLATE GRID -->
     <div class="card" id="templatePage">
         <h3>12 Shop Templates</h3>
-        <div id="templateList" class="template-grid">Loading...</div>
+        <div id="templateList" class="template-grid">Loading Templates...</div>
     </div>
 
-    <!-- PAGE 2: PRODUCT LIST OF SELECTED CATEGORY -->
     <div class="card" id="productPage" style="display:none">
-        <button class="btn back-btn" onclick="backToTemplates()"><i class="fas fa-arrow-left"></i> Back to Templates</button>
-        <div style="display:flex;justify-content:space-between; align-items: center;">
-            <h3><span id="selectedTemplateName"></span> - Template Products</h3>
-            <button class="btn btn-success" onclick="showAddProductModal()"><i class="fas fa-plus"></i> Add Product</button>
+        <button class="btn" style="background:#64748b" onclick="backToTemplates()"><i class="fas fa-arrow-left"></i> Back</button>
+        <div style="display:flex;justify-content:space-between; margin-top:15px;">
+            <h3><span id="selectedTemplateName"></span> Products</h3>
+            <button class="btn" style="background:var(--success)" onclick="showAddProductModal()"><i class="fas fa-plus"></i> Add Product</button>
         </div>
-        <table id="productsTable">
-            <thead><tr><th>Image</th><th>Product Name</th><th>Sub Category</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
-            <tbody><tr><td colspan="6" style="text-align:center">Loading...</td></tr></tbody>
-        </table>
+        <table id="productsTable"><thead><tr><th>Image</th><th>Name</th><th>Sub Cat</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead><tbody></tbody></table>
     </div>
 </div>
 
-<!-- ADD PRODUCT MODAL -->
 <div id="productModal" class="modal">
     <div class="modal-content">
-        <h2>Add Product to <span id="modalCatName"></span></h2>
+        <h2>Add to <span id="modalCatName"></span></h2>
         <form id="productForm" onsubmit="saveTemplateProduct(event)">
-            <div class="form-group"><label>Product Name *</label><input type="text" id="pName" required placeholder="Ex: Aata 1kg"></div>
-            <div class="form-group"><label>Sub Category</label><input type="text" id="pCat" placeholder="Ex: Aata, Dal, Oil"></div>
-            <div class="form-group"><label>Price ₹ *</label><input type="number" id="pPrice" step="0.01" required></div>
+            <div class="form-group"><label>Name *</label><input type="text" id="pName" required></div>
+            <div class="form-group"><label>Sub Category</label><input type="text" id="pCat"></div>
+            <div class="form-group"><label>Price *</label><input type="number" id="pPrice" required></div>
             <div class="form-group"><label>Stock *</label><input type="number" id="pStock" required value="100"></div>
-            <div class="form-group"><label>Image URL</label><input type="text" id="pImage" placeholder="https://..."></div>
-            <button type="submit" class="btn btn-success" style="width:100%">Save to Template</button>
+            <div class="form-group"><label>Image URL</label><input type="text" id="pImage"></div>
+            <button type="submit" class="btn" style="width:100%;background:var(--success)">Save</button>
         </form>
-        <button onclick="closeModal()" style="margin-top:10px;width:100%;padding:10px; background: #64748b; color:white; border:none; border-radius:10px; cursor:pointer;">Cancel</button>
+        <button onclick="closeModal()" style="margin-top:10px;width:100%;padding:10px;">Cancel</button>
     </div>
 </div>
 
 <script>
 const API = 'https://samanlive.onrender.com/api/admin';
-const TEMPLATES = [
-    {key: 'kirana', name: 'Kirana Store', icon: 'fa-shopping-basket'},
-    {key: 'cloth', name: 'Cloth Shop', icon: 'fa-tshirt'},
-    {key: 'medical', name: 'Medical Store', icon: 'fa-pills'},
-    {key: 'restaurant', name: 'Restaurant', icon: 'fa-utensils'},
-    {key: 'electronics', name: 'Electronics', icon: 'fa-tv'},
-    {key: 'hardware', name: 'Hardware', icon: 'fa-tools'},
-    {key: 'salon', name: 'Salon', icon: 'fa-cut'},
-    {key: 'stationery', name: 'Stationery', icon: 'fa-book'},
-    {key: 'service', name: 'Service', icon: 'fa-concierge-bell'},
-    {key: 'rental', name: 'Rental', icon: 'fa-key'},
-    {key: 'common', name: 'Common Store', icon: 'fa-store'},
-    {key: 'grocery', name: 'Grocery', icon: 'fa-apple-alt'}
-];
+const TEMPLATES = ['kirana','cloth','medical','restaurant','electronics','hardware','salon','stationery','service','rental','common','grocery'];
 let selectedCategory = null;
 
 async function apiCall(endpoint, method = 'GET', body = null) {
-    const opts = { method, headers: {'Content-Type': 'application/json'} };
-    if(body) opts.body = JSON.stringify(body);
-    const res = await fetch(API + endpoint, opts);
-    return res.json();
+    try{
+        const opts = { method, headers: {'Content-Type': 'application/json'} };
+        if(body) opts.body = JSON.stringify(body);
+        const res = await fetch(API + endpoint, opts);
+        return await res.json();
+    }catch(e){
+        alert('API Error: ' + e.message);
+        return {success:false}
+    }
 }
 
 function loadTemplates(){
+    console.log("Loading templates...");
     document.getElementById('templateList').innerHTML = TEMPLATES.map(t=>`
-        <div class="template-card" onclick="openTemplate('${t.key}')">
-            <i class="fas ${t.icon}" style="font-size:35px;color:var(--primary)"></i>
-            <h4 style="margin-top:10px;">${t.name}</h4>
+        <div class="template-card" onclick="openTemplate('${t}')">
+            <i class="fas fa-store" style="font-size:30px;color:var(--primary)"></i>
+            <h4 style="margin-top:10px;text-transform:capitalize">${t}</h4>
         </div>
     `).join('');
 }
 
 async function openTemplate(category){
     selectedCategory = category;
-    const template = TEMPLATES.find(t=>t.key === category);
-    document.getElementById('selectedTemplateName').innerText = template.name;
-    document.getElementById('modalCatName').innerText = template.name;
-
+    document.getElementById('selectedTemplateName').innerText = category.toUpperCase();
+    document.getElementById('modalCatName').innerText = category.toUpperCase();
     document.getElementById('templatePage').style.display = 'none';
     document.getElementById('productPage').style.display = 'block';
-
+    
     const res = await apiCall(`/category-master/${category}`);
     const products = res.products || [];
-
+    
     if(products.length === 0){
-        document.querySelector('#productsTable tbody').innerHTML = `<tr><td colspan="6" style="text-align:center">Is template me abhi koi product nahi hai. "Add Product" dabao</td></tr>`;
+        document.querySelector('#productsTable tbody').innerHTML = `<tr><td colspan="6" style="text-align:center">No products. Click "Add Product"</td></tr>`;
         return;
     }
-
     document.querySelector('#productsTable tbody').innerHTML = products.map(p=>`
         <tr>
-            <td><img src="${p.image || 'https://via.placeholder.com/50'}" class="product-img" onerror="this.src='https://via.placeholder.com/50'"></td>
-            <td><strong>${p.name}</strong></td>
+            <td><img src="${p.image || 'https://via.placeholder.com/50'}" class="product-img"></td>
+            <td>${p.name}</td>
             <td>${p.category || '-'}</td>
             <td>₹${p.price}</td>
             <td>${p.stock}</td>
-            <td><button onclick="deleteTemplateProduct('${p._id}')" class="btn" style="background:var(--danger); padding: 8px 12px;"><i class="fas fa-trash"></i></button></td>
+            <td><button onclick="deleteTemplateProduct('${p._id}')" class="btn" style="background:var(--danger)">Del</button></td>
         </tr>
     `).join('');
 }
@@ -141,38 +117,32 @@ function backToTemplates(){
     document.getElementById('templatePage').style.display = 'block';
 }
 
-window.showAddProductModal = () => {
-    document.getElementById('productForm').reset();
-    document.getElementById('productModal').classList.add('active');
-}
+window.showAddProductModal = () => {document.getElementById('productForm').reset(); document.getElementById('productModal').classList.add('active');}
 window.closeModal = () => {document.getElementById('productModal').classList.remove('active');}
 
 window.saveTemplateProduct = async (e) => {
     e.preventDefault();
+    // ✅ YEHI SABSE BADI GALTI THI. "category" 2 baar tha
     const data = {
-        category: selectedCategory,
-        name: pName.value,
-        subCategory: pCat.value,
-        price: pPrice.value,
-        stock: pStock.value,
-        image: pImage.value
+        category: selectedCategory, 
+        name: document.getElementById('pName').value, 
+        subCategory: document.getElementById('pCat').value, 
+        price: document.getElementById('pPrice').value, 
+        stock: document.getElementById('pStock').value, 
+        image: document.getElementById('pImage').value
     };
     const res = await apiCall('/category-master/add-product', 'POST', data);
-    if(res.success){
-        alert('✅ Product added to template');
-        closeModal();
-        openTemplate(selectedCategory);
-    } else {
-        alert('Error: ' + res.error);
-    }
+    if(res.success){alert('✅ Added'); closeModal(); openTemplate(selectedCategory);} 
+    else {alert('Error: ' + res.error);}
 }
 
 window.deleteTemplateProduct = async (id) => {
-    if(!confirm('Delete this product from template?')) return;
+    if(!confirm('Delete?')) return;
     await apiCall(`/category-master/product/${id}`, 'DELETE');
     openTemplate(selectedCategory);
 }
 
+// ✅ YE LINE SABSE IMPORTANT HAI
 document.addEventListener('DOMContentLoaded', loadTemplates);
 </script>
 </body>
