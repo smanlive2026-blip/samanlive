@@ -2,73 +2,70 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Category Products Manager - SAMANLIVE ADMIN</title>
+<title>Category Master - SAMANLIVE ADMIN</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {--primary: #6366f1; --primary-dark: #4f46e5; --success: #10b981; --danger: #ef4444; --border: #e2e8f0;}
+:root {--primary: #6366f1; --primary-dark: #4f46e5; --danger: #ef4444; --border: #e2e8f0;}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins', sans-serif}
-body{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px;}
+body{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh;}
 .container{max-width: 1400px; margin: 0 auto;}
-.page-header{background: rgba(255,255,255,0.95); padding: 20px 30px; border-radius: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;}
-.btn{padding: 12px 24px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600;}
-.card{background: rgba(255,255,255,0.95); padding: 25px; border-radius: 20px; margin-bottom: 25px;}
-.category-grid{display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;}
-.category-card{padding: 20px; background: white; border: 2px solid var(--border); border-radius: 16px; cursor: pointer; text-align: center; transition: 0.3s;}
-.category-card:hover{border-color: var(--primary); transform: translateY(-5px);}
-.category-card.active{border-color: var(--primary); background: #eef2ff;}
-table{width: 100%; border-collapse: collapse;} thead{background: var(--primary);}
-th{padding: 14px; text-align: left; color: white;} td{padding: 14px; border-bottom: 1px solid var(--border);}
+.page-header{background: rgba(255,255,255,0.95); padding: 20px 30px; border-radius: 20px; margin-bottom: 25px;}
+.btn{padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;}
+.card{background: rgba(255,255,255,0.95); padding: 25px; border-radius: 20px;}
+.template-grid{display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;}
+.template-card{padding: 25px; background: white; border: 2px solid var(--border); border-radius: 16px; cursor: pointer; text-align: center;}
+.template-card:hover{border-color: var(--primary);}
+table{width: 100%; border-collapse: collapse;} th{background: var(--primary); color: white; padding: 12px;}
+td{padding: 12px; border-bottom: 1px solid var(--border);} .product-img{width: 50px; height: 50px; border-radius: 8px; object-fit: cover;}
 .modal{display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;}
-.modal.active{display: flex;} .modal-content{background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 550px;}
-.form-group{margin: 15px 0;} .form-group input, .form-group select{width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px;}
+.modal.active{display: flex;} .modal-content{background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 600px;}
+.form-group{margin: 15px 0;} .form-group input{width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px;}
 </style>
 </head>
 <body>
-
 <div class="container">
     <div class="page-header">
-        <h2><i class="fas fa-layer-group"></i> Category Products Manager - ADMIN</h2>
-        <button class="btn" onclick="showAddProductModal()" id="addProductBtn" disabled><i class="fas fa-plus"></i> Add Product to Category</button>
+        <h2><i class="fas fa-layer-group"></i> Category Master - Product Templates</h2>
+        <p>Yaha se 12 shop type ke default products manage karo. Nayi shop bante hi ye product auto mil jayenge</p>
     </div>
 
     <div class="card">
-        <h3><i class="fas fa-tags"></i> Step 1: Select Category</h3>
-        <div id="categoryList" class="category-grid">Loading categories...</div>
+        <h3>12 Shop Templates</h3>
+        <div id="templateList" class="template-grid">Loading...</div>
     </div>
 
     <div class="card" id="productSection" style="display:none">
-        <h3>Step 2: Products in <span id="selectedCategoryName" style="color:var(--primary)"></span> Category</h3>
-        <table id="productsTable">
-            <thead><tr><th>Shop</th><th>Product</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
-            <tbody><tr><td colspan="5">Select a category</td></tr></tbody>
+        <div style="display:flex;justify-content:space-between">
+            <h3><span id="selectedTemplateName"></span> Template Products</h3>
+            <button class="btn" onclick="showAddProductModal()"><i class="fas fa-plus"></i> Add Product to Template</button>
+        </div>
+        <table id="productsTable" style="margin-top:20px">
+            <thead><tr><th>Image</th><th>Product Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
+            <tbody></tbody>
         </table>
     </div>
 </div>
 
 <div id="productModal" class="modal">
     <div class="modal-content">
-        <h2>Add Product to <span id="modalCategoryName"></span></h2>
-        <form id="productForm" onsubmit="saveProduct(event)">
-            <div class="form-group">
-                <label>Select Shops in this Category *</label>
-                <select id="shopSelect" multiple size="5" required></select>
-                <small>Ctrl+Click to select multiple shops</small>
-            </div>
-            <div class="form-group"><label>Product Name *</label><input type="text" id="productName" required></div>
-            <div class="form-group"><label>Price ₹ *</label><input type="number" id="productPrice" step="0.01" required></div>
-            <div class="form-group"><label>Stock *</label><input type="number" id="productStock" required></div>
-            <div class="form-group"><label>Image URL</label><input type="text" id="productImage"></div>
-            <button type="submit" class="btn" style="width:100%">Add to Selected Shops</button>
+        <h2>Add Product to <span id="modalCatName"></span></h2>
+        <form id="productForm" onsubmit="saveTemplateProduct(event)">
+            <div class="form-group"><label>Product Name *</label><input type="text" id="pName" required></div>
+            <div class="form-group"><label>Sub Category</label><input type="text" id="pCat" placeholder="Aata, Dal, Oil"></div>
+            <div class="form-group"><label>Price ₹ *</label><input type="number" id="pPrice" step="0.01" required></div>
+            <div class="form-group"><label>Stock *</label><input type="number" id="pStock" required></div>
+            <div class="form-group"><label>Image URL</label><input type="text" id="pImage"></div>
+            <button type="submit" class="btn" style="width:100%">Save to Template</button>
         </form>
-        <button onclick="closeProductModal()" style="margin-top:10px;width:100%;padding:10px;">Cancel</button>
+        <button onclick="closeModal()" style="margin-top:10px;width:100%;padding:10px;">Cancel</button>
     </div>
 </div>
 
 <script>
 const API = 'https://samanlive.onrender.com/api/admin';
+const TEMPLATES = ['kirana', 'cloth', 'medical', 'restaurant', 'electronics', 'hardware', 'salon', 'stationery', 'service', 'rental', 'common', 'grocery'];
 let selectedCategory = null;
-let categoryShops = [];
 
 async function apiCall(endpoint, method = 'GET', body = null) {
     const opts = { method, headers: {'Content-Type': 'application/json'} };
@@ -77,72 +74,53 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     return res.json();
 }
 
-// 1. SAARI CATEGORIES NIKALO
-async function loadCategories() {
-    const res = await apiCall('/shops/all');
-    const shops = res.shops;
-    const categories = [...new Set(shops.map(s => s.category).filter(Boolean))];
-    
-    document.getElementById('categoryList').innerHTML = categories.map(cat=>`
-        <div class="category-card" onclick="selectCategory('${cat}', event)">
-            <i class="fas fa-tag" style="font-size:24px;color:var(--primary)"></i>
-            <h4 style="margin-top:10px">${cat}</h4>
-            <p style="font-size:12px">${shops.filter(s=>s.category===cat).length} Shops</p>
+function loadTemplates(){
+    document.getElementById('templateList').innerHTML = TEMPLATES.map(t=>`
+        <div class="template-card" onclick="openTemplate('${t}')">
+            <i class="fas fa-store" style="font-size:30px;color:var(--primary)"></i>
+            <h4 style="margin-top:10px;text-transform:capitalize">${t}</h4>
         </div>
     `).join('');
 }
 
-async function selectCategory(category, event) {
+async function openTemplate(category){
     selectedCategory = category;
-    document.getElementById('selectedCategoryName').innerText = category;
+    document.getElementById('selectedTemplateName').innerText = category.toUpperCase();
     document.getElementById('productSection').style.display = 'block';
-    document.getElementById('addProductBtn').disabled = false;
-    document.querySelectorAll('.category-card').forEach(c=>c.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-
-    // Is category ki saari shops
-    const res = await apiCall('/shops/all');
-    categoryShops = res.shops.filter(s => s.category === category);
+    document.getElementById('modalCatName').innerText = category.toUpperCase();
     
-    // Table me dikhao
-    let html = '';
-    for(let shop of categoryShops){
-        const prodRes = await apiCall(`/shop/${shop._id}/products`);
-        prodRes.products.forEach(p=>{
-            html += `<tr>
-                <td><strong>${shop.shopName}</strong></td>
-                <td>${p.name}</td>
-                <td>₹${p.price}</td>
-                <td>${p.stock}</td>
-                <td>-</td>
-            </tr>`;
-        })
-    }
-    document.querySelector('#productsTable tbody').innerHTML = html || '<tr><td colspan="5">No products yet</td></tr>';
+    const res = await apiCall(`/category-master/${category}`);
+    const products = res.products || [];
+    document.querySelector('#productsTable tbody').innerHTML = products.map(p=>`
+        <tr>
+            <td><img src="${p.image || 'https://via.placeholder.com/50'}" class="product-img"></td>
+            <td><strong>${p.name}</strong></td>
+            <td>${p.category || '-'}</td>
+            <td>₹${p.price}</td>
+            <td>${p.stock}</td>
+            <td><button onclick="deleteTemplateProduct('${p._id}')" class="btn" style="background:var(--danger)">Delete</button></td>
+        </tr>
+    `).join('');
 }
 
-window.showAddProductModal = () => {
-    document.getElementById('modalCategoryName').innerText = selectedCategory;
-    // Dropdown me shops bharo
-    document.getElementById('shopSelect').innerHTML = categoryShops.map(s=>`<option value="${s._id}">${s.shopName}</option>`).join('');
-    document.getElementById('productModal').classList.add('active');
-}
-window.closeProductModal = () => {document.getElementById('productModal').classList.remove('active');}
+window.showAddProductModal = () => {document.getElementById('productForm').reset(); document.getElementById('productModal').classList.add('active');}
+window.closeModal = () => {document.getElementById('productModal').classList.remove('active');}
 
-window.saveProduct = async (e) => {
+window.saveTemplateProduct = async (e) => {
     e.preventDefault();
-    const selectedShops = [...document.getElementById('shopSelect').selectedOptions].map(o=>o.value);
-    const data = {name:productName.value, price:productPrice.value, stock:productStock.value, image:productImage.value, category: selectedCategory};
-    
-    for(let shopId of selectedShops){
-        await apiCall(`/shop/${shopId}/add-product`, 'POST', data);
-    }
-    alert(`✅ Product added to ${selectedShops.length} shops`);
-    closeProductModal(); 
-    selectCategory(selectedCategory, {currentTarget: document.querySelector('.category-card.active')});
+    const data = {category: selectedCategory, name:pName.value, category:pCat.value, price:pPrice.value, stock:pStock.value, image:pImage.value};
+    await apiCall('/category-master/add-product', 'POST', data);
+    alert('✅ Product added to template');
+    closeModal(); openTemplate(selectedCategory);
 }
 
-setTimeout(loadCategories, 1000);
+window.deleteTemplateProduct = async (id) => {
+    if(!confirm('Delete?')) return;
+    await apiCall(`/category-master/product/${id}`, 'DELETE');
+    openTemplate(selectedCategory);
+}
+
+window.onload = loadTemplates;
 </script>
 </body>
 </html>
