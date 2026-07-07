@@ -295,7 +295,7 @@ function initCreateShopForm() {
           phone: phoneNumber, // ✅ ADD - model me required hai
           contact: phoneNumber,
           serviceType: shopModule, // ✅ kirana, cloth etc
-          shopType: mapShopType(shopModule), // ✅ ADD - enum me convert
+          shopType: window.mapShopType(shopModule), // ✅ ADD - enum me convert
           bucket: manager.bucket || 'DEFAULT', // ✅ ADD - required hai
           areaCode: manager.areaCode, // ✅ ADD - required hai
           email: document.getElementById('createShopEmail').value.trim() || '',
