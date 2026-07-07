@@ -2,7 +2,7 @@
 // SHOP CREATE MODULE - CATEGORY BASED
 // File: /public/assets/js/shop-create.js
 // ========================================
-function mapShopType(module) {
+window.mapShopType = function(module) {
     const map = {
         'kirana': 'product',
         'cloth': 'fashion',
