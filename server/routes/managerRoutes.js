@@ -303,6 +303,8 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
         // ✅ Shop Create Karo - Auto fill hoga
         const newShop = new Shop({
             shopName: shopName.trim(),
+            ownerName: req.body.ownerName || 'N/A', // ✅
+            serviceType: req.body.serviceType || shopType, // ✅
             shopType: shopType || 'General Store',
             contact: contact,
             email: email,
@@ -327,7 +329,8 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
                 ]
             },
 
-            module: 'local-market',
+            //module: 'local-market',
+            module: req.body.serviceType || 'common', // ✅ taki folder ka naam mile
             status: 'approved', // Direct approved
             isActive: true,
             createdBy: manager._id,

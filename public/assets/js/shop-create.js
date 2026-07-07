@@ -1,7 +1,6 @@
 // ========================================
 // SHOP CREATE MODULE - CATEGORY BASED
 // File: /public/assets/js/shop-create.js
-// Match with old create-shop.html
 // ========================================
 
 let createShopSelectedIcon = '🏪';
@@ -276,6 +275,8 @@ function initCreateShopForm() {
         // ✅ BACKEND /manager/create-shop-v2 YEHI 7 FIELDS EXPECT KARTA HAI
         const shopData = {
             shopName: shopName,
+            ownerName: ownerName,       // ✅ 
+            serviceType: shopModule,    // ✅ 
             shopType: shopModule,
             contact: phoneNumber,
             email: document.getElementById('createShopEmail').value.trim() || '',
