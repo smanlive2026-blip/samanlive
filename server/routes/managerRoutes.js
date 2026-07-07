@@ -263,7 +263,7 @@ router.post('/claim-shop', authManager, async (req, res) => {
 });
 
 // ========== ROUTE 9: Manager Se Nayi Shop Create Karna - NEW ✅ ==========
-router.post('/create-shop', authManager, async (req, res) => {
+router.post('/create-shop-v2', authManager, async (req, res) => {
     try {
         const manager = req.manager;
         const { shopName, shopType, contact, email, address, icon, range } = req.body;

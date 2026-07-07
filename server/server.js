@@ -92,7 +92,8 @@ app.use('/api', require('./routes/adminRoutes'));
 app.use('/api/manager', require('./routes/managerRoutes'));
 
 // Existing routes ke neeche add kar
-app.use('/api/manager', require('./routes/managerShopCreate')); // ✅ NEW
+//app.use('/api/manager', require('./routes/managerShopCreate')); // ✅ NEW changed
+app.use('/api/manager', require('./routes/managerRout')); // ✅ sahi
 
 // Area Routes
 app.use('/api', require('./routes/areaRoutes'));
