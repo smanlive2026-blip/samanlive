@@ -2,6 +2,22 @@
 // SHOP CREATE MODULE - CATEGORY BASED
 // File: /public/assets/js/shop-create.js
 // ========================================
+function mapShopType(module) {
+    const map = {
+        'kirana': 'product',
+        'cloth': 'fashion',
+        'medical': 'product',
+        'restaurant': 'food',
+        'electronics': 'product',
+        'hardware': 'product',
+        'salon': 'service',
+        'stationery': 'product',
+        'service': 'service',
+        'rental': 'rental',
+        'common': 'common'
+    };
+    return map[module] || 'common';
+}
 
 let createShopSelectedIcon = '🏪';
 let createShopUploadedLogoBase64 = null;
@@ -356,22 +372,6 @@ function resetCreateShopForm() {
     const defaultIcon = document.querySelector('#createShopIconPicker.icon-option[data-icon="🏪"]');
     if (defaultIcon) defaultIcon.classList.add('selected');
     removeCreateShopLogo();
-}
-function mapShopType(module) {
-    const map = {
-        'kirana': 'product',
-        'cloth': 'fashion',
-        'medical': 'product',
-        'restaurant': 'food',
-        'electronics': 'product',
-        'hardware': 'product',
-        'salon': 'service',
-        'stationery': 'product',
-        'service': 'service',
-        'rental': 'rental',
-        'common': 'common'
-    };
-    return map[module] || 'common';
 }
 
 function escapeHtml(text) {
