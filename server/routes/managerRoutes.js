@@ -302,15 +302,18 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
 
         // ✅ Shop Create Karo - Auto fill hoga
         const newShop = new Shop({
-            shopName: shopName.trim(),
-            ownerName: req.body.ownerName || 'N/A', // ✅
-            serviceType: req.body.serviceType || shopType, // ✅
-            shopType: shopType || 'General Store',
-            contact: contact,
-            email: email,
-            address: { line1: address },
-            icon: icon || '🏪',
-            range: range || 5000,
+           shopName: shopName.trim(),
+           ownerName: req.body.ownerName || 'N/A', // ✅
+           phone: req.body.phone || contact, // ✅ ADD - required hai
+           bucket: req.body.bucket || manager.bucket || 'DEFAULT', // ✅ ADD - required hai
+           areaCode: manager.areaCode, // ✅ ADD - required hai
+           serviceType: req.body.serviceType || shopType, // ✅
+           shopType: mapShopType(req.body.serviceType || shopType), // ✅ enum me convert
+           contact: contact,
+           email: email,
+           address: { line1: address },
+           icon: icon || '🏪',
+           range: range || 5000,
 
             // Auto fields - Manager ke hisaab se
             areaCode: manager.areaCode,

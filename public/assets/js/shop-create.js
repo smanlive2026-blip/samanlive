@@ -273,16 +273,19 @@ function initCreateShopForm() {
         if (!manager?.managerCode) return showError('Session expired! Page reload karo.', null, btn);
 
         // ✅ BACKEND /manager/create-shop-v2 YEHI 7 FIELDS EXPECT KARTA HAI
-        const shopData = {
-            shopName: shopName,
-            ownerName: ownerName,       // ✅ 
-            serviceType: shopModule,    // ✅ 
-            shopType: shopModule,
-            contact: phoneNumber,
-            email: document.getElementById('createShopEmail').value.trim() || '',
-            address: shopAddress,
-            icon: createShopSelectedIcon,
-            range: range
+       const shopData = {
+          shopName: shopName,
+          ownerName: ownerName,
+          phone: phoneNumber, // ✅ ADD - model me required hai
+          contact: phoneNumber,
+          serviceType: shopModule, // ✅ kirana, cloth etc
+          shopType: mapShopType(shopModule), // ✅ ADD - enum me convert
+          bucket: manager.bucket || 'DEFAULT', // ✅ ADD - required hai
+          areaCode: manager.areaCode, // ✅ ADD - required hai
+          email: document.getElementById('createShopEmail').value.trim() || '',
+          address: shopAddress,
+          icon: createShopSelectedIcon,
+          range: range
         };
 
         console.log('📤 FINAL PAYLOAD for /manager/create-shop-v2:', shopData);
@@ -353,6 +356,22 @@ function resetCreateShopForm() {
     const defaultIcon = document.querySelector('#createShopIconPicker.icon-option[data-icon="🏪"]');
     if (defaultIcon) defaultIcon.classList.add('selected');
     removeCreateShopLogo();
+}
+function mapShopType(module) {
+    const map = {
+        'kirana': 'product',
+        'cloth': 'fashion',
+        'medical': 'product',
+        'restaurant': 'food',
+        'electronics': 'product',
+        'hardware': 'product',
+        'salon': 'service',
+        'stationery': 'product',
+        'service': 'service',
+        'rental': 'rental',
+        'common': 'common'
+    };
+    return map[module] || 'common';
 }
 
 function escapeHtml(text) {
