@@ -113,8 +113,9 @@ app.use('/api', require('./routes/stats'));
 app.use('/api/local-market', require('./routes/shopRoutes'));
 
 // ✅ NEW: MASTER PRODUCT 
-app.use('/api/master-products', require('./routes/api/master-product'));
-app.use('/api/modules', require('./routes/api/module'));
+//app.use('/api/master-products', require('./routes/api/master-product'));
+//app.use('/api/modules', require('./routes/api/module'));
+
 // ==================== ADMIN PANEL ROUTES ====================
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/admin-panel/modules.html'));
