@@ -30,7 +30,7 @@ app.use('/logos', express.static(path.join(__dirname, '../public/logos')));
 app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
 app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
 
-// ✅ NEW: Shop templates static serve karo - CSS/JS ke liye
+// ✅ Shop templates static serve
 app.use('/shop-templates', express.static(path.join(__dirname, '../public/shop-templates')));
 
 // ==================== MONGODB CONNECT ====================
@@ -42,7 +42,7 @@ mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://
     console.log('✅ MongoDB Connected Successfully');
     console.log(`📦 Database: ${mongoose.connection.name}`);
 
-    // ✅ AUTO-MIGRATION: Purani shops ko 'active' se 'approved' me convert karo
+    // ✅ AUTO-MIGRATION: Purani shops ko 'active' se 'approved' me convert
     try {
         const Shop = require('./models/Shop');
         const result = await Shop.updateMany(
@@ -82,24 +82,17 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Auth Routes - LOGIN/OTP KE LIYE - NAYA ADD KIYA
+// Auth Routes
 app.use('/api/auth', require('./routes/auth'));
 
 // Admin Routes
 app.use('/api', require('./routes/adminRoutes'));
 
-// Manager Routes - ✅ UNCOMMENTED: Ab active hai
+// Manager Routes - ✅ SIRF YAHI SE MANAGER KAAM KAREGA AB
 app.use('/api/manager', require('./routes/managerRoutes'));
-
-// Existing routes ke neeche add kar
-//app.use('/api/manager', require('./routes/managerShopCreate')); // ✅ NEW changed
-//app.use('/api/manager', require('./routes/managerRout')); // ✅ sahi
 
 // Area Routes
 app.use('/api', require('./routes/areaRoutes'));
-
-// Local Market Admin Routes - CONFLICT KE LIYE COMMENTED ✅
-// app.use('/api/local-market', require('./routes/local-market-admin'));
 
 // Market/Public Routes
 app.use('/api', require('./routes/market'));
@@ -110,12 +103,11 @@ app.use('/api', require('./routes/public-modules'));
 // Stats Routes
 app.use('/api', require('./routes/stats'));
 
-// Shop Routes - User side
+// Shop Routes - ✅ User side + Products + Public
 app.use('/api/local-market', require('./routes/shopRoutes'));
 
-// ✅ NEW: MASTER PRODUCT 
-//app.use('/api/master-products', require('./routes/api/master-product'));
-//app.use('/api/modules', require('./routes/api/module'));
+// ❌ PURANA CLAIM SYSTEM WALA FILE HATA DIYA
+// app.use('/api', require('./routes/shop'));
 
 // ==================== ADMIN PANEL ROUTES ====================
 app.get('/admin', (req, res) => {
@@ -171,12 +163,12 @@ app.get('/local-market.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/local-market.html'));
 });
 
-// ✅ OLD: Shop detail page
-app.get('/shop/:id', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/shop-detail.html'));
-});
+// ❌ OLD: Shop detail page HATA DIYA - Ab template se chalega
+// app.get('/shop/:id', (req, res) => {
+// res.sendFile(path.join(__dirname, '../public/shop-detail.html'));
+// });
 
-// ✅ NEW: SHOP DASHBOARD - TEMPLATE BASED ✅
+// ✅ NEW: SHOP DASHBOARD - TEMPLATE BASED
 app.get('/shop/:id/dashboard', async (req, res) => {
     try {
         const Shop = require('./models/Shop');
@@ -186,8 +178,6 @@ app.get('/shop/:id/dashboard', async (req, res) => {
             return res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
         }
 
-        // shopType ke hisaab se template serve karo
-        // "Kirana" -> "kirana", "General Store" -> "general", etc
         const shopTypeMap = {
             'General Store': 'general',
             'Kirana': 'kirana',
@@ -201,7 +191,6 @@ app.get('/shop/:id/dashboard', async (req, res) => {
 
         console.log(`🏪 Loading template: ${templateFolder} for shop: ${shop.shopName}`);
 
-        // Agar template exist nahi karta to general wala bhej do
         res.sendFile(templatePath, (err) => {
             if (err) {
                 console.log(`⚠️ Template ${templateFolder} not found, serving general`);
@@ -234,26 +223,15 @@ app.get('/api/admin/routes', (req, res) => {
         function scanProjectTree(dir, basePath = '') {
             const items = [];
             if (!fs.existsSync(dir)) return items;
-
             const files = fs.readdirSync(dir);
             files.forEach(file => {
                 const filePath = path.join(dir, file);
                 const stat = fs.statSync(filePath);
                 const relativePath = path.join(basePath, file);
-
                 if (stat.isDirectory()) {
-                    items.push({
-                        name: file,
-                        type: 'folder',
-                        path: relativePath,
-                        children: scanProjectTree(filePath, relativePath)
-                    });
+                    items.push({ name: file, type: 'folder', path: relativePath, children: scanProjectTree(filePath, relativePath) });
                 } else {
-                    items.push({
-                        name: file,
-                        type: 'file',
-                        path: relativePath
-                    });
+                    items.push({ name: file, type: 'file', path: relativePath });
                 }
             });
             return items;
@@ -264,55 +242,34 @@ app.get('/api/admin/routes', (req, res) => {
                 if (layer.route) {
                     const path = layer.route.path;
                     const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
-                    allRoutes.push({
-                        path,
-                        methods,
-                        file: 'server.js',
-                        type: 'direct'
-                    });
+                    allRoutes.push({ path, methods, file: 'server.js', type: 'direct' });
                 }
             });
         }
 
         if (fs.existsSync(routesDir)) {
             const files = fs.readdirSync(routesDir);
-
             files.forEach(file => {
                 if (file.endsWith('.js')) {
                     const filePath = path.join(routesDir, file);
                     const content = fs.readFileSync(filePath, 'utf8');
                     const routeRegex = /router\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]/g;
                     let match;
-
                     while ((match = routeRegex.exec(content))!== null) {
                         const method = match[1].toUpperCase();
                         const routePath = match[2];
-
                         let basePath = '';
                         if (file === 'adminRoutes.js') basePath = '/api/admin';
                         else if (file === 'managerRoutes.js') basePath = '/api/manager';
                         else if (file === 'areaRoutes.js') basePath = '/api';
-                        else if (file === 'local-market-admin.js') basePath = '/api/local-market';
                         else if (file === 'shopRoutes.js') basePath = '/api/local-market';
                         else if (file === 'market.js') basePath = '/api/market';
                         else if (file === 'stats.js') basePath = '/api';
                         else if (file === 'public-modules.js') basePath = '/api';
                         else if (file === 'auth.js') basePath = '/api/auth';
-                        else if (file === 'master-product.js') basePath = '/api/master-products'; // ✅ NEW
-                        else if (file === 'category.js') basePath = '/api/categories'; // ✅ NEW
-                        else {
-                            const name = file.replace('Routes.js', '').replace('.js', '').toLowerCase();
-                            basePath = `/api/${name}`;
-                        }
-
+                        else { const name = file.replace('Routes.js', '').replace('.js', '').toLowerCase(); basePath = `/api/${name}`; }
                         const fullPath = basePath + routePath;
-
-                        allRoutes.push({
-                            path: fullPath,
-                            methods: [method],
-                            file: file,
-                            type: 'file'
-                        });
+                        allRoutes.push({ path: fullPath, methods: [method], file: file, type: 'file' });
                     }
                 }
             });
@@ -320,34 +277,18 @@ app.get('/api/admin/routes', (req, res) => {
 
         const uniqueRoutes = [];
         const seen = new Set();
-
         allRoutes.forEach(r => {
             const key = `${r.methods[0]}_${r.path}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                uniqueRoutes.push(r);
-            }
+            if (!seen.has(key)) { seen.add(key); uniqueRoutes.push(r); }
         });
 
         const projectRoot = path.join(__dirname, '..');
         const projectTree = scanProjectTree(projectRoot);
 
-        res.json({
-            success: true,
-            total: uniqueRoutes.length,
-            routes: uniqueRoutes.sort((a, b) => a.path.localeCompare(b.path)),
-            models: mongoose.modelNames(),
-            projectTree: projectTree
-        });
+        res.json({ success: true, total: uniqueRoutes.length, routes: uniqueRoutes.sort((a, b) => a.path.localeCompare(b.path)), models: mongoose.modelNames(), projectTree: projectTree });
     } catch (err) {
         console.error('API Routes Error:', err);
-        res.status(500).json({
-            success: false,
-            error: err.message,
-            routes: [],
-            models: [],
-            projectTree: []
-        });
+        res.status(500).json({ success: false, error: err.message, routes: [], models: [], projectTree: [] });
     }
 });
 
@@ -355,25 +296,10 @@ app.get('/api/admin/routes', (req, res) => {
 app.post('/api/admin/get-route-code', express.json(), (req, res) => {
     try {
         const { file } = req.body;
-        let filePath;
-
-        if (file === 'server.js') {
-            filePath = path.join(__dirname, 'server.js');
-        } else {
-            filePath = path.join(__dirname, './routes', file);
-        }
-
-        if (!fs.existsSync(filePath)) {
-            return res.json({ success: false, error: 'File not found: ' + file });
-        }
-
+        let filePath = file === 'server.js'? path.join(__dirname, 'server.js') : path.join(__dirname, './routes', file);
+        if (!fs.existsSync(filePath)) return res.json({ success: false, error: 'File not found: ' + file });
         const fileContent = fs.readFileSync(filePath, 'utf8');
-
-        res.json({
-            success: true,
-            file: file,
-            code: fileContent
-        });
+        res.json({ success: true, file: file, code: fileContent });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -382,29 +308,14 @@ app.post('/api/admin/get-route-code', express.json(), (req, res) => {
 app.post('/api/admin/update-route-code', express.json(), (req, res) => {
     try {
         if (process.env.NODE_ENV === 'production') {
-            return res.status(403).json({
-                success: false,
-                error: 'File editing disabled in production for security'
-            });
+            return res.status(403).json({ success: false, error: 'File editing disabled in production for security' });
         }
-
         const { file, code } = req.body;
-        let filePath;
-
-        if (file === 'server.js') {
-            filePath = path.join(__dirname, 'server.js');
-        } else {
-            filePath = path.join(__dirname, './routes', file);
-        }
-
+        let filePath = file === 'server.js'? path.join(__dirname, 'server.js') : path.join(__dirname, './routes', file);
         const backupPath = filePath + '.backup-' + Date.now();
         fs.copyFileSync(filePath, backupPath);
         fs.writeFileSync(filePath, code);
-
-        res.json({
-            success: true,
-            message: `File ${file} updated! Server restart karo changes dekhne ke liye. Backup: ${path.basename(backupPath)}`
-        });
+        res.json({ success: true, message: `File ${file} updated! Server restart karo. Backup: ${path.basename(backupPath)}` });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -418,42 +329,19 @@ app.get('*', (req, res) => {
 // ==================== ERROR HANDLER ====================
 app.use((err, req, res, next) => {
     console.error('❌ Error:', err.stack);
-
     if (err.name === 'ValidationError') {
-        return res.status(400).json({
-            success: false,
-            error: 'Validation Error',
-            details: Object.values(err.errors).map(e => e.message)
-        });
+        return res.status(400).json({ success: false, error: 'Validation Error', details: Object.values(err.errors).map(e => e.message) });
     }
-
     if (err.code === 11000) {
-        return res.status(400).json({
-            success: false,
-            error: 'Duplicate Entry',
-            field: Object.keys(err.keyPattern)[0]
-        });
+        return res.status(400).json({ success: false, error: 'Duplicate Entry', field: Object.keys(err.keyPattern)[0] });
     }
-
     if (err.name === 'JsonWebTokenError') {
-        return res.status(401).json({
-            success: false,
-            error: 'Invalid Token'
-        });
+        return res.status(401).json({ success: false, error: 'Invalid Token' });
     }
-
     if (err.name === 'TokenExpiredError') {
-        return res.status(401).json({
-            success: false,
-            error: 'Token Expired'
-        });
+        return res.status(401).json({ success: false, error: 'Token Expired' });
     }
-
-    res.status(err.status || 500).json({
-        success: false,
-        error: err.message || 'Something went wrong!',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    });
+    res.status(err.status || 500).json({ success: false, error: err.message || 'Something went wrong!',...(process.env.NODE_ENV === 'development' && { stack: err.stack }) });
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================

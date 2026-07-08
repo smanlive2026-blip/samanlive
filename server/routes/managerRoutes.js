@@ -8,7 +8,6 @@ const Area = require('../models/Area');
 const authManager = async (req, res, next) => {
     try {
         const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
-
         console.log('🔑 AuthManager Token Received:', token);
 
         if (!token) {
@@ -16,7 +15,6 @@ const authManager = async (req, res, next) => {
         }
 
         const manager = await Manager.findOne({ loginToken: token });
-
         console.log('🔍 AuthManager Found:', manager?.managerCode, '| Status:', manager?.status);
 
         if (!manager) {
@@ -39,7 +37,7 @@ router.get('/dashboard', authManager, async (req, res) => {
 
         const area = await Area.findOne({ areaCode: manager.areaCode });
 
-        // AREA CODE SE DIRECT FILTER - Fast + Accurate
+        // AreaCode se filter - manager ki saari shops
         const shops = await Shop.find({
             areaCode: manager.areaCode,
             isActive: true
@@ -64,7 +62,9 @@ router.get('/dashboard', authManager, async (req, res) => {
                 centerLat: area?.centerLat,
                 centerLng: area?.centerLng,
                 serviceCharge: manager.serviceCharge,
-                maxShops: manager.maxShops || 10 // ✅ NEW: Shop limit
+                maxShops: manager.maxShops || 10,
+                bucket: manager.bucket,
+                currentShopCount: shops.length
             },
             shops: shops,
             stats: {
@@ -79,20 +79,17 @@ router.get('/dashboard', authManager, async (req, res) => {
     }
 });
 
-// ========== ROUTE 2: Manager Ke Area Ki Shops - SABSE IMPORTANT ==========
+// ========== ROUTE 2: Manager Ke Area Ki Shops ==========
 router.get('/shops', authManager, async (req, res) => {
     try {
         const manager = req.manager;
         console.log('🔍 Manager Shops:', manager.name, '| AreaCode:', manager.areaCode);
 
-        // ✅ AREA CODE SE DIRECT FILTER
         const shops = await Shop.find({
             areaCode: manager.areaCode,
             isActive: true,
             status: { $in: ['active', 'approved'] }
         }).sort({ createdAt: -1 }).lean();
-
-        console.log('✅ Found shops:', shops.length);
 
         res.json({
             success: true,
@@ -107,74 +104,36 @@ router.get('/shops', authManager, async (req, res) => {
     }
 });
 
-// ========== ROUTE 3: Available Shops For Claim ==========
-router.get('/available-shops', authManager, async (req, res) => {
-    try {
-        const manager = req.manager;
-
-        const shops = await Shop.find({
-            areaCode: manager.areaCode,
-            managerCodes: manager.managerCode,
-            claimedBy: null,
-            status: { $in: ['active', 'approved'] },
-            isActive: true,
-            module: 'local-market'
-        }).lean();
-
-        res.json({ success: true, shops: shops });
-
-    } catch (err) {
-        console.error('❌ Available shops error:', err);
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-// ========== ROUTE 4: Token Verify - Dashboard Load Ke Liye ==========
+// ========== ROUTE 3: Token Verify ==========
 router.post('/verify-token', async (req, res) => {
     try {
         const { token } = req.body;
-        if (!token) {
-            return res.json({ success: false, error: 'Token required' });
-        }
+        if (!token) return res.json({ success: false, error: 'Token required' });
 
         const manager = await Manager.findOne({ loginToken: token });
-
-        if (!manager) {
-            return res.json({ success: false, error: 'Invalid token' });
-        }
+        if (!manager) return res.json({ success: false, error: 'Invalid token' });
 
         res.json({ success: true, manager: manager });
-
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// ========== ROUTE 5: Get Manager By Token - GET Request Ke Liye ==========
+// ========== ROUTE 4: Get Manager By Token ==========
 router.get('/by-token/:token', async (req, res) => {
     try {
-        const { token } = req.params;
-        const manager = await Manager.findOne({ loginToken: token });
-
-        if (!manager) {
-            return res.status(404).json({ success: false, error: 'Invalid token' });
-        }
-
+        const manager = await Manager.findOne({ loginToken: req.params.token });
+        if (!manager) return res.status(404).json({ success: false, error: 'Invalid token' });
         res.json({ success: true, manager });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// ========== ROUTE 6: Update Manager Profile ==========
-router.put('/update-profile', async (req, res) => {
+// ========== ROUTE 5: Update Manager Profile ==========
+router.put('/update-profile', authManager, async (req, res) => {
     try {
-        const { token } = req.query;
-        if (!token) return res.status(400).json({ success: false, error: 'Token required' });
-
-        const manager = await Manager.findOne({ loginToken: token });
-        if (!manager) return res.status(404).json({ success: false, error: 'Invalid token' });
-
+        const manager = req.manager;
         const { name, phone, email, photo } = req.body;
 
         if (name) manager.name = name.trim();
@@ -195,24 +154,20 @@ router.put('/update-profile', async (req, res) => {
     }
 });
 
-// ========== ROUTE 7: Shop Update - Manager Edit Kar Sakta Hai ==========
+// ========== ROUTE 6: Shop Update - Manager Edit ==========
 router.put('/shops/:id', authManager, async (req, res) => {
     try {
         const manager = req.manager;
         const shopId = req.params.id;
 
         const shop = await Shop.findById(shopId);
-        if (!shop) {
-            return res.status(404).json({ success: false, error: 'Shop not found' });
-        }
+        if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
 
-        // Security: Sirf apne area ki shop edit kar sakta hai
-        if (shop.areaCode !== manager.areaCode) {
+        if (shop.areaCode!== manager.areaCode) {
             return res.status(403).json({ success: false, error: 'You can only edit shops in your area' });
         }
 
-        // Location, areaCode, ownerId change nahi kar sakta
-        const { location, areaCode, ownerId, managerCodes, claimedBy, ...updateData } = req.body;
+        const { location, areaCode, ownerId, managerCodes, claimedBy, controlledBy,...updateData } = req.body;
 
         const updatedShop = await Shop.findByIdAndUpdate(
             shopId,
@@ -228,55 +183,21 @@ router.put('/shops/:id', authManager, async (req, res) => {
     }
 });
 
-// ========== ROUTE 8: Claim Shop ==========
-router.post('/claim-shop', authManager, async (req, res) => {
-    try {
-        const manager = req.manager;
-        const { shopId } = req.body;
-
-        if (!shopId) {
-            return res.status(400).json({ success: false, error: 'Shop ID required' });
-        }
-
-        const shop = await Shop.findById(shopId);
-        if (!shop) {
-            return res.status(404).json({ success: false, error: 'Shop not found' });
-        }
-
-        if (shop.areaCode !== manager.areaCode) {
-            return res.status(403).json({ success: false, error: 'Shop not in your area' });
-        }
-
-        if (shop.claimedBy) {
-            return res.status(400).json({ success: false, error: 'Shop already claimed' });
-        }
-
-        shop.claimedBy = manager.managerCode;
-        await shop.save();
-
-        res.json({ success: true, message: 'Shop claimed successfully', shop });
-
-    } catch (err) {
-        console.error('❌ Claim shop error:', err);
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-// ========== ROUTE 9: Manager Se Nayi Shop Create Karna - NEW ✅ ==========
+// ========== ROUTE 7: Manager Se Nayi Shop Create Karna ==========
 router.post('/create-shop-v2', authManager, async (req, res) => {
     try {
         const manager = req.manager;
-        const { shopName, shopType, contact, email, address, icon, range } = req.body;
+        const { shopName, ownerName, phone, contact, serviceType, shopType, email, address, icon, range, bucket } = req.body;
 
         console.log('🏪 Create Shop Request:', manager.name, '| Shop:', shopName);
 
-        // ✅ Check 1: Manager ka shop limit check kar
+        // 1. Shop limit check
         const currentShopCount = await Shop.countDocuments({
             areaCode: manager.areaCode,
             isActive: true
         });
 
-        const maxShops = manager.maxShops || 10; // Default 10
+        const maxShops = manager.maxShops || 10;
         if (currentShopCount >= maxShops) {
             return res.status(403).json({
                 success: false,
@@ -284,7 +205,7 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
             });
         }
 
-        // ✅ Check 2: Same naam ki shop already to nahi
+        // 2. Duplicate check
         const existingShop = await Shop.findOne({
             shopName: shopName.trim(),
             areaCode: manager.areaCode
@@ -297,52 +218,57 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
             });
         }
 
-        // ✅ Check 3: Area details nikal
+        // 3. Area details
         const area = await Area.findOne({ areaCode: manager.areaCode });
 
-        // ✅ Shop Create Karo - Auto fill hoga
+        // 4. Shop Create
         const newShop = new Shop({
-           shopName: shopName.trim(),
-           ownerName: req.body.ownerName || 'N/A', // ✅
-           phone: req.body.phone || contact, // ✅ ADD - required hai
-           bucket: req.body.bucket || manager.bucket || 'DEFAULT', // ✅ ADD - required hai
-           areaCode: manager.areaCode, // ✅ ADD - required hai
-           serviceType: req.body.serviceType || shopType, // ✅
-           shopType: mapShopType(req.body.serviceType || shopType), // ✅ enum me convert
-           contact: contact,
-           email: email,
-           address: { line1: address },
-           icon: icon || '🏪',
-           range: range || 5000,
+            shopName: shopName.trim(),
+            ownerName: ownerName || manager.name,
+            phone: phone || contact,
+            contact: contact,
+            email: email || '',
+            address: {
+                line1: address,
+                city: area?.city || manager.city || 'Surat',
+                state: area?.state || manager.state || 'Gujarat',
+                pincode: area?.pincode || '395007'
+            },
+            icon: icon || '🏪',
+            range: parseInt(range) || 5000,
 
-            // Auto fields - Manager ke hisaab se
+            serviceType: serviceType,
+            shopType: mapShopType(serviceType),
+            bucket: bucket || manager.bucket || 'DEFAULT',
             areaCode: manager.areaCode,
             areaName: area?.areaName || manager.areaName,
             city: area?.city || manager.city,
             state: area?.state || manager.state,
-            managerCodes: manager.managerCode,
-            claimedBy: manager.managerCode, // Auto claimed
+            managerCodes: [manager.managerCode],
 
-            // Location - Area ka center use karo
+            // ✅ CLAIM SYSTEM - Auto assign to manager
+            claimedBy: manager.managerCode,
+            controlledBy: manager._id,
+            ownerId: manager._id,
+            createdBy: manager._id,
+
             location: {
                 type: 'Point',
-                coordinates: [
-                    area?.centerLng || manager.centerLng || 72.8311,
-                    area?.centerLat || manager.centerLat || 20.3974
-                ]
+                coordinates: [area?.centerLng || 72.8311, area?.centerLat || 20.3974]
             },
 
-            //module: 'local-market',
-            module: req.body.serviceType || 'common', // ✅ taki folder ka naam mile
-            status: 'approved', // Direct approved
+            module: 'local-market',
+            status: 'approved',
             isActive: true,
-            createdBy: manager._id,
-            ownerId: null // Manager baad me owner assign karega
+            isVerified: true
         });
 
         await newShop.save();
 
-        console.log('✅ New shop created by manager:', manager.name, '| Shop:', shopName, '| Total:', currentShopCount + 1);
+        // Manager ka count update
+        await Manager.findByIdAndUpdate(manager._id, { $inc: { currentShopCount: 1 } });
+
+        console.log('✅ New shop created:', shopName, '| By:', manager.name);
 
         res.json({
             success: true,
@@ -357,5 +283,16 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 });
+
+// ========== HELPER FUNCTION ==========
+function mapShopType(module) {
+    const map = {
+        'kirana': 'product', 'cloth': 'fashion', 'medical': 'product',
+        'restaurant': 'food', 'electronics': 'product', 'hardware': 'product',
+        'salon': 'service', 'stationery': 'product', 'service': 'service',
+        'rental': 'rental', 'common': 'common'
+    };
+    return map[module] || 'common';
+}
 
 module.exports = router;
