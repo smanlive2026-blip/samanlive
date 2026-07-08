@@ -317,14 +317,14 @@ function initCreateShopForm() {
             // ✅ Backend {success: true, shop: newShop, currentCount, maxShops} bhejta hai
             if (res.success && res.shop) {
                 const shopId = res.shop._id;
-                const shopType = res.shop.serviceType || res.shopType || shopModule || 'common';
-                // ✅ SAHI LINK: TEMPLATE WALA
+                const shopType = res.shop.serviceType || shopModule || 'common';
+                // ✅ SAHI TEMPLATE LINK
                 const dashboardUrl = `${window.location.origin}/shop-templates/${shopType}/dashboard.html?shopId=${shopId}`;
 
                 // ✅ Clipboard me copy
                 navigator.clipboard.writeText(dashboardUrl).catch(err => {});
 
-                // ✅ NAYA: CUSTOM SUCCESS MODAL WITH BUTTON
+                // ✅ NAYA: SUCCESS MODAL WITH OPEN BUTTON
                 showSuccessModal(res.shopName, dashboardUrl, res.currentCount, res.maxShops);
 
                 closeCreateShopModal();
