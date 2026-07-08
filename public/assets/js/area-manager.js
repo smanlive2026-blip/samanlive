@@ -192,7 +192,7 @@ function renderShops(shops) {
     }
     tbody.innerHTML = shops.map(shop => {
         const shopType = shop.serviceType || shop.shopType || 'common';
-        const dashboardUrl = `${window.location.origin}/shop/${shop._id}/dashboard`;
+        const dashboardUrl = `${window.location.origin}/shop-templates/${shopType}/dashboard.html?shopId=${shop._id}`;
         
         return `
             <tr>
@@ -206,7 +206,7 @@ function renderShops(shops) {
                 </span></td>
                 <td>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <!-- NAYA BUTTON: DIRECT OPEN -->
+                        <!-- ✅ NAYA BUTTON: DIRECT OPEN -->
                         <a href="${dashboardUrl}" target="_blank" class="btn btn-small btn-primary" title="Open Dashboard">
                             <i class="fas fa-external-link-alt"></i> Open
                         </a>
@@ -226,7 +226,7 @@ function renderShops(shops) {
 
 window.copyShopLink = function(shopId, shopType, shopName) {
     const finalShopType = shopType || 'common';
-    const shopLink = `${window.location.origin}/shop/${shopId}/dashboard`;
+    const shopLink = `${window.location.origin}/shop-templates/${finalShopType}/dashboard.html?shopId=${shopId}`;
     
     navigator.clipboard.writeText(shopLink).then(() => {
         alert(`✅ Dashboard link copied!\n\nShop: ${shopName}\n\nLink: ${shopLink}\n\nAb ye link shop owner ko bhej do.`);
