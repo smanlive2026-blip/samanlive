@@ -254,7 +254,7 @@ function updateCreateShopManagerCountText() {
 }
 
 // ========================================
-// SUBMIT SHOP - ✅ UPDATED: Direct Open Button
+// SUBMIT SHOP - ✅ FIXED: TEMPLATE LINK + OPEN BUTTON
 // ========================================
 function initCreateShopForm() {
     const createForm = document.getElementById('createShopForm');
@@ -317,12 +317,14 @@ function initCreateShopForm() {
             // ✅ Backend {success: true, shop: newShop, currentCount, maxShops} bhejta hai
             if (res.success && res.shop) {
                 const shopId = res.shop._id;
-                const dashboardUrl = `${window.location.origin}/shop/${shopId}/dashboard`;
+                const shopType = res.shop.serviceType || res.shopType || shopModule || 'common';
+                // ✅ SAHI LINK: TEMPLATE WALA
+                const dashboardUrl = `${window.location.origin}/shop-templates/${shopType}/dashboard.html?shopId=${shopId}`;
 
-                // ✅ Clipboard me copy bhi kar do
+                // ✅ Clipboard me copy
                 navigator.clipboard.writeText(dashboardUrl).catch(err => {});
 
-                // ✅ NAYA: CUSTOM ALERT WITH BUTTON
+                // ✅ NAYA: CUSTOM SUCCESS MODAL WITH BUTTON
                 showSuccessModal(res.shopName, dashboardUrl, res.currentCount, res.maxShops);
 
                 closeCreateShopModal();
