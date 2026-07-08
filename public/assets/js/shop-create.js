@@ -254,7 +254,7 @@ function updateCreateShopManagerCountText() {
 }
 
 // ========================================
-// SUBMIT SHOP - ✅ FIXED: shopId wala dashboard link
+// SUBMIT SHOP - ✅ UPDATED: Direct Open Button
 // ========================================
 function initCreateShopForm() {
     const createForm = document.getElementById('createShopForm');
@@ -288,16 +288,16 @@ function initCreateShopForm() {
         if (!shopAddress) return showError('Shop Address dalna zaroori hai!', 'createShopAddress', btn);
         if (!manager?.managerCode) return showError('Session expired! Page reload karo.', null, btn);
 
-        // ✅ BACKEND /manager/create-shop-v2 YEHI 7 FIELDS EXPECT KARTA HAI
+        // ✅ BACKEND /manager/create-shop-v2 YEHI FIELDS EXPECT KARTA HAI
        const shopData = {
           shopName: shopName,
           ownerName: ownerName,
-          phone: phoneNumber, // ✅ ADD - model me required hai
+          phone: phoneNumber,
           contact: phoneNumber,
-          serviceType: shopModule, // ✅ kirana, cloth etc
-          shopType: window.mapShopType(shopModule), // ✅ ADD - enum me convert
-          bucket: manager.bucket || 'DEFAULT', // ✅ ADD - required hai
-          areaCode: manager.areaCode, // ✅ ADD - required hai
+          serviceType: shopModule,
+          shopType: window.mapShopType(shopModule),
+          bucket: manager.bucket || 'DEFAULT',
+          areaCode: manager.areaCode,
           email: document.getElementById('createShopEmail').value.trim() || '',
           address: shopAddress,
           icon: createShopSelectedIcon,
@@ -316,20 +316,15 @@ function initCreateShopForm() {
 
             // ✅ Backend {success: true, shop: newShop, currentCount, maxShops} bhejta hai
             if (res.success && res.shop) {
-                const shopId = res.shop._id; // ✅ shopId nikala
-                const shopType = res.shop.serviceType || res.shop.shopType || shopModule || 'common';
-                const shopLink = `${window.location.origin}/shop-templates/${shopType}/dashboard.html?shopId=${shopId}`; // ✅ shopId ke saath link
+                const shopId = res.shop._id;
+                const dashboardUrl = `${window.location.origin}/shop/${shopId}/dashboard`;
 
-                // ✅ Clipboard me copy
-                navigator.clipboard.writeText(shopLink).then(() => {
-                    console.log('✅ Shop link copied:', shopLink);
-                }).catch(err => {
-                    console.log('⚠️ Clipboard copy failed:', err);
-                });
+                // ✅ Clipboard me copy bhi kar do
+                navigator.clipboard.writeText(dashboardUrl).catch(err => {});
 
-                const msg = `✅ Shop created successfully!\n\nShop: "${res.shop.shopName}"\nShops: ${res.currentCount}/${res.maxShops}\n\nDashboard Link:\n${shopLink}\n\n(Link copied to clipboard)`;
+                // ✅ NAYA: CUSTOM ALERT WITH BUTTON
+                showSuccessModal(res.shopName, dashboardUrl, res.currentCount, res.maxShops);
 
-                alert(msg);
                 closeCreateShopModal();
                 window.loadDashboard();
             } else {
@@ -344,6 +339,29 @@ function initCreateShopForm() {
             btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop';
         }
     });
+}
+
+// ✅ NAYA FUNCTION: SUCCESS MODAL WITH OPEN BUTTON
+function showSuccessModal(shopName, dashboardUrl, currentCount, maxShops) {
+    const modalHtml = `
+        <div id="successModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;">
+            <div style="background:#fff;padding:30px;border-radius:16px;max-width:400px;width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+                <i class="fas fa-check-circle" style="font-size:64px;color:#10b981;margin-bottom:15px;"></i>
+                <h2 style="margin:0 0 10px 0;color:#1e293b;">Shop Created!</h2>
+                <p style="margin:0 0 5px 0;color:#64748b;"><strong>${escapeHtml(shopName)}</strong> is now LIVE</p>
+                <p style="margin:0 0 20px 0;color:#94a3b8;font-size:14px;">Total Shops: ${currentCount}/${maxShops}</p>
+
+                <a href="${dashboardUrl}" target="_blank" class="btn btn-primary" style="width:100%;margin-bottom:10px;text-decoration:none;display:block;padding:12px;">
+                    <i class="fas fa-external-link-alt"></i> Open Shop Dashboard
+                </a>
+
+                <button onclick="document.getElementById('successModal').remove()" class="btn btn-outline" style="width:100%;">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
 function showError(msg, focusId, btn) {

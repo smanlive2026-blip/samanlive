@@ -180,7 +180,7 @@ function renderStats(stats) {
 }
 
 // ========================================
-// RENDER SHOPS TABLE
+// RENDER SHOPS TABLE - ✅ OPEN BUTTON ADDED
 // ========================================
 function renderShops(shops) {
     const tbody = document.getElementById('shopsTable');
@@ -191,6 +191,9 @@ function renderShops(shops) {
         return;
     }
     tbody.innerHTML = shops.map(shop => {
+        const shopType = shop.serviceType || shop.shopType || 'common';
+        const dashboardUrl = `${window.location.origin}/shop/${shop._id}/dashboard`;
+        
         return `
             <tr>
                 <td style="font-size: 28px;">${shop.logo? `<img src="${shop.logo}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">` : shop.icon || '🏪'}</td>
@@ -202,8 +205,13 @@ function renderShops(shops) {
                     <i class="fas fa-circle" style="font-size:8px;"></i> ${shop.isActive? 'Active' : 'Inactive'}
                 </span></td>
                 <td>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-small btn-link" onclick="copyShopLink('${shop._id}', '${shop.serviceType || shop.shopType || 'common'}', '${escapeHtml(shop.shopName)}')" title="Copy Dashboard Link">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <!-- NAYA BUTTON: DIRECT OPEN -->
+                        <a href="${dashboardUrl}" target="_blank" class="btn btn-small btn-primary" title="Open Dashboard">
+                            <i class="fas fa-external-link-alt"></i> Open
+                        </a>
+                        
+                        <button class="btn btn-small btn-link" onclick="copyShopLink('${shop._id}', '${shopType}', '${escapeHtml(shop.shopName)}')" title="Copy Dashboard Link">
                             <i class="fas fa-link"></i> Link
                         </button>
                         <button class="btn btn-small" onclick='editShop(${JSON.stringify(shop).replace(/'/g, "&apos;")})' title="Edit Shop">
@@ -218,7 +226,7 @@ function renderShops(shops) {
 
 window.copyShopLink = function(shopId, shopType, shopName) {
     const finalShopType = shopType || 'common';
-    const shopLink = `${window.location.origin}/shop-templates/${finalShopType}/dashboard.html?shopId=${shopId}`;
+    const shopLink = `${window.location.origin}/shop/${shopId}/dashboard`;
     
     navigator.clipboard.writeText(shopLink).then(() => {
         alert(`✅ Dashboard link copied!\n\nShop: ${shopName}\n\nLink: ${shopLink}\n\nAb ye link shop owner ko bhej do.`);
@@ -456,9 +464,9 @@ window.closeProfileModal = closeProfileModal;
 window.previewProfilePhoto = previewProfilePhoto;
 window.editShop = editShop;
 window.closeShopModal = closeShopModal;
-window.openProductLibrary = openProductLibrary; // NAYA
-window.closeProductLibrary = closeProductLibrary; // NAYA
-window.openOrderView = openOrderView; // NAYA
-window.openManagerPanel = openManagerPanel; // NAYA
+window.openProductLibrary = openProductLibrary;
+window.closeProductLibrary = closeProductLibrary;
+window.openOrderView = openOrderView;
+window.openManagerPanel = openManagerPanel;
 
 console.log('✅ area-manager.js loaded - Shop create logic moved to shop-create.js');
