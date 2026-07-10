@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nursery Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0fdf4; }
+       .header { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #22c55e; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #22c55e; }
+       .btn-buy { background: #22c55e; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #22c55e; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-seedling"></i> <span id="shopName">Hariyali Nursery</span></h1>
+        <p>Indoor & Outdoor Plants | Pots | Fertilizer | Free Planting Service</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 75+</div>
+            <div class="tab" onclick="filter('Indoor')">Indoor 12</div>
+            <div class="tab" onclick="filter('Outdoor')">Outdoor 10</div>
+            <div class="tab" onclick="filter('Flowering')">Flowering 10</div>
+            <div class="tab" onclick="filter('Fruit')">Fruit 8</div>
+            <div class="tab" onclick="filter('Medicinal')">Medicinal 8</div>
+            <div class="tab" onclick="filter('Pot')">Pots 10</div>
+            <div class="tab" onclick="filter('Garden')">Garden 17</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Special Services</h3>
+            <p style="margin-top:10px;">Free Home Delivery | Free Planting | Garden Setup | Bulk Order Discount</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // INDOOR - 12
+            {name: "Money Plant", price: 150, cat: "Indoor", icon: "🌿"}, 
+            {name: "Snake Plant", price: 250, cat: "Indoor", icon: "🌿"},
+            {name: "Peace Lily", price: 300, cat: "Indoor", icon: "🌿"},
+            {name: "Spider Plant", price: 180, cat: "Indoor", icon: "🌿"},
+            {name: "Areca Palm", price: 400, cat: "Indoor", icon: "🌿"},
+            {name: "Ficus Plant", price: 350, cat: "Indoor", icon: "🌿"},
+            {name: "Bamboo Plant", price: 200, cat: "Indoor", icon: "🎋"},
+            {name: "Pothos", price: 160, cat: "Indoor", icon: "🌿"},
+            {name: "Rubber Plant", price: 450, cat: "Indoor", icon: "🌿"},
+            {name: "ZZ Plant", price: 500, cat: "Indoor", icon: "🌿"},
+            {name: "Philodendron", price: 280, cat: "Indoor", icon: "🌿"},
+            {name: "Fern Plant", price: 220, cat: "Indoor", icon: "🌿"},
+            
+            // OUTDOOR - 10
+            {name: "Tulsi Plant", price: 100, cat: "Outdoor", icon: "🌿"}, 
+            {name: "Neem Tree", price: 300, cat: "Outdoor", icon: "🌳"},
+            {name: "Peepal Tree", price: 350, cat: "Outdoor", icon: "🌳"},
+            {name: "Banyan Tree", price: 400, cat: "Outdoor", icon: "🌳"},
+            {name: "Ashoka Tree", price: 250, cat: "Outdoor", icon: "🌳"},
+            {name: "Curry Leaf Plant", price: 120, cat: "Outdoor", icon: "🌿"},
+            {name: "Lemon Grass", price: 150, cat: "Outdoor", icon: "🌿"},
+            {name: "Cactus", price: 200, cat: "Outdoor", icon: "🌵"},
+            {name: "Succulent Mix", price: 300, cat: "Outdoor", icon: "🌵"},
+            {name: "Bonsai", price: 1200, cat: "Outdoor", icon: "🌳"},
+            
+            // FLOWERING - 10
+            {name: "Rose Plant", price: 200, cat: "Flowering", icon: "🌹"}, 
+            {name: "Hibiscus", price: 180, cat: "Flowering", icon: "🌺"},
+            {name: "Marigold", price: 80, cat: "Flowering", icon: "🌼"},
+            {name: "Jasmine", price: 150, cat: "Flowering", icon: "🌸"},
+            {name: "Bougainvillea", price: 250, cat: "Flowering", icon: "🌺"},
+            {name: "Petunia", price: 100, cat: "Flowering", icon: "🌸"},
+            {name: "Sunflower", price: 120, cat: "Flowering", icon: "🌻"},
+            {name: "Orchid", price: 800, cat: "Flowering", icon: "🌸"},
+            {name: "Lily", price: 300, cat: "Flowering", icon: "🌸"},
+            {name: "Geranium", price: 160, cat: "Flowering", icon: "🌺"},
+            
+            // FRUIT - 8
+            {name: "Mango Tree", price: 500, cat: "Fruit", icon: "🥭"}, 
+            {name: "Guava Plant", price: 250, cat: "Fruit", icon: "🍐"},
+            {name: "Lemon Plant", price: 200, cat: "Fruit", icon: "🍋"},
+            {name: "Papaya Plant", price: 180, cat: "Fruit", icon: "🥭"},
+            {name: "Pomegranate", price: 300, cat: "Fruit", icon: "🍎"},
+            {name: "Banana Plant", price: 220, cat: "Fruit", icon: "🍌"},
+            {name: "Apple Tree", price: 600, cat: "Fruit", icon: "🍎"},
+            {name: "Orange Plant", price: 350, cat: "Fruit", icon: "🍊"},
+            
+            // MEDICINAL - 8
+            {name: "Aloe Vera", price: 120, cat: "Medicinal", icon: "🌿"}, 
+            {name: "Tulsi", price: 100, cat: "Medicinal", icon: "🌿"},
+            {name: "Mint Plant", price: 80, cat: "Medicinal", icon: "🌿"},
+            {name: "Coriander", price: 60, cat: "Medicinal", icon: "🌿"},
+            {name: "Fenugreek", price: 50, cat: "Medicinal", icon: "🌿"},
+            {name: "Ginger Plant", price: 100, cat: "Medicinal", icon: "🌿"},
+            {name: "Turmeric Plant", price: 120, cat: "Medicinal", icon: "🌿"},
+            {name: "Ashwagandha", price: 200, cat: "Medicinal", icon: "🌿"},
+            
+            // POTS - 10
+            {name: "Clay Pot 8inch", price: 60, cat: "Pot", icon: "🪴"}, 
+            {name: "Clay Pot 10inch", price: 80, cat: "Pot", icon: "🪴"},
+            {name: "Clay Pot 12inch", price: 120, cat: "Pot", icon: "🪴"},
+            {name: "Plastic Pot", price: 50, cat: "Pot", icon: "🪴"},
+            {name: "Ceramic Pot", price: 300, cat: "Pot", icon: "🪴"},
+            {name: "Hanging Pot", price: 150, cat: "Pot", icon: "🪴"},
+            {name: "Wooden Planter", price: 800, cat: "Pot", icon: "🪴"},
+            {name: "Grow Bag", price: 40, cat: "Pot", icon: "🪴"},
+            {name: "Tray Pot", price: 200, cat: "Pot", icon: "🪴"},
+            {name: "Decorative Pot", price: 500, cat: "Pot", icon: "🪴"},
+            
+            // GARDEN ITEMS - 17
+            {name: "Garden Soil 5kg", price: 100, cat: "Garden", icon: "🪣"}, 
+            {name: "Vermicompost 1kg", price: 150, cat: "Garden", icon: "🪣"},
+            {name: "NPK Fertilizer", price: 200, cat: "Garden", icon: "🪣"},
+            {name: "Cocopeat 5kg", price: 250, cat: "Garden", icon: "🪣"},
+            {name: "Seed Pack Vegetables", price: 80, cat: "Garden", icon: "🌱"},
+            {name: "Seed Pack Flowers", price: 100, cat: "Garden", icon: "🌱"},
+            {name: "Gardening Tool Set", price: 500, cat: "Garden", icon: "🛠️"},
+            {name: "Watering Can", price: 300, cat: "Garden", icon: "🚿"},
+            {name: "Pruning Shears", price: 400, cat: "Garden", icon: "✂️"},
+            {name: "Garden Gloves", price: 150, cat: "Garden", icon: "🧤"},
+            {name: "Pesticide", price: 250, cat: "Garden", icon: "🧪"},
+            {name: "Plant Stand", price: 600, cat: "Garden", icon: "🪑"},
+            {name: "Garden Fence", price: 800, cat: "Garden", icon: "🚧"},
+            {name: "Sprinkler", price: 350, cat: "Garden", icon: "🚿"},
+            {name: "Garden Lights", price: 1000, cat: "Garden", icon: "💡"},
+            {name: "Mulch 5kg", price: 180, cat: "Garden", icon: "🪣"},
+            {name: "Plant Support Stick", price: 50, cat: "Garden", icon: "📏"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Added to cart! Free planting available')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

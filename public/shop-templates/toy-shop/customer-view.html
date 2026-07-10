@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toy Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fff7ed; }
+       .header { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #f97316; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #f97316; }
+       .btn-buy { background: #f97316; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 2px dashed #f97316; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-puzzle-piece"></i> <span id="shopName">Bachpan Toy World</span></h1>
+        <p>Cars, Dolls, Puzzles, Educational Toys | Birthday Gift | Age 0 to 12 Years</p>
+    </div>
+
+    <div class="container">
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Birthday Special</h3>
+            <p>Buy 2 Toys Get 1 Free | Gift Wrapping Free | Return Gift Pack Available</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Car')">Car</div>
+            <div class="filter" onclick="filter('Doll')">Doll</div>
+            <div class="filter" onclick="filter('Educational')">Educational</div>
+            <div class="filter" onclick="filter('Soft Toy')">Soft Toy</div>
+            <div class="filter" onclick="filter('Puzzle')">Puzzle</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "RC Racing Car", price: 1200, age: "3+ Years", cat: "Car", brand: "Hot Wheels", icon: "🧸"}, 
+            {name: "Barbie Princess Doll", price: 800, age: "4+ Years", cat: "Doll", brand: "Mattel", icon: "🧸"},
+            {name: "Building Blocks 100pc", price: 650, age: "2+ Years", cat: "Educational", brand: "Lego", icon: "🧸"},
+            {name: "Teddy Bear 2ft", price: 1500, age: "0+ Years", cat: "Soft Toy", brand: "Hamleys", icon: "🧸"},
+            {name: "Chess Board", price: 900, age: "6+ Years", cat: "Puzzle", brand: "ChessBase", icon: "🧸"},
+            {name: "Football", price: 500, age: "5+ Years", cat: "Sports", brand: "Nivia", icon: "🧸"},
+            {name: "Ludo Board Game", price: 400, age: "4+ Years", cat: "Board Game", brand: "Local", icon: "🧸"},
+            {name: "Birthday Gift Pack", price: 2000, age: "3+ Years", cat: "Gift Pack", brand: "Bundle", icon: "🧸"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.brand} | Age: ${p.age}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Added to Cart!')"><i class="fa fa-cart-plus"></i> Add to Cart</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

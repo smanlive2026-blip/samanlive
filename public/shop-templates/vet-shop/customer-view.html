@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vet Medical Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f7fee7; }
+       .header { background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #84cc16; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #84cc16; }
+       .btn-buy { background: #84cc16; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .service-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 2px dashed #84cc16; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-paw"></i> <span id="shopName">Shree Pashu Aushadhi Kendra</span></h1>
+        <p>Cow, Buffalo, Goat, Poultry Medicine | Feed | Vaccine | Doctor Consultation</p>
+    </div>
+
+    <div class="container">
+        <div class="service-box">
+            <h3><i class="fa fa-user-doctor"></i> Free Services</h3>
+            <p>Doctor Advice | Vaccination Camp | Home Delivery | Bulk Discount for Gaushala</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Cow')">Cow</div>
+            <div class="filter" onclick="filter('Buffalo')">Buffalo</div>
+            <div class="filter" onclick="filter('Goat')">Goat</div>
+            <div class="filter" onclick="filter('Poultry')">Poultry</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Calcium Tonic 1L", price: 450, animal: "Cow", type: "Tonic", icon: "🍼"}, 
+            {name: "Antibiotic Injection", price: 120, animal: "Buffalo", type: "Injection", icon: "💉"},
+            {name: "Deworming Tablet", price: 80, animal: "Goat", type: "Tablet", icon: "💊"},
+            {name: "Poultry Feed 50kg", price: 2200, animal: "Poultry", type: "Feed", icon: "🌾"},
+            {name: "Mineral Mixture 5kg", price: 650, animal: "Cow", type: "Supplement", icon: "🍼"},
+            {name: "FMD Vaccine", price: 350, animal: "Cow", type: "Vaccine", icon: "💉"},
+            {name: "Goat Feed 20kg", price: 900, animal: "Goat", type: "Feed", icon: "🌾"},
+            {name: "Multi Vitamin", price: 380, animal: "All", type: "Tonic", icon: "🍼"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">For: ${p.animal} | ${p.type}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Order Placed!')"><i class="fa fa-phone"></i> Order Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.animal.includes(cat) || p.animal === 'All'));
+        }
+        display(products);
+    </script>
+</body>
+</html>

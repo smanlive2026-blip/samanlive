@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juice Bar Menu</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0fdf4; }
+       .header { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #16a34a; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-icon { font-size: 40px; margin-bottom: 12px; }
+       .product-price { font-size: 22px; font-weight: 800; color: #16a34a; }
+       .btn-order { background: #16a34a; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-glass-water"></i> <span id="shopName">Fresh Juice Corner</span></h1>
+        <p>100% Fresh Fruits | No Sugar | No Preservatives</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 45+</div>
+            <div class="tab" onclick="filter('Juice')">Fresh Juice 12</div>
+            <div class="tab" onclick="filter('Shake')">Shakes 10</div>
+            <div class="tab" onclick="filter('Mocktail')">Mocktails 8</div>
+            <div class="tab" onclick="filter('Special')">Special 8</div>
+            <div class="tab" onclick="filter('Food')">Salad 7</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            // FRESH JUICE - 12
+            {name: "Orange Juice", price: 40, cat: "Juice", icon: "🍊"}, {name: "Mango Juice", price: 50, cat: "Juice", icon: "🥭"},
+            {name: "Pineapple Juice", price: 50, cat: "Juice", icon: "🍍"}, {name: "Pomegranate Juice", price: 70, cat: "Juice", icon: "🍎"},
+            {name: "Apple Juice", price: 60, cat: "Juice", icon: "🍏"}, {name: "Watermelon Juice", price: 30, cat: "Juice", icon: "🍉"},
+            {name: "Sugarcane Juice", price: 30, cat: "Juice", icon: "🌿"}, {name: "Carrot Juice", price: 40, cat: "Juice", icon: "🥕"},
+            {name: "Beetroot Juice", price: 40, cat: "Juice", icon: "🫜"}, {name: "Lemon Juice", price: 25, cat: "Juice", icon: "🍋"},
+            {name: "Mosambi Juice", price: 40, cat: "Juice", icon: "🍊"}, {name: "Grapes Juice", price: 50, cat: "Juice", icon: "🍇"},
+            
+            // SHAKES - 10
+            {name: "Mango Shake", price: 60, cat: "Shake", icon: "🥤"}, {name: "Banana Shake", price: 50, cat: "Shake", icon: "🥤"},
+            {name: "Chocolate Shake", price: 70, cat: "Shake", icon: "🥤"}, {name: "Strawberry Shake", price: 70, cat: "Shake", icon: "🥤"},
+            {name: "Vanilla Shake", price: 60, cat: "Shake", icon: "🥤"}, {name: "Dry Fruit Shake", price: 90, cat: "Shake", icon: "🥤"},
+            {name: "Oreo Shake", price: 80, cat: "Shake", icon: "🥤"}, {name: "Kitkat Shake", price: 90, cat: "Shake", icon: "🥤"},
+            {name: "Cold Coffee Shake", price: 70, cat: "Shake", icon: "🥤"}, {name: "Pista Shake", price: 80, cat: "Shake", icon: "🥤"},
+            
+            // MOCKTAILS - 8
+            {name: "Virgin Mojito", price: 80, cat: "Mocktail", icon: "🍹"}, {name: "Blue Lagoon", price: 90, cat: "Mocktail", icon: "🍹"},
+            {name: "Fruit Punch", price: 80, cat: "Mocktail", icon: "🍹"}, {name: "Pina Colada", price: 90, cat: "Mocktail", icon: "🍹"},
+            {name: "Strawberry Mojito", price: 90, cat: "Mocktail", icon: "🍹"}, {name: "Green Apple Mocktail", price: 80, cat: "Mocktail", icon: "🍹"},
+            {name: "Orange Mocktail", price: 70, cat: "Mocktail", icon: "🍹"}, {name: "Cranberry Splash", price: 90, cat: "Mocktail", icon: "🍹"},
+            
+            // SPECIAL - 8
+            {name: "Immunity Booster", price: 100, cat: "Special", icon: "💪"}, {name: "Green Detox Juice", price: 90, cat: "Special", icon: "💪"},
+            {name: "Protein Shake", price: 120, cat: "Special", icon: "💪"}, {name: "Weight Loss Juice", price: 80, cat: "Special", icon: "💪"},
+            {name: "Skin Glow Juice", price: 100, cat: "Special", icon: "💪"}, {name: "Energy Drink", price: 70, cat: "Special", icon: "💪"},
+            {name: "Sugar Free Juice", price: 60, cat: "Special", icon: "💪"}, {name: "Diabetic Special", price: 70, cat: "Special", icon: "💪"},
+            
+            // FOOD - 7
+            {name: "Fruit Salad", price: 60, cat: "Food", icon: "🥗"}, {name: "Sprouts Salad", price: 50, cat: "Food", icon: "🥗"},
+            {name: "Mix Veg Salad", price: 40, cat: "Food", icon: "🥗"}, {name: "Cheese Corn", price: 70, cat: "Food", icon: "🥗"},
+            {name: "Fruit Chat", price: 50, cat: "Food", icon: "🥗"}, {name: "Boiled Chana", price: 40, cat: "Food", icon: "🥗"},
+            {name: "Sandwich", price: 60, cat: "Food", icon: "🥗"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div class="product-icon">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-order" onclick="alert('Order placed!')"><i class="fa fa-cart-plus"></i> Order</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

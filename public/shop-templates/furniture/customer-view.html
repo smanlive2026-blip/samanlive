@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furniture Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fffbeb; }
+       .header { background: linear-gradient(135deg, #a16207 0%, #78350f 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #a16207; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+       .product-price { font-size: 22px; font-weight: 800; color: #a16207; }
+       .btn-buy { background: #a16207; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #a16207; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-couch"></i> <span id="shopName">Royal Furniture</span></h1>
+        <p>Home & Office Furniture | EMI Available | Free Home Delivery</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 50+</div>
+            <div class="tab" onclick="filter('Sofa')">Sofa 8</div>
+            <div class="tab" onclick="filter('Bed')">Bed 8</div>
+            <div class="tab" onclick="filter('Table')">Table 10</div>
+            <div class="tab" onclick="filter('Storage')">Storage 8</div>
+            <div class="tab" onclick="filter('Chair')">Chair 8</div>
+            <div class="tab" onclick="filter('Office')">Office 8</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Special Offers</h3>
+            <p style="margin-top:10px;">0% EMI Available | 5 Year Warranty | Free Assembly & Delivery</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // SOFA - 8
+            {name: "3 Seater Sofa", price: 25000, cat: "Sofa", icon: "🛋️"}, 
+            {name: "5 Seater Sofa Set", price: 45000, cat: "Sofa", icon: "🛋️"},
+            {name: "L Shape Sofa", price: 55000, cat: "Sofa", icon: "🛋️"},
+            {name: "Recliner Sofa", price: 35000, cat: "Sofa", icon: "🛋️"},
+            {name: "Sofa Cum Bed", price: 30000, cat: "Sofa", icon: "🛋️"},
+            {name: "2 Seater Sofa", price: 18000, cat: "Sofa", icon: "🛋️"},
+            {name: "Leather Sofa", price: 65000, cat: "Sofa", icon: "🛋️"},
+            {name: "Corner Sofa", price: 48000, cat: "Sofa", icon: "🛋️"},
+            
+            // BED - 8
+            {name: "King Size Bed", price: 35000, cat: "Bed", icon: "🛏️"}, 
+            {name: "Queen Size Bed", price: 28000, cat: "Bed", icon: "🛏️"},
+            {name: "Single Bed", price: 15000, cat: "Bed", icon: "🛏️"},
+            {name: "Bed with Storage", price: 40000, cat: "Bed", icon: "🛏️"},
+            {name: "Bunk Bed", price: 32000, cat: "Bed", icon: "🛏️"},
+            {name: "Sofa Cum Bed", price: 30000, cat: "Bed", icon: "🛏️"},
+            {name: "Double Bed", price: 25000, cat: "Bed", icon: "🛏️"},
+            {name: "Designer Bed", price: 55000, cat: "Bed", icon: "🛏️"},
+            
+            // TABLE - 10
+            {name: "Dining Table 4 Seater", price: 20000, cat: "Table", icon: "🍽️"}, 
+            {name: "Dining Table 6 Seater", price: 28000, cat: "Table", icon: "🍽️"},
+            {name: "Dining Table 8 Seater", price: 40000, cat: "Table", icon: "🍽️"},
+            {name: "Study Table", price: 12000, cat: "Table", icon: "📚"},
+            {name: "Computer Table", price: 8000, cat: "Table", icon: "💻"},
+            {name: "Coffee Table", price: 7000, cat: "Table", icon: "☕"},
+            {name: "Side Table", price: 4000, cat: "Table", icon: "📦"},
+            {name: "Center Table", price: 9000, cat: "Table", icon: "📦"},
+            {name: "Office Desk", price: 15000, cat: "Table", icon: "💼"},
+            {name: "Console Table", price: 11000, cat: "Table", icon: "📦"},
+            
+            // STORAGE - 8
+            {name: "3 Door Wardrobe", price: 35000, cat: "Storage", icon: "🚪"}, 
+            {name: "2 Door Almirah", price: 25000, cat: "Storage", icon: "🚪"},
+            {name: "Book Shelf", price: 12000, cat: "Storage", icon: "📚"},
+            {name: "TV Cabinet", price: 18000, cat: "Storage", icon: "📺"},
+            {name: "Shoe Rack", price: 6000, cat: "Storage", icon: "👟"},
+            {name: "Chest of Drawers", price: 16000, cat: "Storage", icon: "📦"},
+            {name: "Storage Cabinet", price: 22000, cat: "Storage", icon: "📦"},
+            {name: "Display Unit", price: 28000, cat: "Storage", icon: "🖼️"},
+            
+            // CHAIR - 8
+            {name: "Dining Chair", price: 3000, cat: "Chair", icon: "💺"}, 
+            {name: "Office Chair", price: 8000, cat: "Chair", icon: "💺"},
+            {name: "Study Chair", price: 5000, cat: "Chair", icon: "💺"},
+            {name: "Recliner Chair", price: 20000, cat: "Chair", icon: "💺"},
+            {name: "Rocking Chair", price: 15000, cat: "Chair", icon: "💺"},
+            {name: "Plastic Chair", price: 1200, cat: "Chair", icon: "💺"},
+            {name: "Visitor Chair", price: 4000, cat: "Chair", icon: "💺"},
+            {name: "Bar Chair", price: 6000, cat: "Chair", icon: "💺"},
+            
+            // OFFICE - 8
+            {name: "Office Table", price: 12000, cat: "Office", icon: "💼"}, 
+            {name: "Executive Chair", price: 15000, cat: "Office", icon: "💼"},
+            {name: "Office Cabinet", price: 20000, cat: "Office", icon: "💼"},
+            {name: "Conference Table", price: 45000, cat: "Office", icon: "💼"},
+            {name: "Reception Desk", price: 25000, cat: "Office", icon: "💼"},
+            {name: "File Cabinet", price: 10000, cat: "Office", icon: "💼"},
+            {name: "Workstation", price: 30000, cat: "Office", icon: "💼"},
+            {name: "Office Sofa", price: 35000, cat: "Office", icon: "💼"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Added to cart! EMI Available')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

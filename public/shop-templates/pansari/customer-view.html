@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pansari Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fffbeb; }
+       .header { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .category-tabs { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 30px; padding-bottom: 10px; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #f59e0b; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: 0.3s; }
+       .product-card:hover { transform: translateY(-5px); }
+       .product-icon { font-size: 40px; color: #f59e0b; margin-bottom: 12px; text-align: center; }
+       .product-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+       .product-price { font-size: 22px; font-weight: 800; color: #f59e0b; }
+       .btn-add { background: #f59e0b; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .cart-float { position: fixed; bottom: 30px; right: 30px; background: #f59e0b; color: white; padding: 15px 25px; border-radius: 50px; font-weight: 700; box-shadow: 0 8px 30px rgba(245,158,11,0.4); cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-store"></i> <span id="shopName">Pansari Store</span></h1>
+        <p>Masala, Dal, Oil, Snacks & Daily Needs</p>
+    </div>
+
+    <div class="container">
+        <div class="category-tabs">
+            <div class="tab active" onclick="filterCategory('All')">All</div>
+            <div class="tab" onclick="filterCategory('Masala')">Masala</div>
+            <div class="tab" onclick="filterCategory('Dal')">Dal & Pulses</div>
+            <div class="tab" onclick="filterCategory('Oil')">Oil & Ghee</div>
+            <div class="tab" onclick="filterCategory('Snacks')">Snacks</div>
+            <div class="tab" onclick="filterCategory('Grocery')">Grocery</div>
+        </div>
+
+        <div class="product-grid" id="productGrid">Loading...</div>
+    </div>
+
+    <div class="cart-float" onclick="alert('Cart me items add ho gaye!')">
+        <i class="fa fa-shopping-cart"></i> Cart: <span id="cartCount">0</span>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        let allProducts = [];
+        let cartCount = 0;
+
+        async function loadShop() {
+            const res = await fetch(`/api/local-market/shops/${shopId}`);
+            const shop = await res.json();
+            document.getElementById('shopName').innerText = shop.shopName;
+            allProducts = shop.items || shop.products || [];
+            displayProducts(allProducts);
+        }
+
+        function displayProducts(products) {
+            const grid = document.getElementById('productGrid');
+            if (products.length === 0) {
+                grid.innerHTML = `<p style="grid-column:1/-1; text-align:center;">No products available</p>`;
+                return;
+            }
+            grid.innerHTML = products.map(p => `
+                <div class="product-card">
+                    <div class="product-icon"><i class="fa ${getIcon(p.category)}"></i></div>
+                    <div class="product-name">${p.name}</div>
+                    <p style="color:#64748b; font-size:12px; margin-bottom:10px;">${p.category}</p>
+                    <div class="product-price">₹${p.price} <span style="font-size:14px;">/${p.unit || 'kg'}</span></div>
+                    <p style="color:#64748b; font-size:12px;">Stock: ${p.stock} ${p.unit || 'kg'}</p>
+                    <button class="btn-add" onclick="addToCart()"><i class="fa fa-cart-plus"></i> Add to Cart</button>
+                </div>
+            `).join('');
+        }
+
+        function getIcon(cat) {
+            if(cat==='Masala') return 'fa-mortar-pestle'; if(cat==='Dal') return 'fa-bowl-rice';
+            if(cat==='Oil') return 'fa-bottle-droplet'; if(cat==='Snacks') return 'fa-cookie';
+            return 'fa-box';
+        }
+
+        function filterCategory(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            const filtered = cat==='All'? allProducts : allProducts.filter(p => p.category === cat);
+            displayProducts(filtered);
+        }
+
+        function addToCart() {
+            cartCount++;
+            document.getElementById('cartCount').innerText = cartCount;
+        }
+
+        loadShop();
+    </script>
+</body>
+</html>

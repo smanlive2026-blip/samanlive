@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloth Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0fdf4; }
+       .header { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #16a34a; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #16a34a; }
+       .btn-buy { background: #16a34a; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 2px dashed #16a34a; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-scissors"></i> <span id="shopName">Shree Cloth Emporium</span></h1>
+        <p>Meter se Kapda | Cotton, Silk, Georgette | Tailor Service | Shaadi ka Kapda</p>
+    </div>
+
+    <div class="container">
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Special Offer</h3>
+            <p>10 Meter se upar 5% Discount | Free Cutting | Asthar & Lace bhi milega</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Cotton')">Cotton</div>
+            <div class="filter" onclick="filter('Silk')">Silk</div>
+            <div class="filter" onclick="filter('Georgette')">Georgette</div>
+            <div class="filter" onclick="filter('Rayon')">Rayon</div>
+            <div class="filter" onclick="filter('Polyester')">Polyester</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Cotton Fabric", price: 120, stock: "200m", cat: "Cotton", use: "Shirt, Kurta, Suit", brand: "Vimal", icon: "🧵"}, 
+            {name: "Silk Fabric", price: 450, stock: "80m", cat: "Silk", use: "Saree, Kurta, Sherwani", brand: "Bansari", icon: "🧵"},
+            {name: "Rayon Fabric", price: 180, stock: "150m", cat: "Rayon", use: "Kurti, Gown, Dress", brand: "Liva", icon: "🧵"},
+            {name: "Georgette Fabric", price: 250, stock: "100m", cat: "Georgette", use: "Saree, Suit, Dupatta", brand: "Imported", icon: "🧵"},
+            {name: "Polyester Fabric", price: 90, stock: "300m", cat: "Polyester", use: "School Uniform", brand: "Local", icon: "🧵"},
+            {name: "Linen Fabric", price: 300, stock: "120m", cat: "Linen", use: "Shirt, Kurta", brand: "Raymond", icon: "🧵"},
+            {name: "Denim Fabric", price: 200, stock: "90m", cat: "Denim", use: "Jeans, Jacket", brand: "Denim Co", icon: "🧵"},
+            {name: "Lace & Asthar", price: 50, stock: "500m", cat: "Accessories", use: "Border, Lining", brand: "Mix", icon: "🧵"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.brand} | Use: ${p.use} | Stock: ${p.stock}</p>
+                    <div class="product-price">₹${p.price}/Meter</div>
+                    <button class="btn-buy" onclick="alert('Added to Cart!')"><i class="fa fa-cart-plus"></i> Add to Cart</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

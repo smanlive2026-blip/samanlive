@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dairy Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0f9ff; }
+       .header { background: linear-gradient(135deg, #0284c7 0%, #075985 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; margin-bottom: 30px; }
+       .tab { background: white; padding: 15px 30px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .tab.active { background: #0284c7; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-icon { font-size: 40px; color: #0284c7; margin-bottom: 15px; }
+       .product-price { font-size: 24px; font-weight: 800; color: #0284c7; }
+       .btn-subscribe { background: #0284c7; color: white; padding: 12px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .delivery-info { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-cow"></i> <span id="shopName">Fresh Dairy</span></h1>
+        <p>100% Pure | Farm Fresh | Daily Delivery</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('subscription')"><i class="fa fa-calendar"></i> Subscription</div>
+            <div class="tab" onclick="showTab('products')"><i class="fa fa-shopping-bag"></i> Buy Now</div>
+        </div>
+
+        <div id="subscription" class="product-grid">
+            <div class="product-card">
+                <div class="product-icon"><i class="fa fa-droplet"></i></div>
+                <h3>Cow Milk</h3>
+                <div class="product-price">₹60 <span style="font-size:14px;">/L</span></div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">Monthly: 30L = ₹1800</p>
+                <button class="btn-subscribe" onclick="subscribe('Cow Milk', 60)">Subscribe</button>
+            </div>
+            <div class="product-card">
+                <div class="product-icon"><i class="fa fa-droplet"></i></div>
+                <h3>Buffalo Milk</h3>
+                <div class="product-price">₹70 <span style="font-size:14px;">/L</span></div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">Monthly: 30L = ₹2100</p>
+                <button class="btn-subscribe" onclick="subscribe('Buffalo Milk', 70)">Subscribe</button>
+            </div>
+            <div class="product-card">
+                <div class="product-icon"><i class="fa fa-cheese"></i></div>
+                <h3>Paneer</h3>
+                <div class="product-price">₹320 <span style="font-size:14px;">/kg</span></div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">Weekly: 2kg = ₹640</p>
+                <button class="btn-subscribe" onclick="subscribe('Paneer', 320)">Subscribe</button>
+            </div>
+        </div>
+
+        <div id="products" class="product-grid" style="display:none;">
+            <div class="product-card">
+                <div class="product-icon"><i class="fa fa-bowl-food"></i></div>
+                <h3>Fresh Curd</h3>
+                <div class="product-price">₹80 <span style="font-size:14px;">/kg</span></div>
+                <button class="btn-subscribe" onclick="addToCart('Curd')">Add to Cart</button>
+            </div>
+            <div class="product-card">
+                <div class="product-icon"><i class="fa fa-jar"></i></div>
+                <h3>Desi Ghee</h3>
+                <div class="product-price">₹600 <span style="font-size:14px;">/kg</span></div>
+                <button class="btn-subscribe" onclick="addToCart('Ghee')">Add to Cart</button>
+            </div>
+        </div>
+
+        <div class="delivery-info">
+            <h3><i class="fa fa-truck"></i> Delivery Timings</h3>
+            <p style="margin-top:10px;"><strong>Morning:</strong> 6:00 AM - 8:00 AM</p>
+            <p><strong>Evening:</strong> 5:00 PM - 7:00 PM</p>
+            <p style="margin-top:10px; color:#0284c7;"><i class="fa fa-phone"></i> Contact: +91 98765 43210</p>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+
+        async function loadShop() {
+            const res = await fetch(`/api/local-market/shops/${shopId}`);
+            const shop = await res.json();
+            document.getElementById('shopName').innerText = shop.shopName;
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('subscription').style.display = tab==='subscription'? 'grid' : 'none';
+            document.getElementById('products').style.display = tab==='products'? 'grid' : 'none';
+        }
+
+        function subscribe(product, price) {
+            alert(`${product} subscription started! Daily delivery at your doorstep.`);
+        }
+
+        function addToCart(item) {
+            alert(`${item} added to cart!`);
+        }
+
+        loadShop();
+    </script>
+</body>
+</html>

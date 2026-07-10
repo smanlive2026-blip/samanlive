@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thela Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); min-height: 100vh; padding: 20px; }
+       .container { max-width: 1600px; margin: 0 auto; }
+        
+       .header { background: white; padding: 25px 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px; }
+       .header h1 { font-size: 28px; color: #7c2d12; display: flex; align-items: center; gap: 12px; }
+        
+       .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
+       .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); border-left: 5px solid #f97316; }
+       .stat-card .icon { font-size: 32px; color: #f97316; margin-bottom: 12px; }
+       .stat-card h3 { color: #64748b; font-size: 14px; }
+       .stat-card .value { font-size: 32px; font-weight: 700; color: #1e293b; }
+        
+       .content-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+       .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+       .item-card { border: 2px solid #ffedd5; padding: 15px; border-radius: 12px; }
+       .item-card h4 { color: #9a3412; margin-bottom: 5px; }
+       .btn { background: #f97316; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fa fa-cart-shopping"></i> <span id="shopName">Thela Wala</span></h1>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="icon"><i class="fa fa-receipt"></i></div><h3>Today Orders</h3><div class="value" id="orders">0</div></div>
+            <div class="stat-card"><div class="icon"><i class="fa fa-rupee-sign"></i></div><h3>Today Sale</h3><div class="value">₹<span id="sale">0</span></div></div>
+            <div class="stat-card"><div class="icon"><i class="fa fa-bowl-food"></i></div><h3>Total Items</h3><div class="value">60+</div></div>
+            <div class="stat-card"><div class="icon"><i class="fa fa-users"></i></div><h3>Customers</h3><div class="value" id="customers">0</div></div>
+        </div>
+
+        <div class="content-card">
+            <h2><i class="fa fa-list"></i> All 60+ Items Price List</h2>
+            <div class="item-grid" id="itemGrid"></div>
+        </div>
+    </div>
+    <script>
+        const items = [
+            // CHAT ITEMS - 15
+            {name: "Pani Puri", price: 30, cat: "Chat"}, {name: "Dahi Puri", price: 40, cat: "Chat"},
+            {name: "Sev Puri", price: 35, cat: "Chat"}, {name: "Bhel Puri", price: 30, cat: "Chat"},
+            {name: "Raj Kachori", price: 50, cat: "Chat"}, {name: "Dahi Bhalla", price: 40, cat: "Chat"},
+            {name: "Papdi Chat", price: 35, cat: "Chat"}, {name: "Aloo Tikki", price: 30, cat: "Chat"},
+            {name: "Samosa Chat", price: 40, cat: "Chat"}, {name: "Fruit Chat", price: 50, cat: "Chat"},
+            {name: "Masala Puri", price: 30, cat: "Chat"}, {name: "Katori Chat", price: 45, cat: "Chat"},
+            {name: "Dahi Papdi", price: 40, cat: "Chat"}, {name: "Cheese Pani Puri", price: 50, cat: "Chat"},
+            {name: "Fire Pani Puri", price: 60, cat: "Chat"},
+
+            // CHOWMIN & FAST FOOD - 15
+            {name: "Veg Chowmin", price: 50, cat: "Chinese"}, {name: "Chicken Chowmin", price: 70, cat: "Chinese"},
+            {name: "Veg Fried Rice", price: 60, cat: "Chinese"}, {name: "Egg Fried Rice", price: 70, cat: "Chinese"},
+            {name: "Chilli Potato", price: 60, cat: "Chinese"}, {name: "Chilli Paneer", price: 80, cat: "Chinese"},
+            {name: "Manchurian Dry", price: 70, cat: "Chinese"}, {name: "Manchurian Gravy", price: 80, cat: "Chinese"},
+            {name: "Spring Roll", price: 50, cat: "Chinese"}, {name: "Veg Momos", price: 40, cat: "Chinese"},
+            {name: "Chicken Momos", price: 60, cat: "Chinese"}, {name: "Tandoori Momos", price: 70, cat: "Chinese"},
+            {name: "French Fries", price: 50, cat: "Chinese"}, {name: "Burger", price: 40, cat: "Chinese"},
+            {name: "Cheese Burger", price: 60, cat: "Chinese"},
+
+            // SANDWICH & PIZZA - 10
+            {name: "Veg Sandwich", price: 40, cat: "Sandwich"}, {name: "Cheese Sandwich", price: 60, cat: "Sandwich"},
+            {name: "Grill Sandwich", price: 50, cat: "Sandwich"}, {name: "Pizza Slice", price: 40, cat: "Sandwich"},
+            {name: "Cheese Pizza", price: 120, cat: "Sandwich"}, {name: "Corn Pizza", price: 100, cat: "Sandwich"},
+            {name: "Garlic Bread", price: 60, cat: "Sandwich"}, {name: "White Pasta", price: 80, cat: "Sandwich"},
+            {name: "Red Pasta", price: 80, cat: "Sandwich"}, {name: "Maggi", price: 30, cat: "Sandwich"},
+
+            // SOUTH INDIAN & OTHER - 10
+            {name: "Masala Dosa", price: 60, cat: "South"}, {name: "Plain Dosa", price: 40, cat: "South"},
+            {name: "Idli Sambhar", price: 40, cat: "South"}, {name: "Vada Sambhar", price: 40, cat: "South"},
+            {name: "Uttapam", price: 50, cat: "South"}, {name: "Paneer Tikka", price: 120, cat: "Other"},
+            {name: "Soya Chaap", price: 80, cat: "Other"}, {name: "Tandoori Roti", price: 15, cat: "Other"},
+            {name: "Butter Naan", price: 30, cat: "Other"}, {name: "Chole Bhature", price: 70, cat: "Other"},
+
+            // DRINKS & DESSERT - 10
+            {name: "Cold Drink", price: 20, cat: "Drinks"}, {name: "Lassi", price: 30, cat: "Drinks"},
+            {name: "Butter Milk", price: 20, cat: "Drinks"}, {name: "Sugarcane Juice", price: 30, cat: "Drinks"},
+            {name: "Lemon Soda", price: 25, cat: "Drinks"}, {name: "Ice Cream", price: 30, cat: "Dessert"},
+            {name: "Kulfi", price: 40, cat: "Dessert"}, {name: "Faluda", price: 50, cat: "Dessert"},
+            {name: "Rasgulla", price: 10, cat: "Dessert"}, {name: "Gulab Jamun", price: 10, cat: "Dessert"}
+        ];
+
+        document.getElementById('itemGrid').innerHTML = items.map(i => `
+            <div class="item-card">
+                <h4>${i.name}</h4>
+                <p style="color:#64748b; font-size:12px;">${i.cat}</p>
+                <strong style="color:#f97316;">₹${i.price}</strong>
+            </div>
+        `).join('');
+    </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jewellery Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fffbeb; }
+       .header { background: linear-gradient(135deg, #facc15 0%, #eab308 100%); color: #713f12; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .rate-box { background: white; padding: 20px; border-radius: 16px; text-align: center; margin: 20px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+       .rate { font-size: 28px; font-weight: 800; color: #facc15; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .btn-contact { background: #facc15; color: #713f12; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #facc15; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-gem"></i> <span id="shopName">Shri Ram Jewellers</span></h1>
+        <p>22K & 24K Gold | Diamond | Silver | BIS Hallmarked</p>
+    </div>
+
+    <div class="container">
+        <div class="rate-box">
+            <h3>Today's Gold Rate</h3>
+            <div class="rate">₹72,000 / 10g</div>
+            <p style="color:#64748b; font-size:12px;">*Rate changes daily. Making charges extra</p>
+        </div>
+
+        <h2 style="text-align:center; margin:20px 0;">Our Collection</h2>
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Wedding Offer</h3>
+            <p style="margin-top:10px;">50% OFF on Making Charges | Free Silver Coin on Purchase Above ₹1 Lakh</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Gold Wedding Ring", weight: "5g", type: "22K Gold", icon: "💍"}, 
+            {name: "Diamond Necklace Set", weight: "20g", type: "18K Gold + Diamond", icon: "📿"},
+            {name: "Gold Bangles Pair", weight: "40g", type: "22K Gold", icon: "💍"},
+            {name: "Silver Payal", weight: "60g", type: "Pure Silver", icon: "💍"},
+            {name: "Gold Chain", weight: "15g", type: "22K Gold", icon: "⛓️"},
+            {name: "Diamond Earrings", weight: "8g", type: "18K Gold + Diamond", icon: "💎"},
+            {name: "Mangalsutra", weight: "12g", type: "22K Gold", icon: "📿"},
+            {name: "Nath", weight: "4g", type: "22K Gold", icon: "💍"}
+        ];
+
+        document.getElementById('productGrid').innerHTML = products.map(p => `
+            <div class="product-card">
+                <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                <h3>${p.name}</h3>
+                <p style="color:#64748b; font-size:14px;">${p.type}</p>
+                <p style="color:#64748b; font-size:12px;">Approx Weight: ${p.weight}</p>
+                <button class="btn-contact" onclick="alert('Visit shop for price & details')"><i class="fa fa-phone"></i> Contact for Price</button>
+            </div>
+        `).join('');
+    </script>
+</body>
+</html>

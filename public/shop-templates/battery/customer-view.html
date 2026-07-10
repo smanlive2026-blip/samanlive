@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battery Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fefce8; }
+       .header { background: linear-gradient(135deg, #eab308 0%, #a16207 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #eab308; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+       .product-price { font-size: 22px; font-weight: 800; color: #eab308; }
+       .btn-buy { background: #eab308; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .warranty-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #eab308; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-car-battery"></i> <span id="shopName">Power Battery Center</span></h1>
+        <p>Car, Bike, Inverter, Solar Battery | Exchange Available | Home Fitting</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 40+</div>
+            <div class="tab" onclick="filter('Car')">Car 10</div>
+            <div class="tab" onclick="filter('Bike')">Bike 8</div>
+            <div class="tab" onclick="filter('Inverter')">Inverter 8</div>
+            <div class="tab" onclick="filter('Solar')">Solar 6</div>
+            <div class="tab" onclick="filter('Other')">Other 8</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="warranty-box">
+            <h3><i class="fa fa-shield"></i> Up to 60 Months Warranty</h3>
+            <p style="margin-top:10px;">Old Battery Exchange | Free Home Fitting | 24x7 Service</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // CAR BATTERY - 10
+            {name: "Exide Car Battery 35AH", price: 4200, cat: "Car", warranty: 36, exchange: 1000, icon: "🚗"}, 
+            {name: "Exide Car Battery 45AH", price: 5200, cat: "Car", warranty: 36, exchange: 1200, icon: "🚗"},
+            {name: "Exide Car Battery 60AH", price: 6500, cat: "Car", warranty: 36, exchange: 1500, icon: "🚗"},
+            {name: "Amaron Car Battery 60AH", price: 6800, cat: "Car", warranty: 48, exchange: 1500, icon: "🚗"},
+            {name: "Tata Car Battery 65AH", price: 7000, cat: "Car", warranty: 36, exchange: 1600, icon: "🚗"},
+            {name: "Livguard Car Battery 70AH", price: 7500, cat: "Car", warranty: 36, exchange: 1700, icon: "🚗"},
+            {name: "SF Sonic Car Battery 80AH", price: 8200, cat: "Car", warranty: 36, exchange: 1800, icon: "🚗"},
+            {name: "Luminous Car Battery 90AH", price: 9000, cat: "Car", warranty: 36, exchange: 2000, icon: "🚗"},
+            {name: "Okaya Car Battery 100AH", price: 9500, cat: "Car", warranty: 36, exchange: 2200, icon: "🚗"},
+            {name: "Sukam Car Battery 120AH", price: 11000, cat: "Car", warranty: 36, exchange: 2500, icon: "🚗"},
+            
+            // BIKE BATTERY - 8
+            {name: "Amaron Bike Battery 4AH", price: 1200, cat: "Bike", warranty: 24, exchange: 300, icon: "🏍️"},
+            {name: "Exide Bike Battery 5AH", price: 1500, cat: "Bike", warranty: 24, exchange: 400, icon: "🏍️"},
+            {name: "Tata Bike Battery 9AH", price: 1800, cat: "Bike", warranty: 24, exchange: 450, icon: "🏍️"},
+            {name: "Amaron Bike Battery 12V", price: 2200, cat: "Bike", warranty: 24, exchange: 500, icon: "🏍️"},
+            {name: "Livguard Bike Battery 14AH", price: 2500, cat: "Bike", warranty: 24, exchange: 600, icon: "🏍️"},
+            {name: "SF Sonic Bike Battery 16AH", price: 2800, cat: "Bike", warranty: 24, exchange: 650, icon: "🏍️"},
+            {name: "Luminous Bike Battery 18AH", price: 3000, cat: "Bike", warranty: 24, exchange: 700, icon: "🏍️"},
+            {name: "Okaya Bike Battery 20AH", price: 3200, cat: "Bike", warranty: 24, exchange: 750, icon: "🏍️"},
+            
+            // INVERTER BATTERY - 8
+            {name: "Tata Inverter Battery 100AH", price: 12000, cat: "Inverter", warranty: 60, exchange: 3000, icon: "🔋"},
+            {name: "Exide Inverter Battery 120AH", price: 14000, cat: "Inverter", warranty: 60, exchange: 3500, icon: "🔋"},
+            {name: "Amaron Inverter Battery 150AH", price: 18000, cat: "Inverter", warranty: 60, exchange: 4000, icon: "🔋"},
+            {name: "Luminous Inverter Battery 160AH", price: 19000, cat: "Inverter", warranty: 60, exchange: 4200, icon: "🔋"},
+            {name: "Livguard Inverter Battery 180AH", price: 21000, cat: "Inverter", warranty: 60, exchange: 4500, icon: "🔋"},
+            {name: "SF Sonic Inverter Battery 200AH", price: 23000, cat: "Inverter", warranty: 60, exchange: 5000, icon: "🔋"},
+            {name: "Okaya Inverter Battery 220AH", price: 25000, cat: "Inverter", warranty: 60, exchange: 5500, icon: "🔋"},
+            {name: "Sukam Inverter Battery 250AH", price: 28000, cat: "Inverter", warranty: 60, exchange: 6000, icon: "🔋"},
+            
+            // SOLAR BATTERY - 6
+            {name: "Luminous Solar Battery 100AH", price: 15000, cat: "Solar", warranty: 60, exchange: 4000, icon: "☀️"},
+            {name: "Tata Solar Battery 150AH", price: 22000, cat: "Solar", warranty: 60, exchange: 5500, icon: "☀️"},
+            {name: "Exide Solar Battery 200AH", price: 25000, cat: "Solar", warranty: 60, exchange: 6000, icon: "☀️"},
+            {name: "Amaron Solar Battery 220AH", price: 27000, cat: "Solar", warranty: 60, exchange: 6500, icon: "☀️"},
+            {name: "Livguard Solar Battery 250AH", price: 30000, cat: "Solar", warranty: 60, exchange: 7000, icon: "☀️"},
+            {name: "SF Sonic Solar Battery 300AH", price: 35000, cat: "Solar", warranty: 60, exchange: 8000, icon: "☀️"},
+            
+            // OTHER - 8
+            {name: "UPS Battery 12V 7AH", price: 1500, cat: "Other", warranty: 24, exchange: 400, icon: "💻"},
+            {name: "E-Rickshaw Battery 120AH", price: 16000, cat: "Other", warranty: 36, exchange: 4000, icon: "🛺"},
+            {name: "DG Set Battery 100AH", price: 13000, cat: "Other", warranty: 36, exchange: 3500, icon: "⚡"},
+            {name: "Tractor Battery 80AH", price: 9000, cat: "Other", warranty: 36, exchange: 2500, icon: "🚜"},
+            {name: "Boat Battery 100AH", price: 14000, cat: "Other", warranty: 36, exchange: 3500, icon: "⛵"},
+            {name: "Forklift Battery 500AH", price: 80000, cat: "Other", warranty: 36, exchange: 20000, icon: "🏭"},
+            {name: "Telecom Battery 200AH", price: 26000, cat: "Other", warranty: 60, exchange: 6000, icon: "📡"},
+            {name: "Golf Cart Battery 150AH", price: 22000, cat: "Other", warranty: 36, exchange: 5000, icon: "⛳"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">Warranty: ${p.warranty} Months | Exchange: ₹${p.exchange}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Order placed! Free fitting available')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardware Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f1f5f9; }
+        .header { background: linear-gradient(135deg, #64748b 0%, #334155 100%); color: white; padding: 50px 20px; text-align: center; }
+        .header h1 { font-size: 36px; }
+        .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+        .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .cat-card { background: white; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .cat-card:hover { background: #64748b; color: white; }
+        .cat-card i { font-size: 32px; margin-bottom: 10px; }
+        
+        .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .item-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .item-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+        .item-name { font-size: 18px; font-weight: 700; }
+        .item-price { font-size: 22px; font-weight: 800; color: #64748b; }
+        .item-unit { font-size: 12px; color: #64748b; }
+        .btn-quote { background: #64748b; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+        .contact-float { position: fixed; bottom: 30px; right: 30px; background: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 8px 30px rgba(37,211,102,0.4); cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-tools"></i> <span id="shopName">Hardware Store</span></h1>
+        <p>Cement, Tools, Paint, Electrical & Building Material</p>
+    </div>
+
+    <div class="container">
+        <h2 style="margin-bottom:20px;">Shop by Category</h2>
+        <div class="category-grid">
+            <div class="cat-card" onclick="filterCategory('Cement')"><i class="fa fa-mountain"></i><div>Cement</div></div>
+            <div class="cat-card" onclick="filterCategory('Tools')"><i class="fa fa-wrench"></i><div>Tools</div></div>
+            <div class="cat-card" onclick="filterCategory('Electrical')"><i class="fa fa-bolt"></i><div>Electrical</div></div>
+            <div class="cat-card" onclick="filterCategory('Plumbing')"><i class="fa fa-faucet"></i><div>Plumbing</div></div>
+            <div class="cat-card" onclick="filterCategory('Paint')"><i class="fa fa-paint-roller"></i><div>Paint</div></div>
+            <div class="cat-card" onclick="filterCategory('Building')"><i class="fa fa-home"></i><div>Building</div></div>
+        </div>
+
+        <div class="item-grid" id="itemGrid">Loading...</div>
+    </div>
+
+    <div class="contact-float" onclick="contactShop()">
+        <i class="fab fa-whatsapp"></i>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        let allItems = [];
+        let shopData = null;
+
+        async function loadShop() {
+            const res = await fetch(`/api/local-market/shops/${shopId}`);
+            shopData = await res.json();
+            document.getElementById('shopName').innerText = shopData.shopName;
+            allItems = shopData.items || shopData.products || [];
+            displayItems(allItems);
+        }
+
+        function displayItems(items) {
+            const grid = document.getElementById('itemGrid');
+            if (items.length === 0) {
+                grid.innerHTML = `<p style="grid-column:1/-1; text-align:center;">No items available</p>`;
+                return;
+            }
+            grid.innerHTML = items.map(item => `
+                <div class="item-card">
+                    <div class="item-header">
+                        <div class="item-name">${item.name}</div>
+                    </div>
+                    <p style="color:#64748b; font-size:12px; margin-bottom:10px;">${item.category}</p>
+                    <div class="item-price">₹${item.price} <span class="item-unit">/${item.unit || 'pc'}</span></div>
+                    <p style="color:#64748b; font-size:12px; margin-top:8px;">Stock: ${item.stock} ${item.unit || 'pcs'}</p>
+                    <button class="btn-quote" onclick="requestQuote('${item.name}')"><i class="fa fa-phone"></i> Get Quote</button>
+                </div>
+            `).join('');
+        }
+
+        function filterCategory(cat) {
+            const filtered = allItems.filter(i => i.category === cat);
+            displayItems(filtered);
+        }
+
+        function requestQuote(itemName) {
+            const msg = `Hi, I want quote for ${itemName} from ${shopData.shopName}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function contactShop() {
+            window.open(`https://wa.me/?text=${encodeURIComponent('Hi, I need hardware materials')}`, '_blank');
+        }
+
+        loadShop();
+    </script>
+</body>
+</html>

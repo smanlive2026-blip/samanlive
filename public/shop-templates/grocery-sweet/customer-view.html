@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sweet Grocery Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fffbeb; }
+       .header { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #d97706; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #d97706; }
+       .btn-buy { background: #d97706; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 2px dashed #d97706; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-candy-cane"></i> <span id="shopName">Shree Shakkar Bhandar</span></h1>
+        <p>Gud, Cheeni, Shakkar, Bura | Wholesale & Retail | Mithai Wale Contact</p>
+    </div>
+
+    <div class="container">
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Bulk Offer</h3>
+            <p>50kg se upar ₹2/kg Discount | Free Home Delivery | Shaadi ka Order Special Rate</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Cheeni')">Cheeni</div>
+            <div class="filter" onclick="filter('Shakkar')">Shakkar</div>
+            <div class="filter" onclick="filter('Gud')">Gud</div>
+            <div class="filter" onclick="filter('Bura')">Bura</div>
+            <div class="filter" onclick="filter('Mishri')">Mishri</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Cheeni / Sugar", price: 45, stock: "500kg", cat: "Cheeni", quality: "Moti Dana", use: "Chai, Mithai", icon: "🫙"}, 
+            {name: "Shakkar / Brown Sugar", price: 55, stock: "200kg", cat: "Shakkar", quality: "Desi", use: "Chai, Halwa", icon: "🫙"},
+            {name: "Gud / Jaggery", price: 80, stock: "150kg", cat: "Gud", quality: "Organic", use: "Roti, Laddu", icon: "🫙"},
+            {name: "Bura Sugar", price: 60, stock: "100kg", cat: "Bura", quality: "Powder", use: "Prasad, Ladoo", icon: "🫙"},
+            {name: "Mishri / Rock Sugar", price: 300, stock: "50kg", cat: "Mishri", quality: "Dora", use: "Mukhwas", icon: "🫙"},
+            {name: "Khand / Fine Sugar", price: 50, stock: "250kg", cat: "Khand", quality: "Fine", use: "Cold Drink", icon: "🫙"},
+            {name: "Tal Mishri", price: 400, stock: "30kg", cat: "Mishri", quality: "Premium", use: "Ayurvedic", icon: "🫙"},
+            {name: "Bulk 50kg Bag", price: 2200, stock: "20 Bag", cat: "Cheeni", quality: "Wholesale", use: "Shop", icon: "📦"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.quality} | Use: ${p.use} | Stock: ${p.stock}</p>
+                    <div class="product-price">₹${p.price}/kg</div>
+                    <button class="btn-buy" onclick="alert('Added to Cart!')"><i class="fa fa-cart-plus"></i> Add to Cart</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

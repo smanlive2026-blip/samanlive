@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mochi Services</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fef3c7; }
+       .header { background: linear-gradient(135deg, #a16207 0%, #713f12 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1200px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; margin-bottom: 40px; }
+       .service-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .service-icon { font-size: 40px; color: #a16207; margin-bottom: 15px; }
+       .service-price { font-size: 24px; font-weight: 800; color: #a16207; }
+       .btn-book { background: #a16207; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .whatsapp-float { position: fixed; bottom: 30px; right: 30px; background: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 8px 30px rgba(37,211,102,0.4); cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-shoe-prints"></i> <span id="shopName">Mochi Ji</span></h1>
+        <p>Juta Repair, Polish, Sole Change - 1 Din me Delivery</p>
+    </div>
+
+    <div class="container">
+        <h2 style="margin-bottom:20px; text-align:center;">Our Services</h2>
+        <div class="service-grid">
+            <div class="service-card">
+                <div class="service-icon"><i class="fa fa-shoe-prints"></i></div>
+                <h3>Sole Change</h3>
+                <div class="service-price">₹200</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">1-2 din me</p>
+                <button class="btn-book" onclick="bookService('Sole Change', 200)">Book Now</button>
+            </div>
+            <div class="service-card">
+                <div class="service-icon"><i class="fa fa-tools"></i></div>
+                <h3>Stitching</h3>
+                <div class="service-price">₹80</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">Same day</p>
+                <button class="btn-book" onclick="bookService('Stitching', 80)">Book Now</button>
+            </div>
+            <div class="service-card">
+                <div class="service-icon"><i class="fa fa-spray-can"></i></div>
+                <h3>Polish</h3>
+                <div class="service-price">₹50</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">15 min me</p>
+                <button class="btn-book" onclick="bookService('Polish', 50)">Book Now</button>
+            </div>
+            <div class="service-card">
+                <div class="service-icon"><i class="fa fa-wrench"></i></div>
+                <h3>Heel Repair</h3>
+                <div class="service-price">₹120</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">Same day</p>
+                <button class="btn-book" onclick="bookService('Heel Repair', 120)">Book Now</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="whatsapp-float" onclick="contactMochi()">
+        <i class="fab fa-whatsapp"></i>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        let shopName = 'Mochi Ji';
+
+        async function loadShop() {
+            const res = await fetch(`/api/local-market/shops/${shopId}`);
+            const shop = await res.json();
+            shopName = shop.shopName;
+            document.getElementById('shopName').innerText = shopName;
+        }
+
+        function bookService(service, price) {
+            const msg = `Hi, I want to book ${service} for ₹${price} at ${shopName}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function contactMochi() {
+            window.open(`https://wa.me/?text=${encodeURIComponent('Hi, I need shoe repair service')}`, '_blank');
+        }
+
+        loadShop();
+    </script>
+</body>
+</html>

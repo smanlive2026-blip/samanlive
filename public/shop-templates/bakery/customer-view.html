@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bakery Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fdf2f8; }
+       .header { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #ec4899; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-img { font-size: 40px; margin-bottom: 12px; }
+       .product-price { font-size: 22px; font-weight: 800; color: #ec4899; }
+       .btn-order { background: #ec4899; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-cake-candles"></i> <span id="shopName">Sweet Bakery</span></h1>
+        <p>Fresh Daily | Custom Cakes Available</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All</div>
+            <div class="tab" onclick="filter('Cake')">Cakes</div>
+            <div class="tab" onclick="filter('Bread')">Bread</div>
+            <div class="tab" onclick="filter('Pastry')">Pastry</div>
+            <div class="tab" onclick="filter('Biscuit')">Biscuits</div>
+            <div class="tab" onclick="filter('Dessert')">Desserts</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            // CAKES - 10
+            {name: "Chocolate Cake", price: 400, cat: "Cake", icon: "🎂"}, {name: "Vanilla Cake", price: 350, cat: "Cake", icon: "🎂"},
+            {name: "Black Forest", price: 450, cat: "Cake", icon: "🎂"}, {name: "Pineapple Cake", price: 400, cat: "Cake", icon: "🎂"},
+            {name: "Butterscotch Cake", price: 450, cat: "Cake", icon: "🎂"}, {name: "Red Velvet", price: 500, cat: "Cake", icon: "🎂"},
+            {name: "Strawberry Cake", price: 420, cat: "Cake", icon: "🎂"}, {name: "Photo Cake", price: 600, cat: "Cake", icon: "🎂"},
+            {name: "Heart Shape Cake", price: 550, cat: "Cake", icon: "🎂"}, {name: "2 Tier Cake", price: 1200, cat: "Cake", icon: "🎂"},
+            
+            // BREAD - 8
+            {name: "White Bread", price: 30, cat: "Bread", icon: "🍞"}, {name: "Brown Bread", price: 40, cat: "Bread", icon: "🍞"},
+            {name: "Pav", price: 20, cat: "Bread", icon: "🍞"}, {name: "Burger Bun", price: 25, cat: "Bread", icon: "🍞"},
+            {name: "Hot Dog Bun", price: 25, cat: "Bread", icon: "🍞"}, {name: "Garlic Bread", price: 60, cat: "Bread", icon: "🍞"},
+            {name: "Cheese Bread", price: 70, cat: "Bread", icon: "🍞"}, {name: "Sandwich Bread", price: 35, cat: "Bread", icon: "🍞"},
+            
+            // PASTRY - 8
+            {name: "Cream Roll", price: 20, cat: "Pastry", icon: "🧁"}, {name: "Puff Pastry", price: 15, cat: "Pastry", icon: "🧁"},
+            {name: "Donut", price: 30, cat: "Pastry", icon: "🧁"}, {name: "Chocolate Pastry", price: 40, cat: "Pastry", icon: "🧁"},
+            {name: "Black Forest Pastry", price: 45, cat: "Pastry", icon: "🧁"}, {name: "Pineapple Pastry", price: 40, cat: "Pastry", icon: "🧁"},
+            {name: "Cupcake", price: 35, cat: "Pastry", icon: "🧁"}, {name: "Muffin", price: 40, cat: "Pastry", icon: "🧁"},
+            
+            // BISCUITS - 8
+            {name: "Rusks", price: 60, cat: "Biscuit", icon: "🍪"}, {name: "Butter Cookies", price: 80, cat: "Biscuit", icon: "🍪"},
+            {name: "Chocolate Chip", price: 90, cat: "Biscuit", icon: "🍪"}, {name: "Nan Khatai", price: 70, cat: "Biscuit", icon: "🍪"},
+            {name: "Jeera Biscuit", price: 60, cat: "Biscuit", icon: "🍪"}, {name: "Marie Biscuit", price: 40, cat: "Biscuit", icon: "🍪"},
+            {name: "Coconut Cookies", price: 85, cat: "Biscuit", icon: "🍪"}, {name: "Almond Biscuit", price: 100, cat: "Biscuit", icon: "🍪"},
+            
+            // DESSERTS - 6
+            {name: "Brownie", price: 50, cat: "Dessert", icon: "🍫"}, {name: "Cheesecake", price: 120, cat: "Dessert", icon: "🍫"},
+            {name: "Tiramisu", price: 150, cat: "Dessert", icon: "🍫"}, {name: "Chocolate Cake Jar", price: 80, cat: "Dessert", icon: "🍫"},
+            {name: "Pudding", price: 60, cat: "Dessert", icon: "🍫"}, {name: "Ice Cake", price: 200, cat: "Dessert", icon: "🍫"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div class="product-img">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-order" onclick="alert('Added to cart!')"><i class="fa fa-cart-plus"></i> Order Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

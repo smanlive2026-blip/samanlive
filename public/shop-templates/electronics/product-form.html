@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - Electronics</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 30px 20px; }
+       .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); overflow: hidden; }
+
+       .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; }
+       .header h1 { font-size: 28px; display: flex; align-items: center; gap: 12px; }
+       .header p { opacity: 0.9; margin-top: 8px; }
+
+       .form-body { padding: 40px; }
+       .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+       .form-group { display: flex; flex-direction: column; }
+       .form-group.full { grid-column: 1 / -1; }
+
+       .form-group label { font-weight: 600; color: #334155; margin-bottom: 8px; font-size: 14px; }
+       .form-group label i { margin-right: 8px; color: #667eea; }
+
+       .form-group input,.form-group select,.form-group textarea {
+            padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 12px;
+            font-size: 15px; transition: all 0.3s; outline: none;
+        }
+       .form-group input:focus,.form-group select:focus,.form-group textarea:focus {
+            border-color: #667eea; box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+        }
+
+       .image-upload { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: 0.3s; }
+       .image-upload:hover { border-color: #667eea; background: #f8fafc; }
+       .image-preview { max-width: 200px; margin-top: 15px; border-radius: 12px; display: none; }
+
+       .btn-group { display: flex; gap: 15px; margin-top: 30px; }
+       .btn {
+            padding: 16px 32px; border: none; border-radius: 12px; font-weight: 700; font-size: 16px;
+            cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 10px;
+        }
+       .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; flex: 1; justify-content: center; }
+       .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(102,126,234,0.4); }
+       .btn-secondary { background: #f1f5f9; color: #475569; }
+       .btn-secondary:hover { background: #e2e8f0; }
+
+       .specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media(max-width: 768px) {.form-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fa fa-mobile-alt"></i> <span id="formTitle">Add New Product</span></h1>
+            <p>Add Mobile, Laptop, TV, AC and other electronics to your shop</p>
+        </div>
+
+        <div class="form-body">
+            <form id="productForm">
+                <div class="form-grid">
+                    <!-- Basic Info -->
+                    <div class="form-group">
+                        <label><i class="fa fa-tag"></i>Product Name</label>
+                        <input type="text" id="productName" placeholder="iPhone 15 Pro" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa fa-copyright"></i>Brand</label>
+                        <select id="brand" required>
+                            <option value="">Select Brand</option>
+                            <option>Samsung</option><option>Apple</option><option>OnePlus</option>
+                            <option>Xiaomi</option><option>LG</option><option>Sony</option>
+                            <option>Boat</option><option>JBL</option><option>Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa fa-list"></i>Category</label>
+                        <select id="category" required>
+                            <option value="">Select Category</option>
+                            <option>Mobile</option><option>Laptop</option><option>TV</option>
+                            <option>AC</option><option>Refrigerator</option><option>Washing Machine</option>
+                            <option>Headphones</option><option>Speakers</option><option>Accessories</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa fa-barcode"></i>SKU / Model No.</label>
+                        <input type="text" id="sku" placeholder="IP15P-256GB">
+                    </div>
+
+                    <!-- Pricing -->
+                    <div class="form-group">
+                        <label><i class="fa fa-rupee-sign"></i>MRP</label>
+                        <input type="number" id="mrp" placeholder="99999" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa fa-tag"></i>Selling Price</label>
+                        <input type="number" id="price" placeholder="94999" required>
+                    </div>
+
+                    <!-- Stock -->
+                    <div class="form-group">
+                        <label><i class="fa fa-boxes"></i>Stock Quantity</label>
+                        <input type="number" id="stock" placeholder="10" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa fa-shield-alt"></i>Warranty</label>
+                        <select id="warranty">
+                            <option>6 Months</option>
+                            <option selected>1 Year</option>
+                            <option>2 Years</option>
+                            <option>3 Years</option>
+                        </select>
+                    </div>
+
+                    <!-- Specs -->
+                    <div class="form-group full">
+                        <label><i class="fa fa-microchip"></i>Key Specifications</label>
+                        <div class="specs-grid">
+                            <input type="text" id="spec1" placeholder="RAM: 8GB">
+                            <input type="text" id="spec2" placeholder="Storage: 256GB">
+                            <input type="text" id="spec3" placeholder="Display: 6.1 inch">
+                            <input type="text" id="spec4" placeholder="Camera: 48MP">
+                        </div>
+                    </div>
+
+                    <!-- Image -->
+                    <div class="form-group full">
+                        <label><i class="fa fa-image"></i>Product Image</label>
+                        <div class="image-upload" onclick="document.getElementById('imageInput').click()">
+                            <i class="fa fa-cloud-upload-alt" style="font-size:40px; color:#667eea;"></i>
+                            <p>Click to upload image</p>
+                            <input type="file" id="imageInput" accept="image/*" style="display:none;">
+                            <img id="imagePreview" class="image-preview">
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group full">
+                        <label><i class="fa fa-align-left"></i>Description</label>
+                        <textarea id="description" rows="4" placeholder="Write product details..."></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" onclick="goBack()">
+                        <i class="fa fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save"></i> <span id="btnText">Save Product</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        const itemId = urlParams.get('itemId');
+        let uploadedImage = '';
+
+        if (!shopId) {
+            alert('Invalid shop');
+            window.location.href = '/local-market/create-shop.html';
+        }
+
+        // Image Preview
+        document.getElementById('imageInput').onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedImage = event.target.result;
+                    document.getElementById('imagePreview').src = uploadedImage;
+                    document.getElementById('imagePreview').style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Load for Edit
+        if (itemId) {
+            document.getElementById('formTitle').innerText = 'Edit Product';
+            document.getElementById('btnText').innerText = 'Update Product';
+            loadProductForEdit(itemId);
+        }
+
+        async function loadProductForEdit(id) {
+            const res = await fetch(`/api/local-market/products/${id}`);
+            const product = await res.json();
+            document.getElementById('productName').value = product.name;
+            document.getElementById('brand').value = product.brand;
+            document.getElementById('category').value = product.category;
+            document.getElementById('sku').value = product.sku || '';
+            document.getElementById('mrp').value = product.mrp;
+            document.getElementById('price').value = product.price;
+            document.getElementById('stock').value = product.stock;
+            document.getElementById('warranty').value = product.warranty || '1 Year';
+            document.getElementById('description').value = product.description || '';
+            if (product.image) {
+                document.getElementById('imagePreview').src = product.image;
+                document.getElementById('imagePreview').style.display = 'block';
+                uploadedImage = product.image;
+            }
+        }
+
+        // Form Submit
+        document.getElementById('productForm').onsubmit = async function(e) {
+            e.preventDefault();
+
+            const productData = {
+                shopId: shopId,
+                name: document.getElementById('productName').value,
+                brand: document.getElementById('brand').value,
+                category: document.getElementById('category').value,
+                sku: document.getElementById('sku').value,
+                mrp: Number(document.getElementById('mrp').value),
+                price: Number(document.getElementById('price').value),
+                stock: Number(document.getElementById('stock').value),
+                warranty: document.getElementById('warranty').value,
+                specs: [
+                    document.getElementById('spec1').value,
+                    document.getElementById('spec2').value,
+                    document.getElementById('spec3').value,
+                    document.getElementById('spec4').value
+                ].filter(s => s),
+                description: document.getElementById('description').value,
+                image: uploadedImage
+            };
+
+            try {
+                const url = itemId? `/api/local-market/products/${itemId}` : `/api/local-market/products`;
+                const method = itemId? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productData)
+                });
+
+                if (res.ok) {
+                    alert(itemId? 'Product Updated!' : 'Product Added!');
+                    window.location.href = `/shop-templates/electronics/dashboard.html?shopId=${shopId}`;
+                } else {
+                    alert('Failed to save product');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function goBack() {
+            window.location.href = `/shop-templates/electronics/dashboard.html?shopId=${shopId}`;
+        }
+    </script>
+</body>
+</html>

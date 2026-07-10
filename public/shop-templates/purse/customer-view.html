@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ladies Purse Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fdf2f8; }
+       .header { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #ec4899; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #ec4899; }
+       .old-price { text-decoration: line-through; color: #94a3b8; font-size: 14px; }
+       .btn-buy { background: #ec4899; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .trend-badge { background: #ec4899; color: white; padding: 4px 10px; border-radius: 8px; font-size: 11px; position: absolute; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-bag-shopping"></i> <span id="shopName">Fashion Purse Hub</span></h1>
+        <p>Latest Collection | Premium Quality | Free Shipping Above ₹999</p>
+    </div>
+
+    <div class="container">
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Tote')">Tote</div>
+            <div class="filter" onclick="filter('Sling')">Sling</div>
+            <div class="filter" onclick="filter('Clutch')">Clutch</div>
+            <div class="filter" onclick="filter('Backpack')">Backpack</div>
+            <div class="filter" onclick="filter('Wallet')">Wallet</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Premium Tote Bag", price: 1299, old: 1599, cat: "Tote", icon: "👜", trend: true}, 
+            {name: "Pink Sling Bag", price: 799, old: 999, cat: "Sling", icon: "👛", trend: true},
+            {name: "Golden Clutch", price: 599, old: 799, cat: "Clutch", icon: "👝", trend: false},
+            {name: "College Backpack", price: 1099, old: 1399, cat: "Backpack", icon: "🎒", trend: false},
+            {name: "Leather Wallet", price: 399, old: 499, cat: "Wallet", icon: "👛", trend: false},
+            {name: "Office Handbag", price: 1499, old: 1799, cat: "Tote", icon: "👜", trend: true},
+            {name: "Party Clutch", price: 899, old: 1199, cat: "Clutch", icon: "👝", trend: true},
+            {name: "Casual Sling", price: 699, old: 899, cat: "Sling", icon: "👛", trend: false}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card" style="position:relative;">
+                    ${p.trend ? '<span class="trend-badge">TRENDING</span>' : ''}
+                    <div style="font-size:50px; margin:20px 0 10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <div style="margin:10px 0;">
+                        <span class="product-price">₹${p.price}</span>
+                        <span class="old-price">₹${p.old}</span>
+                    </div>
+                    <button class="btn-buy" onclick="alert('Added to Cart!')"><i class="fa fa-cart-plus"></i> Add to Cart</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

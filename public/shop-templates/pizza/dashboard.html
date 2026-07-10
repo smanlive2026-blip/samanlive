@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizza Shop Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-height: 100vh; padding: 20px; }
+       .container { max-width: 1600px; margin: 0 auto; }
+        
+       .header { background: white; padding: 25px 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+       .header h1 { font-size: 28px; color: #7f1d1d; display: flex; align-items: center; gap: 12px; }
+        
+       .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
+       .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); border-left: 5px solid #dc2626; }
+       .stat-card .icon { font-size: 32px; color: #dc2626; margin-bottom: 12px; }
+       .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 8px; }
+       .stat-card .value { font-size: 32px; font-weight: 700; color: #1e293b; }
+        
+       .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
+       .content-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+       .content-card h2 { font-size: 22px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        
+       .btn { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+        
+       .order-card { border: 2px solid #fee2e2; border-radius: 16px; padding: 18px; margin-bottom: 15px; }
+       .status { padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+       .status.preparing { background: #fef3c7; color: #78350f; }
+       .status.baking { background: #dbeafe; color: #1e40af; }
+       .status.out { background: #dcfce7; color: #166534; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1><i class="fa fa-pizza-slice"></i> <span id="shopName">Pizza Point</span></h1>
+                <div style="color:#64748b; font-size:14px;">Shop ID: <span id="shopIdDisplay"></span></div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" id="addItemBtn"><i class="fa fa-plus"></i> Add Item</button>
+                <button class="btn" id="newOrderBtn"><i class="fa fa-cart-plus"></i> New Order</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="icon"><i class="fa fa-pizza-slice"></i></div><h3>Pizzas Today</h3><div class="value" id="pizza">0</div></div>
+            <div class="stat-card"><div class="icon"><i class="fa fa-motorcycle"></i></div><h3>Active Orders</h3><div class="value" id="active">0</div></div>
+            <div class="stat-card"><div class="icon"><i class="fa fa-rupee-sign"></i></div><h3>Today Revenue</h3><div class="value">₹<span id="revenue">0</span></div></div>
+            <div class="stat-card"><div class="icon"><i class="fa fa-clock"></i></div><h3>Avg Time</h3><div class="value">30 min</div></div>
+        </div>
+
+        <div class="content-grid">
+            <div>
+                <div class="content-card">
+                    <h2><i class="fa fa-list"></i> Live Orders</h2>
+                    <div id="orderList">Loading...</div>
+                </div>
+                <div class="content-card">
+                    <h2><i class="fa fa-fire"></i> Menu Items</h2>
+                    <div id="menuList">Loading...</div>
+                </div>
+            </div>
+            <div>
+                <div class="content-card">
+                    <h2><i class="fa fa-box"></i> Ingredients Stock</h2>
+                    <div id="stock">Loading...</div>
+                </div>
+                <div class="content-card">
+                    <h2><i class="fa fa-star"></i> Top Selling</h2>
+                    <div id="topSelling">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achar Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fefce8; }
+       .header { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #eab308; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #eab308; }
+       .btn-buy { background: #eab308; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 2px dashed #eab308; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-jar"></i> <span id="shopName">Maa Ke Haath Ka Achar</span></h1>
+        <p>100% Homemade | Mustard Oil | No Preservative | 500g & 1kg Pack</p>
+    </div>
+
+    <div class="container">
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Combo Offer</h3>
+            <p>Buy 2kg Achar Get 1 Jar Free | Gift Pack Available | All India Delivery</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Aam')">Aam</div>
+            <div class="filter" onclick="filter('Nimbu')">Nimbu</div>
+            <div class="filter" onclick="filter('Mirchi')">Mirchi</div>
+            <div class="filter" onclick="filter('Mix')">Mix</div>
+            <div class="filter" onclick="filter('Seasonal')">Seasonal</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Aam Ka Achar", price: 200, weight: "500g", cat: "Aam", taste: "Khatta Teekha", oil: "Mustard Oil", icon: "🥭"}, 
+            {name: "Nimbu Ka Achar", price: 180, weight: "500g", cat: "Nimbu", taste: "Khatta", oil: "Oil Free", icon: "🍋"},
+            {name: "Mirchi Ka Achar", price: 220, weight: "500g", cat: "Mirchi", taste: "Teekha", oil: "Mustard Oil", icon: "🌶️"},
+            {name: "Mix Achar", price: 250, weight: "1kg", cat: "Mix", taste: "Khatta Meetha", oil: "Mustard Oil", icon: "🫙"},
+            {name: "Gajar Gobhi Achar", price: 240, weight: "500g", cat: "Seasonal", taste: "Khatta", oil: "Oil Free", icon: "🥕"},
+            {name: "Lasun Ka Achar", price: 260, weight: "500g", cat: "Seasonal", taste: "Teekha", oil: "Mustard Oil", icon: "🧄"},
+            {name: "Adrak Ka Achar", price: 230, weight: "500g", cat: "Seasonal", taste: "Khatta Teekha", oil: "Oil Free", icon: "🫚"},
+            {name: "Family Gift Pack 3kg", price: 600, weight: "3kg", cat: "Gift", taste: "Mix", oil: "Mix", icon: "🎁"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.taste} | ${p.oil} | ${p.weight}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Order Placed!')"><i class="fa fa-cart-plus"></i> Add to Cart</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadDashboard() {
     try {
-        console.log('Loading dashboard with token:', token);
+        console.log("Loading dashboard with token:", token);
 
         const dashboardRes = await apiCall(`/manager/dashboard`);
         if (!dashboardRes.success) throw new Error(dashboardRes.error || 'Invalid token');
@@ -180,7 +180,7 @@ function renderStats(stats) {
 }
 
 // ========================================
-// RENDER SHOPS TABLE - ✅ OPEN BUTTON ADDED
+// RENDER SHOPS TABLE - ✅ FIXED: TEMPLATE FOLDER MAPPING
 // ========================================
 function renderShops(shops) {
     const tbody = document.getElementById('shopsTable');
@@ -192,7 +192,8 @@ function renderShops(shops) {
     }
     tbody.innerHTML = shops.map(shop => {
         const shopType = shop.serviceType || shop.shopType || 'common';
-        const dashboardUrl = `${window.location.origin}/shop-templates/${shopType}/dashboard.html?shopId=${shop._id}`;
+        const templateFolder = window.getShopTemplateFolder(shopType); // ✅ FIX: MAP SE FOLDER LO
+        const dashboardUrl = `${window.location.origin}/shop-templates/${templateFolder}/dashboard.html?shopId=${shop._id}`;
         
         return `
             <tr>
@@ -225,8 +226,8 @@ function renderShops(shops) {
 }
 
 window.copyShopLink = function(shopId, shopType, shopName) {
-    const finalShopType = shopType || 'common';
-    const shopLink = `${window.location.origin}/shop-templates/${finalShopType}/dashboard.html?shopId=${shopId}`;
+    const finalFolder = window.getShopTemplateFolder(shopType || 'common'); // ✅ FIX: MAP SE FOLDER LO
+    const shopLink = `${window.location.origin}/shop-templates/${finalFolder}/dashboard.html?shopId=${shopId}`;
     
     navigator.clipboard.writeText(shopLink).then(() => {
         alert(`✅ Dashboard link copied!\n\nShop: ${shopName}\n\nLink: ${shopLink}\n\nAb ye link shop owner ko bhej do.`);
@@ -346,7 +347,7 @@ function openShopModal(shop = null) {
 
     const catSelect = document.getElementById('shopCategory');
     if (catSelect) {
-        catSelect.innerHTML = categories.map(c => `<option value="${c.id || c._id}">${c.icon} ${c.name}</option>`).join('');
+        catSelect.innerHTML = window.getAllShopTemplates().map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join(''); // ✅ 70+ CATEGORY
     }
 
     if (shop) {
@@ -423,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // UTILITIES
 // ========================================
 function getCategoryName(id) {
-    const cat = categories.find(c => c.id === id || c._id === id || c.name === id);
+    const cat = window.getAllShopTemplates().find(c => c.id === id || c._id === id || c.name === id); // ✅ MAP SE
     return cat? cat.name : id || '-';
 }
 
@@ -469,4 +470,4 @@ window.closeProductLibrary = closeProductLibrary;
 window.openOrderView = openOrderView;
 window.openManagerPanel = openManagerPanel;
 
-console.log('✅ area-manager.js loaded - Shop create logic moved to shop-create.js');
+console.log('✅ area-manager.js loaded - Shop create logic moved to shop-create.js + Template Mapping');

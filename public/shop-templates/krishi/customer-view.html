@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khad Bij Bhandar</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0fdf4; }
+       .header { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #22c55e; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #22c55e; }
+       .btn-buy { background: #22c55e; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #22c55e; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-seedling"></i> <span id="shopName">Kisan Khad Bij Bhandar</span></h1>
+        <p>Khad, Beej, Dawai | IFFCO, Coromandel, Bayer | Govt Rate Available</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All</div>
+            <div class="tab" onclick="filter('Khad')">Khad</div>
+            <div class="tab" onclick="filter('Beej')">Beej</div>
+            <div class="tab" onclick="filter('Dawai')">Dawai</div>
+            <div class="tab" onclick="filter('Upkaran')">Upkaran</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Kisan Suvidha</h3>
+            <p style="margin-top:10px;">Govt Subsidy | Credit Suvidha | Home Delivery | Free Kheti Salah</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // KHAD
+            {name: "Urea 50kg", price: 266, cat: "Khad", icon: "🌾"}, 
+            {name: "DAP 50kg", price: 1350, cat: "Khad", icon: "🌾"},
+            {name: "NPK 20:20:20", price: 1200, cat: "Khad", icon: "🌾"},
+            {name: "Potash 50kg", price: 1700, cat: "Khad", icon: "🌾"},
+            
+            // BEEJ
+            {name: "Wheat Seed", price: 3200, cat: "Beej", icon: "🌱"}, 
+            {name: "Paddy Seed", price: 2800, cat: "Beej", icon: "🌱"},
+            {name: "Cotton Seed", price: 1800, cat: "Beej", icon: "🌱"},
+            {name: "Vegetable Seed", price: 500, cat: "Beej", icon: "🌱"},
+            
+            // DAWAI
+            {name: "Pesticide", price: 850, cat: "Dawai", icon: "🧪"}, 
+            {name: "Weedicide", price: 900, cat: "Dawai", icon: "🧪"},
+            {name: "Fungicide", price: 750, cat: "Dawai", icon: "🧪"},
+            
+            // UPKARAN
+            {name: "Sprayer 16L", price: 2200, cat: "Upkaran", icon: "🔧"}, 
+            {name: "Khurpi", price: 150, cat: "Upkaran", icon: "🔧"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Order Placed!')"><i class="fa fa-cart-plus"></i> Order Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

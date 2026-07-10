@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taddy Wear Kids</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fdf2f8; }
+       .header { background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #ec4899; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #ec4899; }
+       .old-price { text-decoration: line-through; color: #94a3b8; font-size: 14px; }
+       .btn-buy { background: #ec4899; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .new-badge { background: #ec4899; color: white; padding: 4px 10px; border-radius: 8px; font-size: 11px; position: absolute; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-child"></i> <span id="shopName">Taddy Wear Kids</span></h1>
+        <p>0 to 14 Years | Soft Fabric | Trendy Collection | Free Gift on ₹1500+</p>
+    </div>
+
+    <div class="container">
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Boys')">Boys</div>
+            <div class="filter" onclick="filter('Girls')">Girls</div>
+            <div class="filter" onclick="filter('Infant')">Infant</div>
+            <div class="filter" onclick="filter('Party Wear')">Party</div>
+            <div class="filter" onclick="filter('Winter')">Winter</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Pink Princess Frock", price: 799, old: 999, cat: "Girls", icon: "👗", new: true}, 
+            {name: "Boys Denim Set", price: 999, old: 1299, cat: "Boys", icon: "👕", new: false},
+            {name: "Baby Romper", price: 499, old: 699, cat: "Infant", icon: "👶", new: true},
+            {name: "Party Gown", price: 1499, old: 1899, cat: "Party Wear", icon: "👗", new: true},
+            {name: "Winter Jacket", price: 1299, old: 1599, cat: "Winter", icon: "🧥", new: false},
+            {name: "Ethnic Kurta", price: 899, old: 1099, cat: "Ethnic", icon: "👔", new: false},
+            {name: "Sports Track Suit", price: 1099, old: 1399, cat: "Sports", icon: "👟", new: false},
+            {name: "Birthday Dress", price: 1199, old: 1499, cat: "Girls", icon: "👗", new: true}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card" style="position:relative;">
+                    ${p.new ? '<span class="new-badge">NEW</span>' : ''}
+                    <div style="font-size:50px; margin:20px 0 10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat} | Age: 0-14 Years</p>
+                    <div style="margin:10px 0;">
+                        <span class="product-price">₹${p.price}</span>
+                        <span class="old-price">₹${p.old}</span>
+                    </div>
+                    <button class="btn-buy" onclick="alert('Added to Cart!')"><i class="fa fa-cart-plus"></i> Add to Cart</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

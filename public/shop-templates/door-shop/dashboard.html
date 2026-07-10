@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Door Shop Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: linear-gradient(135deg, #a16207 0%, #713f12 100%); min-height: 100vh; padding: 20px; }
+       .container { max-width: 1600px; margin: 0 auto; }
+        
+       .header { background: white; padding: 25px 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+       .header h1 { font-size: 28px; color: #431407; display: flex; align-items: center; gap: 12px; }
+        
+       .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
+       .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); border-left: 5px solid #a16207; }
+       .stat-card .icon { font-size: 32px; color: #a16207; margin-bottom: 12px; }
+       .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 8px; }
+       .stat-card .value { font-size: 32px; font-weight: 700; color: #1e293b; }
+        
+       .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
+       .content-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+       .content-card h2 { font-size: 22px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        
+       .btn { background: linear-gradient(135deg, #a16207 0%, #713f12 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+        
+       .door-row { display:flex; justify-content:space-between; padding:15px; border-bottom:1px solid #fefce8; }
+       .spec-badge { background: #fefce8; color: #431407; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1><i class="fa fa-door-closed"></i> <span id="shopName">Shree Door & Furniture</span></h1>
+                <div style="color:#64748b; font-size:14px;">Shop ID: <span id="shopIdDisplay"></span></div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" id="addDoorBtn"><i class="fa fa-plus"></i> Add Door</button>
+                <button class="btn" id="newOrderBtn"><i class="fa fa-receipt"></i> New Order</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="icon"><i class="fa fa-boxes"></i></div><h3>Total Doors</h3><div class="value" id="products">0</div></div>
+            <div class="stat-card"><div class="icon"><i class="fa fa-users"></i></div><h3>Today Orders</h3><div class="value" id="orders">0</div></div>
+            <div class="stat-card"><div class="icon"><i class="fa fa-rupee-sign"></i></div><h3>Today Sale</h3><div class="value">₹<span id="revenue">0</span></div></div>
+            <div class="stat-card"><div class="icon"><i class="fa fa-tools"></i></div><h3>Installations</h3><div class="value" id="install">0</div></div>
+        </div>
+
+        <div class="content-grid">
+            <div>
+                <div class="content-card">
+                    <h2><i class="fa fa-list"></i> Inventory</h2>
+                    <div id="inventoryList">Loading...</div>
+                </div>
+                <div class="content-card">
+                    <h2><i class="fa fa-receipt"></i> Recent Orders</h2>
+                    <div id="orderList">Loading...</div>
+                </div>
+            </div>
+            <div>
+                <div class="content-card">
+                    <h2><i class="fa fa-star"></i> Categories</h2>
+                    <div id="categories">Loading...</div>
+                </div>
+                <div class="content-card">
+                    <h2><i class="fa fa-calendar"></i> Installation Due</h2>
+                    <div id="installation">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="dashboard.js"></script>
+</body>
+</html>

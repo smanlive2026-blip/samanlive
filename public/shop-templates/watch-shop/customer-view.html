@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f8fafc; }
+       .header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #facc15; color: #1e293b; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #facc15; }
+       .old-price { text-decoration: line-through; color: #94a3b8; font-size: 14px; }
+       .btn-buy { background: #facc15; color: #1e293b; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .luxury-badge { background: #facc15; color: #1e293b; padding: 4px 10px; border-radius: 8px; font-size: 11px; position: absolute; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-clock"></i> <span id="shopName">TimeZone Watches</span></h1>
+        <p>Original Watches | 2 Year Warranty | Free Battery Replacement | Gift Wrapping</p>
+    </div>
+
+    <div class="container">
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Men')">Men</div>
+            <div class="filter" onclick="filter('Women')">Women</div>
+            <div class="filter" onclick="filter('Smart')">Smart</div>
+            <div class="filter" onclick="filter('Luxury')">Luxury</div>
+            <div class="filter" onclick="filter('Sports')">Sports</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Titan Neo Analog", price: 3999, old: 4999, cat: "Men", brand: "Titan", icon: "⌚"}, 
+            {name: "Fastrack Reflex 3.0", price: 2499, old: 2999, cat: "Smart", brand: "Fastrack", icon: "⌚"},
+            {name: "Fossil Women Chrono", price: 8999, old: 10999, cat: "Women", brand: "Fossil", icon: "⌚", luxury: true},
+            {name: "Casio G-Shock", price: 12999, old: 14999, cat: "Sports", brand: "Casio", icon: "⌚"},
+            {name: "Seiko Automatic", price: 24999, old: 29999, cat: "Luxury", brand: "Seiko", icon: "⌚", luxury: true},
+            {name: "Timex Weekender", price: 3499, old: 3999, cat: "Men", brand: "Timex", icon: "⌚"},
+            {name: "Sonata Quartz", price: 1899, old: 2299, cat: "Women", brand: "Sonata", icon: "⌚"},
+            {name: "Apple Watch SE", price: 28999, old: 31999, cat: "Smart", brand: "Apple", icon: "⌚"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card" style="position:relative;">
+                    ${p.luxury ? '<span class="luxury-badge">LUXURY</span>' : ''}
+                    <div style="font-size:50px; margin:20px 0 10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.brand} | 2 Year Warranty</p>
+                    <div style="margin:10px 0;">
+                        <span class="product-price">₹${p.price}</span>
+                        <span class="old-price">₹${p.old}</span>
+                    </div>
+                    <button class="btn-buy" onclick="alert('Added to Cart!')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

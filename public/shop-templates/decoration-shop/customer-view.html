@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Decoration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #faf5ff; }
+       .header { background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #a855f7; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #a855f7; }
+       .btn-book { background: #a855f7; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 2px dashed #a855f7; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-lightbulb"></i> <span id="shopName">Shree Event Decor</span></h1>
+        <p>Wedding, Birthday, Stage, Lighting | Full Setup with Team | Book Now</p>
+    </div>
+
+    <div class="container">
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Shaadi Season Package</h3>
+            <p>Stage + Lights + Flowers = ₹40,000 Only | Free Entry Gate | 10% Off on Bulk Booking</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Wedding')">Wedding</div>
+            <div class="filter" onclick="filter('Birthday')">Birthday</div>
+            <div class="filter" onclick="filter('Stage')">Stage</div>
+            <div class="filter" onclick="filter('Lights')">Lights</div>
+            <div class="filter" onclick="filter('Balloon')">Balloon</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Royal Wedding Stage", price: 25000, cat: "Wedding", type: "Stage", size: "20x15 ft", icon: "🎪"}, 
+            {name: "Birthday Balloon Decor", price: 5000, cat: "Birthday", type: "Balloon", size: "Full Hall", icon: "🎈"},
+            {name: "LED Lights Setup", price: 3000, cat: "Lights", type: "Lights", size: "50 Meter", icon: "💡"},
+            {name: "Flower Stage Decor", price: 8000, cat: "Wedding", type: "Flowers", size: "Stage + Gate", icon: "🌸"},
+            {name: "Sound System 4 Speaker", price: 7000, cat: "All", type: "Sound", size: "Full Event", icon: "🔊"},
+            {name: "Entry Gate Decor", price: 6000, cat: "Wedding", type: "Gate", size: "10x8 ft", icon: "🎪"},
+            {name: "Haldi Backdrop", price: 4000, cat: "Birthday", type: "Backdrop", size: "12x8 ft", icon: "📸"},
+            {name: "Full Event Package", price: 40000, cat: "Wedding", type: "Package", size: "Stage+Lights+Flowers", icon: "🎉"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.type} | ${p.size}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-book" onclick="alert('Booking Confirmed!')"><i class="fa fa-phone"></i> Book Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

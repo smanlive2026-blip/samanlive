@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mattress Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #eef2ff; }
+       .header { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #6366f1; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #6366f1; }
+       .btn-buy { background: #6366f1; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .service-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 2px dashed #6366f1; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-bed"></i> <span id="shopName">Comfort Sleep Mattress</span></h1>
+        <p>100 Night Trial | Free Delivery | 12 Year Warranty | EMI Available</p>
+    </div>
+
+    <div class="container">
+        <div class="service-box">
+            <h3><i class="fa fa-truck"></i> Free Services</h3>
+            <p>Home Delivery | Old Mattress Exchange | 100 Night Trial | Installation</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Spring')">Spring</div>
+            <div class="filter" onclick="filter('Foam')">Memory Foam</div>
+            <div class="filter" onclick="filter('Orthopedic')">Orthopedic</div>
+            <div class="filter" onclick="filter('Coir')">Coir</div>
+            <div class="filter" onclick="filter('Latex')">Latex</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Orthopedic Spring 6x6", price: 12000, size: "6x6 ft", cat: "Spring", brand: "Sleepwell", icon: "🛏️"}, 
+            {name: "Memory Foam 5x6", price: 18000, size: "5x6 ft", cat: "Foam", brand: "Kurlon", icon: "🛏️"},
+            {name: "Coir Mattress 6x6", price: 8500, size: "6x6 ft", cat: "Coir", brand: "Peps", icon: "🛏️"},
+            {name: "Rebond 4x6", price: 9500, size: "4x6 ft", cat: "Rebond", brand: "Duroflex", icon: "🛏️"},
+            {name: "Latex Mattress 6x6", price: 22000, size: "6x6 ft", cat: "Latex", brand: "Wakefit", icon: "🛏️"},
+            {name: "Hotel Spring 5x6", price: 15000, size: "5x6 ft", cat: "Spring", brand: "Sleepwell", icon: "🛏️"},
+            {name: "Orthopedic 4x6", price: 10000, size: "4x6 ft", cat: "Orthopedic", brand: "Kurlon", icon: "🛏️"},
+            {name: "Memory Pillow", price: 1200, size: "Standard", cat: "Pillow", brand: "Peps", icon: "🛏️"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.brand} | ${p.size} | 100 Night Trial</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Order Placed!')"><i class="fa fa-phone"></i> Book Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

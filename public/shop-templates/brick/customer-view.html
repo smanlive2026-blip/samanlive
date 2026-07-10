@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brick Dealer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fef2f2; }
+       .header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #dc2626; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #dc2626; }
+       .btn-order { background: #dc2626; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-truck"></i> <span id="shopName">Sharma Brick Dealer</span></h1>
+        <p>Lal Eent, Cement, Sand | Truck Load | Site Delivery Available</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 50+</div>
+            <div class="tab" onclick="filter('Brick')">Brick 8</div>
+            <div class="tab" onclick="filter('Cement')">Cement 6</div>
+            <div class="tab" onclick="filter('Sand')">Sand 4</div>
+            <div class="tab" onclick="filter('Gitti')">Gitti 4</div>
+            <div class="tab" onclick="filter('Steel')">Steel 8</div>
+            <div class="tab" onclick="filter('Block')">Block 6</div>
+            <div class="tab" onclick="filter('Other')">Other 14</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-truck"></i> Services</h3>
+            <p style="margin-top:10px;">Free Site Delivery | Truck Load Available | Bulk Discount | Bill & GST</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // BRICK - 8
+            {name: "Lal Eent 1st Class", price: 8, cat: "Brick", unit: "pcs", icon: "🧱"}, 
+            {name: "Lal Eent 2nd Class", price: 7, cat: "Brick", unit: "pcs", icon: "🧱"},
+            {name: "Fly Ash Brick", price: 10, cat: "Brick", unit: "pcs", icon: "🧱"},
+            {name: "AAC Block", price: 45, cat: "Brick", unit: "pcs", icon: "🧱"},
+            {name: "Hollow Block", price: 35, cat: "Brick", unit: "pcs", icon: "🧱"},
+            {name: "Paver Block", price: 25, cat: "Brick", unit: "pcs", icon: "🧱"},
+            {name: "Interlocking Brick", price: 20, cat: "Brick", unit: "pcs", icon: "🧱"},
+            {name: "Jali Brick", price: 15, cat: "Brick", unit: "pcs", icon: "🧱"},
+            
+            // CEMENT - 6
+            {name: "Cement OPC 53 Grade", price: 420, cat: "Cement", unit: "bag", icon: "🏗️"}, 
+            {name: "Cement PPC 43 Grade", price: 400, cat: "Cement", unit: "bag", icon: "🏗️"},
+            {name: "White Cement", price: 600, cat: "Cement", unit: "bag", icon: "🏗️"},
+            {name: "Waterproof Cement", price: 450, cat: "Cement", unit: "bag", icon: "🏗️"},
+            {name: "Cement 1000 Bag", price: 380000, cat: "Cement", unit: "1000bag", icon: "🏗️"},
+            {name: "Cement Truck Load", price: 180000, cat: "Cement", unit: "truck", icon: "🏗️"},
+            
+            // SAND - 4
+            {name: "River Sand", price: 2500, cat: "Sand", unit: "truck", icon: "🏖️"}, 
+            {name: "Crushed Sand", price: 2800, cat: "Sand", unit: "truck", icon: "🏖️"},
+            {name: "Plaster Sand", price: 2600, cat: "Sand", unit: "truck", icon: "🏖️"},
+            {name: "Sand 1 trolley", price: 1200, cat: "Sand", unit: "trolley", icon: "🏖️"},
+            
+            // GITTI - 4
+            {name: "Gitti 20mm", price: 2200, cat: "Gitti", unit: "truck", icon: "🪨"}, 
+            {name: "Gitti 10mm", price: 2400, cat: "Gitti", unit: "truck", icon: "🪨"},
+            {name: "Gitti 40mm", price: 2000, cat: "Gitti", unit: "truck", icon: "🪨"},
+            {name: "Stone Dust", price: 1800, cat: "Gitti", unit: "truck", icon: "🪨"},
+            
+            // STEEL - 8
+            {name: "TMT Bar 8mm", price: 65, cat: "Steel", unit: "kg", icon: "🔩"}, 
+            {name: "TMT Bar 10mm", price: 64, cat: "Steel", unit: "kg", icon: "🔩"},
+            {name: "TMT Bar 12mm", price: 63, cat: "Steel", unit: "kg", icon: "🔩"},
+            {name: "TMT Bar 16mm", price: 62, cat: "Steel", unit: "kg", icon: "🔩"},
+            {name: "Binding Wire", price: 80, cat: "Steel", unit: "kg", icon: "🔩"},
+            {name: "Steel Angle", price: 90, cat: "Steel", unit: "kg", icon: "🔩"},
+            {name: "Steel Plate", price: 100, cat: "Steel", unit: "kg", icon: "🔩"},
+            {name: "Steel Truck Load", price: 65000, cat: "Steel", unit: "ton", icon: "🔩"},
+            
+            // BLOCK - 6
+            {name: "Concrete Block 4inch", price: 40, cat: "Block", unit: "pcs", icon: "🧱"}, 
+            {name: "Concrete Block 6inch", price: 50, cat: "Block", unit: "pcs", icon: "🧱"},
+            {name: "Concrete Block 8inch", price: 60, cat: "Block", unit: "pcs", icon: "🧱"},
+            {name: "Light Weight Block", price: 55, cat: "Block", unit: "pcs", icon: "🧱"},
+            {name: "Cellular Block", price: 70, cat: "Block", unit: "pcs", icon: "🧱"},
+            {name: "Block 1000pcs", price: 45000, cat: "Block", unit: "1000pcs", icon: "🧱"},
+            
+            // OTHER - 14
+            {name: "PVC Pipe 4inch", price: 300, cat: "Other", unit: "piece", icon: "🔧"}, 
+            {name: "PVC Pipe 6inch", price: 500, cat: "Other", unit: "piece", icon: "🔧"},
+            {name: "Water Tank 1000L", price: 8000, cat: "Other", unit: "piece", icon: "🛢️"},
+            {name: "Bajri", price: 2000, cat: "Other", unit: "truck", icon: "🪨"},
+            {name: "M-Sand", price: 2700, cat: "Other", unit: "truck", icon: "🏖️"},
+            {name: "Red Soil", price: 1500, cat: "Other", unit: "truck", icon: "🟫"},
+            {name: "Nail 2inch", price: 100, cat: "Other", unit: "kg", icon: "🔩"},
+            {name: "Wire Mesh", price: 120, cat: "Other", unit: "kg", icon: "🔩"},
+            {name: "Admixture", price: 250, cat: "Other", unit: "liter", icon: "🧪"},
+            {name: "Curing Compound", price: 400, cat: "Other", unit: "liter", icon: "🧪"},
+            {name: "Construction Labor", price: 800, cat: "Other", unit: "day", icon: "👷"},
+            {name: "JCB Rent", price: 1200, cat: "Other", unit: "hour", icon: "🚜"},
+            {name: "Tractor Trolley", price: 1000, cat: "Other", unit: "trip", icon: "🚜"},
+            {name: "Complete House Material", price: 0, cat: "Other", unit: "quote", icon: "🏠"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">Per ${p.unit}</p>
+                    <div class="product-price">${p.price===0?'Contact':`₹${p.price}`}</div>
+                    <button class="btn-order" onclick="alert('Order placed! Site delivery available')"><i class="fa fa-cart-plus"></i> Order</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

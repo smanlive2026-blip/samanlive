@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vet Clinic</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #ecfdf5; }
+       .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin: 30px 0; }
+       .service-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .service-price { font-size: 20px; font-weight: 800; color: #10b981; }
+       .btn-book { background: #10b981; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .emergency-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 3px dashed #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-house-medical"></i> <span id="shopName">Shree Pashu Chikitsalaya</span></h1>
+        <p>24x7 Emergency | Home Visit | Surgery | Vaccination | Ultrasound</p>
+    </div>
+
+    <div class="container">
+        <div class="emergency-box">
+            <h3 style="color:#ef4444;"><i class="fa fa-phone"></i> Emergency: 98765 43210</h3>
+            <p>Delivery Case | Accident | Poisoning | 24 Hour Service Available</p>
+        </div>
+
+        <h2 style="text-align:center; margin:20px 0;">Our Services & Charges</h2>
+        <div class="service-grid" id="serviceGrid"></div>
+    </div>
+
+    <script>
+        const services = [
+            {name: "General Checkup", price: "₹200", desc: "Fever, Cough, Health Check", icon: "🩺"}, 
+            {name: "Vaccination", price: "₹350", desc: "FMD, HS, BQ Vaccine", icon: "💉"},
+            {name: "Surgery", price: "₹2500", desc: "Minor + Major Surgery", icon: "🔪"},
+            {name: "IV Treatment", price: "₹800", desc: "Drip + Medicine", icon: "🍼"},
+            {name: "Ultrasound", price: "₹1200", desc: "Pregnancy Test", icon: "📡"},
+            {name: "Delivery Case", price: "₹1500", desc: "Normal + Complicated", icon: "🐄"},
+            {name: "Home Visit", price: "₹500", desc: "Within 10km", icon: "🚑"},
+            {name: "Deworming", price: "₹150", desc: "Tablet + Liquid", icon: "💊"}
+        ];
+
+        document.getElementById('serviceGrid').innerHTML = services.map(s => `
+            <div class="service-card">
+                <div style="font-size:40px; margin-bottom:10px;">${s.icon}</div>
+                <h3>${s.name}</h3>
+                <p style="color:#64748b; font-size:14px; margin:8px 0;">${s.desc}</p>
+                <div class="service-price">${s.price}</div>
+                <button class="btn-book" onclick="alert('Appointment Booked!')"><i class="fa fa-calendar"></i> Book Now</button>
+            </div>
+        `).join('');
+    </script>
+</body>
+</html>

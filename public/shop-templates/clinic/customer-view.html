@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0f9ff; }
+       .header { background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1200px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .doctor-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 30px; text-align: center; }
+       .doctor-img { width: 100px; height: 100px; background: #0ea5e9; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: white; }
+        
+       .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .service-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+       .service-price { font-size: 24px; font-weight: 800; color: #0ea5e9; }
+       .btn-book { background: #0ea5e9; color: white; padding: 12px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .timing-card { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-hospital"></i> <span id="clinicName">Clinic</span></h1>
+        <p>Book Appointment Online | Emergency 24x7</p>
+    </div>
+
+    <div class="container">
+        <div class="doctor-card">
+            <div class="doctor-img"><i class="fa fa-user-doctor"></i></div>
+            <h2>Dr. <span id="doctorName">Amit Sharma</span></h2>
+            <p style="color:#64748b;">MBBS, MD - General Medicine</p>
+            <p style="color:#64748b; margin-top:10px;">Experience: 10+ Years</p>
+        </div>
+
+        <h2 style="margin-bottom:20px;">Our Services</h2>
+        <div class="service-grid">
+            <div class="service-card">
+                <h3>General Checkup</h3>
+                <div class="service-price">₹300</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">Complete body checkup</p>
+                <button class="btn-book" onclick="bookAppointment('General Checkup')">Book Now</button>
+            </div>
+            <div class="service-card">
+                <h3>Lab Test</h3>
+                <div class="service-price">₹400</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">Blood, Sugar, etc</p>
+                <button class="btn-book" onclick="bookAppointment('Lab Test')">Book Now</button>
+            </div>
+            <div class="service-card">
+                <h3>ECG</h3>
+                <div class="service-price">₹500</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">Heart checkup</p>
+                <button class="btn-book" onclick="bookAppointment('ECG')">Book Now</button>
+            </div>
+            <div class="service-card">
+                <h3>Injection</h3>
+                <div class="service-price">₹100</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">IM/IV Injection</p>
+                <button class="btn-book" onclick="bookAppointment('Injection')">Book Now</button>
+            </div>
+        </div>
+
+        <div class="timing-card">
+            <h3><i class="fa fa-clock"></i> Clinic Timings</h3>
+            <p style="margin-top:10px;">Mon - Sat: 9:00 AM - 8:00 PM</p>
+            <p>Sunday: 10:00 AM - 2:00 PM</p>
+            <p style="margin-top:10px; color:#0ea5e9;"><i class="fa fa-phone"></i> Emergency: +91 98765 43210</p>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+
+        async function loadClinic() {
+            const res = await fetch(`/api/local-market/shops/${shopId}`);
+            const clinic = await res.json();
+            document.getElementById('clinicName').innerText = clinic.shopName;
+            document.getElementById('doctorName').innerText = clinic.doctorName || 'Amit Sharma';
+        }
+
+        function bookAppointment(service) {
+            alert(`Appointment booked for ${service}. You will receive confirmation on WhatsApp.`);
+        }
+
+        loadClinic();
+    </script>
+</body>
+</html>

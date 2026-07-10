@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thela Menu</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fff7ed; }
+       .header { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); color: white; padding: 40px 20px; text-align: center; }
+       .header h1 { font-size: 32px; }
+       .container { max-width: 1400px; margin: -20px auto 40px; padding: 0 15px; }
+        
+       .category-tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #f97316; color: white; }
+        
+       .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+       .item-card { background: white; padding: 15px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+       .item-name { font-weight: 700; font-size: 16px; }
+       .item-price { color: #f97316; font-weight: 800; font-size: 18px; }
+       .btn-add { background: #f97316; color: white; border: none; padding: 8px; width: 100%; border-radius: 8px; margin-top: 10px; font-weight: 600; }
+        
+       .cart-float { position: fixed; bottom: 20px; right: 20px; background: #f97316; color: white; padding: 15px 20px; border-radius: 50px; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-cart-shopping"></i> <span id="shopName">Gali Ka Famous Thela</span></h1>
+        <p>Chat, Chowmin, Fast Food - Sab Kuch Milega</p>
+    </div>
+
+    <div class="container">
+        <div class="category-tabs">
+            <div class="tab active" onclick="filter('All')">All 60+</div>
+            <div class="tab" onclick="filter('Chat')">Chat 15</div>
+            <div class="tab" onclick="filter('Chinese')">Chowmin 15</div>
+            <div class="tab" onclick="filter('Sandwich')">Pizza 10</div>
+            <div class="tab" onclick="filter('South')">South 5</div>
+            <div class="tab" onclick="filter('Other')">Other 5</div>
+            <div class="tab" onclick="filter('Drinks')">Drinks 5</div>
+            <div class="tab" onclick="filter('Dessert')">Sweet 5</div>
+        </div>
+
+        <div class="item-grid" id="itemGrid"></div>
+    </div>
+
+    <div class="cart-float" onclick="alert('Order WhatsApp pe bhej diya!')">
+        <i class="fa fa-cart-shopping"></i> Cart: <span id="cart">0</span>
+    </div>
+
+    <script>
+        const allItems = [
+            // CHAT
+            {name: "Pani Puri", price: 30, cat: "Chat"}, {name: "Dahi Puri", price: 40, cat: "Chat"}, {name: "Sev Puri", price: 35, cat: "Chat"}, {name: "Bhel Puri", price: 30, cat: "Chat"}, {name: "Raj Kachori", price: 50, cat: "Chat"}, {name: "Dahi Bhalla", price: 40, cat: "Chat"}, {name: "Papdi Chat", price: 35, cat: "Chat"}, {name: "Aloo Tikki", price: 30, cat: "Chat"}, {name: "Samosa Chat", price: 40, cat: "Chat"}, {name: "Fruit Chat", price: 50, cat: "Chat"}, {name: "Masala Puri", price: 30, cat: "Chat"}, {name: "Katori Chat", price: 45, cat: "Chat"}, {name: "Dahi Papdi", price: 40, cat: "Chat"}, {name: "Cheese Pani Puri", price: 50, cat: "Chat"}, {name: "Fire Pani Puri", price: 60, cat: "Chat"},
+            // CHINESE
+            {name: "Veg Chowmin", price: 50, cat: "Chinese"}, {name: "Chicken Chowmin", price: 70, cat: "Chinese"}, {name: "Veg Fried Rice", price: 60, cat: "Chinese"}, {name: "Egg Fried Rice", price: 70, cat: "Chinese"}, {name: "Chilli Potato", price: 60, cat: "Chinese"}, {name: "Chilli Paneer", price: 80, cat: "Chinese"}, {name: "Manchurian Dry", price: 70, cat: "Chinese"}, {name: "Manchurian Gravy", price: 80, cat: "Chinese"}, {name: "Spring Roll", price: 50, cat: "Chinese"}, {name: "Veg Momos", price: 40, cat: "Chinese"}, {name: "Chicken Momos", price: 60, cat: "Chinese"}, {name: "Tandoori Momos", price: 70, cat: "Chinese"}, {name: "French Fries", price: 50, cat: "Chinese"}, {name: "Burger", price: 40, cat: "Chinese"}, {name: "Cheese Burger", price: 60, cat: "Chinese"},
+            // SANDWICH
+            {name: "Veg Sandwich", price: 40, cat: "Sandwich"}, {name: "Cheese Sandwich", price: 60, cat: "Sandwich"}, {name: "Grill Sandwich", price: 50, cat: "Sandwich"}, {name: "Pizza Slice", price: 40, cat: "Sandwich"}, {name: "Cheese Pizza", price: 120, cat: "Sandwich"}, {name: "Corn Pizza", price: 100, cat: "Sandwich"}, {name: "Garlic Bread", price: 60, cat: "Sandwich"}, {name: "White Pasta", price: 80, cat: "Sandwich"}, {name: "Red Pasta", price: 80, cat: "Sandwich"}, {name: "Maggi", price: 30, cat: "Sandwich"},
+            // SOUTH
+            {name: "Masala Dosa", price: 60, cat: "South"}, {name: "Plain Dosa", price: 40, cat: "South"}, {name: "Idli Sambhar", price: 40, cat: "South"}, {name: "Vada Sambhar", price: 40, cat: "South"}, {name: "Uttapam", price: 50, cat: "South"},
+            // OTHER
+            {name: "Paneer Tikka", price: 120, cat: "Other"}, {name: "Soya Chaap", price: 80, cat: "Other"}, {name: "Tandoori Roti", price: 15, cat: "Other"}, {name: "Butter Naan", price: 30, cat: "Other"}, {name: "Chole Bhature", price: 70, cat: "Other"},
+            // DRINKS
+            {name: "Cold Drink", price: 20, cat: "Drinks"}, {name: "Lassi", price: 30, cat: "Drinks"}, {name: "Butter Milk", price: 20, cat: "Drinks"}, {name: "Sugarcane Juice", price: 30, cat: "Drinks"}, {name: "Lemon Soda", price: 25, cat: "Drinks"},
+            // DESSERT
+            {name: "Ice Cream", price: 30, cat: "Dessert"}, {name: "Kulfi", price: 40, cat: "Dessert"}, {name: "Faluda", price: 50, cat: "Dessert"}, {name: "Rasgulla", price: 10, cat: "Dessert"}, {name: "Gulab Jamun", price: 10, cat: "Dessert"}
+        ];
+
+        let cart = 0;
+        function display(items) {
+            document.getElementById('itemGrid').innerHTML = items.map(i => `
+                <div class="item-card">
+                    <div class="item-name">${i.name}</div>
+                    <p style="color:#64748b; font-size:12px;">${i.cat}</p>
+                    <div class="item-price">₹${i.price}</div>
+                    <button class="btn-add" onclick="cart++; document.getElementById('cart').innerText=cart">Add +</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? allItems : allItems.filter(i => i.cat === cat));
+        }
+        display(allItems);
+    </script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bartan Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f8fafc; }
+       .header { background: linear-gradient(135deg, #64748b 0%, #334155 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #64748b; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #64748b; }
+       .btn-buy { background: #64748b; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #64748b; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-pot-food"></i> <span id="shopName">Shree Bartan Bhandar</span></h1>
+        <p>Steel, Non-Stick, Dinner Set | Wedding Gift Packs | EMI Available</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 60+</div>
+            <div class="tab" onclick="filter('Cookware')">Cookware 12</div>
+            <div class="tab" onclick="filter('Dinnerware')">Dinner Set 8</div>
+            <div class="tab" onclick="filter('Glassware')">Glass 8</div>
+            <div class="tab" onclick="filter('Storage')">Storage 10</div>
+            <div class="tab" onclick="filter('Tools')">Kitchen Tools 12</div>
+            <div class="tab" onclick="filter('Gift')">Gift Set 10</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Special Offers</h3>
+            <p style="margin-top:10px;">0% EMI on ₹5000+ | Free Home Delivery | Wedding Gift Sets Available</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // COOKWARE - 12
+            {name: "Steel Cookware Set 5pc", price: 3500, cat: "Cookware", icon: "🍲"}, 
+            {name: "Non-Stick Fry Pan", price: 800, cat: "Cookware", icon: "🍳"},
+            {name: "Pressure Cooker 3L", price: 2200, cat: "Cookware", icon: "🍲"},
+            {name: "Pressure Cooker 5L", price: 2800, cat: "Cookware", icon: "🍲"},
+            {name: "Kadhai Steel", price: 600, cat: "Cookware", icon: "🍲"},
+            {name: "Tawa", price: 400, cat: "Cookware", icon: "🍳"},
+            {name: "Sauce Pan", price: 500, cat: "Cookware", icon: "🍲"},
+            {name: "Cooker Set 3pc", price: 6500, cat: "Cookware", icon: "🍲"},
+            {name: "Non-Stick Dosa Tawa", price: 700, cat: "Cookware", icon: "🍳"},
+            {name: "Steel Patila Set", price: 1200, cat: "Cookware", icon: "🍲"},
+            {name: "Wok Pan", price: 900, cat: "Cookware", icon: "🍲"},
+            {name: "Induction Cooktop", price: 2500, cat: "Cookware", icon: "🔥"},
+            
+            // DINNERWARE - 8
+            {name: "Dinner Set 6pc", price: 2200, cat: "Dinnerware", icon: "🍽️"}, 
+            {name: "Dinner Set 12pc", price: 4000, cat: "Dinnerware", icon: "🍽️"},
+            {name: "Ceramic Plate Set", price: 800, cat: "Dinnerware", icon: "🍽️"},
+            {name: "Steel Thali Set", price: 600, cat: "Dinnerware", icon: "🍽️"},
+            {name: "Soup Bowl Set", price: 1200, cat: "Dinnerware", icon: "🍽️"},
+            {name: "Serving Bowl Set", price: 1500, cat: "Dinnerware", icon: "🍽️"},
+            {name: "Melamine Dinner Set", price: 1800, cat: "Dinnerware", icon: "🍽️"},
+            {name: "Luxury Dinner Set", price: 8000, cat: "Dinnerware", icon: "🍽️"},
+            
+            // GLASSWARE - 8
+            {name: "Steel Glass Set 6pc", price: 600, cat: "Glassware", icon: "🥛"}, 
+            {name: "Water Jug Steel", price: 400, cat: "Glassware", icon: "🥛"},
+            {name: "Ceramic Mug Set", price: 500, cat: "Glassware", icon: "☕"},
+            {name: "Glass Set 6pc", price: 700, cat: "Glassware", icon: "🥛"},
+            {name: "Tea Cup Set", price: 900, cat: "Glassware", icon: "☕"},
+            {name: "Tumbler Set", price: 450, cat: "Glassware", icon: "🥛"},
+            {name: "Carafe", price: 350, cat: "Glassware", icon: "🥛"},
+            {name: "Wine Glass Set", price: 1200, cat: "Glassware", icon: "🍷"},
+            
+            // STORAGE - 10
+            {name: "Steel Container Set", price: 1200, cat: "Storage", icon: "📦"}, 
+            {name: "Plastic Storage Box", price: 300, cat: "Storage", icon: "📦"},
+            {name: "Masala Dabba", price: 400, cat: "Storage", icon: "📦"},
+            {name: "Steel Dabba Set", price: 800, cat: "Storage", icon: "📦"},
+            {name: "Water Bottle", price: 250, cat: "Storage", icon: "💧"},
+            {name: "Lunch Box", price: 350, cat: "Storage", icon: "📦"},
+            {name: "Kitchen Rack", price: 2000, cat: "Storage", icon: "📦"},
+            {name: "Jar Set 5pc", price: 600, cat: "Storage", icon: "📦"},
+            {name: "Oil Dispenser", price: 300, cat: "Storage", icon: "🛢️"},
+            {name: "Steel Bucket", price: 500, cat: "Storage", icon: "🪣"},
+            
+            // KITCHEN TOOLS - 12
+            {name: "Knife Set", price: 600, cat: "Tools", icon: "🔪"}, 
+            {name: "Chopping Board", price: 250, cat: "Tools", icon: "🪚"},
+            {name: "Spatula Set", price: 300, cat: "Tools", icon: "🥄"},
+            {name: "Ladle", price: 150, cat: "Tools", icon: "🥄"},
+            {name: "Whisk", price: 200, cat: "Tools", icon: "🥄"},
+            {name: "Grater", price: 180, cat: "Tools", icon: "🧀"},
+            {name: "Rolling Pin", price: 150, cat: "Tools", icon: "🪵"},
+            {name: "Tongs", price: 120, cat: "Tools", icon: "🥄"},
+            {name: "Peeler", price: 100, cat: "Tools", icon: "🔪"},
+            {name: "Sieve", price: 200, cat: "Tools", icon: "🫧"},
+            {name: "Measuring Cup", price: 250, cat: "Tools", icon: "📏"},
+            {name: "Kitchen Scissors", price: 180, cat: "Tools", icon: "✂️"},
+            
+            // GIFT SET - 10
+            {name: "Wedding Gift Set", price: 5000, cat: "Gift", icon: "🎁"}, 
+            {name: "Cookware Gift Pack", price: 4000, cat: "Gift", icon: "🎁"},
+            {name: "Dinner Set Gift", price: 3500, cat: "Gift", icon: "🎁"},
+            {name: "Steel Utensil Set", price: 2500, cat: "Gift", icon: "🎁"},
+            {name: "Kitchen Starter Kit", price: 3000, cat: "Gift", icon: "🎁"},
+            {name: "Glassware Gift Set", price: 1800, cat: "Gift", icon: "🎁"},
+            {name: "Non-Stick Combo", price: 2200, cat: "Gift", icon: "🎁"},
+            {name: "Festival Gift Pack", price: 2800, cat: "Gift", icon: "🎁"},
+            {name: "Corporate Gift Set", price: 4500, cat: "Gift", icon: "🎁"},
+            {name: "Housewarming Set", price: 6000, cat: "Gift", icon: "🎁"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Added to cart!')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

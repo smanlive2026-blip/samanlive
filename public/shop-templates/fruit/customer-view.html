@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fresh Fruits</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0fdf4; }
+       .header { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+
+       .category-tabs { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 30px; padding-bottom: 10px; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #22c55e; color: white; }
+
+       .fruit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .fruit-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: 0.3s; text-align: center; }
+       .fruit-card:hover { transform: translateY(-5px); }
+       .fruit-emoji { font-size: 60px; margin-bottom: 12px; }
+       .fruit-name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+       .fruit-price { font-size: 24px; font-weight: 800; color: #22c55e; }
+       .qty-controls { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 15px 0; }
+       .qty-btn { background: #22c55e; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 18px; cursor: pointer; }
+       .btn-add { background: #22c55e; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; }
+
+       .cart-float { position: fixed; bottom: 30px; right: 30px; background: #22c55e; color: white; padding: 15px 25px; border-radius: 50px; font-weight: 700; box-shadow: 0 8px 30px rgba(34,197,94,0.4); cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-apple-alt"></i> <span id="shopName">Fresh Fruit Shop</span></h1>
+        <p>100% Fresh Fruits & Dry Fruits</p>
+    </div>
+
+    <div class="container">
+        <div class="category-tabs">
+            <div class="tab active" onclick="filterCategory('All')">All</div>
+            <div class="tab" onclick="filterCategory('Fresh')">Fresh Fruits</div>
+            <div class="tab" onclick="filterCategory('Seasonal')">Seasonal</div>
+            <div class="tab" onclick="filterCategory('Dry')">Dry Fruits</div>
+            <div class="tab" onclick="filterCategory('Juice')">Juice</div>
+        </div>
+
+        <div class="fruit-grid" id="fruitGrid">Loading...</div>
+    </div>
+
+    <div class="cart-float" onclick="checkout()">
+        <i class="fa fa-shopping-basket"></i> Cart: <span id="cartCount">0</span> items
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        let allFruits = [];
+        let cart = {};
+
+        async function loadShop() {
+            const res = await fetch(`/api/local-market/shops/${shopId}`);
+            const shop = await res.json();
+            document.getElementById('shopName').innerText = shop.shopName;
+            allFruits = shop.fruits || shop.items || [];
+            displayFruits(allFruits);
+        }
+
+        function displayFruits(fruits) {
+            const grid = document.getElementById('fruitGrid');
+            if (fruits.length === 0) {
+                grid.innerHTML = `<p style="grid-column:1/-1; text-align:center;">No fruits available</p>`;
+                return;
+            }
+            grid.innerHTML = fruits.map(f => `
+                <div class="fruit-card">
+                    <div class="fruit-emoji">${getEmoji(f.name)}</div>
+                    <div class="fruit-name">${f.name}</div>
+                    <p style="color:#64748b; font-size:12px; margin-bottom:10px;">${f.category}</p>
+                    <div class="fruit-price">₹${f.price} <span style="font-size:14px; color:#64748b;">/kg</span></div>
+                    <p style="color:#64748b; font-size:12px;">Stock: ${f.stock} KG</p>
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="changeQty('${f._id}', -1)">-</button>
+                        <span id="qty-${f._id}">0</span>
+                        <button class="qty-btn" onclick="changeQty('${f._id}', 1)">+</button>
+                    </div>
+                    <button class="btn-add" onclick="addToCart('${f._id}')"><i class="fa fa-cart-plus"></i> Add to Cart</button>
+                </div>
+            `).join('');
+        }
+
+        function getEmoji(name) {
+            const map = {Apple: '🍎', Banana: '🍌', Mango: '🥭', Orange: '🍊', Grapes: '🍇', Watermelon: '🍉'};
+            return map[name] || '🍓';
+        }
+
+        function changeQty(id, val) {
+            cart[id] = Math.max(0, (cart[id] || 0) + val);
+            document.getElementById(`qty-${id}`).innerText = cart[id];
+        }
+
+        function addToCart(id) {
+            let count = Object.values(cart).reduce((a,b)=>a+b,0);
+            document.getElementById('cartCount').innerText = count;
+        }
+
+        function filterCategory(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            const filtered = cat==='All'? allFruits : allFruits.filter(f => f.category === cat);
+            displayFruits(filtered);
+        }
+
+        function checkout() {
+            alert('Order placed! Shop will call you for delivery.');
+        }
+
+        loadShop();
+    </script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiles Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f9fafb; }
+       .header { background: linear-gradient(135deg, #6b7280 0%, #374151 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #6b7280; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #6b7280; }
+       .btn-buy { background: #6b7280; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-border-all"></i> <span id="shopName">Royal Tiles</span></h1>
+        <p>Floor, Wall, Bathroom Tiles | Kajaria, Somany, Nitco | Free Fitting</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 60+</div>
+            <div class="tab" onclick="filter('Floor')">Floor 12</div>
+            <div class="tab" onclick="filter('Wall')">Wall 10</div>
+            <div class="tab" onclick="filter('Bathroom')">Bathroom 8</div>
+            <div class="tab" onclick="filter('Parking')">Parking 6</div>
+            <div class="tab" onclick="filter('Designer')">Designer 10</div>
+            <div class="tab" onclick="filter('Marble')">Marble 8</div>
+            <div class="tab" onclick="filter('Material')">Material 6</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-wrench"></i> Special Services</h3>
+            <p style="margin-top:10px;">Free Tile Fitting | Sqft Calculation | 3D Design | Bulk Order Discount</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // FLOOR TILE - 12
+            {name: "Vitrified Floor Tile 2x2", price: 80, cat: "Floor", size: "2x2 ft", icon: "🧱"}, 
+            {name: "Vitrified Floor Tile 4x2", price: 120, cat: "Floor", size: "4x2 ft", icon: "🧱"},
+            {name: "Ceramic Floor Tile", price: 70, cat: "Floor", size: "2x2 ft", icon: "🧱"},
+            {name: "Wooden Finish Tile", price: 100, cat: "Floor", size: "1x4 ft", icon: "🧱"},
+            {name: "Matte Finish Tile", price: 90, cat: "Floor", size: "2x2 ft", icon: "🧱"},
+            {name: "Glossy Floor Tile", price: 85, cat: "Floor", size: "2x2 ft", icon: "🧱"},
+            {name: "Digital Floor Tile", price: 110, cat: "Floor", size: "2x2 ft", icon: "🧱"},
+            {name: "Heavy Duty Floor", price: 130, cat: "Floor", size: "2x2 ft", icon: "🧱"},
+            {name: "Anti-Skid Floor", price: 95, cat: "Floor", size: "2x2 ft", icon: "🧱"},
+            {name: "Granite Finish Tile", price: 140, cat: "Floor", size: "2x2 ft", icon: "🧱"},
+            {name: "Stone Finish Tile", price: 125, cat: "Floor", size: "2x2 ft", icon: "🧱"},
+            {name: "Premium Floor Tile", price: 160, cat: "Floor", size: "4x4 ft", icon: "🧱"},
+            
+            // WALL TILE - 10
+            {name: "Ceramic Wall Tile 1x1", price: 90, cat: "Wall", size: "1x1 ft", icon: "🟦"}, 
+            {name: "Ceramic Wall Tile 1x2", price: 110, cat: "Wall", size: "1x2 ft", icon: "🟦"},
+            {name: "Digital Wall Tile", price: 120, cat: "Wall", size: "1x2 ft", icon: "🟦"},
+            {name: "Glossy Wall Tile", price: 100, cat: "Wall", size: "1x1 ft", icon: "🟦"},
+            {name: "Kitchen Wall Tile", price: 95, cat: "Wall", size: "1x1 ft", icon: "🟦"},
+            {name: "Living Room Wall", price: 130, cat: "Wall", size: "2x2 ft", icon: "🟦"},
+            {name: "Texture Wall Tile", price: 140, cat: "Wall", size: "1x2 ft", icon: "🟦"},
+            {name: "3D Wall Tile", price: 180, cat: "Wall", size: "1x2 ft", icon: "🟦"},
+            {name: "Brick Design Tile", price: 115, cat: "Wall", size: "1x2 ft", icon: "🟦"},
+            {name: "Premium Wall Tile", price: 200, cat: "Wall", size: "2x4 ft", icon: "🟦"},
+            
+            // BATHROOM TILE - 8
+            {name: "Bathroom Floor Tile", price: 100, cat: "Bathroom", size: "1x1 ft", icon: "🚿"}, 
+            {name: "Bathroom Wall Tile", price: 105, cat: "Bathroom", size: "1x2 ft", icon: "🚿"},
+            {name: "Anti-Skid Bath Tile", price: 110, cat: "Bathroom", size: "1x1 ft", icon: "🚿"},
+            {name: "Designer Bath Tile", price: 150, cat: "Bathroom", size: "1x2 ft", icon: "🚿"},
+            {name: "Mosaic Bath Tile", price: 200, cat: "Bathroom", size: "1x1 ft", icon: "🚿"},
+            {name: "Stone Bath Tile", price: 130, cat: "Bathroom", size: "1x2 ft", icon: "🚿"},
+            {name: "Luxury Bath Tile", price: 250, cat: "Bathroom", size: "2x2 ft", icon: "🚿"},
+            {name: "Bathroom Combo", price: 180, cat: "Bathroom", size: "Set", icon: "🚿"},
+            
+            // PARKING TILE - 6
+            {name: "Parking Tile Heavy", price: 70, cat: "Parking", size: "1x1 ft", icon: "🚗"}, 
+            {name: "Driveway Tile", price: 80, cat: "Parking", size: "1x1 ft", icon: "🚗"},
+            {name: "Interlocking Tile", price: 60, cat: "Parking", size: "1x1 ft", icon: "🚗"},
+            {name: "Heavy Load Tile", price: 90, cat: "Parking", size: "1x1 ft", icon: "🚗"},
+            {name: "Designer Parking", price: 100, cat: "Parking", size: "1x1 ft", icon: "🚗"},
+            {name: "Anti-Slip Parking", price: 85, cat: "Parking", size: "1x1 ft", icon: "🚗"},
+            
+            // DESIGNER TILE - 10
+            {name: "3D Floor Tile", price: 200, cat: "Designer", size: "2x2 ft", icon: "✨"}, 
+            {name: "Metallic Tile", price: 250, cat: "Designer", size: "2x2 ft", icon: "✨"},
+            {name: "Carved Tile", price: 300, cat: "Designer", size: "2x2 ft", icon: "✨"},
+            {name: "Glass Mosaic", price: 400, cat: "Designer", size: "1x1 ft", icon: "✨"},
+            {name: "Pattern Tile", price: 180, cat: "Designer", size: "2x2 ft", icon: "✨"},
+            {name: "Artistic Tile", price: 350, cat: "Designer", size: "2x2 ft", icon: "✨"},
+            {name: "Border Tile", price: 120, cat: "Designer", size: "1x1 ft", icon: "✨"},
+            {name: "Decorative Tile", price: 160, cat: "Designer", size: "1x2 ft", icon: "✨"},
+            {name: "Luxury Designer", price: 500, cat: "Designer", size: "2x4 ft", icon: "✨"},
+            {name: "Custom Design Tile", price: 450, cat: "Designer", size: "2x2 ft", icon: "✨"},
+            
+            // MARBLE & GRANITE - 8
+            {name: "White Marble", price: 300, cat: "Marble", size: "2x2 ft", icon: "⚪"}, 
+            {name: "Black Granite", price: 350, cat: "Marble", size: "2x2 ft", icon: "⚫"},
+            {name: "Italian Marble", price: 500, cat: "Marble", size: "2x4 ft", icon: "⚪"},
+            {name: "Green Marble", price: 400, cat: "Marble", size: "2x2 ft", icon: "🟢"},
+            {name: "Beige Marble", price: 320, cat: "Marble", size: "2x2 ft", icon: "🟫"},
+            {name: "Grey Granite", price: 380, cat: "Marble", size: "2x2 ft", icon: "⚫"},
+            {name: "Marble Flooring", price: 600, cat: "Marble", size: "4x4 ft", icon: "⚪"},
+            {name: "Granite Slab", price: 450, cat: "Marble", size: "3x2 ft", icon: "⚫"},
+            
+            // MATERIAL - 6
+            {name: "Tile Adhesive 20kg", price: 500, cat: "Material", size: "Bag", icon: "🪣"}, 
+            {name: "Grout 5kg", price: 200, cat: "Material", size: "Bag", icon: "🪣"},
+            {name: "Tile Spacer", price: 50, cat: "Material", size: "Pack", icon: "📦"},
+            {name: "Tile Cutter", price: 1500, cat: "Material", size: "Piece", icon: "🔧"},
+            {name: "Floor Cleaner", price: 300, cat: "Material", size: "5L", icon: "🧴"},
+            {name: "Sealant", price: 250, cat: "Material", size: "Tube", icon: "🧴"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">Size: ${p.size}</p>
+                    <div class="product-price">₹${p.price}/sqft</div>
+                    <button class="btn-buy" onclick="alert('Added to cart! Free fitting available')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

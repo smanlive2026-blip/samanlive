@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanitary Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0f9ff; }
+       .header { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #0ea5e9; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #0ea5e9; }
+       .btn-buy { background: #0ea5e9; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #0ea5e9; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-toilet"></i> <span id="shopName">Bathroom World</span></h1>
+        <p>Toilet, Basin, Tap, Shower | Cera, Jaquar, Hindware | Free Installation</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 70+</div>
+            <div class="tab" onclick="filter('Toilet')">Toilet 10</div>
+            <div class="tab" onclick="filter('Basin')">Basin 8</div>
+            <div class="tab" onclick="filter('Tap')">Tap 12</div>
+            <div class="tab" onclick="filter('Shower')">Shower 8</div>
+            <div class="tab" onclick="filter('Flush')">Flush 6</div>
+            <div class="tab" onclick="filter('Tiles')">Tiles 8</div>
+            <div class="tab" onclick="filter('Accessories')">Accessories 18</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-wrench"></i> Special Services</h3>
+            <p style="margin-top:10px;">Free Installation | 5 Year Warranty | Bathroom Setup | Bulk Order Discount</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // TOILET SEAT - 10
+            {name: "Western Toilet Seat", price: 4500, cat: "Toilet", icon: "🚽"}, 
+            {name: "Indian Toilet", price: 2000, cat: "Toilet", icon: "🚽"},
+            {name: "Wall Mount Toilet", price: 8000, cat: "Toilet", icon: "🚽"},
+            {name: "One Piece Toilet", price: 12000, cat: "Toilet", icon: "🚽"},
+            {name: "Smart Toilet", price: 25000, cat: "Toilet", icon: "🚽"},
+            {name: "Toilet Seat Cover", price: 800, cat: "Toilet", icon: "🚽"},
+            {name: "E-WC Toilet", price: 15000, cat: "Toilet", icon: "🚽"},
+            {name: "Kids Toilet", price: 6000, cat: "Toilet", icon: "🚽"},
+            {name: "Disabled Toilet", price: 10000, cat: "Toilet", icon: "🚽"},
+            {name: "Urinal", price: 3500, cat: "Toilet", icon: "🚽"},
+            
+            // BASIN - 8
+            {name: "Wash Basin", price: 2200, cat: "Basin", icon: "🛁"}, 
+            {name: "Counter Basin", price: 3500, cat: "Basin", icon: "🛁"},
+            {name: "Wall Mount Basin", price: 1800, cat: "Basin", icon: "🛁"},
+            {name: "Pedestal Basin", price: 4000, cat: "Basin", icon: "🛁"},
+            {name: "Kitchen Sink", price: 5000, cat: "Basin", icon: "🛁"},
+            {name: "Double Basin", price: 7000, cat: "Basin", icon: "🛁"},
+            {name: "Designer Basin", price: 6000, cat: "Basin", icon: "🛁"},
+            {name: "Steel Sink", price: 3000, cat: "Basin", icon: "🛁"},
+            
+            // TAP & FAUCET - 12
+            {name: "Basin Tap", price: 800, cat: "Tap", icon: "🚰"}, 
+            {name: "Kitchen Tap", price: 1200, cat: "Tap", icon: "🚰"},
+            {name: "Shower Tap", price: 1500, cat: "Tap", icon: "🚰"},
+            {name: "Angle Valve", price: 300, cat: "Tap", icon: "🚰"},
+            {name: "Bib Tap", price: 500, cat: "Tap", icon: "🚰"},
+            {name: "Mixer Tap", price: 2000, cat: "Tap", icon: "🚰"},
+            {name: "Sensor Tap", price: 4000, cat: "Tap", icon: "🚰"},
+            {name: "Hot Cold Tap", price: 2500, cat: "Tap", icon: "🚰"},
+            {name: "Wall Tap", price: 900, cat: "Tap", icon: "🚰"},
+            {name: "Pillar Tap", price: 1100, cat: "Tap", icon: "🚰"},
+            {name: "Tap Set 3pc", price: 3500, cat: "Tap", icon: "🚰"},
+            {name: "Luxury Tap", price: 5000, cat: "Tap", icon: "🚰"},
+            
+            // SHOWER - 8
+            {name: "Shower Head", price: 800, cat: "Shower", icon: "🚿"}, 
+            {name: "Rain Shower", price: 2500, cat: "Shower", icon: "🚿"},
+            {name: "Hand Shower", price: 600, cat: "Shower", icon: "🚿"},
+            {name: "Shower Panel", price: 8000, cat: "Shower", icon: "🚿"},
+            {name: "Shower Set", price: 3000, cat: "Shower", icon: "🚿"},
+            {name: "Overhead Shower", price: 2000, cat: "Shower", icon: "🚿"},
+            {name: "Body Jet", price: 1500, cat: "Shower", icon: "🚿"},
+            {name: "Luxury Shower", price: 12000, cat: "Shower", icon: "🚿"},
+            
+            // FLUSH - 6
+            {name: "Flush Tank", price: 1200, cat: "Flush", icon: "💧"}, 
+            {name: "Flush Valve", price: 800, cat: "Flush", icon: "💧"},
+            {name: "Dual Flush", price: 1500, cat: "Flush", icon: "💧"},
+            {name: "Concealed Tank", price: 4000, cat: "Flush", icon: "💧"},
+            {name: "Flush Button", price: 500, cat: "Flush", icon: "💧"},
+            {name: "Auto Flush", price: 3000, cat: "Flush", icon: "💧"},
+            
+            // TILES - 8
+            {name: "Floor Tile", price: 80, cat: "Tiles", icon: "🧱"}, 
+            {name: "Wall Tile", price: 90, cat: "Tiles", icon: "🧱"},
+            {name: "Bathroom Tile", price: 100, cat: "Tiles", icon: "🧱"},
+            {name: "Designer Tile", price: 150, cat: "Tiles", icon: "🧱"},
+            {name: "Anti-Skid Tile", price: 110, cat: "Tiles", icon: "🧱"},
+            {name: "Mosaic Tile", price: 200, cat: "Tiles", icon: "🧱"},
+            {name: "Marble Tile", price: 300, cat: "Tiles", icon: "🧱"},
+            {name: "Tile Adhesive", price: 500, cat: "Tiles", icon: "🧱"},
+            
+            // ACCESSORIES - 18
+            {name: "Toilet Brush", price: 200, cat: "Accessories", icon: "🧽"}, 
+            {name: "Soap Dish", price: 300, cat: "Accessories", icon: "🧼"},
+            {name: "Towel Rack", price: 800, cat: "Accessories", icon: "🧺"},
+            {name: "Mirror", price: 1200, cat: "Accessories", icon: "🪞"},
+            {name: "Shower Curtain", price: 600, cat: "Accessories", icon: "🚿"},
+            {name: "Drainage Pipe", price: 400, cat: "Accessories", icon: "🔧"},
+            {name: "PVC Pipe", price: 200, cat: "Accessories", icon: "🔧"},
+            {name: "Waste Pipe", price: 250, cat: "Accessories", icon: "🔧"},
+            {name: "Toilet Paper Holder", price: 400, cat: "Accessories", icon: "🧻"},
+            {name: "Health Faucet", price: 700, cat: "Accessories", icon: "🚰"},
+            {name: "Geyser", price: 8000, cat: "Accessories", icon: "🔥"},
+            {name: "Exhaust Fan", price: 1500, cat: "Accessories", icon: "💨"},
+            {name: "Bathroom Cabinet", price: 5000, cat: "Accessories", icon: "📦"},
+            {name: "Floor Drain", price: 300, cat: "Accessories", icon: "🔧"},
+            {name: "Sealant", price: 200, cat: "Accessories", icon: "🧴"},
+            {name: "Bath Mat", price: 400, cat: "Accessories", icon: "🧺"},
+            {name: "Soap Dispenser", price: 600, cat: "Accessories", icon: "🧴"},
+            {name: "Plunger", price: 150, cat: "Accessories", icon: "🪠"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Added to cart! Installation available')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

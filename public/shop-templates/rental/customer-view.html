@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent Items</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fff7ed; }
+        .header { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; padding: 50px 20px; text-align: center; }
+        .header h1 { font-size: 36px; }
+        .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+        .filter-tabs { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 30px; padding-bottom: 10px; }
+        .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+        .tab.active { background: #f97316; color: white; }
+        
+        .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        .item-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .item-image { height: 200px; background: #ffedd5; display: flex; align-items: center; justify-content: center; font-size: 60px; color: #f97316; }
+        .item-info { padding: 20px; }
+        .item-info h3 { font-size: 20px; margin-bottom: 8px; }
+        .price { font-size: 24px; font-weight: 800; color: #f97316; }
+        .btn-rent { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; padding: 12px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 15px; }
+        
+        .booking-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 40px; border-radius: 20px; max-width: 500px; width: 90%; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-truck-moving"></i> <span id="shopName">Rental Store</span></h1>
+        <p>Rent Car, Bike, Furniture, Tent & More</p>
+    </div>
+
+    <div class="container">
+        <div class="filter-tabs">
+            <div class="tab active" onclick="filterCategory('All')">All</div>
+            <div class="tab" onclick="filterCategory('Vehicle')">Vehicles</div>
+            <div class="tab" onclick="filterCategory('Furniture')">Furniture</div>
+            <div class="tab" onclick="filterCategory('Event')">Event Items</div>
+            <div class="tab" onclick="filterCategory('Equipment')">Equipment</div>
+        </div>
+
+        <div class="item-grid" id="itemGrid">Loading...</div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div class="booking-modal" id="bookingModal">
+        <div class="modal-content">
+            <h2>Book <span id="modalItemName"></span></h2>
+            <form onsubmit="submitBooking(event)">
+                <div style="margin:15px 0;"><label>Your Name</label><input type="text" id="custName" required style="width:100%; padding:12px; border:2px solid #ffedd5; border-radius:10px;"></div>
+                <div style="margin:15px 0;"><label>Phone</label><input type="tel" id="custPhone" required style="width:100%; padding:12px; border:2px solid #ffedd5; border-radius:10px;"></div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                    <div><label>From Date</label><input type="date" id="fromDate" required style="width:100%; padding:12px; border:2px solid #ffedd5; border-radius:10px;"></div>
+                    <div><label>To Date</label><input type="date" id="toDate" required style="width:100%; padding:12px; border:2px solid #ffedd5; border-radius:10px;"></div>
+                </div>
+                <button type="submit" class="btn-rent" style="margin-top:20px;">Confirm Booking</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        let allItems = [];
+        let selectedItem = null;
+
+        async function loadShop() {
+            const res = await fetch(`/api/local-market/shops/${shopId}`);
+            const shop = await res.json();
+            document.getElementById('shopName').innerText = shop.shopName;
+            allItems = shop.rentalItems || [];
+            displayItems(allItems);
+        }
+
+        function displayItems(items) {
+            const grid = document.getElementById('itemGrid');
+            if (items.length === 0) {
+                grid.innerHTML = `<p style="grid-column:1/-1; text-align:center;">No items available</p>`;
+                return;
+            }
+            grid.innerHTML = items.map(item => `
+                <div class="item-card">
+                    <div class="item-image"><i class="fa ${getIcon(item.category)}"></i></div>
+                    <div class="item-info">
+                        <h3>${item.name}</h3>
+                        <p style="color:#64748b; margin-bottom:10px;">${item.description || item.category}</p>
+                        <div class="price">₹${item.rentPerDay} <span style="font-size:14px; color:#64748b;">/day</span></div>
+                        <button class="btn-rent" onclick="openBooking('${item._id}', '${item.name}')" ${!item.isAvailable? 'disabled' : ''}>
+                            ${item.isAvailable? 'Rent Now' : 'Currently Rented'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getIcon(cat) {
+            if(cat==='Vehicle') return 'fa-car'; if(cat==='Furniture') return 'fa-couch';
+            if(cat==='Event') return 'fa-party-horn'; return 'fa-tools';
+        }
+
+        function filterCategory(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            const filtered = cat==='All'? allItems : allItems.filter(i => i.category === cat);
+            displayItems(filtered);
+        }
+
+        function openBooking(itemId, itemName) {
+            selectedItem = itemId;
+            document.getElementById('modalItemName').innerText = itemName;
+            document.getElementById('bookingModal').style.display = 'flex';
+        }
+
+        async function submitBooking(e) {
+            e.preventDefault();
+            const bookingData = {
+                shopId, itemId: selectedItem,
+                customerName: document.getElementById('custName').value,
+                phone: document.getElementById('custPhone').value,
+                startDate: document.getElementById('fromDate').value,
+                endDate: document.getElementById('toDate').value,
+                status: 'upcoming'
+            };
+            await fetch('/api/local-market/rental-bookings', {
+                method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(bookingData)
+            });
+            alert('Booking Request Sent! Shop will confirm soon.');
+            document.getElementById('bookingModal').style.display = 'none';
+        }
+
+        loadShop();
+    </script>
+</body>
+</html>

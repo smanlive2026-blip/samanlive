@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plastic Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #eff6ff; }
+       .header { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #3b82f6; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #3b82f6; }
+       .btn-buy { background: #3b82f6; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #3b82f6; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-box"></i> <span id="shopName">Plastic World</span></h1>
+        <p>Bucket, Chair, Storage, Kitchen | Cello, Nilkamal, Tupperware | Wholesale Available</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 80+</div>
+            <div class="tab" onclick="filter('Bucket')">Bucket 10</div>
+            <div class="tab" onclick="filter('Chair')">Chair 8</div>
+            <div class="tab" onclick="filter('Storage')">Storage 10</div>
+            <div class="tab" onclick="filter('Kitchen')">Kitchen 15</div>
+            <div class="tab" onclick="filter('Toys')">Toys 10</div>
+            <div class="tab" onclick="filter('Home')">Home 12</div>
+            <div class="tab" onclick="filter('Bathroom')">Bathroom 15</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Special Offers</h3>
+            <p style="margin-top:10px;">Wholesale Price | Bulk Order Discount | Home Delivery | All Brands Available</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // BUCKET - 10
+            {name: "Water Bucket 20L", price: 250, cat: "Bucket", icon: "🪣"}, 
+            {name: "Water Bucket 15L", price: 200, cat: "Bucket", icon: "🪣"},
+            {name: "Water Bucket 10L", price: 150, cat: "Bucket", icon: "🪣"},
+            {name: "Mug 1L", price: 50, cat: "Bucket", icon: "🪣"},
+            {name: "Mug 2L", price: 80, cat: "Bucket", icon: "🪣"},
+            {name: "Washing Tub", price: 300, cat: "Bucket", icon: "🪣"},
+            {name: "Clothes Basket", price: 400, cat: "Bucket", icon: "🪣"},
+            {name: "Dustbin 10L", price: 200, cat: "Bucket", icon: "🪣"},
+            {name: "Dustbin 20L", price: 350, cat: "Bucket", icon: "🪣"},
+            {name: "Bucket Set 3pc", price: 600, cat: "Bucket", icon: "🪣"},
+            
+            // CHAIR - 8
+            {name: "Plastic Chair", price: 600, cat: "Chair", icon: "🪑"}, 
+            {name: "Plastic Stool", price: 200, cat: "Chair", icon: "🪑"},
+            {name: "Arm Chair", price: 800, cat: "Chair", icon: "🪑"},
+            {name: "Study Chair", price: 700, cat: "Chair", icon: "🪑"},
+            {name: "Folding Chair", price: 900, cat: "Chair", icon: "🪑"},
+            {name: "Baby Chair", price: 500, cat: "Chair", icon: "🪑"},
+            {name: "Chair 4pc Set", price: 2200, cat: "Chair", icon: "🪑"},
+            {name: "Garden Chair", price: 1000, cat: "Chair", icon: "🪑"},
+            
+            // STORAGE - 10
+            {name: "Storage Box 10L", price: 300, cat: "Storage", icon: "📦"}, 
+            {name: "Storage Box 20L", price: 400, cat: "Storage", icon: "📦"},
+            {name: "Storage Box 50L", price: 600, cat: "Storage", icon: "📦"},
+            {name: "Wardrobe Box", price: 800, cat: "Storage", icon: "📦"},
+            {name: "Toy Box", price: 700, cat: "Storage", icon: "📦"},
+            {name: "Drawer Box 3 Layer", price: 1200, cat: "Storage", icon: "📦"},
+            {name: "Storage Rack", price: 1500, cat: "Storage", icon: "📦"},
+            {name: "Laundry Basket", price: 450, cat: "Storage", icon: "📦"},
+            {name: "Vegetable Basket", price: 250, cat: "Storage", icon: "📦"},
+            {name: "Storage Trolley", price: 2000, cat: "Storage", icon: "📦"},
+            
+            // KITCHEN - 15
+            {name: "Kitchen Container 1L", price: 150, cat: "Kitchen", icon: "🍱"}, 
+            {name: "Kitchen Container 2L", price: 200, cat: "Kitchen", icon: "🍱"},
+            {name: "Kitchen Container 5L", price: 300, cat: "Kitchen", icon: "🍱"},
+            {name: "Water Bottle 1L", price: 100, cat: "Kitchen", icon: "🍱"},
+            {name: "Lunch Box", price: 250, cat: "Kitchen", icon: "🍱"},
+            {name: "Rice Drum 10kg", price: 400, cat: "Kitchen", icon: "🍱"},
+            {name: "Atta Bin 5kg", price: 350, cat: "Kitchen", icon: "🍱"},
+            {name: "Spice Box", price: 200, cat: "Kitchen", icon: "🍱"},
+            {name: "Oil Can 2L", price: 180, cat: "Kitchen", icon: "🍱"},
+            {name: "Juice Jug", price: 220, cat: "Kitchen", icon: "🍱"},
+            {name: "Cutting Board", price: 150, cat: "Kitchen", icon: "🍱"},
+            {name: "Colander", price: 120, cat: "Kitchen", icon: "🍱"},
+            {name: "Strainer", price: 100, cat: "Kitchen", icon: "🍱"},
+            {name: "Kitchen Rack", price: 800, cat: "Kitchen", icon: "🍱"},
+            {name: "Container Set 12pc", price: 1200, cat: "Kitchen", icon: "🍱"},
+            
+            // TOYS - 10
+            {name: "Baby Toy Car", price: 300, cat: "Toys", icon: "🚗"}, 
+            {name: "Building Blocks", price: 500, cat: "Toys", icon: "🚗"},
+            {name: "Doll", price: 400, cat: "Toys", icon: "🚗"},
+            {name: "Water Gun", price: 200, cat: "Toys", icon: "🚗"},
+            {name: "Ball", price: 100, cat: "Toys", icon: "🚗"},
+            {name: "Toy Kitchen Set", price: 800, cat: "Toys", icon: "🚗"},
+            {name: "Educational Toy", price: 600, cat: "Toys", icon: "🚗"},
+            {name: "Rattle", price: 150, cat: "Toys", icon: "🚗"},
+            {name: "Toy Truck", price: 450, cat: "Toys", icon: "🚗"},
+            {name: "Puzzle Set", price: 350, cat: "Toys", icon: "🚗"},
+            
+            // HOME - 12
+            {name: "Cloth Hanger", price: 20, cat: "Home", icon: "👔"}, 
+            {name: "Cloth Clip", price: 30, cat: "Home", icon: "👔"},
+            {name: "Drying Rack", price: 500, cat: "Home", icon: "👔"},
+            {name: "Mirror", price: 300, cat: "Home", icon: "👔"},
+            {name: "Wall Shelf", price: 400, cat: "Home", icon: "👔"},
+            {name: "Shoe Rack", price: 1200, cat: "Home", icon: "👔"},
+            {name: "Flower Pot", price: 150, cat: "Home", icon: "👔"},
+            {name: "Table", price: 1000, cat: "Home", icon: "👔"},
+            {name: "Step Stool", price: 350, cat: "Home", icon: "👔"},
+            {name: "Laundry Bag", price: 200, cat: "Home", icon: "👔"},
+            {name: "Door Mat", price: 100, cat: "Home", icon: "👔"},
+            {name: "Home Organizer", price: 600, cat: "Home", icon: "👔"},
+            
+            // BATHROOM - 15
+            {name: "Soap Case", price: 80, cat: "Bathroom", icon: "🧼"}, 
+            {name: "Toothbrush Holder", price: 100, cat: "Bathroom", icon: "🧼"},
+            {name: "Towel Rack", price: 300, cat: "Bathroom", icon: "🧼"},
+            {name: "Shower Caddy", price: 250, cat: "Bathroom", icon: "🧼"},
+            {name: "Bath Stool", price: 400, cat: "Bathroom", icon: "🧼"},
+            {name: "Bucket with Mug", price: 350, cat: "Bathroom", icon: "🧼"},
+            {name: "Dustbin Bathroom", price: 200, cat: "Bathroom", icon: "🧼"},
+            {name: "Bath Mat", price: 150, cat: "Bathroom", icon: "🧼"},
+            {name: "Shampoo Bottle", price: 80, cat: "Bathroom", icon: "🧼"},
+            {name: "Soap Dispenser", price: 200, cat: "Bathroom", icon: "🧼"},
+            {name: "Bathroom Shelf", price: 500, cat: "Bathroom", icon: "🧼"},
+            {name: "Toilet Brush", price: 120, cat: "Bathroom", icon: "🧼"},
+            {name: "Plunger", price: 100, cat: "Bathroom", icon: "🧼"},
+            {name: "Bathroom Set 5pc", price: 800, cat: "Bathroom", icon: "🧼"},
+            {name: "Water Spray", price: 180, cat: "Bathroom", icon: "🧼"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Added to cart!')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

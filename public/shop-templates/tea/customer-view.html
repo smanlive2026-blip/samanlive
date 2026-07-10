@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tea Shop Menu</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fff7ed; }
+       .header { background: linear-gradient(135deg, #d97706 0%, #92400e 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1200px; margin: -30px auto 40px; padding: 0 20px; }
+
+       .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; margin-bottom: 40px; }
+       .menu-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; transition: 0.3s; }
+       .menu-card:hover { transform: translateY(-5px); }
+       .menu-icon { font-size: 40px; color: #d97706; margin-bottom: 15px; }
+       .menu-card.price { font-size: 24px; font-weight: 800; color: #d97706; }
+       .qty-controls { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 15px 0; }
+       .qty-btn { background: #d97706; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 18px; cursor: pointer; }
+
+       .cart-float { position: fixed; bottom: 30px; right: 30px; background: #d97706; color: white; padding: 15px 25px; border-radius: 50px; font-weight: 700; box-shadow: 0 8px 30px rgba(217,119,6,0.4); cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-mug-hot"></i> <span id="shopName">Tea Stall</span></h1>
+        <p>Garam Chai, Snacks & Morning Breakfast</p>
+    </div>
+
+    <div class="container">
+        <h2 style="margin-bottom:20px; text-align:center;">Our Menu</h2>
+        <div class="menu-grid">
+            <div class="menu-card">
+                <div class="menu-icon"><i class="fa fa-coffee"></i></div>
+                <h3>Regular Chai</h3>
+                <div class="price">₹10</div>
+                <div class="qty-controls">
+                    <button class="qty-btn" onclick="changeQty('chai', -1)">-</button>
+                    <span id="chai-qty">0</span>
+                    <button class="qty-btn" onclick="changeQty('chai', 1)">+</button>
+                </div>
+            </div>
+            <div class="menu-card">
+                <div class="menu-icon"><i class="fa fa-coffee"></i></div>
+                <h3>Special Tea</h3>
+                <div class="price">₹15</div>
+                <div class="qty-controls">
+                    <button class="qty-btn" onclick="changeQty('special', -1)">-</button>
+                    <span id="special-qty">0</span>
+                    <button class="qty-btn" onclick="changeQty('special', 1)">+</button>
+                </div>
+            </div>
+            <div class="menu-card">
+                <div class="menu-icon"><i class="fa fa-coffee"></i></div>
+                <h3>Coffee</h3>
+                <div class="price">₹20</div>
+                <div class="qty-controls">
+                    <button class="qty-btn" onclick="changeQty('coffee', -1)">-</button>
+                    <span id="coffee-qty">0</span>
+                    <button class="qty-btn" onclick="changeQty('coffee', 1)">+</button>
+                </div>
+            </div>
+            <div class="menu-card">
+                <div class="menu-icon"><i class="fa fa-bread-slice"></i></div>
+                <h3>Samosa</h3>
+                <div class="price">₹15</div>
+                <div class="qty-controls">
+                    <button class="qty-btn" onclick="changeQty('samosa', -1)">-</button>
+                    <span id="samosa-qty">0</span>
+                    <button class="qty-btn" onclick="changeQty('samosa', 1)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cart-float" onclick="placeOrder()">
+        <i class="fa fa-shopping-cart"></i> Place Order
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        let cart = {chai: 0, special: 0, coffee: 0, samosa: 0};
+
+        async function loadShop() {
+            const res = await fetch(`/api/local-market/shops/${shopId}`);
+            const shop = await res.json();
+            document.getElementById('shopName').innerText = shop.shopName;
+        }
+
+        function changeQty(item, val) {
+            cart[item] = Math.max(0, cart[item] + val);
+            document.getElementById(item + '-qty').innerText = cart[item];
+        }
+
+        function placeOrder() {
+            const total = cart.chai*10 + cart.special*15 + cart.coffee*20 + cart.samosa*15;
+            if (total === 0) { alert('Add items to cart first'); return; }
+            alert(`Order Placed! Total: ₹${total}. Shop will prepare your order.`);
+        }
+
+        loadShop();
+    </script>
+</body>
+</html>

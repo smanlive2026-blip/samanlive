@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electronics Shop Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .header {
+            background: white; padding: 25px 30px; border-radius: 20px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .header h1 { font-size: 28px; color: #1e293b; display: flex; align-items: center; gap: 12px; }
+        .header h1 i { color: #667eea; }
+        .shop-id { color: #64748b; font-size: 14px; }
+        
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px; margin-bottom: 25px;
+        }
+        .stat-card {
+            background: white; padding: 25px; border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card .icon { font-size: 32px; margin-bottom: 12px; }
+        .stat-card h3 { color: #64748b; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+        .stat-card .value { font-size: 32px; font-weight: 700; color: #1e293b; }
+        
+        .content-card {
+            background: white; padding: 30px; border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px;
+        }
+        .content-card h2 { font-size: 22px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; padding: 12px 24px;
+            border-radius: 12px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102,126,234,0.4); }
+        
+        table { width: 100%; border-collapse: collapse; }
+        table th { text-align: left; padding: 15px; background: #f8fafc; color: #475569; font-weight: 600; }
+        table td { padding: 15px; border-bottom: 1px solid #e2e8f0; }
+        .badge { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+        .badge.warranty { background: #dcfce7; color: #166534; }
+        .badge.stock-low { background: #fee2e2; color: #991b1b; }
+        
+        #loader { text-align: center; padding: 50px; font-size: 18px; color: #64748b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1><i class="fa fa-mobile-alt"></i> <span id="shopName">Electronics Shop</span></h1>
+                <div class="shop-id">Shop ID: <span id="shopIdDisplay"></span></div>
+            </div>
+            <button class="btn" onclick="editShopInfo()"><i class="fa fa-edit"></i> Edit Shop</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon" style="color: #667eea;"><i class="fa fa-box"></i></div>
+                <h3>Total Products</h3>
+                <div class="value" id="totalProducts">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="color: #10b981;"><i class="fa fa-shopping-cart"></i></div>
+                <h3>Today's Orders</h3>
+                <div class="value" id="todayOrders">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="color: #f59e0b;"><i class="fa fa-exclamation-triangle"></i></div>
+                <h3>Low Stock</h3>
+                <div class="value" id="lowStock">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="color: #ef4444;"><i class="fa fa-shield-alt"></i></div>
+                <h3>Warranty Claims</h3>
+                <div class="value" id="warrantyClaims">0</div>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="content-card">
+            <h2><i class="fa fa-laptop"></i> Product Inventory</h2>
+            <div id="loader">Loading products...</div>
+            <table id="productTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Brand</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Warranty</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody"></tbody>
+            </table>
+            <button class="btn" id="addProductBtn" style="margin-top: 20px;"><i class="fa fa-plus"></i> Add New Product</button>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

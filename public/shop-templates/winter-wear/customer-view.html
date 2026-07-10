@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winter Wear Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fdf2f8; }
+       .header { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #ec4899; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #ec4899; }
+       .btn-buy { background: #ec4899; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 2px dashed #ec4899; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-snowflake"></i> <span id="shopName">Shree Winter Collection</span></h1>
+        <p>Jersey, Cardigan, Jacket, Sweater | Mens, Womens, Kids | 100% Wool</p>
+    </div>
+
+    <div class="container">
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Winter Sale</h3>
+            <p>Buy 2 Get 15% Off | Free Muffler on ₹2000+ | New Winter Stock Arrived</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Men')">Men</div>
+            <div class="filter" onclick="filter('Women')">Women</div>
+            <div class="filter" onclick="filter('Kids')">Kids</div>
+            <div class="filter" onclick="filter('Jersey')">Jersey</div>
+            <div class="filter" onclick="filter('Jacket')">Jacket</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Mens Woolen Jersey", price: 1200, size: "M,L,XL", cat: "Men", type: "Jersey", brand: "Monte Carlo", icon: "🧥"}, 
+            {name: "Ladies Cardigan", price: 1500, size: "S,M,L", cat: "Women", type: "Cardigan", brand: "H&M", icon: "🧥"},
+            {name: "Kids Sweater", price: 800, size: "26,28,30", cat: "Kids", type: "Sweater", brand: "Gini & Jony", icon: "🧥"},
+            {name: "Mens Puffer Jacket", price: 2800, size: "M,L,XL", cat: "Men", type: "Jacket", brand: "Puma", icon: "🧥"},
+            {name: "Thermal Set", price: 900, size: "M,L,XL", cat: "Unisex", type: "Thermal", brand: "Lux", icon: "🧥"},
+            {name: "Womens Hoodie", price: 1100, size: "S,M,L", cat: "Women", type: "Hoodie", brand: "Zara", icon: "🧥"},
+            {name: "Woolen Muffler", price: 350, size: "Free", cat: "Accessory", type: "Muffler", brand: "Local", icon: "🧥"},
+            {name: "Kids Jacket", price: 1300, size: "24,26,28", cat: "Kids", type: "Jacket", brand: "Pepe", icon: "🧥"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.brand} | ${p.type} | Size: ${p.size}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Order Placed!')"><i class="fa fa-phone"></i> Order Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat || p.type === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

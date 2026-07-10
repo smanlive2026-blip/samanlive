@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0fdf4; }
+       .header { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #16a34a; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #16a34a; }
+       .btn-buy { background: #16a34a; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #16a34a; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-trophy"></i> <span id="shopName">Champion Sports</span></h1>
+        <p>Cricket, Football, Gym | Team Jersey | All Brands Available</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 80+</div>
+            <div class="tab" onclick="filter('Cricket')">Cricket 15</div>
+            <div class="tab" onclick="filter('Football')">Football 8</div>
+            <div class="tab" onclick="filter('Badminton')">Badminton 8</div>
+            <div class="tab" onclick="filter('Gym')">Gym 12</div>
+            <div class="tab" onclick="filter('Jersey')">Jersey 10</div>
+            <div class="tab" onclick="filter('Trophy')">Trophy 8</div>
+            <div class="tab" onclick="filter('Other')">Other 19</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Team Offers</h3>
+            <p style="margin-top:10px;">Team Jersey 15% OFF | School/College Bulk Order | Free Name Printing</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // CRICKET - 15
+            {name: "Cricket Bat English Willow", price: 5000, cat: "Cricket", icon: "🏏"}, 
+            {name: "Cricket Bat Kashmir Willow", price: 2500, cat: "Cricket", icon: "🏏"},
+            {name: "Cricket Ball Leather", price: 400, cat: "Cricket", icon: "🏏"},
+            {name: "Cricket Ball Tennis", price: 100, cat: "Cricket", icon: "🏏"},
+            {name: "Cricket Helmet", price: 1500, cat: "Cricket", icon: "⛑️"},
+            {name: "Batting Gloves", price: 800, cat: "Cricket", icon: "🧤"},
+            {name: "Cricket Pads", price: 1200, cat: "Cricket", icon: "🦵"},
+            {name: "Cricket Kit Bag", price: 2000, cat: "Cricket", icon: "🎒"},
+            {name: "Wicket Set", price: 600, cat: "Cricket", icon: "🏏"},
+            {name: "Cricket Shoes", price: 1800, cat: "Cricket", icon: "👟"},
+            {name: "Thigh Guard", price: 400, cat: "Cricket", icon: "🦵"},
+            {name: "Abdominal Guard", price: 250, cat: "Cricket", icon: "🦵"},
+            {name: "Cricket Jersey", price: 900, cat: "Cricket", icon: "👕"},
+            {name: "Full Cricket Kit", price: 8000, cat: "Cricket", icon: "🏏"},
+            {name: "Cricket Stumps LED", price: 3500, cat: "Cricket", icon: "🏏"},
+            
+            // FOOTBALL - 8
+            {name: "Football Size 5", price: 800, cat: "Football", icon: "⚽"}, 
+            {name: "Football Size 4", price: 700, cat: "Football", icon: "⚽"},
+            {name: "Football Shoes", price: 2000, cat: "Football", icon: "👟"},
+            {name: "Goalkeeper Gloves", price: 1200, cat: "Football", icon: "🧤"},
+            {name: "Shin Guard", price: 400, cat: "Football", icon: "🦵"},
+            {name: "Football Jersey", price: 1000, cat: "Football", icon: "👕"},
+            {name: "Football Pump", price: 200, cat: "Football", icon: "🔧"},
+            {name: "Team Football Kit", price: 15000, cat: "Football", icon: "⚽"},
+            
+            // BADMINTON - 8
+            {name: "Badminton Racket Yonex", price: 2500, cat: "Badminton", icon: "🏸"}, 
+            {name: "Badminton Racket Li-Ning", price: 1800, cat: "Badminton", icon: "🏸"},
+            {name: "Shuttlecock 12pc", price: 400, cat: "Badminton", icon: "🏸"},
+            {name: "Badminton Shoes", price: 2200, cat: "Badminton", icon: "👟"},
+            {name: "Racket Cover", price: 300, cat: "Badminton", icon: "🎒"},
+            {name: "Badminton Net", price: 800, cat: "Badminton", icon: "🏸"},
+            {name: "Grip Tape", price: 100, cat: "Badminton", icon: "📦"},
+            {name: "Badminton Kit Bag", price: 1200, cat: "Badminton", icon: "🎒"},
+            
+            // GYM - 12
+            {name: "Dumbbell 10kg Pair", price: 1500, cat: "Gym", icon: "💪"}, 
+            {name: "Barbell Set", price: 4000, cat: "Gym", icon: "💪"},
+            {name: "Gym Gloves", price: 400, cat: "Gym", icon: "🧤"},
+            {name: "Weight Lifting Belt", price: 800, cat: "Gym", icon: "🥋"},
+            {name: "Skipping Rope", price: 200, cat: "Gym", icon: "🪢"},
+            {name: "Yoga Mat", price: 600, cat: "Gym", icon: "🧘"},
+            {name: "Resistance Band", price: 500, cat: "Gym", icon: "💪"},
+            {name: "Gym T-Shirt", price: 700, cat: "Gym", icon: "👕"},
+            {name: "Gym Shorts", price: 600, cat: "Gym", icon: "🩳"},
+            {name: "Protein Shaker", price: 300, cat: "Gym", icon: "🥤"},
+            {name: "Wrist Support", price: 350, cat: "Gym", icon: "💪"},
+            {name: "Treadmill", price: 45000, cat: "Gym", icon: "🏃"},
+            
+            // JERSEY - 10
+            {name: "Cricket Team Jersey", price: 900, cat: "Jersey", icon: "👕"}, 
+            {name: "Football Team Jersey", price: 1000, cat: "Jersey", icon: "👕"},
+            {name: "Basketball Jersey", price: 1100, cat: "Jersey", icon: "👕"},
+            {name: "Sports T-Shirt", price: 500, cat: "Jersey", icon: "👕"},
+            {name: "Track Suit", price: 2000, cat: "Jersey", icon: "👕"},
+            {name: "Sports Shorts", price: 600, cat: "Jersey", icon: "🩳"},
+            {name: "Cap", price: 300, cat: "Jersey", icon: "🧢"},
+            {name: "Socks Sports", price: 200, cat: "Jersey", icon: "🧦"},
+            {name: "Jersey with Name", price: 1200, cat: "Jersey", icon: "👕"},
+            {name: "Full Team Kit 11pc", price: 12000, cat: "Jersey", icon: "👕"},
+            
+            // TROPHY - 8
+            {name: "Winner Trophy", price: 800, cat: "Trophy", icon: "🏆"}, 
+            {name: "Runner Up Trophy", price: 600, cat: "Trophy", icon: "🏆"},
+            {name: "Man of Match Trophy", price: 500, cat: "Trophy", icon: "🏆"},
+            {name: "Medal Gold", price: 200, cat: "Trophy", icon: "🥇"},
+            {name: "Medal Silver", price: 180, cat: "Trophy", icon: "🥈"},
+            {name: "Medal Bronze", price: 150, cat: "Trophy", icon: "🥉"},
+            {name: "Shield", price: 1200, cat: "Trophy", icon: "🛡️"},
+            {name: "Custom Trophy", price: 2000, cat: "Trophy", icon: "🏆"},
+            
+            // OTHER - 19
+            {name: "Tennis Racket", price: 3000, cat: "Other", icon: "🎾"}, 
+            {name: "Table Tennis Bat", price: 800, cat: "Other", icon: "🏓"},
+            {name: "Basketball", price: 900, cat: "Other", icon: "🏀"},
+            {name: "Volleyball", price: 700, cat: "Other", icon: "🏐"},
+            {name: "Hockey Stick", price: 1200, cat: "Other", icon: "🏑"},
+            {name: "Chess Board", price: 500, cat: "Other", icon: "♟️"},
+            {name: "Carrom Board", price: 1500, cat: "Other", icon: "🎯"},
+            {name: "Skating Shoes", price: 2500, cat: "Other", icon: "⛸️"},
+            {name: "Swimming Goggles", price: 400, cat: "Other", icon: "🏊"},
+            {name: "Boxing Gloves", price: 1500, cat: "Other", icon: "🥊"},
+            {name: "Archery Set", price: 4000, cat: "Other", icon: "🏹"},
+            {name: "Cycle", price: 12000, cat: "Other", icon: "🚴"},
+            {name: "Helmet Sports", price: 800, cat: "Other", icon: "⛑️"},
+            {name: "Knee Cap", price: 300, cat: "Other", icon: "🦵"},
+            {name: "Water Bottle", price: 250, cat: "Other", icon: "💧"},
+            {name: "Sports Bag", price: 1000, cat: "Other", icon: "🎒"},
+            {name: "First Aid Kit", price: 600, cat: "Other", icon: "🩹"},
+            {name: "Whistle", price: 100, cat: "Other", icon: "📯"},
+            {name: "Stopwatch", price: 500, cat: "Other", icon: "⏱️"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Added to cart!')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

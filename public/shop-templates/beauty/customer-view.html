@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beauty Salon</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fdf2f8; }
+       .header { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; margin-bottom: 30px; }
+       .tab { background: white; padding: 15px 30px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .tab.active { background: #ec4899; color: white; }
+        
+       .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+       .service-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .service-icon { font-size: 40px; color: #ec4899; margin-bottom: 15px; }
+       .service-price { font-size: 24px; font-weight: 800; color: #ec4899; }
+       .btn-book { background: #ec4899; color: white; padding: 12px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .product-grid { display: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-spa"></i> <span id="shopName">Glam Beauty Studio</span></h1>
+        <p>Makeup, Hair, Skin & Bridal Services</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('services')"><i class="fa fa-scissors"></i> Services</div>
+            <div class="tab" onclick="showTab('products')"><i class="fa fa-shopping-bag"></i> Products</div>
+        </div>
+
+        <div id="services" class="service-grid">
+            <div class="service-card">
+                <div class="service-icon"><i class="fa fa-face-smile"></i></div>
+                <h3>Facial</h3>
+                <div class="service-price">₹800</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">45 min</p>
+                <button class="btn-book" onclick="bookService('Facial', 800)">Book Now</button>
+            </div>
+            <div class="service-card">
+                <div class="service-icon"><i class="fa fa-cut"></i></div>
+                <h3>Haircut</h3>
+                <div class="service-price">₹300</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">30 min</p>
+                <button class="btn-book" onclick="bookService('Haircut', 300)">Book Now</button>
+            </div>
+            <div class="service-card">
+                <div class="service-icon"><i class="fa fa-hand-sparkles"></i></div>
+                <h3>Manicure + Pedicure</h3>
+                <div class="service-price">₹800</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">60 min</p>
+                <button class="btn-book" onclick="bookService('Manicure', 800)">Book Now</button>
+            </div>
+            <div class="service-card">
+                <div class="service-icon"><i class="fa fa-crown"></i></div>
+                <h3>Bridal Makeup</h3>
+                <div class="service-price">₹5000</div>
+                <p style="color:#64748b; font-size:12px; margin:10px 0;">2 hours</p>
+                <button class="btn-book" onclick="bookService('Bridal Makeup', 5000)">Book Now</button>
+            </div>
+        </div>
+
+        <div id="products" class="service-grid product-grid">
+            <div class="service-card">
+                <div class="service-icon"><i class="fa fa-paintbrush"></i></div>
+                <h3>Lipstick</h3>
+                <div class="service-price">₹450</div>
+                <button class="btn-book" onclick="addToCart('Lipstick')">Add to Cart</button>
+            </div>
+            <div class="service-card">
+                <div class="service-icon"><i class="fa fa-bottle-droplet"></i></div>
+                <h3>Face Cream</h3>
+                <div class="service-price">₹600</div>
+                <button class="btn-book" onclick="addToCart('Face Cream')">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+
+        async function loadShop() {
+            const res = await fetch(`/api/local-market/shops/${shopId}`);
+            const shop = await res.json();
+            document.getElementById('shopName').innerText = shop.shopName;
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('services').style.display = tab==='services'? 'grid' : 'none';
+            document.getElementById('products').style.display = tab==='products'? 'grid' : 'none';
+        }
+
+        function bookService(service, price) {
+            alert(`Booking confirmed for ${service} - ₹${price}. We will call you for time slot.`);
+        }
+
+        function addToCart(item) {
+            alert(`${item} added to cart!`);
+        }
+
+        loadShop();
+    </script>
+</body>
+</html>

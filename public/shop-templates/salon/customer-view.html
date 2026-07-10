@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Salon Appointment</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fdf2f8; }
+        .header { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); color: white; padding: 50px 20px; text-align: center; }
+        .header h1 { font-size: 36px; }
+        .container { max-width: 1200px; margin: -30px auto 40px; padding: 0 20px; }
+        
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .service-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); cursor: pointer; transition: 0.3s; border: 3px solid transparent; }
+        .service-card:hover { border-color: #ec4899; transform: translateY(-5px); }
+        .service-card .icon { font-size: 40px; color: #ec4899; margin-bottom: 15px; }
+        .service-card .price { font-size: 24px; font-weight: 800; color: #ec4899; }
+        
+        .booking-form { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group label { font-weight: 600; margin-bottom: 8px; display: block; }
+        .form-group input, .form-group select { width: 100%; padding: 14px; border: 2px solid #fce7f3; border-radius: 10px; }
+        .btn-book { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); color: white; padding: 16px 40px; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-cut"></i> <span id="shopName">Beauty Salon</span></h1>
+        <p>Book Haircut, Facial, Bridal & Spa Services</p>
+    </div>
+
+    <div class="container">
+        <h2 style="margin-bottom:20px; text-align:center;">Our Services</h2>
+        <div class="services-grid">
+            <div class="service-card" onclick="selectService('Haircut', 200)"><div class="icon"><i class="fa fa-cut"></i></div><h3>Haircut</h3><p>Men & Women Styling</p><div class="price">₹200</div></div>
+            <div class="service-card" onclick="selectService('Hair Spa', 800)"><div class="icon"><i class="fa fa-water"></i></div><h3>Hair Spa</h3><p>Deep Conditioning</p><div class="price">₹800</div></div>
+            <div class="service-card" onclick="selectService('Facial', 1200)"><div class="icon"><i class="fa fa-smile"></i></div><h3>Facial</h3><p>Glow & Cleanup</p><div class="price">₹1200</div></div>
+            <div class="service-card" onclick="selectService('Manicure', 400)"><div class="icon"><i class="fa fa-hand-sparkles"></i></div><h3>Manicure</h3><p>Nail Care</p><div class="price">₹400</div></div>
+            <div class="service-card" onclick="selectService('Pedicure', 500)"><div class="icon"><i class="fa fa-shoe-prints"></i></div><h3>Pedicure</h3><p>Foot Spa</p><div class="price">₹500</div></div>
+            <div class="service-card" onclick="selectService('Bridal Makeup', 8000)"><div class="icon"><i class="fa fa-ring"></i></div><h3>Bridal Makeup</h3><p>Complete Package</p><div class="price">₹8000</div></div>
+        </div>
+
+        <div class="booking-form" id="bookingForm" style="display:none;">
+            <h2>Book <span id="selectedService"></span> - ₹<span id="selectedPrice"></span></h2>
+            <form onsubmit="submitBooking(event)">
+                <div class="form-grid">
+                    <div class="form-group"><label>Your Name</label><input type="text" id="custName" required></div>
+                    <div class="form-group"><label>Phone Number</label><input type="tel" id="custPhone" required></div>
+                    <div class="form-group"><label>Preferred Date</label><input type="date" id="prefDate" required></div>
+                    <div class="form-group"><label>Preferred Time</label><input type="time" id="prefTime" required></div>
+                    <div class="form-group"><label>Select Stylist</label>
+                        <select id="stylist"><option>Any Available</option><option>Riya</option><option>Priya</option><option>Anjali</option></select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-book"><i class="fa fa-calendar-check"></i> Book Appointment</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        let selectedService = '', selectedPrice = 0;
+
+        async function loadShop() {
+            const res = await fetch(`/api/local-market/shops/${shopId}`);
+            const shop = await res.json();
+            document.getElementById('shopName').innerText = shop.shopName;
+        }
+
+        function selectService(service, price) {
+            selectedService = service; selectedPrice = price;
+            document.getElementById('selectedService').innerText = service;
+            document.getElementById('selectedPrice').innerText = price;
+            document.getElementById('bookingForm').style.display = 'block';
+            document.getElementById('bookingForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function submitBooking(e) {
+            e.preventDefault();
+            const bookingData = {
+                shopId: shopId, service: selectedService, price: selectedPrice,
+                customerName: document.getElementById('custName').value,
+                phone: document.getElementById('custPhone').value,
+                date: document.getElementById('prefDate').value,
+                time: document.getElementById('prefTime').value,
+                stylist: document.getElementById('stylist').value,
+                status: 'pending'
+            };
+            
+            const res = await fetch('/api/local-market/appointments', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bookingData)
+            });
+            
+            if (res.ok) {
+                alert('Appointment Booked! You will get confirmation call.');
+                location.reload();
+            }
+        }
+        loadShop();
+    </script>
+</body>
+</html>

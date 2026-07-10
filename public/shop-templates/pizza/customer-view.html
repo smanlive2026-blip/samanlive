@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizza Shop Menu</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fef2f2; }
+       .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #dc2626; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #dc2626; }
+       .btn-order { background: #dc2626; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-pizza-slice"></i> <span id="shopName">Pizza Hub</span></h1>
+        <p>Hot & Fresh | 30 Min Delivery | Buy 1 Get 1</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 50+</div>
+            <div class="tab" onclick="filter('Pizza')">Pizza 15</div>
+            <div class="tab" onclick="filter('Burger')">Burger 8</div>
+            <div class="tab" onclick="filter('Pasta')">Pasta 6</div>
+            <div class="tab" onclick="filter('Sides')">Sides 8</div>
+            <div class="tab" onclick="filter('Drinks')">Drinks 6</div>
+            <div class="tab" onclick="filter('Combo')">Combo 7</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Today's Special Offers</h3>
+            <p style="margin-top:10px;">Buy 1 Get 1 Pizza | Free Delivery above ₹299 | Family Combo 20% OFF</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // PIZZA - 15
+            {name: "Margherita Pizza", price: 199, cat: "Pizza", size: "Regular", icon: "🍕"}, 
+            {name: "Farmhouse Pizza", price: 399, cat: "Pizza", size: "Medium", icon: "🍕"},
+            {name: "Pepperoni Pizza", price: 449, cat: "Pizza", size: "Medium", icon: "🍕"},
+            {name: "Veggie Supreme", price: 429, cat: "Pizza", size: "Medium", icon: "🍕"},
+            {name: "Paneer Tikka Pizza", price: 459, cat: "Pizza", size: "Medium", icon: "🍕"},
+            {name: "Chicken Dominator", price: 499, cat: "Pizza", size: "Medium", icon: "🍕"},
+            {name: "BBQ Chicken Pizza", price: 479, cat: "Pizza", size: "Medium", icon: "🍕"},
+            {name: "Cheese Burst Pizza", price: 529, cat: "Pizza", size: "Large", icon: "🍕"},
+            {name: "Mexican Green Wave", price: 419, cat: "Pizza", size: "Medium", icon: "🍕"},
+            {name: "Tandoori Paneer Pizza", price: 469, cat: "Pizza", size: "Medium", icon: "🍕"},
+            {name: "Golden Corn Pizza", price: 349, cat: "Pizza", size: "Regular", icon: "🍕"},
+            {name: "Deluxe Veggie Pizza", price: 389, cat: "Pizza", size: "Medium", icon: "🍕"},
+            {name: "Chicken Sausage Pizza", price: 489, cat: "Pizza", size: "Medium", icon: "🍕"},
+            {name: "Exotica Pizza", price: 439, cat: "Pizza", size: "Medium", icon: "🍕"},
+            {name: "Classic Cheese Pizza", price: 299, cat: "Pizza", size: "Regular", icon: "🍕"},
+            
+            // BURGER - 8
+            {name: "Veg Burger", price: 80, cat: "Burger", icon: "🍔"}, 
+            {name: "Cheese Burger", price: 120, cat: "Burger", icon: "🍔"},
+            {name: "Aloo Tikki Burger", price: 90, cat: "Burger", icon: "🍔"},
+            {name: "Paneer Burger", price: 140, cat: "Burger", icon: "🍔"},
+            {name: "Chicken Burger", price: 160, cat: "Burger", icon: "🍔"},
+            {name: "Double Patty Burger", price: 200, cat: "Burger", icon: "🍔"},
+            {name: "Crispy Chicken Burger", price: 180, cat: "Burger", icon: "🍔"},
+            {name: "Zinger Burger", price: 190, cat: "Burger", icon: "🍔"},
+            
+            // PASTA - 6
+            {name: "White Sauce Pasta", price: 150, cat: "Pasta", icon: "🍝"}, 
+            {name: "Red Sauce Pasta", price: 150, cat: "Pasta", icon: "🍝"},
+            {name: "Pink Sauce Pasta", price: 170, cat: "Pasta", icon: "🍝"},
+            {name: "Cheese Pasta", price: 180, cat: "Pasta", icon: "🍝"},
+            {name: "Chicken Pasta", price: 220, cat: "Pasta", icon: "🍝"},
+            {name: "Penne Pasta", price: 190, cat: "Pasta", icon: "🍝"},
+            
+            // SIDES - 8
+            {name: "Garlic Bread", price: 99, cat: "Sides", icon: "🥖"}, 
+            {name: "Cheese Garlic Bread", price: 149, cat: "Sides", icon: "🥖"},
+            {name: "French Fries", price: 80, cat: "Sides", icon: "🍟"},
+            {name: "Cheese Fries", price: 120, cat: "Sides", icon: "🍟"},
+            {name: "Chicken Wings", price: 199, cat: "Sides", icon: "🍗"},
+            {name: "Veg Nuggets", price: 150, cat: "Sides", icon: "🍗"},
+            {name: "Bread Sticks", price: 110, cat: "Sides", icon: "🥖"},
+            {name: "Potato Wedges", price: 100, cat: "Sides", icon: "🍟"},
+            
+            // DRINKS - 6
+            {name: "Coke 250ml", price: 40, cat: "Drinks", icon: "🥤"}, 
+            {name: "Coke 500ml", price: 60, cat: "Drinks", icon: "🥤"},
+            {name: "Sprite", price: 50, cat: "Drinks", icon: "🥤"},
+            {name: "Fanta", price: 50, cat: "Drinks", icon: "🥤"},
+            {name: "Cold Coffee", price: 90, cat: "Drinks", icon: "🥤"},
+            {name: "Milkshake", price: 120, cat: "Drinks", icon: "🥤"},
+            
+            // COMBO - 7
+            {name: "Pizza + Coke Combo", price: 299, cat: "Combo", icon: "🎁"}, 
+            {name: "2 Pizza Combo", price: 699, cat: "Combo", icon: "🎁"},
+            {name: "Family Feast", price: 999, cat: "Combo", icon: "🎁"},
+            {name: "Burger + Fries Combo", price: 199, cat: "Combo", icon: "🎁"},
+            {name: "Pasta + Garlic Bread", price: 249, cat: "Combo", icon: "🎁"},
+            {name: "Party Combo", price: 1499, cat: "Combo", icon: "🎁"},
+            {name: "Student Combo", price: 179, cat: "Combo", icon: "🎁"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.size || p.cat}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-order" onclick="alert('Added to cart!')"><i class="fa fa-cart-plus"></i> Order Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

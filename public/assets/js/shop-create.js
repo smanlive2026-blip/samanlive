@@ -2,22 +2,7 @@
 // SHOP CREATE MODULE - CATEGORY BASED
 // File: /public/assets/js/shop-create.js
 // ========================================
-window.mapShopType = function(module) {
-    const map = {
-        'kirana': 'product',
-        'cloth': 'fashion',
-        'medical': 'product',
-        'restaurant': 'food',
-        'electronics': 'product',
-        'hardware': 'product',
-        'salon': 'service',
-        'stationery': 'product',
-        'service': 'service',
-        'rental': 'rental',
-        'common': 'common'
-    };
-    return map[module] || 'common';
-}
+// NOTE: window.mapShopType ab shop-template-map.js se aa raha hai
 
 let createShopSelectedIcon = '🏪';
 let createShopUploadedLogoBase64 = null;
@@ -94,7 +79,7 @@ window.previewCreateShopLogo = function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) { // ✅ 2MB = 2097152 bytes
+    if (file.size > 2 * 1024 * 1024) {
         alert('Image size should be less than 2MB');
         event.target.value = '';
         return;
@@ -128,7 +113,7 @@ window.removeCreateShopLogo = function() {
 }
 
 // ========================================
-// LOAD SHOP MODULES
+// LOAD SHOP MODULES - ✅ 70+ SHOPS FROM MAP
 // ========================================
 function loadCreateShopModules() {
     const moduleSelect = document.getElementById('createShopModule');
@@ -136,28 +121,14 @@ function loadCreateShopModules() {
 
     moduleSelect.innerHTML = '<option value="">Select Shop Category</option>';
 
-    const shopTemplates = [
-        {id: 'kirana', name: 'Kirana/Grocery Store', icon: '🛒'},
-        {id: 'cloth', name: 'Cloth/Garment Shop', icon: '👗'},
-        {id: 'medical', name: 'Medical Store', icon: '💊'},
-        {id: 'restaurant', name: 'Restaurant/Cafe', icon: '🍕'},
-        {id: 'electronics', name: 'Electronics Shop', icon: '📱'},
-        {id: 'hardware', name: 'Hardware Store', icon: '🔧'},
-        {id: 'salon', name: 'Salon/Beauty Parlour', icon: '💇'},
-        {id: 'stationery', name: 'Stationery Shop', icon: '🎓'},
-        {id: 'service', name: 'Service Provider', icon: '🔧'},
-        {id: 'rental', name: 'Rental Shop', icon: '🚗'},
-        {id: 'common', name: 'Common Shop - General', icon: '🏪'}
-    ];
-
-    shopTemplates.forEach(m => {
+    window.getAllShopTemplates().forEach(m => {
         const option = document.createElement('option');
         option.value = m.id;
         option.textContent = `${m.icon} ${m.name}`;
         moduleSelect.appendChild(option);
     });
 
-    console.log('✅ Loaded Shop Templates:', shopTemplates.length);
+    console.log('✅ Loaded Shop Templates:', window.getAllShopTemplates().length);
 }
 
 // ========================================
@@ -172,7 +143,6 @@ function autoFillCreateShopArea() {
         return;
     }
 
-    // ✅ HARD FALLBACKS - Undefined kabhi nahi jayega
     const city = manager.city || 'Surat';
     const state = manager.state || 'Gujarat';
     const pincode = manager.pincode || '395007';
@@ -188,7 +158,6 @@ function autoFillCreateShopArea() {
     createShopSelectedManagerCodes = [managerCode];
     document.getElementById('createShopManagerCodes').value = JSON.stringify(createShopSelectedManagerCodes);
 
-    // ✅ Fix undefined issue
     const cityBox = document.getElementById('createShopCityBox');
     if (cityBox) {
         cityBox.style.display = 'flex';
@@ -267,7 +236,6 @@ function initCreateShopForm() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
 
-        // ✅ GET VALUES + SANITIZE PHONE
         const shopName = document.getElementById('createShopName').value.trim();
         const ownerName = document.getElementById('createShopOwnerName').value.trim();
         const phoneNumber = document.getElementById('createShopPhone').value.trim().replace(/\D/g, '');
@@ -278,7 +246,6 @@ function initCreateShopForm() {
 
         console.log('🔍 RAW Values:', { shopName, ownerName, phoneNumber, shopModule, shopAddress, range });
 
-        // ✅ STRICT VALIDATION
         if (!shopName) return showError('Shop Name dalna zaroori hai!', 'createShopName', btn);
         if (!ownerName) return showError('Owner Name dalna zaroori hai!', 'createShopOwnerName', btn);
         if (!phoneNumber || phoneNumber.length!== 10) {
@@ -288,14 +255,13 @@ function initCreateShopForm() {
         if (!shopAddress) return showError('Shop Address dalna zaroori hai!', 'createShopAddress', btn);
         if (!manager?.managerCode) return showError('Session expired! Page reload karo.', null, btn);
 
-        // ✅ BACKEND /manager/create-shop-v2 YEHI FIELDS EXPECT KARTA HAI
        const shopData = {
           shopName: shopName,
           ownerName: ownerName,
           phone: phoneNumber,
           contact: phoneNumber,
           serviceType: shopModule,
-          shopType: window.mapShopType(shopModule),
+          shopType: window.mapShopType(shopModule), // ✅ MAP FILE SE
           bucket: manager.bucket || 'DEFAULT',
           areaCode: manager.areaCode,
           email: document.getElementById('createShopEmail').value.trim() || '',
@@ -314,17 +280,13 @@ function initCreateShopForm() {
 
             console.log('📥 Backend Response:', res);
 
-            // ✅ Backend {success: true, shop: newShop, currentCount, maxShops} bhejta hai
             if (res.success && res.shop) {
                 const shopId = res.shop._id;
                 const shopType = res.shop.serviceType || shopModule || 'common';
-                // ✅ SAHI TEMPLATE LINK
-                const dashboardUrl = `${window.location.origin}/shop-templates/${shopType}/dashboard.html?shopId=${shopId}`;
+                const templateFolder = window.getShopTemplateFolder(shopType); // ✅ SAHI FOLDER
+                const dashboardUrl = `${window.location.origin}/shop-templates/${templateFolder}/dashboard.html?shopId=${shopId}`;
 
-                // ✅ Clipboard me copy
                 navigator.clipboard.writeText(dashboardUrl).catch(err => {});
-
-                // ✅ NAYA: SUCCESS MODAL WITH OPEN BUTTON
                 showSuccessModal(res.shopName, dashboardUrl, res.currentCount, res.maxShops);
 
                 closeCreateShopModal();
@@ -343,7 +305,7 @@ function initCreateShopForm() {
     });
 }
 
-// ✅ NAYA FUNCTION: SUCCESS MODAL WITH OPEN BUTTON
+// ✅ SUCCESS MODAL WITH OPEN BUTTON
 function showSuccessModal(shopName, dashboardUrl, currentCount, maxShops) {
     const modalHtml = `
         <div id="successModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;">
@@ -388,8 +350,8 @@ function resetCreateShopForm() {
     document.getElementById('createShopRange').value = '5000';
 
     createShopSelectedIcon = '🏪';
-    document.querySelectorAll('#createShopIconPicker.icon-option').forEach(el => el.classList.remove('selected'));
-    const defaultIcon = document.querySelector('#createShopIconPicker.icon-option[data-icon="🏪"]');
+    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+    const defaultIcon = document.querySelector('.icon-option[data-icon="🏪"]');
     if (defaultIcon) defaultIcon.classList.add('selected');
     removeCreateShopLogo();
 }
@@ -400,4 +362,4 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-console.log('✅ shop-create.js loaded - Auto-connected to Current Manager Only');
+console.log('✅ shop-create.js loaded - Auto-connected to Current Manager Only + 70+ Templates');

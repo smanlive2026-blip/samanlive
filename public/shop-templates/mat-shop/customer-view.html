@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mat Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0fdf4; }
+       .header { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #22c55e; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #22c55e; }
+       .old-price { text-decoration: line-through; color: #94a3b8; font-size: 14px; }
+       .btn-buy { background: #22c55e; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #22c55e; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-person"></i> <span id="shopName">FitMat Sports</span></h1>
+        <p>Yoga, Gym, Meditation Mats | Anti-Slip | Eco-Friendly | Free Delivery Above ₹999</p>
+    </div>
+
+    <div class="container">
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Gym Offer</h3>
+            <p>Buy 5 Get 1 Free | Bulk Discount for Yoga Centers | Free Carrying Bag</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Yoga')">Yoga</div>
+            <div class="filter" onclick="filter('Gym')">Gym</div>
+            <div class="filter" onclick="filter('Meditation')">Meditation</div>
+            <div class="filter" onclick="filter('Kids')">Kids</div>
+            <div class="filter" onclick="filter('Pilates')">Pilates</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "Yoga Mat Pro TPE", price: 1299, old: 1599, cat: "Yoga", size: "6x2 ft", thick: "6mm", icon: "🧘"}, 
+            {name: "Gym Exercise Mat", price: 2200, old: 2600, cat: "Gym", size: "8x4 ft", thick: "15mm", icon: "💪"},
+            {name: "Meditation Mat Cotton", price: 899, old: 1099, cat: "Meditation", size: "5x2 ft", thick: "4mm", icon: "🧘"},
+            {name: "Kids Play Mat EVA", price: 1800, old: 2100, cat: "Kids", size: "6x6 ft", thick: "20mm", icon: "🧸"},
+            {name: "Pilates Mat NBR", price: 1500, old: 1800, cat: "Pilates", size: "6x2 ft", thick: "10mm", icon: "🧘"},
+            {name: "Anti-Slip Yoga Mat", price: 999, old: 1299, cat: "Yoga", size: "6x2 ft", thick: "5mm", icon: "🧘"},
+            {name: "Floor Exercise Mat", price: 2800, old: 3200, cat: "Gym", size: "10x5 ft", thick: "20mm", icon: "💪"},
+            {name: "Travel Yoga Mat", price: 799, old: 999, cat: "Yoga", size: "6x2 ft", thick: "3mm", icon: "🧘"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.size} | ${p.thick}</p>
+                    <div style="margin:10px 0;">
+                        <span class="product-price">₹${p.price}</span>
+                        <span class="old-price">₹${p.old}</span>
+                    </div>
+                    <button class="btn-buy" onclick="alert('Added to Cart!')"><i class="fa fa-cart-plus"></i> Add to Cart</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

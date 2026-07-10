@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plywood Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f5f3ff; }
+       .header { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #8b5cf6; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #8b5cf6; }
+       .btn-buy { background: #8b5cf6; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .service-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 2px dashed #8b5cf6; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-layer-group"></i> <span id="shopName">Shree Plywood & Hardware</span></h1>
+        <p>Plywood, MDF, Laminate, Veneer | Cutting Service | Carpenter Available</p>
+    </div>
+
+    <div class="container">
+        <div class="service-box">
+            <h3><i class="fa fa-tools"></i> Free Services</h3>
+            <p>Board Cutting | Edge Banding | Delivery | Carpenter Booking | Interior Consultation</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Plywood')">Plywood</div>
+            <div class="filter" onclick="filter('MDF')">MDF</div>
+            <div class="filter" onclick="filter('Laminate')">Laminate</div>
+            <div class="filter" onclick="filter('Veneer')">Veneer</div>
+            <div class="filter" onclick="filter('Door')">Door</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "18mm BWR Plywood", price: 3200, size: "8x4 ft", cat: "Plywood", grade: "Waterproof", brand: "Greenply", icon: "🪚"}, 
+            {name: "12mm MR Plywood", price: 1800, size: "8x4 ft", cat: "Plywood", grade: "Moisture Resistant", brand: "Century", icon: "🪚"},
+            {name: "MDF Board", price: 1200, size: "8x4 ft", cat: "MDF", grade: "18mm", brand: "Action Tesa", icon: "🪚"},
+            {name: "Laminate Sheet", price: 800, size: "8x4 ft", cat: "Laminate", grade: "1mm", brand: "Merino", icon: "🪚"},
+            {name: "Teak Veneer", price: 1500, size: "8x4 ft", cat: "Veneer", grade: "Natural", brand: "DURO", icon: "🪚"},
+            {name: "Flush Door", price: 2800, size: "7x3 ft", cat: "Door", grade: "Commercial", brand: "Duro", icon: "🚪"},
+            {name: "Block Board", price: 2500, size: "8x4 ft", cat: "Plywood", grade: "19mm", brand: "Greenply", icon: "🪚"},
+            {name: "Hinges & Hardware", price: 500, size: "Set", cat: "Hardware", grade: "SS", brand: "Hafele", icon: "🔩"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.brand} | ${p.grade} | ${p.size}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Order Placed!')"><i class="fa fa-phone"></i> Call Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

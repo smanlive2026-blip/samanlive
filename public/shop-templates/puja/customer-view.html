@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puja Samagri Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fffbeb; }
+       .header { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #f59e0b; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 20px; font-weight: 800; color: #f59e0b; }
+       .btn-buy { background: #f59e0b; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-om"></i> <span id="shopName">Shri Ram Puja Bhandar</span></h1>
+        <p>Murti, Agarbatti, Diya | Festival Combos | Home Delivery</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 70+</div>
+            <div class="tab" onclick="filter('Murti')">Murti 10</div>
+            <div class="tab" onclick="filter('Pooja')">Pooja Item 15</div>
+            <div class="tab" onclick="filter('Diya')">Diya 8</div>
+            <div class="tab" onclick="filter('Fragrance')">Agarbatti 8</div>
+            <div class="tab" onclick="filter('Thali')">Thali 8</div>
+            <div class="tab" onclick="filter('Havan')">Havan 8</div>
+            <div class="tab" onclick="filter('Combo')">Festival Combo 13</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="offer-box">
+            <h3><i class="fa fa-gift"></i> Festival Special</h3>
+            <p style="margin-top:10px;">Diwali, Navratri, Karwa Chauth Combo Available | Bulk Orders Accepted</p>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            // MURTI - 10
+            {name: "Ganesh Ji Murti", price: 500, cat: "Murti", icon: "🕉️"}, 
+            {name: "Lakshmi Ji Murti", price: 600, cat: "Murti", icon: "🕉️"},
+            {name: "Radha Krishna Murti", price: 800, cat: "Murti", icon: "🕉️"},
+            {name: "Shivling", price: 400, cat: "Murti", icon: "🕉️"},
+            {name: "Hanuman Ji Murti", price: 450, cat: "Murti", icon: "🕉️"},
+            {name: "Saraswati Murti", price: 550, cat: "Murti", icon: "🕉️"},
+            {name: "Durga Mata Murti", price: 700, cat: "Murti", icon: "🕉️"},
+            {name: "Bal Gopal Murti", price: 350, cat: "Murti", icon: "🕉️"},
+            {name: "Vishnu Ji Murti", price: 650, cat: "Murti", icon: "🕉️"},
+            {name: "Shiv Parivar Murti", price: 1200, cat: "Murti", icon: "🕉️"},
+            
+            // POOJA ITEM - 15
+            {name: "Sindoor", price: 20, cat: "Pooja", icon: "🔴"}, 
+            {name: "Kumkum", price: 15, cat: "Pooja", icon: "🔴"},
+            {name: "Chandan", price: 50, cat: "Pooja", icon: "🟡"},
+            {name: "Roli", price: 20, cat: "Pooja", icon: "🔴"},
+            {name: "Haldi", price: 30, cat: "Pooja", icon: "🟡"},
+            {name: "Akshat Chawal", price: 40, cat: "Pooja", icon: "🌾"},
+            {name: "Pooja Kalash", price: 250, cat: "Pooja", icon: "🏺"},
+            {name: "Bell Ghanti", price: 150, cat: "Pooja", icon: "🔔"},
+            {name: "Pooja Aasan", price: 200, cat: "Pooja", icon: "🪑"},
+            {name: "Mala", price: 100, cat: "Pooja", icon: "📿"},
+            {name: "Janeu", price: 50, cat: "Pooja", icon: "🧵"},
+            {name: "Pooja Book", price: 80, cat: "Pooja", icon: "📖"},
+            {name: "Photo Frame", price: 300, cat: "Pooja", icon: "🖼️"},
+            {name: "Kalawa", price: 10, cat: "Pooja", icon: "🧵"},
+            {name: "Naivedyam Plate", price: 120, cat: "Pooja", icon: "🍽️"},
+            
+            // DIYA - 8
+            {name: "Mitti Diya 12pc", price: 60, cat: "Diya", icon: "🪔"}, 
+            {name: "Brass Diya", price: 200, cat: "Diya", icon: "🪔"},
+            {name: "Oil Diya", price: 150, cat: "Diya", icon: "🪔"},
+            {name: "LED Diya", price: 250, cat: "Diya", icon: "🪔"},
+            {name: "Floating Diya", price: 180, cat: "Diya", icon: "🪔"},
+            {name: "Decorative Diya", price: 300, cat: "Diya", icon: "🪔"},
+            {name: "Diya Stand", price: 120, cat: "Diya", icon: "🪔"},
+            {name: "Diya Oil 1L", price: 200, cat: "Diya", icon: "🪔"},
+            
+            // FRAGRANCE - 8
+            {name: "Agarbatti Pack", price: 50, cat: "Fragrance", icon: "🪔"}, 
+            {name: "Dhoop Batti", price: 60, cat: "Fragrance", icon: "🪔"},
+            {name: "Camphor Kapur", price: 40, cat: "Fragrance", icon: "🔥"},
+            {name: "Sandalwood Powder", price: 100, cat: "Fragrance", icon: "🟡"},
+            {name: "Rose Water", price: 80, cat: "Fragrance", icon: "🌹"},
+            {name: "Itra", price: 150, cat: "Fragrance", icon: "🌸"},
+            {name: "Guggal", price: 120, cat: "Fragrance", icon: "🔥"},
+            {name: "Loban", price: 90, cat: "Fragrance", icon: "🔥"},
+            
+            // THALI - 8
+            {name: "Pooja Thali Small", price: 250, cat: "Thali", icon: "🍽️"}, 
+            {name: "Pooja Thali Large", price: 450, cat: "Thali", icon: "🍽️"},
+            {name: "Karwa Thali", price: 800, cat: "Thali", icon: "🍽️"},
+            {name: "Brass Thali Set", price: 1200, cat: "Thali", icon: "🍽️"},
+            {name: "Decorated Thali", price: 600, cat: "Thali", icon: "🍽️"},
+            {name: "Thali with Diya", price: 350, cat: "Thali", icon: "🍽️"},
+            {name: "Wedding Thali", price: 2000, cat: "Thali", icon: "🍽️"},
+            {name: "Gift Thali", price: 900, cat: "Thali", icon: "🍽️"},
+            
+            // HAVAN - 8
+            {name: "Havan Samagri", price: 200, cat: "Havan", icon: "🔥"}, 
+            {name: "Havan Kund", price: 500, cat: "Havan", icon: "🔥"},
+            {name: "Ghee 500ml", price: 300, cat: "Havan", icon: "🫙"},
+            {name: "Havan Ladle", price: 150, cat: "Havan", icon: "🥄"},
+            {name: "Sacred Grass Kusha", price: 80, cat: "Havan", icon: "🌿"},
+            {name: "Pooja Coconut", price: 50, cat: "Havan", icon: "🥥"},
+            {name: "Betel Leaves", price: 40, cat: "Havan", icon: "🍃"},
+            {name: "Havan Mantra Book", price: 120, cat: "Havan", icon: "📖"},
+            
+            // FESTIVAL COMBO - 13
+            {name: "Diwali Combo Pack", price: 1500, cat: "Combo", icon: "🎁"}, 
+            {name: "Navratri Pooja Kit", price: 800, cat: "Combo", icon: "🎁"},
+            {name: "Karwa Chauth Kit", price: 1200, cat: "Combo", icon: "🎁"},
+            {name: "Janmashtami Kit", price: 900, cat: "Combo", icon: "🎁"},
+            {name: "Rakhi Pooja Set", price: 600, cat: "Combo", icon: "🎁"},
+            {name: "Wedding Pooja Kit", price: 5000, cat: "Combo", icon: "🎁"},
+            {name: "Griha Pravesh Kit", price: 2500, cat: "Combo", icon: "🎁"},
+            {name: "Satyanarayan Pooja", price: 1800, cat: "Combo", icon: "🎁"},
+            {name: "Durga Pooja Kit", price: 1000, cat: "Combo", icon: "🎁"},
+            {name: "Ganesh Chaturthi Kit", price: 1100, cat: "Combo", icon: "🎁"},
+            {name: "Gift Pack Small", price: 500, cat: "Combo", icon: "🎁"},
+            {name: "Gift Pack Large", price: 2000, cat: "Combo", icon: "🎁"},
+            {name: "Corporate Gift", price: 1500, cat: "Combo", icon: "🎁"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Added to cart!')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

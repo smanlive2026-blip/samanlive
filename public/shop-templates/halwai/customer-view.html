@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Halwai Sweet Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #fef2f2; }
+       .header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+       .tab.active { background: #dc2626; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 20px; font-weight: 800; color: #dc2626; }
+       .btn-order { background: #dc2626; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-candy-cane"></i> <span id="shopName">Sharma Halwai</span></h1>
+        <p>Mithai + Namkeen + Garam Snacks | Fresh Daily</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All')">All 65+</div>
+            <div class="tab" onclick="filter('Sweet')">Mithai 20</div>
+            <div class="tab" onclick="filter('Namkeen')">Namkeen 10</div>
+            <div class="tab" onclick="filter('Snack')">Garam Snack 10</div>
+            <div class="tab" onclick="filter('Farsan')">Farsan 8</div>
+            <div class="tab" onclick="filter('Dryfruit')">Dryfruit 8</div>
+            <div class="tab" onclick="filter('Special')">Festival 9</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            // SWEETS - 20
+            {name: "Gulab Jamun", price: 300, cat: "Sweet", unit: "kg", icon: "🍯"}, 
+            {name: "Rasgulla", price: 280, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Rasmalai", price: 400, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Jalebi", price: 240, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Kaju Katli", price: 800, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Barfi", price: 500, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Ladoo", price: 320, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Peda", price: 400, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Kalakand", price: 450, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Rabri", price: 350, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Milk Cake", price: 500, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Soan Papdi", price: 280, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Balushahi", price: 260, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Chamcham", price: 420, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Sandesh", price: 450, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Malpua", price: 300, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Ghevar", price: 600, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Halwa", price: 320, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Kheer", price: 200, cat: "Sweet", unit: "kg", icon: "🍯"},
+            {name: "Imarti", price: 280, cat: "Sweet", unit: "kg", icon: "🍯"},
+            
+            // NAMKEEN - 10
+            {name: "Aloo Bhujia", price: 200, cat: "Namkeen", unit: "kg", icon: "🥨"}, 
+            {name: "Mix Namkeen", price: 220, cat: "Namkeen", unit: "kg", icon: "🥨"},
+            {name: "Chana Dal", price: 180, cat: "Namkeen", unit: "kg", icon: "🥨"},
+            {name: "Sev", price: 190, cat: "Namkeen", unit: "kg", icon: "🥨"},
+            {name: "Matar", price: 210, cat: "Namkeen", unit: "kg", icon: "🥨"},
+            {name: "Moth Dal", price: 200, cat: "Namkeen", unit: "kg", icon: "🥨"},
+            {name: "Khatta Meetha", price: 240, cat: "Namkeen", unit: "kg", icon: "🥨"},
+            {name: "Navratan Mix", price: 250, cat: "Namkeen", unit: "kg", icon: "🥨"},
+            {name: "Bikaneri Bhujia", price: 230, cat: "Namkeen", unit: "kg", icon: "🥨"},
+            {name: "Diet Chivda", price: 260, cat: "Namkeen", unit: "kg", icon: "🥨"},
+            
+            // GARAM SNACK - 10
+            {name: "Samosa", price: 15, cat: "Snack", unit: "pcs", icon: "🔥"}, 
+            {name: "Bread Pakoda", price: 20, cat: "Snack", unit: "pcs", icon: "🔥"},
+            {name: "Aloo Tikki", price: 20, cat: "Snack", unit: "pcs", icon: "🔥"},
+            {name: "Kachori", price: 15, cat: "Snack", unit: "pcs", icon: "🔥"},
+            {name: "Paneer Pakoda", price: 30, cat: "Snack", unit: "pcs", icon: "🔥"},
+            {name: "Onion Pakoda", price: 20, cat: "Snack", unit: "pcs", icon: "🔥"},
+            {name: "Mirchi Pakoda", price: 15, cat: "Snack", unit: "pcs", icon: "🔥"},
+            {name: "Golgappa", price: 30, cat: "Snack", unit: "plate", icon: "🔥"},
+            {name: "Chole Bhature", price: 60, cat: "Snack", unit: "plate", icon: "🔥"},
+            {name: "Raj Kachori", price: 50, cat: "Snack", unit: "pcs", icon: "🔥"},
+            
+            // FARSAN - 8
+            {name: "Dhokla", price: 200, cat: "Farsan", unit: "kg", icon: "🍽️"}, 
+            {name: "Khandvi", price: 250, cat: "Farsan", unit: "kg", icon: "🍽️"},
+            {name: "Fafda", price: 180, cat: "Farsan", unit: "kg", icon: "🍽️"},
+            {name: "Gathiya", price: 190, cat: "Farsan", unit: "kg", icon: "🍽️"},
+            {name: "Patra", price: 220, cat: "Farsan", unit: "kg", icon: "🍽️"},
+            {name: "Dabeli", price: 25, cat: "Farsan", unit: "pcs", icon: "🍽️"},
+            {name: "Vada Pav", price: 20, cat: "Farsan", unit: "pcs", icon: "🍽️"},
+            {name: "Pav Bhaji", price: 70, cat: "Farsan", unit: "plate", icon: "🍽️"},
+            
+            // DRYFRUIT - 8
+            {name: "Kaju Katli Dryfruit", price: 900, cat: "Dryfruit", unit: "kg", icon: "🥜"}, 
+            {name: "Dryfruit Ladoo", price: 700, cat: "Dryfruit", unit: "kg", icon: "🥜"},
+            {name: "Pista Barfi", price: 850, cat: "Dryfruit", unit: "kg", icon: "🥜"},
+            {name: "Badam Halwa", price: 800, cat: "Dryfruit", unit: "kg", icon: "🥜"},
+            {name: "Dryfruit Mix", price: 1200, cat: "Dryfruit", unit: "kg", icon: "🥜"},
+            {name: "Anjeer Roll", price: 950, cat: "Dryfruit", unit: "kg", icon: "🥜"},
+            {name: "Kesar Peda", price: 600, cat: "Dryfruit", unit: "kg", icon: "🥜"},
+            {name: "Dryfruit Modak", price: 750, cat: "Dryfruit", unit: "kg", icon: "🥜"},
+            
+            // SPECIAL FESTIVAL - 9
+            {name: "Diwali Gift Pack", price: 1000, cat: "Special", unit: "box", icon: "🎁"}, 
+            {name: "Holi Gujiya", price: 400, cat: "Special", unit: "kg", icon: "🎁"},
+            {name: "Rakhi Sweet Box", price: 800, cat: "Special", unit: "box", icon: "🎁"},
+            {name: "Wedding Sweet Tray", price: 5000, cat: "Special", unit: "tray", icon: "🎁"},
+            {name: "Birthday Cake", price: 600, cat: "Special", unit: "kg", icon: "🎁"},
+            {name: "Ladoo Box 51pcs", price: 1200, cat: "Special", unit: "box", icon: "🎁"},
+            {name: "Mithai Thali", price: 1500, cat: "Special", unit: "thali", icon: "🎁"},
+            {name: "Bulk Order 10kg+", price: 0, cat: "Special", unit: "custom", icon: "🎁"},
+            {name: "Corporate Gift", price: 2000, cat: "Special", unit: "box", icon: "🎁"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.cat} | Per ${p.unit}</p>
+                    <div class="product-price">${p.price===0?'Contact':`₹${p.price}`}</div>
+                    <button class="btn-order" onclick="alert('Order placed!')"><i class="fa fa-cart-plus"></i> Order</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Studio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0f9ff; }
+       .header { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin: 30px 0; }
+       .service-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .service-price { font-size: 20px; font-weight: 800; color: #0ea5e9; }
+       .btn-book { background: #0ea5e9; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .upload-box { background: white; padding: 30px; border-radius: 20px; margin: 30px 0; text-align: center; border: 3px dashed #0ea5e9; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-camera"></i> <span id="shopName">Pixel Pro Photo Studio</span></h1>
+        <p>HD Photo Print | Wedding Album | ID Photo | Drone Shoot | 1 Hour Delivery</p>
+    </div>
+
+    <div class="container">
+        <div class="upload-box">
+            <h2><i class="fa fa-cloud-upload"></i> Upload Photos & Get Print</h2>
+            <p style="margin:10px 0; color:#64748b;">WhatsApp: 9876543210 | Email: pixelpro@gmail.com</p>
+            <button class="btn-book" onclick="alert('Upload Page Opened')"><i class="fa fa-upload"></i> Upload Now</button>
+        </div>
+
+        <h2 style="text-align:center; margin:20px 0;">Our Services</h2>
+        <div class="service-grid" id="serviceGrid"></div>
+    </div>
+
+    <script>
+        const services = [
+            {name: "Photo Print 4x6", price: "₹15", desc: "HD Glossy Print", icon: "📷"}, 
+            {name: "ID Photo", price: "₹200", desc: "12 Photos - 5min", icon: "🪪"},
+            {name: "Wedding Album", price: "₹4500", desc: "30 Page Premium", icon: "📖"},
+            {name: "Photo Framing", price: "₹800", desc: "All Sizes Available", icon: "🖼️"},
+            {name: "Photo Shoot", price: "₹5000", desc: "Birthday, Event", icon: "🎬"},
+            {name: "Drone Video", price: "₹8000", desc: "Wedding + Event", icon: "🚁"},
+            {name: "Photo Editing", price: "₹50", desc: "Retouch, Background", icon: "✨"},
+            {name: "Canvas Print", price: "₹1200", desc: "16x20 Size", icon: "🖼️"}
+        ];
+
+        document.getElementById('serviceGrid').innerHTML = services.map(s => `
+            <div class="service-card">
+                <div style="font-size:40px; margin-bottom:10px;">${s.icon}</div>
+                <h3>${s.name}</h3>
+                <p style="color:#64748b; font-size:14px; margin:8px 0;">${s.desc}</p>
+                <div class="service-price">${s.price}</div>
+                <button class="btn-book" onclick="alert('Order Placed!')"><i class="fa fa-phone"></i> Book Now</button>
+            </div>
+        `).join('');
+    </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipe & Pump Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0f9ff; }
+       .header { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header h1 { font-size: 36px; }
+       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        
+       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
+       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+       .filter.active { background: #0ea5e9; color: white; }
+        
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+       .product-price { font-size: 22px; font-weight: 800; color: #0ea5e9; }
+       .btn-buy { background: #0ea5e9; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+        
+       .service-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 2px dashed #0ea5e9; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-faucet"></i> <span id="shopName">JalDhara Pipe & Pump</span></h1>
+        <p>PVC Pipe, Submersible Pump, Water Tank | Installation | 2 Year Warranty</p>
+    </div>
+
+    <div class="container">
+        <div class="service-box">
+            <h3><i class="fa fa-wrench"></i> Free Services</h3>
+            <p>Borewell Digging | Pump Installation | Tank Cleaning | Pipe Fitting | 24x7 Service</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter active" onclick="filter('All')">All</div>
+            <div class="filter" onclick="filter('Pipe')">Pipe</div>
+            <div class="filter" onclick="filter('Pump')">Pump</div>
+            <div class="filter" onclick="filter('Tanki')">Tanki</div>
+            <div class="filter" onclick="filter('Fitting')">Fitting</div>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <script>
+        const products = [
+            {name: "PVC Pipe 1 inch", price: 450, size: "20ft", cat: "Pipe", brand: "Supreme", icon: "🚰"}, 
+            {name: "CPVC Pipe 3/4\"", price: 380, size: "20ft", cat: "Pipe", brand: "Astral", icon: "🚰"},
+            {name: "Submersible 1HP", price: 8500, size: "1HP", cat: "Pump", brand: "Crompton", icon: "⚡"},
+            {name: "Pressure Pump 0.5HP", price: 4200, size: "0.5HP", cat: "Pump", brand: "Kirloskar", icon: "⚡"},
+            {name: "Water Tank 1000L", price: 6500, size: "1000L", cat: "Tanki", brand: "Sintex", icon: "🛢️"},
+            {name: "Water Tank 500L", price: 3800, size: "500L", cat: "Tanki", brand: "Plasto", icon: "🛢️"},
+            {name: "Elbow Fitting", price: 25, size: "1 inch", cat: "Fitting", brand: "Local", icon: "🔧"},
+            {name: "Ball Valve", price: 120, size: "1 inch", cat: "Fitting", brand: "Jaguar", icon: "🔧"}
+        ];
+
+        function display(items) {
+            document.getElementById('productGrid').innerHTML = items.map(p => `
+                <div class="product-card">
+                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <h3>${p.name}</h3>
+                    <p style="color:#64748b; font-size:12px;">${p.brand} | ${p.size}</p>
+                    <div class="product-price">₹${p.price}</div>
+                    <button class="btn-buy" onclick="alert('Order Placed!')"><i class="fa fa-phone"></i> Call for Order</button>
+                </div>
+            `).join('');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            display(cat==='All'? products : products.filter(p => p.cat === cat));
+        }
+        display(products);
+    </script>
+</body>
+</html>
