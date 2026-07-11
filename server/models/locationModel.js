@@ -1,3 +1,5 @@
+//  isska location h   server/models/location.js
+
 const mongoose = require('mongoose');
 
 const locationSchema = new mongoose.Schema({

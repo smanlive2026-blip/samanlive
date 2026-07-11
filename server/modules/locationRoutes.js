@@ -1,3 +1,5 @@
+//iska location h server/modules/locationRoutes.js
+
 const express = require('express');
 const router = express.Router();
 const locationCtrl = require('../controllers/locationController');

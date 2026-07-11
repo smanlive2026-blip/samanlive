@@ -6,27 +6,20 @@ const auth = require('../middleware/authenticateToken');
 
 // ========================================
 // 1. PUBLIC SHOPS - Customer app/website
+// Location filter hata diya. Ye ab locationRoutes.js se aayega
 // ========================================
 router.get('/public', async (req, res) => {
     try {
-        const { lat, lng, radius = 5000, shopType, categoryId, serviceType } = req.query;
+        const { shopType, categoryId, serviceType } = req.query;
         let query = { status: { $in: ['approved', 'active'] }, isActive: true };
 
-        if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
-            query.location = { 
-                $near: { 
-                    $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] }, 
-                    $maxDistance: parseInt(radius) 
-                } 
-            };
-        }
         if (shopType) query.shopType = shopType;
         if (categoryId) query.categoryId = categoryId;
         if (serviceType) query.serviceType = serviceType;
 
         const shops = await Shop.find(query)
             .select('-ownerId -approvedBy -rejectionReason -email')
-            .limit(50)
+            .limit(100)
             .sort({ priority: -1, rating: -1 });
         res.json({ success: true, count: shops.length, data: shops });
     } catch (err) {
@@ -35,31 +28,10 @@ router.get('/public', async (req, res) => {
 });
 
 // ========================================
-// 2. NEARBY SHOPS
+// 2. NEARBY SHOPS - DELETE KIYA
+// Ab ye kaam /api/location/nearby-shops karega
 // ========================================
-router.get('/nearby', async (req, res) => {
-    try {
-        const { lat, lng, radius = 5000, type } = req.query;
-        if (!lat || !lng) return res.status(400).json({ error: 'lat and lng required' });
-
-        const query = { 
-            status: { $in: ['approved', 'active'] }, 
-            isActive: true, 
-            location: { 
-                $near: { 
-                    $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] }, 
-                    $maxDistance: parseInt(radius) 
-                } 
-            } 
-        };
-        if (type) query.shopType = type;
-
-        const shops = await Shop.find(query).limit(50);
-        res.json(shops);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// router.get('/nearby', ...)  // PURA DELETE
 
 // ========================================
 // 3. SHOP DETAILS
@@ -161,6 +133,7 @@ router.delete('/products/:shopId/:productId', auth, async (req, res) => {
 
 // ========================================
 // 6. UPDATE SHOP
+// Location update wala code hata diya. Ab sirf normal info update hoga
 // ========================================
 router.put('/shops/:id', auth, async (req, res) => {
     try {
@@ -171,9 +144,7 @@ router.put('/shops/:id', auth, async (req, res) => {
         const isManager = shop.controlledBy?.toString() === req.user.id;
         if (!isOwner && !isManager && req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
 
-        if (req.body.location?.coordinates) {
-            req.body.location = { type: 'Point', coordinates: [parseFloat(req.body.location.coordinates[0]), parseFloat(req.body.location.coordinates[1])] };
-        }
+        // location wala if block delete kar diya
         Object.assign(shop, req.body);
         shop.updatedAt = new Date();
         await shop.save();

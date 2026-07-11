@@ -7,10 +7,6 @@ let shopMarker = null;
 let rangeCircle = null;
 let lastSentLocation = null;
 let shopManagers = [];
-let pickerMap = null;
-let pickerMarker = null;
-let locationType = 'fixed';
-let liveWatchId = null;
 let isMapVisible = true;
 
 if (!shopId) {
@@ -23,9 +19,9 @@ function toggleMap() {
     const wrapper = document.getElementById('mapWrapper');
     const icon = document.getElementById('mapToggleIcon');
     const text = document.getElementById('mapToggleText');
-    
-    isMapVisible = !isMapVisible;
-    
+
+    isMapVisible =!isMapVisible;
+
     if(isMapVisible){
         wrapper.style.display = 'block';
         icon.className = 'fa fa-eye';
@@ -57,7 +53,7 @@ async function loadShopData() {
         currentShop = shop;
         document.getElementById('shopName').innerText = shop.shopName;
         document.getElementById('ownerName').innerText = shop.ownerName || 'Owner';
-        
+
         if(shop.logo) document.getElementById('shopLogo').src = shop.logo;
         if(shop.coverPhoto) document.getElementById('shopCover').src = shop.coverPhoto;
 
@@ -65,11 +61,14 @@ async function loadShopData() {
         statusEl.innerText = shop.status.toUpperCase();
         statusEl.className = 'badge ' + shop.status;
 
+        // ===== NAYA: ShopLocation collection se data load karna =====
+        const locRes = await fetch(`/api/location/shop-info/${shopId}`); // agar banaya ho to
+        // nahi to ShopLocation se direct load nahi hoga, isliye shop doc se hi le rahe
         locationType = shop.locationType || 'fixed';
         const locationBadge = document.getElementById('locationTypeBadge');
         const rangeText = document.getElementById('rangeText');
         const locationUpdateText = document.getElementById('locationUpdateText');
-        
+
         if (locationType === 'dynamic') {
             locationBadge.innerText = 'Mobile';
             rangeText.textContent = `Delivery Range: ${(shop.range/1000).toFixed(1)} KM`;
@@ -80,12 +79,12 @@ async function loadShopData() {
             locationUpdateText.textContent = 'Fixed Location';
         }
 
-        document.getElementById('deliveryRange').value = shop.range ? shop.range/1000 : 5;
+        document.getElementById('deliveryRange').value = shop.range? shop.range/1000 : 5;
         document.getElementById('shopAddress').value = shop.address || '';
 
         const items = shop.items || shop.products || [];
         const totalStock = items.reduce((sum, i) => sum + (i.stock || 0), 0);
-        
+
         document.getElementById('totalItems').innerText = items.length;
         document.getElementById('totalStock').innerText = totalStock;
         document.getElementById('todayOrders').innerText = shop.todayOrders || 0;
@@ -118,7 +117,7 @@ async function uploadPhoto(e, field){
     const formData = new FormData();
     formData.append('file', file);
     formData.append('field', field);
-    
+
     try {
         const token = getToken();
         const res = await fetch(`/api/local-market/shops/${shopId}/upload`, {
@@ -137,85 +136,9 @@ async function uploadPhoto(e, field){
     } catch(err){ alert('Upload failed: ' + err.message); }
 }
 
-// ===== LOCATION MODAL =====
-function openLocationModal(){
-    document.getElementById('locationModal').style.display = 'flex';
-    setLocationType(locationType);
-    navigator.geolocation.getCurrentPosition(pos => {
-        let lat = pos.coords.latitude, lng = pos.coords.longitude;
-        initPickerMap(lat, lng); 
-    }, ()=> {
-        let [lng, lat] = currentShop.location?.coordinates || [72.8311, 21.1702];
-        initPickerMap(lat, lng);
-    });
-}
-function closeLocationModal(){
-    document.getElementById('locationModal').style.display = 'none';
-    if(liveWatchId) navigator.geolocation.clearWatch(liveWatchId);
-}
-
-function setLocationType(type){
-    locationType = type;
-    document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelector(`[data-type="${type}"]`).classList.add('active');
-    document.getElementById('fixedFields').style.display = type=='fixed' ? 'block' : 'none';
-    document.getElementById('dynamicFields').style.display = type=='dynamic' ? 'block' : 'none';
-}
-
-function initPickerMap(lat, lng){
-    if(pickerMap) pickerMap.remove();
-    pickerMap = L.map('locationPickerMap').setView([lat, lng], 16);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pickerMap);
-    pickerMarker = L.marker([lat, lng], {draggable: true}).addTo(pickerMap);
-}
-
-function startLiveLocation(){
-    if(!navigator.geolocation) return alert("GPS not supported");
-    document.getElementById('currentLatLng').innerText = 'Starting...';
-    liveWatchId = navigator.geolocation.watchPosition(pos=>{
-        let lat = pos.coords.latitude, lng = pos.coords.longitude;
-        document.getElementById('currentLatLng').innerText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    }, err=>alert("Location permission denied"), {enableHighAccuracy: true});
-}
-
-function stopLiveLocation(){
-    if(liveWatchId) navigator.geolocation.clearWatch(liveWatchId);
-    document.getElementById('currentLatLng').innerText = 'Stopped';
-}
-
-async function saveLocation(){
-    let range = document.getElementById('deliveryRange').value * 1000;
-    let address = document.getElementById('shopAddress').value;
-    let coords = currentShop.location?.coordinates || [72.8311, 21.1702];
-
-    if(locationType === 'fixed' && pickerMarker){
-        let latlng = pickerMarker.getLatLng();
-        coords = [latlng.lng, latlng.lat];
-    }
-    if(locationType === 'dynamic' && liveWatchId){
-        let latlngText = document.getElementById('currentLatLng').innerText;
-        if(latlngText !== 'Starting...' && latlngText !== 'Stopped'){
-            let [lat, lng] = latlngText.split(', ');
-            coords = [parseFloat(lng), parseFloat(lat)];
-        }
-    }
-    
-    try {
-        const token = getToken();
-        const res = await fetch(`/api/local-market/shops/${shopId}/update-location`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
-            body: JSON.stringify({locationType, range, address, coordinates: coords})
-        });
-        if(res.ok){
-            alert("Location Updated Successfully!");
-            loadShopData();
-            closeLocationModal();
-        } else {
-            alert("Failed to save location");
-        }
-    } catch(err){ alert("Failed to save: " + err.message); }
-}
+// ===== LOCATION MODAL - AB COMMON FILE USE KAREGA =====
+// ye 5 function ab shop-location.js se aa rahe. yaha se hata diye
+// openLocationModal, closeLocationModal, setLocationType, startLiveLocation, stopLiveLocation, saveLocation
 
 // ===== MANAGERS =====
 async function loadShopManagers() {
@@ -238,7 +161,7 @@ function openManagersModal() {
     }
     container.innerHTML = shopManagers.map(m => `
         <div class="manager-list-item" onclick='showManagerContact(${JSON.stringify(m).replace(/'/g, "&apos;")})'>
-            <div class="manager-avatar">${m.photo ? `<img src="${m.photo}">` : m.name.charAt(0).toUpperCase()}</div>
+            <div class="manager-avatar">${m.photo? `<img src="${m.photo}">` : m.name.charAt(0).toUpperCase()}</div>
             <div class="manager-info"><h4>${m.name}</h4><p><i class="fa fa-id-badge"></i> ${m.managerCode}</p></div>
             <i class="fa fa-chevron-right" style="color:#94a3b8;"></i>
         </div>
@@ -253,7 +176,7 @@ function showManagerContact(manager) {
     document.getElementById('managerContactBody').innerHTML = `
         <div style="text-align:center; margin-bottom:24px;">
             <div class="manager-avatar" style="width:80px; height:80px; margin:0 auto 16px; font-size:32px;">
-                ${manager.photo ? `<img src="${manager.photo}">` : manager.name.charAt(0).toUpperCase()}
+                ${manager.photo? `<img src="${manager.photo}">` : manager.name.charAt(0).toUpperCase()}
             </div>
             <h3 style="margin:0; color:#1e293b;">${manager.name}</h3>
         </div>
@@ -265,7 +188,9 @@ function closeContactModal() { document.getElementById('managerContactModal').st
 
 // ===== MAP =====
 function initShopMap() {
-    if (!currentShop.location || !currentShop.location.coordinates) return;
+    // ShopLocation collection se coordinates lane hai
+    // abhi ke liye shop doc se le rahe. baad me API bana lena
+    if (!currentShop.location ||!currentShop.location.coordinates) return;
     const [lng, lat] = currentShop.location.coordinates;
     const range = currentShop.range || 5000;
 
@@ -282,7 +207,7 @@ function initShopMap() {
 
 function startDynamicLocationTracking() {
     if (locationInterval) clearInterval(locationInterval);
-    if (currentShop.locationType !== 'dynamic') return;
+    if (currentShop.locationType!== 'dynamic') return;
     updateShopLocation();
     locationInterval = setInterval(updateShopLocation, 30000);
 }
@@ -306,16 +231,22 @@ function updateShopLocation() {
     }, (err) => console.error('Geolocation error:', err), { enableHighAccuracy: true });
 }
 
+// ===== NAYA API HIT KAREGA =====
 async function updateShopLocationToServer(lng, lat) {
     try {
         const token = getToken();
         if (!token) return;
-        await fetch(`/api/local-market/shops/${shopId}/update-location`, {
-            method: 'PUT',
+        await fetch(`/api/location/shop`, { // PURANA URL HATA DIYA
+            method: 'POST', // PURANA PUT HATA DIYA
             headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
-            body: JSON.stringify({coordinates: [lng, lat], locationType: 'dynamic'})
+            body: JSON.stringify({
+                shopId: shopId,
+                lat: lat,
+                lng: lng,
+                type: 'dynamic',
+                range: currentShop.range/1000 || 5
+            })
         });
-        currentShop.location.coordinates = [lng, lat];
     } catch (err) { console.error('Location sync failed:', err); }
 }
 
@@ -340,8 +271,8 @@ function loadItems(items) {
     }).join('');
 }
 
-document.getElementById('addProductBtn').onclick = function() { 
-    window.location.href = `/shop-templates/cloth/product-form.html?shopId=${shopId}`; 
+document.getElementById('addProductBtn').onclick = function() {
+    window.location.href = `/shop-templates/cloth/product-form.html?shopId=${shopId}`;
 };
 function editShopInfo() { window.location.href = `/local-market/shop/edit-shop.html?shopId=${shopId}`; }
 function loadOrders() { window.location.href = `/local-market/orders.html?shopId=${shopId}`; }
@@ -349,20 +280,19 @@ function editItem(itemId) { window.location.href = `/shop-templates/cloth/produc
 
 async function deleteItem(itemId) {
     if (!confirm('Delete this item?')) return;
-    try { 
+    try {
         const token = getToken();
         await fetch(`/api/local-market/products/${itemId}`, {
             method: 'DELETE',
             headers: {'Authorization': 'Bearer ' + token}
-        }); 
-        alert('Item deleted!'); 
-        loadShopData(); 
+        });
+        alert('Item deleted!');
+        loadShopData();
     } catch (err) { alert('Failed to delete: ' + err.message); }
 }
 
-window.addEventListener('beforeunload', () => { 
-    if (locationInterval) clearInterval(locationInterval); 
-    if(liveWatchId) navigator.geolocation.clearWatch(liveWatchId); 
+window.addEventListener('beforeunload', () => {
+    if (locationInterval) clearInterval(locationInterval);
 });
 
 loadShopData();

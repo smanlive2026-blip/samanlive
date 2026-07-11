@@ -1,3 +1,5 @@
+// iska location  server/controllers/locationControllers.js h
+
 const { UserLocation, ShopLocation } = require('../models/locationModel');
 
 // USER LOCATION UPDATE

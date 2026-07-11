@@ -1,3 +1,5 @@
+//      public/assets/js/location.core.js
+
 let userWatchId = null;
 
 function initUserLocation(){

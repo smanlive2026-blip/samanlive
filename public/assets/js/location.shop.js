@@ -1,3 +1,5 @@
+//      public/assets/js/location.shop.js
+
 let shopWatchId = null;
 let shopLocationType = 'fixed';
 let pickerMap, pickerMarker;

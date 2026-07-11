@@ -6,7 +6,7 @@ const { authenticateToken } = require('../middleware/authenticateToken');
 
 // ========================================
 // 1. CREATE SHOP - Admin/User ke liye
-// Manager create ab mangerRoutes.js me hai
+// locationType aur range rakh diya, par coordinates nahi
 // ========================================
 router.post('/shops', authenticateToken, async (req, res) => {
     try {
@@ -30,9 +30,8 @@ router.post('/shops', authenticateToken, async (req, res) => {
             isActive: true,
             isVerified: true,
             module: 'local-market',
-            locationType: req.body.locationType || 'fixed',
-            range: req.body.range || 5000,
-            lastLocationUpdate: req.body.locationType === 'dynamic'? new Date() : null,
+            locationType: req.body.locationType || 'fixed', // ye rahega info ke liye
+            range: req.body.range || 5000, // ye bhi rahega
             createdAt: new Date()
         };
 
@@ -86,26 +85,10 @@ router.get('/public', async (req, res) => {
 });
 
 // ========================================
-// 4. NEARBY SHOPS - Customer App ke liye
+// 4. NEARBY SHOPS - DELETE KIYA
+// Ab ye kaam /api/location/nearby-shops karega
 // ========================================
-router.get('/nearby', async (req, res) => {
-    try {
-        const { type } = req.query;
-        let query = { status: { $in: ['active', 'approved'] }, isActive: true };
-        if (type) query.shopType = type;
-
-        const shops = await Shop.find(query)
-       .select('-ownerId -approvedBy -rejectionReason -email')
-       .sort({ rating: -1, totalOrders: -1, createdAt: -1 })
-       .limit(100)
-       .lean();
-
-        res.json({ success: true, count: shops.length, data: shops });
-    } catch (err) {
-        console.error('❌ Nearby shops error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
+// router.get('/nearby', ...)  // PURA DELETE
 
 // ========================================
 // 5. SHOP DETAILS
@@ -235,6 +218,7 @@ router.delete('/products/:shopId/:productId', authenticateToken, async (req, res
 
 // ========================================
 // 8. UPDATE SHOP - Owner/Manager
+// location update wala code hata diya
 // ========================================
 router.put('/shops/:id', authenticateToken, async (req, res) => {
     try {
@@ -252,11 +236,7 @@ router.put('/shops/:id', authenticateToken, async (req, res) => {
             }
         }
 
-        if (req.body.location?.coordinates) {
-            req.body.location = { type: 'Point', coordinates: [parseFloat(req.body.location.coordinates[0]), parseFloat(req.body.location.coordinates[1])] };
-            if (shop.locationType === 'dynamic') req.body.lastLocationUpdate = new Date();
-        }
-
+        // location wala if block delete kar diya
         Object.assign(shop, req.body);
         shop.updatedAt = new Date();
         await shop.save();
@@ -267,28 +247,9 @@ router.put('/shops/:id', authenticateToken, async (req, res) => {
 });
 
 // ========================================
-// 9. DYNAMIC LOCATION UPDATE
+// 9. DYNAMIC LOCATION UPDATE - DELETE KIYA
+// Ab ye kaam /api/location/shop karega
 // ========================================
-router.put('/shops/:id/update-location', authenticateToken, async (req, res) => {
-    try {
-        const { coordinates } = req.body;
-        if (!coordinates || coordinates.length!== 2) return res.status(400).json({ error: 'coordinates [lng, lat] required' });
-
-        const shop = await Shop.findById(req.params.id);
-        if (!shop) return res.status(404).json({ error: 'Shop not found' });
-
-        const isOwner = shop.ownerId?.toString() === req.userId || shop.createdBy?.toString() === req.userId;
-        if (!isOwner && req.user?.role!== 'admin') return res.status(403).json({ error: 'Access denied' });
-        if (shop.locationType!== 'dynamic') return res.status(400).json({ error: 'Shop is not dynamic type' });
-
-        shop.location = { type: 'Point', coordinates: [parseFloat(coordinates[0]), parseFloat(coordinates[1])] };
-        shop.lastLocationUpdate = new Date();
-        await shop.save();
-
-        res.json({ success: true, message: 'Location updated', location: shop.location });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// router.put('/shops/:id/update-location', ...)  // PURA DELETE
 
 module.exports = router;

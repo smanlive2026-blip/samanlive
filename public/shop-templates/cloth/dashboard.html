@@ -163,6 +163,21 @@
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- NAYE LOCATION SYSTEM KE LIYE 2 FILE ADD KI -->
+    <script src="/assets/js/location.core.js"></script>
+    <script src="/shop-templates/shop-location.js"></script>
+
     <script src="dashboard.js"></script>
+
+    <script>
+    // Page load pe init
+    document.addEventListener('DOMContentLoaded', ()=>{
+        const shopId = localStorage.getItem('shopId'); // ya jaha se tu leta hai
+        if(ShopLocationManager && shopId){
+            ShopLocationManager.init(shopId);
+        }
+    })
+    </script>
 </body>
 </html>

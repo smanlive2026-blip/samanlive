@@ -1,3 +1,5 @@
+//            public/assets/js/location.core.js
+
 const LocationCore = {
     getDistance: (lat1, lon1, lat2, lon2) => {
         const R = 6371e3;
