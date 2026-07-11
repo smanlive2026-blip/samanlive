@@ -1,5 +1,5 @@
 // ========================================
-// SAMANLIVE - HOMEPAGE JAVASCRIPT - UPDATED 6 LINE SYSTEM
+// SAMANLIVE - HOMEPAGE JAVASCRIPT - UPDATED 6 LINE SYSTEM + LIVE LOCATION
 // ========================================
 
 // Global variables
@@ -16,11 +16,12 @@ let currentUser = null;
 let allProducts = []; // ✅ Top products ke liye
 
 // ========================================
-// LOCATION MANAGER - SAB SAME
+// LOCATION MANAGER - LIVE + SERVER SYNC
 // ========================================
 window.LocationManager = {
-    updateInterval: 30000,
+    updateInterval: 30000, // 30 sec
     isRequesting: false,
+    minDistance: 100, // 100 meter
 
     getManual: function() {
         return new Promise((resolve) => {
@@ -38,7 +39,7 @@ window.LocationManager = {
 
             this.isRequesting = true;
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const loc = {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
@@ -48,6 +49,9 @@ window.LocationManager = {
                     lastFetchedLocation = {...loc};
                     console.log('📍 Manual Location:', loc);
                     this.isRequesting = false;
+
+                    // ✅ SERVER KO BHEJO
+                    await this.sendLocationToServer(loc);
                     resolve(loc);
                 },
                 (error) => {
@@ -77,24 +81,47 @@ window.LocationManager = {
         }
     },
 
-    fetchAndUpdate: function() {
+    fetchAndUpdate: async function() {
         if(!navigator.geolocation) return;
         navigator.geolocation.getCurrentPosition(
-            (position) => {
+            async (position) => {
                 const newLoc = {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 };
+
+                // 100m check
+                if(lastFetchedLocation && calculateDistance(lastFetchedLocation.lat, lastFetchedLocation.lng, newLoc.lat, newLoc.lng) < this.minDistance){
+                    return;
+                }
+
                 window.currentUserLocation = newLoc;
                 userLocation = newLoc;
                 lastFetchedLocation = {...newLoc};
                 console.log('📍 Auto Location Updated:', newLoc);
+                showUserLocationInHeader();
+
+                // ✅ SERVER KO BHEJO
+                await this.sendLocationToServer(newLoc);
+
+                // ✅ NEARBY RELOAD
+                reloadNearbyData();
             },
-            (error) => {
-                console.error('Auto location error:', error.message);
-            },
+            (error) => { console.error('Auto location error:', error.message); },
             { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
         );
+    },
+
+    sendLocationToServer: async function(loc) {
+        const userId = localStorage.getItem('userId') || currentUser?._id;
+        if(!userId) return;
+        try{
+            await fetch('/api/location/user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ userId, lat: loc.lat, lng: loc.lng })
+            });
+        }catch(e){ console.log('Location save error', e) }
     },
 
     checkPermission: async function() {
@@ -123,8 +150,9 @@ function getUserLocation() {
     });
 }
 
+// METER ME DISTANCE
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371;
+    const R = 6371000; // METER
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -134,20 +162,22 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-// ✅ RELOAD NEARBY DATA - AB PRODUCTS BHI
+// ✅ RELOAD NEARBY DATA - LOCATION KE HISAB SE
 async function reloadNearbyData() {
-    console.log('🔄 Reloading all shops & products...');
+    if(!userLocation) return;
+    console.log('🔄 Reloading nearby shops & products...');
 
     try {
-        const shopsRes = await fetch(`/api/local-market/public`);
+        // ✅ LOCATION KE SATH NEARBY SHOPS
+        const shopsRes = await fetch(`/api/location/nearby-shops?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
         if(shopsRes.ok) {
             const shopsData = await shopsRes.json();
-            allServices = shopsData.data || shopsData;
+            allServices = shopsData.shops || [];
             renderSixLineShops();
-            console.log('✅ All Shops updated:', allServices.length);
+            console.log('✅ Nearby Shops updated:', allServices.length);
         }
 
-       const productsRes = await fetch(`/api/local-market/top-rated-products?limit=24`);
+        const productsRes = await fetch(`/api/local-market/top-rated-products?limit=24`);
         if(productsRes.ok) {
             allProducts = await productsRes.json();
             renderSixLineProducts();
@@ -193,16 +223,16 @@ async function loadAllData() {
             allModules = [];
         }
 
-        // SHOPS
-        try {
+        // INITIAL NEARBY SHOPS LOAD
+        if(userLocation){
+            await reloadNearbyData();
+        } else {
+            // Fallback
             const shopsRes = await fetch('/api/local-market/public');
             if(shopsRes.ok) {
                 const shopsData = await shopsRes.json();
                 allServices = shopsData.data || shopsData;
             }
-        } catch(e) {
-            console.log('Public shops API failed:', e);
-            allServices = [];
         }
 
         // ✅ TOP PRODUCTS - NAYA
@@ -261,12 +291,18 @@ function showUserLocationInHeader() {
         header.querySelector('.search-box-modern')?.insertAdjacentElement('afterend', locDiv);
 
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
-     .then(r => r.json())
-     .then(data => {
+    .then(r => r.json())
+    .then(data => {
                 document.getElementById('userCity').textContent = data.address.city || data.address.town || data.address.village || 'Your Area';
             })
-     .catch(() => {
+    .catch(() => {
                 document.getElementById('userCity').textContent = 'Your Area';
+            });
+    } else if(headerLocation && userLocation){
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
+    .then(r => r.json())
+    .then(data => {
+                document.getElementById('userCity').textContent = data.address.city || data.address.town || data.address.village || 'Your Area';
             });
     }
 }
@@ -619,7 +655,6 @@ function performSearch() {
             product.name.toLowerCase().includes(searchTerm)
         );
 
-        // Temporarily update arrays for search results
         const originalServices = allServices;
         const originalProducts = allProducts;
 
@@ -630,7 +665,6 @@ function performSearch() {
         renderSixLineShops();
         renderSixLineProducts();
 
-        // Restore original arrays after 3 seconds or on next search
         setTimeout(() => {
             allServices = originalServices;
             allProducts = originalProducts;
