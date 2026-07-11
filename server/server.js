@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 const fs = require('fs');
 require('dotenv').config();
+const cloudinary = require('./utils/cloudinary');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +34,9 @@ app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
 
 // ✅ Shop templates static serve
 app.use('/shop-templates', express.static(path.join(__dirname, '../public/shop-templates')));
+
+// YEH cloudnary se related file 
+app.use('/api', uploadRoutes);
 
 // ==================== MONGODB CONNECT ====================
 mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/samanlive', {
@@ -110,6 +115,10 @@ app.use('/api/local-market', require('./routes/shopRoutes'));
 const locationRoutes = require('./modules/locationRoutes');
 app.use('/api/location', locationRoutes);
 app.use('/api/location', require('./modules/locationRoutes'));
+
+// ✅ CLOUDINARY UPLOAD ROUTE - NEW
+const uploadRoutesCloud = require('./routes/upload');
+app.use('/api', uploadRoutesCloud);
 
 // ❌ PURANA CLAIM SYSTEM WALA FILE HATA DIYA
 // app.use('/api', require('./routes/shop'));
@@ -324,6 +333,14 @@ app.post('/api/admin/update-route-code', express.json(), (req, res) => {
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
+});
+
+// ==================== CLOUDINARY ERROR HANDLER ====================
+app.use((err, req, res, next) => {
+    if (err.name === 'MulterError') {
+        return res.status(400).json({ success: false, error: err.message });
+    }
+    next(err);
 });
 
 // ==================== 404 FALLBACK ====================
