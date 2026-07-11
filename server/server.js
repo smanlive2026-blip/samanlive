@@ -109,6 +109,7 @@ app.use('/api/local-market', require('./routes/shopRoutes'));
 // ==================== LOCATION ROUTES new ====================
 const locationRoutes = require('./modules/locationRoutes');
 app.use('/api/location', locationRoutes);
+app.use('/api/location', require('./modules/locationRoutes'));
 
 // ❌ PURANA CLAIM SYSTEM WALA FILE HATA DIYA
 // app.use('/api', require('./routes/shop'));

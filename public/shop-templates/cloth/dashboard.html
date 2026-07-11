@@ -170,14 +170,16 @@
 
     <script src="dashboard.js"></script>
 
-    <script>
+<script>
     // Page load pe init
     document.addEventListener('DOMContentLoaded', ()=>{
-        const shopId = localStorage.getItem('shopId'); // ya jaha se tu leta hai
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId'); // URL se lega ab
         if(ShopLocationManager && shopId){
             ShopLocationManager.init(shopId);
         }
     })
-    </script>
+</script>
+
 </body>
 </html>
