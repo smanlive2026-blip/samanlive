@@ -26,6 +26,7 @@ const storage = new CloudinaryStorage({
   },
 });
 
+
 const upload = multer({ storage: storage });
 
 // Direct URL se bhi upload karne ka function

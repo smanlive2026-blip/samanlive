@@ -13,6 +13,7 @@ router.post('/upload', upload.single('file'), (req, res) => {
   });
 });
 
+
 // Case 2: Direct URL se upload - "keval link dalne se"
 router.post('/upload-url', async (req, res) => {
   const { url, shopId, template, type } = req.body;
