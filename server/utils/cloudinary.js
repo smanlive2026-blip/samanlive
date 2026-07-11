@@ -3,12 +3,12 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY,
-  api_secret: process.env.CLOUD_API_SECRET
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, // <-- YE CHANGE
+  api_key: process.env.CLOUDINARY_API_KEY,       // <-- YE CHANGE
+  api_secret: process.env.CLOUDINARY_API_SECRET  // <-- YE CHANGE
 });
 
-// Storage engine - shop aur user dono ke liye
+// Storage engine
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
@@ -20,9 +20,7 @@ const storage = new CloudinaryStorage({
         folder: `shops/${shopId}/${template}/${type}`,
         allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'mp4', 'pdf'],
         resource_type: 'auto',
-        transformation: [
-          { width: 1200, crop: "limit", quality: "auto" }
-        ]
+        transformation: [{ width: 1200, crop: "limit", quality: "auto" }]
       };
     }
 
@@ -32,9 +30,7 @@ const storage = new CloudinaryStorage({
         folder: `users/${req.user.id}/profile`,
         allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
         resource_type: 'image',
-        transformation: [
-          { width: 500, height: 500, crop: "fill", quality: "auto" }
-        ]
+        transformation: [{ width: 500, height: 500, crop: "fill", quality: "auto" }]
       };
     }
 
@@ -47,7 +43,10 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 2 * 1024 * 1024 } // 2MB
+});
 
 // Direct URL se upload
 const uploadFromUrl = async (url, shopId, template, type) => {

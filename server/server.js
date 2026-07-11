@@ -116,9 +116,13 @@ const locationRoutes = require('./modules/locationRoutes');
 app.use('/api/location', locationRoutes);
 app.use('/api/location', require('./modules/locationRoutes'));
 
+// ============== UPLOAD ROUTES ==============
+// Alag prefix de dete hai taaki takkar na ho
+app.use('/api/upload', require('./routes/upload'));
+
 // ✅ CLOUDINARY UPLOAD ROUTE - NEW
-const uploadRoutesCloud = require('./routes/upload');
-app.use('/api', uploadRoutesCloud);
+//const uploadRoutesCloud = require('./routes/upload');
+//app.use('/api', uploadRoutesCloud);
 
 // ❌ PURANA CLAIM SYSTEM WALA FILE HATA DIYA
 // app.use('/api', require('./routes/shop'));
