@@ -127,15 +127,19 @@ async function saveDetails() {
     }
 
     try {
-        // 1. Pehle pic upload karo agar nayi hai
+        // STEP 1: Pehle pic upload karo
         if (newProfilePic) {
             const picUrl = await uploadProfilePic(newProfilePic, token);
             if(picUrl) {
-                data.profilePic = picUrl; // url ko data me daal do
+                data.profilePic = picUrl;
+            } else {
+                btn.textContent = 'Save Details';
+                btn.disabled = false;
+                return; // agar pic upload fail to aage mat jao
             }
         }
 
-        // 2. Fir saara data save karo
+        // STEP 2: Fir saara data save karo
         const res = await fetch('/api/user/update', {
             method: 'PUT',
             headers: {
@@ -158,6 +162,7 @@ async function saveDetails() {
             alert('Update failed: ' + result.error);
         }
     } catch (err) {
+        console.log(err);
         alert('Update failed. Please try again.');
     }
 
@@ -170,7 +175,7 @@ async function uploadProfilePic(file, token) {
     formData.append('profilePic', file);
 
     try {
-        const res = await fetch('/api/upload-pic', { // <-- YE ROUTE SAHI KIYA
+        const res = await fetch('/api/upload/upload-pic', { // <-- FIX 1: /api/upload/ lagaya
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -178,13 +183,16 @@ async function uploadProfilePic(file, token) {
             body: formData
         });
         const result = await res.json();
+        console.log('Upload result:', result); // debug ke liye
         if (result.success) {
             document.getElementById('userProfilePic').src = result.url;
-            return result.url; // url return karo
+            return result.url;
+        } else {
+            alert('Upload failed: ' + result.error);
         }
     } catch (err) {
         console.log('Pic upload failed:', err);
-        alert('Profile pic upload failed');
+        alert('Profile pic upload failed: ' + err.message);
     }
     return null;
 }
