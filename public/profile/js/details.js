@@ -1,13 +1,5 @@
-// ========================================
-// MY DETAILS - USER PROFILE UPDATE LOGIC
-// app.js se LocationManager + currentUser use karega
-// ========================================
-
 let newProfilePic = null;
 
-// ========================================
-// PAGE LOAD - Init
-// ========================================
 window.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('userToken');
     if (!token) {
@@ -15,12 +7,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // app.js se user check karo pehle
     if (window.currentUser) {
         currentUser = window.currentUser;
         loadUserData();
     } else {
-        // Agar app.js me nahi mila to API se
         try {
             const res = await fetch('/api/auth/me', {
                 headers: { 'Authorization': 'Bearer ' + token }
@@ -38,14 +28,9 @@ window.addEventListener('DOMContentLoaded', async () => {
             window.location.href = '/';
         }
     }
-
-    // Auto fill location from global
     autoFillLocation();
 });
 
-// ========================================
-// LOAD USER DATA - Form me fill karo
-// ========================================
 function loadUserData() {
     document.getElementById('userName').value = window.currentUser.name || '';
     document.getElementById('userEmail').value = window.currentUser.email || '';
@@ -56,7 +41,6 @@ function loadUserData() {
     document.getElementById('userLang').value = window.currentUser.language || 'hi';
     document.getElementById('userProfilePic').src = window.currentUser.profilePic || '/assets/default-avatar.png';
 
-    // Agar purani location hai to dikha do
     if (window.currentUser.location?.coordinates) {
         const lat = window.currentUser.location.coordinates[1];
         const lng = window.currentUser.location.coordinates[0];
@@ -64,19 +48,14 @@ function loadUserData() {
     }
 }
 
-// ========================================
-// AUTO FILL LOCATION - app.js se
-// ========================================
 function autoFillLocation() {
     const coordsEl = document.getElementById('locationCoords');
-
     if (window.currentUserLocation) {
         const lat = window.currentUserLocation.lat;
         const lng = window.currentUserLocation.lng;
         updateLocationUI(lat, lng, true);
     } else {
         coordsEl.innerHTML = '⏳ Waiting for location... Make sure GPS is enabled';
-        // 2 sec baad fir check karo
         setTimeout(() => {
             if (window.currentUserLocation) {
                 autoFillLocation();
@@ -99,9 +78,6 @@ function updateLocationUI(lat, lng, isAuto = false) {
     coordsEl.classList.add('success');
 }
 
-// ========================================
-// PROFILE PIC CHANGE
-// ========================================
 function handlePicChange(event) {
     const file = event.target.files[0];
     if (file) {
@@ -109,7 +85,6 @@ function handlePicChange(event) {
             alert('Image size should be less than 2MB');
             return;
         }
-
         newProfilePic = file;
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -119,9 +94,6 @@ function handlePicChange(event) {
     }
 }
 
-// ========================================
-// SAVE DETAILS - API Call
-// ========================================
 async function saveDetails() {
     const btn = document.getElementById('saveBtn');
     btn.textContent = 'Saving...';
@@ -155,6 +127,15 @@ async function saveDetails() {
     }
 
     try {
+        // 1. Pehle pic upload karo agar nayi hai
+        if (newProfilePic) {
+            const picUrl = await uploadProfilePic(newProfilePic, token);
+            if(picUrl) {
+                data.profilePic = picUrl; // url ko data me daal do
+            }
+        }
+
+        // 2. Fir saara data save karo
         const res = await fetch('/api/user/update', {
             method: 'PUT',
             headers: {
@@ -171,12 +152,8 @@ async function saveDetails() {
                 document.getElementById('successMsg').style.display = 'none';
             }, 3000);
             currentUser = result.user;
-            window.currentUser = result.user; // app.js me bhi update
-
-            // Profile pic upload agar new hai to
-            if (newProfilePic) {
-                await uploadProfilePic(newProfilePic, token);
-            }
+            window.currentUser = result.user;
+            newProfilePic = null;
         } else {
             alert('Update failed: ' + result.error);
         }
@@ -188,15 +165,12 @@ async function saveDetails() {
     btn.disabled = false;
 }
 
-// ========================================
-// UPLOAD PROFILE PIC - Optional
-// ========================================
 async function uploadProfilePic(file, token) {
     const formData = new FormData();
     formData.append('profilePic', file);
 
     try {
-        const res = await fetch('/api/user/upload-pic', {
+        const res = await fetch('/api/upload-pic', { // <-- YE ROUTE SAHI KIYA
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -205,11 +179,12 @@ async function uploadProfilePic(file, token) {
         });
         const result = await res.json();
         if (result.success) {
-            currentUser.profilePic = result.url;
-            window.currentUser.profilePic = result.url;
             document.getElementById('userProfilePic').src = result.url;
+            return result.url; // url return karo
         }
     } catch (err) {
         console.log('Pic upload failed:', err);
+        alert('Profile pic upload failed');
     }
+    return null;
 }
