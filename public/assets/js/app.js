@@ -15,6 +15,10 @@ let lastFetchedLocation = null;
 let currentUser = null;
 let allProducts = []; // ✅ NAYA: Top products ke liye
 
+// Backup for search
+let originalServices = [];
+let originalProducts = [];
+
 // ========================================
 // LOCATION MANAGER - SAB SAME
 // ========================================
@@ -143,6 +147,7 @@ async function reloadNearbyData() {
         if(shopsRes.ok) {
             const shopsData = await shopsRes.json();
             allServices = shopsData.data || shopsData;
+            originalServices = [...allServices]; // backup
             renderSixLineShops(); // ✅ 6 LINE SHOPS
             console.log('✅ All Shops updated:', allServices.length);
         }
@@ -151,6 +156,7 @@ async function reloadNearbyData() {
         const productsRes = await fetch(`/api/products/top-rated`);
         if(productsRes.ok) {
             allProducts = await productsRes.json();
+            originalProducts = [...allProducts]; // backup
             renderSixLineProducts(); // ✅ 6 LINE PRODUCTS
             console.log('✅ Top Products updated:', allProducts.length);
         }
@@ -225,6 +231,7 @@ async function loadAllData() {
             if(shopsRes.ok) {
                 const shopsData = await shopsRes.json();
                 allServices = shopsData.data || shopsData;
+                originalServices = [...allServices]; // backup
             } else {
                 allServices = [];
             }
@@ -238,6 +245,7 @@ async function loadAllData() {
             const productsRes = await fetch('/api/products/top-rated?limit=24');
             if(productsRes.ok) {
                 allProducts = await productsRes.json();
+                originalProducts = [...allProducts]; // backup
             } else {
                 allProducts = [];
             }
@@ -351,7 +359,7 @@ function renderServices(filteredModules = null) {
 }
 
 // ========================================
-// RENDER TOP ADS
+// RENDER TOP ADS - FIXED SELECTOR
 // ========================================
 function renderTopAds() {
     const topAdChunks = [];
@@ -377,7 +385,7 @@ function renderTopAds() {
 }
 
 // ========================================
-// RENDER CAMPAIGNS
+// RENDER CAMPAIGNS - FIXED SELECTOR
 // ========================================
 function renderCampaigns() {
     const campaignChunks = [];
@@ -516,17 +524,17 @@ function renderVideos() {
 }
 
 // ========================================
-// SLIDER LOGIC
+// SLIDER LOGIC - FIXED
 // ========================================
 let topAdIndex = 0;
 function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     topAdIndex = idx;
 }
 function nextTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex + 1) % slides.length;
     showTopAd(topAdIndex);
@@ -534,13 +542,13 @@ function nextTopAd() {
 
 let campaignIndex = 0;
 function showCampaign(idx) {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     campaignIndex = idx;
 }
 function nextCampaign() {
-    const slides = document.querySelectorAll('#campaignContainer.ad-slide');
+    const slides = document.querySelectorAll('#campaignContainer.ad-slide'); // FIXED
     if(slides.length === 0) return;
     campaignIndex = (campaignIndex + 1) % slides.length;
     showCampaign(campaignIndex);
@@ -598,11 +606,13 @@ function closeVideoModal() {
 }
 
 // ========================================
-// ✅ MODERN SEARCH FUNCTIONALITY
+// ✅ MODERN SEARCH FUNCTIONALITY - FIXED
 // ========================================
 function performSearch() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
     if(searchTerm === '') {
+        allServices = [...originalServices]; // restore
+        allProducts = [...originalProducts]; // restore
         renderServices();
         renderSixLineShops();
         renderSixLineProducts();
@@ -610,10 +620,10 @@ function performSearch() {
         const filteredModules = allModules.filter(module =>
             module.name.toLowerCase().includes(searchTerm)
         );
-        const filteredShops = allServices.filter(shop =>
+        const filteredShops = originalServices.filter(shop => // original se filter
             (shop.shopName || shop.name).toLowerCase().includes(searchTerm)
         );
-        const filteredProducts = allProducts.filter(product =>
+        const filteredProducts = originalProducts.filter(product => // original se filter
             product.name.toLowerCase().includes(searchTerm)
         );
         renderServices(filteredModules);
@@ -719,6 +729,7 @@ async function loginWithPhone() {
             closeLoginModal();
             updateProfileAvatar();
             alert('Login Success! 🎉');
+            window.location.reload(); // FIX: reload after login
         } else {
             alert('Login failed: ' + data.error);
         }

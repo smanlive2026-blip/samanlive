@@ -72,6 +72,9 @@
     margin-top: 8px;
     cursor: pointer;
 }
+.user-id-badge:active {
+    background: #e2e8f0;
+}
 .account-options {
     margin: 0 20px;
     display: grid;
@@ -271,6 +274,7 @@
         </div>
     </div>
 </div>
+
 <script src="/assets/js/app.js"></script>
 <script>
 // Load user data
@@ -286,29 +290,46 @@ window.addEventListener('DOMContentLoaded', async () => {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         const data = await res.json();
+        
+        if (res.status === 401) { // token expire
+            localStorage.removeItem('userToken');
+            alert('Session expired. Please login again');
+            window.location.href = '/';
+            return;
+        }
+
         if (data.success) {
-            document.getElementById('profileUserName').textContent = data.user.name;
-            document.getElementById('profileUserPhone').textContent = '+91 ' + data.user.phone;
-            document.getElementById('profileUserId').textContent = data.user.userId;
-            document.getElementById('profileUserPic').src = data.user.profilePic || '/assets/default-avatar.png';
+            const user = data.user;
+            document.getElementById('profileUserName').textContent = user.name || 'User';
+            document.getElementById('profileUserPhone').textContent = '+91 ' + (user.phone || '');
+            // FIX: userId ya _id dono handle karega
+            document.getElementById('profileUserId').textContent = user.userId || user._id || 'N/A';
+            document.getElementById('profileUserPic').src = user.profilePic || '/assets/default-avatar.png';
         } else {
             localStorage.removeItem('userToken');
+            alert('Session expired');
             window.location.href = '/';
         }
     } catch (err) {
+        console.log(err);
+        localStorage.removeItem('userToken');
         window.location.href = '/';
     }
 });
 
 function copyUserId() {
     const userId = document.getElementById('profileUserId').textContent;
-    navigator.clipboard.writeText(userId);
-    alert('User ID copied: ' + userId);
+    navigator.clipboard.writeText(userId).then(() => {
+        alert('✅ User ID copied: ' + userId);
+    }).catch(() => {
+        alert('Copy failed');
+    });
 }
 
 function handleLogout() {
     if (confirm('Are you sure you want to logout?')) {
         localStorage.removeItem('userToken');
+        window.currentUser = null;
         window.location.href = '/';
     }
 }
