@@ -30,7 +30,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             window.location.href = '/';
         }
     }
-    autoFillLocation();
+    // autoFillLocation(); // COMMENTED: Location auto fill band
 });
 
 function loadUserData() {
@@ -43,13 +43,17 @@ function loadUserData() {
     document.getElementById('userLang').value = window.currentUser.language || 'hi';
     document.getElementById('userProfilePic').src = window.currentUser.profilePic || '/assets/default-avatar.png';
 
+    // COMMENTED: Location load karna band
+    /*
     if (window.currentUser.location?.coordinates) {
         const lat = window.currentUser.location.coordinates[1];
         const lng = window.currentUser.location.coordinates[0];
         updateLocationUI(lat, lng, false);
     }
+    */
 }
 
+/*
 function autoFillLocation() {
     const coordsEl = document.getElementById('locationCoords');
     if (window.currentUserLocation) {
@@ -79,6 +83,7 @@ function updateLocationUI(lat, lng, isAuto = false) {
     `;
     coordsEl.classList.add('success');
 }
+*/
 
 function handlePicChange(event) {
     const file = event.target.files[0];
@@ -102,8 +107,8 @@ async function saveDetails() {
     btn.disabled = true;
 
     const token = localStorage.getItem('userToken');
-    const lat = document.getElementById('userLat').value;
-    const lng = document.getElementById('userLng').value;
+    // const lat = document.getElementById('userLat').value; // COMMENTED
+    // const lng = document.getElementById('userLng').value; // COMMENTED
 
     const data = {
         name: document.getElementById('userName').value.trim(),
@@ -115,10 +120,10 @@ async function saveDetails() {
             pincode: document.getElementById('userPincode').value.trim()
         },
         language: document.getElementById('userLang').value,
-        location: lat && lng? {
-            type: 'Point',
-            coordinates: [parseFloat(lng), parseFloat(lat)]
-        } : undefined
+        // location: lat && lng? { // COMMENTED: location bhejna band
+        // type: 'Point',
+        // coordinates: [parseFloat(lng), parseFloat(lat)]
+        // } : undefined
     };
 
     if (!data.name ||!data.phone) {
@@ -177,7 +182,7 @@ async function uploadProfilePic(file, token) {
     formData.append('profilePic', file);
 
     try {
-        const res = await fetch('/api/upload/upload-pic', { // <-- FIX 1: /api/upload/ lagaya
+        const res = await fetch('/api/upload/upload-pic', {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -185,7 +190,7 @@ async function uploadProfilePic(file, token) {
             body: formData
         });
         const result = await res.json();
-        console.log('Upload result:', result); // debug ke liye
+        console.log('Upload result:', result);
         if (result.success) {
             document.getElementById('userProfilePic').src = result.url;
             return result.url;
