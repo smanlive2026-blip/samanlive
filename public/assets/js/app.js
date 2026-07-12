@@ -176,53 +176,23 @@ async function loadAllData() {
     try {
         await getUserLocation();
 
-        try {
-            const adsRes = await fetch('/api/ads');
-            if(adsRes.ok) allAds = await adsRes.json();
-            else allAds = [];
-        } catch(e) {
-            console.log('Ads API failed:', e);
-            allAds = [];
-        }
+        const endpoints = [
+            {url: '/api/ads', key: 'allAds'},
+            {url: '/api/videos', key: 'nearbyVideos'},
+            {url: '/api/campaigns', key: 'allCampaigns'},
+            {url: '/api/settings', key: 'siteSettings'},
+            {url: '/api/modules', key: 'allModules'},
+        ];
 
-        try {
-            const videosRes = await fetch('/api/videos');
-            if(videosRes.ok) nearbyVideos = await videosRes.json();
-            else nearbyVideos = [];
-        } catch(e) {
-            console.log('Videos API failed:', e);
-            nearbyVideos = [];
-        }
-
-        try {
-            const campaignsRes = await fetch('/api/campaigns');
-            if(campaignsRes.ok) allCampaigns = await campaignsRes.json();
-            else allCampaigns = [];
-        } catch(e) {
-            console.log('Campaigns API failed:', e);
-            allCampaigns = [];
-        }
-
-        try {
-            const settingsRes = await fetch('/api/settings');
-            if(settingsRes.ok) siteSettings = await settingsRes.json();
-            else siteSettings = {};
-        } catch(e) {
-            console.log('Settings API failed:', e);
-            siteSettings = {};
-        }
-
-        try {
-            const modulesRes = await fetch('/api/modules');
-            if(modulesRes.ok) {
-                const modulesData = await modulesRes.json();
-                allModules = modulesData.modules || modulesData;
-            } else {
-                allModules = [];
-            }
-        } catch(e) {
-            console.log('Modules API failed:', e);
-            allModules = [];
+        for(let ep of endpoints) {
+            try {
+                const res = await fetch(ep.url);
+                if(res.ok) {
+                    const data = await res.json();
+                    if(ep.key === 'allModules') window[ep.key] = data.modules || data;
+                    else window[ep.key] = data;
+                }
+            } catch(e) { console.log(ep.url + ' failed:', e); }
         }
 
         // ✅ SHOPS LOAD
@@ -662,14 +632,15 @@ document.addEventListener('gesturestart', function(e) {
 });
 
 // ========================================
-// USER AUTH + PROFILE SYSTEM
+// USER AUTH + PROFILE SYSTEM - FIXED
 // ========================================
 window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('userToken');
     if (token) {
         fetchUserData(token);
+    } else {
+        updateProfileAvatar(); // logout state
     }
-    updateProfileAvatar();
 });
 
 async function fetchUserData(token) {
@@ -684,20 +655,22 @@ async function fetchUserData(token) {
             updateProfileAvatar();
         } else {
             localStorage.removeItem('userToken');
+            updateProfileAvatar();
         }
     } catch (err) {
         localStorage.removeItem('userToken');
+        updateProfileAvatar();
     }
 }
 
 function updateProfileAvatar() {
-    const avatar = document.querySelector('.profile-avatar');
+    const avatar = document.getElementById('headerProfilePic'); // FIX: ID se pakda
     if (!avatar) return;
     if (currentUser) {
-        avatar.innerHTML = `<img src="${currentUser.profilePic || '/assets/default-avatar.png'}" alt="Profile">`;
+        avatar.src = currentUser.profilePic || '/assets/default-avatar.png'; // FIX: img ka src
         avatar.onclick = goToProfilePage;
     } else {
-        avatar.innerHTML = 'P';
+        avatar.src = '/assets/default-avatar.png';
         avatar.onclick = openLoginModal;
     }
 }
@@ -729,7 +702,7 @@ async function loginWithPhone() {
             closeLoginModal();
             updateProfileAvatar();
             alert('Login Success! 🎉');
-            window.location.reload(); // FIX: reload after login
+            window.location.reload(); // FIX: reload taaki header pic update ho
         } else {
             alert('Login failed: ' + data.error);
         }
@@ -742,13 +715,15 @@ function loginWithGoogle() {
     alert('Google Login setup ho raha hai. Abhi phone se login karo 🙏');
 }
 
-function openProfileModal() {
+// FIX: NAYA FUNCTION ADD KIYA
+function goToProfilePage() {
     if (!currentUser) return openLoginModal();
     document.getElementById('profileName').textContent = currentUser.name;
     document.getElementById('userUniqueId').textContent = currentUser.userId;
     document.getElementById('profilePic').src = currentUser.profilePic || '/assets/default-avatar.png';
     document.getElementById('profileModal').style.display = 'flex';
 }
+
 function closeProfileModal() {
     document.getElementById('profileModal').style.display = 'none';
     document.getElementById('detailsForm').style.display = 'none';
@@ -793,19 +768,13 @@ async function updateUserDetails() {
             window.currentUser = result.user;
             alert('Details Updated! ✅');
             closeProfileModal();
-            updateProfileAvatar();
+            updateProfileAvatar(); // header bhi update
+        } else {
+            alert('Update failed: ' + result.message);
         }
     } catch (err) {
         alert('Update failed');
     }
-}
-
-function goToProfilePage() {
-    if (!currentUser) {
-        openLoginModal();
-        return;
-    }
-    window.location.href = '/profile.html';
 }
 
 // ========================================

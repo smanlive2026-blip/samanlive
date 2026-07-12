@@ -8,7 +8,7 @@
 <style>
 .details-page { min-height: 100vh; background: #f1f5f9; padding-bottom: 40px; }
 .header-bar { background: linear-gradient(135deg, #667eea, #764ba2); padding: 16px 20px; color: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-.header-bar.back-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-right: 12px; }
+.header-bar.back-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-right: 12px; } /* FIX: space lagaya */
 .header-bar h1 { display: inline-block; font-size: 20px; margin: 0; }
 .form-container { margin: 20px; background: white; padding: 24px; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
 .profile-pic-section { text-align: center; margin-bottom: 24px; }
@@ -81,19 +81,6 @@
             </select>
         </div>
 
-        <!-- LOCATION BOX COMMENTED FOR NOW -->
-        <!--
-        <div class="location-box">
-            <div class="location-header">
-                <h3>📍 Current Location</h3>
-                <div class="auto-badge"><span class="pulse"></span>AUTO SYNC</div>
-            </div>
-            <div class="location-coords" id="locationCoords">Loading...</div>
-            <input type="hidden" id="userLat">
-            <input type="hidden" id="userLng">
-        </div>
-        -->
-
         <button class="save-btn" onclick="saveDetails()" id="saveBtn">Save Details</button>
     </div>
 </div>
@@ -102,7 +89,6 @@
 <script>
 let newProfilePic = null;
 
-// Load user data
 window.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('userToken');
     if (!token) {
@@ -139,7 +125,7 @@ function loadUserData() {
     document.getElementById('userCity').value = window.currentUser.address?.city || '';
     document.getElementById('userPincode').value = window.currentUser.address?.pincode || '';
     document.getElementById('userLang').value = window.currentUser.language || 'hi';
-    document.getElementById('userProfilePic').src = window.currentUser.profilePic || '/assets/default-avatar.png';
+    document.getElementById('userProfilePic').src = window.currentUser.profilePic || '/assets/default-avatar.png'; // ab ye cloudinary url hoga
 }
 
 function handlePicChange(event) {
@@ -185,11 +171,10 @@ async function saveDetails() {
     }
 
     try {
-        // STEP 1: Pehle pic upload
         if (newProfilePic) {
             const picUrl = await uploadProfilePic(newProfilePic, token);
             if(picUrl) {
-                data.profilePic = picUrl;
+                data.profilePic = picUrl; // ye backend me avatar me save hoga
             } else {
                 btn.textContent = 'Save Details';
                 btn.disabled = false;
@@ -197,7 +182,6 @@ async function saveDetails() {
             }
         }
 
-        // STEP 2: Fir data save
         const res = await fetch('/api/user/update', {
             method: 'PUT',
             headers: {
@@ -210,13 +194,12 @@ async function saveDetails() {
 
         if (result.success) {
             document.getElementById('successMsg').style.display = 'block';
-            window.currentUser = result.user;
+            window.currentUser = result.user; // nayi pic ke sath update
             newProfilePic = null;
 
-            // 1.5 sec baad redirect
             setTimeout(() => {
                 document.getElementById('successMsg').style.display = 'none';
-                window.location.href = '/profile.html';
+                window.location.href = '/profile.html'; // profile pe nayi pic dikhegi
             }, 1500);
 
         } else {
@@ -237,7 +220,7 @@ async function uploadProfilePic(file, token) {
     formData.append('profilePic', file);
 
     try {
-        const res = await fetch('/api/upload/upload-pic', { // <-- FIX KIYA: /api/upload/ lagaya
+        const res = await fetch('/api/upload-pic', {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -246,7 +229,7 @@ async function uploadProfilePic(file, token) {
         });
         const result = await res.json();
         if (result.success) {
-            document.getElementById('userProfilePic').src = result.url;
+            document.getElementById('userProfilePic').src = result.url; // turant preview
             return result.url;
         } else {
             alert('Upload failed: ' + (result.error || result.message));

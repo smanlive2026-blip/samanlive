@@ -13,7 +13,6 @@
     max-width: 600px;
     margin: 0 20px;
 }
-
 .search-box-modern input {
     width: 100%;
     height: 44px;
@@ -26,18 +25,15 @@
     font-size: 15px;
     transition: all 0.3s ease;
 }
-
 .search-box-modern input:focus {
     outline: none;
     border-color: #10b981;
     background: rgba(255,255,255,0.12);
     box-shadow: 0 0 0 4px rgba(16,185,129,0.1);
 }
-
 .search-box-modern input::placeholder {
     color: rgba(255,255,255,0.5);
 }
-
 .search-icon {
     position: absolute;
     left: 16px;
@@ -47,7 +43,6 @@
     font-size: 18px;
     pointer-events: none;
 }
-
 .search-btn-modern {
     position: absolute;
     right: 4px;
@@ -65,10 +60,29 @@
     justify-content: center;
     transition: all 0.3s ease;
 }
-
 .search-btn-modern:hover {
     transform: translateY(-50%) scale(1.05);
     box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+}
+
+/* ✅ HEADER PROFILE PIC */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.profile-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid #10b981;
+    transition: all 0.3s;
+}
+.profile-avatar:hover {
+    transform: scale(1.1);
+    border-color: #fff;
 }
 
 /* ✅ 6 LINE CAROUSEL GRID */
@@ -80,7 +94,6 @@
     overflow-y: auto;
     overflow-x: hidden;
 }
-
 .six-line-carousel .carousel-item {
     display: flex;
     gap: 12px;
@@ -88,11 +101,9 @@
     padding-bottom: 8px;
     scroll-snap-type: x mandatory;
 }
-
 .six-line-carousel .carousel-item::-webkit-scrollbar {
     height: 4px;
 }
-
 .six-line-carousel .carousel-item::-webkit-scrollbar-thumb {
     background: rgba(255,255,255,0.2);
     border-radius: 2px;
@@ -109,7 +120,6 @@
     color: rgba(255,255,255,0.4);
     grid-column: 1 / -1;
 }
-
 .empty-state-icon {
     font-size: 48px;
     margin-bottom: 12px;
@@ -146,7 +156,8 @@
 
 <div class="header-right">
 <div class="notification-icon">🔔<span class="notif-badge">3</span></div>
-<div class="profile-avatar" onclick="goToProfilePage()">P</div>
+<!-- FIX: P ki jagah img aa gayi -->
+<img class="profile-avatar" id="headerProfilePic" src="/assets/default-avatar.png" onclick="goToProfilePage()" alt="Profile">
 </div>
 </header>
 
@@ -308,7 +319,7 @@
             <p>Scan to get user details</p>
         </div>
         <div class="profile-options">
-            <button onclick="showDetailsForm()">📋 My Details</button>
+            <button onclick="window.location.href='/profile/details.html'">📋 My Details</button>
             <button onclick="showCreateShop()">🏪 Create Shop</button>
             <button onclick="openQRScanner()">📷 Scan QR</button>
             <button onclick="logout()" class="logout-btn">🚪 Logout</button>
@@ -366,6 +377,39 @@
 </div>
 
 <script>
+// ✅ HEADER ME PIC LOAD KARNE WALA FUNCTION
+function loadHeaderUser() {
+    const token = localStorage.getItem('userToken');
+    if(!token) return;
+    
+    if(window.currentUser && window.currentUser.profilePic) {
+        document.getElementById('headerProfilePic').src = window.currentUser.profilePic;
+    } else {
+        fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token }})
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                window.currentUser = data.user;
+                document.getElementById('headerProfilePic').src = data.user.profilePic || '/assets/default-avatar.png';
+            }
+        }).catch(err => console.log(err))
+    }
+}
+
+// ✅ PROFILE MODAL OPEN
+function goToProfilePage() {
+    if(window.currentUser) {
+        document.getElementById('profilePic').src = window.currentUser.profilePic || '/assets/default-avatar.png';
+        document.getElementById('profileName').textContent = window.currentUser.name || 'User';
+        document.getElementById('userUniqueId').textContent = window.currentUser.userId || 'USER123';
+    }
+    document.getElementById('profileModal').style.display = 'flex';
+}
+
+function closeProfileModal() {
+    document.getElementById('profileModal').style.display = 'none';
+}
+
 // ✅ EMPTY STATE RENDER FUNCTION
 function renderEmptyState(containerId, message) {
     const container = document.getElementById(containerId);
@@ -384,8 +428,6 @@ function loadShops(shops) {
         renderEmptyState('shopsContent', 'No shops available in your area');
         return;
     }
-    // Yahan 6 lines me shops render karo
-    // Har line me 4-5 shops horizontally scroll
 }
 
 // ✅ Example: Top Products load ho
@@ -395,13 +437,15 @@ function loadTopProducts(products) {
         renderEmptyState('topProductsContent', 'No products available yet');
         return;
     }
-    // Yahan 6 lines me products render karo
 }
 
 function performSearch() {
     const query = document.getElementById('searchInput').value;
     console.log('Searching:', query);
 }
+
+// PAGE LOAD PE HEADER PIC LOAD KARO
+window.addEventListener('DOMContentLoaded', loadHeaderUser);
 </script>
 
 <script src="/assets/js/app.js"></script>
