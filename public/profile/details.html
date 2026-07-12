@@ -8,7 +8,7 @@
 <style>
 .details-page { min-height: 100vh; background: #f1f5f9; padding-bottom: 40px; }
 .header-bar { background: linear-gradient(135deg, #667eea, #764ba2); padding: 16px 20px; color: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-.header-bar.back-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-right: 12px; } /* FIX: space lagaya */
+.header-bar.back-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-right: 12px; } /* FIX:. lagaya */
 .header-bar h1 { display: inline-block; font-size: 20px; margin: 0; }
 .form-container { margin: 20px; background: white; padding: 24px; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
 .profile-pic-section { text-align: center; margin-bottom: 24px; }
@@ -118,14 +118,15 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 function loadUserData() {
-    document.getElementById('userName').value = window.currentUser.name || '';
-    document.getElementById('userEmail').value = window.currentUser.email || '';
-    document.getElementById('userPhone').value = window.currentUser.phone || '';
-    document.getElementById('userAddress').value = window.currentUser.address?.street || '';
-    document.getElementById('userCity').value = window.currentUser.address?.city || '';
-    document.getElementById('userPincode').value = window.currentUser.address?.pincode || '';
-    document.getElementById('userLang').value = window.currentUser.language || 'hi';
-    document.getElementById('userProfilePic').src = window.currentUser.profilePic || '/assets/default-avatar.png'; // ab ye cloudinary url hoga
+    const user = window.currentUser;
+    document.getElementById('userName').value = user.name || '';
+    document.getElementById('userEmail').value = user.email || '';
+    document.getElementById('userPhone').value = user.phone || '';
+    document.getElementById('userAddress').value = user.address?.street || '';
+    document.getElementById('userCity').value = user.address?.city || '';
+    document.getElementById('userPincode').value = user.address?.pincode || '';
+    document.getElementById('userLang').value = user.language || 'hi';
+    document.getElementById('userProfilePic').src = user.profilePic || user.avatar || '/assets/default-avatar.png'; // FIX: avatar bhi check
 }
 
 function handlePicChange(event) {
@@ -215,12 +216,13 @@ async function saveDetails() {
     }
 }
 
+// FIX: YEHI URL SAHI HAI
 async function uploadProfilePic(file, token) {
     const formData = new FormData();
     formData.append('profilePic', file);
 
     try {
-        const res = await fetch('/api/upload-pic', {
+        const res = await fetch('/api/upload/upload-pic', { // <-- YAHI CHANGE KIYA
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -236,7 +238,7 @@ async function uploadProfilePic(file, token) {
         }
     } catch (err) {
         console.log('Pic upload failed:', err);
-        alert('Profile pic upload failed');
+        alert('Profile pic upload failed: ' + err.message);
     }
     return null;
 }

@@ -8,7 +8,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (window.currentUser) {
-        currentUser = window.currentUser;
+        window.currentUser = window.currentUser; // FIX: currentUser ko window se hi lo
         loadUserData();
     } else {
         try {
@@ -17,7 +17,6 @@ window.addEventListener('DOMContentLoaded', async () => {
             });
             const data = await res.json();
             if (data.success) {
-                currentUser = data.user;
                 window.currentUser = data.user;
                 loadUserData();
             } else {
@@ -28,60 +27,19 @@ window.addEventListener('DOMContentLoaded', async () => {
             window.location.href = '/';
         }
     }
-    // autoFillLocation(); // COMMENTED: Location auto fill band
 });
 
 function loadUserData() {
-    document.getElementById('userName').value = window.currentUser.name || '';
-    document.getElementById('userEmail').value = window.currentUser.email || '';
-    document.getElementById('userPhone').value = window.currentUser.phone || '';
-    document.getElementById('userAddress').value = window.currentUser.address?.street || '';
-    document.getElementById('userCity').value = window.currentUser.address?.city || '';
-    document.getElementById('userPincode').value = window.currentUser.address?.pincode || '';
-    document.getElementById('userLang').value = window.currentUser.language || 'hi';
-    document.getElementById('userProfilePic').src = window.currentUser.profilePic || '/assets/default-avatar.png';
-
-    // COMMENTED: Location load karna band
-    /*
-    if (window.currentUser.location?.coordinates) {
-        const lat = window.currentUser.location.coordinates[1];
-        const lng = window.currentUser.location.coordinates[0];
-        updateLocationUI(lat, lng, false);
-    }
-    */
+    const user = window.currentUser;
+    document.getElementById('userName').value = user.name || '';
+    document.getElementById('userEmail').value = user.email || '';
+    document.getElementById('userPhone').value = user.phone || '';
+    document.getElementById('userAddress').value = user.address?.street || '';
+    document.getElementById('userCity').value = user.address?.city || '';
+    document.getElementById('userPincode').value = user.address?.pincode || '';
+    document.getElementById('userLang').value = user.language || 'hi';
+    document.getElementById('userProfilePic').src = user.profilePic || user.avatar || '/assets/default-avatar.png'; // FIX: avatar bhi check karo
 }
-
-/*
-function autoFillLocation() {
-    const coordsEl = document.getElementById('locationCoords');
-    if (window.currentUserLocation) {
-        const lat = window.currentUserLocation.lat;
-        const lng = window.currentUserLocation.lng;
-        updateLocationUI(lat, lng, true);
-    } else {
-        coordsEl.innerHTML = '⏳ Waiting for location... Make sure GPS is enabled';
-        setTimeout(() => {
-            if (window.currentUserLocation) {
-                autoFillLocation();
-            } else {
-                coordsEl.innerHTML = '❌ Location not available. Please enable GPS in app settings';
-            }
-        }, 2000);
-    }
-}
-
-function updateLocationUI(lat, lng, isAuto = false) {
-    document.getElementById('userLat').value = lat;
-    document.getElementById('userLng').value = lng;
-    const coordsEl = document.getElementById('locationCoords');
-    coordsEl.innerHTML = `
-        <strong>Lat:</strong> ${lat.toFixed(6)}<br>
-        <strong>Lng:</strong> ${lng.toFixed(6)}
-        ${isAuto? '<br><small style="color:#10b981;">✅ Auto-updated from current location</small>' : ''}
-    `;
-    coordsEl.classList.add('success');
-}
-*/
 
 function handlePicChange(event) {
     const file = event.target.files[0];
@@ -105,8 +63,6 @@ async function saveDetails() {
     btn.disabled = true;
 
     const token = localStorage.getItem('userToken');
-    // const lat = document.getElementById('userLat').value; // COMMENTED
-    // const lng = document.getElementById('userLng').value; // COMMENTED
 
     const data = {
         name: document.getElementById('userName').value.trim(),
@@ -118,10 +74,6 @@ async function saveDetails() {
             pincode: document.getElementById('userPincode').value.trim()
         },
         language: document.getElementById('userLang').value
-        // location: lat && lng? { // COMMENTED: location bhejna band
-        // type: 'Point',
-        // coordinates: [parseFloat(lng), parseFloat(lat)]
-        // } : undefined
     };
 
     if (!data.name ||!data.phone) {
@@ -136,11 +88,11 @@ async function saveDetails() {
         if (newProfilePic) {
             const picUrl = await uploadProfilePic(newProfilePic, token);
             if(picUrl) {
-                data.profilePic = picUrl;
+                data.profilePic = picUrl; // backend isko avatar me convert karega
             } else {
                 btn.textContent = 'Save Details';
                 btn.disabled = false;
-                return; // agar pic upload fail to aage mat jao
+                return;
             }
         }
 
@@ -157,14 +109,12 @@ async function saveDetails() {
 
         if (result.success) {
             document.getElementById('successMsg').style.display = 'block';
-            currentUser = result.user;
             window.currentUser = result.user;
             newProfilePic = null;
 
-            // 1.5 sec baad profile page pe redirect
             setTimeout(() => {
                 document.getElementById('successMsg').style.display = 'none';
-                window.location.href = '/profile.html'; // yaha apna page ka naam daal
+                window.location.href = '/profile.html';
             }, 1500);
 
         } else {
@@ -180,12 +130,13 @@ async function saveDetails() {
     }
 }
 
+// FIX: URL 1 hi rakho
 async function uploadProfilePic(file, token) {
     const formData = new FormData();
     formData.append('profilePic', file);
 
     try {
-        const res = await fetch('/api/upload/upload-pic', {
+        const res = await fetch('/api/upload/upload-pic', { // <-- YEHI FINAL URL
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token

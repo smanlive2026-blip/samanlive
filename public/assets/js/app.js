@@ -176,23 +176,53 @@ async function loadAllData() {
     try {
         await getUserLocation();
 
-        const endpoints = [
-            {url: '/api/ads', key: 'allAds'},
-            {url: '/api/videos', key: 'nearbyVideos'},
-            {url: '/api/campaigns', key: 'allCampaigns'},
-            {url: '/api/settings', key: 'siteSettings'},
-            {url: '/api/modules', key: 'allModules'},
-        ];
+        try {
+            const adsRes = await fetch('/api/ads');
+            if(adsRes.ok) allAds = await adsRes.json();
+            else allAds = [];
+        } catch(e) {
+            console.log('Ads API failed:', e);
+            allAds = [];
+        }
 
-        for(let ep of endpoints) {
-            try {
-                const res = await fetch(ep.url);
-                if(res.ok) {
-                    const data = await res.json();
-                    if(ep.key === 'allModules') window[ep.key] = data.modules || data;
-                    else window[ep.key] = data;
-                }
-            } catch(e) { console.log(ep.url + ' failed:', e); }
+        try {
+            const videosRes = await fetch('/api/videos');
+            if(videosRes.ok) nearbyVideos = await videosRes.json();
+            else nearbyVideos = [];
+        } catch(e) {
+            console.log('Videos API failed:', e);
+            nearbyVideos = [];
+        }
+
+        try {
+            const campaignsRes = await fetch('/api/campaigns');
+            if(campaignsRes.ok) allCampaigns = await campaignsRes.json();
+            else allCampaigns = [];
+        } catch(e) {
+            console.log('Campaigns API failed:', e);
+            allCampaigns = [];
+        }
+
+        try {
+            const settingsRes = await fetch('/api/settings');
+            if(settingsRes.ok) siteSettings = await settingsRes.json();
+            else siteSettings = {};
+        } catch(e) {
+            console.log('Settings API failed:', e);
+            siteSettings = {};
+        }
+
+        try {
+            const modulesRes = await fetch('/api/modules');
+            if(modulesRes.ok) {
+                const modulesData = await modulesRes.json();
+                allModules = modulesData.modules || modulesData;
+            } else {
+                allModules = [];
+            }
+        } catch(e) {
+            console.log('Modules API failed:', e);
+            allModules = [];
         }
 
         // ✅ SHOPS LOAD
@@ -498,7 +528,7 @@ function renderVideos() {
 // ========================================
 let topAdIndex = 0;
 function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED
+    const slides = document.querySelectorAll('#topAdsContainer.ad-slide'); // FIXED: space add kiya
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     topAdIndex = idx;
@@ -632,15 +662,14 @@ document.addEventListener('gesturestart', function(e) {
 });
 
 // ========================================
-// USER AUTH + PROFILE SYSTEM - FIXED
+// USER AUTH + PROFILE SYSTEM
 // ========================================
 window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('userToken');
     if (token) {
         fetchUserData(token);
-    } else {
-        updateProfileAvatar(); // logout state
     }
+    updateProfileAvatar();
 });
 
 async function fetchUserData(token) {
@@ -655,19 +684,18 @@ async function fetchUserData(token) {
             updateProfileAvatar();
         } else {
             localStorage.removeItem('userToken');
-            updateProfileAvatar();
         }
     } catch (err) {
         localStorage.removeItem('userToken');
-        updateProfileAvatar();
     }
 }
 
+// FIX 1: ID se pakdo aur cache bust lagao
 function updateProfileAvatar() {
-    const avatar = document.getElementById('headerProfilePic'); // FIX: ID se pakda
+    const avatar = document.getElementById('headerProfilePic'); // FIXED
     if (!avatar) return;
     if (currentUser) {
-        avatar.src = currentUser.profilePic || '/assets/default-avatar.png'; // FIX: img ka src
+        avatar.src = (currentUser.profilePic || '/assets/default-avatar.png') + '?t=' + Date.now(); // FIXED
         avatar.onclick = goToProfilePage;
     } else {
         avatar.src = '/assets/default-avatar.png';
@@ -702,7 +730,7 @@ async function loginWithPhone() {
             closeLoginModal();
             updateProfileAvatar();
             alert('Login Success! 🎉');
-            window.location.reload(); // FIX: reload taaki header pic update ho
+            window.location.reload(); // FIX: reload after login
         } else {
             alert('Login failed: ' + data.error);
         }
@@ -715,15 +743,13 @@ function loginWithGoogle() {
     alert('Google Login setup ho raha hai. Abhi phone se login karo 🙏');
 }
 
-// FIX: NAYA FUNCTION ADD KIYA
-function goToProfilePage() {
+function openProfileModal() {
     if (!currentUser) return openLoginModal();
     document.getElementById('profileName').textContent = currentUser.name;
     document.getElementById('userUniqueId').textContent = currentUser.userId;
     document.getElementById('profilePic').src = currentUser.profilePic || '/assets/default-avatar.png';
     document.getElementById('profileModal').style.display = 'flex';
 }
-
 function closeProfileModal() {
     document.getElementById('profileModal').style.display = 'none';
     document.getElementById('detailsForm').style.display = 'none';
@@ -743,6 +769,7 @@ function showDetailsForm() {
     }
 }
 
+// FIX 2: Update ke baad dubara fetch
 async function updateUserDetails() {
     const token = localStorage.getItem('userToken');
     const data = {
@@ -768,13 +795,22 @@ async function updateUserDetails() {
             window.currentUser = result.user;
             alert('Details Updated! ✅');
             closeProfileModal();
-            updateProfileAvatar(); // header bhi update
+            updateProfileAvatar();
+            fetchUserData(token); // FIXED: dubara data lao
         } else {
             alert('Update failed: ' + result.message);
         }
     } catch (err) {
         alert('Update failed');
     }
+}
+
+function goToProfilePage() {
+    if (!currentUser) {
+        openLoginModal();
+        return;
+    }
+    window.location.href = '/profile.html';
 }
 
 // ========================================
