@@ -120,6 +120,10 @@ app.use('/api/location', require('./modules/locationRoutes'));
 // Alag prefix de dete hai taaki takkar na ho
 app.use('/api/upload', require('./routes/upload'));
 
+// user profilr ke liye bnaya tha 
+const userRoutes = require('./routes/user');
+app.use('/api/user', userRoutes);
+
 // ✅ CLOUDINARY UPLOAD ROUTE - NEW
 //const uploadRoutesCloud = require('./routes/upload');
 //app.use('/api', uploadRoutesCloud);
