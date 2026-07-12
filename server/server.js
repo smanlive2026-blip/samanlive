@@ -151,6 +151,10 @@ app.get('/module-detail.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/admin-panel/module-detail.html'));
 });
 
+//   user ke liye   
+app.use('/api', require('./routes/admin.routes'));
+
+
 // ==================== AREA MANAGER ROUTE ====================
 app.get('/area-manager.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/area-manager.html'));
