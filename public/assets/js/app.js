@@ -710,6 +710,7 @@ function closeLoginModal() {
     document.getElementById('loginModal').style.display = 'none';
 }
 
+// ✅ FIX: SIGNUP API HIT KAREGA AB
 async function loginWithPhone() {
     const phone = document.getElementById('loginPhone').value.trim();
     const name = document.getElementById('loginName').value.trim();
@@ -717,14 +718,14 @@ async function loginWithPhone() {
     if (!name) return alert('Name dalo');
 
     try {
-        const res = await fetch('/api/auth/login-phone', {
+        const res = await fetch('/api/auth/signup', { // ✅ YE CHANGE KIYA
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone, name })
         });
         const data = await res.json();
         if (data.success) {
-            localStorage.setItem('userToken', data.token);
+            localStorage.setItem('userToken', data.user._id);
             currentUser = data.user;
             window.currentUser = data.user;
             closeLoginModal();

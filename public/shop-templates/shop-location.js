@@ -1,3 +1,5 @@
+//  ye sabhi shop template ke liye comman location file h  public/shop-template.js    
+
 const ShopLocationManager = {
     shopId: null,
     type: 'fixed', // fixed ya dynamic
