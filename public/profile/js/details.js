@@ -1,3 +1,5 @@
+//       public/prifile/details.js
+
 let newProfilePic = null;
 
 window.addEventListener('DOMContentLoaded', async () => {
