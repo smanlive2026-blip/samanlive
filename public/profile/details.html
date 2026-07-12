@@ -100,7 +100,6 @@
 
 <script src="/assets/js/app.js"></script>
 <script>
-// let currentUser = null; <-- YE HATA DIYA. app.js me already hai
 let newProfilePic = null;
 
 // Load user data
@@ -130,7 +129,6 @@ window.addEventListener('DOMContentLoaded', async () => {
             window.location.href = '/';
         }
     }
-    // autoFillLocation(); <-- LOCATION HATA DIYA
 });
 
 function loadUserData() {
@@ -177,7 +175,6 @@ async function saveDetails() {
             pincode: document.getElementById('userPincode').value.trim()
         },
         language: document.getElementById('userLang').value
-        // location hata di
     };
 
     if (!data.name ||!data.phone) {
@@ -213,20 +210,26 @@ async function saveDetails() {
 
         if (result.success) {
             document.getElementById('successMsg').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('successMsg').style.display = 'none';
-            }, 3000);
             window.currentUser = result.user;
             newProfilePic = null;
+
+            // 1.5 sec baad redirect
+            setTimeout(() => {
+                document.getElementById('successMsg').style.display = 'none';
+                window.location.href = '/profile.html';
+            }, 1500);
+
         } else {
-            alert('Update failed: ' + result.error);
+            alert('Update failed: ' + (result.error || result.message));
+            btn.textContent = 'Save Details';
+            btn.disabled = false;
         }
     } catch (err) {
+        console.log(err);
         alert('Update failed. Please try again.');
+        btn.textContent = 'Save Details';
+        btn.disabled = false;
     }
-
-    btn.textContent = 'Save Details';
-    btn.disabled = false;
 }
 
 async function uploadProfilePic(file, token) {
@@ -234,7 +237,7 @@ async function uploadProfilePic(file, token) {
     formData.append('profilePic', file);
 
     try {
-        const res = await fetch('/api/upload-pic', { // <-- YE ROUTE
+        const res = await fetch('/api/upload/upload-pic', { // <-- FIX KIYA: /api/upload/ lagaya
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -246,7 +249,7 @@ async function uploadProfilePic(file, token) {
             document.getElementById('userProfilePic').src = result.url;
             return result.url;
         } else {
-            alert('Upload failed: ' + result.error);
+            alert('Upload failed: ' + (result.error || result.message));
         }
     } catch (err) {
         console.log('Pic upload failed:', err);

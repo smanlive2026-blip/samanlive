@@ -1,5 +1,3 @@
-//       public/prifile/details.js
-
 let newProfilePic = null;
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -119,7 +117,7 @@ async function saveDetails() {
             city: document.getElementById('userCity').value.trim(),
             pincode: document.getElementById('userPincode').value.trim()
         },
-        language: document.getElementById('userLang').value,
+        language: document.getElementById('userLang').value
         // location: lat && lng? { // COMMENTED: location bhejna band
         // type: 'Point',
         // coordinates: [parseFloat(lng), parseFloat(lat)]
@@ -159,22 +157,27 @@ async function saveDetails() {
 
         if (result.success) {
             document.getElementById('successMsg').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('successMsg').style.display = 'none';
-            }, 3000);
             currentUser = result.user;
             window.currentUser = result.user;
             newProfilePic = null;
+
+            // 1.5 sec baad profile page pe redirect
+            setTimeout(() => {
+                document.getElementById('successMsg').style.display = 'none';
+                window.location.href = '/profile.html'; // yaha apna page ka naam daal
+            }, 1500);
+
         } else {
-            alert('Update failed: ' + result.error);
+            alert('Update failed: ' + (result.error || result.message));
+            btn.textContent = 'Save Details';
+            btn.disabled = false;
         }
     } catch (err) {
         console.log(err);
         alert('Update failed. Please try again.');
+        btn.textContent = 'Save Details';
+        btn.disabled = false;
     }
-
-    btn.textContent = 'Save Details';
-    btn.disabled = false;
 }
 
 async function uploadProfilePic(file, token) {
@@ -195,7 +198,7 @@ async function uploadProfilePic(file, token) {
             document.getElementById('userProfilePic').src = result.url;
             return result.url;
         } else {
-            alert('Upload failed: ' + result.error);
+            alert('Upload failed: ' + (result.error || result.message));
         }
     } catch (err) {
         console.log('Pic upload failed:', err);
