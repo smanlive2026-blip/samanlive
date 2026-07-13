@@ -9,7 +9,6 @@ window.allManagers = window.allManagers || [];
 window.allContent = window.allContent || [];
 window.allAreas = window.allAreas || [];
 window.allUsers = window.allUsers || [];
-const API_BASE = '/api';
 
 // ========== UTILITY FUNCTIONS ==========
 async function apiCall(endpoint, method = 'GET', data = null) {
