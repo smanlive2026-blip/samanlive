@@ -15,7 +15,7 @@
     -webkit-text-fill-color: transparent;
     margin: 0;
 }
-.dashboard-header.last-updated { /*. lagaya */
+.dashboard-header.last-updated {
     font-size: 13px;
     color: #64748b;
     display: flex;
@@ -161,7 +161,7 @@
             <div class="chart-container">
                 <canvas id="areaRadiusChart"></canvas>
             </div>
-        </div> <!-- YE BAND KIYA -->
+        </div> <!-- YAHI BAND KIYA THA SIRF -->
 
         <div class="chart-card">
             <h3>📍 Shops by Area</h3>
@@ -195,7 +195,7 @@ async function loadDashboard() {
 
     try {
         const [stats, shops, modules, areas] = await Promise.all([
-            apiCall('/admin/stats'), // <- YAHI FIX THA
+            apiCall('/stats'), // TERA PURANA ROUTE HI HAI
             apiCall('/shops'),
             apiCall('/modules'),
             apiCall('/areas').catch(() => [])
