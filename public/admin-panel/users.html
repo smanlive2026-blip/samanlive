@@ -58,16 +58,45 @@
 
 <script>
 let allUsers = [];
+let rawUsers = []; // backend se aaya hua original data
+
+function formatDate(date) {
+    if(!date) return '-';
+    return new Date(date).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'});
+}
+
+function escapeHtml(text) {
+    if(!text) return '';
+    return text.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 async function loadUsers() {
     const tbody = document.querySelector('#usersTable tbody');
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;">Loading...</td></tr>`;
     try {
-        allUsers = await apiCall('/users');
+        rawUsers = await apiCall('/users'); // backend seedha array de raha hai
+
+        // backend data ko frontend format me convert
+        allUsers = rawUsers.map(u => ({
+            _id: u._id,
+            name: u.name,
+            phone: u.phone,
+            email: u.email,
+            role: 'user', // tere user me role field nahi hai to default user
+            isBlocked: u.status === 'blocked',
+            orderCount: u.totalOrders || 0,
+            walletBalance: 0,
+            createdAt: u.createdAt,
+            addresses: u.addresses?.map(a => ({
+                fullAddress: `${a.line1 || ''}, ${a.city || ''}, ${a.state || ''} - ${a.pincode || ''}`
+            })) || []
+        }));
+
         renderUsers(allUsers);
         showToast(`${allUsers.length} users loaded`, 'success');
     } catch(err) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#ef4444;">Failed to load users</td></tr>`;
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#ef4444;">Failed to load users. Token check karo</td></tr>`;
     }
 }
 
@@ -78,17 +107,17 @@ function renderUsers(users) {
         return;
     }
     tbody.innerHTML = users.map(u => `
-        <tr>
-            <td><strong>${escapeHtml(u.name || 'N/A')}</strong></td>
-            <td>${escapeHtml(u.phone || '-')}</td>
-            <td>${escapeHtml(u.email || '-')}</td>
-            <td><span class="badge role-${u.role || 'user'}">${u.role || 'user'}</span></td>
-            <td>${u.orderCount || 0}</td>
-            <td><span class="badge status-${u.isBlocked ? 'blocked' : 'active'}">${u.isBlocked ? 'Blocked' : 'Active'}</span></td>
-            <td>${formatDate(u.createdAt)}</td>
-            <td>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:12px;"><strong>${escapeHtml(u.name || 'N/A')}</strong></td>
+            <td style="padding:12px;">${escapeHtml(u.phone || '-')}</td>
+            <td style="padding:12px;">${escapeHtml(u.email || '-')}</td>
+            <td style="padding:12px;"><span class="badge role-${u.role || 'user'}">${u.role || 'user'}</span></td>
+            <td style="padding:12px;">${u.orderCount || 0}</td>
+            <td style="padding:12px;"><span class="badge status-${u.isBlocked? 'blocked' : 'active'}">${u.isBlocked? 'Blocked' : 'Active'}</span></td>
+            <td style="padding:12px;">${formatDate(u.createdAt)}</td>
+            <td style="padding:12px;">
                 <button class="btn-icon" onclick="viewUser('${u._id}')" title="View">👁️</button>
-                <button class="btn-icon" onclick="toggleBlockUser('${u._id}', ${!u.isBlocked})" title="${u.isBlocked ? 'Unblock' : 'Block'}" style="background:${u.isBlocked ? '#d1fae5' : '#fee2e2'};">${u.isBlocked ? '✅' : '🚫'}</button>
+                <button class="btn-icon" onclick="toggleBlockUser('${u._id}', ${!u.isBlocked})" title="${u.isBlocked? 'Unblock' : 'Block'}" style="background:${u.isBlocked? '#d1fae5' : '#fee2e2'};">${u.isBlocked? '✅' : '🚫'}</button>
             </td>
         </tr>
     `).join('');
@@ -103,11 +132,11 @@ function viewUser(id) {
             <p><strong>Phone:</strong> ${escapeHtml(user.phone || '-')}</p>
             <p><strong>Email:</strong> ${escapeHtml(user.email || '-')}</p>
             <p><strong>Role:</strong> ${escapeHtml(user.role || 'user')}</p>
-            <p><strong>Status:</strong> ${user.isBlocked ? 'Blocked' : 'Active'}</p>
+            <p><strong>Status:</strong> ${user.isBlocked? 'Blocked' : 'Active'}</p>
             <p><strong>Total Orders:</strong> ${user.orderCount || 0}</p>
             <p><strong>Wallet Balance:</strong> ₹${user.walletBalance || 0}</p>
             <p><strong>Joined:</strong> ${formatDate(user.createdAt)}</p>
-            ${user.addresses ? `<p><strong>Addresses:</strong><br>${user.addresses.map(a => `• ${escapeHtml(a.fullAddress)}`).join('<br>')}</p>` : ''}
+            ${user.addresses && user.addresses.length > 0? `<p><strong>Addresses:</strong><br>${user.addresses.map(a => `• ${escapeHtml(a.fullAddress)}`).join('<br>')}</p>` : ''}
         </div>
     `;
     document.getElementById('userDetailsContent').innerHTML = content;
@@ -119,10 +148,10 @@ function closeUserModal() {
 }
 
 async function toggleBlockUser(id, block) {
-    if(!confirm(block ? 'Block this user?' : 'Unblock this user?')) return;
+    if(!confirm(block? 'Block this user?' : 'Unblock this user?')) return;
     try {
         await apiCall(`/users/${id}/block`, 'PUT', { isBlocked: block });
-        showToast(block ? 'User blocked!' : 'User unblocked!', 'success');
+        showToast(block? 'User blocked!' : 'User unblocked!', 'success');
         loadUsers();
     } catch(err) {
         showToast('Failed to update', 'error');
@@ -131,8 +160,8 @@ async function toggleBlockUser(id, block) {
 
 function searchUsers() {
     const query = document.getElementById('userSearch').value.toLowerCase();
-    const filtered = allUsers.filter(u => 
-        u.name?.toLowerCase().includes(query) || 
+    const filtered = allUsers.filter(u =>
+        u.name?.toLowerCase().includes(query) ||
         u.phone?.toLowerCase().includes(query) ||
         u.email?.toLowerCase().includes(query)
     );
@@ -142,7 +171,7 @@ function searchUsers() {
 function filterByStatus() {
     const status = document.getElementById('statusFilter').value;
     if(status === 'all') renderUsers(allUsers);
-    else if(status === 'active') renderUsers(allUsers.filter(u => !u.isBlocked));
+    else if(status === 'active') renderUsers(allUsers.filter(u =>!u.isBlocked));
     else renderUsers(allUsers.filter(u => u.isBlocked));
 }
 

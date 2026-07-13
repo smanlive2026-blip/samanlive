@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken'); // ✅ YE ADD KAR
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -24,6 +25,22 @@ async function authenticateManager(req, res, next) {
 
     req.manager = manager;
     next();
+}
+
+// ✅ YE 
+async function authenticateToken(req, res, next) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'No token' });
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'samanlive_secret_key_2026_change_this');
+        const user = await User.findById(decoded.id || decoded.userId).select('-password');
+        if(!user) return res.status(401).json({ error: 'User not found' });
+        req.user = user;
+        next();
+    } catch(err) {
+        return res.status(401).json({ error: 'Invalid token' });
+    }
 }
 
 // ==================== UPLOAD SETUP ====================
