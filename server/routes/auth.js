@@ -1,4 +1,5 @@
 // server/routes/auth.js
+//   ye file user banane ke liye h ok
 
 const express = require('express');
 const jwt = require('jsonwebtoken');

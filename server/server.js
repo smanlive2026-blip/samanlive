@@ -124,6 +124,9 @@ app.use('/api/upload', require('./routes/upload'));
 const userRoutes = require('./routes/user');
 app.use('/api/user', userRoutes);
 
+// ✅ NEW: Admin user management
+app.use('/api/admin', require('./routes/userAdmin'));
+
 // ✅ CLOUDINARY UPLOAD ROUTE - NEW
 //const uploadRoutesCloud = require('./routes/upload');
 //app.use('/api', uploadRoutesCloud);
@@ -152,7 +155,7 @@ app.get('/module-detail.html', (req, res) => {
 });
 
 //   user ke liye   
-app.use('/api', require('./routes/admin.routes'));
+//app.use('/api', require('./routes/admin.routes'));
 
 
 // ==================== AREA MANAGER ROUTE ====================
