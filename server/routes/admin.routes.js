@@ -2,16 +2,18 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 
-// BINA LOGIN WALA TEST KE LIYE - BAAD ME MIDDLEWARE LAGA DENA
+// SAARAY USERS LANA
 router.get('/users', async (req,res)=>{
     try {
         const users = await User.find().sort({createdAt:-1});
-        res.json(users); // ✅ Seedha array bhej
+        res.json(users);
     } catch (err) {
+        console.error(err);
         res.status(500).json({msg: 'Server Error'});
     }
 });
 
+// BLOCK/UNBLOCK
 router.put('/users/:id/block', async (req,res)=>{
     try {
         const {isBlocked} = req.body;
