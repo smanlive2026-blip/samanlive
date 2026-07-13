@@ -415,4 +415,109 @@ window.addEventListener('beforeunload', () => {
     if (locationInterval) clearInterval(locationInterval);
 });
 
+// ================= CATALOG SYSTEM - READY MADE MEDICINES =================
+let allCatalogProducts = [];
+
+async function openCatalog() {
+    document.getElementById('catalogModal').style.display = 'flex';
+    showLoader(true);
+    
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/admin/shop/${shopId}/catalog/medical`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        
+        if(data.success) {
+            allCatalogProducts = data.products || [];
+            showCatalog(allCatalogProducts);
+        } else {
+            alert('Catalog load nahi hua: ' + data.error);
+        }
+    } catch(err) {
+        console.error(err);
+        alert('Catalog load nahi hua');
+    }
+    showLoader(false);
+}
+
+function showCatalog(products) {
+    const list = document.getElementById('catalogList');
+    if(products.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No products found</p>';
+        return;
+    }
+    
+    list.innerHTML = products.map(p => `
+        <div style="border:1px solid #e2e8f0; padding:12px; margin-bottom:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <b style="font-size:15px; color:#1e293b;">${p.name}</b><br>
+                <small style="color:#64748b;"><i class="fa fa-tag"></i> ${p.category} • ${p.description}</small>
+            </div>
+            <button onclick="addFromCatalog('${p._id}', '${p.name.replace(/'/g, "\\'")}')" 
+                style="background:#10b981; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
+                <i class="fa fa-plus"></i> Add
+            </button>
+        </div>
+    `).join('');
+}
+
+async function addFromCatalog(templateId, name) {
+    const price = prompt(`${name} ka Selling Price daalo: ₹`);
+    if(price === null || price === '') return;
+    const mrp = prompt(`${name} ka MRP daalo: ₹`);
+    if(mrp === null) return;
+    const stock = prompt(`${name} ka Stock kitna hai:`);
+    if(stock === null) return;
+    
+    showLoader(true);
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/admin/shop/${shopId}/add-from-catalog`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': 'Bearer ' + token 
+            },
+            body: JSON.stringify({ templateId, price: Number(price), mrp: Number(mrp), stock: Number(stock) })
+        });
+        const data = await res.json();
+        showLoader(false);
+        
+        if(data.success) {
+            alert('✅ Medicine add ho gayi!');
+            loadShopData(); // table refresh
+        } else {
+            alert('❌ ' + data.error);
+        }
+    } catch(err) {
+        showLoader(false);
+        alert('Error: ' + err.message);
+    }
+}
+
+function closeCatalog() { 
+    document.getElementById('catalogModal').style.display = 'none'; 
+}
+
+function filterCatalog() {
+    const val = document.getElementById('searchCatalog').value.toLowerCase();
+    const filtered = allCatalogProducts.filter(p => 
+        p.name.toLowerCase().includes(val) || 
+        p.category.toLowerCase().includes(val) ||
+        p.description.toLowerCase().includes(val)
+    );
+    showCatalog(filtered);
+}
+
+function showLoader(show) {
+    document.getElementById('loader').style.display = show ? 'flex' : 'none';
+}
+// ================= CATALOG SYSTEM END =================
+
+window.addEventListener('beforeunload', () => {
+    if (locationInterval) clearInterval(locationInterval);
+});
+
 loadShopData();

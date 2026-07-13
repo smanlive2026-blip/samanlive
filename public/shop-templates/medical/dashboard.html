@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+    </style>
 </head>
 <body>
     <div class="shop-container">
@@ -65,6 +69,12 @@
             <button class="btn btn-primary" id="addProductBtn">
                 <i class="fa fa-plus"></i> Add Medicine
             </button>
+            
+            <!-- NAYA CATALOG BUTTON -->
+            <button class="btn btn-success" onclick="openCatalog()">
+                <i class="fa fa-store"></i> Catalog se Add Kare
+            </button>
+
             <button class="btn btn-secondary" onclick="loadOrders()">
                 <i class="fa fa-list"></i> View Orders
             </button>
@@ -129,6 +139,20 @@
                 <button onclick="closeContactModal()" style="background:none; border:none; font-size:28px; cursor:pointer; color:#64748b; line-height:1;">×</button>
             </div>
             <div id="managerContactBody" style="padding:24px;">
+            </div>
+        </div>
+    </div>
+
+    <!-- CATALOG MODAL NAYA ADD KIYA -->
+    <div id="catalogModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:10002; backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:16px; max-width:900px; width:95%; max-height:85vh; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <div style="padding:20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="margin:0; font-size:20px; color:#1e293b;"><i class="fa fa-boxes"></i> Ready Made Medical Catalog - 100+ Medicines</h2>
+                <button onclick="closeCatalog()" style="background:none; border:none; font-size:28px; cursor:pointer; color:#64748b; line-height:1;">×</button>
+            </div>
+            <div style="padding:20px;">
+                <input type="text" id="searchCatalog" placeholder="Medicine search kare... Crocin, Dolo, Bandage..." onkeyup="filterCatalog()" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; font-size:14px;">
+                <div id="catalogList" style="overflow-y:auto; max-height:60vh;"></div>
             </div>
         </div>
     </div>

@@ -1,6 +1,8 @@
 const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId');
-document.getElementById('shopIdDisplay').innerText = shopId.substring(0, 8) + '...';
+document.getElementById('shopIdDisplay').innerText = shopId ? shopId.substring(0, 8) + '...' : 'N/A';
+
+let allCatalogProducts = [];
 
 async function loadShopData() {
     const res = await fetch(`/api/local-market/shops/${shopId}`);
@@ -83,5 +85,101 @@ document.getElementById('addItemBtn').onclick = () => {
 document.getElementById('newOrderBtn').onclick = () => {
     window.location.href = `/shop-templates/jewellery/billing.html?shopId=${shopId}`;
 };
+
+// ================= CATALOG SYSTEM START =================
+async function openCatalog() {
+    document.getElementById('catalogModal').style.display = 'flex';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/admin/shop/${shopId}/catalog/jewellery`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        
+        if(data.success) {
+            allCatalogProducts = data.products || [];
+            showCatalog(allCatalogProducts);
+        } else {
+            alert('Catalog load nahi hua: ' + data.error);
+        }
+    } catch(err) {
+        console.error(err);
+        alert('Catalog load nahi hua');
+    }
+}
+
+function showCatalog(products) {
+    const list = document.getElementById('catalogList');
+    if(products.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No products found</p>';
+        return;
+    }
+    
+    list.innerHTML = products.map(p => `
+        <div class="jewellery-card">
+            <div>
+                <b style="font-size:16px; color:#713f12;">${p.name}</b><br>
+                <span class="gold-badge">${p.category}</span>
+                <small style="color:#64748b; margin-left:8px;">${p.description}</small>
+            </div>
+            <button onclick="addFromCatalog('${p._id}', '${p.name.replace(/'/g, "\\'")}')" class="btn btn-success" style="padding:8px 16px;">
+                <i class="fa fa-plus"></i> Add
+            </button>
+        </div>
+    `).join('');
+}
+
+async function addFromCatalog(templateId, name) {
+    const price = prompt(`${name} ka Selling Price daalo: ₹`);
+    if(price === null || price === '') return;
+    const weight = prompt(`${name} ka Weight in Grams daalo:`);
+    if(weight === null) return;
+    const making = prompt(`${name} ka Making Charges % daalo:`);
+    if(making === null) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/admin/shop/${shopId}/add-from-catalog`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': 'Bearer ' + token 
+            },
+            body: JSON.stringify({ 
+                templateId, 
+                price: Number(price), 
+                stock: 1,
+                weight: Number(weight),
+                making: Number(making)
+            })
+        });
+        const data = await res.json();
+        
+        if(data.success) {
+            alert('✅ Jewellery item add ho gayi!');
+            loadShopData(); // inventory refresh
+        } else {
+            alert('❌ ' + data.error);
+        }
+    } catch(err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+function closeCatalog() { 
+    document.getElementById('catalogModal').style.display = 'none'; 
+}
+
+function filterCatalog() {
+    const val = document.getElementById('searchCatalog').value.toLowerCase();
+    const filtered = allCatalogProducts.filter(p => 
+        p.name.toLowerCase().includes(val) || 
+        p.category.toLowerCase().includes(val) ||
+        p.description.toLowerCase().includes(val)
+    );
+    showCatalog(filtered);
+}
+// ================= CATALOG SYSTEM END =================
 
 loadShopData();

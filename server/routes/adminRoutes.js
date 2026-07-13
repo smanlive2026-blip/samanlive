@@ -870,6 +870,45 @@ router.delete('/shop/:shopId/product/:productId', async (req, res) => {
     }
 })
 
+// ==================== TEMPLATE PRODUCTS - READY MADE CATALOG ====================
+const TemplateProduct = require('../models/TemplateProduct'); // upar models ke sath ye bhi add kar lena
+
+// 1. SAARI TEMPLATE PRODUCTS LANA - Filter: shopType se
+router.get('/template-products', authenticateToken, async (req, res) => {
+    try {
+        const { shopType } = req.query;
+        let filter = { isActive: true };
+        if(shopType) filter.shopType = shopType;
+        
+        const products = await TemplateProduct.find(filter).sort({ createdAt: -1 });
+        res.json({ success: true, products });
+    } catch(err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 2. NAYA TEMPLATE PRODUCT BANANA - Admin se
+router.post('/template-products', authenticateToken, async (req, res) => {
+    try {
+        const product = new TemplateProduct(req.body);
+        await product.save();
+        res.json({ success: true, product });
+    } catch(err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 3. TEMPLATE PRODUCT DELETE
+router.delete('/template-products/:id', authenticateToken, async (req, res) => {
+    try {
+        await TemplateProduct.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch(err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+
 // ================= USERS LIST FOR ADMIN =================
 router.get('/users', authenticateToken, async (req, res) => {
     try {
