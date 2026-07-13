@@ -13,18 +13,21 @@
         table { width: 100%; border-collapse: collapse; background: white; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: #f5f5f5; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index:999; }
         .modal-content { background: white; margin: 5% auto; padding: 20px; width: 500px; border-radius: 8px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .error { color:red; text-align:center; padding:20px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>📦 Template Products - Ready Made Catalog</h1>
-            <button class="btn" onclick="openModal()">+ Naya Product Add Kare</button>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" onclick="openModal()">+ Naya Product Add Kare</button>
+            </div>
         </div>
 
         <div class="filters">
@@ -34,8 +37,14 @@
                 <option value="medical">Medical</option>
                 <option value="electronics">Electronics</option>
                 <option value="grocery-sweet">Grocery-Sweet</option>
+                <option value="achar">Achar</option>
+                <option value="auto">Auto</option>
+                <option value="bakery">Bakery</option>
+                <option value="furniture">Furniture</option>
             </select>
         </div>
+
+        <div id="errorBox"></div>
 
         <table id="productsTable">
             <thead>
@@ -48,7 +57,7 @@
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody><tr><td colspan="6" style="text-align:center;">Loading...</td></tr></tbody>
         </table>
     </div>
 
@@ -63,6 +72,10 @@
                         <option value="kirana">Kirana</option>
                         <option value="medical">Medical</option>
                         <option value="electronics">Electronics</option>
+                        <option value="achar">Achar</option>
+                        <option value="auto">Auto</option>
+                        <option value="bakery">Bakery</option>
+                        <option value="furniture">Furniture</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -88,26 +101,43 @@
     </div>
 
     <script>
-        const token = localStorage.getItem('adminToken');
+        // FIX: userToken use karo kyunki admin.js me wahi set hai
+        const token = localStorage.getItem('userToken'); 
 
         async function loadProducts() {
             const shopType = document.getElementById('shopTypeFilter').value;
-            const res = await fetch(`/api/admin/template-products?shopType=${shopType}`, {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            const data = await res.json();
+            const errorBox = document.getElementById('errorBox');
+            errorBox.innerHTML = '';
             
-            const tbody = document.querySelector('#productsTable tbody');
-            tbody.innerHTML = data.products.map(p => `
-                <tr>
-                    <td><img src="${p.image}" width="50"></td>
-                    <td>${p.shopType}</td>
-                    <td>${p.category}</td>
-                    <td>${p.name}</td>
-                    <td>${p.defaultUnit}</td>
-                    <td><button onclick="deleteProduct('${p._id}')">Delete</button></td>
-                </tr>
-            `).join('');
+            try {
+                const res = await fetch(`/api/admin/template-products?shopType=${shopType}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if(!res.ok) throw new Error('API Error: ' + res.status);
+                
+                const data = await res.json();
+                
+                const tbody = document.querySelector('#productsTable tbody');
+                if(!data.products || data.products.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Koi product nahi mila</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = data.products.map(p => `
+                    <tr>
+                        <td><img src="${p.image || 'https://via.placeholder.com/50'}" width="50"></td>
+                        <td>${p.shopType}</td>
+                        <td>${p.category}</td>
+                        <td>${p.name}</td>
+                        <td>${p.defaultUnit}</td>
+                        <td><button class="btn" style="background:red; padding:5px 10px;" onclick="deleteProduct('${p._id}')">Delete</button></td>
+                    </tr>
+                `).join('');
+            } catch(err) {
+                errorBox.innerHTML = `<div class="error">⚠️ ${err.message}. Login karke aao</div>`;
+                console.error(err);
+            }
         }
 
         document.getElementById('productForm').addEventListener('submit', async (e) => {
@@ -125,9 +155,19 @@
             loadProducts();
         });
 
+        async function deleteProduct(id) {
+            if(!confirm('Delete kare?')) return;
+            await fetch('/api/admin/template-products/' + id, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            loadProducts();
+        }
+
         function openModal() { document.getElementById('productModal').style.display = 'block'; }
         function closeModal() { document.getElementById('productModal').style.display = 'none'; }
         
+        // Page load hote hi data le aao
         loadProducts();
     </script>
 </body>
