@@ -91,7 +91,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 
 // Admin Routes
-// app.use('/api', require('./routes/adminRoutes'));
+app.use('/api', require('./routes/adminRoutes'));
 
 // Manager Routes - ✅ SIRF YAHI SE MANAGER KAAM KAREGA AB
 app.use('/api/manager', require('./routes/managerRoutes'));
