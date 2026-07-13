@@ -103,8 +103,8 @@
     height: 320px;
 }
 @media (max-width: 768px) {
- .chart-grid { grid-template-columns: 1fr; }
- .chart-container { height: 280px; }
+.chart-grid { grid-template-columns: 1fr; }
+.chart-container { height: 280px; }
 }
 </style>
 
@@ -161,6 +161,8 @@
             <div class="chart-container">
                 <canvas id="areaRadiusChart"></canvas>
             </div>
+        </div> <!-- YAHAN </div> ADD KIYA -->
+
         <div class="chart-card">
             <h3>📍 Shops by Area</h3>
             <div class="chart-container">
@@ -175,6 +177,8 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 // ========================================
@@ -201,7 +205,7 @@ async function loadDashboard() {
 
     try {
         const [stats, shops, modules, areas] = await Promise.all([
-            apiCall('/stats'),
+            apiCall('/admin/stats'), // <- SIRF YAHAN CHANGE
             apiCall('/shops'),
             apiCall('/modules'),
             apiCall('/areas').catch(() => []) // ← AREAS ADDED
