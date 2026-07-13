@@ -14,12 +14,11 @@ const API_BASE = '/api';
 // ========== UTILITY FUNCTIONS ==========
 async function apiCall(endpoint, method = 'GET', data = null) {
     try {
-        const token = localStorage.getItem('userToken'); // ✅ YE ADD KIYA
+        const token = localStorage.getItem('userToken'); // ✅ yaha se uthayega
         
         const options = { method, headers: {} };
 
-        // ✅ TOKEN HEADER ADD KIYA
-        if(token) {
+        if(token) { // ✅ yaha header me bhejega
             options.headers['Authorization'] = `Bearer ${token}`;
         }
 
@@ -33,9 +32,9 @@ async function apiCall(endpoint, method = 'GET', data = null) {
 
         const response = await fetch(API_BASE + endpoint, options);
         
-        if(response.status === 401) { // ✅ UNAUTHORIZED CHECK
+        if(response.status === 401) {
             localStorage.removeItem('userToken');
-            window.location.href = '/core/auth/login.html';
+            window.location.href = '/auth/login.html'; // ✅ path fix kiya
             throw new Error('Session expired. Login karo');
         }
 
