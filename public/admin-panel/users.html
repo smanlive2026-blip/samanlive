@@ -63,7 +63,7 @@ async function loadUsers() {
     const tbody = document.querySelector('#usersTable tbody');
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;">Loading...</td></tr>`;
     try {
-        allUsers = await apiCall('/admin/users') || [];
+        allUsers = await apiCall('/users');
         renderUsers(allUsers);
         showToast(`${allUsers.length} users loaded`, 'success');
     } catch(err) {
@@ -121,7 +121,7 @@ function closeUserModal() {
 async function toggleBlockUser(id, block) {
     if(!confirm(block ? 'Block this user?' : 'Unblock this user?')) return;
     try {
-        await apiCall(`/admin/users/${id}/block`, 'PUT', { isBlocked: block });
+        await apiCall(`/users/${id}/block`, 'PUT', { isBlocked: block });
         showToast(block ? 'User blocked!' : 'User unblocked!', 'success');
         loadUsers();
     } catch(err) {
