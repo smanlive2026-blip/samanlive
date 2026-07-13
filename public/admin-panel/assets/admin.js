@@ -110,6 +110,29 @@ async function loadPage(pageName, btnElement) {
         if (window.shopMap) { window.shopMap.remove(); window.shopMap = null; }
         if (window.areaMap) { window.areaMap.remove(); window.areaMap = null; }
 
+                // ========= YE NAYA CASE ADD KAR DE =========
+        if(pageName === 'template-catalog') {
+            document.getElementById('mainContainer').innerHTML = `
+                <iframe src="/admin/template-catalog.html" 
+                        style="width:100%; height:calc(100vh - 180px); border:none; border-radius:12px; background:white;">
+                </iframe>
+            `;
+            
+            // URL update
+            if (history.pushState) {
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?page=' + pageName;
+                window.history.pushState({path: newUrl}, '', newUrl);
+            }
+            return; // yaha return karna jaruri hai
+        }
+        // ===========================================
+
+        const res = await fetch(pageName + '.html');
+        if (!res.ok) throw new Error('Page not found');
+        const html = await res.text();
+        document.getElementById('mainContainer').innerHTML = html;
+
+
         const res = await fetch(pageName + '.html');
         if (!res.ok) throw new Error('Page not found');
         const html = await res.text();
@@ -186,6 +209,7 @@ const BUCKET_LIST = [
 function generateManagerCode(areaCode, bucket) {
     return `${areaCode}-${bucket}`.toUpperCase();
 }
+
 
 // ========== GLOBAL MAPS CLEANUP ==========
 window.addEventListener('beforeunload', () => {
