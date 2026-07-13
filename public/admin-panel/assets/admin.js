@@ -9,11 +9,20 @@ window.allManagers = window.allManagers || [];
 window.allContent = window.allContent || [];
 window.allAreas = window.allAreas || [];
 window.allUsers = window.allUsers || [];
+const API_BASE = '/api';
 
 // ========== UTILITY FUNCTIONS ==========
 async function apiCall(endpoint, method = 'GET', data = null) {
     try {
+        const token = localStorage.getItem('userToken'); // ✅ YE ADD KIYA
+        
         const options = { method, headers: {} };
+
+        // ✅ TOKEN HEADER ADD KIYA
+        if(token) {
+            options.headers['Authorization'] = `Bearer ${token}`;
+        }
+
         if (data) {
             if (data instanceof FormData) options.body = data;
             else {
@@ -21,7 +30,15 @@ async function apiCall(endpoint, method = 'GET', data = null) {
                 options.body = JSON.stringify(data);
             }
         }
+
         const response = await fetch(API_BASE + endpoint, options);
+        
+        if(response.status === 401) { // ✅ UNAUTHORIZED CHECK
+            localStorage.removeItem('userToken');
+            window.location.href = '/core/auth/login.html';
+            throw new Error('Session expired. Login karo');
+        }
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
             throw new Error(errorData.error || `HTTP ${response.status}`);
@@ -32,6 +49,7 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         throw err;
     }
 }
+
 
 function showToast(message, type = 'success') {
     const existing = document.querySelector('.toast-notification');
