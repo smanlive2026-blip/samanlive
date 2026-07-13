@@ -15,7 +15,7 @@
     -webkit-text-fill-color: transparent;
     margin: 0;
 }
-.dashboard-header.last-updated {
+.dashboard-header.last-updated { /*. lagaya */
     font-size: 13px;
     color: #64748b;
     display: flex;
@@ -50,7 +50,7 @@
     transform: translateY(-4px);
     box-shadow: 0 12px 24px rgba(0,0,0,0.1);
 }
-.stat-card.icon {
+.stat-card.icon { /*. lagaya */
     font-size: 32px;
     margin-bottom: 8px;
     opacity: 0.9;
@@ -161,7 +161,7 @@
             <div class="chart-container">
                 <canvas id="areaRadiusChart"></canvas>
             </div>
-        </div> <!-- YAHAN </div> ADD KIYA -->
+        </div> <!-- YE BAND KIYA -->
 
         <div class="chart-card">
             <h3>📍 Shops by Area</h3>
@@ -189,51 +189,37 @@ let statusChartInstance = null;
 let areaRadiusChartInstance = null;
 
 async function loadDashboard() {
-    // Destroy existing charts first
-    if (areaChartInstance) {
-        areaChartInstance.destroy();
-        areaChartInstance = null;
-    }
-    if (statusChartInstance) {
-        statusChartInstance.destroy();
-        statusChartInstance = null;
-    }
-    if (areaRadiusChartInstance) {
-        areaRadiusChartInstance.destroy();
-        areaRadiusChartInstance = null;
-    }
+    if (areaChartInstance) { areaChartInstance.destroy(); areaChartInstance = null; }
+    if (statusChartInstance) { statusChartInstance.destroy(); statusChartInstance = null; }
+    if (areaRadiusChartInstance) { areaRadiusChartInstance.destroy(); areaRadiusChartInstance = null; }
 
     try {
         const [stats, shops, modules, areas] = await Promise.all([
-            apiCall('/admin/stats'), // <- SIRF YAHAN CHANGE
+            apiCall('/admin/stats'), // <- YAHI FIX THA
             apiCall('/shops'),
             apiCall('/modules'),
-            apiCall('/areas').catch(() => []) // ← AREAS ADDED
+            apiCall('/areas').catch(() => [])
         ]);
 
         window.allModules = modules.modules || modules || [];
         window.allCategories = window.allModules.flatMap(m => m.categoryDetails || []);
 
-        // Animate numbers
         animateValue('totalUsersCount', 0, stats.users || 0, 800);
-        animateValue('totalAreasCount', 0, areas.length || 0, 800); // ← AREA COUNT
+        animateValue('totalAreasCount', 0, areas.length || 0, 800);
         animateValue('totalShopsCount', 0, stats.shops || 0, 800);
         animateValue('totalModulesCount', 0, stats.modules || window.allModules.length, 800);
         animateValue('totalCategoriesCount', 0, window.allCategories.length, 800);
         animateValue('totalContentCount', 0, stats.content || 0, 800);
         animateValue('pendingShopsCount', 0, shops.filter(s => s.status === 'pending').length, 800);
 
-        // Update timestamp
         document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('en-IN', {
-            hour: '2-digit',
-            minute: '2-digit'
+            hour: '2-digit', minute: '2-digit'
         });
 
-        // Render charts with delay for animation
         setTimeout(() => {
             renderAreaChart(shops);
             renderStatusChart(shops);
-            renderAreaRadiusChart(areas); // ← NEW CHART
+            renderAreaRadiusChart(areas);
         }, 300);
 
     } catch (err) {
@@ -245,16 +231,13 @@ async function loadDashboard() {
 function animateValue(id, start, end, duration) {
     const element = document.getElementById(id);
     if (!element) return;
-
     const range = end - start;
     const increment = range / (duration / 16);
     let current = start;
-
     const timer = setInterval(() => {
         current += increment;
         if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
-            current = end;
-            clearInterval(timer);
+            current = end; clearInterval(timer);
         }
         element.textContent = Math.floor(current);
     }, 16);
@@ -262,17 +245,11 @@ function animateValue(id, start, end, duration) {
 
 function renderAreaChart(shops) {
     const areaCounts = {};
-    shops.forEach(s => {
-        if (s.area) areaCounts[s.area] = (areaCounts[s.area] || 0) + 1;
-    });
-
+    shops.forEach(s => { if (s.area) areaCounts[s.area] = (areaCounts[s.area] || 0) + 1; });
     const ctx = document.getElementById('areaChart');
     if (!ctx) return;
-
     const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, '#8b5cf6');
-    gradient.addColorStop(1, '#a78bfa');
-
+    gradient.addColorStop(0, '#8b5cf6'); gradient.addColorStop(1, '#a78bfa');
     areaChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -321,7 +298,6 @@ function renderAreaChart(shops) {
     });
 }
 
-// NEW: Areas by Radius Chart
 function renderAreaRadiusChart(areas) {
     const radiusCounts = {};
     areas.forEach(a => {
@@ -329,10 +305,8 @@ function renderAreaRadiusChart(areas) {
         const range = radius <= 25? '1-25 km' : radius <= 50? '26-50 km' : radius <= 100? '51-100 km' : '100+ km';
         radiusCounts[range] = (radiusCounts[range] || 0) + 1;
     });
-
     const ctx = document.getElementById('areaRadiusChart');
     if (!ctx) return;
-
     areaRadiusChartInstance = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -383,10 +357,8 @@ function renderStatusChart(shops) {
         pending: shops.filter(s => s.status === 'pending').length,
         inactive: shops.filter(s => s.status === 'inactive' || s.status === 'hidden').length
     };
-
     const ctx = document.getElementById('statusChart');
     if (!ctx) return;
-
     statusChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -432,9 +404,6 @@ function renderStatusChart(shops) {
     });
 }
 
-// Initialize dashboard
 loadDashboard();
-
-// Auto refresh every 60 seconds
 setInterval(loadDashboard, 60000);
 </script>
