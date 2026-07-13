@@ -13,7 +13,13 @@ window.allUsers = window.allUsers || [];
 // ========== UTILITY FUNCTIONS ==========
 async function apiCall(endpoint, method = 'GET', data = null) {
     try {
+        const token = localStorage.getItem('userToken'); // ✅ ADDED
         const options = { method, headers: {} };
+        
+        if (token) { // ✅ ADDED
+            options.headers['Authorization'] = `Bearer ${token}`; // ✅ ADDED
+        }
+
         if (data) {
             if (data instanceof FormData) options.body = data;
             else {
@@ -22,6 +28,13 @@ async function apiCall(endpoint, method = 'GET', data = null) {
             }
         }
         const response = await fetch(API_BASE + endpoint, options);
+        
+        if (response.status === 401) { // ✅ ADDED
+            localStorage.removeItem('userToken');
+            window.location.href = '/auth/login.html';
+            throw new Error('Session expired. Login karo');
+        }
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
             throw new Error(errorData.error || `HTTP ${response.status}`);
