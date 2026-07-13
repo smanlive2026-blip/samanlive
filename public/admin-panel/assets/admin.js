@@ -1,7 +1,6 @@
 const API_BASE = '/api';
 
 // ========== GLOBAL VARIABLES - WINDOW PE DALO ==========
-// Ab ye kisi bhi file me redeclare nahi honge
 window.allModules = window.allModules || [];
 window.allCategories = window.allCategories || [];
 window.allShops = window.allShops || [];
@@ -13,11 +12,11 @@ window.allUsers = window.allUsers || [];
 // ========== UTILITY FUNCTIONS ==========
 async function apiCall(endpoint, method = 'GET', data = null) {
     try {
-        const token = localStorage.getItem('userToken'); // ✅ ADDED
+        const token = localStorage.getItem('userToken');
         const options = { method, headers: {} };
         
-        if (token) { // ✅ ADDED
-            options.headers['Authorization'] = `Bearer ${token}`; // ✅ ADDED
+        if (token) {
+            options.headers['Authorization'] = `Bearer ${token}`;
         }
 
         if (data) {
@@ -29,7 +28,7 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         }
         const response = await fetch(API_BASE + endpoint, options);
         
-        if (response.status === 401) { // ✅ ADDED
+        if (response.status === 401) {
             localStorage.removeItem('userToken');
             window.location.href = '/auth/login.html';
             throw new Error('Session expired. Login karo');
@@ -100,8 +99,6 @@ async function loadPage(pageName, btnElement) {
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     if (btnElement) {
         btnElement.classList.add('active');
-    } else if (event && event.target) {
-        event.target.classList.add('active');
     }
 
     try {
@@ -110,7 +107,7 @@ async function loadPage(pageName, btnElement) {
         if (window.shopMap) { window.shopMap.remove(); window.shopMap = null; }
         if (window.areaMap) { window.areaMap.remove(); window.areaMap = null; }
 
-                // ========= YE NAYA CASE ADD KAR DE =========
+        // ========= TEMPLATE CATALOG CASE =========
         if(pageName === 'template-catalog') {
             document.getElementById('mainContainer').innerHTML = `
                 <iframe src="/admin/template-catalog.html" 
@@ -118,31 +115,25 @@ async function loadPage(pageName, btnElement) {
                 </iframe>
             `;
             
-            // URL update
             if (history.pushState) {
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?page=' + pageName;
                 window.history.pushState({path: newUrl}, '', newUrl);
             }
-            return; // yaha return karna jaruri hai
+            return;
         }
         // ===========================================
 
+        // NORMAL PAGE LOAD - SIRF 1 BAAR
         const res = await fetch(pageName + '.html');
-        if (!res.ok) throw new Error('Page not found');
+        if (!res.ok) throw new Error('Page not found: ' + pageName + '.html');
         const html = await res.text();
         document.getElementById('mainContainer').innerHTML = html;
 
-
-        const res = await fetch(pageName + '.html');
-        if (!res.ok) throw new Error('Page not found');
-        const html = await res.text();
-        document.getElementById('mainContainer').innerHTML = html;
-
-        // Page ke scripts execute karo - FIX: eval use kiya duplicate se bachne ke liye
+        // Page ke scripts execute karo
         const container = document.getElementById('mainContainer');
         const scripts = container.querySelectorAll('script');
         scripts.forEach(oldScript => {
-            if (!oldScript.src) { // Sirf inline scripts
+            if (!oldScript.src) {
                 try {
                     eval(oldScript.textContent);
                 } catch(e) {
@@ -158,6 +149,7 @@ async function loadPage(pageName, btnElement) {
             window.history.pushState({path: newUrl}, '', newUrl);
         }
     } catch (err) {
+        console.error(err);
         document.getElementById('mainContainer').innerHTML = `
             <div class="card" style="text-align:center;padding:60px;">
                 <h2 style="color:#ef4444;">⚠️ Error loading ${pageName}</h2>
@@ -210,7 +202,6 @@ function generateManagerCode(areaCode, bucket) {
     return `${areaCode}-${bucket}`.toUpperCase();
 }
 
-
 // ========== GLOBAL MAPS CLEANUP ==========
 window.addEventListener('beforeunload', () => {
     if (window.moduleMap) window.moduleMap.remove();
@@ -220,7 +211,6 @@ window.addEventListener('beforeunload', () => {
 
 // ========== INITIALIZE ON LOAD ==========
 document.addEventListener('DOMContentLoaded', () => {
-    // URL se page param pakdo
     const pageParam = getUrlParam('page') || 'dashboard';
     const navBtn = document.querySelector(`.nav-btn[onclick*="'${pageParam}'"]`);
     loadPage(pageParam, navBtn);
