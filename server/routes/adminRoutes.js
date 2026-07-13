@@ -853,4 +853,30 @@ router.delete('/shop/:shopId/product/:productId', async (req, res) => {
     }
 })
 
+// ================= USERS LIST FOR ADMIN =================
+router.get('/users', authenticateToken, async (req, res) => {
+    try {
+        const users = await User.find({ status: { $ne: 'deleted' } })
+            .select('-password')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.json(users); // seedha array bhej diya
+    } catch(err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// BLOCK/UNBLOCK USER
+router.put('/users/:id/block', authenticateToken, async (req, res) => {
+    try {
+        const { isBlocked } = req.body;
+        const status = isBlocked ? 'blocked' : 'active';
+        await User.findByIdAndUpdate(req.params.id, { status });
+        res.json({ success: true });
+    } catch(err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
