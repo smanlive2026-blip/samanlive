@@ -535,7 +535,7 @@ window.closeProductLibrary = closeProductLibrary;
 window.openOrderView = openOrderView;
 window.openManagerPanel = openManagerPanel;
 
-// ✅ YE 3 NAYE BHI ADD KAR DE
+// ✅ NAYE 3 FUNCTION YAHI ADD KAR
 window.openCreateDeliveryModal = openCreateDeliveryModal;
 window.closeCreateDeliveryModal = closeCreateDeliveryModal;
 window.openDeliveryManagerPanel = openDeliveryManagerPanel;
