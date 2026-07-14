@@ -285,10 +285,10 @@ function previewProfilePhoto(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 500 * 1024) {
-        alert('Image size should be less than 500KB. Please compress it.');
-        event.target.value = '';
-        return;
+    if (file.size > 2 * 1024 * 1024) {
+    alert('Image size should be less than 2MB. Please compress it.');
+    event.target.value = '';
+    return;
     }
 
     const reader = new FileReader();
