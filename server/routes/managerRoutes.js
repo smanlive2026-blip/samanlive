@@ -239,7 +239,7 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
 
             serviceType: serviceType,
             shopType: mapShopType(serviceType),
-            bucket: bucket || manager.bucket || 'DEFAULT',
+            bucket: bucket || manager.bucket || 'EVERY NEW MORNING NEW WAY',
             areaCode: manager.areaCode,
             areaName: area?.areaName || manager.areaName,
             city: area?.city || manager.city,
