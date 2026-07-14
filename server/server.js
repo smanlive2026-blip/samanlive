@@ -7,7 +7,8 @@ const fs = require('fs');
 require('dotenv').config();
 const cloudinary = require('./utils/cloudinary');
 const uploadRoutes = require('./routes/upload');
-const deliveryManagerRoutes = require('./routes/deliveryManager'); // ✅ SAHI
+//const deliveryManagerRoutes = require('./routes/deliveryManager'); // ✅ SAHI
+const deliveryManagerRoutes = require('./routes/deliveryManager'); 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -16,7 +17,9 @@ app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use('/api', deliveryManagerRoutes);
+//app.use('/api', deliveryManagerRoutes);
+app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-manager banega
+
 // Request Logger - Development ke liye
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'development') {

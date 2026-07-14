@@ -1,11 +1,13 @@
+// LOCATION: server/routes/deliveryManager.js
+// YE FILE DELIVERY MANAGER BANANE AUR LIST KARNE KE LIYE HAI
+
 const express = require('express');
 const router = express.Router();
 const Manager = require('../models/Manager');
-const authManager = require('../middleware/auth');
-// const { authManager } = require('../middleware/auth'); // ✅ YE LINE IMPORTANT HAI
+const { authDelivery } = require('../middleware/authDelivery'); // ✅ NAYI FILE SE IMPORT
 
-// 1. Naya Delivery Manager banana
-router.post('/manager/create-delivery-manager', authManager, async (req, res) => {
+// 1. Naya Delivery Manager banana - Sirf Area Manager bana sakta hai
+router.post('/manager/create-delivery-manager', authDelivery, async (req, res) => {
     try {
         const { name, phone, email, vehicleType } = req.body;
         
@@ -43,9 +45,8 @@ router.post('/manager/create-delivery-manager', authManager, async (req, res) =>
     }
 });
 
-
 // 2. Apne area ke Delivery Managers ki list
-router.get('/manager/delivery-managers', authManager, async (req, res) => {
+router.get('/manager/delivery-managers', authDelivery, async (req, res) => {
     try {
         if(req.manager.role !== 'area-manager') {
             return res.status(403).json({ success: false, message: 'Access Denied' });
@@ -58,6 +59,7 @@ router.get('/manager/delivery-managers', authManager, async (req, res) => {
         
         res.json({ success: true, managers: managers });
     } catch (err) {
+        console.log("GET DM ERROR:", err);
         res.status(500).json({ success: false, message: err.message });
     }
 });
