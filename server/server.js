@@ -7,7 +7,7 @@ const fs = require('fs');
 require('dotenv').config();
 const cloudinary = require('./utils/cloudinary');
 const uploadRoutes = require('./routes/upload');
-const deliveryManagerRoutes = require('./server/routes/deliveryManager');
+const deliveryManagerRoutes = require('./routes/deliveryManager'); // ✅ SAHI
 const app = express();
 const PORT = process.env.PORT || 3000;
 
