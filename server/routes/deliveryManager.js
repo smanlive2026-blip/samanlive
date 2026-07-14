@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Manager = require('../models/Manager');
-const { authManager } = require('../middleware/auth'); // ✅ YE LINE IMPORTANT HAI
+const authManager = require('../middleware/auth');
+// const { authManager } = require('../middleware/auth'); // ✅ YE LINE IMPORTANT HAI
 
 // 1. Naya Delivery Manager banana
 router.post('/manager/create-delivery-manager', authManager, async (req, res) => {
