@@ -295,4 +295,17 @@ function mapShopType(module) {
     return map[module] || 'common';
 }
 
+// File: server/routes/adminRoutes.js
+router.get('/admin/all-delivery-managers', async (req, res) => {
+    try {
+        const managers = await Manager.find({ role: 'delivery-manager' })
+        .populate('parentManager', 'name managerCode') // AM ka naam nikalne ke liye
+        .select('-loginToken -password');
+        
+        res.json({ success: true, managers: managers });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 module.exports = router;

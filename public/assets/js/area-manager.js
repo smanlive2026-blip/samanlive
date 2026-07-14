@@ -457,7 +457,72 @@ window.addEventListener('message', (event) => {
         closeProductLibrary();
     }
 });
-// ========== END NAYE FUNCTION ==========
+
+// ===== DELIVERY MANAGER FUNCTIONS =====
+
+async function loadDeliveryBoys() {
+    try {
+        const data = await apiCall(`/manager/delivery-managers`); // /api hata diya
+        
+        const tbody = document.getElementById('deliveryBoysTable');
+        if(!data.success || data.managers.length === 0) { // managers key theek ki
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Abhi koi Delivery Boy nahi hai</td></tr>`;
+            return;
+        }
+        
+        tbody.innerHTML = data.managers.map(dm => `
+            <tr>
+                <td>${dm.name}</td>
+                <td>${dm.phone}</td>
+                <td>${dm.vehicleType}</td>
+                <td>${dm.managerCode}</td>
+                <td><span class="badge ${dm.status? 'badge-success' : 'badge-danger'}">${dm.status? 'Active' : 'Inactive'}</span></td>
+            </tr>
+        `).join('');
+    } catch(err) {
+        console.error(err);
+    }
+}
+
+document.getElementById('createDeliveryForm').addEventListener('submit', async(e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+    const body = {
+        name: document.getElementById('dmName').value,
+        phone: document.getElementById('dmPhone').value,
+        email: document.getElementById('dmEmail').value,
+        vehicleType: document.getElementById('dmVehicle').value
+    };
+    
+    try {
+        const data = await apiCall(`/manager/create-delivery-manager`, { // /api hata diya
+            method: 'POST',
+            body: body
+        });
+        
+        alert(data.message);
+        if(data.success){
+            closeCreateDeliveryModal();
+            loadDeliveryBoys();
+            document.getElementById('createDeliveryForm').reset();
+        }
+    } catch(err) {
+        alert('Error: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Create';
+    }
+});
+
+function openCreateDeliveryModal(){ document.getElementById('createDeliveryModal').classList.add('active'); }
+function closeCreateDeliveryModal(){ document.getElementById('createDeliveryModal').classList.remove('active'); }
+function openDeliveryManagerPanel(){ document.getElementById('deliveryBoysTable').scrollIntoView({behavior: 'smooth'}); }
+
+// page load pe call karna
+loadDeliveryBoys();
 
 // Export functions to window for onclick handlers
 window.openProfileModal = openProfileModal;
@@ -470,4 +535,9 @@ window.closeProductLibrary = closeProductLibrary;
 window.openOrderView = openOrderView;
 window.openManagerPanel = openManagerPanel;
 
-console.log('✅ area-manager.js loaded - Shop create logic moved to shop-create.js + Template Mapping');
+// ✅ YE 3 NAYE BHI ADD KAR DE
+window.openCreateDeliveryModal = openCreateDeliveryModal;
+window.closeCreateDeliveryModal = closeCreateDeliveryModal;
+window.openDeliveryManagerPanel = openDeliveryManagerPanel;
+
+console.log('✅ area-manager.js loaded - Shop create logic moved to shop-create.js + Template Mapping + Delivery Manager');

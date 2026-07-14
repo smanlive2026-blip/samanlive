@@ -18,13 +18,16 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .error { color:red; text-align:center; padding:20px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>📦 Template Products - Ready Made Catalog</h1>
-            <button class="btn" onclick="openModal()">+ Naya Product Add Kare</button>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" onclick="openModal()">+ Naya Product Add Kare</button>
+            </div>
         </div>
 
         <div class="filters">
@@ -40,6 +43,8 @@
                 <option value="furniture">Furniture</option>
             </select>
         </div>
+
+        <div id="errorBox"></div>
 
         <table id="productsTable">
             <thead>
@@ -96,27 +101,43 @@
     </div>
 
     <script>
+        // FIX: userToken use karo kyunki admin.js me wahi set hai
+        const token = localStorage.getItem('userToken'); 
+
         async function loadProducts() {
             const shopType = document.getElementById('shopTypeFilter').value;
-            const res = await fetch(`/api/admin/template-products?shopType=${shopType}`);
-            const data = await res.json();
+            const errorBox = document.getElementById('errorBox');
+            errorBox.innerHTML = '';
             
-            const tbody = document.querySelector('#productsTable tbody');
-            if(!data.products || data.products.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Koi product nahi mila. Pehle seed file run karo</td></tr>`;
-                return;
-            }
+            try {
+                const res = await fetch(`/api/admin/template-products?shopType=${shopType}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if(!res.ok) throw new Error('API Error: ' + res.status);
+                
+                const data = await res.json();
+                
+                const tbody = document.querySelector('#productsTable tbody');
+                if(!data.products || data.products.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Koi product nahi mila</td></tr>`;
+                    return;
+                }
 
-            tbody.innerHTML = data.products.map(p => `
-                <tr>
-                    <td><img src="${p.image || 'https://via.placeholder.com/50'}" width="50"></td>
-                    <td>${p.shopType}</td>
-                    <td>${p.category}</td>
-                    <td>${p.name}</td>
-                    <td>${p.defaultUnit}</td>
-                    <td><button class="btn" style="background:red; padding:5px 10px;" onclick="deleteProduct('${p._id}')">Delete</button></td>
-                </tr>
-            `).join('');
+                tbody.innerHTML = data.products.map(p => `
+                    <tr>
+                        <td><img src="${p.image || 'https://via.placeholder.com/50'}" width="50"></td>
+                        <td>${p.shopType}</td>
+                        <td>${p.category}</td>
+                        <td>${p.name}</td>
+                        <td>${p.defaultUnit}</td>
+                        <td><button class="btn" style="background:red; padding:5px 10px;" onclick="deleteProduct('${p._id}')">Delete</button></td>
+                    </tr>
+                `).join('');
+            } catch(err) {
+                errorBox.innerHTML = `<div class="error">⚠️ ${err.message}. Login karke aao</div>`;
+                console.error(err);
+            }
         }
 
         document.getElementById('productForm').addEventListener('submit', async (e) => {
@@ -126,7 +147,7 @@
             
             await fetch('/api/admin/template-products', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify(body)
             });
             
@@ -136,13 +157,17 @@
 
         async function deleteProduct(id) {
             if(!confirm('Delete kare?')) return;
-            await fetch('/api/admin/template-products/' + id, { method: 'DELETE' });
+            await fetch('/api/admin/template-products/' + id, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
             loadProducts();
         }
 
         function openModal() { document.getElementById('productModal').style.display = 'block'; }
         function closeModal() { document.getElementById('productModal').style.display = 'none'; }
         
+        // Page load hote hi data le aao
         loadProducts();
     </script>
 </body>

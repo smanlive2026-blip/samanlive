@@ -79,14 +79,30 @@ const managerSchema = new mongoose.Schema({
     radius: { 
         type: Number 
     },
-    // ✅ NEW: Max shops limit - Admin set karega
     maxShops: { 
         type: Number, 
         default: 10,
         min: 1
+    },
+
+    // ✅ YE 3 NAYE FIELD ADD KAR DE DELIVERY BOY KE LIYE
+    role: { 
+        type: String, 
+        enum: ['area-manager', 'delivery-manager'], // area-manager ya delivery-manager
+        default: 'area-manager' 
+    },
+    parentManager: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Manager' // kis area manager ne banaya
+    },
+    vehicleType: { 
+        type: String, 
+        enum: ['bike', 'cycle', 'auto', 'foot'], 
+        default: 'bike' 
     }
+
 }, {
-    timestamps: true // ← Ye add kiya: createdAt + updatedAt auto banenge
+    timestamps: true
 });
 
 module.exports = mongoose.model('Manager', managerSchema);

@@ -1,6 +1,5 @@
 // ========================================
 // FILE: routes/manager.js - ONLY MANAGER DASHBOARD
-// Claim system HATA DIYA
 // ========================================
 const express = require('express');
 const router = express.Router();
@@ -45,6 +44,61 @@ router.get('/manager/area-info', authManager, async (req, res) => {
 router.put('/manager/update-profile', authManager, async (req, res) => {
     const updated = await Manager.findByIdAndUpdate(req.manager._id, { $set: req.body }, { new: true });
     res.json({ success: true, manager: updated });
+});
+
+// ✅ YE 2 NAYE ROUTE ADD KAR DE DELIVERY BOY KE LIYE
+
+// 6. Naya Delivery Manager banana - Sirf Area Manager kar sakta
+router.post('/manager/create-delivery-manager', authManager, async (req, res) => {
+    try {
+        const { name, phone, email, vehicleType } = req.body;
+        
+        if(req.manager.role !== 'area-manager') {
+            return res.status(403).json({ success: false, message: 'Sirf Area Manager bana sakta hai' });
+        }
+
+        const exists = await Manager.findOne({ phone });
+        if(exists) return res.status(400).json({ success: false, message: 'Phone already exist' });
+
+        // ManagerCode: DM-AreaCode-1, DM-AreaCode-2
+        const count = await Manager.countDocuments({ role: 'delivery-manager', areaCode: req.manager.areaCode });
+        const managerCode = `DM-${req.manager.areaCode}-${count + 1}`;
+
+        const deliveryManager = new Manager({
+            name,
+            phone,
+            email,
+            loginToken: `DMTOKEN-${Date.now()}`, // simple token
+            role: 'delivery-manager',
+            areaCode: req.manager.areaCode,
+            areaName: req.manager.areaName,
+            city: req.manager.city,
+            state: req.manager.state,
+            managerCode,
+            parentManager: req.manager._id,
+            vehicleType: vehicleType || 'bike'
+        });
+
+        await deliveryManager.save();
+        res.json({ success: true, message: 'Delivery Boy ban gaya', manager: deliveryManager });
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// 7. Apne area ke saare Delivery Manager ki list
+router.get('/manager/delivery-managers', authManager, async (req, res) => {
+    try {
+        const managers = await Manager.find({ 
+            role: 'delivery-manager', 
+            areaCode: req.manager.areaCode 
+        }).select('-loginToken'); // token hide kar do
+        
+        res.json({ success: true, managers: managers });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
 module.exports = router;
