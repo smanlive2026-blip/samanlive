@@ -66,7 +66,7 @@ router.post('/manager/create-delivery-manager', authManager, async (req, res) =>
         const deliveryManager = new Manager({
             name,
             phone,
-            email,
+            email: email || `${managerCode}@samanlive.local`, // ✅ auto email
             loginToken: `DMTOKEN-${Date.now()}-${Math.random()}`, // ✅ YE LINE CHANGE
             role: 'delivery-manager',
             areaCode: req.manager.areaCode,
@@ -82,7 +82,7 @@ router.post('/manager/create-delivery-manager', authManager, async (req, res) =>
         res.json({ success: true, message: 'Delivery Boy ban gaya', manager: deliveryManager });
 
     } catch (err) {
-        console.log(err); // ✅ ye add kar taaki render log me error dikhe
+        console.log("CREATE DM ERROR:", err); // ✅ render log me dikhega
         res.status(500).json({ success: false, message: err.message });
     }
 });
