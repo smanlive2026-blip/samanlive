@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Manager = require('../models/Manager');
-const { authManager } = require('../middleware/auth');
+const { authManager } = require('../middleware/auth'); // ✅ YE LINE IMPORTANT HAI
 
-// 1. Naya Delivery Manager banana - Sirf Area Manager
+// 1. Naya Delivery Manager banana
 router.post('/manager/create-delivery-manager', authManager, async (req, res) => {
     try {
         const { name, phone, email, vehicleType } = req.body;
@@ -60,6 +60,5 @@ router.get('/manager/delivery-managers', authManager, async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 });
-
 
 module.exports = router;
