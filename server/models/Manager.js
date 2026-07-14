@@ -18,7 +18,7 @@ const managerSchema = new mongoose.Schema({
     },
     email: { 
         type: String, 
-        required: true,
+        required: false,
         lowercase: true,
         trim: true
     },
@@ -87,13 +87,14 @@ const managerSchema = new mongoose.Schema({
 
     // ✅ YE 3 NAYE FIELD ADD KAR DE DELIVERY BOY KE LIYE
     role: { 
-        type: String, 
-        enum: ['area-manager', 'delivery-manager'], // area-manager ya delivery-manager
+       type: String, 
+        enum: ['admin', 'area-manager', 'delivery-manager'], // ✅ admin add kiya
         default: 'area-manager' 
     },
     parentManager: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Manager' // kis area manager ne banaya
+        ref: 'Manager',
+        default: null // ✅ default add kiya
     },
     vehicleType: { 
         type: String, 
