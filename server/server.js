@@ -11,6 +11,7 @@ const uploadRoutes = require('./routes/upload');
 const deliveryManagerRoutes = require('./routes/deliveryManager'); 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const orderRoutes = require('./routes/orders');
 
 // ==================== MIDDLEWARE ====================
 app.use(compression());
@@ -34,6 +35,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 app.use('/logos', express.static(path.join(__dirname, '../public/logos')));
 app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
 app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
+app.use('/api/orders', orderRoutes);
 
 // ✅ Shop templates static serve
 app.use('/shop-templates', express.static(path.join(__dirname, '../public/shop-templates')));

@@ -1,67 +1,102 @@
+// File: server/routes/orders.js
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
-const auth = require('../middleware/authenticateToken');
+const Manager = require('../models/Manager');
 
-// GET /api/orders/my-orders - Get user orders
-router.get('/orders/my-orders', auth, async (req, res) => {
+// Helper: Order ID generate
+function generateOrderId() {
+    const date = new Date().toISOString().slice(0,10).replace(/-/g, '');
+    const rand = Math.floor(Math.random() * 1000);
+    return `ORD-${date}-${rand}`;
+}
+
+// ========== 1. GET ORDERS - DM KE LIYE ==========
+router.get('/', async (req, res) => {
     try {
-        const orders = await Order.find({ userId: req.userId })
-            .populate('shopId', 'shopName')
-            .sort({ createdAt: -1 });
+        const { assignedTo, status } = req.query;
+        let query = {};
 
-        const formattedOrders = orders.map(order => ({
-            _id: order._id,
-            shopName: order.shopId?.shopName || 'SAMANLIVE Store',
-            items: order.items,
-            totalAmount: order.totalAmount,
-            orderStatus: order.orderStatus,
-            paymentStatus: order.paymentStatus,
-            createdAt: order.createdAt,
-            deliveryDate: order.deliveryDate
-        }));
+        if(assignedTo) query.assignedTo = assignedTo; // DM ke orders
+        if(status) query.status = { $in: status.split(',') }; // pending,assigned
 
-        res.json({ success: true, orders: formattedOrders });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        const orders = await Order.find(query).sort({ createdAt: -1 }).lean();
+        res.json({ success: true, orders });
+
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// GET /api/orders/:id - Get single order details
-router.get('/orders/:id', auth, async (req, res) => {
+// ========== 2. CREATE ORDER - TEST KE LIYE / SHOP SE AAYEGA ==========
+router.post('/create', async (req, res) => {
     try {
-        const order = await Order.findOne({ _id: req.params.id, userId: req.userId })
-            .populate('shopId', 'shopName phone');
+        const { shopId, customerName, customerPhone, customerAddress, areaCode, total } = req.body;
 
-        if (!order) {
-            return res.status(404).json({ success: false, error: 'Order not found' });
-        }
+        const newOrder = new Order({
+            orderId: generateOrderId(),
+            shopId,
+            customerName,
+            customerPhone,
+            customerAddress,
+            areaCode,
+            total: total || 0,
+            status: 'pending'
+        });
 
-        res.json({ success: true, order });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        await newOrder.save();
+        res.json({ success: true, message: 'Order Created', order: newOrder });
+
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// POST /api/orders/:id/cancel - Cancel order
-router.post('/orders/:id/cancel', auth, async (req, res) => {
+// ========== 3. ASSIGN ORDER TO DM - AREA MANAGER KAREGA ==========
+router.put('/:id/assign', async (req, res) => {
     try {
-        const order = await Order.findOne({ _id: req.params.id, userId: req.userId });
+        const { dmCode } = req.body; // DM ka managerCode
+        const order = await Order.findByIdAndUpdate(req.params.id, {
+            assignedTo: dmCode,
+            status: 'assigned',
+            assignedAt: new Date()
+        }, { new: true });
 
-        if (!order) {
-            return res.status(404).json({ success: false, error: 'Order not found' });
-        }
+        res.json({ success: true, message: 'Order Assigned', order });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
-        if (['shipped', 'out_for_delivery', 'delivered'].includes(order.orderStatus)) {
-            return res.status(400).json({ success: false, error: 'Cannot cancel this order' });
-        }
+// ========== 4. DM PICK ORDER ==========
+router.put('/:id/pick', async (req, res) => {
+    try {
+        const { dmCode } = req.body;
+        const order = await Order.findOneAndUpdate(
+            { _id: req.params.id, assignedTo: dmCode },
+            { status: 'picked', pickedAt: new Date() },
+            { new: true }
+        );
+        if(!order) return res.status(403).json({ success: false, error: 'Not your order' });
+        res.json({ success: true, message: 'Order Picked', order });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
-        order.orderStatus = 'cancelled';
-        await order.save();
-
-        res.json({ success: true, message: 'Order cancelled successfully' });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+// ========== 5. DM DELIVER ORDER ==========
+router.put('/:id/deliver', async (req, res) => {
+    try {
+        const { dmCode } = req.body;
+        const order = await Order.findOneAndUpdate(
+            { _id: req.params.id, assignedTo: dmCode },
+            { status: 'delivered', deliveredAt: new Date() },
+            { new: true }
+        );
+        if(!order) return res.status(403).json({ success: false, error: 'Not your order' });
+        res.json({ success: true, message: 'Order Delivered', order });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 

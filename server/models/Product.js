@@ -1,57 +1,48 @@
+// File: server/models/Order.js
 const mongoose = require('mongoose');
 
-const productSchema = new mongoose.Schema({
-    shopId: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Shop',
-        required: true,
-        index: true
-    },
-    templateId: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'TemplateProduct',
-        default: null // agar manual add kiya to null rahega
-    },
-    name: { 
-        type: String, 
-        required: true,
-        trim: true
-    },
-    description: { 
-        type: String, 
-        default: '' 
-    },
-    image: { 
-        type: String, 
-        default: '/assets/img/no-image.png' 
-    },
-    category: { 
-        type: String, 
-        default: 'General' 
-    },
-    price: { 
-        type: Number, 
-        required: true,
-        default: 0 // shop owner set karega
-    },
-    mrp: { 
-        type: Number, 
-        default: 0 
-    },
-    stock: { 
-        type: Number, 
-        default: 0 
-    },
-    unit: { 
-        type: String, 
-        default: 'piece' 
-    },
-    isActive: { 
-        type: Boolean, 
-        default: true 
-    }
-}, { timestamps: true });
+const OrderSchema = new mongoose.Schema({
+    orderId: { type: String, unique: true, required: true }, // ORD-20251004-001
 
-productSchema.index({ shopId: 1, name: 1 });
+    // ========== SHOP SE CONNECT ==========
+    shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true }, // ✅ Shop ka _id yaha aayega
+    shopName: { type: String }, // fast load ke liye copy kar lena
+    shopPhone: { type: String },
 
-module.exports = mongoose.model('Product', productSchema);
+    // ========== PRODUCT SE CONNECT ==========
+    // ✅ Aage product array yaha aayega. Abhi itemsCount se kaam chala
+    products: [{
+        productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }, // ✅ Product.js se link
+        name: String,
+        qty: Number,
+        price: Number
+    }],
+    itemsCount: { type: Number, default: 1 }, // abhi ke liye
+    total: { type: Number, default: 0 }, // total bill
+
+    // ========== CUSTOMER DETAILS ==========
+    customerName: { type: String, required: true },
+    customerPhone: { type: String, required: true },
+    customerAddress: { type: String, required: true },
+
+    // ========== DELIVERY BOY SE CONNECT ==========
+    assignedTo: { type: String }, // ✅ DM ka managerCode yaha save hoga. Ex: DM-BHARGU-1-1
+    assignedAt: { type: Date },
+    pickedAt: { type: Date },
+    deliveredAt: { type: Date },
+    deliveryCharge: { type: Number, default: 30 }, // DM ki earning
+
+    // ========== STATUS ==========
+    status: { 
+        type: String, 
+        enum: ['pending', 'assigned', 'picked', 'delivered', 'cancelled'], 
+        default: 'pending' 
+    },
+
+    // ========== AREA FOR FILTER ==========
+    areaCode: { type: String }, // ✅ Area Manager filter ke liye
+
+    createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('Order', OrderSchema);

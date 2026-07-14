@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delivery Boy Panel - SAMANLIVE</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root { --primary: #667eea; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; }
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+body { background: #f5f7fa; }
+.header { background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%); color: white; padding: 15px; position: sticky; top: 0; z-index: 1000; }
+.header-top { display: flex; justify-content: space-between; align-items: center; }
+.status-toggle { background: var(--success); padding: 6px 15px; border-radius: 20px; font-size: 12px; cursor: pointer; border: none; color: white; font-weight: 600; }
+.status-toggle.offline { background: var(--danger); }
+.container { padding: 15px; max-width: 600px; margin: 0 auto; }
+.card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.card h3 { font-size: 16px; margin-bottom: 12px; color: #333; display: flex; align-items: center; gap: 8px; }
+.profile-row { display: flex; align-items: center; gap: 15px; }
+.profile-avatar { width: 60px; height: 60px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.stat-box { text-align: center; padding: 12px; background: #f8f9ff; border-radius: 8px; }
+.stat-box.value { font-size: 20px; font-weight: 700; color: var(--primary); }
+.stat-box.label { font-size: 11px; color: #666; }
+#map { height: 200px; border-radius: 8px; margin-top: 10px; }
+.order-item { border-left: 4px solid var(--warning); padding: 12px; margin-bottom: 10px; background: #fffbeb; border-radius: 8px; }
+.order-item.assigned { border-color: var(--primary); background: #eff6ff; }
+.order-item.delivered { border-color: var(--success); background: #ecfdf5; opacity: 0.7; }
+.btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; }
+.btn-success { background: var(--success); color: white; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-warning { background: var(--warning); color: white; }
+.tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+.tab { flex: 1; padding: 10px; text-align: center; background: white; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.tab.active { background: var(--primary); color: white; }
+.hidden { display: none; }
+.location-text { font-size: 12px; color: #666; margin-top: 5px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <h2><i class="fas fa-motorcycle"></i> Delivery Panel</h2>
+    <button class="status-toggle" id="statusBtn" onclick="toggleStatus()">Online</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- PROFILE -->
+  <div class="card">
+    <div class="profile-row">
+      <div class="profile-avatar" id="dmAvatar">D</div>
+      <div>
+        <h3 id="dmName" style="margin: 0;">Loading...</h3>
+        <p style="font-size: 13px; color: #666;"><span id="dmPhone">-</span> | <span id="dmArea">-</span></p>
+        <p style="font-size: 12px; color: #999;">Code: <span id="dmCode">-</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="card">
+    <h3><i class="fas fa-chart-bar"></i> Aaj Ka Hisab</h3>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="value" id="todayOrders">0</div>
+        <div class="label">Orders</div>
+      </div>
+      <div class="stat-box">
+        <div class="value" id="todayEarning">₹0</div>
+        <div class="label">Earning</div>
+      </div>
+      <div class="stat-box">
+        <div class="value" id="todayKM">0</div>
+        <div class="label">KM</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE LOCATION -->
+  <div class="card">
+    <h3><i class="fas fa-map-marker-alt"></i> Live Location</h3>
+    <div id="map"></div>
+    <p class="location-text" id="locationText">Location fetching...</p>
+    <button class="btn btn-warning" onclick="updateLocationNow()" style="margin-top: 10px; width: 100%;"><i class="fas fa-sync"></i> Update Location</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('pending')"><i class="fas fa-clock"></i> Pending</div>
+    <div class="tab" onclick="switchTab('history')"><i class="fas fa-history"></i> History</div>
+  </div>
+
+  <!-- ORDERS -->
+  <div id="pendingTab">
+    <div class="card">
+      <h3><i class="fas fa-box"></i> Mere Orders</h3>
+      <div id="ordersList"><p style="text-align:center;color:#999;">Loading...</p></div>
+    </div>
+  </div>
+
+  <div id="historyTab" class="hidden">
+    <div class="card">
+      <h3><i class="fas fa-check-circle"></i> Delivered Orders</h3>
+      <div id="historyList"><p style="text-align:center;color:#999;">Loading...</p></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const TOKEN = urlParams.get('token');
+const API = '/api';
+
+let DM_DATA = {};
+let map, marker;
+let isOnline = true;
+let watchId;
+
+// 1. PAGE LOAD
+document.addEventListener('DOMContentLoaded', async () => {
+  if(!TOKEN) return document.body.innerHTML = '<h1 style="text-align:center;margin-top:50px;color:red;">Invalid Link</h1>';
+  await loadDM();
+  initMap();
+  startLocationTracking();
+  loadOrders();
+  setInterval(loadOrders, 10000); // 10 sec me auto refresh
+});
+
+async function loadDM() {
+  const res = await fetch(`${API}/manager/by-token/${TOKEN}`);
+  const data = await res.json();
+  if(!data.success) return alert('Invalid DM');
+  DM_DATA = data.manager;
+
+  document.getElementById('dmName').innerText = DM_DATA.name;
+  document.getElementById('dmPhone').innerText = DM_DATA.phone;
+  document.getElementById('dmArea').innerText = DM_DATA.areaName;
+  document.getElementById('dmCode').innerText = DM_DATA.managerCode;
+  document.getElementById('dmAvatar').innerText = DM_DATA.name.charAt(0).toUpperCase();
+}
+
+// 2. MAP
+function initMap() {
+  map = L.map('map').setView([20.3974, 72.8311], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  marker = L.marker([20.3974, 72.8311]).addTo(map);
+}
+
+// 3. LIVE LOCATION
+function startLocationTracking() {
+  if(!navigator.geolocation) return;
+  watchId = navigator.geolocation.watchPosition(async (pos) => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    document.getElementById('locationText').innerText = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
+    marker.setLatLng([lat, lng]);
+    map.setView([lat, lng]);
+
+    if(isOnline) {
+      await fetch(`${API}/manager/update-location`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: TOKEN, lat, lng })
+      });
+    }
+  });
+}
+
+function updateLocationNow() {
+  navigator.geolocation.getCurrentPosition((pos) => {
+    alert('Location Updated!');
+  });
+}
+
+// 4. ORDERS
+async function loadOrders() {
+  const res = await fetch(`${API}/orders?assignedTo=${DM_DATA.managerCode}`);
+  const data = await res.json();
+  if(!data.orders) return;
+
+  const pending = data.orders.filter(o => o.status!== 'delivered');
+  const history = data.orders.filter(o => o.status === 'delivered');
+
+  document.getElementById('todayOrders').innerText = history.length;
+  document.getElementById('todayEarning').innerText = '₹' + history.reduce((a,b) => a + (b.deliveryCharge || 30), 0);
+
+  document.getElementById('ordersList').innerHTML = pending.length === 0? '<p style="text-align:center;">Koi naya order nahi</p>' :
+  pending.map(o => `
+    <div class="order-item ${o.status}">
+      <b>#${o.orderId}</b> - ${o.shopName}<br>
+      <small><i class="fas fa-user"></i> ${o.customerName} | <i class="fas fa-phone"></i> ${o.customerPhone}</small><br>
+      <small><i class="fas fa-map-marker-alt"></i> ${o.customerAddress}</small><br>
+      <small>₹${o.total} | ${o.itemsCount} items</small><br>
+      <div style="margin-top:8px; display:flex; gap:8px;">
+        ${o.status === 'assigned'? `<button class="btn btn-primary" onclick="acceptOrder('${o._id}')"><i class="fas fa-check"></i> Accept</button>` : ''}
+        ${o.status === 'picked'? `<button class="btn btn-success" onclick="deliverOrder('${o._id}')"><i class="fas fa-truck"></i> Delivered</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('historyList').innerHTML = history.length === 0? '<p style="text-align:center;">Koi history nahi</p>' :
+  history.map(o => `
+    <div class="order-item delivered">
+      <b>#${o.orderId}</b> - ${o.shopName} <span style="float:right;color:green;">Delivered</span><br>
+      <small>₹${o.total} | ${new Date(o.deliveredAt).toLocaleTimeString()}</small>
+    </div>
+  `).join('');
+}
+
+async function acceptOrder(id) {
+  await fetch(`${API}/orders/${id}/pick`, { method: 'PUT', body: JSON.stringify({ dmCode: DM_DATA.managerCode }) });
+  alert('Order Picked!');
+  loadOrders();
+}
+
+async function deliverOrder(id) {
+  await fetch(`${API}/orders/${id}/deliver`, { method: 'PUT', body: JSON.stringify({ dmCode: DM_DATA.managerCode }) });
+  alert('Order Delivered!');
+  loadOrders();
+}
+
+// 5. UTILS
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('pendingTab').classList.add('hidden');
+  document.getElementById('historyTab').classList.add('hidden');
+
+  if(tab === 'pending') {
+    document.querySelectorAll('.tab')[0].classList.add('active');
+    document.getElementById('pendingTab').classList.remove('hidden');
+  } else {
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    document.getElementById('historyTab').classList.remove('hidden');
+  }
+}
+
+function toggleStatus() {
+  isOnline =!isOnline;
+  const btn = document.getElementById('statusBtn');
+  btn.innerText = isOnline? 'Online' : 'Offline';
+  btn.classList.toggle('offline');
+}
+</script>
+</body>
+</html>

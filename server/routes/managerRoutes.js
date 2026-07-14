@@ -307,5 +307,15 @@ router.get('/admin/all-delivery-managers', async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 });
+// DM LOCATION UPDATE   delevery managery ke liye location 
+router.post('/manager/update-location', async (req, res) => {
+  try {
+    const { token, lat, lng } = req.body;
+    await Manager.findOneAndUpdate({ loginToken: token }, { lastLat: lat, lastLng: lng });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;

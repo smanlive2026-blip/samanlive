@@ -462,28 +462,33 @@ window.addEventListener('message', (event) => {
 
 async function loadDeliveryBoys() {
     try {
-        const data = await apiCall(`/manager/delivery-managers`); // /api hata diya
+        const data = await apiCall(`/manager/delivery-managers`);
         
         const tbody = document.getElementById('deliveryBoysTable');
-        if(!data.success || data.managers.length === 0) { // managers key theek ki
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Abhi koi Delivery Boy nahi hai</td></tr>`;
+        if(!data.success || data.managers.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Abhi koi Delivery Boy nahi hai</td></tr>`;
             return;
         }
         
-        tbody.innerHTML = data.managers.map(dm => `
+        tbody.innerHTML = data.managers.map(dm => {
+            const link = `${window.location.origin}/delivery-boy.html?token=${dm.loginToken}`;
+            return `
             <tr>
                 <td>${dm.name}</td>
                 <td>${dm.phone}</td>
                 <td>${dm.vehicleType}</td>
                 <td>${dm.managerCode}</td>
                 <td><span class="badge ${dm.status? 'badge-success' : 'badge-danger'}">${dm.status? 'Active' : 'Inactive'}</span></td>
+                <td>
+                    <button onclick="window.open('${link}')" style="background:#10b981;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">Open</button>
+                    <button onclick="navigator.clipboard.writeText('${link}');alert('Link Copied')" style="background:#3b82f6;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;margin-left:5px;">Copy</button>
+                </td>
             </tr>
-        `).join('');
+        `}).join('');
     } catch(err) {
         console.error(err);
     }
 }
-
 document.getElementById('createDeliveryForm').addEventListener('submit', async(e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
