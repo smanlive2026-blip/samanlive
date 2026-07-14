@@ -48,7 +48,7 @@ router.put('/manager/update-profile', authManager, async (req, res) => {
 
 // ✅ YE 2 NAYE ROUTE ADD KAR DE DELIVERY BOY KE LIYE
 
-// 6. Naya Delivery Manager banana - Sirf Area Manager kar sakta
+// 6. Naya Delivery Manager banana
 router.post('/manager/create-delivery-manager', authManager, async (req, res) => {
     try {
         const { name, phone, email, vehicleType } = req.body;
@@ -60,7 +60,6 @@ router.post('/manager/create-delivery-manager', authManager, async (req, res) =>
         const exists = await Manager.findOne({ phone });
         if(exists) return res.status(400).json({ success: false, message: 'Phone already exist' });
 
-        // ManagerCode: DM-AreaCode-1, DM-AreaCode-2
         const count = await Manager.countDocuments({ role: 'delivery-manager', areaCode: req.manager.areaCode });
         const managerCode = `DM-${req.manager.areaCode}-${count + 1}`;
 
@@ -68,7 +67,7 @@ router.post('/manager/create-delivery-manager', authManager, async (req, res) =>
             name,
             phone,
             email,
-            loginToken: `DMTOKEN-${Date.now()}`, // simple token
+            loginToken: `DMTOKEN-${Date.now()}-${Math.random()}`, // ✅ YE LINE CHANGE
             role: 'delivery-manager',
             areaCode: req.manager.areaCode,
             areaName: req.manager.areaName,
@@ -83,6 +82,7 @@ router.post('/manager/create-delivery-manager', authManager, async (req, res) =>
         res.json({ success: true, message: 'Delivery Boy ban gaya', manager: deliveryManager });
 
     } catch (err) {
+        console.log(err); // ✅ ye add kar taaki render log me error dikhe
         res.status(500).json({ success: false, message: err.message });
     }
 });
