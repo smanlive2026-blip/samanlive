@@ -39,11 +39,20 @@ router.post('/manager/create-delivery-manager', authDelivery, async (req, res) =
         const managerCode = `DM-${req.manager.areaCode}-${count + 1}`;
 
         const deliveryManager = new Manager({
-            name, phone, role: 'delivery-manager', areaCode: req.manager.areaCode,
+            name, 
+            phone, 
+            role: 'delivery-manager', 
+            areaCode: req.manager.areaCode,
+            bucket: 'DELIVERY', // ✅ YE LINE ADD KI - DUPLICATE ERROR FIX
             email: email || `${managerCode}@samanlive.local`,
             loginToken: `DMTOKEN-${Date.now()}-${Math.random()}`,
-            areaName: req.manager.areaName, city: req.manager.city, state: req.manager.state,
-            managerCode, parentManager: req.manager._id, vehicleType: vehicleType || 'bike'
+            areaName: req.manager.areaName, 
+            city: req.manager.city, 
+            state: req.manager.state,
+            managerCode, 
+            parentManager: req.manager._id, 
+            vehicleType: vehicleType || 'bike',
+            status: true // ✅ status bhi true kar diya
         });
 
         await deliveryManager.save();
