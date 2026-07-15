@@ -909,7 +909,7 @@ tr:last-child td { border-bottom: none; }
     align-items: center;
     padding: 0px 0px;
     gap: 20px;
-    height: 250px; 
+    height: 200px; 
 }
 
 .header-left {
@@ -920,7 +920,7 @@ tr:last-child td { border-bottom: none; }
 
 .logo-box {
     width: 200px;
-    height: 250px;
+    height: 200px;
     border-radius: 12px;
     background: white;
     display: flex;
