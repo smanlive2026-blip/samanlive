@@ -25,20 +25,32 @@ File: routes/managerShopCreate.js me sab routes hain
 </head>
 <body>
     <div class="dashboard" id="dashboard">
-        <div class="header">
-            <div class="header-content">
-                <div class="header-left">
-                 <div style="display: flex; align-items: center; gap: 8px; font-size: 26px; font-weight: 800; color: white; letter-spacing: 0.5px;">
-                <span>SAMAN</span>
-                <span style="color: #10b981; background: white; padding: 2px 8px; border-radius: 6px;">LIVE</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#10b981">
-               <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z"/>
-              <path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" fill="none"/>
-             </svg>
-           </div>
-        </div>
-                    <h1>Area Manager Dashboard</h1>
+<div class="header">
+    <div class="header-content">
+        <!-- LEFT: LOGO + NAME + BADGE -->
+        <div class="header-left">
+            <div class="logo-box">
+                <img src="/assets/images/samanlive-logo.png" alt="SamanLive" id="headerLogo">
+                <!-- agar photo nahi hai to ye default logo rahega -->
+            </div>
+            <div class="header-info">
+                <div class="brand-name">
+                    <span>SAMAN</span>
+                    <span class="brand-live">LIVE</span>
                 </div>
+                <div class="manager-info">
+                    <span id="managerName">SHEKHAR</span>
+                    <span class="manager-badge" id="managerBadge">PRITMA-1</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: DASHBOARD TITLE -->
+        <div class="header-right">
+            <h1>Area Manager Dashboard</h1>
+        </div>
+    </div>
+</div>                    
                 <div class="header-right">
                     <span id="managerName"></span>
                     <span class="manager-badge" id="managerBadge">-</span>
