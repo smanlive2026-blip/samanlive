@@ -145,7 +145,7 @@ function renderProfile() {
     if (!currentManager) return;
 
     document.getElementById('managerName').textContent = currentManager.name || 'Manager';
-    document.getElementById('managerBadge').textContent = currentManager.bucket || 'DEFAULT';
+    document.getElementById('managerBadge').textContent = currentManager.bucket || 'HII BOSS TO DAY SET NEW TARGET';
     document.getElementById('managerFullName').textContent = currentManager.name || 'Manager Name';
     document.getElementById('managerRole').textContent = 'Area Manager';
     document.getElementById('managerAreaName').textContent = currentManager.areaName || currentManager.areaCode || '-';
