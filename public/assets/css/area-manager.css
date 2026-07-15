@@ -918,9 +918,9 @@ tr:last-child td { border-bottom: none; }
 }
 
 .logo-box {
-    width: 45px;
-    height: 45px;
-    border-radius: 8px;
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
     background: white;
     display: flex;
     align-items: center;
@@ -933,7 +933,7 @@ tr:last-child td { border-bottom: none; }
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 4px;
+    padding: 0px;
 }
 
 .header-info {
@@ -943,7 +943,7 @@ tr:last-child td { border-bottom: none; }
 }
 
 .brand-name {
-    font-size: 75px;
+    font-size: 24px;
     font-weight: 800;
     color: white;
     letter-spacing: 0.5px;
