@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f8fafc; }
+        .header { 
+            background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+            color: white; 
+            padding: 25px 20px; 
+            text-align: center; 
+        }
+        .header h1 { font-size: 24px; }
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 16px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .card h3 { 
+            color: #14532d; 
+            margin-bottom: 10px; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card p { color: #64748b; line-height: 1.6; }
+        .back-btn {
+            width: 100%;
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-info-circle"></i> About Us</h1>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h3><i class="fa fa-store"></i> <span id="shopName">Fresh Fruits</span></h3>
+            <p>We provide 100% fresh fruits directly from farm to your home. 
+            Quality and freshness is our top priority.</p>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa fa-clock"></i> Shop Timings</h3>
+            <p id="timings">08:00 AM - 10:00 PM</p>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa fa-map-marker-alt"></i> Address</h3>
+            <p id="address">Ahmedabad, Gujarat</p>
+        </div>
+
+        <button class="back-btn" onclick="history.back()">
+            <i class="fa fa-arrow-left"></i> Back to Shop
+        </button>
+    </div>
+
+    <script>
+        const shopId = new URLSearchParams(window.location.search).get('shopId');
+        document.getElementById('shopName').innerText = localStorage.getItem('shopName_'+shopId) || 'Fresh Fruits';
+        
+        const t = JSON.parse(localStorage.getItem('shopTimings_'+shopId));
+        if(t) document.getElementById('timings').innerText = t.open + ' - ' + t.close;
+    </script>
+</body>
+</html>

@@ -3,118 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fresh Fruits</title>
+    <title id="pageTitle">Fresh Fruits - Shop</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #f0fdf4; }
-       .header { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; padding: 50px 20px; text-align: center; }
-       .header h1 { font-size: 36px; }
-       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
-
-       .category-tabs { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 30px; padding-bottom: 10px; }
-       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
-       .tab.active { background: #22c55e; color: white; }
-
-       .fruit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-       .fruit-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: 0.3s; text-align: center; }
-       .fruit-card:hover { transform: translateY(-5px); }
-       .fruit-emoji { font-size: 60px; margin-bottom: 12px; }
-       .fruit-name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-       .fruit-price { font-size: 24px; font-weight: 800; color: #22c55e; }
-       .qty-controls { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 15px 0; }
-       .qty-btn { background: #22c55e; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 18px; cursor: pointer; }
-       .btn-add { background: #22c55e; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; }
-
-       .cart-float { position: fixed; bottom: 30px; right: 30px; background: #22c55e; color: white; padding: 15px 25px; border-radius: 50px; font-weight: 700; box-shadow: 0 8px 30px rgba(34,197,94,0.4); cursor: pointer; }
+        body { background: #f8fafc; padding-bottom: 80px; }
+        .header { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; padding: 20px; position: sticky; top: 0; z-index: 100; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .shop-info h1 { font-size: 22px; display: flex; align-items: center; gap: 10px; }
+        .status { font-size: 12px; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; }
+        .cart-btn { background: white; color: #22c55e; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 700; position: relative; cursor: pointer; }
+        .cart-count { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+        .search-bar { background: rgba(255,255,255,0.2); padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px; }
+        .search-bar input { background: transparent; border: none; color: white; outline: none; width: 100%; }
+        .search-bar input::placeholder { color: rgba(255,255,255,0.8); }
+        .announcement { background: #fef3c7; color: #92400e; padding: 12px; text-align: center; font-weight: 600; font-size: 14px; }
+        .categories { display: flex; gap: 12px; padding: 15px; overflow-x: auto; background: white; }
+        .cat-btn { padding: 8px 16px; border: 2px solid #e2e8f0; border-radius: 20px; background: white; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .cat-btn.active { background: #22c55e; color: white; border-color: #22c55e; }
+        .container { padding: 15px; max-width: 1200px; margin: 0 auto; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        .product-card { background: white; border-radius: 16px; padding: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .product-img { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; }
+        .product-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        .product-price { color: #22c55e; font-weight: 700; font-size: 16px; }
+        .product-unit { font-size: 12px; color: #64748b; }
+        .add-btn { width: 100%; background: #22c55e; color: white; border: none; padding: 8px; border-radius: 10px; margin-top: 8px; font-weight: 600; cursor: pointer; }
+        .qty-control { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+        .qty-btn { background: #f0fdf4; border: none; width: 30px; height: 30px; border-radius: 8px; font-weight: 700; color: #22c55e; cursor: pointer; }
+        .cart-sidebar { position: fixed; right: -100%; top: 0; width: 350px; height: 100%; background: white; box-shadow: -5px 0 20px rgba(0,0,0,0.1); transition: 0.3s; z-index: 999; padding: 20px; overflow-y: auto; }
+        .cart-sidebar.active { right: 0; }
+        .cart-item { display: flex; gap: 10px; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+        .cart-item img { width: 50px; height: 50px; border-radius: 8px; }
+        .checkout-btn { width: 100%; background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 700; font-size: 16px; margin-top: 20px; cursor: pointer; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 998; }
+        .overlay.active { display: block; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 99; }
+        .nav-item { text-align: center; color: #64748b; cursor: pointer; }
+        .nav-item.active { color: #22c55e; }
+        @media(max-width: 400px) {.cart-sidebar { width: 100%; } }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1><i class="fa fa-apple-alt"></i> <span id="shopName">Fresh Fruit Shop</span></h1>
-        <p>100% Fresh Fruits & Dry Fruits</p>
-    </div>
-
-    <div class="container">
-        <div class="category-tabs">
-            <div class="tab active" onclick="filterCategory('All')">All</div>
-            <div class="tab" onclick="filterCategory('Fresh')">Fresh Fruits</div>
-            <div class="tab" onclick="filterCategory('Seasonal')">Seasonal</div>
-            <div class="tab" onclick="filterCategory('Dry')">Dry Fruits</div>
-            <div class="tab" onclick="filterCategory('Juice')">Juice</div>
+        <div class="header-top">
+            <div class="shop-info">
+                <h1><i class="fa fa-apple-alt"></i> <span id="shopName">Fresh Fruits</span></h1>
+                <span id="shopStatus" class="status"><i class="fa fa-circle"></i> OPEN</span>
+            </div>
+            <button class="cart-btn" onclick="toggleCart()"><i class="fa fa-shopping-cart"></i><span class="cart-count" id="cartCount">0</span></button>
         </div>
-
-        <div class="fruit-grid" id="fruitGrid">Loading...</div>
+        <div class="search-bar"><i class="fa fa-search"></i><input type="text" id="searchInput" placeholder="Search fruits..."></div>
     </div>
 
-    <div class="cart-float" onclick="checkout()">
-        <i class="fa fa-shopping-basket"></i> Cart: <span id="cartCount">0</span> items
+    <div class="announcement" id="announcementBox" style="display: none;"></div>
+
+    <div class="categories">
+        <button class="cat-btn active" onclick="filterCat('all')">All</button>
+        <button class="cat-btn" onclick="filterCat('Fresh Fruits')">Fresh</button>
+        <button class="cat-btn" onclick="filterCat('Dry Fruits')">Dry Fruits</button>
+        <button class="cat-btn" onclick="filterCat('Exotic Fruits')">Exotic</button>
+        <button class="cat-btn" onclick="filterCat('Tropical')">Tropical</button>
     </div>
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const shopId = urlParams.get('shopId');
-        let allFruits = [];
-        let cart = {};
+    <div class="container"><div class="product-grid" id="productGrid"></div></div>
 
-        async function loadShop() {
-            const res = await fetch(`/api/local-market/shops/${shopId}`);
-            const shop = await res.json();
-            document.getElementById('shopName').innerText = shop.shopName;
-            allFruits = shop.fruits || shop.items || [];
-            displayFruits(allFruits);
-        }
+    <div class="overlay" id="overlay" onclick="toggleCart()"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <h2 style="margin-bottom: 20px;">Your Cart <i class="fa fa-times" style="float: right; cursor: pointer;" onclick="toggleCart()"></i></h2>
+        <div id="cartItems"></div>
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #f1f5f9;">
+            <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700;"><span>Total:</span><span>₹<span id="cartTotal">0</span></span></div>
+            <button class="checkout-btn" onclick="placeOrder()"><i class="fa fa-whatsapp"></i> Order on WhatsApp</button>
+        </div>
+    </div>
 
-        function displayFruits(fruits) {
-            const grid = document.getElementById('fruitGrid');
-            if (fruits.length === 0) {
-                grid.innerHTML = `<p style="grid-column:1/-1; text-align:center;">No fruits available</p>`;
-                return;
-            }
-            grid.innerHTML = fruits.map(f => `
-                <div class="fruit-card">
-                    <div class="fruit-emoji">${getEmoji(f.name)}</div>
-                    <div class="fruit-name">${f.name}</div>
-                    <p style="color:#64748b; font-size:12px; margin-bottom:10px;">${f.category}</p>
-                    <div class="fruit-price">₹${f.price} <span style="font-size:14px; color:#64748b;">/kg</span></div>
-                    <p style="color:#64748b; font-size:12px;">Stock: ${f.stock} KG</p>
-                    <div class="qty-controls">
-                        <button class="qty-btn" onclick="changeQty('${f._id}', -1)">-</button>
-                        <span id="qty-${f._id}">0</span>
-                        <button class="qty-btn" onclick="changeQty('${f._id}', 1)">+</button>
-                    </div>
-                    <button class="btn-add" onclick="addToCart('${f._id}')"><i class="fa fa-cart-plus"></i> Add to Cart</button>
-                </div>
-            `).join('');
-        }
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="location.reload()"><i class="fa fa-home"></i><div>Home</div></div>
+        <div class="nav-item" onclick="location.href='about.html?shopId='+shopId"><i class="fa fa-info-circle"></i><div>About</div></div>
+        <div class="nav-item" onclick="location.href='contact.html?shopId='+shopId"><i class="fa fa-phone"></i><div>Contact</div></div>
+        <div class="nav-item" onclick="location.href='offers.html?shopId='+shopId"><i class="fa fa-tag"></i><div>Offers</div></div>
+    </div>
 
-        function getEmoji(name) {
-            const map = {Apple: '🍎', Banana: '🍌', Mango: '🥭', Orange: '🍊', Grapes: '🍇', Watermelon: '🍉'};
-            return map[name] || '🍓';
-        }
-
-        function changeQty(id, val) {
-            cart[id] = Math.max(0, (cart[id] || 0) + val);
-            document.getElementById(`qty-${id}`).innerText = cart[id];
-        }
-
-        function addToCart(id) {
-            let count = Object.values(cart).reduce((a,b)=>a+b,0);
-            document.getElementById('cartCount').innerText = count;
-        }
-
-        function filterCategory(cat) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            const filtered = cat==='All'? allFruits : allFruits.filter(f => f.category === cat);
-            displayFruits(filtered);
-        }
-
-        function checkout() {
-            alert('Order placed! Shop will call you for delivery.');
-        }
-
-        loadShop();
-    </script>
+    <script src="./fruit-products-data.js"></script>
+    <script src="./customer.js"></script>
 </body>
 </html>

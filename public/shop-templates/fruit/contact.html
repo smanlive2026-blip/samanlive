@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f8fafc; }
+        .header { 
+            background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+            color: white; 
+            padding: 25px 20px; 
+            text-align: center; 
+        }
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .btn {
+            width: 100%;
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn.call { background: #22c55e; }
+        .btn.back { background: #64748b; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fa fa-phone"></i> Contact Us</h1>
+    </div>
+
+    <div class="container">
+        <button class="btn" onclick="window.open('https://wa.me/91XXXXXXXXXX')">
+            <i class="fa fa-whatsapp"></i> Chat on WhatsApp
+        </button>
+
+        <button class="btn call" onclick="window.open('tel:91XXXXXXXXXX')">
+            <i class="fa fa-phone"></i> Call Now
+        </button>
+
+        <button class="btn back" onclick="history.back()">
+            <i class="fa fa-arrow-left"></i> Back to Shop
+        </button>
+    </div>
+</body>
+</html>

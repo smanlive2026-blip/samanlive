@@ -921,7 +921,7 @@ tr:last-child td { border-bottom: none; }
 .logo-box {
     width: 200px;
     height: 200px;
-    border-radius: 12px;
+    border-radius: 50px;
     background: white;
     display: flex;
     align-items: center;
@@ -984,9 +984,9 @@ tr:last-child td { border-bottom: none; }
 }
 
 .header-right h1 {
-    font-size: 20px;
+    font-size: 18px;
     color: white;
-    font-weight: 700;
+    font-weight: 600;
     margin: 0;
 }
 
@@ -998,6 +998,6 @@ tr:last-child td { border-bottom: none; }
         gap: 10px;
     }
     .header-right h1 {
-        font-size: 16px;
+        font-size: 14px;
     }
 }
