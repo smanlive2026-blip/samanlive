@@ -123,6 +123,11 @@ document.getElementById('shareBtn').onclick = () => {
     alert('Shop Link Copied!');
 }
 
+// VIEW SHOP BUTTON - Customer View kholega
+document.getElementById('viewShopBtn').onclick = () => {
+    window.open(`fruit-shop.html?shopId=${shopId}`, '_blank');
+};
+
 // PHOTO UPLOAD
 document.getElementById('ownerPhoto').onclick = () => document.getElementById('photoUpload').click();
 document.getElementById('photoUpload').onchange = (e) => {
