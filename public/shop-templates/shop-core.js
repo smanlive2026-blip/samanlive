@@ -1,5 +1,5 @@
 // public/shop-templates/shop-core.js
-// NOTE: Photo local + Cloudinary dono support. manualCloudUpload = PREMIUM FEATURE
+// NOTE: Photo local + Cloudinary dono support.
 
 const ShopCore = {
     shopId: null,
@@ -8,23 +8,29 @@ const ShopCore = {
     init(shopId, template) {
         this.shopId = shopId;
         this.template = template;
+        console.log("SHOPCORE INIT:", shopId, template); // DEBUG
         this.loadSavedPhoto(); // PAGE LOAD PE PHOTO LOAD KAREGA
     },
 
     // CLOUDINARY UPLOAD VIA BACKEND
     async uploadImage(file, type = 'profile') {
         if(!file) return null;
+        if(!this.shopId ||!this.template){
+            alert('Shop ID ya Template missing hai. Page reload karo');
+            return null;
+        }
+        
         const loader = document.getElementById('uploadLoader');
         if(loader) loader.style.display = 'inline';
 
         const formData = new FormData();
-        formData.append('image', file); // 'image' naam hona chahiye
-        formData.append('shopId', this.shopId);
-        formData.append('template', this.template);
-        formData.append('type', type);
+        formData.append('image', file); 
+        formData.append('shopId', String(this.shopId)); // STRING ME BHEJ
+        formData.append('template', String(this.template)); // STRING ME BHEJ
+        formData.append('type', String(type)); // STRING ME BHEJ
 
         try {
-            console.log("UPLOADING TO: /api/upload/shop", this.shopId); // DEBUG
+            console.log("UPLOADING TO: /api/upload/shop", {shopId: this.shopId, template: this.template, type}); // DEBUG
             const res = await fetch('/api/upload/shop', { method: 'POST', body: formData });
 
             console.log("RESPONSE STATUS:", res.status); // DEBUG
@@ -34,7 +40,7 @@ const ShopCore = {
             if(data.success && data.url){
                 return data.url;
             } else {
-                alert('Upload Failed: ' + (data.message || 'Server Error'));
+                alert('Upload Failed: ' + (data.error || data.message || 'Server Error'));
                 return null;
             }
         } catch(err) {
@@ -77,6 +83,7 @@ const ShopCore = {
 
     // LOAD SAVED PHOTO - PEHLE CLOUD WALI DEKHEGA, NA MILE TO LOCAL WALI
     loadSavedPhoto() {
+        if(!this.shopId) return; // shopId na ho to mat chal
         const cloudPhoto = localStorage.getItem('ownerPhoto_'+this.shopId+'_cloud');
         const localPhoto = localStorage.getItem('ownerPhoto_'+this.shopId);
 
