@@ -7,12 +7,16 @@ document.getElementById('shopIdDisplay').innerText = shopId? shopId.substring(0,
 // GLOBAL
 let allShopFruits = [];
 
-// 1. CORE INIT SABSE PEHLE
-ShopCore.init(shopId, TEMPLATE_NAME);
+// 1. CORE INIT SABSE PEHLE - GUARD LAGAYA
+if(shopId) {
+    ShopCore.init(shopId, TEMPLATE_NAME);
+} else {
+    console.error("ShopId URL me nahi mila");
+}
 
 function loadShopData() {
     try {
-        // 1. Shop Name - Photo wala shop-core.js khud handle karega
+        // 1. Shop Name
         const shopName = localStorage.getItem('shopName_'+shopId) || 'Fresh Fruits';
         document.getElementById('shopName').innerText = shopName;
 
@@ -63,10 +67,10 @@ function loadShopData() {
 function loadFruits(fruits) {
     const tbody = document.getElementById('fruitTableBody');
     if (fruits.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px;">
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px;">
             <i class="fa fa-inbox" style="font-size:32px; color:#cbd5e1; margin-bottom:10px;"></i><br>
             No fruits added yet. Click "Add Fruit" to start
-        </td></tr>`;
+        </td></tr>`; // FIX: yaha se comment hata diya tha, yehi error de raha tha
         return;
     }
 
@@ -94,7 +98,7 @@ function loadFruits(fruits) {
                 <button onclick="deleteFruit('${fruit.id}')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;">
                     <i class="fa fa-trash"></i>
                 </button>
-                <!-- PREMIUM FEATURE: MANUAL CLOUD UPLOAD - FUTURE PAID -->
+                <!-- PREMIUM FEATURE: MANUAL CLOUD UPLOAD -->
                 <button onclick="manualCloudUpload()" style="background:#3b82f6; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;" title="Save Photo to Cloud - Premium">
                     <i class="fa fa-cloud-upload-alt"></i>
                 </button>
@@ -135,8 +139,10 @@ document.getElementById('viewShopBtn').onclick = () => {
     window.open(`fruit-shop.html?shopId=${shopId}`, '_blank');
 };
 
-// 2. PHOTO UPLOAD BIND - CLOUDINARY WALA
-ShopCore.bindOwnerPhotoUpload('ownerPhoto', 'photoUpload');
+// 2. PHOTO UPLOAD BIND - NAME SAHI KIYA
+if(shopId) {
+    ShopCore.bindImageUpload('ownerPhoto', 'photoUpload', 'profile', 'owner');
+}
 
 // SHOP OPEN/CLOSE TOGGLE
 document.getElementById('shopToggle').onchange = (e) => {
@@ -188,21 +194,12 @@ document.getElementById('searchFruit').onkeyup = (e) => {
     loadFruits(allShopFruits.filter(f => f.name.toLowerCase().includes(term)));
 }
 
-/*
-
-  PREMIUM FEATURE: MANUAL CLOUD UPLOAD
-  Description: Ye feature shop owner ko manual photo cloud pe save karne deta hai
-  Use Case: Laptop pe local photo select karne ke baad, is button se cloudinary pe upload
-  Future: Isko paid plan me rakhna hai. Free me auto-upload band rahega
-
-*/
+// PREMIUM FEATURE: MANUAL CLOUD UPLOAD
 async function manualCloudUpload() {
     const fileInput = document.getElementById('photoUpload');
     const currentImg = document.getElementById('ownerPhoto').src;
 
-    // Check if current image is base64/local
     if(currentImg.startsWith('data:image')) {
-        // Trigger file input to select new photo
         fileInput.click();
         fileInput.onchange = async (e) => {
             const file = e.target.files[0];
