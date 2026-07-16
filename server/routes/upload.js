@@ -38,4 +38,13 @@ router.post('/upload-pic', auth, upload.single('profilePic'), async (req, res) =
   }
 });
 
+// Case 4: NAYA - Shop Template wala - BINA LOGIN KE
+router.post('/shop', upload.single('image'), (req, res) => {
+  res.json({
+    success: true,
+    url: req.file.path, // cloudinary url
+    public_id: req.file.filename
+  });
+});
+
 module.exports = router;

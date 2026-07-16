@@ -1,9 +1,14 @@
 const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId');
-document.getElementById('shopIdDisplay').innerText = shopId ? shopId.substring(0, 8) + '...' : 'Demo';
+const TEMPLATE_NAME = 'fruit'; // YE ADD KIYA
+
+document.getElementById('shopIdDisplay').innerText = shopId? shopId.substring(0, 8) + '...' : 'Demo';
 
 // GLOBAL
 let allShopFruits = [];
+
+// 1. CORE INIT KIYA
+ShopCore.init(shopId, TEMPLATE_NAME);
 
 function loadShopData() {
     try {
@@ -15,7 +20,7 @@ function loadShopData() {
 
         // 2. Load Fruits: Pehle localStorage dekho, nahi to 104 seed wale
         const savedFruits = JSON.parse(localStorage.getItem('shopFruits_'+shopId)) || [];
-        allShopFruits = savedFruits.length > 0 ? savedFruits : [...window.FRUIT_PRODUCTS_DATA];
+        allShopFruits = savedFruits.length > 0? savedFruits : [...window.FRUIT_PRODUCTS_DATA];
 
         // 3. Stats Calculate
         const totalStock = allShopFruits.reduce((sum, f) => sum + (f.stock || 0), 0);
@@ -70,8 +75,8 @@ function loadFruits(fruits) {
     tbody.innerHTML = fruits.map(fruit => {
         const stock = fruit.stock || 0;
         const days = fruit.expiryDays || 7;
-        const status = days <= 2 ? `<span class="expiry"><i class="fa fa-exclamation"></i> Expiring Soon</span>` : `<span class="fresh"><i class="fa fa-check"></i> Fresh</span>`;
-        const stockClass = stock < 10 ? 'low-stock' : '';
+        const status = days <= 2? `<span class="expiry"><i class="fa fa-exclamation"></i> Expiring Soon</span>` : `<span class="fresh"><i class="fa fa-check"></i> Fresh</span>`;
+        const stockClass = stock < 10? 'low-stock' : '';
 
         return `
         <tr>
@@ -100,7 +105,7 @@ function loadFruits(fruits) {
 // DELETE FRUIT
 function deleteFruit(fruitId) {
     if(confirm('Are you sure you want to delete this fruit?')) {
-        allShopFruits = allShopFruits.filter(f => f.id !== fruitId);
+        allShopFruits = allShopFruits.filter(f => f.id!== fruitId);
         localStorage.setItem('shopFruits_'+shopId, JSON.stringify(allShopFruits));
         loadShopData(); // reload
     }
@@ -128,19 +133,8 @@ document.getElementById('viewShopBtn').onclick = () => {
     window.open(`fruit-shop.html?shopId=${shopId}`, '_blank');
 };
 
-// PHOTO UPLOAD
-document.getElementById('ownerPhoto').onclick = () => document.getElementById('photoUpload').click();
-document.getElementById('photoUpload').onchange = (e) => {
-    const file = e.target.files[0];
-    if(file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            document.getElementById('ownerPhoto').src = ev.target.result;
-            localStorage.setItem('ownerPhoto_'+shopId, ev.target.result);
-        }
-        reader.readAsDataURL(file);
-    }
-}
+// 2. PHOTO UPLOAD UPDATE KIYA - CLOUDINARY WALA
+ShopCore.bindOwnerPhotoUpload('ownerPhoto', 'photoUpload');
 
 // SHOP OPEN/CLOSE TOGGLE
 document.getElementById('shopToggle').onchange = (e) => {

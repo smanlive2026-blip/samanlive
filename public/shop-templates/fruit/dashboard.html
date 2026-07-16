@@ -104,6 +104,7 @@
                 <div style="position: relative;">
                     <img src="https://ui-avatars.com/api/?name=Owner&background=22c55e&color=fff&size=128" id="ownerPhoto" class="owner-photo" alt="Owner">
                     <input type="file" id="photoUpload" class="owner-photo-upload" accept="image/*">
+                    <span id="uploadLoader" style="display:none; font-size:11px; color:#22c55e; position:absolute; bottom:-18px; left:0; white-space:nowrap;"><i class="fa fa-spinner fa-spin"></i> Uploading...</span>
                 </div>
                 <div class="shop-info">
                     <h1><i class="fa fa-apple-alt"></i> <span id="shopName">Fresh Fruits</span></h1>
@@ -198,7 +199,8 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="../shop-core.js"></script> <!-- 1. YE ADD KIYA -->
     <script src="./fruit-products-data.js"></script>
-    <script src="./dashboard.js"></script>
+    <script src="./dashboard.js"></script> <!-- 2. YE LAST ME RAHEGA -->
 </body>
 </html>
