@@ -47,5 +47,24 @@ function placeOrder() {
     window.location.href = `order-success.html?shopId=${shopId}`;
 }
 
+// dashboard.js ke bilkul last me paste kar
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // 1. SHOP ID AUR TEMPLATE SET KARO
+    const shopId = document.getElementById('shopIdDisplay').innerText || 'demo123'; // tumhare id se
+    const template = 'fruit'; // tumhara template name
+    
+    ShopCore.init(shopId, template);
+
+    // 2. OWNER PHOTO BIND KARO
+    ShopCore.bindImageUpload('ownerPhoto', 'photoUpload', 'profile', 'owner');
+
+    // 3. AGAR BANNER HAI TO YE BHI
+    // ShopCore.bindImageUpload('bannerImg', 'bannerInput', 'banner', 'banner');
+
+    console.log("ShopCore Loaded for:", shopId);
+});
+
 document.getElementById('searchInput').onkeyup = (e) => { const term = e.target.value.toLowerCase(); renderProducts(allProducts.filter(p => p.name.toLowerCase().includes(term))); }
 init();

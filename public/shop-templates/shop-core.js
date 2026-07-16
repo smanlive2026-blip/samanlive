@@ -1,5 +1,5 @@
 // public/shop-templates/shop-core.js
-// NOTE: Photo local + Cloudinary dono support.
+// NOTE: Photo Local + Cloudinary dono. Har photo ka alag storage key
 
 const ShopCore = {
     shopId: null,
@@ -8,11 +8,10 @@ const ShopCore = {
     init(shopId, template) {
         this.shopId = shopId;
         this.template = template;
-        console.log("SHOPCORE INIT:", shopId, template); // DEBUG
-        this.loadSavedPhoto(); // PAGE LOAD PE PHOTO LOAD KAREGA
+        console.log("SHOPCORE INIT:", shopId, template);
     },
 
-    // CLOUDINARY UPLOAD VIA BACKEND
+    // ===== CLOUDINARY UPLOAD VIA BACKEND =====
     async uploadImage(file, type = 'profile') {
         if(!file) return null;
         if(!this.shopId ||!this.template){
@@ -25,17 +24,15 @@ const ShopCore = {
 
         const formData = new FormData();
         formData.append('image', file); 
-        formData.append('shopId', String(this.shopId)); // STRING ME BHEJ
-        formData.append('template', String(this.template)); // STRING ME BHEJ
-        formData.append('type', String(type)); // STRING ME BHEJ
+        formData.append('shopId', String(this.shopId));
+        formData.append('template', String(this.template));
+        formData.append('type', String(type)); // profile, banner, product, offer
 
         try {
-            console.log("UPLOADING TO: /api/upload/shop", {shopId: this.shopId, template: this.template, type}); // DEBUG
+            console.log("UPLOADING:", {shopId: this.shopId, template: this.template, type});
             const res = await fetch('/api/upload/shop', { method: 'POST', body: formData });
-
-            console.log("RESPONSE STATUS:", res.status); // DEBUG
             const data = await res.json();
-            console.log("RESPONSE DATA:", data); // DEBUG
+            console.log("RESPONSE:", data);
 
             if(data.success && data.url){
                 return data.url;
@@ -44,7 +41,7 @@ const ShopCore = {
                 return null;
             }
         } catch(err) {
-            console.error("UPLOAD CATCH ERROR:", err); // DEBUG
+            console.error("UPLOAD ERROR:", err);
             alert('Upload Failed! Server/Internet check karo: ' + err.message);
             return null;
         } finally {
@@ -52,44 +49,47 @@ const ShopCore = {
         }
     },
 
-    // OWNER PHOTO BIND - LOCAL + CLOUDINARY DONO
-    bindOwnerPhotoUpload(photoImgId, photoInputId) {
-        const img = document.getElementById(photoImgId);
-        const input = document.getElementById(photoInputId);
-        if(!img ||!input) return;
+    // ===== GENERIC BIND FUNCTION - SABKE LIYE EK HI =====
+    bindImageUpload(imgId, inputId, type, storageKey) {
+        const img = document.getElementById(imgId);
+        const input = document.getElementById(inputId);
+        if(!img ||!input) {
+            console.warn(`Element not found: ${imgId} or ${inputId}`);
+            return;
+        }
 
+        const cloudKey = `photo_${this.shopId}_${storageKey}_cloud`;
+        const localKey = `photo_${this.shopId}_${storageKey}`;
+        const defaultSrc = img.src; // pehle se jo img hai use backup
+
+        // 1. PAGE LOAD PE PHOTO LOAD KARO - PEHLE CLOUD, NA MILE TO LOCAL
+        const savedCloud = localStorage.getItem(cloudKey);
+        const savedLocal = localStorage.getItem(localKey);
+        img.src = savedCloud || savedLocal || defaultSrc;
+
+        // 2. CLICK PE FILE PICKER
         img.onclick = () => input.click();
+
+        // 3. FILE SELECT HOTE HI UPLOAD
         input.onchange = async (e) => {
             const file = e.target.files[0];
             if(!file) return;
 
-            // 1. TURANT LOCAL ME DIKHADO - LAPTOP KE LIYE
+            // A. TURANT LOCAL PREVIEW - LAPTOP KE LIYE FAST
             const reader = new FileReader();
             reader.onload = (ev) => {
                 img.src = ev.target.result;
-                localStorage.setItem('ownerPhoto_'+this.shopId, ev.target.result); // BACKUP
+                localStorage.setItem(localKey, ev.target.result); // BACKUP
             }
             reader.readAsDataURL(file);
 
-            // 2. SAATH ME CLOUDINARY PE BHEJ DO - MOBILE KE LIYE
-            const url = await this.uploadImage(file, 'profile');
+            // B. SAATH ME CLOUDINARY PE BHEJ DO - MOBILE KE LIYE
+            const url = await this.uploadImage(file, type);
             if(url){
-                img.src = url; // CLOUDINARY WALI URL SE REPLACE KAR DE
-                localStorage.setItem('ownerPhoto_'+this.shopId+'_cloud', url); // CLOUD URL SAVE
-                console.log("CLOUD URL SAVED:", url);
+                img.src = url; // CLOUD WALI SE REPLACE
+                localStorage.setItem(cloudKey, url); // CLOUD URL SAVE
+                console.log(`CLOUD URL SAVED [${type}]:`, url);
             }
-        }
-    },
-
-    // LOAD SAVED PHOTO - PEHLE CLOUD WALI DEKHEGA, NA MILE TO LOCAL WALI
-    loadSavedPhoto() {
-        if(!this.shopId) return; // shopId na ho to mat chal
-        const cloudPhoto = localStorage.getItem('ownerPhoto_'+this.shopId+'_cloud');
-        const localPhoto = localStorage.getItem('ownerPhoto_'+this.shopId);
-
-        const img = document.getElementById('ownerPhoto');
-        if(img){
-            img.src = cloudPhoto || localPhoto || 'https://ui-avatars.com/api/?name=Owner&background=22c55e&color=fff&size=128';
         }
     }
 }
