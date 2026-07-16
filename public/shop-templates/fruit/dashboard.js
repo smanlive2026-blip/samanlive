@@ -87,12 +87,16 @@ function loadFruits(fruits) {
             <td>₹<strong>${fruit.price}</strong> <span style="font-size:12px; color:#64748b;">/${fruit.unit}</span></td>
             <td class="${stockClass}"><strong>${stock}</strong> ${fruit.unit}</td>
             <td>${status}</td>
-            <td>
-                <button onclick="editFruit('${fruit.id}')" style="background:#22c55e; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; margin-right:5px;">
+            <td style="display:flex; gap:5px; flex-wrap:wrap;">
+                <button onclick="editFruit('${fruit.id}')" style="background:#22c55e; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;">
                     <i class="fa fa-edit"></i>
                 </button>
                 <button onclick="deleteFruit('${fruit.id}')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;">
                     <i class="fa fa-trash"></i>
+                </button>
+                <!-- PREMIUM FEATURE: MANUAL CLOUD UPLOAD - FUTURE PAID -->
+                <button onclick="manualCloudUpload()" style="background:#3b82f6; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;" title="Save Photo to Cloud - Premium">
+                    <i class="fa fa-cloud-upload-alt"></i>
                 </button>
             </td>
         </tr>
@@ -182,6 +186,51 @@ function downloadQR() {
 document.getElementById('searchFruit').onkeyup = (e) => {
     const term = e.target.value.toLowerCase();
     loadFruits(allShopFruits.filter(f => f.name.toLowerCase().includes(term)));
+}
+
+/*
+
+  PREMIUM FEATURE: MANUAL CLOUD UPLOAD
+  Description: Ye feature shop owner ko manual photo cloud pe save karne deta hai
+  Use Case: Laptop pe local photo select karne ke baad, is button se cloudinary pe upload
+  Future: Isko paid plan me rakhna hai. Free me auto-upload band rahega
+
+*/
+async function manualCloudUpload() {
+    const fileInput = document.getElementById('photoUpload');
+    const currentImg = document.getElementById('ownerPhoto').src;
+
+    // Check if current image is base64/local
+    if(currentImg.startsWith('data:image')) {
+        // Trigger file input to select new photo
+        fileInput.click();
+        fileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            if(confirm('Kya is photo ko Cloudinary pe save karna hai? Ye Premium Feature hai.')) {
+                const loader = document.getElementById('uploadLoader');
+                if(loader) loader.style.display = 'inline';
+
+                const url = await ShopCore.uploadImage(file, 'profile');
+
+                if(loader) loader.style.display = 'none';
+
+                if(url) {
+                    document.getElementById('ownerPhoto').src = url;
+                    localStorage.setItem('ownerPhoto_'+shopId+'_cloud', url);
+                    alert('Photo Cloud pe Save ho gayi! ✅ Ab mobile me dikhegi');
+                } else {
+                    alert('Upload Failed! Internet check karo');
+                }
+            }
+        }
+    } else if(currentImg.includes('cloudinary.com')) {
+        alert('Photo already Cloud pe hai');
+    } else {
+        alert('Pehle photo select karo');
+        fileInput.click();
+    }
 }
 
 // INIT
