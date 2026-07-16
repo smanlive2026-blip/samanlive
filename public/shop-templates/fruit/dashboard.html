@@ -8,73 +8,92 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); min-height: 100vh; padding: 20px; }
-      .container { max-width: 1400px; margin: 0 auto; }
+        body { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); min-height: 100vh; padding: 15px; }
+        .container { max-width: 1400px; margin: 0 auto; }
 
         /* HEADER */
-      .header { background: white; padding: 25px 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
-      .header-left { display: flex; align-items: center; gap: 20px; }
-      .owner-photo { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid #22c55e; cursor: pointer; }
-      .owner-photo-upload { display: none; }
-      .shop-info h1 { font-size: 28px; color: #14532d; display: flex; align-items: center; gap: 12px; }
-      .shop-info p { color: #64748b; font-size: 14px; }
-      .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 8px; }
-      .status-open { background: #dcfce7; color: #166534; }
-      .status-close { background: #fee2e2; color: #991b1b; }
+        .header { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .header-left { display: flex; align-items: center; gap: 15px; width: 100%; }
+        .owner-photo { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid #22c55e; cursor: pointer; }
+        .owner-photo-upload { display: none; }
+        .shop-info h1 { font-size: 22px; color: #14532d; display: flex; align-items: center; gap: 10px; }
+        .shop-info p { color: #64748b; font-size: 12px; }
+        .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 6px; }
+        .status-open { background: #dcfce7; color: #166534; }
+        .status-close { background: #fee2e2; color: #991b1b; }
 
         /* BUTTONS */
-      .header-right { display: flex; gap: 10px; flex-wrap: wrap; }
-      .btn { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.3s; }
-      .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(34,197,94,0.3); }
-      .btn-outline { background: white; color: #22c55e; border: 2px solid #22c55e; }
-      .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
+        .header-right { display: flex; gap: 10px; flex-wrap: wrap; width: 100%; justify-content: flex-end; }
+        .btn { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.3s; font-size: 14px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(34,197,94,0.3); }
+        .btn-outline { background: white; color: #22c55e; border: 2px solid #22c55e; }
 
         /* TOGGLE SWITCH */
-      .toggle-switch { display: flex; align-items: center; gap: 10px; background: #f0fdf4; padding: 10px 15px; border-radius: 12px; }
-      .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
-      .switch input { opacity: 0; width: 0; height: 0; }
-      .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ef4444; transition:.4s; border-radius: 34px; }
-      .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition:.4s; border-radius: 50%; }
-       input:checked +.slider { background-color: #22c55e; }
-       input:checked +.slider:before { transform: translateX(24px); }
+        .toggle-switch { display: flex; align-items: center; gap: 10px; background: #f0fdf4; padding: 10px 15px; border-radius: 12px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ef4444; transition:.4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition:.4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #22c55e; }
+        input:checked + .slider:before { transform: translateX(24px); }
 
         /* STATS */
-      .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px; }
-      .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); border-left: 5px solid #22c55e; transition: 0.3s; }
-      .stat-card:hover { transform: translateY(-5px); }
-      .stat-card.icon { font-size: 32px; color: #22c55e; margin-bottom: 12px; }
-      .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 8px; }
-      .stat-card.value { font-size: 32px; font-weight: 700; color: #1e293b; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); border-left: 5px solid #22c55e; transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card .icon { font-size: 28px; color: #22c55e; margin-bottom: 10px; }
+        .stat-card h3 { color: #64748b; font-size: 13px; margin-bottom: 6px; }
+        .stat-card .value { font-size: 26px; font-weight: 700; color: #1e293b; }
 
         /* CONTENT CARDS */
-      .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-      .content-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px; }
-      .content-card h2 { font-size: 20px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0fdf4; padding-bottom: 12px; }
+        .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .content-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .content-card h2 { font-size: 18px; margin-bottom: 18px; color: #1e293b; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0fdf4; padding-bottom: 10px; }
 
         /* SHOP SETTINGS */
-      .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
-      .setting-item:last-child { border: none; }
-      .setting-label { font-weight: 500; color: #334155; }
-      .setting-input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; width: 150px; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; gap: 10px; }
+        .setting-item:last-child { border: none; }
+        .setting-label { font-weight: 500; color: #334155; }
+        .setting-input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; width: 150px; }
 
         /* ANNOUNCEMENT */
-      .announcement { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 15px; border-radius: 12px; border-left: 4px solid #f59e0b; margin-bottom: 15px; }
-      .announcement textarea { width: 100%; border: none; background: transparent; resize: none; outline: none; font-size: 14px; }
+        .announcement { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 15px; border-radius: 12px; border-left: 4px solid #f59e0b; margin-bottom: 15px; }
+        .announcement textarea { width: 100%; border: none; background: transparent; resize: none; outline: none; font-size: 14px; }
 
         /* QR CODE */
-      .qr-box { text-align: center; padding: 20px; background: #f8fafc; border-radius: 12px; }
-      .qr-box img { width: 150px; height: 150px; margin: 10px auto; }
+        .qr-box { text-align: center; padding: 20px; background: #f8fafc; border-radius: 12px; }
+        .qr-box div { display: flex; justify-content: center; }
 
         /* TABLE */
-      .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
         table th { text-align: left; padding: 15px; background: #f0fdf4; color: #166534; font-weight: 600; }
         table td { padding: 15px; border-bottom: 1px solid #d1fae5; }
-      .expiry { background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
-      .fresh { background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
-      .low-stock { color: #ef4444; font-weight: 700; }
+        .expiry { background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+        .fresh { background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+        .low-stock { color: #ef4444; font-weight: 700; }
 
+        /* MOBILE RESPONSIVE */
         @media(max-width: 968px) {.grid-2 { grid-template-columns: 1fr; } }
+        @media(max-width: 640px) {
+            body { padding: 10px; }
+            .header { padding: 15px; }
+            .shop-info h1 { font-size: 18px; }
+            .shop-info p { font-size: 11px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .stat-card { padding: 15px; }
+            .stat-card .value { font-size: 20px; }
+            .stat-card .icon { font-size: 22px; }
+            .content-card { padding: 15px; }
+            .content-card h2 { font-size: 16px; }
+            /* Hide Stock and Status columns on mobile */
+            table th:nth-child(3), table td:nth-child(3),
+            table th:nth-child(4), table td:nth-child(4) { display: none; }
+            table { min-width: 400px; }
+            .btn { padding: 9px 14px; font-size: 13px; }
+            .setting-input { width: 100%; }
+            .header-right { justify-content: space-between; }
+        }
     </style>
 </head>
 <body>
@@ -168,7 +187,7 @@
                 <div class="content-card">
                     <h2><i class="fa fa-qrcode"></i> Shop QR</h2>
                     <div class="qr-box">
-                        <img id="shopQR" src="" alt="QR">
+                        <div id="shopQR"></div>
                         <p style="font-size: 12px; color: #64748b;">Scan to visit shop</p>
                         <button class="btn btn-outline" style="width: 100%; margin-top: 10px;" onclick="downloadQR()"><i class="fa fa-download"></i> Download</button>
                     </div>
@@ -180,88 +199,5 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="./fruit-products-data.js"></script>
     <script src="./dashboard.js"></script>
-
-    <script>
-        // OWNER PHOTO UPLOAD
-        document.getElementById('ownerPhoto').onclick = () => document.getElementById('photoUpload').click();
-        document.getElementById('photoUpload').onchange = (e) => {
-            const file = e.target.files[0];
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    document.getElementById('ownerPhoto').src = ev.target.result;
-                    localStorage.setItem('ownerPhoto_'+shopId, ev.target.result);
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // SHOP OPEN/CLOSE TOGGLE
-        document.getElementById('shopToggle').onchange = (e) => {
-            const badge = document.getElementById('shopStatusBadge');
-            if(e.target.checked) {
-                badge.className = 'status-badge status-open';
-                badge.innerHTML = '<i class="fa fa-circle"></i> OPEN NOW';
-            } else {
-                badge.className = 'status-badge status-close';
-                badge.innerHTML = '<i class="fa fa-circle"></i> CLOSED';
-            }
-            localStorage.setItem('shopStatus_'+shopId, e.target.checked);
-        }
-
-        // SAVE TIMINGS
-        function saveTimings() {
-            const open = document.getElementById('openTime').value;
-            const close = document.getElementById('closeTime').value;
-            localStorage.setItem('shopTimings_'+shopId, JSON.stringify({open, close}));
-            alert('Timings Saved!');
-        }
-
-        // SAVE ANNOUNCEMENT
-        function saveAnnouncement() {
-            const text = document.getElementById('announcementText').value;
-            localStorage.setItem('announcement_'+shopId, text);
-            alert('Announcement Updated!');
-        }
-
-        // GENERATE QR
-        function generateQR() {
-            const url = window.location.href;
-            new QRCode(document.getElementById("shopQR"), { text: url, width: 150, height: 150 });
-        }
-        function downloadQR() {
-            const img = document.getElementById('shopQR').querySelector('img');
-            const a = document.createElement('a');
-            a.href = img.src;
-            a.download = 'shop-qr.png';
-            a.click();
-        }
-
-        // LOAD SAVED DATA
-        window.onload = () => {
-            const savedPhoto = localStorage.getItem('ownerPhoto_'+shopId);
-            if(savedPhoto) document.getElementById('ownerPhoto').src = savedPhoto;
-
-            const savedStatus = localStorage.getItem('shopStatus_'+shopId);
-            if(savedStatus === 'false') {
-                document.getElementById('shopToggle').checked = false;
-                document.getElementById('shopToggle').dispatchEvent(new Event('change'));
-            }
-
-            const savedAnn = localStorage.getItem('announcement_'+shopId);
-            if(savedAnn) document.getElementById('announcementText').value = savedAnn;
-
-            generateQR();
-        }
-
-        // SEARCH FUNCTION
-        document.getElementById('searchFruit').onkeyup = (e) => {
-            const term = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('#fruitTableBody tr');
-            rows.forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(term)? '' : 'none';
-            });
-        }
-    </script>
 </body>
 </html>

@@ -1,15 +1,17 @@
 const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId');
-document.getElementById('shopIdDisplay').innerText = shopId.substring(0, 8) + '...';
+document.getElementById('shopIdDisplay').innerText = shopId ? shopId.substring(0, 8) + '...' : 'Demo';
 
 // GLOBAL
 let allShopFruits = [];
 
 function loadShopData() {
     try {
-        // 1. Shop Name
+        // 1. Shop Name + Photo
         const shopName = localStorage.getItem('shopName_'+shopId) || 'Fresh Fruits';
         document.getElementById('shopName').innerText = shopName;
+        const savedPhoto = localStorage.getItem('ownerPhoto_'+shopId);
+        if(savedPhoto) document.getElementById('ownerPhoto').src = savedPhoto;
 
         // 2. Load Fruits: Pehle localStorage dekho, nahi to 104 seed wale
         const savedFruits = JSON.parse(localStorage.getItem('shopFruits_'+shopId)) || [];
@@ -30,6 +32,24 @@ function loadShopData() {
         loadFruits(allShopFruits);
         document.getElementById('loader').style.display = 'none';
         document.getElementById('fruitTable').style.display = 'table';
+
+        // 4. Load Saved Settings
+        const savedAnn = localStorage.getItem('announcement_'+shopId);
+        if(savedAnn) document.getElementById('announcementText').value = savedAnn;
+
+        const savedTimings = JSON.parse(localStorage.getItem('shopTimings_'+shopId));
+        if(savedTimings){
+            document.getElementById('openTime').value = savedTimings.open;
+            document.getElementById('closeTime').value = savedTimings.close;
+        }
+
+        const savedStatus = localStorage.getItem('shopStatus_'+shopId);
+        if(savedStatus === 'false') {
+            document.getElementById('shopToggle').checked = false;
+            document.getElementById('shopToggle').dispatchEvent(new Event('change'));
+        }
+
+        generateQR();
 
     } catch (err) {
         console.error(err);
@@ -101,6 +121,70 @@ document.getElementById('shareBtn').onclick = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url);
     alert('Shop Link Copied!');
+}
+
+// PHOTO UPLOAD
+document.getElementById('ownerPhoto').onclick = () => document.getElementById('photoUpload').click();
+document.getElementById('photoUpload').onchange = (e) => {
+    const file = e.target.files[0];
+    if(file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            document.getElementById('ownerPhoto').src = ev.target.result;
+            localStorage.setItem('ownerPhoto_'+shopId, ev.target.result);
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+// SHOP OPEN/CLOSE TOGGLE
+document.getElementById('shopToggle').onchange = (e) => {
+    const badge = document.getElementById('shopStatusBadge');
+    if(e.target.checked) {
+        badge.className = 'status-badge status-open';
+        badge.innerHTML = '<i class="fa fa-circle"></i> OPEN NOW';
+    } else {
+        badge.className = 'status-badge status-close';
+        badge.innerHTML = '<i class="fa fa-circle"></i> CLOSED';
+    }
+    localStorage.setItem('shopStatus_'+shopId, e.target.checked);
+}
+
+// SAVE TIMINGS
+function saveTimings() {
+    const open = document.getElementById('openTime').value;
+    const close = document.getElementById('closeTime').value;
+    localStorage.setItem('shopTimings_'+shopId, JSON.stringify({open, close}));
+    alert('Timings Saved!');
+}
+
+// SAVE ANNOUNCEMENT
+function saveAnnouncement() {
+    const text = document.getElementById('announcementText').value;
+    localStorage.setItem('announcement_'+shopId, text);
+    alert('Announcement Updated!');
+}
+
+// GENERATE QR
+function generateQR() {
+    const url = `fruit-shop.html?shopId=${shopId}`;
+    document.getElementById("shopQR").innerHTML = "";
+    new QRCode(document.getElementById("shopQR"), { text: url, width: 150, height: 150 });
+}
+function downloadQR() {
+    const img = document.getElementById('shopQR').querySelector('img');
+    if(img){
+        const a = document.createElement('a');
+        a.href = img.src;
+        a.download = 'shop-qr.png';
+        a.click();
+    }
+}
+
+// SEARCH FUNCTION
+document.getElementById('searchFruit').onkeyup = (e) => {
+    const term = e.target.value.toLowerCase();
+    loadFruits(allShopFruits.filter(f => f.name.toLowerCase().includes(term)));
 }
 
 // INIT
