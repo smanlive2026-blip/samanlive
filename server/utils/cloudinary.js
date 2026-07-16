@@ -1,4 +1,4 @@
-//  server/utils/cloudnary.js
+//  server/utils/cloudinary.js
 
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');

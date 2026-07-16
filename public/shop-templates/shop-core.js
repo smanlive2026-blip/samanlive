@@ -1,4 +1,5 @@
 // public/shop-templates/shop-core.js
+// NOTE: Photo local + Cloudinary dono support. manualCloudUpload = PREMIUM FEATURE
 
 const ShopCore = {
     shopId: null,
@@ -10,24 +11,35 @@ const ShopCore = {
         this.loadSavedPhoto(); // PAGE LOAD PE PHOTO LOAD KAREGA
     },
 
-    // CLOUDINARY UPLOAD
+    // CLOUDINARY UPLOAD VIA BACKEND
     async uploadImage(file, type = 'profile') {
         if(!file) return null;
         const loader = document.getElementById('uploadLoader');
         if(loader) loader.style.display = 'inline';
 
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('image', file); // 'image' naam hona chahiye
         formData.append('shopId', this.shopId);
         formData.append('template', this.template);
         formData.append('type', type);
 
         try {
+            console.log("UPLOADING TO: /api/upload/shop", this.shopId); // DEBUG
             const res = await fetch('/api/upload/shop', { method: 'POST', body: formData });
+
+            console.log("RESPONSE STATUS:", res.status); // DEBUG
             const data = await res.json();
-            return data.success? data.url : null;
+            console.log("RESPONSE DATA:", data); // DEBUG
+
+            if(data.success && data.url){
+                return data.url;
+            } else {
+                alert('Upload Failed: ' + (data.message || 'Server Error'));
+                return null;
+            }
         } catch(err) {
-            alert('Upload Failed: ' + err.message);
+            console.error("UPLOAD CATCH ERROR:", err); // DEBUG
+            alert('Upload Failed! Server/Internet check karo: ' + err.message);
             return null;
         } finally {
             if(loader) loader.style.display = 'none';
@@ -43,6 +55,7 @@ const ShopCore = {
         img.onclick = () => input.click();
         input.onchange = async (e) => {
             const file = e.target.files[0];
+            if(!file) return;
 
             // 1. TURANT LOCAL ME DIKHADO - LAPTOP KE LIYE
             const reader = new FileReader();
@@ -57,6 +70,7 @@ const ShopCore = {
             if(url){
                 img.src = url; // CLOUDINARY WALI URL SE REPLACE KAR DE
                 localStorage.setItem('ownerPhoto_'+this.shopId+'_cloud', url); // CLOUD URL SAVE
+                console.log("CLOUD URL SAVED:", url);
             }
         }
     },
