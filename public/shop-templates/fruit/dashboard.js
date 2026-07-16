@@ -1,22 +1,20 @@
 const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId');
-const TEMPLATE_NAME = 'fruit'; // YE ADD KIYA
+const TEMPLATE_NAME = 'fruit';
 
 document.getElementById('shopIdDisplay').innerText = shopId? shopId.substring(0, 8) + '...' : 'Demo';
 
 // GLOBAL
 let allShopFruits = [];
 
-// 1. CORE INIT KIYA
+// 1. CORE INIT SABSE PEHLE
 ShopCore.init(shopId, TEMPLATE_NAME);
 
 function loadShopData() {
     try {
-        // 1. Shop Name + Photo
+        // 1. Shop Name - Photo wala shop-core.js khud handle karega
         const shopName = localStorage.getItem('shopName_'+shopId) || 'Fresh Fruits';
         document.getElementById('shopName').innerText = shopName;
-        const savedPhoto = localStorage.getItem('ownerPhoto_'+shopId);
-        if(savedPhoto) document.getElementById('ownerPhoto').src = savedPhoto;
 
         // 2. Load Fruits: Pehle localStorage dekho, nahi to 104 seed wale
         const savedFruits = JSON.parse(localStorage.getItem('shopFruits_'+shopId)) || [];
@@ -107,7 +105,7 @@ function deleteFruit(fruitId) {
     if(confirm('Are you sure you want to delete this fruit?')) {
         allShopFruits = allShopFruits.filter(f => f.id!== fruitId);
         localStorage.setItem('shopFruits_'+shopId, JSON.stringify(allShopFruits));
-        loadShopData(); // reload
+        loadShopData();
     }
 }
 
@@ -128,12 +126,12 @@ document.getElementById('shareBtn').onclick = () => {
     alert('Shop Link Copied!');
 }
 
-// VIEW SHOP BUTTON - Customer View kholega
+// VIEW SHOP BUTTON
 document.getElementById('viewShopBtn').onclick = () => {
     window.open(`fruit-shop.html?shopId=${shopId}`, '_blank');
 };
 
-// 2. PHOTO UPLOAD UPDATE KIYA - CLOUDINARY WALA
+// 2. PHOTO UPLOAD BIND - CLOUDINARY WALA
 ShopCore.bindOwnerPhotoUpload('ownerPhoto', 'photoUpload');
 
 // SHOP OPEN/CLOSE TOGGLE
