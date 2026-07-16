@@ -5,9 +5,9 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, // <-- YE CHANGE
-  api_key: process.env.CLOUDINARY_API_KEY,       // <-- YE CHANGE
-  api_secret: process.env.CLOUDINARY_API_SECRET  // <-- YE CHANGE
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 // Storage engine
@@ -20,7 +20,7 @@ const storage = new CloudinaryStorage({
       const { shopId, template, type } = req.body;
       return {
         folder: `shops/${shopId}/${template}/${type}`,
-        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'mp4', 'pdf'],
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif', 'mp4', 'pdf'], // CHANGED: 'avif' add kiya - mobile se avif photo aati hai
         resource_type: 'auto',
         transformation: [{ width: 1200, crop: "limit", quality: "auto" }]
       };
@@ -30,7 +30,7 @@ const storage = new CloudinaryStorage({
     if(req.user && req.user.id) {
       return {
         folder: `users/${req.user.id}/profile`,
-        allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif'], // CHANGED: 'avif' add kiya
         resource_type: 'image',
         transformation: [{ width: 500, height: 500, crop: "fill", quality: "auto" }]
       };
@@ -39,7 +39,7 @@ const storage = new CloudinaryStorage({
     // Default
     return {
       folder: `misc`,
-      allowed_formats: ['jpg', 'png', 'jpeg'],
+      allowed_formats: ['jpg', 'png', 'jpeg', 'avif'], // CHANGED: 'avif' add kiya
       resource_type: 'auto'
     };
   },
@@ -47,7 +47,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 2 * 1024 * 1024 } // 2MB
+  limits: { fileSize: 5 * 1024 * 1024 } // CHANGED: 2MB se 5MB kiya - avif photos bhari hoti hain
 });
 
 // Direct URL se upload
