@@ -41,7 +41,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/shop-templates', express.static(path.join(__dirname, '../public/shop-templates')));
 
 // YEH cloudnary se related file 
-app.use('/api', uploadRoutes);
+//app.use('/api', uploadRoutes);
 
 // ==================== MONGODB CONNECT ====================
 mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/samanlive', {
