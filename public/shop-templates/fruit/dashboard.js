@@ -16,6 +16,11 @@ if(shopId) {
         ShopLocationManager.init(shopId);
     }
 }
+if(shopId) {
+    ShopCore.init(shopId, TEMPLATE_NAME);
+    if(typeof ShopLocationManager !== 'undefined') ShopLocationManager.init(shopId); // YE GUARD
+}
+
  else {
     console.error("ShopId URL me nahi mila");
 }
