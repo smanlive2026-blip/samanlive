@@ -102,34 +102,12 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-async function loadAllData() {
-    try {
-        await getUserLocation();
-
-        // YE 5 LINE HATA DE YA // LAGA DE  abhi ke liye ye function inactive h 
-         const shopsRes = await fetch('/api/shop/public');  // <-- bas /local-market hata de
-         if(shopsRes.ok) {
-             const shopsData = await shopsRes.json();
-             allServices = shopsData.data || shopsData;
-             renderSixLineShops();
-         }
-          // PRODUCTS LOAD - ye rehne de
-        const productsRes = await fetch('/api/products/top-rated?limit=24');
-        if(productsRes.ok) {
-            allProducts = await productsRes.json();
-            renderSixLineProducts();
-        }
-
-    } catch(e) {
-        console.error('Failed to load data:', e);
-    }
-}
 window.addEventListener('beforeunload', () => {
     window.LocationManager.stopAutoUpdate();
 });
 
 // ========================================
-// LOAD DATA FROM SERVER
+// LOAD DATA FROM SERVER - EK HI FUNCTION
 // ========================================
 async function loadAllData() {
     try {
@@ -141,7 +119,7 @@ async function loadAllData() {
             fetch('/api/campaigns').catch(()=>({ok:false})),
             fetch('/api/settings').catch(()=>({ok:false})),
             fetch('/api/modules').catch(()=>({ok:false})),
-            fetch('/api/local-market/public').catch(()=>({ok:false})),
+            fetch('/api/shop/public').catch(()=>({ok:false})), // <- YAHI PE FIX HAI
             fetch('/api/products/top-rated?limit=24').catch(()=>({ok:false}))
         ]);
 
@@ -257,10 +235,9 @@ function renderCampaigns() {
 }
 
 // ========================================
-// ✅ RENDER SHOPS - 6 LINE + NEW LINK
+// RENDER SHOPS - 6 LINE
 // ========================================
 function openShopView(shopId) {
-    // NAYA ROUTE - Backend khud template check karke sahi view dega
     window.open(`/api/shop/view/${shopId}`, '_blank');
 }
 
@@ -268,7 +245,7 @@ function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
     if (!allServices || allServices.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏪</div><p>No shops available in your area</p></div>`;
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏪</div><p>No shops available</p></div>`;
         return;
     }
     container.innerHTML = '';
@@ -291,7 +268,7 @@ function renderSixLineShops() {
 }
 
 // ========================================
-// ✅ RENDER TOP PRODUCTS - 6 LINE
+// RENDER TOP PRODUCTS - 6 LINE
 // ========================================
 function renderSixLineProducts() {
     const container = document.getElementById('topProductsContent');
@@ -340,13 +317,13 @@ function renderVideos() {
 // ========================================
 let topAdIndex = 0;
 function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
     slides.forEach(s => s.classList.remove('active'));
     if(slides[idx]) slides[idx].classList.add('active');
     topAdIndex = idx;
 }
 function nextTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer.ad-slide');
+    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
     if(slides.length === 0) return;
     topAdIndex = (topAdIndex + 1) % slides.length;
     showTopAd(topAdIndex);
@@ -354,7 +331,7 @@ function nextTopAd() {
 setInterval(nextTopAd, 5000);
 
 // ========================================
-// VIDEO MODAL - SHOP LINK BHI NAYA
+// VIDEO MODAL
 // ========================================
 document.addEventListener('click', function(e) {
     const videoCard = e.target.closest('.video-card');
