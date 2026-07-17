@@ -107,14 +107,13 @@ async function loadAllData() {
         await getUserLocation();
 
         // YE 5 LINE HATA DE YA // LAGA DE  abhi ke liye ye function inactive h 
-        // const shopsRes = await fetch('/api/local-market/public');
-        // if(shopsRes.ok) {
-        //     const shopsData = await shopsRes.json();
-        //     allServices = shopsData.data || shopsData;
-        //     renderSixLineShops();
-        // }
-
-        // PRODUCTS LOAD - ye rehne de
+         const shopsRes = await fetch('/api/shop/public');  // <-- bas /local-market hata de
+         if(shopsRes.ok) {
+             const shopsData = await shopsRes.json();
+             allServices = shopsData.data || shopsData;
+             renderSixLineShops();
+         }
+          // PRODUCTS LOAD - ye rehne de
         const productsRes = await fetch('/api/products/top-rated?limit=24');
         if(productsRes.ok) {
             allProducts = await productsRes.json();
