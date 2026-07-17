@@ -2,17 +2,27 @@ const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId');
 let cart = JSON.parse(localStorage.getItem('cart_'+shopId)) || [];
 let allProducts = [];
+let shopData = {}; // CHANGED: shop ka data yaha save karenge
 
-function init() {
-    document.getElementById('shopName').innerText = localStorage.getItem('shopName_'+shopId) || 'Fresh Fruits';
-    document.getElementById('pageTitle').innerText = localStorage.getItem('shopName_'+shopId) || 'Fresh Fruits';
-    const ann = localStorage.getItem('announcement_'+shopId);
-    if(ann) { document.getElementById('announcementBox').innerText = ann; document.getElementById('announcementBox').style.display = 'block'; }
-    const shopStatus = localStorage.getItem('shopStatus_'+shopId);
-    if(shopStatus === 'false') { document.getElementById('shopStatus').innerHTML = '<i class="fa fa-circle"></i> CLOSED'; document.getElementById('shopStatus').style.background = '#ef4444'; }
+async function init() { // CHANGED: async kiya
+    // CHANGED: AB API SE SAB UTHAO
+    try{
+        const res = await fetch(`/api/shops/${shopId}`);
+        const result = await res.json();
+        if(result.success) shopData = result.shop;
+    }catch(err){ console.error(err) }
+
+    document.getElementById('shopName').innerText = shopData.shopName || localStorage.getItem('shopName_'+shopId) || 'Fresh Fruits'; // CHANGED
+    document.getElementById('pageTitle').innerText = shopData.shopName || localStorage.getItem('shopName_'+shopId) || 'Fresh Fruits'; // CHANGED
     
-    const savedFruits = JSON.parse(localStorage.getItem('shopFruits_'+shopId)) || [];
-    allProducts = savedFruits.length > 0 ? savedFruits : [...window.FRUIT_PRODUCTS_DATA];
+    const ann = shopData.announcement || localStorage.getItem('announcement_'+shopId); // CHANGED
+    if(ann) { document.getElementById('announcementBox').innerText = ann; document.getElementById('announcementBox').style.display = 'block'; }
+    
+    const isOpen = shopData.isOpen; // CHANGED
+    if(isOpen === false) { document.getElementById('shopStatus').innerHTML = '<i class="fa fa-circle"></i> CLOSED'; document.getElementById('shopStatus').style.background = '#ef4444'; } // CHANGED
+    
+    const savedFruits = shopData.items && shopData.items.length > 0 ? shopData.items : [...window.FRUIT_PRODUCTS_DATA]; // CHANGED
+    allProducts = savedFruits;
     renderProducts(allProducts); updateCart();
 }
 
@@ -22,13 +32,28 @@ function renderProducts(products) {
 }
 
 function getCartButton(product) {
-    const item = cart.find(c => c.id === product.id);
-    return item ? `<div class="qty-control"><button class="qty-btn" onclick="updateQty('${product.id}', -1)">-</button><span>${item.qty}</span><button class="qty-btn" onclick="updateQty('${product.id}', 1)">+</button></div>` : `<button class="add-btn" onclick="addToCart('${product.id}')">Add to Cart</button>`;
+    const pid = product._id || product.id; // CHANGED: _id bhi support
+    const item = cart.find(c => c.id === pid);
+    return item ? `<div class="qty-control"><button class="qty-btn" onclick="updateQty('${pid}', -1)">-</button><span>${item.qty}</span><button class="qty-btn" onclick="updateQty('${pid}', 1)">+</button></div>` : `<button class="add-btn" onclick="addToCart('${pid}')">Add to Cart</button>`; // CHANGED
 }
 
-function addToCart(id) { const product = allProducts.find(p => p.id === id); cart.push({...product, qty: 1}); saveCart(); renderProducts(allProducts); }
-function updateQty(id, change) { const item = cart.find(c => c.id === id); item.qty += change; if(item.qty <= 0) cart = cart.filter(c => c.id !== id); saveCart(); renderProducts(allProducts); }
-function saveCart() { localStorage.setItem('cart_'+shopId, JSON.stringify(cart)); updateCart(); }
+function addToCart(id) { 
+    const product = allProducts.find(p => (p._id || p.id) === id); // CHANGED
+    cart.push({...product, id: id, qty: 1}); // CHANGED: id fix kiya
+    saveCart(); 
+    renderProducts(allProducts); 
+}
+function updateQty(id, change) { 
+    const item = cart.find(c => c.id === id); 
+    item.qty += change; 
+    if(item.qty <= 0) cart = cart.filter(c => c.id !== id); 
+    saveCart(); 
+    renderProducts(allProducts); 
+}
+function saveCart() { 
+    localStorage.setItem('cart_'+shopId, JSON.stringify(cart)); 
+    updateCart(); 
+}
 function updateCart() {
     document.getElementById('cartCount').innerText = cart.reduce((sum, c) => sum + c.qty, 0);
     document.getElementById('cartTotal').innerText = cart.reduce((sum, c) => sum + (c.price * c.qty), 0);
@@ -40,31 +65,24 @@ function filterCat(cat) { document.querySelectorAll('.cat-btn').forEach(b => b.c
 
 function placeOrder() {
     if(cart.length === 0) return alert('Cart is empty!');
+    let phone = shopData.phone || '91XXXXXXXXXX'; // CHANGED: shop ka number
     let msg = `Hello! Order from ${document.getElementById('shopName').innerText}%0A%0A`;
     cart.forEach(c => msg += `${c.name} x ${c.qty} = ₹${c.price * c.qty}%0A`);
     msg += `%0ATotal: ₹${document.getElementById('cartTotal').innerText}`;
-    window.open(`https://wa.me/91XXXXXXXXXX?text=${msg}`, '_blank');
+    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank'); // CHANGED
     window.location.href = `order-success.html?shopId=${shopId}`;
 }
 
-// dashboard.js ke bilkul last me paste kar
-
+// CHANGED: YE PURA BLOCK HATA DIYA. YE DASHBOARD WALA THA, CUSTOMER ME NAHI CHAHIYE
+/*
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // 1. SHOP ID AUR TEMPLATE SET KARO
-    const shopId = document.getElementById('shopIdDisplay').innerText || 'demo123'; // tumhare id se
-    const template = 'fruit'; // tumhara template name
-    
+    const shopId = document.getElementById('shopIdDisplay').innerText || 'demo123';
+    const template = 'fruit';
     ShopCore.init(shopId, template);
-
-    // 2. OWNER PHOTO BIND KARO
     ShopCore.bindImageUpload('ownerPhoto', 'photoUpload', 'profile', 'owner');
-
-    // 3. AGAR BANNER HAI TO YE BHI
-    // ShopCore.bindImageUpload('bannerImg', 'bannerInput', 'banner', 'banner');
-
     console.log("ShopCore Loaded for:", shopId);
 });
+*/
 
 document.getElementById('searchInput').onkeyup = (e) => { const term = e.target.value.toLowerCase(); renderProducts(allProducts.filter(p => p.name.toLowerCase().includes(term))); }
 init();

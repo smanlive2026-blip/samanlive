@@ -1,5 +1,8 @@
 // public/shop-templates/shop-core.js
 // NOTE: Photo Local + Cloudinary dono. Har photo ka alag storage key
+// CHANGED: Added auto compress + DB save
+
+import imageCompression from 'browser-image-compression'; // CHANGED: Compress lib add
 
 const ShopCore = {
     shopId: null,
@@ -18,12 +21,25 @@ const ShopCore = {
             alert('Shop ID ya Template missing hai. Page reload karo');
             return null;
         }
-        
+
         const loader = document.getElementById('uploadLoader');
         if(loader) loader.style.display = 'inline';
 
+        // CHANGED: STEP 1 - IMAGE COMPRESS KARO 10MB ko 50KB
+        let compressedFile = file;
+        try{
+            compressedFile = await imageCompression(file, {
+                maxSizeMB: 0.05, // 50KB target
+                maxWidthOrHeight: 800,
+                useWebWorker: true
+            });
+            console.log(`COMPRESSED: ${file.size/1024}KB -> ${compressedFile.size/1024}KB`);
+        }catch(err){
+            console.error("Compress failed, original bhej rahe", err);
+        }
+
         const formData = new FormData();
-        formData.append('image', file); 
+        formData.append('image', compressedFile); // CHANGED: file ki jagah compressedFile
         formData.append('shopId', String(this.shopId));
         formData.append('template', String(this.template));
         formData.append('type', String(type)); // profile, banner, product, offer
@@ -63,6 +79,7 @@ const ShopCore = {
         const defaultSrc = img.src; // pehle se jo img hai use backup
 
         // 1. PAGE LOAD PE PHOTO LOAD KARO - PEHLE CLOUD, NA MILE TO LOCAL
+        // CHANGED: Ab DB se bhi load karenge, isliye dashboard.js se call hoga
         const savedCloud = localStorage.getItem(cloudKey);
         const savedLocal = localStorage.getItem(localKey);
         img.src = savedCloud || savedLocal || defaultSrc;
@@ -88,7 +105,18 @@ const ShopCore = {
             if(url){
                 img.src = url; // CLOUD WALI SE REPLACE
                 localStorage.setItem(cloudKey, url); // CLOUD URL SAVE
-                console.log(`CLOUD URL SAVED [${type}]:`, url);
+
+                // CHANGED: STEP 2 - DB ME BHI SAVE KARO TAKEY HAR DEVICE PE DIKHE
+                try{
+                    await fetch(`/api/shops/${this.shopId}`, { // note: /shops/ hai
+                        method: 'PUT', // tere route me PUT hai
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ ownerPhotoUrl: url })
+                    });
+                    console.log(`DB ME SAVE HO GAYA [${type}]:`, url);
+                }catch(err){
+                    console.error("DB Save failed", err);
+                }
             }
         }
     }

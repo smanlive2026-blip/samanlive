@@ -46,7 +46,7 @@ router.get('/shops/:id', async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.id).lean();
         if (!shop) return res.status(404).json({ error: 'Shop not found' });
-        res.json(shop);
+        res.json({ success: true, shop }); // <-- YE CHANGE: wrap kar diya
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

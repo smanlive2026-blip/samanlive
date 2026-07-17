@@ -108,13 +108,14 @@ const shopSchema = new mongoose.Schema({
     // ========== CLAIM SYSTEM FIELDS END ==========
 
     // ========== SHOP TYPE & ITEMS ==========
+// ========== SHOP TYPE & ITEMS ==========
     shopType: {
         type: String,
         enum: ['product', 'food', 'service', 'rental', 'fashion', 'common'],
         default: 'product',
         required: true
     },
-    items: [{
+    items: [{  // <-- YE SIRF PRODUCT KE LIYE HAI
         name: { type: String, required: true },
         price: { type: Number, required: true },
         image: { type: String, default: '' },
@@ -130,7 +131,16 @@ const shopSchema = new mongoose.Schema({
         expiry: { type: String, default: '' },
         mrp: { type: Number, default: 0 },
         stock: { type: Number, default: 0 }
-    }],
+    }], // <-- YAHI BAND HONA THA
+
+    // CHANGED: YE 4 FIELD ITEMS KE BAHAR AAYENGE
+    ownerPhotoUrl: { type: String, default: '' },
+    isOpen: { type: Boolean, default: true },
+    announcement: { type: String, default: '' },
+    shopSettings: { 
+        openTime: { type: String, default: '08:00' },
+        closeTime: { type: String, default: '22:00' }
+    },
     // ========== ADMIN PRODUCT MANAGER KE LIYE NAYA FIELD ==========
     products: {
         type: [{
@@ -142,8 +152,7 @@ const shopSchema = new mongoose.Schema({
             image: { type: String }
         }],
         default: []
-    },
-    // ========== END ==========
+    },    // ========== END ==========
     // ========== SHOP TYPE & ITEMS END ==========
 
     rating: { type: Number, default: 0, min: 0, max: 5 },
