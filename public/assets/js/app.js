@@ -102,24 +102,29 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-async function reloadNearbyData() {
+async function loadAllData() {
     try {
-        const shopsRes = await fetch(`/api/local-market/public`);
-        if(shopsRes.ok) {
-            const shopsData = await shopsRes.json();
-            allServices = shopsData.data || shopsData;
-            originalServices = [...allServices];
-            renderSixLineShops();
-        }
-        const productsRes = await fetch(`/api/products/top-rated`);
+        await getUserLocation();
+
+        // YE 5 LINE HATA DE YA // LAGA DE  abhi ke liye ye function inactive h 
+        // const shopsRes = await fetch('/api/local-market/public');
+        // if(shopsRes.ok) {
+        //     const shopsData = await shopsRes.json();
+        //     allServices = shopsData.data || shopsData;
+        //     renderSixLineShops();
+        // }
+
+        // PRODUCTS LOAD - ye rehne de
+        const productsRes = await fetch('/api/products/top-rated?limit=24');
         if(productsRes.ok) {
             allProducts = await productsRes.json();
-            originalProducts = [...allProducts];
             renderSixLineProducts();
         }
-    } catch(e) { console.error('Failed to reload:', e); }
-}
 
+    } catch(e) {
+        console.error('Failed to load data:', e);
+    }
+}
 window.addEventListener('beforeunload', () => {
     window.LocationManager.stopAutoUpdate();
 });
