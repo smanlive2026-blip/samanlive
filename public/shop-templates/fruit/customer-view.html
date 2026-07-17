@@ -87,6 +87,125 @@
     </div>
 
     <script src="./fruit-products-data.js"></script>
+    <script>
+const urlParams = new URLSearchParams(window.location.search);
+const shopId = urlParams.get('shopId');
+let shopData = null;
+let cart = [];
+
+// 1. DB SE DATA LOAD KARO SABSE PEHLE
+async function loadShopForView() {
+    try {
+        const res = await fetch(`/api/shops/${shopId}`);
+        const result = await res.json();
+        
+        if(result.success && result.shop) {
+            shopData = result.shop;
+        } else {
+            // DB fail to local se
+            shopData = {
+                shopName: localStorage.getItem('shopName_'+shopId) || 'Fresh Fruits',
+                isOpen: localStorage.getItem('shopStatus_'+shopId) !== 'false',
+                announcement: localStorage.getItem('announcement_'+shopId) || '',
+                items: JSON.parse(localStorage.getItem('shopFruits_'+shopId)) || [...window.FRUIT_PRODUCTS_DATA]
+            }
+        }
+
+        // 2. SHOP NAME + STATUS UPDATE
+        document.getElementById('shopName').innerText = shopData.shopName || 'Fresh Fruits';
+        document.getElementById('pageTitle').innerText = shopData.shopName + ' - Shop';
+        
+        const statusEl = document.getElementById('shopStatus');
+        if(shopData.isOpen) {
+            statusEl.innerHTML = '<i class="fa fa-circle"></i> OPEN';
+            statusEl.style.background = 'rgba(255,255,255,0.2)';
+        } else {
+            statusEl.innerHTML = '<i class="fa fa-circle"></i> CLOSED';
+            statusEl.style.background = '#ef4444';
+        }
+
+        // 3. ANNOUNCEMENT
+        if(shopData.announcement) {
+            document.getElementById('announcementBox').innerText = shopData.announcement;
+            document.getElementById('announcementBox').style.display = 'block';
+        }
+
+        // 4. FRUITS LOAD + FIELD THEEK KARO img -> image
+        let fruits = shopData.items || [];
+        fruits = fruits.map(f => ({
+            ...f,
+            image: f.image || f.img || 'https://via.placeholder.com/120?text=Fruit'
+        }));
+
+        renderProducts(fruits);
+
+    } catch(err) {
+        console.error("Load failed", err);
+    }
+}
+
+// 2. PRODUCTS RENDER KARNA
+function renderProducts(fruits) {
+    const grid = document.getElementById('productGrid');
+    if(fruits.length === 0) {
+        grid.innerHTML = '<p style="text-align:center; padding:40px;">No fruits added yet</p>';
+        return;
+    }
+    
+    grid.innerHTML = fruits.map(f => `
+        <div class="product-card">
+            <img src="${f.image}" class="product-img" onerror="this.src='https://via.placeholder.com/120?text=Fruit'">
+            <div class="product-name">${f.name}</div>
+            <div class="product-price">₹${f.price} <span class="product-unit">/${f.unit}</span></div>
+            <button class="add-btn" onclick="addToCart('${f._id || f.id}', '${f.name}', ${f.price}, '${f.image}')">Add to Cart</button>
+        </div>
+    `).join('');
+}
+
+// 3. CART FUNCTIONS - SIMPLE
+function toggleCart() {
+    document.getElementById('cartSidebar').classList.toggle('active');
+    document.getElementById('overlay').classList.toggle('active');
+}
+
+function addToCart(id, name, price, img) {
+    const exist = cart.find(i => i.id === id);
+    if(exist) exist.qty++;
+    else cart.push({id, name, price, img, qty: 1});
+    updateCart();
+}
+
+function updateCart() {
+    document.getElementById('cartCount').innerText = cart.reduce((a,b) => a+b.qty, 0);
+    document.getElementById('cartTotal').innerText = cart.reduce((a,b) => a + (b.price*b.qty), 0);
+    
+    document.getElementById('cartItems').innerHTML = cart.map(i => `
+        <div class="cart-item">
+            <img src="${i.img}">
+            <div style="flex:1">
+                <div>${i.name}</div>
+                <div>₹${i.price} x ${i.qty}</div>
+            </div>
+        </div>
+    `).join('') || '<p>Cart Empty</p>';
+}
+
+function filterCat(cat) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    let fruits = shopData.items || [];
+    if(cat !== 'all') fruits = fruits.filter(f => f.category === cat);
+    renderProducts(fruits.map(f => ({...f, image: f.image || f.img})));
+}
+
+function placeOrder() {
+    alert('Order feature baad me jodege');
+}
+
+// INIT
+loadShopForView();
+</script>
     <script src="./customer.js"></script>
 </body>
 </html>
