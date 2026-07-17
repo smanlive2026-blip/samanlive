@@ -1,6 +1,6 @@
 // public/shop-templates/shop-core.js
 // NOTE: Photo Local + Cloudinary dono. Har photo ka alag storage key
-// CHANGED: Added auto compress + DB save
+// CHANGED: Added auto compress + DB save + SAFETY CHECK
 
 const browserImageCompression = window.imageCompression; // CHANGED: CDN se aayega
 
@@ -25,17 +25,21 @@ const ShopCore = {
         const loader = document.getElementById('uploadLoader');
         if(loader) loader.style.display = 'inline';
 
-        // CHANGED: STEP 1 - IMAGE COMPRESS KARO 10MB ko 50KB
+        // CHANGED: STEP 1 - IMAGE COMPRESS KARO 10MB ko 50KB - WITH SAFETY
         let compressedFile = file;
-        try{
-            compressedFile = await browserImageCompression(file, { // Yaha change kar
-                maxSizeMB: 0.05, // 50KB target
-                maxWidthOrHeight: 800,
-                useWebWorker: true
-            });
-            console.log(`COMPRESSED: ${file.size/1024}KB -> ${compressedFile.size/1024}KB`);
-        }catch(err){
-            console.error("Compress failed, original bhej rahe", err);
+        if(browserImageCompression){ // SAFETY CHECK: CDN mila ya nahi
+            try{
+                compressedFile = await browserImageCompression(file, {
+                    maxSizeMB: 0.05, // 50KB target
+                    maxWidthOrHeight: 800,
+                    useWebWorker: true
+                });
+                console.log(`COMPRESSED: ${file.size/1024}KB -> ${compressedFile.size/1024}KB`);
+            }catch(err){
+                console.error("Compress failed, original bhej rahe", err);
+            }
+        } else {
+            console.warn("Compression lib nahi mili, original file bhej rahe");
         }
 
         const formData = new FormData();
