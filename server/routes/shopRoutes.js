@@ -252,4 +252,53 @@ router.put('/shops/:id', authenticateToken, async (req, res) => {
 // ========================================
 // router.put('/shops/:id/update-location', ...)  // PURA DELETE
 
+// ... tera pura code same rahega upar wala ...
+
+// ========================================
+// 9. DYNAMIC LOCATION UPDATE - DELETE KIYA
+// Ab ye kaam /api/location/shop karega
+// ========================================
+// router.put('/shops/:id/update-location', ...)  // PURA DELETE
+
+// ========================================
+// 10. SHOP USER VIEW - DYNAMIC TEMPLATE ROUTE - NAYA YE WALA LAGA
+// ========================================
+const path = require('path');
+const fs = require('fs');
+
+router.get('/view/:shopId', async (req, res) => {
+    try {
+        const { shopId } = req.params;
+        const shop = await Shop.findById(shopId);
+        
+        if(!shop) return res.status(404).send("Shop not found");
+        
+        const template = shop.template || shop.shopType || 'general'; // template field nahi hai to shopType le lo
+        const templatePath = path.join(__dirname, '../../public/shop-templates', template);
+
+        // YEH 3 NAAM CHECK KAREGA
+        const possibleFiles = ['customer-view.html', 'user-view.html', 'shop-view.html'];
+        let viewFile = null;
+
+        for(let file of possibleFiles) {
+            const filePath = path.join(templatePath, file);
+            if(fs.existsSync(filePath)) {
+                viewFile = filePath;
+                break;
+            }
+        }
+
+        // agar template me nahi mila to general wala
+        if(!viewFile) {
+            viewFile = path.join(__dirname, '../../public/shop-templates/general/user-view.html');
+        }
+        
+        res.sendFile(viewFile);
+
+    } catch(err) {
+        console.error(err);
+        res.status(500).send(err.message);
+    }
+});
+
 module.exports = router;

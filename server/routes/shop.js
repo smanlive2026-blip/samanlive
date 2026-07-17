@@ -3,6 +3,8 @@ const router = express.Router();
 const Shop = require('../models/Shop');
 const Order = require('../models/Order');
 const auth = require('../middleware/authenticateToken');
+const path = require('path');  // shop template user view ke liye 
+const fs = require('fs');   // shop view ke liye   
 
 // ========================================
 // 1. PUBLIC SHOPS - Customer app/website
@@ -151,6 +153,36 @@ router.put('/shops/:id', auth, async (req, res) => {
         res.json(shop);
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+});
+
+// SHOP USER VIEW - DYNAMIC TEMPLATE
+router.get('/view/:shopId', async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.shopId);
+        if(!shop) return res.status(404).send("Shop not found");
+        
+        const template = shop.template || shop.shopType || 'general';
+        const templatePath = path.join(__dirname, '../../public/shop-templates', template);
+
+        const possibleFiles = ['customer-view.html', 'user-view.html', 'shop-view.html'];
+        let viewFile = null;
+
+        for(let file of possibleFiles) {
+            const filePath = path.join(templatePath, file);
+            if(fs.existsSync(filePath)) {
+                viewFile = filePath;
+                break;
+            }
+        }
+
+        if(!viewFile) {
+            viewFile = path.join(__dirname, '../../public/shop-templates/general/user-view.html');
+        }
+        
+        res.sendFile(viewFile);
+    } catch(err) {
+        res.status(500).send(err.message);
     }
 });
 

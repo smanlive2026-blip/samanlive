@@ -367,24 +367,27 @@
             }
         };
 
-        window.openPublicShop = (shopId) => {
-            const shop = window.allShops.find(s => s._id === shopId);
-            if (!shop) return alert('Shop not found');
-            const url = `${window.location.origin}/local-market/shop/user-view.html?shopId=${shopId}&type=${shop.shopType}`;
-            window.open(url, '_blank');
-        };
+window.openPublicShop = (shopId) => {
+    const shop = window.allShops.find(s => s._id === shopId);
+    if (!shop) return alert('Shop not found');
+    
+    // NAYA ROUTE - Backend khud template check karke sahi view dega
+    const url = `${window.location.origin}/api/shop/view/${shopId}`;
+    window.open(url, '_blank');
+};
 
-        window.copyLink = (shopId) => {
-            const shop = window.allShops.find(s => s._id === shopId);
-            if (!shop) return alert('Shop not found');
-            const url = `${window.location.origin}/local-market/shop/user-view.html?shopId=${shopId}&type=${shop.shopType}`;
-            navigator.clipboard.writeText(url).then(() => {
-                showToast('🔗 Link copied!', 'success');
-            }).catch(() => {
-                showToast('Failed to copy', 'error');
-            });
-        };
-
+window.copyLink = (shopId) => {
+    const shop = window.allShops.find(s => s._id === shopId);
+    if (!shop) return alert('Shop not found');
+    
+    // NAYA ROUTE
+    const url = `${window.location.origin}/api/shop/view/${shopId}`;
+    navigator.clipboard.writeText(url).then(() => {
+        showToast('🔗 Link copied!', 'success');
+    }).catch(() => {
+        showToast('Failed to copy', 'error');
+    });
+};
         function timeAgo(date) {
             const seconds = Math.floor((new Date() - date) / 1000);
             if (seconds < 60) return 'Just now';
