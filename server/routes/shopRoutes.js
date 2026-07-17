@@ -301,7 +301,4 @@ router.get('/view/:shopId', async (req, res) => {
     }
 });
 
-const Shop = require('../models/Shop');
-
-
 module.exports = router;
