@@ -2,7 +2,7 @@
 // NOTE: Photo Local + Cloudinary dono. Har photo ka alag storage key
 // CHANGED: Added auto compress + DB save
 
-import imageCompression from 'browser-image-compression'; // CHANGED: Compress lib add
+const browserImageCompression = window.imageCompression; // CHANGED: CDN se aayega
 
 const ShopCore = {
     shopId: null,
@@ -28,7 +28,7 @@ const ShopCore = {
         // CHANGED: STEP 1 - IMAGE COMPRESS KARO 10MB ko 50KB
         let compressedFile = file;
         try{
-            compressedFile = await imageCompression(file, {
+            compressedFile = await browserImageCompression(file, { // Yaha change kar
                 maxSizeMB: 0.05, // 50KB target
                 maxWidthOrHeight: 800,
                 useWebWorker: true
