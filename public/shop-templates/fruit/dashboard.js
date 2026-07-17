@@ -26,7 +26,7 @@ async function loadShopData() {
         // STEP 1: DB SE DATA LAO
         const res = await fetch(`/api/shops/${shopId}`);
         if(!res.ok) throw new Error('Shop not found');
-        const shop = await res.json(); // seedha shop lelo
+        shop = await res.json(); // seedha shop lelo
 
         // STEP 2: AGAR DB FAIL HO GAYI TO ERROR DIKHAO
         if(!shop || shop.error){
