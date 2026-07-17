@@ -174,7 +174,7 @@
 
         async function loadShopFruits() {
             try{
-                const res = await fetch(`/api/shops/${shopId}`);
+                const res = await fetch(`/api/shop/${shopId}`);
                 const result = await res.json();
                 if(result.success) shopFruits = result.shop.items || [];
             }catch(e){
@@ -241,7 +241,7 @@
 
             // 2. DB ME SAVE
             try{
-                await fetch(`/api/shops/${shopId}`, {
+                await fetch(`/api/shop/${shopId}`, {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ items: shopFruits })

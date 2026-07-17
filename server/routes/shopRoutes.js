@@ -301,4 +301,18 @@ router.get('/view/:shopId', async (req, res) => {
     }
 });
 
+const Shop = require('../models/Shop');
+
+// Shop data lene ke liye
+router.get('/:shopId', async (req, res) => {
+    const shop = await Shop.findById(req.params.shopId);
+    res.json({success: true, shop});
+});
+
+// Fruit save karne ke liye
+router.put('/:shopId', async (req, res) => {
+    const shop = await Shop.findByIdAndUpdate(req.params.shopId, {items: req.body.items}, {new: true});
+    res.json({success: true, shop});
+});
+
 module.exports = router;
