@@ -14,13 +14,77 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .logo { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .logo-icon { width: 34px; height: 34px; background: linear-gradient(135deg, #fff, #e0e7ff); color: #1e40af; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; }
 .logo-text { font-size: 15px; font-weight: bold; white-space: nowrap; }
-.search-box { flex: 1; max-width: 500px; display: flex; background: white; border-radius: 20px; overflow: hidden; min-width: 0; }
-.search-box input { flex: 1; border: none; padding: 9px 14px; font-size: 13px; outline: none; min-width: 0; }
-.search-btn { background: transparent; border: none; padding: 7px 12px; cursor: pointer; font-size: 16px; flex-shrink: 0; }
-.header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+/* ✅ MODERN SEARCH BAR */
+.search-box-modern {
+    position: relative;
+    flex: 1;
+    max-width: 600px;
+    margin: 0 20px;
+}
+.search-box-modern input {
+    width: 100%;
+    height: 44px;
+    padding: 0 50px 0 45px;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    border-radius: 22px;
+    color: #fff;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+.search-box-modern input:focus {
+    outline: none;
+    border-color: #10b981;
+    background: rgba(255,255,255,0.12);
+    box-shadow: 0 0 0 4px rgba(16,185,129,0.1);
+}
+.search-box-modern input::placeholder { color: rgba(255,255,255,0.5); }
+.search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255,255,255,0.5);
+    font-size: 18px;
+    pointer-events: none;
+}
+.search-btn-modern {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.search-btn-modern:hover {
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+}
+
+.header-right { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
 .notification-icon { position: relative; font-size: 20px; cursor: pointer; }
 .notif-badge { position: absolute; top: -5px; right: -6px; background: #ef4444; color: white; font-size: 9px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-.profile-avatar { width: 34px; height: 34px; background: linear-gradient(135deg, #fff, #e0e7ff); color: #1e40af; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 15px; }
+.profile-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid #10b981;
+    transition: all 0.2s;
+}
+.profile-avatar:hover { transform: scale(1.05); }
 
 /* MAIN */
 .main-content { padding: 10px 0; }
@@ -36,8 +100,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .ad-card h3 { font-size: 11px; margin-bottom: 3px; font-weight: 600; }
 .ad-card p { font-size: 9px; opacity: 0.9; margin-bottom: 6px; }
 .ad-btn { background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 4px 8px; border-radius: 10px; font-size: 9px; font-weight: 600; cursor: pointer; }
-.ad-nav { display: none !important; } /* MODIFIED BY AI - BUTTON HIDE */
-.ad-nav.prev { left: 6px; } .ad-nav.next { right: 6px; }
+.ad-nav { display: none !important; }
 
 /* NEAR YOU - 3 LINE ALAG */
 .nearby-slider { background: linear-gradient(135deg, #1e40af, #3b82f6); border-radius: 14px; padding: 10px; margin-bottom: 10px; color: white; box-shadow: 0 6px 20px rgba(30, 64, 175, 0.3); }
@@ -49,14 +112,61 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .nearby-line:last-of-type { margin-bottom: 8px; }
 .line-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .line-header span { font-size: 12px; font-weight: 600; opacity: 0.9; }
-.line-controls { display: none !important; } /* MODIFIED BY AI - BUTTON HIDE */
-.line-controls button { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; width: 24px; height: 24px; border-radius: 50%; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .line-content { position: relative; min-height: 70px; overflow: hidden; }
-.nearby-slide { display: none; }
-.nearby-slide.active { display: block; animation: slideIn 0.4s; }
-@keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
-/* LINE 1: SHOPS - TRAIN SCROLL ADDED BY AI */
+/* ✅ 6 LINE CAROUSEL GRID */
+.six-line-carousel {
+    display: grid;
+    grid-template-rows: repeat(6, 1fr);
+    gap: 12px;
+    max-height: 480px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.six-line-carousel .carousel-item {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x mandatory;
+}
+.six-line-carousel .carousel-item::-webkit-scrollbar { height: 4px; }
+.six-line-carousel .carousel-item::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+}
+
+/* ✅ SHOP CARD MINI - USER VIEW KE LIYE */
+.shop-card-mini {
+    min-width: 120px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    scroll-snap-align: start;
+    transition: all 0.2s;
+}
+.shop-card-mini:active { transform: scale(0.95); }
+.shop-card-mini img {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    object-fit: cover;
+    margin-bottom: 5px;
+}
+.shop-card-mini p {
+    font-size: 12px;
+    color: white;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* LINE 1: SHOPS - TRAIN SCROLL */
 .shops-grid { 
     display: flex; 
     gap: 8px; 
@@ -86,7 +196,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .shop-icon { font-size: 16px; margin-bottom: 2px; }
 .shop-name { font-size: 7px; font-weight: 600; line-height: 1; }
 
-/* LINE 2: VIDEOS - TRAIN SCROLL + NEW DESIGN ADDED BY AI */
+/* LINE 2: VIDEOS - TRAIN SCROLL */
 .videos-grid { 
     display: flex; 
     gap: 8px; 
@@ -105,11 +215,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
-.video-card video { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-}
+.video-card video { width: 100%; height: 100%; object-fit: cover; }
 .video-label { 
     position: absolute; 
     bottom: 0; 
@@ -132,20 +238,30 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     font-size: 9px;
     font-weight: 600;
 }
-.video-play { display: none; }
 
 /* LINE 3: 4 BUTTONS - FIXED */
 .nearby-actions-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 8px; }
 .nearby-action-btn { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 7px 2px; text-align: center; cursor: pointer; transition: all 0.2s; color: white; font-size: 8px; font-weight: 600; }
 .nearby-action-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.25); }
-.nearby-action-btn.add-location-btn { background: rgba(255,153,0,0.9); }
 
-/* DOTS */
-.line-dots { display: flex; justify-content: center; gap: 4px; margin-top: 6px; }
-.line-dots span { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.3s; }
-.line-dots span.active { background: white; width: 14px; border-radius: 3px; }
+/* ✅ EMPTY STATE */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: rgba(255,255,255,0.4);
+    grid-column: 1 / -1;
+}
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.3;
+}
 
-/* ALL SERVICES - 52 ITEMS, 3 PER ROW */
+/* ALL SERVICES - 3 PER ROW */
 .services-section { padding: 10px 0; }
 .section-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #1f2937; }
 .service-box { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border-radius: 14px; padding: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
@@ -160,23 +276,19 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    font-size: 45px; /* CHANGED BY AI - PEHLE 28px THA */
+    font-size: 45px;
     margin-bottom: 5px; 
     color: white; 
     box-shadow: 0 3px 10px rgba(0,0,0,0.15); 
-    line-height: 1; /* ADDED BY AI - EMOJI PERFECT CENTER ME RAHEGA */
+    line-height: 1;
 }
 .service-item p { font-size: 10px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.2px; }
 
-/* CAMPAIGNS - 48 ITEMS, 4 PER SLIDE */
+/* CAMPAIGNS */
 .campaign-slider { padding: 10px 0 16px; }
 .campaign-header h2 { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: #1f2937; }
-.campaign-card { padding: 12px 6px; text-align: center; color: white; min-height: 80px; display: flex; flex-direction: column; justify-content: center; border-radius: 8px; }
-.campaign-card h3 { font-size: 11px; margin-bottom: 3px; font-weight: 600; }
-.campaign-card p { font-size: 9px; opacity: 0.9; margin-bottom: 6px; }
-.campaign-btn { background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 4px 8px; border-radius: 10px; font-size: 9px; font-weight: 600; cursor: pointer; }
 
-/* FOOTER AMAZON MOBILE */
+/* FOOTER */
 .footer { background: #232f3e; color: #fff; margin-top: 16px; }
 .back-to-top { display: block; text-align: center; padding: 12px; background: #37475a; color: white; text-decoration: none; font-weight: 600; font-size: 13px; }
 .footer-container { max-width: 1200px; margin: 0 auto; padding: 16px 10px; }
@@ -189,37 +301,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .footer-logo { font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #ff9900; }
 .footer-bottom p { font-size: 11px; color: #999; margin: 4px 0; }
 
-/* MOBILE */
-@media (max-width: 767px) {
-  .container { padding: 0 6px; }
-  .header-container { padding: 0 6px; gap: 5px; }
-  .logo-text { display: none; }
-  .search-box { padding: 7px 10px; }
-  .ads-grid { grid-template-columns: repeat(4, 1fr); gap: 5px; }
-  .ad-card { padding: 10px 5px; min-height: 75px; }
-  .ad-card h3 { font-size: 10px; }
-  .ad-card p { font-size: 8px; }
-  .shops-grid { gap: 6px; }
-  .videos-grid { gap: 6px; }
-  .video-card { width: 100px; height: 150px; }
-  .nearby-actions-row { grid-template-columns: repeat(4, 1fr); gap: 5px; }
-  .service-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .service-icon { 
-    font-size: 38px; /* CHANGED BY AI - PEHLE 24px THA */
-    border-radius: 14px; 
-  }
-  .service-item p { font-size: 9px; }
-  .footer-links { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (min-width: 768px) {
-  .service-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; }
-  .service-icon { font-size: 32px; }
-}
-
-/* ======================================== */
-/* AUTH MODALS - NAYA ADD KIYA */
-/* ======================================== */
+/* AUTH MODALS */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -257,19 +339,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     color: #64748b;
     line-height: 1;
 }
-.modal-box h2, .modal-box h3 {
-    margin-bottom: 20px;
-    color: #1e293b;
-}
-.modal-box input, .modal-box select {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 14px;
-}
-.login-btn, .google-btn {
+.login-btn {
     width: 100%;
     padding: 12px;
     margin: 10px 0;
@@ -278,153 +348,11 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-}
-.login-btn {
     background: #1e40af;
     color: white;
 }
-.google-btn {
-    background: white;
-    border: 2px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    color: #1e293b;
-}
-.google-btn img { width: 20px; }
-.divider {
-    text-align: center;
-    margin: 15px 0;
-    color: #64748b;
-    position: relative;
-}
-.divider::before, .divider::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 40%;
-    height: 1px;
-    background: #e2e8f0;
-}
-.divider::before { left: 0; }
-.divider::after { right: 0; }
 
-/* PROFILE MODAL */
-.profile-header {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #e2e8f0;
-}
-.profile-img {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #1e40af;
-}
-.user-id-box {
-    background: #f1f5f9;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 5px;
-    transition: all 0.2s;
-}
-.user-id-box:hover {
-    background: #e2e8f0;
-}
-.qr-icon { font-size: 18px; }
-#qrCodeBox {
-    text-align: center;
-    padding: 20px;
-    background: #f8fafc;
-    border-radius: 12px;
-    margin: 15px 0;
-}
-#qrCodeBox p {
-    margin-top: 10px;
-    color: #64748b;
-    font-size: 13px;
-}
-.profile-options button {
-    width: 100%;
-    padding: 14px;
-    margin: 8px 0;
-    border: 2px solid #e2e8f0;
-    background: white;
-    border-radius: 10px;
-    font-size: 15px;
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.2s;
-}
-.profile-options button:hover {
-    background: #f1f5f9;
-    border-color: #1e40af;
-    transform: translateX(5px);
-}
-.logout-btn {
-    background: #fee2e2 !important;
-    border-color: #fca5a5 !important;
-    color: #dc2626;
-}
-
-/* FLOATING QR BUTTON */
-.floating-qr-btn {
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #1e40af, #3b82f6);
-    color: white;
-    font-size: 28px;
-    border: none;
-    box-shadow: 0 4px 12px rgba(30,64,175,0.4);
-    cursor: pointer;
-    z-index: 1000;
-    transition: all 0.3s;
-}
-.floating-qr-btn:active {
-    transform: scale(0.9);
-}
-
-/* SCAN ACTIONS */
-.scan-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-.scan-actions button {
-    flex: 1;
-}
-
-/* PROFILE AVATAR UPDATE */
-.profile-avatar {
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.profile-avatar:hover {
-    transform: scale(1.05);
-}
-.profile-avatar img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-/* ======================================== */
-/* TRAIN DRAG SUPPORT - ADDED BY AI */
-/* ======================================== */
+/* TRAIN DRAG SUPPORT */
 .shops-grid,.videos-grid {
     overflow-x: auto;
     overflow-y: hidden;
@@ -432,19 +360,21 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     scroll-behavior: smooth;
     cursor: grab;
     user-select: none;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
 }
-
 .shops-grid::-webkit-scrollbar,
-.videos-grid::-webkit-scrollbar {
-    display: none; /* Chrome Safari */
-}
+.videos-grid::-webkit-scrollbar { display: none; }
+.shops-grid:active,.videos-grid:active { cursor: grabbing; }
+.shops-grid.dragging,.videos-grid.dragging { animation-play-state: paused!important; }
 
-.shops-grid:active,.videos-grid:active {
-    cursor: grabbing;
-}
-
-/* Jab drag ho raha ho to animation ruk jaye */
-.shops-grid.dragging,.videos-grid.dragging {
-    animation-play-state: paused!important;
+/* MOBILE */
+@media (max-width: 768px) {
+  .search-box-modern { margin: 0 10px; }
+  .search-box-modern input { font-size: 14px; height: 40px; }
+  .container { padding: 0 6px; }
+  .logo-text { display: none; }
+  .ads-grid { grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .service-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .service-icon { font-size: 38px; border-radius: 14px; }
+  .footer-links { grid-template-columns: repeat(2, 1fr); }
 }
