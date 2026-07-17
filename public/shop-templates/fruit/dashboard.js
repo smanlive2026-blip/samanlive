@@ -17,29 +17,22 @@ if(shopId) {
     console.error("ShopId URL me nahi mila");
 }
 
-// CHANGED: DB + LOCAL DONO SUPPORT
+// FINAL: SIRF DB SE DATA
 async function loadShopData() {
     try {
         document.getElementById('loader').innerText = 'Loading...';
         let shop = null;
 
-        // STEP 1: PEHLE DB TRY KAR
-        try{
-            const res = await fetch(`/api/shops/${shopId}`);
-            const result = await res.json();
-            if(result.success) shop = result.shop;
-        }catch(e){ console.log("DB failed, using localStorage") }
+        // STEP 1: DB SE DATA LAO
+        const res = await fetch(`/api/shops/${shopId}`);
+        const result = await res.json();
+        if(result.success) shop = result.shop;
 
-        // STEP 2: AGAR DB FAIL TO LOCAL SE UTHA
+        // STEP 2: AGAR DB FAIL HO GAYI TO ERROR DIKHAO
         if(!shop){
-            shop = {
-                shopName: localStorage.getItem('shopName_'+shopId) || 'Fresh Fruits',
-                ownerPhotoUrl: localStorage.getItem('ownerPhoto_'+shopId+'_cloud') || '',
-                announcement: localStorage.getItem('announcement_'+shopId) || '',
-                isOpen: localStorage.getItem('shopStatus_'+shopId)!== 'false',
-                items: JSON.parse(localStorage.getItem('shopFruits_'+shopId)) || [],
-                shopSettings: JSON.parse(localStorage.getItem('shopTimings_'+shopId)) || {openTime: '08:00', closeTime: '22:00'}
-            }
+            document.getElementById('loader').innerText = 'Error: Server on nahi hai. npm start karo';
+            alert('Error: Shop data DB se load nahi hui. Server on hai kya?');
+            return;
         }
 
         // 1. Shop Name + Photo + Settings
@@ -50,14 +43,14 @@ async function loadShopData() {
         document.getElementById('openTime').value = shop.shopSettings?.openTime || '08:00';
         document.getElementById('closeTime').value = shop.shopSettings?.closeTime || '22:00';
 
-        // 2. Load Fruits: DB se, nahi to local, nahi to seed
-        allShopFruits = shop.items && shop.items.length > 0? shop.items : [...window.FRUIT_PRODUCTS_DATA];
+        // 2. Load Fruits: SIRF DB SE
+        allShopFruits = shop.items || [];
 
-        // 3. Stats Calculate
+        // 3. Stats Calculate - DB se, nahi to 0
         const totalStock = allShopFruits.reduce((sum, f) => sum + (f.stock || 0), 0);
-        const totalCustomers = localStorage.getItem('customers_'+shopId) || Math.floor(Math.random()*200) + 50;
-        const revenue = localStorage.getItem('revenue_'+shopId) || allShopFruits.reduce((sum, f) => sum + (f.price * 2), 0);
-        const todaySales = localStorage.getItem('sales_'+shopId) || Math.floor(Math.random()*20) + 5;
+        const totalCustomers = shop.totalCustomers || 0;
+        const revenue = shop.revenue || 0;
+        const todaySales = shop.todaySales || 0;
 
         document.getElementById('totalFruits').innerText = allShopFruits.length;
         document.getElementById('totalStock').innerText = totalStock;
@@ -81,7 +74,7 @@ async function loadShopData() {
 
     } catch (err) {
         console.error(err);
-        document.getElementById('loader').innerText = 'Failed to load data';
+        document.getElementById('loader').innerText = 'Failed to load data. Server check karo';
     }
 }
 
@@ -132,7 +125,7 @@ function loadFruits(fruits) {
         <tr>
             <td>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="${fruit.image || 'https://via.placeholder.com/40?text=F'}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">
+                    <img src="${fruit.image || fruit.img || 'https://via.placeholder.com/40?text=F'}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">
                     <strong>${fruit.name}</strong>
                 </div>
             </td>
@@ -155,14 +148,11 @@ function loadFruits(fruits) {
     }).join('');
 }
 
-// CHANGED: DELETE DB + LOCAL DONO
+// FINAL: DELETE SIRF DB SE
 async function deleteFruit(fruitId) {
     if(confirm('Are you sure you want to delete this fruit?')) {
         allShopFruits = allShopFruits.filter(f => (f._id || f.id)!== fruitId);
-        try{
-            await fetch(`/api/shops/${shopId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ items: allShopFruits }) });
-        }catch(e){}
-        localStorage.setItem('shopFruits_'+shopId, JSON.stringify(allShopFruits)); // backup
+        await fetch(`/api/shops/${shopId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ items: allShopFruits }) });
         loadShopData();
     }
 }
@@ -194,27 +184,24 @@ if(shopId) {
     ShopCore.bindImageUpload('ownerPhoto', 'photoUpload', 'profile', 'owner');
 }
 
-// CHANGED: TOGGLE DB + LOCAL
+// FINAL: TOGGLE SIRF DB
 document.getElementById('shopToggle').onchange = async (e) => {
     updateStatusBadge(e.target.checked);
-    try{ await fetch(`/api/shops/${shopId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ isOpen: e.target.checked }) }); }catch(e){}
-    localStorage.setItem('shopStatus_'+shopId, e.target.checked);
+    await fetch(`/api/shops/${shopId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ isOpen: e.target.checked }) });
 }
 
-// CHANGED: SAVE TIMINGS DB + LOCAL
+// FINAL: SAVE TIMINGS SIRF DB
 async function saveTimings() {
     const open = document.getElementById('openTime').value;
     const close = document.getElementById('closeTime').value;
-    try{ await fetch(`/api/shops/${shopId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ shopSettings: { openTime: open, closeTime: close } }) }); }catch(e){}
-    localStorage.setItem('shopTimings_'+shopId, JSON.stringify({open, close}));
+    await fetch(`/api/shops/${shopId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ shopSettings: { openTime: open, closeTime: close } }) });
     alert('Timings Saved!');
 }
 
-// CHANGED: SAVE ANNOUNCEMENT DB + LOCAL
+// FINAL: SAVE ANNOUNCEMENT SIRF DB
 async function saveAnnouncement() {
     const text = document.getElementById('announcementText').value;
-    try{ await fetch(`/api/shops/${shopId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ announcement: text }) }); }catch(e){}
-    localStorage.setItem('announcement_'+shopId, text);
+    await fetch(`/api/shops/${shopId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ announcement: text }) });
     alert('Announcement Updated!');
 }
 

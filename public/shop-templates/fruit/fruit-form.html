@@ -178,7 +178,7 @@
                 const result = await res.json();
                 if(result.success) shopFruits = result.shop.items || [];
             }catch(e){
-                shopFruits = JSON.parse(localStorage.getItem('shopFruits_'+shopId)) || [];
+                shopFruits = []; // seedha khali
             }
         }
 
@@ -248,7 +248,6 @@
                 });
             }catch(e){ alert('DB Save Failed! Server on hai kya?'); }
 
-            localStorage.setItem('shopFruits_'+shopId, JSON.stringify(shopFruits)); // backup
             alert('Fruit Saved Successfully!');
             window.location.href = `dashboard.html?shopId=${shopId}`;
         }
