@@ -9,34 +9,35 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); min-height: 100vh; padding: 20px; display: flex; align-items: center; justify-content: center; }
-       .form-container { background: white; padding: 35px; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.2); width: 100%; max-width: 650px; }
-       .form-header { text-align: center; margin-bottom: 30px; }
-       .form-header h1 { font-size: 26px; color: #14532d; display: flex; align-items: center; justify-content: center; gap: 10px; }
-       .form-header p { color: #64748b; font-size: 14px; margin-top: 8px; }
+      .form-container { background: white; padding: 35px; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.2); width: 100%; max-width: 650px; }
+      .form-header { text-align: center; margin-bottom: 30px; }
+      .form-header h1 { font-size: 26px; color: #14532d; display: flex; align-items: center; justify-content: center; gap: 10px; }
+      .form-header p { color: #64748b; font-size: 14px; margin-top: 8px; }
 
-       .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-       .form-group { margin-bottom: 20px; }
-       .form-group.full { grid-column: 1 / -1; }
-       .form-group label { display: block; font-weight: 600; color: #334155; margin-bottom: 8px; font-size: 14px; }
-       .form-group input,.form-group select,.form-group textarea {
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+      .form-group { margin-bottom: 20px; }
+      .form-group.full { grid-column: 1 / -1; }
+      .form-group label { display: block; font-weight: 600; color: #334155; margin-bottom: 8px; font-size: 14px; }
+      .form-group input,.form-group select,.form-group textarea {
             width: 100%; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 12px;
             font-size: 15px; transition: 0.3s; outline: none;
         }
-       .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color: #22c55e; }
+      .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color: #22c55e; }
 
-       .image-upload { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; }
-       .image-upload img { max-width: 100px; max-height: 100px; border-radius: 10px; margin-bottom: 10px; }
-       .image-upload input { display: none; }
+      .image-upload { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; }
+      .image-upload img { max-width: 100px; max-height: 100px; border-radius: 10px; margin-bottom: 10px; }
+      .image-upload input { display: none; }
+       #uploadLoader { font-size: 12px; color: #22c55e; }
 
-       .btn-group { display: flex; gap: 12px; margin-top: 25px; }
-       .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
-       .btn-primary { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; }
-       .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(34,197,94,0.3); }
-       .btn-outline { background: white; color: #64748b; border: 2px solid #e2e8f0; }
+      .btn-group { display: flex; gap: 12px; margin-top: 25px; }
+      .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
+      .btn-primary { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; }
+      .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(34,197,94,0.3); }
+      .btn-outline { background: white; color: #64748b; border: 2px solid #e2e8f0; }
 
-       .fruit-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-       .fruit-tag { background: #f0fdf4; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #bbf7d0; }
-       .fruit-tag:hover { background: #22c55e; color: white; }
+      .fruit-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      .fruit-tag { background: #f0fdf4; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #bbf7d0; }
+      .fruit-tag:hover { background: #22c55e; color: white; }
 
         @media(max-width: 600px) {.form-grid { grid-template-columns: 1fr; } }
     </style>
@@ -106,7 +107,7 @@
                 <label>Fruit Image</label>
                 <div class="image-upload" onclick="document.getElementById('fruitImage').click()">
                     <img id="imagePreview" src="https://via.placeholder.com/100?text=Fruit" alt="">
-                    <p><i class="fa fa-camera"></i> Click to upload image</p>
+                    <p><i class="fa fa-camera"></i> Click to upload image <span id="uploadLoader" style="display:none;"><i class="fa fa-spinner fa-spin"></i> Uploading...</span></p>
                     <input type="file" id="fruitImage" accept="image/*">
                 </div>
             </div>
@@ -118,18 +119,21 @@
 
             <div class="btn-group">
                 <button type="button" class="btn btn-outline" onclick="goBack()"><i class="fa fa-arrow-left"></i> Back</button>
-                <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save Fruit</button>
+                <button type="submit" class="btn btn-primary" id="saveBtn"><i class="fa fa-save"></i> Save Fruit</button>
             </div>
         </form>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <script src="/shop-templates/shop-core.js"></script>
     <script src="./fruit-products-data.js"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const shopId = urlParams.get('shopId');
         const fruitId = urlParams.get('fruitId');
-        let allFruits = [];
         let shopFruits = [];
+
+        ShopCore.init(shopId, 'fruit');
 
         // Load 104 fruits in dropdown
         function loadFruitDropdown() {
@@ -142,13 +146,11 @@
             });
         }
 
-        // Quick select tags
         function quickSelect(name) {
             document.getElementById('fruitSelect').value = name;
             document.getElementById('fruitSelect').dispatchEvent(new Event('change'));
         }
 
-        // Auto fill when select fruit
         document.getElementById('fruitSelect').onchange = (e) => {
             const fruit = window.FRUIT_PRODUCTS_DATA.find(f => f.name === e.target.value);
             if(fruit) {
@@ -170,32 +172,52 @@
             }
         }
 
-        // Load shop fruits from localStorage
-        function loadShopFruits() {
-            shopFruits = JSON.parse(localStorage.getItem('shopFruits_'+shopId)) || [];
-        }
-
-        // If editing
-        if(fruitId) {
-            document.getElementById('formTitle').innerText = 'Edit Fruit';
-            loadShopFruits();
-            const fruit = shopFruits.find(f => f.id === fruitId);
-            if(fruit) {
-                document.getElementById('fruitId').value = fruit.id;
-                document.getElementById('fruitName').value = fruit.name;
-                document.getElementById('fruitPrice').value = fruit.price;
-                document.getElementById('fruitStock').value = fruit.stock;
-                document.getElementById('fruitUnit').value = fruit.unit;
-                document.getElementById('expiryDays').value = fruit.expiryDays;
-                document.getElementById('fruitDesc').value = fruit.desc || '';
-                if(fruit.image) document.getElementById('imagePreview').src = fruit.image;
+        async function loadShopFruits() {
+            try{
+                const res = await fetch(`/api/shops/${shopId}`);
+                const result = await res.json();
+                if(result.success) shopFruits = result.shop.items || [];
+            }catch(e){
+                shopFruits = JSON.parse(localStorage.getItem('shopFruits_'+shopId)) || [];
             }
         }
 
-        // Save Form
-        document.getElementById('fruitForm').onsubmit = (e) => {
+        async function loadForEdit() {
+            await loadShopFruits();
+            if(fruitId) {
+                document.getElementById('formTitle').innerText = 'Edit Fruit';
+                const fruit = shopFruits.find(f => (f._id || f.id) === fruitId);
+                if(fruit) {
+                    document.getElementById('fruitId').value = fruit._id || fruit.id;
+                    document.getElementById('fruitName').value = fruit.name;
+                    document.getElementById('fruitPrice').value = fruit.price;
+                    document.getElementById('fruitStock').value = fruit.stock;
+                    document.getElementById('fruitUnit').value = fruit.unit;
+                    document.getElementById('expiryDays').value = fruit.expiryDays;
+                    document.getElementById('fruitDesc').value = fruit.desc || '';
+                    if(fruit.image) document.getElementById('imagePreview').src = fruit.image;
+                }
+            }
+        }
+
+        // MAIN SAVE FUNCTION - DB + CLOUDINARY DONO
+        document.getElementById('fruitForm').onsubmit = async (e) => {
             e.preventDefault();
-            loadShopFruits();
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+
+            await loadShopFruits();
+
+            const file = document.getElementById('fruitImage').files[0];
+            let imageUrl = document.getElementById('imagePreview').src;
+
+            // 1. AGAR NAYI PHOTO HAI TO CLOUDINARY PE UPLOAD
+            if(file) {
+                document.getElementById('uploadLoader').style.display = 'inline';
+                imageUrl = await ShopCore.uploadImage(file, 'product');
+                document.getElementById('uploadLoader').style.display = 'none';
+            }
 
             const fruitData = {
                 id: fruitId || 'f_'+Date.now(),
@@ -206,17 +228,27 @@
                 stock: parseInt(document.getElementById('fruitStock').value),
                 expiryDays: parseInt(document.getElementById('expiryDays').value),
                 desc: document.getElementById('fruitDesc').value,
-                image: document.getElementById('imagePreview').src
+                image: imageUrl, // <-- DB ME JAYEGA
+                img: imageUrl
             };
 
             if(fruitId) {
-                const index = shopFruits.findIndex(f => f.id === fruitId);
+                const index = shopFruits.findIndex(f => (f._id || f.id) === fruitId);
                 shopFruits[index] = fruitData;
             } else {
                 shopFruits.push(fruitData);
             }
 
-            localStorage.setItem('shopFruits_'+shopId, JSON.stringify(shopFruits));
+            // 2. DB ME SAVE
+            try{
+                await fetch(`/api/shops/${shopId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ items: shopFruits })
+                });
+            }catch(e){ alert('DB Save Failed! Server on hai kya?'); }
+
+            localStorage.setItem('shopFruits_'+shopId, JSON.stringify(shopFruits)); // backup
             alert('Fruit Saved Successfully!');
             window.location.href = `dashboard.html?shopId=${shopId}`;
         }
@@ -225,9 +257,9 @@
             window.location.href = `dashboard.html?shopId=${shopId}`;
         }
 
-        // Init
         loadFruitDropdown();
         document.getElementById('shopName').innerText = 'Fruit Shop ' + shopId.substring(0,8);
+        loadForEdit();
     </script>
 </body>
 </html>
