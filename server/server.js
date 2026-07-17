@@ -114,7 +114,9 @@ app.use('/api', require('./routes/public-modules'));
 app.use('/api', require('./routes/stats'));
 
 // Shop Routes - ✅ User side + Products + Public
-app.use('/api/local-market', require('./routes/shopRoutes'));
+//app.use('/api/local-market', require('./routes/shopRoutes'));
+// ✅ NAYA: direct /api/shop/view bhi chale
+app.use('/api/shop', require('./routes/shopRoutes'));
 
 // ==================== LOCATION ROUTES new ====================
 const locationRoutes = require('./modules/locationRoutes');

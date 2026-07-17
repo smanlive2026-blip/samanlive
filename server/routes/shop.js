@@ -156,13 +156,27 @@ router.put('/shops/:id', auth, async (req, res) => {
     }
 });
 
-// SHOP USER VIEW - DYNAMIC TEMPLATE
+// SHOP USER VIEW - DYNAMIC TEMPLATE - FINAL
 router.get('/view/:shopId', async (req, res) => {
     try {
         const shop = await Shop.findById(req.params.shopId);
         if(!shop) return res.status(404).send("Shop not found");
-        
-        const template = shop.template || shop.shopType || 'general';
+
+        let template = shop.template || shop.shopType || 'general';
+        template = template.toLowerCase().trim();
+
+        // Naam map
+        const typeMap = {
+            'grocery': 'kirana',
+            'fruit shop': 'fruit',
+            'vegetable': 'sabji',
+            'clothes': 'cloth',
+            'medicine': 'medical',
+            'hotel': 'restaurant',
+            'general store': 'general'
+        };
+        template = typeMap[template] || template;
+
         const templatePath = path.join(__dirname, '../../public/shop-templates', template);
 
         const possibleFiles = ['customer-view.html', 'user-view.html', 'shop-view.html'];
@@ -179,9 +193,10 @@ router.get('/view/:shopId', async (req, res) => {
         if(!viewFile) {
             viewFile = path.join(__dirname, '../../public/shop-templates/general/user-view.html');
         }
-        
+
         res.sendFile(viewFile);
     } catch(err) {
+        console.error(err);
         res.status(500).send(err.message);
     }
 });

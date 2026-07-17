@@ -114,7 +114,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .line-header span { font-size: 12px; font-weight: 600; opacity: 0.9; }
 .line-content { position: relative; min-height: 70px; overflow: hidden; }
 
-/* ✅ 6 LINE CAROUSEL GRID */
+/* ✅ 6 LINE CAROUSEL GRID - USER VIEW KE LIYE ADD KIYA */
 .six-line-carousel {
     display: grid;
     grid-template-rows: repeat(6, 1fr);
@@ -136,7 +136,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     border-radius: 2px;
 }
 
-/* ✅ SHOP CARD MINI - USER VIEW KE LIYE */
+/* ✅ SHOP CARD MINI - USER VIEW KE LIYE ADD KIYA */
 .shop-card-mini {
     min-width: 120px;
     background: rgba(255,255,255,0.15);
@@ -148,6 +148,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     cursor: pointer;
     scroll-snap-align: start;
     transition: all 0.2s;
+    flex-shrink: 0;
 }
 .shop-card-mini:active { transform: scale(0.95); }
 .shop-card-mini img {
@@ -166,7 +167,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     text-overflow: ellipsis;
 }
 
-/* LINE 1: SHOPS - TRAIN SCROLL */
+/* LINE 1: SHOPS - TRAIN SCROLL - YE SAME RAHEGA */
 .shops-grid { 
     display: flex; 
     gap: 8px; 
@@ -244,7 +245,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .nearby-action-btn { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 7px 2px; text-align: center; cursor: pointer; transition: all 0.2s; color: white; font-size: 8px; font-weight: 600; }
 .nearby-action-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.25); }
 
-/* ✅ EMPTY STATE */
+/* ✅ EMPTY STATE - ADD KIYA */
 .empty-state {
     display: flex;
     flex-direction: column;
