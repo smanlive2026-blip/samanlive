@@ -10,10 +10,13 @@ let allShopFruits = [];
 // 1. CORE INIT SABSE PEHLE - GUARD LAGAYA
 if(shopId) {
     ShopCore.init(shopId, TEMPLATE_NAME);
-
-    // LOCATION ADD - 1. ShopLocationManager ko shopId de do
-    ShopLocationManager.init(shopId);
-} else {
+    
+    // GUARD - agar location file nahi hai to skip kar de
+    if(typeof ShopLocationManager !== 'undefined') {
+        ShopLocationManager.init(shopId);
+    }
+}
+ else {
     console.error("ShopId URL me nahi mila");
 }
 
@@ -62,7 +65,9 @@ function loadShopData() {
         generateQR();
 
         // LOCATION ADD - 2. Saved location load karke badge update kar
-        loadShopLocationBadge();
+        if(typeof loadShopLocationBadge === 'function') {
+    loadShopLocationBadge();
+}
 
     } catch (err) {
         console.error(err);
