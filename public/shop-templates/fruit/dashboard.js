@@ -25,11 +25,11 @@ async function loadShopData() {
 
         // STEP 1: DB SE DATA LAO
         const res = await fetch(`/api/shops/${shopId}`);
-        const result = await res.json();
-        if(result.success) shop = result.shop;
+        if(!res.ok) throw new Error('Shop not found');
+        const shop = await res.json(); // seedha shop lelo
 
         // STEP 2: AGAR DB FAIL HO GAYI TO ERROR DIKHAO
-        if(!shop){
+        if(!shop || shop.error){
             document.getElementById('loader').innerText = 'Error: Server on nahi hai. npm start karo';
             alert('Error: Shop data DB se load nahi hui. Server on hai kya?');
             return;
