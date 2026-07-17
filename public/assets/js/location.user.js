@@ -1,4 +1,4 @@
-//      public/assets/js/location.core.js
+//  public/assets/js/location.user.js 
 
 let userWatchId = null;
 

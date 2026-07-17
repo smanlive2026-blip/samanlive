@@ -5,6 +5,10 @@ const Order = require('../models/Order');
 const auth = require('../middleware/authenticateToken');
 const path = require('path');  // shop template user view ke liye 
 const fs = require('fs');   // shop view ke liye   
+// REDIS ADD
+const redis = require('redis');
+const client = redis.createClient();
+client.connect().catch(console.error);
 
 // ========================================
 // 1. PUBLIC SHOPS - Customer app/website
@@ -150,38 +154,39 @@ router.put('/shops/:id', auth, async (req, res) => {
         Object.assign(shop, req.body);
         shop.updatedAt = new Date();
         await shop.save();
+        // CACHE CLEAR - jab shop update ho to purana view delete kar de
+        await client.del(`shop_view:${req.params.id}`);
+
         res.json(shop);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-// SHOP USER VIEW - DYNAMIC TEMPLATE - FINAL
+// SHOP USER VIEW - 70 TEMPLATES + CACHE
 router.get('/view/:shopId', async (req, res) => {
     try {
-        const shop = await Shop.findById(req.params.shopId);
+        const cacheKey = `shop_view:${req.params.shopId}`;
+        
+        // 1. Cache check
+        const cachedFile = await client.get(cacheKey);
+        if(cachedFile && fs.existsSync(cachedFile)){
+            return res.sendFile(cachedFile);
+        }
+
+        // 2. DB se shop nikal
+        const shop = await Shop.findById(req.params.shopId).lean();
         if(!shop) return res.status(404).send("Shop not found");
 
+        // 3. Template naam fix - seedha folder ka naam use kar
         let template = shop.template || shop.shopType || 'general';
-        template = template.toLowerCase().trim();
-
-        // Naam map
-        const typeMap = {
-            'grocery': 'kirana',
-            'fruit shop': 'fruit',
-            'vegetable': 'sabji',
-            'clothes': 'cloth',
-            'medicine': 'medical',
-            'hotel': 'restaurant',
-            'general store': 'general'
-        };
-        template = typeMap[template] || template;
+        template = template.toLowerCase().trim().replace(/\s+/g, '-'); // "fruit shop" -> "fruit-shop"
 
         const templatePath = path.join(__dirname, '../../public/shop-templates', template);
-
         const possibleFiles = ['customer-view.html', 'user-view.html', 'shop-view.html'];
         let viewFile = null;
 
+        // 4. Folder me file dhoond
         for(let file of possibleFiles) {
             const filePath = path.join(templatePath, file);
             if(fs.existsSync(filePath)) {
@@ -190,15 +195,18 @@ router.get('/view/:shopId', async (req, res) => {
             }
         }
 
+        // 5. Nahi mila to general pe daal de
         if(!viewFile) {
             viewFile = path.join(__dirname, '../../public/shop-templates/general/user-view.html');
         }
 
+        // 6. Cache me daal 30 sec
+        await client.setex(cacheKey, 30, viewFile);
+        
         res.sendFile(viewFile);
     } catch(err) {
         console.error(err);
         res.status(500).send(err.message);
     }
 });
-
 module.exports = router;

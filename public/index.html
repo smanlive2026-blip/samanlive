@@ -328,105 +328,10 @@
     </div>
 </div>
 
-<script>
-// ✅ EMPTY STATE
-function renderEmptyState(containerId, message) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = `
-        <div class="empty-state">
-            <div class="empty-state-icon">📦</div>
-            <p>${message}</p>
-        </div>
-    `;
-}
-
-// ✅ SHOP VIEW KHOLNE KA FUNCTION
-function openShopView(shopId) {
-    window.open(`/api/shop/view/${shopId}`, '_blank');
-}
-
-// ✅ SHOPS LOAD - 6 LINE
-function loadShops(shops) {
-    const container = document.getElementById('shopsContent');
-    if (!shops || shops.length === 0) {
-        renderEmptyState('shopsContent', 'No shops available in your area');
-        return;
-    }
-    
-    let html = '';
-    const perLine = 4; // har line me 4 shop
-    
-    for(let i = 0; i < 6; i++) {
-        const lineShops = shops.slice(i * perLine, (i + 1) * perLine);
-        if(lineShops.length === 0) break;
-        
-        html += `<div class="carousel-item">`;
-        lineShops.forEach(shop => {
-            html += `
-                <div class="shop-card-mini" onclick="openShopView('${shop._id}')">
-                    <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
-                    <p>${shop.shopName || shop.name}</p>
-                </div>
-            `;
-        });
-        html += `</div>`;
-    }
-    container.innerHTML = html;
-}
-
-// ✅ PRODUCTS LOAD - 6 LINE
-function loadTopProducts(products) {
-    const container = document.getElementById('topProductsContent');
-    if (!products || products.length === 0) {
-        renderEmptyState('topProductsContent', 'No products available yet');
-        return;
-    }
-    
-    let html = '';
-    const perLine = 4;
-    
-    for(let i = 0; i < 6; i++) {
-        const lineProducts = products.slice(i * perLine, (i + 1) * perLine);
-        if(lineProducts.length === 0) break;
-        
-        html += `<div class="carousel-item">`;
-        lineProducts.forEach(p => {
-            html += `
-                <div class="shop-card-mini" onclick="openShopView('${p.shopId}')">
-                    <img src="${p.image || '/assets/default-product.png'}" onerror="this.src='/assets/default-product.png'">
-                    <p>${p.name}</p>
-                </div>
-            `;
-        });
-        html += `</div>`;
-    }
-    container.innerHTML = html;
-}
-
-function performSearch() {
-    const query = document.getElementById('searchInput').value;
-    if(query.trim() === '') return;
-    window.location.href = `/search?q=${encodeURIComponent(query)}`;
-}
-
-// ✅ PAGE LOAD PE DATA LAO
-document.addEventListener('DOMContentLoaded', () => {
-    // Example: API se data lao
-    fetch('/api/shop/public')
-    .then(res => res.json())
-    .then(data => {
-        if(data.success) loadShops(data.data);
-    }).catch(err => console.log(err));
-    
-    fetch('/api/products/top')
-    .then(res => res.json())
-    .then(data => {
-        if(data.success) loadTopProducts(data.data);
-    }).catch(err => console.log(err));
-});
-
-</script>
-
+<!-- LOCATION ADD - 1. location.core.js pehle load hoga -->
+<script src="/assets/js/location.core.js"></script>
+<!-- LOCATION ADD - 2. phir app.js jisme sab logic hai -->
 <script src="/assets/js/app.js"></script>
+
 </body>
 </html>

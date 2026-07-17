@@ -10,6 +10,9 @@ let allShopFruits = [];
 // 1. CORE INIT SABSE PEHLE - GUARD LAGAYA
 if(shopId) {
     ShopCore.init(shopId, TEMPLATE_NAME);
+
+    // LOCATION ADD - 1. ShopLocationManager ko shopId de do
+    ShopLocationManager.init(shopId);
 } else {
     console.error("ShopId URL me nahi mila");
 }
@@ -58,9 +61,27 @@ function loadShopData() {
 
         generateQR();
 
+        // LOCATION ADD - 2. Saved location load karke badge update kar
+        loadShopLocationBadge();
+
     } catch (err) {
         console.error(err);
         document.getElementById('loader').innerText = 'Failed to load data';
+    }
+}
+
+// LOCATION BADGE LOAD KARNE KA FUNCTION
+async function loadShopLocationBadge(){
+    try {
+        const res = await fetch(`/api/location/shop/${shopId}`);
+        const data = await res.json();
+        if(data.success && data.data){
+            document.getElementById('locationTypeBadge').innerText = data.data.locationType === 'fixed'? 'Fixed' : 'Mobile';
+            document.getElementById('rangeText').innerText = `Delivery Range: ${data.data.deliveryRange} KM`;
+            if(data.data.address) document.getElementById('shopAddress').value = data.data.address;
+        }
+    } catch(err) {
+        console.error('Location load failed', err);
     }
 }
 
@@ -70,7 +91,7 @@ function loadFruits(fruits) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px;">
             <i class="fa fa-inbox" style="font-size:32px; color:#cbd5e1; margin-bottom:10px;"></i><br>
             No fruits added yet. Click "Add Fruit" to start
-        </td></tr>`; // FIX: yaha se comment hata diya tha, yehi error de raha tha
+        </td></tr>`;
         return;
     }
 
@@ -98,7 +119,6 @@ function loadFruits(fruits) {
                 <button onclick="deleteFruit('${fruit.id}')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;">
                     <i class="fa fa-trash"></i>
                 </button>
-                <!-- PREMIUM FEATURE: MANUAL CLOUD UPLOAD -->
                 <button onclick="manualCloudUpload()" style="background:#3b82f6; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;" title="Save Photo to Cloud - Premium">
                     <i class="fa fa-cloud-upload-alt"></i>
                 </button>

@@ -1,5 +1,5 @@
 // ========================================
-// SAMANLIVE - DYNAMIC JAVASCRIPT - FINAL
+// SAMANLIVE - DYNAMIC JAVASCRIPT - FINAL    public/assets/js/app.js 
 // ========================================
 
 // Global variables
@@ -107,11 +107,40 @@ window.addEventListener('beforeunload', () => {
 });
 
 // ========================================
+// LOCATION ADD - 1. USER LIVE LOCATION KO SERVER PE BHEJNE KA FUNCTION
+// ========================================
+let userWatchId = null; // location.user.js ke liye global variable
+function startUserLiveLocation() {
+    if(!navigator.geolocation) return;
+    if(!localStorage.getItem('userId')) return; // login nahi hai to skip
+
+    // har 100 meter pe location update hogi
+    userWatchId = LocationCore.startWatch((lat, lng) => {
+        // Server ko bhejo
+        fetch('/api/location/user', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ userId: localStorage.getItem('userId'), lat, lng })
+        }).catch(err => console.log('User location update failed', err));
+
+        // Nearby shops reload karne ke liye
+        if(typeof loadAllData === 'function') loadAllData();
+        
+    }, 100);
+}
+
+// ========================================
 // LOAD DATA FROM SERVER - EK HI FUNCTION
 // ========================================
 async function loadAllData() {
     try {
         await getUserLocation();
+
+        // LOCATION ADD - 2. Shops API me lat lng bhejna hai taaki nearby mile
+        let shopApiUrl = '/api/shop/public';
+        if(userLocation) {
+            shopApiUrl += `?lat=${userLocation.lat}&lng=${userLocation.lng}`;
+        }
 
         const [adsRes, videosRes, campaignsRes, settingsRes, modulesRes, shopsRes, productsRes] = await Promise.all([
             fetch('/api/ads').catch(()=>({ok:false})),
@@ -119,7 +148,7 @@ async function loadAllData() {
             fetch('/api/campaigns').catch(()=>({ok:false})),
             fetch('/api/settings').catch(()=>({ok:false})),
             fetch('/api/modules').catch(()=>({ok:false})),
-            fetch('/api/shop/public').catch(()=>({ok:false})), // <- YAHI PE FIX HAI
+            fetch(shopApiUrl).catch(()=>({ok:false})), // <- YAHI PE UPDATE KIYA
             fetch('/api/products/top-rated?limit=24').catch(()=>({ok:false}))
         ]);
 
@@ -388,13 +417,22 @@ window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('userToken');
     if (token) fetchUserData(token);
     updateProfileAvatar();
+    
+    // LOCATION ADD - 3. Login ke baad live location start karo
+    startUserLiveLocation();
 });
 
 async function fetchUserData(token) {
     try {
         const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
         const data = await res.json();
-        if (data.success) { currentUser = data.user; window.currentUser = data.user; updateProfileAvatar(); }
+        if (data.success) { 
+            currentUser = data.user; 
+            window.currentUser = data.user; 
+            // LOCATION ADD - 4. userId localStorage me save karo taaki location bheje
+            localStorage.setItem('userId', data.user._id);
+            updateProfileAvatar(); 
+        }
         else localStorage.removeItem('userToken');
     } catch (err) { localStorage.removeItem('userToken'); }
 }
@@ -419,8 +457,12 @@ async function loginWithPhone() {
         const data = await res.json();
         if (data.success) {
             localStorage.setItem('userToken', data.user._id);
+            // LOCATION ADD - 5. Signup ke baad bhi userId save karo
+            localStorage.setItem('userId', data.user._id);
             currentUser = data.user; window.currentUser = data.user;
-            closeLoginModal(); updateProfileAvatar(); alert('Login Success! 🎉'); window.location.reload();
+            closeLoginModal(); updateProfileAvatar(); alert('Login Success! 🎉'); 
+            startUserLiveLocation(); // location start
+            window.location.reload();
         } else alert('Login failed: ' + data.error);
     } catch (err) { alert('Login failed. Server check karo.'); }
 }

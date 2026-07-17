@@ -6,6 +6,7 @@
     <title>Fruit Shop Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); min-height: 100vh; padding: 15px; }
@@ -17,7 +18,7 @@
         .owner-photo { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid #22c55e; cursor: pointer; }
         .owner-photo-upload { display: none; }
         .shop-info h1 { font-size: 22px; color: #14532d; display: flex; align-items: center; gap: 10px; }
-        .shop-info p { color: #64748b; font-size: 12px; }
+        .shop-info p { color: #64748b; font-size: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 6px; }
         .status-open { background: #dcfce7; color: #166534; }
         .status-close { background: #fee2e2; color: #991b1b; }
@@ -73,6 +74,9 @@
         .fresh { background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
         .low-stock { color: #ef4444; font-weight: 700; }
 
+        /* LOCATION MODAL */
+        .type-btn.active { background: #22c55e !important; color: white !important; }
+
         /* MOBILE RESPONSIVE */
         @media(max-width: 968px) {.grid-2 { grid-template-columns: 1fr; } }
         @media(max-width: 640px) {
@@ -86,7 +90,6 @@
             .stat-card .icon { font-size: 22px; }
             .content-card { padding: 15px; }
             .content-card h2 { font-size: 16px; }
-            /* Hide Stock and Status columns on mobile */
             table th:nth-child(3), table td:nth-child(3),
             table th:nth-child(4), table td:nth-child(4) { display: none; }
             table { min-width: 400px; }
@@ -108,7 +111,13 @@
                 </div>
                 <div class="shop-info">
                     <h1><i class="fa fa-apple-alt"></i> <span id="shopName">Fresh Fruits</span></h1>
-                    <p>Shop ID: <span id="shopIdDisplay"></span> • <i class="fa fa-map-marker-alt"></i> <span id="shopAddress">Ahmedabad, Gujarat</span></p>
+                    <p>
+                        Shop ID: <span id="shopIdDisplay"></span> • 
+                        <i class="fa fa-map-marker-alt"></i> 
+                        <input type="text" id="shopAddress" value="Ahmedabad, Gujarat" style="border:none; background:transparent; font-size:12px; color:#64748b; width:200px;">
+                        <span id="locationTypeBadge" class="status-badge status-open">Fixed</span>
+                        <span id="rangeText" style="font-size:11px;">Delivery Range: 5 KM</span>
+                    </p>
                     <span id="shopStatusBadge" class="status-badge status-open"><i class="fa fa-circle"></i> OPEN NOW</span>
                 </div>
             </div>
@@ -120,6 +129,7 @@
                         <span class="slider"></span>
                     </label>
                 </div>
+                <button class="btn btn-outline" onclick="openLocationModal()"><i class="fa fa-location-dot"></i> Set Location</button>
                 <button class="btn btn-outline" id="viewShopBtn"><i class="fa fa-eye"></i> View Shop</button>
                 <button class="btn btn-outline" id="shareBtn"><i class="fa fa-share-alt"></i> Share</button>
                 <button class="btn" id="addFruitBtn"><i class="fa fa-plus"></i> Add Fruit</button>
@@ -198,9 +208,45 @@
         </div>
     </div>
 
+    <!-- LOCATION MODAL -->
+    <div id="locationModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;">
+        <div style="background:white; padding:25px; border-radius:20px; width:90%; max-width:650px;">
+            <h3 style="margin-bottom:15px;"><i class="fa fa-map"></i> Set Shop Location</h3>
+            
+            <div style="margin-bottom:10px;">
+                <button onclick="setLocationType('fixed')" class="type-btn active" data-type="fixed" style="padding:8px 16px; border:2px solid #22c55e; border-radius:8px; background:#22c55e; color:white; margin-right:10px;">Fixed</button>
+                <button onclick="setLocationType('dynamic')" class="type-btn" data-type="dynamic" style="padding:8px 16px; border:2px solid #22c55e; border-radius:8px; background:white; color:#22c55e;">Dynamic/Live</button>
+            </div>
+
+            <div id="locationPickerMap" style="height:300px; border-radius:12px; margin:15px 0;"></div>
+            
+            <div id="fixedFields">
+                <p style="font-size:12px; color:#64748b;">Pin ko drag karke location set karo</p>
+            </div>
+            <div id="dynamicFields" style="display:none;">
+                <button onclick="startLiveLocation()" class="btn" style="margin-right:10px;">Start Live</button>
+                <button onclick="stopLiveLocation()" class="btn btn-outline">Stop Live</button>
+                <p style="margin-top:10px;">Current: <span id="currentLatLng">Not Started</span></p>
+            </div>
+
+            <div style="margin:15px 0;">
+                <label>Delivery Range KM: </label>
+                <input id="deliveryRange" type="number" value="5" style="padding:8px; border:1px solid #ccc; border-radius:8px; width:80px;">
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button onclick="saveLocation()" class="btn" style="flex:1;">Save Location</button>
+                <button onclick="closeLocationModal()" class="btn btn-outline" style="flex:1;">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="../shop-core.js"></script> <!-- 1. YE ADD KIYA -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/assets/js/location.core.js"></script>
+    <script src="/shop-template.js"></script>
+    <script src="../shop-core.js"></script>
     <script src="./fruit-products-data.js"></script>
-    <script src="./dashboard.js"></script> <!-- 2. YE LAST ME RAHEGA -->
+    <script src="./dashboard.js"></script>
 </body>
 </html>
