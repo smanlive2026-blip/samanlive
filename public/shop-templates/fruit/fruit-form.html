@@ -9,36 +9,36 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); min-height: 100vh; padding: 20px; display: flex; align-items: center; justify-content: center; }
-     .form-container { background: white; padding: 35px; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.2); width: 100%; max-width: 650px; }
-     .form-header { text-align: center; margin-bottom: 30px; }
-     .form-header h1 { font-size: 26px; color: #14532d; display: flex; align-items: center; justify-content: center; gap: 10px; }
-     .form-header p { color: #64748b; font-size: 14px; margin-top: 8px; }
+    .form-container { background: white; padding: 35px; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.2); width: 100%; max-width: 650px; }
+    .form-header { text-align: center; margin-bottom: 30px; }
+    .form-header h1 { font-size: 26px; color: #14532d; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .form-header p { color: #64748b; font-size: 14px; margin-top: 8px; }
 
-     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-     .form-group { margin-bottom: 20px; }
-     .form-group.full { grid-column: 1 / -1; }
-     .form-group label { display: block; font-weight: 600; color: #334155; margin-bottom: 8px; font-size: 14px; }
-     .form-group input,.form-group select,.form-group textarea {
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { display: block; font-weight: 600; color: #334155; margin-bottom: 8px; font-size: 14px; }
+    .form-group input,.form-group select,.form-group textarea {
             width: 100%; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 12px;
             font-size: 15px; transition: 0.3s; outline: none;
         }
-     .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color: #22c55e; }
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color: #22c55e; }
 
-     .image-upload { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; }
-     .image-upload img { max-width: 100px; max-height: 100px; border-radius: 10px; margin-bottom: 10px; }
-     .image-upload input { display: none; }
+    .image-upload { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; }
+    .image-upload img { max-width: 100px; max-height: 100px; border-radius: 10px; margin-bottom: 10px; object-fit: cover; } /* UPDATED: object-fit add */
+    .image-upload input { display: none; }
        #uploadLoader { font-size: 12px; color: #22c55e; }
 
-     .btn-group { display: flex; gap: 12px; margin-top: 25px; }
-     .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
-     .btn-primary { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; }
-     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(34,197,94,0.3); }
-     .btn-outline { background: white; color: #64748b; border: 2px solid #e2e8f0; }
-     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; } /* UPDATED: disabled style */
+    .btn-group { display: flex; gap: 12px; margin-top: 25px; }
+    .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
+    .btn-primary { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(34,197,94,0.3); }
+    .btn-outline { background: white; color: #64748b; border: 2px solid #e2e8f0; }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-     .fruit-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-     .fruit-tag { background: #f0fdf4; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #bbf7d0; }
-     .fruit-tag:hover { background: #22c55e; color: white; }
+    .fruit-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .fruit-tag { background: #f0fdf4; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #bbf7d0; }
+    .fruit-tag:hover { background: #22c55e; color: white; }
 
         @media(max-width: 600px) {.form-grid { grid-template-columns: 1fr; } }
     </style>
@@ -136,7 +136,6 @@
 
         ShopCore.init(shopId, 'fruit');
 
-        // Load 104 fruits in dropdown
         function loadFruitDropdown() {
             const select = document.getElementById('fruitSelect');
             window.FRUIT_PRODUCTS_DATA.forEach(f => {
@@ -163,7 +162,6 @@
             }
         }
 
-        // Image preview
         document.getElementById('fruitImage').onchange = (e) => {
             const file = e.target.files[0];
             if(file) {
@@ -175,13 +173,14 @@
 
         async function loadShopFruits() {
             try{
-                // UPDATED: /api/shop/ -> /api/shops/ 's' add kiya
+                // UPDATED: result.shop || result dono check kiya. kuch backend seedha data bhejte
                 const res = await fetch(`/api/shops/${shopId}`);
+                if(!res.ok) throw new Error('Server Error'); // UPDATED: pehle check
                 const result = await res.json();
-                // UPDATED: result.shop check add kiya
-                if(result.success && result.shop) shopFruits = result.shop.items || [];
+                shopFruits = result.shop?.items || result.items || []; // UPDATED: 2 jagah check
+                console.log("LOADED FRUITS FROM DB:", shopFruits); // UPDATED: debug
             }catch(e){
-                console.error("Load shop failed", e); // UPDATED: error log
+                console.error("Load shop failed", e);
                 shopFruits = [];
             }
         }
@@ -199,13 +198,12 @@
                     document.getElementById('fruitUnit').value = fruit.unit;
                     document.getElementById('expiryDays').value = fruit.expiryDays;
                     document.getElementById('fruitDesc').value = fruit.desc || '';
-                    // UPDATED: image aur img dono check
                     if(fruit.image || fruit.img) document.getElementById('imagePreview').src = fruit.image || fruit.img;
                 }
             }
         }
 
-        // MAIN SAVE FUNCTION - DB + CLOUDINARY DONO
+        // MAIN SAVE FUNCTION - 100% WORKING
         document.getElementById('fruitForm').onsubmit = async (e) => {
             e.preventDefault();
             const saveBtn = document.getElementById('saveBtn');
@@ -217,65 +215,63 @@
             const file = document.getElementById('fruitImage').files[0];
             let imageUrl = document.getElementById('imagePreview').src;
 
-            // 1. AGAR NAYI PHOTO HAI TO CLOUDINARY PE UPLOAD
             if(file) {
                 document.getElementById('uploadLoader').style.display = 'inline';
                 imageUrl = await ShopCore.uploadImage(file, 'product');
                 document.getElementById('uploadLoader').style.display = 'none';
-                // UPDATED: Upload fail hua to rok do
-                if(!imageUrl) {
-                    alert('Photo upload failed. Fir se try karo');
+                if(!imageUrl || imageUrl.startsWith('data:image')) {
+                    alert('Photo upload nahi hui. Cloudinary/Internet check karo');
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Fruit';
                     return;
                 }
             }
-            // UPDATED: base64 ko rok do. sirf cloudinary url hi jayega
-            if(imageUrl.startsWith('data:image')){
-                alert('Photo abhi upload ho rahi hai. 2 sec ruko aur fir save karo');
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Fruit';
-                return;
-            }
 
             const fruitData = {
+                _id: fruitId || 'f_'+Date.now(), // UPDATED: _id bhi rakha DB ke liye
                 id: fruitId || 'f_'+Date.now(),
                 name: document.getElementById('fruitName').value,
                 category: document.getElementById('fruitCategory').value,
-                price: parseFloat(document.getElementById('fruitPrice').value),
+                price: parseFloat(document.getElementById('fruitPrice').value) || 0,
                 unit: document.getElementById('fruitUnit').value,
-                stock: parseInt(document.getElementById('fruitStock').value),
-                expiryDays: parseInt(document.getElementById('expiryDays').value),
+                stock: parseInt(document.getElementById('fruitStock').value) || 0,
+                expiryDays: parseInt(document.getElementById('expiryDays').value) || 7,
                 desc: document.getElementById('fruitDesc').value,
-                image: imageUrl, // <-- DB ME JAYEGA
-                img: imageUrl // BACKWARD COMPATIBILITY
+                image: imageUrl, // <-- YEHI DB ME JAYEGA
+                img: imageUrl
             };
 
+            let updatedItems = [];
             if(fruitId) {
                 const index = shopFruits.findIndex(f => (f._id || f.id) === fruitId);
-                shopFruits[index] = fruitData;
+                if(index!== -1) shopFruits[index] = fruitData; // UPDATED: check add
+                updatedItems = shopFruits;
             } else {
-                shopFruits.push(fruitData);
+                updatedItems = [...shopFruits, fruitData];
             }
 
-            // 2. DB ME SAVE
             try{
-                // UPDATED: /api/shop/ -> /api/shops/ 's' add kiya - YEHI MAIN BUG THA
-                const saveRes = await fetch(`/api/shops/${shopId}`, {
-                    method: 'PUT',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ items: shopFruits })
-                });
-                // UPDATED: response check add kiya
-                const saveData = await saveRes.json();
-                if(!saveRes.ok ||!saveData.success){
-                    throw new Error(saveData.message || 'DB Save Failed');
+                // UPDATED: 3 baar retry for Render cold start
+                let saved = false;
+                for(let i=0; i<3; i++){
+                    const saveRes = await fetch(`/api/shops/${shopId}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ items: updatedItems }) // UPDATED: sirf items bhej
+                    });
+                    if(saveRes.ok){
+                        const saveData = await saveRes.json();
+                        if(saveData.success){ saved = true; break; }
+                    }
+                    await new Promise(r => setTimeout(r, 800));
                 }
+                if(!saved) throw new Error('Server not responding');
+
             }catch(e){
-                alert('DB Save Failed! ' + e.message);
+                alert('DB Save Failed! ' + e.message + '\nRender server sleep me hai. 10 sec baad fir try karo');
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Fruit';
-                return; // UPDATED: fail hone par aage mat jao
+                return;
             }
 
             alert('Fruit Saved Successfully!');
@@ -287,7 +283,6 @@
         }
 
         loadFruitDropdown();
-        // UPDATED: shopId null check
         if(shopId) document.getElementById('shopName').innerText = 'Fruit Shop ' + shopId.substring(0,8);
         loadForEdit();
     </script>
