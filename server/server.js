@@ -20,8 +20,8 @@ const fruitItemRoutes = require('./routes/fruit-item'); // UPAR IMPORT KAR
 // app.use('/api/shops', shopRoutes);
 
 // UPDATED: NAYA FRUIT ROUTE JOD DIYA
-app.use('/api/shops', fruitItemRoutes); // YE 1 LINE ADD KAR
-app.use('/api/shops', require('./routes/shopRoutes')); // shop -> shops
+//app.use('/api/shops', fruitItemRoutes); // YE 1 LINE ADD KAR
+
 
 // ==================== MIDDLEWARE ====================
 app.use(compression());
@@ -30,6 +30,8 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 //app.use('/api', deliveryManagerRoutes);
 app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-manager banega
+app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
+app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
 
 // Request Logger - Development ke liye
 app.use((req, res, next) => {
