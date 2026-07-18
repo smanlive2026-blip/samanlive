@@ -11,8 +11,10 @@ const uploadRoutes = require('./routes/upload');
 const deliveryManagerRoutes = require('./routes/deliveryManager'); 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const orderRoutes = require('./routes/orders');
+const orderRoutes = require('./routes/orders');  // fruit ke liye 
+const fruitItemRoutes = require('./routes/fruit-item'); // UPAR IMPORT KAR
 
+app.use('/api/shops', fruitItemRoutes); // YE LINE ADD KAR
 // ==================== MIDDLEWARE ====================
 app.use(compression());
 app.use(cors());
