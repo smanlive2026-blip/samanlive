@@ -15,7 +15,7 @@ const orderRoutes = require('./routes/orders');  // fruit ke liye
 const fruitItemRoutes = require('./routes/fruit-item'); // UPAR IMPORT KAR
 
 
-app.use(express.json({ limit: '10mb' })); // YE BHI UPAR RAKH DE
+//app.use(express.json({ limit: '10mb' })); // YE BHI UPAR RAKH DE
 // TERE PURANE ROUTES
 // app.use('/api/shops', shopRoutes);
 
@@ -126,7 +126,8 @@ app.use('/api', require('./routes/stats'));
 // Shop Routes - ✅ User side + Products + Public
 //app.use('/api/local-market', require('./routes/shopRoutes'));
 // ✅ NAYA: direct /api/shop/view bhi chale
-app.use('/api/shop', require('./routes/shopRoutes'));
+//app.use('/api/shop', require('./routes/shopRoutes'));
+app.use('/api/shops', require('./routes/shopRoutes')); // shop -> shops
 
 // ==================== LOCATION ROUTES new ====================
 const locationRoutes = require('./modules/locationRoutes');
