@@ -34,13 +34,13 @@
         function loadFruitDropdown() { const select = document.getElementById('fruitSelect'); window.FRUIT_PRODUCTS_DATA.forEach(f => { const option = document.createElement('option'); option.value = f.name; option.textContent = `${f.name} - ${f.name_en}`; select.appendChild(option); }); }
         function quickSelect(name) { document.getElementById('fruitSelect').value = name; document.getElementById('fruitSelect').dispatchEvent(new Event('change')); }
         document.getElementById('fruitSelect').onchange = (e) => { const fruit = window.FRUIT_PRODUCTS_DATA.find(f => f.name === e.target.value); if(fruit) { document.getElementById('fruitName').value = fruit.name; document.getElementById('fruitPrice').value = fruit.price; document.getElementById('fruitStock').value = fruit.stock; document.getElementById('fruitUnit').value = fruit.unit; document.getElementById('expiryDays').value = fruit.expiryDays; } }
-        document.getElementById('fruitImage').onchange = (e) => { const file = e.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (ev) => document.getElementById('imagePreview').src = ev.target.result; reader.readAsDataURL(file); } }
+        document.getElementById('fruitImage').onchange = (e) => { const file = e.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (ev) => document.getElementById('imagePreview').src = ev.target.result; reader.readAsDataURL(file); }
 
         async function loadShopFruits() { try{ const res = await fetch(`/api/shops/${shopId}`); if(!res.ok) throw new Error('Server Error'); const result = await res.json(); shopFruits = result.shop?.items || result.items || []; }catch(e){ console.error("Load shop failed", e); shopFruits = []; } }
 
-        async function loadForEdit() { await loadShopFruits(); if(fruitId) { document.getElementById('formTitle').innerText = 'Edit Fruit'; const fruit = shopFruits.find(f => (f._id || f.id) === fruitId); if(fruit) { document.getElementById('fruitId').value = fruit._id || fruit.id; document.getElementById('fruitName').value = fruit.name; document.getElementById('fruitPrice').value = fruit.price; document.getElementById('fruitStock').value = fruit.stock; document.getElementById('fruitUnit').value = fruit.unit; document.getElementById('expiryDays').value = fruit.expiryDays; document.getElementById('fruitDesc').value = fruit.desc || ''; if(fruit.image || fruit.img) document.getElementById('imagePreview').src = fruit.image || fruit.img; } }
+        async function loadForEdit() { await loadShopFruits(); if(fruitId) { document.getElementById('formTitle').innerText = 'Edit Fruit'; const fruit = shopFruits.find(f => (f._id || f.id) === fruitId); if(fruit) { document.getElementById('fruitId').value = fruit._id || fruit.id; document.getElementById('fruitName').value = fruit.name; document.getElementById('fruitPrice').value = fruit.price; document.getElementById('fruitStock').value = fruit.stock; document.getElementById('fruitUnit').value = fruit.unit; document.getElementById('expiryDays').value = fruit.expiryDays; document.getElementById('fruitDesc').value = fruit.desc || ''; if(fruit.image || fruit.img) document.getElementById('imagePreview').src = fruit.image || fruit.img; }
 
-        // MAIN SAVE FUNCTION - UPDATED: AB SIRF 1 FRUIT BHEJEGA
+        // MAIN SAVE FUNCTION - UPDATED: AB EK EK FRUIT BHEJEGA
         document.getElementById('fruitForm').onsubmit = async (e) => {
             e.preventDefault();
             const saveBtn = document.getElementById('saveBtn');
@@ -57,20 +57,17 @@
                 if(!imageUrl || imageUrl.startsWith('data:image')) { alert('Photo upload nahi hui.'); saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Fruit'; return; }
             }
 
-            const fruitData = { _id: fruitId || 'f_'+Date.now(), id: fruitId || 'f_'+Date.now(), name: document.getElementById('fruitName').value, category: document.getElementById('fruitCategory').value, price: parseFloat(document.getElementById('fruitPrice').value) || 0, unit: document.getElementById('fruitUnit').value, stock: parseInt(document.getElementById('fruitStock').value) || 0, expiryDays: parseInt(document.getElementById('expiryDays').value) || 7, desc: document.getElementById('fruitDesc').value, image: imageUrl, img: imageUrl };
+            const fruitData = { id: fruitId || 'f_'+Date.now(), name: document.getElementById('fruitName').value, category: document.getElementById('fruitCategory').value, price: parseFloat(document.getElementById('fruitPrice').value) || 0, unit: document.getElementById('fruitUnit').value, stock: parseInt(document.getElementById('fruitStock').value) || 0, expiryDays: parseInt(document.getElementById('expiryDays').value) || 7, desc: document.getElementById('fruitDesc').value, image: imageUrl, img: imageUrl };
 
             try{
-                // UPDATED: AB EK EK FRUIT UPDATE HOGA. PURA ARRAY NAHI
                 let endpoint = fruitId? `/api/shops/${shopId}/fruit/${fruitId}` : `/api/shops/${shopId}/fruit`;
                 const method = fruitId? 'PUT' : 'POST';
-
-                const saveRes = await fetch(endpoint, { method: method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ item: fruitData }) });
+                const saveRes = await fetch(endpoint, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ item: fruitData }) });
                 if(!saveRes.ok) throw new Error('Server 500 Error');
                 const saveData = await saveRes.json();
                 if(!saveData.success) throw new Error(saveData.message);
-
             }catch(e){
-                alert('DB Save Failed! ' + e.message + '\nRender server check karo');
+                alert('DB Save Failed! ' + e.message);
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Fruit';
                 return;
