@@ -23,13 +23,14 @@ async function loadShopData() {
         document.getElementById('loader').innerText = 'Loading...';
         let shop = null;
 
-        // STEP 1: DB SE DATA LAO
+        // STEP 1: DB SE DATA LAO - AB YE NAYE ROUTE SE AA RAHA
         const res = await fetch(`/api/shops/${shopId}`);
         if(!res.ok) throw new Error('Shop not found');
-        shop = await res.json(); // seedha shop lelo
+        const result = await res.json();
+        shop = result.shop; // IMPORTANT: result.shop me aayega
 
         // STEP 2: AGAR DB FAIL HO GAYI TO ERROR DIKHAO
-        if(!shop || shop.error){
+        if(!shop ||!result.success){
             document.getElementById('loader').innerText = 'Error: Server on nahi hai. npm start karo';
             alert('Error: Shop data DB se load nahi hui. Server on hai kya?');
             return;
@@ -148,12 +149,21 @@ function loadFruits(fruits) {
     }).join('');
 }
 
-// FINAL: DELETE SIRF DB SE
+// FINAL: DELETE AB NAYE ROUTE SE
 async function deleteFruit(fruitId) {
     if(confirm('Are you sure you want to delete this fruit?')) {
-        allShopFruits = allShopFruits.filter(f => (f._id || f.id)!== fruitId);
-        await fetch(`/api/shops/${shopId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ items: allShopFruits }) });
-        loadShopData();
+        try{
+            const res = await fetch(`/api/shops/${shopId}/fruit/${fruitId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if(data.success){
+                alert('Fruit Deleted');
+                loadShopData(); // list refresh
+            } else {
+                alert('Delete failed: ' + data.message);
+            }
+        }catch(err){
+            alert('Delete error: ' + err.message);
+        }
     }
 }
 
