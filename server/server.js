@@ -14,7 +14,15 @@ const PORT = process.env.PORT || 3000;
 const orderRoutes = require('./routes/orders');  // fruit ke liye 
 const fruitItemRoutes = require('./routes/fruit-item'); // UPAR IMPORT KAR
 
-app.use('/api/shops', fruitItemRoutes); // YE LINE ADD KAR
+
+app.use(express.json({ limit: '10mb' })); // YE BHI UPAR RAKH DE
+// TERE PURANE ROUTES
+// app.use('/api/shops', shopRoutes);
+
+// UPDATED: NAYA FRUIT ROUTE JOD DIYA
+app.use('/api/shops', fruitItemRoutes); // YE 1 LINE ADD KAR
+
+
 // ==================== MIDDLEWARE ====================
 app.use(compression());
 app.use(cors());

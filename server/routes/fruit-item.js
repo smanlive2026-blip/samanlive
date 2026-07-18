@@ -1,21 +1,20 @@
+// KEVAL FRUIT ITEM ADD/UPDATE/DELETE KE LIYE HAI YE FILE.
+// PURANE /api/shops/:shopId WALE PUT KO CHHEDNA MAT HAI
 const express = require('express');
 const router = express.Router();
-const Shop = require('../models/Shop'); // tera Shop model ka path
+const Shop = require('../models/Shop');
 
-// MIDDLEWARE: BODY SIZE BADHA DIYA KYUKI PHOTO URL BADI HOTI
+// BODY SIZE BADHA DIYA KYUKI PHOTO URL BADI HOTI HAI
 router.use(express.json({ limit: '10mb' }));
 router.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // 1. EK NAYA FRUIT ADD KARNA
-// POST /api/shops/:shopId/fruit
 router.post('/:shopId/fruit', async (req, res) => {
     try {
         const { item } = req.body;
-        console.log("ADDING FRUIT TO SHOP:", req.params.shopId);
-
         const shop = await Shop.findByIdAndUpdate(
             req.params.shopId,
-            { $push: { items: item } }, // array me push
+            { $push: { items: item } },
             { new: true }
         );
         if(!shop) return res.status(404).json({success: false, message: "Shop not found"});
@@ -27,15 +26,12 @@ router.post('/:shopId/fruit', async (req, res) => {
 });
 
 // 2. EK FRUIT UPDATE KARNA
-// PUT /api/shops/:shopId/fruit/:fruitId
 router.put('/:shopId/fruit/:fruitId', async (req, res) => {
     try {
         const { item } = req.body;
-        console.log("UPDATING FRUIT:", req.params.fruitId);
-
         const shop = await Shop.findOneAndUpdate(
-            { _id: req.params.shopId, "items._id": req.params.fruitId }, // ya "items.id"
-            { $set: { "items.$": item } }, // $ = jisko mila usko update
+            { _id: req.params.shopId, "items.id": req.params.fruitId }, // UPDATED: _id ki jagah id bhi check
+            { $set: { "items.$": item } },
             { new: true }
         );
         if(!shop) return res.status(404).json({success: false, message: "Shop or Fruit not found"});
@@ -47,12 +43,11 @@ router.put('/:shopId/fruit/:fruitId', async (req, res) => {
 });
 
 // 3. EK FRUIT DELETE KARNA
-// DELETE /api/shops/:shopId/fruit/:fruitId
 router.delete('/:shopId/fruit/:fruitId', async (req, res) => {
     try {
         await Shop.findByIdAndUpdate(
             req.params.shopId,
-            { $pull: { items: { _id: req.params.fruitId } } } // ya {id: fruitId}
+            { $pull: { items: { id: req.params.fruitId } } } // UPDATED: id se delete
         );
         res.json({ success: true });
     } catch (err) {
