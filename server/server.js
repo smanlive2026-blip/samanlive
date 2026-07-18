@@ -21,7 +21,7 @@ const fruitItemRoutes = require('./routes/fruit-item'); // UPAR IMPORT KAR
 
 // UPDATED: NAYA FRUIT ROUTE JOD DIYA
 app.use('/api/shops', fruitItemRoutes); // YE 1 LINE ADD KAR
-
+app.use('/api/shops', require('./routes/shopRoutes')); // shop -> shops
 
 // ==================== MIDDLEWARE ====================
 app.use(compression());
@@ -127,7 +127,6 @@ app.use('/api', require('./routes/stats'));
 //app.use('/api/local-market', require('./routes/shopRoutes'));
 // ✅ NAYA: direct /api/shop/view bhi chale
 //app.use('/api/shop', require('./routes/shopRoutes'));
-app.use('/api/shops', require('./routes/shopRoutes')); // shop -> shops
 
 // ==================== LOCATION ROUTES new ====================
 const locationRoutes = require('./modules/locationRoutes');

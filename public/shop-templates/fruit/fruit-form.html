@@ -6,18 +6,75 @@
     <title>Add/Edit Fruit</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; } body { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); min-height: 100vh; padding: 20px; display: flex; align-items: center; justify-content: center; }.form-container { background: white; padding: 35px; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.2); width: 100%; max-width: 650px; }.form-header { text-align: center; margin-bottom: 30px; }.form-header h1 { font-size: 26px; color: #14532d; display: flex; align-items: center; justify-content: center; gap: 10px; }.form-header p { color: #64748b; font-size: 14px; margin-top: 8px; }.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }.form-group { margin-bottom: 20px; }.form-group.full { grid-column: 1 / -1; }.form-group label { display: block; font-weight: 600; color: #334155; margin-bottom: 8px; font-size: 14px; }.form-group input,.form-group select,.form-group textarea { width: 100%; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; transition: 0.3s; outline: none; }.form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color: #22c55e; }.image-upload { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; }.image-upload img { max-width: 100px; max-height: 100px; border-radius: 10px; margin-bottom: 10px; object-fit: cover; }.image-upload input { display: none; } #uploadLoader { font-size: 12px; color: #22c55e; }.btn-group { display: flex; gap: 12px; margin-top: 25px; }.btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }.btn-primary { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; }.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(34,197,94,0.3); }.btn-outline { background: white; color: #64748b; border: 2px solid #e2e8f0; }.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }.fruit-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }.fruit-tag { background: #f0fdf4; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #bbf7d0; }.fruit-tag:hover { background: #22c55e; color: white; } @media(max-width: 600px) {.form-grid { grid-template-columns: 1fr; } }</style>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); min-height: 100vh; padding: 20px; display: flex; align-items: center; justify-content: center; }
+       .form-container { background: white; padding: 35px; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.2); width: 100%; max-width: 650px; }
+       .form-header { text-align: center; margin-bottom: 30px; }
+       .form-header h1 { font-size: 26px; color: #14532d; display: flex; align-items: center; justify-content: center; gap: 10px; }
+       .form-header p { color: #64748b; font-size: 14px; margin-top: 8px; }
+       .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+       .form-group { margin-bottom: 20px; }
+       .form-group.full { grid-column: 1 / -1; }
+       .form-group label { display: block; font-weight: 600; color: #334155; margin-bottom: 8px; font-size: 14px; }
+       .form-group input,.form-group select,.form-group textarea { width: 100%; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; transition: 0.3s; outline: none; }
+       .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color: #22c55e; }
+       .image-upload { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; }
+       .image-upload img { max-width: 100px; max-height: 100px; border-radius: 10px; margin-bottom: 10px; object-fit: cover; }
+       .image-upload input { display: none; }
+        #uploadLoader { font-size: 12px; color: #22c55e; }
+       .btn-group { display: flex; gap: 12px; margin-top: 25px; }
+       .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
+       .btn-primary { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; }
+       .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(34,197,94,0.3); }
+       .btn-outline { background: white; color: #64748b; border: 2px solid #e2e8f0; }
+       .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+       .fruit-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+       .fruit-tag { background: #f0fdf4; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #bbf7d0; }
+       .fruit-tag:hover { background: #22c55e; color: white; }
+        @media(max-width: 600px) {.form-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
     <div class="form-container">
-        <div class="form-header"><h1><i class="fa fa-apple-alt"></i> <span id="formTitle">Add New Fruit</span></h1><p>Shop: <span id="shopName">Loading...</span></p></div>
+        <div class="form-header">
+            <h1><i class="fa fa-apple-alt"></i> <span id="formTitle">Add New Fruit</span></h1>
+            <p>Shop: <span id="shopName">Loading...</span></p>
+        </div>
         <form id="fruitForm">
             <input type="hidden" id="fruitId">
-            <div class="form-group full"><label>Select from 104 Fruits *</label><select id="fruitSelect"><option value="">-- Select Fruit --</option></select><div class="fruit-suggestions"><span class="fruit-tag" onclick="quickSelect('Seb')">Seb</span><span class="fruit-tag" onclick="quickSelect('Kela')">Kela</span><span class="fruit-tag" onclick="quickSelect('Aam')">Aam</span><span class="fruit-tag" onclick="quickSelect('Angoor')">Angoor</span><span class="fruit-tag" onclick="quickSelect('Santra')">Santra</span></div></div>
-            <div class="form-grid"><div class="form-group"><label>Fruit Name *</label><input type="text" id="fruitName" placeholder="Ex: Seb" required></div><div class="form-group"><label>Category</label><select id="fruitCategory"><option>Fresh Fruits</option><option>Dry Fruits</option><option>Exotic Fruits</option><option>Tropical</option></select></div><div class="form-group"><label>Price ₹ *</label><input type="number" id="fruitPrice" placeholder="120" required></div><div class="form-group"><label>Unit</label><select id="fruitUnit"><option value="kg">Per KG</option><option value="dozen">Per Dozen</option><option value="piece">Per Piece</option><option value="liter">Per Liter</option></select></div><div class="form-group"><label>Stock *</label><input type="number" id="fruitStock" placeholder="50" required></div><div class="form-group"><label>Expiry Days</label><input type="number" id="expiryDays" placeholder="7" value="7"></div></div>
-            <div class="form-group full"><label>Fruit Image</label><div class="image-upload" onclick="document.getElementById('fruitImage').click()"><img id="imagePreview" src="https://via.placeholder.com/100?text=Fruit" alt=""><p><i class="fa fa-camera"></i> Click to upload image <span id="uploadLoader" style="display:none;"><i class="fa fa-spinner fa-spin"></i> Uploading...</span></p><input type="file" id="fruitImage" accept="image/*"></div></div>
+            <div class="form-group full">
+                <label>Select from 104 Fruits *</label>
+                <select id="fruitSelect"><option value="">-- Select Fruit --</option></select>
+                <div class="fruit-suggestions">
+                    <span class="fruit-tag" onclick="quickSelect('Seb')">Seb</span>
+                    <span class="fruit-tag" onclick="quickSelect('Kela')">Kela</span>
+                    <span class="fruit-tag" onclick="quickSelect('Aam')">Aam</span>
+                    <span class="fruit-tag" onclick="quickSelect('Angoor')">Angoor</span>
+                    <span class="fruit-tag" onclick="quickSelect('Santra')">Santra</span>
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label>Fruit Name *</label><input type="text" id="fruitName" placeholder="Ex: Seb" required></div>
+                <div class="form-group"><label>Category</label><select id="fruitCategory"><option>Fresh Fruits</option><option>Dry Fruits</option><option>Exotic Fruits</option><option>Tropical</option></select></div>
+                <div class="form-group"><label>Price ₹ *</label><input type="number" id="fruitPrice" placeholder="120" required></div>
+                <div class="form-group"><label>Unit</label><select id="fruitUnit"><option value="kg">Per KG</option><option value="dozen">Per Dozen</option><option value="piece">Per Piece</option><option value="liter">Per Liter</option></select></div>
+                <div class="form-group"><label>Stock *</label><input type="number" id="fruitStock" placeholder="50" required></div>
+                <div class="form-group"><label>Expiry Days</label><input type="number" id="expiryDays" placeholder="7" value="7"></div>
+            </div>
+            <div class="form-group full">
+                <label>Fruit Image</label>
+                <div class="image-upload" onclick="document.getElementById('fruitImage').click()">
+                    <img id="imagePreview" src="https://via.placeholder.com/100?text=Fruit" alt="">
+                    <p><i class="fa fa-camera"></i> Click to upload image <span id="uploadLoader" style="display:none;"><i class="fa fa-spinner fa-spin"></i> Uploading...</span></p>
+                    <input type="file" id="fruitImage" accept="image/*">
+                </div>
+            </div>
             <div class="form-group full"><label>Description</label><textarea id="fruitDesc" rows="3" placeholder="Fresh and juicy..."></textarea></div>
-            <div class="btn-group"><button type="button" class="btn btn-outline" onclick="goBack()"><i class="fa fa-arrow-left"></i> Back</button><button type="submit" class="btn btn-primary" id="saveBtn"><i class="fa fa-save"></i> Save Fruit</button></div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline" onclick="goBack()"><i class="fa fa-arrow-left"></i> Back</button>
+                <button type="submit" class="btn btn-primary" id="saveBtn"><i class="fa fa-save"></i> Save Fruit</button>
+            </div>
         </form>
     </div>
 
@@ -31,16 +88,69 @@
         let shopFruits = [];
         ShopCore.init(shopId, 'fruit');
 
-        function loadFruitDropdown() { const select = document.getElementById('fruitSelect'); window.FRUIT_PRODUCTS_DATA.forEach(f => { const option = document.createElement('option'); option.value = f.name; option.textContent = `${f.name} - ${f.name_en}`; select.appendChild(option); }); }
-        function quickSelect(name) { document.getElementById('fruitSelect').value = name; document.getElementById('fruitSelect').dispatchEvent(new Event('change')); }
-        document.getElementById('fruitSelect').onchange = (e) => { const fruit = window.FRUIT_PRODUCTS_DATA.find(f => f.name === e.target.value); if(fruit) { document.getElementById('fruitName').value = fruit.name; document.getElementById('fruitPrice').value = fruit.price; document.getElementById('fruitStock').value = fruit.stock; document.getElementById('fruitUnit').value = fruit.unit; document.getElementById('expiryDays').value = fruit.expiryDays; } }
-        document.getElementById('fruitImage').onchange = (e) => { const file = e.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (ev) => document.getElementById('imagePreview').src = ev.target.result; reader.readAsDataURL(file); }
+        function loadFruitDropdown() {
+            const select = document.getElementById('fruitSelect');
+            window.FRUIT_PRODUCTS_DATA.forEach(f => {
+                const option = document.createElement('option');
+                option.value = f.name;
+                option.textContent = `${f.name} - ${f.name_en}`;
+                select.appendChild(option);
+            });
+        }
+        function quickSelect(name) {
+            document.getElementById('fruitSelect').value = name;
+            document.getElementById('fruitSelect').dispatchEvent(new Event('change'));
+        }
+        document.getElementById('fruitSelect').onchange = (e) => {
+            const fruit = window.FRUIT_PRODUCTS_DATA.find(f => f.name === e.target.value);
+            if(fruit) {
+                document.getElementById('fruitName').value = fruit.name;
+                document.getElementById('fruitPrice').value = fruit.price;
+                document.getElementById('fruitStock').value = fruit.stock;
+                document.getElementById('fruitUnit').value = fruit.unit;
+                document.getElementById('expiryDays').value = fruit.expiryDays;
+            }
+        }
+        document.getElementById('fruitImage').onchange = (e) => {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => document.getElementById('imagePreview').src = ev.target.result;
+                reader.readAsDataURL(file);
+            }
+        }
 
-        async function loadShopFruits() { try{ const res = await fetch(`/api/shops/${shopId}`); if(!res.ok) throw new Error('Server Error'); const result = await res.json(); shopFruits = result.shop?.items || result.items || []; }catch(e){ console.error("Load shop failed", e); shopFruits = []; } }
+        async function loadShopFruits() {
+            try{
+                const res = await fetch(`/api/shops/${shopId}`);
+                if(!res.ok) throw new Error('Server Error');
+                const result = await res.json();
+                shopFruits = result.shop?.items || result.items || [];
+            }catch(e){
+                console.error("Load shop failed", e);
+                shopFruits = [];
+            }
+        }
 
-        async function loadForEdit() { await loadShopFruits(); if(fruitId) { document.getElementById('formTitle').innerText = 'Edit Fruit'; const fruit = shopFruits.find(f => (f._id || f.id) === fruitId); if(fruit) { document.getElementById('fruitId').value = fruit._id || fruit.id; document.getElementById('fruitName').value = fruit.name; document.getElementById('fruitPrice').value = fruit.price; document.getElementById('fruitStock').value = fruit.stock; document.getElementById('fruitUnit').value = fruit.unit; document.getElementById('expiryDays').value = fruit.expiryDays; document.getElementById('fruitDesc').value = fruit.desc || ''; if(fruit.image || fruit.img) document.getElementById('imagePreview').src = fruit.image || fruit.img; }
+        async function loadForEdit() {
+            await loadShopFruits();
+            if(fruitId) {
+                document.getElementById('formTitle').innerText = 'Edit Fruit';
+                const fruit = shopFruits.find(f => (f._id || f.id) === fruitId);
+                if(fruit) {
+                    document.getElementById('fruitId').value = fruit._id || fruit.id;
+                    document.getElementById('fruitName').value = fruit.name;
+                    document.getElementById('fruitPrice').value = fruit.price;
+                    document.getElementById('fruitStock').value = fruit.stock;
+                    document.getElementById('fruitUnit').value = fruit.unit;
+                    document.getElementById('expiryDays').value = fruit.expiryDays;
+                    document.getElementById('fruitDesc').value = fruit.desc || '';
+                    if(fruit.image || fruit.img) document.getElementById('imagePreview').src = fruit.image || fruit.img;
+                }
+            }
+        }
 
-        // MAIN SAVE FUNCTION - UPDATED: AB EK EK FRUIT BHEJEGA
+        // MAIN SAVE FUNCTION - YEHI SABSE IMPORTANT HAI
         document.getElementById('fruitForm').onsubmit = async (e) => {
             e.preventDefault();
             const saveBtn = document.getElementById('saveBtn');
@@ -54,14 +164,32 @@
                 document.getElementById('uploadLoader').style.display = 'inline';
                 imageUrl = await ShopCore.uploadImage(file, 'product');
                 document.getElementById('uploadLoader').style.display = 'none';
-                if(!imageUrl || imageUrl.startsWith('data:image')) { alert('Photo upload nahi hui.'); saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Fruit'; return; }
+                if(!imageUrl || imageUrl.startsWith('data:image')) {
+                    alert('Photo upload nahi hui.');
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Fruit';
+                    return;
+                }
             }
 
-            const fruitData = { id: fruitId || 'f_'+Date.now(), name: document.getElementById('fruitName').value, category: document.getElementById('fruitCategory').value, price: parseFloat(document.getElementById('fruitPrice').value) || 0, unit: document.getElementById('fruitUnit').value, stock: parseInt(document.getElementById('fruitStock').value) || 0, expiryDays: parseInt(document.getElementById('expiryDays').value) || 7, desc: document.getElementById('fruitDesc').value, image: imageUrl, img: imageUrl };
+            const fruitData = {
+                id: fruitId || 'f_'+Date.now(),
+                name: document.getElementById('fruitName').value,
+                category: document.getElementById('fruitCategory').value,
+                price: parseFloat(document.getElementById('fruitPrice').value) || 0,
+                unit: document.getElementById('fruitUnit').value,
+                stock: parseInt(document.getElementById('fruitStock').value) || 0,
+                expiryDays: parseInt(document.getElementById('expiryDays').value) || 7,
+                desc: document.getElementById('fruitDesc').value,
+                image: imageUrl,
+                img: imageUrl
+            };
 
             try{
+                // UPDATED: AB /fruit WALA ROUTE MAREGA
                 let endpoint = fruitId? `/api/shops/${shopId}/fruit/${fruitId}` : `/api/shops/${shopId}/fruit`;
                 const method = fruitId? 'PUT' : 'POST';
+                console.log("SENDING TO:", endpoint);
                 const saveRes = await fetch(endpoint, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ item: fruitData }) });
                 if(!saveRes.ok) throw new Error('Server 500 Error');
                 const saveData = await saveRes.json();
@@ -76,7 +204,9 @@
             window.location.href = `dashboard.html?shopId=${shopId}`;
         }
         function goBack() { window.location.href = `dashboard.html?shopId=${shopId}`; }
-        loadFruitDropdown(); if(shopId) document.getElementById('shopName').innerText = 'Fruit Shop ' + shopId.substring(0,8); loadForEdit();
+        loadFruitDropdown();
+        if(shopId) document.getElementById('shopName').innerText = 'Fruit Shop ' + shopId.substring(0,8);
+        loadForEdit();
     </script>
 </body>
 </html>
