@@ -5,131 +5,282 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">Furniture Shop</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: #f8fafc; }
-       .banner { width: 100%; height: 250px; background: linear-gradient(135deg, #78350f 0%, #431407 100%); background-size: cover; background-position: center; position: relative; }
-       .banner-overlay { position: absolute; bottom: 0; width: 100%; padding: 30px; background: linear-gradient(transparent, rgba(0,0,0,0.7)); color: white; }
-       .banner-overlay h1 { font-size: 32px; display: flex; align-items: center; gap: 12px; }
-       .shop-status { position: absolute; top: 20px; right: 20px; padding: 8px 16px; border-radius: 50px; font-weight: 700; }
-       .open { background: #dcfce7; color: #166534; }
-       .closed { background: #fee2e2; color: #991b1b; }
         
-       .container { max-width: 1200px; margin: -50px auto 0; padding: 20px; position: relative; }
-       .shop-info { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-       #ownerPic { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #a16207; }
-        
-       .btn-group { display: flex; gap: 10px; margin-left: auto; }
-       .btn { padding: 12px 20px; border-radius: 12px; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-       .btn-whatsapp { background: #25D366; color: white; }
-       .btn-call { background: #2563eb; color: white; }
-        
-       .section-title { font-size: 24px; margin: 30px 0 15px; color: #1e293b; }
-       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-       .product-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); transition: 0.3s; }
-       .product-card:hover { transform: translateY(-5px); }
-       .product-card img { width: 100%; height: 200px; object-fit: cover; }
-       .product-info { padding: 15px; }
-       .product-info h3 { font-size: 18px; margin-bottom: 5px; }
+        /* HEADER */
+       .top-bar { background: white; padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 99; display: flex; justify-content: space-between; align-items: center; }
+       .search-box { flex: 1; max-width: 500px; margin: 0 20px; position: relative; }
+       .search-box input { width: 100%; padding: 12px 45px 12px 15px; border: 2px solid #e2e8f0; border-radius: 12px; }
+       .cart-btn { background: #a16207; color: white; padding: 12px 20px; border-radius: 12px; text-decoration: none; font-weight: 700; position: relative; }
+
+        /* BANNER */
+       .banner { width: 100%; height: 300px; background: linear-gradient(135deg, #78350f 0%, #431407 100%); background-size: cover; background-position: center; position: relative; }
+       .offer-badge { position: absolute; top: 20px; left: 20px; background: #f59e0b; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; animation: pulse 2s infinite; }
+       @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+        /* FEATURES BAR */
+       .features { display: grid; grid-template-columns: repeat(4,1fr); gap: 15px; background: white; padding: 20px; border-radius: 15px; margin: 20px 0; }
+       .feature { text-align: center; color: #64748b; font-size: 13px; }
+       .feature i { font-size: 28px; color: #a16207; margin-bottom: 8px; }
+
+        /* CATEGORIES */
+       .categories { display: flex; gap: 15px; overflow-x: auto; padding: 15px 0; }
+       .cat-btn { background: white; border: 2px solid #e2e8f0; padding: 10px 20px; border-radius: 50px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+       .cat-btn.active { background: #a16207; color: white; }
+
+        /* PRODUCTS */
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
+       .product-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); position: relative; }
+       .wishlist { position: absolute; top: 12px; right: 12px; background: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
+       .wishlist.active i { color: red; }
+       .product-card img { width: 100%; height: 200px; object-fit: cover; cursor: pointer; }
+       .product-info { padding: 18px; }
+       .rating { color: #f59e0b; font-size: 13px; }
        .price { font-size: 22px; font-weight: 700; color: #a16207; }
-       .stock { font-size: 12px; color: #64748b; }
-       .out-of-stock { opacity: 0.5; }
-       .announcement { background: #fef3c7; border-left: 5px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+       .delivery-tag { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 6px; font-size: 11px; margin-top: 5px; display: inline-block; }
+       .btn-add { background: #a16207; color: white; padding: 10px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; }
+
+        /* MODAL + CHECKOUT */
+       .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; justify-content: center; align-items: center; overflow-y: auto; }
+       .modal-content { background: white; padding: 30px; border-radius: 20px; max-width: 1000px; width: 95%; margin: 20px auto; }
+       input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; }
+       .payment-option { border: 2px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; }
+       .payment-option.active { border-color: #a16207; background: #fffbeb; }
     </style>
 </head>
 <body>
-    <div class="banner" id="shopBanner">
-        <div class="shop-status" id="shopStatus">Open</div>
-        <div class="banner-overlay">
-            <h1><i class="fa fa-couch"></i> <span id="shopName">Loading...</span></h1>
-            <p id="shopAddress"></p>
+    <div class="top-bar">
+        <h2 style="color:#a16207;"><i class="fa fa-couch"></i> <span id="shopNameTop">Shop</span></h2>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search Sofa, Bed, Table...">
+            <i class="fa fa-search" style="position:absolute; right:15px; top:14px;"></i>
         </div>
+        <a href="#" id="cartBtn" class="cart-btn"><i class="fa fa-cart-shopping"></i> Cart <span id="cartCount">0</span></a>
     </div>
 
-    <div class="container">
-        <div class="shop-info">
+    <div class="banner" id="shopBanner">
+        <div class="offer-badge" id="offerBadge" style="display:none;"><i class="fa fa-bolt"></i> <span id="offerText"></span></div>
+        <div class="shop-status" id="shopStatus" style="position:absolute; top:20px; right:20px; padding:10px 20px; border-radius:50px; font-weight:700;">Loading...</div>
+    </div>
+
+    <div class="container" style="max-width:1400px; margin:0 auto; padding:20px;">
+        
+        <!-- 4 FEATURES -->
+        <div class="features">
+            <div class="feature"><i class="fa fa-truck-fast"></i><div>Free Delivery</div></div>
+            <div class="feature"><i class="fa fa-shield-halved"></i><div>1 Year Warranty</div></div>
+            <div class="feature"><i class="fa fa-rotate-left"></i><div>7 Day Return</div></div>
+            <div class="feature"><i class="fa fa-headset"></i><div>24x7 Support</div></div>
+        </div>
+
+        <div class="shop-info" style="background:white; padding:25px; border-radius:20px; margin:20px 0; display:flex; gap:20px; align-items:center;">
             <img id="ownerPic" src="https://placehold.co/80">
             <div>
                 <h2 id="ownerName">Owner</h2>
-                <p style="color: #64748b;"><i class="fa fa-phone"></i> <span id="shopPhone"></span></p>
-            </div>
-            <div class="btn-group">
-                <a href="#" id="whatsappBtn" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-                <a href="#" id="callBtn" class="btn btn-call"><i class="fa fa-phone"></i> Call</a>
+                <p style="color: #64748b;">Serving since 2015</p>
             </div>
         </div>
 
-        <div id="announcementBox" style="display:none;" class="announcement">
-            <b><i class="fa fa-bullhorn"></i> Announcement:</b> <span id="announcementText"></span>
-        </div>
+        <div class="categories" id="categories"></div>
 
-        <h2 class="section-title">Our Furniture Collection</h2>
-        <div class="product-grid" id="productGrid">
-            Loading...
+        <h2 style="font-size:28px; margin:30px 0 15px;">Trending Products</h2>
+        <div class="product-grid" id="productGrid">Loading...</div>
+    </div>
+
+    <!-- CART + CHECKOUT MODAL -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content">
+            <h2>Checkout</h2>
+            <div id="cartItems"></div>
+            <h3>Total: ₹<span id="totalAmount">0</span></h3>
+            <hr style="margin:20px 0;">
+            <h3>Delivery Address</h3>
+            <input type="text" id="cName" placeholder="Full Name">
+            <input type="tel" id="cPhone" placeholder="Phone Number">
+            <input type="text" id="cAddress" placeholder="Full Address with Pincode">
+            
+            <h3>Delivery Slot</h3>
+            <select id="deliverySlot">
+                <option>Tomorrow 10AM - 2PM</option>
+                <option>Tomorrow 2PM - 6PM</option>
+                <option>Day After Tomorrow</option>
+            </select>
+
+            <h3>Payment Method</h3>
+            <div class="payment-option active" onclick="selectPayment(this,'COD')"><i class="fa fa-money-bill"></i> Cash on Delivery</div>
+            <div class="payment-option" onclick="selectPayment(this,'UPI')"><i class="fa fa-mobile-screen"></i> UPI / Online Payment</div>
+            <input type="hidden" id="paymentMethod" value="COD">
+
+            <button class="btn-add" style="font-size:16px; padding:15px;" onclick="placeOrder()">Place Order</button>
+            <button onclick="closeCheckout()" style="margin-top:10px; width:100%; padding:12px; border:1px solid #ddd; border-radius:10px;">Cancel</button>
         </div>
+    </div>
+
+    <!-- PRODUCT DETAIL MODAL -->
+    <div class="modal" id="productModal">
+        <div class="modal-content" id="modalContent" style="display:flex; gap:30px;"></div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const shopId = urlParams.get('shopId');
+        let shopDataGlobal = {};
+        let cart = JSON.parse(localStorage.getItem('cart_'+shopId)) || [];
+        let wishlist = JSON.parse(localStorage.getItem('wishlist_'+shopId)) || [];
+        let currentFilter = 'all';
+        let selectedPayment = 'COD';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            updateCartCount();
+            document.getElementById('cartBtn').onclick = openCheckout;
+            document.getElementById('searchInput').onkeyup = (e) => renderProducts(e.target.value);
+        });
 
         async function loadData() {
-            const res = await fetch(`/api/shops/get/${shopId}`);
+            const res = await fetch(`/api/shops/${shopId}`);
             const result = await res.json();
-            if(result.success){
-                const shop = result.data;
-                renderShop(shop);
-            }
+            const shop = result.shop || result.data || result;
+            shopDataGlobal = shop;
+            renderShop(shop);
         }
 
         function renderShop(shop){
             document.getElementById('pageTitle').innerText = shop.shopName;
-            document.getElementById('shopName').innerText = shop.shopName;
-            document.getElementById('shopAddress').innerText = `${shop.address.city}, ${shop.address.state}`;
+            document.getElementById('shopNameTop').innerText = shop.shopName;
             document.getElementById('ownerName').innerText = shop.ownerName;
-            document.getElementById('shopPhone').innerText = shop.phone;
-            document.getElementById('ownerPic').src = shop.ownerPhotoUrl || 'https://placehold.co/80/a16207/fff?text=O';
-            
+            document.getElementById('ownerPic').src = shop.ownerPhotoUrl || 'https://placehold.co/80';
             if(shop.banner) document.getElementById('shopBanner').style.backgroundImage = `url(${shop.banner})`;
+            if(shop.announcement){
+                document.getElementById('offerBadge').style.display = 'block';
+                document.getElementById('offerText').innerText = shop.announcement;
+            }
             
             const statusEl = document.getElementById('shopStatus');
             statusEl.innerText = shop.isOpen? 'Open Now' : 'Closed';
-            statusEl.className = `shop-status ${shop.isOpen? 'open' : 'closed'}`;
+            statusEl.style.background = shop.isOpen? '#22c55e' : '#ef4444';
+            statusEl.style.color = 'white';
 
-            document.getElementById('whatsappBtn').href = `https://wa.me/91${shop.phone}`;
-            document.getElementById('callBtn').href = `tel:${shop.phone}`;
-
-            if(shop.announcement){
-                document.getElementById('announcementBox').style.display = 'block';
-                document.getElementById('announcementText').innerText = shop.announcement;
-            }
-
-            renderProducts(shop.items);
+            const cats = [...new Set(shop.items.map(i => i.category || 'General'))];
+            document.getElementById('categories').innerHTML = '<div class="cat-btn active" onclick="filterCat(\'all\',event)">All</div>' + 
+                cats.map(c => `<div class="cat-btn" onclick="filterCat('${c}',event)">${c}</div>`).join('');
+            
+            renderProducts();
         }
 
-        function renderProducts(items){
-            const grid = document.getElementById('productGrid');
-            if(!items?.length) return grid.innerHTML = '<p style="text-align:center; color:#64748b;">Abhi koi product nahi hai</p>';
+        function filterCat(cat,event){
+            currentFilter = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            renderProducts();
+        }
 
-            grid.innerHTML = items.filter(i => i.available).map(item => `
-                <div class="product-card ${item.stock <= 0 ? 'out-of-stock' : ''}">
-                    <img src="${item.image || 'https://placehold.co/300x200/a16207/fff?text=No+Image'}">
+        function renderProducts(search=''){
+            const grid = document.getElementById('productGrid');
+            let items = shopDataGlobal.items.filter(i => i.available);
+            if(currentFilter !== 'all') items = items.filter(i => (i.category || 'General') === currentFilter);
+            if(search) items = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
+
+            grid.innerHTML = items.map(item => `
+                <div class="product-card">
+                    <div class="wishlist ${wishlist.includes(item._id)?'active':''}" onclick="toggleWishlist('${item._id}')"><i class="fa fa-heart"></i></div>
+                    <img src="${item.image || 'https://placehold.co/300x200'}" onclick='openModal(${JSON.stringify(item)})'>
                     <div class="product-info">
-                        <h3>${item.name}</h3>
-                        <p style="color:#64748b; font-size:13px;">${item.desc || ''}</p>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-                            <div>
-                                <div class="price">₹${item.price}</div>
-                                <div class="stock">Stock: ${item.stock} ${item.unit}</div>
-                            </div>
-                            ${item.stock > 0 ? `<a href="https://wa.me/91${document.getElementById('shopPhone').innerText}?text=Hi, I want to buy ${item.name}" class="btn btn-whatsapp" style="padding:8px 12px;"><i class="fab fa-whatsapp"></i></a>` : '<span style="color:red; font-size:12px;">Out of Stock</span>'}
-                        </div>
+                        <div class="rating"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star-half"></i> 4.8</div>
+                        <h3 onclick='openModal(${JSON.stringify(item)})' style="cursor:pointer;">${item.name}</h3>
+                        <div><span class="price">₹${item.price}</span> <span style="text-decoration:line-through; color:#94a3b8; font-size:14px;">₹${item.price+2000}</span></div>
+                        <div class="delivery-tag"><i class="fa fa-truck"></i> Free Delivery by Tomorrow</div>
+                        <button class="btn-add" onclick="addToCart('${item._id}', '${item.name}', ${item.price})"><i class="fa fa-plus"></i> Add to Cart</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        loadData();
+        function openModal(item){
+            document.getElementById('productModal').style.display = 'flex';
+            document.getElementById('modalContent').innerHTML = `
+                <img src="${item.image}" style="width:400px; height:400px; object-fit:cover; border-radius:15px;">
+                <div>
+                    <h2>${item.name}</h2>
+                    <div class="rating"><i class="fa fa-star"></i> 4.8 (120 Reviews)</div>
+                    <h1 style="color:#a16207; margin:15px 0;">₹${item.price}</h1>
+                    <p>${item.desc}</p>
+                    <p style="margin:10px 0;"><b>Material:</b> Premium Sheesham Wood</p>
+                    <p><b>Warranty:</b> 1 Year</p>
+                    <p><b>Delivery:</b> Free, Tomorrow</p>
+                    <div style="margin:20px 0; padding:15px; background:#f0fdf4; border-radius:10px;"><i class="fa fa-check"></i> 7 Days Easy Return</div>
+                    <button class="btn-add" style="padding:15px; font-size:16px;" onclick="addToCart('${item._id}', '${item.name}', ${item.price}); closeModal()">Add to Cart</button>
+                </div>
+            `;
+        }
+        function closeModal(){ document.getElementById('productModal').style.display = 'none'; }
+
+        function toggleWishlist(id){
+            if(wishlist.includes(id)) wishlist = wishlist.filter(w => w !== id);
+            else wishlist.push(id);
+            localStorage.setItem('wishlist_'+shopId, JSON.stringify(wishlist));
+            renderProducts();
+        }
+
+        function addToCart(id, name, price){
+            const existing = cart.find(i => i.id === id);
+            if(existing) existing.qty++; else cart.push({id, name, price, qty: 1});
+            localStorage.setItem('cart_'+shopId, JSON.stringify(cart));
+            updateCartCount();
+            alert(name + ' added to cart ✅');
+        }
+        function updateCartCount(){ document.getElementById('cartCount').innerText = cart.reduce((a,b) => a+b.qty, 0); }
+
+        function openCheckout(){
+            document.getElementById('checkoutModal').style.display = 'flex';
+            let total = 0;
+            document.getElementById('cartItems').innerHTML = cart.map(item => {
+                total += item.price * item.qty;
+                return `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee;">${item.name} x ${item.qty} <b>₹${item.price * item.qty}</b></div>`
+            }).join('');
+            document.getElementById('totalAmount').innerText = total;
+        }
+        function closeCheckout(){ document.getElementById('checkoutModal').style.display = 'none'; }
+        function selectPayment(el, method){
+            document.querySelectorAll('.payment-option').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('paymentMethod').value = method;
+        }
+
+        async function placeOrder(){
+            const orderData = {
+                shopId,
+                customerName: document.getElementById('cName').value,
+                customerPhone: document.getElementById('cPhone').value,
+                customerAddress: document.getElementById('cAddress').value,
+                deliverySlot: document.getElementById('deliverySlot').value,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                items: cart,
+                totalAmount: document.getElementById('totalAmount').innerText,
+                orderStatus: 'pending'
+            };
+            if(!orderData.customerName || !orderData.customerPhone) return alert('Details bharo');
+
+            await fetch('/api/orders', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify(orderData)
+            });
+
+            // WhatsApp Message
+            let msg = `*NEW ORDER* - ${shopDataGlobal.shopName}\n\n`;
+            cart.forEach(i => msg += `${i.name} x ${i.qty} = ₹${i.price*i.qty}\n`);
+            msg += `\n*Total:* ₹${orderData.totalAmount}\n*Payment:* ${orderData.paymentMethod}\n*Delivery:* ${orderData.deliverySlot}\n*Address:* ${orderData.customerAddress}`;
+            window.open(`https://wa.me/91${shopDataGlobal.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            
+            localStorage.removeItem('cart_'+shopId);
+            alert('Order Placed! Owner will contact you soon.');
+            closeCheckout();
+            location.reload();
+        }
     </script>
 </body>
 </html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head><title>Track Order</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body{background:#f1f5f9; font-family:Poppins; padding:20px;}
+.container{max-width:700px; margin:0 auto; background:white; padding:30px; border-radius:20px;}
+.step{display:flex; gap:15px; margin-bottom:25px; position:relative;}
+.step .icon{width:40px; height:40px; border-radius:50%; background:#e2e8f0; display:flex; align-items:center; justify-content:center;}
+.step.active .icon{background:#22c55e; color:white;}
+.step-line{position:absolute; left:19px; top:40px; width:2px; height:40px; background:#e2e8f0;}
+</style>
+</head>
+<body>
+    <div class="container">
+        <h2>Track Your Order</h2>
+        <p>Tracking ID: <b id="trackingId"></b></p>
+        <div id="trackingSteps" style="margin-top:30px;"></div>
+    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const shopId = params.get('shopId');
+        const tracking = params.get('tracking');
+        document.getElementById('trackingId').innerText = tracking;
+
+        async function loadTracking(){
+            const res = await fetch(`/api/orders/track/${tracking}`);
+            const order = await res.json();
+            
+            const steps = ['pending','confirmed','packed','out_for_delivery','delivered'];
+            const stepNames = ['Order Placed','Confirmed','Packed','Out for Delivery','Delivered'];
+            const currentIndex = steps.indexOf(order.orderStatus);
+
+            document.getElementById('trackingSteps').innerHTML = steps.map((s,i) => `
+                <div class="step ${i<=currentIndex?'active':''}">
+                    <div class="icon"><i class="fa ${i==4?'fa-check':i==3?'fa-truck':i==2?'fa-box':i==1?'fa-check-double':'fa-receipt'}"></i></div>
+                    <div><b>${stepNames[i]}</b><div style="color:#64748b; font-size:13px;">${i<=currentIndex?'Completed':''}</div></div>
+                    ${i<4?'<div class="step-line"></div>':''}
+                </div>
+            `).join('');
+        }
+        loadTracking();
+        setInterval(loadTracking, 10000); // 10 sec me auto refresh
+    </script>
+</body>
+</html>

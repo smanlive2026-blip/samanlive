@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head><title>Order Success</title>
+<style>body{display:flex; justify-content:center; align-items:center; height:100vh; font-family:Poppins; text-align:center; background:#f1f5f9;}
+.box{background:white; padding:50px; border-radius:20px; box-shadow:0 10px 40px rgba(0,0,0,0.1);}
+h1{color:#16a34a;} .btn{background:#a16207; color:white; padding:12px 24px; border-radius:10px; text-decoration:none; display:inline-block; margin:10px;}</style>
+</head>
+<body>
+    <div class="box">
+        <h1><i class="fa fa-check-circle"></i> Order Placed!</h1>
+        <p>Your Tracking ID: <b id="trackingId"></b></p>
+        <p>Shop owner ko order mil gaya hai. Wo 2 ghante me confirm karenge.</p>
+        <a href="#" id="trackBtn" class="btn">Track Order</a>
+        <a href="#" id="homeBtn" class="btn" style="background:#64748b;">Continue Shopping</a>
+    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const shopId = params.get('shopId');
+        const tracking = params.get('tracking');
+        document.getElementById('trackingId').innerText = tracking;
+        document.getElementById('trackBtn').href = `track-order.html?shopId=${shopId}&tracking=${tracking}`;
+        document.getElementById('homeBtn').href = `customer-view.html?shopId=${shopId}`;
+    </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout - <span id="shopName"></span></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *{font-family:Poppins; box-sizing:border-box;}
+        body{background:#f1f5f9; padding:20px;}
+        .container{max-width:900px; margin:0 auto; display:grid; grid-template-columns: 2fr 1fr; gap:20px;}
+        .card{background:white; padding:25px; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05);}
+        input, select {width:100%; padding:12px; margin-bottom:15px; border:1px solid #ddd; border-radius:10px;}
+        .payment-option { border: 2px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; display:flex; align-items:center; gap:10px; }
+        .payment-option.active { border-color: #a16207; background: #fffbeb; }
+        .btn{background:#a16207; color:white; padding:15px; border:none; border-radius:12px; width:100%; font-size:16px; font-weight:700; cursor:pointer;}
+        .cart-item{display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #eee;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2>1. Delivery Details</h2>
+            <input type="text" id="cName" placeholder="Full Name *">
+            <input type="tel" id="cPhone" placeholder="Phone Number *">
+            <input type="text" id="cAddress" placeholder="Full Address with House No *">
+            <input type="text" id="cPincode" placeholder="Pincode *">
+            
+            <h2>2. Delivery Slot</h2>
+            <select id="deliverySlot">
+                <option>Tomorrow 10AM - 2PM</option>
+                <option>Tomorrow 2PM - 6PM</option>
+                <option>Day After Tomorrow 10AM - 2PM</option>
+            </select>
+
+            <h2>3. Payment Method</h2>
+            <div class="payment-option active" onclick="selectPayment(this,'COD')"><i class="fa fa-money-bill-wave"></i> Cash on Delivery</div>
+            <div class="payment-option" onclick="selectPayment(this,'UPI')"><i class="fa fa-qrcode"></i> UPI / GPay / PhonePe</div>
+            <div class="payment-option" onclick="selectPayment(this,'CARD')"><i class="fa fa-credit-card"></i> Debit/Credit Card</div>
+            <input type="hidden" id="paymentMethod" value="COD">
+        </div>
+
+        <div class="card">
+            <h2>Order Summary</h2>
+            <div id="cartItems"></div>
+            <hr>
+            <div style="display:flex; justify-content:space-between;"><span>Subtotal</span> <span>₹<span id="subtotal">0</span></span></div>
+            <div style="display:flex; justify-content:space-between;"><span>Delivery</span> <span style="color:green;">FREE</span></div>
+            <hr>
+            <div style="display:flex; justify-content:space-between; font-size:20px; font-weight:700;"><span>Total</span> <span>₹<span id="total">0</span></span></div>
+            <button class="btn" onclick="placeOrder()">Place Order</button>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        const cart = JSON.parse(localStorage.getItem('cart_'+shopId)) || [];
+        let shopData = {};
+
+        async function loadData(){
+            const res = await fetch(`/api/shops/${shopId}`);
+            shopData = (await res.json()).shop || (await res.json()).data;
+            document.getElementById('shopName').innerText = shopData.shopName;
+            renderCart();
+        }
+        loadData();
+
+        function renderCart(){
+            let total = 0;
+            document.getElementById('cartItems').innerHTML = cart.map(item => {
+                total += item.price * item.qty;
+                return `<div class="cart-item"><div>${item.name} x ${item.qty}</div><div>₹${item.price * item.qty}</div></div>`
+            }).join('');
+            document.getElementById('subtotal').innerText = total;
+            document.getElementById('total').innerText = total;
+        }
+
+        function selectPayment(el, method){
+            document.querySelectorAll('.payment-option').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('paymentMethod').value = method;
+        }
+
+        async function placeOrder(){
+            const orderData = {
+                shopId,
+                customerName: document.getElementById('cName').value,
+                customerPhone: document.getElementById('cPhone').value,
+                customerAddress: document.getElementById('cAddress').value,
+                pincode: document.getElementById('cPincode').value,
+                deliverySlot: document.getElementById('deliverySlot').value,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                items: cart,
+                totalAmount: document.getElementById('total').innerText,
+                orderStatus: 'pending',
+                trackingId: 'FUR' + Date.now()
+            };
+            if(!orderData.customerName || !orderData.customerPhone) return alert('Details bharo');
+
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify(orderData)
+            });
+            const result = await res.json();
+
+            // WhatsApp to Owner
+            let msg = `*NEW ORDER #${orderData.trackingId}*\n\n`;
+            cart.forEach(i => msg += `${i.name} x ${i.qty} = ₹${i.price*i.qty}\n`);
+            msg += `\n*Total:* ₹${orderData.totalAmount}\n*Payment:* ${orderData.paymentMethod}\n*Delivery:* ${orderData.deliverySlot}\n*Address:* ${orderData.customerAddress}`;
+            window.open(`https://wa.me/91${shopData.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            
+            localStorage.removeItem('cart_'+shopId);
+            window.location.href = `order-success.html?shopId=${shopId}&tracking=${orderData.trackingId}`;
+        }
+    </script>
+</body>
+</html>
