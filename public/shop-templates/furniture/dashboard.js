@@ -25,7 +25,7 @@ async function loadData() {
         const result = await res.json();
         console.log("API RESPONSE:", result);
 
-        shopData = result.shop || result.data || result; // FIX: data ya seedha object
+         shopData = result.shop || result.data || result; // FIX: data ya seedha object
         
         if(shopData && shopData._id){
             renderAll();
