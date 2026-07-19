@@ -43,10 +43,11 @@ function renderAll(){
     document.getElementById('shopName').innerText = shopData?.shopName || 'Furniture Showroom';
     document.getElementById('items').innerText = shopData?.items?.length || 0;
 
-    // BUTTON LINK UPDATE - YAHI FIX HAI
+    // BUTTON LINK UPDATE - 4 BUTTON
     document.getElementById('userViewBtn').href = `/shop-templates/furniture/customer-view.html?shopId=${shopId}`;
     document.getElementById('addProductBtn').href = `add-product.html?shopId=${shopId}`;
-    document.getElementById('bulkProductBtn').href = `bulk-products.html?shopId=${shopId}`; // NAYA BUTTON
+    document.getElementById('bulkProductBtn').href = `bulk-products.html?shopId=${shopId}`;
+    document.getElementById('libraryBtn').href = `product-library.html?shopId=${shopId}`; // PRODUCT LIBRARY LINK
 
     document.getElementById('announcementInput').value = shopData?.announcement || '';
     document.getElementById('openTime').value = shopData?.shopSettings?.openTime || '09:00';
@@ -63,11 +64,6 @@ function renderAll(){
     renderLowStock();
     loadOrderStats();
     bindUploadsCustom();
-}
-
-// YE FUNCTION BAHAR HONA CHAHIYE THA
-function openBulkProduct(){
-    window.location.href = `bulk-products.html?shopId=${shopId}`; // currentShopId -> shopId
 }
 
 function renderProducts(filter=''){
@@ -118,7 +114,7 @@ async function loadOrderStats(){
 }
 
 async function updateShopDB(updateData){
-    const res = await fetch(`/api/shops/${shopId}`, { // YE SAHI HAI
+    const res = await fetch(`/api/shops/${shopId}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(updateData)
     });
