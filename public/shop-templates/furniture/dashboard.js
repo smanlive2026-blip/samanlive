@@ -20,48 +20,50 @@ let editingIndex = null;
 
 async function loadData() {
     try{
-        const res = await fetch(`/api/shops/${shopId}`); // FIX: /get/ hata diya
+        const res = await fetch(`/api/shops/${shopId}`);
         if(!res.ok) throw new Error('Shop not found 404');
         const result = await res.json();
         console.log("API RESPONSE:", result);
-        if(result.success){
-            shopData = result.data;
+
+        shopData = result.data || result; // FIX: data ya seedha object
+        
+        if(shopData && shopData._id){
             renderAll();
         } else {
-            alert('Shop nahi mila: ' + result.message);
+            alert('Shop nahi mila');
         }
     }catch(err){
         console.error("LOAD ERROR:", err);
-        alert('Server se data nahi aa raha. Backend route check karo');
+        alert('Server se data nahi aa raha');
     }
 }
 
 function renderAll(){
-    document.getElementById('shopName').innerText = shopData.shopName || 'Furniture Showroom';
-    document.getElementById('items').innerText = shopData.items?.length || 0;
+    document.getElementById('shopName').innerText = shopData?.shopName || 'Furniture Showroom';
+    document.getElementById('items').innerText = shopData?.items?.length || 0;
     document.getElementById('userViewBtn').href = `/shop-templates/furniture/customer-view.html?shopId=${shopId}`;
     document.getElementById('addProductBtn').href = `add-product.html?shopId=${shopId}`;
 
-    document.getElementById('announcementInput').value = shopData.announcement || '';
-    document.getElementById('openTime').value = shopData.shopSettings?.openTime || '09:00';
-    document.getElementById('closeTime').value = shopData.shopSettings?.closeTime || '21:00';
+    document.getElementById('announcementInput').value = shopData?.announcement || '';
+    document.getElementById('openTime').value = shopData?.shopSettings?.openTime || '09:00';
+    document.getElementById('closeTime').value = shopData?.shopSettings?.closeTime || '21:00';
 
     const toggle = document.getElementById('shopToggle');
-    toggle.classList.toggle('off',!shopData.isOpen);
-    document.getElementById('toggleText').innerText = shopData.isOpen? 'Open' : 'Closed';
+    toggle.classList.toggle('off',!shopData?.isOpen);
+    document.getElementById('toggleText').innerText = shopData?.isOpen? 'Open' : 'Closed';
 
-    if(shopData.banner) document.getElementById('shopBanner').src = shopData.banner;
-    if(shopData.ownerPhotoUrl) document.getElementById('ownerImg').src = shopData.ownerPhotoUrl;
+    if(shopData?.banner) document.getElementById('shopBanner').src = shopData.banner;
+    if(shopData?.ownerPhotoUrl) document.getElementById('ownerImg').src = shopData.ownerPhotoUrl;
 
     renderProducts();
     renderLowStock();
     loadOrderStats();
-    bindUploadsCustom(); // shopcore ko touch nahi kiya
+    bindUploadsCustom();
 }
 
 function renderProducts(filter=''){
     const list = document.getElementById('productList');
-    let items = shopData.items?.filter(i => i.name.toLowerCase().includes(filter.toLowerCase())) || [];
+    let items = shopData?.items?.filter(i => i.name.toLowerCase().includes(filter.toLowerCase())) || [];
     if(!items.length) return list.innerHTML = '<p style="color:#64748b;">Koi product nahi hai. + Add Furniture dabao</p>';
 
     list.innerHTML = items.map((item, index) => `
@@ -78,7 +80,7 @@ function renderProducts(filter=''){
 }
 
 function renderLowStock(){
-    const low = shopData.items?.filter(i => i.stock <= 5) || [];
+    const low = shopData?.items?.filter(i => i.stock <= 5) || [];
     document.getElementById('lowStock').innerHTML = low.length?
         low.map(i => `<div style="padding:10px; background:#fef2f2; border-radius:10px; margin-bottom:8px;"><b>${i.name}</b> - ${i.stock} left</div>`).join('') :
         '<p style="color:#16a34a;">Sab stock me hai ✅</p>';
@@ -106,7 +108,6 @@ async function loadOrderStats(){
     }catch(err){ console.log("Order stats error", err) }
 }
 
-// ===== FIX: /api/shops/:id WALA ROUTE =====
 async function updateShopDB(updateData){
     const res = await fetch(`/api/shops/${shopId}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'},
@@ -117,7 +118,6 @@ async function updateShopDB(updateData){
     else alert('Update failed: ' + result.message);
 }
 
-// ===== CUSTOM UPLOAD BIND - SHOPCORE COMMON HAI =====
 function bindUploadsCustom(){
     document.getElementById('ownerInput').onchange = async (e)=>{
         const file = e.target.files[0]; if(!file) return;
@@ -137,7 +137,6 @@ function bindUploadsCustom(){
     }
 }
 
-// EVENTS
 function initEvents(){
     document.getElementById('searchProduct').onkeyup = (e) => renderProducts(e.target.value);
     document.getElementById('shopToggle').onclick = () => updateShopDB({isOpen:!shopData.isOpen});
