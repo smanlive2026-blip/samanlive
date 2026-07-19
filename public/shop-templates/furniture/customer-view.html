@@ -31,106 +31,80 @@
     </div>
 
     <div class="container">
-        <div class="tabs">
-            <div class="tab active" onclick="filter('All')">All 50+</div>
-            <div class="tab" onclick="filter('Sofa')">Sofa 8</div>
-            <div class="tab" onclick="filter('Bed')">Bed 8</div>
-            <div class="tab" onclick="filter('Table')">Table 10</div>
-            <div class="tab" onclick="filter('Storage')">Storage 8</div>
-            <div class="tab" onclick="filter('Chair')">Chair 8</div>
-            <div class="tab" onclick="filter('Office')">Office 8</div>
+        <div class="tabs" id="tabs">
+            <div class="tab active" onclick="filter('All', this)">All</div>
         </div>
 
-        <div class="product-grid" id="productGrid"></div>
+        <div class="product-grid" id="productGrid">Loading...</div>
 
-        <div class="offer-box">
+        <div class="offer-box" id="offerBox">
             <h3><i class="fa fa-gift"></i> Special Offers</h3>
             <p style="margin-top:10px;">0% EMI Available | 5 Year Warranty | Free Assembly & Delivery</p>
         </div>
     </div>
 
     <script>
-        const products = [
-            // SOFA - 8
-            {name: "3 Seater Sofa", price: 25000, cat: "Sofa", icon: "🛋️"}, 
-            {name: "5 Seater Sofa Set", price: 45000, cat: "Sofa", icon: "🛋️"},
-            {name: "L Shape Sofa", price: 55000, cat: "Sofa", icon: "🛋️"},
-            {name: "Recliner Sofa", price: 35000, cat: "Sofa", icon: "🛋️"},
-            {name: "Sofa Cum Bed", price: 30000, cat: "Sofa", icon: "🛋️"},
-            {name: "2 Seater Sofa", price: 18000, cat: "Sofa", icon: "🛋️"},
-            {name: "Leather Sofa", price: 65000, cat: "Sofa", icon: "🛋️"},
-            {name: "Corner Sofa", price: 48000, cat: "Sofa", icon: "🛋️"},
-            
-            // BED - 8
-            {name: "King Size Bed", price: 35000, cat: "Bed", icon: "🛏️"}, 
-            {name: "Queen Size Bed", price: 28000, cat: "Bed", icon: "🛏️"},
-            {name: "Single Bed", price: 15000, cat: "Bed", icon: "🛏️"},
-            {name: "Bed with Storage", price: 40000, cat: "Bed", icon: "🛏️"},
-            {name: "Bunk Bed", price: 32000, cat: "Bed", icon: "🛏️"},
-            {name: "Sofa Cum Bed", price: 30000, cat: "Bed", icon: "🛏️"},
-            {name: "Double Bed", price: 25000, cat: "Bed", icon: "🛏️"},
-            {name: "Designer Bed", price: 55000, cat: "Bed", icon: "🛏️"},
-            
-            // TABLE - 10
-            {name: "Dining Table 4 Seater", price: 20000, cat: "Table", icon: "🍽️"}, 
-            {name: "Dining Table 6 Seater", price: 28000, cat: "Table", icon: "🍽️"},
-            {name: "Dining Table 8 Seater", price: 40000, cat: "Table", icon: "🍽️"},
-            {name: "Study Table", price: 12000, cat: "Table", icon: "📚"},
-            {name: "Computer Table", price: 8000, cat: "Table", icon: "💻"},
-            {name: "Coffee Table", price: 7000, cat: "Table", icon: "☕"},
-            {name: "Side Table", price: 4000, cat: "Table", icon: "📦"},
-            {name: "Center Table", price: 9000, cat: "Table", icon: "📦"},
-            {name: "Office Desk", price: 15000, cat: "Table", icon: "💼"},
-            {name: "Console Table", price: 11000, cat: "Table", icon: "📦"},
-            
-            // STORAGE - 8
-            {name: "3 Door Wardrobe", price: 35000, cat: "Storage", icon: "🚪"}, 
-            {name: "2 Door Almirah", price: 25000, cat: "Storage", icon: "🚪"},
-            {name: "Book Shelf", price: 12000, cat: "Storage", icon: "📚"},
-            {name: "TV Cabinet", price: 18000, cat: "Storage", icon: "📺"},
-            {name: "Shoe Rack", price: 6000, cat: "Storage", icon: "👟"},
-            {name: "Chest of Drawers", price: 16000, cat: "Storage", icon: "📦"},
-            {name: "Storage Cabinet", price: 22000, cat: "Storage", icon: "📦"},
-            {name: "Display Unit", price: 28000, cat: "Storage", icon: "🖼️"},
-            
-            // CHAIR - 8
-            {name: "Dining Chair", price: 3000, cat: "Chair", icon: "💺"}, 
-            {name: "Office Chair", price: 8000, cat: "Chair", icon: "💺"},
-            {name: "Study Chair", price: 5000, cat: "Chair", icon: "💺"},
-            {name: "Recliner Chair", price: 20000, cat: "Chair", icon: "💺"},
-            {name: "Rocking Chair", price: 15000, cat: "Chair", icon: "💺"},
-            {name: "Plastic Chair", price: 1200, cat: "Chair", icon: "💺"},
-            {name: "Visitor Chair", price: 4000, cat: "Chair", icon: "💺"},
-            {name: "Bar Chair", price: 6000, cat: "Chair", icon: "💺"},
-            
-            // OFFICE - 8
-            {name: "Office Table", price: 12000, cat: "Office", icon: "💼"}, 
-            {name: "Executive Chair", price: 15000, cat: "Office", icon: "💼"},
-            {name: "Office Cabinet", price: 20000, cat: "Office", icon: "💼"},
-            {name: "Conference Table", price: 45000, cat: "Office", icon: "💼"},
-            {name: "Reception Desk", price: 25000, cat: "Office", icon: "💼"},
-            {name: "File Cabinet", price: 10000, cat: "Office", icon: "💼"},
-            {name: "Workstation", price: 30000, cat: "Office", icon: "💼"},
-            {name: "Office Sofa", price: 35000, cat: "Office", icon: "💼"}
-        ];
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        let products = [];
+
+        async function loadData(){
+            const res = await fetch(`/api/furniture/${shopId}`);
+            const result = await res.json();
+            if(result.success){
+                products = result.data.items || [];
+                document.getElementById('shopName').innerText = result.data.shopName || 'Royal Furniture';
+                renderTabs();
+                filter('All', document.querySelector('.tab'));
+            }
+        }
+
+        function renderTabs(){
+            const cats = ['All', ...new Set(products.map(p => p.category))];
+            document.getElementById('tabs').innerHTML = cats.map(c => 
+                `<div class="tab" onclick="filter('${c}', this)">${c}</div>`
+            ).join('');
+        }
 
         function display(items) {
+            if(!items.length) return document.getElementById('productGrid').innerHTML = '<p>No products</p>';
             document.getElementById('productGrid').innerHTML = items.map(p => `
                 <div class="product-card">
-                    <div style="font-size:40px; margin-bottom:10px;">${p.icon}</div>
+                    <img src="${p.image || 'https://placehold.co/300x180/a16207/fff?text=Furniture'}" style="width:100%; height:180px; object-fit:cover; border-radius:12px; margin-bottom:10px;">
                     <h3>${p.name}</h3>
-                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
+                    <p style="color:#64748b; font-size:12px;">${p.category}</p>
                     <div class="product-price">₹${p.price}</div>
-                    <button class="btn-buy" onclick="alert('Added to cart! EMI Available')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+                    <button class="btn-buy" onclick="placeOrder('${p.id}')"><i class="fa fa-cart-plus"></i> Buy Now</button>
                 </div>
             `).join('');
         }
-        function filter(cat) {
+
+        function filter(cat, el) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            display(cat==='All'? products : products.filter(p => p.cat === cat));
+            el.classList.add('active');
+            const filtered = cat==='All'? products : products.filter(p => p.category === cat);
+            el.innerText = `${cat} ${filtered.length}`;
+            display(filtered);
         }
-        display(products);
+
+        async function placeOrder(itemId){
+            const item = products.find(p => p.id == itemId);
+            const order = {
+                customerName: prompt('Name?'),
+                phone: prompt('Phone?'),
+                address: prompt('Address?'),
+                items: [{...item, qty: 1}],
+                total: item.price
+            }
+            await fetch(`/api/furniture/${shopId}/order`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(order)
+            });
+            alert('Order placed! Shop wale ko call aayega');
+        }
+
+        loadData();
     </script>
 </body>
 </html>
