@@ -1,40 +1,210 @@
-<!DOCTYPE html><html><head><title>Add Product</title>
-<style>body{background:#f1f5f9;font-family:Poppins;padding:30px}.card{background:white;padding:30px;border-radius:20px;max-width:500px;margin:auto}input{width:100%;padding:12px;margin-bottom:12px;border:1px solid #cbd5e1;border-radius:8px}.btn{background:#a16207;color:white;border:none;padding:12px 24px;border-radius:12px;font-weight:600;cursor:pointer;width:100%}</style>
-</head><body>
-<div class="card">
-<h2>Add New Furniture</h2>
-<input type="text" id="name" placeholder="Product Name">
-<input type="number" id="price" placeholder="Price ₹">
-<input type="number" id="stock" placeholder="Stock">
-<input type="text" id="unit" placeholder="Unit: Piece, Set">
-<textarea id="desc" placeholder="Description" rows="3"></textarea>
-<input type="file" id="image">
-<button class="btn" onclick="saveProduct()">Save Product</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Manage Products</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    *{font-family:Poppins; box-sizing:border-box;}
+    body{background:#f8fafc; padding:20px;}
+    .container{max-width:1200px; margin:0 auto; display:grid; grid-template-columns: 1fr 2fr; gap:25px;}
+    .card{background:white; padding:25px; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05);}
+    h2{margin-bottom:20px; color:#1e293b;}
+    input, textarea, select {width:100%; padding:12px; margin-bottom:15px; border:2px solid #e2e8f0; border-radius:10px; font-size:14px;}
+    input:focus{border-color:#a16207; outline:none;}
+    .btn{background:#a16207; color:white; border:none; padding:14px 24px; border-radius:12px; font-weight:700; cursor:pointer; width:100%;}
+    .btn-secondary{background:#64748b;}
+    .btn-danger{background:#ef4444;}
+    
+    /* IMAGE UPLOAD */
+    .img-upload{border:2px dashed #cbd5e1; border-radius:12px; padding:20px; text-align:center; cursor:pointer; margin-bottom:15px;}
+    .img-upload img{max-width:100%; height:180px; object-fit:cover; border-radius:10px;}
+    
+    /* PRODUCT LIST */
+    .product-item{display:flex; gap:15px; padding:15px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px; align-items:center;}
+    .product-item img{width:70px; height:70px; object-fit:cover; border-radius:10px;}
+    .product-info{flex:1;}
+    .product-info h4{margin:0; font-size:16px;}
+    .product-info p{margin:3px 0; color:#64748b; font-size:13px;}
+    .actions{display:flex; gap:8px;}
+    .actions button{padding:8px 12px; border:none; border-radius:8px; cursor:pointer; font-size:12px;}
+    .toggle{padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600;}
+    .toggle.on{background:#dcfce7; color:#166534;}
+    .toggle.off{background:#fee2e2; color:#991b1b;}
+</style>
+</head>
+<body>
+<div class="container">
+    <!-- LEFT: ADD/EDIT FORM -->
+    <div class="card">
+        <h2 id="formTitle"><i class="fa fa-plus"></i> Add New Product</h2>
+        <input type="hidden" id="editId">
+        
+        <div class="img-upload" onclick="document.getElementById('image').click()">
+            <img id="imgPreview" src="https://placehold.co/300x180/a16207/fff?text=Click+to+Upload" style="display:none;">
+            <div id="uploadText"><i class="fa fa-cloud-upload" style="font-size:40px; color:#a16207;"></i><p>Click to Upload Image</p></div>
+        </div>
+        <input type="file" id="image" accept="image/*" style="display:none;" onchange="previewImage(event)">
+        
+        <input type="text" id="name" placeholder="Product Name *">
+        <select id="category">
+            <option value="Sofa">Sofa</option>
+            <option value="Bed">Bed</option>
+            <option value="Table">Table</option>
+            <option value="Chair">Chair</option>
+            <option value="Wardrobe">Wardrobe</option>
+            <option value="General">General</option>
+        </select>
+        <input type="number" id="price" placeholder="Price ₹ *">
+        <input type="number" id="stock" placeholder="Stock Quantity *">
+        <input type="text" id="unit" placeholder="Unit: Piece, Set, Pair" value="Piece">
+        <textarea id="desc" placeholder="Description" rows="3"></textarea>
+        
+        <button class="btn" onclick="saveProduct()"><i class="fa fa-save"></i> Save Product</button>
+        <button class="btn btn-secondary" id="cancelBtn" onclick="resetForm()" style="display:none; margin-top:10px;">Cancel</button>
+    </div>
+
+    <!-- RIGHT: PRODUCT LIST -->
+    <div class="card">
+        <h2><i class="fa fa-list"></i> Your Products (<span id="productCount">0</span>)</h2>
+        <div id="productList">Loading...</div>
+    </div>
 </div>
+
 <script>
 const shopId = new URLSearchParams(window.location.search).get('shopId');
+let shopData = {};
+
+document.addEventListener('DOMContentLoaded', loadShop);
+
+async function loadShop(){
+    const res = await fetch(`/api/shops/${shopId}`); // FIX: /get/ hata diya
+    const result = await res.json();
+    shopData = result.shop || result.data || result;
+    shopData.items = shopData.items || [];
+    renderProductList();
+}
+
+function previewImage(event){
+    const file = event.target.files[0];
+    if(file){
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('imgPreview').src = e.target.result;
+            document.getElementById('imgPreview').style.display = 'block';
+            document.getElementById('uploadText').style.display = 'none';
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
 async function saveProduct(){
-    const formData = new FormData();
-    formData.append('image', document.getElementById('image').files[0]);
-    const upload = await fetch('/api/upload/shop', {method:'POST', body: formData});
-    const imgData = await upload.json();
+    const name = document.getElementById('name').value;
+    if(!name) return alert('Product name dalo');
 
-    const res = await fetch(`/api/shops/get/${shopId}`);
-    const shop = await res.json();
+    let imageUrl = '';
+    const file = document.getElementById('image').files[0];
+    if(file){
+        const formData = new FormData();
+        formData.append('image', file);
+        const upload = await fetch('/api/upload/shop', {method:'POST', body: formData});
+        const imgData = await upload.json();
+        imageUrl = imgData.url;
+    }
 
-    shop.data.items.push({
-        name: document.getElementById('name').value,
+    const newItem = {
+        _id: document.getElementById('editId').value || Date.now().toString(),
+        name,
+        category: document.getElementById('category').value,
         price: Number(document.getElementById('price').value),
         stock: Number(document.getElementById('stock').value),
         unit: document.getElementById('unit').value,
         desc: document.getElementById('desc').value,
-        image: imgData.url,
+        image: imageUrl || 'https://placehold.co/300x200/a16207/fff?text=No+Image',
         available: true
-    });
+    };
 
-    await fetch(`/api/shops/update/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items: shop.data.items})});
-    alert('Product Added!');
-    window.location.href = `dashboard.html?shopId=${shopId}`;
+    if(document.getElementById('editId').value){
+        // UPDATE
+        const index = shopData.items.findIndex(i => i._id === newItem._id);
+        if(!imageUrl) newItem.image = shopData.items[index].image; // purani image rakho
+        shopData.items[index] = newItem;
+    } else {
+        // ADD NEW
+        shopData.items.push(newItem);
+    }
+
+    await fetch(`/api/shops/update/${shopId}`, {
+        method:'PUT', 
+        headers:{'Content-Type':'application/json'}, 
+        body: JSON.stringify({items: shopData.items})
+    });
+    
+    alert('Product Saved ✅');
+    resetForm();
+    loadShop();
+}
+
+function renderProductList(){
+    document.getElementById('productCount').innerText = shopData.items.length;
+    if(!shopData.items.length) return document.getElementById('productList').innerHTML = '<p style="text-align:center; color:#64748b;">Abhi koi product nahi hai</p>';
+    
+    document.getElementById('productList').innerHTML = shopData.items.map(item => `
+        <div class="product-item">
+            <img src="${item.image}">
+            <div class="product-info">
+                <h4>${item.name}</h4>
+                <p>₹${item.price} | Stock: ${item.stock} ${item.unit} | ${item.category}</p>
+                <span class="toggle ${item.available?'on':'off'}" onclick="toggleAvailable('${item._id}')">${item.available?'Available':'Hidden'}</span>
+            </div>
+            <div class="actions">
+                <button onclick='editProduct(${JSON.stringify(item)})' style="background:#2563eb; color:white;"><i class="fa fa-pen"></i></button>
+                <button onclick="deleteProduct('${item._id}')" class="btn-danger"><i class="fa fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function editProduct(item){
+    document.getElementById('formTitle').innerHTML = '<i class="fa fa-pen"></i> Edit Product';
+    document.getElementById('editId').value = item._id;
+    document.getElementById('name').value = item.name;
+    document.getElementById('category').value = item.category || 'General';
+    document.getElementById('price').value = item.price;
+    document.getElementById('stock').value = item.stock;
+    document.getElementById('unit').value = item.unit;
+    document.getElementById('desc').value = item.desc;
+    document.getElementById('imgPreview').src = item.image;
+    document.getElementById('imgPreview').style.display = 'block';
+    document.getElementById('uploadText').style.display = 'none';
+    document.getElementById('cancelBtn').style.display = 'block';
+    window.scrollTo(0,0);
+}
+
+async function deleteProduct(id){
+    if(!confirm('Delete karna hai?')) return;
+    shopData.items = shopData.items.filter(i => i._id !== id);
+    await fetch(`/api/shops/update/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items: shopData.items})});
+    loadShop();
+}
+
+function toggleAvailable(id){
+    const item = shopData.items.find(i => i._id === id);
+    item.available = !item.available;
+    fetch(`/api/shops/update/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items: shopData.items})});
+    loadShop();
+}
+
+function resetForm(){
+    document.getElementById('formTitle').innerHTML = '<i class="fa fa-plus"></i> Add New Product';
+    document.getElementById('editId').value = '';
+    document.querySelectorAll('input, textarea, select').forEach(i => {if(i.id !== 'unit') i.value = ''});
+    document.getElementById('unit').value = 'Piece';
+    document.getElementById('imgPreview').style.display = 'none';
+    document.getElementById('uploadText').style.display = 'block';
+    document.getElementById('cancelBtn').style.display = 'none';
 }
 </script>
-</body></html>
+</body>
+</html>

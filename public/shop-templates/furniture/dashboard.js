@@ -1,6 +1,6 @@
 // ===== STEP 1: SHOP ID QUERY SE NIKALO =====
 const urlParams = new URLSearchParams(window.location.search);
-const shopId = urlParams.get('shopId');
+const shopId = urlParams.get('shopId'); // YEHI USE HOGA SAB JAGAH
 
 if(!shopId){
     alert('ERROR: URL me?shopId=xxx daalo');
@@ -27,7 +27,7 @@ async function loadData() {
         console.log("API RESPONSE:", result);
 
         shopData = result.shop || result.data || result;
-        
+
         if(shopData && shopData._id){
             renderAll();
         } else {
@@ -42,10 +42,11 @@ async function loadData() {
 function renderAll(){
     document.getElementById('shopName').innerText = shopData?.shopName || 'Furniture Showroom';
     document.getElementById('items').innerText = shopData?.items?.length || 0;
-    
-    // BUTTON LINK UPDATE
+
+    // BUTTON LINK UPDATE - YAHI FIX HAI
     document.getElementById('userViewBtn').href = `/shop-templates/furniture/customer-view.html?shopId=${shopId}`;
     document.getElementById('addProductBtn').href = `add-product.html?shopId=${shopId}`;
+    document.getElementById('bulkProductBtn').href = `bulk-products.html?shopId=${shopId}`; // NAYA BUTTON
 
     document.getElementById('announcementInput').value = shopData?.announcement || '';
     document.getElementById('openTime').value = shopData?.shopSettings?.openTime || '09:00';
@@ -62,6 +63,11 @@ function renderAll(){
     renderLowStock();
     loadOrderStats();
     bindUploadsCustom();
+}
+
+// YE FUNCTION BAHAR HONA CHAHIYE THA
+function openBulkProduct(){
+    window.location.href = `bulk-products.html?shopId=${shopId}`; // currentShopId -> shopId
 }
 
 function renderProducts(filter=''){
@@ -112,7 +118,7 @@ async function loadOrderStats(){
 }
 
 async function updateShopDB(updateData){
-    const res = await fetch(`/api/shops/${shopId}`, {
+    const res = await fetch(`/api/shops/${shopId}`, { // YE SAHI HAI
         method: 'PUT', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(updateData)
     });
