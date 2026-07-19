@@ -33,9 +33,6 @@ app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-mana
 app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
 app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
 app.use('/api/furniture', require('./routes/shops/furniture-route'));
-app.use('/api/upload', require('./routes/common/upload'));  // common uload har shop ke liye  
-//app.use('/api/shop', require('./routes/common/shop-route')); // shop settings ke liye
-app.use('/api/shops', require('./routes/common/shop-route'));
 
 // Request Logger - Development ke liye
 app.use((req, res, next) => {
