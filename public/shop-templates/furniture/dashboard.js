@@ -21,20 +21,21 @@ let editingIndex = null;
 async function loadData() {
     try{
         const res = await fetch(`/api/shops/${shopId}`);
-        if(!res.ok) throw new Error('Shop not found 404');
+        console.log("STATUS:", res.status);
+        if(!res.ok) throw new Error('API Status: ' + res.status + ' - ' + res.statusText);
         const result = await res.json();
         console.log("API RESPONSE:", result);
 
-         shopData = result.shop || result.data || result; // FIX: data ya seedha object
+        shopData = result.shop || result.data || result; // FIX: 3 tarike check kiye
         
         if(shopData && shopData._id){
             renderAll();
         } else {
-            alert('Shop nahi mila');
+            throw new Error('Shop data khali aa raha');
         }
     }catch(err){
         console.error("LOAD ERROR:", err);
-        alert('Server se data nahi aa raha');
+        alert('Error: ' + err.message); // Ab real error dikhega
     }
 }
 
