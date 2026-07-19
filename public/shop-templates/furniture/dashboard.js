@@ -1,17 +1,36 @@
-const pathParts = window.location.pathname.split('/');
-const shopId = pathParts[2];
-document.getElementById('shopIdDisplay').innerText = shopId;
-ShopCore.init(shopId, 'furniture');
+// ===== STEP 1: SHOP ID QUERY SE NIKALO =====
+const urlParams = new URLSearchParams(window.location.search);
+const shopId = urlParams.get('shopId');
+
+if(!shopId){
+    alert('ERROR: URL me?shopId=xxx daalo');
+    throw new Error('Shop ID missing');
+}
+
+console.log("✅ SHOP ID DETECTED:", shopId);
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('shopIdDisplay').innerText = shopId;
+    ShopCore.init(shopId, 'furniture');
+    initEvents();
+    loadData();
+});
 
 let shopData = {};
 let editingIndex = null;
 
 async function loadData() {
-    const res = await fetch(`/api/shops/get/${shopId}`);
-    const result = await res.json();
-    if(result.success){
-        shopData = result.data;
-        renderAll();
+    try{
+        const res = await fetch(`/api/shops/get/${shopId}`);
+        const result = await res.json();
+        if(result.success){
+            shopData = result.data;
+            renderAll();
+        } else {
+            alert('Shop nahi mila: ' + result.message);
+        }
+    }catch(err){
+        console.error("LOAD ERROR:", err);
+        alert('Server se data nahi aa raha');
     }
 }
 
@@ -19,18 +38,16 @@ function renderAll(){
     document.getElementById('shopName').innerText = shopData.shopName || 'Furniture Showroom';
     document.getElementById('items').innerText = shopData.items?.length || 0;
     document.getElementById('userViewBtn').href = `/shop-templates/furniture/customer-view.html?shopId=${shopId}`;
+    document.getElementById('addProductBtn').href = `add-product.html?shopId=${shopId}`;
 
-    // Announcement + Timing
     document.getElementById('announcementInput').value = shopData.announcement || '';
     document.getElementById('openTime').value = shopData.shopSettings?.openTime || '09:00';
     document.getElementById('closeTime').value = shopData.shopSettings?.closeTime || '21:00';
 
-    // Toggle
     const toggle = document.getElementById('shopToggle');
     toggle.classList.toggle('off',!shopData.isOpen);
     document.getElementById('toggleText').innerText = shopData.isOpen? 'Open' : 'Closed';
 
-    // Banner + Photo
     if(shopData.banner) document.getElementById('shopBanner').src = shopData.banner;
     if(shopData.ownerPhotoUrl) document.getElementById('ownerImg').src = shopData.ownerPhotoUrl;
 
@@ -38,15 +55,14 @@ function renderAll(){
     renderLowStock();
     loadOrderStats();
 
-    // Bind Uploads
-    ShopCore.bindImageUpload('ownerImg', 'ownerInput', 'profile', 'profile');
-    ShopCore.bindImageUpload('shopBanner', 'bannerInput', 'banner', 'banner');
+    // FIX: shop-core me /shops/:id hai isliye yaha wahi use karenge
+    bindUploadsCustom();
 }
 
 function renderProducts(filter=''){
     const list = document.getElementById('productList');
     let items = shopData.items?.filter(i => i.name.toLowerCase().includes(filter.toLowerCase())) || [];
-    if(!items.length) return list.innerHTML = '<p style="color:#64748b;">Koi product nahi hai</p>';
+    if(!items.length) return list.innerHTML = '<p style="color:#64748b;">Koi product nahi hai. + Add Furniture dabao</p>';
 
     list.innerHTML = items.map((item, index) => `
         <div class="product-item">
@@ -79,28 +95,56 @@ async function loadOrderStats(){
 
             document.getElementById('orders').innerText = todayOrders.length;
             document.getElementById('delivery').innerText = orders.filter(o =>!['delivered','cancelled'].includes(o.orderStatus)).length;
-            document.getElementById('revenue').innerText = todayOrders.reduce((a,b) => a + b.totalAmount, 0);
+            document.getElementById('revenue').innerText = todayOrders.reduce((a,b) => a + (b.totalAmount||0), 0);
 
-            document.getElementById('orderList').innerHTML = orders.slice(0,5).map(o =>
-                `<div style="padding:10px; border-bottom:1px solid #eee;">${o.customerName} - ₹${o.totalAmount} - ${o.orderStatus}</div>`
-            ).join('') || 'No orders yet';
+            if(document.getElementById('orderList')){
+                document.getElementById('orderList').innerHTML = orders.slice(0,5).map(o =>
+                    `<div style="padding:10px; border-bottom:1px solid #eee;">${o.customerName} - ₹${o.totalAmount} - ${o.orderStatus}</div>`
+                ).join('') || 'No orders yet';
+            }
         }
     }catch(err){ console.log("Order stats error", err) }
 }
 
+// ===== FIX: APNA CUSTOM UPDATE - /shops/:id wala =====
 async function updateShopDB(updateData){
-    await fetch(`/api/shops/${shopId}`, {
+    const res = await fetch(`/api/shops/${shopId}`, { // YAHI ROUTE SHOPCORE USE KARTA HAI
         method: 'PUT', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(updateData)
     });
-    loadData();
+    const result = await res.json();
+    if(result.success) loadData();
+    else alert('Update failed: ' + result.message);
+}
+
+// ===== FIX: CUSTOM BIND - KYUKI SHOPCORE DB ME NAHI BHEJ RAHA =====
+function bindUploadsCustom(){
+    ['ownerImg','ownerInput','profile','ownerPhotoUrl'].forEach(()=>{});
+    document.getElementById('ownerInput').onchange = async (e)=>{
+        const file = e.target.files[0];
+        const url = await ShopCore.uploadImage(file, 'profile');
+        if(url){
+            document.getElementById('ownerImg').src = url;
+            await updateShopDB({ownerPhotoUrl: url}); // /shops/:id pe bhej diya
+        }
+    }
+    document.getElementById('bannerInput').onchange = async (e)=>{
+        const file = e.target.files[0];
+        const url = await ShopCore.uploadImage(file, 'banner');
+        if(url){
+            document.getElementById('shopBanner').src = url;
+            await updateShopDB({banner: url}); // /shops/:id pe bhej diya
+        }
+    }
 }
 
 // EVENTS
-document.getElementById('searchProduct').onkeyup = (e) => renderProducts(e.target.value);
-document.getElementById('shopToggle').onclick = () => updateShopDB({isOpen:!shopData.isOpen});
-document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
-document.getElementById('saveTiming').onclick = () => updateShopDB({shopSettings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
+function initEvents(){
+    document.getElementById('searchProduct').onkeyup = (e) => renderProducts(e.target.value);
+    document.getElementById('shopToggle').onclick = () => updateShopDB({isOpen:!shopData.isOpen});
+    document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
+    document.getElementById('saveTiming').onclick = () => updateShopDB({shopSettings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
+}
 
 function openEditModal(index){
     editingIndex = index;
@@ -143,5 +187,3 @@ async function uploadProductImage(index){
         }
     }
 }
-
-loadData();
