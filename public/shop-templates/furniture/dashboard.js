@@ -22,26 +22,28 @@ async function loadData() {
     try{
         const res = await fetch(`/api/shops/${shopId}`);
         console.log("STATUS:", res.status);
-        if(!res.ok) throw new Error('API Status: ' + res.status + ' - ' + res.statusText);
+        if(!res.ok) throw new Error('API Status: ' + res.status);
         const result = await res.json();
         console.log("API RESPONSE:", result);
 
-        shopData = result.shop || result.data || result; // FIX: 3 tarike check kiye
+        shopData = result.shop || result.data || result;
         
         if(shopData && shopData._id){
             renderAll();
         } else {
-            throw new Error('Shop data khali aa raha');
+            alert('Shop nahi mila');
         }
     }catch(err){
         console.error("LOAD ERROR:", err);
-        alert('Error: ' + err.message); // Ab real error dikhega
+        alert('Error: ' + err.message);
     }
 }
 
 function renderAll(){
     document.getElementById('shopName').innerText = shopData?.shopName || 'Furniture Showroom';
     document.getElementById('items').innerText = shopData?.items?.length || 0;
+    
+    // BUTTON LINK UPDATE
     document.getElementById('userViewBtn').href = `/shop-templates/furniture/customer-view.html?shopId=${shopId}`;
     document.getElementById('addProductBtn').href = `add-product.html?shopId=${shopId}`;
 
@@ -122,7 +124,9 @@ async function updateShopDB(updateData){
 function bindUploadsCustom(){
     document.getElementById('ownerInput').onchange = async (e)=>{
         const file = e.target.files[0]; if(!file) return;
+        document.getElementById('uploadLoader').style.display = 'inline';
         const url = await ShopCore.uploadImage(file, 'profile');
+        document.getElementById('uploadLoader').style.display = 'none';
         if(url){
             document.getElementById('ownerImg').src = url;
             await updateShopDB({ownerPhotoUrl: url});
@@ -130,12 +134,16 @@ function bindUploadsCustom(){
     }
     document.getElementById('bannerInput').onchange = async (e)=>{
         const file = e.target.files[0]; if(!file) return;
+        document.getElementById('uploadLoader').style.display = 'inline';
         const url = await ShopCore.uploadImage(file, 'banner');
+        document.getElementById('uploadLoader').style.display = 'none';
         if(url){
             document.getElementById('shopBanner').src = url;
             await updateShopDB({banner: url});
         }
     }
+    document.getElementById('ownerImg').onclick = () => document.getElementById('ownerInput').click();
+    document.getElementById('shopBanner').onclick = () => document.getElementById('bannerInput').click();
 }
 
 function initEvents(){
