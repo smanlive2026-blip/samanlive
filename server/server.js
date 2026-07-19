@@ -32,7 +32,6 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-manager banega
 app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
 app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
-app.use('/api/furniture', require('./routes/shops/furniture-route'));
 
 // Request Logger - Development ke liye
 app.use((req, res, next) => {
@@ -40,6 +39,14 @@ app.use((req, res, next) => {
         console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
     }
     next();
+});
+//furniture
+app.get('/api/orders/shop/:shopId', async (req, res) => {
+  try {
+    const Order = require('./models/Order');
+    const orders = await Order.find({ shopId: req.params.shopId }).sort({createdAt: -1});
+    res.json({ success: true, data: orders });
+  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 // Static files serve karo
@@ -232,7 +239,8 @@ app.get('/shop/:id/dashboard', async (req, res) => {
             'Kirana': 'kirana',
             'Medical': 'medical',
             'Restaurant': 'restaurant',
-            'Cloth': 'cloth'
+            'Cloth': 'cloth',
+            'Furniture': 'furniture' 
         };
 
         const templateFolder = shopTypeMap[shop.shopType] || shop.shopType?.toLowerCase() || 'general';
