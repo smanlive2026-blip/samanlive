@@ -20,8 +20,10 @@ let editingIndex = null;
 
 async function loadData() {
     try{
-        const res = await fetch(`/api/shops/get/${shopId}`);
+        const res = await fetch(`/api/shops/${shopId}`); // FIX: /get/ hata diya
+        if(!res.ok) throw new Error('Shop not found 404');
         const result = await res.json();
+        console.log("API RESPONSE:", result);
         if(result.success){
             shopData = result.data;
             renderAll();
@@ -30,7 +32,7 @@ async function loadData() {
         }
     }catch(err){
         console.error("LOAD ERROR:", err);
-        alert('Server se data nahi aa raha');
+        alert('Server se data nahi aa raha. Backend route check karo');
     }
 }
 
@@ -54,9 +56,7 @@ function renderAll(){
     renderProducts();
     renderLowStock();
     loadOrderStats();
-
-    // FIX: shop-core me /shops/:id hai isliye yaha wahi use karenge
-    bindUploadsCustom();
+    bindUploadsCustom(); // shopcore ko touch nahi kiya
 }
 
 function renderProducts(filter=''){
@@ -106,9 +106,9 @@ async function loadOrderStats(){
     }catch(err){ console.log("Order stats error", err) }
 }
 
-// ===== FIX: APNA CUSTOM UPDATE - /shops/:id wala =====
+// ===== FIX: /api/shops/:id WALA ROUTE =====
 async function updateShopDB(updateData){
-    const res = await fetch(`/api/shops/${shopId}`, { // YAHI ROUTE SHOPCORE USE KARTA HAI
+    const res = await fetch(`/api/shops/${shopId}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(updateData)
     });
@@ -117,23 +117,22 @@ async function updateShopDB(updateData){
     else alert('Update failed: ' + result.message);
 }
 
-// ===== FIX: CUSTOM BIND - KYUKI SHOPCORE DB ME NAHI BHEJ RAHA =====
+// ===== CUSTOM UPLOAD BIND - SHOPCORE COMMON HAI =====
 function bindUploadsCustom(){
-    ['ownerImg','ownerInput','profile','ownerPhotoUrl'].forEach(()=>{});
     document.getElementById('ownerInput').onchange = async (e)=>{
-        const file = e.target.files[0];
+        const file = e.target.files[0]; if(!file) return;
         const url = await ShopCore.uploadImage(file, 'profile');
         if(url){
             document.getElementById('ownerImg').src = url;
-            await updateShopDB({ownerPhotoUrl: url}); // /shops/:id pe bhej diya
+            await updateShopDB({ownerPhotoUrl: url});
         }
     }
     document.getElementById('bannerInput').onchange = async (e)=>{
-        const file = e.target.files[0];
+        const file = e.target.files[0]; if(!file) return;
         const url = await ShopCore.uploadImage(file, 'banner');
         if(url){
             document.getElementById('shopBanner').src = url;
-            await updateShopDB({banner: url}); // /shops/:id pe bhej diya
+            await updateShopDB({banner: url});
         }
     }
 }
