@@ -1,11 +1,10 @@
-// URL se ID nikalega: /shop/64f1a2b3c4d5e6f7g8h9i0j1/dashboard
 const pathParts = window.location.pathname.split('/');
 const shopId = pathParts[2];
 document.getElementById('shopIdDisplay').innerText = shopId;
-
 ShopCore.init(shopId, 'furniture');
 
 let shopData = {};
+let editingIndex = null;
 
 async function loadData() {
     const res = await fetch(`/api/shops/get/${shopId}`);
@@ -13,27 +12,60 @@ async function loadData() {
     if(result.success){
         shopData = result.data;
         renderAll();
-    } else {
-        alert('Shop nahi mila: ' + result.message);
     }
 }
 
 function renderAll(){
     document.getElementById('shopName').innerText = shopData.shopName || 'Furniture Showroom';
     document.getElementById('items').innerText = shopData.items?.length || 0;
+    document.getElementById('userViewBtn').href = `/shop-templates/furniture/customer-view.html?shopId=${shopId}`;
 
-    // Orders count - tere Order model se
-    loadOrderStats();
+    // Announcement + Timing
+    document.getElementById('announcementInput').value = shopData.announcement || '';
+    document.getElementById('openTime').value = shopData.shopSettings?.openTime || '09:00';
+    document.getElementById('closeTime').value = shopData.shopSettings?.closeTime || '21:00';
+
+    // Toggle
+    const toggle = document.getElementById('shopToggle');
+    toggle.classList.toggle('off',!shopData.isOpen);
+    document.getElementById('toggleText').innerText = shopData.isOpen? 'Open' : 'Closed';
+
+    // Banner + Photo
+    if(shopData.banner) document.getElementById('shopBanner').src = shopData.banner;
+    if(shopData.ownerPhotoUrl) document.getElementById('ownerImg').src = shopData.ownerPhotoUrl;
 
     renderProducts();
     renderLowStock();
-    renderCategories();
+    loadOrderStats();
 
-    // Photo load - DB se aaye to local me save
-    if(shopData.ownerPhotoUrl){
-        localStorage.setItem(`photo_${shopId}_profile_cloud`, shopData.ownerPhotoUrl);
-    }
+    // Bind Uploads
     ShopCore.bindImageUpload('ownerImg', 'ownerInput', 'profile', 'profile');
+    ShopCore.bindImageUpload('shopBanner', 'bannerInput', 'banner', 'banner');
+}
+
+function renderProducts(filter=''){
+    const list = document.getElementById('productList');
+    let items = shopData.items?.filter(i => i.name.toLowerCase().includes(filter.toLowerCase())) || [];
+    if(!items.length) return list.innerHTML = '<p style="color:#64748b;">Koi product nahi hai</p>';
+
+    list.innerHTML = items.map((item, index) => `
+        <div class="product-item">
+            <img src="${item.image || 'https://placehold.co/80x80/a16207/fff?text=Item'}" onclick="uploadProductImage(${index})">
+            <div style="flex:1;">
+                <h4>${item.name} <span class="badge ${item.available? 'badge-green':'badge-red'}" onclick="toggleAvailable(${index})">${item.available? 'In Stock':'Out'}</span></h4>
+                <p style="color:#64748b; font-size:13px;">₹${item.price} | Stock: ${item.stock} | ${item.unit}</p>
+            </div>
+            <button class="btn-sm" style="background:#f59e0b;" onclick="openEditModal(${index})"><i class="fa fa-pen"></i></button>
+            <button class="btn-sm" style="background:#ef4444;" onclick="deleteItem(${index})"><i class="fa fa-trash"></i></button>
+        </div>
+    `).join('');
+}
+
+function renderLowStock(){
+    const low = shopData.items?.filter(i => i.stock <= 5) || [];
+    document.getElementById('lowStock').innerHTML = low.length?
+        low.map(i => `<div style="padding:10px; background:#fef2f2; border-radius:10px; margin-bottom:8px;"><b>${i.name}</b> - ${i.stock} left</div>`).join('') :
+        '<p style="color:#16a34a;">Sab stock me hai ✅</p>';
 }
 
 async function loadOrderStats(){
@@ -48,80 +80,68 @@ async function loadOrderStats(){
             document.getElementById('orders').innerText = todayOrders.length;
             document.getElementById('delivery').innerText = orders.filter(o =>!['delivered','cancelled'].includes(o.orderStatus)).length;
             document.getElementById('revenue').innerText = todayOrders.reduce((a,b) => a + b.totalAmount, 0);
+
+            document.getElementById('orderList').innerHTML = orders.slice(0,5).map(o =>
+                `<div style="padding:10px; border-bottom:1px solid #eee;">${o.customerName} - ₹${o.totalAmount} - ${o.orderStatus}</div>`
+            ).join('') || 'No orders yet';
         }
     }catch(err){ console.log("Order stats error", err) }
 }
 
-function renderProducts(){
-    const list = document.getElementById('productList');
-    if(!shopData.items?.length) return list.innerHTML = '<p style="color:#64748b;">Koi furniture nahi hai. Add karo</p>';
-
-    list.innerHTML = shopData.items.map((item, index) => `
-        <div class="order-card" style="display:flex; gap:15px; align-items:center;">
-            <img src="${item.image || 'https://placehold.co/80x80/a16207/fff?text=Item'}" style="width:80px; height:80px; object-fit:cover; border-radius:12px;">
-            <div style="flex:1;">
-                <h4>${item.name}</h4>
-                <p style="color:#64748b; font-size:13px;">Stock: ${item.stock} | ${item.desc || ''} | ${item.unit}</p>
-            </div>
-            <div style="text-align:right;">
-                <p style="font-weight:700; font-size:18px;">₹${item.price}</p>
-                <button onclick="deleteItem(${index})" style="background:#ef4444; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; margin-top:5px;"><i class="fa fa-trash"></i></button>
-            </div>
-        </div>
-    `).join('');
-}
-
-function renderLowStock(){
-    const low = shopData.items?.filter(i => i.stock <= 5) || [];
-    document.getElementById('lowStock').innerHTML = low.length?
-        low.map(i => `<div style="padding:10px; background:#fef2f2; border-radius:10px; margin-bottom:8px;"><b>${i.name}</b> - ${i.stock} left</div>`).join('') :
-        '<p style="color:#16a34a;">Sab stock me hai ✅</p>';
-}
-
-function renderCategories(){
-    const cats = [...new Set(shopData.items?.map(i => i.unit))].filter(Boolean);
-    document.getElementById('categories').innerHTML = cats.length?
-        cats.map(c => `<div style="padding:8px; background:#fef3c7; border-radius:8px; margin-bottom:6px;">${c}</div>`).join('') :
-        '<p style="color:#64748b;">No categories</p>';
-}
-
-async function updateShop(){
-    const res = await fetch(`/api/shops/update/${shopId}`, {
-        method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ items: shopData.items })
+async function updateShopDB(updateData){
+    await fetch(`/api/shops/${shopId}`, {
+        method: 'PUT', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(updateData)
     });
-    const result = await res.json();
-    if(result.success) loadData();
-    else alert('Update failed');
+    loadData();
 }
 
+// EVENTS
+document.getElementById('searchProduct').onkeyup = (e) => renderProducts(e.target.value);
+document.getElementById('shopToggle').onclick = () => updateShopDB({isOpen:!shopData.isOpen});
+document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
+document.getElementById('saveTiming').onclick = () => updateShopDB({shopSettings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
+
+function openEditModal(index){
+    editingIndex = index;
+    const item = shopData.items[index];
+    document.getElementById('editName').value = item.name;
+    document.getElementById('editPrice').value = item.price;
+    document.getElementById('editStock').value = item.stock;
+    document.getElementById('editUnit').value = item.unit;
+    document.getElementById('editDesc').value = item.desc;
+    document.getElementById('editModal').style.display = 'flex';
+}
+function closeEditModal(){ document.getElementById('editModal').style.display = 'none'; }
+async function saveEditedItem(){
+    const item = shopData.items[editingIndex];
+    item.name = document.getElementById('editName').value;
+    item.price = Number(document.getElementById('editPrice').value);
+    item.stock = Number(document.getElementById('editStock').value);
+    item.unit = document.getElementById('editUnit').value;
+    item.desc = document.getElementById('editDesc').value;
+    updateShopDB({items: shopData.items});
+    closeEditModal();
+}
+async function toggleAvailable(index){
+    shopData.items[index].available =!shopData.items[index].available;
+    updateShopDB({items: shopData.items});
+}
 async function deleteItem(index){
     if(!confirm('Pakka delete karna hai?')) return;
     shopData.items.splice(index, 1);
-    updateShop();
+    updateShopDB({items: shopData.items});
 }
-
-document.getElementById('addItemBtn').onclick = () => {
-    const name = prompt('Furniture Name?');
-    const price = prompt('Price?');
-    const stock = prompt('Stock?');
-    const unit = prompt('Unit? Piece/Set') || 'Piece';
-    if(!name ||!price) return;
-
-    shopData.items.push({
-        name,
-        price: Number(price),
-        stock: Number(stock) || 0,
-        unit: unit,
-        desc: '',
-        image: ''
-    });
-    updateShop();
-}
-
-document.getElementById('newOrderBtn').onclick = () => {
-    alert('Order wala section baad me banayenge');
+async function uploadProductImage(index){
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*'; input.click();
+    input.onchange = async (e) => {
+        const url = await ShopCore.uploadImage(e.target.files[0], 'product');
+        if(url){
+            shopData.items[index].image = url;
+            updateShopDB({items: shopData.items});
+        }
+    }
 }
 
 loadData();

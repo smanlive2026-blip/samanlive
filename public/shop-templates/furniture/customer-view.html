@@ -3,105 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Furniture Store</title>
+    <title id="pageTitle">Furniture Shop</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #fffbeb; }
-       .header { background: linear-gradient(135deg, #a16207 0%, #78350f 100%); color: white; padding: 50px 20px; text-align: center; }
-       .header h1 { font-size: 36px; }
-       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
+        body { background: #f8fafc; }
+       .banner { width: 100%; height: 250px; background: linear-gradient(135deg, #78350f 0%, #431407 100%); background-size: cover; background-position: center; position: relative; }
+       .banner-overlay { position: absolute; bottom: 0; width: 100%; padding: 30px; background: linear-gradient(transparent, rgba(0,0,0,0.7)); color: white; }
+       .banner-overlay h1 { font-size: 32px; display: flex; align-items: center; gap: 12px; }
+       .shop-status { position: absolute; top: 20px; right: 20px; padding: 8px 16px; border-radius: 50px; font-weight: 700; }
+       .open { background: #dcfce7; color: #166534; }
+       .closed { background: #fee2e2; color: #991b1b; }
         
-       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
-       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
-       .tab.active { background: #a16207; color: white; }
+       .container { max-width: 1200px; margin: -50px auto 0; padding: 20px; position: relative; }
+       .shop-info { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+       #ownerPic { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #a16207; }
         
-       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-       .product-price { font-size: 22px; font-weight: 800; color: #a16207; }
-       .btn-buy { background: #a16207; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+       .btn-group { display: flex; gap: 10px; margin-left: auto; }
+       .btn { padding: 12px 20px; border-radius: 12px; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+       .btn-whatsapp { background: #25D366; color: white; }
+       .btn-call { background: #2563eb; color: white; }
         
-       .offer-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #a16207; }
+       .section-title { font-size: 24px; margin: 30px 0 15px; color: #1e293b; }
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+       .product-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); transition: 0.3s; }
+       .product-card:hover { transform: translateY(-5px); }
+       .product-card img { width: 100%; height: 200px; object-fit: cover; }
+       .product-info { padding: 15px; }
+       .product-info h3 { font-size: 18px; margin-bottom: 5px; }
+       .price { font-size: 22px; font-weight: 700; color: #a16207; }
+       .stock { font-size: 12px; color: #64748b; }
+       .out-of-stock { opacity: 0.5; }
+       .announcement { background: #fef3c7; border-left: 5px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1><i class="fa fa-couch"></i> <span id="shopName">Royal Furniture</span></h1>
-        <p>Home & Office Furniture | EMI Available | Free Home Delivery</p>
+    <div class="banner" id="shopBanner">
+        <div class="shop-status" id="shopStatus">Open</div>
+        <div class="banner-overlay">
+            <h1><i class="fa fa-couch"></i> <span id="shopName">Loading...</span></h1>
+            <p id="shopAddress"></p>
+        </div>
     </div>
 
     <div class="container">
-        <div class="tabs" id="tabs">
-            <div class="tab active" onclick="filter('All', this)">All</div>
+        <div class="shop-info">
+            <img id="ownerPic" src="https://placehold.co/80">
+            <div>
+                <h2 id="ownerName">Owner</h2>
+                <p style="color: #64748b;"><i class="fa fa-phone"></i> <span id="shopPhone"></span></p>
+            </div>
+            <div class="btn-group">
+                <a href="#" id="whatsappBtn" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                <a href="#" id="callBtn" class="btn btn-call"><i class="fa fa-phone"></i> Call</a>
+            </div>
         </div>
 
-        <div class="product-grid" id="productGrid">Loading...</div>
+        <div id="announcementBox" style="display:none;" class="announcement">
+            <b><i class="fa fa-bullhorn"></i> Announcement:</b> <span id="announcementText"></span>
+        </div>
 
-        <div class="offer-box" id="offerBox">
-            <h3><i class="fa fa-gift"></i> Special Offers</h3>
-            <p style="margin-top:10px;">0% EMI Available | 5 Year Warranty | Free Assembly & Delivery</p>
+        <h2 class="section-title">Our Furniture Collection</h2>
+        <div class="product-grid" id="productGrid">
+            Loading...
         </div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const shopId = urlParams.get('shopId');
-        let products = [];
 
-        async function loadData(){
-            const res = await fetch(`/api/furniture/${shopId}`);
+        async function loadData() {
+            const res = await fetch(`/api/shops/get/${shopId}`);
             const result = await res.json();
             if(result.success){
-                products = result.data.items || [];
-                document.getElementById('shopName').innerText = result.data.shopName || 'Royal Furniture';
-                renderTabs();
-                filter('All', document.querySelector('.tab'));
+                const shop = result.data;
+                renderShop(shop);
             }
         }
 
-        function renderTabs(){
-            const cats = ['All', ...new Set(products.map(p => p.category))];
-            document.getElementById('tabs').innerHTML = cats.map(c => 
-                `<div class="tab" onclick="filter('${c}', this)">${c}</div>`
-            ).join('');
+        function renderShop(shop){
+            document.getElementById('pageTitle').innerText = shop.shopName;
+            document.getElementById('shopName').innerText = shop.shopName;
+            document.getElementById('shopAddress').innerText = `${shop.address.city}, ${shop.address.state}`;
+            document.getElementById('ownerName').innerText = shop.ownerName;
+            document.getElementById('shopPhone').innerText = shop.phone;
+            document.getElementById('ownerPic').src = shop.ownerPhotoUrl || 'https://placehold.co/80/a16207/fff?text=O';
+            
+            if(shop.banner) document.getElementById('shopBanner').style.backgroundImage = `url(${shop.banner})`;
+            
+            const statusEl = document.getElementById('shopStatus');
+            statusEl.innerText = shop.isOpen? 'Open Now' : 'Closed';
+            statusEl.className = `shop-status ${shop.isOpen? 'open' : 'closed'}`;
+
+            document.getElementById('whatsappBtn').href = `https://wa.me/91${shop.phone}`;
+            document.getElementById('callBtn').href = `tel:${shop.phone}`;
+
+            if(shop.announcement){
+                document.getElementById('announcementBox').style.display = 'block';
+                document.getElementById('announcementText').innerText = shop.announcement;
+            }
+
+            renderProducts(shop.items);
         }
 
-        function display(items) {
-            if(!items.length) return document.getElementById('productGrid').innerHTML = '<p>No products</p>';
-            document.getElementById('productGrid').innerHTML = items.map(p => `
-                <div class="product-card">
-                    <img src="${p.image || 'https://placehold.co/300x180/a16207/fff?text=Furniture'}" style="width:100%; height:180px; object-fit:cover; border-radius:12px; margin-bottom:10px;">
-                    <h3>${p.name}</h3>
-                    <p style="color:#64748b; font-size:12px;">${p.category}</p>
-                    <div class="product-price">₹${p.price}</div>
-                    <button class="btn-buy" onclick="placeOrder('${p.id}')"><i class="fa fa-cart-plus"></i> Buy Now</button>
+        function renderProducts(items){
+            const grid = document.getElementById('productGrid');
+            if(!items?.length) return grid.innerHTML = '<p style="text-align:center; color:#64748b;">Abhi koi product nahi hai</p>';
+
+            grid.innerHTML = items.filter(i => i.available).map(item => `
+                <div class="product-card ${item.stock <= 0 ? 'out-of-stock' : ''}">
+                    <img src="${item.image || 'https://placehold.co/300x200/a16207/fff?text=No+Image'}">
+                    <div class="product-info">
+                        <h3>${item.name}</h3>
+                        <p style="color:#64748b; font-size:13px;">${item.desc || ''}</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                            <div>
+                                <div class="price">₹${item.price}</div>
+                                <div class="stock">Stock: ${item.stock} ${item.unit}</div>
+                            </div>
+                            ${item.stock > 0 ? `<a href="https://wa.me/91${document.getElementById('shopPhone').innerText}?text=Hi, I want to buy ${item.name}" class="btn btn-whatsapp" style="padding:8px 12px;"><i class="fab fa-whatsapp"></i></a>` : '<span style="color:red; font-size:12px;">Out of Stock</span>'}
+                        </div>
+                    </div>
                 </div>
             `).join('');
-        }
-
-        function filter(cat, el) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
-            const filtered = cat==='All'? products : products.filter(p => p.category === cat);
-            el.innerText = `${cat} ${filtered.length}`;
-            display(filtered);
-        }
-
-        async function placeOrder(itemId){
-            const item = products.find(p => p.id == itemId);
-            const order = {
-                customerName: prompt('Name?'),
-                phone: prompt('Phone?'),
-                address: prompt('Address?'),
-                items: [{...item, qty: 1}],
-                total: item.price
-            }
-            await fetch(`/api/furniture/${shopId}/order`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(order)
-            });
-            alert('Order placed! Shop wale ko call aayega');
         }
 
         loadData();

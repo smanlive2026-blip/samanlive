@@ -1,0 +1,40 @@
+<!DOCTYPE html><html><head><title>Add Product</title>
+<style>body{background:#f1f5f9;font-family:Poppins;padding:30px}.card{background:white;padding:30px;border-radius:20px;max-width:500px;margin:auto}input{width:100%;padding:12px;margin-bottom:12px;border:1px solid #cbd5e1;border-radius:8px}.btn{background:#a16207;color:white;border:none;padding:12px 24px;border-radius:12px;font-weight:600;cursor:pointer;width:100%}</style>
+</head><body>
+<div class="card">
+<h2>Add New Furniture</h2>
+<input type="text" id="name" placeholder="Product Name">
+<input type="number" id="price" placeholder="Price ₹">
+<input type="number" id="stock" placeholder="Stock">
+<input type="text" id="unit" placeholder="Unit: Piece, Set">
+<textarea id="desc" placeholder="Description" rows="3"></textarea>
+<input type="file" id="image">
+<button class="btn" onclick="saveProduct()">Save Product</button>
+</div>
+<script>
+const shopId = new URLSearchParams(window.location.search).get('shopId');
+async function saveProduct(){
+    const formData = new FormData();
+    formData.append('image', document.getElementById('image').files[0]);
+    const upload = await fetch('/api/upload/shop', {method:'POST', body: formData});
+    const imgData = await upload.json();
+
+    const res = await fetch(`/api/shops/get/${shopId}`);
+    const shop = await res.json();
+
+    shop.data.items.push({
+        name: document.getElementById('name').value,
+        price: Number(document.getElementById('price').value),
+        stock: Number(document.getElementById('stock').value),
+        unit: document.getElementById('unit').value,
+        desc: document.getElementById('desc').value,
+        image: imgData.url,
+        available: true
+    });
+
+    await fetch(`/api/shops/update/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items: shop.data.items})});
+    alert('Product Added!');
+    window.location.href = `dashboard.html?shopId=${shopId}`;
+}
+</script>
+</body></html>
