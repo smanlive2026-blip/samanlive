@@ -92,4 +92,14 @@ router.put('/:shopId', authenticateToken, isShopOwner, async (req, res) => {
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+// ORDERS GET KARNE KA ROUTE
+router.get('/:shopId/orders', async (req, res) => {
+  try {
+    const orders = await Order.find({shopId: req.params.shopId}).sort({createdAt: -1});
+    res.json({ success: true, data: orders });
+  } catch(err) { 
+    res.status(500).json({ success: false, error: err.message }); 
+  }
+});
+
 module.exports = router;
