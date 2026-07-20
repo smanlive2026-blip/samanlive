@@ -26,12 +26,15 @@ async function loadData() {
         const result = await res.json();
         console.log("API RESPONSE:", result);
 
-        shopData = result.data || result.shop || result; // FIX 1:.data pehle check karo
+        // FIX: backend kabhi data bhejta kabhi shop. Dono ko merge kar do
+        const shopPart = result.data || result.shop || {};
+        const furniturePart = result.data || result.furniture || {};
+        shopData = {...shopPart,...furniturePart, items: furniturePart.items || [] };
 
         if(shopData && shopData.shopId){
             renderAll();
         } else {
-            alert('Shop nahi mila');
+            alert('Shop nahi mila. DB check karo');
         }
     }catch(err){
         console.error("LOAD ERROR:", err);
@@ -47,7 +50,7 @@ function renderAll(){
     document.getElementById('userViewBtn').href = `/shop-templates/furniture/customer-view.html?shopId=${shopId}`;
     document.getElementById('addProductBtn').href = `add-product.html?shopId=${shopId}`;
     document.getElementById('bulkProductBtn').href = `bulk-products.html?shopId=${shopId}`;
-    document.getElementById('libraryBtn').href = `product-library.html?shopId=${shopId}`; // PRODUCT LIBRARY LINK
+    document.getElementById('libraryBtn').href = `product-library.html?shopId=${shopId}`;
 
     document.getElementById('announcementInput').value = shopData?.announcement || '';
     document.getElementById('openTime').value = shopData?.shopSettings?.openTime || '09:00';
@@ -93,7 +96,7 @@ function renderLowStock(){
 
 async function loadOrderStats(){
     try{
-        const res = await fetch(`/api/shops/${shopId}/orders`); // FIX: tera route ye hai
+        const res = await fetch(`/api/shops/${shopId}/orders`);
         const result = await res.json();
         if(result.success){
             const orders = result.data || [];
@@ -101,8 +104,8 @@ async function loadOrderStats(){
             const todayOrders = orders.filter(o => new Date(o.createdAt).toDateString() === today);
 
             document.getElementById('orders').innerText = todayOrders.length;
-            document.getElementById('delivery').innerText = orders.filter(o =>!['delivered','cancelled'].includes(o.status)).length; // status hai tere me
-            document.getElementById('revenue').innerText = todayOrders.reduce((a,b) => a + (b.total||0), 0); // total hai tere me
+            document.getElementById('delivery').innerText = orders.filter(o =>!['delivered','cancelled'].includes(o.status)).length;
+            document.getElementById('revenue').innerText = todayOrders.reduce((a,b) => a + (b.total||0), 0);
 
             if(document.getElementById('orderList')){
                 document.getElementById('orderList').innerHTML = orders.slice(0,5).map(o =>
@@ -181,23 +184,22 @@ function closeEditModal(){ document.getElementById('editModal').style.display = 
 async function saveEditedItem(){
     const item = shopData.items[editingIndex];
     const updatedItem = {...item, name: document.getElementById('editName').value, price: Number(document.getElementById('editPrice').value), stock: Number(document.getElementById('editStock').value), unit: document.getElementById('editUnit').value, desc: document.getElementById('editDesc').value };
-    await updateFurnitureItem(item.id, updatedItem); // FIX 2: single item update
+    await updateFurnitureItem(item.id, updatedItem);
     closeEditModal();
 }
 
 async function toggleAvailable(index){
     const item = shopData.items[index];
-    await updateFurnitureItem(item.id, {...item, available:!item.available}); // FIX 2
+    await updateFurnitureItem(item.id, {...item, available:!item.available});
 }
 
 async function deleteItem(index){
     if(!confirm('Pakka delete karna hai?')) return;
     const item = shopData.items[index];
-    await fetch(`/api/shops/${shopId}/item/${item.id}`, { method: 'DELETE' }); // FIX 2
+    await fetch(`/api/shops/${shopId}/item/${item.id}`, { method: 'DELETE' });
     loadData();
 }
 
-// FIX 3: GOLDEN RULE WALA UPLOAD
 async function uploadProductImage(index){
     const input = document.createElement('input');
     input.type = 'file'; input.accept = 'image/*'; input.click();
@@ -208,7 +210,6 @@ async function uploadProductImage(index){
 
         const item = shopData.items[index];
 
-        // 1. CLOUDINARY UPLOAD
         const imageUrl = await ShopCore.uploadImage(file, 'product');
         document.getElementById('uploadLoader').style.display = 'none';
 
@@ -217,7 +218,6 @@ async function uploadProductImage(index){
             return;
         }
 
-        // 2. DB ME SINGLE ITEM UPDATE
         await updateFurnitureItem(item.id, {...item, image: imageUrl});
         alert('Product Photo Uploaded ✅');
     }
