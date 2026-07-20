@@ -9,33 +9,33 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: #f1f5f9; min-height: 100vh; }
-      .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
-      .header { background: linear-gradient(135deg, #78350f 0%, #431407 100%); color: white; padding: 25px 30px; border-radius: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-      .header-left { display: flex; align-items: center; gap: 15px; }
+       .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+       .header { background: linear-gradient(135deg, #78350f 0%, #431407 100%); color: white; padding: 25px 30px; border-radius: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+       .header-left { display: flex; align-items: center; gap: 15px; }
         #ownerImg { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 3px solid white; }
-      .header h1 { font-size: 26px; }
-      .toggle-switch { background: #dcfce7; color: #166534; padding: 8px 16px; border-radius: 50px; font-weight: 700; cursor: pointer; }
-      .toggle-switch.off { background: #fee2e2; color: #991b1b; }
-      .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
-      .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-left: 5px solid #a16207; transition: 0.3s; }
-      .stat-card:hover { transform: translateY(-5px); }
-      .stat-card.icon { font-size: 32px; color: #a16207; margin-bottom: 12px; }
-      .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 8px; }
-      .stat-card.value { font-size: 32px; font-weight: 700; color: #1e293b; }
-      .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
-      .content-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
-      .content-card h2 { font-size: 20px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
-      .btn { background: linear-gradient(135deg, #a16207 0%, #78350f 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
-      .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; border: none; color: white; cursor: pointer; }
-      .product-item { display:flex; gap:15px; align-items:center; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 12px; }
-      .product-item img { width:80px; height:80px; object-fit:cover; border-radius:12px; cursor:pointer; }
-      .badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
-      .badge-red { background: #fee2e2; color: #991b1b; }
-      .badge-green { background: #dcfce7; color: #166534; }
+       .header h1 { font-size: 26px; }
+       .toggle-switch { background: #dcfce7; color: #166534; padding: 8px 16px; border-radius: 50px; font-weight: 700; cursor: pointer; }
+       .toggle-switch.off { background: #fee2e2; color: #991b1b; }
+       .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
+       .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-left: 5px solid #a16207; transition: 0.3s; }
+       .stat-card:hover { transform: translateY(-5px); }
+       .stat-card.icon { font-size: 32px; color: #a16207; margin-bottom: 12px; } /* FIX:. laga diya */
+       .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 8px; }
+       .stat-card.value { font-size: 32px; font-weight: 700; color: #1e293b; } /* FIX:. laga diya */
+       .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
+       .content-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
+       .content-card h2 { font-size: 20px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+       .btn { background: linear-gradient(135deg, #a16207 0%, #78350f 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+       .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; border: none; color: white; cursor: pointer; }
+       .product-item { display:flex; gap:15px; align-items:center; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 12px; }
+       .product-item img { width:80px; height:80px; object-fit:cover; border-radius:12px; cursor:pointer; }
+       .badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+       .badge-red { background: #fee2e2; color: #991b1b; }
+       .badge-green { background: #dcfce7; color: #166534; }
         #uploadLoader { display: none; color: #a16207; font-size: 12px; }
         input[type="text"], input[type="number"], input[type="time"] { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; }
-      .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center; }
-      .modal-content { background:white; padding:30px; border-radius:20px; width:90%; max-width:500px; }
+       .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center; }
+       .modal-content { background:white; padding:30px; border-radius:20px; width:90%; max-width:500px; }
     </style>
 </head>
 <body>
@@ -126,12 +126,10 @@
     let shopData = {};
     let editingItem = null;
 
-    // FIX 1: INIT LAGAYA
     document.addEventListener('DOMContentLoaded', () => {
         ShopCore.init(shopId, 'furniture');
         loadShop();
 
-        // Button links
         document.getElementById('libraryBtn').href = `/shop-templates/furniture/library.html?shopId=${shopId}`;
         document.getElementById('addProductBtn').href = `/shop-templates/furniture/manage-products.html?shopId=${shopId}`;
         document.getElementById('bulkProductBtn').href = `/shop-templates/furniture/bulk-add.html?shopId=${shopId}`;
@@ -139,21 +137,24 @@
     });
 
     async function loadShop(){
-        const res = await fetch(`/api/shops/${shopId}`);
-        const result = await res.json();
-        shopData = result.data || result.shop || result;
+        try{
+            const res = await fetch(`/api/shops/${shopId}`);
+            const result = await res.json();
+            shopData = result.data || result.shop || result;
+            shopData.items = shopData.items || shopData.products || [];
 
-        // FIX 2: products bhi check karega
-        shopData.items = shopData.items || shopData.products || [];
+            document.getElementById('shopName').innerText = shopData.name || 'Furniture Showroom';
+            document.getElementById('items').innerText = shopData.items.length;
 
-        document.getElementById('shopName').innerText = shopData.name || 'Furniture Showroom';
-        document.getElementById('items').innerText = shopData.items.length; // Total Items fix
+            if(shopData.ownerPhotoUrl) document.getElementById('ownerImg').src = shopData.ownerPhotoUrl;
+            if(shopData.banner) document.getElementById('shopBanner').src = shopData.banner;
 
-        if(shopData.ownerPhotoUrl) document.getElementById('ownerImg').src = shopData.ownerPhotoUrl;
-        if(shopData.banner) document.getElementById('shopBanner').src = shopData.banner;
-
-        renderProducts(shopData.items);
-        renderLowStock(shopData.items);
+            renderProducts(shopData.items);
+            renderLowStock(shopData.items);
+        }catch(err){
+            console.error(err);
+            document.getElementById('productList').innerHTML = 'Error loading shop';
+        }
     }
 
     function renderProducts(products){
@@ -185,7 +186,6 @@
             '<p style="color:#16a34a;">All stock is good ✅</p>';
     }
 
-    // Upload Owner Photo
     document.getElementById('ownerImg').onclick = () => document.getElementById('ownerInput').click();
     document.getElementById('ownerInput').onchange = async (e) => {
         document.getElementById('uploadLoader').style.display = 'inline';
@@ -197,7 +197,6 @@
         document.getElementById('uploadLoader').style.display = 'none';
     }
 
-    // Upload Banner
     document.getElementById('shopBanner').onclick = () => document.getElementById('bannerInput').click();
     document.getElementById('bannerInput').onchange = async (e) => {
         const url = await ShopCore.uploadImage(e.target.files[0], 'banner');
@@ -243,7 +242,6 @@
         }).then(() => { closeEditModal(); loadShop(); });
     }
 
-    // Search
     document.getElementById('searchProduct').onkeyup = (e) => {
         const val = e.target.value.toLowerCase();
         renderProducts(shopData.items.filter(p => p.name.toLowerCase().includes(val)));
