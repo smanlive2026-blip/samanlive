@@ -12,15 +12,25 @@ router.get('/:shopId', async (req, res) => {
         Furniture.findOne({ shopId: req.params.shopId }),
         Shop.findOne({ shopId: req.params.shopId })
     ]);
-
-    if(!furniture &&!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
-
-    // IMPORTANT: data ke andar bhej rahe
-    res.json({ success: true, data: {...shop?._doc,...furniture?._doc } });
+    
+    if(!shop) return res.status(404).json({ success: false, message: 'Shop not found' }); // PEHLE SHOP CHECK
+    
+    // Dono ko merge kar do. Furniture na ho to bhi chalega
+    const mergedData = {
+        ...shop._doc,
+        ...furniture?._doc,
+        items: furniture?.items || [],
+        offers: furniture?.offers || [],
+        reviews: furniture?.reviews || []
+    };
+    
+    res.json({ success: true, data: mergedData });
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 2-4. ITEM CRUD - Sirf Furniture model me
+// BAKE KA SARA CODE WAISA HI RAHEGA JAISE PEHLE DIYA THA
+// ... ITEM CRUD, ORDER, OFFER ...
+
 router.post('/:shopId/item', authenticateToken, isShopOwner, async (req, res) => {
   try {
     const newItem = {...req.body, id: Date.now().toString() };
@@ -37,7 +47,7 @@ router.put('/:shopId/item/:itemId', authenticateToken, isShopOwner, async (req, 
   try {
     const shop = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId, 'items.id': req.params.itemId },
-      { $set: { 'items.$': req.body } }, // pura item replace
+      { $set: { 'items.$': req.body } },
       { new: true }
     );
     const updatedItem = shop.items.find(i => i.id === req.params.itemId);
@@ -47,16 +57,15 @@ router.put('/:shopId/item/:itemId', authenticateToken, isShopOwner, async (req, 
 
 router.delete('/:shopId/item/:itemId', authenticateToken, isShopOwner, async (req, res) => {
   try {
-    const shop = await Furniture.findOneAndUpdate(
+    await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
       { $pull: { items: { id: req.params.itemId } } },
       { new: true }
     );
-    res.json({ success: true, data: shop });
+    res.json({ success: true });
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 5-7. ORDER
 router.post('/:shopId/order', async (req, res) => {
   try {
     const newOrder = new Order({...req.body, shopId: req.params.shopId, shopName: 'Furniture', orderId: 'ORD_' + Date.now() });
@@ -72,12 +81,11 @@ router.get('/:shopId/orders', async (req, res) => {
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 13. SETTINGS UPDATE - Shop model me
 router.put('/:shopId', authenticateToken, isShopOwner, async (req, res) => {
   try {
     const shop = await Shop.findOneAndUpdate(
       { shopId: req.params.shopId },
-      { $set: req.body }, // banner, ownerPhotoUrl, isOpen
+      { $set: req.body },
       { new: true, upsert: true }
     );
     res.json({ success: true, data: shop });
