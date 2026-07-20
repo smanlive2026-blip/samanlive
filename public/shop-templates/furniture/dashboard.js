@@ -1,4 +1,5 @@
 // ===== STEP 1: SHOP ID QUERY SE NIKALO =====
+
 const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId');
 
@@ -27,13 +28,8 @@ async function loadData() {
         console.log("API RESPONSE:", result);
 
         shopData = result.shop || result.data || result; 
-        
-        // ===== YAHI LINE FIX KI HAI =====
-        shopData.items = shopData.items || shopData.products || []; 
-        // ===== AB DONO NAAM CHECK HOGA =====
+        shopData.items = shopData.items || []; 
        
-        console.log("TOTAL ITEMS FOUND:", shopData.items.length);
-
         if(shopData && (shopData.shopId || shopData._id)){
             renderAll();
         } else {
@@ -99,7 +95,7 @@ function renderLowStock(){
 async function loadOrderStats(){
     try{
         const res = await fetch(`/api/shops/${shopId}/orders`);
-        if(!res.ok) return;
+        if(!res.ok) return; // 404 aaye to crash nahi hoga
         const result = await res.json();
         if(result.success){
             const orders = result.data || [];
@@ -186,19 +182,19 @@ function closeEditModal(){ document.getElementById('editModal').style.display = 
 async function saveEditedItem(){
     const item = shopData.items[editingIndex];
     const updatedItem = {...item, name: document.getElementById('editName').value, price: Number(document.getElementById('editPrice').value), stock: Number(document.getElementById('editStock').value), unit: document.getElementById('editUnit').value, desc: document.getElementById('editDesc').value };
-    await updateFurnitureItem(item._id || item.id, updatedItem);
+    await updateFurnitureItem(item._id || item.id, updatedItem); // _id support add
     closeEditModal();
 }
 
 async function toggleAvailable(index){
     const item = shopData.items[index];
-    await updateFurnitureItem(item._id || item.id, {...item, available:!item.available});
+    await updateFurnitureItem(item._id || item.id, {...item, available:!item.available}); // _id support add
 }
 
 async function deleteItem(index){
     if(!confirm('Pakka delete karna hai?')) return;
     const item = shopData.items[index];
-    await fetch(`/api/shops/${shopId}/item/${item._id || item.id}`, { method: 'DELETE' });
+    await fetch(`/api/shops/${shopId}/item/${item._id || item.id}`, { method: 'DELETE' }); // _id support add
     loadData();
 }
 
@@ -216,7 +212,7 @@ async function uploadProductImage(index){
             alert('Photo upload nahi hui. Cloudinary check karo');
             return;
         }
-        await updateFurnitureItem(item._id || item.id, {...item, image: imageUrl});
+        await updateFurnitureItem(item._id || item.id, {...item, image: imageUrl}); // _id support add
         alert('Product Photo Uploaded ✅');
     }
 }
