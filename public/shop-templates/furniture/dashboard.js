@@ -1,6 +1,6 @@
 // ===== STEP 1: SHOP ID QUERY SE NIKALO =====
 const urlParams = new URLSearchParams(window.location.search);
-const shopId = urlParams.get('shopId'); // YEHI USE HOGA SAB JAGAH
+const shopId = urlParams.get('shopId');
 
 if(!shopId){
     alert('ERROR: URL me?shopId=xxx daalo');
@@ -26,15 +26,14 @@ async function loadData() {
         const result = await res.json();
         console.log("API RESPONSE:", result);
 
-        // FIX: backend kabhi data bhejta kabhi shop. Dono ko merge kar do
-        const shopPart = result.data || result.shop || {};
-        const furniturePart = result.data || result.furniture || {};
-        shopData = {...shopPart,...furniturePart, items: furniturePart.items || [] };
+        // FINAL FIX: backend shop bhej raha hai. Direct wahi le lo
+        shopData = result.shop || result.data || result; 
+        shopData.items = shopData.items || []; // items na ho to []
 
         if(shopData && shopData.shopId){
             renderAll();
         } else {
-            alert('Shop nahi mila. DB check karo');
+            alert('Shop nahi mila. DB me shopId check karo: ' + shopId);
         }
     }catch(err){
         console.error("LOAD ERROR:", err);
@@ -46,7 +45,6 @@ function renderAll(){
     document.getElementById('shopName').innerText = shopData?.shopName || 'Furniture Showroom';
     document.getElementById('items').innerText = shopData?.items?.length || 0;
 
-    // BUTTON LINK UPDATE - 4 BUTTON
     document.getElementById('userViewBtn').href = `/shop-templates/furniture/customer-view.html?shopId=${shopId}`;
     document.getElementById('addProductBtn').href = `add-product.html?shopId=${shopId}`;
     document.getElementById('bulkProductBtn').href = `bulk-products.html?shopId=${shopId}`;
@@ -126,7 +124,6 @@ async function updateShopDB(updateData){
     else alert('Update failed: ' + result.message);
 }
 
-// NAYA HELPER: SINGLE ITEM UPDATE
 async function updateFurnitureItem(itemId, updatedItem){
     const res = await fetch(`/api/shops/${shopId}/item/${itemId}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'},
@@ -207,17 +204,13 @@ async function uploadProductImage(index){
         const file = e.target.files[0];
         if(!file) return;
         document.getElementById('uploadLoader').style.display = 'inline';
-
         const item = shopData.items[index];
-
         const imageUrl = await ShopCore.uploadImage(file, 'product');
         document.getElementById('uploadLoader').style.display = 'none';
-
         if(!imageUrl) {
             alert('Photo upload nahi hui. Cloudinary check karo');
             return;
         }
-
         await updateFurnitureItem(item.id, {...item, image: imageUrl});
         alert('Product Photo Uploaded ✅');
     }
