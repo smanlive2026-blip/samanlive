@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bulk Add Products</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    *{font-family:Poppins; box-sizing:border-box;}
+    body{background:#f8fafc; padding:20px;}
+   .container{max-width:1100px; margin:0 auto;}
+   .card{background:white; padding:30px; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05); margin-bottom:20px;}
+    h2{margin-bottom:10px; color:#1e293b;}
+    textarea{width:100%; height:300px; padding:15px; border:2px solid #e2e8f0; border-radius:12px; font-family:monospace; font-size:13px;}
+   .btn{background:#a16207; color:white; border:none; padding:14px 24px; border-radius:12px; font-weight:700; cursor:pointer; margin-right:10px;}
+   .btn-secondary{background:#2563eb;}
+   .example{background:#fffbeb; border-left:4px solid #f59e0b; padding:15px; border-radius:8px; margin:15px 0; font-size:13px;}
+    table{width:100%; border-collapse:collapse; margin-top:15px;}
+    table th, table td{border:1px solid #e2e8f0; padding:10px; text-align:left; font-size:13px;}
+    table th{background:#f1f5f9;}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h2><i class="fa fa-file-csv"></i> Bulk Add 50+ Products</h2>
+        <p style="color:#64748b; margin-bottom:15px;">Excel ya Google Sheet se copy karke yaha paste kar de. Header wali line bhi paste kar sakta hai.</p>
+
+        <div class="example">
+            <b>Format:</b> name, category, price, stock, unit, description, image_url<br>
+            <b>Example:</b><br>
+            Royal Sofa Set, Sofa, 45000, 5, Set, 5 Seater Sheesham Wood Sofa, https://img.com/sofa.jpg<br>
+            King Size Bed, Bed, 32000, 10, Piece, With Storage Box, https://img.com/bed.jpg
+        </div>
+
+        <textarea id="bulkData" placeholder="name,category,price,stock,unit,description,image_url
+Royal Sofa Set,Sofa,45000,5,Set,5 Seater Sheesham Wood Sofa,https://img.com/sofa.jpg
+King Size Bed,Bed,32000,10,Piece,With Storage Box,https://img.com/bed.jpg"></textarea>
+
+        <button class="btn" onclick="previewData()"><i class="fa fa-eye"></i> Preview</button>
+        <button class="btn btn-secondary" onclick="saveBulk()"><i class="fa fa-upload"></i> Add All Products</button>
+        <button class="btn" style="background:#64748b;" onclick="downloadSample()">Download Sample CSV</button>
+    </div>
+
+    <div class="card" id="previewCard" style="display:none;">
+        <h2>Preview - <span id="count">0</span> Products Found</h2>
+        <div style="overflow-x:auto;">
+            <table id="previewTable"></table>
+        </div>
+    </div>
+</div>
+
+<script>
+const shopId = new URLSearchParams(window.location.search).get('shopId');
+let parsedProducts = [];
+
+function previewData(){
+    const text = document.getElementById('bulkData').value.trim();
+    if(!text) return alert('Kuch data paste karo');
+
+    const lines = text.split('\n');
+    // Agar header hai to hata do
+    if(lines[0].toLowerCase().includes('name')) lines.shift();
+
+    parsedProducts = lines.map(line => {
+        const [name, category, price, stock, unit, desc, image] = line.split(',');
+        return {
+            _id: Date.now().toString() + Math.random(),
+            name: name?.trim(),
+            category: category?.trim() || 'General',
+            price: Number(price),
+            stock: Number(stock),
+            unit: unit?.trim() || 'Piece',
+            desc: desc?.trim(),
+            image: image?.trim() || 'https://placehold.co/300x200/a16207/fff?text=No+Image',
+            available: true
+        }
+    }).filter(p => p.name && p.price);
+
+    document.getElementById('count').innerText = parsedProducts.length;
+    document.getElementById('previewCard').style.display = 'block';
+
+    document.getElementById('previewTable').innerHTML = `
+        <tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th></tr>
+        ${parsedProducts.slice(0,10).map(p => `<tr><td>${p.name}</td><td>${p.category}</td><td>₹${p.price}</td><td>${p.stock}</td></tr>`).join('')}
+        ${parsedProducts.length > 10? `<tr><td colspan="4" style="text-align:center;">...and ${parsedProducts.length-10} more</td></tr>` : ''}
+    `;
+}
+
+async function saveBulk(){
+    if(!parsedProducts.length) return alert('Pehle Preview karo');
+    if(!confirm(parsedProducts.length + ' products add karne hain?')) return;
+
+    const res = await fetch(`/api/shops/${shopId}`);
+    const shop = (await res.json()).shop || (await res.json()).data;
+    shop.items = [...(shop.items || []),...parsedProducts];
+
+    await fetch(`/api/shops/update/${shopId}`, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({items: shop.items})
+    });
+
+    alert(parsedProducts.length + ' Products Added Successfully ✅');
+    window.location.href = `add-product.html?shopId=${shopId}`;
+}
+
+function downloadSample(){
+    const csv = `name,category,price,stock,unit,description,image_url
+Royal Sofa Set,Sofa,45000,5,Set,5 Seater Sheesham Wood Sofa,https://placehold.co/300x200
+King Size Bed,Bed,32000,10,Piece,With Storage Box,https://placehold.co/300x200
+Dining Table 6 Seater,Table,25000,8,Set,Solid Wood Dining Table,https://placehold.co/300x200`;
+
+    const blob = new Blob([csv], {type: 'text/csv'});
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sample-products.csv';
+    a.click();
+}
+</script>
+</body>
+</html>
