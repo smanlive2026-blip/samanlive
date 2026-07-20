@@ -35,6 +35,8 @@ app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
 //app.use('/api/shops', require('./routes/shops/furniture-route')); // <- YE LINE ADD KAR
 //app.use('/api/shops', require('./routes/shops/furniture-route'));
 //app.use('/api/shops', require('./routes/shops/Furniture-route'));
+app.use('/api/shops', require('./routes/shops/furniture-route'));
+
 // Request Logger - Development ke liye
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'development') {
