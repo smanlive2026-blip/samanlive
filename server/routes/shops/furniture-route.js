@@ -1,39 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const Furniture = require('../../models/shops/Furniture');
-const Order = require('../../models/Order'); 
 const Shop = require('../../models/Shop');
 
-// 0. UPDATE PURA SHOP - YE NAYA ADD KAR
-router.put('/:shopId', async (req, res) => {
-  try {
-    const updated = await Furniture.findOneAndUpdate(
-      { shopId: req.params.shopId },
-      { $set: req.body },
-      { new: true, upsert: true }
-    );
-    res.json({ success: true, data: updated });
-  } catch(err) { 
-    res.status(500).json({ success: false, error: err.message }); 
-  }
-});
-
-// 0.5. GET ORDERS - YE BHI NAYA ADD KAR
-router.get('/:shopId/orders', async (req, res) => {
-  try {
-    const furniture = await Furniture.findOne({ shopId: req.params.shopId });
-    res.json({ success: true, data: furniture?.orders || [] });
-  } catch(err) { 
-    res.status(500).json({ success: false, error: err.message }); 
-  }
-});
-
-// 1. GET PURI SHOP DATA - TERA WALA
+// 1. GET PURI SHOP DATA - Dashboard + Customer View ke liye
 router.get('/:shopId', async (req, res) => {
   try {
-    const [furniture, shop] = await Promise.all([
-        Furniture.findOne({ shopId: req.params.shopId }),
-        Shop.findById(req.params.shopId)
+    const shopId = req.params.shopId;
+    
+    const [shop, furniture] = await Promise.all([
+        Shop.findById(shopId),
+        Furniture.findOne({ shopId: shopId })
     ]);
     
     if(!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
@@ -41,27 +18,32 @@ router.get('/:shopId', async (req, res) => {
     res.json({ 
       success: true, 
       shop: {
-        ...shop._doc, 
-        ...furniture?._doc, // <- ye add kiya taki announcement, isOpen bhi aa jaye
+        ...shop._doc, // shopName, owner, phone, etc
         items: furniture?.items || [],
         orders: furniture?.orders || [],
         offers: furniture?.offers || [],
-        reviews: furniture?.reviews || []
+        reviews: furniture?.reviews || [],
+        location: furniture?.location || {},
+        settings: furniture?.settings || {},
+        isOpen: furniture?.settings?.isOpen ?? true,
+        announcement: furniture?.settings?.announcement || '',
+        ownerPhotoUrl: furniture?.settings?.ownerPhotoUrl || ''
       }
     });
   } catch(err) { 
+    console.log(err)
     res.status(500).json({ success: false, error: err.message }); 
   }
 });
 
-// 2. ADD ITEM - TERA WALA
+// 2. ADD ITEM - Product Library + Add Product se
 router.post('/:shopId/item', async (req, res) => {
   try {
-    const newItem = {...req.body, id: Date.now().toString() }; // id theek hai
-    const updated = await Furniture.findOneAndUpdate(
+    const newItem = {...req.body, id: Date.now().toString() };
+    await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
       { $push: { items: newItem } },
-      { new: true, upsert: true }
+      { new: true, upsert: true } // upsert=true zaruri hai
     );
     res.json({ success: true, data: newItem });
   } catch(err) { 
@@ -69,7 +51,7 @@ router.post('/:shopId/item', async (req, res) => {
   }
 });
 
-// 3. UPDATE ITEM - TERA WALA
+// 3. UPDATE ITEM - Edit + Toggle + Image Upload
 router.put('/:shopId/item/:itemId', async (req, res) => {
   try {
     await Furniture.findOneAndUpdate(
@@ -83,7 +65,7 @@ router.put('/:shopId/item/:itemId', async (req, res) => {
   }
 });
 
-// 4. DELETE ITEM - TERA WALA
+// 4. DELETE ITEM
 router.delete('/:shopId/item/:itemId', async (req, res) => {
   try {
     await Furniture.findOneAndUpdate(
@@ -92,6 +74,30 @@ router.delete('/:shopId/item/:itemId', async (req, res) => {
       { new: true }
     );
     res.json({ success: true });
+  } catch(err) { 
+    res.status(500).json({ success: false, error: err.message }); 
+  }
+});
+
+// 5. UPDATE PURA SHOP - Announcement, Timing, Toggle
+router.put('/:shopId', async (req, res) => {
+  try {
+    const updated = await Furniture.findOneAndUpdate(
+      { shopId: req.params.shopId },
+      { $set: req.body },
+      { new: true, upsert: true }
+    );
+    res.json({ success: true, data: updated });
+  } catch(err) { 
+    res.status(500).json({ success: false, error: err.message }); 
+  }
+});
+
+// 6. GET ORDERS - Dashboard Stats ke liye
+router.get('/:shopId/orders', async (req, res) => {
+  try {
+    const furniture = await Furniture.findOne({ shopId: req.params.shopId });
+    res.json({ success: true, data: furniture?.orders || [] });
   } catch(err) { 
     res.status(500).json({ success: false, error: err.message }); 
   }
