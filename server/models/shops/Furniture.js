@@ -1,4 +1,3 @@
-// server/models/shops/furniture.js
 const mongoose = require('mongoose');
 
 const furnitureSchema = new mongoose.Schema({
@@ -7,13 +6,13 @@ const furnitureSchema = new mongoose.Schema({
   items: [{
     id: String,
     name: String,
-    category: { type: String, default: 'Sofa' }, // Sofa, Bed, Table, Chair
+    category: { type: String, default: 'Furniture' },
     price: Number,
     stock: Number,
     image: String,
     specs: {
-      material: String, // Wood, Metal, Fabric
-      dimensions: String, // LxWxH
+      material: String,
+      dimensions: String,
       color: String,
       warranty: String
     }
@@ -26,7 +25,7 @@ const furnitureSchema = new mongoose.Schema({
     address: String,
     items: [],
     total: Number,
-    status: { type: String, default: 'Pending' }, // Pending, Delivered, Cancelled
+    status: { type: String, default: 'Pending' },
     createdAt: { type: Date, default: Date.now }
   }],
 
@@ -50,7 +49,7 @@ const furnitureSchema = new mongoose.Schema({
   location: {
     lat: Number,
     lng: Number,
-    type: { type: String, default: 'fixed' }, // fixed ya dynamic
+    type: { type: String, default: 'fixed' },
     range: Number,
     address: String
   },
@@ -61,6 +60,6 @@ const furnitureSchema = new mongoose.Schema({
     announcement: String,
     lowStockThreshold: { type: Number, default: 5 }
   }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Furniture', furnitureSchema);
