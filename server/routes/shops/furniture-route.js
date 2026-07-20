@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const Furniture = require('../../models/Furniture');
-const Order = require('../../models/order'); 
+const Furniture = require('../../models/shops/Furniture');  // <- SIRF YE LINE BADLI
+const Order = require('../../models/Order');  // <- isme bhi O capital kar de
 const Shop = require('../../models/Shop');
 
 // 1. GET PURI SHOP DATA
@@ -61,12 +61,12 @@ router.put('/:shopId/item/:itemId', async (req, res) => {
   }
 });
 
-// 4. DELETE ITEM - YAHI BRACKET THEEK KIYA
+// 4. DELETE ITEM
 router.delete('/:shopId/item/:itemId', async (req, res) => {
   try {
     await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
-      { $pull: { items: { id: req.params.itemId } }}, // <- yaha ) band kiya
+      { $pull: { items: { id: req.params.itemId } }},
       { new: true }
     );
     res.json({ success: true });
