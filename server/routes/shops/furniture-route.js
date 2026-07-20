@@ -1,3 +1,5 @@
+//server/routes/shops/furniture-route.js 
+
 const express = require('express');
 const router = express.Router();
 const Furniture = require('../../models/shops/Furniture');
