@@ -1,11 +1,9 @@
-//server/routes/shops/furniture-route.js 
-
 const express = require('express');
 const router = express.Router();
 const Furniture = require('../../models/shops/Furniture');
 const Order = require('../../models/common/Order');
 const Shop = require('../../models/common/Shop');
-const { authenticateToken, isShopOwner } = require('../common/auth');
+// const { authenticateToken, isShopOwner } = require('../common/auth'); // <- HATA DIYA
 
 // 1. GET PURI SHOP DATA
 router.get('/:shopId', async (req, res) => {
@@ -29,8 +27,8 @@ router.get('/:shopId', async (req, res) => {
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 2. ADD ITEM - AUTH HATA DIYA
-router.post('/:shopId/item', async (req, res) => { // <- Yaha se authenticateToken hata
+// 2. ADD ITEM
+router.post('/:shopId/item', async (req, res) => {
   try {
     const newItem = {...req.body, id: Date.now().toString() };
     await Furniture.findOneAndUpdate(
@@ -42,8 +40,8 @@ router.post('/:shopId/item', async (req, res) => { // <- Yaha se authenticateTok
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 3. UPDATE ITEM - AUTH RAHEGA
-router.put('/:shopId/item/:itemId', authenticateToken, isShopOwner, async (req, res) => {
+// 3. UPDATE ITEM
+router.put('/:shopId/item/:itemId', async (req, res) => { // <- auth hata
   try {
     const shop = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId, $or: [{'items.id': req.params.itemId}, {'items._id': req.params.itemId}] },
@@ -55,8 +53,8 @@ router.put('/:shopId/item/:itemId', authenticateToken, isShopOwner, async (req, 
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 4. DELETE ITEM - AUTH RAHEGA
-router.delete('/:shopId/item/:itemId', authenticateToken, isShopOwner, async (req, res) => {
+// 4. DELETE ITEM
+router.delete('/:shopId/item/:itemId', async (req, res) => { // <- auth hata
   try {
     await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
@@ -87,7 +85,7 @@ router.get('/:shopId/orders', async (req, res) => {
 });
 
 // 7. UPDATE SHOP
-router.put('/:shopId', authenticateToken, isShopOwner, async (req, res) => {
+router.put('/:shopId', async (req, res) => { // <- auth hata
   try {
     const shop = await Shop.findOneAndUpdate(
       { shopId: req.params.shopId },
