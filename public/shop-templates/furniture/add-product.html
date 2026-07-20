@@ -75,9 +75,10 @@
 <script src="/shop-templates/shop-core.js"></script>
 <script>
 const shopId = new URLSearchParams(window.location.search).get('shopId');
+if(!shopId) alert('ERROR: URL me ?shopId=xxx daalo');
+
 let shopData = {};
 let editingItem = null;
-
 document.addEventListener('DOMContentLoaded', loadShop);
 
 async function loadShop(){
