@@ -36,18 +36,19 @@ router.get('/:shopId', async (req, res) => {
   }
 });
 
-// ADD ITEM
+// 2. ADD ITEM - YE WALA REPLACE KAR
 router.post('/:shopId/item', async (req, res) => {
   try {
     const newItem = {...req.body, id: Date.now().toString() };
-    console.log("ADDING ITEM TO:", req.params.shopId, newItem.name) // LOG 5
-    await Furniture.findOneAndUpdate(
+    const updated = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
       { $push: { items: newItem } },
-      { new: true, upsert: true }
+      { new: true, upsert: true, setDefaultsOnInsert: true } // <- ye 2 extra lagao
     );
+    console.log("SAVED IN DB:", updated.items.length) // check karne ke liye
     res.json({ success: true, data: newItem });
   } catch(err) { 
+    console.log(err)
     res.status(500).json({ success: false, error: err.message }); 
   }
 });
