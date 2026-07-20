@@ -34,7 +34,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 //app.use('/api', deliveryManagerRoutes);
 app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-manager banega
-app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
+//app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
 
 // Request Logger - Development ke liye
 app.use((req, res, next) => {
