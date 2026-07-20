@@ -29,7 +29,7 @@
     .product-info p{margin:3px 0; color:#64748b; font-size:13px;}
     .actions{display:flex; gap:8px;}
     .actions button{padding:8px 12px; border:none; border-radius:8px; cursor:pointer; font-size:12px;}
-    .toggle{padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600;}
+    .toggle{padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer;}
     .toggle.on{background:#dcfce7; color:#166534;}
     .toggle.off{background:#fee2e2; color:#991b1b;}
 </style>
@@ -72,16 +72,18 @@
     </div>
 </div>
 
+<script src="/shop-templates/shop-core.js"></script>
 <script>
 const shopId = new URLSearchParams(window.location.search).get('shopId');
 let shopData = {};
+let editingItem = null;
 
 document.addEventListener('DOMContentLoaded', loadShop);
 
 async function loadShop(){
-    const res = await fetch(`/api/shops/${shopId}`); // FIX: /get/ hata diya
+    const res = await fetch(`/api/shops/${shopId}`);
     const result = await res.json();
-    shopData = result.shop || result.data || result;
+    shopData = result.data || result.shop || result;
     shopData.items = shopData.items || [];
     renderProductList();
 }
@@ -103,47 +105,49 @@ async function saveProduct(){
     const name = document.getElementById('name').value;
     if(!name) return alert('Product name dalo');
 
-    let imageUrl = '';
+    let imageUrl = editingItem ? editingItem.image : '';
     const file = document.getElementById('image').files[0];
     if(file){
-        const formData = new FormData();
-        formData.append('image', file);
-        const upload = await fetch('/api/upload/shop', {method:'POST', body: formData});
-        const imgData = await upload.json();
-        imageUrl = imgData.url;
+        // 1. PEHLE CLOUDINARY UPLOAD
+        imageUrl = await ShopCore.uploadImage(file, 'product');
+        if(!imageUrl) return alert('Image upload failed');
     }
 
-    const newItem = {
-        _id: document.getElementById('editId').value || Date.now().toString(),
+    const itemData = {
+        id: editingItem ? editingItem.id : Date.now().toString(), // 'id' hai tere schema me
         name,
         category: document.getElementById('category').value,
         price: Number(document.getElementById('price').value),
         stock: Number(document.getElementById('stock').value),
         unit: document.getElementById('unit').value,
         desc: document.getElementById('desc').value,
-        image: imageUrl || 'https://placehold.co/300x200/a16207/fff?text=No+Image',
-        available: true
+        image: imageUrl,
+        available: editingItem ? editingItem.available : true
     };
 
-    if(document.getElementById('editId').value){
-        // UPDATE
-        const index = shopData.items.findIndex(i => i._id === newItem._id);
-        if(!imageUrl) newItem.image = shopData.items[index].image; // purani image rakho
-        shopData.items[index] = newItem;
-    } else {
-        // ADD NEW
-        shopData.items.push(newItem);
+    let endpoint = `/api/shops/${shopId}/item`;
+    let method = 'POST';
+    
+    if(editingItem){ // UPDATE
+        endpoint = `/api/shops/${shopId}/item/${editingItem.id}`;
+        method = 'PUT';
     }
 
-    await fetch(`/api/shops/update/${shopId}`, {
-        method:'PUT', 
+    // 2. GOLDEN RULE: SINGLE ITEM SAVE
+    const res = await fetch(endpoint, {
+        method: method, 
         headers:{'Content-Type':'application/json'}, 
-        body: JSON.stringify({items: shopData.items})
+        body: JSON.stringify(itemData) // pura item bhej
     });
     
-    alert('Product Saved ✅');
-    resetForm();
-    loadShop();
+    const result = await res.json();
+    if(result.success){
+        alert('Product Saved ✅');
+        resetForm();
+        loadShop();
+    } else {
+        alert('Error: ' + result.error);
+    }
 }
 
 function renderProductList(){
@@ -156,19 +160,20 @@ function renderProductList(){
             <div class="product-info">
                 <h4>${item.name}</h4>
                 <p>₹${item.price} | Stock: ${item.stock} ${item.unit} | ${item.category}</p>
-                <span class="toggle ${item.available?'on':'off'}" onclick="toggleAvailable('${item._id}')">${item.available?'Available':'Hidden'}</span>
+                <span class="toggle ${item.available?'on':'off'}" onclick="toggleAvailable('${item.id}')">${item.available?'Available':'Hidden'}</span>
             </div>
             <div class="actions">
-                <button onclick='editProduct(${JSON.stringify(item)})' style="background:#2563eb; color:white;"><i class="fa fa-pen"></i></button>
-                <button onclick="deleteProduct('${item._id}')" class="btn-danger"><i class="fa fa-trash"></i></button>
+                <button onclick='editProduct(${JSON.stringify(item).replace(/"/g, '&quot;')})' style="background:#2563eb; color:white;"><i class="fa fa-pen"></i></button>
+                <button onclick="deleteProduct('${item.id}')" class="btn-danger"><i class="fa fa-trash"></i></button>
             </div>
         </div>
     `).join('');
 }
 
 function editProduct(item){
+    editingItem = item;
     document.getElementById('formTitle').innerHTML = '<i class="fa fa-pen"></i> Edit Product';
-    document.getElementById('editId').value = item._id;
+    document.getElementById('editId').value = item.id;
     document.getElementById('name').value = item.name;
     document.getElementById('category').value = item.category || 'General';
     document.getElementById('price').value = item.price;
@@ -184,19 +189,22 @@ function editProduct(item){
 
 async function deleteProduct(id){
     if(!confirm('Delete karna hai?')) return;
-    shopData.items = shopData.items.filter(i => i._id !== id);
-    await fetch(`/api/shops/update/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items: shopData.items})});
+    await fetch(`/api/shops/${shopId}/item/${id}`, {method:'DELETE'});
     loadShop();
 }
 
-function toggleAvailable(id){
-    const item = shopData.items.find(i => i._id === id);
-    item.available = !item.available;
-    fetch(`/api/shops/update/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items: shopData.items})});
+async function toggleAvailable(id){
+    const item = shopData.items.find(i => i.id === id);
+    await fetch(`/api/shops/${shopId}/item/${id}`, {
+        method:'PUT', 
+        headers:{'Content-Type':'application/json'}, 
+        body: JSON.stringify({...item, available: !item.available})
+    });
     loadShop();
 }
 
 function resetForm(){
+    editingItem = null;
     document.getElementById('formTitle').innerHTML = '<i class="fa fa-plus"></i> Add New Product';
     document.getElementById('editId').value = '';
     document.querySelectorAll('input, textarea, select').forEach(i => {if(i.id !== 'unit') i.value = ''});

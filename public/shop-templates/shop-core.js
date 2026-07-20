@@ -44,6 +44,7 @@ const ShopCore = {
 
         const formData = new FormData();
         formData.append('image', compressedFile); // CHANGED: file ki jagah compressedFile
+        formData.append('image', file);
         formData.append('shopId', String(this.shopId));
         formData.append('template', String(this.template));
         formData.append('type', String(type)); // profile, banner, product, offer

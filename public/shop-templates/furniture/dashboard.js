@@ -26,9 +26,9 @@ async function loadData() {
         const result = await res.json();
         console.log("API RESPONSE:", result);
 
-        shopData = result.shop || result.data || result;
+        shopData = result.data || result.shop || result; // FIX 1:.data pehle check karo
 
-        if(shopData && shopData._id){
+        if(shopData && shopData.shopId){
             renderAll();
         } else {
             alert('Shop nahi mila');
@@ -73,7 +73,7 @@ function renderProducts(filter=''){
 
     list.innerHTML = items.map((item, index) => `
         <div class="product-item">
-            <img src="${item.image || 'https://placehold.co/80x80/a16207/fff?text=Item'}" onclick="uploadProductImage(${index})">
+            <img src="${item.image || 'https://placehold.co/80x80/a16207/fff?text=Item'}" onclick="uploadProductImage(${index})" style="cursor:pointer;">
             <div style="flex:1;">
                 <h4>${item.name} <span class="badge ${item.available? 'badge-green':'badge-red'}" onclick="toggleAvailable(${index})">${item.available? 'In Stock':'Out'}</span></h4>
                 <p style="color:#64748b; font-size:13px;">₹${item.price} | Stock: ${item.stock} | ${item.unit}</p>
@@ -93,7 +93,7 @@ function renderLowStock(){
 
 async function loadOrderStats(){
     try{
-        const res = await fetch(`/api/orders/shop/${shopId}`);
+        const res = await fetch(`/api/shops/${shopId}/orders`); // FIX: tera route ye hai
         const result = await res.json();
         if(result.success){
             const orders = result.data || [];
@@ -101,12 +101,12 @@ async function loadOrderStats(){
             const todayOrders = orders.filter(o => new Date(o.createdAt).toDateString() === today);
 
             document.getElementById('orders').innerText = todayOrders.length;
-            document.getElementById('delivery').innerText = orders.filter(o =>!['delivered','cancelled'].includes(o.orderStatus)).length;
-            document.getElementById('revenue').innerText = todayOrders.reduce((a,b) => a + (b.totalAmount||0), 0);
+            document.getElementById('delivery').innerText = orders.filter(o =>!['delivered','cancelled'].includes(o.status)).length; // status hai tere me
+            document.getElementById('revenue').innerText = todayOrders.reduce((a,b) => a + (b.total||0), 0); // total hai tere me
 
             if(document.getElementById('orderList')){
                 document.getElementById('orderList').innerHTML = orders.slice(0,5).map(o =>
-                    `<div style="padding:10px; border-bottom:1px solid #eee;">${o.customerName} - ₹${o.totalAmount} - ${o.orderStatus}</div>`
+                    `<div style="padding:10px; border-bottom:1px solid #eee;">${o.customerName} - ₹${o.total} - ${o.status}</div>`
                 ).join('') || 'No orders yet';
             }
         }
@@ -121,6 +121,17 @@ async function updateShopDB(updateData){
     const result = await res.json();
     if(result.success) loadData();
     else alert('Update failed: ' + result.message);
+}
+
+// NAYA HELPER: SINGLE ITEM UPDATE
+async function updateFurnitureItem(itemId, updatedItem){
+    const res = await fetch(`/api/shops/${shopId}/item/${itemId}`, {
+        method: 'PUT', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(updatedItem)
+    });
+    const result = await res.json();
+    if(result.success) loadData();
+    else alert('Item Update failed: ' + result.message);
 }
 
 function bindUploadsCustom(){
@@ -162,37 +173,52 @@ function openEditModal(index){
     document.getElementById('editPrice').value = item.price;
     document.getElementById('editStock').value = item.stock;
     document.getElementById('editUnit').value = item.unit;
-    document.getElementById('editDesc').value = item.desc;
+    document.getElementById('editDesc').value = item.desc || '';
     document.getElementById('editModal').style.display = 'flex';
 }
 function closeEditModal(){ document.getElementById('editModal').style.display = 'none'; }
+
 async function saveEditedItem(){
     const item = shopData.items[editingIndex];
-    item.name = document.getElementById('editName').value;
-    item.price = Number(document.getElementById('editPrice').value);
-    item.stock = Number(document.getElementById('editStock').value);
-    item.unit = document.getElementById('editUnit').value;
-    item.desc = document.getElementById('editDesc').value;
-    updateShopDB({items: shopData.items});
+    const updatedItem = {...item, name: document.getElementById('editName').value, price: Number(document.getElementById('editPrice').value), stock: Number(document.getElementById('editStock').value), unit: document.getElementById('editUnit').value, desc: document.getElementById('editDesc').value };
+    await updateFurnitureItem(item.id, updatedItem); // FIX 2: single item update
     closeEditModal();
 }
+
 async function toggleAvailable(index){
-    shopData.items[index].available =!shopData.items[index].available;
-    updateShopDB({items: shopData.items});
+    const item = shopData.items[index];
+    await updateFurnitureItem(item.id, {...item, available:!item.available}); // FIX 2
 }
+
 async function deleteItem(index){
     if(!confirm('Pakka delete karna hai?')) return;
-    shopData.items.splice(index, 1);
-    updateShopDB({items: shopData.items});
+    const item = shopData.items[index];
+    await fetch(`/api/shops/${shopId}/item/${item.id}`, { method: 'DELETE' }); // FIX 2
+    loadData();
 }
+
+// FIX 3: GOLDEN RULE WALA UPLOAD
 async function uploadProductImage(index){
     const input = document.createElement('input');
     input.type = 'file'; input.accept = 'image/*'; input.click();
     input.onchange = async (e) => {
-        const url = await ShopCore.uploadImage(e.target.files[0], 'product');
-        if(url){
-            shopData.items[index].image = url;
-            updateShopDB({items: shopData.items});
+        const file = e.target.files[0];
+        if(!file) return;
+        document.getElementById('uploadLoader').style.display = 'inline';
+
+        const item = shopData.items[index];
+
+        // 1. CLOUDINARY UPLOAD
+        const imageUrl = await ShopCore.uploadImage(file, 'product');
+        document.getElementById('uploadLoader').style.display = 'none';
+
+        if(!imageUrl) {
+            alert('Photo upload nahi hui. Cloudinary check karo');
+            return;
         }
+
+        // 2. DB ME SINGLE ITEM UPDATE
+        await updateFurnitureItem(item.id, {...item, image: imageUrl});
+        alert('Product Photo Uploaded ✅');
     }
 }

@@ -9,29 +9,19 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: #f8fafc; }
-        
-        /* HEADER */
        .top-bar { background: white; padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 99; display: flex; justify-content: space-between; align-items: center; }
        .search-box { flex: 1; max-width: 500px; margin: 0 20px; position: relative; }
        .search-box input { width: 100%; padding: 12px 45px 12px 15px; border: 2px solid #e2e8f0; border-radius: 12px; }
        .cart-btn { background: #a16207; color: white; padding: 12px 20px; border-radius: 12px; text-decoration: none; font-weight: 700; position: relative; }
-
-        /* BANNER */
        .banner { width: 100%; height: 300px; background: linear-gradient(135deg, #78350f 0%, #431407 100%); background-size: cover; background-position: center; position: relative; }
        .offer-badge { position: absolute; top: 20px; left: 20px; background: #f59e0b; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; animation: pulse 2s infinite; }
        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
-
-        /* FEATURES BAR */
        .features { display: grid; grid-template-columns: repeat(4,1fr); gap: 15px; background: white; padding: 20px; border-radius: 15px; margin: 20px 0; }
        .feature { text-align: center; color: #64748b; font-size: 13px; }
        .feature i { font-size: 28px; color: #a16207; margin-bottom: 8px; }
-
-        /* CATEGORIES */
        .categories { display: flex; gap: 15px; overflow-x: auto; padding: 15px 0; }
        .cat-btn { background: white; border: 2px solid #e2e8f0; padding: 10px 20px; border-radius: 50px; font-weight: 600; cursor: pointer; white-space: nowrap; }
        .cat-btn.active { background: #a16207; color: white; }
-
-        /* PRODUCTS */
        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
        .product-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); position: relative; }
        .wishlist { position: absolute; top: 12px; right: 12px; background: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
@@ -42,8 +32,6 @@
        .price { font-size: 22px; font-weight: 700; color: #a16207; }
        .delivery-tag { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 6px; font-size: 11px; margin-top: 5px; display: inline-block; }
        .btn-add { background: #a16207; color: white; padding: 10px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; }
-
-        /* MODAL + CHECKOUT */
        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; justify-content: center; align-items: center; overflow-y: auto; }
        .modal-content { background: white; padding: 30px; border-radius: 20px; max-width: 1000px; width: 95%; margin: 20px auto; }
        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; }
@@ -67,8 +55,6 @@
     </div>
 
     <div class="container" style="max-width:1400px; margin:0 auto; padding:20px;">
-        
-        <!-- 4 FEATURES -->
         <div class="features">
             <div class="feature"><i class="fa fa-truck-fast"></i><div>Free Delivery</div></div>
             <div class="feature"><i class="fa fa-shield-halved"></i><div>1 Year Warranty</div></div>
@@ -85,7 +71,6 @@
         </div>
 
         <div class="categories" id="categories"></div>
-
         <h2 style="font-size:28px; margin:30px 0 15px;">Trending Products</h2>
         <div class="product-grid" id="productGrid">Loading...</div>
     </div>
@@ -143,15 +128,16 @@
         async function loadData() {
             const res = await fetch(`/api/shops/${shopId}`);
             const result = await res.json();
-            const shop = result.shop || result.data || result;
+            const shop = result.data || result.shop || result; // FIX 2
             shopDataGlobal = shop;
-            renderShop(shop);
+            shopDataGlobal.items = shopDataGlobal.items || [];
+            renderShop(shopDataGlobal);
         }
 
         function renderShop(shop){
-            document.getElementById('pageTitle').innerText = shop.shopName;
-            document.getElementById('shopNameTop').innerText = shop.shopName;
-            document.getElementById('ownerName').innerText = shop.ownerName;
+            document.getElementById('pageTitle').innerText = shop.shopName || 'Furniture Shop';
+            document.getElementById('shopNameTop').innerText = shop.shopName || 'Shop';
+            document.getElementById('ownerName').innerText = shop.ownerName || 'Owner';
             document.getElementById('ownerPic').src = shop.ownerPhotoUrl || 'https://placehold.co/80';
             if(shop.banner) document.getElementById('shopBanner').style.backgroundImage = `url(${shop.banner})`;
             if(shop.announcement){
@@ -180,20 +166,22 @@
 
         function renderProducts(search=''){
             const grid = document.getElementById('productGrid');
-            let items = shopDataGlobal.items.filter(i => i.available);
+            let items = shopDataGlobal.items.filter(i => i.available !== false); // available na ho to bhi dikhe
             if(currentFilter !== 'all') items = items.filter(i => (i.category || 'General') === currentFilter);
             if(search) items = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
 
+            if(!items.length) return grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">Koi product nahi mila</p>';
+
             grid.innerHTML = items.map(item => `
                 <div class="product-card">
-                    <div class="wishlist ${wishlist.includes(item._id)?'active':''}" onclick="toggleWishlist('${item._id}')"><i class="fa fa-heart"></i></div>
-                    <img src="${item.image || 'https://placehold.co/300x200'}" onclick='openModal(${JSON.stringify(item)})'>
+                    <div class="wishlist ${wishlist.includes(item.id)?'active':''}" onclick="toggleWishlist('${item.id}')"><i class="fa fa-heart"></i></div> <!-- FIX 1: item.id -->
+                    <img src="${item.image || 'https://placehold.co/300x200'}" onclick='openModal(${JSON.stringify(item).replace(/"/g, '&quot;')})'>
                     <div class="product-info">
                         <div class="rating"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star-half"></i> 4.8</div>
-                        <h3 onclick='openModal(${JSON.stringify(item)})' style="cursor:pointer;">${item.name}</h3>
+                        <h3 onclick='openModal(${JSON.stringify(item).replace(/"/g, '&quot;')})' style="cursor:pointer;">${item.name}</h3>
                         <div><span class="price">₹${item.price}</span> <span style="text-decoration:line-through; color:#94a3b8; font-size:14px;">₹${item.price+2000}</span></div>
                         <div class="delivery-tag"><i class="fa fa-truck"></i> Free Delivery by Tomorrow</div>
-                        <button class="btn-add" onclick="addToCart('${item._id}', '${item.name}', ${item.price})"><i class="fa fa-plus"></i> Add to Cart</button>
+                        <button class="btn-add" onclick="addToCart('${item.id}', '${item.name}', ${item.price})"><i class="fa fa-plus"></i> Add to Cart</button> <!-- FIX 1 -->
                     </div>
                 </div>
             `).join('');
@@ -208,11 +196,11 @@
                     <div class="rating"><i class="fa fa-star"></i> 4.8 (120 Reviews)</div>
                     <h1 style="color:#a16207; margin:15px 0;">₹${item.price}</h1>
                     <p>${item.desc}</p>
-                    <p style="margin:10px 0;"><b>Material:</b> Premium Sheesham Wood</p>
-                    <p><b>Warranty:</b> 1 Year</p>
+                    <p style="margin:10px 0;"><b>Material:</b> ${item.specs?.material || 'Wood'}</p>
+                    <p><b>Warranty:</b> ${item.specs?.warranty || '1 Year'}</p>
                     <p><b>Delivery:</b> Free, Tomorrow</p>
                     <div style="margin:20px 0; padding:15px; background:#f0fdf4; border-radius:10px;"><i class="fa fa-check"></i> 7 Days Easy Return</div>
-                    <button class="btn-add" style="padding:15px; font-size:16px;" onclick="addToCart('${item._id}', '${item.name}', ${item.price}); closeModal()">Add to Cart</button>
+                    <button class="btn-add" style="padding:15px; font-size:16px;" onclick="addToCart('${item.id}', '${item.name}', ${item.price}); closeModal()">Add to Cart</button> <!-- FIX 1 -->
                 </div>
             `;
         }
@@ -252,19 +240,19 @@
 
         async function placeOrder(){
             const orderData = {
-                shopId,
                 customerName: document.getElementById('cName').value,
                 customerPhone: document.getElementById('cPhone').value,
                 customerAddress: document.getElementById('cAddress').value,
                 deliverySlot: document.getElementById('deliverySlot').value,
                 paymentMethod: document.getElementById('paymentMethod').value,
                 items: cart,
-                totalAmount: document.getElementById('totalAmount').innerText,
-                orderStatus: 'pending'
+                total: Number(document.getElementById('totalAmount').innerText), // FIX 3: total hai tere me
+                status: 'pending'
             };
             if(!orderData.customerName || !orderData.customerPhone) return alert('Details bharo');
 
-            await fetch('/api/orders', {
+            // FIX 3: TERE ROUTE KE HISAB SE
+            await fetch(`/api/shops/${shopId}/order`, {
                 method: 'POST',
                 headers: {'Content-Type':'application/json'},
                 body: JSON.stringify(orderData)
@@ -273,8 +261,8 @@
             // WhatsApp Message
             let msg = `*NEW ORDER* - ${shopDataGlobal.shopName}\n\n`;
             cart.forEach(i => msg += `${i.name} x ${i.qty} = ₹${i.price*i.qty}\n`);
-            msg += `\n*Total:* ₹${orderData.totalAmount}\n*Payment:* ${orderData.paymentMethod}\n*Delivery:* ${orderData.deliverySlot}\n*Address:* ${orderData.customerAddress}`;
-            window.open(`https://wa.me/91${shopDataGlobal.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            msg += `\n*Total:* ₹${orderData.total}\n*Payment:* ${orderData.paymentMethod}\n*Delivery:* ${orderData.deliverySlot}\n*Address:* ${orderData.customerAddress}`;
+            if(shopDataGlobal.phone) window.open(`https://wa.me/91${shopDataGlobal.phone}?text=${encodeURIComponent(msg)}`, '_blank');
             
             localStorage.removeItem('cart_'+shopId);
             alert('Order Placed! Owner will contact you soon.');
