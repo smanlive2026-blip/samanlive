@@ -12,11 +12,6 @@ const deliveryManagerRoutes = require('./routes/deliveryManager');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const orderRoutes = require('./routes/orders');  // fruit ke liye 
-// Shop Routes - ORDER MATTER KARTA HAI
-app.use('/api/shops', require('./routes/shopRoutes')); 
-app.use('/api/shops', require('./routes/shops/furniture-route'));
-app.use('/api/shops', fruitItemRoutes);
-app.use('/api/shops', require('./routes/shopRoutes')); // duplicate hai ye, 1 hi rakhna
 
 
 //app.use(express.json({ limit: '10mb' })); // YE BHI UPAR RAKH DE
@@ -35,6 +30,11 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 //app.use('/api', deliveryManagerRoutes);
 app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-manager banega
 //app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
+// Shop Routes - ORDER MATTER KARTA HAI
+app.use('/api/shops', require('./routes/shopRoutes')); 
+app.use('/api/shops', require('./routes/shops/furniture-route'));
+app.use('/api/shops', fruitItemRoutes);
+app.use('/api/shops', require('./routes/shopRoutes')); // duplicate hai ye, 1 hi rakhna
 
 // Request Logger - Development ke liye
 app.use((req, res, next) => {
