@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Furniture = require('../../models/shops/Furniture');
 const Order = require('../../models/common/Order');
-const Shop = require('../../models/common/Shop'); // <- yaha Shop likha, shop-route nahi
+const Shop = require('../../models/common/Shop');
 const { authenticateToken, isShopOwner } = require('../common/auth');
 
-// 1. GET PURI SHOP DATA - 2 model merge karke
+// 1. GET PURI SHOP DATA
 router.get('/:shopId', async (req, res) => {
   try {
     const [furniture, shop] = await Promise.all([
@@ -23,15 +23,15 @@ router.get('/:shopId', async (req, res) => {
         reviews: furniture?.reviews || []
     };
     
-    res.json({ success: true, shop: mergedData }); // <- Yaha "shop" key se bheja
+    res.json({ success: true, shop: mergedData });
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 2. ADD ITEM
-router.post('/:shopId/item', authenticateToken, isShopOwner, async (req, res) => {
+// 2. ADD ITEM - AUTH HATA DIYA
+router.post('/:shopId/item', async (req, res) => { // <- Yaha se authenticateToken hata
   try {
     const newItem = {...req.body, id: Date.now().toString() };
-    const shop = await Furniture.findOneAndUpdate(
+    await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
       { $push: { items: newItem } },
       { new: true, upsert: true }
@@ -40,7 +40,7 @@ router.post('/:shopId/item', authenticateToken, isShopOwner, async (req, res) =>
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 3. UPDATE ITEM - _id aur id dono support
+// 3. UPDATE ITEM - AUTH RAHEGA
 router.put('/:shopId/item/:itemId', authenticateToken, isShopOwner, async (req, res) => {
   try {
     const shop = await Furniture.findOneAndUpdate(
@@ -53,7 +53,7 @@ router.put('/:shopId/item/:itemId', authenticateToken, isShopOwner, async (req, 
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 4. DELETE ITEM - _id aur id dono support
+// 4. DELETE ITEM - AUTH RAHEGA
 router.delete('/:shopId/item/:itemId', authenticateToken, isShopOwner, async (req, res) => {
   try {
     await Furniture.findOneAndUpdate(
@@ -74,7 +74,7 @@ router.post('/:shopId/order', async (req, res) => {
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 6. GET ORDERS - SIRF 1 BAAR
+// 6. GET ORDERS
 router.get('/:shopId/orders', async (req, res) => {
   try {
     const orders = await Order.find({shopId: req.params.shopId}).sort({createdAt: -1});
