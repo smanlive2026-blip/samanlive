@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Furniture = require('../../models/shops/Furniture');
+const Furniture = require('../../models/shops/furniture');
 const Order = require('../../models/common/Order');
 const Shop = require('../../models/common/Shop');
 // const { authenticateToken, isShopOwner } = require('../common/auth'); // <- HATA DIYA
@@ -41,7 +41,7 @@ router.post('/:shopId/item', async (req, res) => {
 });
 
 // 3. UPDATE ITEM
-router.put('/:shopId/item/:itemId', async (req, res) => { // <- auth hata
+router.put('/:shopId/item/:itemId', async (req, res) => { 
   try {
     const shop = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId, $or: [{'items.id': req.params.itemId}, {'items._id': req.params.itemId}] },
@@ -54,7 +54,7 @@ router.put('/:shopId/item/:itemId', async (req, res) => { // <- auth hata
 });
 
 // 4. DELETE ITEM
-router.delete('/:shopId/item/:itemId', async (req, res) => { // <- auth hata
+router.delete('/:shopId/item/:itemId', async (req, res) => {
   try {
     await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
@@ -85,7 +85,7 @@ router.get('/:shopId/orders', async (req, res) => {
 });
 
 // 7. UPDATE SHOP
-router.put('/:shopId', async (req, res) => { // <- auth hata
+router.put('/:shopId', async (req, res) => { 
   try {
     const shop = await Shop.findOneAndUpdate(
       { shopId: req.params.shopId },

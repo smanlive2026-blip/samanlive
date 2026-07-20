@@ -1,4 +1,4 @@
-// server/modal/shops/furniture.js
+// server/models/shops/furniture.js
 
 const mongoose = require('mongoose');
 
