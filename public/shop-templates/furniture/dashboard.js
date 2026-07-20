@@ -29,8 +29,8 @@ async function loadData() {
         // FINAL FIX: backend shop bhej raha hai. Direct wahi le lo
         shopData = result.shop || result.data || result; 
         shopData.items = shopData.items || []; // items na ho to []
-
-        if(shopData && shopData.shopId){
+       // FIX: _id bhi check karo kyunki backend _id bhejta hai
+        if(shopData && (shopData.shopId || shopData._id)){
             renderAll();
         } else {
             alert('Shop nahi mila. DB me shopId check karo: ' + shopId);
