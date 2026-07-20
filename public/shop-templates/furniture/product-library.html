@@ -50,10 +50,11 @@
 
 <script src="/shop-templates/shop-core.js"></script>
 <script>
-// ===== YE 2 LINE NAYI ADD KAR =====
+// ===== YE 3 LINE FIX KI HAI =====
 const urlParams = new URLSearchParams(window.location.search);
-ShopCore.init(urlParams.get('shopId'), 'furniture'); // <- sabse important line
-const shopId = ShopCore.shopId; // <- YE WALI LINE MISSING HAI
+const shopId = urlParams.get('shopId'); // <- DIRECT URL SE NIKAL
+ShopCore.init(shopId, 'furniture'); // <- FIR INIT KAR
+
 let allProducts = [];
 let myShopItems = [];
 
@@ -156,11 +157,14 @@ allProducts = [
 {name: "Wall Panel", category: "Decor", price: 3499, stock: 15, unit: "Piece", desc: "Decorative Wall Panel", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"}
 ];
 
+// ===== loadData ko async bana aur shopId check add kiya =====
 async function loadData(){
+    if(!shopId) return alert("ShopId missing in URL"); // SAFETY
+    
     const res = await fetch(`/api/shops/${shopId}`);
     const result = await res.json();
-    const shop = result.data || result.shop;
-    myShopItems = shop.items || [];
+    const shop = result.data || result.shop || result;
+    myShopItems = shop.items || shop.products || []; // <- products bhi check
     renderProducts(allProducts);
 }
 
@@ -175,7 +179,7 @@ function renderProducts(products){
                 <h4>${p.name}</h4>
                 <p>${p.desc}</p>
                 <div class="price">₹${p.price.toLocaleString()}</div>
-                <button class="btn-add ${alreadyAdded?'btn-added':''}" onclick="addToShop(JSON.stringify(${JSON.stringify(p).replace(/"/g, '&quot;')}))" ${alreadyAdded?'disabled':''}>
+                <button class="btn-add ${alreadyAdded?'btn-added':''}" onclick='addToShop(${JSON.stringify(p)})' ${alreadyAdded?'disabled':''}>
                     ${alreadyAdded?'<i class="fa fa-check"></i> Added':'<i class="fa fa-plus"></i> Add to My Shop'}
                 </button>
             </div>
@@ -185,9 +189,7 @@ function renderProducts(products){
 }
 
 // GOLDEN RULE: POST /api/shops/:shopId/item
-async function addToShop(productStr){
-    const product = JSON.parse(productStr.replace(/&quot;/g, '"'));
-    
+async function addToShop(product){
     const newItem = {
         id: Date.now().toString(),
         name: product.name,
@@ -200,6 +202,7 @@ async function addToShop(productStr){
         available: true
     };
 
+    console.log("SENDING TO:", `/api/shops/${shopId}/item`); // DEBUG LOG
     const res = await fetch(`/api/shops/${shopId}/item`, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -227,7 +230,5 @@ document.getElementById('search').onkeyup = (e) => {
     renderProducts(allProducts.filter(p => p.name.toLowerCase().includes(val) || p.category.toLowerCase().includes(val)));
 }
 
-loadData();
+loadData(); // <- sabse last me call
 </script>
-</body>
-</html>
