@@ -1,4 +1,5 @@
-// public/shop-templates/shop-core.js
+// public/shop-templates/shop-core.js 
+//   bhai iss file ko hath nhi lgana h ye golden rule h samjha na 
 // NOTE: Photo Local + Cloudinary dono. Har photo ka alag storage key
 // CHANGED: Added auto compress + DB save + SAFETY CHECK
 

@@ -50,7 +50,10 @@
 
 <script src="/shop-templates/shop-core.js"></script>
 <script>
-const shopId = new URLSearchParams(window.location.search).get('shopId');
+// ===== YE 2 LINE NAYI ADD KAR =====
+const urlParams = new URLSearchParams(window.location.search);
+ShopCore.init(urlParams.get('shopId'), 'furniture'); // <- sabse important line
+
 let allProducts = [];
 let myShopItems = [];
 
