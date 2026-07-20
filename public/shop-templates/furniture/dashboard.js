@@ -1,5 +1,4 @@
 // ===== STEP 1: SHOP ID QUERY SE NIKALO =====
-
 const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId');
 
@@ -27,9 +26,10 @@ async function loadData() {
         const result = await res.json();
         console.log("API RESPONSE:", result);
 
-        shopData = result.shop || result.data || result; 
-        shopData.items = shopData.items || []; 
-       
+        shopData = result.shop || result.data || result;
+        // FIX 1: products bhi check karo kyunki add-product me {item: } se save ho raha
+        shopData.items = shopData.items || shopData.products || shopData.inventory || [];
+
         if(shopData && (shopData.shopId || shopData._id)){
             renderAll();
         } else {
@@ -42,7 +42,7 @@ async function loadData() {
 }
 
 function renderAll(){
-    document.getElementById('shopName').innerText = shopData?.shopName || 'Furniture Showroom';
+    document.getElementById('shopName').innerText = shopData?.shopName || shopData?.name || 'Furniture Showroom';
     document.getElementById('items').innerText = shopData?.items?.length || 0;
 
     document.getElementById('userViewBtn').href = `/shop-templates/furniture/customer-view.html?shopId=${shopId}`;
@@ -72,9 +72,11 @@ function renderProducts(filter=''){
     let items = shopData?.items?.filter(i => i.name.toLowerCase().includes(filter.toLowerCase())) || [];
     if(!items.length) return list.innerHTML = '<p style="color:#64748b;">Koi product nahi hai. + Add Furniture dabao</p>';
 
-    list.innerHTML = items.map((item, index) => `
+    list.innerHTML = items.map((item, index) => {
+        const id = item._id || item.id; // _id support
+        return `
         <div class="product-item">
-            <img src="${item.image || 'https://placehold.co/80x80/a16207/fff?text=Item'}" onclick="uploadProductImage(${index})" style="cursor:pointer;">
+            <img src="${item.image || item.img || 'https://placehold.co/80x80/a16207/fff?text=Item'}" onclick="uploadProductImage(${index})" style="cursor:pointer;">
             <div style="flex:1;">
                 <h4>${item.name} <span class="badge ${item.available? 'badge-green':'badge-red'}" onclick="toggleAvailable(${index})">${item.available? 'In Stock':'Out'}</span></h4>
                 <p style="color:#64748b; font-size:13px;">₹${item.price} | Stock: ${item.stock} | ${item.unit}</p>
@@ -82,7 +84,7 @@ function renderProducts(filter=''){
             <button class="btn-sm" style="background:#f59e0b;" onclick="openEditModal(${index})"><i class="fa fa-pen"></i></button>
             <button class="btn-sm" style="background:#ef4444;" onclick="deleteItem(${index})"><i class="fa fa-trash"></i></button>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 function renderLowStock(){
@@ -125,10 +127,11 @@ async function updateShopDB(updateData){
     else alert('Update failed: ' + result.message);
 }
 
+// FIX 2: BODY ME {item:} LAGANA HAI
 async function updateFurnitureItem(itemId, updatedItem){
     const res = await fetch(`/api/shops/${shopId}/item/${itemId}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(updatedItem)
+        body: JSON.stringify({ item: updatedItem }) // YE BADLA
     });
     const result = await res.json();
     if(result.success) loadData();
@@ -182,19 +185,19 @@ function closeEditModal(){ document.getElementById('editModal').style.display = 
 async function saveEditedItem(){
     const item = shopData.items[editingIndex];
     const updatedItem = {...item, name: document.getElementById('editName').value, price: Number(document.getElementById('editPrice').value), stock: Number(document.getElementById('editStock').value), unit: document.getElementById('editUnit').value, desc: document.getElementById('editDesc').value };
-    await updateFurnitureItem(item._id || item.id, updatedItem); // _id support add
+    await updateFurnitureItem(item._id || item.id, updatedItem); // _id support
     closeEditModal();
 }
 
 async function toggleAvailable(index){
     const item = shopData.items[index];
-    await updateFurnitureItem(item._id || item.id, {...item, available:!item.available}); // _id support add
+    await updateFurnitureItem(item._id || item.id, {...item, available:!item.available}); // _id support
 }
 
 async function deleteItem(index){
     if(!confirm('Pakka delete karna hai?')) return;
     const item = shopData.items[index];
-    await fetch(`/api/shops/${shopId}/item/${item._id || item.id}`, { method: 'DELETE' }); // _id support add
+    await fetch(`/api/shops/${shopId}/item/${item._id || item.id}`, { method: 'DELETE' }); // _id support
     loadData();
 }
 
@@ -212,7 +215,7 @@ async function uploadProductImage(index){
             alert('Photo upload nahi hui. Cloudinary check karo');
             return;
         }
-        await updateFurnitureItem(item._id || item.id, {...item, image: imageUrl}); // _id support add
+        await updateFurnitureItem(item._id || item.id, {...item, image: imageUrl}); // _id support
         alert('Product Photo Uploaded ✅');
     }
 }

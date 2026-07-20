@@ -75,7 +75,6 @@
         <div class="product-grid" id="productGrid">Loading...</div>
     </div>
 
-    <!-- CART + CHECKOUT MODAL -->
     <div class="modal" id="checkoutModal">
         <div class="modal-content">
             <h2>Checkout</h2>
@@ -104,7 +103,6 @@
         </div>
     </div>
 
-    <!-- PRODUCT DETAIL MODAL -->
     <div class="modal" id="productModal">
         <div class="modal-content" id="modalContent" style="display:flex; gap:30px;"></div>
     </div>
@@ -128,15 +126,16 @@
         async function loadData() {
             const res = await fetch(`/api/shops/${shopId}`);
             const result = await res.json();
-            const shop = result.data || result.shop || result; // FIX 2
+            const shop = result.data || result.shop || result;
             shopDataGlobal = shop;
-            shopDataGlobal.items = shopDataGlobal.items || [];
+            // FIX 1: products bhi check karo
+            shopDataGlobal.items = shopDataGlobal.items || shopDataGlobal.products || [];
             renderShop(shopDataGlobal);
         }
 
         function renderShop(shop){
-            document.getElementById('pageTitle').innerText = shop.shopName || 'Furniture Shop';
-            document.getElementById('shopNameTop').innerText = shop.shopName || 'Shop';
+            document.getElementById('pageTitle').innerText = shop.shopName || shop.name || 'Furniture Shop';
+            document.getElementById('shopNameTop').innerText = shop.shopName || shop.name || 'Shop';
             document.getElementById('ownerName').innerText = shop.ownerName || 'Owner';
             document.getElementById('ownerPic').src = shop.ownerPhotoUrl || 'https://placehold.co/80';
             if(shop.banner) document.getElementById('shopBanner').style.backgroundImage = `url(${shop.banner})`;
@@ -166,31 +165,34 @@
 
         function renderProducts(search=''){
             const grid = document.getElementById('productGrid');
-            let items = shopDataGlobal.items.filter(i => i.available !== false); // available na ho to bhi dikhe
+            let items = shopDataGlobal.items.filter(i => i.available !== false);
             if(currentFilter !== 'all') items = items.filter(i => (i.category || 'General') === currentFilter);
             if(search) items = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
 
             if(!items.length) return grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">Koi product nahi mila</p>';
 
-            grid.innerHTML = items.map(item => `
+            grid.innerHTML = items.map(item => {
+                const id = item._id || item.id; // FIX 2: _id || id
+                return `
                 <div class="product-card">
-                    <div class="wishlist ${wishlist.includes(item.id)?'active':''}" onclick="toggleWishlist('${item.id}')"><i class="fa fa-heart"></i></div> <!-- FIX 1: item.id -->
-                    <img src="${item.image || 'https://placehold.co/300x200'}" onclick='openModal(${JSON.stringify(item).replace(/"/g, '&quot;')})'>
+                    <div class="wishlist ${wishlist.includes(id)?'active':''}" onclick="toggleWishlist('${id}')"><i class="fa fa-heart"></i></div>
+                    <img src="${item.image || item.img || 'https://placehold.co/300x200'}" onclick='openModal(${JSON.stringify(item).replace(/"/g, '&quot;')})'>
                     <div class="product-info">
                         <div class="rating"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star-half"></i> 4.8</div>
                         <h3 onclick='openModal(${JSON.stringify(item).replace(/"/g, '&quot;')})' style="cursor:pointer;">${item.name}</h3>
                         <div><span class="price">₹${item.price}</span> <span style="text-decoration:line-through; color:#94a3b8; font-size:14px;">₹${item.price+2000}</span></div>
                         <div class="delivery-tag"><i class="fa fa-truck"></i> Free Delivery by Tomorrow</div>
-                        <button class="btn-add" onclick="addToCart('${item.id}', '${item.name}', ${item.price})"><i class="fa fa-plus"></i> Add to Cart</button> <!-- FIX 1 -->
+                        <button class="btn-add" onclick="addToCart('${id}', '${item.name}', ${item.price})"><i class="fa fa-plus"></i> Add to Cart</button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function openModal(item){
+            const id = item._id || item.id; // FIX 3
             document.getElementById('productModal').style.display = 'flex';
             document.getElementById('modalContent').innerHTML = `
-                <img src="${item.image}" style="width:400px; height:400px; object-fit:cover; border-radius:15px;">
+                <img src="${item.image || item.img}" style="width:400px; height:400px; object-fit:cover; border-radius:15px;">
                 <div>
                     <h2>${item.name}</h2>
                     <div class="rating"><i class="fa fa-star"></i> 4.8 (120 Reviews)</div>
@@ -200,7 +202,7 @@
                     <p><b>Warranty:</b> ${item.specs?.warranty || '1 Year'}</p>
                     <p><b>Delivery:</b> Free, Tomorrow</p>
                     <div style="margin:20px 0; padding:15px; background:#f0fdf4; border-radius:10px;"><i class="fa fa-check"></i> 7 Days Easy Return</div>
-                    <button class="btn-add" style="padding:15px; font-size:16px;" onclick="addToCart('${item.id}', '${item.name}', ${item.price}); closeModal()">Add to Cart</button> <!-- FIX 1 -->
+                    <button class="btn-add" style="padding:15px; font-size:16px;" onclick="addToCart('${id}', '${item.name}', ${item.price}); closeModal()">Add to Cart</button>
                 </div>
             `;
         }
@@ -246,20 +248,18 @@
                 deliverySlot: document.getElementById('deliverySlot').value,
                 paymentMethod: document.getElementById('paymentMethod').value,
                 items: cart,
-                total: Number(document.getElementById('totalAmount').innerText), // FIX 3: total hai tere me
+                total: Number(document.getElementById('totalAmount').innerText),
                 status: 'pending'
             };
             if(!orderData.customerName || !orderData.customerPhone) return alert('Details bharo');
 
-            // FIX 3: TERE ROUTE KE HISAB SE
             await fetch(`/api/shops/${shopId}/order`, {
                 method: 'POST',
                 headers: {'Content-Type':'application/json'},
                 body: JSON.stringify(orderData)
             });
 
-            // WhatsApp Message
-            let msg = `*NEW ORDER* - ${shopDataGlobal.shopName}\n\n`;
+            let msg = `*NEW ORDER* - ${shopDataGlobal.shopName || shopDataGlobal.name}\n\n`;
             cart.forEach(i => msg += `${i.name} x ${i.qty} = ₹${i.price*i.qty}\n`);
             msg += `\n*Total:* ₹${orderData.total}\n*Payment:* ${orderData.paymentMethod}\n*Delivery:* ${orderData.deliverySlot}\n*Address:* ${orderData.customerAddress}`;
             if(shopDataGlobal.phone) window.open(`https://wa.me/91${shopDataGlobal.phone}?text=${encodeURIComponent(msg)}`, '_blank');
