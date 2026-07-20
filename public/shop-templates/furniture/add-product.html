@@ -58,7 +58,7 @@
         <input type="text" id="unit" placeholder="Unit: Piece, Set, Pair" value="Piece">
         <textarea id="desc" placeholder="Description" rows="3"></textarea>
         
-        <button class="btn" onclick="saveProduct()"><i class="fa fa-save"></i> Save Product</button>
+        <button class="btn" id="saveBtn" onclick="saveProduct()"><i class="fa fa-save"></i> Save Product</button>
         <button class="btn btn-secondary" id="cancelBtn" onclick="resetForm()" style="display:none; margin-top:10px;">Cancel</button>
     </div>
 
@@ -68,6 +68,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 <script src="/shop-templates/shop-core.js"></script>
 <script>
 const shopId = new URLSearchParams(window.location.search).get('shopId');
@@ -76,9 +77,8 @@ if(!shopId) alert('ERROR: URL me ?shopId=xxx daalo');
 let shopData = {};
 let editingItem = null;
 
-// FIX 1: INIT LAGAYA
 document.addEventListener('DOMContentLoaded', () => {
-    ShopCore.init(shopId, 'furniture'); 
+    ShopCore.init(shopId, 'furniture'); // INIT LAGAYA
     loadShop();
 });
 
@@ -87,9 +87,7 @@ async function loadShop(){
         const res = await fetch(`/api/shops/${shopId}`);
         const result = await res.json();
         shopData = result.data || result.shop || result;
-        
-        // FIX 2: products bhi check karega
-        shopData.items = shopData.items || shopData.products || []; 
+        shopData.items = shopData.items || shopData.products || []; // products bhi check
         
         console.log("LOADED ITEMS:", shopData.items);
         renderProductList();
@@ -112,21 +110,30 @@ function previewImage(event){
 }
 
 async function saveProduct(){
+    const saveBtn = document.getElementById('saveBtn');
     const name = document.getElementById('name').value;
     if(!name) return alert('Product name dalo');
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
 
     let imageUrl = editingItem ? editingItem.image : '';
     const file = document.getElementById('image').files[0];
     if(file){
-        imageUrl = await ShopCore.uploadImage(file, 'product'); // ab kaam karega
-        if(!imageUrl) return alert('Image upload failed');
+        imageUrl = await ShopCore.uploadImage(file, 'product'); // CLOUDINARY
+        if(!imageUrl || imageUrl.startsWith('data:image')) {
+            alert('Photo upload nahi hui.');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Product';
+            return;
+        }
     }
 
-    // FIX 3: _id ya id dono support
     const itemId = editingItem ? (editingItem._id || editingItem.id) : Date.now().toString();
 
     const itemData = {
-        _id: itemId, // backend me _id jata hai
+        _id: itemId,
+        id: itemId,
         name,
         category: document.getElementById('category').value,
         price: Number(document.getElementById('price').value),
@@ -134,6 +141,7 @@ async function saveProduct(){
         unit: document.getElementById('unit').value,
         desc: document.getElementById('desc').value,
         image: imageUrl,
+        img: imageUrl,
         available: editingItem ? editingItem.available : true
     };
 
@@ -145,32 +153,38 @@ async function saveProduct(){
         method = 'PUT';
     }
 
-    const res = await fetch(endpoint, {
-        method: method, 
-        headers:{'Content-Type':'application/json'}, 
-        body: JSON.stringify(itemData)
-    });
-    
-    const result = await res.json();
-    if(result.success){
-        alert('Product Saved ✅');
-        resetForm();
-        loadShop();
-    } else {
-        alert('Error: ' + (result.message || result.error));
+    try{
+        // FRUIT WALA FORMAT: { item: itemData }
+        const res = await fetch(endpoint, {
+            method: method, 
+            headers:{'Content-Type':'application/json'}, 
+            body: JSON.stringify({ item: itemData }) // <- YE LINE BADLI
+        });
+        
+        const result = await res.json();
+        if(result.success){
+            alert('Product Saved ✅');
+            resetForm();
+            loadShop();
+        } else {
+            throw new Error(result.message || 'Save failed');
+        }
+    }catch(e){
+        alert('DB Save Failed! ' + e.message);
     }
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Product';
 }
 
 function renderProductList(){
     document.getElementById('productCount').innerText = shopData.items.length;
     if(!shopData.items.length) return document.getElementById('productList').innerHTML = '<p style="text-align:center; color:#64748b;">Abhi koi product nahi hai</p>';
     
-    // FIX 4: ID safe pass kiya
     document.getElementById('productList').innerHTML = shopData.items.map(item => {
         const id = item._id || item.id;
         return `
         <div class="product-item">
-            <img src="${item.image || 'https://placehold.co/70/a16207/fff'}">
+            <img src="${item.image || 'https://placehold.co/70/a16207/fff'}" onerror="this.src='https://placehold.co/70'">
             <div class="product-info">
                 <h4>${item.name}</h4>
                 <p>₹${item.price} | Stock: ${item.stock} ${item.unit} | ${item.category}</p>
@@ -184,7 +198,6 @@ function renderProductList(){
     `}).join('');
 }
 
-// FIX 5: ID se item dhunda
 function editProduct(id){
     const item = shopData.items.find(i => (i._id || i.id) === id);
     if(!item) return;
@@ -215,7 +228,7 @@ async function toggleAvailable(id){
     await fetch(`/api/shops/${shopId}/item/${id}`, {
         method:'PUT', 
         headers:{'Content-Type':'application/json'}, 
-        body: JSON.stringify({...item, available: !item.available})
+        body: JSON.stringify({ item: {...item, available: !item.available} }) // YAHAN BHI {item:}
     });
     loadShop();
 }
