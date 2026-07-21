@@ -1,3 +1,5 @@
+// server/models/shops/Furniture.js
+
 const mongoose = require('mongoose');
 
 const furnitureSchema = new mongoose.Schema({

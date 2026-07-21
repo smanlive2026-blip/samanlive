@@ -131,7 +131,7 @@ async function updateShopDB(updateData){
 async function updateFurnitureItem(itemId, updatedItem){
     const res = await fetch(`/api/shops/${shopId}/item/${itemId}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ item: updatedItem }) // YE BADLA
+        body: JSON.stringify(updatedItem) // YE BADLA
     });
     const result = await res.json();
     if(result.success) loadData();

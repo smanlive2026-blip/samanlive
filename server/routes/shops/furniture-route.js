@@ -3,30 +3,31 @@ const router = express.Router();
 const Furniture = require('../../models/shops/Furniture');
 const Shop = require('../../models/Shop');
 
-// GET PURI SHOP DATA
+// GET PURI SHOP DATA - DASHBOARD + CUSTOMER VIEW DONO KE LIYE
 router.get('/:shopId', async (req, res) => {
   try {
     const shopId = req.params.shopId;
-    console.log("GET CALLED FOR SHOPID:", shopId); // LOG 1
+    console.log("GET CALLED FOR SHOPID:", shopId);
     
     const [shop, furniture] = await Promise.all([
-        Shop.findById(shopId),
-        Furniture.findOne({ shopId: shopId })
+        Shop.findById(shopId), // Shop ki basic info
+        Furniture.findOne({ shopId: shopId }) // Furniture ke items, orders
     ]);
     
-    console.log("SHOP FOUND:", !!shop); // LOG 2
-    console.log("FURNITURE FOUND:", !!furniture); // LOG 3
-    console.log("ITEMS COUNT:", furniture?.items?.length || 0); // LOG 4
+    console.log("SHOP FOUND:", !!shop);
+    console.log("FURNITURE FOUND:", !!furniture);
+    console.log("ITEMS COUNT:", furniture?.items?.length || 0);
     
     if(!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
     
     const finalData = {
         ...shop._doc,
-        items: furniture?.items || [],
+        items: furniture?.items || [], // <- YAHI SE DASHBOARD PRODUCT AAYEGA
         orders: furniture?.orders || [],
         settings: furniture?.settings || {},
         isOpen: furniture?.settings?.isOpen ?? true,
-        announcement: furniture?.settings?.announcement || ''
+        announcement: furniture?.settings?.announcement || '',
+        shopId: shop._id // customer view ke liye
     }
 
     res.json({ success: true, shop: finalData });
@@ -36,16 +37,16 @@ router.get('/:shopId', async (req, res) => {
   }
 });
 
-// 2. ADD ITEM - YE WALA REPLACE KAR
+// ADD ITEM
 router.post('/:shopId/item', async (req, res) => {
   try {
     const newItem = {...req.body, id: Date.now().toString() };
     const updated = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
       { $push: { items: newItem } },
-      { new: true, upsert: true, setDefaultsOnInsert: true } // <- ye 2 extra lagao
+      { new: true, upsert: true, setDefaultsOnInsert: true }
     );
-    console.log("SAVED IN DB:", updated.items.length) // check karne ke liye
+    console.log("SAVED IN DB:", updated.items.length)
     res.json({ success: true, data: newItem });
   } catch(err) { 
     console.log(err)
@@ -56,12 +57,16 @@ router.post('/:shopId/item', async (req, res) => {
 // UPDATE ITEM
 router.put('/:shopId/item/:itemId', async (req, res) => {
   try {
-    await Furniture.findOneAndUpdate(
+    const result = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId, 'items.id': req.params.itemId },
-      { $set: { 'items.$': req.body } }
+      { $set: { 'items.$': req.body } }, // frontend seedha item bhejta hai
+      { new: true }
     );
-    res.json({ success: true });
-  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+    res.json({ success: true, data: result });
+  } catch(err) { 
+    console.log("UPDATE ERROR:", err)
+    res.status(500).json({ success: false, error: err.message }); 
+  }
 });
 
 // DELETE ITEM
@@ -75,7 +80,7 @@ router.delete('/:shopId/item/:itemId', async (req, res) => {
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// UPDATE SHOP
+// UPDATE SHOP SETTINGS
 router.put('/:shopId', async (req, res) => {
   try {
     const updated = await Furniture.findOneAndUpdate(
