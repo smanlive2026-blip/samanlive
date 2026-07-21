@@ -41,15 +41,27 @@ router.get('/:shopId', async (req, res) => {
 router.post('/:shopId/item', async (req, res) => {
   try {
     const newItem = {...req.body, id: Date.now().toString() };
-    const updated = await Furniture.findOneAndUpdate(
-      { shopId: req.params.shopId },
-      { $push: { items: newItem } },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
-    console.log("SAVED IN DB:", updated.items.length)
+    
+    // PEHLE CHECK KARO DOC HAI YA NAHI
+    let furniture = await Furniture.findOne({ shopId: req.params.shopId });
+    
+    if(!furniture){
+      // NAHI HAI TO NAYA BANAO
+      furniture = new Furniture({
+        shopId: req.params.shopId,
+        items: [newItem]
+      });
+      await furniture.save();
+    } else {
+      // HAI TO PUSH KAR DO
+      furniture.items.push(newItem);
+      await furniture.save();
+    }
+    
+    console.log("SAVED IN DB:", furniture.items.length)
     res.json({ success: true, data: newItem });
   } catch(err) { 
-    console.log(err)
+    console.log("POST ERROR:", err)
     res.status(500).json({ success: false, error: err.message }); 
   }
 });
