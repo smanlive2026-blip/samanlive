@@ -8,28 +8,26 @@
 <style>
     *{font-family:Poppins; box-sizing:border-box;}
     body{background:#f8fafc; padding:20px;}
-    .container{max-width:1200px; margin:0 auto; display:grid; grid-template-columns: 1fr 2fr; gap:25px;}
-    .card{background:white; padding:25px; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05);}
+   .container{max-width:1200px; margin:0 auto; display:grid; grid-template-columns: 1fr 2fr; gap:25px;}
+   .card{background:white; padding:25px; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05);}
     h2{margin-bottom:20px; color:#1e293b;}
     input, textarea, select {width:100%; padding:12px; margin-bottom:15px; border:2px solid #e2e8f0; border-radius:10px; font-size:14px;}
     input:focus{border-color:#a16207; outline:none;}
-    .btn{background:#a16207; color:white; border:none; padding:14px 24px; border-radius:12px; font-weight:700; cursor:pointer; width:100%;}
-    .btn-secondary{background:#64748b;}
-    .btn-danger{background:#ef4444;}
-    
-    .img-upload{border:2px dashed #cbd5e1; border-radius:12px; padding:20px; text-align:center; cursor:pointer; margin-bottom:15px;}
-    .img-upload img{max-width:100%; height:180px; object-fit:cover; border-radius:10px;}
-    
-    .product-item{display:flex; gap:15px; padding:15px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px; align-items:center;}
-    .product-item img{width:70px; height:70px; object-fit:cover; border-radius:10px;}
-    .product-info{flex:1;}
-    .product-info h4{margin:0; font-size:16px;}
-    .product-info p{margin:3px 0; color:#64748b; font-size:13px;}
-    .actions{display:flex; gap:8px;}
-    .actions button{padding:8px 12px; border:none; border-radius:8px; cursor:pointer; font-size:12px;}
-    .toggle{padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer;}
-    .toggle.on{background:#dcfce7; color:#166534;}
-    .toggle.off{background:#fee2e2; color:#991b1b;}
+   .btn{background:#a16207; color:white; border:none; padding:14px 24px; border-radius:12px; font-weight:700; cursor:pointer; width:100%;}
+   .btn-secondary{background:#64748b;}
+   .btn-danger{background:#ef4444;}
+   .img-upload{border:2px dashed #cbd5e1; border-radius:12px; padding:20px; text-align:center; cursor:pointer; margin-bottom:15px;}
+   .img-upload img{max-width:100%; height:180px; object-fit:cover; border-radius:10px;}
+   .product-item{display:flex; gap:15px; padding:15px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px; align-items:center;}
+   .product-item img{width:70px; height:70px; object-fit:cover; border-radius:10px;}
+   .product-info{flex:1;}
+   .product-info h4{margin:0; font-size:16px;}
+   .product-info p{margin:3px 0; color:#64748b; font-size:13px;}
+   .actions{display:flex; gap:8px;}
+   .actions button{padding:8px 12px; border:none; border-radius:8px; cursor:pointer; font-size:12px;}
+   .toggle{padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer;}
+   .toggle.on{background:#dcfce7; color:#166534;}
+   .toggle.off{background:#fee2e2; color:#991b1b;}
 </style>
 </head>
 <body>
@@ -37,31 +35,23 @@
     <div class="card">
         <h2 id="formTitle"><i class="fa fa-plus"></i> Add New Product</h2>
         <input type="hidden" id="editId">
-        
         <div class="img-upload" onclick="document.getElementById('image').click()">
             <img id="imgPreview" src="https://placehold.co/300x180/a16207/fff?text=Click+to+Upload" style="display:none;">
             <div id="uploadText"><i class="fa fa-cloud-upload" style="font-size:40px; color:#a16207;"></i><p>Click to Upload Image</p></div>
         </div>
         <input type="file" id="image" accept="image/*" style="display:none;" onchange="previewImage(event)">
-        
         <input type="text" id="name" placeholder="Product Name *">
         <select id="category">
-            <option value="Sofa">Sofa</option>
-            <option value="Bed">Bed</option>
-            <option value="Table">Table</option>
-            <option value="Chair">Chair</option>
-            <option value="Wardrobe">Wardrobe</option>
-            <option value="General">General</option>
+            <option value="Sofa">Sofa</option><option value="Bed">Bed</option><option value="Table">Table</option>
+            <option value="Chair">Chair</option><option value="Wardrobe">Wardrobe</option><option value="General">General</option>
         </select>
         <input type="number" id="price" placeholder="Price ₹ *">
         <input type="number" id="stock" placeholder="Stock Quantity *">
         <input type="text" id="unit" placeholder="Unit: Piece, Set, Pair" value="Piece">
         <textarea id="desc" placeholder="Description" rows="3"></textarea>
-        
         <button class="btn" id="saveBtn" onclick="saveProduct()"><i class="fa fa-save"></i> Save Product</button>
         <button class="btn btn-secondary" id="cancelBtn" onclick="resetForm()" style="display:none; margin-top:10px;">Cancel</button>
     </div>
-
     <div class="card">
         <h2><i class="fa fa-list"></i> Your Products (<span id="productCount">0</span>)</h2>
         <div id="productList">Loading...</div>
@@ -72,13 +62,13 @@
 <script src="/shop-templates/shop-core.js"></script>
 <script>
 const shopId = new URLSearchParams(window.location.search).get('shopId');
-if(!shopId) alert('ERROR: URL me ?shopId=xxx daalo');
+if(!shopId) alert('ERROR: URL me?shopId=xxx daalo');
 
 let shopData = {};
 let editingItem = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    ShopCore.init(shopId, 'furniture'); // INIT LAGAYA
+    ShopCore.init(shopId, 'furniture');
     loadShop();
 });
 
@@ -86,9 +76,8 @@ async function loadShop(){
     try{
         const res = await fetch(`/api/shops/${shopId}`);
         const result = await res.json();
-        shopData = result.data || result.shop || result;
-        shopData.items = shopData.items || shopData.products || []; // products bhi check
-        
+        shopData = result.shop || result.data || result;
+        shopData.items = shopData.items || [];
         console.log("LOADED ITEMS:", shopData.items);
         renderProductList();
     }catch(err){
@@ -117,24 +106,23 @@ async function saveProduct(){
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
 
-    let imageUrl = editingItem ? editingItem.image : '';
+    let imageUrl = editingItem? editingItem.image : '';
     const file = document.getElementById('image').files[0];
-if(file){
-    try {
-        imageUrl = await ShopCore.uploadImage(file, 'product'); // CLOUDINARY
-        console.log("UPLOAD URL:", imageUrl);
-        if(!imageUrl) throw new Error('Cloudinary returned empty url');
-    } catch(err) {
-        alert('Photo upload nahi hui: ' + err.message);
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Product';
-        return;
+    if(file){
+        try {
+            imageUrl = await ShopCore.uploadImage(file, 'product');
+            console.log("UPLOAD URL:", imageUrl);
+            if(!imageUrl) throw new Error('Cloudinary returned empty url');
+        } catch(err) {
+            alert('Photo upload nahi hui: ' + err.message);
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Product';
+            return;
+        }
     }
-}
-    const itemId = editingItem ? (editingItem._id || editingItem.id) : Date.now().toString();
+    const itemId = editingItem? (editingItem.id) : Date.now().toString();
 
     const itemData = {
-        _id: itemId,
         id: itemId,
         name,
         category: document.getElementById('category').value,
@@ -144,25 +132,24 @@ if(file){
         desc: document.getElementById('desc').value,
         image: imageUrl,
         img: imageUrl,
-        available: editingItem ? editingItem.available : true
+        available: editingItem? editingItem.available : true
     };
 
     let endpoint = `/api/shops/${shopId}/item`;
     let method = 'POST';
-    
+
     if(editingItem){
         endpoint = `/api/shops/${shopId}/item/${itemId}`;
         method = 'PUT';
     }
 
     try{
-        // FRUIT WALA FORMAT: { item: itemData }
         const res = await fetch(endpoint, {
-            method: method, 
-            headers:{'Content-Type':'application/json'}, 
-            body: JSON.stringify({ item: itemData }) // <- YE LINE BADLI
+            method: method,
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ item: itemData }) // <- AB BACKEND BHI ISE HI LE RAHA
         });
-        
+
         const result = await res.json();
         if(result.success){
             alert('Product Saved ✅');
@@ -181,12 +168,12 @@ if(file){
 function renderProductList(){
     document.getElementById('productCount').innerText = shopData.items.length;
     if(!shopData.items.length) return document.getElementById('productList').innerHTML = '<p style="text-align:center; color:#64748b;">Abhi koi product nahi hai</p>';
-    
+
     document.getElementById('productList').innerHTML = shopData.items.map(item => {
-        const id = item._id || item.id;
+        const id = item.id;
         return `
         <div class="product-item">
-            <img src="${item.image || 'https://placehold.co/70/a16207/fff'}" onerror="this.src='https://placehold.co/70'">
+            <img src="${item.image || item.img || 'https://placehold.co/70/a16207/fff'}" onerror="this.src='https://placehold.co/70'">
             <div class="product-info">
                 <h4>${item.name}</h4>
                 <p>₹${item.price} | Stock: ${item.stock} ${item.unit} | ${item.category}</p>
@@ -201,7 +188,7 @@ function renderProductList(){
 }
 
 function editProduct(id){
-    const item = shopData.items.find(i => (i._id || i.id) === id);
+    const item = shopData.items.find(i => i.id === id);
     if(!item) return;
     editingItem = item;
     document.getElementById('formTitle').innerHTML = '<i class="fa fa-pen"></i> Edit Product';
@@ -226,11 +213,11 @@ async function deleteProduct(id){
 }
 
 async function toggleAvailable(id){
-    const item = shopData.items.find(i => (i._id || i.id) === id);
+    const item = shopData.items.find(i => i.id === id);
     await fetch(`/api/shops/${shopId}/item/${id}`, {
-        method:'PUT', 
-        headers:{'Content-Type':'application/json'}, 
-        body: JSON.stringify({ item: {...item, available: !item.available} }) // YAHAN BHI {item:}
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ item: {...item, available:!item.available} })
     });
     loadShop();
 }
