@@ -22,16 +22,13 @@ let editingIndex = null;
 async function loadData() {
     try{
         const res = await fetch(`${API_BASE}/${shopId}`);
-        console.log("STATUS:", res.status);
-        if(!res.ok) throw new Error('API Status: ' + res.status);
         const result = await res.json();
-        console.log("API RESPONSE FULL:", result); // DEBUG
+        console.log("API RESPONSE FULL:", result); // YAHI DEKHNA HAI
 
         shopData = result.shop || result.data || result;
-        // UPDATE: sab possible naam check karenge
         shopData.items = shopData.items || shopData.products || shopData.inventory || [];
 
-        console.log("FINAL ITEMS COUNT:", shopData.items.length); // DEBUG
+        console.log("ITEMS ARRAY:", shopData.items); // YAHI DEKHNA HAI
 
         if(shopData && (shopData.shopId || shopData._id)){
             renderAll();
@@ -57,12 +54,12 @@ function renderAll(){
     document.getElementById('openTime').value = shopData?.shopSettings?.openTime || shopData?.settings?.openTime || '09:00';
     document.getElementById('closeTime').value = shopData?.shopSettings?.closeTime || shopData?.settings?.closeTime || '21:00';
 
-    // UPDATE: Toggle ke liye 3 naam check
-    const isOpen = shopData?.isOpen?? shopData?.shopStatus?? shopData?.isShopOpen?? true;
+    // TOGGLE FIX: backend se jo bhi aaye usko true/false me convert
+    const isOpen = shopData?.isOpen === true || shopData?.isOpen === "true" || shopData?.shopStatus === "open";
     const toggle = document.getElementById('shopToggle');
     toggle.classList.toggle('off',!isOpen);
     document.getElementById('toggleText').innerText = isOpen? 'Open' : 'Closed';
-    shopData.isOpen = isOpen; // save kar lo aage ke liye
+    shopData.isOpen = isOpen;
 
     if(shopData?.banner || shopData?.bannerPhotoUrl) document.getElementById('shopBanner').src = shopData.banner || shopData.bannerPhotoUrl;
     if(shopData?.ownerPhotoUrl) document.getElementById('ownerImg').src = shopData.ownerPhotoUrl;
@@ -77,15 +74,13 @@ function renderProducts(filter=''){
     const list = document.getElementById('productList');
     const searchTerm = filter.toLowerCase();
 
-    // UPDATE: price, stock, unit ka bhi backup
     let items = shopData?.items?.filter(i => {
         if(!i) return false;
         const name = i.name || i.productName || i.title || '';
-        if(!name) return false;
         return name.toLowerCase().includes(searchTerm);
     }) || [];
 
-    console.log("RENDERING ITEMS:", items.length); // DEBUG
+    console.log("FILTERED ITEMS TO RENDER:", items); // YAHI DEKHNA HAI
 
     if(!items.length) return list.innerHTML = '<p style="color:#64748b;">Koi product nahi hai. + Add Furniture dabao</p>';
 
@@ -95,11 +90,12 @@ function renderProducts(filter=''){
         const price = item.price || item.productPrice || 0;
         const stock = item.stock || item.quantity || 0;
         const unit = item.unit || item.productUnit || 'Piece';
+        const available = item.available === true || item.available === "true";
         return `
         <div class="product-item">
             <img src="${item.image || item.img || item.productImage || 'https://placehold.co/80x80/a16207/fff?text=Item'}" onclick="uploadProductImage(${index})" style="cursor:pointer;">
             <div style="flex:1;">
-                <h4>${name} <span class="badge ${item.available? 'badge-green':'badge-red'}" onclick="toggleAvailable(${index})">${item.available? 'In Stock':'Out'}</span></h4>
+                <h4>${name} <span class="badge ${available? 'badge-green':'badge-red'}" onclick="toggleAvailable(${index})">${available? 'In Stock':'Out'}</span></h4>
                 <p style="color:#64748b; font-size:13px;">₹${price} | Stock: ${stock} | ${unit}</p>
             </div>
             <button class="btn-sm" style="background:#f59e0b;" onclick="openEditModal(${index})"><i class="fa fa-pen"></i></button>
@@ -109,7 +105,7 @@ function renderProducts(filter=''){
 }
 
 function renderLowStock(){
-    const low = shopData?.items?.filter(i => i && (i.stock || i.quantity) <= 5) || [];
+    const low = shopData?.items?.filter(i => i && (i.stock || i.quantity || 0) <= 5) || [];
     document.getElementById('lowStock').innerHTML = low.length?
         low.map(i => `<div style="padding:10px; background:#fef2f2; border-radius:10px; margin-bottom:8px;"><b>${i.name || i.productName || 'No Name'}</b> - ${i.stock || i.quantity} left</div>`).join('') :
         '<p style="color:#16a34a;">Sab stock me hai ✅</p>';
@@ -185,8 +181,11 @@ function bindUploadsCustom(){
 
 function initEvents(){
     document.getElementById('searchProduct').onkeyup = (e) => renderProducts(e.target.value);
-    // UPDATE: Toggle me 3 naam bhej do
-    document.getElementById('shopToggle').onclick = () => updateShopDB({isOpen:!shopData.isOpen, shopStatus:!shopData.isOpen, isShopOpen:!shopData.isOpen});
+    // TOGGLE FIX: 3 naam ek saath bhej do
+    document.getElementById('shopToggle').onclick = () => {
+        const newStatus =!shopData.isOpen;
+        updateShopDB({isOpen:newStatus, shopStatus: newStatus? "open":"closed", isShopOpen:newStatus});
+    };
     document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
     document.getElementById('saveTiming').onclick = () => updateShopDB({settings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
 }
@@ -206,12 +205,12 @@ function closeEditModal(){ document.getElementById('editModal').style.display = 
 async function saveEditedItem(){
     const item = shopData.items[editingIndex];
     const updatedItem = {
-       ...item, 
-        name: document.getElementById('editName').value, 
-        price: Number(document.getElementById('editPrice').value), 
-        stock: Number(document.getElementById('editStock').value), 
-        unit: document.getElementById('editUnit').value, 
-        desc: document.getElementById('editDesc').value 
+      ...item,
+        name: document.getElementById('editName').value,
+        price: Number(document.getElementById('editPrice').value),
+        stock: Number(document.getElementById('editStock').value),
+        unit: document.getElementById('editUnit').value,
+        desc: document.getElementById('editDesc').value
     };
     await updateFurnitureItem(item._id || item.id, updatedItem);
     closeEditModal();
