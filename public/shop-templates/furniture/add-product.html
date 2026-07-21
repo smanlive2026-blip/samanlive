@@ -137,11 +137,11 @@ async function saveProduct(){
         available: editingItem? editingItem.available : true
     };
 
-    let endpoint = `/api/shops/${shopId}/item`;
+    let endpoint = `/api/furniture/${shopId}/item`; // UPDATE: shops ki jagah furniture
     let method = 'POST';
 
     if(editingItem){
-        endpoint = `/api/shops/${shopId}/item/${itemId}`;
+        endpoint = `/api/furniture/${shopId}/item/${itemId}`; // UPDATE: yaha bhi
         method = 'PUT';
     }
 
