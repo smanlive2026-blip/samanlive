@@ -3,32 +3,34 @@ const router = express.Router();
 const Furniture = require('../../models/shops/Furniture');
 const Shop = require('../../models/Shop');
 
-// GET PURI SHOP DATA
+// GET PURI SHOP DATA - SAB ITEMS KE SATH
 router.get('/:shopId', async (req, res) => {
   try {
     const shopId = req.params.shopId;
     console.log("GET CALLED FOR SHOPID:", shopId);
 
-    const [shop, furniture] = await Promise.all([
-        Shop.findById(shopId).lean(),
-        Furniture.findOne({ shopId: shopId }).lean()
-    ]);
-
+    const shop = await Shop.findById(shopId).lean();
     if(!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
 
+    // AGAR DOC NAHI HAI TO BANA DO
+    let furniture = await Furniture.findOne({ shopId: shopId });
+    if(!furniture){
+        furniture = await Furniture.create({ shopId: shopId, items: [] });
+    }
+
     const finalData = {
-     ...shop,
-        items: furniture?.items || [],
-        orders: furniture?.orders || [],
-        settings: furniture?.settings || {},
-        isOpen: furniture?.settings?.isOpen?? true,
-        announcement: furniture?.settings?.announcement || '',
-        ownerPhotoUrl: furniture?.ownerPhotoUrl || '',
-        bannerPhotoUrl: furniture?.bannerPhotoUrl || '',
+       ...shop,
+        items: furniture.items || [], // YAHI PE TERE 10 DIN WALE PRODUCT AYENGE
+        orders: furniture.orders || [],
+        settings: furniture.settings || {},
+        isOpen: furniture.settings?.isOpen?? true,
+        announcement: furniture.settings?.announcement || '',
+        ownerPhotoUrl: furniture.ownerPhotoUrl || '',
+        bannerPhotoUrl: furniture.bannerPhotoUrl || '',
         shopId: shop._id
     }
 
-    console.log("ITEMS COUNT:", finalData.items.length);
+    console.log("TOTAL ITEMS IN DB:", finalData.items.length); // YE LOG DEKHNA
     res.json({ success: true, shop: finalData });
   } catch(err) {
     console.log("GET ERROR:", err)
@@ -36,24 +38,21 @@ router.get('/:shopId', async (req, res) => {
   }
 });
 
-// ADD ITEM - NUCLEAR FIX
+// ADD ITEM
 router.post('/:shopId/item', async (req, res) => {
   try {
-    const itemData = req.body.item || req.body; // DONO FORMAT SUPPORT
+    const itemData = req.body.item || req.body;
     const newItem = {...itemData, id: itemData.id || Date.now().toString() };
 
-    // PEHLE FIND KARO, NAHI HAI TO BANAO
     let furniture = await Furniture.findOne({ shopId: req.params.shopId });
-
-    if(furniture){
-        furniture.items.push(newItem);
+    if(!furniture){
+        furniture = await Furniture.create({ shopId: req.params.shopId, items: [newItem] });
     } else {
-        furniture = new Furniture({ shopId: req.params.shopId, items: [newItem] });
+        furniture.items.push(newItem);
+        await furniture.save();
     }
 
-    await furniture.save(); // SAVE KARNE KE BAAD PAKKA MILEGA
-
-    console.log("SAVED IN DB - TOTAL ITEMS:", furniture.items.length)
+    console.log("SAVED IN DB - TOTAL ITEMS NOW:", furniture.items.length)
     res.json({ success: true, data: newItem });
   } catch(err) {
     console.log("POST ERROR:", err)
@@ -64,7 +63,7 @@ router.post('/:shopId/item', async (req, res) => {
 // UPDATE ITEM
 router.put('/:shopId/item/:itemId', async (req, res) => {
   try {
-    const itemData = req.body.item || req.body; // DONO FORMAT SUPPORT
+    const itemData = req.body.item || req.body;
     await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId, 'items.id': req.params.itemId },
       { $set: { 'items.$': itemData } },
@@ -94,10 +93,10 @@ router.delete('/:shopId/item/:itemId', async (req, res) => {
 // UPDATE SHOP SETTINGS + PHOTO
 router.put('/:shopId', async (req, res) => {
   try {
-    const updateData = req.body.item || req.body; // DONO FORMAT SUPPORT
+    const updateData = req.body.item || req.body;
     const updated = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
-      { $set: updateData }, // settings ke sath photo bhi update ho jayegi
+      { $set: updateData },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
     res.json({ success: true, data: updated });
