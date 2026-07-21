@@ -1,7 +1,7 @@
 // ===== STEP 1: SHOP ID QUERY SE NIKALO =====
 const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId');
-const API_BASE = `/api/furniture`; // UPDATE: ye 1 line add
+const API_BASE = `/api/furniture`;
 
 if(!shopId){
     alert('ERROR: URL me?shopId=xxx daalo');
@@ -21,7 +21,7 @@ let editingIndex = null;
 
 async function loadData() {
     try{
-        const res = await fetch(`${API_BASE}/${shopId}`); // UPDATE: shops -> furniture
+        const res = await fetch(`${API_BASE}/${shopId}`);
         console.log("STATUS:", res.status);
         if(!res.ok) throw new Error('API Status: ' + res.status);
         const result = await res.json();
@@ -51,14 +51,14 @@ function renderAll(){
     document.getElementById('libraryBtn').href = `product-library.html?shopId=${shopId}`;
 
     document.getElementById('announcementInput').value = shopData?.announcement || '';
-    document.getElementById('openTime').value = shopData?.shopSettings?.openTime || shopData?.settings?.openTime || '09:00'; // UPDATE: dono support
-    document.getElementById('closeTime').value = shopData?.shopSettings?.closeTime || shopData?.settings?.closeTime || '21:00'; // UPDATE: dono support
+    document.getElementById('openTime').value = shopData?.shopSettings?.openTime || shopData?.settings?.openTime || '09:00';
+    document.getElementById('closeTime').value = shopData?.shopSettings?.closeTime || shopData?.settings?.closeTime || '21:00';
 
     const toggle = document.getElementById('shopToggle');
     toggle.classList.toggle('off',!shopData?.isOpen);
     document.getElementById('toggleText').innerText = shopData?.isOpen? 'Open' : 'Closed';
 
-    if(shopData?.banner || shopData?.bannerPhotoUrl) document.getElementById('shopBanner').src = shopData.banner || shopData.bannerPhotoUrl; // UPDATE: dono support
+    if(shopData?.banner || shopData?.bannerPhotoUrl) document.getElementById('shopBanner').src = shopData.banner || shopData.bannerPhotoUrl;
     if(shopData?.ownerPhotoUrl) document.getElementById('ownerImg').src = shopData.ownerPhotoUrl;
 
     renderProducts();
@@ -69,7 +69,14 @@ function renderAll(){
 
 function renderProducts(filter=''){
     const list = document.getElementById('productList');
-    let items = shopData?.items?.filter(i => i.name.toLowerCase().includes(filter.toLowerCase())) || [];
+    const searchTerm = filter.toLowerCase(); // UPDATE: search ko lower me kar diya
+
+    // UPDATE: name check + toLowerCase dono. Ab crash nahi hoga
+    let items = shopData?.items?.filter(i => {
+        if(!i ||!i.name) return false; // agar item ya name nahi hai to skip
+        return i.name.toLowerCase().includes(searchTerm);
+    }) || [];
+
     if(!items.length) return list.innerHTML = '<p style="color:#64748b;">Koi product nahi hai. + Add Furniture dabao</p>';
 
     list.innerHTML = items.map((item, index) => {
@@ -79,7 +86,7 @@ function renderProducts(filter=''){
             <img src="${item.image || item.img || 'https://placehold.co/80x80/a16207/fff?text=Item'}" onclick="uploadProductImage(${index})" style="cursor:pointer;">
             <div style="flex:1;">
                 <h4>${item.name} <span class="badge ${item.available? 'badge-green':'badge-red'}" onclick="toggleAvailable(${index})">${item.available? 'In Stock':'Out'}</span></h4>
-                <p style="color:#64748b; font-size:13px;">₹${item.price} | Stock: ${item.stock} | ${item.unit}</p>
+                <p style="color:#64748b; font-size:13px;">₹${item.price || 0} | Stock: ${item.stock || 0} | ${item.unit || 'Piece'}</p>
             </div>
             <button class="btn-sm" style="background:#f59e0b;" onclick="openEditModal(${index})"><i class="fa fa-pen"></i></button>
             <button class="btn-sm" style="background:#ef4444;" onclick="deleteItem(${index})"><i class="fa fa-trash"></i></button>
@@ -88,15 +95,16 @@ function renderProducts(filter=''){
 }
 
 function renderLowStock(){
-    const low = shopData?.items?.filter(i => i.stock <= 5) || [];
+    // UPDATE: yaha bhi name check add
+    const low = shopData?.items?.filter(i => i && i.stock <= 5) || [];
     document.getElementById('lowStock').innerHTML = low.length?
-        low.map(i => `<div style="padding:10px; background:#fef2f2; border-radius:10px; margin-bottom:8px;"><b>${i.name}</b> - ${i.stock} left</div>`).join('') :
+        low.map(i => `<div style="padding:10px; background:#fef2f2; border-radius:10px; margin-bottom:8px;"><b>${i.name || 'No Name'}</b> - ${i.stock} left</div>`).join('') :
         '<p style="color:#16a34a;">Sab stock me hai ✅</p>';
 }
 
 async function loadOrderStats(){
     try{
-        const res = await fetch(`${API_BASE}/${shopId}/orders`); // UPDATE: shops -> furniture
+        const res = await fetch(`${API_BASE}/${shopId}/orders`);
         if(!res.ok) return;
         const result = await res.json();
         if(result.success){
@@ -118,18 +126,17 @@ async function loadOrderStats(){
 }
 
 async function updateShopDB(updateData){
-    const res = await fetch(`${API_BASE}/${shopId}`, { // UPDATE: shops -> furniture
+    const res = await fetch(`${API_BASE}/${shopId}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(updateData) // UPDATE: {item:} hata diya kyunki backend direct le raha
+        body: JSON.stringify(updateData)
     });
     const result = await res.json();
     if(result.success) loadData();
     else alert('Update failed: ' + result.message);
 }
 
-// FIX 2: BODY ME {item:} LAGANA HAI
 async function updateFurnitureItem(itemId, updatedItem){
-    const res = await fetch(`${API_BASE}/${shopId}/item/${itemId}`, { // UPDATE: shops -> furniture
+    const res = await fetch(`${API_BASE}/${shopId}/item/${itemId}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ item: updatedItem })
     });
@@ -156,7 +163,7 @@ function bindUploadsCustom(){
         document.getElementById('uploadLoader').style.display = 'none';
         if(url){
             document.getElementById('shopBanner').src = url;
-            await updateShopDB({bannerPhotoUrl: url}); // UPDATE: banner -> bannerPhotoUrl
+            await updateShopDB({bannerPhotoUrl: url});
         }
     }
     document.getElementById('ownerImg').onclick = () => document.getElementById('ownerInput').click();
@@ -167,7 +174,7 @@ function initEvents(){
     document.getElementById('searchProduct').onkeyup = (e) => renderProducts(e.target.value);
     document.getElementById('shopToggle').onclick = () => updateShopDB({isOpen:!shopData.isOpen});
     document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
-    document.getElementById('saveTiming').onclick = () => updateShopDB({settings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}}); // UPDATE: shopSettings -> settings
+    document.getElementById('saveTiming').onclick = () => updateShopDB({settings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
 }
 
 function openEditModal(index){
@@ -197,7 +204,7 @@ async function toggleAvailable(index){
 async function deleteItem(index){
     if(!confirm('Pakka delete karna hai?')) return;
     const item = shopData.items[index];
-    await fetch(`${API_BASE}/${shopId}/item/${item._id || item.id}`, { method: 'DELETE' }); // UPDATE: shops -> furniture
+    await fetch(`${API_BASE}/${shopId}/item/${item._id || item.id}`, { method: 'DELETE' });
     loadData();
 }
 
