@@ -23,12 +23,12 @@ async function loadData() {
     try{
         const res = await fetch(`${API_BASE}/${shopId}`);
         const result = await res.json();
-        console.log("API RESPONSE FULL:", result); // YAHI DEKHNA HAI
+        console.log("API RESPONSE FULL:", result);
 
         shopData = result.shop || result.data || result;
         shopData.items = shopData.items || shopData.products || shopData.inventory || [];
 
-        console.log("ITEMS ARRAY:", shopData.items); // YAHI DEKHNA HAI
+        console.log("ITEMS ARRAY:", shopData.items);
 
         if(shopData && (shopData.shopId || shopData._id)){
             renderAll();
@@ -50,24 +50,30 @@ function renderAll(){
     document.getElementById('bulkProductBtn').href = `bulk-products.html?shopId=${shopId}`;
     document.getElementById('libraryBtn').href = `product-library.html?shopId=${shopId}`;
 
-    document.getElementById('announcementInput').value = shopData?.announcement || '';
+    document.getElementById('announcementInput').value = shopData?.announcement || shopData?.settings?.announcement || '';
     document.getElementById('openTime').value = shopData?.shopSettings?.openTime || shopData?.settings?.openTime || '09:00';
     document.getElementById('closeTime').value = shopData?.shopSettings?.closeTime || shopData?.settings?.closeTime || '21:00';
 
     // TOGGLE FIX: backend se jo bhi aaye usko true/false me convert
-    const isOpen = shopData?.isOpen === true || shopData?.isOpen === "true" || shopData?.shopStatus === "open";
+    const isOpen = shopData?.isOpen === true || shopData?.isOpen === "true" || shopData?.settings?.isOpen === true || shopData?.shopStatus === "open";
     const toggle = document.getElementById('shopToggle');
     toggle.classList.toggle('off',!isOpen);
     document.getElementById('toggleText').innerText = isOpen? 'Open' : 'Closed';
     shopData.isOpen = isOpen;
 
-    if(shopData?.banner || shopData?.bannerPhotoUrl) document.getElementById('shopBanner').src = shopData.banner || shopData.bannerPhotoUrl;
-    if(shopData?.ownerPhotoUrl) document.getElementById('ownerImg').src = shopData.ownerPhotoUrl;
+    // UPDATE: banner + owner dono settings se bhi padhe
+    if(shopData?.banner || shopData?.bannerPhotoUrl || shopData?.settings?.bannerPhotoUrl)
+        document.getElementById('shopBanner').src = shopData.banner || shopData.bannerPhotoUrl || shopData?.settings?.bannerPhotoUrl;
+    if(shopData?.ownerPhotoUrl || shopData?.settings?.ownerPhotoUrl)
+        document.getElementById('ownerImg').src = shopData.ownerPhotoUrl || shopData?.settings?.ownerPhotoUrl;
 
     renderProducts();
     renderLowStock();
     loadOrderStats();
-    bindUploadsCustom();
+    bindUploadsCustom(); // purana wala rehne de
+        // UPDATE: shop-core wala bind use karo. Golden rule follow. Double bind ho jayega par chalega
+    ShopCore.bindImageUpload('ownerImg', 'ownerInput', 'profile', 'owner');
+    ShopCore.bindImageUpload('shopBanner', 'bannerInput', 'banner', 'banner');
 }
 
 function renderProducts(filter=''){
@@ -80,7 +86,7 @@ function renderProducts(filter=''){
         return name.toLowerCase().includes(searchTerm);
     }) || [];
 
-    console.log("FILTERED ITEMS TO RENDER:", items); // YAHI DEKHNA HAI
+    console.log("FILTERED ITEMS TO RENDER:", items);
 
     if(!items.length) return list.innerHTML = '<p style="color:#64748b;">Koi product nahi hai. + Add Furniture dabao</p>';
 
@@ -155,6 +161,7 @@ async function updateFurnitureItem(itemId, updatedItem){
 }
 
 function bindUploadsCustom(){
+    // YE PURANA REHNE DE. SHOP-CORE BHI CALL HO RAHA
     document.getElementById('ownerInput').onchange = async (e)=>{
         const file = e.target.files[0]; if(!file) return;
         document.getElementById('uploadLoader').style.display = 'inline';
@@ -163,6 +170,7 @@ function bindUploadsCustom(){
         if(url){
             document.getElementById('ownerImg').src = url;
             await updateShopDB({ownerPhotoUrl: url});
+            setTimeout(()=>updateShopDB({ownerPhotoUrl: url}), 1000); // shop-core ke baad dobara
         }
     }
     document.getElementById('bannerInput').onchange = async (e)=>{
@@ -173,6 +181,7 @@ function bindUploadsCustom(){
         if(url){
             document.getElementById('shopBanner').src = url;
             await updateShopDB({bannerPhotoUrl: url});
+            setTimeout(()=>updateShopDB({bannerPhotoUrl: url}), 1000); // shop-core ke baad dobara
         }
     }
     document.getElementById('ownerImg').onclick = () => document.getElementById('ownerInput').click();
@@ -181,11 +190,11 @@ function bindUploadsCustom(){
 
 function initEvents(){
     document.getElementById('searchProduct').onkeyup = (e) => renderProducts(e.target.value);
-    
+
     // TOGGLE FINAL CODE
     document.getElementById('shopToggle').onclick = async () => {
-        const newStatus = !shopData.isOpen;
-        
+        const newStatus =!shopData.isOpen;
+
         // 1. Pehle UI turant change
         shopData.isOpen = newStatus;
         document.getElementById('shopToggle').classList.toggle('off',!newStatus);
@@ -199,6 +208,7 @@ function initEvents(){
     document.getElementById('saveTiming').onclick = () => updateShopDB({settings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
 }
 
+// UPDATE: YE WALA HATA DIYA THA. AB SIRF 1 HI RAHEGA
 async function updateShopDB(updateData){
     const res = await fetch(`${API_BASE}/${shopId}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'},
@@ -206,7 +216,7 @@ async function updateShopDB(updateData){
     });
     const result = await res.json();
     console.log("UPDATE RESPONSE:", result);
-    
+
     // success ho ya na ho, 500ms baad fresh data le aao
     setTimeout(() => loadData(), 500);
 }
@@ -226,7 +236,7 @@ function closeEditModal(){ document.getElementById('editModal').style.display = 
 async function saveEditedItem(){
     const item = shopData.items[editingIndex];
     const updatedItem = {
-      ...item,
+     ...item,
         name: document.getElementById('editName').value,
         price: Number(document.getElementById('editPrice').value),
         stock: Number(document.getElementById('editStock').value),

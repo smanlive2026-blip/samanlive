@@ -119,20 +119,33 @@ router.delete('/:shopId/item/:itemId', async (req, res) => {
 router.put('/:shopId', async (req, res) => {
   try {
     const updateData = req.body.item || req.body;
+    const setObj = {}; // UPDATE: alag object banaya
     
-    // UPDATE: agar isOpen seedha aaya to usko settings ke andar daal do
+    // UPDATE: jo bhi seedha aaye usko settings me daal do
     if('isOpen' in updateData){
-        updateData['settings.isOpen'] = updateData.isOpen;
-        delete updateData.isOpen;
+        setObj['settings.isOpen'] = updateData.isOpen;
     }
     if('announcement' in updateData){
-        updateData['settings.announcement'] = updateData.announcement;
-        delete updateData.announcement;
+        setObj['settings.announcement'] = updateData.announcement;
+    }
+    // YE 2 NAYI LINE ADD KI
+    if('bannerPhotoUrl' in updateData){
+        setObj['settings.bannerPhotoUrl'] = updateData.bannerPhotoUrl;
+    }
+    if('ownerPhotoUrl' in updateData){
+        setObj['settings.ownerPhotoUrl'] = updateData.ownerPhotoUrl;
+    }
+
+    // timing wagera agar seedha settings me aaye to
+    if(updateData.settings){
+        Object.keys(updateData.settings).forEach(key => {
+            setObj[`settings.${key}`] = updateData.settings[key];
+        })
     }
 
     const updated = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
-      { $set: updateData },
+      { $set: setObj }, // UPDATE: updateData ki jagah setObj
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
     res.json({ success: true, data: updated });
