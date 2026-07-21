@@ -1,6 +1,7 @@
 // ===== STEP 1: SHOP ID QUERY SE NIKALO =====
 const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId');
+const API_BASE = `/api/furniture`; // UPDATE: ye 1 line add
 
 if(!shopId){
     alert('ERROR: URL me?shopId=xxx daalo');
@@ -20,7 +21,7 @@ let editingIndex = null;
 
 async function loadData() {
     try{
-        const res = await fetch(`/api/shops/${shopId}`);
+        const res = await fetch(`${API_BASE}/${shopId}`); // UPDATE: shops -> furniture
         console.log("STATUS:", res.status);
         if(!res.ok) throw new Error('API Status: ' + res.status);
         const result = await res.json();
@@ -50,14 +51,14 @@ function renderAll(){
     document.getElementById('libraryBtn').href = `product-library.html?shopId=${shopId}`;
 
     document.getElementById('announcementInput').value = shopData?.announcement || '';
-    document.getElementById('openTime').value = shopData?.shopSettings?.openTime || '09:00';
-    document.getElementById('closeTime').value = shopData?.shopSettings?.closeTime || '21:00';
+    document.getElementById('openTime').value = shopData?.shopSettings?.openTime || shopData?.settings?.openTime || '09:00'; // UPDATE: dono support
+    document.getElementById('closeTime').value = shopData?.shopSettings?.closeTime || shopData?.settings?.closeTime || '21:00'; // UPDATE: dono support
 
     const toggle = document.getElementById('shopToggle');
     toggle.classList.toggle('off',!shopData?.isOpen);
     document.getElementById('toggleText').innerText = shopData?.isOpen? 'Open' : 'Closed';
 
-    if(shopData?.banner) document.getElementById('shopBanner').src = shopData.banner;
+    if(shopData?.banner || shopData?.bannerPhotoUrl) document.getElementById('shopBanner').src = shopData.banner || shopData.bannerPhotoUrl; // UPDATE: dono support
     if(shopData?.ownerPhotoUrl) document.getElementById('ownerImg').src = shopData.ownerPhotoUrl;
 
     renderProducts();
@@ -95,7 +96,7 @@ function renderLowStock(){
 
 async function loadOrderStats(){
     try{
-        const res = await fetch(`/api/shops/${shopId}/orders`);
+        const res = await fetch(`${API_BASE}/${shopId}/orders`); // UPDATE: shops -> furniture
         if(!res.ok) return;
         const result = await res.json();
         if(result.success){
@@ -117,9 +118,9 @@ async function loadOrderStats(){
 }
 
 async function updateShopDB(updateData){
-    const res = await fetch(`/api/shops/${shopId}`, {
+    const res = await fetch(`${API_BASE}/${shopId}`, { // UPDATE: shops -> furniture
         method: 'PUT', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ item: updateData }) // FIX 1: Yaha {item:} lagana hai
+        body: JSON.stringify(updateData) // UPDATE: {item:} hata diya kyunki backend direct le raha
     });
     const result = await res.json();
     if(result.success) loadData();
@@ -128,9 +129,9 @@ async function updateShopDB(updateData){
 
 // FIX 2: BODY ME {item:} LAGANA HAI
 async function updateFurnitureItem(itemId, updatedItem){
-    const res = await fetch(`/api/shops/${shopId}/item/${itemId}`, {
+    const res = await fetch(`${API_BASE}/${shopId}/item/${itemId}`, { // UPDATE: shops -> furniture
         method: 'PUT', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ item: updatedItem }) // YE SAHI HAI
+        body: JSON.stringify({ item: updatedItem })
     });
     const result = await res.json();
     if(result.success) loadData();
@@ -155,7 +156,7 @@ function bindUploadsCustom(){
         document.getElementById('uploadLoader').style.display = 'none';
         if(url){
             document.getElementById('shopBanner').src = url;
-            await updateShopDB({banner: url});
+            await updateShopDB({bannerPhotoUrl: url}); // UPDATE: banner -> bannerPhotoUrl
         }
     }
     document.getElementById('ownerImg').onclick = () => document.getElementById('ownerInput').click();
@@ -166,7 +167,7 @@ function initEvents(){
     document.getElementById('searchProduct').onkeyup = (e) => renderProducts(e.target.value);
     document.getElementById('shopToggle').onclick = () => updateShopDB({isOpen:!shopData.isOpen});
     document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
-    document.getElementById('saveTiming').onclick = () => updateShopDB({shopSettings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
+    document.getElementById('saveTiming').onclick = () => updateShopDB({settings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}}); // UPDATE: shopSettings -> settings
 }
 
 function openEditModal(index){
@@ -196,7 +197,7 @@ async function toggleAvailable(index){
 async function deleteItem(index){
     if(!confirm('Pakka delete karna hai?')) return;
     const item = shopData.items[index];
-    await fetch(`/api/shops/${shopId}/item/${item._id || item.id}`, { method: 'DELETE' });
+    await fetch(`${API_BASE}/${shopId}/item/${item._id || item.id}`, { method: 'DELETE' }); // UPDATE: shops -> furniture
     loadData();
 }
 

@@ -110,6 +110,7 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const shopId = urlParams.get('shopId');
+        const API_BASE = `/api/furniture`; // UPDATE: ye add kiya
         let shopDataGlobal = {};
         let cart = JSON.parse(localStorage.getItem('cart_'+shopId)) || [];
         let wishlist = JSON.parse(localStorage.getItem('wishlist_'+shopId)) || [];
@@ -124,11 +125,10 @@
         });
 
         async function loadData() {
-            const res = await fetch(`/api/shops/${shopId}`);
+            const res = await fetch(`${API_BASE}/${shopId}`); // UPDATE: shops -> furniture
             const result = await res.json();
             const shop = result.data || result.shop || result;
             shopDataGlobal = shop;
-            // FIX 1: products bhi check karo
             shopDataGlobal.items = shopDataGlobal.items || shopDataGlobal.products || [];
             renderShop(shopDataGlobal);
         }
@@ -138,7 +138,7 @@
             document.getElementById('shopNameTop').innerText = shop.shopName || shop.name || 'Shop';
             document.getElementById('ownerName').innerText = shop.ownerName || 'Owner';
             document.getElementById('ownerPic').src = shop.ownerPhotoUrl || 'https://placehold.co/80';
-            if(shop.banner) document.getElementById('shopBanner').style.backgroundImage = `url(${shop.banner})`;
+            if(shop.banner || shop.bannerPhotoUrl) document.getElementById('shopBanner').style.backgroundImage = `url(${shop.banner || shop.bannerPhotoUrl})`; // UPDATE: dono support
             if(shop.announcement){
                 document.getElementById('offerBadge').style.display = 'block';
                 document.getElementById('offerText').innerText = shop.announcement;
@@ -172,7 +172,7 @@
             if(!items.length) return grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">Koi product nahi mila</p>';
 
             grid.innerHTML = items.map(item => {
-                const id = item._id || item.id; // FIX 2: _id || id
+                const id = item._id || item.id;
                 return `
                 <div class="product-card">
                     <div class="wishlist ${wishlist.includes(id)?'active':''}" onclick="toggleWishlist('${id}')"><i class="fa fa-heart"></i></div>
@@ -189,7 +189,7 @@
         }
 
         function openModal(item){
-            const id = item._id || item.id; // FIX 3
+            const id = item._id || item.id;
             document.getElementById('productModal').style.display = 'flex';
             document.getElementById('modalContent').innerHTML = `
                 <img src="${item.image || item.img}" style="width:400px; height:400px; object-fit:cover; border-radius:15px;">
@@ -253,7 +253,7 @@
             };
             if(!orderData.customerName || !orderData.customerPhone) return alert('Details bharo');
 
-            await fetch(`/api/shops/${shopId}/order`, {
+            await fetch(`${API_BASE}/${shopId}/order`, { // UPDATE: shops -> furniture
                 method: 'POST',
                 headers: {'Content-Type':'application/json'},
                 body: JSON.stringify(orderData)
