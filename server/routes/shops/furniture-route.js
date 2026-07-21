@@ -119,6 +119,17 @@ router.delete('/:shopId/item/:itemId', async (req, res) => {
 router.put('/:shopId', async (req, res) => {
   try {
     const updateData = req.body.item || req.body;
+    
+    // UPDATE: agar isOpen seedha aaya to usko settings ke andar daal do
+    if('isOpen' in updateData){
+        updateData['settings.isOpen'] = updateData.isOpen;
+        delete updateData.isOpen;
+    }
+    if('announcement' in updateData){
+        updateData['settings.announcement'] = updateData.announcement;
+        delete updateData.announcement;
+    }
+
     const updated = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
       { $set: updateData },
