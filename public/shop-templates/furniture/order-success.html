@@ -1,23 +1,64 @@
 <!DOCTYPE html>
-<html>
-<head><title>Order Success</title>
-<style>body{display:flex; justify-content:center; align-items:center; height:100vh; font-family:Poppins; text-align:center; background:#f1f5f9;}
-.box{background:white; padding:50px; border-radius:20px; box-shadow:0 10px 40px rgba(0,0,0,0.1);}
-h1{color:#16a34a;} .btn{background:#a16207; color:white; padding:12px 24px; border-radius:10px; text-decoration:none; display:inline-block; margin:10px;}</style>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Success - SamanLive</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); padding:20px;}
+.box{background:white; padding:40px 30px; border-radius:24px; box-shadow:0 20px 60px rgba(161,98,7,0.15); text-align:center; max-width:480px; width:100%; animation:pop 0.5s ease;}
+@keyframes pop{0%{transform:scale(0.9);opacity:0;}100%{transform:scale(1);opacity:1;}}
+.icon{width:80px; height:80px; background:#dcfce7; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; color:#16a34a; font-size:40px;}
+h1{color:#1e293b; font-size:28px; margin-bottom:8px;}
+p{color:#64748b; font-size:14px; margin-bottom:20px;}
+.track-box{background:#fffbeb; border:2px dashed #fbbf24; padding:15px; border-radius:12px; margin-bottom:20px;}
+.track-box b{color:#a16207; font-size:18px; letter-spacing:1px;}
+.steps{display:flex; justify-content:space-between; margin:25px 0; position:relative;}
+.steps::before{content:''; position:absolute; top:15px; left:10%; right:10%; height:2px; background:#e2e8f0; z-index:0;}
+.step{position:relative; z-index:1; text-align:center; flex:1;}
+.step i{width:30px; height:30px; background:#e2e8f0; color:#94a3b8; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px; font-size:14px;}
+.step.active i{background:#a16207; color:white;}
+.step p{font-size:11px; margin:0;}
+.btn-group{display:flex; gap:10px; margin-top:20px;}
+.btn{flex:1; background:#a16207; color:white; padding:14px; border-radius:12px; text-decoration:none; font-weight:600; transition:0.3s;}
+.btn:hover{background:#854d0e; transform:translateY(-2px);}
+.btn-outline{background:white; color:#a16207; border:2px solid #fde68a;}
+.btn-outline:hover{background:#fffbeb;}
+@media(max-width:480px){.btn-group{flex-direction:column;}}
+</style>
 </head>
 <body>
     <div class="box">
-        <h1><i class="fa fa-check-circle"></i> Order Placed!</h1>
-        <p>Your Tracking ID: <b id="trackingId"></b></p>
-        <p>Shop owner ko order mil gaya hai. Wo 2 ghante me confirm karenge.</p>
-        <a href="#" id="trackBtn" class="btn">Track Order</a>
-        <a href="#" id="homeBtn" class="btn" style="background:#64748b;">Continue Shopping</a>
+        <div class="icon"><i class="fa fa-check"></i></div>
+        <h1>Order Placed! 🎉</h1>
+        <p>Shop owner ko order mil gaya hai. Wo jald hi confirm karenge.</p>
+        
+        <div class="track-box">
+            <p style="margin:0 0 5px; font-size:12px;">Your Tracking ID</p>
+            <b id="trackingId">LOADING...</b>
+        </div>
+
+        <div class="steps">
+            <div class="step active"><i class="fa fa-check"></i><p>Ordered</p></div>
+            <div class="step"><i class="fa fa-box"></i><p>Confirmed</p></div>
+            <div class="step"><i class="fa fa-truck"></i><p>Shipped</p></div>
+            <div class="step"><i class="fa fa-home"></i><p>Delivered</p></div>
+        </div>
+
+        <div class="btn-group">
+            <a href="#" id="trackBtn" class="btn"><i class="fa fa-map-location-dot"></i> Track Order</a>
+            <a href="#" id="homeBtn" class="btn btn-outline"><i class="fa fa-shop"></i> Continue Shopping</a>
+        </div>
     </div>
+
     <script>
         const params = new URLSearchParams(window.location.search);
         const shopId = params.get('shopId');
         const tracking = params.get('tracking');
-        document.getElementById('trackingId').innerText = tracking;
+        document.getElementById('trackingId').innerText = tracking || 'N/A';
         document.getElementById('trackBtn').href = `track-order.html?shopId=${shopId}&tracking=${tracking}`;
         document.getElementById('homeBtn').href = `customer-view.html?shopId=${shopId}`;
     </script>

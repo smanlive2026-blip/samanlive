@@ -142,4 +142,45 @@ router.put('/:shopId', async (req, res) => {
   }
 });
 
+// GET ORDERS - Dashboard ke liye
+router.get('/:shopId/orders', async (req, res) => {
+  try {
+    const furniture = await Furniture.findOne({ shopId: req.params.shopId }).lean();
+    if(!furniture) return res.json({ success: true, data: [] });
+    
+    // latest pehle aaye isliye reverse
+    const orders = (furniture.orders || []).reverse();
+    res.json({ success: true, data: orders });
+  } catch(err) {
+    console.log("ORDERS GET ERROR:", err)
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST NEW ORDER - Customer se order aayega
+router.post('/:shopId/order', async (req, res) => {
+  try {
+    const orderData = req.body;
+    const trackingId = 'FUR' + Date.now().toString().slice(-8); // FUR12345678
+
+    const newOrder = {
+        ...orderData,
+        trackingId: trackingId,
+        status: 'pending',
+        createdAt: new Date()
+    };
+
+    await Furniture.findOneAndUpdate(
+      { shopId: req.params.shopId },
+      { $push: { orders: newOrder } },
+      { new: true, upsert: true }
+    );
+    
+    res.json({ success: true, trackingId: trackingId });
+  } catch(err) {
+    console.log("ORDER POST ERROR:", err)
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
