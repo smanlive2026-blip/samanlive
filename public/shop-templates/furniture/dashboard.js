@@ -25,10 +25,13 @@ async function loadData() {
         console.log("STATUS:", res.status);
         if(!res.ok) throw new Error('API Status: ' + res.status);
         const result = await res.json();
-        console.log("API RESPONSE:", result);
+        console.log("API RESPONSE FULL:", result); // DEBUG
 
         shopData = result.shop || result.data || result;
+        // UPDATE: sab possible naam check karenge
         shopData.items = shopData.items || shopData.products || shopData.inventory || [];
+
+        console.log("FINAL ITEMS COUNT:", shopData.items.length); // DEBUG
 
         if(shopData && (shopData.shopId || shopData._id)){
             renderAll();
@@ -54,9 +57,12 @@ function renderAll(){
     document.getElementById('openTime').value = shopData?.shopSettings?.openTime || shopData?.settings?.openTime || '09:00';
     document.getElementById('closeTime').value = shopData?.shopSettings?.closeTime || shopData?.settings?.closeTime || '21:00';
 
+    // UPDATE: Toggle ke liye 3 naam check
+    const isOpen = shopData?.isOpen?? shopData?.shopStatus?? shopData?.isShopOpen?? true;
     const toggle = document.getElementById('shopToggle');
-    toggle.classList.toggle('off',!shopData?.isOpen);
-    document.getElementById('toggleText').innerText = shopData?.isOpen? 'Open' : 'Closed';
+    toggle.classList.toggle('off',!isOpen);
+    document.getElementById('toggleText').innerText = isOpen? 'Open' : 'Closed';
+    shopData.isOpen = isOpen; // save kar lo aage ke liye
 
     if(shopData?.banner || shopData?.bannerPhotoUrl) document.getElementById('shopBanner').src = shopData.banner || shopData.bannerPhotoUrl;
     if(shopData?.ownerPhotoUrl) document.getElementById('ownerImg').src = shopData.ownerPhotoUrl;
@@ -69,24 +75,32 @@ function renderAll(){
 
 function renderProducts(filter=''){
     const list = document.getElementById('productList');
-    const searchTerm = filter.toLowerCase(); // UPDATE: search ko lower me kar diya
+    const searchTerm = filter.toLowerCase();
 
-    // UPDATE: name check + toLowerCase dono. Ab crash nahi hoga
+    // UPDATE: price, stock, unit ka bhi backup
     let items = shopData?.items?.filter(i => {
-        if(!i ||!i.name) return false; // agar item ya name nahi hai to skip
-        return i.name.toLowerCase().includes(searchTerm);
+        if(!i) return false;
+        const name = i.name || i.productName || i.title || '';
+        if(!name) return false;
+        return name.toLowerCase().includes(searchTerm);
     }) || [];
+
+    console.log("RENDERING ITEMS:", items.length); // DEBUG
 
     if(!items.length) return list.innerHTML = '<p style="color:#64748b;">Koi product nahi hai. + Add Furniture dabao</p>';
 
     list.innerHTML = items.map((item, index) => {
         const id = item._id || item.id;
+        const name = item.name || item.productName || item.title || 'No Name';
+        const price = item.price || item.productPrice || 0;
+        const stock = item.stock || item.quantity || 0;
+        const unit = item.unit || item.productUnit || 'Piece';
         return `
         <div class="product-item">
-            <img src="${item.image || item.img || 'https://placehold.co/80x80/a16207/fff?text=Item'}" onclick="uploadProductImage(${index})" style="cursor:pointer;">
+            <img src="${item.image || item.img || item.productImage || 'https://placehold.co/80x80/a16207/fff?text=Item'}" onclick="uploadProductImage(${index})" style="cursor:pointer;">
             <div style="flex:1;">
-                <h4>${item.name} <span class="badge ${item.available? 'badge-green':'badge-red'}" onclick="toggleAvailable(${index})">${item.available? 'In Stock':'Out'}</span></h4>
-                <p style="color:#64748b; font-size:13px;">₹${item.price || 0} | Stock: ${item.stock || 0} | ${item.unit || 'Piece'}</p>
+                <h4>${name} <span class="badge ${item.available? 'badge-green':'badge-red'}" onclick="toggleAvailable(${index})">${item.available? 'In Stock':'Out'}</span></h4>
+                <p style="color:#64748b; font-size:13px;">₹${price} | Stock: ${stock} | ${unit}</p>
             </div>
             <button class="btn-sm" style="background:#f59e0b;" onclick="openEditModal(${index})"><i class="fa fa-pen"></i></button>
             <button class="btn-sm" style="background:#ef4444;" onclick="deleteItem(${index})"><i class="fa fa-trash"></i></button>
@@ -95,10 +109,9 @@ function renderProducts(filter=''){
 }
 
 function renderLowStock(){
-    // UPDATE: yaha bhi name check add
-    const low = shopData?.items?.filter(i => i && i.stock <= 5) || [];
+    const low = shopData?.items?.filter(i => i && (i.stock || i.quantity) <= 5) || [];
     document.getElementById('lowStock').innerHTML = low.length?
-        low.map(i => `<div style="padding:10px; background:#fef2f2; border-radius:10px; margin-bottom:8px;"><b>${i.name || 'No Name'}</b> - ${i.stock} left</div>`).join('') :
+        low.map(i => `<div style="padding:10px; background:#fef2f2; border-radius:10px; margin-bottom:8px;"><b>${i.name || i.productName || 'No Name'}</b> - ${i.stock || i.quantity} left</div>`).join('') :
         '<p style="color:#16a34a;">Sab stock me hai ✅</p>';
 }
 
@@ -172,7 +185,8 @@ function bindUploadsCustom(){
 
 function initEvents(){
     document.getElementById('searchProduct').onkeyup = (e) => renderProducts(e.target.value);
-    document.getElementById('shopToggle').onclick = () => updateShopDB({isOpen:!shopData.isOpen});
+    // UPDATE: Toggle me 3 naam bhej do
+    document.getElementById('shopToggle').onclick = () => updateShopDB({isOpen:!shopData.isOpen, shopStatus:!shopData.isOpen, isShopOpen:!shopData.isOpen});
     document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
     document.getElementById('saveTiming').onclick = () => updateShopDB({settings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
 }
@@ -180,18 +194,25 @@ function initEvents(){
 function openEditModal(index){
     editingIndex = index;
     const item = shopData.items[index];
-    document.getElementById('editName').value = item.name;
-    document.getElementById('editPrice').value = item.price;
-    document.getElementById('editStock').value = item.stock;
-    document.getElementById('editUnit').value = item.unit;
-    document.getElementById('editDesc').value = item.desc || '';
+    document.getElementById('editName').value = item.name || item.productName || '';
+    document.getElementById('editPrice').value = item.price || item.productPrice || 0;
+    document.getElementById('editStock').value = item.stock || item.quantity || 0;
+    document.getElementById('editUnit').value = item.unit || item.productUnit || '';
+    document.getElementById('editDesc').value = item.desc || item.description || '';
     document.getElementById('editModal').style.display = 'flex';
 }
 function closeEditModal(){ document.getElementById('editModal').style.display = 'none'; }
 
 async function saveEditedItem(){
     const item = shopData.items[editingIndex];
-    const updatedItem = {...item, name: document.getElementById('editName').value, price: Number(document.getElementById('editPrice').value), stock: Number(document.getElementById('editStock').value), unit: document.getElementById('editUnit').value, desc: document.getElementById('editDesc').value };
+    const updatedItem = {
+       ...item, 
+        name: document.getElementById('editName').value, 
+        price: Number(document.getElementById('editPrice').value), 
+        stock: Number(document.getElementById('editStock').value), 
+        unit: document.getElementById('editUnit').value, 
+        desc: document.getElementById('editDesc').value 
+    };
     await updateFurnitureItem(item._id || item.id, updatedItem);
     closeEditModal();
 }
