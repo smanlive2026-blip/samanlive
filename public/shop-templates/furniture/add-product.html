@@ -111,6 +111,8 @@ async function saveProduct(){
     if(file){
         try {
             imageUrl = await ShopCore.uploadImage(file, 'product');
+            document.getElementById('imgPreview').src = imageUrl; // YE NAYI
+            document.getElementById('imgPreview').style.display = 'block'; // YE NAYI
             console.log("UPLOAD URL:", imageUrl);
             if(!imageUrl) throw new Error('Cloudinary returned empty url');
         } catch(err) {

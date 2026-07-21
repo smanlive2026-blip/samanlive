@@ -17,7 +17,7 @@ router.get('/:shopId', async (req, res) => {
     if(!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
 
     const finalData = {
-      ...shop,
+     ...shop,
         items: furniture?.items || [],
         orders: furniture?.orders || [],
         settings: furniture?.settings || {},
@@ -39,7 +39,7 @@ router.get('/:shopId', async (req, res) => {
 // ADD ITEM - NUCLEAR FIX
 router.post('/:shopId/item', async (req, res) => {
   try {
-    const itemData = req.body.item || req.body;
+    const itemData = req.body.item || req.body; // DONO FORMAT SUPPORT
     const newItem = {...itemData, id: itemData.id || Date.now().toString() };
 
     // PEHLE FIND KARO, NAHI HAI TO BANAO
@@ -64,7 +64,7 @@ router.post('/:shopId/item', async (req, res) => {
 // UPDATE ITEM
 router.put('/:shopId/item/:itemId', async (req, res) => {
   try {
-    const itemData = req.body.item || req.body;
+    const itemData = req.body.item || req.body; // DONO FORMAT SUPPORT
     await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId, 'items.id': req.params.itemId },
       { $set: { 'items.$': itemData } },
@@ -85,20 +85,26 @@ router.delete('/:shopId/item/:itemId', async (req, res) => {
       { $pull: { items: { id: req.params.itemId } }}
     );
     res.json({ success: true });
-  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+  } catch(err) {
+    console.log("DELETE ERROR:", err)
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
-// UPDATE SHOP SETTINGS
+// UPDATE SHOP SETTINGS + PHOTO
 router.put('/:shopId', async (req, res) => {
   try {
-    const settings = req.body.item || req.body;
-    await Furniture.findOneAndUpdate(
+    const updateData = req.body.item || req.body; // DONO FORMAT SUPPORT
+    const updated = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
-      { $set: { settings: settings } },
-      { new: true, upsert: true }
+      { $set: updateData }, // settings ke sath photo bhi update ho jayegi
+      { new: true, upsert: true, setDefaultsOnInsert: true }
     );
-    res.json({ success: true });
-  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+    res.json({ success: true, data: updated });
+  } catch(err) {
+    console.log("SETTINGS ERROR:", err)
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 module.exports = router;
