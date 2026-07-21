@@ -10,8 +10,8 @@ router.get('/:shopId', async (req, res) => {
     console.log("GET CALLED FOR SHOPID:", shopId);
     
     const [shop, furniture] = await Promise.all([
-        Shop.findById(shopId), // Shop ki basic info
-        Furniture.findOne({ shopId: shopId }) // Furniture ke items, orders
+        Shop.findById(shopId).lean(), // .lean() add kiya
+        Furniture.findOne({ shopId: shopId }).lean()
     ]);
     
     console.log("SHOP FOUND:", !!shop);
@@ -21,13 +21,13 @@ router.get('/:shopId', async (req, res) => {
     if(!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
     
     const finalData = {
-        ...shop._doc,
-        items: furniture?.items || [], // <- YAHI SE DASHBOARD PRODUCT AAYEGA
+        ...shop, // ._doc hata diya
+        items: furniture?.items || [],
         orders: furniture?.orders || [],
         settings: furniture?.settings || {},
         isOpen: furniture?.settings?.isOpen ?? true,
         announcement: furniture?.settings?.announcement || '',
-        shopId: shop._id // customer view ke liye
+        shopId: shop._id
     }
 
     res.json({ success: true, shop: finalData });
@@ -59,7 +59,7 @@ router.put('/:shopId/item/:itemId', async (req, res) => {
   try {
     const result = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId, 'items.id': req.params.itemId },
-      { $set: { 'items.$': req.body } }, // frontend seedha item bhejta hai
+      { $set: { 'items.$': req.body } },
       { new: true }
     );
     res.json({ success: true, data: result });
