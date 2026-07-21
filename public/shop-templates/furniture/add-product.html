@@ -119,16 +119,18 @@ async function saveProduct(){
 
     let imageUrl = editingItem ? editingItem.image : '';
     const file = document.getElementById('image').files[0];
-    if(file){
+if(file){
+    try {
         imageUrl = await ShopCore.uploadImage(file, 'product'); // CLOUDINARY
-        if(!imageUrl || imageUrl.startsWith('data:image')) {
-            alert('Photo upload nahi hui.');
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Product';
-            return;
-        }
+        console.log("UPLOAD URL:", imageUrl);
+        if(!imageUrl) throw new Error('Cloudinary returned empty url');
+    } catch(err) {
+        alert('Photo upload nahi hui: ' + err.message);
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Product';
+        return;
     }
-
+}
     const itemId = editingItem ? (editingItem._id || editingItem.id) : Date.now().toString();
 
     const itemData = {
