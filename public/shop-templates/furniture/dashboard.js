@@ -181,13 +181,34 @@ function bindUploadsCustom(){
 
 function initEvents(){
     document.getElementById('searchProduct').onkeyup = (e) => renderProducts(e.target.value);
-    // TOGGLE FIX: 3 naam ek saath bhej do
-    document.getElementById('shopToggle').onclick = () => {
-        const newStatus =!shopData.isOpen;
-        updateShopDB({isOpen:newStatus, shopStatus: newStatus? "open":"closed", isShopOpen:newStatus});
+    
+    // TOGGLE FINAL CODE
+    document.getElementById('shopToggle').onclick = async () => {
+        const newStatus = !shopData.isOpen;
+        
+        // 1. Pehle UI turant change
+        shopData.isOpen = newStatus;
+        document.getElementById('shopToggle').classList.toggle('off',!newStatus);
+        document.getElementById('toggleText').innerText = newStatus? 'Open' : 'Closed';
+
+        // 2. Fir backend me save
+        await updateShopDB({isOpen: newStatus});
     };
+
     document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
     document.getElementById('saveTiming').onclick = () => updateShopDB({settings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
+}
+
+async function updateShopDB(updateData){
+    const res = await fetch(`${API_BASE}/${shopId}`, {
+        method: 'PUT', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(updateData)
+    });
+    const result = await res.json();
+    console.log("UPDATE RESPONSE:", result);
+    
+    // success ho ya na ho, 500ms baad fresh data le aao
+    setTimeout(() => loadData(), 500);
 }
 
 function openEditModal(index){
