@@ -2,31 +2,35 @@ const express = require('express');
 const router = express.Router();
 const Furniture = require('../../models/shops/Furniture');
 const Shop = require('../../models/Shop');
-const { Types } = require('mongoose'); // UPDATE: ObjectId fix ke liye mongoose import kiya
+const { Types } = require('mongoose'); // UPDATE: ObjectId error fix
 
-// GET PURI SHOP DATA - SAB ITEMS KE SATH
+// GET PURI SHOP DATA - SAB FORMAT SUPPORT
 router.get('/:shopId', async (req, res) => {
   try {
     const shopId = req.params.shopId;
     console.log("GET CALLED FOR SHOPID:", shopId);
 
-    // UPDATE: Cast to ObjectId error fix. String ID ko ObjectId me convert kar rahe
     if(!Types.ObjectId.isValid(shopId)){
         return res.status(400).json({ success: false, message: 'Invalid ShopId format' });
     }
-    const shop = await Shop.findById(new Types.ObjectId(shopId)).lean(); // UPDATE: yaha ObjectId wrap kiya
-
+    const shop = await Shop.findById(new Types.ObjectId(shopId)).lean();
     if(!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
 
-    // UPDATE: shopId ko string me save karte hai furniture me bhi, isliye direct use kiya
     let furniture = await Furniture.findOne({ shopId: shopId });
     if(!furniture){
-        furniture = await Furniture.create({ shopId: shopId, items: [] }); // UPDATE: nahi mila to bana diya
+        furniture = await Furniture.create({ shopId: shopId, items: [] });
     }
+
+    // UPDATE: KISI BHI FORMAT KE ITEM KO NORMALIZE KAR DIYA
+    const normalizedItems = (furniture.items || []).map(item => ({
+       ...item,
+        image: item.image || item.img || '', // UPDATE: img ya image dono se chalega
+        id: item.id || item._id?.toString() // UPDATE: _id bhi support
+    }));
 
     const finalData = {
       ...shop,
-        items: furniture.items || [], // YAHI PE TERE 10 DIN WALE PRODUCT AYENGE
+        items: normalizedItems, // UPDATE: normalized items bhej rahe
         orders: furniture.orders || [],
         settings: furniture.settings || {},
         isOpen: furniture.settings?.isOpen?? true,
@@ -44,15 +48,26 @@ router.get('/:shopId', async (req, res) => {
   }
 });
 
-// ADD ITEM
+// ADD ITEM - NUCLEAR FIX
 router.post('/:shopId/item', async (req, res) => {
   try {
-    const itemData = req.body.item || req.body;
-    const newItem = {...itemData, id: itemData.id || Date.now().toString() };
+    const itemData = req.body.item || req.body; // UPDATE: dono format support
+    console.log("RECEIVED ITEM DATA:", itemData);
+
+    if(!itemData.name) return res.status(400).json({ success: false, message: 'Product name is required' });
+
+    // UPDATE: image aur img dono ko merge kar diya
+    const newItem = {
+       ...itemData,
+        id: itemData.id || Date.now().toString(),
+        image: itemData.image || itemData.img || '', // UPDATE: dono me se koi bhi ho
+        img: itemData.image || itemData.img || '', // UPDATE: purane data ke liye
+        createdAt: new Date()
+    };
 
     let furniture = await Furniture.findOne({ shopId: req.params.shopId });
     if(!furniture){
-        furniture = await Furniture.create({ shopId: req.params.shopId, items: [newItem] }); // UPDATE: pehle baar me create
+        furniture = await Furniture.create({ shopId: req.params.shopId, items: [newItem] });
     } else {
         furniture.items.push(newItem);
         await furniture.save();
@@ -70,6 +85,10 @@ router.post('/:shopId/item', async (req, res) => {
 router.put('/:shopId/item/:itemId', async (req, res) => {
   try {
     const itemData = req.body.item || req.body;
+    // UPDATE: update me bhi image/img fix
+    itemData.image = itemData.image || itemData.img || '';
+    itemData.img = itemData.image || itemData.img || '';
+
     await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId, 'items.id': req.params.itemId },
       { $set: { 'items.$': itemData } },
@@ -103,7 +122,7 @@ router.put('/:shopId', async (req, res) => {
     const updated = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
       { $set: updateData },
-      { new: true, upsert: true, setDefaultsOnInsert: true } // UPDATE: upsert laga diya taaki doc na ho to ban jaye
+      { new: true, upsert: true, setDefaultsOnInsert: true }
     );
     res.json({ success: true, data: updated });
   } catch(err) {
