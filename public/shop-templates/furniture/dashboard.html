@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -33,9 +33,10 @@
        .badge-red { background: #fee2e2; color: #991b1b; }
        .badge-green { background: #dcfce7; color: #166534; }
         #uploadLoader { display: none; color: #a16207; font-size: 12px; }
-        input[type="text"], input[type="number"], input[type="time"] { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; }
+        input[type="text"], input[type="number"], input[type="time"], input[type="tel"] { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; }
        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center; }
        .modal-content { background:white; padding:30px; border-radius:20px; width:90%; max-width:500px; }
+       .hint-text { font-size:12px; color:#64748b; margin-top:-5px; margin-bottom:10px; }
     </style>
 </head>
 <body>
@@ -43,7 +44,7 @@
         <div class="header">
             <div class="header-left">
                 <img id="ownerImg" src="https://placehold.co/60/a16207/fff?text=U">
-                <input type="file" id="ownerInput" style="display:none;" accept="image/*"> <!-- YE TAG THA -->
+                <input type="file" id="ownerInput" style="display:none;" accept="image/*">
                 <div>
                     <h1><i class="fa fa-couch"></i> <span id="shopName">Furniture Showroom</span></h1>
                     <div style="font-size:14px; opacity:0.8;">Shop ID: <span id="shopIdDisplay"></span> <span id="uploadLoader">Uploading...</span></div>
@@ -51,14 +52,9 @@
             </div>
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                 <a href="#" id="userViewBtn" class="btn" style="background: #2563eb;"><i class="fa fa-eye"></i> User View</a>
-                
-                <!-- NAYA BUTTON ADD KIYA -->
                 <a href="#" id="libraryBtn" class="btn" style="background: #16a34a;"><i class="fa fa-warehouse"></i> Product Library</a>
-
                 <a href="#" id="bulkProductBtn" class="btn" style="background: #0ea5e9;"><i class="fa fa-file-csv"></i> Bulk Add</a>
-                
                 <a href="#" id="addProductBtn" class="btn"><i class="fa fa-plus"></i> Add Furniture</a>
-                
                 <div class="toggle-switch" id="shopToggle"><i class="fa fa-store"></i> <span id="toggleText">Open</span></div>
             </div>
         </div>
@@ -94,6 +90,15 @@
                     Close: <input type="time" id="closeTime">
                     <button class="btn" id="saveTiming">Save</button>
                 </div>
+
+                <!-- YE NAYA CARD ADD KIYA -->
+                <div class="content-card">
+                    <h2><i class="fa fa-phone"></i> Contact Number</h2>
+                    <input type="tel" id="shopPhoneInput" placeholder="10 digit number - 9876543210" maxlength="10">
+                    <div class="hint-text">Ye number customer ko Call aur WhatsApp ke liye dikhega</div>
+                    <button class="btn" id="savePhone">Save Number</button>
+                </div>
+
                 <div class="content-card">
                     <h2><i class="fa fa-bell"></i> Low Stock Alert</h2>
                     <div id="lowStock">Loading...</div>
@@ -101,7 +106,7 @@
                 <div class="content-card">
                     <h2><i class="fa fa-image"></i> Shop Banner</h2>
                     <img id="shopBanner" src="https://placehold.co/400x150/a16207/fff?text=Upload+Banner" style="width:100%; border-radius:12px; cursor:pointer;">
-                    <input type="file" id="bannerInput" style="display:none;" accept="image/*"> <!-- YE TAG ADD KIYA -->
+                    <input type="file" id="bannerInput" style="display:none;" accept="image/*">
                 </div>
             </div>
         </div>

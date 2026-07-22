@@ -54,6 +54,9 @@ function renderAll(){
     document.getElementById('openTime').value = shopData?.shopSettings?.openTime || shopData?.settings?.openTime || '09:00';
     document.getElementById('closeTime').value = shopData?.shopSettings?.closeTime || shopData?.settings?.closeTime || '21:00';
 
+    // NAYA: PHONE NUMBER LOAD KARO
+    document.getElementById('shopPhoneInput').value = shopData?.phone || '';
+
     // TOGGLE FIX: backend se jo bhi aaye usko true/false me convert
     const isOpen = shopData?.isOpen === true || shopData?.isOpen === "true" || shopData?.settings?.isOpen === true || shopData?.shopStatus === "open";
     const toggle = document.getElementById('shopToggle');
@@ -71,7 +74,7 @@ function renderAll(){
     renderLowStock();
     loadOrderStats();
     bindUploadsCustom(); // purana wala rehne de
-        // UPDATE: shop-core wala bind use karo. Golden rule follow. Double bind ho jayega par chalega
+    // UPDATE: shop-core wala bind use karo. Golden rule follow. Double bind ho jayega par chalega
     ShopCore.bindImageUpload('ownerImg', 'ownerInput', 'profile', 'owner');
     ShopCore.bindImageUpload('shopBanner', 'bannerInput', 'banner', 'banner');
 }
@@ -140,14 +143,17 @@ async function loadOrderStats(){
     }catch(err){ console.log("Order stats error", err) }
 }
 
+// YE EK HI RAKHO. UPAR WALA HATA DIYA
 async function updateShopDB(updateData){
     const res = await fetch(`${API_BASE}/${shopId}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(updateData)
     });
     const result = await res.json();
-    if(result.success) loadData();
-    else alert('Update failed: ' + result.message);
+    console.log("UPDATE RESPONSE:", result);
+
+    // success ho ya na ho, 500ms baad fresh data le aao
+    setTimeout(() => loadData(), 500);
 }
 
 async function updateFurnitureItem(itemId, updatedItem){
@@ -206,19 +212,15 @@ function initEvents(){
 
     document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
     document.getElementById('saveTiming').onclick = () => updateShopDB({settings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
-}
 
-// UPDATE: YE WALA HATA DIYA THA. AB SIRF 1 HI RAHEGA
-async function updateShopDB(updateData){
-    const res = await fetch(`${API_BASE}/${shopId}`, {
-        method: 'PUT', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(updateData)
-    });
-    const result = await res.json();
-    console.log("UPDATE RESPONSE:", result);
+    // NAYA: PHONE SAVE KARNE KA CODE
+    document.getElementById('savePhone').onclick = async () => {
+        const phone = document.getElementById('shopPhoneInput').value;
+        if(phone.length!== 10) return alert('10 digit number dalo bhai');
 
-    // success ho ya na ho, 500ms baad fresh data le aao
-    setTimeout(() => loadData(), 500);
+        await updateShopDB({phone: phone});
+        alert('Number Saved ✅');
+    };
 }
 
 function openEditModal(index){
@@ -236,7 +238,7 @@ function closeEditModal(){ document.getElementById('editModal').style.display = 
 async function saveEditedItem(){
     const item = shopData.items[editingIndex];
     const updatedItem = {
-     ...item,
+    ...item,
         name: document.getElementById('editName').value,
         price: Number(document.getElementById('editPrice').value),
         stock: Number(document.getElementById('editStock').value),

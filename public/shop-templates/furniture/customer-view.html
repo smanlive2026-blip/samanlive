@@ -6,7 +6,7 @@
     <title id="pageTitle">Furniture Shop</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="customer.css"> <!-- CSS ALAG FILE -->
+    <link rel="stylesheet" href="customer.css">
 </head>
 <body>
     <div class="top-bar">
@@ -19,9 +19,9 @@
     </div>
 
     <div class="banner" id="shopBanner">
-        <img src="https://placehold.co/80" id="ownerPic" class="shop-logo"> <!-- LOGO -->
+        <img src="https://placehold.co/80" id="ownerPic" class="shop-logo">
         <div class="offer-badge" id="offerBadge" style="display:none;"><i class="fa fa-bolt"></i> <span id="offerText"></span></div>
-        <div class="shop-status" id="shopStatus" style="position:absolute; top:20px; right:20px; padding:10px 20px; border-radius:50px; font-weight:700;">Loading...</div>
+        <div class="shop-status" id="shopStatus">Loading...</div>
     </div>
 
     <div class="container" style="max-width:1400px; margin:0 auto; padding:20px;">
@@ -58,6 +58,7 @@
             <h3>Payment Method</h3>
             <div class="payment-option active" onclick="selectPayment(this,'COD')"><i class="fa fa-money-bill"></i> Cash on Delivery</div>
             <div class="payment-option" onclick="selectPayment(this,'UPI')"><i class="fa fa-mobile-screen"></i> UPI / Online Payment</div>
+            <div class="payment-option" onclick="selectPayment(this,'CARD')"><i class="fa fa-credit-card"></i> Debit / Credit Card</div>
             <input type="hidden" id="paymentMethod" value="COD">
 
             <button class="btn-add" style="font-size:16px; padding:15px;" onclick="placeOrder()">Place Order</button>
@@ -68,6 +69,8 @@
     <div class="modal" id="productModal">
         <div class="modal-content" id="modalContent" style="display:flex; gap:30px;"></div>
     </div>
+
+    <a href="#" id="waBtn" class="sticky-whatsapp" target="_blank"><i class="fa fa-whatsapp"></i></a>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -93,6 +96,14 @@
                 shopDataGlobal = shop;
                 shopDataGlobal.items = shopDataGlobal.items || shopDataGlobal.products || [];
                 renderShop(shopDataGlobal);
+
+                // WhatsApp button link
+                const waBtn = document.getElementById('waBtn');
+                if(shopDataGlobal.phone){
+                    waBtn.href = `https://wa.me/91${shopDataGlobal.phone}?text=Hello, I need info about your furniture`;
+                } else {
+                    waBtn.style.display = 'none';
+                }
             }catch(err){
                 console.error("LOAD ERROR", err);
             }
@@ -116,7 +127,6 @@
             const isOpen = shop.isOpen === true || shop.settings?.isOpen === true;
             statusEl.innerText = isOpen? 'Open Now' : 'Closed';
             statusEl.style.background = isOpen? '#22c55e' : '#ef4444';
-            statusEl.style.color = 'white';
 
             const cats = [...new Set(shop.items.map(i => i.category || 'General'))];
             document.getElementById('categories').innerHTML = '<div class="cat-btn active" onclick="filterCat(\'all\',event)">All</div>' + 
@@ -150,6 +160,12 @@
                         <div class="rating"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star-half"></i> 4.8</div>
                         <h3 onclick='openModal(${JSON.stringify(item).replace(/"/g, '&quot;')})' style="cursor:pointer; font-size:16px; margin:5px 0;">${item.name}</h3>
                         <div><span class="price">₹${item.price}</span> <span style="text-decoration:line-through; color:#94a3b8; font-size:14px;">₹${Number(item.price)+2000}</span></div>
+                        
+                        <div class="badge-row">
+                            <div class="badge"><i class="fa fa-credit-card"></i> No Cost EMI</div>
+                            <div class="badge"><i class="fa fa-truck"></i> Free Install</div>
+                        </div>
+
                         <div class="delivery-tag"><i class="fa fa-truck"></i> Free Delivery by Tomorrow</div>
                         <button class="btn-add" onclick="addToCart('${id}', '${item.name}', ${item.price})"><i class="fa fa-plus"></i> Add to Cart</button>
                     </div>
@@ -172,6 +188,7 @@
                     <p><b>Delivery:</b> Free, Tomorrow</p>
                     <div style="margin:20px 0; padding:15px; background:#f0fdf4; border-radius:10px;"><i class="fa fa-check"></i> 7 Days Easy Return</div>
                     <button class="btn-add" style="padding:15px; font-size:16px;" onclick="addToCart('${id}', '${item.name}', ${item.price}); closeModal()">Add to Cart</button>
+                    <button class="call-btn" onclick="window.location.href='tel:91${shopDataGlobal.phone}'"><i class="fa fa-phone"></i> Call Now</button>
                 </div>
             `;
         }
