@@ -119,16 +119,15 @@ router.delete('/:shopId/item/:itemId', async (req, res) => {
 router.put('/:shopId', async (req, res) => {
   try {
     const updateData = req.body.item || req.body;
-    const setObj = {}; // UPDATE: alag object banaya
+    const setObj = {};
     
-    // UPDATE: jo bhi seedha aaye usko settings me daal do
+    // 1. seedha wale keys
     if('isOpen' in updateData){
         setObj['settings.isOpen'] = updateData.isOpen;
     }
     if('announcement' in updateData){
         setObj['settings.announcement'] = updateData.announcement;
     }
-    // YE 2 NAYI LINE ADD KI
     if('bannerPhotoUrl' in updateData){
         setObj['settings.bannerPhotoUrl'] = updateData.bannerPhotoUrl;
     }
@@ -136,16 +135,25 @@ router.put('/:shopId', async (req, res) => {
         setObj['settings.ownerPhotoUrl'] = updateData.ownerPhotoUrl;
     }
 
-    // timing wagera agar seedha settings me aaye to
+    // 2. agar settings object ke andar aaya to
     if(updateData.settings){
-        Object.keys(updateData.settings).forEach(key => {
-            setObj[`settings.${key}`] = updateData.settings[key];
-        })
+        if(updateData.settings.bannerPhotoUrl)
+            setObj['settings.bannerPhotoUrl'] = updateData.settings.bannerPhotoUrl;
+        if(updateData.settings.ownerPhotoUrl)
+            setObj['settings.ownerPhotoUrl'] = updateData.settings.ownerPhotoUrl;
+        if(updateData.settings.openTime)
+            setObj['settings.openTime'] = updateData.settings.openTime;
+        if(updateData.settings.closeTime)
+            setObj['settings.closeTime'] = updateData.settings.closeTime;
+        if('isOpen' in updateData.settings)
+            setObj['settings.isOpen'] = updateData.settings.isOpen;
+        if('announcement' in updateData.settings)
+            setObj['settings.announcement'] = updateData.settings.announcement;
     }
 
     const updated = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
-      { $set: setObj }, // UPDATE: updateData ki jagah setObj
+      { $set: setObj },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
     res.json({ success: true, data: updated });
