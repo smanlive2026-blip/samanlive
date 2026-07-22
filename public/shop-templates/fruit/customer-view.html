@@ -9,9 +9,12 @@
     <link rel="stylesheet" href="customer.css"> <!-- CSS ALAG FILE -->
 </head>
 <body>
+    <div class="banner" id="shopBanner"></div> <!-- 1. BANNER ADD KIYA -->
+
     <div class="header">
         <div class="header-top">
             <div class="shop-info">
+                <img src="https://placehold.co/60x60/fff/22c55e?text=Logo" id="ownerImg" class="shop-logo"> <!-- 2. LOGO ADD KIYA -->
                 <h1><i class="fa fa-apple-alt"></i> <span id="shopName">Fresh Fruits</span></h1>
                 <span id="shopStatus" class="status"><i class="fa fa-circle"></i> OPEN</span>
             </div>
@@ -80,6 +83,13 @@ async function loadData() {
 }
 
 function renderAll(){
+    // 3. BANNER + LOGO SET KARNA ADD KIYA
+    const bannerUrl = shopData.banner || shopData.bannerPhotoUrl || shopData.settings?.bannerPhotoUrl;
+    if(bannerUrl) document.getElementById('shopBanner').style.background = `url(${bannerUrl}) center/cover`;
+
+    const logoUrl = shopData.ownerPhotoUrl || shopData.settings?.ownerPhotoUrl;
+    if(logoUrl) document.getElementById('ownerImg').src = logoUrl;
+
     document.getElementById('pageTitle').innerText = shopData.shopName || 'Fresh Fruits';
     document.getElementById('shopName').innerText = shopData.shopName || 'Fresh Fruits';
     
