@@ -17,10 +17,10 @@ body { background: #f8fafc; }
 .search-box input { width: 100%; padding: 12px 45px 12px 15px; border: 2px solid #e2e8f0; border-radius: 12px; font-size:14px; }
 .cart-btn { background: #a16207; color: white; padding: 12px 20px; border-radius: 12px; text-decoration: none; font-weight: 700; position: relative; white-space: nowrap; }
 
-/* BANNER - PURI PATTI HI BANNER HAI */
+/* BANNER AB PURA BADA HAI */
 .banner { 
     width: 100%; 
-    height: 240px;
+    height: 280px; /* PEHLE 240 THA */
     background: linear-gradient(135deg, #78350f 0%, #431407 100%); 
     background-size: cover; 
     background-position: center; 
@@ -28,18 +28,18 @@ body { background: #f8fafc; }
     margin-bottom: 20px;
 }
 
-/* LOGO BANNER KE ANDAR */
+/* LOGO AB BANNER KE BILKUL NICHE LEFT ME CHIPKA HUA */
 .shop-logo {
     position: absolute;
-    bottom: 20px;
-    left: 30px;
-    width: 70px;
-    height: 70px;
+    bottom: -35px; /* BANNER KE BAHAR NIKALA */
+    left: 25px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    border: 3px solid white;
+    border: 4px solid white;
     object-fit: cover;
     background: white;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
     z-index: 10;
 }
 
@@ -69,16 +69,33 @@ body { background: #f8fafc; }
     z-index: 10;
 }
 
-.features { display: grid; grid-template-columns: repeat(4,1fr); gap: 15px; background: white; padding: 20px; border-radius: 15px; margin: 20px 0; }
-.feature { text-align: center; color: #64748b; font-size: 13px; }
+/* FEATURES AB EK LINE ME SCROLL HONGE MOBILE ME */
+.features { 
+    display: flex; /* GRID HATAKE FLEX KIYA */
+    gap: 20px; 
+    background: white; 
+    padding: 20px; 
+    border-radius: 15px; 
+    margin: 50px 20px 20px 20px; /* UPAR 50px DIYA LOGO KE LIYE JAGAH */
+    overflow-x: auto; /* SCROLL */
+    scrollbar-width: none;
+}
+.features::-webkit-scrollbar{display:none;}
+.feature { 
+    text-align: center; 
+    color: #64748b; 
+    font-size: 13px; 
+    min-width: 110px; /* HAR ITEM KI WIDTH FIX */
+    flex-shrink: 0;
+}
 .feature i { font-size: 28px; color: #a16207; margin-bottom: 8px; }
 
-.categories { display: flex; gap: 15px; overflow-x: auto; padding: 15px 0; scrollbar-width: none; }
+.categories { display: flex; gap: 15px; overflow-x: auto; padding: 15px 20px; scrollbar-width: none; }
 .categories::-webkit-scrollbar{display:none;}
 .cat-btn { background: white; border: 2px solid #e2e8f0; padding: 10px 20px; border-radius: 50px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .cat-btn.active { background: #a16207; color: white; border-color:#a16207; }
 
-.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
+.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; padding:0 20px; }
 .product-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); position: relative; transition:0.3s; }
 .product-card:hover{transform:translateY(-5px);}
 .wishlist { position: absolute; top: 12px; right: 12px; background: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
@@ -138,10 +155,10 @@ input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px sol
 @media(max-width: 768px){
     .top-bar{flex-direction:column; padding:10px;}
     .search-box{margin:10px 0; max-width:100%; width:100%;}
-    .banner{height:160px; margin-bottom: 15px;}
-    .shop-logo{width: 50px; height: 50px; bottom: 15px; left: 20px;}
-    .features{grid-template-columns: repeat(2,1fr); padding:15px;}
-    .product-grid{grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:15px;}
+    .banner{height:200px; margin-bottom: 15px;} /* MOBILE ME THODA CHOTA */
+    .shop-logo{width: 65px; height: 65px; bottom: -30px; left: 20px; border:3px solid white;}
+    .features{margin: 45px 10px 20px 10px; padding:15px;} /* UPAR MARGIN DIYA */
+    .product-grid{grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:15px; padding:0 10px;}
     .product-card img{height:150px;}
     .modal-content{padding:20px;}
     .modal-content[style*="display:flex"]{flex-direction:column !important;}
@@ -152,6 +169,5 @@ input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px sol
 }
 @media(max-width: 480px){
     .product-grid{grid-template-columns: 1fr 1fr;}
-    .features{grid-template-columns: 1fr;}
     .cart-btn{padding:10px 15px; font-size:14px;}
 }
