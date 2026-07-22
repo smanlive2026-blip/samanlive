@@ -35,6 +35,8 @@ router.get('/:shopId', async (req, res) => {
         settings: furniture.settings || {},
         isOpen: furniture.settings?.isOpen?? true,
         announcement: furniture.settings?.announcement || '',
+        ownerPhotoUrl: furniture.settings?.ownerPhotoUrl || '',  // <-- settings. add kiya
+        bannerPhotoUrl: furniture.settings?.bannerPhotoUrl || '', // <-- settings. add kiya
         ownerPhotoUrl: furniture.ownerPhotoUrl || '',
         bannerPhotoUrl: furniture.bannerPhotoUrl || '',
         shopId: shop._id
@@ -118,24 +120,10 @@ router.delete('/:shopId/item/:itemId', async (req, res) => {
 // UPDATE SHOP SETTINGS + PHOTO
 router.put('/:shopId', async (req, res) => {
   try {
-    const updateData = req.body.item || req.body;
+    const updateData = req.body;
     const setObj = {};
     
-    // 1. seedha wale keys
-    if('isOpen' in updateData){
-        setObj['settings.isOpen'] = updateData.isOpen;
-    }
-    if('announcement' in updateData){
-        setObj['settings.announcement'] = updateData.announcement;
-    }
-    if('bannerPhotoUrl' in updateData){
-        setObj['settings.bannerPhotoUrl'] = updateData.bannerPhotoUrl;
-    }
-    if('ownerPhotoUrl' in updateData){
-        setObj['settings.ownerPhotoUrl'] = updateData.ownerPhotoUrl;
-    }
-
-    // 2. agar settings object ke andar aaya to
+    // agar settings object ke andar aaya to
     if(updateData.settings){
         if(updateData.settings.bannerPhotoUrl)
             setObj['settings.bannerPhotoUrl'] = updateData.settings.bannerPhotoUrl;
