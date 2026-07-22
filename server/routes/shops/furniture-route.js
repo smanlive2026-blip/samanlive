@@ -10,10 +10,8 @@ router.get('/:shopId', async (req, res) => {
     const shopId = req.params.shopId;
     console.log("GET CALLED FOR SHOPID:", shopId);
 
-    if(!Types.ObjectId.isValid(shopId)){
-        return res.status(400).json({ success: false, message: 'Invalid ShopId format' });
-    }
-    const shop = await Shop.findById(new Types.ObjectId(shopId)).lean();
+    // UPDATE: ObjectId check hata diya. String bhi chalega ab
+    const shop = await Shop.findById(shopId).lean(); // seedha findById
     if(!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
 
     let furniture = await Furniture.findOne({ shopId: shopId });
@@ -24,21 +22,20 @@ router.get('/:shopId', async (req, res) => {
     // UPDATE: KISI BHI FORMAT KE ITEM KO NORMALIZE KAR DIYA
     const normalizedItems = (furniture.items || []).map(item => ({
        ...item,
-        image: item.image || item.img || '', // UPDATE: img ya image dono se chalega
-        id: item.id || item._id?.toString() // UPDATE: _id bhi support
+        image: item.image || item.img || '', 
+        id: item.id || item._id?.toString() 
     }));
 
     const finalData = {
       ...shop,
-        items: normalizedItems, // UPDATE: normalized items bhej rahe
+        items: normalizedItems,
         orders: furniture.orders || [],
         settings: furniture.settings || {},
         isOpen: furniture.settings?.isOpen?? true,
         announcement: furniture.settings?.announcement || '',
-        ownerPhotoUrl: furniture.settings?.ownerPhotoUrl || '',  // <-- settings. add kiya
-        bannerPhotoUrl: furniture.settings?.bannerPhotoUrl || '', // <-- settings. add kiya
-        ownerPhotoUrl: furniture.ownerPhotoUrl || '',
-        bannerPhotoUrl: furniture.bannerPhotoUrl || '',
+        ownerPhotoUrl: furniture.settings?.ownerPhotoUrl || furniture.ownerPhotoUrl || '',  
+        bannerPhotoUrl: furniture.settings?.bannerPhotoUrl || furniture.bannerPhotoUrl || '',
+        phone: furniture.phone || '', // NAYA
         shopId: shop._id
     }
 
