@@ -162,28 +162,28 @@ async function updateFurnitureItem(itemId, updatedItem){
 
 function bindUploadsCustom(){
     // YE PURANA REHNE DE. SHOP-CORE BHI CALL HO RAHA
-    document.getElementById('ownerInput').onchange = async (e)=>{
-        const file = e.target.files[0]; if(!file) return;
-        document.getElementById('uploadLoader').style.display = 'inline';
-        const url = await ShopCore.uploadImage(file, 'profile');
-        document.getElementById('uploadLoader').style.display = 'none';
-        if(url){
-            document.getElementById('ownerImg').src = url;
-            await updateShopDB({ownerPhotoUrl: url});
-            setTimeout(()=>updateShopDB({ownerPhotoUrl: url}), 1000); // shop-core ke baad dobara
-        }
+document.getElementById('ownerInput').onchange = async (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    document.getElementById('uploadLoader').style.display = 'inline';
+    const url = await ShopCore.uploadImage(file, 'profile');
+    document.getElementById('uploadLoader').style.display = 'none';
+    if(url){
+        document.getElementById('ownerImg').src = url;
+        await updateShopDB({settings: {ownerPhotoUrl: url}}); // <-- settings ke andar
+        setTimeout(()=>updateShopDB({settings: {ownerPhotoUrl: url}}), 1000);
     }
-    document.getElementById('bannerInput').onchange = async (e)=>{
-        const file = e.target.files[0]; if(!file) return;
-        document.getElementById('uploadLoader').style.display = 'inline';
-        const url = await ShopCore.uploadImage(file, 'banner');
-        document.getElementById('uploadLoader').style.display = 'none';
-        if(url){
-            document.getElementById('shopBanner').src = url;
-            await updateShopDB({bannerPhotoUrl: url});
-            setTimeout(()=>updateShopDB({bannerPhotoUrl: url}), 1000); // shop-core ke baad dobara
-        }
+}
+document.getElementById('bannerInput').onchange = async (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    document.getElementById('uploadLoader').style.display = 'inline';
+    const url = await ShopCore.uploadImage(file, 'banner');
+    document.getElementById('uploadLoader').style.display = 'none';
+    if(url){
+        document.getElementById('shopBanner').src = url;
+        await updateShopDB({settings: {bannerPhotoUrl: url}}); // <-- settings ke andar
+        setTimeout(()=>updateShopDB({settings: {bannerPhotoUrl: url}}), 1000);
     }
+}
     document.getElementById('ownerImg').onclick = () => document.getElementById('ownerInput').click();
     document.getElementById('shopBanner').onclick = () => document.getElementById('bannerInput').click();
 }
