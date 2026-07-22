@@ -17,22 +17,22 @@ body { background: #f8fafc; }
 .search-box input { width: 100%; padding: 12px 45px 12px 15px; border: 2px solid #e2e8f0; border-radius: 12px; font-size:14px; }
 .cart-btn { background: #a16207; color: white; padding: 12px 20px; border-radius: 12px; text-decoration: none; font-weight: 700; position: relative; white-space: nowrap; }
 
-/* BANNER AB PURA BADA HAI */
+/* BANNER AB PHOTO HAI */
 .banner { 
     width: 100%; 
-    height: 280px; /* PEHLE 240 THA */
-    background: linear-gradient(135deg, #78350f 0%, #431407 100%); 
+    height: 280px;
+    background: linear-gradient(135deg, #78350f 0%, #431407 100%); /* YE DEFAULT RAHEGA AGAR PHOTO NA HO */
     background-size: cover; 
     background-position: center; 
     position: relative; 
     margin-bottom: 20px;
 }
 
-/* LOGO AB BANNER KE BILKUL NICHE LEFT ME CHIPKA HUA */
+/* LOGO AB BANNER KE UPAR HAI */
 .shop-logo {
     position: absolute;
-    bottom: -35px; /* BANNER KE BAHAR NIKALA */
-    left: 25px;
+    bottom: 20px; /* AB BANNER KE ANDAR HI RAHEGA */
+    left: 30px;
     width: 80px;
     height: 80px;
     border-radius: 50%;
@@ -69,15 +69,15 @@ body { background: #f8fafc; }
     z-index: 10;
 }
 
-/* FEATURES AB EK LINE ME SCROLL HONGE MOBILE ME */
+/* FEATURES EK LINE ME SCROLL */
 .features { 
-    display: flex; /* GRID HATAKE FLEX KIYA */
+    display: flex;
     gap: 20px; 
     background: white; 
     padding: 20px; 
     border-radius: 15px; 
-    margin: 50px 20px 20px 20px; /* UPAR 50px DIYA LOGO KE LIYE JAGAH */
-    overflow-x: auto; /* SCROLL */
+    margin: 20px; 
+    overflow-x: auto;
     scrollbar-width: none;
 }
 .features::-webkit-scrollbar{display:none;}
@@ -85,7 +85,7 @@ body { background: #f8fafc; }
     text-align: center; 
     color: #64748b; 
     font-size: 13px; 
-    min-width: 110px; /* HAR ITEM KI WIDTH FIX */
+    min-width: 110px;
     flex-shrink: 0;
 }
 .feature i { font-size: 28px; color: #a16207; margin-bottom: 8px; }
@@ -155,9 +155,9 @@ input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px sol
 @media(max-width: 768px){
     .top-bar{flex-direction:column; padding:10px;}
     .search-box{margin:10px 0; max-width:100%; width:100%;}
-    .banner{height:200px; margin-bottom: 15px;} /* MOBILE ME THODA CHOTA */
-    .shop-logo{width: 65px; height: 65px; bottom: -30px; left: 20px; border:3px solid white;}
-    .features{margin: 45px 10px 20px 10px; padding:15px;} /* UPAR MARGIN DIYA */
+    .banner{height:200px; margin-bottom: 15px;}
+    .shop-logo{width: 65px; height: 65px; bottom: 15px; left: 20px; border:3px solid white;}
+    .features{margin: 20px 10px; padding:15px;}
     .product-grid{grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:15px; padding:0 10px;}
     .product-card img{height:150px;}
     .modal-content{padding:20px;}
