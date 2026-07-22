@@ -6,44 +6,7 @@
     <title id="pageTitle">Fresh Fruits - Shop</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #f8fafc; padding-bottom: 80px; }
-        .header { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; padding: 20px; position: sticky; top: 0; z-index: 100; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .shop-info h1 { font-size: 22px; display: flex; align-items: center; gap: 10px; }
-        .status { font-size: 12px; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; }
-        .cart-btn { background: white; color: #22c55e; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 700; position: relative; cursor: pointer; }
-        .cart-count { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; }
-        .search-bar { background: rgba(255,255,255,0.2); padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px; }
-        .search-bar input { background: transparent; border: none; color: white; outline: none; width: 100%; }
-        .search-bar input::placeholder { color: rgba(255,255,255,0.8); }
-        .announcement { background: #fef3c7; color: #92400e; padding: 12px; text-align: center; font-weight: 600; font-size: 14px; }
-        .categories { display: flex; gap: 12px; padding: 15px; overflow-x: auto; background: white; }
-        .cat-btn { padding: 8px 16px; border: 2px solid #e2e8f0; border-radius: 20px; background: white; font-weight: 600; cursor: pointer; white-space: nowrap; }
-        .cat-btn.active { background: #22c55e; color: white; border-color: #22c55e; }
-        .container { padding: 15px; max-width: 1200px; margin: 0 auto; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-        .product-card { background: white; border-radius: 16px; padding: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .product-img { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; }
-        .product-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-        .product-price { color: #22c55e; font-weight: 700; font-size: 16px; }
-        .product-unit { font-size: 12px; color: #64748b; }
-        .add-btn { width: 100%; background: #22c55e; color: white; border: none; padding: 8px; border-radius: 10px; margin-top: 8px; font-weight: 600; cursor: pointer; }
-        .qty-control { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
-        .qty-btn { background: #f0fdf4; border: none; width: 30px; height: 30px; border-radius: 8px; font-weight: 700; color: #22c55e; cursor: pointer; }
-        .cart-sidebar { position: fixed; right: -100%; top: 0; width: 350px; height: 100%; background: white; box-shadow: -5px 0 20px rgba(0,0,0,0.1); transition: 0.3s; z-index: 999; padding: 20px; overflow-y: auto; }
-        .cart-sidebar.active { right: 0; }
-        .cart-item { display: flex; gap: 10px; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
-        .cart-item img { width: 50px; height: 50px; border-radius: 8px; }
-        .checkout-btn { width: 100%; background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 700; font-size: 16px; margin-top: 20px; cursor: pointer; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 998; }
-        .overlay.active { display: block; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 99; }
-        .nav-item { text-align: center; color: #64748b; cursor: pointer; }
-        .nav-item.active { color: #22c55e; }
-        @media(max-width: 400px) {.cart-sidebar { width: 100%; } }
-    </style>
+    <link rel="stylesheet" href="customer.css"> <!-- CSS ALAG FILE -->
 </head>
 <body>
     <div class="header">
@@ -59,22 +22,26 @@
 
     <div class="announcement" id="announcementBox" style="display: none;"></div>
 
-    <div class="categories">
-        <button class="cat-btn active" onclick="filterCat('all')">All</button>
-        <button class="cat-btn" onclick="filterCat('Fresh Fruits')">Fresh</button>
-        <button class="cat-btn" onclick="filterCat('Dry Fruits')">Dry Fruits</button>
-        <button class="cat-btn" onclick="filterCat('Exotic Fruits')">Exotic</button>
-        <button class="cat-btn" onclick="filterCat('Tropical')">Tropical</button>
+    <div class="categories" id="categories">
+        <button class="cat-btn active" onclick="filterCat('all', event)">All</button>
     </div>
 
-    <div class="container"><div class="product-grid" id="productGrid"></div></div>
+    <div class="container">
+        <div class="product-grid" id="productGrid">Loading...</div>
+    </div>
 
     <div class="overlay" id="overlay" onclick="toggleCart()"></div>
     <div class="cart-sidebar" id="cartSidebar">
         <h2 style="margin-bottom: 20px;">Your Cart <i class="fa fa-times" style="float: right; cursor: pointer;" onclick="toggleCart()"></i></h2>
         <div id="cartItems"></div>
         <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #f1f5f9;">
-            <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700;"><span>Total:</span><span>₹<span id="cartTotal">0</span></span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-bottom: 15px;">
+                <span>Subtotal:</span><span>₹<span id="cartTotal">0</span></span>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="custName" placeholder="Your Name" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:8px;">
+                <input type="tel" id="custPhone" placeholder="Your WhatsApp Number" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+            </div>
             <button class="checkout-btn" onclick="placeOrder()"><i class="fa fa-whatsapp"></i> Order on WhatsApp</button>
         </div>
     </div>
@@ -86,7 +53,149 @@
         <div class="nav-item" onclick="location.href='offers.html?shopId='+shopId"><i class="fa fa-tag"></i><div>Offers</div></div>
     </div>
 
-    <script src="./fruit-products-data.js"></script>
-    <script src="./customer.js"></script>
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const shopId = urlParams.get('shopId');
+const API_BASE = `/api/fruit`;
+let shopData = {};
+let cart = JSON.parse(localStorage.getItem('cart_'+shopId)) || [];
+let currentFilter = 'all';
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+    updateCartCount();
+    document.getElementById('searchInput').onkeyup = (e) => renderProducts(e.target.value);
+});
+
+async function loadData() {
+    try{
+        const res = await fetch(`${API_BASE}/${shopId}`);
+        const result = await res.json();
+        shopData = result.shop || result.data || result;
+        shopData.items = shopData.items || [];
+        renderAll();
+    }catch(err){
+        console.error("LOAD ERROR:", err);
+    }
+}
+
+function renderAll(){
+    document.getElementById('pageTitle').innerText = shopData.shopName || 'Fresh Fruits';
+    document.getElementById('shopName').innerText = shopData.shopName || 'Fresh Fruits';
+    
+    const isOpen = shopData.isOpen ?? shopData.settings?.isOpen ?? true;
+    document.getElementById('shopStatus').innerHTML = `<i class="fa fa-circle"></i> ${isOpen ? 'OPEN' : 'CLOSED'}`;
+    document.getElementById('shopStatus').style.background = isOpen ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)';
+
+    if(shopData.announcement || shopData.settings?.announcement){
+        document.getElementById('announcementBox').style.display = 'block';
+        document.getElementById('announcementBox').innerText = shopData.announcement || shopData.settings?.announcement;
+    }
+
+    const cats = [...new Set(shopData.items.map(i => i.category || 'General'))];
+    document.getElementById('categories').innerHTML = '<button class="cat-btn active" onclick="filterCat(\'all\', event)">All</button>' + 
+        cats.map(c => `<button class="cat-btn" onclick="filterCat('${c}',event)">${c}</button>`).join('');
+    
+    renderProducts();
+}
+
+function filterCat(cat, event){
+    currentFilter = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    renderProducts();
+}
+
+function renderProducts(search=''){
+    const grid = document.getElementById('productGrid');
+    let items = shopData.items.filter(i => i.available !== false);
+    if(currentFilter !== 'all') items = items.filter(i => (i.category || 'General') === currentFilter);
+    if(search) items = items.filter(i => (i.name || '').toLowerCase().includes(search.toLowerCase()));
+
+    if(!items.length) return grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color:#64748b;">Koi product nahi mila</p>';
+
+    grid.innerHTML = items.map(item => {
+        const id = item.id || item._id;
+        const inCart = cart.find(c => c.id === id);
+        return `
+        <div class="product-card">
+            <img src="${item.image || 'https://placehold.co/300x200/22c55e/fff?text=Fruit'}" class="product-img">
+            <div class="product-name">${item.name}</div>
+            <div class="product-price">₹${item.price} <span class="product-unit">/ ${item.unit || 'Kg'}</span></div>
+            ${inCart ? 
+                `<div class="qty-control">
+                    <button class="qty-btn" onclick="updateQty('${id}', -1)">-</button>
+                    <span>${inCart.qty}</span>
+                    <button class="qty-btn" onclick="updateQty('${id}', 1)">+</button>
+                </div>` :
+                `<button class="add-btn" onclick="addToCart('${id}', '${item.name}', ${item.price})">ADD</button>`
+            }
+        </div>
+    `}).join('');
+}
+
+function addToCart(id, name, price){
+    const existing = cart.find(i => i.id === id);
+    if(existing) existing.qty++; else cart.push({id, name, price, qty: 1});
+    saveCart();
+}
+function updateQty(id, change){
+    const item = cart.find(i => i.id === id);
+    if(item) item.qty += change;
+    if(item.qty <= 0) cart = cart.filter(i => i.id !== id);
+    saveCart();
+}
+function saveCart(){
+    localStorage.setItem('cart_'+shopId, JSON.stringify(cart));
+    updateCartCount();
+    renderProducts();
+    renderCart();
+}
+function updateCartCount(){ 
+    document.getElementById('cartCount').innerText = cart.reduce((a,b) => a+b.qty, 0); 
+}
+function toggleCart(){
+    document.getElementById('cartSidebar').classList.toggle('active');
+    document.getElementById('overlay').classList.toggle('active');
+    renderCart();
+}
+function renderCart(){
+    const cartItems = document.getElementById('cartItems');
+    let total = 0;
+    cartItems.innerHTML = cart.map(item => {
+        total += item.price * item.qty;
+        return `<div class="cart-item">
+            <img src="https://placehold.co/50x50/22c55e/fff">
+            <div style="flex:1;">
+                <div style="font-weight:600;">${item.name}</div>
+                <div>₹${item.price} x ${item.qty}</div>
+            </div>
+            <div style="font-weight:700;">₹${item.price * item.qty}</div>
+        </div>`
+    }).join('') || '<p>Cart Khali hai</p>';
+    document.getElementById('cartTotal').innerText = total;
+}
+
+function placeOrder(){
+    const name = document.getElementById('custName').value;
+    const phone = document.getElementById('custPhone').value;
+    if(!name || !phone) return alert('Name aur Number bharo');
+    if(cart.length === 0) return alert('Cart khali hai');
+
+    let msg = `*NEW ORDER - ${shopData.shopName}*\n\n`;
+    cart.forEach(i => msg += `${i.name} x ${i.qty} = ₹${i.price*i.qty}\n`);
+    msg += `\n*Total:* ₹${document.getElementById('cartTotal').innerText}`;
+    msg += `\n*Name:* ${name}\n*Phone:* ${phone}`;
+    
+    const shopPhone = shopData.phone || '91XXXXXXXXXX';
+    window.open(`https://wa.me/${shopPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+    
+    localStorage.removeItem('cart_'+shopId);
+    cart = [];
+    saveCart();
+    toggleCart();
+    alert('Order bhej diya WhatsApp pe ✅');
+}
+</script>
 </body>
 </html>
