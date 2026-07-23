@@ -19,9 +19,8 @@
     </div>
 
     <div class="banner" id="shopBanner">
-        <img src="https://placehold.co/80" id="ownerPic" class="shop-logo">
-        <div class="offer-badge" id="offerBadge" style="display:none;"><i class="fa fa-bolt"></i> <span id="offerText"></span></div>
-        <div class="shop-status" id="shopStatus">Loading...</div>
+     <div class="offer-badge" id="offerBadge" style="display:none;"><i class="fa fa-bolt"></i> <span id="offerText"></span></div>
+     <div class="shop-status" id="shopStatus">Loading...</div>
     </div>
 
     <div class="container" style="max-width:1400px; margin:0 auto; padding:20px;">
@@ -113,7 +112,6 @@ function renderShop(shop){
     document.getElementById('pageTitle').innerText = shop.shopName || shop.name || 'Furniture Shop';
     document.getElementById('shopNameTop').innerText = shop.shopName || shop.name || 'Shop';
     
-    document.getElementById('ownerPic').src = shop.ownerPhotoUrl || shop.settings?.ownerPhotoUrl || 'https://placehold.co/80';
     
     // YE WALI 4 LINE REPLACE KAR DE
     const bannerUrl = shop.bannerPhotoUrl || shop.banner || shop.settings?.bannerPhotoUrl || '';

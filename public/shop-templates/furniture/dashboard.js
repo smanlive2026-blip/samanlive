@@ -191,7 +191,7 @@ function bindUploadsCustom(){
         const url = await ShopCore.uploadImage(file, 'banner');
         document.getElementById('uploadLoader').style.display = 'none';
         if(url){
-            document.getElementById('shopBanner').src = url;
+            document.getElementById('shopBanner').style.backgroundImage = `url('${url}')`;
             // YAHAN CHANGE: settings hata ke seedha root me bhej
             await updateShopDB({bannerPhotoUrl: url});
             alert('Banner Saved ✅');
@@ -218,8 +218,7 @@ function initEvents(){
     };
 
     document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
-    document.getElementById('saveTiming').onclick = () => updateShopDB({settings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
-
+    document.getElementById('saveTiming').onclick = () => updateShopDB({shopSettings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
     // NAYA: PHONE SAVE KARNE KA CODE
     document.getElementById('savePhone').onclick = async () => {
         const phone = document.getElementById('shopPhoneInput').value;

@@ -20,26 +20,12 @@ body { background: #f8fafc; }
 .banner { 
     width: 100%; 
     height: 250px;
-    background: linear-gradient(135deg, #78350f 0%, #431407 100%); /* YE LINE ADD KAR */
+    background: linear-gradient(135deg, #78350f 0%, #431407 100%);
     background-size: cover; 
     background-position: center; 
+    background-repeat: no-repeat; /* YE ADD KAR DE */
     position: relative; 
     margin-bottom: 20px;
-}
-
-/* LOGO AB BANNER KE UPAR HAI */
-.shop-logo {
-    position: absolute;
-    bottom: 20px; /* AB BANNER KE ANDAR HI RAHEGA */
-    left: 30px;
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    border: 4px solid white;
-    object-fit: cover;
-    background: white;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    z-index: 10;
 }
 
 .offer-badge { 
