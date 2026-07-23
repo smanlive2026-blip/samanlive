@@ -26,7 +26,8 @@ router.get('/:shopId', async (req, res) => {
     }));
 
     const finalData = {
-     ...shop,
+      shopId: shopId, // Shop doc hata diya
+      name: 'Furniture Shop', // default name
       items: normalizedItems,
       orders: furniture.orders || [],
       settings: furniture.settings || {},
