@@ -9,7 +9,9 @@ router.get('/:shopId', async (req, res) => {
   try {
     const shopId = req.params.shopId;
     console.log("GET CALLED FOR SHOPID:", shopId);
-
+    console.log("SENDING TO FRONTEND - BANNER:", furniture.bannerPhotoUrl);
+    console.log("SENDING TO FRONTEND - SETTINGS BANNER:", furniture.settings?.bannerPhotoUrl);
+    
     // UPDATE: ObjectId check hata diya. String bhi chalega ab
     const shop = await Shop.findById(shopId).lean(); // seedha findById
     if(!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
