@@ -33,7 +33,7 @@ router.get('/:shopId', async (req, res) => {
       isOpen: furniture.settings?.isOpen?? true,
       announcement: furniture.settings?.announcement || '',
       ownerPhotoUrl: furniture.settings?.ownerPhotoUrl || furniture.ownerPhotoUrl || '',
-      bannerPhotoUrl: furniture.settings?.bannerPhotoUrl || furniture.bannerPhotoUrl || '',
+      bannerPhotoUrl: furniture.bannerPhotoUrl || furniture.settings?.bannerPhotoUrl || '',
       phone: furniture.phone || '',
       shopId: shop._id
     }

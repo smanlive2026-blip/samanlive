@@ -5,6 +5,11 @@ const mongoose = require('mongoose');
 const furnitureSchema = new mongoose.Schema({
   shopId: { type: String, required: true, unique: true },
   
+  // YE 3 FIELD NAYE ADD KIYE HAI
+  bannerPhotoUrl: { type: String, default: '' },
+  ownerPhotoUrl: { type: String, default: '' },
+  phone: { type: String, default: '' },
+  
   items: [{
     id: String,
     name: String,
@@ -57,9 +62,10 @@ const furnitureSchema = new mongoose.Schema({
   },
 
   settings: {
-    ownerPhotoUrl: String,
+    ownerPhotoUrl: { type: String, default: '' },
+    bannerPhotoUrl: { type: String, default: '' }, // YE BHI ADD KIYA
     isOpen: { type: Boolean, default: true },
-    announcement: String,
+    announcement: { type: String, default: '' },
     lowStockThreshold: { type: Number, default: 5 }
   }
 }, { timestamps: true });
