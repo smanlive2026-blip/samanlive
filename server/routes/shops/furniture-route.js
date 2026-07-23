@@ -114,51 +114,40 @@ router.delete('/:shopId/item/:itemId', async (req, res) => {
   }
 });
 
-// UPDATE SHOP SETTINGS + PHOTO
+// UPDATE SHOP SETTINGS + PHOTO - NUCLEAR VERSION
 router.put('/:shopId', async (req, res) => {
   try {
     const updateData = req.body;
-    const setObj = {};
-    
-    console.log("PUT CALLED FOR:", req.params.shopId); // DEBUG
-    console.log("BODY MILA:", updateData); // DEBUG
-    
-    // ROOT LEVEL PE BHI SAVE KARO
-    if(updateData.bannerPhotoUrl) {
-        setObj['bannerPhotoUrl'] = updateData.bannerPhotoUrl;
-        console.log("BANNER URL SET HOGA:", updateData.bannerPhotoUrl);
+    console.log("=== PUT HIT ===");
+    console.log("ShopId:", req.params.shopId);
+    console.log("Body:", updateData);
+
+    // Pehle check kare furniture doc hai ya nahi
+    let furniture = await Furniture.findOne({ shopId: req.params.shopId });
+    if(!furniture){
+        console.log("Furniture doc nahi mila, naya bana raha hu");
+        furniture = await Furniture.create({ shopId: req.params.shopId });
     }
-    if(updateData.ownerPhotoUrl)
-        setObj['ownerPhotoUrl'] = updateData.ownerPhotoUrl;
-    if('phone' in updateData)
-        setObj['phone'] = updateData.phone;
+
+    // Seedha set karo
+    if(updateData.bannerPhotoUrl) furniture.bannerPhotoUrl = updateData.bannerPhotoUrl;
+    if(updateData.ownerPhotoUrl) furniture.ownerPhotoUrl = updateData.ownerPhotoUrl;
+    if('phone' in updateData) furniture.phone = updateData.phone;
     
-    // SETTINGS KE ANDAR BHI SAVE KARO
     if(updateData.settings){
-        if(updateData.settings.bannerPhotoUrl)
-            setObj['settings.bannerPhotoUrl'] = updateData.settings.bannerPhotoUrl;
-        if(updateData.settings.ownerPhotoUrl)
-            setObj['settings.ownerPhotoUrl'] = updateData.settings.ownerPhotoUrl;
-        if(updateData.settings.openTime)
-            setObj['settings.openTime'] = updateData.settings.openTime;
-        if(updateData.settings.closeTime)
-            setObj['settings.closeTime'] = updateData.settings.closeTime;
-        if('isOpen' in updateData.settings)
-            setObj['settings.isOpen'] = updateData.settings.isOpen;
-        if('announcement' in updateData.settings)
-            setObj['settings.announcement'] = updateData.settings.announcement;
+        furniture.settings = furniture.settings || {};
+        if(updateData.settings.bannerPhotoUrl) furniture.settings.bannerPhotoUrl = updateData.settings.bannerPhotoUrl;
+        if(updateData.settings.ownerPhotoUrl) furniture.settings.ownerPhotoUrl = updateData.settings.ownerPhotoUrl;
+        if(updateData.settings.openTime) furniture.settings.openTime = updateData.settings.openTime;
+        if(updateData.settings.closeTime) furniture.settings.closeTime = updateData.settings.closeTime;
+        if('isOpen' in updateData.settings) furniture.settings.isOpen = updateData.settings.isOpen;
+        if('announcement' in updateData.settings) furniture.settings.announcement = updateData.settings.announcement;
     }
 
-    // YAHI MAIN FIX HAI - upsert true kar diya aur log lagaya
-    const updated = await Furniture.findOneAndUpdate(
-      { shopId: req.params.shopId },
-      { $set: setObj },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
-    
-    console.log("DB ME SAVE HUA:", updated.bannerPhotoUrl); // DEBUG
+    await furniture.save();
+    console.log("SAVE HO GAYA:", furniture.bannerPhotoUrl);
 
-    res.json({ success: true, data: updated });
+    res.json({ success: true, data: furniture });
   } catch(err) {
     console.log("SETTINGS ERROR:", err)
     res.status(500).json({ success: false, error: err.message });
