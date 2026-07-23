@@ -1,7 +1,7 @@
 // ===== STEP 1: SHOP ID QUERY SE NIKALO =====
 const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId');
-const API_BASE = `/api/furniture`;
+const API_BASE = `/api/shops/furniture`;
 
 if(!shopId){
     alert('ERROR: URL me?shopId=xxx daalo');

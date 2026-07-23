@@ -31,12 +31,15 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 //app.use('/api', deliveryManagerRoutes);
 app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-manager banega
 app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
-app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
+//app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
 //app.use('/api/shops', require('./routes/shops/furniture-route')); // <- YE LINE ADD KAR
 //app.use('/api/shops', require('./routes/shops/furniture-route'));
 //app.use('/api/shops', require('./routes/shops/Furniture-route'));
-app.use('/api/shops', require('./routes/shops/furniture-route'));
-app.use('/api/furniture', require('./routes/shops/furniture-route'));
+//app.use('/api/shops', require('./routes/shops/furniture-route'));
+//app.use('/api/furniture', require('./routes/shops/furniture-route'));
+//app.use('/api/shops/fruit', fruitItemRoutes); // 1. FRUIT ALAG
+app.use('/api/shops/furniture', require('./routes/shops/furniture-route')); // 2. FURNITURE ALAG
+app.use('/api/shops', require('./routes/shopRoutes')); // 3. BAAKI SAB GENERIC
 // Request Logger - Development ke liye
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'development') {
