@@ -75,17 +75,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadShop(){
     try{
-        const res = await fetch(`${API_BASE}/${shopId}`); // UPDATE: furniture
-        const result = await res.json();
+        const res = await fetch(`${API_BASE}/${shopId}`);
+        const text = await res.text(); // pehle text le
+        console.log("RAW RESPONSE:", text); // debug
+        
+        if(!res.ok) throw new Error(`Server ${res.status}: ${text}`);
+        if(!text) throw new Error("Khali response aaya");
+
+        const result = JSON.parse(text);
         shopData = result.shop || result.data || result;
         shopData.items = shopData.items || [];
         console.log("LOADED ITEMS:", shopData.items);
         renderProductList();
     }catch(err){
+        console.error("FULL ERROR:", err);
         alert('Shop load error: ' + err.message);
+        document.getElementById('productList').innerHTML = `<p style="color:red;">${err.message}</p>`;
     }
 }
-
 function previewImage(event){
     const file = event.target.files[0];
     if(file){
