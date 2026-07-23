@@ -8,7 +8,7 @@ const { getShopId } = require('../../utils/shopId');
 // GET PURI SHOP DATA - SAB FORMAT SUPPORT
 router.get('/:shopId', async (req, res) => {
   try {
-    const shopId = req.params.shopId;
+    const shopId = getShopId(req);
     console.log("GET CALLED FOR SHOPID:", shopId);
   
 
