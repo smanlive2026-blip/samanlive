@@ -29,12 +29,13 @@
         
         .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
         .content-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .content-card h2 { font-size: 20px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        .content-card h2 { font-size: 20px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; cursor: pointer; }
         
         .btn { background: linear-gradient(135deg, #a16207 0%, #78350f 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; white-space: nowrap; }
         .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; border: none; color: white; cursor: pointer; }
         
-        .product-item { display:flex; gap:15px; align-items:center; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+        .product-grid { display: grid; grid-template-columns: 1fr; gap: 12px; } /* Desktop 1 column */
+        .product-item { display:flex; gap:15px; align-items:center; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; }
         .product-item img { width:80px; height:80px; object-fit:cover; border-radius:12px; cursor:pointer; flex-shrink: 0; }
         .product-item > div { flex: 1; min-width: 150px; }
         
@@ -46,6 +47,10 @@
         .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center; padding: 20px; }
         .modal-content { background:white; padding:30px; border-radius:20px; width:100%; max-width:500px; }
         .hint-text { font-size:12px; color:#64748b; margin-top:-5px; margin-bottom:10px; }
+
+        /* ACCORDION FOR MOBILE */
+        .accordion-body { display: block; }
+        .accordion-arrow { margin-left: auto; transition: 0.3s; }
 
         /* ========== MOBILE RESPONSIVE ========== */
         @media (max-width: 1024px) {
@@ -59,24 +64,26 @@
             .header h1 { font-size: 20px; }
             #ownerImg { width: 50px; height: 50px; }
             .header-buttons { width: 100%; justify-content: center; }
-            .btn { padding: 10px 14px; font-size: 13px; flex: 1 1 calc(50% - 5px); justify-content: center; }
-            .toggle-switch { flex: 1 1 100%; text-align: center; }
+            .btn { padding: 10px 8px; font-size: 12px; flex: 1 1 calc(33.33% - 7px); justify-content: center; } /* 3-3 BUTTON */
+            .toggle-switch { flex: 1 1 calc(33.33% - 7px); text-align: center; }
             
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } /* 2-2 STATS */
             .stat-card { padding: 18px; }
             .stat-card .value { font-size: 24px; }
             
-            .content-card { padding: 18px; }
-            .content-card h2 { font-size: 17px; }
+            .content-card { padding: 15px; }
+            .content-card h2 { font-size: 16px; margin-bottom: 0; } /* chota kiya */
+            .accordion-body { display: none; padding-top: 15px; } /* band rahega */
+            .content-card.active .accordion-body { display: block; }
+            .content-card.active .accordion-arrow { transform: rotate(180deg); }
             
-            .product-item { flex-direction: column; align-items: stretch; }
-            .product-item img { width: 100%; height: 150px; }
+            .product-grid { grid-template-columns: repeat(2, 1fr); } /* 2-2 PRODUCT CARD */
+            .product-item { flex-direction: column; align-items: stretch; padding: 10px; }
+            .product-item img { width: 100%; height: 120px; }
         }
 
         @media (max-width: 480px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            .btn { flex: 1 1 100%; }
-            .modal-content { padding: 20px; }
+            .btn { font-size: 11px; padding: 8px 6px; }
         }
     </style>
 </head>
@@ -92,7 +99,7 @@
                 </div>
             </div>
             <div class="header-buttons">
-                <a href="#" id="userViewBtn" class="btn" style="background: #2563eb;"><i class="fa fa-eye"></i> User View</a>
+                <a href="#" id="userViewBtn" class="btn" style="background: #2563eb;"><i class="fa fa-eye"></i> User</a>
                 <a href="#" id="libraryBtn" class="btn" style="background: #16a34a;"><i class="fa fa-warehouse"></i> Library</a>
                 <a href="#" id="bulkProductBtn" class="btn" style="background: #0ea5e9;"><i class="fa fa-file-csv"></i> Bulk</a>
                 <a href="#" id="addProductBtn" class="btn"><i class="fa fa-plus"></i> Add</a>
@@ -104,8 +111,8 @@
         <div class="stats-grid">
             <div class="stat-card"><div class="icon"><i class="fa fa-boxes"></i></div><h3>Total Items</h3><div class="value" id="items">0</div></div>
             <div class="stat-card"><div class="icon"><i class="fa fa-shopping-cart"></i></div><h3>Today Orders</h3><div class="value" id="orders">0</div></div>
-            <div class="stat-card"><div class="icon"><i class="fa fa-truck"></i></div><h3>Pending Delivery</h3><div class="value" id="delivery">0</div></div>
-            <div class="stat-card"><div class="icon"><i class="fa fa-rupee-sign"></i></div><h3>Today Revenue</h3><div class="value">₹<span id="revenue">0</span></div></div>
+            <div class="stat-card"><div class="icon"><i class="fa fa-truck"></i></div><h3>Pending</h3><div class="value" id="delivery">0</div></div>
+            <div class="stat-card"><div class="icon"><i class="fa fa-rupee-sign"></i></div><h3>Revenue</h3><div class="value">₹<span id="revenue">0</span></div></div>
         </div>
 
         <div class="content-grid">
@@ -113,7 +120,7 @@
                 <div class="content-card">
                     <h2><i class="fa fa-list"></i> Product Inventory</h2>
                     <input type="text" id="searchProduct" placeholder="Search Product Name...">
-                    <div id="productList">Loading...</div>
+                    <div id="productList" class="product-grid">Loading...</div> <!-- GRID ADD KIYA -->
                 </div>
                 <div class="content-card">
                     <h2><i class="fa fa-receipt"></i> Recent Orders</h2>
@@ -121,35 +128,44 @@
                 </div>
             </div>
             <div>
-                <div class="content-card">
-                    <h2><i class="fa fa-bullhorn"></i> Announcement</h2>
-                    <input type="text" id="announcementInput" placeholder="e.g. 20% OFF on Sofa Set">
-                    <button class="btn" id="saveAnnouncement">Save</button>
+                <!-- ACCORDION CARDS START -->
+                <div class="content-card accordion">
+                    <h2 onclick="this.parentElement.classList.toggle('active')"><i class="fa fa-bullhorn"></i> Announcement <i class="fa fa-chevron-down accordion-arrow"></i></h2>
+                    <div class="accordion-body">
+                        <input type="text" id="announcementInput" placeholder="e.g. 20% OFF on Sofa Set">
+                        <button class="btn" id="saveAnnouncement">Save</button>
+                    </div>
                 </div>
-                <div class="content-card">
-                    <h2><i class="fa fa-clock"></i> Shop Timing</h2>
-                    Open: <input type="time" id="openTime">
-                    Close: <input type="time" id="closeTime">
-                    <button class="btn" id="saveTiming">Save</button>
+                <div class="content-card accordion">
+                    <h2 onclick="this.parentElement.classList.toggle('active')"><i class="fa fa-clock"></i> Shop Timing <i class="fa fa-chevron-down accordion-arrow"></i></h2>
+                    <div class="accordion-body">
+                        Open: <input type="time" id="openTime">
+                        Close: <input type="time" id="closeTime">
+                        <button class="btn" id="saveTiming">Save</button>
+                    </div>
                 </div>
-
-                <div class="content-card">
-                    <h2><i class="fa fa-phone"></i> Contact Number</h2>
-                    <input type="tel" id="shopPhoneInput" placeholder="10 digit number - 9876543210" maxlength="10">
-                    <div class="hint-text">Ye number customer ko Call aur WhatsApp ke liye dikhega</div>
-                    <button class="btn" id="savePhone">Save Number</button>
+                <div class="content-card accordion">
+                    <h2 onclick="this.parentElement.classList.toggle('active')"><i class="fa fa-phone"></i> Contact <i class="fa fa-chevron-down accordion-arrow"></i></h2>
+                    <div class="accordion-body">
+                        <input type="tel" id="shopPhoneInput" placeholder="10 digit number" maxlength="10">
+                        <div class="hint-text">Customer ko Call/WhatsApp ke liye</div>
+                        <button class="btn" id="savePhone">Save Number</button>
+                    </div>
                 </div>
-
-                <div class="content-card">
-                    <h2><i class="fa fa-bell"></i> Low Stock Alert</h2>
-                    <div id="lowStock">Loading...</div>
+                <div class="content-card accordion">
+                    <h2 onclick="this.parentElement.classList.toggle('active')"><i class="fa fa-bell"></i> Low Stock <i class="fa fa-chevron-down accordion-arrow"></i></h2>
+                    <div class="accordion-body">
+                        <div id="lowStock">Loading...</div>
+                    </div>
                 </div>
-                <div class="content-card">
-                    <h2><i class="fa fa-image"></i> Shop Banner Quick Upload</h2>
-                    <img id="shopBanner" src="https://placehold.co/400x150/a16207/fff?text=Upload+Banner" style="width:100%; border-radius:12px; cursor:pointer;">
-                    <input type="file" id="bannerInput" style="display:none;" accept="image/*">
-                    <div class="hint-text">Ya upar "Change Banner" button se pro page pe jao</div>
+                <div class="content-card accordion">
+                    <h2 onclick="this.parentElement.classList.toggle('active')"><i class="fa fa-image"></i> Banner <i class="fa fa-chevron-down accordion-arrow"></i></h2>
+                    <div class="accordion-body">
+                        <img id="shopBanner" src="https://placehold.co/400x150/a16207/fff?text=Upload+Banner" style="width:100%; border-radius:12px; cursor:pointer;">
+                        <input type="file" id="bannerInput" style="display:none;" accept="image/*">
+                    </div>
                 </div>
+                <!-- ACCORDION CARDS END -->
             </div>
         </div>
     </div>
