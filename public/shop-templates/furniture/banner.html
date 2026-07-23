@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Banner - Furniture Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f1f5f9; padding: 20px; min-height: 100vh; }
+      .container { max-width: 900px; margin: 0 auto; }
+      .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #1e293b; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-size: 24px; }
+      .hint { color: #64748b; margin-bottom: 25px; font-size: 14px; }
+      .banner-preview {
+            width: 100%;
+            height: 250px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #78350f 0%, #431407 100%);
+            background-size: cover;
+            background-position: center;
+            border: 3px dashed #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+      .banner-preview:hover { border-color: #a16207; transform: scale(1.01); }
+      .upload-text { text-align: center; color: #64748b; }
+      .upload-text i { font-size: 40px; color: #a16207; margin-bottom: 10px; display: block; }
+        #bannerInput { display: none; }
+      .btn { background: linear-gradient(135deg, #a16207 0%, #78350f 100%); color: white; border: none; padding: 14px 28px; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 16px; width: 100%; transition: 0.3s; }
+      .btn:hover { transform: translateY(-2px); }
+      .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+      .loader { display: none; color: #a16207; text-align: center; margin-top: 15px; font-weight: 600; }
+      .back-btn { background: #64748b; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; padding: 10px 20px; border-radius: 10px; color: white; font-weight: 600; }
+        #statusMsg { text-align: center; margin-top: 15px; font-weight: 600; min-height: 20px; }
+      .tips { background: #fffbeb; border: 1px solid #fde68a; padding: 15px; border-radius: 10px; margin-top: 20px; font-size: 13px; color: #78350f; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:history.back()" class="back-btn"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>
+
+        <div class="card">
+            <h1><i class="fa fa-image"></i> Change Shop Banner</h1>
+            <p class="hint">Recommended: 1200 x 400px. JPG/PNG. Max 2MB. Photo Cloudinary me save hogi.</p>
+
+            <div class="banner-preview" id="bannerPreview">
+                <div class="upload-text">
+                    <i class="fa fa-cloud-upload"></i>
+                    <div><b>Click to Upload Banner</b></div>
+                    <div style="font-size:12px;">Current banner will be replaced</div>
+                </div>
+            </div>
+            <input type="file" id="bannerInput" accept="image/*">
+
+            <button class="btn" id="saveBtn" disabled><i class="fa fa-save"></i> Save Banner to Cloudinary</button>
+            <div class="loader" id="loader"><i class="fa fa-spinner fa-spin"></i> Uploading to Cloudinary...</div>
+            <div id="statusMsg"></div>
+
+            <div class="tips">
+                <b>Note:</b> 1. Photo pehle Cloudinary pe upload hogi. 2. Fir DB me link save hoga. 3. Dashboard + Customer view dono me dikhega.
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <script src="/shop-templates/shop-core.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        const API_BASE = `/api/furniture`;
+        let selectedFileUrl = null;
+
+        if(!shopId) {
+            alert('ERROR: URL me?shopId=xxx missing hai');
+            throw new Error('Shop ID missing');
+        }
+
+        ShopCore.init(shopId, 'furniture');
+        console.log("BANNER PAGE INIT:", shopId);
+
+        document.getElementById('bannerPreview').onclick = () => document.getElementById('bannerInput').click();
+
+        document.getElementById('bannerInput').onchange = async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('statusMsg').innerText = '';
+            document.getElementById('saveBtn').disabled = true;
+
+            // 1. Preview dikhao turant
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById('bannerPreview').style.backgroundImage = `url('${ev.target.result}')`;
+                document.querySelector('.upload-text').style.display = 'none';
+            }
+            reader.readAsDataURL(file);
+
+            // 2. Cloudinary pe upload karo via shop-core.js
+            const url = await ShopCore.uploadImage(file, 'banner');
+            document.getElementById('loader').style.display = 'none';
+
+            if(url){
+                selectedFileUrl = url;
+                document.getElementById('bannerPreview').style.backgroundImage = `url('${url}')`;
+                document.getElementById('saveBtn').disabled = false;
+                document.getElementById('statusMsg').innerText = '✅ Uploaded to Cloudinary. Now click Save Banner';
+                document.getElementById('statusMsg').style.color = '#16a34a';
+                console.log("CLOUDINARY URL:", url);
+            } else {
+                document.getElementById('statusMsg').innerText = '❌ Upload failed. Check internet/Cloudinary';
+                document.getElementById('statusMsg').style.color = '#ef4444';
+            }
+        }
+
+        document.getElementById('saveBtn').onclick = async () => {
+            if(!selectedFileUrl) return;
+            document.getElementById('saveBtn').disabled = true;
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('statusMsg').innerText = 'Saving to Database...';
+
+            // 3. DB me save karo - /api/furniture route use kar rahe
+            const res = await fetch(`${API_BASE}/${shopId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({bannerPhotoUrl: selectedFileUrl}) // ROOT ME SAVE
+            });
+            const result = await res.json();
+            document.getElementById('loader').style.display = 'none';
+
+            if(result.success){
+                document.getElementById('statusMsg').innerText = '✅ Banner Saved Successfully in DB!';
+                document.getElementById('statusMsg').style.color = '#16a34a';
+                setTimeout(() => {
+                    alert('Banner Updated! Customer view refresh karna');
+                    window.location.href = `/shop-templates/furniture/dashboard.html?shopId=${shopId}`;
+                }, 1200);
+            } else {
+                document.getElementById('statusMsg').innerText = '❌ DB Save failed: ' + result.error;
+                document.getElementById('statusMsg').style.color = '#ef4444';
+                document.getElementById('saveBtn').disabled = false;
+            }
+        }
+
+        // 4. Page load pe purana banner dikhao
+        async function loadCurrentBanner(){
+            try{
+                const res = await fetch(`${API_BASE}/${shopId}`);
+                const result = await res.json();
+                const shop = result.shop || result.data || result;
+                const bannerUrl = shop.bannerPhotoUrl || shop.settings?.bannerPhotoUrl || '';
+                if(bannerUrl){
+                    document.getElementById('bannerPreview').style.backgroundImage = `url('${bannerUrl}')`;
+                    document.querySelector('.upload-text').style.display = 'none';
+                }
+            }catch(err){ console.log("Load banner error", err) }
+        }
+        loadCurrentBanner();
+    </script>
+</body>
+</html>

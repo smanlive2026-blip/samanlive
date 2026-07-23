@@ -50,6 +50,9 @@ function renderAll(){
     document.getElementById('bulkProductBtn').href = `bulk-products.html?shopId=${shopId}`;
     document.getElementById('libraryBtn').href = `product-library.html?shopId=${shopId}`;
 
+    // NAYA: Change Banner button ka link
+    document.getElementById('changeBannerBtn').href = `banner.html?shopId=${shopId}`;
+
     document.getElementById('announcementInput').value = shopData?.announcement || shopData?.settings?.announcement || '';
     document.getElementById('openTime').value = shopData?.shopSettings?.openTime || shopData?.settings?.openTime || '09:00';
     document.getElementById('closeTime').value = shopData?.shopSettings?.closeTime || shopData?.settings?.closeTime || '21:00';
@@ -242,7 +245,7 @@ function closeEditModal(){ document.getElementById('editModal').style.display = 
 async function saveEditedItem(){
     const item = shopData.items[editingIndex];
     const updatedItem = {
-    ...item,
+   ...item,
         name: document.getElementById('editName').value,
         price: Number(document.getElementById('editPrice').value),
         stock: Number(document.getElementById('editStock').value),
