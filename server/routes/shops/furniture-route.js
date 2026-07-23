@@ -120,15 +120,20 @@ router.put('/:shopId', async (req, res) => {
     const updateData = req.body;
     const setObj = {};
     
+    console.log("PUT CALLED FOR:", req.params.shopId); // DEBUG
+    console.log("BODY MILA:", updateData); // DEBUG
+    
     // ROOT LEVEL PE BHI SAVE KARO
-    if(updateData.bannerPhotoUrl)
+    if(updateData.bannerPhotoUrl) {
         setObj['bannerPhotoUrl'] = updateData.bannerPhotoUrl;
+        console.log("BANNER URL SET HOGA:", updateData.bannerPhotoUrl);
+    }
     if(updateData.ownerPhotoUrl)
         setObj['ownerPhotoUrl'] = updateData.ownerPhotoUrl;
     if('phone' in updateData)
         setObj['phone'] = updateData.phone;
     
-    // SETTINGS KE ANDAR BHI SAVE KARO - BACKWARD COMPATIBILITY
+    // SETTINGS KE ANDAR BHI SAVE KARO
     if(updateData.settings){
         if(updateData.settings.bannerPhotoUrl)
             setObj['settings.bannerPhotoUrl'] = updateData.settings.bannerPhotoUrl;
@@ -144,11 +149,15 @@ router.put('/:shopId', async (req, res) => {
             setObj['settings.announcement'] = updateData.settings.announcement;
     }
 
+    // YAHI MAIN FIX HAI - upsert true kar diya aur log lagaya
     const updated = await Furniture.findOneAndUpdate(
       { shopId: req.params.shopId },
       { $set: setObj },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
+    
+    console.log("DB ME SAVE HUA:", updated.bannerPhotoUrl); // DEBUG
+
     res.json({ success: true, data: updated });
   } catch(err) {
     console.log("SETTINGS ERROR:", err)
