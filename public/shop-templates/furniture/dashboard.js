@@ -167,29 +167,33 @@ async function updateFurnitureItem(itemId, updatedItem){
 }
 
 function bindUploadsCustom(){
-    // YE PURANA REHNE DE. SHOP-CORE BHI CALL HO RAHA
-document.getElementById('ownerInput').onchange = async (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    document.getElementById('uploadLoader').style.display = 'inline';
-    const url = await ShopCore.uploadImage(file, 'profile');
-    document.getElementById('uploadLoader').style.display = 'none';
-    if(url){
-        document.getElementById('ownerImg').src = url;
-        await updateShopDB({settings: {ownerPhotoUrl: url}}); // <-- settings ke andar
-        setTimeout(()=>updateShopDB({settings: {ownerPhotoUrl: url}}), 1000);
+    // OWNER UPLOAD
+    document.getElementById('ownerInput').onchange = async (e)=>{
+        const file = e.target.files[0]; if(!file) return;
+        document.getElementById('uploadLoader').style.display = 'inline';
+        const url = await ShopCore.uploadImage(file, 'profile');
+        document.getElementById('uploadLoader').style.display = 'none';
+        if(url){
+            document.getElementById('ownerImg').src = url;
+            // YAHAN CHANGE: settings hata ke seedha root me bhej
+            await updateShopDB({ownerPhotoUrl: url});
+            alert('Logo Saved ✅');
+        }
     }
-}
-document.getElementById('bannerInput').onchange = async (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    document.getElementById('uploadLoader').style.display = 'inline';
-    const url = await ShopCore.uploadImage(file, 'banner');
-    document.getElementById('uploadLoader').style.display = 'none';
-    if(url){
-        document.getElementById('shopBanner').src = url;
-        await updateShopDB({settings: {bannerPhotoUrl: url}}); // <-- settings ke andar
-        setTimeout(()=>updateShopDB({settings: {bannerPhotoUrl: url}}), 1000);
+
+    // BANNER UPLOAD - YEHI MAIN FIX HAI
+    document.getElementById('bannerInput').onchange = async (e)=>{
+        const file = e.target.files[0]; if(!file) return;
+        document.getElementById('uploadLoader').style.display = 'inline';
+        const url = await ShopCore.uploadImage(file, 'banner');
+        document.getElementById('uploadLoader').style.display = 'none';
+        if(url){
+            document.getElementById('shopBanner').src = url;
+            // YAHAN CHANGE: settings hata ke seedha root me bhej
+            await updateShopDB({bannerPhotoUrl: url});
+            alert('Banner Saved ✅');
+        }
     }
-}
     document.getElementById('ownerImg').onclick = () => document.getElementById('ownerInput').click();
     document.getElementById('shopBanner').onclick = () => document.getElementById('bannerInput').click();
 }

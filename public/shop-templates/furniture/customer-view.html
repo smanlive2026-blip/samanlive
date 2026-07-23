@@ -109,32 +109,35 @@
             }
         }
 
-        function renderShop(shop){
-            document.getElementById('pageTitle').innerText = shop.shopName || shop.name || 'Furniture Shop';
-            document.getElementById('shopNameTop').innerText = shop.shopName || shop.name || 'Shop';
-            
-            document.getElementById('ownerPic').src = shop.ownerPhotoUrl || shop.settings?.ownerPhotoUrl || 'https://placehold.co/80';
-            
-            const bannerUrl = shop.banner || shop.bannerPhotoUrl || shop.settings?.bannerPhotoUrl;
-            if(bannerUrl) document.getElementById('shopBanner').style.backgroundImage = `url(${bannerUrl})`;
-            
-            if(shop.announcement || shop.settings?.announcement){
-                document.getElementById('offerBadge').style.display = 'block';
-                document.getElementById('offerText').innerText = shop.announcement || shop.settings?.announcement;
-            }
-            
-            const statusEl = document.getElementById('shopStatus');
-            const isOpen = shop.isOpen === true || shop.settings?.isOpen === true;
-            statusEl.innerText = isOpen? 'Open Now' : 'Closed';
-            statusEl.style.background = isOpen? '#22c55e' : '#ef4444';
+function renderShop(shop){
+    document.getElementById('pageTitle').innerText = shop.shopName || shop.name || 'Furniture Shop';
+    document.getElementById('shopNameTop').innerText = shop.shopName || shop.name || 'Shop';
+    
+    document.getElementById('ownerPic').src = shop.ownerPhotoUrl || shop.settings?.ownerPhotoUrl || 'https://placehold.co/80';
+    
+    // YE WALI 4 LINE REPLACE KAR DE
+    const bannerUrl = shop.bannerPhotoUrl || shop.banner || shop.settings?.bannerPhotoUrl || '';
+    console.log("BANNER URL MILA:", bannerUrl); // DEBUG KE LIYE
+    if(bannerUrl && bannerUrl !== '') {
+        document.getElementById('shopBanner').style.cssText += `background-image: url('${bannerUrl}') !important;`;
+    }
+    
+    if(shop.announcement || shop.settings?.announcement){
+        document.getElementById('offerBadge').style.display = 'block';
+        document.getElementById('offerText').innerText = shop.announcement || shop.settings?.announcement;
+    }
+    
+    const statusEl = document.getElementById('shopStatus');
+    const isOpen = shop.isOpen === true || shop.settings?.isOpen === true;
+    statusEl.innerText = isOpen? 'Open Now' : 'Closed';
+    statusEl.style.background = isOpen? '#22c55e' : '#ef4444';
 
-            const cats = [...new Set(shop.items.map(i => i.category || 'General'))];
-            document.getElementById('categories').innerHTML = '<div class="cat-btn active" onclick="filterCat(\'all\',event)">All</div>' + 
-                cats.map(c => `<div class="cat-btn" onclick="filterCat('${c}',event)">${c}</div>`).join('');
-            
-            renderProducts();
-        }
-
+    const cats = [...new Set(shop.items.map(i => i.category || 'General'))];
+    document.getElementById('categories').innerHTML = '<div class="cat-btn active" onclick="filterCat(\'all\',event)">All</div>' + 
+        cats.map(c => `<div class="cat-btn" onclick="filterCat('${c}',event)">${c}</div>`).join('');
+    
+    renderProducts();
+}
         function filterCat(cat,event){
             currentFilter = cat;
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));

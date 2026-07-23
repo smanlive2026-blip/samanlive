@@ -120,7 +120,15 @@ router.put('/:shopId', async (req, res) => {
     const updateData = req.body;
     const setObj = {};
     
-    // agar settings object ke andar aaya to
+    // ROOT LEVEL PE BHI SAVE KARO
+    if(updateData.bannerPhotoUrl)
+        setObj['bannerPhotoUrl'] = updateData.bannerPhotoUrl;
+    if(updateData.ownerPhotoUrl)
+        setObj['ownerPhotoUrl'] = updateData.ownerPhotoUrl;
+    if('phone' in updateData)
+        setObj['phone'] = updateData.phone;
+    
+    // SETTINGS KE ANDAR BHI SAVE KARO - BACKWARD COMPATIBILITY
     if(updateData.settings){
         if(updateData.settings.bannerPhotoUrl)
             setObj['settings.bannerPhotoUrl'] = updateData.settings.bannerPhotoUrl;
