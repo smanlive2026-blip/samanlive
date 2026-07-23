@@ -75,7 +75,7 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const shopId = urlParams.get('shopId');
-        const API_BASE = `/api/furniture`;
+        const API_BASE = `/api/shops/furniture`; // ✅ SAHI
         let selectedFileUrl = null;
 
         if(!shopId) {
