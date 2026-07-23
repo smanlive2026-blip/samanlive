@@ -5,23 +5,29 @@ const mongoose = require('mongoose');
 const furnitureSchema = new mongoose.Schema({
   shopId: { type: String, required: true, unique: true },
   
-  // YE 3 FIELD NAYE ADD KIYE HAI
   bannerPhotoUrl: { type: String, default: '' },
   ownerPhotoUrl: { type: String, default: '' },
   phone: { type: String, default: '' },
   
   items: [{
-    id: String,
-    name: String,
+    id: { type: String, required: true },
+    name: { type: String, required: true },
     category: { type: String, default: 'Furniture' },
-    price: Number,
-    stock: Number,
-    image: String,
+    price: { type: Number, default: 0 },
+    stock: { type: Number, default: 0 },
+    
+    // YE 4 FIELD NAYE ADD KIYE HAI
+    unit: { type: String, default: 'Piece' },
+    desc: { type: String, default: '' },
+    image: { type: String, default: '' },
+    img: { type: String, default: '' }, // backup
+    available: { type: Boolean, default: true },
+    
     specs: {
-      material: String,
-      dimensions: String,
-      color: String,
-      warranty: String
+      material: { type: String, default: '' },
+      dimensions: { type: String, default: '' },
+      color: { type: String, default: '' },
+      warranty: { type: String, default: '' }
     }
   }],
 
@@ -63,7 +69,7 @@ const furnitureSchema = new mongoose.Schema({
 
   settings: {
     ownerPhotoUrl: { type: String, default: '' },
-    bannerPhotoUrl: { type: String, default: '' }, // YE BHI ADD KIYA
+    bannerPhotoUrl: { type: String, default: '' },
     isOpen: { type: Boolean, default: true },
     announcement: { type: String, default: '' },
     lowStockThreshold: { type: Number, default: 5 }
