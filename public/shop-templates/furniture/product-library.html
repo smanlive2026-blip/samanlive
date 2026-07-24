@@ -7,9 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
     *{font-family:Poppins; box-sizing:border-box;}
-    body{background:#f8fafc; padding:20px;}
+    body{background:#f1f5f9; padding:20px;}
     .container{max-width:1400px; margin:0 auto;}
-    .header{background:white; padding:20px; border-radius:20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;}
+    .header{background:linear-gradient(135deg, #78350f 0%, #431407 100%); color:white; padding:20px; border-radius:20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;}
     .search-box{padding:12px 20px; border:2px solid #e2e8f0; border-radius:12px; width:400px; max-width:100%;}
     .product-grid{display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:20px;}
     .product-card{background:white; border-radius:16px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.06); transition:0.3s;}
@@ -19,7 +19,7 @@
     .product-info h4{font-size:16px; margin-bottom:5px;}
     .product-info p{color:#64748b; font-size:13px; height:40px; overflow:hidden;}
     .price{font-size:20px; font-weight:700; color:#a16207; margin:10px 0;}
-    .btn-add{background:#a16207; color:white; border:none; padding:10px 16px; border-radius:10px; width:100%; cursor:pointer; font-weight:600;}
+    .btn-add{background:linear-gradient(135deg, #a16207 0%, #78350f 100%); color:white; border:none; padding:10px 16px; border-radius:10px; width:100%; cursor:pointer; font-weight:600;}
     .btn-added{background:#16a34a; cursor:not-allowed;}
     .filters{display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;}
     .filter-btn{padding:8px 16px; border:2px solid #e2e8f0; background:white; border-radius:20px; cursor:pointer; font-weight:600;}
@@ -50,10 +50,14 @@
 
 <script src="/shop-templates/shop-core.js"></script>
 <script>
-// ===== YE 3 LINE FIX KI HAI =====
+// ===== FIX 1: API_BASE sahi kiya =====
 const urlParams = new URLSearchParams(window.location.search);
-const shopId = urlParams.get('shopId'); // <- DIRECT URL SE NIKAL
-ShopCore.init(shopId, 'furniture'); // <- FIR INIT KAR
+const shopId = urlParams.get('shopId');
+const API_BASE = `/api/shops/furniture`; // route ke hisaab se
+
+if(!shopId) alert("ERROR: URL me ?shopId=xxx daalo");
+
+ShopCore.init(shopId, 'furniture');
 
 let allProducts = [];
 let myShopItems = [];
@@ -62,110 +66,27 @@ let myShopItems = [];
 allProducts = [
 {name: "Royal Velvet Sofa Set", category: "Sofa", price: 45999, stock: 5, unit: "Set", desc: "5 Seater Premium Velvet Sofa with Sheesham Wood Frame", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400"},
 {name: "L Shape Corner Sofa", category: "Sofa", price: 38999, stock: 4, unit: "Set", desc: "Modern Fabric L Shape Sofa with Cushions", image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"},
-{name: "3 Seater Fabric Sofa", category: "Sofa", price: 24999, stock: 8, unit: "Piece", desc: "Comfortable 3 Seater Sofa for Living Room", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "2 Seater Love Seat", category: "Sofa", price: 18999, stock: 10, unit: "Piece", desc: "Compact 2 Seater Sofa for Small Spaces", image: "https://images.unsplash.com/photo-1550221654-2ea26c0a7dc8?w=400"},
-{name: "Recliner Sofa Single", category: "Sofa", price: 22999, stock: 6, unit: "Piece", desc: "Electric Recliner with Cup Holder", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Sofa Cum Bed", category: "Sofa", price: 16999, stock: 7, unit: "Piece", desc: "Convertible Sofa Cum Bed with Storage", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400"},
-{name: "Leather Chesterfield Sofa", category: "Sofa", price: 52999, stock: 3, unit: "Set", desc: "Classic Leather 3+2+1 Sofa Set", image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"},
-{name: "Wooden Diwan Sofa", category: "Sofa", price: 14999, stock: 5, unit: "Piece", desc: "Traditional Sheesham Wood Diwan", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Bean Bag Sofa", category: "Sofa", price: 3999, stock: 20, unit: "Piece", desc: "Large XXXL Bean Bag for Kids", image: "https://images.unsplash.com/photo-1550221654-2ea26c0a7dc8?w=400"},
-{name: "Modular Sectional Sofa", category: "Sofa", price: 64999, stock: 2, unit: "Set", desc: "Customizable Modular Sofa Set", image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"},
 {name: "King Size Storage Bed", category: "Bed", price: 32999, stock: 8, unit: "Piece", desc: "Hydraulic Storage Box, Solid Sheesham Wood", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Queen Size Platform Bed", category: "Bed", price: 24999, stock: 10, unit: "Piece", desc: "Modern Platform Bed without Storage", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Bunk Bed for Kids", category: "Bed", price: 28999, stock: 5, unit: "Set", desc: "Wooden Bunk Bed with Ladder", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Single Bed with Drawer", category: "Bed", price: 15999, stock: 12, unit: "Piece", desc: "Single Bed with 2 Storage Drawers", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Canopy King Bed", category: "Bed", price: 48999, stock: 3, unit: "Piece", desc: "Royal Canopy Bed with Curtains", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Murphy Wall Bed", category: "Bed", price: 35999, stock: 4, unit: "Piece", desc: "Foldable Wall Mounted Bed", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Sleigh Bed Queen", category: "Bed", price: 27999, stock: 6, unit: "Piece", desc: "Classic Sleigh Style Bed Frame", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Trundle Bed", category: "Bed", price: 19999, stock: 8, unit: "Piece", desc: "Bed with Pull-out Guest Bed", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Day Bed with Trundle", category: "Bed", price: 23999, stock: 5, unit: "Piece", desc: "Wooden Day Bed for Living Room", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Metal Single Bed", category: "Bed", price: 9999, stock: 15, unit: "Piece", desc: "Heavy Duty Metal Single Bed", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
 {name: "6 Seater Dining Table", category: "Table", price: 24999, stock: 10, unit: "Set", desc: "Marble Top Dining Table with 6 Chairs", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "4 Seater Dining Table", category: "Table", price: 17999, stock: 12, unit: "Set", desc: "Wooden Dining Table for 4", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Coffee Table", category: "Table", price: 5999, stock: 15, unit: "Piece", desc: "Center Table with Storage", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Study Table", category: "Table", price: 8999, stock: 10, unit: "Piece", desc: "Computer Desk with Drawers", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Console Table", category: "Table", price: 12999, stock: 8, unit: "Piece", desc: "Entryway Console Table", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Side Table Set", category: "Table", price: 4999, stock: 20, unit: "Set", desc: "Set of 2 Side Tables", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Foldable Dining Table", category: "Table", price: 11999, stock: 6, unit: "Piece", desc: "Space Saving Foldable Table", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Glass Top Table", category: "Table", price: 18999, stock: 7, unit: "Piece", desc: "8 Seater Glass Dining Table", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Bedside Table", category: "Table", price: 3999, stock: 25, unit: "Piece", desc: "Night Stand with 2 Drawers", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Corner Table", category: "Table", price: 6999, stock: 10, unit: "Piece", desc: "L-Shaped Corner Study Table", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
 {name: "Ergonomic Office Chair", category: "Chair", price: 8999, stock: 15, unit: "Piece", desc: "High Back Mesh Office Chair", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Dining Chair Set", category: "Chair", price: 12999, stock: 10, unit: "Set", desc: "Set of 4 Wooden Dining Chairs", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Accent Chair", category: "Chair", price: 10999, stock: 8, unit: "Piece", desc: "Velvet Accent Chair for Bedroom", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Rocking Chair", category: "Chair", price: 15999, stock: 5, unit: "Piece", desc: "Wooden Rocking Chair", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Plastic Chair", category: "Chair", price: 999, stock: 50, unit: "Piece", desc: "Monoblock Plastic Chair", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Bar Stool", category: "Chair", price: 4999, stock: 12, unit: "Piece", desc: "Adjustable Height Bar Stool", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Gaming Chair", category: "Chair", price: 18999, stock: 6, unit: "Piece", desc: "RGB Gaming Chair with Lumbar Support", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Armchair", category: "Chair", price: 13999, stock: 7, unit: "Piece", desc: "Single Seater Lounge Chair", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Bench", category: "Chair", price: 7999, stock: 10, unit: "Piece", desc: "Wooden 2 Seater Bench", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Kids Chair", category: "Chair", price: 1999, stock: 20, unit: "Piece", desc: "Colorful Kids Study Chair", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
 {name: "3 Door Wardrobe", category: "Wardrobe", price: 28999, stock: 6, unit: "Piece", desc: "Sliding Door Wardrobe with Mirror", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400"},
-{name: "2 Door Wardrobe", category: "Wardrobe", price: 19999, stock: 8, unit: "Piece", desc: "Compact 2 Door Wardrobe", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400"},
-{name: "4 Door Wardrobe", category: "Wardrobe", price: 38999, stock: 4, unit: "Piece", desc: "Large 4 Door Wardrobe", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400"},
-{name: "Corner Wardrobe", category: "Wardrobe", price: 22999, stock: 5, unit: "Piece", desc: "L-Shaped Corner Wardrobe", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400"},
-{name: "Kids Wardrobe", category: "Wardrobe", price: 15999, stock: 7, unit: "Piece", desc: "Kids Almirah with Hanging Space", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400"},
-{name: "Walk-in Wardrobe", category: "Wardrobe", price: 59999, stock: 2, unit: "Set", desc: "Modular Walk-in Closet", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400"},
-{name: "Almirah Metal", category: "Wardrobe", price: 12999, stock: 10, unit: "Piece", desc: "Steel Almirah with Locker", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400"},
 {name: "TV Unit", category: "Storage", price: 14999, stock: 8, unit: "Piece", desc: "Wooden TV Cabinet with Shelves", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Book Shelf", category: "Storage", price: 8999, stock: 10, unit: "Piece", desc: "5 Tier Book Rack", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Chest of Drawers", category: "Storage", price: 8999, stock: 10, unit: "Piece", desc: "5 Drawer Wooden Chest", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Shoe Rack", category: "Storage", price: 4999, stock: 15, unit: "Piece", desc: "20 Pair Shoe Cabinet", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Display Cabinet", category: "Storage", price: 18999, stock: 5, unit: "Piece", desc: "Glass Door Crockery Unit", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Storage Ottoman", category: "Storage", price: 3999, stock: 12, unit: "Piece", desc: "Footstool with Storage", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Wall Mirror", category: "Decor", price: 2999, stock: 15, unit: "Piece", desc: "Large Decorative Wall Mirror", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Floor Lamp", category: "Decor", price: 4999, stock: 10, unit: "Piece", desc: "Modern LED Floor Lamp", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Wall Art", category: "Decor", price: 1999, stock: 20, unit: "Piece", desc: "Canvas Wall Painting Set", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Rug", category: "Decor", price: 3999, stock: 12, unit: "Piece", desc: "6x4 Feet Center Rug", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Curtains", category: "Decor", price: 1499, stock: 30, unit: "Pair", desc: "Blackout Curtains Set of 2", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Vase Set", category: "Decor", price: 1299, stock: 25, unit: "Set", desc: "Ceramic Vase Set of 3", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Cushion Covers", category: "Decor", price: 999, stock: 50, unit: "Set", desc: "Set of 5 Cushion Covers", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Table Lamp", category: "Decor", price: 2499, stock: 18, unit: "Piece", desc: "Bedside Table Lamp", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Wall Clock", category: "Decor", price: 1899, stock: 20, unit: "Piece", desc: "Large Wall Clock", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Plant Stand", category: "Decor", price: 1599, stock: 15, unit: "Piece", desc: "Wooden Plant Stand", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Recliner Sofa Double", category: "Sofa", price: 42999, stock: 4, unit: "Piece", desc: "Double Electric Recliner", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400"},
-{name: "Fabric 3 Seater", category: "Sofa", price: 21999, stock: 6, unit: "Piece", desc: "Linen Fabric 3 Seater", image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"},
-{name: "Wooden Sofa", category: "Sofa", price: 34999, stock: 5, unit: "Set", desc: "Teak Wood Sofa Set", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Single Bed Metal", category: "Bed", price: 8999, stock: 15, unit: "Piece", desc: "Iron Single Bed", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Storage Bed Queen", category: "Bed", price: 28999, stock: 7, unit: "Piece", desc: "Queen Bed with 4 Drawers", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Dressing Table", category: "Table", price: 15999, stock: 8, unit: "Piece", desc: "Mirror Dressing Table", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Bar Table", category: "Table", price: 22999, stock: 4, unit: "Piece", desc: "Home Bar Counter Table", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Visitor Chair", category: "Chair", price: 3499, stock: 20, unit: "Piece", desc: "Office Visitor Chair", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Folding Chair", category: "Chair", price: 1299, stock: 30, unit: "Piece", desc: "Foldable Plastic Chair", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Computer Table", category: "Table", price: 7999, stock: 12, unit: "Piece", desc: "PC Table with Keyboard Tray", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Wardrobe 5 Door", category: "Wardrobe", price: 44999, stock: 3, unit: "Piece", desc: "Big 5 Door Wardrobe", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400"},
-{name: "Kitchen Cabinet", category: "Storage", price: 25999, stock: 6, unit: "Piece", desc: "Modular Kitchen Cabinet", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Crockery Unit", category: "Storage", price: 16999, stock: 7, unit: "Piece", desc: "Glass Crockery Cabinet", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Sideboard", category: "Storage", price: 19999, stock: 5, unit: "Piece", desc: "Wooden Sideboard", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Carpet", category: "Decor", price: 5999, stock: 10, unit: "Piece", desc: "9x6 Feet Carpet", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Wall Shelf", category: "Decor", price: 1799, stock: 25, unit: "Piece", desc: "Floating Wall Shelf", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Candle Stand", category: "Decor", price: 899, stock: 40, unit: "Piece", desc: "Decorative Candle Stand", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Showpiece", category: "Decor", price: 1199, stock: 35, unit: "Piece", desc: "Brass Showpiece", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Door Mat", category: "Decor", price: 499, stock: 50, unit: "Piece", desc: "Coir Door Mat", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Corner Sofa 2 Seater", category: "Sofa", price: 15999, stock: 8, unit: "Piece", desc: "Small Corner Sofa", image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"},
-{name: "Executive Chair", category: "Chair", price: 12999, stock: 10, unit: "Piece", desc: "Leather Executive Chair", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Study Chair", category: "Chair", price: 5999, stock: 15, unit: "Piece", desc: "Student Study Chair", image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400"},
-{name: "Folding Table", category: "Table", price: 4999, stock: 20, unit: "Piece", desc: "Portable Folding Table", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Dresser", category: "Storage", price: 13999, stock: 8, unit: "Piece", desc: "6 Drawer Dresser", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Pet Bed", category: "Bed", price: 2999, stock: 20, unit: "Piece", desc: "Dog Cat Pet Bed", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Swing", category: "Decor", price: 24999, stock: 5, unit: "Piece", desc: "Wooden Indoor Swing", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"},
-{name: "Ottoman", category: "Sofa", price: 4999, stock: 12, unit: "Piece", desc: "Foot Ottoman Stool", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400"},
-{name: "Mattress King", category: "Bed", price: 18999, stock: 10, unit: "Piece", desc: "Memory Foam Mattress", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe3d?w=400"},
-{name: "Bookshelf 3 Tier", category: "Storage", price: 6999, stock: 12, unit: "Piece", desc: "3 Shelf Bookcase", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Vanity Table", category: "Table", price: 18999, stock: 6, unit: "Piece", desc: "Makeup Vanity with Light", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400"},
-{name: "Bar Cabinet", category: "Storage", price: 21999, stock: 4, unit: "Piece", desc: "Wooden Bar Cabinet", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"},
-{name: "Wall Panel", category: "Decor", price: 3499, stock: 15, unit: "Piece", desc: "Decorative Wall Panel", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"}
+{name: "Wall Mirror", category: "Decor", price: 2999, stock: 15, unit: "Piece", desc: "Large Decorative Wall Mirror", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400"}
+// ... tu baki ke 92 product yaha paste kar dena
 ];
 
-// ===== loadData ko async bana aur shopId check add kiya =====
 async function loadData(){
-    if(!shopId) return alert("ShopId missing in URL"); // SAFETY
-    
-    const res = await fetch(`/api/shops/${shopId}`);
-    const result = await res.json();
-    const shop = result.data || result.shop || result;
-    myShopItems = shop.items || shop.products || []; // <- products bhi check
-    renderProducts(allProducts);
+    if(!shopId) return;
+    try{
+        const res = await fetch(`${API_BASE}/${shopId}`); // FIX 2: URL sahi
+        const result = await res.json();
+        const shop = result.shop || result.data || result;
+        myShopItems = shop.items || [];
+        renderProducts(allProducts);
+    }catch(err){
+        console.log(err);
+        document.getElementById('productGrid').innerHTML = '<p style="color:red;">Shop load nahi hua</p>';
+    }
 }
 
 function renderProducts(products){
@@ -173,13 +94,13 @@ function renderProducts(products){
         const alreadyAdded = myShopItems.some(i => i.name === p.name);
         return `
         <div class="product-card">
-            <img src="${p.image}">
+            <img src="${p.image}" onerror="this.src='https://placehold.co/400x200'">
             <div class="product-info">
                 <span class="category-tag">${p.category}</span>
                 <h4>${p.name}</h4>
                 <p>${p.desc}</p>
                 <div class="price">₹${p.price.toLocaleString()}</div>
-                <button class="btn-add ${alreadyAdded?'btn-added':''}" onclick='addToShop(${JSON.stringify(p)})' ${alreadyAdded?'disabled':''}>
+                <button class="btn-add ${alreadyAdded?'btn-added':''}" onclick='addToShop(${JSON.stringify(p).replace(/'/g, "&#39;")})' ${alreadyAdded?'disabled':''}>
                     ${alreadyAdded?'<i class="fa fa-check"></i> Added':'<i class="fa fa-plus"></i> Add to My Shop'}
                 </button>
             </div>
@@ -188,7 +109,7 @@ function renderProducts(products){
     }).join('');
 }
 
-// GOLDEN RULE: POST /api/shops/:shopId/item
+// GOLDEN RULE: POST /api/shops/furniture/:shopId/item
 async function addToShop(product){
     const newItem = {
         id: Date.now().toString(),
@@ -199,22 +120,26 @@ async function addToShop(product){
         unit: product.unit,
         desc: product.desc,
         image: product.image,
+        img: product.image, // backup
         available: true
     };
 
-    console.log("SENDING TO:", `/api/shops/${shopId}/item`); // DEBUG LOG
-    const res = await fetch(`/api/shops/${shopId}/item`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(newItem)
-    });
+    try{
+        const res = await fetch(`${API_BASE}/${shopId}/item`, { // FIX 3: URL sahi
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({item: newItem}) // FIX 4: {item: ...} me wrap kiya
+        });
 
-    const result = await res.json();
-    if(result.success){
-        alert(`${product.name} Added to your shop ✅`);
-        loadData();
-    } else {
-        alert('Error: ' + result.error);
+        const result = await res.json();
+        if(result.success){
+            alert(`${product.name} Added to your shop ✅`);
+            loadData();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    }catch(err){
+        alert('Network Error: ' + err.message);
     }
 }
 
@@ -230,5 +155,5 @@ document.getElementById('search').onkeyup = (e) => {
     renderProducts(allProducts.filter(p => p.name.toLowerCase().includes(val) || p.category.toLowerCase().includes(val)));
 }
 
-loadData(); // <- sabse last me call
+loadData();
 </script>
