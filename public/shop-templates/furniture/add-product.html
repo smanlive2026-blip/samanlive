@@ -7,30 +7,42 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
     *{font-family:Poppins; box-sizing:border-box;}
-    body{background:#f8fafc; padding:20px;}
-  .container{max-width:1200px; margin:0 auto; display:grid; grid-template-columns: 1fr 2fr; gap:25px;}
-  .card{background:white; padding:25px; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05);}
+    body{background:#f1f5f9; padding:20px;}
+   .header { background: linear-gradient(135deg, #78350f 0%, #431407 100%); color: white; padding: 20px 25px; border-radius: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+   .header h1 { font-size: 22px; }
+   .btn-back { background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 600; cursor: pointer; text-decoration: none; }
+ .container{max-width:1200px; margin:0 auto; display:grid; grid-template-columns: 1fr 2fr; gap:25px;}
+ .card{background:white; padding:25px; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05);}
     h2{margin-bottom:20px; color:#1e293b;}
     input, textarea, select {width:100%; padding:12px; margin-bottom:15px; border:2px solid #e2e8f0; border-radius:10px; font-size:14px;}
     input:focus{border-color:#a16207; outline:none;}
-  .btn{background:#a16207; color:white; border:none; padding:14px 24px; border-radius:12px; font-weight:700; cursor:pointer; width:100%;}
-  .btn-secondary{background:#64748b;}
-  .btn-danger{background:#ef4444;}
-  .img-upload{border:2px dashed #cbd5e1; border-radius:12px; padding:20px; text-align:center; cursor:pointer; margin-bottom:15px;}
-  .img-upload img{max-width:100%; height:180px; object-fit:cover; border-radius:10px;}
-  .product-item{display:flex; gap:15px; padding:15px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px; align-items:center;}
-  .product-item img{width:70px; height:70px; object-fit:cover; border-radius:10px;}
-  .product-info{flex:1;}
-  .product-info h4{margin:0; font-size:16px;}
-  .product-info p{margin:3px 0; color:#64748b; font-size:13px;}
-  .actions{display:flex; gap:8px;}
-  .actions button{padding:8px 12px; border:none; border-radius:8px; cursor:pointer; font-size:12px;}
-  .toggle{padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer;}
-  .toggle.on{background:#dcfce7; color:#166534;}
-  .toggle.off{background:#fee2e2; color:#991b1b;}
+ .btn{background:linear-gradient(135deg, #a16207 0%, #78350f 100%); color:white; border:none; padding:14px 24px; border-radius:12px; font-weight:700; cursor:pointer; width:100%;}
+ .btn-secondary{background:#64748b;}
+ .btn-danger{background:#ef4444;}
+ .img-upload{border:2px dashed #cbd5e1; border-radius:12px; padding:20px; text-align:center; cursor:pointer; margin-bottom:15px;}
+ .img-upload img{max-width:100%; height:180px; object-fit:cover; border-radius:10px;}
+ .product-item{display:flex; gap:15px; padding:15px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px; align-items:center;}
+ .product-item img{width:70px; height:70px; object-fit:cover; border-radius:10px;}
+ .product-info{flex:1;}
+ .product-info h4{margin:0; font-size:16px;}
+ .product-info p{margin:3px 0; color:#64748b; font-size:13px;}
+ .actions{display:flex; gap:8px;}
+ .actions button{padding:8px 12px; border:none; border-radius:8px; cursor:pointer; font-size:12px;}
+ .toggle{padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer;}
+ .toggle.on{background:#dcfce7; color:#166534;}
+ .toggle.off{background:#fee2e2; color:#991b1b;}
+
+  @media(max-width:1024px){.container{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
+<div class="container" style="max-width:1200px; margin:0 auto; display:block;">
+    <div class="header">
+        <h1><i class="fa fa-boxes"></i> Manage Products</h1>
+        <a href="#" id="backBtn" class="btn-back"><i class="fa fa-arrow-left"></i> Dashboard</a>
+    </div>
+</div>
+
 <div class="container">
     <div class="card">
         <h2 id="formTitle"><i class="fa fa-plus"></i> Add New Product</h2>
@@ -64,9 +76,11 @@
 const shopId = new URLSearchParams(window.location.search).get('shopId');
 if(!shopId) alert('ERROR: URL me?shopId=xxx daalo');
 
+document.getElementById('backBtn').href = `dashboard.html?shopId=${shopId}`; // back link
+
 let shopData = {};
 let editingItem = null;
-const API_BASE = `/api/furniture`; // UPDATE: ek jagah se base URL control hoga
+const API_BASE = `/api/shops/furniture`; // FIX: route ke hisaab se
 
 document.addEventListener('DOMContentLoaded', () => {
     ShopCore.init(shopId, 'furniture');
@@ -76,16 +90,15 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadShop(){
     try{
         const res = await fetch(`${API_BASE}/${shopId}`);
-        const text = await res.text(); // pehle text le
-        console.log("RAW RESPONSE:", text); // debug
-        
+        const text = await res.text();
+        console.log("RAW RESPONSE:", text);
+
         if(!res.ok) throw new Error(`Server ${res.status}: ${text}`);
         if(!text) throw new Error("Khali response aaya");
 
         const result = JSON.parse(text);
         shopData = result.shop || result.data || result;
         shopData.items = shopData.items || [];
-        console.log("LOADED ITEMS:", shopData.items);
         renderProductList();
     }catch(err){
         console.error("FULL ERROR:", err);
@@ -93,6 +106,7 @@ async function loadShop(){
         document.getElementById('productList').innerHTML = `<p style="color:red;">${err.message}</p>`;
     }
 }
+
 function previewImage(event){
     const file = event.target.files[0];
     if(file){
@@ -119,10 +133,6 @@ async function saveProduct(){
     if(file){
         try {
             imageUrl = await ShopCore.uploadImage(file, 'product');
-            document.getElementById('imgPreview').src = imageUrl;
-            document.getElementById('imgPreview').style.display = 'block';
-            document.getElementById('uploadText').style.display = 'none';
-            console.log("UPLOAD URL:", imageUrl);
             if(!imageUrl) throw new Error('Cloudinary returned empty url');
         } catch(err) {
             alert('Photo upload nahi hui: ' + err.message);
@@ -134,44 +144,34 @@ async function saveProduct(){
     const itemId = editingItem? (editingItem.id) : Date.now().toString();
 
     const itemData = {
-        id: itemId,
-        name,
-        category: document.getElementById('category').value,
+        id: itemId, name, category: document.getElementById('category').value,
         price: Number(document.getElementById('price').value),
         stock: Number(document.getElementById('stock').value),
         unit: document.getElementById('unit').value,
         desc: document.getElementById('desc').value,
-        image: imageUrl, // UPDATE: dono bhej rahe
-        img: imageUrl,
-        available: editingItem? editingItem.available : true
+        image: imageUrl, img: imageUrl, available: editingItem? editingItem.available : true
     };
 
-    let endpoint = `${API_BASE}/${shopId}/item`; // UPDATE: furniture
+    let endpoint = `${API_BASE}/${shopId}/item`;
     let method = 'POST';
-
     if(editingItem){
-        endpoint = `${API_BASE}/${shopId}/item/${itemId}`; // UPDATE: furniture
+        endpoint = `${API_BASE}/${shopId}/item/${itemId}`;
         method = 'PUT';
     }
 
     try{
         const res = await fetch(endpoint, {
-            method: method,
-            headers:{'Content-Type':'application/json'},
+            method, headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ item: itemData })
         });
-
         const result = await res.json();
         if(result.success){
             alert('Product Saved ✅');
             resetForm();
             loadShop();
-        } else {
-            throw new Error(result.message || 'Save failed');
-        }
-    }catch(e){
-        alert('DB Save Failed! ' + e.message);
-    }
+        } else { throw new Error(result.message || 'Save failed'); }
+    }catch(e){ alert('DB Save Failed! ' + e.message); }
+
     saveBtn.disabled = false;
     saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Product';
 }
@@ -180,37 +180,33 @@ function renderProductList(){
     document.getElementById('productCount').innerText = shopData.items.length;
     if(!shopData.items.length) return document.getElementById('productList').innerHTML = '<p style="text-align:center; color:#64748b;">Abhi koi product nahi hai</p>';
 
-    document.getElementById('productList').innerHTML = shopData.items.map(item => {
-        const id = item.id;
-        return `
+    document.getElementById('productList').innerHTML = shopData.items.map(item => `
         <div class="product-item">
             <img src="${item.image || item.img || 'https://placehold.co/70/a16207/fff'}" onerror="this.src='https://placehold.co/70'">
             <div class="product-info">
                 <h4>${item.name}</h4>
                 <p>₹${item.price} | Stock: ${item.stock} ${item.unit} | ${item.category}</p>
-                <span class="toggle ${item.available?'on':'off'}" onclick="toggleAvailable('${id}')">${item.available?'Available':'Hidden'}</span>
+                <span class="toggle ${item.available?'on':'off'}" onclick="toggleAvailable('${item.id}')">${item.available?'Available':'Hidden'}</span>
             </div>
             <div class="actions">
-                <button onclick="editProduct('${id}')" style="background:#2563eb; color:white;"><i class="fa fa-pen"></i></button>
-                <button onclick="deleteProduct('${id}')" class="btn-danger"><i class="fa fa-trash"></i></button>
+                <button onclick="editProduct('${item.id}')" style="background:#2563eb; color:white;"><i class="fa fa-pen"></i></button>
+                <button onclick="deleteProduct('${item.id}')" class="btn-danger"><i class="fa fa-trash"></i></button>
             </div>
         </div>
-    `}).join('');
+    `).join('');
 }
 
 function editProduct(id){
     const item = shopData.items.find(i => i.id === id);
-    if(!item) return;
     editingItem = item;
     document.getElementById('formTitle').innerHTML = '<i class="fa fa-pen"></i> Edit Product';
-    document.getElementById('editId').value = id;
     document.getElementById('name').value = item.name;
     document.getElementById('category').value = item.category || 'General';
     document.getElementById('price').value = item.price;
     document.getElementById('stock').value = item.stock;
     document.getElementById('unit').value = item.unit;
     document.getElementById('desc').value = item.desc;
-    document.getElementById('imgPreview').src = item.image || item.img; // UPDATE: dono support
+    document.getElementById('imgPreview').src = item.image || item.img;
     document.getElementById('imgPreview').style.display = 'block';
     document.getElementById('uploadText').style.display = 'none';
     document.getElementById('cancelBtn').style.display = 'block';
@@ -219,15 +215,14 @@ function editProduct(id){
 
 async function deleteProduct(id){
     if(!confirm('Delete karna hai?')) return;
-    await fetch(`${API_BASE}/${shopId}/item/${id}`, {method:'DELETE'}); // UPDATE: furniture
+    await fetch(`${API_BASE}/${shopId}/item/${id}`, {method:'DELETE'});
     loadShop();
 }
 
 async function toggleAvailable(id){
     const item = shopData.items.find(i => i.id === id);
-    await fetch(`${API_BASE}/${shopId}/item/${id}`, { // UPDATE: furniture
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
+    await fetch(`${API_BASE}/${shopId}/item/${id}`, {
+        method:'PUT', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ item: {...item, available:!item.available} })
     });
     loadShop();
@@ -236,13 +231,10 @@ async function toggleAvailable(id){
 function resetForm(){
     editingItem = null;
     document.getElementById('formTitle').innerHTML = '<i class="fa fa-plus"></i> Add New Product';
-    document.getElementById('editId').value = '';
     document.getElementById('name').value = '';
     document.getElementById('price').value = '';
     document.getElementById('stock').value = '';
     document.getElementById('desc').value = '';
-    document.getElementById('category').value = 'Sofa';
-    document.getElementById('unit').value = 'Piece';
     document.getElementById('image').value = '';
     document.getElementById('imgPreview').style.display = 'none';
     document.getElementById('uploadText').style.display = 'block';
