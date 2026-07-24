@@ -7,39 +7,49 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
     *{font-family:Poppins; box-sizing:border-box;}
-    body{background:#f8fafc; padding:20px;}
-   .container{max-width:1100px; margin:0 auto;}
-   .card{background:white; padding:30px; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05); margin-bottom:20px;}
+    body{background:#f1f5f9; padding:20px;}
+  .container{max-width:1100px; margin:0 auto;}
+  .header { background: linear-gradient(135deg, #78350f 0%, #431407 100%); color: white; padding: 20px 25px; border-radius: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+  .card{background:white; padding:30px; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05); margin-bottom:20px;}
     h2{margin-bottom:10px; color:#1e293b;}
     textarea{width:100%; height:300px; padding:15px; border:2px solid #e2e8f0; border-radius:12px; font-family:monospace; font-size:13px;}
-   .btn{background:#a16207; color:white; border:none; padding:14px 24px; border-radius:12px; font-weight:700; cursor:pointer; margin-right:10px;}
-   .btn-secondary{background:#2563eb;}
-   .example{background:#fffbeb; border-left:4px solid #f59e0b; padding:15px; border-radius:8px; margin:15px 0; font-size:13px;}
+  .btn{background:linear-gradient(135deg, #a16207 0%, #78350f 100%); color:white; border:none; padding:14px 24px; border-radius:12px; font-weight:700; cursor:pointer; margin-right:10px;}
+  .btn-secondary{background:#2563eb;}
+  .btn:disabled{opacity:0.6; cursor:not-allowed;}
+  .example{background:#fffbeb; border-left:4px solid #f59e0b; padding:15px; border-radius:8px; margin:15px 0; font-size:13px;}
     table{width:100%; border-collapse:collapse; margin-top:15px;}
     table th, table td{border:1px solid #e2e8f0; padding:10px; text-align:left; font-size:13px;}
     table th{background:#f1f5f9;}
+    #progressBar{height:8px; background:#e2e8f0; border-radius:10px; overflow:hidden; margin-top:15px; display:none;}
+    #progressFill{height:100%; width:0%; background:#16a34a; transition:0.3s;}
 </style>
 </head>
 <body>
 <div class="container">
-    <div class="card">
+    <div class="header">
         <h2><i class="fa fa-file-csv"></i> Bulk Add 50+ Products</h2>
+        <a href="#" id="backBtn" style="color:white; text-decoration:none;"><i class="fa fa-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="card">
         <p style="color:#64748b; margin-bottom:15px;">Excel ya Google Sheet se copy karke yaha paste kar de. Header wali line bhi paste kar sakta hai.</p>
 
         <div class="example">
             <b>Format:</b> name, category, price, stock, unit, description, image_url<br>
             <b>Example:</b><br>
-            Royal Sofa Set, Sofa, 45000, 5, Set, 5 Seater Sheesham Wood Sofa, https://img.com/sofa.jpg<br>
-            King Size Bed, Bed, 32000, 10, Piece, With Storage Box, https://img.com/bed.jpg
+            Royal Sofa Set, Sofa, 45000, 5, Set, 5 Seater Sheesham Wood Sofa, https://img.com/sofa.jpg
         </div>
 
         <textarea id="bulkData" placeholder="name,category,price,stock,unit,description,image_url
 Royal Sofa Set,Sofa,45000,5,Set,5 Seater Sheesham Wood Sofa,https://img.com/sofa.jpg
 King Size Bed,Bed,32000,10,Piece,With Storage Box,https://img.com/bed.jpg"></textarea>
 
-        <button class="btn" onclick="previewData()"><i class="fa fa-eye"></i> Preview</button>
-        <button class="btn btn-secondary" onclick="saveBulk()"><i class="fa fa-upload"></i> Add All Products</button>
+        <button class="btn" id="previewBtn" onclick="previewData()"><i class="fa fa-eye"></i> Preview</button>
+        <button class="btn btn-secondary" id="saveBtn" onclick="saveBulk()"><i class="fa fa-upload"></i> Add All Products</button>
         <button class="btn" style="background:#64748b;" onclick="downloadSample()">Download Sample CSV</button>
+
+        <div id="progressBar"><div id="progressFill"></div></div>
+        <p id="progressText" style="margin-top:10px; color:#64748b;"></p>
     </div>
 
     <div class="card" id="previewCard" style="display:none;">
@@ -52,6 +62,9 @@ King Size Bed,Bed,32000,10,Piece,With Storage Box,https://img.com/bed.jpg"></tex
 
 <script>
 const shopId = new URLSearchParams(window.location.search).get('shopId');
+const API_BASE = `/api/shops/furniture`;
+document.getElementById('backBtn').href = `dashboard.html?shopId=${shopId}`;
+
 let parsedProducts = [];
 
 function previewData(){
@@ -59,23 +72,23 @@ function previewData(){
     if(!text) return alert('Kuch data paste karo');
 
     const lines = text.split('\n');
-    // Agar header hai to hata do
     if(lines[0].toLowerCase().includes('name')) lines.shift();
 
     parsedProducts = lines.map(line => {
-        const [name, category, price, stock, unit, desc, image] = line.split(',');
+        const parts = line.split(',');
         return {
-            _id: Date.now().toString() + Math.random(),
-            name: name?.trim(),
-            category: category?.trim() || 'General',
-            price: Number(price),
-            stock: Number(stock),
-            unit: unit?.trim() || 'Piece',
-            desc: desc?.trim(),
-            image: image?.trim() || 'https://placehold.co/300x200/a16207/fff?text=No+Image',
+            id: Date.now().toString() + Math.random(),
+            name: parts[0]?.trim(),
+            category: parts[1]?.trim() || 'General',
+            price: Number(parts[2]) || 0,
+            stock: Number(parts[3]) || 0,
+            unit: parts[4]?.trim() || 'Piece',
+            desc: parts[5]?.trim() || '',
+            image: parts[6]?.trim() || 'https://placehold.co/300x200/a16207/fff',
+            img: parts[6]?.trim() || 'https://placehold.co/300x200/a16207/fff',
             available: true
         }
-    }).filter(p => p.name && p.price);
+    }).filter(p => p.name && p.price > 0);
 
     document.getElementById('count').innerText = parsedProducts.length;
     document.getElementById('previewCard').style.display = 'block';
@@ -91,18 +104,36 @@ async function saveBulk(){
     if(!parsedProducts.length) return alert('Pehle Preview karo');
     if(!confirm(parsedProducts.length + ' products add karne hain?')) return;
 
-    const res = await fetch(`/api/shops/${shopId}`);
-    const shop = (await res.json()).shop || (await res.json()).data;
-    shop.items = [...(shop.items || []),...parsedProducts];
+    document.getElementById('saveBtn').disabled = true;
+    document.getElementById('progressBar').style.display = 'block';
 
-    await fetch(`/api/shops/update/${shopId}`, {
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({items: shop.items})
-    });
+    let success = 0;
+    let failed = 0;
 
-    alert(parsedProducts.length + ' Products Added Successfully ✅');
-    window.location.href = `add-product.html?shopId=${shopId}`;
+    for(let i=0; i<parsedProducts.length; i++){
+        const p = parsedProducts[i];
+        document.getElementById('progressFill').style.width = ((i+1)/parsedProducts.length*100) + '%';
+        document.getElementById('progressText').innerText = `Adding ${i+1} of ${parsedProducts.length}...`;
+
+        try{
+            const res = await fetch(`${API_BASE}/${shopId}/item`, {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({item: p})
+            });
+            const result = await res.json();
+            if(result.success) success++;
+            else failed++;
+        }catch(e){
+            failed++;
+        }
+        // thoda delay taki server hang na ho
+        await new Promise(r => setTimeout(r, 200));
+    }
+
+    document.getElementById('saveBtn').disabled = false;
+    alert(`${success} Products Added ✅\n${failed} Failed`);
+    window.location.href = `manage-products.html?shopId=${shopId}`;
 }
 
 function downloadSample(){

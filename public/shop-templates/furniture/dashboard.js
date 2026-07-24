@@ -222,7 +222,16 @@ document.getElementById('shopToggle').onclick = async () => {
     });
 };
 
-    document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
+// NAYA - DONO JAGAH SAVE KAREGA
+document.getElementById('saveAnnouncement').onclick = async () => {
+    const text = document.getElementById('announcementInput').value;
+    await updateShopDB({ 
+        announcement: text,
+        settings: { ...shopData.settings, announcement: text }
+    });
+    alert('Announcement Saved ✅');
+}
+
     document.getElementById('saveTiming').onclick = () => updateShopDB({shopSettings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
     // NAYA: PHONE SAVE KARNE KA CODE
     document.getElementById('savePhone').onclick = async () => {

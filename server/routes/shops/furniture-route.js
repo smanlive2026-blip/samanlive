@@ -32,6 +32,7 @@ router.get('/:shopId', async (req, res) => {
       orders: furniture.orders || [],
       settings: furniture.settings || {},
       isOpen: furniture.settings?.isOpen?? true,
+      announcement: furniture.announcement || furniture.settings?.announcement || '', // YE LINE CHANGE
       announcement: furniture.settings?.announcement || '',
       ownerPhotoUrl: furniture.settings?.ownerPhotoUrl || furniture.ownerPhotoUrl || '',
       bannerPhotoUrl: furniture.bannerPhotoUrl || furniture.settings?.bannerPhotoUrl || '',
@@ -135,6 +136,7 @@ router.put('/:shopId', async (req, res) => {
     if(updateData.ownerPhotoUrl) furniture.ownerPhotoUrl = updateData.ownerPhotoUrl;
     if('phone' in updateData) furniture.phone = updateData.phone;
     if('isOpen' in updateData) furniture.isOpen = updateData.isOpen; // NAYA LINE ADD KAR
+    if('announcement' in updateData) furniture.announcement = updateData.announcement; // YE NAYI LINE
 
     if(updateData.settings){
         furniture.settings = furniture.settings || {};
