@@ -134,6 +134,7 @@ router.put('/:shopId', async (req, res) => {
     if(updateData.bannerPhotoUrl) furniture.bannerPhotoUrl = updateData.bannerPhotoUrl;
     if(updateData.ownerPhotoUrl) furniture.ownerPhotoUrl = updateData.ownerPhotoUrl;
     if('phone' in updateData) furniture.phone = updateData.phone;
+    if('isOpen' in updateData) furniture.isOpen = updateData.isOpen; // NAYA LINE ADD KAR
 
     if(updateData.settings){
         furniture.settings = furniture.settings || {};

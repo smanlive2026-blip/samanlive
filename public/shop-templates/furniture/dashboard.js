@@ -205,17 +205,22 @@ function initEvents(){
     document.getElementById('searchProduct').onkeyup = (e) => renderProducts(e.target.value);
 
     // TOGGLE FINAL CODE
-    document.getElementById('shopToggle').onclick = async () => {
-        const newStatus =!shopData.isOpen;
+// TOGGLE FINAL CODE - FIXED
+document.getElementById('shopToggle').onclick = async () => {
+    const toggle = document.getElementById('shopToggle');
+    const newStatus = !shopData.isOpen;
 
-        // 1. Pehle UI turant change
-        shopData.isOpen = newStatus;
-        document.getElementById('shopToggle').classList.toggle('off',!newStatus);
-        document.getElementById('toggleText').innerText = newStatus? 'Open' : 'Closed';
+    // 1. Optimistic UI update - turant change
+    shopData.isOpen = newStatus;
+    toggle.classList.toggle('off', !newStatus);
+    document.getElementById('toggleText').innerText = newStatus ? 'Open' : 'Closed';
 
-        // 2. Fir backend me save
-        await updateShopDB({isOpen: newStatus});
-    };
+    // 2. Backend me save - dono jagah bhejo taki koi miss na ho
+    await updateShopDB({ 
+        isOpen: newStatus, 
+        settings: { ...shopData.settings, isOpen: newStatus } 
+    });
+};
 
     document.getElementById('saveAnnouncement').onclick = () => updateShopDB({announcement: document.getElementById('announcementInput').value});
     document.getElementById('saveTiming').onclick = () => updateShopDB({shopSettings: {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value}});
