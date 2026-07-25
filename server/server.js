@@ -150,7 +150,6 @@ const locationRoutes = require('./modules/locationRoutes');
 app.use('/api/location', locationRoutes);
 app.use('/api/location', require('./modules/locationRoutes'));
 const locationRoutes = require('./routes/location');
-app.use('/api/location', locationRoutes);
 
 // ============== UPLOAD ROUTES ==============
 // Alag prefix de dete hai taaki takkar na ho
