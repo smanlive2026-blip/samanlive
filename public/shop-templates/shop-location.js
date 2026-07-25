@@ -1,3 +1,5 @@
+// public/shop-templates/shop-core.js
+
 window.ShopLocationManager = {
     shopId: null,
     

@@ -137,7 +137,7 @@ async function loadAllData() {
         await getUserLocation();
 
         // LOCATION ADD - 2. Shops API me lat lng bhejna hai taaki nearby mile
-        let shopApiUrl = '/api/shop/public';
+        let shopApiUrl = '/api/shops/nearby';
         if(userLocation) {
             shopApiUrl += `?lat=${userLocation.lat}&lng=${userLocation.lng}`;
         }
@@ -286,11 +286,11 @@ function renderSixLineShops() {
         if (lineShops.length === 0) continue;
         lineShops.forEach(shop => {
             row.innerHTML += `
-                <div class="shop-card-mini" onclick="openShopView('${shop._id}')">
-                    <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
-                    <p>${shop.shopName || shop.name}</p>
-                </div>
-            `;
+                  <div class="shop-card-mini" onclick="openShopView('${shop._id}')">
+        <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
+        <p>${shop.shopName || shop.name}</p>
+    </div>
+`;
         });
         container.appendChild(row);
     }
