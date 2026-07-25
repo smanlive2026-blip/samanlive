@@ -3,6 +3,7 @@ const router = express.Router();
 const Furniture = require('../../models/shops/Furniture');
 const Shop = require('../../models/Shop');
 const { getShopId } = require('../../utils/shopId'); // ID fix ke liye
+const { ShopLocation } = require('../../models/location'); 
 
 // GET PURI SHOP DATA - SAB FORMAT SUPPORT
 router.get('/:shopId', async (req, res) => {
@@ -200,4 +201,31 @@ router.post('/:shopId/order', async (req, res) => {
   }
 });
 
+// POST /api/shops/furniture/:shopId/location  -> Location Save
+router.post('/:shopId/location', async (req, res) => {
+  try {
+    const shopId = getShopId(req);
+    const { lat, lng, type, range, address } = req.body;
+
+    const location = await ShopLocation.findOneAndUpdate(
+      { shopId },
+      { shopId, latitude: lat, longitude: lng, locationType: type, deliveryRange: range, address },
+      { upsert: true, new: true }
+    );
+    res.json({ success: true, data: location });
+  } catch(err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/shops/furniture/:shopId/location  -> Location Get
+router.get('/:shopId/location', async (req, res) => {
+  try {
+    const shopId = getShopId(req);
+    const data = await ShopLocation.findOne({ shopId });
+    res.json({ success: true, data });
+  } catch(err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 module.exports = router;

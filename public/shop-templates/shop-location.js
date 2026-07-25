@@ -26,11 +26,11 @@ window.ShopLocationManager = {
             const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, {enableHighAccuracy: true, timeout: 10000}));
             const loc = {lat: pos.coords.latitude, lng: pos.coords.longitude};
 
-            const res = await fetch('/api/location/shop', {
+            const res = await fetch('/api/location/shop', { // ✅ YAHAN /:shopId NAHI HAI
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify({
-                    shopId: this.shopId,
+                    shopId: this.shopId, // ✅ BODY ME BHEJ RAHE
                     lat: loc.lat, lng: loc.lng,
                     type: document.getElementById('locationType').value,
                     range: document.getElementById('deliveryRange').value,
@@ -52,9 +52,9 @@ window.ShopLocationManager = {
         } finally { btn.disabled = false; }
     },
 
-    loadExistingLocation: async function() {
+    loadExistingLocation: async function() { // ✅ YAHAN THEEK KIYA
         try {
-            const res = await fetch(`/api/location/shop/${this.shopId}`);
+            const res = await fetch(`/api/location/shop/${this.shopId}`); // ✅ YAHAN :shopId SAHI JAGAH HAI
             const data = await res.json();
             if(data.success && data.data) {
                 const d = data.data;
@@ -64,7 +64,9 @@ window.ShopLocationManager = {
                 document.getElementById('locationStatus').innerHTML = `✅ Already Set`;
                 document.getElementById('locationType').dispatchEvent(new Event('change'));
             }
-        } catch(e){}
+        } catch(e){
+            console.log('No location found yet');
+        }
     }
 };
 
