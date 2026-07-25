@@ -12,6 +12,7 @@ console.log("✅ SHOP ID DETECTED:", shopId);
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('shopIdDisplay').innerText = shopId;
     ShopCore.init(shopId, 'furniture');
+    ShopLocationManager.init(shopId); // ✅ YE NAYI LINE
     initEvents();
     loadData();
 });

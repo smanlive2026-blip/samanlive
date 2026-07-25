@@ -168,16 +168,31 @@ async function reloadNearbyData() {
     console.log('🔄 Reloading nearby shops & products...');
 
     try {
-        // ✅ LOCATION KE SATH NEARBY SHOPS
-        const shopsRes = await fetch(`/api/location/nearby-shops?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=5000`);
+        // ✅ 1. NEARBY SHOPS - URL + response fix
+        const shopsRes = await fetch(`/api/shops/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}`);
         if(shopsRes.ok) {
-            const shopsData = await shopsRes.json();
-            allServices = shopsData.shops || [];
+            const res = await shopsRes.json();
+            const shopsData = res.data || []; // backend se data array aata hai
+
+            // distance add kar de taaki card pe dikh jaye
+            allServices = shopsData.map(shop => {
+                const dist = calculateDistance(userLocation.lat, userLocation.lng, shop.latitude, shop.longitude);
+                return {
+                    _id: shop.shopId,
+                    shopName: shop.address || 'Shop', // tujhe Shop name ke liye Shop table se populate karna padega
+                    latitude: shop.latitude,
+                    longitude: shop.longitude,
+                    distance: Math.round(dist),
+                    shopType: 'general', // default. baad me populate kar lena
+                    icon: '🏪'
+                }
+            });
             renderSixLineShops();
             console.log('✅ Nearby Shops updated:', allServices.length);
         }
 
-        const productsRes = await fetch(`/api/local-market/top-rated-products?limit=24`);
+        // ✅ 2. TOP PRODUCTS - ye wala API tere paas hai kya?
+        const productsRes = await fetch(`/api/products/top-rated?limit=24`);
         if(productsRes.ok) {
             allProducts = await productsRes.json();
             renderSixLineProducts();
@@ -187,10 +202,6 @@ async function reloadNearbyData() {
         console.error('Failed to reload:', e);
     }
 }
-
-window.addEventListener('beforeunload', () => {
-    window.LocationManager.stopAutoUpdate();
-});
 
 // ========================================
 // LOAD DATA FROM SERVER

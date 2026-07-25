@@ -34,7 +34,7 @@
         .btn { background: linear-gradient(135deg, #a16207 0%, #78350f 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; white-space: nowrap; }
         .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; border: none; color: white; cursor: pointer; }
         
-        .product-grid { display: grid; grid-template-columns: 1fr; gap: 12px; } /* Desktop 1 column */
+        .product-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         .product-item { display:flex; gap:15px; align-items:center; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; }
         .product-item img { width:80px; height:80px; object-fit:cover; border-radius:12px; cursor:pointer; flex-shrink: 0; }
         .product-item > div { flex: 1; min-width: 150px; }
@@ -48,11 +48,9 @@
         .modal-content { background:white; padding:30px; border-radius:20px; width:100%; max-width:500px; }
         .hint-text { font-size:12px; color:#64748b; margin-top:-5px; margin-bottom:10px; }
 
-        /* ACCORDION FOR MOBILE */
         .accordion-body { display: block; }
         .accordion-arrow { margin-left: auto; transition: 0.3s; }
 
-        /* ========== MOBILE RESPONSIVE ========== */
         @media (max-width: 1024px) {
             .content-grid { grid-template-columns: 1fr; }
         }
@@ -64,20 +62,17 @@
             .header h1 { font-size: 20px; }
             #ownerImg { width: 50px; height: 50px; }
             .header-buttons { width: 100%; justify-content: center; }
-            .btn { padding: 10px 8px; font-size: 12px; flex: 1 1 calc(33.33% - 7px); justify-content: center; } /* 3-3 BUTTON */
+            .btn { padding: 10px 8px; font-size: 12px; flex: 1 1 calc(33.33% - 7px); justify-content: center; }
             .toggle-switch { flex: 1 1 calc(33.33% - 7px); text-align: center; }
-            
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } /* 2-2 STATS */
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .stat-card { padding: 18px; }
             .stat-card .value { font-size: 24px; }
-            
             .content-card { padding: 15px; }
-            .content-card h2 { font-size: 16px; margin-bottom: 0; } /* chota kiya */
-            .accordion-body { display: none; padding-top: 15px; } /* band rahega */
+            .content-card h2 { font-size: 16px; margin-bottom: 0; }
+            .accordion-body { display: none; padding-top: 15px; }
             .content-card.active .accordion-body { display: block; }
             .content-card.active .accordion-arrow { transform: rotate(180deg); }
-            
-            .product-grid { grid-template-columns: repeat(2, 1fr); } /* 2-2 PRODUCT CARD */
+            .product-grid { grid-template-columns: repeat(2, 1fr); }
             .product-item { flex-direction: column; align-items: stretch; padding: 10px; }
             .product-item img { width: 100%; height: 120px; }
         }
@@ -103,6 +98,7 @@
                 <a href="#" id="libraryBtn" class="btn" style="background: #16a34a;"><i class="fa fa-warehouse"></i> Library</a>
                 <a href="#" id="bulkProductBtn" class="btn" style="background: #0ea5e9;"><i class="fa fa-file-csv"></i> Bulk</a>
                 <a href="#" id="addProductBtn" class="btn"><i class="fa fa-plus"></i> Add</a>
+                <a href="#" id="locationBtn" class="btn" style="background: #059669;"><i class="fa fa-location-dot"></i> Location</a>
                 <a href="#" id="changeBannerBtn" class="btn" style="background: #f59e0b;"><i class="fa fa-image"></i> Banner</a>
                 <div class="toggle-switch" id="shopToggle"><i class="fa fa-store"></i> <span id="toggleText">Open</span></div>
             </div>
@@ -120,7 +116,7 @@
                 <div class="content-card">
                     <h2><i class="fa fa-list"></i> Product Inventory</h2>
                     <input type="text" id="searchProduct" placeholder="Search Product Name...">
-                    <div id="productList" class="product-grid">Loading...</div> <!-- GRID ADD KIYA -->
+                    <div id="productList" class="product-grid">Loading...</div>
                 </div>
                 <div class="content-card">
                     <h2><i class="fa fa-receipt"></i> Recent Orders</h2>
@@ -128,7 +124,6 @@
                 </div>
             </div>
             <div>
-                <!-- ACCORDION CARDS START -->
                 <div class="content-card accordion">
                     <h2 onclick="this.parentElement.classList.toggle('active')"><i class="fa fa-bullhorn"></i> Announcement <i class="fa fa-chevron-down accordion-arrow"></i></h2>
                     <div class="accordion-body">
@@ -165,9 +160,38 @@
                         <input type="file" id="bannerInput" style="display:none;" accept="image/*">
                     </div>
                 </div>
-                <!-- ACCORDION CARDS END -->
             </div>
         </div>
+
+        <!-- ✅ LOCATION CARD - AB CONTAINER KE ANDAR HAI -->
+        <div class="content-card" id="locationCard" style="display:none;">
+            <h2><i class="fa fa-location-dot"></i> Shop Location Setting</h2>
+            <p style="color:#64748b;font-size:14px;margin-bottom:15px;">Is location ke andar ke customer ko aapki shop dikhegi</p>
+            
+            <div style="margin:15px 0;">
+                <label style="font-weight:600;">Location Type:</label>
+                <select id="locationType" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin-top:5px;">
+                    <option value="fixed">Fixed Shop - Delivery Range</option>
+                    <option value="dynamic">Thela/Moving Shop</option>
+                </select>
+            </div>
+
+            <div id="rangeDiv" style="margin:15px 0;">
+                <label style="font-weight:600;">Delivery Range KM:</label>
+                <input type="number" id="deliveryRange" value="5" min="1" max="50" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin-top:5px;">
+            </div>
+
+            <div style="margin:15px 0;">
+                <label style="font-weight:600;">Shop Address:</label>
+                <input type="text" id="shopAddress" placeholder="Pura address likho" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin-top:5px;">
+            </div>
+
+            <button class="btn" id="saveLocationBtn" style="width:100%; background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+                <i class="fa fa-location-crosshairs"></i> Current Location Se Save Karein
+            </button>
+            <div id="locationStatus" style="margin-top:10px;font-size:13px;"></div>
+        </div>
+
     </div>
 
     <!-- EDIT PRODUCT MODAL -->
@@ -186,8 +210,11 @@
         </div>
     </div>
 
+    <!-- SCRIPTS - ORDER IMPORTANT -->
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
     <script src="/shop-templates/shop-core.js"></script>
+    <script src="/shop-templates/shop-location.js"></script>
     <script src="dashboard.js"></script>
+
 </body>
 </html>
