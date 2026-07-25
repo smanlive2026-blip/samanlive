@@ -453,15 +453,18 @@ async function loginWithPhone() {
     if (!phone || phone.length!== 10) return alert('Valid 10 digit phone dalo');
     if (!name) return alert('Name dalo');
     try {
-        const res = await fetch('/api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, name }) });
+        const res = await fetch('/api/auth/login-phone', { // ✅ YE SAHI HAI
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ phone, name }) 
+        });
         const data = await res.json();
         if (data.success) {
-            localStorage.setItem('userToken', data.user._id);
-            // LOCATION ADD - 5. Signup ke baad bhi userId save karo
+            localStorage.setItem('userToken', data.token); // ✅ TOKEN SAVE KAR, ID NAHI
             localStorage.setItem('userId', data.user._id);
             currentUser = data.user; window.currentUser = data.user;
             closeLoginModal(); updateProfileAvatar(); alert('Login Success! 🎉'); 
-            startUserLiveLocation(); // location start
+            startUserLiveLocation();
             window.location.reload();
         } else alert('Login failed: ' + data.error);
     } catch (err) { alert('Login failed. Server check karo.'); }
