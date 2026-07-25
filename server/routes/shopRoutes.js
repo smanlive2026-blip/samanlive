@@ -3,6 +3,8 @@ const router = express.Router();
 const Shop = require('../models/Shop');
 const Order = require('../models/Order');
 const { authenticateToken } = require('../middleware/authenticateToken');
+const path = require('path');
+const fs = require('fs');
 
 // ========================================
 // 1. CREATE SHOP - Admin/User ke liye
@@ -86,31 +88,24 @@ router.get('/public', async (req, res) => {
 
 // ========================================
 // 4. NEARBY SHOPS - LOCATION KE HISAB SE
+// 5KM me ho to paas wali, nahi to sab. approve ka chakkar nahi
 // ========================================
 router.get('/nearby', async (req, res) => {
     try {
         const { lat, lng } = req.query;
         let shops = [];
 
-        // STEP 1: LOCATION HAI TO 5KM DHOONDH
+        // STEP 1: LOCATION HAI TO SAB NIKAL KE DISTANCE LAGA DE
         if(lat && lng) {
             const latitude = parseFloat(lat);
             const longitude = parseFloat(lng);
             
-            shops = await Shop.find({
-                // approve na ho tab bhi dikhe
-                location: {
-                    $near: {
-                        $geometry: { type: "Point", coordinates: [longitude, latitude] },
-                        $maxDistance: 5000 // 5KM
-                    }
-                }
-            })
-            .select('-ownerId -approvedBy -rejectionReason -email -phone')
-            .limit(100)
-            .lean();
+            shops = await Shop.find({}) // sab nikal le
+             .select('-ownerId -approvedBy -rejectionReason -email -phone')
+             .limit(200)
+             .lean();
             
-            // distance calculate
+            // distance calculate kar
             shops = shops.map(shop => {
                 if(shop.location?.coordinates) {
                     const [shopLng, shopLat] = shop.location.coordinates;
@@ -119,13 +114,14 @@ router.get('/nearby', async (req, res) => {
                     const dLon = (shopLng - longitude) * Math.PI / 180;
                     const a = Math.sin(dLat/2)**2 + Math.cos(latitude*Math.PI/180) * Math.cos(shopLat*Math.PI/180) * Math.sin(dLon/2)**2;
                     shop.distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                } else {
+                    shop.distance = 9999; // location nahi hai to last me
                 }
                 return shop;
-            });
-        }
-
-        // STEP 2: NA MILI YA LOCATION HI NAHI THI TO SAB DIKHA DE
-        if(shops.length === 0) {
+            }).sort((a,b) => a.distance - b.distance).slice(0,100); // paas wali 100
+        } 
+        // STEP 2: LOCATION NAHI HAI TO SAB
+        else {
             shops = await Shop.find({}) // koi filter nahi. pending, approved, inactive sab
              .select('-ownerId -approvedBy -rejectionReason -email -phone')
              .sort({ createdAt: -1 })
@@ -155,9 +151,6 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 // ========================================
 // 4.5 SHOP USER VIEW - DYNAMIC TEMPLATE ROUTE
 // ========================================
-const path = require('path');
-const fs = require('fs');
-
 router.get('/view/:shopId', async (req, res) => {
     try {
         const { shopId } = req.params;
@@ -337,7 +330,6 @@ router.put('/shops/:id', authenticateToken, async (req, res) => {
             }
         }
 
-        // location wala if block delete kar diya
         Object.assign(shop, req.body);
         shop.updatedAt = new Date();
         await shop.save();
@@ -352,54 +344,5 @@ router.put('/shops/:id', authenticateToken, async (req, res) => {
 // Ab ye kaam /api/location/shop karega
 // ========================================
 // router.put('/shops/:id/update-location', ...)  // PURA DELETE
-
-// ... tera pura code same rahega upar wala ...
-
-// ========================================
-// 9. DYNAMIC LOCATION UPDATE - DELETE KIYA
-// Ab ye kaam /api/location/shop karega
-// ========================================
-// router.put('/shops/:id/update-location', ...)  // PURA DELETE
-
-// ========================================
-// 10. SHOP USER VIEW - DYNAMIC TEMPLATE ROUTE - NAYA YE WALA LAGA
-// ========================================
-//const path = require('path');
-//const fs = require('fs');
-
-router.get('/view/:shopId', async (req, res) => {
-    try {
-        const { shopId } = req.params;
-        const shop = await Shop.findById(shopId);
-        
-        if(!shop) return res.status(404).send("Shop not found");
-        
-        const template = shop.template || shop.shopType || 'general'; // template field nahi hai to shopType le lo
-        const templatePath = path.join(__dirname, '../../public/shop-templates', template);
-
-        // YEH 3 NAAM CHECK KAREGA
-        const possibleFiles = ['customer-view.html', 'user-view.html', 'shop-view.html'];
-        let viewFile = null;
-
-        for(let file of possibleFiles) {
-            const filePath = path.join(templatePath, file);
-            if(fs.existsSync(filePath)) {
-                viewFile = filePath;
-                break;
-            }
-        }
-
-        // agar template me nahi mila to general wala
-        if(!viewFile) {
-            viewFile = path.join(__dirname, '../../public/shop-templates/general/user-view.html');
-        }
-        
-        res.sendFile(viewFile);
-
-    } catch(err) {
-        console.error(err);
-        res.status(500).send(err.message);
-    }
-});
 
 module.exports = router;
