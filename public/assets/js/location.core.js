@@ -1,4 +1,4 @@
-//            public/assets/js/location.core.js
+//         ye golden rule h   public/assets/js/location.core.js
 
 const LocationCore = {
     getDistance: (lat1, lon1, lat2, lon2) => {

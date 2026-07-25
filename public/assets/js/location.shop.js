@@ -1,4 +1,4 @@
-//      public/assets/js/location.shop.js
+//   ye golden rule h    public/assets/js/location.shop.js
 
 let shopWatchId = null;
 let shopLocationType = 'fixed';

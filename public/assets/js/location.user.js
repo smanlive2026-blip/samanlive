@@ -1,4 +1,4 @@
-//  public/assets/js/location.user.js 
+//  isko hath nhi lagana h ye golden rule h   public/assets/js/location.user.js 
 
 let userWatchId = null;
 
