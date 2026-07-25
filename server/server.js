@@ -13,7 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const orderRoutes = require('./routes/orders');  // fruit ke liye 
 const fruitItemRoutes = require('./routes/fruit-item'); // UPAR IMPORT KAR
-//const locationRoutes = require('./routes/location');
+
 
 //app.use(express.json({ limit: '10mb' })); // YE BHI UPAR RAKH DE
 // TERE PURANE ROUTES
@@ -146,9 +146,10 @@ app.use('/api', require('./routes/stats'));
 //app.use('/api/shop', require('./routes/shopRoutes'));
 
 // ==================== LOCATION ROUTES new ====================
-const locationRoutes = require('./modules/locationRoutes');
+const locationRoutes = require('./routes/location');
+//const locationRoutes = require('./modules/locationRoutes');
 app.use('/api/location', locationRoutes);
-app.use('/api/location', require('./modules/locationRoutes'));
+//app.use('/api/location', require('./modules/locationRoutes'));
 
 
 // ============== UPLOAD ROUTES ==============
