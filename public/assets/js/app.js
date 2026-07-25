@@ -131,19 +131,30 @@ window.addEventListener('beforeunload', () => {
 });
 
 // ✅ RELOAD NEARBY DATA - LOCATION KE HISAB SE
-async function reloadNearbyData() {
-    if(!userLocation) return;
+ async function reloadNearbyData() {
+   let apiUrl = '/api/shops/nearby'; // default: sab shop
+    
+    if(userLocation) {
+        // agar location hai to nearby wali
+        apiUrl += `?lat=${userLocation.lat}&lng=${userLocation.lng}`;
+        console.log("📍 Loading Nearby Shops");
+    } else {
+        console.log("🌍 Loading All Shops - Location nahi mili");
+    }
+
     try {
-        const shopsRes = await fetch(`/api/shops/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}`);
+        const shopsRes = await fetch(apiUrl); // ✅ yaha lat-lng optional ho gaya
         if(shopsRes.ok) {
             const res = await shopsRes.json();
-            const shopsData = res.data || [];
+            const shopsData = res.data || res || []; // ✅ koi bhi format ho
+            console.log("SHOPS COUNT:", shopsData.length);
+
             allServices = shopsData.map(shop => ({
-                _id: shop.shopId,
-                shopName: shop.shopName || 'Shop',
-                distance: shop.distance,
+                _id: String(shop.shopId || shop._id || shop.id),
+                shopName: shop.shopName || shop.name || 'Shop',
+                distance: shop.distance || 0,
                 shopType: shop.shopType || 'general',
-                logo: shop.logo,
+                logo: shop.logo || '/assets/default-shop.png',
                 icon: '🏪'
             }));
             originalServices = [...allServices];
@@ -160,7 +171,6 @@ async function reloadNearbyData() {
         console.error('Failed to reload:', e);
     }
 }
-
 // ========================================
 // LOAD DATA FROM SERVER
 // ========================================
@@ -183,9 +193,7 @@ async function loadAllData() {
         if(modulesRes.ok) allModules = (await modulesRes.json()).modules || [];
 
         // INITIAL NEARBY LOAD
-        if(userLocation){
-            await reloadNearbyData();
-        }
+        await reloadNearbyData(); // ✅ location ho ya na ho, ye chala dega
 
         if(!userLocation) showLocationPopup();
         showUserLocationInHeader();
@@ -387,9 +395,9 @@ function renderVideos() {
 
 // SLIDER LOGIC
 let topAdIndex = 0, campaignIndex = 0;
-function showTopAd(idx) { document.querySelectorAll('#topAdsContainer.ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); topAdIndex=idx; }
+function showTopAd(idx) { document.querySelectorAll('#topAdsContainer .ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); topAdIndex=idx; }
 function nextTopAd() { const slides=document.querySelectorAll('#topAdsContainer.ad-slide'); if(slides.length) {topAdIndex=(topAdIndex+1)%slides.length; showTopAd(topAdIndex);} }
-function showCampaign(idx) { document.querySelectorAll('#campaignContainer.ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); campaignIndex=idx; }
+function showCampaign(idx) { document.querySelectorAll('#campaignContainer .ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); campaignIndex=idx; }
 function nextCampaign() { const slides=document.querySelectorAll('#campaignContainer.ad-slide'); if(slides.length) {campaignIndex=(campaignIndex+1)%slides.length; showCampaign(campaignIndex);} }
 setInterval(nextTopAd, 5000); setInterval(nextCampaign, 6000);
 
@@ -425,7 +433,7 @@ function performSearch() {
         renderServices(); renderSixLineShops(); renderSixLineProducts();
     } else {
         const filteredModules = allModules.filter(m => m.name.toLowerCase().includes(searchTerm));
-        allServices = originalServices.filter(s => (s.shopName).toLowerCase().includes(searchTerm));
+        allServices = originalServices.filter(s => (s.shopName || s.name || '').toLowerCase().includes(searchTerm));
         allProducts = originalProducts.filter(p => p.name.toLowerCase().includes(searchTerm));
         renderServices(filteredModules); renderSixLineShops(); renderSixLineProducts();
     }
