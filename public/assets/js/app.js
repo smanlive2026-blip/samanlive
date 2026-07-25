@@ -138,7 +138,7 @@ async function reloadNearbyData() {
         if(userLocation) {
             // 1. PEHLE NEARBY TRY KAREGA 5KM
             console.log("📍 Step 1: Loading Nearby Shops 5KM");
-            const nearbyRes = await fetch(`/api/shops/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}`);
+            const nearbyRes = await fetch(`/api/shop-view/nearby-shops?lat=${userLocation.lat}&lng=${userLocation.lng}`);
             
             if(nearbyRes.ok) {
                 const res = await nearbyRes.json();
@@ -148,7 +148,7 @@ async function reloadNearbyData() {
             // 2. AGAR NEARBY ME 0 HAI TO SAB LOAD KAR
             if(shopsData.length === 0) {
                 console.log("⚠️ Nearby me 0 shop mili. Step 2: Loading ALL Shops");
-                const allRes = await fetch(`/api/shops/nearby`); // bina lat-lng
+                const allRes = await fetch(`/api/shop-view/nearby-shops`); // bina lat-lng
                 if(allRes.ok) {
                     const res = await allRes.json();
                     shopsData = res.data || res || [];
@@ -353,7 +353,7 @@ function renderSixLineShops() {
         lineShops.forEach(shop => {
             const shopType = ['cloth','kirana','medical','restaurant'].includes(shop.shopType)? shop.shopType : 'general';
             row.innerHTML += `
-                <div class="shop-card-mini" onclick="window.location.href='/api/shops/view/${shop._id}'">
+                <div class="shop-card-mini" onclick="window.location.href='/api/shop-view/${shop._id}'">
                     <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
                     <p>${shop.shopName}</p>
                     ${shop.distance? `<small style="color:#10b981;font-size:11px;">📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
