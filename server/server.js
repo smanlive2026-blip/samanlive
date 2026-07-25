@@ -147,7 +147,7 @@ app.use('/api', require('./routes/stats'));
 
 // ==================== LOCATION ROUTES new ====================
 const locationRoutes = require('./routes/location');
-const locationRoutes = require('./modules/locationRoutes');
+//const locationRoutes = require('./modules/locationRoutes');
 app.use('/api/location', locationRoutes);
 //app.use('/api/location', require('./modules/locationRoutes'));
 
