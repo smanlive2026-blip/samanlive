@@ -175,18 +175,17 @@ async function reloadNearbyData() {
             const shopsData = res.data || []; // backend se data array aata hai
 
             // distance add kar de taaki card pe dikh jaye
-            allServices = shopsData.map(shop => {
-                const dist = calculateDistance(userLocation.lat, userLocation.lng, shop.latitude, shop.longitude);
-                return {
-                    _id: shop.shopId,
-                    shopName: shop.address || 'Shop', // tujhe Shop name ke liye Shop table se populate karna padega
-                    latitude: shop.latitude,
-                    longitude: shop.longitude,
-                    distance: Math.round(dist),
-                    shopType: 'general', // default. baad me populate kar lena
-                    icon: '🏪'
-                }
-            });
+allServices = shopsData.map(shop => {
+    return {
+        _id: shop.shopId,
+        shopName: shop.shopName || 'Shop', // ✅ BACKEND SE NAME AA RAHA
+        latitude: shop.latitude,
+        longitude: shop.longitude,
+        distance: shop.distance, // ✅ BACKEND SE HI AA RAHA METER ME
+        shopType: shop.shopType || 'general', // ✅ BACKEND SE AA RAHA
+        icon: '🏪'
+    }
+});
             renderSixLineShops();
             console.log('✅ Nearby Shops updated:', allServices.length);
         }
@@ -486,7 +485,7 @@ function renderSixLineShops() {
                 <div class="shop-card" onclick="window.location.href='/shop-templates/${shopType}/user-view.html?shopId=${shop._id}'">
                     <div class="shop-icon">${shop.icon || '🏪'}</div>
                     <div class="shop-name">${shop.shopName || shop.name}</div>
-                    ${shop.distance? `<small style="color:#10b981;font-size:11px;font-weight:600;">📍 ${shop.distance}m</small>` : ''}
+                    ${shop.distance? `<small style="color:#10b981;font-size:11px;font-weight:600;">📍 ${shop.distance/1000}Km</small>` : ''}
                 </div>
             `;
         });

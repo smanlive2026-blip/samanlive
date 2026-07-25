@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { ShopLocation, UserLocation } = require('../models/location'); // YE LINE THEEK
+const Shop = require('../models/Shop'); // UPOR ADD KAR LE
 
 // Haversine formula - meter me doori
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -46,27 +47,50 @@ router.get('/location/shop/:shopId', async (req, res) => {
     }
 });
 
+const Shop = require('../models/Shop'); // UPOR ADD KAR LE
+
 // GET /api/shops/nearby?lat=xx&lng=yy -> 5KM ke andar shop
 router.get('/shops/nearby', async (req, res) => {
     try {
         const { lat, lng } = req.query;
-        const shops = await ShopLocation.find({ locationType: 'fixed' }).populate('shopId', 'shopName shopType address');
+        if(!lat || !lng) return res.status(400).json({ success: false, message: 'lat lng chahiye' });
 
-        const nearby = shops.filter(shop => {
-            const dist = getDistance(lat, lng, shop.latitude, shop.longitude);
-            return dist <= shop.deliveryRange * 1000;
-        }).map(shop => ({
-            shopId: shop.shopId._id,
-            shopName: shop.shopId.shopName,
-            shopType: shop.shopId.shopType,
-            address: shop.shopId.address,
-            latitude: shop.latitude,
-            longitude: shop.longitude,
-            deliveryRange: shop.deliveryRange
-        }));
+        const userLat = Number(lat);
+        const userLng = Number(lng);
+
+        // 1. Sab shop location nikal
+        const allShopLocations = await ShopLocation.find({ locationType: 'fixed' }).lean();
+
+        // 2. Distance check karke filter
+        const nearbyLocations = allShopLocations.filter(shopLoc => {
+            if(!shopLoc.latitude || !shopLoc.longitude) return false;
+            const dist = getDistance(userLat, userLng, shopLoc.latitude, shopLoc.longitude);
+            return dist <= (shopLoc.deliveryRange || 5) * 1000; // default 5KM
+        });
+
+        // 3. Shop details nikalne ke liye
+        const shopIds = nearbyLocations.map(n => n.shopId);
+        const shops = await Shop.find({ _id: { $in: shopIds } }).lean();
+
+        // 4. Dono ko merge kar de
+        const nearby = nearbyLocations.map(shopLoc => {
+            const shop = shops.find(s => s._id.toString() === shopLoc.shopId.toString());
+            const dist = getDistance(userLat, userLng, shopLoc.latitude, shopLoc.longitude);
+            
+            return {
+                shopId: shopLoc.shopId,
+                shopName: shop?.shopName || 'Shop',
+                shopType: shop?.shopType || 'general', // folder ka naam
+                address: shopLoc.address || shop?.address,
+                latitude: shopLoc.latitude,
+                longitude: shopLoc.longitude,
+                distance: dist // meter me
+            }
+        }).sort((a,b) => a.distance - b.distance); // paas wali pehle
 
         res.json({ success: true, data: nearby });
     } catch (err) {
+        console.log("NEARBY ERROR:", err)
         res.status(500).json({ success: false, message: err.message });
     }
 });
