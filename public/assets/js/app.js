@@ -380,13 +380,13 @@ function renderSixLineProducts() {
         const lineProducts = allProducts.slice(i * productsPerLine, (i + 1) * productsPerLine);
         if (lineProducts.length === 0) continue;
         lineProducts.forEach(product => {
-            row.innerHTML += `
-                <div class="shop-card-mini" onclick="openProduct('${product._id}')">
-                    <img src="${product.image || '/assets/default-product.png'}" onerror="this.src='/assets/default-product.png'">
-                    <p>${product.name}</p>
-                    <small>₹${product.price} ⭐${product.rating || 0}</small>
-                </div>
-            `;
+        row.innerHTML += `
+             <div class="shop-card-mini" onclick="window.location.href='/api/shop-view/${shop._id}'">
+             <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
+             <p>${shop.shopName}</p>
+             ${shop.distance !== undefined ? `<small>📍 ${shop.distance < 1 ? Math.round(shop.distance*1000)+'m' : shop.distance.toFixed(1)+'Km'}</small>` : ''}
+            </div>
+    `       ;
         });
         container.appendChild(row);
     }

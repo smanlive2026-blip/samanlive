@@ -118,16 +118,16 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .six-line-carousel {
     display: grid;
     grid-template-rows: repeat(6, 1fr);
-    gap: 12px;
+    gap: 8px; /* 12px se 8px kiya */
     max-height: 480px;
     overflow-y: auto;
     overflow-x: hidden;
 }
 .six-line-carousel .carousel-item {
     display: flex;
-    gap: 12px;
+    gap: 8px; /* 12px se 8px kiya */
     overflow-x: auto;
-    padding-bottom: 8px;
+    padding: 4px 2px;
     scroll-snap-type: x mandatory;
 }
 .six-line-carousel .carousel-item::-webkit-scrollbar { height: 4px; }
@@ -138,33 +138,48 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 
 /* ✅ SHOP CARD MINI - USER VIEW KE LIYE ADD KIYA */
 .shop-card-mini {
-    min-width: 120px;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 12px;
-    padding: 10px;
+    min-width: 70px;
+    width: 70px;
+    background: transparent;
+    border: none;
+    padding: 0;
     text-align: center;
     cursor: pointer;
     scroll-snap-align: start;
     transition: all 0.2s;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
 }
-.shop-card-mini:active { transform: scale(0.95); }
+.shop-card-mini:active { transform: scale(0.92); }
+
 .shop-card-mini img {
     width: 60px;
     height: 60px;
-    border-radius: 10px;
+    border-radius: 50%; /* GOL */
     object-fit: cover;
-    margin-bottom: 5px;
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    background: white;
 }
+
 .shop-card-mini p {
-    font-size: 12px;
+    font-size: 10px;
     color: white;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    width: 100%;
+    line-height: 1.2;
+}
+
+.shop-card-mini small {
+    font-size: 9px;
+    color: #10b981;
+    font-weight: 500;
 }
 
 /* LINE 1: SHOPS - TRAIN SCROLL - YE SAME RAHEGA */
