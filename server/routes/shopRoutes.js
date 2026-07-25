@@ -149,6 +149,46 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
 }
+
+// ========================================
+// 4.5 SHOP USER VIEW - DYNAMIC TEMPLATE ROUTE
+// ========================================
+const path = require('path');
+const fs = require('fs');
+
+router.get('/view/:shopId', async (req, res) => {
+    try {
+        const { shopId } = req.params;
+        const shop = await Shop.findById(shopId);
+        
+        if(!shop) return res.status(404).send("Shop not found");
+        
+        const template = shop.template || shop.shopType || 'general'; 
+        const templatePath = path.join(__dirname, '../../public/shop-templates', template);
+
+        const possibleFiles = ['customer-view.html', 'user-view.html', 'shop-view.html'];
+        let viewFile = null;
+
+        for(let file of possibleFiles) {
+            const filePath = path.join(templatePath, file);
+            if(fs.existsSync(filePath)) {
+                viewFile = filePath;
+                break;
+            }
+        }
+
+        if(!viewFile) {
+            viewFile = path.join(__dirname, '../../public/shop-templates/general/user-view.html');
+        }
+        
+        res.sendFile(viewFile);
+
+    } catch(err) {
+        console.error(err);
+        res.status(500).send(err.message);
+    }
+});
+
 // ========================================
 // 5. SHOP DETAILS
 // ========================================

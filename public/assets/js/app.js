@@ -130,37 +130,54 @@ window.addEventListener('beforeunload', () => {
     window.LocationManager.stopAutoUpdate();
 });
 
-// ✅ RELOAD NEARBY DATA - LOCATION KE HISAB SE
+// ✅ RELOAD NEARBY DATA - NA MILE TO SAB DIKHA DE
 async function reloadNearbyData() {
-   let apiUrl = '/api/shops/nearby'; 
-    
-    if(userLocation) {
-        // agar location hai to nearby wali
-        apiUrl += `?lat=${userLocation.lat}&lng=${userLocation.lng}`;
-        console.log("📍 Loading Nearby Shops");
-    } else {
-        console.log("🌍 Loading All Shops - Location nahi mili");
-    }
-
     try {
-        const shopsRes = await fetch(apiUrl); 
-        if(shopsRes.ok) {
-            const res = await shopsRes.json();
-            const shopsData = res.data || res || []; 
-            console.log("SHOPS COUNT:", shopsData.length);
+        let shopsData = [];
 
-            allServices = shopsData.map(shop => ({
-                _id: String(shop.shopId || shop._id || shop.id),
-                shopName: shop.shopName || shop.name || 'Shop',
-                distance: shop.distance || 0,
-                shopType: shop.shopType || 'general',
-                logo: shop.logo || '/assets/default-shop.png',
-                icon: '🏪'
-            }));
-            originalServices = [...allServices];
-            renderSixLineShops();
+        if(userLocation) {
+            // 1. PEHLE NEARBY TRY KAREGA 5KM
+            console.log("📍 Step 1: Loading Nearby Shops 5KM");
+            const nearbyRes = await fetch(`/api/shops/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}`);
+            
+            if(nearbyRes.ok) {
+                const res = await nearbyRes.json();
+                shopsData = res.data || res || [];
+            }
+
+            // 2. AGAR NEARBY ME 0 HAI TO SAB LOAD KAR
+            if(shopsData.length === 0) {
+                console.log("⚠️ Nearby me 0 shop mili. Step 2: Loading ALL Shops");
+                const allRes = await fetch(`/api/shops/nearby`); // bina lat-lng
+                if(allRes.ok) {
+                    const res = await allRes.json();
+                    shopsData = res.data || res || [];
+                }
+            }
+        } else {
+            // 3. LOCATION HI NAHI HAI TO DIRECT SAB
+            console.log("🌍 Location nahi mili. Loading ALL Shops");
+            const allRes = await fetch(`/api/shops/nearby`);
+            if(allRes.ok) {
+                const res = await allRes.json();
+                shopsData = res.data || res || [];
+            }
         }
 
+        console.log("SHOPS COUNT:", shopsData.length);
+
+        allServices = shopsData.map(shop => ({
+            _id: String(shop.shopId || shop._id || shop.id),
+            shopName: shop.shopName || shop.name || 'Shop',
+            distance: shop.distance || 0,
+            shopType: shop.shopType || 'general',
+            logo: shop.logo || '/assets/default-shop.png',
+            icon: '🏪'
+        }));
+        originalServices = [...allServices];
+        renderSixLineShops();
+
+        // PRODUCTS
         const productsRes = await fetch(`/api/products/top-rated?limit=24`);
         if(productsRes.ok) {
             allProducts = await productsRes.json();
@@ -336,7 +353,7 @@ function renderSixLineShops() {
         lineShops.forEach(shop => {
             const shopType = ['cloth','kirana','medical','restaurant'].includes(shop.shopType)? shop.shopType : 'general';
             row.innerHTML += `
-                <div class="shop-card-mini" onclick="window.location.href='/shop-templates/${shopType}/user-view.html?shopId=${shop._id}'">
+                <div class="shop-card-mini" onclick="window.location.href='/api/shops/view/${shop._id}'">
                     <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
                     <p>${shop.shopName}</p>
                     ${shop.distance? `<small style="color:#10b981;font-size:11px;">📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
