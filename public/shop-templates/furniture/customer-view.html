@@ -74,7 +74,11 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const shopId = urlParams.get('shopId');
-        const API_BASE = `/api/shops/furniture`; // ✅ YE NAYA HAI
+        // ✅ YE 1 NAYI LINE - folder se type nikal lega
+        const shopType = window.location.pathname.split('/')[2]; // "general" nikalega
+        const API_BASE = `/api/shops/${shopType}`; // /api/shops/general ban jayega
+        fetch(`${API_BASE}/${shopId}`)
+        //const API_BASE = `/api/shops/furniture`; // ✅ YE NAYA HAI
         let shopDataGlobal = {};
         let cart = JSON.parse(localStorage.getItem('cart_'+shopId)) || [];
         let wishlist = JSON.parse(localStorage.getItem('wishlist_'+shopId)) || [];
