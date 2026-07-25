@@ -1,5 +1,5 @@
 // ========================================
-// SAMANLIVE - DYNAMIC JAVASCRIPT - FINAL    public/assets/js/app.js 
+// SAMANLIVE - DYNAMIC JAVASCRIPT - FINAL MERGED
 // ========================================
 
 // Global variables
@@ -20,11 +20,12 @@ let originalServices = [];
 let originalProducts = [];
 
 // ========================================
-// LOCATION MANAGER
+// LOCATION MANAGER - LIVE + SERVER SYNC
 // ========================================
 window.LocationManager = {
-    updateInterval: 30000,
+    updateInterval: 30000, // 30 sec
     isRequesting: false,
+    minDistance: 100, // 100 meter
 
     getManual: function() {
         return new Promise((resolve) => {
@@ -38,12 +39,13 @@ window.LocationManager = {
             }
             this.isRequesting = true;
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const loc = { lat: position.coords.latitude, lng: position.coords.longitude };
                     window.currentUserLocation = loc;
                     userLocation = loc;
                     lastFetchedLocation = {...loc};
                     this.isRequesting = false;
+                    await this.sendLocationToServer(loc);
                     resolve(loc);
                 },
                 (error) => {
@@ -68,18 +70,39 @@ window.LocationManager = {
         }
     },
 
-    fetchAndUpdate: function() {
+    fetchAndUpdate: async function() {
         if(!navigator.geolocation) return;
         navigator.geolocation.getCurrentPosition(
-            (position) => {
+            async (position) => {
                 const newLoc = { lat: position.coords.latitude, lng: position.coords.longitude };
+
+                // 100m check
+                if(lastFetchedLocation && calculateDistance(lastFetchedLocation.lat, lastFetchedLocation.lng, newLoc.lat, newLoc.lng) < this.minDistance){
+                    return;
+                }
+
                 window.currentUserLocation = newLoc;
                 userLocation = newLoc;
                 lastFetchedLocation = {...newLoc};
+                showUserLocationInHeader();
+                await this.sendLocationToServer(newLoc);
+                reloadNearbyData(); // ✅ sirf nearby reload hoga
             },
             (error) => { console.error('Auto location error:', error.message); },
             { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
         );
+    },
+
+    sendLocationToServer: async function(loc) {
+        const userId = localStorage.getItem('userId');
+        if(!userId) return;
+        try{
+            await fetch('/api/location/user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ userId, lat: loc.lat, lng: loc.lng })
+            });
+        }catch(e){ console.log('Location save error', e) }
     }
 };
 
@@ -91,8 +114,9 @@ async function getUserLocation() {
     return loc;
 }
 
+// METER ME DISTANCE
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371;
+    const R = 6371000;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -106,50 +130,50 @@ window.addEventListener('beforeunload', () => {
     window.LocationManager.stopAutoUpdate();
 });
 
-// ========================================
-// LOCATION ADD - 1. USER LIVE LOCATION KO SERVER PE BHEJNE KA FUNCTION
-// ========================================
-let userWatchId = null; // location.user.js ke liye global variable
-function startUserLiveLocation() {
-    if(!navigator.geolocation) return;
-    if(!localStorage.getItem('userId')) return; // login nahi hai to skip
+// ✅ RELOAD NEARBY DATA - LOCATION KE HISAB SE
+async function reloadNearbyData() {
+    if(!userLocation) return;
+    try {
+        const shopsRes = await fetch(`/api/shops/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}`);
+        if(shopsRes.ok) {
+            const res = await shopsRes.json();
+            const shopsData = res.data || [];
+            allServices = shopsData.map(shop => ({
+                _id: shop.shopId,
+                shopName: shop.shopName || 'Shop',
+                distance: shop.distance,
+                shopType: shop.shopType || 'general',
+                logo: shop.logo,
+                icon: '🏪'
+            }));
+            originalServices = [...allServices];
+            renderSixLineShops();
+        }
 
-    // har 100 meter pe location update hogi
-    userWatchId = LocationCore.startWatch((lat, lng) => {
-        // Server ko bhejo
-        fetch('/api/location/user', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ userId: localStorage.getItem('userId'), lat, lng })
-        }).catch(err => console.log('User location update failed', err));
-
-        // Nearby shops reload karne ke liye
-        if(typeof loadAllData === 'function') loadAllData();
-        
-    }, 100);
+        const productsRes = await fetch(`/api/products/top-rated?limit=24`);
+        if(productsRes.ok) {
+            allProducts = await productsRes.json();
+            originalProducts = [...allProducts];
+            renderSixLineProducts();
+        }
+    } catch(e) {
+        console.error('Failed to reload:', e);
+    }
 }
 
 // ========================================
-// LOAD DATA FROM SERVER - EK HI FUNCTION
+// LOAD DATA FROM SERVER
 // ========================================
 async function loadAllData() {
     try {
         await getUserLocation();
 
-        // LOCATION ADD - 2. Shops API me lat lng bhejna hai taaki nearby mile
-        let shopApiUrl = '/api/shops/nearby';
-        if(userLocation) {
-            shopApiUrl += `?lat=${userLocation.lat}&lng=${userLocation.lng}`;
-        }
-
-        const [adsRes, videosRes, campaignsRes, settingsRes, modulesRes, shopsRes, productsRes] = await Promise.all([
+        const [adsRes, videosRes, campaignsRes, settingsRes, modulesRes] = await Promise.all([
             fetch('/api/ads').catch(()=>({ok:false})),
             fetch('/api/videos').catch(()=>({ok:false})),
             fetch('/api/campaigns').catch(()=>({ok:false})),
             fetch('/api/settings').catch(()=>({ok:false})),
-            fetch('/api/modules').catch(()=>({ok:false})),
-            fetch(shopApiUrl).catch(()=>({ok:false})), // <- YAHI PE UPDATE KIYA
-            fetch('/api/products/top-rated?limit=24').catch(()=>({ok:false}))
+            fetch('/api/modules').catch(()=>({ok:false}))
         ]);
 
         if(adsRes.ok) allAds = await adsRes.json();
@@ -157,15 +181,14 @@ async function loadAllData() {
         if(campaignsRes.ok) allCampaigns = await campaignsRes.json();
         if(settingsRes.ok) siteSettings = await settingsRes.json();
         if(modulesRes.ok) allModules = (await modulesRes.json()).modules || [];
-        if(shopsRes.ok) {
-            const shopsData = await shopsRes.json();
-            allServices = shopsData.data || shopsData;
-            originalServices = [...allServices];
+
+        // INITIAL NEARBY LOAD
+        if(userLocation){
+            await reloadNearbyData();
         }
-        if(productsRes.ok) {
-            allProducts = await productsRes.json();
-            originalProducts = [...allProducts];
-        }
+
+        if(!userLocation) showLocationPopup();
+        showUserLocationInHeader();
 
         renderServices();
         renderTopAds();
@@ -177,10 +200,37 @@ async function loadAllData() {
 
     } catch(e) {
         console.error('Failed to load data:', e);
-        renderSixLineShops();
-        renderSixLineProducts();
-        renderServices();
     }
+}
+
+function showLocationPopup() {
+    if(document.getElementById('locPopup')) return;
+    const popup = document.createElement('div');
+    popup.id = 'locPopup';
+    popup.style.cssText = `position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1e40af;color:white;padding:12px 20px;border-radius:8px;z-index:9999;`;
+    popup.innerHTML = `📍 Location enable karein <button onclick="this.parentElement.remove()" style="margin-left:10px;background:white;color:#1e40af;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">OK</button>`;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 6000);
+}
+
+function showUserLocationInHeader() {
+    if (!userLocation) return;
+    let headerLocation = document.querySelector('.location-display');
+    if (!headerLocation) {
+        const header = document.querySelector('.header-container');
+        const locDiv = document.createElement('div');
+        locDiv.className = 'location-display';
+        locDiv.style.cssText = 'font-size:12px;color:#e0e7ff;display:flex;align-items:center;gap:4px;margin-left:10px;';
+        locDiv.innerHTML = `📍 <span id="userCity">Detecting...</span>`;
+        header.querySelector('.search-box-modern')?.insertAdjacentElement('afterend', locDiv);
+    }
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
+   .then(r => r.json())
+   .then(data => {
+        document.getElementById('userCity').textContent = data.address.city || data.address.town || 'Your Area';
+    }).catch(() => {
+        document.getElementById('userCity').textContent = 'Your Area';
+    });
 }
 
 function updateLogo() {
@@ -202,9 +252,7 @@ function updateLogo() {
     if(footerLogo) footerLogo.textContent = siteSettings.logoText || 'SAMANLIVE';
 }
 
-// ========================================
-// RENDER SERVICES
-// ========================================
+// SMART SORT
 function getModuleClicks() { return JSON.parse(localStorage.getItem('samanlive_module_clicks') || '{}'); }
 function saveModuleClick(moduleId) {
     const clicks = getModuleClicks();
@@ -214,9 +262,10 @@ function saveModuleClick(moduleId) {
 }
 function sortModulesByUsage(modules) {
     const clicks = getModuleClicks();
-    return [...modules].sort((a, b) => (clicks[b.id] || 0) - (clicks[a.id] || 0) || a.priority - b.priority);
+    return [...modules].sort((a, b) => (clicks[b.id] || 0) - (clicks[a.id] || 0) || (a.priority || 0) - (b.priority || 0));
 }
 
+// RENDER SERVICES
 function renderServices(filteredModules = null) {
     const modulesToRender = filteredModules || allModules;
     const sortedModules = sortModulesByUsage(modulesToRender);
@@ -232,9 +281,7 @@ function renderServices(filteredModules = null) {
     `).join('');
 }
 
-// ========================================
 // RENDER ADS & CAMPAIGNS
-// ========================================
 function renderTopAds() {
     const topAdChunks = [];
     for (let i = 0; i < allAds.length; i += 4) topAdChunks.push(allAds.slice(i, i + 4));
@@ -263,18 +310,12 @@ function renderCampaigns() {
         </div>`).join('');
 }
 
-// ========================================
 // RENDER SHOPS - 6 LINE
-// ========================================
-function openShopView(shopId) {
-    window.open(`/api/shop/view/${shopId}`, '_blank');
-}
-
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
     if (!allServices || allServices.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏪</div><p>No shops available</p></div>`;
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏪</div><p>No shops available in your area</p></div>`;
         return;
     }
     container.innerHTML = '';
@@ -285,20 +326,20 @@ function renderSixLineShops() {
         const lineShops = allServices.slice(i * shopsPerLine, (i + 1) * shopsPerLine);
         if (lineShops.length === 0) continue;
         lineShops.forEach(shop => {
+            const shopType = ['cloth','kirana','medical','restaurant'].includes(shop.shopType)? shop.shopType : 'general';
             row.innerHTML += `
-                  <div class="shop-card-mini" onclick="openShopView('${shop._id}')">
-        <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
-        <p>${shop.shopName || shop.name}</p>
-    </div>
-`;
+                <div class="shop-card-mini" onclick="window.location.href='/shop-templates/${shopType}/user-view.html?shopId=${shop._id}'">
+                    <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
+                    <p>${shop.shopName}</p>
+                    ${shop.distance? `<small style="color:#10b981;font-size:11px;">📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
+                </div>
+            `;
         });
         container.appendChild(row);
     }
 }
 
-// ========================================
 // RENDER TOP PRODUCTS - 6 LINE
-// ========================================
 function renderSixLineProducts() {
     const container = document.getElementById('topProductsContent');
     if (!container) return;
@@ -315,9 +356,10 @@ function renderSixLineProducts() {
         if (lineProducts.length === 0) continue;
         lineProducts.forEach(product => {
             row.innerHTML += `
-                <div class="shop-card-mini" onclick="openShopView('${product.shopId}')">
+                <div class="shop-card-mini" onclick="openProduct('${product._id}')">
                     <img src="${product.image || '/assets/default-product.png'}" onerror="this.src='/assets/default-product.png'">
                     <p>${product.name}</p>
+                    <small>₹${product.price} ⭐${product.rating || 0}</small>
                 </div>
             `;
         });
@@ -325,9 +367,11 @@ function renderSixLineProducts() {
     }
 }
 
-// ========================================
+function openProduct(productId) {
+    window.location.href = `/product.html?id=${productId}`;
+}
+
 // RENDER VIDEOS
-// ========================================
 function renderVideos() {
     const doubleVideos = [...nearbyVideos,...nearbyVideos];
     const videosEl = document.getElementById('videosContent');
@@ -341,97 +385,68 @@ function renderVideos() {
         </div>`;
 }
 
-// ========================================
 // SLIDER LOGIC
-// ========================================
-let topAdIndex = 0;
-function showTopAd(idx) {
-    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
-    slides.forEach(s => s.classList.remove('active'));
-    if(slides[idx]) slides[idx].classList.add('active');
-    topAdIndex = idx;
-}
-function nextTopAd() {
-    const slides = document.querySelectorAll('#topAdsContainer .ad-slide');
-    if(slides.length === 0) return;
-    topAdIndex = (topAdIndex + 1) % slides.length;
-    showTopAd(topAdIndex);
-}
-setInterval(nextTopAd, 5000);
+let topAdIndex = 0, campaignIndex = 0;
+function showTopAd(idx) { document.querySelectorAll('#topAdsContainer.ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); topAdIndex=idx; }
+function nextTopAd() { const slides=document.querySelectorAll('#topAdsContainer.ad-slide'); if(slides.length) {topAdIndex=(topAdIndex+1)%slides.length; showTopAd(topAdIndex);} }
+function showCampaign(idx) { document.querySelectorAll('#campaignContainer.ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); campaignIndex=idx; }
+function nextCampaign() { const slides=document.querySelectorAll('#campaignContainer.ad-slide'); if(slides.length) {campaignIndex=(campaignIndex+1)%slides.length; showCampaign(campaignIndex);} }
+setInterval(nextTopAd, 5000); setInterval(nextCampaign, 6000);
 
-// ========================================
 // VIDEO MODAL
-// ========================================
 document.addEventListener('click', function(e) {
     const videoCard = e.target.closest('.video-card');
     if (videoCard) openVideoModal(videoCard.dataset.videoUrl, videoCard.dataset.shopId);
 });
-
 function openVideoModal(url, shopId) {
-    const shop = allServices.find(s => s.shopId === shopId);
-    const oldModal = document.getElementById('videoModal');
-    if(oldModal) oldModal.remove();
+    const shop = allServices.find(s => s._id === shopId);
+    document.getElementById('videoModal')?.remove();
     const modal = document.createElement('div');
     modal.id = 'videoModal';
     modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center;`;
-    modal.innerHTML = `
-        <div style="position:relative;width:90%;max-width:900px;">
-            <button onclick="closeVideoModal()" style="position:absolute;top:-40px;right:0;background:#fff;border:none;font-size:30px;width:40px;height:40px;border-radius:50%;cursor:pointer;">×</button>
-            <video controls autoplay style="width:100%;border-radius:10px;"><source src="${url}" type="video/mp4"></video>
-            ${shop? `
-            <div style="background:white;padding:12px;border-radius:0 0 10px 10px;display:flex;justify-content:space-between;align-items:center;">
-                <div><div style="font-weight:700;color:#1e40af;">${shop.shopName}</div><div style="font-size:12px;color:#64748b;">${shop.address || 'Location'}</div></div>
-                <button onclick="openShopView('${shop._id}')" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">Visit Shop</button>
-            </div>` : ''}
-        </div>`;
+    modal.innerHTML = `<div style="position:relative;width:90%;max-width:900px;">
+        <button onclick="closeVideoModal()" style="position:absolute;top:-40px;right:0;background:#fff;border:none;font-size:30px;width:40px;height:40px;border-radius:50%;cursor:pointer;">×</button>
+        <video controls autoplay style="width:100%;border-radius:10px;"><source src="${url}" type="video/mp4"></video>
+        ${shop? `<div style="background:white;padding:12px;border-radius:0 0 10px 10px;display:flex;justify-content:space-between;align-items:center;">
+            <div><div style="font-weight:700;color:#1e40af;">${shop.shopName}</div></div>
+            <button onclick="window.location.href='/shop-templates/${shop.shopType}/user-view.html?shopId=${shop._id}'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">Visit Shop</button>
+        </div>` : ''}
+    </div>`;
     document.body.appendChild(modal);
     modal.addEventListener('click', function(e) { if(e.target === modal) closeVideoModal(); });
 }
 function closeVideoModal() { document.getElementById('videoModal')?.remove(); }
 
-// ========================================
 // SEARCH
-// ========================================
 function performSearch() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
     if(searchTerm === '') {
-        allServices = [...originalServices];
-        allProducts = [...originalProducts];
+        allServices = [...originalServices]; allProducts = [...originalProducts];
         renderServices(); renderSixLineShops(); renderSixLineProducts();
     } else {
         const filteredModules = allModules.filter(m => m.name.toLowerCase().includes(searchTerm));
-        const filteredShops = originalServices.filter(s => (s.shopName || s.name).toLowerCase().includes(searchTerm));
-        const filteredProducts = originalProducts.filter(p => p.name.toLowerCase().includes(searchTerm));
-        renderServices(filteredModules);
-        allServices = filteredShops; renderSixLineShops();
-        allProducts = filteredProducts; renderSixLineProducts();
+        allServices = originalServices.filter(s => (s.shopName).toLowerCase().includes(searchTerm));
+        allProducts = originalProducts.filter(p => p.name.toLowerCase().includes(searchTerm));
+        renderServices(filteredModules); renderSixLineShops(); renderSixLineProducts();
     }
 }
 document.getElementById('searchInput')?.addEventListener('input', performSearch);
-document.getElementById('searchInput')?.addEventListener('keypress', e => { if(e.key === 'Enter') performSearch(); });
 
-// ========================================
 // AUTH
-// ========================================
 window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('userToken');
     if (token) fetchUserData(token);
     updateProfileAvatar();
-    
-    // LOCATION ADD - 3. Login ke baad live location start karo
-    startUserLiveLocation();
 });
 
 async function fetchUserData(token) {
     try {
         const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
         const data = await res.json();
-        if (data.success) { 
-            currentUser = data.user; 
-            window.currentUser = data.user; 
-            // LOCATION ADD - 4. userId localStorage me save karo taaki location bheje
-            localStorage.setItem('userId', data.user._id);
-            updateProfileAvatar(); 
+        if (data.success) {
+            currentUser = data.user; window.currentUser = data.user;
+            localStorage.setItem('userId', data.user._id); // ✅ location ke liye
+            updateProfileAvatar();
         }
         else localStorage.removeItem('userToken');
     } catch (err) { localStorage.removeItem('userToken'); }
@@ -453,49 +468,34 @@ async function loginWithPhone() {
     if (!phone || phone.length!== 10) return alert('Valid 10 digit phone dalo');
     if (!name) return alert('Name dalo');
     try {
-        const res = await fetch('/api/auth/login-phone', { // ✅ YE SAHI HAI
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ phone, name }) 
-        });
+        const res = await fetch('/api/auth/login-phone', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, name }) });
         const data = await res.json();
         if (data.success) {
-            localStorage.setItem('userToken', data.token); // ✅ TOKEN SAVE KAR, ID NAHI
+            localStorage.setItem('userToken', data.token);
             localStorage.setItem('userId', data.user._id);
             currentUser = data.user; window.currentUser = data.user;
-            closeLoginModal(); updateProfileAvatar(); alert('Login Success! 🎉'); 
-            startUserLiveLocation();
+            closeLoginModal(); updateProfileAvatar(); alert('Login Success! 🎉');
             window.location.reload();
         } else alert('Login failed: ' + data.error);
     } catch (err) { alert('Login failed. Server check karo.'); }
 }
-
-function openProfileModal() {
-    if (!currentUser) return openLoginModal();
-    document.getElementById('profileName').textContent = currentUser.name;
-    document.getElementById('userUniqueId').textContent = currentUser.userId;
-    document.getElementById('profilePic').src = currentUser.profilePic || '/assets/default-avatar.png';
-    document.getElementById('profileModal').style.display = 'flex';
-}
+function openProfileModal() { if (!currentUser) return openLoginModal(); document.getElementById('profileName').textContent = currentUser.name; document.getElementById('userUniqueId').textContent = currentUser.userId; document.getElementById('profilePic').src = currentUser.profilePic || '/assets/default-avatar.png'; document.getElementById('profileModal').style.display = 'flex'; }
 function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
 function goToProfilePage() { if (!currentUser) openLoginModal(); else window.location.href = '/profile.html'; }
 
-// ========================================
-// DRAG SUPPORT
-// ========================================
+// DRAG SUPPORT + TOUCH
 function startTrainSliding() {
     [document.getElementById('shopsContent'), document.getElementById('videosContent'), document.getElementById('topProductsContent')].forEach(container => {
         if (!container) return;
         let isDown = false, startX, scrollLeft;
-        container.addEventListener('mousedown', e => { isDown = true; container.classList.add('dragging'); startX = e.pageX - container.offsetLeft; scrollLeft = container.scrollLeft; });
-        container.addEventListener('mouseleave', () => { isDown = false; container.classList.remove('dragging'); });
-        container.addEventListener('mouseup', () => { isDown = false; container.classList.remove('dragging'); });
-        container.addEventListener('mousemove', e => { if (!isDown) return; e.preventDefault(); container.scrollLeft = scrollLeft - (e.pageX - container.offsetLeft - startX) * 2; });
+        const start = (e) => {isDown=true; container.classList.add('dragging'); startX=(e.pageX||e.touches[0].pageX)-container.offsetLeft; scrollLeft=container.scrollLeft;}
+        const end = () => {isDown=false; container.classList.remove('dragging');}
+        const move = (e) => {if(!isDown)return; e.preventDefault(); const x=(e.pageX||e.touches[0].pageX)-container.offsetLeft; container.scrollLeft=scrollLeft-(x-startX)*2;}
+        container.addEventListener('mousedown', start); container.addEventListener('mouseup', end); container.addEventListener('mouseleave', end); container.addEventListener('mousemove', move);
+        container.addEventListener('touchstart', start); container.addEventListener('touchend', end); container.addEventListener('touchmove', move);
     });
 }
 setTimeout(startTrainSliding, 2000);
 
-// ========================================
 // INIT
-// ========================================
 loadAllData();
