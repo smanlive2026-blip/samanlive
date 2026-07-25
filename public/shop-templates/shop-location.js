@@ -54,8 +54,10 @@ window.ShopLocationManager = {
 
     loadExistingLocation: async function() { // ✅ YAHAN THEEK KIYA
         try {
-            const res = await fetch(`/api/location/shop/${this.shopId}`); // ✅ YAHAN :shopId SAHI JAGAH HAI
-            const data = await res.json();
+            //const res = await fetch(`/api/location/shop/${this.shopId}`); // ✅ YAHAN :shopId SAHI JAGAH HAI
+           // const data = await res.json();
+           fetch(`/api/shops/furniture/${shopId}/location`)
+        
             if(data.success && data.data) {
                 const d = data.data;
                 document.getElementById('locationType').value = d.locationType;
