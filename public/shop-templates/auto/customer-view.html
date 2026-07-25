@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Service Center</title>
+    <title id="pageTitle">Auto Service Center</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
@@ -20,88 +20,131 @@
        .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
        .product-price { font-size: 22px; font-weight: 800; color: #f97316; }
        .btn-book { background: #f97316; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+       .stock { font-size:12px; color:#16a34a; }
+       .out { color:#dc2626; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1><i class="fa fa-car-wrench"></i> <span id="shopName">Auto Care Center</span></h1>
-        <p>Car & Bike Service | Genuine Parts | 6 Month Warranty</p>
+        <p id="shopAddress">Car & Bike Service | Genuine Parts | 6 Month Warranty</p>
     </div>
 
     <div class="container">
-        <div class="tabs">
-            <div class="tab active" onclick="filter('All')">All</div>
-            <div class="tab" onclick="filter('Service')">Services</div>
-            <div class="tab" onclick="filter('Engine')">Engine Parts</div>
-            <div class="tab" onclick="filter('Brake')">Brake Parts</div>
-            <div class="tab" onclick="filter('Electrical')">Electrical</div>
-            <div class="tab" onclick="filter('Tyre')">Tyre & Wheel</div>
+        <div class="tabs" id="tabsContainer">
+            <div class="tab active" onclick="filterTab('All', this)">All</div>
         </div>
 
-        <div class="product-grid" id="productGrid"></div>
+        <div class="product-grid" id="productGrid">Loading...</div>
     </div>
 
     <script>
-        const products = [
-            // SERVICES - 10
-            {name: "Engine Oil Change", price: 800, cat: "Service", icon: "🛢️"}, {name: "Brake Service", price: 1200, cat: "Service", icon: "🛑"},
-            {name: "AC Service", price: 1500, cat: "Service", icon: "❄️"}, {name: "Engine Work", price: 8000, cat: "Service", icon: "⚙️"},
-            {name: "Car Wash", price: 300, cat: "Service", icon: "🚿"}, {name: "Battery Change", price: 6500, cat: "Service", icon: "🔋"},
-            {name: "Tyre Change", price: 2500, cat: "Service", icon: "🛞"}, {name: "Denting Painting", price: 10000, cat: "Service", icon: "🎨"},
-            {name: "Wheel Alignment", price: 600, cat: "Service", icon: "📐"}, {name: "General Checkup", price: 500, cat: "Service", icon: "🔍"},
-            
-            // ENGINE PARTS - 15
-            {name: "Engine Oil 1L", price: 400, cat: "Engine", icon: "🛢️"}, {name: "Engine Oil 3L", price: 1100, cat: "Engine", icon: "🛢️"},
-            {name: "Air Filter", price: 350, cat: "Engine", icon: "🌬️"}, {name: "Oil Filter", price: 250, cat: "Engine", icon: "🔧"},
-            {name: "Spark Plug", price: 200, cat: "Engine", icon: "⚡"}, {name: "Radiator", price: 4000, cat: "Engine", icon: "🌡️"},
-            {name: "Clutch Plate", price: 2500, cat: "Engine", icon: "⚙️"}, {name: "Timing Belt", price: 1800, cat: "Engine", icon: "⛓️"},
-            {name: "Fuel Pump", price: 3500, cat: "Engine", icon: "⛽"}, {name: "Gasket Set", price: 1200, cat: "Engine", icon: "📦"},
-            {name: "Coolant 1L", price: 300, cat: "Engine", icon: "💧"}, {name: "Engine Mount", price: 2200, cat: "Engine", icon: "🔩"},
-            {name: "Fan Belt", price: 600, cat: "Engine", icon: "⛓️"}, {name: "Piston Ring", price: 2800, cat: "Engine", icon: "⭕"},
-            {name: "Valve", price: 1500, cat: "Engine", icon: "🔧"},
-            
-            // BRAKE PARTS - 10
-            {name: "Brake Pad", price: 800, cat: "Brake", icon: "🛑"}, {name: "Brake Disc", price: 2200, cat: "Brake", icon: "⭕"},
-            {name: "Brake Oil", price: 250, cat: "Brake", icon: "🛢️"}, {name: "Master Cylinder", price: 3000, cat: "Brake", icon: "🔧"},
-            {name: "Brake Shoe", price: 900, cat: "Brake", icon: "🛑"}, {name: "ABS Sensor", price: 2500, cat: "Brake", icon: "📡"},
-            {name: "Hand Brake Cable", price: 600, cat: "Brake", icon: "🔗"}, {name: "Brake Caliper", price: 4000, cat: "Brake", icon: "🔧"},
-            {name: "Wheel Cylinder", price: 1200, cat: "Brake", icon: "🔧"}, {name: "Brake Hose", price: 500, cat: "Brake", icon: "🔗"},
-            
-            // ELECTRICAL - 15
-            {name: "Car Battery", price: 6500, cat: "Electrical", icon: "🔋"}, {name: "Bike Battery", price: 2200, cat: "Electrical", icon: "🔋"},
-            {name: "Headlight", price: 1500, cat: "Electrical", icon: "💡"}, {name: "Tail Light", price: 800, cat: "Electrical", icon: "💡"},
-            {name: "Wiper Motor", price: 1800, cat: "Electrical", icon: "🌧️"}, {name: "Horn", price: 600, cat: "Electrical", icon: "📢"},
-            {name: "Alternator", price: 5500, cat: "Electrical", icon: "⚡"}, {name: "Starter Motor", price: 4500, cat: "Electrical", icon: "🔌"},
-            {name: "Fuse Box", price: 1200, cat: "Electrical", icon: "📦"}, {name: "Wiring Harness", price: 3500, cat: "Electrical", icon: "🔗"},
-            {name: "AC Compressor", price: 12000, cat: "Electrical", icon: "❄️"}, {name: "Blower Motor", price: 2500, cat: "Electrical", icon: "💨"},
-            {name: "Power Window Motor", price: 2000, cat: "Electrical", icon: "🪟"}, {name: "Central Lock", price: 3000, cat: "Electrical", icon: "🔒"},
-            {name: "Indicator Bulb", price: 100, cat: "Electrical", icon: "💡"},
-            
-            // TYRE & WHEEL - 10
-            {name: "Car Tyre", price: 4500, cat: "Tyre", icon: "🛞"}, {name: "Bike Tyre", price: 1200, cat: "Tyre", icon: "🛞"},
-            {name: "Alloy Wheel", price: 8000, cat: "Tyre", icon: "⭕"}, {name: "Wheel Rim", price: 3500, cat: "Tyre", icon: "⭕"},
-            {name: "Tube", price: 400, cat: "Tyre", icon: "⭕"}, {name: "Wheel Bearing", price: 1500, cat: "Tyre", icon: "⚙️"},
-            {name: "Suspension", price: 6000, cat: "Tyre", icon: "〰️"}, {name: "Shock Absorber", price: 3500, cat: "Tyre", icon: "〰️"},
-            {name: "Steering Rack", price: 8000, cat: "Tyre", icon: "🎮"}, {name: "Tie Rod", price: 1200, cat: "Tyre", icon: "🔗"}
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId');
+        let allItems = []; // parts + services dono
+
+        // DEFAULT SERVICES - agar dashboard me na ho to ye dikhe
+        const defaultServices = [
+            {name: "Engine Oil Change", price: 800, cat: "Service", icon: "🛢️"},
+            {name: "Brake Service", price: 1200, cat: "Service", icon: "🛑"},
+            {name: "AC Service", price: 1500, cat: "Service", icon: "❄️"},
+            {name: "Engine Work", price: 8000, cat: "Service", icon: "⚙️"},
+            {name: "Car Wash", price: 300, cat: "Service", icon: "🚿"},
+            {name: "Battery Change", price: 6500, cat: "Service", icon: "🔋"},
+            {name: "Tyre Change", price: 2500, cat: "Service", icon: "🛞"},
+            {name: "Denting Painting", price: 10000, cat: "Service", icon: "🎨"}
         ];
 
+        // ICON MAP
+        const iconMap = {
+            'Engine': '🛢️', 'Brake': '🛑', 'Electrical': '🔋', 'Tyre': '🛞', 'Service': '⚙️'
+        };
+
+        async function loadShop() {
+            try {
+                const res = await fetch(`/api/shops/auto/${shopId}`); // ✅ tera naya backend
+                const result = await res.json();
+                if(!result.success) return;
+
+                const shop = result.shop;
+                document.getElementById('shopName').innerText = shop.shopName;
+                document.getElementById('pageTitle').innerText = shop.shopName;
+                document.getElementById('shopAddress').innerText = shop.address || 'Genuine Parts | Service';
+
+                // 1. SERVICES: dashboard wale + default
+                const dbServices = (shop.services || []).map(s => ({
+                    name: s.name, price: s.price, cat: 'Service', icon: '⚙️'
+                }));
+                const services = dbServices.length > 0 ? dbServices : defaultServices;
+
+                // 2. PARTS: dashboard se aayenge
+                const parts = (shop.parts || []).map(p => {
+                    // naam se category guess karega
+                    let cat = 'Engine';
+                    if(p.name.toLowerCase().includes('brake')) cat = 'Brake';
+                    else if(p.name.toLowerCase().includes('battery') || p.name.toLowerCase().includes('light')) cat = 'Electrical';
+                    else if(p.name.toLowerCase().includes('tyre') || p.name.toLowerCase().includes('wheel')) cat = 'Tyre';
+
+                    return {
+                        name: p.name, price: p.price, cat: cat, icon: iconMap[cat] || '🔧',
+                        stock: p.stock
+                    }
+                });
+
+                allItems = [...services, ...parts];
+                buildTabs();
+                display(allItems);
+
+            } catch(e) {
+                console.error(e);
+                allItems = defaultServices;
+                display(allItems);
+            }
+        }
+
+        function buildTabs() {
+            const categories = ['All', ...new Set(allItems.map(i => i.cat))];
+            document.getElementById('tabsContainer').innerHTML = categories.map((cat, i) => `
+                <div class="tab ${i===0?'active':''}" onclick="filterTab('${cat}', this)">${cat}</div>
+            `).join('');
+        }
+
         function display(items) {
+            if(items.length === 0) {
+                document.getElementById('productGrid').innerHTML = '<p>No items found</p>';
+                return;
+            }
             document.getElementById('productGrid').innerHTML = items.map(p => `
                 <div class="product-card">
                     <div style="font-size:30px; margin-bottom:10px;">${p.icon}</div>
                     <h3>${p.name}</h3>
                     <p style="color:#64748b; font-size:12px;">${p.cat}</p>
                     <div class="product-price">₹${p.price}</div>
-                    <button class="btn-book" onclick="alert('Booked!')">${p.cat==='Service'?'Book Service':'Add to Cart'}</button>
+                    ${p.stock !== undefined ? `<div class="stock ${p.stock < 1 ? 'out' : ''}">Stock: ${p.stock}</div>` : ''}
+                    <button class="btn-book" onclick="bookItem('${p.name}', '${p.cat}')">
+                        ${p.cat==='Service'?'Book Service':'Add to Cart'}
+                    </button>
                 </div>
             `).join('');
         }
-        function filter(cat) {
+
+        function filterTab(cat, el) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            display(cat==='All'? products : products.filter(p => p.cat === cat));
+            el.classList.add('active');
+            const filtered = cat==='All'? allItems : allItems.filter(p => p.cat === cat);
+            display(filtered);
         }
-        display(products);
+
+        function bookItem(name, cat) {
+            if(cat === 'Service') {
+                window.location.href = `/shop-templates/auto/book-service.html?shopId=${shopId}&service=${name}`;
+            } else {
+                alert(`${name} added to cart!`);
+                // yaha cart ka logic daal dena
+            }
+        }
+
+        loadShop();
     </script>
 </body>
 </html>

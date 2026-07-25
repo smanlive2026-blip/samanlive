@@ -33,6 +33,7 @@ app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-mana
 app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
 const shopViewRoutes = require('./routes/shopViewRoutes');
 app.use('/api/shop-view', shopViewRoutes);
+app.use('/api/shops/auto', require('./routes/shops/auto'));
 //app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
 //app.use('/api/shops', require('./routes/shops/furniture-route')); // <- YE LINE ADD KAR
 //app.use('/api/shops', require('./routes/shops/furniture-route'));
