@@ -139,7 +139,7 @@ async function reloadNearbyData() {
             // 1. PEHLE NEARBY TRY KAREGA 5KM
             console.log("📍 Step 1: Loading Nearby Shops 5KM");
             const nearbyRes = await fetch(`/api/shop-view/nearby-shops?lat=${userLocation.lat}&lng=${userLocation.lng}`);
-            
+
             if(nearbyRes.ok) {
                 const res = await nearbyRes.json();
                 shopsData = res.data || res || [];
@@ -250,8 +250,8 @@ function showUserLocationInHeader() {
         header.querySelector('.search-box-modern')?.insertAdjacentElement('afterend', locDiv);
     }
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
-  .then(r => r.json())
-  .then(data => {
+ .then(r => r.json())
+ .then(data => {
         document.getElementById('userCity').textContent = data.address.city || data.address.town || 'Your Area';
     }).catch(() => {
         document.getElementById('userCity').textContent = 'Your Area';
@@ -351,12 +351,12 @@ function renderSixLineShops() {
         const lineShops = allServices.slice(i * shopsPerLine, (i + 1) * shopsPerLine);
         if (lineShops.length === 0) continue;
         lineShops.forEach(shop => {
-            const shopType = ['cloth','kirana','medical','restaurant'].includes(shop.shopType)? shop.shopType : 'general';
+            const shopType = ['cloth','kirana','medical','restaurant','furniture'].includes(shop.shopType)? shop.shopType : 'general';
             row.innerHTML += `
                 <div class="shop-card-mini" onclick="window.location.href='/shop-templates/${shopType}/customer-view.html?shopId=${shop._id}'">
                     <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
                     <p>${shop.shopName}</p>
-                    ${shop.distance? `<small style="color:#10b981;font-size:11px;">📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
+                    ${shop.distance? `<small>📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
                 </div>
             `;
         });
@@ -364,7 +364,7 @@ function renderSixLineShops() {
     }
 }
 
-// RENDER TOP PRODUCTS - 6 LINE
+// RENDER TOP PRODUCTS - 6 LINE ✅ FIXED
 function renderSixLineProducts() {
     const container = document.getElementById('topProductsContent');
     if (!container) return;
@@ -380,13 +380,13 @@ function renderSixLineProducts() {
         const lineProducts = allProducts.slice(i * productsPerLine, (i + 1) * productsPerLine);
         if (lineProducts.length === 0) continue;
         lineProducts.forEach(product => {
-        row.innerHTML += `
-             <div class="shop-card-mini" onclick="window.location.href='/api/shop-view/${shop._id}'">
-             <img src="${shop.logo || '/assets/images/samanlive-logo.png'}"onerror="this.src='/assets/images/samanlive-logo.png'">
-             <p>${shop.shopName}</p>
-             ${shop.distance !== undefined ? `<small>📍 ${shop.distance < 1 ? Math.round(shop.distance*1000)+'m' : shop.distance.toFixed(1)+'Km'}</small>` : ''}
-            </div>
-    `       ;
+            row.innerHTML += `
+                <div class="shop-card-mini" onclick="openProduct('${product._id}')">
+                    <img src="${product.image || product.imageUrl || '/assets/default-product.png'}" onerror="this.src='/assets/default-product.png'">
+                    <p>${product.name}</p>
+                    ${product.price? `<small style="color:#10b981;">₹${product.price}</small>` : ''}
+                </div>
+            `;
         });
         container.appendChild(row);
     }
@@ -434,7 +434,7 @@ function openVideoModal(url, shopId) {
         <video controls autoplay style="width:100%;border-radius:10px;"><source src="${url}" type="video/mp4"></video>
         ${shop? `<div style="background:white;padding:12px;border-radius:0 0 10px 10px;display:flex;justify-content:space-between;align-items:center;">
             <div><div style="font-weight:700;color:#1e40af;">${shop.shopName}</div></div>
-            <button onclick="window.location.href='/shop-templates/${shop.shopType}/user-view.html?shopId=${shop._id}'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">Visit Shop</button>
+            <button onclick="window.location.href='/shop-templates/${shop.shopType}/customer-view.html?shopId=${shop._id}'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">Visit Shop</button>
         </div>` : ''}
     </div>`;
     document.body.appendChild(modal);
