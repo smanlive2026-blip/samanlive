@@ -90,17 +90,15 @@ router.get('/public', async (req, res) => {
 router.get('/nearby', async (req, res) => {
     try {
         const { lat, lng } = req.query;
-
-        let query = { status: { $in: ['approved', 'active'] }, isActive: true };
         let shops = [];
 
+        // STEP 1: LOCATION HAI TO 5KM DHOONDH
         if(lat && lng) {
-            // Location hai to nearby 5KM tak
             const latitude = parseFloat(lat);
             const longitude = parseFloat(lng);
-
+            
             shops = await Shop.find({
-               ...query,
+                // approve na ho tab bhi dikhe
                 location: {
                     $near: {
                         $geometry: { type: "Point", coordinates: [longitude, latitude] },
@@ -108,27 +106,31 @@ router.get('/nearby', async (req, res) => {
                     }
                 }
             })
-           .select('-ownerId -approvedBy -rejectionReason -email -phone')
-           .limit(100)
-           .lean();
-
-            // distance calculate karke bhej de
+            .select('-ownerId -approvedBy -rejectionReason -email -phone')
+            .limit(100)
+            .lean();
+            
+            // distance calculate
             shops = shops.map(shop => {
-                if(shop.location && shop.location.coordinates) {
+                if(shop.location?.coordinates) {
                     const [shopLng, shopLat] = shop.location.coordinates;
-                    const distance = calculateDistance(latitude, longitude, shopLat, shopLng);
-                    shop.distance = distance;
+                    const R = 6371;
+                    const dLat = (shopLat - latitude) * Math.PI / 180;
+                    const dLon = (shopLng - longitude) * Math.PI / 180;
+                    const a = Math.sin(dLat/2)**2 + Math.cos(latitude*Math.PI/180) * Math.cos(shopLat*Math.PI/180) * Math.sin(dLon/2)**2;
+                    shop.distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
                 }
                 return shop;
             });
+        }
 
-        } else {
-            // Location nahi hai to sab shop de do
-            shops = await Shop.find(query)
-          .select('-ownerId -approvedBy -rejectionReason -email -phone')
-          .sort({ rating: -1, createdAt: -1 })
-          .limit(100)
-          .lean();
+        // STEP 2: NA MILI YA LOCATION HI NAHI THI TO SAB DIKHA DE
+        if(shops.length === 0) {
+            shops = await Shop.find({}) // koi filter nahi. pending, approved, inactive sab
+             .select('-ownerId -approvedBy -rejectionReason -email -phone')
+             .sort({ createdAt: -1 })
+             .limit(200)
+             .lean();
         }
 
         res.json({ success: true, count: shops.length, data: shops });
