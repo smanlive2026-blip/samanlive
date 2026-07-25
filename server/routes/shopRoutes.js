@@ -153,7 +153,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 // ========================================
 // 4.5 SHOP USER VIEW - DYNAMIC TEMPLATE ROUTE
 // ========================================
-const path = require('path');
+//const path = require('path');
 const fs = require('fs');
 
 router.get('/view/:shopId', async (req, res) => {
