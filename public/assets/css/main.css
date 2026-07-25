@@ -1,5 +1,5 @@
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { overflow-x: hidden; width: 100%; touch-action: pan-y; }
+html, body { overflow-x: hidden; width: 100%; touch-action: pan-y; overflow-y: auto; } /* overflow-y add */
 body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 10px; }
 
@@ -114,35 +114,35 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .line-header span { font-size: 12px; font-weight: 600; opacity: 0.9; }
 .line-content { position: relative; min-height: 70px; overflow: hidden; }
 
-/* ✅ 6 LINE CAROUSEL GRID - USER VIEW KE LIYE ADD KIYA */
+/* ✅ 6 LINE CAROUSEL GRID - FIXED SCROLL */
 .six-line-carousel {
-    display: grid;
-    grid-template-rows: repeat(6, 1fr);
-    gap: 8px; /* 12px se 8px kiya */
-    max-height: 480px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 .six-line-carousel .carousel-item {
     display: flex;
-    gap: 8px; /* 12px se 8px kiya */
+    gap: 8px;
     overflow-x: auto;
-    padding: 4px 2px;
+    padding: 4px 2px 8px;
     scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; /* mobile smooth */
 }
-.six-line-carousel .carousel-item::-webkit-scrollbar { height: 4px; }
+.six-line-carousel .carousel-item::-webkit-scrollbar { height: 3px; }
 .six-line-carousel .carousel-item::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.3);
     border-radius: 2px;
 }
 
-/* ✅ SHOP CARD MINI - USER VIEW KE LIYE ADD KIYA */
+/* ✅ SHOP CARD MINI - GOL ICON FINAL */
 .shop-card-mini {
-    min-width: 70px;
-    width: 70px;
-    background: transparent;
-    border: none;
-    padding: 0;
+    min-width: 75px;
+    width: 75px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 14px;
+    padding: 8px 4px;
     text-align: center;
     cursor: pointer;
     scroll-snap-align: start;
@@ -156,12 +156,11 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .shop-card-mini:active { transform: scale(0.92); }
 
 .shop-card-mini img {
-    width: 60px;
-    height: 60px;
+    width: 55px;
+    height: 55px;
     border-radius: 50%; /* GOL */
     object-fit: cover;
-    border: 2px solid rgba(255,255,255,0.3);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border: 2px solid rgba(255,255,255,0.4);
     background: white;
 }
 
@@ -182,7 +181,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     font-weight: 500;
 }
 
-/* LINE 1: SHOPS - TRAIN SCROLL - YE SAME RAHEGA */
+/* LINE 1: SHOPS - TRAIN SCROLL */
 .shops-grid { 
     display: flex; 
     gap: 8px; 
@@ -260,7 +259,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .nearby-action-btn { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 7px 2px; text-align: center; cursor: pointer; transition: all 0.2s; color: white; font-size: 8px; font-weight: 600; }
 .nearby-action-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.25); }
 
-/* ✅ EMPTY STATE - ADD KIYA */
+/* ✅ EMPTY STATE */
 .empty-state {
     display: flex;
     flex-direction: column;
@@ -269,7 +268,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     padding: 40px 20px;
     text-align: center;
     color: rgba(255,255,255,0.4);
-    grid-column: 1 / -1;
+    width: 100%;
 }
 .empty-state-icon {
     font-size: 48px;

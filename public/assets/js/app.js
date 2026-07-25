@@ -353,7 +353,7 @@ function renderSixLineShops() {
         lineShops.forEach(shop => {
             const shopType = ['cloth','kirana','medical','restaurant'].includes(shop.shopType)? shop.shopType : 'general';
             row.innerHTML += `
-                <div class="shop-card-mini" onclick="window.location.href='/api/shop-view/${shop._id}'">
+                <div class="shop-card-mini" onclick="window.location.href='/shop-templates/${shopType}/customer-view.html?shopId=${shop._id}'">
                     <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
                     <p>${shop.shopName}</p>
                     ${shop.distance? `<small style="color:#10b981;font-size:11px;">📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
@@ -382,7 +382,7 @@ function renderSixLineProducts() {
         lineProducts.forEach(product => {
         row.innerHTML += `
              <div class="shop-card-mini" onclick="window.location.href='/api/shop-view/${shop._id}'">
-             <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
+             <img src="${shop.logo || '/assets/images/samanlive-logo.png'}"onerror="this.src='/assets/images/samanlive-logo.png'">
              <p>${shop.shopName}</p>
              ${shop.distance !== undefined ? `<small>📍 ${shop.distance < 1 ? Math.round(shop.distance*1000)+'m' : shop.distance.toFixed(1)+'Km'}</small>` : ''}
             </div>
