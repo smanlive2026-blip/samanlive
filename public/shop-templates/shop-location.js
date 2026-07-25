@@ -26,12 +26,12 @@ window.ShopLocationManager = {
             const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, {enableHighAccuracy: true, timeout: 10000}));
             const loc = {lat: pos.coords.latitude, lng: pos.coords.longitude};
 
-            const res = await fetch('/api/location/shop', { // ✅ YAHAN /:shopId NAHI HAI
+            // FIX 1: URL change kiya
+            const res = await fetch(`/api/shops/furniture/${this.shopId}/location`, { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify({
-                    shopId: this.shopId, // ✅ BODY ME BHEJ RAHE
-                    lat: loc.lat, lng: loc.lng,
+                    lat: loc.lat, lng: loc.lng,  // shopId body se hata diya
                     type: document.getElementById('locationType').value,
                     range: document.getElementById('deliveryRange').value,
                     address: document.getElementById('shopAddress').value
@@ -52,11 +52,11 @@ window.ShopLocationManager = {
         } finally { btn.disabled = false; }
     },
 
-    loadExistingLocation: async function() { // ✅ YAHAN THEEK KIYA
+    loadExistingLocation: async function() {
         try {
-            //const res = await fetch(`/api/location/shop/${this.shopId}`); // ✅ YAHAN :shopId SAHI JAGAH HAI
-           // const data = await res.json();
-           fetch(`/api/shops/furniture/${shopId}/location`)
+            // FIX 2: ye 2 line theek ki
+            const res = await fetch(`/api/shops/furniture/${this.shopId}/location`);
+            const data = await res.json();
         
             if(data.success && data.data) {
                 const d = data.data;

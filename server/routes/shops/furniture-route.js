@@ -208,9 +208,9 @@ router.post('/:shopId/location', async (req, res) => {
     const shopId = getShopId(req);
     const { lat, lng, type, range, address } = req.body;
     const location = await ShopLocation.findOneAndUpdate(
-      { shopId }, { shopId, latitude: lat, longitude: lng, locationType: type, deliveryRange: range, address },
-      { upsert: true, new: true }
-    );
+  { shopId },{ shopId, latitude: Number(lat), longitude: Number(lng), locationType: type || 'fixed', deliveryRange: Number(range) || 5, address },
+  { upsert: true, new: true }
+   );
     res.json({ success: true, data: location });
   } catch(err) { res.status(500).json({ success: false, message: err.message }); }
 });
