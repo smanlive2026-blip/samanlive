@@ -2,8 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const ShopLocation = require('../models/ShopLocation');
-const UserLocation = require('../models/UserLocation');
+const { ShopLocation, UserLocation } = require('../models/location'); // YE LINE THEEK
 
 // Haversine formula - meter me doori
 function getDistance(lat1, lon1, lat2, lon2) {

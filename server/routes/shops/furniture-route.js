@@ -202,30 +202,26 @@ router.post('/:shopId/order', async (req, res) => {
 });
 
 // POST /api/shops/furniture/:shopId/location  -> Location Save
+// SAVE LOCATION
 router.post('/:shopId/location', async (req, res) => {
   try {
     const shopId = getShopId(req);
     const { lat, lng, type, range, address } = req.body;
-
     const location = await ShopLocation.findOneAndUpdate(
-      { shopId },
-      { shopId, latitude: lat, longitude: lng, locationType: type, deliveryRange: range, address },
+      { shopId }, { shopId, latitude: lat, longitude: lng, locationType: type, deliveryRange: range, address },
       { upsert: true, new: true }
     );
     res.json({ success: true, data: location });
-  } catch(err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+  } catch(err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
-// GET /api/shops/furniture/:shopId/location  -> Location Get
+// GET LOCATION
 router.get('/:shopId/location', async (req, res) => {
   try {
     const shopId = getShopId(req);
     const data = await ShopLocation.findOne({ shopId });
     res.json({ success: true, data });
-  } catch(err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+  } catch(err) { res.status(500).json({ success: false, message: err.message }); }
 });
+
 module.exports = router;
