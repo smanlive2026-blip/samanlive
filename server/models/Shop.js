@@ -45,6 +45,10 @@ const shopSchema = new mongoose.Schema({
     logo: { type: String, default: '' }, // ✅ Base64 logo
     icon: { type: String, default: '🏪' },
 
+    // ========== TEMPLATE FIELD ADD KIYA ==========
+    template: { type: String, default: 'general' }, // ✅ NEW: kirana, cloth, medical etc
+    // ========== TEMPLATE FIELD END ==========
+
     // ========== LOCATION TYPE FIELDS ==========
     locationType: {
         type: String,
@@ -108,14 +112,13 @@ const shopSchema = new mongoose.Schema({
     // ========== CLAIM SYSTEM FIELDS END ==========
 
     // ========== SHOP TYPE & ITEMS ==========
-// ========== SHOP TYPE & ITEMS ==========
     shopType: {
         type: String,
-        enum: ['product', 'food', 'service', 'rental', 'fashion', 'common'],
+        enum: ['product', 'food', 'service', 'rental', 'fashion', 'common', 'kirana', 'cloth', 'medical', 'restaurant'], // ✅ sare template add
         default: 'product',
         required: true
     },
-    items: [{  // <-- YE SIRF PRODUCT KE LIYE HAI
+    items: [{ // <-- YE SIRF PRODUCT KE LIYE HAI
         name: { type: String, required: true },
         price: { type: Number, required: true },
         image: { type: String, default: '' },
@@ -131,13 +134,12 @@ const shopSchema = new mongoose.Schema({
         expiry: { type: String, default: '' },
         mrp: { type: Number, default: 0 },
         stock: { type: Number, default: 0 }
-    }], // <-- YAHI BAND HONA THA
+    }],
 
-    // CHANGED: YE 4 FIELD ITEMS KE BAHAR AAYENGE
     ownerPhotoUrl: { type: String, default: '' },
     isOpen: { type: Boolean, default: true },
     announcement: { type: String, default: '' },
-    shopSettings: { 
+    shopSettings: {
         openTime: { type: String, default: '08:00' },
         closeTime: { type: String, default: '22:00' }
     },
@@ -152,7 +154,7 @@ const shopSchema = new mongoose.Schema({
             image: { type: String }
         }],
         default: []
-    },    // ========== END ==========
+    },
     // ========== SHOP TYPE & ITEMS END ==========
 
     rating: { type: Number, default: 0, min: 0, max: 5 },
@@ -166,7 +168,7 @@ const shopSchema = new mongoose.Schema({
 });
 
 // ========== INDEXES ==========
-shopSchema.index({ location: '2dsphere' });
+shopSchema.index({ location: '2dsphere' }); // ✅ nearby ke liye jaruri
 shopSchema.index({ status: 1 });
 shopSchema.index({ area: 1 });
 shopSchema.index({ areaCode: 1 });
@@ -184,6 +186,7 @@ shopSchema.index({ createdAt: -1 });
 shopSchema.index({ isActive: 1 });
 shopSchema.index({ locationType: 1 });
 shopSchema.index({ shopType: 1 });
+shopSchema.index({ template: 1 }); // ✅ template search ke liye
 
 // ✅ CLAIM SYSTEM INDEXES
 shopSchema.index({ claimedBy: 1 });

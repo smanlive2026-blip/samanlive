@@ -131,8 +131,8 @@ window.addEventListener('beforeunload', () => {
 });
 
 // ✅ RELOAD NEARBY DATA - LOCATION KE HISAB SE
- async function reloadNearbyData() {
-   let apiUrl = '/api/shops/nearby'; // default: sab shop
+async function reloadNearbyData() {
+   let apiUrl = '/api/shops/nearby'; 
     
     if(userLocation) {
         // agar location hai to nearby wali
@@ -143,10 +143,10 @@ window.addEventListener('beforeunload', () => {
     }
 
     try {
-        const shopsRes = await fetch(apiUrl); // ✅ yaha lat-lng optional ho gaya
+        const shopsRes = await fetch(apiUrl); 
         if(shopsRes.ok) {
             const res = await shopsRes.json();
-            const shopsData = res.data || res || []; // ✅ koi bhi format ho
+            const shopsData = res.data || res || []; 
             console.log("SHOPS COUNT:", shopsData.length);
 
             allServices = shopsData.map(shop => ({
@@ -233,8 +233,8 @@ function showUserLocationInHeader() {
         header.querySelector('.search-box-modern')?.insertAdjacentElement('afterend', locDiv);
     }
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
-   .then(r => r.json())
-   .then(data => {
+  .then(r => r.json())
+  .then(data => {
         document.getElementById('userCity').textContent = data.address.city || data.address.town || 'Your Area';
     }).catch(() => {
         document.getElementById('userCity').textContent = 'Your Area';
@@ -393,11 +393,11 @@ function renderVideos() {
         </div>`;
 }
 
-// SLIDER LOGIC
+// SLIDER LOGIC - FIX KIYA HAI
 let topAdIndex = 0, campaignIndex = 0;
-function showTopAd(idx) { document.querySelectorAll('#topAdsContainer .ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); topAdIndex=idx; }
+function showTopAd(idx) { document.querySelectorAll('#topAdsContainer.ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); topAdIndex=idx; }
 function nextTopAd() { const slides=document.querySelectorAll('#topAdsContainer.ad-slide'); if(slides.length) {topAdIndex=(topAdIndex+1)%slides.length; showTopAd(topAdIndex);} }
-function showCampaign(idx) { document.querySelectorAll('#campaignContainer .ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); campaignIndex=idx; }
+function showCampaign(idx) { document.querySelectorAll('#campaignContainer.ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); campaignIndex=idx; }
 function nextCampaign() { const slides=document.querySelectorAll('#campaignContainer.ad-slide'); if(slides.length) {campaignIndex=(campaignIndex+1)%slides.length; showCampaign(campaignIndex);} }
 setInterval(nextTopAd, 5000); setInterval(nextCampaign, 6000);
 

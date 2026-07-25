@@ -85,11 +85,70 @@ router.get('/public', async (req, res) => {
 });
 
 // ========================================
-// 4. NEARBY SHOPS - DELETE KIYA
-// Ab ye kaam /api/location/nearby-shops karega
+// 4. NEARBY SHOPS - LOCATION KE HISAB SE
 // ========================================
-// router.get('/nearby', ...)  // PURA DELETE
+router.get('/nearby', async (req, res) => {
+    try {
+        const { lat, lng } = req.query;
 
+        let query = { status: { $in: ['approved', 'active'] }, isActive: true };
+        let shops = [];
+
+        if(lat && lng) {
+            // Location hai to nearby 5KM tak
+            const latitude = parseFloat(lat);
+            const longitude = parseFloat(lng);
+
+            shops = await Shop.find({
+               ...query,
+                location: {
+                    $near: {
+                        $geometry: { type: "Point", coordinates: [longitude, latitude] },
+                        $maxDistance: 5000 // 5KM
+                    }
+                }
+            })
+           .select('-ownerId -approvedBy -rejectionReason -email -phone')
+           .limit(100)
+           .lean();
+
+            // distance calculate karke bhej de
+            shops = shops.map(shop => {
+                if(shop.location && shop.location.coordinates) {
+                    const [shopLng, shopLat] = shop.location.coordinates;
+                    const distance = calculateDistance(latitude, longitude, shopLat, shopLng);
+                    shop.distance = distance;
+                }
+                return shop;
+            });
+
+        } else {
+            // Location nahi hai to sab shop de do
+            shops = await Shop.find(query)
+          .select('-ownerId -approvedBy -rejectionReason -email -phone')
+          .sort({ rating: -1, createdAt: -1 })
+          .limit(100)
+          .lean();
+        }
+
+        res.json({ success: true, count: shops.length, data: shops });
+    } catch (err) {
+        console.error('❌ Nearby shops error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Distance calculate karne ka function
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
 // ========================================
 // 5. SHOP DETAILS
 // ========================================
