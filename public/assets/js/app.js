@@ -368,7 +368,7 @@ document.addEventListener('click', function(e) {
 });
 
 function openVideoModal(url, shopId) {
-    const shop = allServices.find(s => s._id === shopId);
+    const shop = allServices.find(s => s.shopId === shopId);
     const oldModal = document.getElementById('videoModal');
     if(oldModal) oldModal.remove();
     const modal = document.createElement('div');
