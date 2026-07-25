@@ -152,7 +152,7 @@ app.use('/api/location', locationRoutes);
 //app.use('/api/location', require('./modules/locationRoutes'));
 app.use('/api/location', require('./routes/location'));
 app.use('/api/location', require('./routes/user.location.routes'));
-app.use('/api', require('./routes/shop.location.routes'));
+//app.use('/api', require('./routes/shop.location.routes'));
 // ============== UPLOAD ROUTES ==============
 // Alag prefix de dete hai taaki takkar na ho
 app.use('/api/upload', require('./routes/upload'));
