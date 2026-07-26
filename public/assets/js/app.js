@@ -351,8 +351,8 @@ function renderSixLineShops() {
         const lineShops = allServices.slice(i * shopsPerLine, (i + 1) * shopsPerLine);
         if (lineShops.length === 0) continue;
         lineShops.forEach(shop => {
-        const shopType = ['cloth','kirana','medical','restaurant','furniture','auto','electronics','fruit','hardware','jewellery','bakery','kirana','dairy','mobile','salon','restaurant','service'].includes(shop.shopType)? shop.shopType : 'general';
-             row.innerHTML += `
+        const shopType = shop.shopType || 'general';            
+         row.innerHTML += `
                 <div class="shop-card-mini" onclick="window.location.href='/shop-templates/${shopType}/customer-view.html?shopId=${shop._id}'">
                     <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
                     <p>${shop.shopName}</p>
