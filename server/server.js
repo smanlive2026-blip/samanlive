@@ -62,12 +62,12 @@ app.get('/api/orders/shop/:shopId', async (req, res) => {
 });
 
 // Static files serve karo
-app.use(express.static(path.join(__dirname, '../public')));
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
-app.use('/logos', express.static(path.join(__dirname, '../public/logos')));
-app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
-app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
-app.use('/api/orders', orderRoutes);
+//app.use(express.static(path.join(__dirname, '../public')));
+//app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+//app.use('/logos', express.static(path.join(__dirname, '../public/logos')));
+//app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
+//app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
+//app.use('/api/orders', orderRoutes);
 
 // ✅ Shop templates static serve
 app.use('/shop-templates', express.static(path.join(__dirname, '../public/shop-templates')));

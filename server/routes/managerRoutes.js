@@ -322,19 +322,5 @@ router.post('/manager/update-location', async (req, res) => {
   }
 });
 
-// ========== EK BAAR CHALANE KE LIYE: PURANI SHOP FIX ==========
-router.post('/fix-old-shops', authManager, async (req, res) => {
-    try {
-        const result = await Shop.updateMany(
-            { areaCode: req.manager.areaCode, shopType: { $in: ['product', 'common', 'fashion', 'food', 'service'] } },
-            [
-                { $set: { shopType: "$serviceType" } } // shopType = serviceType kar de
-            ]
-        );
-        res.json({ success: true, message: `${result.modifiedCount} shops fixed` });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
 
 module.exports = router;
