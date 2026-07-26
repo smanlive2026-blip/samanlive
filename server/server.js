@@ -44,7 +44,7 @@ app.use('/shop', require('./routes/shopViewRoutes'));
 //app.use('/api/shops/fruit', fruitItemRoutes); // 1. FRUIT ALAG
 app.use('/api/shops/furniture', require('./routes/shops/furniture-route')); // 2. FURNITURE ALAG
 app.use('/api/shops', require('./routes/shopRoutes')); // 3. BAAKI SAB GENERIC
-app.use('/api/shops/general', require('./routes/shops/general'));
+//app.use('/api/shops/general', require('./routes/shops/general'));
 // Request Logger - Development ke liye
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'development') {
