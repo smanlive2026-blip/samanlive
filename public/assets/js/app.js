@@ -75,12 +75,9 @@ window.LocationManager = {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const newLoc = { lat: position.coords.latitude, lng: position.coords.longitude };
-
-                // 100m check
                 if(lastFetchedLocation && calculateDistance(lastFetchedLocation.lat, lastFetchedLocation.lng, newLoc.lat, newLoc.lng) < this.minDistance){
                     return;
                 }
-
                 window.currentUserLocation = newLoc;
                 userLocation = newLoc;
                 lastFetchedLocation = {...newLoc};
@@ -134,28 +131,22 @@ window.addEventListener('beforeunload', () => {
 async function reloadNearbyData() {
     try {
         let shopsData = [];
-
         if(userLocation) {
-            // 1. PEHLE NEARBY TRY KAREGA 5KM
             console.log("📍 Step 1: Loading Nearby Shops 5KM");
             const nearbyRes = await fetch(`/api/shop-view/nearby-shops?lat=${userLocation.lat}&lng=${userLocation.lng}`);
-
             if(nearbyRes.ok) {
                 const res = await nearbyRes.json();
                 shopsData = res.data || res || [];
             }
-
-            // 2. AGAR NEARBY ME 0 HAI TO SAB LOAD KAR
             if(shopsData.length === 0) {
                 console.log("⚠️ Nearby me 0 shop mili. Step 2: Loading ALL Shops");
-                const allRes = await fetch(`/api/shop-view/nearby-shops`); // bina lat-lng
+                const allRes = await fetch(`/api/shop-view/nearby-shops`);
                 if(allRes.ok) {
                     const res = await allRes.json();
                     shopsData = res.data || res || [];
                 }
             }
         } else {
-            // 3. LOCATION HI NAHI HAI TO DIRECT SAB
             console.log("🌍 Location nahi mili. Loading ALL Shops");
             const allRes = await fetch(`/api/shops/nearby`);
             if(allRes.ok) {
@@ -165,21 +156,18 @@ async function reloadNearbyData() {
         }
 
         console.log("SHOPS COUNT:", shopsData.length);
-
-        // CHANGE 1: YAHAN template BHI ADD KIYA
         allServices = shopsData.map(shop => ({
             _id: String(shop.shopId || shop._id || shop.id),
             shopName: shop.shopName || shop.name || 'Shop',
             distance: shop.distance || 0,
             shopType: shop.shopType || 'general',
-            template: shop.template || null, // ✅ NAYI LINE
+            template: shop.template || null,
             logo: shop.logo || '/assets/default-shop.png',
             icon: '🏪'
         }));
         originalServices = [...allServices];
         renderSixLineShops();
 
-        // PRODUCTS
         const productsRes = await fetch(`/api/products/top-rated?limit=24`);
         if(productsRes.ok) {
             allProducts = await productsRes.json();
@@ -190,13 +178,13 @@ async function reloadNearbyData() {
         console.error('Failed to reload:', e);
     }
 }
+
 // ========================================
 // LOAD DATA FROM SERVER
 // ========================================
 async function loadAllData() {
     try {
         await getUserLocation();
-
         const [adsRes, videosRes, campaignsRes, settingsRes, modulesRes] = await Promise.all([
             fetch('/api/ads').catch(()=>({ok:false})),
             fetch('/api/videos').catch(()=>({ok:false})),
@@ -204,19 +192,14 @@ async function loadAllData() {
             fetch('/api/settings').catch(()=>({ok:false})),
             fetch('/api/modules').catch(()=>({ok:false}))
         ]);
-
         if(adsRes.ok) allAds = await adsRes.json();
         if(videosRes.ok) nearbyVideos = await videosRes.json();
         if(campaignsRes.ok) allCampaigns = await campaignsRes.json();
         if(settingsRes.ok) siteSettings = await settingsRes.json();
         if(modulesRes.ok) allModules = (await modulesRes.json()).modules || [];
-
-        // INITIAL NEARBY LOAD
-        await reloadNearbyData(); // ✅ location ho ya na ho, ye chala dega
-
+        await reloadNearbyData();
         if(!userLocation) showLocationPopup();
         showUserLocationInHeader();
-
         renderServices();
         renderTopAds();
         renderCampaigns();
@@ -224,7 +207,6 @@ async function loadAllData() {
         renderSixLineProducts();
         renderVideos();
         updateLogo();
-
     } catch(e) {
         console.error('Failed to load data:', e);
     }
@@ -264,9 +246,7 @@ function updateLogo() {
     const logoContainer = document.querySelector('.logo');
     const header = document.querySelector('.header');
     const footerLogo = document.querySelector('.footer-logo');
-
     if(header) header.style.background = `linear-gradient(135deg, ${siteSettings.headerColor || '#667eea'}, #764ba2)`;
-
     if(logoContainer) {
         const logoImg = siteSettings.logoImage;
         const logoText = siteSettings.logoText || 'SAMANLIVE';
@@ -337,7 +317,7 @@ function renderCampaigns() {
         </div>`).join('');
 }
 
-// RENDER SHOPS - 6 LINE
+// RENDER SHOPS - 6 LINE - FIXED
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
@@ -347,17 +327,20 @@ function renderSixLineShops() {
     }
     container.innerHTML = '';
     const shopsPerLine = 4;
+    const userViewTemplates = ['kirana', 'medical', 'restaurant', 'cloth']; // jinke user-view hai
+
     for (let i = 0; i < 6; i++) {
         const row = document.createElement('div');
         row.className = 'carousel-item';
         const lineShops = allServices.slice(i * shopsPerLine, (i + 1) * shopsPerLine);
         if (lineShops.length === 0) continue;
 
-        // CHANGE 2: FIXMAP HATA KE DIRECT TEMPLATE USE KIYA
         lineShops.forEach(shop => {
-            const folder = shop.template || shop.shopType || 'general'; // ✅ NAYI LINE
+            const template = (shop.template || shop.shopType || '').toLowerCase().trim();
+            const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
+
             row.innerHTML += `
-                <div class="shop-card-mini" onclick="window.location.href='/shop/${shop._id}/view'">
+                <div class="shop-card-mini" onclick="window.location.href='/shop-templates/${template}/${fileName}?shopId=${shop._id}'">
                     <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
                     <p>${shop.shopName}</p>
                     ${shop.distance? `<small>📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
@@ -368,7 +351,7 @@ function renderSixLineShops() {
     }
 }
 
-// RENDER TOP PRODUCTS - 6 LINE ✅ FIXED
+// RENDER TOP PRODUCTS - 6 LINE
 function renderSixLineProducts() {
     const container = document.getElementById('topProductsContent');
     if (!container) return;
@@ -414,7 +397,7 @@ function renderVideos() {
         </div>`;
 }
 
-// SLIDER LOGIC - FIX KIYA HAI
+// SLIDER LOGIC
 let topAdIndex = 0, campaignIndex = 0;
 function showTopAd(idx) { document.querySelectorAll('#topAdsContainer.ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); topAdIndex=idx; }
 function nextTopAd() { const slides=document.querySelectorAll('#topAdsContainer.ad-slide'); if(slides.length) {topAdIndex=(topAdIndex+1)%slides.length; showTopAd(topAdIndex);} }
@@ -422,7 +405,7 @@ function showCampaign(idx) { document.querySelectorAll('#campaignContainer.ad-sl
 function nextCampaign() { const slides=document.querySelectorAll('#campaignContainer.ad-slide'); if(slides.length) {campaignIndex=(campaignIndex+1)%slides.length; showCampaign(campaignIndex);} }
 setInterval(nextTopAd, 5000); setInterval(nextCampaign, 6000);
 
-// VIDEO MODAL
+// VIDEO MODAL - FIXED
 document.addEventListener('click', function(e) {
     const videoCard = e.target.closest('.video-card');
     if (videoCard) openVideoModal(videoCard.dataset.videoUrl, videoCard.dataset.shopId);
@@ -434,13 +417,20 @@ function openVideoModal(url, shopId) {
     modal.id = 'videoModal';
     modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center;`;
 
-    // CHANGE 3: VIDEO MODAL KA BUTTON BHI /shop/id/view KIYA
+    const userViewTemplates = ['kirana', 'medical', 'restaurant', 'cloth'];
+    let visitBtn = '';
+    if(shop) {
+        const template = (shop.template || shop.shopType || '').toLowerCase().trim();
+        const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
+        visitBtn = `<button onclick="window.location.href='/shop-templates/${template}/${fileName}?shopId=${shop._id}'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">Visit Shop</button>`;
+    }
+
     modal.innerHTML = `<div style="position:relative;width:90%;max-width:900px;">
         <button onclick="closeVideoModal()" style="position:absolute;top:-40px;right:0;background:#fff;border:none;font-size:30px;width:40px;height:40px;border-radius:50%;cursor:pointer;">×</button>
         <video controls autoplay style="width:100%;border-radius:10px;"><source src="${url}" type="video/mp4"></video>
         ${shop? `<div style="background:white;padding:12px;border-radius:0 0 10px 10px;display:flex;justify-content:space-between;align-items:center;">
             <div><div style="font-weight:700;color:#1e40af;">${shop.shopName}</div></div>
-            <button onclick="window.location.href='/shop/${shop._id}/view'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">Visit Shop</button>
+            ${visitBtn}
         </div>` : ''}
     </div>`;
     document.body.appendChild(modal);
@@ -476,7 +466,7 @@ async function fetchUserData(token) {
         const data = await res.json();
         if (data.success) {
             currentUser = data.user; window.currentUser = data.user;
-            localStorage.setItem('userId', data.user._id); // ✅ location ke liye
+            localStorage.setItem('userId', data.user._id);
             updateProfileAvatar();
         }
         else localStorage.removeItem('userToken');
