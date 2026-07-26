@@ -255,20 +255,21 @@ function initCreateShopForm() {
         if (!shopAddress) return showError('Shop Address dalna zaroori hai!', 'createShopAddress', btn);
         if (!manager?.managerCode) return showError('Session expired! Page reload karo.', null, btn);
 
-       const shopData = {
-          shopName: shopName,
-          ownerName: ownerName,
-          phone: phoneNumber,
-          contact: phoneNumber,
-          serviceType: shopModule,
-          shopType: window.mapShopType(shopModule), // ✅ MAP FILE SE
-          bucket: manager.bucket || 'DEFAULT',
-          areaCode: manager.areaCode,
-          email: document.getElementById('createShopEmail').value.trim() || '',
-          address: shopAddress,
-          icon: createShopSelectedIcon,
-          range: range
-        };
+      const shopData = {
+    shopName: shopName,
+    ownerName: ownerName,
+    phone: phoneNumber,
+    contact: phoneNumber,
+    serviceType: shopModule, // 'kirana'
+    shopType: window.mapShopType(shopModule), // 'product' - purane code ke liye
+    template: shopModule, // ✅ YE NAYI LINE - 'kirana' seedha save hoga
+    bucket: manager.bucket || 'DEFAULT',
+    areaCode: manager.areaCode,
+    email: document.getElementById('createShopEmail').value.trim() || '',
+    address: shopAddress,
+    icon: createShopSelectedIcon,
+    range: range
+     };
 
         console.log('📤 FINAL PAYLOAD for /manager/create-shop-v2:', shopData);
 

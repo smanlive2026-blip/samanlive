@@ -9,7 +9,9 @@ exports.getShopUserView = async (req, res) => {
         
         if(!shop) return res.status(404).send("Shop not found");
         
-        const template = shop.template || 'general'; 
+        // 1. PEHLE template dekho. NAHI HAI TO serviceType se lo. USKE BAAD general
+        const template = shop.template || shop.serviceType || 'general'; 
+        
         const templatePath = path.join(__dirname, '../../public/shop-templates', template);
 
         // YEH 3 NAAM CHECK KAREGA
@@ -26,10 +28,11 @@ exports.getShopUserView = async (req, res) => {
 
         // agar template me nahi mila to general wala
         if(!viewFile) {
+            console.log(`⚠️ ${template} folder not found. Using general`);
             viewFile = path.join(__dirname, '../../public/shop-templates/general/user-view.html');
         }
         
-        // shopId ko file me inject karne ke liye redirect with query
+        console.log(`✅ Serving: ${shop.shopName} | Template: ${template}`);
         res.sendFile(viewFile);
 
     } catch(err) {

@@ -166,11 +166,13 @@ async function reloadNearbyData() {
 
         console.log("SHOPS COUNT:", shopsData.length);
 
+        // CHANGE 1: YAHAN template BHI ADD KIYA
         allServices = shopsData.map(shop => ({
             _id: String(shop.shopId || shop._id || shop.id),
             shopName: shop.shopName || shop.name || 'Shop',
             distance: shop.distance || 0,
             shopType: shop.shopType || 'general',
+            template: shop.template || null, // ✅ NAYI LINE
             logo: shop.logo || '/assets/default-shop.png',
             icon: '🏪'
         }));
@@ -250,8 +252,8 @@ function showUserLocationInHeader() {
         header.querySelector('.search-box-modern')?.insertAdjacentElement('afterend', locDiv);
     }
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
- .then(r => r.json())
- .then(data => {
+.then(r => r.json())
+.then(data => {
         document.getElementById('userCity').textContent = data.address.city || data.address.town || 'Your Area';
     }).catch(() => {
         document.getElementById('userCity').textContent = 'Your Area';
@@ -350,11 +352,12 @@ function renderSixLineShops() {
         row.className = 'carousel-item';
         const lineShops = allServices.slice(i * shopsPerLine, (i + 1) * shopsPerLine);
         if (lineShops.length === 0) continue;
-    const fixMap = { 'product':'kirana', 'fashion':'cloth', 'food':'restaurant', 'service':'service', 'common':'general' };
-         lineShops.forEach(shop => {
-            const folder = fixMap[shop.shopType] || 'general'; // YE NAYI LINE
-           row.innerHTML += `
-            <div class="shop-card-mini" onclick="window.location.href='/shop-templates/${folder}/customer-view.html?shopId=${shop._id}'">      
+
+        // CHANGE 2: FIXMAP HATA KE DIRECT TEMPLATE USE KIYA
+        lineShops.forEach(shop => {
+            const folder = shop.template || shop.shopType || 'general'; // ✅ NAYI LINE
+            row.innerHTML += `
+                <div class="shop-card-mini" onclick="window.location.href='/shop/${shop._id}/view'">
                     <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
                     <p>${shop.shopName}</p>
                     ${shop.distance? `<small>📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
@@ -430,12 +433,14 @@ function openVideoModal(url, shopId) {
     const modal = document.createElement('div');
     modal.id = 'videoModal';
     modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center;`;
+
+    // CHANGE 3: VIDEO MODAL KA BUTTON BHI /shop/id/view KIYA
     modal.innerHTML = `<div style="position:relative;width:90%;max-width:900px;">
         <button onclick="closeVideoModal()" style="position:absolute;top:-40px;right:0;background:#fff;border:none;font-size:30px;width:40px;height:40px;border-radius:50%;cursor:pointer;">×</button>
         <video controls autoplay style="width:100%;border-radius:10px;"><source src="${url}" type="video/mp4"></video>
         ${shop? `<div style="background:white;padding:12px;border-radius:0 0 10px 10px;display:flex;justify-content:space-between;align-items:center;">
             <div><div style="font-weight:700;color:#1e40af;">${shop.shopName}</div></div>
-            <button onclick="window.location.href='/shop-templates/${shop.shopType}/customer-view.html?shopId=${shop._id}'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">Visit Shop</button>
+            <button onclick="window.location.href='/shop/${shop._id}/view'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">Visit Shop</button>
         </div>` : ''}
     </div>`;
     document.body.appendChild(modal);
