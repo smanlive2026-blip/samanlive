@@ -14,8 +14,8 @@ function getDistance(lat1, lon1, lat2, lon2) {
 }
 
 // ========================================
-// 1. NEARBY SHOPS - SAB SHOP CHAHIYE. KOI FILTER NAHI
-// URL: /api/shop-view/nearby-shops?lat=23.22&lng=72.58
+// 1. NEARBY SHOPS
+// URL: /shop/nearby-shops?lat=23.22&lng=72.58
 // ========================================
 router.get('/nearby-shops', async (req, res) => {
     try {
@@ -23,35 +23,26 @@ router.get('/nearby-shops', async (req, res) => {
         const latitude = parseFloat(lat);
         const longitude = parseFloat(lng);
 
-        // SABHI SHOP NIKALO. APPROVED PENDING KUCH NAHI DEKHEGA
         let shops = await Shop.find({})
             .select('-ownerId -approvedBy -rejectionReason -email -phone -managerCodes')
             .limit(1000)
             .lean();
 
-        // LOCATION HAI TO DISTANCE LAGA KE SORT
         if(lat && lng && !isNaN(latitude) && !isNaN(longitude)) {
             shops = shops.map(shop => {
                 if(shop.location?.coordinates) {
                     const [shopLng, shopLat] = shop.location.coordinates;
                     shop.distance = getDistance(latitude, longitude, shopLat, shopLng);
                 } else {
-                    shop.distance = 9999; // location nahi hai to sabse last
+                    shop.distance = 9999;
                 }
                 return shop;
-            }).sort((a,b) => a.distance - b.distance); // paas wali pehle
-        } 
-        // LOCATION NAHI HAI TO NAYI WALI PEHLE
-        else {
+            }).sort((a,b) => a.distance - b.distance);
+        } else {
             shops = shops.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
 
-        res.json({ 
-            success: true, 
-            count: shops.length, 
-            data: shops
-        });
-
+        res.json({ success: true, count: shops.length, data: shops });
     } catch (err) { 
         console.error('❌ nearby-shops error:', err);
         res.status(500).json({ error: err.message }); 
@@ -60,9 +51,9 @@ router.get('/nearby-shops', async (req, res) => {
 
 // ========================================
 // 2. SINGLE SHOP TEMPLATE KHOLNA
-// URL: /api/shop-view/:shopId
+// URL: /shop/:shopId/view  <-- YE BADLA
 // ========================================
-router.get('/:shopId', async (req, res) => {
+router.get('/:shopId/view', async (req, res) => {  // ✅ /view ADD KIYA
     try {
         const { shopId } = req.params;
         const shop = await Shop.findById(shopId);
@@ -77,8 +68,13 @@ router.get('/:shopId', async (req, res) => {
             if(fs.existsSync(filePath)) { viewFile = filePath; break; }
         }
         if(!viewFile) viewFile = path.join(__dirname, '../../public/shop-templates/general/user-view.html');
+        
+        console.log(`✅ Serving: ${shop.shopName} | Template: ${template}`);
         res.sendFile(viewFile);
-    } catch(err) { res.status(500).send(err.message); }
+    } catch(err) { 
+        console.error(err);
+        res.status(500).send(err.message); 
+    }
 });
 
 module.exports = router;
