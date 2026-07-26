@@ -287,9 +287,17 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
 });
 
 // ========== HELPER FUNCTION ==========
+// ========== HELPER FUNCTION ==========
 function mapShopType(module) {
-    return module || 'general';
+    const map = {
+        'kirana': 'product', 'cloth': 'fashion', 'medical': 'product',
+        'restaurant': 'food', 'electronics': 'product', 'hardware': 'product',
+        'salon': 'service', 'stationery': 'product', 'service': 'service',
+        'rental': 'rental', 'common': 'common'
+    };
+    return map[module] || 'common';
 }
+
 
 // File: server/routes/adminRoutes.js
 router.get('/admin/all-delivery-managers', async (req, res) => {
