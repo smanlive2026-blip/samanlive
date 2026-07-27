@@ -317,7 +317,8 @@ function renderCampaigns() {
         </div>`).join('');
 }
 
-// RENDER SHOPS - 6 LINE - FIXED
+// RENDER SHOPS - 6 LINE - SHOP TEMPLATES WALA
+
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
@@ -327,7 +328,8 @@ function renderSixLineShops() {
     }
     container.innerHTML = '';
     const shopsPerLine = 4;
-    const userViewTemplates = ['kirana', 'medical', 'restaurant', 'cloth']; // jinke user-view hai
+    // jinke user-view.html hai
+    const userViewTemplates = ['kirana', 'medical', 'restaurant']; 
 
     for (let i = 0; i < 6; i++) {
         const row = document.createElement('div');
@@ -336,14 +338,20 @@ function renderSixLineShops() {
         if (lineShops.length === 0) continue;
 
         lineShops.forEach(shop => {
-            const template = (shop.template || shop.shopType || '').toLowerCase().trim();
-            const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
+            // 1. template priority: DB se template > shopType
+            const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
+            
+            // 2. file ka naam decide
+            const fileName = userViewTemplates.includes(template) ? 'user-view.html' : 'customer-view.html';
+
+            // 3. Direct shop-templates ka link
+            const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
 
             row.innerHTML += `
-                <div class="shop-card-mini" onclick="window.location.href='/shop-templates/${template}/${fileName}?shopId=${shop._id}'">
+                <div class="shop-card-mini" onclick="window.location.href='${customerUrl}'">
                     <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
                     <p>${shop.shopName}</p>
-                    ${shop.distance? `<small>📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
+                    ${shop.distance ? `<small>📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
                 </div>
             `;
         });
@@ -420,10 +428,10 @@ function openVideoModal(url, shopId) {
     const userViewTemplates = ['kirana', 'medical', 'restaurant', 'cloth'];
     let visitBtn = '';
     if(shop) {
-        const template = (shop.template || shop.shopType || '').toLowerCase().trim();
-        const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
-        visitBtn = `<button onclick="window.location.href='/shop-templates/${template}/${fileName}?shopId=${shop._id}'" style="background:#1e40af;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">Visit Shop</button>`;
-    }
+         const template = (shop.template || shop.shopType || '').toLowerCase().trim();
+         const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
+        visitBtn = `<button onclick="window.location.href='/shop-templates/${template}/${fileName}?shopId=${shop._id}'"...`    
+}
 
     modal.innerHTML = `<div style="position:relative;width:90%;max-width:900px;">
         <button onclick="closeVideoModal()" style="position:absolute;top:-40px;right:0;background:#fff;border:none;font-size:30px;width:40px;height:40px;border-radius:50%;cursor:pointer;">×</button>
