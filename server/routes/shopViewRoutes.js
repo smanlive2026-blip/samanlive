@@ -34,7 +34,7 @@ router.get('/nearby-shops', async (req, res) => {
                     const [shopLng, shopLat] = shop.location.coordinates;
                     shop.distance = getDistance(latitude, longitude, shopLat, shopLng); // meter
                 } else {
-                    shop.distance = 999999; // bahut door
+                    shop.distance = 999; // bahut door
                 }
                 return shop;
             }).sort((a,b) => a.distance - b.distance).slice(0, 100); // top 100
@@ -63,7 +63,7 @@ router.get('/nearby-shops', async (req, res) => {
 // ========================================
 // 2. SINGLE SHOP REDIRECT - PURANA LINK SUPPORT
 // URL: /shop/:shopId/view 
-// Ab ye seedha /shop-templates/ wale pe bhej dega
+// App ya purane link ke liye
 // ========================================
 router.get('/:shopId/view', async (req, res) => {
     try {
@@ -78,7 +78,35 @@ router.get('/:shopId/view', async (req, res) => {
         const fileName = userViewTemplates.includes(template) ? 'user-view.html' : 'customer-view.html';
         
         const newUrl = `/shop-templates/${template}/${fileName}?shopId=${shopId}`;
-        console.log(`✅ Redirecting: ${shop.shopName} to ${newUrl}`);
+        console.log(`✅ Redirecting OLD: ${shop.shopName} to ${newUrl}`);
+        
+        res.redirect(301, newUrl); // 301 permanent redirect
+
+    } catch(err) { 
+        console.error(err);
+        res.status(500).send(err.message); 
+    }
+});
+
+// ========================================
+// 3. SINGLE SHOP REDIRECT - ADMIN PANEL KE LIYE NAYA
+// URL: /api/shop/view/:shopId 
+// Admin "View" button isi ko call karega
+// ========================================
+router.get('/view/:shopId', async (req, res) => {
+    try {
+        const { shopId } = req.params;
+        const shop = await Shop.findById(shopId);
+        if(!shop) return res.status(404).send("Shop not found");
+        
+        const template = (shop.template || shop.serviceType || 'common').toLowerCase().trim();
+        
+        // user-view wale template
+        const userViewTemplates = ['kirana', 'medical', 'restaurant']; 
+        const fileName = userViewTemplates.includes(template) ? 'user-view.html' : 'customer-view.html';
+        
+        const newUrl = `/shop-templates/${template}/${fileName}?shopId=${shopId}`;
+        console.log(`✅ Redirecting ADMIN: ${shop.shopName} to ${newUrl}`);
         
         res.redirect(301, newUrl); // 301 permanent redirect
 

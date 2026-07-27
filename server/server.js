@@ -32,7 +32,9 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-manager banega
 app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
 const shopViewRoutes = require('./routes/shopViewRoutes');
-app.use('/api/shop-view', shopViewRoutes);
+app.use('/api/shop-view', shopViewRoutes);  // isko delet krna h 
+app.use('/api/shop-view', require('./routes/shopViewRoutes'));  // ye nya h 
+app.use('/api/shop', require('./routes/shopViewRoutes')); // admin ke liye
 app.use('/api/shops/auto', require('./routes/shops/auto'));
 app.use('/shop', require('./routes/shopViewRoutes'));
 //app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
