@@ -288,7 +288,8 @@ function initCreateShopForm() {
                 const dashboardUrl = `${window.location.origin}/shop-templates/${templateFolder}/dashboard.html?shopId=${shopId}`;
 
                 navigator.clipboard.writeText(dashboardUrl).catch(err => {});
-                showSuccessModal(res.shopName, dashboardUrl, res.currentCount, res.maxShops);
+                // naya
+                showSuccessModal(res.shopName, shopId, shopModule, res.currentCount, res.maxShops);
 
                 closeCreateShopModal();
                 window.loadDashboard();
@@ -306,8 +307,16 @@ function initCreateShopForm() {
     });
 }
 
-// ✅ SUCCESS MODAL WITH OPEN BUTTON
-function showSuccessModal(shopName, dashboardUrl, currentCount, maxShops) {
+// ✅ SUCCESS MODAL WITH DASHBOARD + CUSTOMER BUTTON
+function showSuccessModal(shopName, shopId, shopModule, currentCount, maxShops) {
+    const templateFolder = window.getShopTemplateFolder(shopModule);
+    
+    // 90% me customer-view.html hai, 3 me user-view.html
+    const customerFile = ['kirana','medical','restaurant'].includes(templateFolder) ? 'user-view.html' : 'customer-view.html';
+    
+    const dashboardUrl = `${window.location.origin}/shop-templates/${templateFolder}/dashboard.html?shopId=${shopId}`;
+    const customerUrl = `${window.location.origin}/shop-templates/${templateFolder}/${customerFile}?shopId=${shopId}`;
+
     const modalHtml = `
         <div id="successModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;">
             <div style="background:#fff;padding:30px;border-radius:16px;max-width:400px;width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
@@ -317,7 +326,10 @@ function showSuccessModal(shopName, dashboardUrl, currentCount, maxShops) {
                 <p style="margin:0 0 20px 0;color:#94a3b8;font-size:14px;">Total Shops: ${currentCount}/${maxShops}</p>
 
                 <a href="${dashboardUrl}" target="_blank" class="btn btn-primary" style="width:100%;margin-bottom:10px;text-decoration:none;display:block;padding:12px;">
-                    <i class="fas fa-external-link-alt"></i> Open Shop Dashboard
+                    <i class="fas fa-cog"></i> Manager Dashboard
+                </a>
+                <a href="${customerUrl}" target="_blank" class="btn btn-success" style="width:100%;margin-bottom:10px;text-decoration:none;display:block;padding:12px;background:#10b981;">
+                    <i class="fas fa-store"></i> Customer View
                 </a>
 
                 <button onclick="document.getElementById('successModal').remove()" class="btn btn-outline" style="width:100%;">

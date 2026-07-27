@@ -189,7 +189,7 @@ router.put('/shops/:id', authManager, async (req, res) => {
 router.post('/create-shop-v2', authManager, async (req, res) => {
     try {
         const manager = req.manager;
-        const { shopName, ownerName, phone, contact, serviceType, shopType, email, address, icon, range, bucket } = req.body;
+        const { shopName, ownerName, phone, contact, serviceType, shopType, template, email, address, icon, range, bucket } = req.body; // ✅ template add kiya
 
         console.log('🏪 Create Shop Request:', manager.name, '| Shop:', shopName);
 
@@ -223,6 +223,8 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
         // 3. Area details
         const area = await Area.findOne({ areaCode: manager.areaCode });
 
+        const shopModule = template || serviceType; // ✅ ye line add kar de
+
         // 4. Shop Create
         const newShop = new Shop({
             shopName: shopName.trim(),
@@ -241,6 +243,7 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
 
             serviceType: serviceType,
             shopType: mapShopType(serviceType),
+            template: shopModule, // ✅ ye bhi save kar le future ke liye
             bucket: bucket || manager.bucket || 'EVERY NEW MORNING NEW WAY',
             areaCode: manager.areaCode,
             areaName: area?.areaName || manager.areaName,
@@ -259,7 +262,7 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
                 coordinates: [area?.centerLng || 72.8311, area?.centerLat || 20.3974]
             },
 
-            module: 'local-market',
+            module: shopModule,  // ✅ ab ye kaam karega - 'kirana', 'fruit' direct save hoga
             status: 'approved',
             isActive: true,
             isVerified: true
@@ -270,7 +273,7 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
         // Manager ka count update
         await Manager.findByIdAndUpdate(manager._id, { $inc: { currentShopCount: 1 } });
 
-        console.log('✅ New shop created:', shopName, '| By:', manager.name);
+        console.log('✅ New shop created:', shopName, '| By:', manager.name, '| Module:', shopModule);
 
         res.json({
             success: true,
