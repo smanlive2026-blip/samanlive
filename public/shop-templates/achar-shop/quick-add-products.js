@@ -2,19 +2,8 @@
 // QUICK ADD 50+ ACHAR PRODUCTS
 // File: /public/shop-templates/achar-shop/quick-add-products.js
 // ========================================
-// ========================================
-// QUICK ADD 50 ACHAR PRODUCTS
-// File: /public/shop-templates/achar-shop/quick-add-products.js
-// ========================================
 
-async function addAllProducts() {
-    if(!confirm('50 Achar add karne hain? Pehle wale delete nahi honge')) return;
-
-    const shopId = new URLSearchParams(window.location.search).get('shopId');
-    if(!shopId) return alert('ShopId nahi mila');
-    }
 const acharProductsList = [
-
     { name: 'Aam Ka Achar', category: 'Aam', price500: 120, price1kg: 220, stock: 20, description: 'Khatta meetha aam ka achar maa ke haath ka', jarType: 'Glass', spiceLevel: 'Medium', image: 'https://placehold.co/400/FBBF24/fff?text=Aam+Achar' },
     { name: 'Nimbu Ka Achar', category: 'Nimbu', price500: 100, price1kg: 180, stock: 15, description: 'Teekha nimbu achar', jarType: 'Glass', spiceLevel: 'Teekha', image: 'https://placehold.co/400/FBBF24/fff?text=Nimbu+Achar' },
     { name: 'Mix Achar', category: 'Mix', price500: 140, price1kg: 260, stock: 25, description: 'Aam, gajar, mooli ka mix achar', jarType: 'Glass', spiceLevel: 'Medium', image: 'https://placehold.co/400/FBBF24/fff?text=Mix+Achar' },
@@ -25,6 +14,7 @@ const acharProductsList = [
     { name: 'Aam Ka Gol Achar', category: 'Aam', price500: 130, price1kg: 240, stock: 22, description: 'Masaledar gol aam', jarType: 'Glass', spiceLevel: 'Teekha', image: 'https://placehold.co/400/FBBF24/fff?text=Aam+Gol' },
     { name: 'Nimbu Meetha Achar', category: 'Nimbu', price500: 110, price1kg: 200, stock: 16, description: 'Meetha nimbu', jarType: 'Glass', spiceLevel: 'Mild', image: 'https://placehold.co/400/FBBF24/fff?text=Meetha+Nimbu' },
     { name: 'Mix Punjabi Achar', category: 'Mix', price500: 150, price1kg: 270, stock: 20, description: 'Punjabi style mix', jarType: 'Ceramic', spiceLevel: 'Teekha', image: 'https://placehold.co/400/FBBF24/fff?text=Punjabi+Mix' },
+    // Baki ke 40 product... yaha full list daal dena
     { name: 'Bharwa Mirchi', category: 'Mirchi', price500: 120, price1kg: 220, stock: 14, description: 'Bharwa masala mirchi', jarType: 'Glass', spiceLevel: 'Teekha', image: 'https://placehold.co/400/FBBF24/fff?text=Bharwa' },
     { name: 'Aam Chunda', category: 'Aam', price500: 140, price1kg: 250, stock: 19, description: 'Gujrati chunda', jarType: 'Glass', spiceLevel: 'Mild', image: 'https://placehold.co/400/FBBF24/fff?text=Chunda' },
     { name: 'Adrak Ka Achar', category: 'Other', price500: 130, price1kg: 240, stock: 11, description: 'Adrak nimbu achar', jarType: 'Glass', spiceLevel: 'Medium', image: 'https://placehold.co/400/FBBF24/fff?text=Adrak' },
@@ -66,21 +56,26 @@ const acharProductsList = [
     { name: 'Nimbu Ka Achar Gharalu', category: 'Nimbu', price500: 105, price1kg: 195, stock: 18, description: 'Gharalu recipe', jarType: 'Glass', spiceLevel: 'Medium', image: 'https://placehold.co/400/FBBF24/fff?text=Gharalu+Nimbu' }
 ];
 
-// Total 50+ product bana diye. Yaha paste karne ke liye short rakha. Chahiye to full 50 bhej du
-
 let isAdding = false;
 
 async function addAllProducts() {
+    const shopId = new URLSearchParams(window.location.search).get('shopId'); // FIX: shopId yaha liya
+    
     if(isAdding) return alert('Pehle wale add ho rahe hain');
-    if(!confirm('50+ products add karein?')) return;
+    if(!shopId) return alert('ShopId nahi mila');
+    if(!confirm('50+ products add karein? Pehle wale delete nahi honge')) return;
     
     isAdding = true;
-    document.getElementById('quickAddBtn').innerText = 'Adding...';
-    document.getElementById('quickAddBtn').disabled = true;
+    const btn = document.getElementById('quickAddBtn');
+    if(btn) {
+        btn.innerText = 'Adding...';
+        btn.disabled = true;
+    }
 
     let success = 0;
     for(let p of acharProductsList) {
         p.shopId = shopId;
+        p.isActive = true; // ye add kiya
         try {
             const res = await fetch('/api/shops/achar', {
                 method: 'POST',
@@ -88,18 +83,15 @@ async function addAllProducts() {
                 body: JSON.stringify(p)
             });
             if(res.ok) success++;
+            await new Promise(r => setTimeout(r, 100)); // server load kam karne ke liye
         } catch(e) { console.log('Error', p.name) }
     }
 
     alert(`${success} products add ho gaye!`);
     isAdding = false;
-    document.getElementById('quickAddBtn').innerText = '50+ Products Add Karein';
-    document.getElementById('quickAddBtn').disabled = false;
-    loadInventory();
+    if(btn) {
+        btn.innerText = '⚡ 50+ Products Add Karein';
+        btn.disabled = false;
+    }
+    if(typeof loadInventory === 'function') loadInventory(); // inventory refresh
 }
-
-// Dashboard me button add karne ke liye
-document.addEventListener('DOMContentLoaded', () => {
-    const btn = `<button id="quickAddBtn" onclick="addAllProducts()" style="background:#16a34a; color:#fff; padding:12px; border:none; border-radius:8px; width:100%; margin:10px 0; font-weight:700;">⚡ 50+ Products 1 Click Me Add Karein</button>`;
-    document.querySelector('.dashboard-section')?.insertAdjacentHTML('afterbegin', btn);
-});

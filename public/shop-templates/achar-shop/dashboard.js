@@ -1,18 +1,17 @@
 // ========================================
-// ACHAR SHOP DASHBOARD JS - FULL v5
+// ACHAR SHOP DASHBOARD JS - FULL v6 FIXED
 // File: /public/shop-templates/achar-shop/dashboard.js
-// SHOPCORE INTEGRATED + QUICK ADD + BANNER FIX
 // ========================================
 
 let shopId = new URLSearchParams(window.location.search).get('shopId');
 let allProducts = [];
 let allOrders = [];
 let currentEditId = null;
-let productImageUrl = ''; // product image ke liye
+let productImageUrl = ''; 
 
 document.addEventListener('DOMContentLoaded', () => {
     if(!shopId) {
-        alert('Shop ID nahi mila. URL me?shopId=xxx add karo');
+        alert('Shop ID nahi mila. URL me ?shopId=xxx add karo');
         return;
     }
 
@@ -30,12 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event Listeners
     document.getElementById('addAcharBtn').addEventListener('click', openAddModal);
-    document.getElementById('quickAddBtn').addEventListener('click', addAllProducts); // FIXED: Quick add
-    document.getElementById('changeBannerBtn').addEventListener('click', () => { // FIXED: Banner button
+    document.getElementById('quickAddBtn').addEventListener('click', quickAddProducts); // FIX 1: function name sahi
+    document.getElementById('changeBannerBtn').addEventListener('click', () => {
         document.getElementById('bannerInput').click();
     });
     document.getElementById('newOrderBtn').addEventListener('click', () => alert('Order system file 6 me banega'));
-    document.getElementById('userViewBtn').href = `/shop/${shopId}`;
+    document.getElementById('userViewBtn').href = `/shop/customer-view?shopId=${shopId}`; // FIX 2: url sahi
     document.getElementById('locationBtn').addEventListener('click', () => {
         document.getElementById('locationCard').style.display = 'block';
     });
@@ -312,4 +311,4 @@ ShopCore.uploadImage = async function(file, type) {
     return url;
 }
 
-console.log('✅ Achar Dashboard v5 Loaded - All Fixed');
+console.log('✅ Achar Dashboard v6 Loaded - All Fixed');
