@@ -3,80 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Achar Store</title>
+    <title id="pageTitle">Maa Ke Haath Ka Achar</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #fefce8; }
-       .header { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; padding: 50px 20px; text-align: center; }
-       .header h1 { font-size: 36px; }
-       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
-        
-       .filter-bar { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
-       .filter { background: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
-       .filter.active { background: #eab308; color: white; }
-        
-       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
-       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
-       .product-price { font-size: 22px; font-weight: 800; color: #eab308; }
-       .btn-buy { background: #eab308; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
-        
-       .offer-box { background: white; padding: 25px; border-radius: 20px; margin: 30px 0; text-align: center; border: 2px dashed #eab308; }
+        body { background: #fffbeb; }
+
+       .banner { width: 100%; height: 280px; object-fit: cover; position: relative; }
+       .banner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 280px; background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6)); }
+
+       .container { max-width: 1300px; margin: -60px auto 0; padding: 20px; position: relative; z-index: 2; }
+
+       .shop-header { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); margin-bottom: 25px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+       .shop-header img { width: 90px; height: 90px; border-radius: 50%; border: 4px solid #eab308; flex-shrink: 0; }
+       .shop-info h1 { color: #713f12; font-size: 30px; margin-bottom: 5px; }
+       .shop-info p { color: #64748b; font-size: 14px; }
+       .shop-status { margin-left: auto; background: #dcfce7; color: #166534; padding: 8px 16px; border-radius: 50px; font-weight: 700; }
+       .shop-status.closed { background: #fee2e2; color: #991b1b; }
+
+       .announcement { background: #fef9c3; color: #713f12; padding: 15px 20px; border-radius: 15px; margin-bottom: 20px; font-weight: 600; display: flex; align-items: center; gap: 10px; border-left: 5px solid #eab308; }
+
+       .filters { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 5px; }
+       .filter-btn { background: white; border: 2px solid #eab308; color: #713f12; padding: 10px 20px; border-radius: 50px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.3s; }
+       .filter-btn.active { background: #eab308; color: white; transform: scale(1.05); }
+
+       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+       .product-card { background: white; border-radius: 20px; padding: 18px; box-shadow: 0 5px 25px rgba(0,0,0,0.08); transition: 0.3s; }
+       .product-card:hover { transform: translateY(-8px); box-shadow: 0 15px 40px rgba(234,179,8,0.2); }
+       .product-card img { width: 100%; height: 220px; object-fit: cover; border-radius: 15px; margin-bottom: 15px; }
+       .product-card.category-tag { background: #fef9c3; color: #713f12; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; display: inline-block; margin-bottom: 8px; }
+       .product-card h3 { color: #1e293b; font-size: 20px; margin-bottom: 8px; }
+       .product-meta { display: flex; gap: 10px; font-size: 12px; color: #64748b; margin-bottom: 10px; }
+       .price-row { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
+       .price { font-size: 22px; font-weight: 700; color: #eab308; }
+       .price small { font-size: 14px; color: #64748b; font-weight: 400; }
+       .stock { font-size: 13px; color: #16a34a; font-weight: 600; }
+       .stock.low { color: #dc2626; }
+       .btn-add { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; font-size: 15px; transition: 0.3s; }
+       .btn-add:hover { transform: scale(1.02); }
+       .btn-add:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+
+       .cart-float { position: fixed; bottom: 25px; right: 25px; background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; padding: 16px 28px; border-radius: 50px; font-weight: 700; box-shadow: 0 10px 30px rgba(234,179,8,0.5); cursor: pointer; z-index: 99; display: flex; align-items: center; gap: 10px; font-size: 16px; }
+       .cart-count { background: white; color: #eab308; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+
+       .footer { text-align: center; padding: 40px 20px; color: #64748b; background: white; margin-top: 40px; border-radius: 20px; }
+       .footer h3 { color: #713f12; margin-bottom: 10px; }
+
+        @media(max-width:768px){
+           .banner,.banner-overlay {height: 200px;}
+           .container {margin-top: -40px;}
+           .shop-header {flex-direction: column; text-align: center;}
+           .shop-status {margin-left: 0;}
+           .product-grid {grid-template-columns: repeat(2, 1fr); gap: 15px;}
+           .cart-float {bottom: 15px; right: 15px; padding: 12px 20px; font-size: 14px;}
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1><i class="fa fa-jar"></i> <span id="shopName">Maa Ke Haath Ka Achar</span></h1>
-        <p>100% Homemade | Mustard Oil | No Preservative | 500g & 1kg Pack</p>
+    <div style="position:relative;">
+        <img id="shopBanner" class="banner" src="https://placehold.co/1400x280/eab308/fff?text=Maa+Ke+Haath+Ka+Achar">
+        <div class="banner-overlay"></div>
     </div>
 
     <div class="container">
-        <div class="offer-box">
-            <h3><i class="fa fa-gift"></i> Combo Offer</h3>
-            <p>Buy 2kg Achar Get 1 Jar Free | Gift Pack Available | All India Delivery</p>
+        <div class="shop-header">
+            <img id="shopLogo" src="https://placehold.co/90/eab308/fff?text=A">
+            <div class="shop-info">
+                <h1 id="shopName">Maa Ke Haath Ka Achar</h1>
+                <p><i class="fa fa-location-dot"></i> <span id="shopAddress">Ahmedabad, Gujarat</span></p>
+                <p><i class="fa fa-phone"></i> <span id="shopPhone">+91 XXXXX XXXXX</span> | <i class="fa fa-clock"></i> <span id="shopTiming">9:00 AM - 9:00 PM</span></p>
+            </div>
+            <div class="shop-status" id="shopStatus">Open</div>
         </div>
 
-        <div class="filter-bar">
-            <div class="filter active" onclick="filter('All')">All</div>
-            <div class="filter" onclick="filter('Aam')">Aam</div>
-            <div class="filter" onclick="filter('Nimbu')">Nimbu</div>
-            <div class="filter" onclick="filter('Mirchi')">Mirchi</div>
-            <div class="filter" onclick="filter('Mix')">Mix</div>
-            <div class="filter" onclick="filter('Seasonal')">Seasonal</div>
+        <div id="announcementBox" class="announcement" style="display:none;">
+            <i class="fa fa-bullhorn"></i> <span id="announcementText"></span>
         </div>
 
-        <div class="product-grid" id="productGrid"></div>
+        <div class="filters" id="categoryFilters">
+            <button class="filter-btn active">All</button>
+        </div>
+
+        <div id="productGrid" class="product-grid">
+            <p style="text-align:center; grid-column:1/-1; padding:40px;">Loading Achar...</p>
+        </div>
+    </div>
+
+    <div class="cart-float" id="cartBtn" onclick="openCart()">
+        <i class="fa fa-cart-shopping"></i> Cart <span class="cart-count" id="cartCount">0</span>
+    </div>
+
+    <div class="footer">
+        <h3 id="footerShopName">Maa Ke Haath Ka Achar</h3>
+        <p>Ghar ka bana hua, Shuddh aur Swadisht Achar</p>
     </div>
 
     <script>
-        const products = [
-            {name: "Aam Ka Achar", price: 200, weight: "500g", cat: "Aam", taste: "Khatta Teekha", oil: "Mustard Oil", icon: "🥭"}, 
-            {name: "Nimbu Ka Achar", price: 180, weight: "500g", cat: "Nimbu", taste: "Khatta", oil: "Oil Free", icon: "🍋"},
-            {name: "Mirchi Ka Achar", price: 220, weight: "500g", cat: "Mirchi", taste: "Teekha", oil: "Mustard Oil", icon: "🌶️"},
-            {name: "Mix Achar", price: 250, weight: "1kg", cat: "Mix", taste: "Khatta Meetha", oil: "Mustard Oil", icon: "🫙"},
-            {name: "Gajar Gobhi Achar", price: 240, weight: "500g", cat: "Seasonal", taste: "Khatta", oil: "Oil Free", icon: "🥕"},
-            {name: "Lasun Ka Achar", price: 260, weight: "500g", cat: "Seasonal", taste: "Teekha", oil: "Mustard Oil", icon: "🧄"},
-            {name: "Adrak Ka Achar", price: 230, weight: "500g", cat: "Seasonal", taste: "Khatta Teekha", oil: "Oil Free", icon: "🫚"},
-            {name: "Family Gift Pack 3kg", price: 600, weight: "3kg", cat: "Gift", taste: "Mix", oil: "Mix", icon: "🎁"}
-        ];
+        let shopId = window.location.pathname.split('/')[2] || new URLSearchParams(window.location.search).get('shopId');
+        let allProducts = [];
+        let cart = JSON.parse(localStorage.getItem('cart_'+shopId)) || [];
 
-        function display(items) {
-            document.getElementById('productGrid').innerHTML = items.map(p => `
+        document.addEventListener('DOMContentLoaded', () => {
+            loadShop();
+            loadProducts();
+            updateCartCount();
+        });
+
+        async function loadShop() {
+            try {
+                const res = await fetch(`/api/shop/${shopId}`);
+                const shop = await res.json();
+                document.getElementById('shopName').innerText = shop.shopName;
+                document.getElementById('footerShopName').innerText = shop.shopName;
+                document.getElementById('pageTitle').innerText = shop.shopName;
+                document.getElementById('shopLogo').src = shop.logo || 'https://placehold.co/90/eab308/fff?text=A';
+                document.getElementById('shopBanner').src = shop.banner || 'https://placehold.co/1400x280/eab308/fff?text=Achar';
+                document.getElementById('shopPhone').innerText = shop.phone || 'N/A';
+                document.getElementById('shopTiming').innerText = `${shop.openTime || '09:00'} - ${shop.closeTime || '21:00'}`;
+                document.getElementById('shopAddress').innerText = shop.address || 'Ahmedabad, Gujarat';
+
+                const statusEl = document.getElementById('shopStatus');
+                if(shop.isOpen) {
+                    statusEl.innerText = 'Open Now';
+                    statusEl.classList.remove('closed');
+                } else {
+                    statusEl.innerText = 'Closed';
+                    statusEl.classList.add('closed');
+                }
+
+                if(shop.announcement) {
+                    document.getElementById('announcementText').innerText = shop.announcement;
+                    document.getElementById('announcementBox').style.display = 'flex';
+                }
+            } catch(e) { console.log(e) }
+        }
+
+        async function loadProducts() {
+            try {
+                const res = await fetch(`/api/shops/achar/${shopId}`);
+                const data = await res.json();
+                allProducts = data.products.filter(p => p.isActive) || [];
+                renderProducts(allProducts);
+                renderCategories();
+            } catch(e) {
+                document.getElementById('productGrid').innerHTML = '<p style="text-align:center; grid-column:1/-1;">Error loading products</p>';
+            }
+        }
+
+        function renderCategories() {
+            const cats = [...new Set(allProducts.map(p => p.category))];
+            const div = document.getElementById('categoryFilters');
+            div.innerHTML = `<button class="filter-btn active" onclick="filterCat('All', this)">All</button>`;
+            cats.forEach(c => {
+                div.innerHTML += `<button class="filter-btn" onclick="filterCat('${c}', this)">${c}</button>`;
+            });
+        }
+
+        function filterCat(cat, el) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            if(cat === 'All') renderProducts(allProducts);
+            else renderProducts(allProducts.filter(p => p.category === cat));
+        }
+
+        function renderProducts(products) {
+            const grid = document.getElementById('productGrid');
+            if(products.length === 0) {
+                grid.innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px;">Is category me koi achar nahi hai</p>';
+                return;
+            }
+            grid.innerHTML = products.map(p => `
                 <div class="product-card">
-                    <div style="font-size:50px; margin-bottom:10px;">${p.icon}</div>
+                    <img src="${p.image || 'https://placehold.co/400/eab308/fff?text=Achar'}" alt="${p.name}">
+                    <span class="category-tag">${p.category}</span>
                     <h3>${p.name}</h3>
-                    <p style="color:#64748b; font-size:12px;">${p.taste} | ${p.oil} | ${p.weight}</p>
-                    <div class="product-price">₹${p.price}</div>
-                    <button class="btn-buy" onclick="alert('Order Placed!')"><i class="fa fa-cart-plus"></i> Add to Cart</button>
+                    <div class="product-meta">
+                        <span><i class="fa fa-pepper-hot"></i> ${p.spiceLevel}</span>
+                        <span><i class="fa fa-jar"></i> ${p.jarType}</span>
+                        ${p.isHomemade? '<span><i class="fa fa-home"></i> Homemade</span>' : ''}
+                    </div>
+                    <div class="price-row">
+                        <div>
+                            <div class="price">₹${p.price1kg} <small>/1Kg</small></div>
+                            <div style="font-size:13px; color:#64748b;">₹${p.price500}/500g</div>
+                        </div>
+                        <div class="stock ${p.stock < 2? 'low' : ''}">${p.stock > 0? p.stock+' Kg Left' : 'Out of Stock'}</div>
+                    </div>
+                    <button class="btn-add" ${p.stock <= 0? 'disabled' : ''} onclick="addToCart('${p._id}')">
+                        ${p.stock <= 0? 'Out of Stock' : '<i class="fa fa-cart-plus"></i> Add to Cart'}
+                    </button>
                 </div>
             `).join('');
         }
-        function filter(cat) {
-            document.querySelectorAll('.filter').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            display(cat==='All'? products : products.filter(p => p.cat === cat));
+
+        function addToCart(id) {
+            const product = allProducts.find(p => p._id === id);
+            const existing = cart.find(c => c.id === id);
+            if(existing) {
+                if(existing.qty >= product.stock) return alert('Stock khatam');
+                existing.qty += 1;
+            } else {
+                cart.push({id, name: product.name, price: product.price1kg, qty: 1, image: product.image});
+            }
+            localStorage.setItem('cart_'+shopId, JSON.stringify(cart));
+            updateCartCount();
+            alert(`${product.name} cart me add ho gaya 🥒`);
         }
-        display(products);
+
+        function updateCartCount() {
+            document.getElementById('cartCount').innerText = cart.reduce((sum, c) => sum + c.qty, 0);
+        }
+
+        function openCart() {
+            if(cart.length === 0) return alert('Cart khali hai');
+            alert('Cart Page - File 6 me banayenge. Total Items: ' + cart.reduce((sum, c) => sum + c.qty, 0));
+        }
     </script>
 </body>
 </html>
