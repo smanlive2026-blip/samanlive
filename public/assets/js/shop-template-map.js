@@ -6,6 +6,7 @@
 window.SHOP_TEMPLATES = [
     // ========= PHOTO 1 =========
     {id: 'auto', name: 'Auto Parts Shop', icon: '🚗', folder: 'auto', type: 'product'},
+    {id: 'achar-shop', name: 'Achar/Murabba Shop', icon: '🥒', folder: 'achar-shop', type: 'product'},
     {id: 'bakery', name: 'Bakery Shop', icon: '🍞', folder: 'bakery', type: 'product'},
     {id: 'bartan', name: 'Bartan/Kitchenware', icon: '🍳', folder: 'bartan', type: 'product'},
     {id: 'battery', name: 'Battery Shop', icon: '🔋', folder: 'battery', type: 'product'},
