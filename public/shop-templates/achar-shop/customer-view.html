@@ -2,73 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title id="pageTitle">Maa Ke Haath Ka Achar</title>
+    <meta name="description" id="metaDesc" content="Ghar ka bana hua shuddh achar">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #fffbeb; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: #fffbeb; color: #1e293b; padding-bottom: 90px; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #eab308; border-radius: 10px; }
 
-       .banner { width: 100%; height: 280px; object-fit: cover; position: relative; }
-       .banner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 280px; background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6)); }
+     .banner-wrap { position: relative; width: 100%; height: 200px; }
+     .banner { width: 100%; height: 100%; object-fit: cover; }
+     .banner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7)); }
 
-       .container { max-width: 1300px; margin: -60px auto 0; padding: 20px; position: relative; z-index: 2; }
+     .container { max-width: 1300px; margin: -40px auto 0; padding: 15px; position: relative; z-index: 2; }
 
-       .shop-header { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); margin-bottom: 25px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-       .shop-header img { width: 90px; height: 90px; border-radius: 50%; border: 4px solid #eab308; flex-shrink: 0; }
-       .shop-info h1 { color: #713f12; font-size: 30px; margin-bottom: 5px; }
-       .shop-info p { color: #64748b; font-size: 14px; }
-       .shop-status { margin-left: auto; background: #dcfce7; color: #166534; padding: 8px 16px; border-radius: 50px; font-weight: 700; }
-       .shop-status.closed { background: #fee2e2; color: #991b1b; }
+     .shop-header { background: white; padding: 18px; border-radius: 18px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); margin-bottom: 18px; display: flex; gap: 15px; align-items: center; border: 1px solid #fef9c3; }
+     .shop-header img { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #eab308; object-fit: cover; flex-shrink: 0; }
+     .shop-info { flex: 1; }
+     .shop-info h1 { color: #713f12; font-size: 20px; font-weight: 800; margin-bottom: 4px; line-height: 1.3; }
+     .shop-info p { color: #64748b; font-size: 12px; margin: 3px 0; }
+     .shop-info i { color: #eab308; width: 14px; }
+     .shop-status { background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 50px; font-weight: 700; font-size: 11px; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+     .shop-status::before { content: ''; width: 8px; height: 8px; background: #16a34a; border-radius: 50%; }
+     .shop-status.closed { background: #fee2e2; color: #991b1b; }
+     .shop-status.closed::before { background: #dc2626; }
 
-       .announcement { background: #fef9c3; color: #713f12; padding: 15px 20px; border-radius: 15px; margin-bottom: 20px; font-weight: 600; display: flex; align-items: center; gap: 10px; border-left: 5px solid #eab308; }
+     .announcement { background: linear-gradient(90deg, #fef9c3 0%, #fef08a 100%); color: #713f12; padding: 12px 16px; border-radius: 14px; margin-bottom: 18px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 10px; border-left: 4px solid #eab308; animation: slideIn 0.5s; }
+       @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-       .filters { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 5px; }
-       .filter-btn { background: white; border: 2px solid #eab308; color: #713f12; padding: 10px 20px; border-radius: 50px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.3s; }
-       .filter-btn.active { background: #eab308; color: white; transform: scale(1.05); }
+     .filters { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+     .filters::-webkit-scrollbar { display: none; }
+     .filter-btn { background: white; border: 1.5px solid #eab308; color: #713f12; padding: 9px 18px; border-radius: 50px; font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+     .filter-btn.active { background: #eab308; color: white; }
 
-       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-       .product-card { background: white; border-radius: 20px; padding: 18px; box-shadow: 0 5px 25px rgba(0,0,0,0.08); transition: 0.3s; }
-       .product-card:hover { transform: translateY(-8px); box-shadow: 0 15px 40px rgba(234,179,8,0.2); }
-       .product-card img { width: 100%; height: 220px; object-fit: cover; border-radius: 15px; margin-bottom: 15px; }
-       .product-card.category-tag { background: #fef9c3; color: #713f12; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; display: inline-block; margin-bottom: 8px; }
-       .product-card h3 { color: #1e293b; font-size: 20px; margin-bottom: 8px; }
-       .product-meta { display: flex; gap: 10px; font-size: 12px; color: #64748b; margin-bottom: 10px; }
-       .price-row { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
-       .price { font-size: 22px; font-weight: 700; color: #eab308; }
-       .price small { font-size: 14px; color: #64748b; font-weight: 400; }
-       .stock { font-size: 13px; color: #16a34a; font-weight: 600; }
-       .stock.low { color: #dc2626; }
-       .btn-add { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; font-size: 15px; transition: 0.3s; }
-       .btn-add:hover { transform: scale(1.02); }
-       .btn-add:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+     .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+     .product-card { background: white; border-radius: 16px; padding: 12px; box-shadow: 0 3px 15px rgba(0,0,0,0.06); border: 1px solid #fef9c3; display: flex; flex-direction: column; }
+     .product-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; }
+     .category-tag { background: #fef9c3; color: #713f12; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; display: inline-block; margin-bottom: 6px; text-transform: uppercase; width: fit-content; }
+     .product-card h3 { color: #1e293b; font-size: 14px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; height: 36px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+     .product-meta { display: none; }
+     .price-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 10px; }
+     .price { font-size: 16px; font-weight: 800; color: #eab308; }
+     .price small { font-size: 11px; color: #64748b; font-weight: 400; }
+     .stock { font-size: 10px; color: #16a34a; font-weight: 700; }
+     .stock.low { color: #dc2626; }
+     .btn-add { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; width: 100%; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: auto; transition: 0.2s; }
+     .btn-add:active { transform: scale(0.95); }
+     .btn-add:disabled { background: #cbd5e1; }
 
-       .cart-float { position: fixed; bottom: 25px; right: 25px; background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; padding: 16px 28px; border-radius: 50px; font-weight: 700; box-shadow: 0 10px 30px rgba(234,179,8,0.5); cursor: pointer; z-index: 99; display: flex; align-items: center; gap: 10px; font-size: 16px; }
-       .cart-count { background: white; color: #eab308; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+     .cart-float { position: fixed; bottom: 15px; right: 15px; left: 15px; background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; padding: 14px; border-radius: 16px; font-weight: 700; box-shadow: 0 8px 25px rgba(234,179,8,0.5); cursor: pointer; z-index: 99; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; }
+     .cart-count { background: white; color: #eab308; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; }
 
-       .footer { text-align: center; padding: 40px 20px; color: #64748b; background: white; margin-top: 40px; border-radius: 20px; }
-       .footer h3 { color: #713f12; margin-bottom: 10px; }
+     .footer { text-align: center; padding: 30px 15px; color: #64748b; font-size: 12px; }
+     .footer h3 { color: #713f12; margin-bottom: 8px; font-size: 18px; font-weight: 800; }
 
-        @media(max-width:768px){
-           .banner,.banner-overlay {height: 200px;}
-           .container {margin-top: -40px;}
-           .shop-header {flex-direction: column; text-align: center;}
-           .shop-status {margin-left: 0;}
-           .product-grid {grid-template-columns: repeat(2, 1fr); gap: 15px;}
-           .cart-float {bottom: 15px; right: 15px; padding: 12px 20px; font-size: 14px;}
+        /* DESKTOP */
+        @media(min-width:769px){
+          body {padding-bottom: 0;}
+        .banner-wrap {height: 320px;}
+        .container {margin-top: -80px; padding: 20px;}
+        .shop-header {padding: 30px;}
+        .shop-header img {width: 100px; height: 100px;}
+        .shop-info h1 {font-size: 32px;}
+        .shop-info p {font-size: 14px;}
+        .shop-status {padding: 10px 20px; font-size: 14px;}
+        .shop-status::before {width: 10px; height: 10px;}
+        .announcement {padding: 16px 22px; font-size: 15px;}
+        .filter-btn {padding: 12px 24px; font-size: 15px;}
+        .product-grid {grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;}
+        .product-card {padding: 20px;}
+        .product-card img {height: 230px;}
+        .product-card h3 {font-size: 20px; height: auto; -webkit-line-clamp: unset;}
+        .product-meta {display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #64748b; margin-bottom: 12px;}
+        .product-meta span { background: #f8fafc; padding: 4px 10px; border-radius: 8px; display: flex; align-items: center; gap: 5px; }
+        .product-meta i { color: #eab308; }
+        .price {font-size: 24px;}
+        .price small {font-size: 14px;}
+        .stock {font-size: 13px;}
+        .btn-add {padding: 14px; font-size: 15px;}
+        .btn-add:hover { transform: scale(1.03); }
+        .cart-float {bottom: 30px; right: 30px; left: auto; width: auto; padding: 18px 32px; border-radius: 50px;}
+        .footer {padding: 50px 20px; font-size: 14px;}
+        .footer h3 {font-size: 24px;}
         }
     </style>
 </head>
 <body>
-    <div style="position:relative;">
-        <img id="shopBanner" class="banner" src="https://placehold.co/1400x280/eab308/fff?text=Maa+Ke+Haath+Ka+Achar">
+    <div class="banner-wrap">
+        <img id="shopBanner" class="banner" src="https://placehold.co/1400x320/eab308/fff?text=Maa+Ke+Haath+Ka+Achar">
         <div class="banner-overlay"></div>
     </div>
 
     <div class="container">
         <div class="shop-header">
-            <img id="shopLogo" src="https://placehold.co/90/eab308/fff?text=A">
+            <img id="shopLogo" src="https://placehold.co/100/eab308/fff?text=A" alt="Logo">
             <div class="shop-info">
                 <h1 id="shopName">Maa Ke Haath Ka Achar</h1>
                 <p><i class="fa fa-location-dot"></i> <span id="shopAddress">Ahmedabad, Gujarat</span></p>
@@ -86,17 +116,17 @@
         </div>
 
         <div id="productGrid" class="product-grid">
-            <p style="text-align:center; grid-column:1/-1; padding:40px;">Loading Achar...</p>
+            <p style="text-align:center; grid-column:1/-1; padding:40px; color:#64748b;"><i class="fa fa-spinner fa-spin"></i> Loading Achar...</p>
         </div>
     </div>
 
     <div class="cart-float" id="cartBtn" onclick="openCart()">
-        <i class="fa fa-cart-shopping"></i> Cart <span class="cart-count" id="cartCount">0</span>
+        <i class="fa fa-cart-shopping"></i> View Cart <span class="cart-count" id="cartCount">0</span>
     </div>
 
     <div class="footer">
         <h3 id="footerShopName">Maa Ke Haath Ka Achar</h3>
-        <p>Ghar ka bana hua, Shuddh aur Swadisht Achar</p>
+        <p>Ghar ka bana hua, Shuddh aur Swadisht Achar 🥒</p>
     </div>
 
     <script>
@@ -113,19 +143,21 @@
         async function loadShop() {
             try {
                 const res = await fetch(`/api/shop/${shopId}`);
-                const shop = await res.json();
+                const data = await res.json();
+                const shop = data.shop || data;
                 document.getElementById('shopName').innerText = shop.shopName;
                 document.getElementById('footerShopName').innerText = shop.shopName;
                 document.getElementById('pageTitle').innerText = shop.shopName;
-                document.getElementById('shopLogo').src = shop.logo || 'https://placehold.co/90/eab308/fff?text=A';
-                document.getElementById('shopBanner').src = shop.banner || 'https://placehold.co/1400x280/eab308/fff?text=Achar';
+                document.getElementById('metaDesc').content = shop.description || 'Ghar ka bana hua shuddh achar';
+                document.getElementById('shopLogo').src = shop.logo || 'https://placehold.co/100/eab308/fff?text=A';
+                document.getElementById('shopBanner').src = shop.banner || 'https://placehold.co/1400x320/eab308/fff?text=Achar';
                 document.getElementById('shopPhone').innerText = shop.phone || 'N/A';
                 document.getElementById('shopTiming').innerText = `${shop.openTime || '09:00'} - ${shop.closeTime || '21:00'}`;
                 document.getElementById('shopAddress').innerText = shop.address || 'Ahmedabad, Gujarat';
 
                 const statusEl = document.getElementById('shopStatus');
                 if(shop.isOpen) {
-                    statusEl.innerText = 'Open Now';
+                    statusEl.innerText = 'Open';
                     statusEl.classList.remove('closed');
                 } else {
                     statusEl.innerText = 'Closed';
@@ -136,7 +168,7 @@
                     document.getElementById('announcementText').innerText = shop.announcement;
                     document.getElementById('announcementBox').style.display = 'flex';
                 }
-            } catch(e) { console.log(e) }
+            } catch(e) { console.log('Shop load error', e) }
         }
 
         async function loadProducts() {
@@ -147,7 +179,7 @@
                 renderProducts(allProducts);
                 renderCategories();
             } catch(e) {
-                document.getElementById('productGrid').innerHTML = '<p style="text-align:center; grid-column:1/-1;">Error loading products</p>';
+                document.getElementById('productGrid').innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px;">Error loading products</p>';
             }
         }
 
@@ -170,45 +202,50 @@
         function renderProducts(products) {
             const grid = document.getElementById('productGrid');
             if(products.length === 0) {
-                grid.innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px;">Is category me koi achar nahi hai</p>';
+                grid.innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px;">Is category me koi achar nahi hai 🥲</p>';
                 return;
             }
             grid.innerHTML = products.map(p => `
                 <div class="product-card">
-                    <img src="${p.image || 'https://placehold.co/400/eab308/fff?text=Achar'}" alt="${p.name}">
+                    <img src="${p.image || 'https://placehold.co/400/eab308/fff?text=Achar'}" alt="${p.name}" loading="lazy">
                     <span class="category-tag">${p.category}</span>
                     <h3>${p.name}</h3>
                     <div class="product-meta">
                         <span><i class="fa fa-pepper-hot"></i> ${p.spiceLevel}</span>
                         <span><i class="fa fa-jar"></i> ${p.jarType}</span>
                         ${p.isHomemade? '<span><i class="fa fa-home"></i> Homemade</span>' : ''}
+                        <span><i class="fa fa-hourglass"></i> ${p.expiryMonths}M</span>
                     </div>
                     <div class="price-row">
                         <div>
-                            <div class="price">₹${p.price1kg} <small>/1Kg</small></div>
-                            <div style="font-size:13px; color:#64748b;">₹${p.price500}/500g</div>
+                            <div class="price">₹${p.price1kg} <small>/Kg</small></div>
+                            <div style="font-size:10px; color:#64748b;">₹${p.price500}/500g</div>
                         </div>
-                        <div class="stock ${p.stock < 2? 'low' : ''}">${p.stock > 0? p.stock+' Kg Left' : 'Out of Stock'}</div>
+                        <div class="stock ${p.stock < 2? 'low' : ''}"><i class="fa fa-box"></i> ${p.stock > 0? p.stock+'Kg' : 'Out'}</div>
                     </div>
-                    <button class="btn-add" ${p.stock <= 0? 'disabled' : ''} onclick="addToCart('${p._id}')">
-                        ${p.stock <= 0? 'Out of Stock' : '<i class="fa fa-cart-plus"></i> Add to Cart'}
+                    <button class="btn-add" ${p.stock <= 0? 'disabled' : ''} onclick="addToCart('${p._id}', event)">
+                        ${p.stock <= 0? '<i class="fa fa-ban"></i> Out' : '<i class="fa fa-plus"></i> Add'}
                     </button>
                 </div>
             `).join('');
         }
 
-        function addToCart(id) {
+        function addToCart(id, event) {
             const product = allProducts.find(p => p._id === id);
             const existing = cart.find(c => c.id === id);
             if(existing) {
-                if(existing.qty >= product.stock) return alert('Stock khatam');
+                if(existing.qty >= product.stock) return alert('Stock khatam bhai!');
                 existing.qty += 1;
             } else {
                 cart.push({id, name: product.name, price: product.price1kg, qty: 1, image: product.image});
             }
             localStorage.setItem('cart_'+shopId, JSON.stringify(cart));
             updateCartCount();
-            alert(`${product.name} cart me add ho gaya 🥒`);
+
+            const btn = event.target.closest('button');
+            const oldText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa fa-check"></i>';
+            setTimeout(() => btn.innerHTML = oldText, 800);
         }
 
         function updateCartCount() {
@@ -217,7 +254,7 @@
 
         function openCart() {
             if(cart.length === 0) return alert('Cart khali hai');
-            alert('Cart Page - File 6 me banayenge. Total Items: ' + cart.reduce((sum, c) => sum + c.qty, 0));
+            window.location.href = `/shop/cart?shopId=${shopId}`;
         }
     </script>
 </body>

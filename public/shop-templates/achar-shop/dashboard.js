@@ -1,7 +1,7 @@
 // ========================================
-// ACHAR SHOP DASHBOARD JS - FULL v4
+// ACHAR SHOP DASHBOARD JS - FULL v5
 // File: /public/shop-templates/achar-shop/dashboard.js
-// SHOPCORE INTEGRATED + FULL MODAL
+// SHOPCORE INTEGRATED + QUICK ADD + BANNER FIX
 // ========================================
 
 let shopId = new URLSearchParams(window.location.search).get('shopId');
@@ -30,16 +30,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event Listeners
     document.getElementById('addAcharBtn').addEventListener('click', openAddModal);
+    document.getElementById('quickAddBtn').addEventListener('click', addAllProducts); // FIXED: Quick add
+    document.getElementById('changeBannerBtn').addEventListener('click', () => { // FIXED: Banner button
+        document.getElementById('bannerInput').click();
+    });
     document.getElementById('newOrderBtn').addEventListener('click', () => alert('Order system file 6 me banega'));
     document.getElementById('userViewBtn').href = `/shop/${shopId}`;
     document.getElementById('locationBtn').addEventListener('click', () => {
         document.getElementById('locationCard').style.display = 'block';
     });
 
-    // SHOPCORE BIND
+    // SHOPCORE BIND - 3 IMAGE UPLOAD
     ShopCore.bindImageUpload('shopBanner', 'bannerInput', 'banner', 'banner');
     ShopCore.bindImageUpload('ownerImg', 'ownerInput', 'profile', 'logo');
-    ShopCore.bindImageUpload('productImgPreview', 'productImageInput', 'product', 'product_temp'); // CHANGED: product image
+    ShopCore.bindImageUpload('productImgPreview', 'productImageInput', 'product', 'product_temp');
 
     document.getElementById('shopToggle').addEventListener('click', toggleShop);
     document.getElementById('saveAnnouncement').addEventListener('click', saveAnnouncement);
@@ -97,7 +101,7 @@ function renderInventory(list = allProducts) {
 
     div.innerHTML = list.map(p => `
         <div class="achar-row">
-            <img src="${p.image}" style="width:50px; height:50px; border-radius:8px; object-fit:cover;">
+            <img src="${p.image}" style="width:50px; height:50px; border-radius:8px; object-fit:cover; flex-shrink:0;">
             <div style="flex:1;">
                 <b>${p.name}</b> <span class="badge" style="background:#fef9c3; color:#713f12;">${p.category}</span>
                 <div style="font-size:12px; color:#64748b; margin:5px 0;">Stock: ${p.stock} Kg | ${p.spiceLevel} | ${p.jarType}</div>
@@ -120,7 +124,7 @@ function filterProducts(query) {
     renderInventory(filtered);
 }
 
-// 5. LOAD ORDERS + 6. RENDER ORDERS + 7. LOAD STATS + 8. LOW STOCK + 9. CATEGORIES
+// 5. LOAD ORDERS
 async function loadOrders() {
     try {
         const res = await fetch(`/api/orders?shopId=${shopId}&limit=10`);
@@ -131,6 +135,8 @@ async function loadOrders() {
         document.getElementById('orderList').innerHTML = '<p style="color:#64748b;">No orders</p>';
     }
 }
+
+// 6. RENDER ORDERS
 function renderOrders() {
     const div = document.getElementById('orderList');
     if(allOrders.length === 0) {
@@ -147,6 +153,8 @@ function renderOrders() {
         </div>
     `).join('');
 }
+
+// 7. LOAD STATS
 function loadStats() {
     document.getElementById('products').innerText = allProducts.length;
     let today = new Date().toDateString();
@@ -155,6 +163,8 @@ function loadStats() {
     document.getElementById('revenue').innerText = todayOrders.reduce((sum, o) => sum + (o.total || 0), 0);
     document.getElementById('kg').innerText = todayOrders.reduce((sum, o) => sum + (o.totalKg || 0), 0);
 }
+
+// 8. LOW STOCK
 async function renderLowStock() {
     try {
         const res = await fetch(`/api/shops/achar/low-stock/${shopId}`);
@@ -170,6 +180,8 @@ async function renderLowStock() {
         document.getElementById('stockAlert').innerHTML = 'Error';
     }
 }
+
+// 9. CATEGORIES
 function renderCategories() {
     const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
     const div = document.getElementById('categories');
@@ -185,12 +197,12 @@ function renderCategories() {
     `).join('');
 }
 
-// 10. ADD/EDIT MODAL - FULL UPDATED
+// 10. ADD/EDIT MODAL
 function openAddModal() {
     currentEditId = null;
     productImageUrl = '';
+    document.getElementById('modalTitle').innerText = 'Add New Achar';
     document.getElementById('addModal').style.display = 'flex';
-    document.querySelector('#addModal h2').innerText = 'Add New Achar';
     document.getElementById('acharName').value = '';
     document.getElementById('acharType').value = 'Aam';
     document.getElementById('acharDesc').value = '';
@@ -211,13 +223,13 @@ async function saveNewAchar() {
         shopId,
         name: document.getElementById('acharName').value,
         category: document.getElementById('acharType').value,
-        description: document.getElementById('acharDesc').value, // NEW
-        jarType: document.getElementById('acharJar').value, // NEW
-        spiceLevel: document.getElementById('acharSpice').value, // NEW
+        description: document.getElementById('acharDesc').value,
+        jarType: document.getElementById('acharJar').value,
+        spiceLevel: document.getElementById('acharSpice').value,
         price500: Number(document.getElementById('acharPrice500g').value),
         price1kg: Number(document.getElementById('acharPrice1kg').value),
         stock: Number(document.getElementById('acharStock').value),
-        image: productImageUrl || document.getElementById('productImgPreview').src // NEW
+        image: productImageUrl || document.getElementById('productImgPreview').src
     };
 
     if(!data.name ||!data.price1kg) return alert('Name aur 1Kg Price jaruri hai');
@@ -241,17 +253,17 @@ function editProduct(id) {
     const p = allProducts.find(x => x._id === id);
     currentEditId = id;
     productImageUrl = p.image;
+    document.getElementById('modalTitle').innerText = 'Edit Achar';
     document.getElementById('addModal').style.display = 'flex';
-    document.querySelector('#addModal h2').innerText = 'Edit Achar';
     document.getElementById('acharName').value = p.name;
     document.getElementById('acharType').value = p.category;
-    document.getElementById('acharDesc').value = p.description || ''; // NEW
-    document.getElementById('acharJar').value = p.jarType || 'Glass'; // NEW
-    document.getElementById('acharSpice').value = p.spiceLevel || 'Medium'; // NEW
+    document.getElementById('acharDesc').value = p.description || '';
+    document.getElementById('acharJar').value = p.jarType || 'Glass';
+    document.getElementById('acharSpice').value = p.spiceLevel || 'Medium';
     document.getElementById('acharPrice1kg').value = p.price1kg;
     document.getElementById('acharPrice500g').value = p.price500;
     document.getElementById('acharStock').value = p.stock;
-    document.getElementById('productImgPreview').src = p.image; // NEW
+    document.getElementById('productImgPreview').src = p.image;
 }
 
 async function deleteProduct(id) {
@@ -267,21 +279,25 @@ function toggleShop() {
     document.getElementById('toggleText').innerText = isOpen? 'Open' : 'Closed';
     fetch(`/api/shop/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({isOpen})});
 }
+
 async function saveAnnouncement() {
     const announcement = document.getElementById('announcementInput').value;
     await fetch(`/api/shop/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({announcement})});
     alert('Saved');
 }
+
 async function saveTiming() {
     const data = {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value};
     await fetch(`/api/shop/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
     alert('Saved');
 }
+
 async function savePhone() {
     const phone = document.getElementById('shopPhoneInput').value;
     await fetch(`/api/shop/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({phone})});
     alert('Saved');
 }
+
 function saveLocation() {
     alert('Location save - shop-location.js handle karega');
 }
@@ -296,4 +312,4 @@ ShopCore.uploadImage = async function(file, type) {
     return url;
 }
 
-console.log('✅ Achar Dashboard v4 Loaded - Full Modal + ShopCore');
+console.log('✅ Achar Dashboard v5 Loaded - All Fixed');

@@ -32,23 +32,27 @@
         .content-card h2 { font-size: 20px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; cursor: pointer; }
         
         .btn { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; white-space: nowrap; }
+        .btn-green { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); }
         .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; border: none; color: white; cursor: pointer; }
         
-        .achar-row { display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #fef9c3; }
+        .achar-row { display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #fef9c3; gap:10px; }
         .achar-row:last-child { border-bottom: none; }
         .weight-badge { background: #fef9c3; color: #713f12; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; margin-right: 5px; }
         .badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
         .badge-red { background: #fee2e2; color: #991b1b; }
         .badge-green { background: #dcfce7; color: #166534; }
         
-        input[type="text"], input[type="number"], input[type="time"], input[type="tel"], select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; font-size: 14px; }
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center; padding: 20px; }
-        .modal-content { background:white; padding:30px; border-radius:20px; width:100%; max-width:500px; }
+        input[type="text"], input[type="number"], input[type="time"], input[type="tel"], select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; font-size: 14px; }
+        textarea { resize: vertical; min-height: 70px; }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center; padding: 20px; overflow-y: auto; }
+        .modal-content { background:white; padding:30px; border-radius:20px; width:100%; max-width:550px; margin: 20px 0; }
         .hint-text { font-size:12px; color:#64748b; margin-top:-5px; margin-bottom:10px; }
+        #productImgPreview { width: 100px; height: 100px; border-radius: 12px; object-fit: cover; margin-bottom: 10px; border: 2px dashed #eab308; cursor: pointer; }
 
         .accordion-body { display: block; }
         .accordion-arrow { margin-left: auto; transition: 0.3s; }
 
+        /* MOBILE RESPONSIVE */
         @media (max-width: 1024px) { .content-grid { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
             .container { padding: 12px; }
@@ -62,9 +66,12 @@
             .stat-card { padding: 18px; }
             .stat-card .value { font-size: 24px; }
             .content-card { padding: 15px; }
+            .achar-row { flex-direction: column; align-items: flex-start; }
+            .achar-row img { width: 100% !important; height: 120px !important; }
             .accordion-body { display: none; padding-top: 15px; }
             .content-card.active .accordion-body { display: block; }
             .content-card.active .accordion-arrow { transform: rotate(180deg); }
+            .modal-content { padding: 20px; }
         }
     </style>
 </head>
@@ -82,6 +89,7 @@
             <div class="header-buttons">
                 <a href="#" id="userViewBtn" class="btn" style="background: #2563eb;"><i class="fa fa-eye"></i> User View</a>
                 <button id="addAcharBtn" class="btn"><i class="fa fa-plus"></i> Add Achar</button>
+                <button id="quickAddBtn" class="btn btn-green"><i class="fa fa-bolt"></i> 50+ Add</button>
                 <button id="newOrderBtn" class="btn" style="background: #16a34a;"><i class="fa fa-receipt"></i> New Order</button>
                 <button id="locationBtn" class="btn" style="background: #059669;"><i class="fa fa-location-dot"></i> Location</button>
                 <button id="changeBannerBtn" class="btn" style="background: #f59e0b;"><i class="fa fa-image"></i> Banner</button>
@@ -180,18 +188,25 @@
         </div>
     </div>
 
-    <!-- ADD ACHAR MODAL -->
+    <!-- ADD/EDIT ACHAR MODAL FULL -->
     <div class="modal" id="addModal">
         <div class="modal-content">
-            <h2>Add New Achar</h2>
+            <h2 id="modalTitle">Add New Achar</h2>
+            <img id="productImgPreview" src="https://placehold.co/100/eab308/fff?text=Achar">
+            <input type="file" id="productImageInput" style="display:none;" accept="image/*">
+            <button class="btn btn-sm" onclick="document.getElementById('productImageInput').click()" style="width:100%; margin-bottom:10px;">📷 Change Photo</button>
+
             <input type="text" id="acharName" placeholder="Achar Name: Aam ka Achar">
             <select id="acharType">
-                <option value="">Select Type</option>
-                <option value="Aam">Aam</option>
-                <option value="Nimbu">Nimbu</option>
-                <option value="Mix">Mix</option>
-                <option value="Murabba">Murabba</option>
+                <option value="Aam">Aam</option><option value="Nimbu">Nimbu</option><option value="Mix">Mix</option>
+                <option value="Murabba">Murabba</option><option value="Gajar">Gajar</option><option value="Lahsun">Lahsun</option>
+                <option value="Mirchi">Mirchi</option><option value="Other">Other</option>
             </select>
+            <textarea id="acharDesc" placeholder="Description: Maa ke haath ka bana hua"></textarea>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <select id="acharJar"><option value="Glass">Glass Jar</option><option value="Plastic">Plastic Jar</option><option value="Ceramic">Ceramic Jar</option></select>
+                <select id="acharSpice"><option value="Mild">Mild</option><option value="Medium">Medium</option><option value="Teekha">Teekha</option></select>
+            </div>
             <input type="number" id="acharPrice1kg" placeholder="1Kg Price ₹">
             <input type="number" id="acharPrice500g" placeholder="500g Price ₹">
             <input type="number" id="acharStock" placeholder="Stock in Kg">
@@ -204,5 +219,6 @@
     <script src="/shop-templates/shop-core.js"></script>
     <script src="/shop-templates/shop-location.js"></script>
     <script src="dashboard.js"></script>
+    <script src="quick-add-products.js"></script>
 </body>
 </html>

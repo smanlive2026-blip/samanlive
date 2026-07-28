@@ -23,7 +23,7 @@ const acharSchema = new mongoose.Schema({
     description: {
         type: String,
         default: '',
-        maxlength: 500 // 500 character tak
+        maxlength: 500
     },
 
     // Pricing - Achar specific
@@ -54,7 +54,7 @@ const acharSchema = new mongoose.Schema({
         default: 'Kg'
     },
 
-    // Achar specific fields - SAB DAAL DIYE
+    // Achar specific fields
     jarType: {
         type: String,
         enum: ['Glass', 'Plastic', 'Ceramic'],
@@ -75,12 +75,12 @@ const acharSchema = new mongoose.Schema({
         min: 1
     },
 
-    // Media - MULTIPLE IMAGE SUPPORT DAAL DIYA
-    image: { // main image
+    // Media
+    image: {
         type: String,
         default: 'https://placehold.co/400/eab308/fff?text=Achar'
     },
-    images: { // gallery ke liye
+    images: {
         type: [String],
         default: []
     },
@@ -92,6 +92,20 @@ const acharSchema = new mongoose.Schema({
     },
 
 }, { timestamps: true });
+
+// IMPORTANT: price auto set karne ke liye
+acharSchema.pre('save', function(next) {
+    this.price = this.price1kg;
+    next();
+});
+
+acharSchema.pre('findOneAndUpdate', function(next) {
+    const update = this.getUpdate();
+    if(update.price1kg) {
+        update.price = update.price1kg;
+    }
+    next();
+});
 
 // Index for fast search
 acharSchema.index({ shopId: 1, name: 1, category: 1 });
