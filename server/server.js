@@ -38,8 +38,8 @@ app.use('/api/shop-view', require('./routes/shopViewRoutes'));  // ye nya h
 app.use('/api/shop', require('./routes/shopViewRoutes')); // admin ke liye
 app.use('/api/shops/auto', require('./routes/shops/auto'));
 app.use('/shop', require('./routes/shopViewRoutes'));
-//app.use('/api/shops/achar', require('./routes/shops/achar-route'));
-app.use('/api/shops/achar', acharRoutes);
+app.use('/api/shops/achar', require('./routes/shops/achar-route'));
+//app.use('/api/shops/achar', acharRoutes);
 //app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
 //app.use('/api/shops', require('./routes/shops/furniture-route')); // <- YE LINE ADD KAR
 //app.use('/api/shops', require('./routes/shops/furniture-route'));
