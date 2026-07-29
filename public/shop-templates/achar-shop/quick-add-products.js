@@ -58,7 +58,7 @@ const acharProductsList = [
 
 let isAdding = false;
 
-async function addAllProducts() {
+async function quickAddProducts() {
     const shopId = new URLSearchParams(window.location.search).get('shopId'); // FIX: shopId yaha liya
     
     if(isAdding) return alert('Pehle wale add ho rahe hain');
