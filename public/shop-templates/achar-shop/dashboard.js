@@ -62,7 +62,7 @@ async function init() {
 // 1. LOAD SHOP DATA
 async function loadShopData() {
     try {
-        const res = await fetch(`/api/shop/${shopId}`);
+        const res = await fetch(`/api/shops/${shopId}`);
         const shop = await res.json();
         document.getElementById('shopName').innerText = shop.shopName || 'Maa Ke Haath Ka Achar';
         document.getElementById('ownerImg').src = localStorage.getItem(`photo_${shopId}_logo_cloud`) || shop.ownerPhotoUrl || shop.logo || 'https://placehold.co/60/eab308/fff?text=A';
