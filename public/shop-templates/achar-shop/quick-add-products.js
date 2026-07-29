@@ -82,6 +82,8 @@ async function quickAddProducts() {
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(p)
             });
+            const data = await res.json(); // <-- YE ADD KAR
+            console.log(data); // <-- YE ADD KAR
             if(res.ok) success++;
             await new Promise(r => setTimeout(r, 100)); // server load kam karne ke liye
         } catch(e) { console.log('Error', p.name) }
