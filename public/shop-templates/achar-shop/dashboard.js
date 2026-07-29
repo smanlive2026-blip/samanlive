@@ -284,7 +284,14 @@ async function toggleShop() {
     document.getElementById('shopToggle').classList.toggle('off');
     const isOpen =!document.getElementById('shopToggle').classList.contains('off');
     document.getElementById('toggleText').innerText = isOpen? 'Open' : 'Closed';
-    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({isOpen})});
+    
+    await fetch(`/api/shops/achar/${shopId}`, {
+        method:'PUT', 
+        headers:{'Content-Type':'application/json'}, 
+        body:JSON.stringify({isOpen, settings: {isOpen}}) // <-- dono bhejo
+    });
+    
+    alert(`Shop ab ${isOpen? 'Open' : 'Closed'} hai`);
 }
 
 async function saveAnnouncement() {

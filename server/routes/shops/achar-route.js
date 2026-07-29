@@ -61,10 +61,11 @@ router.get('/:shopId', async (req, res) => {
       items: normalizedItems,
       orders: achar.orders || [],
       settings: achar.settings || {},
-      isOpen: achar.settings?.isOpen?? true,
+      isOpen: achar.settings?.isOpen ?? true,
       announcement: achar.settings?.announcement || '',
       ownerPhotoUrl: achar.settings?.ownerPhotoUrl || '',
       bannerPhotoUrl: achar.settings?.bannerPhotoUrl || '',
+      category: item.category || 'Other', // <-- YE BHI ADD KAR
       phone: achar.phone || ''
     }
     res.json({ success: true, shop: finalData });
@@ -145,7 +146,11 @@ router.put('/:shopId', async (req, res) => {
     if(updateData.bannerPhotoUrl) achar.bannerPhotoUrl = updateData.bannerPhotoUrl;
     if(updateData.ownerPhotoUrl) achar.ownerPhotoUrl = updateData.ownerPhotoUrl;
     if('phone' in updateData) achar.phone = updateData.phone;
-    if('isOpen' in updateData) achar.settings.isOpen = updateData.isOpen;
+    if(!achar.settings) achar.settings = {}; // settings init
+    if('isOpen' in updateData) {
+    achar.settings.isOpen = updateData.isOpen;
+    achar.isOpen = updateData.isOpen; // <-- MAIN SHOP ME BHI SAVE KARO
+}
     if('announcement' in updateData) achar.settings.announcement = updateData.announcement;
     if(updateData.settings) achar.settings = {...achar.settings,...updateData.settings };
 
