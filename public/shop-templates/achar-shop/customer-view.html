@@ -154,8 +154,7 @@
             try {
                 const res = await fetch(`/api/shops/achar/${shopId}`);
                 const data = await res.json();
-
-                if(!data.success) throw new Error(data.message); // <-- ERROR CHECK ADD
+                if(!data.success) throw new Error(data.message);
 
                 shopData = data.shop || {};
 
@@ -166,8 +165,6 @@
                 document.getElementById('shopLogo').src = shopData.ownerPhotoUrl || 'https://placehold.co/100/eab308/fff?text=A';
                 document.getElementById('shopBanner').src = shopData.bannerPhotoUrl || 'https://placehold.co/1400x320/eab308/fff?text=Achar';
                 document.getElementById('shopPhone').innerText = shopData.phone || 'N/A';
-
-                // TIME FIX: 24hr to 12hr
                 document.getElementById('shopTiming').innerText = `${convertTo12Hr(shopData.settings?.openTime)} - ${convertTo12Hr(shopData.settings?.closeTime)}`;
                 document.getElementById('shopAddress').innerText = 'Ahmedabad, Gujarat';
 
@@ -185,7 +182,7 @@
                     document.getElementById('announcementBox').style.display = 'flex';
                 }
 
-                allProducts = (shopData.items || []).filter(p => p.isActive);
+                allProducts = shopData.items || []; // <-- FIX 1
                 renderProducts(allProducts);
                 renderCategories();
 
@@ -196,7 +193,7 @@
         }
 
         function renderCategories() {
-            const cats = [...new Set(allProducts.map(p => p.category))];
+            const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))]; // <-- FIX 2
             const div = document.getElementById('categoryFilters');
             div.innerHTML = `<button class="filter-btn active" onclick="filterCat('All', this)">All</button>`;
             cats.forEach(c => {
@@ -220,7 +217,7 @@
             grid.innerHTML = products.map(p => `
                 <div class="product-card">
                     <img src="${p.image || 'https://placehold.co/400/eab308/fff?text=Achar'}" alt="${p.name}" loading="lazy">
-                    <span class="category-tag">${p.category}</span>
+                    <span class="category-tag">${p.category || 'Other'}</span>
                     <h3>${p.name}</h3>
                     <div class="product-meta">
                         <span><i class="fa fa-pepper-hot"></i> ${p.spiceLevel}</span>
@@ -270,4 +267,5 @@
         }
     </script>
     </body>
+    
 </html>
