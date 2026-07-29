@@ -128,13 +128,13 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        
-        if(req.body.price1kg) req.body.price = req.body.price1kg; // price sync
 
-        const updated = await Achar.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
-        
+        if(req.body.price1kg!== undefined) req.body.price = req.body.price1kg; // price sync
+
+        const updated = await Achar.findByIdAndUpdate(id, req.body, { new: true, runValidators: false }); // runValidators false kar de
+
         if(!updated) return res.status(404).json({ success: false, message: 'Achar nahi mila' });
-        
+
         res.json({ success: true, message: 'Update ho gaya', product: updated });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

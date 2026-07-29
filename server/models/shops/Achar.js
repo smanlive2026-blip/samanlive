@@ -85,13 +85,12 @@ const acharSchema = new mongoose.Schema({
         default: true
     },
 
-}, { timestamps: true, strict: false });
-
-// Sirf save ke time price sync karega
-acharSchema.pre('save', function(next) {
-    this.price = this.price1kg;
-    next();
+}, {
+    timestamps: true,
+    strict: false // purane data ke liye
 });
+
+
 
 acharSchema.index({ shopId: 1, name: 1, category: 1 });
 acharSchema.index({ shopId: 1, isActive: 1 });
