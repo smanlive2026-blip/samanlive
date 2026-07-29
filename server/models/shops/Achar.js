@@ -38,7 +38,7 @@ const acharSchema = new mongoose.Schema({
     },
     price: { // default 1kg price for generic cart
         type: Number,
-        required: true
+        required: false,
     },
 
     // Stock

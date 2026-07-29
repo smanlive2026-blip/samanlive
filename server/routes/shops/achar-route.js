@@ -81,37 +81,48 @@ router.get('/:shopId', async (req, res) => {
 // 4. ADD NEW ACHAR
 router.post('/', async (req, res) => {
     try {
-        const { shopId, name, category, price500, price1kg, stock, description, jarType, spiceLevel, image, images } = req.body;
+        console.log("BODY RECEIVED:", req.body); // debug ke liye
 
-        if(!shopId || !name || !price1kg) {
-            return res.status(400).json({ success: false, message: 'ShopId, Name, Price1kg jaruri hai' });
+        const { shopId, name, category, price500, price1kg, stock, description, jarType, spiceLevel, image, images, isActive } = req.body;
+
+        if(!shopId || !name) {
+            return res.status(400).json({ success: false, message: 'ShopId aur Name jaruri hai' });
+        }
+        if(price1kg === undefined || price1kg === null) {
+            return res.status(400).json({ success: false, message: 'Price1kg jaruri hai' });
         }
 
-        // String hai to seedha save kar do. Shop check nahi karenge
+        // Shop check hata diya kyunki ab shopId String hai
+        // const shop = await Shop.findById(shopId); 
+
         const newAchar = new Achar({
-            shopId,
-            name,
+            shopId: String(shopId),
+            name: String(name).trim(),
             category: category || 'Aam',
-            price500: price500 || 0,
-            price1kg,
-            price: price1kg,
-            stock: stock || 0,
+            price500: Number(price500) || 0,
+            price1kg: Number(price1kg),
+            price: Number(price1kg), // auto sync
+            stock: Number(stock) || 0,
             description: description || '',
             jarType: jarType || 'Glass',
             spiceLevel: spiceLevel || 'Medium',
             image: image || 'https://placehold.co/400/eab308/fff?text=Achar',
             images: images || [],
-            isActive: true
+            isActive: isActive !== undefined ? isActive : true
         });
 
         await newAchar.save();
+        
+        console.log("SAVED:", newAchar.name);
         res.status(201).json({ success: true, message: 'Achar add ho gaya', product: newAchar });
 
     } catch (error) {
-        console.log("ADD ACHAR ERROR:", error); 
+        console.log("ADD ACHAR ERROR FULL:", error.message); 
+        console.log("ERROR STACK:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
 
 // 5. UPDATE ACHAR
 router.put('/:id', async (req, res) => {
