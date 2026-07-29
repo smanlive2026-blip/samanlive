@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event Listeners
     document.getElementById('addAcharBtn').addEventListener('click', openAddModal);
-    document.getElementById('quickAddBtn').addEventListener('click', addAllProducts) // FIX 1: function name sahi
+    document.getElementById('quickAddBtn').addEventListener('click', quickAddProducts); // FIX 1: function name sahi
     document.getElementById('changeBannerBtn').addEventListener('click', () => {
         document.getElementById('bannerInput').click();
     });
