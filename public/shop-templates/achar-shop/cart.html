@@ -184,23 +184,24 @@
             if(!name || !phone || !address) return alert('Please fill all address details');
 
             const orderData = {
-                shopId,
+                customerName: name,
+                phone: phone,
+                address: address,
                 items: cart,
-                customer: { name, phone, address },
                 total: cart.reduce((sum, c) => sum + (c.price * c.qty), 0),
-                paymentMethod
+                paymentMethod: paymentMethod,
+                totalKg: cart.reduce((sum, c) => sum + c.qty, 0) // dashboard ke liye
             };
 
-            // API call
             try {
-                const res = await fetch('/api/order', {
+                const res = await fetch(`/api/shops/achar/${shopId}/order`, { // <-- NAYA ROUTE
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(orderData)
                 });
                 const data = await res.json();
                 if(data.success) {
-                    alert('Order placed successfully! 🎉');
+                    alert(`Order placed successfully! 🎉\nTracking ID: ${data.trackingId}`);
                     localStorage.removeItem('cart_'+shopId);
                     window.location.href = `/shop/customer-view?shopId=${shopId}`;
                 } else {

@@ -13,80 +13,79 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: #eab308; border-radius: 10px; }
 
-     .banner-wrap { position: relative; width: 100%; height: 200px; }
-     .banner { width: 100%; height: 100%; object-fit: cover; }
-     .banner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7)); }
+    .banner-wrap { position: relative; width: 100%; height: 200px; }
+    .banner { width: 100%; height: 100%; object-fit: cover; }
+    .banner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7)); }
 
-     .container { max-width: 1300px; margin: -40px auto 0; padding: 15px; position: relative; z-index: 2; }
+    .container { max-width: 1300px; margin: -40px auto 0; padding: 15px; position: relative; z-index: 2; }
 
-     .shop-header { background: white; padding: 18px; border-radius: 18px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); margin-bottom: 18px; display: flex; gap: 15px; align-items: center; border: 1px solid #fef9c3; }
-     .shop-header img { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #eab308; object-fit: cover; flex-shrink: 0; }
-     .shop-info { flex: 1; }
-     .shop-info h1 { color: #713f12; font-size: 20px; font-weight: 800; margin-bottom: 4px; line-height: 1.3; }
-     .shop-info p { color: #64748b; font-size: 12px; margin: 3px 0; }
-     .shop-info i { color: #eab308; width: 14px; }
-     .shop-status { background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 50px; font-weight: 700; font-size: 11px; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-     .shop-status::before { content: ''; width: 8px; height: 8px; background: #16a34a; border-radius: 50%; }
-     .shop-status.closed { background: #fee2e2; color: #991b1b; }
-     .shop-status.closed::before { background: #dc2626; }
+    .shop-header { background: white; padding: 18px; border-radius: 18px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); margin-bottom: 18px; display: flex; gap: 15px; align-items: center; border: 1px solid #fef9c3; }
+    .shop-header img { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #eab308; object-fit: cover; flex-shrink: 0; }
+    .shop-info { flex: 1; }
+    .shop-info h1 { color: #713f12; font-size: 20px; font-weight: 800; margin-bottom: 4px; line-height: 1.3; }
+    .shop-info p { color: #64748b; font-size: 12px; margin: 3px 0; }
+    .shop-info i { color: #eab308; width: 14px; }
+    .shop-status { background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 50px; font-weight: 700; font-size: 11px; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .shop-status::before { content: ''; width: 8px; height: 8px; background: #16a34a; border-radius: 50%; }
+    .shop-status.closed { background: #fee2e2; color: #991b1b; }
+    .shop-status.closed::before { background: #dc2626; }
 
-     .announcement { background: linear-gradient(90deg, #fef9c3 0%, #fef08a 100%); color: #713f12; padding: 12px 16px; border-radius: 14px; margin-bottom: 18px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 10px; border-left: 4px solid #eab308; animation: slideIn 0.5s; }
+    .announcement { background: linear-gradient(90deg, #fef9c3 0%, #fef08a 100%); color: #713f12; padding: 12px 16px; border-radius: 14px; margin-bottom: 18px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 10px; border-left: 4px solid #eab308; animation: slideIn 0.5s; }
        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-     .filters { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-     .filters::-webkit-scrollbar { display: none; }
-     .filter-btn { background: white; border: 1.5px solid #eab308; color: #713f12; padding: 9px 18px; border-radius: 50px; font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
-     .filter-btn.active { background: #eab308; color: white; }
+    .filters { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+    .filters::-webkit-scrollbar { display: none; }
+    .filter-btn { background: white; border: 1.5px solid #eab308; color: #713f12; padding: 9px 18px; border-radius: 50px; font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+    .filter-btn.active { background: #eab308; color: white; }
 
-     .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-     .product-card { background: white; border-radius: 16px; padding: 12px; box-shadow: 0 3px 15px rgba(0,0,0,0.06); border: 1px solid #fef9c3; display: flex; flex-direction: column; }
-     .product-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; }
-     .category-tag { background: #fef9c3; color: #713f12; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; display: inline-block; margin-bottom: 6px; text-transform: uppercase; width: fit-content; }
-     .product-card h3 { color: #1e293b; font-size: 14px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; height: 36px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-     .product-meta { display: none; }
-     .price-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 10px; }
-     .price { font-size: 16px; font-weight: 800; color: #eab308; }
-     .price small { font-size: 11px; color: #64748b; font-weight: 400; }
-     .stock { font-size: 10px; color: #16a34a; font-weight: 700; }
-     .stock.low { color: #dc2626; }
-     .btn-add { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; width: 100%; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: auto; transition: 0.2s; }
-     .btn-add:active { transform: scale(0.95); }
-     .btn-add:disabled { background: #cbd5e1; }
+    .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .product-card { background: white; border-radius: 16px; padding: 12px; box-shadow: 0 3px 15px rgba(0,0,0,0.06); border: 1px solid #fef9c3; display: flex; flex-direction: column; }
+    .product-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; }
+    .category-tag { background: #fef9c3; color: #713f12; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; display: inline-block; margin-bottom: 6px; text-transform: uppercase; width: fit-content; }
+    .product-card h3 { color: #1e293b; font-size: 14px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; height: 36px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .product-meta { display: none; }
+    .price-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 10px; }
+    .price { font-size: 16px; font-weight: 800; color: #eab308; }
+    .price small { font-size: 11px; color: #64748b; font-weight: 400; }
+    .stock { font-size: 10px; color: #16a34a; font-weight: 700; }
+    .stock.low { color: #dc2626; }
+    .btn-add { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; width: 100%; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: auto; transition: 0.2s; }
+    .btn-add:active { transform: scale(0.95); }
+    .btn-add:disabled { background: #cbd5e1; }
 
-     .cart-float { position: fixed; bottom: 15px; right: 15px; left: 15px; background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; padding: 14px; border-radius: 16px; font-weight: 700; box-shadow: 0 8px 25px rgba(234,179,8,0.5); cursor: pointer; z-index: 99; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; }
-     .cart-count { background: white; color: #eab308; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; }
+    .cart-float { position: fixed; bottom: 15px; right: 15px; left: 15px; background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; padding: 14px; border-radius: 16px; font-weight: 700; box-shadow: 0 8px 25px rgba(234,179,8,0.5); cursor: pointer; z-index: 99; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; }
+    .cart-count { background: white; color: #eab308; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; }
 
-     .footer { text-align: center; padding: 30px 15px; color: #64748b; font-size: 12px; }
-     .footer h3 { color: #713f12; margin-bottom: 8px; font-size: 18px; font-weight: 800; }
+    .footer { text-align: center; padding: 30px 15px; color: #64748b; font-size: 12px; }
+    .footer h3 { color: #713f12; margin-bottom: 8px; font-size: 18px; font-weight: 800; }
 
-        /* DESKTOP */
         @media(min-width:769px){
           body {padding-bottom: 0;}
-        .banner-wrap {height: 320px;}
-        .container {margin-top: -80px; padding: 20px;}
-        .shop-header {padding: 30px;}
-        .shop-header img {width: 100px; height: 100px;}
-        .shop-info h1 {font-size: 32px;}
-        .shop-info p {font-size: 14px;}
-        .shop-status {padding: 10px 20px; font-size: 14px;}
-        .shop-status::before {width: 10px; height: 10px;}
-        .announcement {padding: 16px 22px; font-size: 15px;}
-        .filter-btn {padding: 12px 24px; font-size: 15px;}
-        .product-grid {grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;}
-        .product-card {padding: 20px;}
-        .product-card img {height: 230px;}
-        .product-card h3 {font-size: 20px; height: auto; -webkit-line-clamp: unset;}
-        .product-meta {display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #64748b; margin-bottom: 12px;}
-        .product-meta span { background: #f8fafc; padding: 4px 10px; border-radius: 8px; display: flex; align-items: center; gap: 5px; }
-        .product-meta i { color: #eab308; }
-        .price {font-size: 24px;}
-        .price small {font-size: 14px;}
-        .stock {font-size: 13px;}
-        .btn-add {padding: 14px; font-size: 15px;}
-        .btn-add:hover { transform: scale(1.03); }
-        .cart-float {bottom: 30px; right: 30px; left: auto; width: auto; padding: 18px 32px; border-radius: 50px;}
-        .footer {padding: 50px 20px; font-size: 14px;}
-        .footer h3 {font-size: 24px;}
+       .banner-wrap {height: 320px;}
+       .container {margin-top: -80px; padding: 20px;}
+       .shop-header {padding: 30px;}
+       .shop-header img {width: 100px; height: 100px;}
+       .shop-info h1 {font-size: 32px;}
+       .shop-info p {font-size: 14px;}
+       .shop-status {padding: 10px 20px; font-size: 14px;}
+       .shop-status::before {width: 10px; height: 10px;}
+       .announcement {padding: 16px 22px; font-size: 15px;}
+       .filter-btn {padding: 12px 24px; font-size: 15px;}
+       .product-grid {grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;}
+       .product-card {padding: 20px;}
+       .product-card img {height: 230px;}
+       .product-card h3 {font-size: 20px; height: auto; -webkit-line-clamp: unset;}
+       .product-meta {display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #64748b; margin-bottom: 12px;}
+       .product-meta span { background: #f8fafc; padding: 4px 10px; border-radius: 8px; display: flex; align-items: center; gap: 5px; }
+       .product-meta i { color: #eab308; }
+       .price {font-size: 24px;}
+       .price small {font-size: 14px;}
+       .stock {font-size: 13px;}
+       .btn-add {padding: 14px; font-size: 15px;}
+       .btn-add:hover { transform: scale(1.03); }
+       .cart-float {bottom: 30px; right: 30px; left: auto; width: auto; padding: 18px 32px; border-radius: 50px;}
+       .footer {padding: 50px 20px; font-size: 14px;}
+       .footer h3 {font-size: 24px;}
         }
     </style>
 </head>
@@ -131,32 +130,34 @@
 
     <script>
         let shopId = window.location.pathname.split('/')[2] || new URLSearchParams(window.location.search).get('shopId');
+        let shopData = {}; // pura shop object
         let allProducts = [];
         let cart = JSON.parse(localStorage.getItem('cart_'+shopId)) || [];
 
         document.addEventListener('DOMContentLoaded', () => {
             loadShop();
-            loadProducts();
             updateCartCount();
         });
 
+        // 1. LOAD SHOP + PRODUCTS EK SAATH - FURNITURE FORMAT
         async function loadShop() {
             try {
-                const res = await fetch(`/api/shop/${shopId}`);
+                const res = await fetch(`/api/shops/achar/${shopId}`); // <-- NAYA URL
                 const data = await res.json();
-                const shop = data.shop || data;
-                document.getElementById('shopName').innerText = shop.shopName;
-                document.getElementById('footerShopName').innerText = shop.shopName;
-                document.getElementById('pageTitle').innerText = shop.shopName;
-                document.getElementById('metaDesc').content = shop.description || 'Ghar ka bana hua shuddh achar';
-                document.getElementById('shopLogo').src = shop.logo || 'https://placehold.co/100/eab308/fff?text=A';
-                document.getElementById('shopBanner').src = shop.banner || 'https://placehold.co/1400x320/eab308/fff?text=Achar';
-                document.getElementById('shopPhone').innerText = shop.phone || 'N/A';
-                document.getElementById('shopTiming').innerText = `${shop.openTime || '09:00'} - ${shop.closeTime || '21:00'}`;
-                document.getElementById('shopAddress').innerText = shop.address || 'Ahmedabad, Gujarat';
+                shopData = data.shop || {};
+
+                document.getElementById('shopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
+                document.getElementById('footerShopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
+                document.getElementById('pageTitle').innerText = shopData.name || 'Achar Shop';
+                document.getElementById('metaDesc').content = shopData.announcement || 'Ghar ka bana hua shuddh achar';
+                document.getElementById('shopLogo').src = shopData.ownerPhotoUrl || 'https://placehold.co/100/eab308/fff?text=A';
+                document.getElementById('shopBanner').src = shopData.bannerPhotoUrl || 'https://placehold.co/1400x320/eab308/fff?text=Achar';
+                document.getElementById('shopPhone').innerText = shopData.phone || 'N/A';
+                document.getElementById('shopTiming').innerText = `${shopData.settings?.openTime || '09:00'} - ${shopData.settings?.closeTime || '21:00'}`;
+                document.getElementById('shopAddress').innerText = 'Ahmedabad, Gujarat'; // location alag se aayegi
 
                 const statusEl = document.getElementById('shopStatus');
-                if(shop.isOpen) {
+                if(shopData.isOpen) {
                     statusEl.innerText = 'Open';
                     statusEl.classList.remove('closed');
                 } else {
@@ -164,21 +165,17 @@
                     statusEl.classList.add('closed');
                 }
 
-                if(shop.announcement) {
-                    document.getElementById('announcementText').innerText = shop.announcement;
+                if(shopData.announcement) {
+                    document.getElementById('announcementText').innerText = shopData.announcement;
                     document.getElementById('announcementBox').style.display = 'flex';
                 }
-            } catch(e) { console.log('Shop load error', e) }
-        }
 
-        async function loadProducts() {
-            try {
-                const res = await fetch(`/api/shops/achar/${shopId}`);
-                const data = await res.json();
-                allProducts = data.products.filter(p => p.isActive) || [];
+                allProducts = (shopData.items || []).filter(p => p.isActive); // <-- items se nikala
                 renderProducts(allProducts);
                 renderCategories();
+
             } catch(e) {
+                console.log('Shop load error', e);
                 document.getElementById('productGrid').innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px;">Error loading products</p>';
             }
         }
@@ -213,8 +210,7 @@
                     <div class="product-meta">
                         <span><i class="fa fa-pepper-hot"></i> ${p.spiceLevel}</span>
                         <span><i class="fa fa-jar"></i> ${p.jarType}</span>
-                        ${p.isHomemade? '<span><i class="fa fa-home"></i> Homemade</span>' : ''}
-                        <span><i class="fa fa-hourglass"></i> ${p.expiryMonths}M</span>
+                        <span><i class="fa fa-hourglass"></i> 12M</span>
                     </div>
                     <div class="price-row">
                         <div>
@@ -223,7 +219,7 @@
                         </div>
                         <div class="stock ${p.stock < 2? 'low' : ''}"><i class="fa fa-box"></i> ${p.stock > 0? p.stock+'Kg' : 'Out'}</div>
                     </div>
-                    <button class="btn-add" ${p.stock <= 0? 'disabled' : ''} onclick="addToCart('${p._id}', event)">
+                    <button class="btn-add" ${p.stock <= 0? 'disabled' : ''} onclick="addToCart('${p.id}', event)"> <!-- id -->
                         ${p.stock <= 0? '<i class="fa fa-ban"></i> Out' : '<i class="fa fa-plus"></i> Add'}
                     </button>
                 </div>
@@ -231,7 +227,7 @@
         }
 
         function addToCart(id, event) {
-            const product = allProducts.find(p => p._id === id);
+            const product = allProducts.find(p => p.id === id); // id
             const existing = cart.find(c => c.id === id);
             if(existing) {
                 if(existing.qty >= product.stock) return alert('Stock khatam bhai!');

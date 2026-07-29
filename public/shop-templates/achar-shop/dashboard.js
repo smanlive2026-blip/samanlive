@@ -1,9 +1,10 @@
 // ========================================
-// ACHAR SHOP DASHBOARD JS - FULL v6 FIXED
+// ACHAR SHOP DASHBOARD JS - FULL v7 FURNITURE FORMAT
 // File: /public/shop-templates/achar-shop/dashboard.js
 // ========================================
 
 let shopId = new URLSearchParams(window.location.search).get('shopId');
+let shopData = {}; // pura shop object
 let allProducts = [];
 let allOrders = [];
 let currentEditId = null;
@@ -15,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // 1. SHOPCORE INIT
     if(typeof ShopCore !== 'undefined') {
         ShopCore.init(shopId, 'achar-shop'); 
     } else {
@@ -27,19 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     init();
 
-    // Event Listeners
     document.getElementById('addAcharBtn').addEventListener('click', openAddModal);
-    document.getElementById('quickAddBtn').addEventListener('click', quickAddProducts); // FIX 1: function name sahi
+    document.getElementById('quickAddBtn').addEventListener('click', quickAddProducts);
     document.getElementById('changeBannerBtn').addEventListener('click', () => {
         document.getElementById('bannerInput').click();
     });
     document.getElementById('newOrderBtn').addEventListener('click', () => alert('Order system file 6 me banega'));
-    document.getElementById('userViewBtn').href = `/shop/customer-view?shopId=${shopId}`; // FIX 2: url sahi
+    document.getElementById('userViewBtn').href = `/shop/customer-view?shopId=${shopId}`;
     document.getElementById('locationBtn').addEventListener('click', () => {
         document.getElementById('locationCard').style.display = 'block';
     });
 
-    // SHOPCORE BIND - 3 IMAGE UPLOAD
     ShopCore.bindImageUpload('shopBanner', 'bannerInput', 'banner', 'banner');
     ShopCore.bindImageUpload('ownerImg', 'ownerInput', 'profile', 'logo');
     ShopCore.bindImageUpload('productImgPreview', 'productImageInput', 'product', 'product_temp');
@@ -54,43 +52,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function init() {
     await loadShopData();
-    await loadInventory();
     await loadOrders();
     loadStats();
 }
 
-// 1. LOAD SHOP DATA
+// 1. LOAD SHOP DATA - FURNITURE FORMAT
 async function loadShopData() {
     try {
-        const res = await fetch(`/api/shops/${shopId}`);
-        const shop = await res.json();
-        document.getElementById('shopName').innerText = shop.shopName || 'Maa Ke Haath Ka Achar';
-        document.getElementById('ownerImg').src = localStorage.getItem(`photo_${shopId}_logo_cloud`) || shop.ownerPhotoUrl || shop.logo || 'https://placehold.co/60/eab308/fff?text=A';
-        document.getElementById('shopBanner').src = localStorage.getItem(`photo_${shopId}_banner_cloud`) || shop.bannerUrl || shop.banner || 'https://placehold.co/400x150/eab308/fff?text=Upload+Banner';
-        document.getElementById('openTime').value = shop.openTime || '09:00';
-        document.getElementById('closeTime').value = shop.closeTime || '21:00';
-        document.getElementById('shopPhoneInput').value = shop.phone || '';
-        document.getElementById('announcementInput').value = shop.announcement || '';
-        document.getElementById('toggleText').innerText = shop.isOpen? 'Open' : 'Closed';
-        if(!shop.isOpen) document.getElementById('shopToggle').classList.add('off');
-    } catch(e) { console.log('Shop data error', e) }
-}
-
-// 2. LOAD INVENTORY
-async function loadInventory() {
-    try {
-        const res = await fetch(`/api/shops/achar/${shopId}`);
+        const res = await fetch(`/api/shops/achar/${shopId}`); // <-- URL CHANGE
         const data = await res.json();
-        allProducts = data.products || [];
+        shopData = data.shop || {};
+        
+        document.getElementById('shopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
+        document.getElementById('ownerImg').src = localStorage.getItem(`photo_${shopId}_logo_cloud`) || shopData.ownerPhotoUrl || 'https://placehold.co/60/eab308/fff?text=A';
+        document.getElementById('shopBanner').src = localStorage.getItem(`photo_${shopId}_banner_cloud`) || shopData.bannerPhotoUrl || 'https://placehold.co/400x150/eab308/fff?text=Upload+Banner';
+        document.getElementById('openTime').value = shopData.settings?.openTime || '09:00';
+        document.getElementById('closeTime').value = shopData.settings?.closeTime || '21:00';
+        document.getElementById('shopPhoneInput').value = shopData.phone || '';
+        document.getElementById('announcementInput').value = shopData.announcement || '';
+        document.getElementById('toggleText').innerText = shopData.isOpen? 'Open' : 'Closed';
+        if(!shopData.isOpen) document.getElementById('shopToggle').classList.add('off');
+
+        allProducts = shopData.items || []; // <-- items me se nikala
         renderInventory();
         renderLowStock();
         renderCategories();
-    } catch(e) {
-        document.getElementById('inventoryList').innerHTML = '<p style="color:red;">Error loading</p>';
-    }
+    } catch(e) { console.log('Shop data error', e) }
 }
 
-// 3. RENDER INVENTORY
+// 2. RENDER INVENTORY - id change
 function renderInventory(list = allProducts) {
     const div = document.getElementById('inventoryList');
     if(list.length === 0) {
@@ -110,32 +100,30 @@ function renderInventory(list = allProducts) {
                 </div>
             </div>
             <div style="display:flex; gap:5px;">
-                <button class="btn-sm" style="background:#2563eb;" onclick="editProduct('${p._id}')"><i class="fa fa-pen"></i></button>
-                <button class="btn-sm" style="background:#dc2626;" onclick="deleteProduct('${p._id}')"><i class="fa fa-trash"></i></button>
+                <button class="btn-sm" style="background:#2563eb;" onclick="editProduct('${p.id}')"><i class="fa fa-pen"></i></button> <!-- id -->
+                <button class="btn-sm" style="background:#dc2626;" onclick="deleteProduct('${p.id}')"><i class="fa fa-trash"></i></button> <!-- id -->
             </div>
         </div>
     `).join('');
 }
 
-// 4. FILTER PRODUCTS
 function filterProducts(query) {
     const filtered = allProducts.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
     renderInventory(filtered);
 }
 
-// 5. LOAD ORDERS
+// 3. LOAD ORDERS - NAYA ROUTE
 async function loadOrders() {
     try {
-        const res = await fetch(`/api/orders?shopId=${shopId}&limit=10`);
+        const res = await fetch(`/api/shops/achar/${shopId}/orders`); // <-- URL CHANGE
         const data = await res.json();
-        allOrders = data.orders || [];
+        allOrders = data.data || [];
         renderOrders();
     } catch(e) {
         document.getElementById('orderList').innerHTML = '<p style="color:#64748b;">No orders</p>';
     }
 }
 
-// 6. RENDER ORDERS
 function renderOrders() {
     const div = document.getElementById('orderList');
     if(allOrders.length === 0) {
@@ -145,7 +133,7 @@ function renderOrders() {
     div.innerHTML = allOrders.map(o => `
         <div class="achar-row">
             <div>
-                <b>Order #${o._id.slice(-6).toUpperCase()}</b>
+                <b>Order #${o.trackingId}</b> <!-- trackingId -->
                 <div style="font-size:12px; color:#64748b;">${o.customerName} | ${new Date(o.createdAt).toLocaleDateString()}</div>
             </div>
             <div style="font-weight:700; color:#eab308;">₹${o.total}</div>
@@ -153,7 +141,6 @@ function renderOrders() {
     `).join('');
 }
 
-// 7. LOAD STATS
 function loadStats() {
     document.getElementById('products').innerText = allProducts.length;
     let today = new Date().toDateString();
@@ -163,12 +150,10 @@ function loadStats() {
     document.getElementById('kg').innerText = todayOrders.reduce((sum, o) => sum + (o.totalKg || 0), 0);
 }
 
-// 8. LOW STOCK
+// 4. LOW STOCK - NAYA ROUTE
 async function renderLowStock() {
     try {
-        const res = await fetch(`/api/shops/achar/low-stock/${shopId}`);
-        const data = await res.json();
-        const low = data.products || [];
+        const low = allProducts.filter(p => p.stock < 5); // frontend se filter
         const div = document.getElementById('stockAlert');
         if(low.length === 0) {
             div.innerHTML = '<p style="color:#16a34a;">✅ Sab stock thik hai</p>';
@@ -180,7 +165,6 @@ async function renderLowStock() {
     }
 }
 
-// 9. CATEGORIES
 function renderCategories() {
     const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
     const div = document.getElementById('categories');
@@ -196,7 +180,7 @@ function renderCategories() {
     `).join('');
 }
 
-// 10. ADD/EDIT MODAL
+// 5. ADD/EDIT MODAL
 function openAddModal() {
     currentEditId = null;
     productImageUrl = '';
@@ -234,14 +218,14 @@ async function saveNewAchar() {
     if(!data.name ||!data.price1kg) return alert('Name aur 1Kg Price jaruri hai');
 
     try {
-        const url = currentEditId? `/api/shops/achar/${currentEditId}` : '/api/shops/achar';
+        const url = currentEditId? `/api/shops/achar/${shopId}/item/${currentEditId}` : `/api/shops/achar/${shopId}/item`; // <-- URL CHANGE
         const method = currentEditId? 'PUT' : 'POST';
-        const res = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+        const res = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify({item: data})}); // <-- item me wrap
         const result = await res.json();
         if(res.ok) {
             alert('Save ho gaya');
             closeAddModal();
-            loadInventory();
+            loadShopData(); // pura reload
         } else {
             alert('Error: ' + result.message);
         }
@@ -249,7 +233,7 @@ async function saveNewAchar() {
 }
 
 function editProduct(id) {
-    const p = allProducts.find(x => x._id === id);
+    const p = allProducts.find(x => x.id === id); // id
     currentEditId = id;
     productImageUrl = p.image;
     document.getElementById('modalTitle').innerText = 'Edit Achar';
@@ -267,33 +251,33 @@ function editProduct(id) {
 
 async function deleteProduct(id) {
     if(!confirm('Delete karein?')) return;
-    await fetch(`/api/shops/achar/${id}`, {method:'DELETE'});
-    loadInventory();
+    await fetch(`/api/shops/achar/${shopId}/item/${id}`, {method:'DELETE'}); // <-- URL CHANGE
+    loadShopData();
 }
 
-// 11. OTHER FUNCTIONS
-function toggleShop() {
+// 6. OTHER FUNCTIONS - ROUTE CHANGE
+async function toggleShop() {
     document.getElementById('shopToggle').classList.toggle('off');
     const isOpen =!document.getElementById('shopToggle').classList.contains('off');
     document.getElementById('toggleText').innerText = isOpen? 'Open' : 'Closed';
-    fetch(`/api/shop/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({isOpen})});
+    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({isOpen})}); // <-- URL CHANGE
 }
 
 async function saveAnnouncement() {
     const announcement = document.getElementById('announcementInput').value;
-    await fetch(`/api/shop/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({announcement})});
+    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({announcement})}); // <-- URL CHANGE
     alert('Saved');
 }
 
 async function saveTiming() {
     const data = {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value};
-    await fetch(`/api/shop/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({settings: data})}); // <-- settings me wrap
     alert('Saved');
 }
 
 async function savePhone() {
     const phone = document.getElementById('shopPhoneInput').value;
-    await fetch(`/api/shop/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({phone})});
+    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({phone})}); // <-- URL CHANGE
     alert('Saved');
 }
 
@@ -301,7 +285,7 @@ function saveLocation() {
     alert('Location save - shop-location.js handle karega');
 }
 
-// SHOPCORE CALLBACK: PRODUCT IMAGE UPLOAD HONE KE BAAD URL PAKADNA
+// SHOPCORE CALLBACK
 const originalUpload = ShopCore.uploadImage;
 ShopCore.uploadImage = async function(file, type) {
     const url = await originalUpload.call(this, file, type);
@@ -311,4 +295,4 @@ ShopCore.uploadImage = async function(file, type) {
     return url;
 }
 
-console.log('✅ Achar Dashboard v6 Loaded - All Fixed');
+console.log('✅ Achar Dashboard v7 Loaded - Furniture Format');

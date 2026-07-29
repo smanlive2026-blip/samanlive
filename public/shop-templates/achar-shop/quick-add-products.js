@@ -14,7 +14,6 @@ const acharProductsList = [
     { name: 'Aam Ka Gol Achar', category: 'Aam', price500: 130, price1kg: 240, stock: 22, description: 'Masaledar gol aam', jarType: 'Glass', spiceLevel: 'Teekha', image: 'https://placehold.co/400/FBBF24/fff?text=Aam+Gol' },
     { name: 'Nimbu Meetha Achar', category: 'Nimbu', price500: 110, price1kg: 200, stock: 16, description: 'Meetha nimbu', jarType: 'Glass', spiceLevel: 'Mild', image: 'https://placehold.co/400/FBBF24/fff?text=Meetha+Nimbu' },
     { name: 'Mix Punjabi Achar', category: 'Mix', price500: 150, price1kg: 270, stock: 20, description: 'Punjabi style mix', jarType: 'Ceramic', spiceLevel: 'Teekha', image: 'https://placehold.co/400/FBBF24/fff?text=Punjabi+Mix' },
-    // Baki ke 40 product... yaha full list daal dena
     { name: 'Bharwa Mirchi', category: 'Mirchi', price500: 120, price1kg: 220, stock: 14, description: 'Bharwa masala mirchi', jarType: 'Glass', spiceLevel: 'Teekha', image: 'https://placehold.co/400/FBBF24/fff?text=Bharwa' },
     { name: 'Aam Chunda', category: 'Aam', price500: 140, price1kg: 250, stock: 19, description: 'Gujrati chunda', jarType: 'Glass', spiceLevel: 'Mild', image: 'https://placehold.co/400/FBBF24/fff?text=Chunda' },
     { name: 'Adrak Ka Achar', category: 'Other', price500: 130, price1kg: 240, stock: 11, description: 'Adrak nimbu achar', jarType: 'Glass', spiceLevel: 'Medium', image: 'https://placehold.co/400/FBBF24/fff?text=Adrak' },
@@ -59,41 +58,57 @@ const acharProductsList = [
 let isAdding = false;
 
 async function quickAddProducts() {
-    const shopId = new URLSearchParams(window.location.search).get('shopId'); // FIX: shopId yaha liya
-    
+    const shopId = new URLSearchParams(window.location.search).get('shopId');
+
     if(isAdding) return alert('Pehle wale add ho rahe hain');
     if(!shopId) return alert('ShopId nahi mila');
-    if(!confirm('50+ products add karein? Pehle wale delete nahi honge')) return;
-    
+    if(!confirm(`50+ products add karein?`)) return;
+
     isAdding = true;
     const btn = document.getElementById('quickAddBtn');
     if(btn) {
-        btn.innerText = 'Adding...';
+        btn.innerText = 'Adding 0/50...';
         btn.disabled = true;
     }
 
     let success = 0;
-    for(let p of acharProductsList) {
+    let failed = 0;
+
+    for(let i = 0; i < acharProductsList.length; i++) {
+        let p = {...acharProductsList[i]}; // copy kar le
         p.shopId = shopId;
-        p.isActive = true; // ye add kiya
+        p.isActive = true;
+
         try {
-            const res = await fetch('/api/shops/achar', {
+            const res = await fetch(`/api/shops/achar/${shopId}/item`, { // <-- res yaha define kiya
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(p)
+                body: JSON.stringify({item: p})
             });
-            const data = await res.json(); // <-- YE ADD KAR
-            console.log(data); // <-- YE ADD KAR
-            if(res.ok) success++;
-            await new Promise(r => setTimeout(r, 100)); // server load kam karne ke liye
-        } catch(e) { console.log('Error', p.name) }
+
+            const data = await res.json();
+
+            if(res.ok && data.success) {
+                success++;
+            } else {
+                failed++;
+                console.log('Failed:', p.name, data.message);
+            }
+
+            if(btn) btn.innerText = `Adding ${success}/${acharProductsList.length}...`;
+            await new Promise(r => setTimeout(r, 150)); // 150ms gap
+
+        } catch(e) {
+            failed++;
+            console.log('Error', p.name, e)
+        }
     }
 
-    alert(`${success} products add ho gaye!`);
+    alert(`${success} products add ho gaye!\n${failed} fail hue`);
     isAdding = false;
     if(btn) {
         btn.innerText = '⚡ 50+ Products Add Karein';
         btn.disabled = false;
     }
-    if(typeof loadInventory === 'function') loadInventory(); // inventory refresh
+    if(typeof loadInventory === 'function') loadInventory();
 }

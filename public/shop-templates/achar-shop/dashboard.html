@@ -52,7 +52,6 @@
         .accordion-body { display: block; }
         .accordion-arrow { margin-left: auto; transition: 0.3s; }
 
-        /* MOBILE RESPONSIVE */
         @media (max-width: 1024px) { .content-grid { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
             .container { padding: 12px; }
@@ -87,7 +86,8 @@
                 </div>
             </div>
             <div class="header-buttons">
-                <a href="/shop/customer-view?shopId=" id="userViewBtn" class="btn" style="background: #2563eb;"><i class="fa fa-eye"></i> User View</a>                <button id="addAcharBtn" class="btn"><i class="fa fa-plus"></i> Add Achar</button>
+                <a href="#" id="userViewBtn" class="btn" style="background: #2563eb;"><i class="fa fa-eye"></i> User View</a>
+                <button id="addAcharBtn" class="btn"><i class="fa fa-plus"></i> Add Achar</button>
                 <button id="quickAddBtn" class="btn btn-green"><i class="fa fa-bolt"></i> 50+ Add</button>
                 <button id="newOrderBtn" class="btn" style="background: #16a34a;"><i class="fa fa-receipt"></i> New Order</button>
                 <button id="locationBtn" class="btn" style="background: #059669;"><i class="fa fa-location-dot"></i> Location</button>
@@ -161,7 +161,6 @@
             </div>
         </div>
 
-        <!-- LOCATION CARD -->
         <div class="content-card" id="locationCard" style="display:none;">
             <h2><i class="fa fa-location-dot"></i> Shop Location Setting</h2>
             <p style="color:#64748b;font-size:14px;margin-bottom:15px;">Is location ke andar ke customer ko aapki shop dikhegi</p>
@@ -187,7 +186,6 @@
         </div>
     </div>
 
-    <!-- ADD/EDIT ACHAR MODAL FULL -->
     <div class="modal" id="addModal">
         <div class="modal-content">
             <h2 id="modalTitle">Add New Achar</h2>
