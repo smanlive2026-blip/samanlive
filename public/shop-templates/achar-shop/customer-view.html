@@ -129,7 +129,8 @@
     </div>
 
 <script>
-        let shopId = window.location.pathname.split('/')[2] || new URLSearchParams(window.location.search).get('shopId');
+        let shopId = new URLSearchParams(window.location.search).get('shopId');
+        if(!shopId) shopId = window.location.pathname.split('/').pop(); // fallback
         let shopData = {};
         let allProducts = [];
         let cart = JSON.parse(localStorage.getItem('cart_'+shopId)) || [];

@@ -139,6 +139,7 @@ router.delete('/:shopId/item/:itemId', async (req, res) => {
 router.put('/:shopId', async (req, res) => {
   try {
     const shopId = getShopId(req);
+    if(!shopId || shopId.length < 20) return res.status(400).json({ success: false, message: 'Invalid ShopId' });
     const updateData = req.body;
     let achar = await Achar.findOne({ shopId: shopId });
     if(!achar) achar = await Achar.create({ shopId: shopId });
