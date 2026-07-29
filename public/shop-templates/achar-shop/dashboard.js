@@ -229,7 +229,7 @@ async function saveNewAchar() {
     const data = {
         shopId,
         name: document.getElementById('acharName').value,
-        category: document.getElementById('acharType').value || 'Aam',
+        category: document.getElementById('acharType').value || 'Aam', // <-- FIX
         description: document.getElementById('acharDesc').value,
         jarType: document.getElementById('acharJar').value,
         spiceLevel: document.getElementById('acharSpice').value,
