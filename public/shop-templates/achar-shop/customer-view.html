@@ -128,9 +128,9 @@
         <p>Ghar ka bana hua, Shuddh aur Swadisht Achar 🥒</p>
     </div>
 
-    <script>
+<script>
         let shopId = window.location.pathname.split('/')[2] || new URLSearchParams(window.location.search).get('shopId');
-        let shopData = {}; // pura shop object
+        let shopData = {};
         let allProducts = [];
         let cart = JSON.parse(localStorage.getItem('cart_'+shopId)) || [];
 
@@ -139,11 +139,24 @@
             updateCartCount();
         });
 
-        // 1. LOAD SHOP + PRODUCTS EK SAATH - FURNITURE FORMAT
+        function convertTo12Hr(time24h) {
+            if(!time24h) return '09:00 AM';
+            if(time24h.includes('AM') || time24h.includes('PM')) return time24h;
+            let [hours, minutes] = time24h.split(':');
+            hours = parseInt(hours, 10);
+            const modifier = hours >= 12? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours? hours : 12;
+            return `${hours}:${minutes} ${modifier}`;
+        }
+
         async function loadShop() {
             try {
-                const res = await fetch(`/api/shops/achar/${shopId}`); // <-- NAYA URL
+                const res = await fetch(`/api/shops/achar/${shopId}`);
                 const data = await res.json();
+
+                if(!data.success) throw new Error(data.message); // <-- ERROR CHECK ADD
+
                 shopData = data.shop || {};
 
                 document.getElementById('shopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
@@ -153,8 +166,10 @@
                 document.getElementById('shopLogo').src = shopData.ownerPhotoUrl || 'https://placehold.co/100/eab308/fff?text=A';
                 document.getElementById('shopBanner').src = shopData.bannerPhotoUrl || 'https://placehold.co/1400x320/eab308/fff?text=Achar';
                 document.getElementById('shopPhone').innerText = shopData.phone || 'N/A';
-                document.getElementById('shopTiming').innerText = `${shopData.settings?.openTime || '09:00'} - ${shopData.settings?.closeTime || '21:00'}`;
-                document.getElementById('shopAddress').innerText = 'Ahmedabad, Gujarat'; // location alag se aayegi
+
+                // TIME FIX: 24hr to 12hr
+                document.getElementById('shopTiming').innerText = `${convertTo12Hr(shopData.settings?.openTime)} - ${convertTo12Hr(shopData.settings?.closeTime)}`;
+                document.getElementById('shopAddress').innerText = 'Ahmedabad, Gujarat';
 
                 const statusEl = document.getElementById('shopStatus');
                 if(shopData.isOpen) {
@@ -170,13 +185,13 @@
                     document.getElementById('announcementBox').style.display = 'flex';
                 }
 
-                allProducts = (shopData.items || []).filter(p => p.isActive); // <-- items se nikala
+                allProducts = (shopData.items || []).filter(p => p.isActive);
                 renderProducts(allProducts);
                 renderCategories();
 
             } catch(e) {
                 console.log('Shop load error', e);
-                document.getElementById('productGrid').innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px;">Error loading products</p>';
+                document.getElementById('productGrid').innerHTML = `<p style="text-align:center; grid-column:1/-1; padding:40px;">Error: ${e.message}</p>`;
             }
         }
 
@@ -219,7 +234,7 @@
                         </div>
                         <div class="stock ${p.stock < 2? 'low' : ''}"><i class="fa fa-box"></i> ${p.stock > 0? p.stock+'Kg' : 'Out'}</div>
                     </div>
-                    <button class="btn-add" ${p.stock <= 0? 'disabled' : ''} onclick="addToCart('${p.id}', event)"> <!-- id -->
+                    <button class="btn-add" ${p.stock <= 0? 'disabled' : ''} onclick="addToCart('${p.id}', event)">
                         ${p.stock <= 0? '<i class="fa fa-ban"></i> Out' : '<i class="fa fa-plus"></i> Add'}
                     </button>
                 </div>
@@ -227,7 +242,8 @@
         }
 
         function addToCart(id, event) {
-            const product = allProducts.find(p => p.id === id); // id
+            const product = allProducts.find(p => p.id === id);
+            if(!product) return;
             const existing = cart.find(c => c.id === id);
             if(existing) {
                 if(existing.qty >= product.stock) return alert('Stock khatam bhai!');
@@ -253,5 +269,5 @@
             window.location.href = `/shop/cart?shopId=${shopId}`;
         }
     </script>
-</body>
+    </body>
 </html>
