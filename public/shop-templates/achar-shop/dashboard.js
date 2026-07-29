@@ -1,5 +1,5 @@
 // ========================================
-// ACHAR SHOP DASHBOARD JS - FULL v7 FURNITURE FORMAT
+// ACHAR SHOP DASHBOARD JS - FULL v8 FURNITURE FORMAT
 // File: /public/shop-templates/achar-shop/dashboard.js
 // ========================================
 
@@ -56,31 +56,55 @@ async function init() {
     loadStats();
 }
 
+// TIME CONVERT FUNCTIONS
+function convertTo24Hr(time12h) {
+    if(!time12h) return '09:00';
+    if(time12h.includes(':') && !time12h.includes('AM') && !time12h.includes('PM')) return time12h;
+    
+    const [time, modifier] = time12h.split(' ');
+    let [hours, minutes] = time.split(':');
+    if (hours === '12') hours = '00';
+    if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+}
+
+function convertTo12Hr(time24h) {
+    let [hours, minutes] = time24h.split(':');
+    hours = parseInt(hours, 10);
+    const modifier = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${modifier}`;
+}
+
 // 1. LOAD SHOP DATA - FURNITURE FORMAT
 async function loadShopData() {
     try {
-        const res = await fetch(`/api/shops/achar/${shopId}`); // <-- URL CHANGE
+        const res = await fetch(`/api/shops/achar/${shopId}`);
         const data = await res.json();
         shopData = data.shop || {};
         
         document.getElementById('shopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
         document.getElementById('ownerImg').src = localStorage.getItem(`photo_${shopId}_logo_cloud`) || shopData.ownerPhotoUrl || 'https://placehold.co/60/eab308/fff?text=A';
         document.getElementById('shopBanner').src = localStorage.getItem(`photo_${shopId}_banner_cloud`) || shopData.bannerPhotoUrl || 'https://placehold.co/400x150/eab308/fff?text=Upload+Banner';
-        document.getElementById('openTime').value = shopData.settings?.openTime || '09:00';
-        document.getElementById('closeTime').value = shopData.settings?.closeTime || '21:00';
+        
+        // TIME FIX: 12hr to 24hr
+        document.getElementById('openTime').value = convertTo24Hr(shopData.settings?.openTime || '09:00 AM');
+        document.getElementById('closeTime').value = convertTo24Hr(shopData.settings?.closeTime || '09:00 PM');
+        
         document.getElementById('shopPhoneInput').value = shopData.phone || '';
         document.getElementById('announcementInput').value = shopData.announcement || '';
         document.getElementById('toggleText').innerText = shopData.isOpen? 'Open' : 'Closed';
         if(!shopData.isOpen) document.getElementById('shopToggle').classList.add('off');
 
-        allProducts = shopData.items || []; // <-- items me se nikala
+        allProducts = shopData.items || [];
         renderInventory();
         renderLowStock();
         renderCategories();
     } catch(e) { console.log('Shop data error', e) }
 }
 
-// 2. RENDER INVENTORY - id change
+// 2. RENDER INVENTORY
 function renderInventory(list = allProducts) {
     const div = document.getElementById('inventoryList');
     if(list.length === 0) {
@@ -100,8 +124,8 @@ function renderInventory(list = allProducts) {
                 </div>
             </div>
             <div style="display:flex; gap:5px;">
-                <button class="btn-sm" style="background:#2563eb;" onclick="editProduct('${p.id}')"><i class="fa fa-pen"></i></button> <!-- id -->
-                <button class="btn-sm" style="background:#dc2626;" onclick="deleteProduct('${p.id}')"><i class="fa fa-trash"></i></button> <!-- id -->
+                <button class="btn-sm" style="background:#2563eb;" onclick="editProduct('${p.id}')"><i class="fa fa-pen"></i></button>
+                <button class="btn-sm" style="background:#dc2626;" onclick="deleteProduct('${p.id}')"><i class="fa fa-trash"></i></button>
             </div>
         </div>
     `).join('');
@@ -112,10 +136,10 @@ function filterProducts(query) {
     renderInventory(filtered);
 }
 
-// 3. LOAD ORDERS - NAYA ROUTE
+// 3. LOAD ORDERS
 async function loadOrders() {
     try {
-        const res = await fetch(`/api/shops/achar/${shopId}/orders`); // <-- URL CHANGE
+        const res = await fetch(`/api/shops/achar/${shopId}/orders`);
         const data = await res.json();
         allOrders = data.data || [];
         renderOrders();
@@ -133,7 +157,7 @@ function renderOrders() {
     div.innerHTML = allOrders.map(o => `
         <div class="achar-row">
             <div>
-                <b>Order #${o.trackingId}</b> <!-- trackingId -->
+                <b>Order #${o.trackingId}</b>
                 <div style="font-size:12px; color:#64748b;">${o.customerName} | ${new Date(o.createdAt).toLocaleDateString()}</div>
             </div>
             <div style="font-weight:700; color:#eab308;">₹${o.total}</div>
@@ -150,10 +174,10 @@ function loadStats() {
     document.getElementById('kg').innerText = todayOrders.reduce((sum, o) => sum + (o.totalKg || 0), 0);
 }
 
-// 4. LOW STOCK - NAYA ROUTE
+// 4. LOW STOCK
 async function renderLowStock() {
     try {
-        const low = allProducts.filter(p => p.stock < 5); // frontend se filter
+        const low = allProducts.filter(p => p.stock < 5);
         const div = document.getElementById('stockAlert');
         if(low.length === 0) {
             div.innerHTML = '<p style="color:#16a34a;">✅ Sab stock thik hai</p>';
@@ -218,14 +242,14 @@ async function saveNewAchar() {
     if(!data.name ||!data.price1kg) return alert('Name aur 1Kg Price jaruri hai');
 
     try {
-        const url = currentEditId? `/api/shops/achar/${shopId}/item/${currentEditId}` : `/api/shops/achar/${shopId}/item`; // <-- URL CHANGE
+        const url = currentEditId? `/api/shops/achar/${shopId}/item/${currentEditId}` : `/api/shops/achar/${shopId}/item`;
         const method = currentEditId? 'PUT' : 'POST';
-        const res = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify({item: data})}); // <-- item me wrap
+        const res = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify({item: data})});
         const result = await res.json();
         if(res.ok) {
             alert('Save ho gaya');
             closeAddModal();
-            loadShopData(); // pura reload
+            loadShopData();
         } else {
             alert('Error: ' + result.message);
         }
@@ -233,7 +257,7 @@ async function saveNewAchar() {
 }
 
 function editProduct(id) {
-    const p = allProducts.find(x => x.id === id); // id
+    const p = allProducts.find(x => x.id === id);
     currentEditId = id;
     productImageUrl = p.image;
     document.getElementById('modalTitle').innerText = 'Edit Achar';
@@ -251,33 +275,45 @@ function editProduct(id) {
 
 async function deleteProduct(id) {
     if(!confirm('Delete karein?')) return;
-    await fetch(`/api/shops/achar/${shopId}/item/${id}`, {method:'DELETE'}); // <-- URL CHANGE
+    await fetch(`/api/shops/achar/${shopId}/item/${id}`, {method:'DELETE'});
     loadShopData();
 }
 
-// 6. OTHER FUNCTIONS - ROUTE CHANGE
+// 6. OTHER FUNCTIONS
 async function toggleShop() {
     document.getElementById('shopToggle').classList.toggle('off');
     const isOpen =!document.getElementById('shopToggle').classList.contains('off');
     document.getElementById('toggleText').innerText = isOpen? 'Open' : 'Closed';
-    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({isOpen})}); // <-- URL CHANGE
+    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({isOpen})});
 }
 
 async function saveAnnouncement() {
     const announcement = document.getElementById('announcementInput').value;
-    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({announcement})}); // <-- URL CHANGE
+    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({announcement})});
     alert('Saved');
 }
 
 async function saveTiming() {
-    const data = {openTime: document.getElementById('openTime').value, closeTime: document.getElementById('closeTime').value};
-    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({settings: data})}); // <-- settings me wrap
+    const open24 = document.getElementById('openTime').value;
+    const close24 = document.getElementById('closeTime').value;
+    
+    // 24hr to 12hr convert karke bhejo
+    const data = {
+        openTime: convertTo12Hr(open24), 
+        closeTime: convertTo12Hr(close24)
+    };
+    
+    await fetch(`/api/shops/achar/${shopId}`, {
+        method:'PUT', 
+        headers:{'Content-Type':'application/json'}, 
+        body:JSON.stringify({settings: data})
+    });
     alert('Saved');
 }
 
 async function savePhone() {
     const phone = document.getElementById('shopPhoneInput').value;
-    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({phone})}); // <-- URL CHANGE
+    await fetch(`/api/shops/achar/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({phone})});
     alert('Saved');
 }
 
@@ -295,4 +331,4 @@ ShopCore.uploadImage = async function(file, type) {
     return url;
 }
 
-console.log('✅ Achar Dashboard v7 Loaded - Furniture Format');
+console.log('✅ Achar Dashboard v8 Loaded - All Fixed');
