@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('bannerInput').click();
     });
     document.getElementById('newOrderBtn').addEventListener('click', () => alert('Order system file 6 me banega'));
-    document.getElementById('userViewBtn').href = `/shop/customer-view?shopId=${shopId}`;
+    document.getElementById('userViewBtn').href = `/shop-templates/achar-shop/customer-view.html?shopId=${shopId}`;
     document.getElementById('locationBtn').addEventListener('click', () => {
         document.getElementById('locationCard').style.display = 'block';
     });
@@ -229,7 +229,7 @@ async function saveNewAchar() {
     const data = {
         shopId,
         name: document.getElementById('acharName').value,
-        category: document.getElementById('acharType').value,
+        category: document.getElementById('acharType').value || 'Aam',
         description: document.getElementById('acharDesc').value,
         jarType: document.getElementById('acharJar').value,
         spiceLevel: document.getElementById('acharSpice').value,
