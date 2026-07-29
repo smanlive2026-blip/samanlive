@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 const acharSchema = new mongoose.Schema({
     shopId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Shop',
+        type: String, // <-- Yaha ObjectId hata ke String kar diya
         required: true,
         index: true
     },
