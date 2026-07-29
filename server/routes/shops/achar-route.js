@@ -87,28 +87,28 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ success: false, message: 'ShopId, Name, Price1kg jaruri hai' });
         }
 
-        const shop = await Shop.findById(shopId);
-        if(!shop) return res.status(404).json({ success: false, message: 'Shop nahi mila' });
-
+        // String hai to seedha save kar do. Shop check nahi karenge
         const newAchar = new Achar({
             shopId,
             name,
             category: category || 'Aam',
             price500: price500 || 0,
             price1kg,
-            price: price1kg, // auto sync
+            price: price1kg,
             stock: stock || 0,
             description: description || '',
             jarType: jarType || 'Glass',
             spiceLevel: spiceLevel || 'Medium',
             image: image || 'https://placehold.co/400/eab308/fff?text=Achar',
-            images: images || []
+            images: images || [],
+            isActive: true
         });
 
         await newAchar.save();
         res.status(201).json({ success: true, message: 'Achar add ho gaya', product: newAchar });
 
     } catch (error) {
+        console.log("ADD ACHAR ERROR:", error); 
         res.status(500).json({ success: false, message: error.message });
     }
 });
