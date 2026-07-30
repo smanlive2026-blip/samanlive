@@ -85,8 +85,8 @@ async function loadShopData() {
         shopData = data.shop || {};
 
         document.getElementById('shopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
-        document.getElementById('ownerImg').src = localStorage.getItem(`photo_${shopId}_logo_cloud`) || shopData.ownerPhotoUrl || 'https://placehold.co/60/eab308/fff?text=A';
-        document.getElementById('shopBanner').src = localStorage.getItem(`photo_${shopId}_banner_cloud`) || shopData.bannerPhotoUrl || 'https://placehold.co/400x150/eab308/fff?text=Upload+Banner';
+        document.getElementById('ownerImg').src = shopData.ownerPhotoUrl || 'https://placehold.co/60/eab308/fff?text=A';
+        document.getElementById('shopBanner').src = shopData.bannerPhotoUrl || 'https://placehold.co/400x150/eab308/fff?text=Upload+Banner';
 
         // TIME FIX: 12hr to 24hr
         document.getElementById('openTime').value = convertTo24Hr(shopData.settings?.openTime || '09:00 AM');
@@ -341,57 +341,34 @@ ShopCore.uploadImage = async function(file, type = 'profile') {
     const loader = document.getElementById('uploadLoader');
     if(loader) loader.style.display = 'inline';
 
-    // COMPRESS RULE: Banner/Logo HD, Product Medium
     let compressedFile = file;
     if(window.imageCompression){
         let options = { useWebWorker: true };
-
         if(type === 'banner' || type === 'profile') {
-            options.maxSizeMB = 0.5; // 500KB
-            options.maxWidthOrHeight = 1920; // Full HD
-            options.initialQuality = 0.9; // 90%
+            options.maxSizeMB = 0.5; options.maxWidthOrHeight = 1920; options.initialQuality = 0.9;
         } else {
-            options.maxSizeMB = 0.2; // 200KB
-            options.maxWidthOrHeight = 1200; // 1200px
-            options.initialQuality = 0.8; // 80%
+            options.maxSizeMB = 0.2; options.maxWidthOrHeight = 1200; options.initialQuality = 0.8;
         }
-        try{
-            compressedFile = await window.imageCompression(file, options);
-        }catch(err){ console.error("Compress failed", err); }
+        try{ compressedFile = await window.imageCompression(file, options); }catch(err){}
     }
 
     const formData = new FormData();
     formData.append('image', compressedFile);
 
     try {
-        // SAHI UPLOAD URL
         const res = await fetch('/api/shops/achar/upload', { method: 'POST', body: formData });
         const data = await res.json();
 
         if(data.success && data.url){
-            // PRODUCT KE LIYE: variable + preview update
             if(type === 'product') {
                 productImageUrl = data.url;
                 document.getElementById('productImgPreview').src = data.url;
-                console.log("Product URL ready:", data.url);
             }
-
-            // BANNER KE LIYE: DB me save
             if(type === 'banner') {
-                await fetch(`/api/shops/achar/${this.shopId}`, {
-                    method:'PUT',
-                    headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({ bannerPhotoUrl: data.url })
-                });
+                await fetch(`/api/shops/achar/${this.shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ bannerPhotoUrl: data.url })});
             }
-
-            // LOGO KE LIYE: DB me save
             if(type === 'profile') {
-                await fetch(`/api/shops/achar/${this.shopId}`, {
-                    method:'PUT',
-                    headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({ ownerPhotoUrl: data.url })
-                });
+                await fetch(`/api/shops/achar/${this.shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ ownerPhotoUrl: data.url })});
             }
             return data.url;
         } else {
@@ -399,7 +376,6 @@ ShopCore.uploadImage = async function(file, type = 'profile') {
             return null;
         }
     } catch(err) {
-        console.error("UPLOAD ERROR:", err);
         alert('Upload Failed! ' + err.message);
         return null;
     } finally {
@@ -407,34 +383,25 @@ ShopCore.uploadImage = async function(file, type = 'profile') {
     }
 }
 
-// ========== BIND IMAGE UPLOAD OVERRIDE - SIRF PRODUCT KE LIYE ==========
+// ========== BIND IMAGE UPLOAD OVERRIDE - SIRF PRODUCT KE LIYE - LOCAL BAND ==========
 const originalBind = ShopCore.bindImageUpload;
 
 ShopCore.bindImageUpload = function(imgId, inputId, type, storageKey) {
-    // Banner aur Logo ke liye original wala hi chalne do
     if(type!== 'product') {
-        return originalBind.call(this, imgId, inputId, type, storageKey);
+        return originalBind.call(this, imgId, inputId, type, storageKey); // Banner/Logo normal
     }
 
-   // ========== LOCALSTORAGE KO MAAR DO - PRODUCT KE LIYE ==========
-const realBind = ShopCore.bindImageUpload;
-ShopCore.bindImageUpload = function(imgId, inputId, type, storageKey) {
-    if(type === 'product') {
-        // PRODUCT KE LIYE LOCALSTORAGE SKIP
-        const img = document.getElementById(imgId);
-        const input = document.getElementById(inputId);
-        if(!img ||!input) return;
+    // PRODUCT KE LIYE: LOCALSTORAGE COMPLETELY BAND
+    const img = document.getElementById(imgId);
+    const input = document.getElementById(inputId);
+    if(!img ||!input) return;
 
-        input.onchange = async (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            const url = await this.uploadImage(file, type); // direct cloud
-            if(url) img.src = url;
-        }
-    } else {
-        realBind.call(this, imgId, inputId, type, storageKey); // banner/logo wahi rahe
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const url = await this.uploadImage(file, type); // direct cloud
+        if(url) img.src = url;
     }
- }
 }
 
 console.log('✅ Achar Dashboard v8 FINAL Loaded');
