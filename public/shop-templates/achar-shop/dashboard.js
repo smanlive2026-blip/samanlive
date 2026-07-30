@@ -236,7 +236,7 @@ async function saveNewAchar() {
         price500: Number(document.getElementById('acharPrice500g').value),
         price1kg: Number(document.getElementById('acharPrice1kg').value),
         stock: Number(document.getElementById('acharStock').value),
-        image: productImageUrl || document.getElementById('productImgPreview').src
+        image: productImageUrl || 'https://placehold.co/400/eab308/fff?text=Achar'
     };
 
     if(!data.name ||!data.price1kg) return alert('Name aur 1Kg Price jaruri hai');
@@ -330,42 +330,79 @@ function saveLocation() {
 
 // SHOPCORE CALLBACK
 
+// ========== SHOPCORE OVERRIDE - HD + PRODUCT FIX ==========
 const originalUpload = ShopCore.uploadImage;
-ShopCore.uploadImage = async function(file, type) {
-    const url = await originalUpload.call(this, file, type);
-    
-    if(url){
-        // PRODUCT KE LIYE
-        if(type === 'product') {
-            productImageUrl = url;
-        }
-        
-        // BANNER KE LIYE - DB ME SAHI FIELD ME SAVE
-        if(type === 'banner') {
-            await fetch(`/api/shops/achar/${shopId}`, {
-                method:'PUT', 
-                headers:{'Content-Type':'application/json'}, 
-                body:JSON.stringify({ 
-                    bannerPhotoUrl: url, 
-                    settings: { bannerPhotoUrl: url }
-                })
-            });
-            console.log("Banner DB me save ho gaya:", url);
-        }
-        
-        // LOGO KE LIYE - PEHLE SE THA
-        if(type === 'profile') {
-            await fetch(`/api/shops/achar/${shopId}`, {
-                method:'PUT', 
-                headers:{'Content-Type':'application/json'}, 
-                body:JSON.stringify({ 
-                    ownerPhotoUrl: url, 
-                    settings: { ownerPhotoUrl: url }
-                })
-            });
-        }
+
+ShopCore.uploadImage = async function(file, type = 'profile') {
+    if(!file) return null;
+    if(!this.shopId ||!this.template){
+        alert('Shop ID ya Template missing hai');
+        return null;
     }
-    return url;
+
+    const loader = document.getElementById('uploadLoader');
+    if(loader) loader.style.display = 'inline';
+
+    // COMPRESS RULE
+    let compressedFile = file;
+    if(window.imageCompression){
+        let options = { useWebWorker: true };
+        
+        if(type === 'banner' || type === 'profile') {
+            options.maxSizeMB = 0.5; options.maxWidthOrHeight = 1920; options.initialQuality = 0.9;
+        } else {
+            options.maxSizeMB = 0.2; options.maxWidthOrHeight = 1200; options.initialQuality = 0.8;
+        }
+        try{
+            compressedFile = await window.imageCompression(file, options);
+        }catch(err){ console.error("Compress failed", err); }
+    }
+
+    const formData = new FormData();
+    formData.append('image', compressedFile);
+    formData.append('shopId', String(this.shopId));
+    formData.append('template', String(this.template));
+    formData.append('type', String(type));
+
+    try {
+        // FIX: SAHI UPLOAD URL - /api/shops/achar/upload
+        const res = await fetch('/api/shops/achar/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if(data.success && data.url){
+            // PRODUCT KE LIYE TURANT DB ME SAVE KARO
+            if(type === 'product') {
+                productImageUrl = data.url;
+                document.getElementById('productImgPreview').src = data.url; // YE LINE NAY
+                console.log("Product URL ready:", data.url);
+            }
+            
+            if(type === 'banner') {
+                await fetch(`/api/shops/achar/${this.shopId}`, {
+                    method:'PUT', 
+                    headers:{'Content-Type':'application/json'}, 
+                    body:JSON.stringify({ bannerPhotoUrl: data.url })
+                });
+            }
+            if(type === 'profile') {
+                await fetch(`/api/shops/achar/${this.shopId}`, {
+                    method:'PUT', 
+                    headers:{'Content-Type':'application/json'}, 
+                    body:JSON.stringify({ ownerPhotoUrl: data.url })
+                });
+            }
+            return data.url;
+        } else {
+            alert('Upload Failed: ' + (data.message || 'Server Error'));
+            return null;
+        }
+    } catch(err) {
+        console.error("UPLOAD ERROR:", err);
+        alert('Upload Failed! ' + err.message);
+        return null;
+    } finally {
+        if(loader) loader.style.display = 'none';
+    }
 }
 
 console.log('✅ Achar Dashboard v8 Loaded - All Fixed');
