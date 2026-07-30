@@ -416,7 +416,7 @@ ShopCore.bindImageUpload = function(imgId, inputId, type, storageKey) {
         return originalBind.call(this, imgId, inputId, type, storageKey);
     }
 
-    // PRODUCT KE LIYE APNA WALA
+    // PRODUCT KE LIYE APNA WALA - DB SAVE MAT KARO
     const img = document.getElementById(imgId);
     const input = document.getElementById(inputId);
     if(!img ||!input) return;
