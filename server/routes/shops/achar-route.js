@@ -123,7 +123,7 @@ router.post('/:shopId/item', async (req, res) => {
   }
 });
 
-// 5. UPDATE ACHAR ITEM
+// 5. UPDATE ACHAR ITEM - FIXED
 router.put('/:shopId/item/:itemId', async (req, res) => {
   try {
     const shopId = getShopId(req);
@@ -131,6 +131,7 @@ router.put('/:shopId/item/:itemId', async (req, res) => {
     if(itemData.price1kg!== undefined) itemData.price = itemData.price1kg;
     itemData.image = itemData.image || itemData.img || '';
     itemData.img = itemData.image || itemData.img || '';
+    itemData.id = req.params.itemId; // <-- YE 1 LINE NAYI JOD DE
 
     const result = await Achar.findOneAndUpdate(
       { shopId: shopId, 'items.id': req.params.itemId },
