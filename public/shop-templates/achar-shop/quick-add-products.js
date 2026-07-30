@@ -110,5 +110,5 @@ async function quickAddProducts() {
         btn.innerText = '⚡ 50+ Products Add Karein';
         btn.disabled = false;
     }
-    if(typeof loadInventory === 'function') loadInventory();
+    loadShopData();
 }

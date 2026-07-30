@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Achar = require('../../models/shops/Achar');
 const Shop = require('../../models/Shop');
-const { getShopId } = require('../../utils/shopId'); // NUCLEAR FIX
+const { getShopId } = require('../../utils/shopId');
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
@@ -39,21 +39,27 @@ router.post('/upload', upload.single('image'), async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
-// 2. GET PURI SHOP DATA
+// 2. GET PURI SHOP DATA - FIXED
 router.get('/:shopId', async (req, res) => {
   try {
     const shopId = getShopId(req);
+    if(!shopId || shopId.length < 20) return res.status(400).json({ success: false, message: 'Invalid ShopId' });
+
     const shop = await Shop.findById(shopId).lean();
     if(!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
 
     let achar = await Achar.findOne({ shopId: shopId });
     if(!achar) achar = await Achar.create({ shopId: shopId, items: [] });
 
-    const normalizedItems = (achar.items || []).map(item => ({
-   ...item,
-      image: item.image || item.img || '',
-      id: item.id
-    }));
+    const normalizedItems = (achar.items || []).map(item => {
+        const obj = item.toObject? item.toObject() : item;
+        return {
+           ...obj,
+            image: obj.image || obj.img || 'https://placehold.co/400/eab308/fff?text=Achar',
+            category: obj.category || 'Other',
+            id: obj.id
+        }
+    });
 
     const finalData = {
       shopId: shop._id,
@@ -61,29 +67,32 @@ router.get('/:shopId', async (req, res) => {
       items: normalizedItems,
       orders: achar.orders || [],
       settings: achar.settings || {},
-      isOpen: achar.settings?.isOpen ?? true,
-      announcement: achar.settings?.announcement || '',
-      ownerPhotoUrl: achar.settings?.ownerPhotoUrl || '',
-      bannerPhotoUrl: achar.settings?.bannerPhotoUrl || '',
-      category: item.category || 'Other', // <-- YE BHI ADD KAR
+      isOpen: achar.settings?.isOpen?? true,
+      announcement: achar.settings?.announcement || achar.announcement || '',
+      ownerPhotoUrl: achar.settings?.ownerPhotoUrl || achar.ownerPhotoUrl || '',
+      bannerPhotoUrl: achar.settings?.bannerPhotoUrl || achar.bannerPhotoUrl || '',
       phone: achar.phone || ''
     }
     res.json({ success: true, shop: finalData });
-  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+  } catch(err) {
+    console.log('GET SHOP ERROR:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // 3. GET SINGLE ITEM
-router.get('/item/:id', async (req, res) => {
+router.get('/:shopId/item/:id', async (req, res) => {
     try {
         const shopId = getShopId(req);
         const achar = await Achar.findOne({ shopId });
+        if(!achar) return res.status(404).json({ success: false, message: 'Shop nahi mila' });
         const product = achar.items.find(i => i.id === req.params.id);
         if(!product) return res.status(404).json({ success: false, message: 'Achar nahi mila' });
         res.json({ success: true, product });
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
-// 4. ADD NEW ACHAR ITEM - QUICK ADD YAHI MAREGA
+// 4. ADD NEW ACHAR ITEM - QUICK ADD
 router.post('/:shopId/item', async (req, res) => {
   try {
     const shopId = getShopId(req);
@@ -92,20 +101,27 @@ router.post('/:shopId/item', async (req, res) => {
     if(!itemData.name) return res.status(400).json({ success: false, message: 'Product name is required' });
 
     const newItem = {
-   ...itemData,
+     ...itemData, // <-- yaha space thik kar di
       id: itemData.id || Date.now().toString(),
       price: Number(itemData.price1kg), // auto sync
-      image: itemData.image || itemData.img || '',
+      image: itemData.image || itemData.img || 'https://placehold.co/400/eab308/fff?text=Achar',
       img: itemData.image || itemData.img || '',
       createdAt: new Date()
     };
 
     let achar = await Achar.findOne({ shopId: shopId });
-    if(!achar) achar = await Achar.create({ shopId: shopId, items: [newItem] });
-    else { achar.items.push(newItem); await achar.save(); }
+    if(!achar) {
+      achar = await Achar.create({ shopId: shopId, items: [newItem] });
+    } else {
+      achar.items.push(newItem);
+      await achar.save();
+    }
 
     res.status(201).json({ success: true, message: 'Achar add ho gaya', data: newItem });
-  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+  } catch(err) {
+    console.log('ADD ITEM ERROR:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // 5. UPDATE ACHAR ITEM
@@ -117,11 +133,12 @@ router.put('/:shopId/item/:itemId', async (req, res) => {
     itemData.image = itemData.image || itemData.img || '';
     itemData.img = itemData.image || itemData.img || '';
 
-    await Achar.findOneAndUpdate(
+    const result = await Achar.findOneAndUpdate(
       { shopId: shopId, 'items.id': req.params.itemId },
       { $set: { 'items.$': itemData } },
       { new: true }
     );
+    if(!result) return res.status(404).json({ success: false, message: 'Item nahi mila' });
     res.json({ success: true, message: 'Update ho gaya' });
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -130,12 +147,12 @@ router.put('/:shopId/item/:itemId', async (req, res) => {
 router.delete('/:shopId/item/:itemId', async (req, res) => {
   try {
     const shopId = getShopId(req);
-    await Achar.findOneAndUpdate({ shopId: shopId }, { $pull: { items: { id: req.params.itemId } } });
+    await Achar.findOneAndUpdate({ shopId: shopId }, { $pull: { items: { id: req.params.itemId }}});
     res.json({ success: true, message: 'Delete ho gaya' });
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 7. UPDATE SHOP SETTINGS
+// 7. UPDATE SHOP SETTINGS - TOGGLE FIX
 router.put('/:shopId', async (req, res) => {
   try {
     const shopId = getShopId(req);
@@ -147,17 +164,21 @@ router.put('/:shopId', async (req, res) => {
     if(updateData.bannerPhotoUrl) achar.bannerPhotoUrl = updateData.bannerPhotoUrl;
     if(updateData.ownerPhotoUrl) achar.ownerPhotoUrl = updateData.ownerPhotoUrl;
     if('phone' in updateData) achar.phone = updateData.phone;
-    if(!achar.settings) achar.settings = {}; // settings init
+
+    if(!achar.settings) achar.settings = {};
     if('isOpen' in updateData) {
-    achar.settings.isOpen = updateData.isOpen;
-    achar.isOpen = updateData.isOpen; // <-- MAIN SHOP ME BHI SAVE KARO
-}
+        achar.settings.isOpen = updateData.isOpen;
+        achar.isOpen = updateData.isOpen; // customer view ke liye
+    }
     if('announcement' in updateData) achar.settings.announcement = updateData.announcement;
     if(updateData.settings) achar.settings = {...achar.settings,...updateData.settings };
 
     await achar.save();
     res.json({ success: true, data: achar });
-  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+  } catch(err) {
+    console.log('UPDATE SHOP ERROR:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // 8. GET ORDERS
