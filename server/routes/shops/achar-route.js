@@ -22,7 +22,6 @@ const storage = new CloudinaryStorage({
     params: {
         folder: 'achar-shop/products',
         allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-        transformation: [{ width: 800, height: 800, crop: 'limit' }]
     }
 });
 const upload = multer({ storage: storage });

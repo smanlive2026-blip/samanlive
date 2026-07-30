@@ -139,7 +139,12 @@
             loadShop();
             updateCartCount();
         });
-
+       // CLOUDINARY HD IMAGE FUNCTION
+            function getHDImage(url, width = 800) {
+            if(!url || url.includes('placehold')) return url;
+            // /upload/ ke baad q_auto:best,f_auto,w_XXX add kar dega
+            return url.replace('/upload/', `/upload/q_auto:best,f_auto,w_${width}/`);
+        }
         function convertTo12Hr(time24h) {
             if(!time24h) return '09:00 AM';
             if(time24h.includes('AM') || time24h.includes('PM')) return time24h;
@@ -163,8 +168,8 @@
                 document.getElementById('footerShopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
                 document.getElementById('pageTitle').innerText = shopData.name || 'Achar Shop';
                 document.getElementById('metaDesc').content = shopData.announcement || 'Ghar ka bana hua shuddh achar';
-                document.getElementById('shopLogo').src = shopData.ownerPhotoUrl || 'https://placehold.co/100/eab308/fff?text=A';
-                document.getElementById('shopBanner').src = shopData.bannerPhotoUrl || 'https://placehold.co/1400x320/eab308/fff?text=Achar';
+                document.getElementById('shopLogo').src = getHDImage(shopData.ownerPhotoUrl, 200) || 'https://placehold.co/100/eab308/fff?text=A';
+                document.getElementById('shopBanner').src = getHDImage(shopData.bannerPhotoUrl, 1400) || 'https://placehold.co/1400x320/eab308/fff?text=Achar';
                 document.getElementById('shopPhone').innerText = shopData.phone || 'N/A';
                 document.getElementById('shopTiming').innerText = `${convertTo12Hr(shopData.settings?.openTime)} - ${convertTo12Hr(shopData.settings?.closeTime)}`;
                 document.getElementById('shopAddress').innerText = 'Ahmedabad, Gujarat';
@@ -217,7 +222,7 @@
             }
             grid.innerHTML = products.map(p => `
                 <div class="product-card">
-                    <img src="${p.image || 'https://placehold.co/400/eab308/fff?text=Achar'}" alt="${p.name}" loading="lazy">
+                    <img src="${getHDImage(p.image, 800) || 'https://placehold.co/400/eab308/fff?text=Achar'}" alt="${p.name}" loading="lazy">
                     <span class="category-tag">${p.category || 'Other'}</span>
                     <h3>${p.name}</h3>
                     <div class="product-meta">
