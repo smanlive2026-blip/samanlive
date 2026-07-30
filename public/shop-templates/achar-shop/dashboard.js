@@ -8,16 +8,16 @@ let shopData = {}; // pura shop object
 let allProducts = [];
 let allOrders = [];
 let currentEditId = null;
-let productImageUrl = ''; 
+let productImageUrl = '';
 
 document.addEventListener('DOMContentLoaded', () => {
     if(!shopId) {
-        alert('Shop ID nahi mila. URL me ?shopId=xxx add karo');
+        alert('Shop ID nahi mila. URL me?shopId=xxx add karo');
         return;
     }
 
-    if(typeof ShopCore !== 'undefined') {
-        ShopCore.init(shopId, 'achar-shop'); 
+    if(typeof ShopCore!== 'undefined') {
+        ShopCore.init(shopId, 'achar-shop');
     } else {
         alert('shop-core.js load nahi hua. Pehle use include karo');
         return;
@@ -59,8 +59,8 @@ async function init() {
 // TIME CONVERT FUNCTIONS
 function convertTo24Hr(time12h) {
     if(!time12h) return '09:00';
-    if(time12h.includes(':') && !time12h.includes('AM') && !time12h.includes('PM')) return time12h;
-    
+    if(time12h.includes(':') &&!time12h.includes('AM') &&!time12h.includes('PM')) return time12h;
+
     const [time, modifier] = time12h.split(' ');
     let [hours, minutes] = time.split(':');
     if (hours === '12') hours = '00';
@@ -71,9 +71,9 @@ function convertTo24Hr(time12h) {
 function convertTo12Hr(time24h) {
     let [hours, minutes] = time24h.split(':');
     hours = parseInt(hours, 10);
-    const modifier = hours >= 12 ? 'PM' : 'AM';
+    const modifier = hours >= 12? 'PM' : 'AM';
     hours = hours % 12;
-    hours = hours ? hours : 12;
+    hours = hours? hours : 12;
     return `${hours}:${minutes} ${modifier}`;
 }
 
@@ -83,15 +83,15 @@ async function loadShopData() {
         const res = await fetch(`/api/shops/achar/${shopId}`);
         const data = await res.json();
         shopData = data.shop || {};
-        
+
         document.getElementById('shopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
         document.getElementById('ownerImg').src = localStorage.getItem(`photo_${shopId}_logo_cloud`) || shopData.ownerPhotoUrl || 'https://placehold.co/60/eab308/fff?text=A';
         document.getElementById('shopBanner').src = localStorage.getItem(`photo_${shopId}_banner_cloud`) || shopData.bannerPhotoUrl || 'https://placehold.co/400x150/eab308/fff?text=Upload+Banner';
-        
+
         // TIME FIX: 12hr to 24hr
         document.getElementById('openTime').value = convertTo24Hr(shopData.settings?.openTime || '09:00 AM');
         document.getElementById('closeTime').value = convertTo24Hr(shopData.settings?.closeTime || '09:00 PM');
-        
+
         document.getElementById('shopPhoneInput').value = shopData.phone || '';
         document.getElementById('announcementInput').value = shopData.announcement || '';
         document.getElementById('toggleText').innerText = shopData.isOpen? 'Open' : 'Closed';
@@ -279,18 +279,20 @@ async function deleteProduct(id) {
     loadShopData();
 }
 
+function quickAddProducts(){ alert('Quick add file 7 me banega'); }
+
 // 6. OTHER FUNCTIONS
 async function toggleShop() {
     document.getElementById('shopToggle').classList.toggle('off');
     const isOpen =!document.getElementById('shopToggle').classList.contains('off');
     document.getElementById('toggleText').innerText = isOpen? 'Open' : 'Closed';
-    
+
     await fetch(`/api/shops/achar/${shopId}`, {
-        method:'PUT', 
-        headers:{'Content-Type':'application/json'}, 
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
         body:JSON.stringify({isOpen, settings: {isOpen}}) // <-- dono bhejo
     });
-    
+
     alert(`Shop ab ${isOpen? 'Open' : 'Closed'} hai`);
 }
 
@@ -303,16 +305,16 @@ async function saveAnnouncement() {
 async function saveTiming() {
     const open24 = document.getElementById('openTime').value;
     const close24 = document.getElementById('closeTime').value;
-    
+
     // 24hr to 12hr convert karke bhejo
     const data = {
-        openTime: convertTo12Hr(open24), 
+        openTime: convertTo12Hr(open24),
         closeTime: convertTo12Hr(close24)
     };
-    
+
     await fetch(`/api/shops/achar/${shopId}`, {
-        method:'PUT', 
-        headers:{'Content-Type':'application/json'}, 
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
         body:JSON.stringify({settings: data})
     });
     alert('Saved');
@@ -328,9 +330,7 @@ function saveLocation() {
     alert('Location save - shop-location.js handle karega');
 }
 
-// SHOPCORE CALLBACK
-
-// ========== SHOPCORE OVERRIDE - HD + PRODUCT FIX ==========
+// ========== SHOPCORE OVERRIDE - HD + PRODUCT FIX - ISKO LAST ME REHNE DO ==========
 ShopCore.uploadImage = async function(file, type = 'profile') {
     if(!file) return null;
     if(!this.shopId ||!this.template){
@@ -437,4 +437,4 @@ ShopCore.bindImageUpload = function(imgId, inputId, type, storageKey) {
         }
     }
 }
-console.log('✅ Achar Dashboard v8 Loaded - All Fixed');
+console.log('✅ Achar Dashboard v8 FINAL Loaded');
