@@ -54,7 +54,7 @@ router.get('/:shopId', async (req, res) => {
         const obj = item.toObject? item.toObject() : item;
         return {
            ...obj,
-            image: obj.image || obj.img || 'https://placehold.co/400/eab308/fff?text=Achar',
+            image: obj.image || obj.img || 'https://placehold.co/400/eab308/fff?text=Achar', // <-- YE LINE
             category: obj.category || 'Other',
             id: obj.id
         }
