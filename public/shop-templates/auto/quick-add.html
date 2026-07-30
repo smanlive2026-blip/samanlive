@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Add Parts</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background: #1f2937; padding: 20px; }
+   .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; }
+    h1 { margin-bottom: 20px; color: #f97316; }
+   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    input, select, textarea { width: 100%; padding: 12px; border: 2px solid #ffedd5; border-radius: 10px; font-size: 14px; }
+    label { font-weight: 600; font-size: 13px; color: #374151; margin-bottom: 6px; display: block; }
+   .btn { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); color: white; border: none; padding: 14px 28px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 20px; }
+   .upload-box { border: 2px dashed #f97316; padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; }
+   .upload-box img { width: 100px; height: 100px; object-fit: cover; border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1><i class="fa fa-bolt"></i> Quick Add Part</h1>
+    <div class="grid">
+        <div><label>Part Name</label><input type="text" id="partName"></div>
+        <div><label>Category</label>
+            <select id="partCategory">
+                <option>Engine</option><option>Brake</option><option>Electrical</option><option>Body</option><option>Oil</option><option>Other</option>
+            </select>
+        </div>
+        <div><label>Part No</label><input type="text" id="partNo"></div>
+        <div><label>Stock Qty</label><input type="number" id="partStock"></div>
+        <div><label>MRP ₹</label><input type="number" id="partMrp"></div>
+        <div><label>Selling Price ₹</label><input type="number" id="partPrice"></div>
+        <div style="grid-column: span 2;"><label>Description</label><textarea id="partDesc" rows="3"></textarea></div>
+        <div style="grid-column: span 2;">
+            <label>Product Photo</label>
+            <div class="upload-box" onclick="document.getElementById('partImageInput').click()">
+                <img id="partImgPreview" src="https://placehold.co/100/f97316/fff?text=Upload">
+                <input type="file" id="partImageInput" style="display:none;">
+            </div>
+        </div>
+    </div>
+    <button class="btn" onclick="savePart()"><i class="fa fa-save"></i> Save Part</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+<script>
+let shopId = new URLSearchParams(window.location.search).get('shopId');
+let editId = new URLSearchParams(window.location.search).get('editId');
+let partImageUrl = '';
+
+document.getElementById('partImageInput').onchange = async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const compressed = await imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 1200 });
+    const formData = new FormData();
+    formData.append('image', compressed);
+    const res = await fetch(`/api/shops/auto/upload`, { method: 'POST', body: formData });
+    const data = await res.json();
+    if(data.success) {
+        partImageUrl = data.url;
+        document.getElementById('partImgPreview').src = data.url;
+    }
+};
+
+async function savePart() {
+    const data = {
+        name: document.getElementById('partName').value,
+        category: document.getElementById('partCategory').value,
+        partNo: document.getElementById('partNo').value,
+        stock: Number(document.getElementById('partStock').value),
+        mrp: Number(document.getElementById('partMrp').value),
+        price: Number(document.getElementById('partPrice').value),
+        description: document.getElementById('partDesc').value,
+        image: partImageUrl
+    };
+
+    const url = editId? `/api/shops/auto/${shopId}/item/${editId}` : `/api/shops/auto/${shopId}/item`;
+    const method = editId? 'PUT' : 'POST';
+
+    const res = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify({item: data})});
+    if(res.ok) {
+        alert('Part Save ho gaya');
+        window.close(); // popup band
+        window.opener.location.reload(); // parent refresh
+    } else {
+        alert('Error');
+    }
+}
+
+// EDIT MODE ME DATA LOAD
+if(editId) {
+    fetch(`/api/shops/auto/${shopId}/item/${editId}`).then(r=>r.json()).then(d=>{
+        const p = d.product;
+        document.getElementById('partName').value = p.name;
+        document.getElementById('partCategory').value = p.category;
+        document.getElementById('partNo').value = p.partNo;
+        document.getElementById('partStock').value = p.stock;
+        document.getElementById('partMrp').value = p.mrp;
+        document.getElementById('partPrice').value = p.price;
+        document.getElementById('partDesc').value = p.description;
+        document.getElementById('partImgPreview').src = p.image;
+        partImageUrl = p.image;
+    });
+}
+</script>
+</body>
+</html>

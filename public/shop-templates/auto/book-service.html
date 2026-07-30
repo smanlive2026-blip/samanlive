@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Service</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background: #fff7ed; padding: 20px; }
+   .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; }
+    h1 { color: #f97316; margin-bottom: 10px; }
+    input, textarea { width: 100%; padding: 12px; border: 2px solid #ffedd5; border-radius: 10px; margin-bottom: 15px; font-size: 14px; }
+    label { font-weight: 600; font-size: 13px; color: #374151; margin-bottom: 6px; display: block; }
+   .btn { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); color: white; border: none; padding: 14px; width: 100%; border-radius: 12px; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1><i class="fa fa-wrench"></i> Book <span id="serviceName">Service</span></h1>
+    <p style="color:#64748b; margin-bottom:20px;">Fill details, we will call you</p>
+    
+    <label>Your Name</label>
+    <input type="text" id="customerName" placeholder="Rahul Sharma">
+    
+    <label>Phone No</label>
+    <input type="tel" id="phone" placeholder="9876543210">
+    
+    <label>Vehicle No</label>
+    <input type="text" id="vehicleNo" placeholder="GJ01 AB 1234">
+    
+    <label>Vehicle Model</label>
+    <input type="text" id="vehicleModel" placeholder="Maruti Swift">
+    
+    <label>Problem / Note</label>
+    <textarea id="problem" rows="3" placeholder="Brake me awaz aa rahi hai"></textarea>
+    
+    <button class="btn" onclick="bookService()">Book Service</button>
+</div>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const shopId = urlParams.get('shopId');
+const service = urlParams.get('service');
+
+document.getElementById('serviceName').innerText = service;
+
+async function bookService() {
+    const data = {
+        customerName: document.getElementById('customerName').value,
+        phone: document.getElementById('phone').value,
+        vehicleNo: document.getElementById('vehicleNo').value,
+        vehicleModel: document.getElementById('vehicleModel').value,
+        problem: document.getElementById('problem').value,
+        serviceType: service,
+        totalAmount: 0,
+        status: 'pending'
+    };
+
+    if(!data.customerName || !data.phone || !data.vehicleNo) return alert('Name, Phone, Vehicle No jaruri hai');
+
+    const res = await fetch(`/api/shops/auto/${shopId}/service`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    
+    const result = await res.json();
+    if(result.success) {
+        alert('Service Booked! Hamara banda call karega');
+        window.location.href = `/shop-templates/auto/customer-view.html?shopId=${shopId}`;
+    } else {
+        alert('Error: ' + result.message);
+    }
+}
+</script>
+</body>
+</html>

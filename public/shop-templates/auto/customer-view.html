@@ -8,18 +8,20 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: #fff7ed; }
-       .header { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); color: white; padding: 50px 20px; text-align: center; }
+       .header { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); color: white; padding: 50px 20px; text-align: center; position:relative; }
        .header h1 { font-size: 36px; }
+       .cart-btn { position:absolute; top:20px; right:20px; background:white; color:#f97316; padding:10px 16px; border-radius:12px; font-weight:700; cursor:pointer; }
+       .cart-count { background:#dc2626; color:white; border-radius:50%; padding:2px 7px; font-size:12px; margin-left:5px; }
        .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
-        
        .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
        .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
        .tab.active { background: #f97316; color: white; }
-        
        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition:0.3s; }
+       .product-card:hover { transform:translateY(-5px); }
        .product-price { font-size: 22px; font-weight: 800; color: #f97316; }
        .btn-book { background: #f97316; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
+       .btn-book:disabled { background:#ccc; cursor:not-allowed; }
        .stock { font-size:12px; color:#16a34a; }
        .out { color:#dc2626; }
     </style>
@@ -28,22 +30,22 @@
     <div class="header">
         <h1><i class="fa fa-car-wrench"></i> <span id="shopName">Auto Care Center</span></h1>
         <p id="shopAddress">Car & Bike Service | Genuine Parts | 6 Month Warranty</p>
+        <div class="cart-btn" onclick="openCart()"><i class="fa fa-cart-shopping"></i> Cart <span class="cart-count" id="cartCount">0</span></div>
     </div>
 
     <div class="container">
         <div class="tabs" id="tabsContainer">
             <div class="tab active" onclick="filterTab('All', this)">All</div>
         </div>
-
         <div class="product-grid" id="productGrid">Loading...</div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const shopId = urlParams.get('shopId');
-        let allItems = []; // parts + services dono
+        let allItems = [];
+        let cart = JSON.parse(localStorage.getItem(`cart_${shopId}`)) || [];
 
-        // DEFAULT SERVICES - agar dashboard me na ho to ye dikhe
         const defaultServices = [
             {name: "Engine Oil Change", price: 800, cat: "Service", icon: "🛢️"},
             {name: "Brake Service", price: 1200, cat: "Service", icon: "🛑"},
@@ -55,14 +57,14 @@
             {name: "Denting Painting", price: 10000, cat: "Service", icon: "🎨"}
         ];
 
-        // ICON MAP
         const iconMap = {
-            'Engine': '🛢️', 'Brake': '🛑', 'Electrical': '🔋', 'Tyre': '🛞', 'Service': '⚙️'
+            'Engine': '🛢️', 'Brake': '🛑', 'Electrical': '🔋', 'Tyre': '🛞',
+            'Body': '🚗', 'Oil': '🛢️', 'Battery': '🔋', 'Service': '⚙️', 'Other': '🔧'
         };
 
         async function loadShop() {
             try {
-                const res = await fetch(`/api/shops/auto/${shopId}`); // ✅ tera naya backend
+                const res = await fetch(`/api/shops/auto/${shopId}`);
                 const result = await res.json();
                 if(!result.success) return;
 
@@ -71,27 +73,18 @@
                 document.getElementById('pageTitle').innerText = shop.shopName;
                 document.getElementById('shopAddress').innerText = shop.address || 'Genuine Parts | Service';
 
-                // 1. SERVICES: dashboard wale + default
-                const dbServices = (shop.services || []).map(s => ({
-                    name: s.name, price: s.price, cat: 'Service', icon: '⚙️'
-                }));
-                const services = dbServices.length > 0 ? dbServices : defaultServices;
+                const dbServices = (shop.services || []).map(s => ({ name: s, price: 0, cat: 'Service', icon: '⚙️' }));
+                const services = dbServices.length > 0? dbServices : defaultServices;
 
-                // 2. PARTS: dashboard se aayenge
                 const parts = (shop.parts || []).map(p => {
-                    // naam se category guess karega
-                    let cat = 'Engine';
-                    if(p.name.toLowerCase().includes('brake')) cat = 'Brake';
-                    else if(p.name.toLowerCase().includes('battery') || p.name.toLowerCase().includes('light')) cat = 'Electrical';
-                    else if(p.name.toLowerCase().includes('tyre') || p.name.toLowerCase().includes('wheel')) cat = 'Tyre';
-
+                    let cat = p.category || 'Other'; // ✅ DB se category lo
                     return {
-                        name: p.name, price: p.price, cat: cat, icon: iconMap[cat] || '🔧',
-                        stock: p.stock
+                        id: p.id, name: p.name, price: p.price, cat: cat, icon: iconMap[cat] || '🔧', stock: p.stock
                     }
                 });
 
-                allItems = [...services, ...parts];
+                allItems = [...services,...parts];
+                updateCartCount();
                 buildTabs();
                 display(allItems);
 
@@ -103,7 +96,7 @@
         }
 
         function buildTabs() {
-            const categories = ['All', ...new Set(allItems.map(i => i.cat))];
+            const categories = ['All',...new Set(allItems.map(i => i.cat))];
             document.getElementById('tabsContainer').innerHTML = categories.map((cat, i) => `
                 <div class="tab ${i===0?'active':''}" onclick="filterTab('${cat}', this)">${cat}</div>
             `).join('');
@@ -111,7 +104,7 @@
 
         function display(items) {
             if(items.length === 0) {
-                document.getElementById('productGrid').innerHTML = '<p>No items found</p>';
+                document.getElementById('productGrid').innerHTML = '<p style="text-align:center; grid-column:1/-1;">No items found</p>';
                 return;
             }
             document.getElementById('productGrid').innerHTML = items.map(p => `
@@ -120,8 +113,8 @@
                     <h3>${p.name}</h3>
                     <p style="color:#64748b; font-size:12px;">${p.cat}</p>
                     <div class="product-price">₹${p.price}</div>
-                    ${p.stock !== undefined ? `<div class="stock ${p.stock < 1 ? 'out' : ''}">Stock: ${p.stock}</div>` : ''}
-                    <button class="btn-book" onclick="bookItem('${p.name}', '${p.cat}')">
+                    ${p.stock!== undefined? `<div class="stock ${p.stock < 1? 'out' : ''}">Stock: ${p.stock}</div>` : ''}
+                    <button class="btn-book" onclick="addToCart('${p.id}', '${p.name}', ${p.price}, '${p.cat}')" ${p.stock===0?'disabled':''}>
                         ${p.cat==='Service'?'Book Service':'Add to Cart'}
                     </button>
                 </div>
@@ -135,13 +128,25 @@
             display(filtered);
         }
 
-        function bookItem(name, cat) {
+        function addToCart(id, name, price, cat) {
             if(cat === 'Service') {
                 window.location.href = `/shop-templates/auto/book-service.html?shopId=${shopId}&service=${name}`;
-            } else {
-                alert(`${name} added to cart!`);
-                // yaha cart ka logic daal dena
+                return;
             }
+            const existing = cart.find(i => i.id === id);
+            if(existing) existing.qty += 1;
+            else cart.push({id, name, price, qty: 1});
+            localStorage.setItem(`cart_${shopId}`, JSON.stringify(cart));
+            updateCartCount();
+            alert(`${name} added to cart!`);
+        }
+
+        function updateCartCount() {
+            document.getElementById('cartCount').innerText = cart.reduce((sum, i) => sum + i.qty, 0);
+        }
+
+        function openCart() {
+            window.location.href = `/shop-templates/auto/cart.html?shopId=${shopId}`;
         }
 
         loadShop();

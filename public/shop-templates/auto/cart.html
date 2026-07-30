@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cart - Auto Parts</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background: #fff7ed; padding: 20px; }
+   .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; }
+    h1 { color: #f97316; margin-bottom: 20px; }
+   .cart-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #ffedd5; }
+    .qty-btn { background: #f97316; color: white; border: none; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; }
+   .total-box { background: #fff7ed; padding: 20px; border-radius: 16px; margin-top: 20px; }
+   .btn-checkout { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 15px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1><i class="fa fa-cart-shopping"></i> Your Cart</h1>
+    <div id="cartList">Loading...</div>
+    <div class="total-box">
+        <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:700;">
+            <span>Total:</span>
+            <span>₹<span id="total">0</span></span>
+        </div>
+        <button class="btn-checkout" onclick="checkout()">Place Order</button>
+    </div>
+</div>
+
+<script>
+const shopId = new URLSearchParams(window.location.search).get('shopId');
+let cart = JSON.parse(localStorage.getItem(`cart_${shopId}`)) || [];
+
+function renderCart() {
+    if(cart.length === 0) {
+        document.getElementById('cartList').innerHTML = '<p style="text-align:center; padding:40px;">Cart khali hai</p>';
+        document.getElementById('total').innerText = 0;
+        return;
+    }
+    let total = 0;
+    document.getElementById('cartList').innerHTML = cart.map((item, i) => {
+        total += item.price * item.qty;
+        return `
+        <div class="cart-item">
+            <div>
+                <b>${item.name}</b>
+                <p>₹${item.price} x ${item.qty}</p>
+            </div>
+            <div>
+                <button class="qty-btn" onclick="updateQty(${i}, -1)">-</button>
+                <button class="qty-btn" onclick="updateQty(${i}, 1)">+</button>
+                <button style="background:#dc2626; color:white; border:none; padding:5px 10px; border-radius:8px; margin-left:10px;" onclick="removeItem(${i})"><i class="fa fa-trash"></i></button>
+            </div>
+        </div>
+        `;
+    }).join('');
+    document.getElementById('total').innerText = total;
+}
+
+function updateQty(index, change) {
+    cart[index].qty += change;
+    if(cart[index].qty < 1) cart.splice(index, 1);
+    localStorage.setItem(`cart_${shopId}`, JSON.stringify(cart));
+    renderCart();
+}
+
+function removeItem(index) {
+    cart.splice(index, 1);
+    localStorage.setItem(`cart_${shopId}`, JSON.stringify(cart));
+    renderCart();
+}
+
+function checkout() {
+    if(cart.length === 0) return alert('Cart khali hai');
+    window.location.href = `/shop-templates/auto/checkout.html?shopId=${shopId}`;
+}
+
+renderCart();
+</script>
+</body>
+</html>

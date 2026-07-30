@@ -15,7 +15,7 @@ const orderRoutes = require('./routes/orders');  // fruit ke liye
 const fruitItemRoutes = require('./routes/fruit-item'); // UPAR IMPORT KAR
 //const acharRoutes = require('./routes/shoporder/acharRoutes');
 const acharRoutes = require('./routes/shops/achar-route');   
-
+const autoRoutes = require('./routes/shops/auto');
 //app.use(express.json({ limit: '10mb' })); // YE BHI UPAR RAKH DE
 // TERE PURANE ROUTES
 // app.use('/api/shops', shopRoutes);
@@ -39,7 +39,7 @@ app.use('/api/shop', require('./routes/shopViewRoutes')); // admin ke liye
 app.use('/api/shops/auto', require('./routes/shops/auto'));
 app.use('/shop', require('./routes/shopViewRoutes'));
 //app.use('/api/shops/achar', require('./routes/shops/achar-route'));
-
+app.use('/api/shops/auto', autoRoutes);
 app.use('/api/shops/achar', acharRoutes);
 //app.use('/api/shops/achar', acharRoutes);
 //app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
