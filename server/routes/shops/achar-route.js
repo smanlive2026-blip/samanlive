@@ -91,51 +91,60 @@ router.get('/:shopId/item/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
-// 4. ADD NEW ACHAR ITEM - QUICK ADD
+// 4. ADD NEW ACHAR ITEM
 router.post('/:shopId/item', async (req, res) => {
   try {
     const shopId = getShopId(req);
     const itemData = req.body.item || req.body;
 
-    if(!itemData.name) return res.status(400).json({ success: false, message: 'Product name is required' });
-
     const newItem = {
-     ...itemData, // <-- yaha space thik kar di
-      id: itemData.id || Date.now().toString(),
-      price: Number(itemData.price1kg), // auto sync
-      image: itemData.image || itemData.img || 'https://placehold.co/400/eab308/fff?text=Achar',
-      img: itemData.image || itemData.img || '',
+      id: Date.now().toString(),
+      name: itemData.name,
+      category: itemData.category || 'Other',
+      description: itemData.description || '',
+      jarType: itemData.jarType || 'Glass',
+      spiceLevel: itemData.spiceLevel || 'Medium',
+      price500: Number(itemData.price500),
+      price1kg: Number(itemData.price1kg),
+      price: Number(itemData.price1kg),
+      stock: Number(itemData.stock),
+      image: itemData.image || 'https://placehold.co/400/eab308/fff?text=Achar',
+      img: itemData.image || '',
+      isActive: true,
       createdAt: new Date()
     };
 
     let achar = await Achar.findOne({ shopId: shopId });
-    if(!achar) {
-      achar = await Achar.create({ shopId: shopId, items: [newItem] });
-    } else {
-      achar.items.push(newItem);
-      await achar.save();
-    }
+    if(!achar) achar = await Achar.create({ shopId: shopId, items: [newItem] });
+    else { achar.items.push(newItem); await achar.save(); }
 
     res.status(201).json({ success: true, message: 'Achar add ho gaya', data: newItem });
-  } catch(err) {
-    console.log('ADD ITEM ERROR:', err);
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 5. UPDATE ACHAR ITEM - FIXED
+// 5. UPDATE ACHAR ITEM - FIELD BY FIELD
 router.put('/:shopId/item/:itemId', async (req, res) => {
   try {
     const shopId = getShopId(req);
     const itemData = req.body.item || req.body;
-    if(itemData.price1kg!== undefined) itemData.price = itemData.price1kg;
-    itemData.image = itemData.image || itemData.img || '';
-    itemData.img = itemData.image || itemData.img || '';
-    itemData.id = req.params.itemId; // <-- YE 1 LINE NAYI JOD DE
 
     const result = await Achar.findOneAndUpdate(
       { shopId: shopId, 'items.id': req.params.itemId },
-      { $set: { 'items.$': itemData } },
+      {
+        $set: {
+          'items.$.name': itemData.name,
+          'items.$.category': itemData.category,
+          'items.$.description': itemData.description,
+          'items.$.jarType': itemData.jarType,
+          'items.$.spiceLevel': itemData.spiceLevel,
+          'items.$.price500': Number(itemData.price500),
+          'items.$.price1kg': Number(itemData.price1kg),
+          'items.$.price': Number(itemData.price1kg),
+          'items.$.stock': Number(itemData.stock),
+          'items.$.image': itemData.image, // <-- YE LINE SABSE IMPORTANT
+          'items.$.img': itemData.image
+        }
+      },
       { new: true }
     );
     if(!result) return res.status(404).json({ success: false, message: 'Item nahi mila' });
