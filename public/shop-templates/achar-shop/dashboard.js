@@ -329,11 +329,41 @@ function saveLocation() {
 }
 
 // SHOPCORE CALLBACK
+
 const originalUpload = ShopCore.uploadImage;
 ShopCore.uploadImage = async function(file, type) {
     const url = await originalUpload.call(this, file, type);
-    if(type === 'product' && url) {
-        productImageUrl = url;
+    
+    if(url){
+        // PRODUCT KE LIYE
+        if(type === 'product') {
+            productImageUrl = url;
+        }
+        
+        // BANNER KE LIYE - DB ME SAHI FIELD ME SAVE
+        if(type === 'banner') {
+            await fetch(`/api/shops/achar/${shopId}`, {
+                method:'PUT', 
+                headers:{'Content-Type':'application/json'}, 
+                body:JSON.stringify({ 
+                    bannerPhotoUrl: url, 
+                    settings: { bannerPhotoUrl: url }
+                })
+            });
+            console.log("Banner DB me save ho gaya:", url);
+        }
+        
+        // LOGO KE LIYE - PEHLE SE THA
+        if(type === 'profile') {
+            await fetch(`/api/shops/achar/${shopId}`, {
+                method:'PUT', 
+                headers:{'Content-Type':'application/json'}, 
+                body:JSON.stringify({ 
+                    ownerPhotoUrl: url, 
+                    settings: { ownerPhotoUrl: url }
+                })
+            });
+        }
     }
     return url;
 }
