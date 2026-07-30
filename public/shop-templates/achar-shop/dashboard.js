@@ -405,4 +405,35 @@ ShopCore.uploadImage = async function(file, type = 'profile') {
     }
 }
 
+// ========== BIND IMAGE UPLOAD OVERRIDE - PRODUCT KE LIYE ==========
+const originalBind = ShopCore.bindImageUpload;
+
+ShopCore.bindImageUpload = function(imgId, inputId, type, storageKey) {
+    // Agar product nahi hai to original wala hi chalne do
+    if(type!== 'product') {
+        return originalBind.call(this, imgId, inputId, type, storageKey);
+    }
+
+    // SIRF PRODUCT KE LIYE APNA WALA
+    const img = document.getElementById(imgId);
+    const input = document.getElementById(inputId);
+    if(!img ||!input) return;
+
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+
+        // 1. TURANT PREVIEW
+        const reader = new FileReader();
+        reader.onload = (ev) => { img.src = ev.target.result; }
+        reader.readAsDataURL(file);
+
+        // 2. CLOUDINARY PE UPLOAD - MERA WALA
+        const url = await this.uploadImage(file, type);
+        if(url){
+            img.src = url; // Cloud wali se replace
+        }
+    }
+}
+
 console.log('✅ Achar Dashboard v8 Loaded - All Fixed');
