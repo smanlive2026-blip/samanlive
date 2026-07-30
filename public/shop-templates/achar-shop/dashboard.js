@@ -331,8 +331,6 @@ function saveLocation() {
 // SHOPCORE CALLBACK
 
 // ========== SHOPCORE OVERRIDE - HD + PRODUCT FIX ==========
-const originalUpload = ShopCore.uploadImage;
-
 ShopCore.uploadImage = async function(file, type = 'profile') {
     if(!file) return null;
     if(!this.shopId ||!this.template){
@@ -343,15 +341,19 @@ ShopCore.uploadImage = async function(file, type = 'profile') {
     const loader = document.getElementById('uploadLoader');
     if(loader) loader.style.display = 'inline';
 
-    // COMPRESS RULE
+    // COMPRESS RULE: Banner/Logo HD, Product Medium
     let compressedFile = file;
     if(window.imageCompression){
         let options = { useWebWorker: true };
-        
+
         if(type === 'banner' || type === 'profile') {
-            options.maxSizeMB = 0.5; options.maxWidthOrHeight = 1920; options.initialQuality = 0.9;
+            options.maxSizeMB = 0.5; // 500KB
+            options.maxWidthOrHeight = 1920; // Full HD
+            options.initialQuality = 0.9; // 90%
         } else {
-            options.maxSizeMB = 0.2; options.maxWidthOrHeight = 1200; options.initialQuality = 0.8;
+            options.maxSizeMB = 0.2; // 200KB
+            options.maxWidthOrHeight = 1200; // 1200px
+            options.initialQuality = 0.8; // 80%
         }
         try{
             compressedFile = await window.imageCompression(file, options);
@@ -360,34 +362,34 @@ ShopCore.uploadImage = async function(file, type = 'profile') {
 
     const formData = new FormData();
     formData.append('image', compressedFile);
-    formData.append('shopId', String(this.shopId));
-    formData.append('template', String(this.template));
-    formData.append('type', String(type));
 
     try {
-        // FIX: SAHI UPLOAD URL - /api/shops/achar/upload
+        // SAHI UPLOAD URL
         const res = await fetch('/api/shops/achar/upload', { method: 'POST', body: formData });
         const data = await res.json();
 
         if(data.success && data.url){
-            // PRODUCT KE LIYE TURANT DB ME SAVE KARO
+            // PRODUCT KE LIYE: variable + preview update
             if(type === 'product') {
                 productImageUrl = data.url;
-                document.getElementById('productImgPreview').src = data.url; // YE LINE NAY
+                document.getElementById('productImgPreview').src = data.url;
                 console.log("Product URL ready:", data.url);
             }
-            
+
+            // BANNER KE LIYE: DB me save
             if(type === 'banner') {
                 await fetch(`/api/shops/achar/${this.shopId}`, {
-                    method:'PUT', 
-                    headers:{'Content-Type':'application/json'}, 
+                    method:'PUT',
+                    headers:{'Content-Type':'application/json'},
                     body:JSON.stringify({ bannerPhotoUrl: data.url })
                 });
             }
+
+            // LOGO KE LIYE: DB me save
             if(type === 'profile') {
                 await fetch(`/api/shops/achar/${this.shopId}`, {
-                    method:'PUT', 
-                    headers:{'Content-Type':'application/json'}, 
+                    method:'PUT',
+                    headers:{'Content-Type':'application/json'},
                     body:JSON.stringify({ ownerPhotoUrl: data.url })
                 });
             }
@@ -405,16 +407,16 @@ ShopCore.uploadImage = async function(file, type = 'profile') {
     }
 }
 
-// ========== BIND IMAGE UPLOAD OVERRIDE - PRODUCT KE LIYE ==========
+// ========== BIND IMAGE UPLOAD OVERRIDE - SIRF PRODUCT KE LIYE ==========
 const originalBind = ShopCore.bindImageUpload;
 
 ShopCore.bindImageUpload = function(imgId, inputId, type, storageKey) {
-    // Agar product nahi hai to original wala hi chalne do
+    // Banner aur Logo ke liye original wala hi chalne do
     if(type!== 'product') {
         return originalBind.call(this, imgId, inputId, type, storageKey);
     }
 
-    // SIRF PRODUCT KE LIYE APNA WALA
+    // PRODUCT KE LIYE APNA WALA
     const img = document.getElementById(imgId);
     const input = document.getElementById(inputId);
     if(!img ||!input) return;
@@ -423,7 +425,7 @@ ShopCore.bindImageUpload = function(imgId, inputId, type, storageKey) {
         const file = e.target.files[0];
         if(!file) return;
 
-        // 1. TURANT PREVIEW
+        // 1. TURANT LOCAL PREVIEW
         const reader = new FileReader();
         reader.onload = (ev) => { img.src = ev.target.result; }
         reader.readAsDataURL(file);
@@ -431,9 +433,8 @@ ShopCore.bindImageUpload = function(imgId, inputId, type, storageKey) {
         // 2. CLOUDINARY PE UPLOAD - MERA WALA
         const url = await this.uploadImage(file, type);
         if(url){
-            img.src = url; // Cloud wali se replace
+            img.src = url; // Cloud wali HD se replace
         }
     }
 }
-
 console.log('✅ Achar Dashboard v8 Loaded - All Fixed');
