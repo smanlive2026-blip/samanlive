@@ -416,25 +416,25 @@ ShopCore.bindImageUpload = function(imgId, inputId, type, storageKey) {
         return originalBind.call(this, imgId, inputId, type, storageKey);
     }
 
-    // PRODUCT KE LIYE APNA WALA - DB SAVE MAT KARO
-    const img = document.getElementById(imgId);
-    const input = document.getElementById(inputId);
-    if(!img ||!input) return;
+   // ========== LOCALSTORAGE KO MAAR DO - PRODUCT KE LIYE ==========
+const realBind = ShopCore.bindImageUpload;
+ShopCore.bindImageUpload = function(imgId, inputId, type, storageKey) {
+    if(type === 'product') {
+        // PRODUCT KE LIYE LOCALSTORAGE SKIP
+        const img = document.getElementById(imgId);
+        const input = document.getElementById(inputId);
+        if(!img ||!input) return;
 
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-
-        // 1. TURANT LOCAL PREVIEW
-        const reader = new FileReader();
-        reader.onload = (ev) => { img.src = ev.target.result; }
-        reader.readAsDataURL(file);
-
-        // 2. CLOUDINARY PE UPLOAD - MERA WALA
-        const url = await this.uploadImage(file, type);
-        if(url){
-            img.src = url; // Cloud wali HD se replace
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const url = await this.uploadImage(file, type); // direct cloud
+            if(url) img.src = url;
         }
+    } else {
+        realBind.call(this, imgId, inputId, type, storageKey); // banner/logo wahi rahe
     }
+ }
 }
+
 console.log('✅ Achar Dashboard v8 FINAL Loaded');
