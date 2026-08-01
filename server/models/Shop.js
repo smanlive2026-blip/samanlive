@@ -43,6 +43,7 @@ const shopSchema = new mongoose.Schema({
     description: { type: String, default: '' },
     banner: { type: String, default: '' },
     logo: { type: String, default: '' }, // ✅ Base64 logo
+    uploadedLogo: { type: String, default: '' }, // purane data ke liye backup
     icon: { type: String, default: '🏪' },
 
     // ========== TEMPLATE FIELD ADD KIYA ==========

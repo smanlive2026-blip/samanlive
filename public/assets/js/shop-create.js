@@ -268,6 +268,7 @@ function initCreateShopForm() {
     email: document.getElementById('createShopEmail').value.trim() || '',
     address: shopAddress,
     icon: createShopSelectedIcon,
+    logo: createShopUploadedLogoBase64, // ✅ YE NAYI LINE ADD KAR
     range: range
      };
 

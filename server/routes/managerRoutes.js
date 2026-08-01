@@ -189,7 +189,7 @@ router.put('/shops/:id', authManager, async (req, res) => {
 router.post('/create-shop-v2', authManager, async (req, res) => {
     try {
         const manager = req.manager;
-        const { shopName, ownerName, phone, contact, serviceType, shopType, template, email, address, icon, range, bucket } = req.body; // ✅ template add kiya
+        const { shopName, ownerName, phone, contact, serviceType, shopType, template, email, address, icon, logo, range, bucket } = req.body; // ✅ template add kiya
 
         console.log('🏪 Create Shop Request:', manager.name, '| Shop:', shopName);
 
@@ -239,6 +239,7 @@ router.post('/create-shop-v2', authManager, async (req, res) => {
                 pincode: area?.pincode || '395007'
             },
             icon: icon || '🏪',
+            logo: logo || '', // ✅ YE NAYI LINE - photo yahi save hogi
             range: parseInt(range) || 5000,
 
             serviceType: serviceType,
