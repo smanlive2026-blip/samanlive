@@ -127,27 +127,8 @@ window.addEventListener('beforeunload', () => {
     window.LocationManager.stopAutoUpdate();
 });
 
-// SKELETON LOADER FOR SHOPS
-function showShopSkeleton(container) {
-    container.innerHTML = '';
-    for(let i=0; i<4; i++) {
-        const row = document.createElement('div');
-        row.className = 'carousel-item';
-        row.innerHTML = Array(4).fill(0).map(() => `
-            <div class="shop-card-mini skeleton">
-                <div style="width:60px;height:60px;border-radius:10px;background:rgba(255,255,255,0.1);margin:0 auto 5px;"></div>
-                <div style="height:12px;width:80%;background:rgba(255,255,255,0.1);border-radius:4px;margin:0 auto;"></div>
-            </div>
-        `).join('');
-        container.appendChild(row);
-    }
-}
-
-// ✅ RELOAD NEARBY DATA - SKELETON + DISTANCE SORT + MAX 24
+// ✅ RELOAD NEARBY DATA - NA MILE TO SAB DIKHA DE
 async function reloadNearbyData() {
-    const container = document.getElementById('shopsContent');
-    if(container) showShopSkeleton(container); // loading me skeleton
-
     try {
         let shopsData = [];
         if(userLocation) {
@@ -174,12 +155,6 @@ async function reloadNearbyData() {
             }
         }
 
-        // DISTANCE SORT - sabse paas wala pehle
-        shopsData.sort((a,b) => (a.distance || 999999) - (b.distance || 999));
-
-        // MAX 24 SHOP HI LENGE
-        shopsData = shopsData.slice(0, 24);
-
         console.log("SHOPS COUNT:", shopsData.length);
         allServices = shopsData.map(shop => ({
             _id: String(shop.shopId || shop._id || shop.id),
@@ -201,7 +176,6 @@ async function reloadNearbyData() {
         }
     } catch(e) {
         console.error('Failed to reload:', e);
-        if(container) container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>Failed to load shops</p></div>`;
     }
 }
 
@@ -343,7 +317,7 @@ function renderCampaigns() {
         </div>`).join('');
 }
 
-// RENDER SHOPS - DYNAMIC LINES + BETTER CARD + IMAGE SAFETY
+// RENDER SHOPS - SINGLE ROW SCROLL - MAX 24
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
@@ -352,32 +326,27 @@ function renderSixLineShops() {
         return;
     }
     container.innerHTML = '';
-    const shopsPerLine = 4;
     const userViewTemplates = ['kirana', 'medical', 'restaurant'];
-    const totalLines = Math.ceil(allServices.length / shopsPerLine); // 6 fixed nahi
+    const shopsToShow = allServices.slice(0, 24); // MAX 24 HI
 
-    for (let i = 0; i < totalLines; i++) {
-        const row = document.createElement('div');
-        row.className = 'carousel-item';
-        const lineShops = allServices.slice(i * shopsPerLine, (i + 1) * shopsPerLine);
-        if (lineShops.length === 0) continue;
+    // SIRF 1 ROW
+    const row = document.createElement('div');
+    row.className = 'carousel-item'; // purana class hi rakha
 
-        lineShops.forEach(shop => {
-            const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
-            const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
-            const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
-            const distKm = shop.distance? (shop.distance/1000).toFixed(1) : null;
+    shopsToShow.forEach(shop => {
+        const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
+        const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
+        const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
 
-            row.innerHTML += `
-                <div class="shop-card-mini" onclick="window.location.href='${customerUrl}'">
-                    <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.onerror=null;this.src='/assets/default-shop.png'">
-                    <p>${shop.shopName}</p>
-                    ${distKm? `<small>📍 ${distKm}Km</small>` : ''}
-                </div>
-            `;
-        });
-        container.appendChild(row);
-    }
+        row.innerHTML += `
+            <div class="shop-card-mini" onclick="window.location.href='${customerUrl}'">
+                <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.onerror=null;this.src='/assets/default-shop.png'">
+                <p>${shop.shopName}</p>
+                ${shop.distance? `<small>📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
+            </div>
+        `;
+    });
+    container.appendChild(row);
 }
 
 // RENDER TOP PRODUCTS - 6 LINE
