@@ -355,32 +355,41 @@ function renderSixLineShops() {
 }
 
 
-// RENDER TOP PRODUCTS - 6 LINE
-function renderSixLineProducts() {
-    const container = document.getElementById('topProductsContent');
+function renderSixLineShops() {
+    const container = document.getElementById('shopsContent');
     if (!container) return;
-    if (!allProducts || allProducts.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📦</div><p>No top rated products yet</p></div>`;
+    if (!allServices || allServices.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏪</div><p>No shops available in your area</p></div>`;
         return;
     }
     container.innerHTML = '';
-    const productsPerLine = 4;
-    for (let i = 0; i < 6; i++) {
-        const row = document.createElement('div');
-        row.className = 'carousel-item';
-        const lineProducts = allProducts.slice(i * productsPerLine, (i + 1) * productsPerLine);
-        if (lineProducts.length === 0) continue;
-        lineProducts.forEach(product => {
-            row.innerHTML += `
-                <div class="shop-card-mini" onclick="openProduct('${product._id}')">
-                    <img src="${product.image || product.imageUrl || '/assets/default-product.png'}" onerror="this.src='/assets/default-product.png'">
-                    <p>${product.name}</p>
-                    ${product.price? `<small style="color:#10b981;">₹${product.price}</small>` : ''}
+    const userViewTemplates = ['kirana', 'medical', 'restaurant'];
+    const shopsToShow = allServices.slice(0, 48);
+
+    const grid = document.createElement('div');
+    grid.className = 'shops-grid';
+
+    shopsToShow.forEach(shop => {
+        const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
+        const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
+        const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
+
+        const isOpen = shop.isOpen === true; // API se aayega
+        const statusText = isOpen ? 'OPEN' : 'CLOSE';
+        const statusClass = isOpen ? 'open' : 'close';
+
+        grid.innerHTML += `
+            <div class="shop-card-mini" onclick="window.location.href='${customerUrl}'">
+                <div class="status-badge ${statusClass}">${statusText}</div>
+                <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.onerror=null;this.src='/assets/default-shop.png'">
+                <div class="card-info">
+                    <p>${shop.shopName}</p>
+                    ${shop.distance? `<span class="km-badge">📍 ${(shop.distance/1000).toFixed(1)}Km</span>` : ''}
                 </div>
-            `;
-        });
-        container.appendChild(row);
-    }
+            </div>
+        `;
+    });
+    container.appendChild(grid);
 }
 
 function openProduct(productId) {
