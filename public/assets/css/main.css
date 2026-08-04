@@ -60,17 +60,17 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .line-header span { font-size: 13px; font-weight: 700; opacity: 0.95; }
 .line-content { position: relative; min-height: 80px; overflow: hidden; }
 
-/* ✅ 6 LINE CAROUSEL GRID - FIXED + RESPONSIVE */
+/* ✅ 6 LINE CAROUSEL GRID - DYNAMIC */
 .six-line-carousel { display: flex; flex-direction: column; gap: 10px; }
 .six-line-carousel .carousel-item { display: flex; gap: 10px; overflow-x: auto; padding: 6px 4px 10px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
 .six-line-carousel .carousel-item::-webkit-scrollbar { height: 4px; }
 .six-line-carousel .carousel-item::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.4); border-radius: 2px; }
 
-/* ✅ SHOP CARD MINI - WORLD CLASS */
+/* ✅ SHOP CARD MINI - WORLD CLASS NEW */
 .shop-card-mini {
-    min-width: clamp(70px, 22vw, 90px); /* ✅ PHATNA BAND */
+    min-width: clamp(70px, 22vw, 90px);
     width: clamp(70px, 22vw, 90px);
-    background: rgba(255,255,255,0.95); /* ✅ CONTRAST BADHAYA */
+    background: rgba(255,255,255,0.95);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255,255,255,0.3);
     border-radius: 16px;
@@ -92,16 +92,16 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .shop-card-mini img {
     width: 58px;
     height: 58px;
-    border-radius: 50%; /* GOL */
+    border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #10b981; /* ✅ BULB WALI CHAMAK */
+    border: 3px solid #10b981;
     background: white;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .shop-card-mini p {
     font-size: 11px;
-    color: #1f2937; /* ✅ KAALA TEXT */
+    color: #1f2937;
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
@@ -117,6 +117,22 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     background: #10b981;
     padding: 2px 6px;
     border-radius: 8px;
+}
+
+/* ✅ SKELETON LOADER */
+.shop-card-mini.skeleton {
+    pointer-events: none;
+    background: rgba(255,255,255,0.15);
+}
+.shop-card-mini.skeleton img {
+    border: none;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 /* VIDEOS - TRAIN SCROLL HATA DIYA SPEED KE LIYE */
@@ -230,15 +246,15 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 /* MOBILE - SPEED KE LIYE BLUR HATA DIYA */
 @media (max-width: 768px) {
   .search-box-modern { margin: 0 10px; }
-  .search-box-modern input { font-size: 14px; height: 40px; backdrop-filter: none; } /* ✅ SPEED */
+  .search-box-modern input { font-size: 14px; height: 40px; backdrop-filter: none; }
   .container { padding: 0 8px; }
   .logo-text { display: none; }
   .ads-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .service-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .service-icon { font-size: 36px; border-radius: 16px; }
   .footer-links { grid-template-columns: repeat(2, 1fr); }
-  .video-overlay { backdrop-filter: blur(20px); } /* ✅ BG BLUR KAM */
-  .shop-card-mini { backdrop-filter: none; background: #fff; } /* ✅ CARD SPEED */
+  .video-overlay { backdrop-filter: blur(20px); }
+  .shop-card-mini { backdrop-filter: none; background: #fff; }
   .nearby-action-btn { backdrop-filter: none; }
   .service-box { backdrop-filter: none; }
 }

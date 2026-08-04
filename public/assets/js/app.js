@@ -127,8 +127,27 @@ window.addEventListener('beforeunload', () => {
     window.LocationManager.stopAutoUpdate();
 });
 
-// ✅ RELOAD NEARBY DATA - NA MILE TO SAB DIKHA DE
+// SKELETON LOADER FOR SHOPS
+function showShopSkeleton(container) {
+    container.innerHTML = '';
+    for(let i=0; i<4; i++) {
+        const row = document.createElement('div');
+        row.className = 'carousel-item';
+        row.innerHTML = Array(4).fill(0).map(() => `
+            <div class="shop-card-mini skeleton">
+                <div style="width:60px;height:60px;border-radius:10px;background:rgba(255,255,255,0.1);margin:0 auto 5px;"></div>
+                <div style="height:12px;width:80%;background:rgba(255,255,255,0.1);border-radius:4px;margin:0 auto;"></div>
+            </div>
+        `).join('');
+        container.appendChild(row);
+    }
+}
+
+// ✅ RELOAD NEARBY DATA - SKELETON + DISTANCE SORT + MAX 24
 async function reloadNearbyData() {
+    const container = document.getElementById('shopsContent');
+    if(container) showShopSkeleton(container); // loading me skeleton
+
     try {
         let shopsData = [];
         if(userLocation) {
@@ -155,6 +174,12 @@ async function reloadNearbyData() {
             }
         }
 
+        // DISTANCE SORT - sabse paas wala pehle
+        shopsData.sort((a,b) => (a.distance || 999999) - (b.distance || 999));
+
+        // MAX 24 SHOP HI LENGE
+        shopsData = shopsData.slice(0, 24);
+
         console.log("SHOPS COUNT:", shopsData.length);
         allServices = shopsData.map(shop => ({
             _id: String(shop.shopId || shop._id || shop.id),
@@ -176,6 +201,7 @@ async function reloadNearbyData() {
         }
     } catch(e) {
         console.error('Failed to reload:', e);
+        if(container) container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>Failed to load shops</p></div>`;
     }
 }
 
@@ -317,8 +343,7 @@ function renderCampaigns() {
         </div>`).join('');
 }
 
-// RENDER SHOPS - 6 LINE - SHOP TEMPLATES WALA
-
+// RENDER SHOPS - DYNAMIC LINES + BETTER CARD + IMAGE SAFETY
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
@@ -328,30 +353,26 @@ function renderSixLineShops() {
     }
     container.innerHTML = '';
     const shopsPerLine = 4;
-    // jinke user-view.html hai
-    const userViewTemplates = ['kirana', 'medical', 'restaurant']; 
+    const userViewTemplates = ['kirana', 'medical', 'restaurant'];
+    const totalLines = Math.ceil(allServices.length / shopsPerLine); // 6 fixed nahi
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < totalLines; i++) {
         const row = document.createElement('div');
         row.className = 'carousel-item';
         const lineShops = allServices.slice(i * shopsPerLine, (i + 1) * shopsPerLine);
         if (lineShops.length === 0) continue;
 
         lineShops.forEach(shop => {
-            // 1. template priority: DB se template > shopType
             const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
-            
-            // 2. file ka naam decide
-            const fileName = userViewTemplates.includes(template) ? 'user-view.html' : 'customer-view.html';
-
-            // 3. Direct shop-templates ka link
+            const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
             const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
+            const distKm = shop.distance? (shop.distance/1000).toFixed(1) : null;
 
             row.innerHTML += `
                 <div class="shop-card-mini" onclick="window.location.href='${customerUrl}'">
-                    <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
+                    <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.onerror=null;this.src='/assets/default-shop.png'">
                     <p>${shop.shopName}</p>
-                    ${shop.distance ? `<small>📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
+                    ${distKm? `<small>📍 ${distKm}Km</small>` : ''}
                 </div>
             `;
         });
@@ -430,8 +451,8 @@ function openVideoModal(url, shopId) {
     if(shop) {
          const template = (shop.template || shop.shopType || '').toLowerCase().trim();
          const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
-        visitBtn = `<button onclick="window.location.href='/shop-templates/${template}/${fileName}?shopId=${shop._id}'"...`    
-}
+        visitBtn = `<button onclick="window.location.href='/shop-templates/${template}/${fileName}?shopId=${shop._id}'" style="background:#10b981;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">Visit Shop</button>`
+    }
 
     modal.innerHTML = `<div style="position:relative;width:90%;max-width:900px;">
         <button onclick="closeVideoModal()" style="position:absolute;top:-40px;right:0;background:#fff;border:none;font-size:30px;width:40px;height:40px;border-radius:50%;cursor:pointer;">×</button>
