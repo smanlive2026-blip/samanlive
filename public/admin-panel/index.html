@@ -26,56 +26,72 @@
             margin: 0 auto;
         }
 
-        /* Premium Header */
+        /* Premium Header - Mobile Fix */
         .admin-header {
             background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #8b5cf6 100%);
-            padding: 20px 24px;
+            padding: 16px 20px;
             box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
             position: sticky;
             top: 0;
             z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .admin-header h1 {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 800;
             color: white;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             margin: 0;
             letter-spacing: -0.5px;
         }
         
         .admin-header h1::before {
             content: '⚡';
-            font-size: 28px;
+            font-size: 24px;
             animation: pulse 2s ease-in-out infinite;
         }
-        
+
+        /* Hamburger Menu Button - Mobile Only */
+        .menu-toggle {
+            display: none;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            color: white;
+            font-size: 24px;
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.8; transform: scale(1.1); }
         }
 
-        /* Modern Navbar - FIXED: Wrap hoga, scroll nahi */
+        /* Modern Navbar - Desktop: wrap | Mobile: sidebar */
         .admin-navbar {
             background: white;
             padding: 12px 16px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
             position: sticky;
-            top: 68px;
+            top: 60px;
             z-index: 99;
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
+            transition: all 0.3s ease;
         }
         
         .nav-btn {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 18px;
+            padding: 10px 16px;
             background: #f8fafc;
             border: 2px solid transparent;
             border-radius: 10px;
@@ -102,11 +118,6 @@
             box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
             transform: translateY(-1px);
         }
-        
-        .nav-btn.active:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
-        }
 
         /* Main Container */
         #mainContainer {
@@ -116,14 +127,8 @@
         }
         
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         /* Loading Animation */
@@ -145,9 +150,7 @@
             animation: spin 0.8s linear infinite;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         
         .loading-text {
             color: #64748b;
@@ -155,20 +158,66 @@
             font-weight: 500;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .admin-header h1 {
-                font-size: 20px;
+        /* Overlay for mobile sidebar */
+        .nav-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 98;
+        }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .admin-navbar {
+                position: fixed;
+                top: 0;
+                left: -280px;
+                width: 280px;
+                height: 100vh;
+                flex-direction: column;
+                padding: 80px 16px 16px;
+                overflow-y: auto;
+                box-shadow: 2px 0 20px rgba(0,0,0,0.2);
             }
-            .admin-header h1::before {
-                font-size: 24px;
+            
+            .admin-navbar.show {
+                left: 0;
             }
+            
             .nav-btn {
-                padding: 8px 14px;
-                font-size: 13px;
+                width: 100%;
+                justify-content: flex-start;
             }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .nav-overlay.show {
+                display: block;
+            }
+            
             #mainContainer {
                 padding: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .admin-header {
+                padding: 14px 16px;
+            }
+            .admin-header h1 {
+                font-size: 18px;
+            }
+            .admin-header h1::before {
+                font-size: 20px;
+            }
+            #mainContainer {
+                padding: 12px;
             }
         }
     </style>
@@ -177,14 +226,17 @@
     <div class="container">
         <div class="admin-header">
             <h1>SAMANLIVE Control Panel</h1>
+            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
         </div>
 
-        <div class="admin-navbar">
+        <div class="nav-overlay" onclick="toggleMenu()"></div>
+        
+        <div class="admin-navbar" id="adminNavbar">
             <button class="nav-btn active" onclick="loadPage('dashboard', this)">📊 Dashboard</button>
             <button class="nav-btn" onclick="loadPage('orders', this)">📋 Orders</button>
             <button class="nav-btn" onclick="loadPage('products', this)">📦 Products</button>
-            <button class="nav-btn" onclick="loadPage('master-products', this)">📚 Master Products</button> <!-- ✅ NEW BUTTON -->
-              <button class="nav-btn" onclick="loadPage('template-catalog', this)">📥 Template Catalog</button>
+            <button class="nav-btn" onclick="loadPage('master-products', this)">📚 Master Products</button>
+            <button class="nav-btn" onclick="loadPage('template-catalog', this)">📥 Template Catalog</button>
             <button class="nav-btn" onclick="loadPage('users', this)">👥 Users</button>
             <button class="nav-btn" onclick="loadPage('shops', this)">🏪 Shops</button>
             <button class="nav-btn" onclick="loadPage('area-dashboard', this)">🗺️ Area Dashboard</button>
@@ -214,10 +266,23 @@
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script src="assets/admin.js"></script>
     <script>
+        // Mobile Menu Toggle
+        function toggleMenu() {
+            document.getElementById('adminNavbar').classList.toggle('show');
+            document.querySelector('.nav-overlay').classList.toggle('show');
+        }
+
         // Pehli baar dashboard load karo
         document.addEventListener('DOMContentLoaded', () => {
             loadPage('dashboard', document.querySelector('.nav-btn.active'));
         });
+
+        // Page load hone ke baad mobile menu band kar do
+        const originalLoadPage = window.loadPage;
+        window.loadPage = function(page, btn) {
+            if(originalLoadPage) originalLoadPage(page, btn);
+            if(window.innerWidth <= 1024) toggleMenu();
+        }
     </script>
 </body>
 </html>
