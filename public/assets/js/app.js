@@ -358,34 +358,22 @@ function renderSixLineShops() {
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
-    if (!allServices || allServices.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏪</div><p>No shops available in your area</p></div>`;
-        return;
-    }
     container.innerHTML = '';
-    const userViewTemplates = ['kirana', 'medical', 'restaurant'];
-    const shopsToShow = allServices.slice(0, 48);
+    const shopsToShow = allServices.slice(0, 24);
 
     const grid = document.createElement('div');
-    grid.className = 'shops-grid';
+    grid.className = 'shops-grid-circle';
 
     shopsToShow.forEach(shop => {
-        const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
-        const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
-        const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
-
-        const isOpen = shop.isOpen === true; // API se aayega
-        const statusText = isOpen ? 'OPEN' : 'CLOSE';
-        const statusClass = isOpen ? 'open' : 'close';
+        const template = (shop.template || 'common').toLowerCase().trim();
+        const customerUrl = `/shop-templates/${template}/user-view.html?shopId=${shop._id}`;
+        const isOpen = shop.isOpen === true;
 
         grid.innerHTML += `
-            <div class="shop-card-mini" onclick="window.location.href='${customerUrl}'">
-                <div class="status-badge ${statusClass}">${statusText}</div>
-                <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.onerror=null;this.src='/assets/default-shop.png'">
-                <div class="card-info">
-                    <p>${shop.shopName}</p>
-                    ${shop.distance? `<span class="km-badge">📍 ${(shop.distance/1000).toFixed(1)}Km</span>` : ''}
-                </div>
+            <div class="shop-circle" onclick="window.location.href='${customerUrl}'">
+                <div class="status-dot ${isOpen ? 'open' : 'close'}"></div>
+                <img src="${shop.logo || 'https://placehold.co/100x100/cccccc/333?text=Shop'}" onerror="this.src='https://placehold.co/100x100/cccccc/333?text=Shop'">
+                <p>${shop.shopName}</p>
             </div>
         `;
     });

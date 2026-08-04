@@ -1,162 +1,119 @@
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { overflow-x: hidden; width: 100%; touch-action: pan-y; overflow-y: auto; }
+html, body { overflow-x: hidden; width: 100%; }
 body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 10px; }
 
 /* VIDEO BG */
 .video-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: linear-gradient(45deg, #1e3a8a, #3b82f6, #8b5cf6, #1e40af); background-size: 400% 400%; animation: gradientShift 15s ease infinite; }
-.video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: rgba(245, 245, 245, 0.92); backdrop-filter: blur(80px); }
+.video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: rgba(245, 245, 245, 0.92); }
 @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-/* ✅ HEADER FIX */
-.header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 0; box-shadow: 0 4px 20px rgba(102,126,234,0.3); position: sticky; top: 0; z-index: 100; width: 100%; backdrop-filter: blur(10px); }
+/* ✅ HEADER */
+.header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 0; box-shadow: 0 4px 20px rgba(102,126,234,0.3); position: sticky; top: 0; z-index: 100; width: 100%; }
 .header-container { max-width: 1200px; margin: 0 auto; padding: 0 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.logo { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.logo-icon { width: 34px; height: 34px; background: linear-gradient(135deg, #fff, #e0e7ff); color: #1e40af; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; }
+.logo { display: flex; align-items: center; gap: 6px; }
+.logo-icon { width: 34px; height: 34px; background: #fff; color: #1e40af; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; }
 .logo-text { font-size: 15px; font-weight: bold; white-space: nowrap; }
-
-/* ✅ SEARCH BAR */
-.search-box-modern { position: relative; flex: 1; min-width: 0; max-width: 600px; margin: 0 8px; }
-.search-box-modern input { width: 100%; height: 42px; padding: 0 45px 0 40px; border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.12); border-radius: 22px; color: #fff; font-size: 14px; }
-.search-box-modern input:focus { outline: none; border-color: #10b981; background: rgba(255,255,255,0.18); }
-.search-box-modern input::placeholder { color: rgba(255,255,255,0.6); }
-.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.6); font-size: 16px; }
-.search-btn-modern { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: none; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-.header-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-.notification-icon { position: relative; font-size: 20px; cursor: pointer; }
-.notif-badge { position: absolute; top: -5px; right: -6px; background: #ef4444; color: white; font-size: 9px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-.profile-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid #10b981; }
-.location-display { font-size: 11px; color: #e0e7ff; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+.search-box-modern { position: relative; flex: 1; min-width: 0; margin: 0 8px; }
+.search-box-modern input { width: 100%; height: 40px; padding: 0 42px 0 38px; border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.12); border-radius: 20px; color: #fff; font-size: 14px; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.6); }
+.search-btn-modern { position: absolute; right: 3px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: none; background: #10b981; border-radius: 50%; color: #fff; cursor: pointer; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.profile-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #10b981; }
 
 /* MAIN */
 .main-content { padding: 12px 0; }
 
 /* TOP ADS */
-.top-ad-slider { margin-bottom: 12px; }
-.ad-container { border-radius: 14px; overflow: hidden; }
-.ad-slide { display: none; }
-.ad-slide.active { display: block; animation: fadeIn 0.5s; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.ads-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.ad-card { padding: 14px 8px; text-align: center; color: white; min-height: 90px; display: flex; flex-direction: column; justify-content: center; border-radius: 10px; }
+.ads-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
 
-/* ✅ NEAR YOU - YAHI EK LINE BADLI HAI: overflow visible */
-.nearby-slider { background: linear-gradient(135deg, #1e40af, #3b82f6); border-radius: 16px; padding: 14px; margin-bottom: 14px; color: white; box-shadow: 0 8px 24px rgba(30, 64, 175, 0.25); overflow: visible; /* YE ADD KIYA */}
-.nearby-header { margin-bottom: 12px; }
-.nearby-header h2 { font-size: 16px; font-weight: 800; }
-.nearby-line { margin-bottom: 14px; }
-.line-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.line-header span { font-size: 13px; font-weight: 700; opacity: 0.95; }
-.line-content { position: relative; min-height: auto; overflow: visible; padding-bottom: 4px; /* niche thodi jagah */ }
+/* NEAR YOU */
+.nearby-slider { background: linear-gradient(135deg, #1e40af, #3b82f6); border-radius: 16px; padding: 14px; margin-bottom: 14px; color: white; }
+.nearby-header h2 { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
 
-/* ✅ FORCE GRID - SCROLL BAND */
-.six-line-carousel { display: block; }
+/* ===== GOL CIRCLE SHOPS ===== */
 .six-line-carousel .carousel-item { display: none; }
 
-/* ✅ SHOPS GRID - 3 CARD */
-.shops-grid {
+.shops-grid-circle {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    padding: 6px 0 0;
-    width: 100%;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 4px 0;
 }
 
-/* ✅ CARD - PHOTO FULL */
-.shop-card-mini {
-    background: #fff;
-    border-radius: 14px;
-    padding: 0;
+.shop-circle {
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s;
-    display: flex;
-    flex-direction: column;
     position: relative;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
-.shop-card-mini:hover { transform: translateY(-3px); }
 
-.shop-card-mini img {
+.shop-circle img {
     width: 100%;
-    height: 95px;
-    border-radius: 14px 14px 0 0;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
     object-fit: cover;
-    background: #f3f4f6;
-}
-
-.shop-card-mini .card-info {
-    padding: 6px 4px 8px;
     background: #fff;
+    border: 3px solid rgba(255,255,255,0.4);
 }
 
-.shop-card-mini p {
-    font-size: 11px;
-    color: #1f2937;
-    font-weight: 700;
+.shop-circle p {
+    font-size: 10px;
+    color: #fff;
+    font-weight: 600;
+    margin-top: 6px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 3px;
 }
 
-.shop-card-mini .km-badge {
-    font-size: 9px;
-    color: #fff;
-    font-weight: 600;
-    background: #10b981;
-    padding: 2px 6px;
-    border-radius: 6px;
-    display: inline-block;
-}
-
-/* ✅ OPEN/CLOSE BADGE */
-.shop-card-mini .status-badge {
+.shop-circle .status-dot {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    font-size: 8px;
-    font-weight: 800;
-    padding: 3px 7px;
-    border-radius: 6px;
-    color: white;
-    z-index: 2;
+    top: 2px;
+    right: 2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #1e40af;
 }
-.shop-card-mini .status-badge.open { background: #10b981; }
-.shop-card-mini .status-badge.close { background: #ef4444; }
+.shop-circle .status-dot.open { background: #10b981; }
+.shop-circle .status-dot.close { background: #ef4444; }
 
 /* VIDEOS */
 .videos-grid { display: flex; gap: 10px; overflow-x: auto; padding: 4px; }
 .video-card { position: relative; border-radius: 12px; overflow: hidden; background: #000; width: 110px; height: 170px; flex-shrink: 0; }
-.video-card video { width: 100%; height: 100%; object-fit: cover; }
 
 /* 4 BUTTONS */
 .nearby-actions-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
-.nearby-action-btn { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); border-radius: 10px; padding: 10px 4px; text-align: center; color: white; font-size: 10px; font-weight: 700; }
+.nearby-action-btn { background: rgba(255,255,255,0.2); border-radius: 10px; padding: 10px 4px; text-align: center; color: white; font-size: 10px; font-weight: 700; }
 
-/* SERVICES - YE BILKUL PURANA HAI */
+/* SERVICES */
 .services-section { padding: 14px 0; }
 .section-title { font-size: 17px; font-weight: 800; margin-bottom: 12px; color: #1f2937; }
-.service-box { background: rgba(255,255,255,0.9); border-radius: 16px; padding: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.service-box { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
 .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .service-item { text-align: center; }
 .service-icon { width: 100%; aspect-ratio: 1; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 42px; margin-bottom: 6px; color: white; }
-.service-item p { font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; }
+.service-item p { font-size: 11px; font-weight: 700; color: #374151; }
 
-/* FOOTER */
+/* ✅ FOOTER FIXED */
 .footer { background: #232f3e; color: #fff; margin-top: 18px; }
-.back-to-top { display: block; text-align: center; padding: 14px; background: #37475a; color: white; text-decoration: none; font-weight: 700; }
+.back-to-top { display: block; text-align: center; padding: 14px; background: #37475a; color: white; text-decoration: none; font-weight: 700; font-size: 13px; }
+.footer-container { max-width: 1200px; margin: 0 auto; padding: 20px 10px; }
+.footer-links { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding-bottom: 20px; border-bottom: 1px solid #3a4553; }
+.footer-col h3 { font-size: 14px; margin-bottom: 10px; color: #fff; }
+.footer-col ul { list-style: none; }
+.footer-col ul li { margin-bottom: 8px; }
+.footer-col ul li a { color: #ddd; text-decoration: none; font-size: 12px; }
+.footer-col ul li a:hover { color: #10b981; }
+.footer-bottom { text-align: center; padding-top: 20px; }
+.footer-logo { font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #ff9900; }
+.footer-bottom p { font-size: 12px; color: #999; }
 
 /* MOBILE */
 @media (max-width: 768px) {
-  .search-box-modern { margin: 0 6px; }
-  .search-box-modern input { height: 38px; }
   .logo-text { display: none; }
-  .location-display { display: none; }
   .ads-grid { grid-template-columns: repeat(2, 1fr); }
-  .shops-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .shop-card-mini img { height: 88px; }
+  .shops-grid-circle { grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .service-grid { grid-template-columns: repeat(3, 1fr); }
+  .footer-links { grid-template-columns: repeat(2, 1fr); }
 }
