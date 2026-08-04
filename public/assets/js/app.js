@@ -317,7 +317,7 @@ function renderCampaigns() {
         </div>`).join('');
 }
 
-// RENDER SHOPS - GRID - NO SCROLL - MAX 48
+// RENDER SHOPS - GRID - 3 PER ROW - PHOTO BIG
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
@@ -329,25 +329,31 @@ function renderSixLineShops() {
     const userViewTemplates = ['kirana', 'medical', 'restaurant'];
     const shopsToShow = allServices.slice(0, 48); // MAX 48
 
-    // GRID BANA DIYA SCROLL KI JAGAH
     const grid = document.createElement('div');
-    grid.className = 'shops-grid'; // naya class
+    grid.className = 'shops-grid';
 
     shopsToShow.forEach(shop => {
         const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
         const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
         const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
 
+        // ✅ OPEN/CLOSE LOGIC - tumhare shop object me isOpen hoga
+        const isOpen = shop.isOpen === true; // default close maan liya
+        const statusText = isOpen ? 'OPEN' : 'CLOSE';
+        const statusClass = isOpen ? 'open' : 'close';
+
         grid.innerHTML += `
             <div class="shop-card-mini" onclick="window.location.href='${customerUrl}'">
+                <div class="status-badge ${statusClass}">${statusText}</div>
                 <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.onerror=null;this.src='/assets/default-shop.png'">
                 <p>${shop.shopName}</p>
-                ${shop.distance? `<small>📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
+                ${shop.distance? `<span class="km-badge">📍 ${(shop.distance/1000).toFixed(1)}Km</span>` : ''}
             </div>
         `;
     });
     container.appendChild(grid);
 }
+
 
 // RENDER TOP PRODUCTS - 6 LINE
 function renderSixLineProducts() {
