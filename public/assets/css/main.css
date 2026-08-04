@@ -32,7 +32,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .nearby-header h2 { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
 
 /* ===== GOL CIRCLE SHOPS ===== */
-.six-line-carousel .carousel-item { display: none; }
+/*.six-line-carousel .carousel-item { display: none; }*/
 
 .shops-grid-circle {
     display: grid;
