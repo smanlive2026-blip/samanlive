@@ -322,12 +322,12 @@ function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
     if (!allServices || allServices.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏪</div><p>No shops available in your area</p></div>`;
+        container.innerHTML = `<div style="text-align:center;padding:20px;color:#fff">No shops found</div>`;
         return;
     }
     container.innerHTML = '';
     const userViewTemplates = ['kirana', 'medical', 'restaurant'];
-    const shopsToShow = allServices.slice(0, 48); // MAX 48
+    const shopsToShow = allServices.slice(0, 48);
 
     const grid = document.createElement('div');
     grid.className = 'shops-grid';
@@ -337,23 +337,23 @@ function renderSixLineShops() {
         const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
         const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
 
-        // ✅ OPEN/CLOSE LOGIC - tumhare shop object me isOpen hoga
-        const isOpen = shop.isOpen === true; // default close maan liya
+        const isOpen = shop.isOpen === true;
         const statusText = isOpen ? 'OPEN' : 'CLOSE';
         const statusClass = isOpen ? 'open' : 'close';
 
         grid.innerHTML += `
             <div class="shop-card-mini" onclick="window.location.href='${customerUrl}'">
                 <div class="status-badge ${statusClass}">${statusText}</div>
-                <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.onerror=null;this.src='/assets/default-shop.png'">
-                <p>${shop.shopName}</p>
-                ${shop.distance? `<span class="km-badge">📍 ${(shop.distance/1000).toFixed(1)}Km</span>` : ''}
+                <img src="${shop.logo || 'https://placehold.co/100x100/cccccc/333?text=Shop'}" onerror="this.src='https://placehold.co/100x100/cccccc/333?text=Shop'">
+                <div class="card-info">
+                    <p>${shop.shopName}</p>
+                    ${shop.distance? `<span class="km-badge">📍 ${(shop.distance/1000).toFixed(1)}Km</span>` : ''}
+                </div>
             </div>
         `;
     });
     container.appendChild(grid);
 }
-
 
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
