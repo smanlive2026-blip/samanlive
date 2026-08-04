@@ -148,7 +148,7 @@ async function reloadNearbyData() {
             }
         } else {
             console.log("🌍 Location nahi mili. Loading ALL Shops");
-            const allRes = await fetch(`/api/shops/nearby`);
+            const allRes = await fetch(`/api/shop-view/nearby-shops`);
             if(allRes.ok) {
                 const res = await allRes.json();
                 shopsData = res.data || res || [];
@@ -321,34 +321,30 @@ function renderCampaigns() {
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
+    
     if (!allServices || allServices.length === 0) {
         container.innerHTML = `<div style="text-align:center;padding:20px;color:#fff">No shops found</div>`;
         return;
     }
+    
     container.innerHTML = '';
-    const userViewTemplates = ['kirana', 'medical', 'restaurant'];
-    const shopsToShow = allServices.slice(0, 48);
+    const shopsToShow = allServices.slice(0, 24);
 
     const grid = document.createElement('div');
-    grid.className = 'shops-grid';
+    grid.className = 'shops-grid-circle';
 
     shopsToShow.forEach(shop => {
         const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
-        const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
+        const userViewTemplates = ['kirana', 'medical', 'restaurant', 'cloth'];
+        const fileName = userViewTemplates.includes(template) ? 'user-view.html' : 'customer-view.html';
         const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
-
         const isOpen = shop.isOpen === true;
-        const statusText = isOpen ? 'OPEN' : 'CLOSE';
-        const statusClass = isOpen ? 'open' : 'close';
 
         grid.innerHTML += `
-            <div class="shop-card-mini" onclick="window.location.href='${customerUrl}'">
-                <div class="status-badge ${statusClass}">${statusText}</div>
+            <div class="shop-circle" onclick="window.location.href='${customerUrl}'">
+                <div class="status-dot ${isOpen ? 'open' : 'close'}"></div>
                 <img src="${shop.logo || 'https://placehold.co/100x100/cccccc/333?text=Shop'}" onerror="this.src='https://placehold.co/100x100/cccccc/333?text=Shop'">
-                <div class="card-info">
-                    <p>${shop.shopName}</p>
-                    ${shop.distance? `<span class="km-badge">📍 ${(shop.distance/1000).toFixed(1)}Km</span>` : ''}
-                </div>
+                <p>${shop.shopName}</p>
             </div>
         `;
     });
