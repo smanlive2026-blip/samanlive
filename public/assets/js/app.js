@@ -318,6 +318,7 @@ function renderCampaigns() {
 }
 
 // RENDER SHOPS - GRID - 3 PER ROW - PHOTO BIG
+// SIRF YE 1 FUNCTION RAKH. BAAKI SAB DELETE
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
@@ -329,13 +330,14 @@ function renderSixLineShops() {
     
     container.innerHTML = '';
     const shopsToShow = allServices.slice(0, 24);
+    const userViewTemplates = ['kirana', 'medical', 'restaurant', 'cloth']; // purane wala
 
     const grid = document.createElement('div');
     grid.className = 'shops-grid-circle';
 
     shopsToShow.forEach(shop => {
+        // PURANA LOGIC: template > shopType > common
         const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
-        const userViewTemplates = ['kirana', 'medical', 'restaurant', 'cloth'];
         const fileName = userViewTemplates.includes(template) ? 'user-view.html' : 'customer-view.html';
         const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
         const isOpen = shop.isOpen === true;
