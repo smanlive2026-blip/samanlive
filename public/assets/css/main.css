@@ -48,45 +48,38 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .ad-btn:hover { background: rgba(255,255,255,0.4); }
 .ad-nav { display: none !important; }
 
-/* NEAR YOU - 3 LINE ALAG - CONTRAST BADHAYA */
-.nearby-slider { background: linear-gradient(135deg, #1e40af, #3b82f6); border-radius: 16px; padding: 14px; margin-bottom: 14px; color: white; box-shadow: 0 8px 24px rgba(30, 64, 175, 0.25); }
+/* NEAR YOU - AUTO HEIGHT */
+.nearby-slider { background: linear-gradient(135deg, #1e40af, #3b82f6); border-radius: 16px; padding: 14px; margin-bottom: 14px; color: white; box-shadow: 0 8px 24px rgba(30, 64, 175, 0.25); min-height: auto; }
 .nearby-header { margin-bottom: 12px; }
 .nearby-header h2 { font-size: 16px; font-weight: 800; }
 
 /* HAR LINE KA COMMON */
 .nearby-line { margin-bottom: 14px; }
-.nearby-line:last-of-type { margin-bottom: 10px; }
+.nearby-line:last-of-type { margin-bottom: 0; }
 .line-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .line-header span { font-size: 13px; font-weight: 700; opacity: 0.95; }
-.line-content { position: relative; min-height: 80px; overflow: hidden; }
+.line-content { position: relative; min-height: auto; overflow: visible; }
 
-/* ✅ SINGLE ROW SCROLL - YAHI BADLA HAI */
-.six-line-carousel { display: flex; flex-direction: column; }
-.six-line-carousel .carousel-item { 
-    display: flex; 
-    gap: 10px; 
-    overflow-x: auto; 
-    padding: 6px 4px 14px; /* neeche scroll ke liye space */
-    scroll-snap-type: x mandatory; 
-    -webkit-overflow-scrolling: touch; 
+/* ✅ GRID SYSTEM - SCROLL HATAYA */
+.six-line-carousel { display: block; }
+.six-line-carousel .carousel-item { display: none !important; } /* purana scroll band */
+
+.shops-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); /* jitni shop utni */
+    gap: 10px;
+    padding: 6px 4px 0;
 }
-.six-line-carousel .carousel-item::-webkit-scrollbar { height: 6px; }
-.six-line-carousel .carousel-item::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 3px; }
-.six-line-carousel .carousel-item::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.6); border-radius: 3px; }
 
-/* ✅ SHOP CARD MINI - WORLD CLASS */
+/* ✅ SHOP CARD MINI */
 .shop-card-mini {
-    min-width: clamp(80px, 24vw, 100px);
-    width: clamp(80px, 24vw, 100px);
-    background: #fff; /* solid white for contrast */
+    background: #fff;
     border: 1px solid rgba(0,0,0,0.08);
     border-radius: 16px;
     padding: 10px 6px;
     text-align: center;
     cursor: pointer;
-    scroll-snap-align: start;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -102,7 +95,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     border-radius: 50%;
     object-fit: cover;
     border: 3px solid #10b981;
-    background: white;
+    background: #f3f4f6;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
@@ -171,15 +164,15 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     font-weight: 700;
 }
 
-/* LINE 3: 4 BUTTONS - FIXED */
+/* LINE 3: 4 BUTTONS */
 .nearby-actions-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
 .nearby-action-btn { background: rgba(255,255,255,0.18); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); border-radius: 10px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.3s; color: white; font-size: 10px; font-weight: 700; }
 .nearby-action-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.3); }
 .nearby-action-btn:hover { background: rgba(255,255,255,0.25); }
 
 /* ✅ EMPTY STATE */
-.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; color: rgba(255,255,255,0.5); width: 100%; }
-.empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 20px; text-align: center; color: rgba(255,255,255,0.6); width: 100%; }
+.empty-state-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.6; }
 
 /* ALL SERVICES - 3 PER ROW */
 .services-section { padding: 14px 0; }
@@ -234,18 +227,20 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .login-btn { width: 100%; padding: 14px; margin: 12px 0; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; transition: all 0.3s; }
 .login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(30,64,175,0.4); }
 
-/* MOBILE - SPEED KE LIYE BLUR HATA DIYA */
+/* MOBILE - 4 PER ROW */
 @media (max-width: 768px) {
   .search-box-modern { margin: 0 10px; }
   .search-box-modern input { font-size: 14px; height: 40px; backdrop-filter: none; }
   .container { padding: 0 8px; }
   .logo-text { display: none; }
   .ads-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .shops-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; } /* MOBILE 4 */
+  .shop-card-mini img { width: 50px; height: 50px; }
   .service-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .service-icon { font-size: 36px; border-radius: 16px; }
   .footer-links { grid-template-columns: repeat(2, 1fr); }
   .video-overlay { backdrop-filter: blur(20px); }
-  .shop-card-mini { background: #fff; } /* backdrop hata diya speed ke liye */
+  .shop-card-mini { background: #fff; }
   .nearby-action-btn { backdrop-filter: none; }
   .service-box { backdrop-filter: none; }
 }

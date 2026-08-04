@@ -317,7 +317,7 @@ function renderCampaigns() {
         </div>`).join('');
 }
 
-// RENDER SHOPS - SINGLE ROW SCROLL - MAX 24
+// RENDER SHOPS - GRID - NO SCROLL - MAX 48
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
@@ -327,18 +327,18 @@ function renderSixLineShops() {
     }
     container.innerHTML = '';
     const userViewTemplates = ['kirana', 'medical', 'restaurant'];
-    const shopsToShow = allServices.slice(0, 24); // MAX 24 HI
+    const shopsToShow = allServices.slice(0, 48); // MAX 48
 
-    // SIRF 1 ROW
-    const row = document.createElement('div');
-    row.className = 'carousel-item'; // purana class hi rakha
+    // GRID BANA DIYA SCROLL KI JAGAH
+    const grid = document.createElement('div');
+    grid.className = 'shops-grid'; // naya class
 
     shopsToShow.forEach(shop => {
         const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
         const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
         const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
 
-        row.innerHTML += `
+        grid.innerHTML += `
             <div class="shop-card-mini" onclick="window.location.href='${customerUrl}'">
                 <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.onerror=null;this.src='/assets/default-shop.png'">
                 <p>${shop.shopName}</p>
@@ -346,7 +346,7 @@ function renderSixLineShops() {
             </div>
         `;
     });
-    container.appendChild(row);
+    container.appendChild(grid);
 }
 
 // RENDER TOP PRODUCTS - 6 LINE
