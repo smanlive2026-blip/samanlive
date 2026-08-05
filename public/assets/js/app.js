@@ -317,39 +317,34 @@ function renderCampaigns() {
         </div>`).join('');
 }
 
-// RENDER SHOPS - 6 LINE - SHOP TEMPLATES WALA - SIRF IMG GOL KI
+// RENDER SHOPS - SIRF GOL ICON, 3 PER LINE, NO SCROLL
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
     if (!allServices || allServices.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏪</div><p>No shops available in your area</p></div>`;
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏪</div><p>No shops available</p></div>`;
         return;
     }
     container.innerHTML = '';
-    const shopsPerLine = 4;
-    const userViewTemplates = ['kirana', 'medical', 'restaurant'];
+    
+    const userViewTemplates = ['kirana', 'medical', 'restaurant']; 
+    const shopsToShow = allServices.slice(0, 18); // 6 line x 3
 
-    for (let i = 0; i < 6; i++) {
-        const row = document.createElement('div');
-        row.className = 'carousel-item';
-        const lineShops = allServices.slice(i * shopsPerLine, (i + 1) * shopsPerLine);
-        if (lineShops.length === 0) continue;
+    shopsToShow.forEach(shop => {
+        const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
+        const fileName = userViewTemplates.includes(template) ? 'user-view.html' : 'customer-view.html';
+        const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
+        const distanceKm = shop.distance? (shop.distance/1000).toFixed(1) : null;
 
-        lineShops.forEach(shop => {
-            const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
-            const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
-            const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
-
-            row.innerHTML += `
-                <div class="shop-card-mini" onclick="window.location.href='${customerUrl}'">
-                    <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'" style="border-radius:50%;">
-                    <p>${shop.shopName}</p>
-                    ${shop.distance? `<small>📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
-                </div>
-            `;
-        });
-        container.appendChild(row);
-    }
+        container.innerHTML += `
+            <div class="shop-circle" onclick="window.location.href='${customerUrl}'">
+                <div class="status-dot"></div>
+                <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
+                <p>${shop.shopName}</p>
+                ${distanceKm ? `<small>${distanceKm}Km</small>` : ''}
+            </div>
+        `;
+    });
 }
 
 // RENDER TOP PRODUCTS - 6 LINE
@@ -507,7 +502,7 @@ function goToProfilePage() { if (!currentUser) openLoginModal(); else window.loc
 
 // DRAG SUPPORT + TOUCH
 function startTrainSliding() {
-    [document.getElementById('shopsContent'), document.getElementById('videosContent'), document.getElementById('topProductsContent')].forEach(container => {
+    [document.getElementById('videosContent'), document.getElementById('topProductsContent')].forEach(container => {
         if (!container) return;
         let isDown = false, startX, scrollLeft;
         const start = (e) => {isDown=true; container.classList.add('dragging'); startX=(e.pageX||e.touches[0].pageX)-container.offsetLeft; scrollLeft=container.scrollLeft;}

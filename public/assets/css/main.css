@@ -40,16 +40,62 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .nearby-line { margin-bottom: 16px; }
 .line-header { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
 
-.six-line-carousel { display: grid; grid-template-rows: repeat(6, 1fr); gap: 12px; max-height: 480px; overflow-y: auto; overflow-x: hidden; }
-.six-line-carousel .carousel-item { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; }
-.six-line-carousel .carousel-item::-webkit-scrollbar { height: 4px; }
-.six-line-carousel .carousel-item::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+/* ✅ CHANGED: SIRF GOL ICON GRID - 3 PER LINE, NO SCROLL */
+/*.six-line-carousel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px 10px;
+    padding: 10px 0;
+    max-height: none;
+    overflow: visible;*/
 
-.shop-card-mini { min-width: 120px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; scroll-snap-align: start; transition: all 0.2s; }
-.shop-card-mini:active { transform: scale(0.95); }
-.shop-card-mini img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 5px; border: 2px solid rgba(255,255,255,0.4); }
-.shop-card-mini p { font-size: 12px; color: white; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.shop-card-mini small { font-size: 10px; color: #10b981; }
+.six-line-carousel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px 10px;
+    padding: 10px 0;
+}
+
+.shop-circle {
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+}
+.shop-circle img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%; /* SIRF GOL */
+    object-fit: cover;
+    background: #fff;
+    border: 2px solid rgba(255,255,255,0.7);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    margin: 0 auto;
+    display: block;
+}
+.shop-circle p {
+    font-size: 11px;
+    color: #fff;
+    font-weight: 600;
+    margin-top: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.shop-circle small {
+    font-size: 9px;
+    color: #d1d5db;
+    display: block;
+}
+.shop-circle .status-dot {
+    position: absolute;
+    top: 2px;
+    right: calc(50% - 32px);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #1e40af;
+    background: #10b981;
+}
 
 .line-content { margin-top: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .videos-grid { display: flex; gap: 10px; overflow-x: auto; padding: 4px; }
