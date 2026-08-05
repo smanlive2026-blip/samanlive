@@ -3,31 +3,29 @@ html, body { overflow-x: hidden; width: 100%; }
 body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 10px; }
 
-/* VIDEO BG */
 .video-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: linear-gradient(45deg, #1e3a8a, #3b82f6, #8b5cf6, #1e40af); background-size: 400% 400%; animation: gradientShift 15s ease infinite; }
 .video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: rgba(245, 245, 245, 0.92); }
 @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-/* ✅ HEADER */
 .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 0; box-shadow: 0 4px 20px rgba(102,126,234,0.3); position: sticky; top: 0; z-index: 100; width: 100%; }
 .header-container { max-width: 1200px; margin: 0 auto; padding: 0 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .logo { display: flex; align-items: center; gap: 6px; }
 .logo-icon { width: 34px; height: 34px; background: #fff; color: #1e40af; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; }
 .logo-text { font-size: 15px; font-weight: bold; white-space: nowrap; }
-.search-box-modern { position: relative; flex: 1; min-width: 0; margin: 0 8px; }
-.search-box-modern input { width: 100%; height: 40px; padding: 0 42px 0 38px; border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.12); border-radius: 20px; color: #fff; font-size: 14px; }
+
+.search-box-modern { position: relative; flex: 1; max-width: 600px; margin: 0 20px; }
+.search-box-modern input { width: 100%; height: 44px; padding: 0 50px 0 45px; border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border-radius: 22px; color: #fff; font-size: 15px; transition: all 0.3s ease; }
+.search-box-modern input:focus { outline: none; border-color: #10b981; background: rgba(255,255,255,0.12); box-shadow: 0 0 0 4px rgba(16,185,129,0.1); }
 .search-box-modern input::placeholder { color: rgba(255,255,255,0.5); }
-.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.6); font-size: 18px; pointer-events: none; }
-.search-btn-modern { position: absolute; right: 3px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: none; background: #10b981; border-radius: 50%; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.header-right { display: flex; align-items: center; gap: 12px; }
-.profile-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #10b981; cursor: pointer; }
+.search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.5); font-size: 18px; pointer-events: none; }
+.search-btn-modern { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border: none; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; }
+
+.header-right { display: flex; align-items: center; gap: 16px; }
+.profile-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid #10b981; }
 .notification-icon { position: relative; font-size: 20px; cursor: pointer; }
 .notif-badge { position: absolute; top: -5px; right: -8px; background: #ef4444; color: #fff; font-size: 10px; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
 
-/* MAIN */
 .main-content { padding: 12px 0; }
-
-/* TOP ADS */
 .top-ad-slider { margin-bottom: 14px; }
 .ad-slide { display: none; }
 .ad-slide.active { display: block; }
@@ -37,129 +35,32 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .ad-card p, .campaign-card p { font-size: 12px; opacity: 0.9; margin-bottom: 8px; }
 .ad-btn, .campaign-btn { background: #fff; color: #1e40af; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; }
 
-/* NEAR YOU */
 .nearby-slider { background: linear-gradient(135deg, #1e40af, #3b82f6); border-radius: 16px; padding: 14px; margin-bottom: 14px; color: white; }
 .nearby-header h2 { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
 .nearby-line { margin-bottom: 16px; }
 .line-header { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
 
-/* ===== GOL CIRCLE SHOPS - NAYA ===== */
-.shops-grid-circle {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
-    padding: 8px 0;
-}
-.shop-circle {
-    text-align: center;
-    cursor: pointer;
-    position: relative;
-}
-.shop-circle img {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: #fff;
-    border: 2px solid rgba(255,255,255,0.6);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-.shop-circle p {
-    font-size: 10px;
-    color: #fff;
-    font-weight: 600;
-    margin-top: 6px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.shop-circle small {
-    font-size: 9px;
-    color: #d1d5db;
-    display: block;
-}
-.shop-circle .status-dot {
-    position: absolute;
-    top: 2px;
-    right: calc(50% - 27px);
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    border: 2px solid #1e40af;
-}
-.shop-circle .status-dot.open { background: #10b981; }
-.shop-circle .status-dot.close { background: #ef4444; }
-
-/* ===== PURANA 6 LINE CAROUSEL - PRODUCTS KE LIYE ===== */
-.six-line-carousel {
-    display: grid;
-    grid-template-rows: repeat(6, 1fr);
-    gap: 12px;
-    max-height: 480px;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-.six-line-carousel .carousel-item {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    padding-bottom: 8px;
-    scroll-snap-type: x mandatory;
-}
+.six-line-carousel { display: grid; grid-template-rows: repeat(6, 1fr); gap: 12px; max-height: 480px; overflow-y: auto; overflow-x: hidden; }
+.six-line-carousel .carousel-item { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; }
 .six-line-carousel .carousel-item::-webkit-scrollbar { height: 4px; }
-.six-line-carousel .carousel-item::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.2);
-    border-radius: 2px;
-}
+.six-line-carousel .carousel-item::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
 
-/* PURANA SHOP CARD - PRODUCTS */
-.shop-card-mini {
-    min-width: 120px;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 12px;
-    padding: 10px;
-    text-align: center;
-    cursor: pointer;
-    scroll-snap-align: start;
-    transition: all 0.2s;
-}
+.shop-card-mini { min-width: 120px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; scroll-snap-align: start; transition: all 0.2s; }
 .shop-card-mini:active { transform: scale(0.95); }
-.shop-card-mini img {
-    width: 60px;
-    height: 60px;
-    border-radius: 10px;
-    object-fit: cover;
-    margin-bottom: 5px;
-}
-.shop-card-mini p {
-    font-size: 12px;
-    color: white;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.shop-card-mini small {
-    font-size: 10px;
-    color: #10b981;
-}
+.shop-card-mini img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 5px; border: 2px solid rgba(255,255,255,0.4); }
+.shop-card-mini p { font-size: 12px; color: white; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shop-card-mini small { font-size: 10px; color: #10b981; }
 
-/* VIDEOS */
-.line-content { margin-top: 8px; }
+.line-content { margin-top: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .videos-grid { display: flex; gap: 10px; overflow-x: auto; padding: 4px; }
 .video-card { position: relative; border-radius: 12px; overflow: hidden; background: #000; width: 110px; height: 170px; flex-shrink: 0; cursor: pointer; }
 .video-card video { width: 100%; height: 100%; object-fit: cover; }
 .video-shop-name { position: absolute; bottom: 30px; left: 5px; color: #fff; font-size: 10px; font-weight: 700; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; }
 .video-label { position: absolute; bottom: 5px; left: 5px; color: #fff; font-size: 10px; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; }
 
-/* 4 BUTTONS */
 .nearby-actions-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
 .nearby-action-btn { background: rgba(255,255,255,0.2); border: none; border-radius: 10px; padding: 10px 4px; text-align: center; color: white; font-size: 10px; font-weight: 700; cursor: pointer; }
-.nearby-action-btn:active { transform: scale(0.95); }
 
-/* SERVICES */
 .services-section { padding: 14px 0; }
 .section-title { font-size: 17px; font-weight: 800; margin-bottom: 12px; color: #1f2937; }
 .service-box { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
@@ -169,34 +70,22 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .service-icon { width: 100%; aspect-ratio: 1; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 42px; margin-bottom: 6px; color: white; }
 .service-item p { font-size: 11px; font-weight: 700; color: #374151; }
 
-/* CAMPAIGN */
 .campaign-slider { margin-top: 14px; }
 .campaign-header h2 { font-size: 16px; font-weight: 800; margin-bottom: 12px; color: #1f2937; }
 
-/* EMPTY STATE */
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    text-align: center;
-    color: rgba(255,255,255,0.4);
-    grid-column: 1 / -1;
-}
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; color: rgba(255,255,255,0.4); grid-column: 1 / -1; }
 .empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
 
-/* MODAL */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; }
 .modal-box { background: #fff; border-radius: 16px; padding: 20px; width: 90%; max-width: 400px; position: relative; }
 .modal-close { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; }
-.modal-box h2, .modal-box h3 { margin-bottom: 15px; color: #1f2937; }
+.modal-box h2 { margin-bottom: 15px; color: #1f2937; }
 .modal-box input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; }
 .login-btn { width: 100%; padding: 12px; background: #10b981; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
-.google-btn { width: 100%; padding: 12px; background: #fff; color: #374151; border: 1px solid #ddd; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.divider { text-align: center; margin: 15px 0; color: #999; }
+.profile-header { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; }
+.profile-img { width: 60px; height: 60px; border-radius: 50%; }
+.logout-btn { width: 100%; padding: 10px; background: #ef4444; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
 
-/* ✅ FOOTER */
 .footer { background: #232f3e; color: #fff; margin-top: 18px; }
 .back-to-top { display: block; text-align: center; padding: 14px; background: #37475a; color: white; text-decoration: none; font-weight: 700; font-size: 13px; }
 .footer-container { max-width: 1200px; margin: 0 auto; padding: 20px 10px; }
@@ -210,13 +99,12 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .footer-logo { font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #ff9900; }
 .footer-bottom p { font-size: 12px; color: #999; }
 
-/* MOBILE */
 @media (max-width: 768px) {
   .logo-text { display: none; }
   .ads-grid { grid-template-columns: repeat(2, 1fr); }
-  .shops-grid-circle { grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .service-grid { grid-template-columns: repeat(3, 1fr); }
   .footer-links { grid-template-columns: repeat(2, 1fr); }
   .search-box-modern { margin: 0 10px; }
   .search-box-modern input { font-size: 14px; height: 40px; }
+  .line-content { grid-template-columns: repeat(2, 1fr); }
 }
