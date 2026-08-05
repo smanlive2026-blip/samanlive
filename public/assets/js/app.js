@@ -317,26 +317,26 @@ function renderCampaigns() {
         </div>`).join('');
 }
 
-// RENDER SHOPS - GRID - 3 PER ROW - PHOTO BIG
-// SIRF YE 1 FUNCTION RAKH. BAAKI SAB DELETE
+// RENDER SHOPS - GOL ICON, LEKIN PURANE WALA HI VIEW LOGIC
+
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
     
     if (!allServices || allServices.length === 0) {
-        container.innerHTML = `<div style="text-align:center;padding:20px;color:#fff">No shops found</div>`;
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏪</div><p>No shops available in your area</p></div>`;
         return;
     }
     
     container.innerHTML = '';
-    const shopsToShow = allServices.slice(0, 24);
-    const userViewTemplates = ['kirana', 'medical', 'restaurant', 'cloth']; // purane wala
+    const shopsToShow = allServices.slice(0, 24); // 24 shop gol me
+    const userViewTemplates = ['kirana', 'medical', 'restaurant']; // TERA PURANA WALA
 
     const grid = document.createElement('div');
     grid.className = 'shops-grid-circle';
 
     shopsToShow.forEach(shop => {
-        // PURANA LOGIC: template > shopType > common
+        // YEHI TERA PURANA LOGIC HAI
         const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
         const fileName = userViewTemplates.includes(template) ? 'user-view.html' : 'customer-view.html';
         const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
@@ -345,13 +345,15 @@ function renderSixLineShops() {
         grid.innerHTML += `
             <div class="shop-circle" onclick="window.location.href='${customerUrl}'">
                 <div class="status-dot ${isOpen ? 'open' : 'close'}"></div>
-                <img src="${shop.logo || 'https://placehold.co/100x100/cccccc/333?text=Shop'}" onerror="this.src='https://placehold.co/100x100/cccccc/333?text=Shop'">
+                <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
                 <p>${shop.shopName}</p>
+                ${shop.distance ? `<small>📍 ${(shop.distance/1000).toFixed(1)}Km</small>` : ''}
             </div>
         `;
     });
     container.appendChild(grid);
 }
+
 
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
