@@ -168,16 +168,18 @@ async function reloadNearbyData() {
         }));
 
        // LOCATION: NAYA CODE - HAR SHOP KA BANNER MEDIA API SE LE AAO
-         await Promise.all(allServices.map(async (shop) => {
-         try {
-            const res = await fetch(`/api/media/${shop._id}`);
-            if(res.ok) {
-            const data = await res.json();
-            const banner = data.data.find(m => m.type === 'banner');
-            shop.banner = banner?.url || null; // banner mil gaya to save
-           }
+         // LOCATION: NAYA CODE - HAR SHOP KA BANNER MEDIA API SE LE AAO
+     await Promise.all(allServices.map(async (shop) => {
+       try {
+          const res = await fetch(`/api/media/${shop._id}`);
+           if(res.ok) {
+             const data = await res.json();
+             const banner = data.data.find(m => m.type === 'banner');
+             shop.banner = banner?.url || null;
+          }
          } catch(e) { console.log('banner fetch fail', shop._id) }
-        }));
+    }));
+    
          // LOCATION: END NAYA CODE
 
          originalServices = [...allServices];

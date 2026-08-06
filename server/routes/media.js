@@ -3,16 +3,17 @@
 const express = require('express');
 const router = express.Router();
 const Media = require('../models/Media');
-const { upload } = require('../middleware/upload'); // ✅ DESTRUCTURE KARNA HAI
+const { upload } = require('../middleware/upload'); 
+const { getShopId } = require('../utils/shopId'); // ✅ NAYA IMPORT
 
 // LOCATION: POST /api/media/upload  -> Photo upload karo
 router.post('/upload', upload.single('image'), async (req, res) => {
     try {
-        const { shopId, template, type, refId } = req.body;
+        let { shopId, template, type, refId } = req.body;
         if(!req.file) return res.status(400).json({ error: 'Image missing' });
 
-        // LOCATION: FIX - LOCAL PATH BANAO
-        const url = `/uploads/${req.file.filename}`; // ✅ YE LINE CHANGE
+        shopId = String(shopId); // ✅ HAMESHA STRING
+        const url = `/uploads/${req.file.filename}`;
 
         // LOCATION: Agar banner/logo hai to purana update, naya nahi banega
         const media = await Media.findOneAndUpdate(
@@ -30,7 +31,8 @@ router.post('/upload', upload.single('image'), async (req, res) => {
 // LOCATION: GET /api/media/:shopId  -> 1 shop ki saari photo le aao
 router.get('/:shopId', async (req,res) => {
     try {
-        const media = await Media.find({ shopId: req.params.shopId });
+        const shopId = getShopId(req); // ✅ HELPER USE KIYA
+        const media = await Media.find({ shopId: shopId });
         res.json({ success: true, data: media });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });

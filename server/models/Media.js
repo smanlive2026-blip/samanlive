@@ -1,14 +1,13 @@
 // server/models/Media.js
-// LOCATION: Sabhi shop ki photo ka single source of truth
 const mongoose = require('mongoose');
 
 const MediaSchema = new mongoose.Schema({
-    shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true }, // kis shop ki hai
+    shopId: { type: String, required: true, index: true }, // ✅ OBJECTID HATA DIYA
     template: { type: String, required: true }, // 'kirana', 'achar', 'medical'
     type: { type: String, required: true }, // 'banner', 'logo', 'product', 'offer'
-    refId: { type: String, default: null }, // product ka _id. banner/logo ke liye null
-    url: { type: String, required: true }, // Cloudinary URL
-    localBackup: { type: String, default: null }, // base64 backup
+    refId: { type: String, default: null }, 
+    url: { type: String, required: true }, 
+    localBackup: { type: String, default: null },
     createdAt: { type: Date, default: Date.now }
 });
 
