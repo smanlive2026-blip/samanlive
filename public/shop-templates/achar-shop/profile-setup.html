@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Setup - Achar Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: linear-gradient(135deg, #eab308 0%, #a16207 100%); min-height: 100vh; padding: 20px; }
+       .container { max-width: 700px; margin: 0 auto; }
+       .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+       .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+       .header h1 { font-size: 24px; color: #713f12; }
+       .btn { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+       .btn-green { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); }
+       .btn-gray { background: #64748b; }
+        input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; margin-bottom: 15px; font-size: 14px; }
+        textarea { min-height: 80px; resize: vertical; }
+        label { font-weight: 600; color: #334155; font-size: 14px; margin-bottom: 5px; display: block; }
+       .img-preview { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #eab308; cursor: pointer; margin-bottom: 10px; }
+       .banner-preview { width: 100%; height: 150px; border-radius: 12px; object-fit: cover; border: 2px dashed #eab308; cursor: pointer; margin-bottom: 10px; }
+       .upload-box { text-align: center; margin-bottom: 20px; }
+       .location-status { font-size: 13px; margin-top: 10px; }
+       .hint { font-size: 12px; color: #64748b; margin-top: -10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1><i class="fa fa-user-gear"></i> Shop Profile Setup</h1>
+                <button class="btn btn-gray" onclick="window.history.back()"><i class="fa fa-arrow-left"></i> Back</button>
+            </div>
+
+            <div class="upload-box">
+                <label>Profile Picture</label>
+                <img id="ownerPicPreview" class="img-preview" src="https://placehold.co/120/eab308/fff?text=Owner">
+                <input type="file" id="ownerPicInput" style="display:none;" accept="image/*">
+                <button class="btn btn-sm" onclick="document.getElementById('ownerPicInput').click()"><i class="fa fa-camera"></i> Change Photo</button>
+            </div>
+
+            <label>Apna Nam / Owner Name</label>
+            <input type="text" id="ownerName" placeholder="Ram Prasad">
+
+            <div class="upload-box">
+                <label>Shop Banner</label>
+                <img id="bannerPreview" class="banner-preview" src="https://placehold.co/600x150/eab308/fff?text=Upload+Banner">
+                <input type="file" id="bannerPicInput" style="display:none;" accept="image/*">
+                <button class="btn btn-sm" onclick="document.getElementById('bannerPicInput').click()"><i class="fa fa-image"></i> Change Banner</button>
+            </div>
+
+            <label>Pura Address</label>
+            <textarea id="fullAddress" placeholder="Shop No, Gali, Area, City, Pincode"></textarea>
+
+            <label>Shop Location</label>
+            <button class="btn btn-green" id="getLocBtn" style="width:100%;"><i class="fa fa-location-crosshairs"></i> Current Location Se Add Karein</button>
+            <input type="text" id="shopAddress" placeholder="Location se address auto aayega" readonly>
+            <input type="hidden" id="lat">
+            <input type="hidden" id="lng">
+            <div id="locationStatus" class="location-status"></div>
+            <div class="hint">Is location ke 5KM andar wale customer ko shop dikhegi</div>
+
+            <button class="btn" id="saveProfileBtn" style="width:100%; margin-top:20px;"><i class="fa fa-floppy-disk"></i> Save Profile</button>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shopId') || localStorage.getItem('shopId');
+        let ownerPicBase64 = '', bannerPicBase64 = '';
+
+        // IMAGE UPLOAD PREVIEW
+        document.getElementById('ownerPicInput').onchange = e => {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = () => { ownerPicBase64 = reader.result; document.getElementById('ownerPicPreview').src = reader.result; }
+                reader.readAsDataURL(file);
+            }
+        }
+        document.getElementById('bannerPicInput').onchange = e => {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = () => { bannerPicBase64 = reader.result; document.getElementById('bannerPreview').src = reader.result; }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // LOCATION LOGIC - shop-core.js wala hi
+        document.getElementById('getLocBtn').onclick = async () => {
+            const btn = document.getElementById('getLocBtn');
+            const status = document.getElementById('locationStatus');
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Location le rahe...';
+                const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, {enableHighAccuracy: true, timeout: 10000}));
+                const loc = {lat: pos.coords.latitude, lng: pos.coords.longitude};
+                document.getElementById('lat').value = loc.lat;
+                document.getElementById('lng').value = loc.lng;
+
+                // address nikalne ke liye
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${loc.lat}&lon=${loc.lng}`);
+                const data = await res.json();
+                document.getElementById('shopAddress').value = data.display_name || '';
+
+                status.innerHTML = `✅ Lat:${loc.lat.toFixed(4)} Lng:${loc.lng.toFixed(4)}`;
+                status.style.color = '#10b981';
+                btn.innerHTML = '<i class="fa fa-check"></i> Location Added';
+            } catch(e) {
+                status.innerHTML = `❌ Location nahi mili`;
+                status.style.color = '#ef4444';
+                btn.innerHTML = '<i class="fa fa-location-crosshairs"></i> Try Again';
+            } finally { btn.disabled = false; }
+        }
+
+        // SAVE PROFILE
+        document.getElementById('saveProfileBtn').onclick = async () => {
+            const data = {
+                shopId,
+                ownerName: document.getElementById('ownerName').value,
+                ownerPic: ownerPicBase64,
+                bannerPic: bannerPicBase64,
+                fullAddress: document.getElementById('fullAddress').value,
+                lat: document.getElementById('lat').value,
+                lng: document.getElementById('lng').value,
+                shopAddress: document.getElementById('shopAddress').value
+            };
+            if(!data.ownerName ||!data.lat) return alert('Name aur Location jaruri hai');
+
+            try {
+                document.getElementById('saveProfileBtn').innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+                const res = await fetch(`/api/shops/furniture/${shopId}/profile`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if(result.success) {
+                    alert('Profile Saved! ✅');
+                    window.location.href = `/shop-templates/achar/dashboard.html?shopId=${shopId}`;
+                } else alert('Error: ' + result.message);
+            } catch(e) { alert('Save failed: ' + e.message); }
+        }
+
+        // LOAD EXISTING DATA
+        async function loadProfile() {
+            try {
+                const res = await fetch(`/api/shops/furniture/${shopId}/profile`);
+                const data = await res.json();
+                if(data.success && data.data) {
+                    const d = data.data;
+                    document.getElementById('ownerName').value = d.ownerName || '';
+                    document.getElementById('fullAddress').value = d.fullAddress || '';
+                    document.getElementById('shopAddress').value = d.shopAddress || '';
+                    document.getElementById('lat').value = d.lat || '';
+                    document.getElementById('lng').value = d.lng || '';
+                    if(d.ownerPic) document.getElementById('ownerPicPreview').src = d.ownerPic;
+                    if(d.bannerPic) document.getElementById('bannerPreview').src = d.bannerPic;
+                }
+            } catch(e){ console.log('No profile found') }
+        }
+        loadProfile();
+    </script>
+</body>
+</html>

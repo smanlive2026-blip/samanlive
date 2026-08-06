@@ -1,5 +1,5 @@
 // public/shop-templates/shop-core.js
-
+// ye golden rule h isko hath nhi lgana h  
 window.ShopLocationManager = {
     shopId: null,
     
