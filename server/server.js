@@ -42,6 +42,8 @@ app.use('/shop', require('./routes/shopViewRoutes'));
 app.use('/api/shops/auto', autoRoutes);
 app.use('/api/shops/achar', acharRoutes);
 //app.use('/api/shops/achar', acharRoutes);
+// LOCATION: server.js me routes ke section me
+app.use('/api/media', require('./routes/media'));
 //app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
 //app.use('/api/shops', require('./routes/shops/furniture-route')); // <- YE LINE ADD KAR
 //app.use('/api/shops', require('./routes/shops/furniture-route'));
