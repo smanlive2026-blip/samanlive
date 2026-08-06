@@ -41,14 +41,6 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .line-header { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
 
 /* ✅ CHANGED: SIRF GOL ICON GRID - 3 PER LINE, NO SCROLL */
-/*.six-line-carousel {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px 10px;
-    padding: 10px 0;
-    max-height: none;
-    overflow: visible;*/
-
 .six-line-carousel {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -56,11 +48,37 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     padding: 10px 0;
 }
 
+/* LOCATION: NAYA CODE - SHOP BANNER KE LIYE */
 .shop-circle {
     text-align: center;
     cursor: pointer;
     position: relative;
+    overflow: hidden; /* banner ke liye */
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding-bottom: 6px;
 }
+.shop-banner-top { 
+    width: 100%; 
+    height: 40px; 
+    object-fit: cover; 
+    border-radius: 12px 12px 0 0; 
+    display: block;
+}
+.shop-logo-circle { 
+    width: 50px; 
+    height: 50px; 
+    border-radius: 50%; 
+    border: 2px solid white; 
+    margin-top: -25px; 
+    background: white; 
+    position: relative; 
+    z-index: 2;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+/* LOCATION: END NAYA CODE */
+
+/* PURANA LOGO WALA RULE - ABHI BHI KAAM KAREGA FALLBACK KE LIYE */
 .shop-circle img {
     width: 70px;
     height: 70px;
@@ -95,6 +113,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     border-radius: 50%;
     border: 2px solid #1e40af;
     background: #10b981;
+    z-index: 3; /* banner ke upar */
 }
 
 .line-content { margin-top: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }

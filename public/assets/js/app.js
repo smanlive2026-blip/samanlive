@@ -1,5 +1,5 @@
 // ========================================
-// SAMANLIVE - DYNAMIC JAVASCRIPT - FINAL MERGED
+// SAMANLIVE - DYNAMIC JAVASCRIPT
 // ========================================
 
 // Global variables
@@ -163,10 +163,25 @@ async function reloadNearbyData() {
             shopType: shop.shopType || 'general',
             template: shop.template || null,
             logo: shop.logo || '/assets/default-shop.png',
+            banner: null, // ✅ BANNER KE LIYE
             icon: '🏪'
         }));
-        originalServices = [...allServices];
-        renderSixLineShops();
+
+       // LOCATION: NAYA CODE - HAR SHOP KA BANNER MEDIA API SE LE AAO
+         await Promise.all(allServices.map(async (shop) => {
+         try {
+            const res = await fetch(`/api/media/${shop._id}`);
+            if(res.ok) {
+            const data = await res.json();
+            const banner = data.data.find(m => m.type === 'banner');
+            shop.banner = banner?.url || null; // banner mil gaya to save
+           }
+         } catch(e) { console.log('banner fetch fail', shop._id) }
+        }));
+         // LOCATION: END NAYA CODE
+
+         originalServices = [...allServices];
+         renderSixLineShops();
 
         const productsRes = await fetch(`/api/products/top-rated?limit=24`);
         if(productsRes.ok) {
@@ -317,7 +332,7 @@ function renderCampaigns() {
         </div>`).join('');
 }
 
-// RENDER SHOPS - SIRF GOL ICON, 3 PER LINE, NO SCROLL
+// RENDER SHOPS - SIRF GOL ICON, 3 PER LINE, NO SCROLL + BANNER
 function renderSixLineShops() {
     const container = document.getElementById('shopsContent');
     if (!container) return;
@@ -326,24 +341,26 @@ function renderSixLineShops() {
         return;
     }
     container.innerHTML = '';
-    
-    const userViewTemplates = ['kirana', 'medical', 'restaurant']; 
+
+    const userViewTemplates = ['kirana', 'medical', 'restaurant'];
     const shopsToShow = allServices.slice(0, 18); // 6 line x 3
 
     shopsToShow.forEach(shop => {
         const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
-        const fileName = userViewTemplates.includes(template) ? 'user-view.html' : 'customer-view.html';
+        const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
         const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
         const distanceKm = shop.distance? (shop.distance/1000).toFixed(1) : null;
 
-        container.innerHTML += `
-            <div class="shop-circle" onclick="window.location.href='${customerUrl}'">
-                <div class="status-dot"></div>
-                <img src="${shop.logo || '/assets/default-shop.png'}" onerror="this.src='/assets/default-shop.png'">
-                <p>${shop.shopName}</p>
-                ${distanceKm ? `<small>${distanceKm}Km</small>` : ''}
-            </div>
-        `;
+       // LOCATION: BANNER ADD KIYA UPAR
+       container.innerHTML += `
+       <div class="shop-circle" onclick="window.location.href='${customerUrl}'">
+         <div class="status-dot"></div>
+         ${shop.banner? `<img src="${shop.banner}" class="shop-banner-top" onerror="this.style.display='none'">` : ''}
+         <img src="${shop.logo || '/assets/default-shop.png'}" class="shop-logo-circle" onerror="this.src='/assets/default-shop.png'">
+         <p>${shop.shopName}</p>
+         ${distanceKm? `<small>${distanceKm}Km</small>` : ''}
+       </div>
+     `;
     });
 }
 
@@ -393,12 +410,12 @@ function renderVideos() {
         </div>`;
 }
 
-// SLIDER LOGIC
+// SLIDER LOGIC - FIX: SPACE LAGAYA
 let topAdIndex = 0, campaignIndex = 0;
-function showTopAd(idx) { document.querySelectorAll('#topAdsContainer.ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); topAdIndex=idx; }
-function nextTopAd() { const slides=document.querySelectorAll('#topAdsContainer.ad-slide'); if(slides.length) {topAdIndex=(topAdIndex+1)%slides.length; showTopAd(topAdIndex);} }
-function showCampaign(idx) { document.querySelectorAll('#campaignContainer.ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); campaignIndex=idx; }
-function nextCampaign() { const slides=document.querySelectorAll('#campaignContainer.ad-slide'); if(slides.length) {campaignIndex=(campaignIndex+1)%slides.length; showCampaign(campaignIndex);} }
+function showTopAd(idx) { document.querySelectorAll('#topAdsContainer.ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); topAdIndex=idx; } // FIX
+function nextTopAd() { const slides=document.querySelectorAll('#topAdsContainer.ad-slide'); if(slides.length) {topAdIndex=(topAdIndex+1)%slides.length; showTopAd(topAdIndex);} } // FIX
+function showCampaign(idx) { document.querySelectorAll('#campaignContainer.ad-slide').forEach((s,i)=>s.classList.toggle('active', i===idx)); campaignIndex=idx; } // FIX
+function nextCampaign() { const slides=document.querySelectorAll('#campaignContainer.ad-slide'); if(slides.length) {campaignIndex=(campaignIndex+1)%slides.length; showCampaign(campaignIndex);} } // FIX
 setInterval(nextTopAd, 5000); setInterval(nextCampaign, 6000);
 
 // VIDEO MODAL - FIXED
@@ -512,6 +529,7 @@ function startTrainSliding() {
         container.addEventListener('touchstart', start); container.addEventListener('touchend', end); container.addEventListener('touchmove', move);
     });
 }
+
 setTimeout(startTrainSliding, 2000);
 
 // INIT

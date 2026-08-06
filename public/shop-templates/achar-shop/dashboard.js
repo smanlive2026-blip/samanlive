@@ -404,4 +404,48 @@ ShopCore.bindImageUpload = function(imgId, inputId, type, storageKey) {
     }
 }
 
+// LOCATION: /public/shop-templates/achar-shop/dashboard.js SABSE LAST ME
+// ========== PURANE CODE KE BAAD - MEDIA SYNC ADDON ==========
+
+// 1. UPLOAD HONE KE BAAD MEDIA COLLECTION ME BHI SAVE KARO
+const oldUpload = ShopCore.uploadImage;
+ShopCore.uploadImage = async function(file, type = 'profile') {
+    // Step 1: Pehle purana wala hi chalne do - cloudinary + DB
+    const url = await oldUpload.call(this, file, type); 
+    if(!url) return null;
+
+    // Step 2: Saath me naye Media collection me bhi daal do
+    try {
+        const formData = new FormData();
+        formData.append('image', file); // wahi file
+        formData.append('shopId', this.shopId);
+        formData.append('template', this.template);
+        formData.append('type', type); // 'banner', 'profile', 'product'
+        
+        await fetch('/api/media/upload', { method: 'POST', body: formData });
+        console.log('✅ Media collection me bhi save ho gaya:', type);
+    } catch(e) { console.log('Media sync fail', e) }
+
+    return url; // purana url wapas
+}
+
+// 2. LOAD HOTE TIME PEHLE MEDIA CHECK KARO, NA MILE TO PURANA
+const oldLoadShop = loadShopData;
+loadShopData = async function() {
+    await oldLoadShop(); // pehle tera wala chalega
+
+    // fir media se banner/logo override kar do agar mila to
+    try {
+        const mediaRes = await fetch(`/api/media/${shopId}`);
+        const mediaData = await mediaRes.json();
+        const banner = mediaData.data.find(m => m.type === 'banner');
+        const logo = mediaData.data.find(m => m.type === 'profile');
+
+        if(banner?.url) document.getElementById('shopBanner').src = banner.url;
+        if(logo?.url) document.getElementById('ownerImg').src = logo.url;
+    } catch(e){}
+}
+
+console.log('✅ Media Sync Addon Loaded - Purana code safe hai');
+
 console.log('✅ Achar Dashboard v8 FINAL Loaded');
