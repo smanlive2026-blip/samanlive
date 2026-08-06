@@ -446,6 +446,4 @@ loadShopData = async function() {
     } catch(e){}
 }
 
-console.log('✅ Media Sync Addon Loaded - Purana code safe hai');
-
 console.log('✅ Achar Dashboard v8 FINAL Loaded');
