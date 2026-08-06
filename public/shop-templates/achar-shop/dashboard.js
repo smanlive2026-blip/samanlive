@@ -87,7 +87,10 @@ async function loadShopData() {
         document.getElementById('shopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
         document.getElementById('ownerImg').src = shopData.ownerPhotoUrl || 'https://placehold.co/60/eab308/fff?text=A';
         document.getElementById('shopBanner').src = shopData.bannerPhotoUrl || 'https://placehold.co/400x150/eab308/fff?text=Upload+Banner';
-
+        // PROFILE DATA LOAD
+        document.getElementById('ownerImg').src = shopData.ownerPhotoUrl || shopData.profilePic || 'https://placehold.co/60/eab308/fff?text=A';
+        document.getElementById('shopBanner').src = shopData.bannerPhotoUrl || shopData.bannerPic || 'https://placehold.co/400x150/eab308/fff?text=Upload+Banner';
+        document.getElementById('shopName').innerText = shopData.ownerName ? `${shopData.ownerName} ki Dukaan` : shopData.name || 'Maa Ke Haath Ka Achar';
         // TIME FIX: 12hr to 24hr
         document.getElementById('openTime').value = convertTo24Hr(shopData.settings?.openTime || '09:00 AM');
         document.getElementById('closeTime').value = convertTo24Hr(shopData.settings?.closeTime || '09:00 PM');
