@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const Media = require('../models/Media');
-const upload = require('../middleware/upload'); // tera cloudinary wala multer
+const { upload } = require('../middleware/upload'); // ✅ DESTRUCTURE KARNA HAI
 
 // LOCATION: POST /api/media/upload  -> Photo upload karo
 router.post('/upload', upload.single('image'), async (req, res) => {
@@ -11,7 +11,8 @@ router.post('/upload', upload.single('image'), async (req, res) => {
         const { shopId, template, type, refId } = req.body;
         if(!req.file) return res.status(400).json({ error: 'Image missing' });
 
-        const url = req.file.path; // cloudinary url
+        // LOCATION: FIX - LOCAL PATH BANAO
+        const url = `/uploads/${req.file.filename}`; // ✅ YE LINE CHANGE
 
         // LOCATION: Agar banner/logo hai to purana update, naya nahi banega
         const media = await Media.findOneAndUpdate(
