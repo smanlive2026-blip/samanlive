@@ -12,7 +12,8 @@ let productImageUrl = '';
 
 document.addEventListener('DOMContentLoaded', () => {
     if(!shopId) {
-        alert('Shop ID nahi mila. URL me?shopId=xxx add karo');
+        alert('Bhai shop select karke aao!');
+        window.location.href = '/shop-dashboard.html'; // yaha se shop choose hogi
         return;
     }
 
