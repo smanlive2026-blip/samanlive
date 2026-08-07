@@ -38,6 +38,94 @@ router.post('/upload', upload.single('image'), async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
+// 1.5 GET LOCATION
+router.get('/:shopId/location', async (req, res) => {
+  try {
+    const shopId = getShopId(req);
+    const achar = await Achar.findOne({ shopId }).lean();
+    if(!achar) return res.json({ success: true, data: null });
+
+    res.json({
+      success: true,
+      data: {
+        locationType: achar.locationType,
+        deliveryRange: achar.deliveryRange,
+        address: achar.shopAddress,
+        lat: achar.location?.coordinates[1] || '',
+        lng: achar.location?.coordinates[0] || ''
+      }
+    });
+  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// 1.6 SAVE LOCATION
+router.post('/:shopId/location', async (req, res) => {
+  try {
+    const shopId = getShopId(req);
+    const { lat, lng, type, range, address } = req.body;
+
+    let achar = await Achar.findOne({ shopId });
+    if(!achar) achar = await Achar.create({ shopId });
+
+    achar.locationType = type;
+    achar.deliveryRange = Number(range);
+    achar.shopAddress = address;
+    if(lat && lng) {
+        achar.location = { type: 'Point', coordinates: [Number(lng), Number(lat)] };
+    }
+
+    await achar.save();
+    res.json({ success: true, message: 'Location saved' });
+
+  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// 1.7 GET PROFILE
+router.get('/:shopId/profile', async (req, res) => {
+  try {
+    const shopId = getShopId(req);
+    const achar = await Achar.findOne({ shopId }).lean();
+    if(!achar) return res.json({ success: true, data: null });
+
+    res.json({
+      success: true,
+      data: {
+        ownerName: achar.ownerName,
+        ownerPhotoUrl: achar.ownerPhotoUrl,
+        bannerPhotoUrl: achar.bannerPhotoUrl,
+        fullAddress: achar.fullAddress,
+        shopAddress: achar.shopAddress,
+        lat: achar.location?.coordinates[1] || '',
+        lng: achar.location?.coordinates[0] || ''
+      }
+    });
+  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// 1.8 SAVE PROFILE
+router.post('/:shopId/profile', async (req, res) => {
+  try {
+    const shopId = getShopId(req);
+    const { ownerName, ownerPhotoUrl, bannerPhotoUrl, fullAddress, lat, lng, shopAddress } = req.body;
+
+    let achar = await Achar.findOne({ shopId });
+    if(!achar) achar = await Achar.create({ shopId });
+
+    if(ownerName) achar.ownerName = ownerName;
+    if(fullAddress) achar.fullAddress = fullAddress;
+    if(shopAddress) achar.shopAddress = shopAddress;
+    if(ownerPhotoUrl) achar.ownerPhotoUrl = ownerPhotoUrl;
+    if(bannerPhotoUrl) achar.bannerPhotoUrl = bannerPhotoUrl;
+    if(lat && lng) {
+        achar.location = { type: 'Point', coordinates: [Number(lng), Number(lat)] };
+    }
+
+    await achar.save();
+    res.json({ success: true, message: 'Profile saved' });
+
+  } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 // 2. GET PURI SHOP DATA - FIXED
 router.get('/:shopId', async (req, res) => {
   try {

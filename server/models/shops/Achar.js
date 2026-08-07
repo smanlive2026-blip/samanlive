@@ -32,6 +32,18 @@ const acharSchema = new mongoose.Schema({
     shopId: { type: String, required: true, unique: true, index: true },
     items: [acharItemSchema],
     orders: [acharOrderSchema],
+
+     // YE LOCATION WALE FIELD ADD KAR
+    ownerName: { type: String, default: '' },
+    fullAddress: { type: String, default: '' },
+    shopAddress: { type: String, default: '' },
+    locationType: { type: String, enum: ['fixed', 'dynamic'], default: 'fixed' },
+    deliveryRange: { type: Number, default: 5 },
+    location: {
+        type: { type: String, default: 'Point' },
+        coordinates: { type: [Number], default: [0,0], index: '2dsphere' } // [lng, lat]
+    },
+
     settings: {
         isOpen: { type: Boolean, default: true },
         announcement: { type: String, default: '' },

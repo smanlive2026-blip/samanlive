@@ -73,5 +73,3 @@ window.ShopLocationManager = {
         }
     }
 };
-
-// ShopID dashboard.js se milegi. Waha se call karna

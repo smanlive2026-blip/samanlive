@@ -34,8 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('newOrderBtn').addEventListener('click', () => alert('Order system file 6 me banega'));
     document.getElementById('userViewBtn').href = `/shop-templates/achar-shop/customer-view.html?shopId=${shopId}`;
+    // NAYI LINE
+    document.getElementById('profileSetupBtn').addEventListener('click', () => {
+    window.location.href = `/shop-templates/achar-shop/profile-setup.html?shopId=${shopId}`;
+    });
     document.getElementById('locationBtn').addEventListener('click', () => {
-        document.getElementById('locationCard').style.display = 'block';
+    document.getElementById('locationCard').style.display = 'block';
     });
 
     ShopCore.bindImageUpload('shopBanner', 'bannerInput', 'banner', 'banner');
@@ -432,21 +436,5 @@ ShopCore.uploadImage = async function(file, type = 'profile') {
     return url; // purana url wapas
 }
 
-// 2. LOAD HOTE TIME PEHLE MEDIA CHECK KARO, NA MILE TO PURANA
-const oldLoadShop = loadShopData;
-loadShopData = async function() {
-    await oldLoadShop(); // pehle tera wala chalega
-
-    // fir media se banner/logo override kar do agar mila to
-    try {
-        const mediaRes = await fetch(`/api/media/${shopId}`);
-        const mediaData = await mediaRes.json();
-        const banner = mediaData.data.find(m => m.type === 'banner');
-        const logo = mediaData.data.find(m => m.type === 'profile');
-
-        if(banner?.url) document.getElementById('shopBanner').src = banner.url;
-        if(logo?.url) document.getElementById('ownerImg').src = logo.url;
-    } catch(e){}
-}
 
 console.log('✅ Achar Dashboard v8 FINAL Loaded');
