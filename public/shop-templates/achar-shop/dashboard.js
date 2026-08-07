@@ -11,11 +11,10 @@ let currentEditId = null;
 let productImageUrl = '';
 
 document.addEventListener('DOMContentLoaded', () => {
-    if(!shopId) {
-        alert('Bhai shop select karke aao!');
-        window.location.href = '/shop-dashboard.html'; // yaha se shop choose hogi
-        return;
-    }
+    if(!shopId) {
+        alert('Shop ID nahi mila. URL me?shopId=xxx add karo');
+        return;
+    }
 
     if(typeof ShopCore!== 'undefined') {
         ShopCore.init(shopId, 'achar-shop');
@@ -36,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('newOrderBtn').addEventListener('click', () => alert('Order system file 6 me banega'));
     document.getElementById('userViewBtn').href = `/shop-templates/achar-shop/customer-view.html?shopId=${shopId}`;
     // NAYI LINE
+    // SAHI HAI
     document.getElementById('profileSetupBtn').addEventListener('click', () => {
     window.location.href = `/shop-templates/achar-shop/profile-setup.html?shopId=${shopId}`;
     });
@@ -82,20 +82,19 @@ function convertTo12Hr(time24h) {
     return `${hours}:${minutes} ${modifier}`;
 }
 
-// 1. LOAD SHOP DATA - FURNITURE FORMAT
+// 1. LOAD SHOP DATA 
+
 async function loadShopData() {
     try {
         const res = await fetch(`/api/shops/achar/${shopId}`);
         const data = await res.json();
         shopData = data.shop || {};
 
-        document.getElementById('shopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
+        // PROFILE DATA LOAD - ownerName, ownerPhotoUrl, bannerPhotoUrl
+        document.getElementById('shopName').innerText = shopData.ownerName ? `${shopData.ownerName} ki Dukaan` : shopData.name || 'Maa Ke Haath Ka Achar';
         document.getElementById('ownerImg').src = shopData.ownerPhotoUrl || 'https://placehold.co/60/eab308/fff?text=A';
         document.getElementById('shopBanner').src = shopData.bannerPhotoUrl || 'https://placehold.co/400x150/eab308/fff?text=Upload+Banner';
-        // PROFILE DATA LOAD
-        document.getElementById('ownerImg').src = shopData.ownerPhotoUrl || shopData.profilePic || 'https://placehold.co/60/eab308/fff?text=A';
-        document.getElementById('shopBanner').src = shopData.bannerPhotoUrl || shopData.bannerPic || 'https://placehold.co/400x150/eab308/fff?text=Upload+Banner';
-        document.getElementById('shopName').innerText = shopData.ownerName ? `${shopData.ownerName} ki Dukaan` : shopData.name || 'Maa Ke Haath Ka Achar';
+        
         // TIME FIX: 12hr to 24hr
         document.getElementById('openTime').value = convertTo24Hr(shopData.settings?.openTime || '09:00 AM');
         document.getElementById('closeTime').value = convertTo24Hr(shopData.settings?.closeTime || '09:00 PM');
@@ -111,6 +110,7 @@ async function loadShopData() {
         renderCategories();
     } catch(e) { console.log('Shop data error', e) }
 }
+
 
 // 2. RENDER INVENTORY
 function renderInventory(list = allProducts) {
