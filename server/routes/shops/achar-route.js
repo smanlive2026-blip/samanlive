@@ -157,7 +157,7 @@ router.get('/:shopId', async (req, res) => {
       isOpen: achar.settings?.isOpen?? true,
       announcement: achar.settings?.announcement || achar.announcement || '',
       ownerPhotoUrl: achar.settings?.ownerPhotoUrl || achar.ownerPhotoUrl || '',
-      bannerPhotoUrl: achar.settings?.bannerPhotoUrl || achar.bannerPhotoUrl || '',
+      bannerPhotoUrl: (achar.settings?.bannerPhotoUrl || achar.bannerPhotoUrl || '') + '?v=' + Date.now(), // <-- YE LINE
       phone: achar.phone || ''
     }
     res.json({ success: true, shop: finalData });
