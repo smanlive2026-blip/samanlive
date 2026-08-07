@@ -252,6 +252,7 @@ router.delete('/:shopId/item/:itemId', async (req, res) => {
 });
 
 // 7. UPDATE SHOP SETTINGS - TOGGLE FIX
+// 7. UPDATE SHOP SETTINGS - PROFILE FIX
 router.put('/:shopId', async (req, res) => {
   try {
     const shopId = getShopId(req);
@@ -260,6 +261,10 @@ router.put('/:shopId', async (req, res) => {
     let achar = await Achar.findOne({ shopId: shopId });
     if(!achar) achar = await Achar.create({ shopId: shopId });
 
+    // YE 5 LINE NAYI ADD KI HAI
+    if(updateData.ownerName) achar.ownerName = updateData.ownerName;
+    if(updateData.fullAddress) achar.fullAddress = updateData.fullAddress;
+    if(updateData.shopAddress) achar.shopAddress = updateData.shopAddress;
     if(updateData.bannerPhotoUrl) achar.bannerPhotoUrl = updateData.bannerPhotoUrl;
     if(updateData.ownerPhotoUrl) achar.ownerPhotoUrl = updateData.ownerPhotoUrl;
     if('phone' in updateData) achar.phone = updateData.phone;
@@ -267,7 +272,7 @@ router.put('/:shopId', async (req, res) => {
     if(!achar.settings) achar.settings = {};
     if('isOpen' in updateData) {
         achar.settings.isOpen = updateData.isOpen;
-        achar.isOpen = updateData.isOpen; // customer view ke liye
+        achar.isOpen = updateData.isOpen; 
     }
     if('announcement' in updateData) achar.settings.announcement = updateData.announcement;
     if(updateData.settings) achar.settings = {...achar.settings,...updateData.settings };
