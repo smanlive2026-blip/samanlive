@@ -29,9 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('addAcharBtn').addEventListener('click', openAddModal);
     document.getElementById('quickAddBtn').addEventListener('click', quickAddProducts);
-    document.getElementById('changeBannerBtn').addEventListener('click', () => {
-        document.getElementById('bannerInput').click();
-    });
     document.getElementById('newOrderBtn').addEventListener('click', () => alert('Order system file 6 me banega'));
     document.getElementById('userViewBtn').href = `/shop-templates/achar-shop/customer-view.html?shopId=${shopId}`;
     // NAYI LINE
@@ -43,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('locationCard').style.display = 'block';
     });
 
-    ShopCore.bindImageUpload('shopBanner', 'bannerInput', 'banner', 'banner');
+    
     ShopCore.bindImageUpload('ownerImg', 'ownerInput', 'profile', 'logo');
     ShopCore.bindImageUpload('productImgPreview', 'productImageInput', 'product', 'product_temp');
 
@@ -93,7 +90,7 @@ async function loadShopData() {
         // PROFILE DATA LOAD - ownerName, ownerPhotoUrl, bannerPhotoUrl
         document.getElementById('shopName').innerText = shopData.ownerName ? `${shopData.ownerName} ki Dukaan` : shopData.name || 'Maa Ke Haath Ka Achar';
         document.getElementById('ownerImg').src = shopData.ownerPhotoUrl || 'https://placehold.co/60/eab308/fff?text=A';
-        document.getElementById('shopBanner').src = shopData.bannerPhotoUrl || 'https://placehold.co/400x150/eab308/fff?text=Upload+Banner';
+        
         
         // TIME FIX: 12hr to 24hr
         document.getElementById('openTime').value = convertTo24Hr(shopData.settings?.openTime || '09:00 AM');
@@ -372,9 +369,7 @@ ShopCore.uploadImage = async function(file, type = 'profile') {
                 productImageUrl = data.url;
                 document.getElementById('productImgPreview').src = data.url;
             }
-            if(type === 'banner') {
-                await fetch(`/api/shops/achar/${this.shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ bannerPhotoUrl: data.url })});
-            }
+        
             if(type === 'profile') {
                 await fetch(`/api/shops/achar/${this.shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ ownerPhotoUrl: data.url })});
             }
