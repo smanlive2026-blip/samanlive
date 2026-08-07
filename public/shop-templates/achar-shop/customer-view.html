@@ -171,7 +171,8 @@
                 document.getElementById('shopLogo').src = getHDImage(shopData.ownerPhotoUrl, 200) || 'https://placehold.co/100/eab308/fff?text=A';
                 // NAYA - ?v=timestamp laga de
                 let bannerUrl = shopData.bannerPhotoUrl || 'https://placehold.co/1400x320/eab308/fff?text=Achar';
-                document.getElementById('shopBanner').src = getHDImage(bannerUrl, 1400) + `?t=${new Date().getTime()}`;
+                if(bannerUrl.includes('cloudinary')) {bannerUrl = bannerUrl.split('?')[0] + `?v=${shopData.updatedAt || new Date().getTime()}`;}
+                document.getElementById('shopBanner').src = getHDImage(bannerUrl, 1400);
                 document.getElementById('shopPhone').innerText = shopData.phone || 'N/A';
                 document.getElementById('shopTiming').innerText = `${convertTo12Hr(shopData.settings?.openTime)} - ${convertTo12Hr(shopData.settings?.closeTime)}`;
                 document.getElementById('shopAddress').innerText = 'Ahmedabad, Gujarat';

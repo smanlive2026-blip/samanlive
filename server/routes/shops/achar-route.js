@@ -157,9 +157,11 @@ router.get('/:shopId', async (req, res) => {
       isOpen: achar.settings?.isOpen?? true,
       announcement: achar.settings?.announcement || achar.announcement || '',
       ownerPhotoUrl: achar.settings?.ownerPhotoUrl || achar.ownerPhotoUrl || '',
-      bannerPhotoUrl: (achar.settings?.bannerPhotoUrl || achar.bannerPhotoUrl || '') + '?v=' + Date.now(), // <-- YE LINE
+      bannerPhotoUrl: achar.settings?.bannerPhotoUrl || achar.bannerPhotoUrl || '', 
+      updatedAt: achar.updatedAt, // <-- YE NAYI LINE ADD KAR
       phone: achar.phone || ''
     }
+
     res.json({ success: true, shop: finalData });
   } catch(err) {
     console.log('GET SHOP ERROR:', err);
