@@ -127,7 +127,7 @@
         <h3 id="footerShopName">Maa Ke Haath Ka Achar</h3>
         <p>Ghar ka bana hua, Shuddh aur Swadisht Achar 🥒</p>
     </div>
-
+<script src="/shop-templates/shop-banner-ext.js"></script>
 <script>
         let shopId = new URLSearchParams(window.location.search).get('shopId');
         if(!shopId) shopId = window.location.pathname.split('/').pop(); // fallback
@@ -156,51 +156,57 @@
             return `${hours}:${minutes} ${modifier}`;
         }
 
-        async function loadShop() {
-            try {
-                const res = await fetch(`/api/shops/achar/${shopId}`);
-                const data = await res.json();
-                if(!data.success) throw new Error(data.message);
+async function loadShop() {
+    try {
+        const res = await fetch(`/api/shops/achar/${shopId}`);
+        const data = await res.json();
+        if(!data.success) throw new Error(data.message);
 
-                shopData = data.shop || {};
+        shopData = data.shop || {};
 
-                document.getElementById('shopName').innerText = shopData.ownerName ? `${shopData.ownerName} ki Dukaan` : shopData.name || 'Maa Ke Haath Ka Achar';
-                document.getElementById('footerShopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
-                document.getElementById('pageTitle').innerText = shopData.name || 'Achar Shop';
-                document.getElementById('metaDesc').content = shopData.announcement || 'Ghar ka bana hua shuddh achar';
-                document.getElementById('shopLogo').src = getHDImage(shopData.ownerPhotoUrl, 200) || 'https://placehold.co/100/eab308/fff?text=A';
-                // NAYA - ?v=timestamp laga de
-                let bannerUrl = shopData.bannerPhotoUrl || 'https://placehold.co/1400x320/eab308/fff?text=Achar';
-                if(bannerUrl.includes('cloudinary')) {bannerUrl = bannerUrl.split('?')[0] + `?v=${shopData.updatedAt || new Date().getTime()}`;}
-                document.getElementById('shopBanner').src = getHDImage(bannerUrl, 1400);
-                document.getElementById('shopPhone').innerText = shopData.phone || 'N/A';
-                document.getElementById('shopTiming').innerText = `${convertTo12Hr(shopData.settings?.openTime)} - ${convertTo12Hr(shopData.settings?.closeTime)}`;
-                document.getElementById('shopAddress').innerText = 'Ahmedabad, Gujarat';
-
-                const statusEl = document.getElementById('shopStatus');
-                if(shopData.isOpen) {
-                    statusEl.innerText = 'Open';
-                    statusEl.classList.remove('closed');
-                } else {
-                    statusEl.innerText = 'Closed';
-                    statusEl.classList.add('closed');
-                }
-
-                if(shopData.announcement) {
-                    document.getElementById('announcementText').innerText = shopData.announcement;
-                    document.getElementById('announcementBox').style.display = 'flex';
-                }
-
-                allProducts = shopData.items || []; // <-- FIX 1
-                renderProducts(allProducts);
-                renderCategories();
-
-            } catch(e) {
-                console.log('Shop load error', e);
-                document.getElementById('productGrid').innerHTML = `<p style="text-align:center; grid-column:1/-1; padding:40px;">Error: ${e.message}</p>`;
-            }
+        // 1. PEHLE BANNER WALA DATA LE AAO
+        const bannerData = await ShopBannerExt.getShopData(shopId, 'achar');
+        if(bannerData) {
+            document.getElementById('shopBanner').src = bannerData.banner;
+            document.getElementById('shopLogo').src = bannerData.logo;
+            document.getElementById('shopName').innerText = bannerData.shopName; // <-- SIRF YAHI 1 BAAR
+        } else {
+            // agar bannerData na mile to backup
+            document.getElementById('shopName').innerText = shopData.ownerName ? `${shopData.ownerName} ki Dukaan` : shopData.name || 'Maa Ke Haath Ka Achar';
+            document.getElementById('shopLogo').src = getHDImage(shopData.ownerPhotoUrl, 200) || 'https://placehold.co/100/eab308/fff?text=A';
         }
 
+        // 2. BAKI SAB
+        document.getElementById('footerShopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
+        document.getElementById('pageTitle').innerText = shopData.name || 'Achar Shop';
+        document.getElementById('metaDesc').content = shopData.announcement || 'Ghar ka bana hua shuddh achar';
+        document.getElementById('shopPhone').innerText = shopData.phone || 'N/A';
+        document.getElementById('shopTiming').innerText = `${convertTo12Hr(shopData.settings?.openTime)} - ${convertTo12Hr(shopData.settings?.closeTime)}`;
+        document.getElementById('shopAddress').innerText = shopData.shopAddress || 'Ahmedabad, Gujarat'; // <-- YAHAN ADDRESS BHI DYNAMIC KAR DIYA
+
+        const statusEl = document.getElementById('shopStatus');
+        if(shopData.isOpen) {
+            statusEl.innerText = 'Open';
+            statusEl.classList.remove('closed');
+        } else {
+            statusEl.innerText = 'Closed';
+            statusEl.classList.add('closed');
+        }
+
+        if(shopData.announcement) {
+            document.getElementById('announcementText').innerText = shopData.announcement;
+            document.getElementById('announcementBox').style.display = 'flex';
+        }
+
+        allProducts = shopData.items || [];
+        renderProducts(allProducts);
+        renderCategories();
+
+    } catch(e) {
+        console.log('Shop load error', e);
+        document.getElementById('productGrid').innerHTML = `<p style="text-align:center; grid-column:1/-1; padding:40px;">Error: ${e.message}</p>`;
+    }
+}
         function renderCategories() {
             const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))]; // <-- FIX 2
             const div = document.getElementById('categoryFilters');
