@@ -23,69 +23,59 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .six-line-carousel {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px 12px; /* GAP BADHAYA */
-    padding: 20px 0;
+    gap: 12px 8px; /* GAP KAM KIYA */
+    padding: 12px 0;
 }
 
-/* SHOP CARD - AB SAHI FIT HOGA */
+/* SHOP CARD - COMPACT */
 .shop-circle {
     text-align: center;
     cursor: pointer;
     position: relative;
-    background: rgba(255,255,255,0.18); /* HALKA WHITE BG DIYA - AAR PAAR NAHI */
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(255,255,255,0.2); /* HALKI BORDER */
-    border-radius: 16px;
-    padding: 35px 6px 10px 6px; /* UPAR JYADA PADDING DIYA LOGO KE LIYE */
+    background: transparent; /* BG HATA DIYA PURA */
+    padding: 4px; /* SIRF CHOTI PADDING */
     transition: transform 0.2s ease;
     overflow: visible;
-    min-height: 110px; /* CARD KI HEIGHT FIX */
 }
 .shop-circle:active { transform: scale(0.95); }
 
-.shop-banner-top { 
-    display: none; /* ABHI BANNER HAI NAHI TO HATA DIYA */
-}
-
 .shop-logo-circle { 
-    width: 60px; 
-    height: 60px; 
+    width: 58px; 
+    height: 58px; 
     border-radius: 50%; 
     border: 3px solid white; 
-    position: absolute; /* ABSOLUTE KAR DIYA */
-    top: -20px; /* UPAR NIKALA LEKIN CARD KE ANDAR */
-    left: 50%;
-    transform: translateX(-50%); /* CENTER KIYA */
     background: white; 
-    z-index: 2;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    margin: 0 auto; /* CENTER ME */
+    display: block;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
     object-fit: cover;
+    position: relative; /* ABSOLUTE HATA DIYA */
 }
 .shop-circle p { 
-    font-size: 12px; 
+    font-size: 11px; 
     color: #fff; 
     font-weight: 700; 
-    margin-top: 4px; 
+    margin-top: 5px; 
     white-space: nowrap; 
     overflow: hidden; 
     text-overflow: ellipsis; 
-    padding: 0 2px;
+    line-height: 1.2;
 }
 .shop-circle small { 
     font-size: 10px; 
-    color: #7dd3fc; /* LIGHT BLUE */
+    color: #bae6fd; /* HALKA BLUE */
     display: block; 
     font-weight: 600;
-    margin-top: 2px;
+    line-height: 1.2;
 }
 .shop-circle .status-dot {
     position: absolute; 
-    top: 32px; /* LOGO KE NEECHE RIGHT ME */
-    right: 10px; 
-    width: 12px; 
-    height: 12px; 
+    top: 2px; /* LOGO KE UPAR RIGHT */
+    right: calc(50% - 26px); /* LOGO KE EDGE PE */
+    width: 11px; 
+    height: 11px; 
     border-radius: 50%; 
-    border: 2px solid #1e40af; 
+    border: 2px solid #fff; 
     background: #10b981; 
     z-index: 3;
 }
@@ -94,12 +84,12 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .ad-full-width {
     grid-column: 1 / -1;
     background: linear-gradient(135deg,#ff9900,#ff5500); 
-    color:#fff; text-align:center; padding:18px 12px; border-radius:14px;
-    margin: 4px 0; box-shadow: 0 4px 12px rgba(255,153,0,0.3);
+    color:#fff; text-align:center; padding:16px 12px; border-radius:12px;
+    margin: 6px 0;
 }
-.ad-full-width h3 { font-size: 16px; margin-bottom: 4px; }
-.ad-full-width p { font-size: 12px; opacity: 0.9; }
-.ad-full-width .ad-btn { background: #fff; color: #ff5500; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; margin-top: 8px; cursor: pointer; }
+.ad-full-width h3 { font-size: 15px; margin-bottom: 3px; }
+.ad-full-width p { font-size: 11px; opacity: 0.9; }
+.ad-full-width .ad-btn { background: #fff; color: #ff5500; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 700; margin-top: 6px; cursor: pointer; font-size: 11px; }
 
 /* EMPTY */
 .empty-state { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; color: rgba(255,255,255,0.6); }
