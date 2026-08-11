@@ -1,107 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SAMANLIVE - All Services</title>
-<link rel="stylesheet" href="/assets/css/main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAMANLIVE</title>
+    <link rel="stylesheet" href="/assets/css/main.css?v=4">
+    <script src="/assets/js/shop-template-map.js"></script>
 </head>
 <body>
-<div class="video-bg"><div class="video-overlay"></div></div>
+    <div class="video-bg"></div>
+    <div class="video-overlay"></div>
 
-<!-- 1. HEADER ROW -->
-<header class="header">
-<div class="header-container">
-    <!-- Admin Logo + Text -->
-    <div class="logo">
-        <img id="adminLogo" src="/assets/images/samanlive-logo.png" class="logo-img-fix" alt="Logo">
-        <span class="logo-text">SAMANLIVE</span>
+    <!-- 1. HEADER ROW: LOGO + LOCATION -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img id="headerLogo" src="/assets/images/samanlive-logo.png" class="logo-img-fix">
+                <span class="logo-text">SAMAN LIVE</span>
+            </div>
+            <div class="location-display">📍 <span id="userCity">Detecting...</span></div>
+        </div>
+    </header>
+
+    <!-- 2. SEARCH ROW: SEARCH + SCANNER -->
+    <div class="search-row">
+        <div class="search-box-modern">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search products, shops...">
+            <button class="search-btn-modern" onclick="performSearch()">→</button>
+        </div>
+        <button class="scanner-btn-header" onclick="openQRScanner()">[ ]</button>
     </div>
 
-    <!-- Location - app.js se aayegi -->
-    <div class="location-display">
-        📍 <span id="userCity">Detecting...</span>
+    <main class="container">
+        <!-- 3. CATEGORY ROW: SABHI SHOP TYPE 1 2 3 4 5 6 7 8 9 -->
+        <section class="category-row">
+            <div class="category-chips" id="categoryChips"></div>
+        </section>
+
+        <!-- 4. HISTORY ROW: LAST DEKHE HUE PRODUCT -->
+        <section class="history-section">
+            <h3>History</h3>
+            <div class="history-scroll" id="historyProducts"></div>
+        </section>
+
+        <!-- 1. ADMIN ADVERTISEMENT ROW: ADMIN CONTROL -->
+        <section class="ad-product-section">
+            <h3>Advertisement</h3>
+            <div class="ad-product-scroll" id="adminAdContainer"></div>
+        </section>
+
+        <!-- 2. NEARBY PRODUCT: JYADA SEARCH WALE - 10 BAAR REPEAT -->
+        <section class="nearby-product-section">
+            <h3>Nearby Product</h3>
+            <div class="nearby-product-list" id="nearbyProductsRepeat"></div>
+        </section>
+    </main>
+
+    <!-- 5 BUTTON BOTTOM NAV -->
+    <footer class="bottom-nav">
+        <button class="nav-btn" onclick="goToProfilePage()">
+            <img id="navProfilePic" src="/assets/images/samanlive-logo.png" class="nav-avatar">
+            <span>Profile</span>
+        </button>
+        <button class="nav-btn" onclick="goToDelivery()">
+            <span>🚚</span>
+            <span>Delivery</span>
+        </button>
+        <button class="nav-btn nav-center" onclick="scrollToNearbyShops()">
+            <div class="nav-center-hex">Local<br>Market</div>
+        </button>
+        <button class="nav-btn" onclick="scrollToServices()">
+            <span>🛍️</span>
+            <span>Service</span>
+        </button>
+        <button class="nav-btn" onclick="trackChild()">
+            <span>📍</span>
+            <span>Track</span>
+        </button>
+    </footer>
+
+    <!-- PURANA CODE HIDE - FUNCTION NA TOOTE -->
+    <div style="display:none">
+        <div id="shopsContent"></div>
+        <div id="topProductsContent"></div>
+        <div id="serviceGrid"></div>
+        <div id="topAdsContainer"></div>
+        <div id="campaignContainer"></div>
+        <div id="videosContent"></div>
     </div>
-</div>
-</header>
 
-<!-- 2. SEARCH ROW -->
-<div class="search-row">
-    <div class="search-box-modern">
-        <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Search services, shops, products..." id="searchInput">
-        <button class="search-btn-modern" onclick="performSearch()">→</button>
-    </div>
-    <button class="scanner-btn-header" onclick="openQRScanner()">📷</button>
-</div>
-
-<main class="main-content">
-<div class="container">
-
-<!-- 3. SHOP CATEGORY ROW - 1 to 9 -->
-<div class="category-row">
-    <div class="category-chips" id="categoryChips"></div>
-</div>
-
-<!-- 4. HISTORY PRODUCT CARDS -->
-<div class="history-section">
-    <h3>Recently Viewed</h3>
-    <div class="history-scroll" id="historyProducts"></div>
-</div>
-
-<!-- 5. ADVERTISEMENT PRODUCT CARDS - Admin Control -->
-<div class="ad-product-section">
-    <div class="ad-header"><h3>📢 Sponsored</h3></div>
-    <div class="ad-product-scroll" id="adminAdContainer"></div>
-</div>
-
-<!-- 6. NEARBY PRODUCTS - Most Searched First -->
-<div class="nearby-product-section">
-    <div class="nearby-header"><h3>⭐ Near By Products</h3></div>
-    <div class="nearby-product-list" id="nearbyProductsRepeat"></div>
-</div>
-
-<!-- PURANE WALE SECTIONS HIDE NAHI KARE - BACKUP KE LIYE -->
-<div style="display:none;">
-    <div id="topAdsContainer"></div>
-    <div id="shopsContent"></div>
-    <div id="serviceGrid"></div>
-    <div id="campaignContainer"></div>
-</div>
-
-</div>
-</main>
-
-<!-- 7. BOTTOM NAV - 5 BUTTONS -->
-<footer class="bottom-nav">
-    <button class="nav-btn" onclick="goToProfilePage()">
-        <img id="navProfilePic" src="/assets/images/samanlive-logo.png" class="nav-avatar">
-        <span>Profile</span>
-    </button>
-    <button class="nav-btn" onclick="goToDelivery()">
-        <span>📦</span>
-        <span>Delivery</span>
-    </button>
-    <button class="nav-btn nav-center" onclick="scrollToNearbyShops()">
-        <div class="nav-center-hex">Local<br>Market</div>
-    </button>
-    <button class="nav-btn" onclick="scrollToServices()">
-        <span>🛠️</span>
-        <span>Service</span>
-    </button>
-    <button class="nav-btn" onclick="trackChild()">
-        <span>👶</span>
-        <span>Track</span>
-    </button>
-</footer>
-
-<!-- MODALS WAHI RAHE -->
-<div id="loginModal" class="modal-overlay" style="display:none;">...</div>
-<div id="profileModal" class="modal-overlay" style="display:none;">...</div>
-
-<script src="/assets/js/shop-template-map.js"></script>
-<script src="/assets/js/location.core.js"></script>
-<script src="/assets/js/app.js"></script>
-<script src="/shop-templates/shop-banner-ext.js"></script>
+    <script src="/assets/js/app.js?v=4"></script>
 </body>
 </html>
