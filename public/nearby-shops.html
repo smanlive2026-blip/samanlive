@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearby Shops - SAMANLIVE</title>
+    <link rel="stylesheet" href="/assets/css/main.css?v=6">
+    <script src="/assets/js/shop-template-map.js"></script>
+</head>
+<body>
+    <div class="video-bg"></div>
+    <div class="video-overlay"></div>
+    
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-container">
+            <button onclick="history.back()" style="background:none;border:none;color:#fff;font-size:24px">←</button>
+            <span class="logo-text">Nearby Shops</span>
+            <div class="location-display">📍 <span id="userCity">Detecting...</span></div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="nearbyShopsGrid" class="six-line-carousel"></div>
+    </main>
+
+    <script src="/assets/js/nearby-shops.js?v=1"></script>
+</body>
+</html>
