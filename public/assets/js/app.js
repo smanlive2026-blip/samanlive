@@ -84,12 +84,15 @@ async function renderAdminAds() {
 // 2. NEARBY PRODUCT 10 BAAR REPEAT - JYADA SEARCH WALE PEHLE
 async function renderNearbyProductsRepeat() {
     const container = document.getElementById('nearbyProductsRepeat'); if(!container) return;
-    const res = await fetch(`/api/products/most-searched?limit=4&lat=${userLocation.lat}&lng=${userLocation.lng}`);
+    const res = await fetch(`/api/products/most-searched?limit=6&lat=${userLocation.lat}&lng=${userLocation.lng}`);
     const data = await res.json(); allProducts = data.products || [];
+    
     let html = '';
     for(let i=0; i<10; i++){
+        // 2 baar data chipka diya taaki train loop lage
+        const doubleData = [...allProducts, ...allProducts];
         html += `<div class="nearby-row">` + 
-        allProducts.map(p => `
+        doubleData.map(p => `
             <div class="nearby-product-card" onclick="openProduct('${p._id}')">
                 <img src="${p.image}"><p>${p.name}</p>
             </div>`).join('') + `</div>`;
