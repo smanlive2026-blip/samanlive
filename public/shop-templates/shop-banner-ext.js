@@ -1,4 +1,5 @@
 // /public/shop-templates/shop-banner-ext.js
+// ye golden rule h  
 // SABHI SHOPS KE LIYE BANNER + LOGO FETCHER
 
 window.ShopBannerExt = {
