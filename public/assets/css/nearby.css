@@ -10,7 +10,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     0% { background-position: 0% 50%; } 
     50% { background-position: 100% 50%; } 
     100% { background-position: 0% 50%; } 
-} /* YAHI } MISSING THA BHAI */
+}
 
 /* HEADER */
 .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 0; box-shadow: 0 4px 20px rgba(102,126,234,0.3); position: sticky; top: 0; z-index: 100; }
@@ -23,58 +23,74 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .six-line-carousel {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 18px 12px;
-    padding: 16px 0;
+    gap: 20px 12px; /* GAP BADHAYA */
+    padding: 20px 0;
 }
 
+/* SHOP CARD - AB SAHI FIT HOGA */
 .shop-circle {
     text-align: center;
     cursor: pointer;
     position: relative;
-    background: rgba(255,255,255,0.12);
-    backdrop-filter: blur(4px);
-    border-radius: 14px;
-    padding: 8px 4px 8px 4px;
+    background: rgba(255,255,255,0.18); /* HALKA WHITE BG DIYA - AAR PAAR NAHI */
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.2); /* HALKI BORDER */
+    border-radius: 16px;
+    padding: 35px 6px 10px 6px; /* UPAR JYADA PADDING DIYA LOGO KE LIYE */
     transition: transform 0.2s ease;
-    overflow: visible; /* CIRCLE NA KATE ISLIYE */
+    overflow: visible;
+    min-height: 110px; /* CARD KI HEIGHT FIX */
 }
 .shop-circle:active { transform: scale(0.95); }
 
 .shop-banner-top { 
-    width: calc(100% + 8px); 
-    height: 45px; 
-    object-fit: cover; 
-    border-radius: 14px 14px 0 0; 
-    display: block;
-    margin: -8px -4px 0 -4px;
+    display: none; /* ABHI BANNER HAI NAHI TO HATA DIYA */
 }
+
 .shop-logo-circle { 
-    width: 55px; 
-    height: 55px; 
+    width: 60px; 
+    height: 60px; 
     border-radius: 50%; 
     border: 3px solid white; 
-    margin: -28px auto 0 auto;
+    position: absolute; /* ABSOLUTE KAR DIYA */
+    top: -20px; /* UPAR NIKALA LEKIN CARD KE ANDAR */
+    left: 50%;
+    transform: translateX(-50%); /* CENTER KIYA */
     background: white; 
-    position: relative; 
     z-index: 2;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-    display: block;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    object-fit: cover;
 }
-.shop-circle p { font-size: 12px; color: #fff; font-weight: 700; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
-.shop-circle small { font-size: 10px; color: #a5f3fc; display: block; font-weight: 600; }
+.shop-circle p { 
+    font-size: 12px; 
+    color: #fff; 
+    font-weight: 700; 
+    margin-top: 4px; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    padding: 0 2px;
+}
+.shop-circle small { 
+    font-size: 10px; 
+    color: #7dd3fc; /* LIGHT BLUE */
+    display: block; 
+    font-weight: 600;
+    margin-top: 2px;
+}
 .shop-circle .status-dot {
     position: absolute; 
-    top: 50px;
-    right: 8px; 
-    width: 11px; 
-    height: 11px; 
+    top: 32px; /* LOGO KE NEECHE RIGHT ME */
+    right: 10px; 
+    width: 12px; 
+    height: 12px; 
     border-radius: 50%; 
     border: 2px solid #1e40af; 
     background: #10b981; 
     z-index: 3;
 }
 
-/* AD CARD HAR 2 ROW BAAD */
+/* AD CARD */
 .ad-full-width {
     grid-column: 1 / -1;
     background: linear-gradient(135deg,#ff9900,#ff5500); 
