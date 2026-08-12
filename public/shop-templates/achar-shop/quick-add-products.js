@@ -1,6 +1,7 @@
 // ========================================
-// QUICK ADD 50+ ACHAR PRODUCTS
+// QUICK ADD 50+ ACHAR PRODUCTS - COMMON SYSTEM V1
 // File: /public/shop-templates/achar-shop/quick-add-products.js
+// KAAM: Common API /api/products/add use karke 50+ achar add karega
 // ========================================
 
 const acharProductsList = [
@@ -76,14 +77,35 @@ async function quickAddProducts() {
 
     for(let i = 0; i < acharProductsList.length; i++) {
         let p = {...acharProductsList[i]}; // copy kar le
-        p.shopId = shopId;
-        p.isActive = true;
+
+        // === NAYA FORMAT: COMMON DB KE LIYE ===
+        const productData = {
+            shopId: shopId,
+            template: 'achar', // ZAROORI
+            name: p.name,
+            description: p.description,
+            price: p.price500, // 500g default
+            mrp: p.price1kg, // 1kg MRP
+            image: p.image,
+            images: [p.image],
+            stock: p.stock,
+            category: p.category,
+            isActive: true,
+            // === ACHAR KE SPECIFIC FIELD ===
+            extra: {
+                price500: p.price500,
+                price1kg: p.price1kg,
+                jarType: p.jarType,
+                spiceLevel: p.spiceLevel
+            }
+        };
 
         try {
-            const res = await fetch(`/api/shops/achar/${shopId}/item`, { // <-- res yaha define kiya
+            // === NAYA COMMON API ===
+            const res = await fetch(`/api/products/add`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({item: p})
+                body: JSON.stringify(productData)
             });
 
             const data = await res.json();
@@ -110,5 +132,10 @@ async function quickAddProducts() {
         btn.innerText = '⚡ 50+ Products Add Karein';
         btn.disabled = false;
     }
-    loadShopData();
+
+    // COMMON FILE SE RELOAD
+    if(window.ProductCore) {
+        const products = await ProductCore.loadProducts(shopId, 'achar');
+        ProductCore.renderProducts('productList', products);
+    }
 }
