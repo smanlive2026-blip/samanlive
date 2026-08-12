@@ -16,6 +16,8 @@ const fruitItemRoutes = require('./routes/fruit-item'); // UPAR IMPORT KAR
 //const acharRoutes = require('./routes/shoporder/acharRoutes');
 const acharRoutes = require('./routes/shops/achar-route');   
 const autoRoutes = require('./routes/shops/auto');
+// UPAR IMPORT KE SAATH
+const productRoutes = require('./routes/product.routes');
 //app.use(express.json({ limit: '10mb' })); // YE BHI UPAR RAKH DE
 // TERE PURANE ROUTES
 // app.use('/api/shops', shopRoutes);
@@ -55,6 +57,8 @@ app.use('/api/shops/furniture', require('./routes/shops/furniture-route')); // 2
 app.use('/api/shops', require('./routes/shopRoutes')); // 3. BAAKI SAB GENERIC
 //app.use('/api/shops/general', require('./routes/shops/general'));
 // Request Logger - Development ke liye
+// MIDDLEWARE KE BAAD
+app.use('/api/products', productRoutes);
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'development') {
         console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);

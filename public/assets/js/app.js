@@ -81,20 +81,35 @@ async function renderAdminAds() {
         </div>`).join('') || '<p>No Ads</p>';
 }
 
-// 2. NEARBY PRODUCT 10 BAAR REPEAT - JYADA SEARCH WALE PEHLE
+// const res = await fetch(`/api/products/most-searched?limit=6&lat=${userLocation.lat}&lng=${userLocation.lng}`);
+
+// NAYA CODE LAGA DE
 async function renderNearbyProductsRepeat() {
-    const container = document.getElementById('nearbyProductsRepeat'); if(!container) return;
-    const res = await fetch(`/api/products/most-searched?limit=6&lat=${userLocation.lat}&lng=${userLocation.lng}`);
-    const data = await res.json(); allProducts = data.products || [];
+    /**
+     * KAAM: Nearby ke sabhi shop ke product laana common API se
+     */
+    const container = document.getElementById('nearbyProductsRepeat'); 
+    if(!container) return;
+
+    // NAYA: COMMON API SE SABHI PRODUCT LAO AREA KE HISAB SE
+    const res = await fetch(`/api/products/admin/all?limit=20&lat=${userLocation.lat}&lng=${userLocation.lng}`);
+    const data = await res.json(); 
+    allProducts = data.products || [];
     
+    if(allProducts.length === 0) {
+        container.innerHTML = '<p>Aas paas koi product nahi</p>';
+        return;
+    }
+
     let html = '';
     for(let i=0; i<10; i++){
-        // 2 baar data chipka diya taaki train loop lage
         const doubleData = [...allProducts, ...allProducts];
         html += `<div class="nearby-row">` + 
         doubleData.map(p => `
             <div class="nearby-product-card" onclick="openProduct('${p._id}')">
-                <img src="${p.image}"><p>${p.name}</p>
+                <img src="${p.image}" onerror="this.src='/assets/default-product.png'">
+                <p>${p.name}</p>
+                <span>₹${p.price}</span>
             </div>`).join('') + `</div>`;
     }
     container.innerHTML = html;
@@ -129,9 +144,22 @@ async function loadUserProfilePic() {
     const pic = localStorage.getItem('userPic') || '/assets/images/samanlive-logo.png';
     document.getElementById('navProfilePic').src = pic;
 }
+// PURANA FUNCTION UPDATE KAR
 function openProduct(productId) {
+    /**
+     * KAAM: Product click pe history me dalna + product page pe bhejna
+     */
     const prod = allProducts.find(p => p._id === productId);
-    if(prod) addToHistory({id: prod._id, name: prod.name, image: prod.image, price: prod.price, url: `/product.html?id=${productId}`});
+    if(prod) {
+        // HISTORY ME DAL
+        addToHistory({
+            id: prod._id, 
+            name: prod.name, 
+            image: prod.image, 
+            price: prod.price, 
+            url: `/product.html?id=${productId}`
+        });
+    }
     window.location.href = `/product.html?id=${productId}`;
 }
 
