@@ -26,10 +26,17 @@ window.LocationManager = {
 };
 
 async function initApp() {
-    await loadSettings(); // 1. PEHLE BANNER LOAD
-    await window.LocationManager.getManual(); // 2. FIR LOCATION
-    await showUserLocationInHeader(); // 3. CITY SET
-    await loadAllData(); // 4. BAQI SAB
+    await loadSettings(); // 1. PEHLE BANNER LOAD - ISE KUCH NA ROKE
+    
+    // LOCATION OR CITY KO ALAG TRY-CATCH ME DAAL DIYA
+    try {
+        await window.LocationManager.getManual(); 
+        await showUserLocationInHeader(); 
+    } catch(e) {
+        console.log("Location/City error, skipping", e);
+    }
+    
+    await loadAllData(); // 2. BAQI SAB LOAD - YE PAKKA CHALEGA
 }
 
 // 1. BANNER ADMIN SE
