@@ -21,7 +21,7 @@ const productRoutes = require('./routes/product.routes');
 //app.use(express.json({ limit: '10mb' })); // YE BHI UPAR RAKH DE
 // TERE PURANE ROUTES
 // app.use('/api/shops', shopRoutes);
-
+const settingsRoutes = require('./routes/settings.routes');
 // UPDATED: NAYA FRUIT ROUTE JOD DIYA
 //app.use('/api/shops', fruitItemRoutes); // YE 1 LINE ADD KAR
 
@@ -59,6 +59,7 @@ app.use('/api/shops', require('./routes/shopRoutes')); // 3. BAAKI SAB GENERIC
 // Request Logger - Development ke liye
 // MIDDLEWARE KE BAAD
 app.use('/api/products', productRoutes);
+app.use('/api/admin', settingsRoutes); // /api/admin/settings aur /api/admin/upload/banner
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'development') {
         console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);

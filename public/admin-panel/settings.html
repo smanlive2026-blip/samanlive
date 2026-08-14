@@ -5,6 +5,28 @@
             <label>Logo Text:</label>
             <input type="text" id="settingLogoText">
         </div>
+
+        <!-- ============ NAYA: HEADER BANNER CONTROL ============ -->
+        <div class="form-group full">
+            <label>Header Banner Image:</label>
+            <div class="logo-upload-wrapper">
+                <div class="logo-preview-box">
+                    <img id="bannerPreview" src="/assets/images/default-banner.jpg" style="width:100%;height:120px;object-fit:cover;border-radius:10px;">
+                </div>
+                <div class="logo-upload-controls">
+                    <input type="file" id="bannerUploadFile" accept="image/*" onchange="previewBanner(event)">
+                    <button class="btn-primary" id="uploadBannerBtn" onclick="uploadBannerFile()">📤 Upload Banner</button>
+                    <p class="help-text">Recommended: 1200x300px. PNG, JPG - Max 2MB</p>
+                    <p id="bannerUploadStatus" class="status-text"></p>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Banner Height (px):</label>
+            <input type="number" id="settingBannerHeight" value="200" placeholder="200">
+        </div>
+        <!-- ============ KHATAM ============ -->
+
         <div class="form-group full">
             <label>Logo Image:</label>
             <div class="logo-upload-wrapper">
@@ -56,6 +78,13 @@ async function loadSettings() {
         document.getElementById('settingInstagram').value = currentSettings.instagram || '';
         document.getElementById('settingTwitter').value = currentSettings.twitter || '';
         document.getElementById('settingYoutube').value = currentSettings.youtube || '';
+
+        // NAYA: BANNER LOAD
+        document.getElementById('settingBannerHeight').value = currentSettings.headerBannerHeight || 200;
+        if (currentSettings.headerBannerUrl) {
+            document.getElementById('bannerPreview').src = currentSettings.headerBannerUrl;
+        }
+
         if (currentSettings.logoUrl) {
             document.getElementById('logoPreview').src = currentSettings.logoUrl;
             document.getElementById('logoPreview').style.display = 'block';
@@ -107,6 +136,23 @@ window.previewLogo = (e) => {
     }
 };
 
+// NAYA: BANNER PREVIEW
+window.previewBanner = (e) => {
+    const file = e.target.files[0];
+    if (file && file.size > 2 * 1024 * 1024) {
+        showToast('File size must be less than 2MB', 'error');
+        e.target.value = '';
+        return;
+    }
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('bannerPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
 window.uploadLogoFile = async () => {
     const fileInput = document.getElementById('logoUploadFile');
     const status = document.getElementById('logoUploadStatus');
@@ -125,6 +171,25 @@ window.uploadLogoFile = async () => {
     }
 };
 
+// NAYA: BANNER UPLOAD
+window.uploadBannerFile = async () => {
+    const fileInput = document.getElementById('bannerUploadFile');
+    const status = document.getElementById('bannerUploadStatus');
+    if (!fileInput.files[0]) return showToast('Please select a banner', 'error');
+    const formData = new FormData();
+    formData.append('banner', fileInput.files[0]);
+    status.textContent = 'Uploading...';
+    try {
+        const res = await apiCall('/upload/banner', 'POST', formData); // backend me /upload/banner banana padega
+        currentSettings.headerBannerUrl = res.url;
+        status.textContent = 'Upload successful!';
+        showToast('Banner uploaded');
+        setTimeout(() => status.textContent = '', 3000);
+    } catch (err) {
+        status.textContent = 'Upload failed!';
+    }
+};
+
 window.saveSettings = async () => {
     const btn = document.getElementById('saveSettingsBtn');
     btn.disabled = true;
@@ -132,6 +197,8 @@ window.saveSettings = async () => {
     const data = {
         logoText: document.getElementById('settingLogoText').value,
         logoUrl: currentSettings.logoUrl || '',
+        headerBannerUrl: currentSettings.headerBannerUrl || '', // NAYA
+        headerBannerHeight: document.getElementById('settingBannerHeight').value, // NAYA
         headerColor: document.getElementById('settingHeaderColor').value,
         footerColor: document.getElementById('settingFooterColor').value,
         footerText: document.getElementById('settingFooterText').value,

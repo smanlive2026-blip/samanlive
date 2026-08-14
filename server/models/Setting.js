@@ -29,11 +29,11 @@ const settingSchema = new mongoose.Schema({
   primaryColor: {
     type: String,
     default: '#3b82f6'
-  }, // ← Naya add kiya
+  },
   accentColor: {
     type: String,
     default: '#8b5cf6'
-  }, // ← Naya add kiya
+  },
 
   // Footer Settings
   footerText: {
@@ -73,41 +73,52 @@ const settingSchema = new mongoose.Schema({
     type: String,
     default: '',
     trim: true
-  }, // ← Naya add kiya
+  },
   whatsapp: {
     type: String,
     default: '',
     trim: true
-  }, // ← Naya add kiya
+  },
 
   // App Settings
   appName: {
     type: String,
     default: 'Deal24Hrs',
     trim: true
-  }, // ← Naya add kiya
+  },
   supportEmail: {
     type: String,
     default: 'support@deal24hrs.com',
     trim: true,
     lowercase: true
-  }, // ← Naya add kiya
+  },
   supportPhone: {
     type: String,
     default: '',
     trim: true
-  }, // ← Naya add kiya
+  },
 
   // Maintenance Mode
   maintenanceMode: {
     type: Boolean,
     default: false
-  }, // ← Naya add kiya
+  },
   maintenanceMessage: {
     type: String,
     default: 'Site under maintenance. Please check back later.',
     trim: true
-  } // ← Naya add kiya
+  },
+
+  // ============ NAYA: HEADER BANNER SETTINGS ============
+  headerBannerUrl: {
+    type: String,
+    default: '/assets/images/default-banner.jpg'
+  },
+  headerBannerHeight: {
+    type: Number,
+    default: 200
+  }
+  // ============ KHATAM ============
 
 }, {
   timestamps: true,

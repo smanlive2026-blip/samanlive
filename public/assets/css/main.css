@@ -7,13 +7,28 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: rgba(245, 245, 245, 0.92); }
 @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-/* ============ 1. HEADER ============ */
-.header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 0; box-shadow: 0 4px 20px rgba(102,126,234,0.3); position: sticky; top: 0; z-index: 100; }
-.header-container { max-width: 1200px; margin: 0 auto; padding: 0 8px; display: flex; align-items: center; justify-content: space-between; }
-.logo { display: flex; align-items: center; gap: 8px; }
-.logo-img-fix { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
-.logo-text { font-size: 16px; font-weight: bold; white-space: nowrap; }
-.location-display { font-size: 12px; color: #e0e7ff; display: flex; align-items: center; gap: 4px; }
+/* ============ 1. HEADER BANNER - ADMIN CONTROL ============ */
+.header-banner {
+    width: 100%;
+    height: 200px; /* default, admin se change hogi */
+    position: relative;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.header-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.banner-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent);
+}
+
+/* PURANA .header, .header-container, .logo, .location-display HATA DIYA */
 
 /* ============ 2. SEARCH ============ */
 .search-row { display: flex; align-items: center; gap: 8px; padding: 10px; max-width: 1200px; margin: 0 auto; }

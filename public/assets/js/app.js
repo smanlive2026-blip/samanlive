@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', initApp);
 
 async function initApp() {
     await getUserLocation();
-    await loadSettings(); // LOGO KE LIYE
+    await loadSettings(); // BANNER KE LIYE
     renderCategoryChips();
     renderHistoryProducts();
     renderAdminAds();
@@ -18,13 +18,26 @@ async function initApp() {
     loadUserProfilePic();
 }
 
-// 1. LOGO ADMIN SE + LOCATION
+// 1. BANNER ADMIN SE + LOCATION
 async function loadSettings() {
     const res = await fetch('/api/settings').catch(()=>({ok:false}));
-    if(res.ok){ siteSettings = await res.json();
-        document.getElementById('headerLogo').src = siteSettings.logoImage || '/assets/images/samanlive-logo.png';
+    if(res.ok){ 
+        siteSettings = await res.json();
+        
+        // PURANA LOGO CODE HATA DIYA
+        // NAYA: HEADER BANNER LOAD KARO
+        const bannerImg = document.getElementById('headerBannerImg');
+        const bannerHeader = document.getElementById('mainHeaderBanner');
+        
+        if(bannerImg && siteSettings.headerBannerUrl) {
+            bannerImg.src = siteSettings.headerBannerUrl;
+        }
+        if(bannerHeader && siteSettings.headerBannerHeight) {
+            bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
+        }
     }
 }
+
 LocationManager.onLocationUpdate = (loc) => {
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${loc.lat}&lon=${loc.lng}`)
     .then(r=>r.json()).then(d=>{ document.getElementById('userCity').textContent = d.address.city || 'Your Area' })
@@ -47,7 +60,6 @@ async function filterShopsByType(shopId) {
     const res = await fetch(`/api/shop-view/nearby-shops?type=${folder}&lat=${userLocation.lat}&lng=${userLocation.lng}`);
     const data = await res.json();
     allServices = data.data || []; 
-    // Yaha tu chahe to alag page pe bhej de ya modal khol de
     alert(folder + ' ki shops load ho gayi');
 }
 
