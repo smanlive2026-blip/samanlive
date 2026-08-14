@@ -1,5 +1,5 @@
 // ========================================
-// SAMANLIVE - BLACKBOARD LAYOUT V4
+// SAMANLIVE - BLACKBOARD LAYOUT V4 - FINAL
 // ========================================
 let allModules = [], allAds = [], allServices = [], nearbyVideos = [], allCampaigns = [];
 let siteSettings = {}, userLocation = null, allProducts = [];
@@ -8,29 +8,24 @@ let originalServices = [], originalProducts = [];
 document.addEventListener('DOMContentLoaded', initApp);
 
 async function initApp() {
-    await getUserLocation();
-    await loadSettings(); // BANNER KE LIYE
-    renderCategoryChips();
-    renderHistoryProducts();
-    renderAdminAds();
-    await reloadNearbyData(); // PURANA FUNCTION
-    renderNearbyProductsRepeat();
-    loadUserProfilePic();
+    await loadSettings(); // 1. PEHLE SETTINGS LOAD
+    await getUserLocation(); // 2. FIR LOCATION LE
 }
 
-// 1. BANNER ADMIN SE + LOCATION
+// 1. BANNER ADMIN SE
 async function loadSettings() {
     const res = await fetch('/api/settings').catch(()=>({ok:false}));
     if(res.ok){ 
         siteSettings = await res.json();
         
-        // PURANA LOGO CODE HATA DIYA
-        // NAYA: HEADER BANNER LOAD KARO
         const bannerImg = document.getElementById('headerBannerImg');
         const bannerHeader = document.getElementById('mainHeaderBanner');
         
-        if(bannerImg && siteSettings.headerBannerUrl) {
-            bannerImg.src = siteSettings.headerBannerUrl;
+        if(bannerImg && siteSettings.headerBannerUrl && siteSettings.headerBannerUrl !== '') {
+            bannerImg.src = siteSettings.headerBannerUrl; // ADMIN WALA BANNER
+            if(bannerHeader) bannerHeader.style.display = 'block';
+        } else {
+            if(bannerHeader) bannerHeader.style.display = 'none'; // NA HO TO CHUPA DE
         }
         if(bannerHeader && siteSettings.headerBannerHeight) {
             bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
@@ -38,15 +33,57 @@ async function loadSettings() {
     }
 }
 
-LocationManager.onLocationUpdate = (loc) => {
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${loc.lat}&lon=${loc.lng}`)
-    .then(r=>r.json()).then(d=>{ document.getElementById('userCity').textContent = d.address.city || 'Your Area' })
+// 2. LOCATION MANAGER - PURA DEFINE KIYA HUA
+window.LocationManager = {
+    onLocationUpdate: null
+};
+
+async function getUserLocation() {
+    if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            
+            // CITY NAME SET KARO
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`);
+                const d = await res.json();
+                document.getElementById('userCity').textContent = d.address.city || d.address.town || d.address.district || 'Your Area';
+            } catch(e){}
+
+            // LOCATION MILNE KE BAAD HI YE SAB CHALAO
+            renderCategoryChips();
+            renderHistoryProducts();
+            renderAdminAds();
+            await reloadNearbyData();
+            renderNearbyProductsRepeat();
+            loadUserProfilePic();
+
+            // AGAR KOI AUR JAGAH LOCATION UPDATE CHAHIYE
+            if(window.LocationManager.onLocationUpdate){
+                window.LocationManager.onLocationUpdate(userLocation);
+            }
+
+        }, (err) => {
+            console.log("Location Error", err);
+            document.getElementById('userCity').textContent = 'Location Off';
+            // LOCATION NA MILE TO BHI BAQI LOAD KAR DO
+            renderCategoryChips();
+            renderHistoryProducts();
+            loadUserProfilePic();
+        });
+    } else {
+        document.getElementById('userCity').textContent = 'Location Not Supported';
+        renderCategoryChips();
+        renderHistoryProducts();
+        loadUserProfilePic();
+    }
 }
 
 // 3. CATEGORY CHIPS - SHOP_TEMPLATE_MAP SE SABHI SHOP
 function renderCategoryChips() {
     const container = document.getElementById('categoryChips'); if(!container) return;
     container.innerHTML = '';
+    if(!window.SHOP_TEMPLATES) return;
     window.SHOP_TEMPLATES.forEach((shop, i) => {
         container.innerHTML += `
         <div class="category-chip" onclick="filterShopsByType('${shop.id}')">
@@ -55,7 +92,9 @@ function renderCategoryChips() {
         </div>`;
     });
 }
+
 async function filterShopsByType(shopId) {
+    if(!userLocation) return alert('Pehle location on karo');
     const folder = window.getShopTemplateFolder(shopId);
     const res = await fetch(`/api/shop-view/nearby-shops?type=${folder}&lat=${userLocation.lat}&lng=${userLocation.lng}`);
     const data = await res.json();
@@ -73,7 +112,8 @@ function renderHistoryProducts() {
             <p>${p.name}</p><span>₹${p.price}</span>
         </div>`).join('') || '<p style="opacity:0.6">No History</p>';
 }
-window.addToHistory = function(product){ // PRODUCT PAGE PE CALL KARNA
+
+window.addToHistory = function(product){
     let history = JSON.parse(localStorage.getItem('productHistory') || '[]');
     history = history.filter(p => p.id !== product.id);
     history.unshift(product); history = history.slice(0,20);
@@ -81,30 +121,30 @@ window.addToHistory = function(product){ // PRODUCT PAGE PE CALL KARNA
     renderHistoryProducts();
 }
 
-// 1. ADMIN ADVERTISEMENT
+// 5. ADMIN ADVERTISEMENT
 async function renderAdminAds() {
     const container = document.getElementById('adminAdContainer'); if(!container) return;
-    const res = await fetch('/api/admin/ads/active?area='+userLocation?.city).catch(()=>({ok:false}));
+    if(!userLocation) { container.innerHTML='<p>Location on karo</p>'; return; }
+    const res = await fetch('/api/admin/ads/active?area='+userLocation.city).catch(()=>({ok:false}));
     if(!res.ok){ container.innerHTML='<p>No Ads</p>'; return; }
     const data = await res.json();
     container.innerHTML = (data.ads||[]).map(ad => `
         <div class="ad-product-card" onclick="window.open('${ad.link}')">
-            <img src="${ad.image}"><div class="ad-info"><h4>${ad.title}</h4><p>${ad.shopName}</p></div>
+            <img src="${ad.image}" onerror="this.style.display='none'"><div class="ad-info"><h4>${ad.title}</h4><p>${ad.shopName}</p></div>
         </div>`).join('') || '<p>No Ads</p>';
 }
 
-// const res = await fetch(`/api/products/most-searched?limit=6&lat=${userLocation.lat}&lng=${userLocation.lng}`);
-
-// NAYA CODE LAGA DE
+// 6. NEARBY PRODUCTS REPEAT
 async function renderNearbyProductsRepeat() {
-    /**
-     * KAAM: Nearby ke sabhi shop ke product laana common API se
-     */
     const container = document.getElementById('nearbyProductsRepeat'); 
     if(!container) return;
+    if(!userLocation){
+        container.innerHTML = '<p>Location on karo products dikhane ke liye</p>';
+        return;
+    }
 
-    // NAYA: COMMON API SE SABHI PRODUCT LAO AREA KE HISAB SE
-    const res = await fetch(`/api/products/admin/all?limit=20&lat=${userLocation.lat}&lng=${userLocation.lng}`);
+    const res = await fetch(`/api/products/admin/all?limit=20&lat=${userLocation.lat}&lng=${userLocation.lng}`).catch(()=>({ok:false}));
+    if(!res.ok){ container.innerHTML = '<p>Products load nahi hue</p>'; return; }
     const data = await res.json(); 
     allProducts = data.products || [];
     
@@ -128,11 +168,8 @@ async function renderNearbyProductsRepeat() {
 }
 
 // PURANE FUNCTION - BILKUL SAFE
-async function reloadNearbyData() {
-    // TERA PURANA WALA HI HAI - 6 LINE SHOP + PRODUCT
-    // BAS AB UI ME SHOW NAHI HO RAHA, FUNCTION CHAL RAHA
-}
-function renderSixLineShops(){} // KHALI CHHOD DIYA
+async function reloadNearbyData() {}
+function renderSixLineShops(){}
 function renderSixLineProducts(){}
 function renderServices(){}
 function renderTopAds(){}
@@ -142,8 +179,8 @@ function renderVideos(){}
 // BOTTOM NAV 5 BUTTON
 function goToProfilePage() { window.location.href = '/profile.html'; }
 function goToDelivery() { window.location.href = '/delivery-boy.html'; }
-function scrollToNearbyShops() { document.querySelector('.nearby-product-section').scrollIntoView({behavior:'smooth'}); }
-function scrollToServices() { document.querySelector('.category-row').scrollIntoView({behavior:'smooth'}); }
+function scrollToNearbyShops() { document.querySelector('.nearby-product-section')?.scrollIntoView({behavior:'smooth'}); }
+function scrollToServices() { document.querySelector('.category-row')?.scrollIntoView({behavior:'smooth'}); }
 function trackChild() { alert('Track Child - Coming Soon'); }
 
 // SEARCH + SCANNER + PROFILE PIC
@@ -154,16 +191,14 @@ function performSearch() {
 function openQRScanner() { alert('QR Scanner Open'); }
 async function loadUserProfilePic() {
     const pic = localStorage.getItem('userPic') || '/assets/images/samanlive-logo.png';
-    document.getElementById('navProfilePic').src = pic;
+    const el = document.getElementById('navProfilePic');
+    if(el) el.src = pic;
 }
-// PURANA FUNCTION UPDATE KAR
+
+// PRODUCT CLICK
 function openProduct(productId) {
-    /**
-     * KAAM: Product click pe history me dalna + product page pe bhejna
-     */
     const prod = allProducts.find(p => p._id === productId);
     if(prod) {
-        // HISTORY ME DAL
         addToHistory({
             id: prod._id, 
             name: prod.name, 
@@ -174,7 +209,3 @@ function openProduct(productId) {
     }
     window.location.href = `/product.html?id=${productId}`;
 }
-
-// TERA LOCATION MANAGER WAHI RAHEGA
-window.LocationManager = { /* tera purana code */ };
-async function getUserLocation() { /* tera purana code */ }
