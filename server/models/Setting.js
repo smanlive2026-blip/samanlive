@@ -6,15 +6,14 @@ const linkSchema = new mongoose.Schema({
 }, { _id: false });
 
 const settingSchema = new mongoose.Schema({
-  // Logo Settings
-  logoText: {
+  // ============ LOGO HATA DIYA ============
+  // logoText aur logoUrl dono nahi rahenge
+
+  // App Settings - LogoText ki jagah ye use hoga
+  appName: {
     type: String,
-    default: 'Deal24Hrs',
+    default: 'SAMAN LIVE',
     trim: true
-  },
-  logoUrl: {
-    type: String,
-    default: ''
   },
 
   // Color Settings
@@ -38,7 +37,7 @@ const settingSchema = new mongoose.Schema({
   // Footer Settings
   footerText: {
     type: String,
-    default: '© 2026 Deal24Hrs. All rights reserved.',
+    default: '© 2026 SAMAN LIVE. All rights reserved.',
     trim: true
   },
   footerAbout: {
@@ -49,46 +48,16 @@ const settingSchema = new mongoose.Schema({
   footerLinks: [linkSchema],
 
   // Social Media Links
-  facebook: {
-    type: String,
-    default: '',
-    trim: true
-  },
-  instagram: {
-    type: String,
-    default: '',
-    trim: true
-  },
-  twitter: {
-    type: String,
-    default: '',
-    trim: true
-  },
-  youtube: {
-    type: String,
-    default: '',
-    trim: true
-  },
-  linkedin: {
-    type: String,
-    default: '',
-    trim: true
-  },
-  whatsapp: {
-    type: String,
-    default: '',
-    trim: true
-  },
+  facebook: { type: String, default: '', trim: true },
+  instagram: { type: String, default: '', trim: true },
+  twitter: { type: String, default: '', trim: true },
+  youtube: { type: String, default: '', trim: true },
+  linkedin: { type: String, default: '', trim: true },
+  whatsapp: { type: String, default: '', trim: true },
 
-  // App Settings
-  appName: {
-    type: String,
-    default: 'Deal24Hrs',
-    trim: true
-  },
   supportEmail: {
     type: String,
-    default: 'support@deal24hrs.com',
+    default: 'support@samanlive.com',
     trim: true,
     lowercase: true
   },
@@ -109,10 +78,10 @@ const settingSchema = new mongoose.Schema({
     trim: true
   },
 
-  // ============ NAYA: HEADER BANNER SETTINGS ============
+  // ============ HEADER BANNER SETTINGS ============
   headerBannerUrl: {
     type: String,
-    default: '/assets/images/default-banner.jpg'
+    default: '' // khali rakha, 404 nahi aayega
   },
   headerBannerHeight: {
     type: Number,

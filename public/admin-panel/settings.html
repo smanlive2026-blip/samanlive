@@ -2,16 +2,16 @@
     <h2>🎨 Site Settings</h2>
     <div class="form-grid">
         <div class="form-group">
-            <label>Logo Text:</label>
-            <input type="text" id="settingLogoText">
+            <label>App Name:</label>
+            <input type="text" id="settingLogoText" placeholder="SAMAN LIVE">
         </div>
 
-        <!-- ============ NAYA: HEADER BANNER CONTROL ============ -->
+        <!-- ============ HEADER BANNER CONTROL ============ -->
         <div class="form-group full">
             <label>Header Banner Image:</label>
             <div class="logo-upload-wrapper">
                 <div class="logo-preview-box">
-                    <img id="bannerPreview" src="/assets/images/default-banner.jpg" style="width:100%;height:120px;object-fit:cover;border-radius:10px;">
+                    <img id="bannerPreview" src="" style="width:100%;height:120px;object-fit:cover;border-radius:10px;background:#f3f4f6;">
                 </div>
                 <div class="logo-upload-controls">
                     <input type="file" id="bannerUploadFile" accept="image/*" onchange="previewBanner(event)">
@@ -27,21 +27,6 @@
         </div>
         <!-- ============ KHATAM ============ -->
 
-        <div class="form-group full">
-            <label>Logo Image:</label>
-            <div class="logo-upload-wrapper">
-                <div class="logo-preview-box">
-                    <img id="logoPreview" src="" style="display:none;width:100px;height:100px;object-fit:contain;">
-                    <div id="logoIconPreview" style="width:100px;height:100px;background:#6366f1;color:white;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;border-radius:10px;"></div>
-                </div>
-                <div class="logo-upload-controls">
-                    <input type="file" id="logoUploadFile" accept="image/*" onchange="previewLogo(event)">
-                    <button class="btn-primary" id="uploadLogoBtn" onclick="uploadLogoFile()">📤 Upload Logo</button>
-                    <p class="help-text">PNG, JPG, SVG - Max 2MB</p>
-                    <p id="logoUploadStatus" class="status-text"></p>
-                </div>
-            </div>
-        </div>
         <div class="form-group"><label>Header Color:</label><input type="color" id="settingHeaderColor"></div>
         <div class="form-group"><label>Footer Color:</label><input type="color" id="settingFooterColor"></div>
         <div class="form-group full"><label>Footer Text:</label><input type="text" id="settingFooterText"></div>
@@ -69,7 +54,7 @@ let currentSettings = {};
 async function loadSettings() {
     try {
         currentSettings = await apiCall('/settings');
-        document.getElementById('settingLogoText').value = currentSettings.logoText || '';
+        document.getElementById('settingLogoText').value = currentSettings.appName || 'SAMAN LIVE';
         document.getElementById('settingHeaderColor').value = currentSettings.headerColor || '#1e40af';
         document.getElementById('settingFooterColor').value = currentSettings.footerColor || '#1e293b';
         document.getElementById('settingFooterText').value = currentSettings.footerText || '';
@@ -79,21 +64,14 @@ async function loadSettings() {
         document.getElementById('settingTwitter').value = currentSettings.twitter || '';
         document.getElementById('settingYoutube').value = currentSettings.youtube || '';
 
-        // NAYA: BANNER LOAD
+        // BANNER LOAD
         document.getElementById('settingBannerHeight').value = currentSettings.headerBannerHeight || 200;
         if (currentSettings.headerBannerUrl) {
             document.getElementById('bannerPreview').src = currentSettings.headerBannerUrl;
+        } else {
+            document.getElementById('bannerPreview').src = ''; // KHALI RAKHO
         }
 
-        if (currentSettings.logoUrl) {
-            document.getElementById('logoPreview').src = currentSettings.logoUrl;
-            document.getElementById('logoPreview').style.display = 'block';
-            document.getElementById('logoIconPreview').style.display = 'none';
-        } else {
-            document.getElementById('logoIconPreview').textContent = (currentSettings.logoText || 'S')[0];
-            document.getElementById('logoIconPreview').style.display = 'flex';
-            document.getElementById('logoPreview').style.display = 'none';
-        }
         renderFooterLinks();
     } catch (err) {}
 }
@@ -118,29 +96,11 @@ window.addFooterLink = () => {
 window.updateFooterLink = (i, field, value) => { currentSettings.footerLinks[i][field] = value; };
 window.removeFooterLink = (i) => { currentSettings.footerLinks.splice(i, 1); renderFooterLinks(); };
 
-window.previewLogo = (e) => {
-    const file = e.target.files[0];
-    if (file && file.size > 2 * 1024 * 1024) {
-        showToast('File size must be less than 2MB', 'error');
-        e.target.value = '';
-        return;
-    }
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            document.getElementById('logoPreview').src = e.target.result;
-            document.getElementById('logoPreview').style.display = 'block';
-            document.getElementById('logoIconPreview').style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-    }
-};
-
 // NAYA: BANNER PREVIEW
 window.previewBanner = (e) => {
     const file = e.target.files[0];
     if (file && file.size > 2 * 1024 * 1024) {
-        showToast('File size must be less than 2MB', 'error');
+        alert('File size must be less than 2MB');
         e.target.value = '';
         return;
     }
@@ -153,37 +113,19 @@ window.previewBanner = (e) => {
     }
 };
 
-window.uploadLogoFile = async () => {
-    const fileInput = document.getElementById('logoUploadFile');
-    const status = document.getElementById('logoUploadStatus');
-    if (!fileInput.files[0]) return showToast('Please select a logo', 'error');
-    const formData = new FormData();
-    formData.append('logo', fileInput.files[0]);
-    status.textContent = 'Uploading...';
-    try {
-        const res = await apiCall('/upload/logo', 'POST', formData);
-        currentSettings.logoUrl = res.url;
-        status.textContent = 'Upload successful!';
-        showToast('Logo uploaded');
-        setTimeout(() => status.textContent = '', 3000);
-    } catch (err) {
-        status.textContent = 'Upload failed!';
-    }
-};
-
 // NAYA: BANNER UPLOAD
 window.uploadBannerFile = async () => {
     const fileInput = document.getElementById('bannerUploadFile');
     const status = document.getElementById('bannerUploadStatus');
-    if (!fileInput.files[0]) return showToast('Please select a banner', 'error');
+    if (!fileInput.files[0]) return alert('Please select a banner');
     const formData = new FormData();
     formData.append('banner', fileInput.files[0]);
     status.textContent = 'Uploading...';
     try {
-        const res = await apiCall('/upload/banner', 'POST', formData); // backend me /upload/banner banana padega
+        const res = await apiCall('/upload/banner', 'POST', formData);
         currentSettings.headerBannerUrl = res.url;
         status.textContent = 'Upload successful!';
-        showToast('Banner uploaded');
+        alert('Banner uploaded');
         setTimeout(() => status.textContent = '', 3000);
     } catch (err) {
         status.textContent = 'Upload failed!';
@@ -195,10 +137,9 @@ window.saveSettings = async () => {
     btn.disabled = true;
     btn.textContent = 'Saving...';
     const data = {
-        logoText: document.getElementById('settingLogoText').value,
-        logoUrl: currentSettings.logoUrl || '',
-        headerBannerUrl: currentSettings.headerBannerUrl || '', // NAYA
-        headerBannerHeight: document.getElementById('settingBannerHeight').value, // NAYA
+        appName: document.getElementById('settingLogoText').value, // LogoText ki jagah AppName
+        headerBannerUrl: currentSettings.headerBannerUrl || '',
+        headerBannerHeight: document.getElementById('settingBannerHeight').value,
         headerColor: document.getElementById('settingHeaderColor').value,
         footerColor: document.getElementById('settingFooterColor').value,
         footerText: document.getElementById('settingFooterText').value,
@@ -211,7 +152,7 @@ window.saveSettings = async () => {
     };
     try {
         await apiCall('/settings', 'PUT', data);
-        showToast('Settings saved successfully');
+        alert('Settings saved successfully');
         await loadSettings();
     } catch (err) {} finally {
         btn.disabled = false;
