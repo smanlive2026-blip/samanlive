@@ -2,13 +2,13 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const Setting = require('../models/Setting'); // TERE PASS YE MODEL HAI
+const Setting = require('../models/Setting');
 const router = express.Router();
 
 // BANNER UPLOAD KE LIYE MULTER
 const bannerStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadPath = path.join(__dirname, '../../public/assets/images/banners');
+        const uploadPath = path.join(__dirname, '../../public/banners'); // <-- /public/banners me save hoga
         if (!fs.existsSync(uploadPath)) {
             fs.mkdirSync(uploadPath, { recursive: true });
         }
@@ -30,7 +30,7 @@ router.get('/settings', async (req, res) => {
         let settings = await Setting.findOne();
         if (!settings) {
             settings = new Setting({
-                headerBannerUrl: '/assets/images/default-banner.jpg',
+                headerBannerUrl: '', // <-- KHALI RAKHA. 404 nahi aayega
                 headerBannerHeight: 200
             });
             await settings.save();
@@ -63,7 +63,7 @@ router.post('/upload/banner', uploadBanner.single('banner'), async (req, res) =>
             return res.status(400).json({ error: 'No file uploaded' });
         }
         
-        const fileUrl = `/assets/images/banners/${req.file.filename}`;
+        const fileUrl = `/banners/${req.file.filename}`; // <-- URL bhi /banners/ se start hoga
         
         res.json({ 
             success: true, 
