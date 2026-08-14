@@ -85,7 +85,7 @@ const settingSchema = new mongoose.Schema({
   },
   headerBannerHeight: {
     type: Number,
-    default: 200
+    default: 100
   }
   // ============ KHATAM ============
 
