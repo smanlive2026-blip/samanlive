@@ -43,12 +43,17 @@ router.put('/settings', express.json(), async (req, res) => {
         res.json({ success: true, data: settings });
     } catch (err) { res.status(500).json({ error: 'Failed' }); }
 });
-
 // UPLOAD BANNER
 router.post('/upload/banner', uploadBanner.single('banner'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file' });
-        const fileUrl = `/header-banner.jpg`; // <-- seedha public se
+        
+        const fileUrl = `/header-banner.jpg?v=` + Date.now(); // cache bust
+        let settings = await Setting.findOne();
+        if (!settings) settings = new Setting();
+        settings.headerBannerUrl = fileUrl; // <-- YE LINE ADD KAR
+        await settings.save();
+
         res.json({ success: true, url: fileUrl });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });

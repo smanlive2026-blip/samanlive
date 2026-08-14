@@ -7,9 +7,29 @@ let originalServices = [], originalProducts = [];
 
 document.addEventListener('DOMContentLoaded', initApp);
 
+// ========== LOCATION MANAGER - CODE1 WALA SYSTEM ==========
+window.LocationManager = {
+    getManual: function() {
+        return new Promise((resolve) => {
+            if(!navigator.geolocation) { resolve(null); return; }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+                    resolve(userLocation);
+                },
+                () => { resolve(null); },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        });
+    },
+    onLocationUpdate: null
+};
+
 async function initApp() {
-    await loadSettings(); // 1. PEHLE SETTINGS LOAD
-    await getUserLocation(); // 2. FIR LOCATION LE
+    await loadSettings(); // 1. PEHLE BANNER LOAD
+    await window.LocationManager.getManual(); // 2. FIR LOCATION
+    await showUserLocationInHeader(); // 3. CITY SET
+    await loadAllData(); // 4. BAQI SAB
 }
 
 // 1. BANNER ADMIN SE
@@ -22,10 +42,10 @@ async function loadSettings() {
         const bannerHeader = document.getElementById('mainHeaderBanner');
         
         if(bannerImg && siteSettings.headerBannerUrl && siteSettings.headerBannerUrl !== '') {
-            bannerImg.src = siteSettings.headerBannerUrl; // ADMIN WALA BANNER
+            bannerImg.src = siteSettings.headerBannerUrl + '?v=' + Date.now(); // CACHE BUST
             if(bannerHeader) bannerHeader.style.display = 'block';
         } else {
-            if(bannerHeader) bannerHeader.style.display = 'none'; // NA HO TO CHUPA DE
+            if(bannerHeader) bannerHeader.style.display = 'none';
         }
         if(bannerHeader && siteSettings.headerBannerHeight) {
             bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
@@ -33,53 +53,36 @@ async function loadSettings() {
     }
 }
 
-// 2. LOCATION MANAGER - PURA DEFINE KIYA HUA
-window.LocationManager = {
-    onLocationUpdate: null
-};
-
-async function getUserLocation() {
-    if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            
-            // CITY NAME SET KARO
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`);
-                const d = await res.json();
-                document.getElementById('userCity').textContent = d.address.city || d.address.town || d.address.district || 'Your Area';
-            } catch(e){}
-
-            // LOCATION MILNE KE BAAD HI YE SAB CHALAO
-            renderCategoryChips();
-            renderHistoryProducts();
-            renderAdminAds();
-            await reloadNearbyData();
-            renderNearbyProductsRepeat();
-            loadUserProfilePic();
-
-            // AGAR KOI AUR JAGAH LOCATION UPDATE CHAHIYE
-            if(window.LocationManager.onLocationUpdate){
-                window.LocationManager.onLocationUpdate(userLocation);
-            }
-
-        }, (err) => {
-            console.log("Location Error", err);
-            document.getElementById('userCity').textContent = 'Location Off';
-            // LOCATION NA MILE TO BHI BAQI LOAD KAR DO
-            renderCategoryChips();
-            renderHistoryProducts();
-            loadUserProfilePic();
-        });
-    } else {
-        document.getElementById('userCity').textContent = 'Location Not Supported';
-        renderCategoryChips();
-        renderHistoryProducts();
-        loadUserProfilePic();
+// 2. CITY NAME SET KARO
+async function showUserLocationInHeader() {
+    if (!userLocation) {
+        document.getElementById('userCity').textContent = 'Location Off';
+        return;
+    }
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`);
+        const d = await res.json();
+        document.getElementById('userCity').textContent = d.address.city || d.address.town || d.address.district || 'Your Area';
+    } catch(e){ 
+        document.getElementById('userCity').textContent = 'Your Area'; 
     }
 }
 
-// 3. CATEGORY CHIPS - SHOP_TEMPLATE_MAP SE SABHI SHOP
+// 3. LOCATION KE BAAD SAB LOAD
+async function loadAllData() {
+    renderCategoryChips();
+    renderHistoryProducts();
+    await renderAdminAds();
+    await reloadNearbyData();
+    await renderNearbyProductsRepeat();
+    loadUserProfilePic();
+
+    if(window.LocationManager.onLocationUpdate){
+        window.LocationManager.onLocationUpdate(userLocation);
+    }
+}
+
+// 4. CATEGORY CHIPS
 function renderCategoryChips() {
     const container = document.getElementById('categoryChips'); if(!container) return;
     container.innerHTML = '';
@@ -102,7 +105,7 @@ async function filterShopsByType(shopId) {
     alert(folder + ' ki shops load ho gayi');
 }
 
-// 4. HISTORY PRODUCT
+// 5. HISTORY PRODUCT
 function renderHistoryProducts() {
     const container = document.getElementById('historyProducts'); if(!container) return;
     let history = JSON.parse(localStorage.getItem('productHistory') || '[]');
@@ -121,11 +124,13 @@ window.addToHistory = function(product){
     renderHistoryProducts();
 }
 
-// 5. ADMIN ADVERTISEMENT
+// 6. ADMIN ADVERTISEMENT - LOCATION NA HO TO BHI CHALEGA
 async function renderAdminAds() {
     const container = document.getElementById('adminAdContainer'); if(!container) return;
-    if(!userLocation) { container.innerHTML='<p>Location on karo</p>'; return; }
-    const res = await fetch('/api/admin/ads/active?area='+userLocation.city).catch(()=>({ok:false}));
+    let url = '/api/admin/ads/active';
+    if(userLocation) url += '?area='+userLocation.city;
+    
+    const res = await fetch(url).catch(()=>({ok:false}));
     if(!res.ok){ container.innerHTML='<p>No Ads</p>'; return; }
     const data = await res.json();
     container.innerHTML = (data.ads||[]).map(ad => `
@@ -134,16 +139,15 @@ async function renderAdminAds() {
         </div>`).join('') || '<p>No Ads</p>';
 }
 
-// 6. NEARBY PRODUCTS REPEAT
+// 7. NEARBY PRODUCTS REPEAT - LOCATION NA HO TO BHI CHALEGA
 async function renderNearbyProductsRepeat() {
     const container = document.getElementById('nearbyProductsRepeat'); 
     if(!container) return;
-    if(!userLocation){
-        container.innerHTML = '<p>Location on karo products dikhane ke liye</p>';
-        return;
-    }
 
-    const res = await fetch(`/api/products/admin/all?limit=20&lat=${userLocation.lat}&lng=${userLocation.lng}`).catch(()=>({ok:false}));
+    let url = `/api/products/admin/all?limit=20`;
+    if(userLocation) url += `&lat=${userLocation.lat}&lng=${userLocation.lng}`;
+
+    const res = await fetch(url).catch(()=>({ok:false}));
     if(!res.ok){ container.innerHTML = '<p>Products load nahi hue</p>'; return; }
     const data = await res.json(); 
     allProducts = data.products || [];
