@@ -135,7 +135,7 @@ window.addToHistory = function(product){
 async function renderAdminAds() {
     const container = document.getElementById('adminAdContainer'); if(!container) return;
     let url = '/api/admin/ads/active';
-    if(userLocation) url += '?area='+userLocation.city;
+    if(userLocation) url += `?lat=${userLocation.lat}&lng=${userLocation.lng}`; // <-- FIX
     
     const res = await fetch(url).catch(()=>({ok:false}));
     if(!res.ok){ container.innerHTML='<p>No Ads</p>'; return; }

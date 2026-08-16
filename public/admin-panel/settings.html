@@ -49,7 +49,24 @@
 </div>
 
 <script>
+
 let currentSettings = {};
+
+// API CALL HELPER - FORMDATA KE LIYE FIX
+async function apiCall(url, method = 'GET', data = null) {
+    const options = { method };
+    if (data) {
+        if (data instanceof FormData) {
+            options.body = data; // FormData ke liye header mat lagana
+        } else {
+            options.headers = { 'Content-Type': 'application/json' };
+            options.body = JSON.stringify(data);
+        }
+    }
+    const res = await fetch('/api' + url, options);
+    if (!res.ok) throw new Error('API Error');
+    return res.json();
+}
 
 async function loadSettings() {
     try {
@@ -67,13 +84,13 @@ async function loadSettings() {
         // BANNER LOAD
         document.getElementById('settingBannerHeight').value = currentSettings.headerBannerHeight || 200;
         if (currentSettings.headerBannerUrl) {
-            document.getElementById('bannerPreview').src = currentSettings.headerBannerUrl;
+            document.getElementById('bannerPreview').src = currentSettings.headerBannerUrl + '?v=' + Date.now(); // cache bust
         } else {
-            document.getElementById('bannerPreview').src = ''; // KHALI RAKHO
+            document.getElementById('bannerPreview').src = '/assets/default-banner.jpg'; // default de
         }
 
         renderFooterLinks();
-    } catch (err) {}
+    } catch (err) { console.error(err) }
 }
 
 function renderFooterLinks() {
@@ -113,22 +130,31 @@ window.previewBanner = (e) => {
     }
 };
 
-// NAYA: BANNER UPLOAD
+// NAYA: BANNER UPLOAD - FIXED
 window.uploadBannerFile = async () => {
     const fileInput = document.getElementById('bannerUploadFile');
     const status = document.getElementById('bannerUploadStatus');
+    const btn = document.getElementById('uploadBannerBtn');
     if (!fileInput.files[0]) return alert('Please select a banner');
+
     const formData = new FormData();
     formData.append('banner', fileInput.files[0]);
-    status.textContent = 'Uploading...';
+
+    status.textContent = 'Uploading to Cloudinary...';
+    btn.disabled = true;
     try {
-        const res = await apiCall('/upload/banner', 'POST', formData);
+        const res = await apiCall('/upload/banner', 'POST', formData); // POST
         currentSettings.headerBannerUrl = res.url;
+        document.getElementById('bannerPreview').src = res.url + '?v=' + Date.now(); // turant update
         status.textContent = 'Upload successful!';
-        alert('Banner uploaded');
+        alert('Banner uploaded and saved to DB!');
         setTimeout(() => status.textContent = '', 3000);
     } catch (err) {
         status.textContent = 'Upload failed!';
+        console.error(err);
+        alert('Upload failed: ' + err.message);
+    } finally {
+        btn.disabled = false;
     }
 };
 
@@ -137,8 +163,8 @@ window.saveSettings = async () => {
     btn.disabled = true;
     btn.textContent = 'Saving...';
     const data = {
-        appName: document.getElementById('settingLogoText').value, // LogoText ki jagah AppName
-        headerBannerUrl: currentSettings.headerBannerUrl || '',
+        appName: document.getElementById('settingLogoText').value,
+        headerBannerUrl: currentSettings.headerBannerUrl || '', // Cloudinary URL
         headerBannerHeight: document.getElementById('settingBannerHeight').value,
         headerColor: document.getElementById('settingHeaderColor').value,
         footerColor: document.getElementById('settingFooterColor').value,
@@ -154,7 +180,10 @@ window.saveSettings = async () => {
         await apiCall('/settings', 'PUT', data);
         alert('Settings saved successfully');
         await loadSettings();
-    } catch (err) {} finally {
+    } catch (err) {
+        alert('Save failed');
+        console.error(err)
+    } finally {
         btn.disabled = false;
         btn.textContent = '💾 Save All Settings';
     }

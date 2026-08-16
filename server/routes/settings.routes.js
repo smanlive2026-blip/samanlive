@@ -1,25 +1,9 @@
+//server/routes/setting.routes.js
+
 const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const Setting = require('../models/Setting');
+const { upload } = require('../utils/cloudinary'); // <-- TERI WALI FILE SE UTHA LIYA
 const router = express.Router();
-
-// BANNER UPLOAD KE LIYE MULTER
-const bannerStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadPath = path.join(__dirname, '../../public'); // <-- seedha public me
-        cb(null, uploadPath);
-    },
-    filename: function (req, file, cb) {
-        cb(null, 'header-banner.jpg'); // <-- naam fix rakha. hamesha 1 hi file overwrite hogi
-    }
-});
-
-const uploadBanner = multer({ 
-    storage: bannerStorage,
-    limits: { fileSize: 2 * 1024 * 1024 }
-});
 
 // GET SETTINGS
 router.get('/settings', async (req, res) => {
@@ -30,7 +14,10 @@ router.get('/settings', async (req, res) => {
             await settings.save();
         }
         res.json(settings);
-    } catch (err) { res.status(500).json({ error: 'Failed' }); }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to load settings' });
+    }
 });
 
 // UPDATE SETTINGS
@@ -41,21 +28,32 @@ router.put('/settings', express.json(), async (req, res) => {
         Object.assign(settings, req.body);
         await settings.save();
         res.json({ success: true, data: settings });
-    } catch (err) { res.status(500).json({ error: 'Failed' }); }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to save settings' });
+    }
 });
-// UPLOAD BANNER
-router.post('/upload/banner', uploadBanner.single('banner'), async (req, res) => {
+
+// ============ UPLOAD BANNER - AB TERI WALI CLOUDINARY STORAGE USE HOGI ============
+router.post('/upload/banner', upload.single('banner'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file' });
-        
-        const fileUrl = `/header-banner.jpg?v=` + Date.now(); // cache bust
+
+        // TERI STORAGE ENGINE SE FILE DIRECT CLOUDINARY PE CHALI GAYI
+        // URL yaha milega: req.file.path
+        const fileUrl = req.file.path;
+
+        // DB ME SAVE KARO
         let settings = await Setting.findOne();
         if (!settings) settings = new Setting();
-        settings.headerBannerUrl = fileUrl; // <-- YE LINE ADD KAR
+        settings.headerBannerUrl = fileUrl;
         await settings.save();
 
         res.json({ success: true, url: fileUrl });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) {
+        console.error("Banner Upload Error:", err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;
