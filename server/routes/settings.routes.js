@@ -1,17 +1,31 @@
-//server/routes/setting.routes.js
-
 const express = require('express');
 const Setting = require('../models/Setting');
-const { upload } = require('../utils/cloudinary'); // <-- TERI WALI FILE SE UTHA LIYA
+const { upload } = require('../utils/cloudinary'); 
 const router = express.Router();
 
-// GET SETTINGS
+// GET SETTINGS - PURANE DOC ME FIELD ADD KAREGA
 router.get('/settings', async (req, res) => {
     try {
         let settings = await Setting.findOne();
         if (!settings) {
-            settings = new Setting({ headerBannerUrl: '', headerBannerHeight: 200 });
+            // NAYA DOC BANA RAHA HAI TO SAB FIELD DAAL DE
+            settings = new Setting({ 
+                headerBannerUrl: '', 
+                headerBannerHeight: 200 
+            });
             await settings.save();
+        } else {
+            // PURANE DOC ME FIELD MISSING HO TO ADD KAR DE
+            let updated = false;
+            if (settings.headerBannerUrl === undefined) {
+                settings.headerBannerUrl = '';
+                updated = true;
+            }
+            if (settings.headerBannerHeight === undefined) {
+                settings.headerBannerHeight = 200;
+                updated = true;
+            }
+            if (updated) await settings.save();
         }
         res.json(settings);
     } catch (err) {
@@ -34,20 +48,22 @@ router.put('/settings', express.json(), async (req, res) => {
     }
 });
 
-// ============ UPLOAD BANNER - AB TERI WALI CLOUDINARY STORAGE USE HOGI ============
+// UPLOAD BANNER - CLOUDINARY + DB SAVE
 router.post('/upload/banner', upload.single('banner'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file' });
 
-        // TERI STORAGE ENGINE SE FILE DIRECT CLOUDINARY PE CHALI GAYI
-        // URL yaha milega: req.file.path
-        const fileUrl = req.file.path;
+        const fileUrl = req.file.path; // Cloudinary URL
+        console.log("Banner Uploaded to Cloudinary:", fileUrl);
 
         // DB ME SAVE KARO
         let settings = await Setting.findOne();
         if (!settings) settings = new Setting();
-        settings.headerBannerUrl = fileUrl;
+        
+        settings.headerBannerUrl = fileUrl; // <-- YAHI SAVE HOGA
         await settings.save();
+
+        console.log("Banner Saved in DB:", settings.headerBannerUrl);
 
         res.json({ success: true, url: fileUrl });
     } catch (err) {
