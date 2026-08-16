@@ -49,11 +49,13 @@ async function loadSettings() {
         const bannerHeader = document.getElementById('mainHeaderBanner');
         
         if(bannerImg && siteSettings.headerBannerUrl && siteSettings.headerBannerUrl !== '') {
-            bannerImg.src = siteSettings.headerBannerUrl + '?v=' + Date.now(); // CACHE BUST
-            if(bannerHeader) bannerHeader.style.display = 'block';
+            bannerImg.src = siteSettings.headerBannerUrl + '?v=' + Date.now(); // ADMIN WALA BANNER
         } else {
-            if(bannerHeader) bannerHeader.style.display = 'none';
+            bannerImg.src = '/assets/images/default-banner.jpg'; // DEFAULT BANNER
         }
+        
+        if(bannerHeader) bannerHeader.style.display = 'block'; // <-- HAMESHA SHOW RAKHO
+        
         if(bannerHeader && siteSettings.headerBannerHeight) {
             bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
         }
