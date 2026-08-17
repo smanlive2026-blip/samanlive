@@ -14,6 +14,21 @@ const settingSchema = new mongoose.Schema({
     trim: true
   },
 
+  // ============ HEADER LOGO + BANNER ============
+  headerLogoUrl: { // <-- YE NAYA ADD KIYA
+    type: String,
+    default: ''
+  },
+  headerBannerUrl: {
+    type: String,
+    default: ''
+  },
+  headerBannerHeight: {
+    type: Number,
+    default: 200
+  },
+  // ============ KHATAM ============
+
   // Color Settings
   headerColor: {
     type: String,
@@ -76,17 +91,6 @@ const settingSchema = new mongoose.Schema({
     trim: true
   },
 
-  // ============ HEADER BANNER SETTINGS ============
-  headerBannerUrl: {
-    type: String,
-    default: ''
-  },
-  headerBannerHeight: {
-    type: Number,
-    default: 200 // 100 se 200 kar diya default
-  }
-  // ============ KHATAM ============
-
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -101,14 +105,5 @@ settingSchema.statics.getSettings = async function() {
   }
   return settings;
 };
-
-// YE HATA DIYA - YAHI SAVE FAILED KARWA RAHA THA
-// settingSchema.pre('save', async function(next) {
-// const count = await mongoose.model('Setting').countDocuments();
-// if (count > 0 && this.isNew) {
-// throw new Error('Only one settings document can exist');
-// }
-// next();
-// });
 
 module.exports = mongoose.models.Setting || mongoose.model('Setting', settingSchema);

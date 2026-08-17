@@ -4,48 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAMANLIVE</title>
-    <link rel="stylesheet" href="/assets/css/main.css?v=4">
+    <link rel="stylesheet" href="/assets/css/main.css?v=5">
     <script src="/assets/js/shop-template-map.js"></script>
 </head>
 <body>
     <div class="video-bg"></div>
     <div class="video-overlay"></div>
 
-    <!-- 1. HEADER ROW: AB YE PURA ADMIN BANNER HOGA - LOGO/LOCATION HATA DIYA -->
-    <header class="header-banner" id="mainHeaderBanner">
-    <img id="headerBannerImg" src="" alt="SamanLive Banner">
-    <div class="banner-overlay"></div>
-    </header>
-
-    <!-- 2. SEARCH ROW: SEARCH + SCANNER -->
-    <div class="search-row">
+    <!-- 1. TOP HEADER: LOGO + SEARCH + SCANNER -->
+    <header class="top-header">
+        <img id="headerLogoImg" src="/assets/images/samanlive-logo.png" alt="Logo" class="header-logo">
+        
         <div class="search-box-modern">
             <span class="search-icon">🔍</span>
             <input type="text" id="searchInput" placeholder="Search products, shops...">
             <button class="search-btn-modern" onclick="performSearch()">→</button>
+            <button class="scanner-btn-inline" onclick="openQRScanner()">📷</button>
         </div>
-        <button class="scanner-btn-header" onclick="openQRScanner()">[ ]</button>
-    </div>
+    </header>
+
+    <!-- 2. HEADER ROW: ADMIN BANNER -->
+    <header class="header-banner" id="mainHeaderBanner">
+        <img id="headerBannerImg" src="" alt="SamanLive Banner">
+        <div class="banner-overlay"></div>
+    </header>
 
     <main class="container">
-        <!-- 3. CATEGORY ROW: SABHI SHOP TYPE 1 2 3 4 5 6 7 8 9 -->
+        <!-- 3. CATEGORY ROW -->
         <section class="category-row">
             <div class="category-chips" id="categoryChips"></div>
         </section>
 
-        <!-- 4. HISTORY ROW: LAST DEKHE HUE PRODUCT -->
+        <!-- 4. HISTORY ROW -->
         <section class="history-section">
             <h3>History</h3>
             <div class="history-scroll" id="historyProducts"></div>
         </section>
 
-        <!-- 1. ADMIN ADVERTISEMENT ROW: ADMIN CONTROL -->
+        <!-- 5. ADMIN ADVERTISEMENT ROW -->
         <section class="ad-product-section">
             <h3>Advertisement</h3>
             <div class="ad-product-scroll" id="adminAdContainer"></div>
         </section>
 
-        <!-- 2. NEARBY PRODUCT: JYADA SEARCH WALE - 10 BAAR REPEAT -->
+        <!-- 6. NEARBY PRODUCT -->
         <section class="nearby-product-section">
             <h3>Nearby Product</h3>
             <div class="nearby-product-list" id="nearbyProductsRepeat"></div>
@@ -59,23 +61,23 @@
             <span>Profile</span>
         </button>
         <button class="nav-btn" onclick="goToDelivery()">
-            <span>🚚</span>
+            <span class="nav-icon">🚚</span>
             <span>Delivery</span>
         </button>
         <button class="nav-btn nav-center" onclick="window.location.href='/nearby-shops.html'">
-        <div class="nav-center-hex">Local<br>Market</div>
+            <div class="nav-center-hex">Local<br>Market</div>
         </button>
         <button class="nav-btn" onclick="scrollToServices()">
-            <span>🛍️</span>
+            <span class="nav-icon">🛍️</span>
             <span>Service</span>
         </button>
         <button class="nav-btn" onclick="trackChild()">
-            <span>📍</span>
+            <span class="nav-icon">📍</span>
             <span>Track</span>
         </button>
     </footer>
 
-    <!-- PURANA CODE HIDE - FUNCTION NA TOOTE -->
+    <!-- PURANA CODE HIDE -->
     <div style="display:none">
         <div id="shopsContent"></div>
         <div id="topProductsContent"></div>
@@ -86,27 +88,26 @@
     </div>
 
     <footer class="footer" id="dynamicFooter">
-    <div class="footer-container">
-        <div class="footer-col">
-            <h3 class="footer-logo" id="footerLogo">SAMAN LIVE</h3>
-            <p id="footerAbout">Best deals platform in your city</p>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h3 class="footer-logo" id="footerLogo">SAMAN LIVE</h3>
+                <p id="footerAbout">Best deals platform in your city</p>
+            </div>
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul id="footerLinksList"></ul>
+            </div>
+            <div class="footer-col">
+                <h4>Follow Us</h4>
+                <div class="social-links" id="footerSocial"></div>
+            </div>
         </div>
-        <div class="footer-col">
-            <h4>Quick Links</h4>
-            <ul id="footerLinksList"></ul>
+        <div class="footer-bottom">
+            <p id="footerText">© 2026 SAMAN LIVE. All rights reserved.</p>
         </div>
-        <div class="footer-col">
-            <h4>Follow Us</h4>
-            <div class="social-links" id="footerSocial"></div>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <p id="footerText">© 2026 SAMAN LIVE. All rights reserved.</p>
-    </div>
-</footer>
+    </footer>
 
-<!-- index.html me <head> ya <body> ke end me -->
     <script src="/assets/js/product-core.js"></script>  
-    <script src="/assets/js/app.js?v=4"></script>
+    <script src="/assets/js/app.js?v=5"></script>
 </body>
 </html>

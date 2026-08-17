@@ -67,5 +67,20 @@ router.post('/upload/banner', upload.single('banner'), async (req, res) => {
     }
 });
 
+// UPLOAD LOGO
+router.post('/upload/logo', upload.single('logo'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No file' });
+        const fileUrl = req.file.path;
+        let settings = await Setting.findOne();
+        if (!settings) settings = new Setting();
+        settings.headerLogoUrl = fileUrl;
+        await settings.save();
+        res.json({ success: true, url: fileUrl });
+    } catch (err) {
+        console.error("Logo Upload Error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
 
 module.exports = router;

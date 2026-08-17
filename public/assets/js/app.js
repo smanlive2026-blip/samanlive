@@ -26,7 +26,7 @@ window.LocationManager = {
 };
 
 async function initApp() {
-    await loadSettings(); // 1. PEHLE BANNER LOAD - ISE KUCH NA ROKE
+    await loadSettings(); // 1. PEHLE BANNER + LOGO LOAD - ISE KUCH NA ROKE
     
     // LOCATION OR CITY KO ALAG TRY-CATCH ME DAAL DIYA
     try {
@@ -39,11 +39,17 @@ async function initApp() {
     await loadAllData(); // 2. BAQI SAB LOAD - YE PAKKA CHALEGA
 }
 
-// 1. BANNER ADMIN SE
+// 1. BANNER + LOGO ADMIN SE
 async function loadSettings() {
     const res = await fetch('/api/settings').catch(()=>({ok:false}));
     if(res.ok){ 
         siteSettings = await res.json();
+        
+        // LOGO LOAD - NAYA
+        const logoImg = document.getElementById('headerLogoImg');
+        if(logoImg) {
+            logoImg.src = siteSettings.headerLogoUrl + '?v=' + Date.now() || '/assets/images/samanlive-logo.png';
+        }
         
         const bannerImg = document.getElementById('headerBannerImg');
         const bannerHeader = document.getElementById('mainHeaderBanner');

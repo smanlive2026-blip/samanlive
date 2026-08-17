@@ -6,6 +6,23 @@
             <input type="text" id="settingLogoText" placeholder="SAMAN LIVE">
         </div>
 
+        <!-- ============ HEADER LOGO CONTROL ============ -->
+        <div class="form-group full">
+            <label>Header Logo - Top Left:</label>
+            <div class="logo-upload-wrapper">
+                <div class="logo-preview-box">
+                    <img id="logoPreview" src="" style="width:60px;height:60px;object-fit:cover;border-radius:10px;background:#f3f4f6;border:2px solid #10b981;">
+                </div>
+                <div class="logo-upload-controls">
+                    <input type="file" id="logoUploadFile" accept="image/*" onchange="previewLogo(event)">
+                    <button class="btn-primary" id="uploadLogoBtn" onclick="uploadLogoFile()">📤 Upload Logo</button>
+                    <p class="help-text">Recommended: 200x200px. PNG, JPG - Max 1MB</p>
+                    <p id="logoUploadStatus" class="status-text"></p>
+                </div>
+            </div>
+        </div>
+        <!-- ============ KHATAM ============ -->
+
         <!-- ============ HEADER BANNER CONTROL ============ -->
         <div class="form-group full">
             <label>Header Banner Image:</label>
@@ -52,8 +69,6 @@
 
 let currentSettings = {};
 
-// API CALL HELPER - FORMDATA KE LIYE FIX
-
 async function apiCall(url, method = 'GET', data = null) {
     const options = { method };
     if (data) {
@@ -85,12 +100,16 @@ async function loadSettings() {
         document.getElementById('settingTwitter').value = currentSettings.twitter || '';
         document.getElementById('settingYoutube').value = currentSettings.youtube || '';
 
+        // LOGO LOAD
+        if (currentSettings.headerLogoUrl) {
+            document.getElementById('logoPreview').src = currentSettings.headerLogoUrl + '?v=' + Date.now();
+        }
+
         // BANNER LOAD
         document.getElementById('settingBannerHeight').value = currentSettings.headerBannerHeight || 200;
-         if (currentSettings.headerBannerUrl) {
-        document.getElementById('bannerPreview').src = currentSettings.headerBannerUrl + '?v=' + Date.now(); // cache bust
+        if (currentSettings.headerBannerUrl) {
+            document.getElementById('bannerPreview').src = currentSettings.headerBannerUrl + '?v=' + Date.now();
         }
-      // BAS. ELSE HATA DIYA
 
         renderFooterLinks();
     } catch (err) { console.error(err) }
@@ -116,7 +135,51 @@ window.addFooterLink = () => {
 window.updateFooterLink = (i, field, value) => { currentSettings.footerLinks[i][field] = value; };
 window.removeFooterLink = (i) => { currentSettings.footerLinks.splice(i, 1); renderFooterLinks(); };
 
-// NAYA: BANNER PREVIEW
+// LOGO PREVIEW + UPLOAD
+window.previewLogo = (e) => {
+    const file = e.target.files[0];
+    if (file && file.size > 2 * 1024 * 1024) {
+        alert('File size must be less than 2MB');
+        e.target.value = '';
+        return;
+    }
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('logoPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+window.uploadLogoFile = async () => {
+    const fileInput = document.getElementById('logoUploadFile');
+    const status = document.getElementById('logoUploadStatus');
+    const btn = document.getElementById('uploadLogoBtn');
+    if (!fileInput.files[0]) return alert('Please select a logo');
+
+    const formData = new FormData();
+    formData.append('logo', fileInput.files[0]);
+
+    status.textContent = 'Uploading to Cloudinary...';
+    btn.disabled = true;
+    try {
+        const res = await apiCall('/upload/logo', 'POST', formData);
+        currentSettings.headerLogoUrl = res.url;
+        document.getElementById('logoPreview').src = res.url + '?v=' + Date.now();
+        status.textContent = 'Logo uploaded!';
+        alert('Logo uploaded and saved to DB!');
+        setTimeout(() => status.textContent = '', 3000);
+    } catch (err) {
+        status.textContent = 'Upload failed!';
+        console.error(err);
+        alert('Upload failed: ' + err.message);
+    } finally {
+        btn.disabled = false;
+    }
+};
+
+// BANNER PREVIEW + UPLOAD
 window.previewBanner = (e) => {
     const file = e.target.files[0];
     if (file && file.size > 5 * 1024 * 1024) {
@@ -133,7 +196,6 @@ window.previewBanner = (e) => {
     }
 };
 
-// NAYA: BANNER UPLOAD - FIXED
 window.uploadBannerFile = async () => {
     const fileInput = document.getElementById('bannerUploadFile');
     const status = document.getElementById('bannerUploadStatus');
@@ -146,9 +208,9 @@ window.uploadBannerFile = async () => {
     status.textContent = 'Uploading to Cloudinary...';
     btn.disabled = true;
     try {
-        const res = await apiCall('/upload/banner', 'POST', formData); // POST
+        const res = await apiCall('/upload/banner', 'POST', formData);
         currentSettings.headerBannerUrl = res.url;
-        document.getElementById('bannerPreview').src = res.url + '?v=' + Date.now(); // turant update
+        document.getElementById('bannerPreview').src = res.url + '?v=' + Date.now();
         status.textContent = 'Upload successful!';
         alert('Banner uploaded and saved to DB!');
         setTimeout(() => status.textContent = '', 3000);
@@ -167,8 +229,9 @@ window.saveSettings = async () => {
     btn.textContent = 'Saving...';
     const data = {
         appName: document.getElementById('settingLogoText').value,
-        headerBannerUrl: currentSettings.headerBannerUrl || '', // Cloudinary URL
-        headerBannerHeight: document.getElementById('settingBannerHeight').value,
+        headerLogoUrl: currentSettings.headerLogoUrl || '', // NAYA
+        headerBannerUrl: currentSettings.headerBannerUrl || '',
+        headerBannerHeight: Number(document.getElementById('settingBannerHeight').value),
         headerColor: document.getElementById('settingHeaderColor').value,
         footerColor: document.getElementById('settingFooterColor').value,
         footerText: document.getElementById('settingFooterText').value,

@@ -7,10 +7,78 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: rgba(245, 245, 245, 0.92); }
 @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-/* ============ 1. HEADER BANNER - ADMIN CONTROL ============ */
+/* ============ TOP HEADER: LOGO + SEARCH + SCANNER ============ */
+.top-header {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.header-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid #10b981;
+}
+.search-box-modern {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+.search-box-modern input {
+    width: 100%;
+    height: 44px;
+    padding: 0 95px 0 45px;
+    border: 2px solid rgba(102,126,234,0.3);
+    background: #fff;
+    border-radius: 22px;
+    font-size: 15px;
+    outline: none;
+}
+.search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #667eea; font-size: 18px; }
+.search-btn-modern { 
+    position: absolute; 
+    right: 45px;
+    top: 50%; 
+    transform: translateY(-50%); 
+    width: 36px; 
+    height: 36px; 
+    border: none; 
+    background: linear-gradient(135deg, #10b981, #059669); 
+    border-radius: 50%; 
+    color: #fff; 
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 800;
+}
+.scanner-btn-inline {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: linear-gradient(135deg, #3b82f6, #1e40af);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(59,130,246,0.4);
+}
+
+/* ============ 2. HEADER BANNER ============ */
 .header-banner {
     width: 100%;
-    height: 200px; /* default, admin se change hogi */
+    height: 200px;
     position: relative;
     overflow: hidden;
     background: #000;
@@ -28,31 +96,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     background: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent);
 }
 
-.footer { 
-    padding: 40px 20px 20px; 
-    margin-top: 50px; 
-    color: #fff; 
-    background: #1f2937;
-}
-.footer-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; max-width: 1200px; margin: auto; }
-.footer-col h4 { margin-bottom: 15px; color: #fff; }
-.footer-col ul { list-style: none; padding: 0; }
-.footer-col ul li a { color: #ccc; text-decoration: none; line-height: 2; }
-.footer-col ul li a:hover { color: #fff; }
-.social-links a { font-size: 24px; margin-right: 15px; text-decoration: none; }
-.footer-bottom { text-align: center; border-top: 1px solid #444; padding-top: 20px; margin-top: 20px; font-size: 14px; }
-
-/* PURANA .header, .header-container, .logo, .location-display HATA DIYA */
-
-/* ============ 2. SEARCH ============ */
-.search-row { display: flex; align-items: center; gap: 8px; padding: 10px; max-width: 1200px; margin: 0 auto; }
-.search-box-modern { position: relative; flex: 1; }
-.search-box-modern input { width: 100%; height: 44px; padding: 0 50px 0 45px; border: 2px solid rgba(102,126,234,0.3); background: #fff; border-radius: 22px; font-size: 15px; }
-.search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #667eea; font-size: 18px; }
-.search-btn-modern { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border: none; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; color: #fff; cursor: pointer; }
-.scanner-btn-header { width: 44px; height: 44px; border: none; background: linear-gradient(135deg, #3b82f6, #1e40af); border-radius: 50%; color: #fff; font-size: 20px; cursor: pointer; }
-
-/* ============ 3. CATEGORY TRAIN - 1 LINE ME SABHI SHOP ============ */
+/* ============ 3. CATEGORY TRAIN ============ */
 .category-row { padding: 12px 0; background: #fff; }
 .category-chips { 
     display: flex; 
@@ -95,7 +139,7 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .ad-info h4 { font-size: 13px; font-weight: 700; }
 .ad-info p { font-size: 11px; color: #6b7280; }
 
-/* ============ 6. NEARBY PRODUCT TRAIN 10 BAAR ============ */
+/* ============ 6. NEARBY PRODUCT TRAIN ============ */
 .nearby-product-section { padding: 12px 10px; max-width: 1200px; margin: 0 auto; }
 .nearby-product-section h3 { font-size: 16px; font-weight: 800; color: #1f2937; margin-bottom: 10px; }
 .nearby-product-list { display: flex; flex-direction: column; gap: 12px; }
@@ -115,8 +159,23 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .nearby-product-card p { font-size: 11px; font-weight: 600; margin-top: 4px; }
 
 /* ============ 7. BOTTOM NAV 5 BUTTON ============ */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; justify-content: space-around; padding: 6px 0; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 100; }
-.nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; color: #6b7280; cursor: pointer; flex: 1; }
-.nav-btn .nav-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 2px solid #10b981; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 100; }
+.nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #6b7280; cursor: pointer; flex: 1; }
+.nav-btn .nav-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 2px solid #10b981; }
+.nav-btn .nav-icon { font-size: 22px; } /* <-- YE NAYA HAI ICON BADE KE LIYE */
 .nav-center { position: relative; top: -10px; }
 .nav-center-hex { background: linear-gradient(135deg, #10b981, #059669); color: #fff; width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; line-height: 1.2; box-shadow: 0 4px 12px rgba(16,185,129,0.4); }
+
+.footer { 
+    padding: 40px 20px 20px; 
+    margin-top: 50px; 
+    color: #fff; 
+    background: #1f2937;
+}
+.footer-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; max-width: 1200px; margin: auto; }
+.footer-col h4 { margin-bottom: 15px; color: #fff; }
+.footer-col ul { list-style: none; padding: 0; }
+.footer-col ul li a { color: #ccc; text-decoration: none; line-height: 2; }
+.footer-col ul li a:hover { color: #fff; }
+.social-links a { font-size: 24px; margin-right: 15px; text-decoration: none; }
+.footer-bottom { text-align: center; border-top: 1px solid #444; padding-top: 20px; margin-top: 20px; font-size: 14px; }
