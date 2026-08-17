@@ -1,17 +1,13 @@
-// server/models/Setting.js
-
-
 const mongoose = require('mongoose');
+
 const linkSchema = new mongoose.Schema({
   text: { type: String, required: true, trim: true },
   url: { type: String, required: true, trim: true }
 }, { _id: false });
 
 const settingSchema = new mongoose.Schema({
-  // ============ LOGO HATA DIYA ============
-  // logoText aur logoUrl dono nahi rahenge
 
-  // App Settings - LogoText ki jagah ye use hoga
+  // App Settings
   appName: {
     type: String,
     default: 'SAMAN LIVE',
@@ -83,11 +79,11 @@ const settingSchema = new mongoose.Schema({
   // ============ HEADER BANNER SETTINGS ============
   headerBannerUrl: {
     type: String,
-    default: '' // khali rakha, 404 nahi aayega
+    default: ''
   },
   headerBannerHeight: {
     type: Number,
-    default: 100
+    default: 200 // 100 se 200 kar diya default
   }
   // ============ KHATAM ============
 
@@ -106,13 +102,13 @@ settingSchema.statics.getSettings = async function() {
   return settings;
 };
 
-// Prevent creating multiple documents
-settingSchema.pre('save', async function(next) {
-  const count = await mongoose.model('Setting').countDocuments();
-  if (count > 0 && this.isNew) {
-    throw new Error('Only one settings document can exist');
-  }
-  next();
-});
+// YE HATA DIYA - YAHI SAVE FAILED KARWA RAHA THA
+// settingSchema.pre('save', async function(next) {
+// const count = await mongoose.model('Setting').countDocuments();
+// if (count > 0 && this.isNew) {
+// throw new Error('Only one settings document can exist');
+// }
+// next();
+// });
 
 module.exports = mongoose.models.Setting || mongoose.model('Setting', settingSchema);

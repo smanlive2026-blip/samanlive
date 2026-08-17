@@ -39,14 +39,15 @@ router.get('/settings', async (req, res) => {
 // UPDATE SETTINGS - AUTH HATA DIYA
 router.put('/settings', express.json(), async (req, res) => {
     try {
-        let settings = await Setting.findOne();
-        if (!settings) settings = new Setting();
-        Object.assign(settings, req.body);
-        await settings.save();
+        const settings = await Setting.findOneAndUpdate(
+            {},
+            req.body,
+            { upsert: true, new: true }
+        );
         res.json({ success: true, data: settings });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Failed to save settings' });
+        res.status(500).json({ error: err.message });
     }
 });
 
