@@ -53,18 +53,22 @@
 let currentSettings = {};
 
 // API CALL HELPER - FORMDATA KE LIYE FIX
+
 async function apiCall(url, method = 'GET', data = null) {
     const options = { method };
     if (data) {
         if (data instanceof FormData) {
-            options.body = data; // FormData ke liye header mat lagana
+            options.body = data;
         } else {
             options.headers = { 'Content-Type': 'application/json' };
             options.body = JSON.stringify(data);
         }
     }
     const res = await fetch('/api' + url, options);
-    if (!res.ok) throw new Error('API Error');
+    if (!res.ok) {
+        const errorData = await res.json().catch(()=>({}));
+        throw new Error(errorData.error || 'API Error: ' + res.status);
+    }
     return res.json();
 }
 

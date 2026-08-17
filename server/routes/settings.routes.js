@@ -36,7 +36,7 @@ router.get('/settings', async (req, res) => {
     }
 });
 
-// UPDATE SETTINGS
+// UPDATE SETTINGS - AUTH HATA DIYA
 router.put('/settings', express.json(), async (req, res) => {
     try {
         let settings = await Setting.findOne();
@@ -50,28 +50,21 @@ router.put('/settings', express.json(), async (req, res) => {
     }
 });
 
-// UPLOAD BANNER - CLOUDINARY + DB SAVE
+// UPLOAD BANNER - AUTH HATA DIYA
 router.post('/upload/banner', upload.single('banner'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file' });
-
-        const fileUrl = req.file.path; // Cloudinary URL
-        console.log("Banner Uploaded to Cloudinary:", fileUrl);
-
-        // DB ME SAVE KARO
+        const fileUrl = req.file.path;
         let settings = await Setting.findOne();
         if (!settings) settings = new Setting();
-        
-        settings.headerBannerUrl = fileUrl; // <-- YAHI SAVE HOGA
+        settings.headerBannerUrl = fileUrl;
         await settings.save();
-
-        console.log("Banner Saved in DB:", settings.headerBannerUrl);
-
         res.json({ success: true, url: fileUrl });
     } catch (err) {
         console.error("Banner Upload Error:", err);
         res.status(500).json({ error: err.message });
     }
 });
+
 
 module.exports = router;
