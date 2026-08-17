@@ -28,6 +28,20 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     background: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent);
 }
 
+.footer { 
+    padding: 40px 20px 20px; 
+    margin-top: 50px; 
+    color: #fff; 
+    background: #1f2937;
+}
+.footer-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; max-width: 1200px; margin: auto; }
+.footer-col h4 { margin-bottom: 15px; color: #fff; }
+.footer-col ul { list-style: none; padding: 0; }
+.footer-col ul li a { color: #ccc; text-decoration: none; line-height: 2; }
+.footer-col ul li a:hover { color: #fff; }
+.social-links a { font-size: 24px; margin-right: 15px; text-decoration: none; }
+.footer-bottom { text-align: center; border-top: 1px solid #444; padding-top: 20px; margin-top: 20px; font-size: 14px; }
+
 /* PURANA .header, .header-container, .logo, .location-display HATA DIYA */
 
 /* ============ 2. SEARCH ============ */

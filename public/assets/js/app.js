@@ -59,6 +59,7 @@ async function loadSettings() {
         if(bannerHeader && siteSettings.headerBannerHeight) {
             bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
         }
+         renderFooter();
     }
 }
 
@@ -221,4 +222,41 @@ function openProduct(productId) {
         });
     }
     window.location.href = `/product.html?id=${productId}`;
+}
+
+// ========================================
+// RENDER FOOTER - ADMIN CONTROL
+// ========================================
+function renderFooter() {
+    // Logo + About
+    document.getElementById('footerLogo').textContent = siteSettings.appName || 'SAMAN LIVE';
+    document.getElementById('footerAbout').textContent = siteSettings.footerAbout || '';
+    document.getElementById('footerText').textContent = siteSettings.footerText || `© ${new Date().getFullYear()} SAMAN LIVE`;
+
+    // Footer Color
+    const footer = document.getElementById('dynamicFooter');
+    if(footer) footer.style.background = siteSettings.footerColor || '#1f2937';
+
+    // Footer Links
+    const linksContainer = document.getElementById('footerLinksList');
+    if(linksContainer && siteSettings.footerLinks) {
+        linksContainer.innerHTML = siteSettings.footerLinks.map(link => 
+            `<li><a href="${link.url}" target="_blank">${link.text}</a></li>`
+        ).join('');
+    }
+
+    // Social Links
+    const socialContainer = document.getElementById('footerSocial');
+    if(socialContainer) {
+        const socials = [
+            {key: 'facebook', icon: '📘'},
+            {key: 'instagram', icon: '📷'},
+            {key: 'twitter', icon: '🐦'},
+            {key: 'youtube', icon: '▶️'},
+            {key: 'whatsapp', icon: '💬'}
+        ];
+        socialContainer.innerHTML = socials.map(s => 
+            siteSettings[s.key] ? `<a href="${siteSettings[s.key]}" target="_blank">${s.icon}</a>` : ''
+        ).join('');
+    }
 }
