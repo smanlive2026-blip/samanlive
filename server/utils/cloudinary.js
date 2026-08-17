@@ -35,7 +35,7 @@ const storage = new CloudinaryStorage({
         transformation: [{ width: 500, height: 500, crop: "fill", quality: "auto" }]
       };
     }
-    
+
      // ========== Case 3: BANNER UPLOAD ==========
     if(req.route.path === '/upload/banner') {
       return {
@@ -49,7 +49,7 @@ const storage = new CloudinaryStorage({
     // Default
     return {
       folder: `misc`,
-      allowed_formats: ['jpg', 'png', 'jpeg', 'avif'], // CHANGED: 'avif' add kiya
+      allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif'], // yaha webp add kar de
       resource_type: 'auto'
     };
   },
