@@ -1,5 +1,7 @@
-const mongoose = require('mongoose');
+// server/models/Setting.js
 
+
+const mongoose = require('mongoose');
 const linkSchema = new mongoose.Schema({
   text: { type: String, required: true, trim: true },
   url: { type: String, required: true, trim: true }

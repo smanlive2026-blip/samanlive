@@ -35,6 +35,16 @@ const storage = new CloudinaryStorage({
         transformation: [{ width: 500, height: 500, crop: "fill", quality: "auto" }]
       };
     }
+    
+     // ========== Case 3: BANNER UPLOAD ==========
+    if(req.route.path === '/upload/banner') {
+      return {
+        folder: `samanlive/banner`, // Alag folder
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif'], // webp add kiya
+        resource_type: 'image',
+        transformation: [{ width: 1200, crop: "limit", quality: "auto" }]
+      };
+    }
 
     // Default
     return {

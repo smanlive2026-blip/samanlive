@@ -1,3 +1,5 @@
+//server/routes/settings.routes.js
+
 const express = require('express');
 const Setting = require('../models/Setting');
 const { upload } = require('../utils/cloudinary'); 
