@@ -83,11 +83,10 @@ async function loadSettings() {
 
         // BANNER LOAD
         document.getElementById('settingBannerHeight').value = currentSettings.headerBannerHeight || 200;
-        if (currentSettings.headerBannerUrl) {
-            document.getElementById('bannerPreview').src = currentSettings.headerBannerUrl + '?v=' + Date.now(); // cache bust
-        } else {
-            document.getElementById('bannerPreview').src = '/assets/default-banner.jpg'; // default de
+         if (currentSettings.headerBannerUrl) {
+        document.getElementById('bannerPreview').src = currentSettings.headerBannerUrl + '?v=' + Date.now(); // cache bust
         }
+      // BAS. ELSE HATA DIYA
 
         renderFooterLinks();
     } catch (err) { console.error(err) }

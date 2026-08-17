@@ -48,13 +48,13 @@ async function loadSettings() {
         const bannerImg = document.getElementById('headerBannerImg');
         const bannerHeader = document.getElementById('mainHeaderBanner');
         
+        // YEHI CHANGE - ELSE HATA DIYA
         if(bannerImg && siteSettings.headerBannerUrl && siteSettings.headerBannerUrl !== '') {
-            bannerImg.src = siteSettings.headerBannerUrl + '?v=' + Date.now(); // ADMIN WALA BANNER
-        } else {
-            bannerImg.src = '/assets/images/default-banner.jpg'; // DEFAULT BANNER
+            bannerImg.src = siteSettings.headerBannerUrl + '?v=' + Date.now(); // SIRF ADMIN WALA
         }
+        // ELSE HATA DIYA - KHALI RAHEGA AGAR UPLOAD NA HO
         
-        if(bannerHeader) bannerHeader.style.display = 'block'; // <-- HAMESHA SHOW RAKHO
+        if(bannerHeader) bannerHeader.style.display = 'block';
         
         if(bannerHeader && siteSettings.headerBannerHeight) {
             bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
