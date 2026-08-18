@@ -26,9 +26,8 @@ window.LocationManager = {
 };
 
 async function initApp() {
-    await loadSettings(); // 1. PEHLE BANNER + LOGO LOAD - ISE KUCH NA ROKE
+    await loadSettings(); // 1. PEHLE BANNER + LOGO LOAD
     
-    // LOCATION OR CITY KO ALAG TRY-CATCH ME DAAL DIYA
     try {
         await window.LocationManager.getManual(); 
         await showUserLocationInHeader(); 
@@ -36,29 +35,33 @@ async function initApp() {
         console.log("Location/City error, skipping", e);
     }
     
-    await loadAllData(); // 2. BAQI SAB LOAD - YE PAKKA CHALEGA
+    await loadAllData();
 }
 
-// 1. BANNER + LOGO ADMIN SE
+// 1. BANNER + LOGO ADMIN SE - UPDATED FOR VIDEO
 async function loadSettings() {
     const res = await fetch('/api/settings').catch(()=>({ok:false}));
     if(res.ok){ 
         siteSettings = await res.json();
         
-        // LOGO LOAD - NAYA
+        // LOGO LOAD
         const logoImg = document.getElementById('headerLogoImg');
         if(logoImg) {
             logoImg.src = siteSettings.headerLogoUrl + '?v=' + Date.now() || '/assets/images/samanlive-logo.png';
         }
         
-        const bannerImg = document.getElementById('headerBannerImg');
         const bannerHeader = document.getElementById('mainHeaderBanner');
         
-        // YEHI CHANGE - ELSE HATA DIYA
-        if(bannerImg && siteSettings.headerBannerUrl && siteSettings.headerBannerUrl !== '') {
-            bannerImg.src = siteSettings.headerBannerUrl + '?v=' + Date.now(); // SIRF ADMIN WALA
+        // BANNER IMAGE YA VIDEO LOAD
+        if(bannerHeader && siteSettings.headerBannerUrl && siteSettings.headerBannerUrl !== '') {
+            if(siteSettings.headerBannerType === 'video'){
+                // VIDEO HAI TO
+                bannerHeader.innerHTML = `<video src="${siteSettings.headerBannerUrl}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>`;
+            } else {
+                // IMAGE HAI TO
+                bannerHeader.innerHTML = `<img id="headerBannerImg" src="${siteSettings.headerBannerUrl}?v=${Date.now()}" style="width:100%;height:100%;object-fit:cover;">`;
+            }
         }
-        // ELSE HATA DIYA - KHALI RAHEGA AGAR UPLOAD NA HO
         
         if(bannerHeader) bannerHeader.style.display = 'block';
         
@@ -140,11 +143,11 @@ window.addToHistory = function(product){
     renderHistoryProducts();
 }
 
-// 6. ADMIN ADVERTISEMENT - LOCATION NA HO TO BHI CHALEGA
+// 6. ADMIN ADVERTISEMENT
 async function renderAdminAds() {
     const container = document.getElementById('adminAdContainer'); if(!container) return;
     let url = '/api/admin/ads/active';
-    if(userLocation) url += `?lat=${userLocation.lat}&lng=${userLocation.lng}`; // <-- FIX
+    if(userLocation) url += `?lat=${userLocation.lat}&lng=${userLocation.lng}`;
     
     const res = await fetch(url).catch(()=>({ok:false}));
     if(!res.ok){ container.innerHTML='<p>No Ads</p>'; return; }
@@ -155,7 +158,7 @@ async function renderAdminAds() {
         </div>`).join('') || '<p>No Ads</p>';
 }
 
-// 7. NEARBY PRODUCTS REPEAT - LOCATION NA HO TO BHI CHALEGA
+// 7. NEARBY PRODUCTS REPEAT
 async function renderNearbyProductsRepeat() {
     const container = document.getElementById('nearbyProductsRepeat'); 
     if(!container) return;
@@ -234,16 +237,13 @@ function openProduct(productId) {
 // RENDER FOOTER - ADMIN CONTROL
 // ========================================
 function renderFooter() {
-    // Logo + About
     document.getElementById('footerLogo').textContent = siteSettings.appName || 'SAMAN LIVE';
     document.getElementById('footerAbout').textContent = siteSettings.footerAbout || '';
     document.getElementById('footerText').textContent = siteSettings.footerText || `© ${new Date().getFullYear()} SAMAN LIVE`;
 
-    // Footer Color
     const footer = document.getElementById('dynamicFooter');
     if(footer) footer.style.background = siteSettings.footerColor || '#1f2937';
 
-    // Footer Links
     const linksContainer = document.getElementById('footerLinksList');
     if(linksContainer && siteSettings.footerLinks) {
         linksContainer.innerHTML = siteSettings.footerLinks.map(link => 
@@ -251,7 +251,6 @@ function renderFooter() {
         ).join('');
     }
 
-    // Social Links
     const socialContainer = document.getElementById('footerSocial');
     if(socialContainer) {
         const socials = [

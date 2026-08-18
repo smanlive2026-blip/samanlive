@@ -11,8 +11,9 @@ router.get('/settings', async (req, res) => {
             // NAYA DOC BANA RAHA HAI TO SAB FIELD DAAL DE
             settings = await Setting.create({ 
                 headerBannerUrl: '', 
+                headerBannerType: 'image', // NAYA ADD
                 headerBannerHeight: 200,
-                headerLogoUrl: '', // NAYA ADD KIYA
+                headerLogoUrl: '', 
                 appName: 'SAMAN LIVE'
             });
         } else {
@@ -22,11 +23,15 @@ router.get('/settings', async (req, res) => {
                 settings.headerBannerUrl = '';
                 updated = true;
             }
+            if (settings.headerBannerType === undefined) { // NAYA ADD
+                settings.headerBannerType = 'image';
+                updated = true;
+            }
             if (settings.headerBannerHeight === undefined) {
                 settings.headerBannerHeight = 200;
                 updated = true;
             }
-            if (settings.headerLogoUrl === undefined) { // NAYA ADD KIYA
+            if (settings.headerLogoUrl === undefined) { 
                 settings.headerLogoUrl = '';
                 updated = true;
             }
@@ -44,7 +49,7 @@ router.put('/settings', express.json(), async (req, res) => {
     try {
         const settings = await Setting.findOneAndUpdate(
             {},
-            { $set: req.body }, // <-- $set lagaya taki pura overwrite na ho
+            { $set: req.body }, 
             { upsert: true, new: true }
         );
         res.json({ success: true, data: settings });
@@ -54,16 +59,21 @@ router.put('/settings', express.json(), async (req, res) => {
     }
 });
 
-// UPLOAD BANNER
+// UPLOAD BANNER - IMAGE YA VIDEO DONO
 router.post('/upload/banner', upload.single('banner'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file' });
         const fileUrl = req.file.path;
+        const fileType = req.file.mimetype.startsWith('video') ? 'video' : 'image'; // AUTO DETECT
+
         let settings = await Setting.findOne();
-        if (!settings) settings = await Setting.create({}); // create with empty
+        if (!settings) settings = await Setting.create({}); 
+        
         settings.headerBannerUrl = fileUrl;
+        settings.headerBannerType = fileType; // TYPE BHI SAVE KAR DIYA
         await settings.save();
-        res.json({ success: true, url: fileUrl });
+        
+        res.json({ success: true, url: fileUrl, type: fileType }); // type bhi bhej diya
     } catch (err) {
         console.error("Banner Upload Error:", err);
         res.status(500).json({ error: err.message });
@@ -76,7 +86,7 @@ router.post('/upload/logo', upload.single('logo'), async (req, res) => {
         if (!req.file) return res.status(400).json({ error: 'No file' });
         const fileUrl = req.file.path;
         let settings = await Setting.findOne();
-        if (!settings) settings = await Setting.create({}); // create with empty
+        if (!settings) settings = await Setting.create({}); 
         settings.headerLogoUrl = fileUrl;
         await settings.save();
         res.json({ success: true, url: fileUrl });

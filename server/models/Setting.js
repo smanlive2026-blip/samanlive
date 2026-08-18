@@ -15,13 +15,18 @@ const settingSchema = new mongoose.Schema({
   },
 
   // ============ HEADER LOGO + BANNER ============
-  headerLogoUrl: { // <-- YE NAYA ADD KIYA
+  headerLogoUrl: {
     type: String,
     default: ''
   },
   headerBannerUrl: {
     type: String,
     default: ''
+  },
+  headerBannerType: { // <-- NAYA ADD KIYA
+    type: String,
+    default: 'image',
+    enum: ['image', 'video']
   },
   headerBannerHeight: {
     type: Number,

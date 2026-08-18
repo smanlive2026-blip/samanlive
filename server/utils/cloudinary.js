@@ -36,13 +36,18 @@ const storage = new CloudinaryStorage({
       };
     }
 
-     // ========== Case 3: BANNER UPLOAD ==========
+     
+     // ========== Case 3: BANNER UPLOAD - UPDATED ==========
     if(req.route.path === '/upload/banner') {
       return {
-        folder: `samanlive/banner`, // Alag folder
-        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif'], // webp add kiya
-        resource_type: 'image',
-        transformation: [{ width: 1200, crop: "limit", quality: "auto" }]
+        folder: `samanlive/banner`,
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif', 'mp4', 'mov', 'webm'], // VIDEO ADD KIYA
+        resource_type: 'auto', // IMAGE + VIDEO DONO KE LIYE AUTO
+        // Video ke liye alag transformation
+        eager: [
+            { width: 1200, crop: "limit", quality: "auto" } // image ke liye
+        ],
+        eager_async: true
       };
     }
 
