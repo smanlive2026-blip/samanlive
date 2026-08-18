@@ -1,5 +1,3 @@
-//server/routes/settings.routes.js
-
 const express = require('express');
 const Setting = require('../models/Setting');
 const { upload } = require('../utils/cloudinary'); 
@@ -11,11 +9,12 @@ router.get('/settings', async (req, res) => {
         let settings = await Setting.findOne();
         if (!settings) {
             // NAYA DOC BANA RAHA HAI TO SAB FIELD DAAL DE
-            settings = new Setting({ 
+            settings = await Setting.create({ 
                 headerBannerUrl: '', 
-                headerBannerHeight: 200 
+                headerBannerHeight: 200,
+                headerLogoUrl: '', // NAYA ADD KIYA
+                appName: 'SAMAN LIVE'
             });
-            await settings.save();
         } else {
             // PURANE DOC ME FIELD MISSING HO TO ADD KAR DE
             let updated = false;
@@ -27,6 +26,10 @@ router.get('/settings', async (req, res) => {
                 settings.headerBannerHeight = 200;
                 updated = true;
             }
+            if (settings.headerLogoUrl === undefined) { // NAYA ADD KIYA
+                settings.headerLogoUrl = '';
+                updated = true;
+            }
             if (updated) await settings.save();
         }
         res.json(settings);
@@ -36,12 +39,12 @@ router.get('/settings', async (req, res) => {
     }
 });
 
-// UPDATE SETTINGS - AUTH HATA DIYA
+// UPDATE SETTINGS - SIRF BHEJI HUI FIELD UPDATE KAREGA, BAQI NAHI UDAEGA
 router.put('/settings', express.json(), async (req, res) => {
     try {
         const settings = await Setting.findOneAndUpdate(
             {},
-            req.body,
+            { $set: req.body }, // <-- $set lagaya taki pura overwrite na ho
             { upsert: true, new: true }
         );
         res.json({ success: true, data: settings });
@@ -51,13 +54,13 @@ router.put('/settings', express.json(), async (req, res) => {
     }
 });
 
-// UPLOAD BANNER - AUTH HATA DIYA
+// UPLOAD BANNER
 router.post('/upload/banner', upload.single('banner'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file' });
         const fileUrl = req.file.path;
         let settings = await Setting.findOne();
-        if (!settings) settings = new Setting();
+        if (!settings) settings = await Setting.create({}); // create with empty
         settings.headerBannerUrl = fileUrl;
         await settings.save();
         res.json({ success: true, url: fileUrl });
@@ -73,7 +76,7 @@ router.post('/upload/logo', upload.single('logo'), async (req, res) => {
         if (!req.file) return res.status(400).json({ error: 'No file' });
         const fileUrl = req.file.path;
         let settings = await Setting.findOne();
-        if (!settings) settings = new Setting();
+        if (!settings) settings = await Setting.create({}); // create with empty
         settings.headerLogoUrl = fileUrl;
         await settings.save();
         res.json({ success: true, url: fileUrl });
