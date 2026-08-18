@@ -1,5 +1,5 @@
 //  server/utils/cloudinary.js
-
+// ye golden rule h isko hath nhi lgana h  
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -20,7 +20,7 @@ const storage = new CloudinaryStorage({
       const { shopId, template, type } = req.body;
       return {
         folder: `shops/${shopId}/${template}/${type}`,
-        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif', 'mp4', 'pdf'], // CHANGED: 'avif' add kiya - mobile se avif photo aati hai
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif', 'mp4', 'pdf'],
         resource_type: 'auto',
         transformation: [{ width: 1200, crop: "limit", quality: "auto" }]
       };
@@ -30,31 +30,32 @@ const storage = new CloudinaryStorage({
     if(req.user && req.user.id) {
       return {
         folder: `users/${req.user.id}/profile`,
-        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif'], // CHANGED: 'avif' add kiya
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif'],
         resource_type: 'image',
         transformation: [{ width: 500, height: 500, crop: "fill", quality: "auto" }]
       };
     }
 
-     
-     // ========== Case 3: BANNER UPLOAD - UPDATED ==========
+    // ========== Case 3: BANNER UPLOAD - VIDEO SUPPORT ==========
     if(req.route.path === '/upload/banner') {
+      const isVideo = file.mimetype.startsWith('video/');
+      
       return {
         folder: `samanlive/banner`,
-        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif', 'mp4', 'mov', 'webm'], // VIDEO ADD KIYA
-        resource_type: 'auto', // IMAGE + VIDEO DONO KE LIYE AUTO
-        // Video ke liye alag transformation
-        eager: [
-            { width: 1200, crop: "limit", quality: "auto" } // image ke liye
-        ],
-        eager_async: true
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif', 'mp4', 'mov', 'webm'],
+        resource_type: 'auto', // VIDEO + IMAGE DONO
+        
+        // SIRF IMAGE PE TRANSFORMATION LAGAO
+        ...(isVideo ? {} : { 
+          transformation: [{ width: 1200, crop: "limit", quality: "auto" }]
+        })
       };
     }
 
     // Default
     return {
       folder: `misc`,
-      allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif'], // yaha webp add kar de
+      allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif'],
       resource_type: 'auto'
     };
   },
@@ -62,7 +63,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 } // CHANGED: 2MB se 5MB kiya - avif photos bhari hoti hain
+  limits: { fileSize: 25 * 1024 * 1024 } // 25MB KIYA - VIDEO KE LIYE
 });
 
 // Direct URL se upload

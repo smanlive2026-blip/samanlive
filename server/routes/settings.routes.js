@@ -59,26 +59,30 @@ router.put('/settings', express.json(), async (req, res) => {
     }
 });
 
-// UPLOAD BANNER - IMAGE YA VIDEO DONO
+// UPLOAD BANNER
 router.post('/upload/banner', upload.single('banner'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file' });
+        
         const fileUrl = req.file.path;
-        const fileType = req.file.mimetype.startsWith('video') ? 'video' : 'image'; // AUTO DETECT
+        const fileType = req.file.mimetype.startsWith('video') ? 'video' : 'image'; 
+
+        console.log("Uploaded:", fileUrl, "Type:", fileType); // DEBUG KE LIYE
 
         let settings = await Setting.findOne();
         if (!settings) settings = await Setting.create({}); 
         
         settings.headerBannerUrl = fileUrl;
-        settings.headerBannerType = fileType; // TYPE BHI SAVE KAR DIYA
+        settings.headerBannerType = fileType;
         await settings.save();
         
-        res.json({ success: true, url: fileUrl, type: fileType }); // type bhi bhej diya
+        res.json({ success: true, url: fileUrl, type: fileType });
     } catch (err) {
         console.error("Banner Upload Error:", err);
         res.status(500).json({ error: err.message });
     }
 });
+
 
 // UPLOAD LOGO
 router.post('/upload/logo', upload.single('logo'), async (req, res) => {
