@@ -1,5 +1,6 @@
 //  server/utils/cloudinary.js
 // ye golden rule h isko hath nhi lgana h  
+// local storage ka khi r bhi use nhi krna h   
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');

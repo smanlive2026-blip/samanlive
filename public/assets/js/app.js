@@ -38,7 +38,8 @@ async function initApp() {
     await loadAllData();
 }
 
-// 1. BANNER + LOGO ADMIN SE - UPDATED FOR VIDEO
+// 1. BANNER + LOGO ADMIN SE - FINAL VIDEO SUPPORT
+
 async function loadSettings() {
     const res = await fetch('/api/settings').catch(()=>({ok:false}));
     if(res.ok){ 
@@ -47,7 +48,7 @@ async function loadSettings() {
         // LOGO LOAD
         const logoImg = document.getElementById('headerLogoImg');
         if(logoImg) {
-            logoImg.src = siteSettings.headerLogoUrl + '?v=' + Date.now() || '/assets/images/samanlive-logo.png';
+            logoImg.src = (siteSettings.headerLogoUrl || '/assets/images/samanlive-logo.png') + '?v=' + Date.now();
         }
         
         const bannerHeader = document.getElementById('mainHeaderBanner');
@@ -55,12 +56,23 @@ async function loadSettings() {
         // BANNER IMAGE YA VIDEO LOAD
         if(bannerHeader && siteSettings.headerBannerUrl && siteSettings.headerBannerUrl !== '') {
             if(siteSettings.headerBannerType === 'video'){
-                // VIDEO HAI TO
-                bannerHeader.innerHTML = `<video src="${siteSettings.headerBannerUrl}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>`;
+                // VIDEO HAI TO - MOBILE KE LIYE OPTIMIZED
+                bannerHeader.innerHTML = `
+                <video 
+                    src="${siteSettings.headerBannerUrl}" 
+                    autoplay 
+                    muted 
+                    loop 
+                    playsinline 
+                    preload="metadata"
+                    style="width:100%;height:100%;object-fit:cover;">
+                </video>`;
             } else {
                 // IMAGE HAI TO
                 bannerHeader.innerHTML = `<img id="headerBannerImg" src="${siteSettings.headerBannerUrl}?v=${Date.now()}" style="width:100%;height:100%;object-fit:cover;">`;
             }
+        } else {
+            bannerHeader.innerHTML = ''; // agar banner nahi hai to khali kar do
         }
         
         if(bannerHeader) bannerHeader.style.display = 'block';
