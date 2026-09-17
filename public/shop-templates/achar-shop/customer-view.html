@@ -254,6 +254,7 @@ async function loadShop() {
         }
 
         function addToCart(id, event) {
+            if(!CustomerShopStatus.canAddToCart()) return;  //  TOGGLE KE LIYE
             const product = allProducts.find(p => p.id === id);
             if(!product) return;
             const existing = cart.find(c => c.id === id);

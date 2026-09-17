@@ -80,6 +80,25 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
     z-index: 3;
 }
 
+/* ======================================== */
+/* YAHAN ADD KAR - COMMON TOGGLE KE LIYE */
+/* ======================================== */
+.shop-circle .status-dot.closed { 
+    background: #dc2626 !important; 
+    box-shadow: 0 0 6px rgba(220,38,38,0.6);
+}
+.closed-shop { 
+    opacity: 0.55; 
+    filter: grayscale(0.85); 
+}
+.closed-shop p { 
+    color: #fecaca !important; 
+}
+.closed-shop .shop-logo-circle {
+    border-color: #fca5a5;
+}
+/* ======================================== */
+
 /* AD CARD */
 .ad-full-width {
     grid-column: 1 / -1;

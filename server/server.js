@@ -58,6 +58,7 @@ app.use('/api/shops', require('./routes/shopRoutes')); // 3. BAAKI SAB GENERIC
 //app.use('/api/shops/general', require('./routes/shops/general'));
 // Request Logger - Development ke liye
 // MIDDLEWARE KE BAAD
+app.use('/api/shop-toggle', require('./routes/common/shop-toggle'));
 app.use('/api/products', productRoutes);
 app.use('/api/admin', settingsRoutes); // /api/admin/settings aur /api/admin/upload/banner
 app.use((req, res, next) => {

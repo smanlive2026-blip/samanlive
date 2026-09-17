@@ -1,3 +1,5 @@
+// LOCATION: public/assets/js/nearby-shops.js (Teri wali file ka final updated version)
+
 let allServices = [];
 let userLocation = null;
 
@@ -37,6 +39,7 @@ async function loadNearbyShops() {
         if(allRes.ok) shopsData = (await allRes.json()).data || [];
     }
 
+    // COMMON TOGGLE SE isOpen BHI AA RAHA HAI AB
     allServices = shopsData.map(shop => ({
         _id: String(shop.shopId || shop._id || shop.id),
         shopName: shop.shopName || shop.name || 'Shop',
@@ -44,7 +47,8 @@ async function loadNearbyShops() {
         shopType: shop.shopType || 'general',
         template: shop.template || null,
         logo: shop.logo || '/assets/default-shop.png',
-        banner: null
+        banner: null,
+        isOpen: shop.isOpen ?? true  // <-- COMMON TOGGLE KA DATA
     }));
 
     if(typeof ShopBannerExt !== 'undefined'){
@@ -71,12 +75,20 @@ function renderNearbyShopsWithAds(){
         const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
         const distanceKm = shop.distance? (shop.distance/1000).toFixed(1) : null;
 
+        // OPEN/CLOSE LOGIC YAHAN LAGA DIYA
+        const isOpen = shop.isOpen;
+        const statusClass = isOpen ? '' : 'closed';
+        const shopCardClass = isOpen ? '' : 'closed-shop';
+        const statusText = isOpen ? '🟢 Open' : '🔴 Closed';
+        const clickAction = isOpen ? `window.location.href='${customerUrl}'` : `alert('${shop.shopName} abhi band hai 🔴')`;
+
         container.innerHTML += `
-        <div class="shop-circle" onclick="window.location.href='${customerUrl}'">
-            <div class="status-dot"></div>
+        <div class="shop-circle ${shopCardClass}" onclick="${clickAction}">
+            <div class="status-dot ${statusClass}"></div>
             ${shop.banner? `<img src="${shop.banner}" class="shop-banner-top" onerror="this.style.display='none'">` : ''}
             <img src="${shop.logo}" class="shop-logo-circle" onerror="this.src='/assets/default-shop.png'">
             <p>${shop.shopName}</p>
+            <small style="font-weight:700; color:${isOpen ? '#16a34a' : '#dc2626'}">${statusText}</small>
             ${distanceKm? `<small>${distanceKm}Km</small>` : ''}
         </div>`;
 
@@ -94,12 +106,17 @@ function renderNearbyShopsWithAds(){
 
 function showUserLocationInHeader() {
     if (!userLocation) {
-        document.getElementById('userCity').textContent = 'Location Off';
+        const el = document.getElementById('userCity');
+        if(el) el.textContent = 'Location Off';
         return;
     }
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
     .then(r => r.json())
     .then(data => {
-        document.getElementById('userCity').textContent = data.address.city || 'Your Area';
-    }).catch(()=>{ document.getElementById('userCity').textContent = 'Your Area'; });
+        const el = document.getElementById('userCity');
+        if(el) el.textContent = data.address.city || 'Your Area';
+    }).catch(()=>{
+        const el = document.getElementById('userCity');
+        if(el) el.textContent = 'Your Area';
+    });
 }
