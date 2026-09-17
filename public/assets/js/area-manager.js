@@ -10,6 +10,8 @@ let managerShops = [];
 let categories = [];
 let allManagers = [];
 let allAreas = [];
+let managerAreaMapInstance = null;
+let isMapHidden = false;
 
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token') || localStorage.getItem('managerToken');
@@ -99,6 +101,7 @@ async function loadDashboard() {
         renderShops(managerShops);
         renderServiceCards(categories);
         updateShopLimitUI();
+        renderAreaMapBlock();
 
         if (typeof initShopCreateModule === 'function') {
             initShopCreateModule(allManagers, allAreas, categories, currentManager);
@@ -151,8 +154,15 @@ function renderProfile() {
     document.getElementById('managerAreaName').textContent = currentManager.areaName || currentManager.areaCode || '-';
     document.getElementById('managerPhone').textContent = currentManager.phone || 'Not Set';
     document.getElementById('managerEmail').textContent = currentManager.email || 'Not Set';
-    document.getElementById('managerLocation').textContent = `${currentManager.city || '-'}, ${currentManager.state || '-'}`;
-    document.getElementById('managerRadius').textContent = currentManager.radius || '50';
+    // FIXED: Ab area master se location lega
+    const myAreaForProfile = allAreas.find(a => a.areaCode === currentManager.areaCode);
+    if (myAreaForProfile) {
+        document.getElementById('managerLocation').textContent = `${myAreaForProfile.city || '-'}, ${myAreaForProfile.state || '-'}`;
+        document.getElementById('managerRadius').textContent = myAreaForProfile.radius || '50';
+    } else {
+        document.getElementById('managerLocation').textContent = `${currentManager.city || '-'}, ${currentManager.state || '-'}`;
+        document.getElementById('managerRadius').textContent = currentManager.radius || '50';
+    }
     document.getElementById('areaCodeText').textContent = currentManager.areaCode || '-';
     document.getElementById('managerCodeText').textContent = currentManager.managerCode || '-';
 
@@ -162,6 +172,76 @@ function renderProfile() {
     } else {
         const firstLetter = (currentManager.name || 'A').charAt(0).toUpperCase();
         avatarEl.innerHTML = `${firstLetter}<div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`;
+    }
+}
+
+// ========================================
+// AREA MAP BLOCK WITH HIDE BUTTON - NEWLY ADDED
+// ========================================
+function renderAreaMapBlock() {
+    if (!currentManager || !allAreas || allAreas.length === 0) return;
+    const myArea = allAreas.find(a => a.areaCode === currentManager.areaCode);
+    if (!myArea) return;
+
+    const mapNameEl = document.getElementById('areaMapName');
+    const badgeEl = document.getElementById('areaCoverageBadge');
+    const cityEl = document.getElementById('detailCity');
+    const stateEl = document.getElementById('detailState');
+    const centerEl = document.getElementById('detailCenter');
+    const radiusEl = document.getElementById('detailRadius');
+
+    if (mapNameEl) mapNameEl.textContent = myArea.areaName || myArea.areaCode;
+    if (badgeEl) badgeEl.textContent = `${myArea.radius || 50} km Radius`;
+    if (cityEl) cityEl.textContent = myArea.city || '-';
+    if (stateEl) stateEl.textContent = myArea.state || '-';
+    if (centerEl) centerEl.textContent = `${(myArea.centerLat || 0).toFixed(4)}, ${(myArea.centerLng || 0).toFixed(4)}`;
+    if (radiusEl) radiusEl.textContent = myArea.radius || 50;
+
+    if (managerAreaMapInstance) {
+        managerAreaMapInstance.remove();
+        managerAreaMapInstance = null;
+    }
+
+    setTimeout(() => {
+        const mapDiv = document.getElementById('managerAreaMap');
+        if (!mapDiv) return;
+        if (!myArea.centerLat || !myArea.centerLng) return;
+
+        managerAreaMapInstance = L.map('managerAreaMap').setView([myArea.centerLat, myArea.centerLng], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(managerAreaMapInstance);
+
+        L.marker([myArea.centerLat, myArea.centerLng]).addTo(managerAreaMapInstance).bindPopup(`<b>${myArea.areaName}</b><br>${myArea.city}, ${myArea.state}`).openPopup();
+        L.circle([myArea.centerLat, myArea.centerLng], {
+            radius: (myArea.radius || 50) * 1000,
+            color: '#3b82f6',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.15,
+            weight: 2
+        }).addTo(managerAreaMapInstance);
+
+        setTimeout(() => {
+            if (managerAreaMapInstance) managerAreaMapInstance.invalidateSize();
+        }, 300);
+    }, 500);
+}
+
+function toggleAreaMap() {
+    const wrapper = document.getElementById('areaMapWrapper');
+    const btn = document.getElementById('toggleMapBtn');
+    if (!wrapper || !btn) return;
+
+    isMapHidden = !isMapHidden;
+    if (isMapHidden) {
+        wrapper.style.display = 'none';
+        btn.innerHTML = '<i class="fas fa-eye"></i> Show Map';
+    } else {
+        wrapper.style.display = 'block';
+        btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Map';
+        setTimeout(() => {
+            if (managerAreaMapInstance) managerAreaMapInstance.invalidateSize();
+        }, 200);
     }
 }
 
@@ -544,5 +624,6 @@ window.openManagerPanel = openManagerPanel;
 window.openCreateDeliveryModal = openCreateDeliveryModal;
 window.closeCreateDeliveryModal = closeCreateDeliveryModal;
 window.openDeliveryManagerPanel = openDeliveryManagerPanel;
+window.toggleAreaMap = toggleAreaMap;
 
-console.log('✅ area-manager.js loaded - Shop create logic moved to shop-create.js + Template Mapping + Delivery Manager');
+console.log('✅ area-manager.js loaded - Shop create logic moved to shop-create.js + Template Mapping + Delivery Manager + AREA MAP');
