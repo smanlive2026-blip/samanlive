@@ -1,7 +1,9 @@
-// LOCATION: public/assets/js/nearby-shops.js (Teri wali file ka final updated version)
+// LOCATION: public/assets/js/nearby-shops.js - FINAL WITH REAL-TIME AREA ADS
 
 let allServices = [];
 let userLocation = null;
+let currentAreaCode = null;
+let areaAdsCache = [];
 
 // LOCATION
 window.LocationManager = {
@@ -17,8 +19,31 @@ window.LocationManager = {
                 { enableHighAccuracy: true, timeout: 10000 }
             );
         });
+    },
+    watch: function(callback){
+        if(!navigator.geolocation) return;
+        navigator.geolocation.watchPosition(
+            (pos) => {
+                const newLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                // Agar 100 meter se zyada hila toh hi area check karo
+                if(!userLocation || getDistance(userLocation.lat, userLocation.lng, newLoc.lat, newLoc.lng) > 0.1){
+                    userLocation = newLoc;
+                    callback(newLoc);
+                }
+            },
+            ()=>{},
+            { enableHighAccuracy: true, maximumAge: 10000 }
+        );
     }
 };
+
+function getDistance(lat1, lon1, lat2, lon2){
+    const R = 6371;
+    const dLat = (lat2-lat1) * Math.PI/180;
+    const dLon = (lon2-lon1) * Math.PI/180;
+    const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
 
 document.addEventListener('DOMContentLoaded', initNearby);
 
@@ -26,6 +51,10 @@ async function initNearby(){
     await window.LocationManager.getManual();
     await loadNearbyShops();
     showUserLocationInHeader();
+    // REAL-TIME TRACKING START
+    window.LocationManager.watch(async (loc) => {
+        await checkAreaAndUpdateAds(loc);
+    });
 }
 
 async function loadNearbyShops() {
@@ -39,7 +68,6 @@ async function loadNearbyShops() {
         if(allRes.ok) shopsData = (await allRes.json()).data || [];
     }
 
-    // COMMON TOGGLE SE isOpen BHI AA RAHA HAI AB
     allServices = shopsData.map(shop => ({
         _id: String(shop.shopId || shop._id || shop.id),
         shopName: shop.shopName || shop.name || 'Shop',
@@ -48,16 +76,53 @@ async function loadNearbyShops() {
         template: shop.template || null,
         logo: shop.logo || '/assets/default-shop.png',
         banner: null,
-        isOpen: shop.isOpen ?? true  // <-- COMMON TOGGLE KA DATA
+        isOpen: shop.isOpen ?? true
     }));
 
     if(typeof ShopBannerExt !== 'undefined'){
         await ShopBannerExt.loadBannersForMainApp(allServices);
     }
-    renderNearbyShopsWithAds();
+    await checkAreaAndUpdateAds(userLocation);
 }
 
-function renderNearbyShopsWithAds(){
+async function checkAreaAndUpdateAds(loc){
+    if(!loc) { renderNearbyShopsWithAds([]); return; }
+    try {
+        // 1. Sabse pehle area nikalo user ki location se
+        const areasRes = await fetch(`/api/areas`).then(r=>r.json()).catch(()=>[]);
+        let foundArea = null;
+        let minDist = Infinity;
+        areasRes.forEach(area => {
+            if(!area.centerLat || !area.centerLng) return;
+            const dist = getDistance(loc.lat, loc.lng, area.centerLat, area.centerLng);
+            if(dist <= (area.radius || 50) && dist < minDist){
+                minDist = dist;
+                foundArea = area;
+            }
+        });
+
+        if(foundArea){
+            if(currentAreaCode !== foundArea.areaCode){
+                console.log(`📍 Area Changed: ${currentAreaCode} -> ${foundArea.areaCode}`);
+                currentAreaCode = foundArea.areaCode;
+                // 2. Is area ke ads lao
+                const contentRes = await fetch(`/api/content?areaCode=${foundArea.areaCode}`).then(r=>r.json()).catch(()=>[]);
+                areaAdsCache = contentRes.filter(c => c.type === 'ad' && c.status === 'active');
+                const cityEl = document.getElementById('userCity');
+                if(cityEl) cityEl.textContent = `${foundArea.city} (${foundArea.areaCode})`;
+            }
+        } else {
+            currentAreaCode = null;
+            areaAdsCache = [];
+        }
+        renderNearbyShopsWithAds(areaAdsCache);
+    } catch(err){
+        console.error(err);
+        renderNearbyShopsWithAds([]);
+    }
+}
+
+function renderNearbyShopsWithAds(areaAds = areaAdsCache){
     const container = document.getElementById('nearbyShopsGrid');
     if (!container) return;
     
@@ -74,8 +139,6 @@ function renderNearbyShopsWithAds(){
         const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
         const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
         const distanceKm = shop.distance? (shop.distance/1000).toFixed(1) : null;
-
-        // OPEN/CLOSE LOGIC YAHAN LAGA DIYA
         const isOpen = shop.isOpen;
         const statusClass = isOpen ? '' : 'closed';
         const shopCardClass = isOpen ? '' : 'closed-shop';
@@ -92,14 +155,25 @@ function renderNearbyShopsWithAds(){
             ${distanceKm? `<small>${distanceKm}Km</small>` : ''}
         </div>`;
 
-        // HAR 6 SHOP = 2 ROW BAAD AD
         if((index + 1) % 6 === 0){
-            container.innerHTML += `
-            <div class="ad-full-width">
-                <h3>📢 Advertisement</h3>
-                <p>Apna ad yaha lagwaye</p>
-                <button class="ad-btn" onclick="alert('Contact Admin')">Contact Now</button>
-            </div>`;
+            const adIndex = Math.floor(index/6) % (areaAds.length || 1);
+            const ad = areaAds[adIndex];
+            if(ad){
+                container.innerHTML += `
+                <div class="ad-full-width" style="background:${ad.color || '#3b82f6'}; color:white; padding:16px; border-radius:12px; text-align:center; grid-column:1/-1;">
+                    <h3 style="margin:0;">${ad.title}</h3>
+                    <p style="margin:8px 0; opacity:0.9;">${ad.description || ''}</p>
+                    ${ad.buttonText ? `<button class="ad-btn" onclick="window.open('${ad.buttonLink || '#'}','_blank')" style="background:white;color:${ad.color};border:none;padding:8px 16px;border-radius:20px;font-weight:700;">${ad.buttonText}</button>` : ''}
+                    <small style="display:block;margin-top:6px;opacity:0.7;">📍 ${currentAreaCode}</small>
+                </div>`;
+            } else {
+                container.innerHTML += `
+                <div class="ad-full-width">
+                    <h3>📢 ${currentAreaCode ? currentAreaCode+' me Ad nahi hai' : 'Advertisement'}</h3>
+                    <p>Apna ad yaha lagwaye</p>
+                    <button class="ad-btn" onclick="alert('Contact Admin')">Contact Now</button>
+                </div>`;
+            }
         }
     });
 }
@@ -114,9 +188,9 @@ function showUserLocationInHeader() {
     .then(r => r.json())
     .then(data => {
         const el = document.getElementById('userCity');
-        if(el) el.textContent = data.address.city || 'Your Area';
+        if(el && !currentAreaCode) el.textContent = data.address.city || 'Your Area';
     }).catch(()=>{
         const el = document.getElementById('userCity');
-        if(el) el.textContent = 'Your Area';
+        if(el && !currentAreaCode) el.textContent = 'Your Area';
     });
 }
