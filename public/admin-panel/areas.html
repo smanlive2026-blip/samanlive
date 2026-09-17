@@ -97,22 +97,16 @@
     </div>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // === FIX START - YEHI MISSING THA ISLIYE WHITE SCREEN AA RAHI THI ===
         const API_BASE = '/api';
         async function apiCall(endpoint, method='GET', body=null){
-            try {
-                const opts = { method, headers: { 'Content-Type':'application/json' } };
-                if(body) opts.body = JSON.stringify(body);
-                const url = endpoint.startsWith('/api')? endpoint : API_BASE + endpoint;
-                const res = await fetch(url, opts);
-                const text = await res.text();
-                let data;
-                try { data = JSON.parse(text); } catch(e){ data = text; }
-                if(!res.ok) throw new Error(data.error || data.msg || 'API Error');
-                return data.data || data.areas || data.modules || data;
-            } catch(err){
-                console.error('apiCall failed:', endpoint, err.message);
-                throw err;
-            }
+            const opts = { method, headers: { 'Content-Type':'application/json' } };
+            if(body) opts.body = JSON.stringify(body);
+            const url = endpoint.startsWith('/api')? endpoint : API_BASE + endpoint;
+            const res = await fetch(url, opts);
+            const json = await res.json().catch(()=> ({}));
+            if(!res.ok) throw new Error(json.error || json.msg || 'API Error');
+            return json;
         }
         function escapeHtml(text) {
             const div = document.createElement('div');
@@ -122,11 +116,13 @@
         function showToast(msg, type = 'success') {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            toast.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;z-index:99999;background:'+(type==='error'?'#ef4444':'#10b981');
             toast.textContent = msg;
+            toast.style.cssText = 'position:fixed;bottom:20px;right:20px;background:'+(type==='error'?'#ef4444':'#10b981')+';color:#fff;padding:12px 20px;border-radius:8px;z-index:99999';
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
+        // === FIX END ===
+
         let allAreas = [];
         let allManagers = [];
         let allUsers = [];
@@ -136,31 +132,31 @@
         let map, marker, circle;
         let searchTimeout;
         let currentRadius = 50;
+
         async function loadAreas() {
             try {
-                const [areasData][managersData][usersData][shopsData][productsData][modulesData] = await Promise.all([
-                    apiCall('/areas').catch(()=>[]),
-                    apiCall('/managers').catch(()=>[]),
+                const [areasData, managersData, usersData, shopsData, productsData, modulesData] = await Promise.all([
+                    apiCall('/areas'),
+                    apiCall('/managers'),
                     apiCall('/users').catch(() => []),
                     apiCall('/shops').catch(() => []),
                     apiCall('/products').catch(() => []),
                     apiCall('/modules').catch(() => [])
                 ]);
-                allAreas = Array.isArray(areasData)? areasData : (areasData.areas || []);
-                allManagers = Array.isArray(managersData)? managersData : (managersData.managers || []);
-                allUsers = Array.isArray(usersData)? usersData : [];
-                allShops = Array.isArray(shopsData)? shopsData : (shopsData.shops || shopsData.data || []);
-                allProducts = Array.isArray(productsData)? productsData : (productsData.products || []);
+                allAreas = areasData || [];
+                allManagers = managersData || [];
+                allUsers = usersData || [];
+                allShops = shopsData || [];
+                allProducts = productsData || [];
                 allModules = modulesData.modules || modulesData || [];
-                if(!Array.isArray(allModules)) allModules = [];
                 renderAreas(allAreas);
                 updateStats();
             } catch (err) {
                 console.error(err);
-                document.getElementById('areasTable').innerHTML = `<tr><td colspan="10" style="color:red;text-align:center;padding:20px;">Failed: ${err.message}</td></tr>`;
                 showToast('Failed to load data: ' + err.message, 'error');
             }
         }
+
         function updateStats() {
             document.getElementById('totalAreas').textContent = allAreas.length;
             document.getElementById('activeAreas').textContent = allAreas.filter(a => a.status).length;
@@ -169,6 +165,7 @@
             document.getElementById('coverageText').textContent = `${avgRadius}km Avg`;
             document.getElementById('areaTableTitle').textContent = `All Areas - ${avgRadius}km Avg Zone`;
         }
+
         function renderAreas(areas) {
             const tbody = document.getElementById('areasTable');
             tbody.innerHTML = areas.length === 0? '<tr><td colspan="10" class="loading">No areas created yet</td></tr>' :
@@ -183,7 +180,7 @@
                         <td>${escapeHtml(a.areaName)}</td>
                         <td>${escapeHtml(a.city)}</td>
                         <td>${escapeHtml(a.state)}</td>
-                        <td style="font-family:monospace;font-size:12px;">${(a.centerLat||0).toFixed(4)}, ${(a.centerLng||0).toFixed(4)}</td>
+                        <td style="font-family:monospace;font-size:12px;">${a.centerLat.toFixed(4)}, ${a.centerLng.toFixed(4)}</td>
                         <td><span class="badge">${radius} km</span></td>
                         <td><b>${managerCount}</b>/${totalBuckets}</td>
                         <td><span class="badge ${moduleCount > 0? 'badge-success' : 'badge-warning'}">${moduleCount}</span></td>
@@ -195,9 +192,13 @@
                     </tr>`;
                 }).join('');
         }
+
         window.filterAreas = (query) => {
             const q = query.toLowerCase().trim();
-            if (!q) { renderAreas(allAreas); return; }
+            if (!q) {
+                renderAreas(allAreas);
+                return;
+            }
             const filtered = allAreas.filter(a =>
                 a.areaCode.toLowerCase().includes(q) ||
                 a.areaName.toLowerCase().includes(q) ||
@@ -206,6 +207,7 @@
             );
             renderAreas(filtered);
         };
+
         window.showAreaStats = async (areaId) => {
             const area = allAreas.find(a => a._id === areaId);
             if (!area) return;
@@ -233,14 +235,14 @@
                     <div style="background:#f8fafc;padding:16px;border-radius:10px;">
                         <p style="margin:8px 0;"><b>City:</b> ${escapeHtml(area.city)}</p>
                         <p style="margin:8px 0;"><b>State:</b> ${escapeHtml(area.state)}</p>
-                        <p style="margin:8px 0;"><b>Center:</b> ${(area.centerLat||0).toFixed(6)}, ${(area.centerLng||0).toFixed(6)}</p>
+                        <p style="margin:8px 0;"><b>Center:</b> ${area.centerLat.toFixed(6)}, ${area.centerLng.toFixed(6)}</p>
                         <p style="margin:8px 0;"><b>Coverage:</b> ${radius} km radius</p>
                         <p style="margin:8px 0;"><b>Status:</b> <span class="status-badge ${area.status?'status-active':'status-hidden'}">${area.status?'Active':'Inactive'}</span></p>
                     </div>
                 </div>
                 <div style="margin-top:24px;">
                     <h3 style="margin-bottom:16px;font-size:16px;font-weight:700;">📦 Live Modules (${liveModules.length})</h3>
-                    ${liveModules.length > 0? liveModules.map(m => `<div style="padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border-left:3px solid #10b981;"><b>${m.icon||'📦'} ${escapeHtml(m.name)}</b><br><small style="color:#64748b;">${escapeHtml(m.desc || 'No description')}</small></div>`).join('') : '<p style="color:#94a3b8;padding:20px;text-align:center;background:#f8fafc;border-radius:8px;">No modules live in this area yet</p>'}
+                    ${liveModules.length > 0? liveModules.map(m => `<div style="padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border-left:3px solid #10b981;"><b>${m.icon} ${escapeHtml(m.name)}</b><br><small style="color:#64748b;">${escapeHtml(m.desc || 'No description')}</small></div>`).join('') : '<p style="color:#94a3b8;padding:20px;text-align:center;background:#f8fafc;border-radius:8px;">No modules live in this area yet</p>'}
                 </div>
                 <div style="margin-top:24px;">
                     <h3 style="margin-bottom:16px;font-size:16px;font-weight:700;">👥 Managers (${managers.length}/15)</h3>
@@ -254,7 +256,7 @@
             const stateCode = state.substring(0, 2).toUpperCase().replace(/[^A-Z]/g, '');
             const baseCode = `${cityCode}${stateCode}`;
             const existingAreas = allAreas.filter(a => a.areaCode.startsWith(baseCode));
-            if (existingAreas.length === 0) return `${baseCode}-1`;
+            if (existingAreas.length === 0) { return `${baseCode}-1`; }
             let maxSeq = 0;
             existingAreas.forEach(a => {
                 const match = a.areaCode.match(new RegExp(`^${baseCode}-(\\d+)$`));
@@ -280,14 +282,16 @@
             map = L.map('map').setView(defaultCenter, 5);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 }).addTo(map);
             map.on('click', async (e) => {
-                const lat = e.latlng.lat; const lng = e.latlng.lng;
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`);
                     const data = await res.json();
                     const city = data.address.city || data.address.town || data.address.village || data.address.county || 'Unknown';
                     const state = data.address.state || data.address.region || '';
                     const areaCode = generateNextAreaCode(city, state);
-                    const seqMatch = areaCode.match(/-(\d+)$/); const seq = seqMatch? seqMatch[1] : '1';
+                    const seqMatch = areaCode.match(/-(\d+)$/);
+                    const seq = seqMatch? seqMatch[1] : '1';
                     document.getElementById('areaCode').value = areaCode;
                     document.getElementById('areaName').value = `${city} Zone ${seq} - ${currentRadius}km`;
                     document.getElementById('cityName').value = city;
@@ -308,7 +312,8 @@
             const cityName = document.getElementById('cityName').value;
             const areaCode = document.getElementById('areaCode').value;
             if (cityName && areaCode) {
-                const seqMatch = areaCode.match(/-(\d+)$/); const seq = seqMatch? seqMatch[1] : '1';
+                const seqMatch = areaCode.match(/-(\d+)$/);
+                const seq = seqMatch? seqMatch[1] : '1';
                 document.getElementById('areaName').value = `${cityName} Zone ${seq} - ${currentRadius}km`;
             }
             if (circle && map) { circle.setRadius(currentRadius * 1000); }
@@ -324,7 +329,11 @@
                     const resultsDiv = document.getElementById('cityResults');
                     if (results.length === 0) { resultsDiv.innerHTML = '<div class="search-result-item">No results found</div>'; }
                     else {
-                        resultsDiv.innerHTML = results.map(r => `<div class="search-result-item" onclick="selectCity(${r.lat}, ${r.lon}, '${escapeHtml(r.display_name)}')">📍 ${escapeHtml(r.display_name)}</div>`).join('');
+                        resultsDiv.innerHTML = results.map(r => `
+                            <div class="search-result-item" onclick="selectCity(${r.lat}, ${r.lon}, '${escapeHtml(r.display_name)}')">
+                                📍 ${escapeHtml(r.display_name)}
+                            </div>
+                        `).join('');
                     }
                     resultsDiv.style.display = 'block';
                 } catch (err) { console.error('Search error:', err); }
@@ -384,18 +393,19 @@
                 radius: parseInt(document.getElementById('areaRadius').value) || 50,
                 status: document.getElementById('areaStatus').value === 'true'
             };
-            if (!formData.centerLat ||!formData.centerLng) return showToast('Please click on map to set location!', 'error');
-            if (!formData.areaCode) return showToast('Area Code is required!', 'error');
-            if (formData.radius < 1 || formData.radius > 500) return showToast('Radius must be between 1 and 500 km!', 'error');
+            if (!formData.centerLat ||!formData.centerLng) { return showToast('Please click on map to set location!', 'error'); }
+            if (!formData.areaCode) { return showToast('Area Code is required!', 'error'); }
+            if (formData.radius < 1 || formData.radius > 500) { return showToast('Radius must be between 1 and 500 km!', 'error'); }
             try {
                 if (id) { await apiCall('/areas/' + id, 'PUT', formData); showToast('Area updated successfully!'); }
                 else { await apiCall('/areas', 'POST', formData); showToast('Area created successfully!'); }
-                closeAreaModal(); await loadAreas();
+                closeAreaModal();
+                await loadAreas();
             } catch (err) { showToast('Error: ' + err.message, 'error'); }
         });
         window.deleteArea = async (id, managerCount, moduleCount) => {
-            if (managerCount > 0) return showToast(`Cannot delete! ${managerCount} managers exist in this area. Delete them first.`, 'error');
-            if (moduleCount > 0) return showToast(`Cannot delete! ${moduleCount} modules are live in this area. Remove from modules first.`, 'error');
+            if (managerCount > 0) { return showToast(`Cannot delete! ${managerCount} managers exist in this area. Delete them first.`, 'error'); }
+            if (moduleCount > 0) { return showToast(`Cannot delete! ${moduleCount} modules are live in this area. Remove from modules first.`, 'error'); }
             if (!confirm('Delete this area? This cannot be undone.')) return;
             try { await apiCall('/areas/' + id, 'DELETE'); showToast('Area deleted'); await loadAreas(); }
             catch (err) { showToast('Failed to delete: ' + err.message, 'error'); }
