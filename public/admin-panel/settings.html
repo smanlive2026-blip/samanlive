@@ -22,23 +22,52 @@
             </div>
         </div>
 
-        <!-- ============ HEADER BANNER CONTROL - UPDATED ============ -->
-        <div class="form-group full">
-            <label>Header Banner - Image / Video:</label>
+        <!-- ============ HEADER BANNER IMAGE ============ -->
+        <div class="form-group full" style="border:2px solid #10b981;padding:15px;border-radius:10px;">
+            <label>🖼️ Header Banner Photo:</label>
             <div class="logo-upload-wrapper">
                 <div class="logo-preview-box">
-                    <div id="bannerPreviewBox">
+                    <div id="bannerImagePreviewBox">
                         <img id="bannerPreview" src="" style="width:100%;height:120px;object-fit:cover;border-radius:10px;background:#f3f4f6;">
                     </div>
                 </div>
                 <div class="logo-upload-controls">
-                    <input type="file" id="bannerUploadFile" accept="image/*,video/*" onchange="previewBanner(event)">
-                    <button class="btn-primary" id="uploadBannerBtn" onclick="uploadBannerFile()">📤 Upload Banner</button>
-                    <p class="help-text">Recommended: Image 1200x300px ya Video MP4 < 20MB. Auto Loop</p>
-                    <p id="bannerUploadStatus" class="status-text"></p>
+                    <input type="file" id="bannerImageUploadFile" accept="image/*" onchange="previewBannerImage(event)">
+                    <button class="btn-primary" id="uploadBannerImageBtn" onclick="uploadBannerImageFile()">📤 Upload Photo Banner</button>
+                    <p class="help-text">Recommended: 1200x300px JPG/PNG Max 2MB</p>
+                    <p id="bannerImageUploadStatus" class="status-text"></p>
                 </div>
             </div>
         </div>
+
+        <!-- ============ HEADER BANNER VIDEO ============ -->
+        <div class="form-group full" style="border:2px solid #3b82f6;padding:15px;border-radius:10px;">
+            <label>🎬 Header Banner Video:</label>
+            <div class="logo-upload-wrapper">
+                <div class="logo-preview-box">
+                    <div id="bannerVideoPreviewBox">
+                        <p style="opacity:0.6">No Video</p>
+                    </div>
+                </div>
+                <div class="logo-upload-controls">
+                    <input type="file" id="bannerVideoUploadFile" accept="video/*" onchange="previewBannerVideo(event)">
+                    <button class="btn-primary" id="uploadBannerVideoBtn" onclick="uploadBannerVideoFile()">📤 Upload Video Banner</button>
+                    <p class="help-text">MP4, MOV, WEBM Max 20MB - Auto Loop</p>
+                    <p id="bannerVideoUploadStatus" class="status-text"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ KAUN SA DIKHEGA DECIDE KARO ============ -->
+        <div class="form-group full" style="background:#fef3c7;padding:15px;border-radius:10px;border:2px dashed #f59e0b;">
+            <label>👁️ Main App pe kya dikhega?</label>
+            <div style="display:flex;gap:10px;margin-top:10px;">
+                <button id="activeImageBtn" class="btn-primary" onclick="setActiveBanner('image')" style="flex:1;background:#10b981">🖼️ Photo Dikhao</button>
+                <button id="activeVideoBtn" class="btn-primary" onclick="setActiveBanner('video')" style="flex:1;background:#3b82f6">🎬 Video Dikhao</button>
+            </div>
+            <p id="activeBannerStatus" style="margin-top:10px;font-weight:bold;"></p>
+        </div>
+
         <div class="form-group">
             <label>Banner Height (px):</label>
             <input type="number" id="settingBannerHeight" value="200" placeholder="200">
@@ -66,37 +95,47 @@
 </div>
 
 <script>
-
 let currentSettings = {};
 
 async function apiCall(url, method = 'GET', data = null) {
     const options = { method };
     if (data) {
-        if (data instanceof FormData) {
-            options.body = data;
-        } else {
-            options.headers = { 'Content-Type': 'application/json' };
-            options.body = JSON.stringify(data);
-        }
+        if (data instanceof FormData) options.body = data;
+        else { options.headers = { 'Content-Type': 'application/json' }; options.body = JSON.stringify(data); }
     }
     const res = await fetch('/api' + url, options);
-    if (!res.ok) {
-        const errorData = await res.json().catch(()=>({}));
-        throw new Error(errorData.error || 'API Error: ' + res.status);
-    }
+    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error || 'API Error: ' + res.status); }
     return res.json();
 }
 
-// HELPER FUNCTION - YAHI NAYA ADD KIYA
-function renderBannerPreview(url, type) {
-    const bannerBox = document.getElementById('bannerPreviewBox');
-    if(!url) { bannerBox.innerHTML = '<p style="opacity:0.6">No Banner</p>'; return; }
-    const cacheUrl = url + (url.includes('blob:') ? '' : '?v=' + Date.now());
-    if(type === 'video'){
-        bannerBox.innerHTML = `<video src="${cacheUrl}" autoplay muted loop playsinline controls style="width:100%;height:120px;object-fit:cover;border-radius:10px;"></video>`;
+function renderBannerImagePreview(url) {
+    const box = document.getElementById('bannerImagePreviewBox');
+    if(!url) { box.innerHTML = '<p style="opacity:0.6">No Photo Banner</p>'; return; }
+    box.innerHTML = `<img src="${url}?v=${Date.now()}" style="width:100%;height:120px;object-fit:cover;border-radius:10px;">`;
+}
+function renderBannerVideoPreview(url) {
+    const box = document.getElementById('bannerVideoPreviewBox');
+    if(!url) { box.innerHTML = '<p style="opacity:0.6">No Video Banner</p>'; return; }
+    const cacheUrl = url.includes('blob:')? url : url + '?v=' + Date.now();
+    box.innerHTML = `<video src="${cacheUrl}" autoplay muted loop playsinline controls style="width:100%;height:120px;object-fit:cover;border-radius:10px;"></video>`;
+}
+function updateActiveStatus() {
+    const status = document.getElementById('activeBannerStatus');
+    const active = currentSettings.headerBannerActive || 'image';
+    status.textContent = active === 'video'? '✅ Ab Main App pe VIDEO dikhega' : '✅ Ab Main App pe PHOTO dikhega';
+    document.getElementById('activeImageBtn').style.opacity = active === 'image'? '1' : '0.5';
+    document.getElementById('activeVideoBtn').style.opacity = active === 'video'? '1' : '0.5';
+}
+window.setActiveBanner = (type) => {
+    currentSettings.headerBannerActive = type;
+    if(type === 'video') {
+        currentSettings.headerBannerUrl = currentSettings.headerBannerVideoUrl;
+        currentSettings.headerBannerType = 'video';
     } else {
-        bannerBox.innerHTML = `<img src="${cacheUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:10px;background:#f3f4f6;">`;
+        currentSettings.headerBannerUrl = currentSettings.headerBannerImageUrl;
+        currentSettings.headerBannerType = 'image';
     }
+    updateActiveStatus();
 }
 
 async function loadSettings() {
@@ -111,15 +150,23 @@ async function loadSettings() {
         document.getElementById('settingInstagram').value = currentSettings.instagram || '';
         document.getElementById('settingTwitter').value = currentSettings.twitter || '';
         document.getElementById('settingYoutube').value = currentSettings.youtube || '';
+        if (currentSettings.headerLogoUrl) document.getElementById('logoPreview').src = currentSettings.headerLogoUrl + '?v=' + Date.now();
+        document.getElementById('settingBannerHeight').value = currentSettings.headerBannerHeight || 200;
 
-        if (currentSettings.headerLogoUrl) {
-            document.getElementById('logoPreview').src = currentSettings.headerLogoUrl + '?v=' + Date.now();
+        // NAYA LOGIC - ALAG ALAG SAVE
+        if(!currentSettings.headerBannerImageUrl && currentSettings.headerBannerType!== 'video') {
+            currentSettings.headerBannerImageUrl = currentSettings.headerBannerUrl || '';
+        }
+        if(!currentSettings.headerBannerVideoUrl && currentSettings.headerBannerType === 'video') {
+            currentSettings.headerBannerVideoUrl = currentSettings.headerBannerUrl || '';
+        }
+        if(!currentSettings.headerBannerActive) {
+            currentSettings.headerBannerActive = currentSettings.headerBannerType || 'image';
         }
 
-        // BANNER LOAD - HELPER USE KIYA
-        document.getElementById('settingBannerHeight').value = currentSettings.headerBannerHeight || 200;
-        renderBannerPreview(currentSettings.headerBannerUrl, currentSettings.headerBannerType);
-
+        renderBannerImagePreview(currentSettings.headerBannerImageUrl);
+        renderBannerVideoPreview(currentSettings.headerBannerVideoUrl);
+        updateActiveStatus();
         renderFooterLinks();
     } catch (err) { console.error(err) }
 }
@@ -134,111 +181,77 @@ function renderFooterLinks() {
             <button class="btn-danger btn-sm" onclick="removeFooterLink(${i})">🗑️</button>
         </div>`).join('');
 }
-
-window.addFooterLink = () => {
-    if (!currentSettings.footerLinks) currentSettings.footerLinks = [];
-    currentSettings.footerLinks.push({text:'', url:''});
-    renderFooterLinks();
-};
-
+window.addFooterLink = () => { if (!currentSettings.footerLinks) currentSettings.footerLinks = []; currentSettings.footerLinks.push({text:'', url:''}); renderFooterLinks(); };
 window.updateFooterLink = (i, field, value) => { currentSettings.footerLinks[i][field] = value; };
 window.removeFooterLink = (i) => { currentSettings.footerLinks.splice(i, 1); renderFooterLinks(); };
 
-// LOGO PREVIEW + UPLOAD
 window.previewLogo = (e) => {
     const file = e.target.files[0];
-    if (file && file.size > 2 * 1024 * 1024) {
-        alert('File size must be less than 2MB');
-        e.target.value = '';
-        return;
-    }
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            document.getElementById('logoPreview').src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
+    if (file && file.size > 2 * 1024 * 1024) { alert('File size must be less than 2MB'); e.target.value = ''; return; }
+    if (file) { const reader = new FileReader(); reader.onload = (e) => { document.getElementById('logoPreview').src = e.target.result; }; reader.readAsDataURL(file); }
 };
-
 window.uploadLogoFile = async () => {
     const fileInput = document.getElementById('logoUploadFile');
     const status = document.getElementById('logoUploadStatus');
     const btn = document.getElementById('uploadLogoBtn');
     if (!fileInput.files[0]) return alert('Please select a logo');
-
-    const formData = new FormData();
-    formData.append('logo', fileInput.files[0]);
-
-    status.textContent = 'Uploading to Cloudinary...';
-    btn.disabled = true;
-    try {
-        const res = await apiCall('/upload/logo', 'POST', formData);
-        currentSettings.headerLogoUrl = res.url;
-        document.getElementById('logoPreview').src = res.url + '?v=' + Date.now();
-        status.textContent = 'Logo uploaded!';
-        setTimeout(() => status.textContent = '', 3000);
-    } catch (err) {
-        status.textContent = 'Upload failed!';
-        console.error(err);
-        alert('Upload failed: ' + err.message);
-    } finally {
-        btn.disabled = false;
-    }
+    const formData = new FormData(); formData.append('logo', fileInput.files[0]);
+    status.textContent = 'Uploading...'; btn.disabled = true;
+    try { const res = await apiCall('/upload/logo', 'POST', formData); currentSettings.headerLogoUrl = res.url; document.getElementById('logoPreview').src = res.url + '?v=' + Date.now(); status.textContent = 'Logo uploaded!'; }
+    catch (err) { status.textContent = 'Upload failed!'; alert('Upload failed: ' + err.message); } finally { btn.disabled = false; }
 };
 
-// BANNER PREVIEW + UPLOAD - FIXED
-window.previewBanner = (e) => {
-    const file = e.target.files[0];
-    if (file && file.size > 20 * 1024 * 1024) {
-        alert('File size must be less than 20MB');
-        e.target.value = '';
-        return;
-    }
-    if (file) {
-        const url = URL.createObjectURL(file);
-        const type = file.type.startsWith('video')? 'video' : 'image';
-        renderBannerPreview(url, type); // HELPER CALL KIYA
-    }
+window.previewBannerImage = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const url = URL.createObjectURL(file); renderBannerImagePreview(url);
+};
+window.previewBannerVideo = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const url = URL.createObjectURL(file); renderBannerVideoPreview(url);
 };
 
-window.uploadBannerFile = async () => {
-    const fileInput = document.getElementById('bannerUploadFile');
-    const status = document.getElementById('bannerUploadStatus');
-    const btn = document.getElementById('uploadBannerBtn');
-    if (!fileInput.files[0]) return alert('Please select a banner');
-
-    const formData = new FormData();
-    formData.append('banner', fileInput.files[0]);
-
-    status.textContent = 'Uploading to Cloudinary...';
-    btn.disabled = true;
+window.uploadBannerImageFile = async () => {
+    const fileInput = document.getElementById('bannerImageUploadFile');
+    const status = document.getElementById('bannerImageUploadStatus');
+    const btn = document.getElementById('uploadBannerImageBtn');
+    if (!fileInput.files[0]) return alert('Please select a photo');
+    const formData = new FormData(); formData.append('banner', fileInput.files[0]);
+    status.textContent = 'Uploading Photo...'; btn.disabled = true;
     try {
         const res = await apiCall('/upload/banner', 'POST', formData);
-        currentSettings.headerBannerUrl = res.url;
-        currentSettings.headerBannerType = res.type;
+        currentSettings.headerBannerImageUrl = res.url;
+        renderBannerImagePreview(res.url);
+        status.textContent = 'Photo uploaded!';
+        if(confirm('Kya ye photo abhi main app pe dikhana hai?')) setActiveBanner('image');
+    } catch (err) { status.textContent = 'Upload failed!'; alert('Upload failed: ' + err.message); } finally { btn.disabled = false; }
+};
 
-        renderBannerPreview(res.url, res.type); // UPLOAD KE BAAD TURANT PREVIEW
-        status.textContent = 'Upload successful! Type: ' + res.type;
-        setTimeout(() => status.textContent = '', 3000);
-    } catch (err) {
-        status.textContent = 'Upload failed!';
-        console.error(err);
-        alert('Upload failed: ' + err.message);
-    } finally {
-        btn.disabled = false;
-    }
+window.uploadBannerVideoFile = async () => {
+    const fileInput = document.getElementById('bannerVideoUploadFile');
+    const status = document.getElementById('bannerVideoUploadStatus');
+    const btn = document.getElementById('uploadBannerVideoBtn');
+    if (!fileInput.files[0]) return alert('Please select a video');
+    const formData = new FormData(); formData.append('banner', fileInput.files[0]);
+    status.textContent = 'Uploading Video...'; btn.disabled = true;
+    try {
+        const res = await apiCall('/upload/banner', 'POST', formData);
+        currentSettings.headerBannerVideoUrl = res.url;
+        renderBannerVideoPreview(res.url);
+        status.textContent = 'Video uploaded!';
+        if(confirm('Kya ye video abhi main app pe dikhana hai?')) setActiveBanner('video');
+    } catch (err) { status.textContent = 'Upload failed!'; alert('Upload failed: ' + err.message); } finally { btn.disabled = false; }
 };
 
 window.saveSettings = async () => {
-    const btn = document.getElementById('saveSettingsBtn');
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
+    const btn = document.getElementById('saveSettingsBtn'); btn.disabled = true; btn.textContent = 'Saving...';
     const data = {
         appName: document.getElementById('settingLogoText').value,
         headerLogoUrl: currentSettings.headerLogoUrl || '',
-        headerBannerUrl: currentSettings.headerBannerUrl || '',
-        headerBannerType: currentSettings.headerBannerType || 'image',
+        headerBannerUrl: currentSettings.headerBannerActive === 'video'? (currentSettings.headerBannerVideoUrl || '') : (currentSettings.headerBannerImageUrl || ''),
+        headerBannerImageUrl: currentSettings.headerBannerImageUrl || '',
+        headerBannerVideoUrl: currentSettings.headerBannerVideoUrl || '',
+        headerBannerType: currentSettings.headerBannerActive === 'video'? 'video' : 'image',
+        headerBannerActive: currentSettings.headerBannerActive || 'image',
         headerBannerHeight: Number(document.getElementById('settingBannerHeight').value),
         headerColor: document.getElementById('settingHeaderColor').value,
         footerColor: document.getElementById('settingFooterColor').value,
@@ -250,18 +263,8 @@ window.saveSettings = async () => {
         twitter: document.getElementById('settingTwitter').value,
         youtube: document.getElementById('settingYoutube').value
     };
-    try {
-        await apiCall('/settings', 'PUT', data);
-        alert('Settings saved successfully');
-        await loadSettings();
-    } catch (err) {
-        alert('Save failed');
-        console.error(err)
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '💾 Save All Settings';
-    }
+    try { await apiCall('/settings', 'PUT', data); alert('Settings saved! Active: ' + data.headerBannerActive); await loadSettings(); }
+    catch (err) { alert('Save failed'); } finally { btn.disabled = false; btn.textContent = '💾 Save All Settings'; }
 };
-
 loadSettings();
 </script>
