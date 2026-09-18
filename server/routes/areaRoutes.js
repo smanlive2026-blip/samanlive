@@ -24,24 +24,25 @@ router.get('/areas', async (req, res) => {
     }
 });
 
-// POST create area + auto create manager - CITY WISE M01, M02, M03...
+// POST create area - FINAL CITY WISE UNLIMITED
 router.post('/areas', async (req, res) => {
     try {
+        console.log("Creating area for city:", req.body.city);
         const area = new Area(req.body);
         await area.save();
 
-        // YAHAN FIX HAI - areaCode se nahi, city se count karo
-        const existingManagersInCity = await Manager.find({ 
-            city: area.city, 
-            state: area.state 
-        });
-        const nextNum = existingManagersInCity.length + 1;
+        // FIX: City se count, areaCode se nahi
+        const count = await Manager.countDocuments({ city: area.city });
+        console.log(`Existing managers in ${area.city}: ${count}`);
+        
+        const nextNum = count + 1;
         const managerNum = `M${String(nextNum).padStart(2, '0')}`;
+        console.log("New Manager will be:", managerNum);
 
         const loginToken = crypto.randomBytes(32).toString('hex');
         const manager = new Manager({
             areaCode: area.areaCode,
-            managerCode: `${area.areaCode}-${managerNum}`, // Ab PRITMA-2-M02 banega
+            managerCode: `${area.areaCode}-${managerNum}`,
             name: req.body.managerName || area.areaName + ' Manager',
             email: req.body.managerEmail || `${area.areaCode.toLowerCase()}-${managerNum.toLowerCase()}@autogen.local`,
             phone: req.body.managerPhone || req.body.phone || '',
@@ -62,6 +63,7 @@ router.post('/areas', async (req, res) => {
 
         res.json({ success: true, area, manager });
     } catch (err) {
+        console.error(err);
         res.status(400).json({ error: err.message });
     }
 });
