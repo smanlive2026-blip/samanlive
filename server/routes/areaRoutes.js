@@ -24,7 +24,7 @@ router.post('/areas', async (req, res) => {
         const loginToken = crypto.randomBytes(32).toString('hex');
         const manager = new Manager({
             areaCode: area.areaCode,
-            managerCode: area.areaCode + '-DEFAULT',
+            managerCode: area.areaCode + '-M01',
             name: req.body.managerName || area.areaName + ' Manager',
             email: req.body.managerEmail || `${area.areaCode.toLowerCase()}@autogen.local`,
             phone: req.body.managerPhone || req.body.phone || '',
@@ -32,7 +32,7 @@ router.post('/areas', async (req, res) => {
             city: area.city,
             state: area.state,
             areaName: area.areaName,
-            bucket: req.body.bucket || 'DEFAULT',
+            bucket: req.body.bucket || 'MANAGER-01',
             loginToken: loginToken,
             centerLat: area.centerLat,
             centerLng: area.centerLng,
