@@ -11,10 +11,10 @@ const bannerMemoryUpload = multer({
     limits: { fileSize: 25 * 1024 * 1024 }
 });
 
-// GET SETTINGS
+// GET SETTINGS - HAMESHA LATEST WALA
 router.get('/settings', async (req, res) => {
     try {
-        let settings = await Setting.findOne();
+        let settings = await Setting.findOne().sort({ _id: -1 });
         if (!settings) {
             settings = await Setting.create({ 
                 headerBannerUrl: '', 
@@ -23,13 +23,6 @@ router.get('/settings', async (req, res) => {
                 headerLogoUrl: '', 
                 appName: 'SAMAN LIVE'
             });
-        } else {
-            let updated = false;
-            if (settings.headerBannerType === undefined) { settings.headerBannerType = 'image'; updated = true; }
-            if (settings.headerBannerHeight === undefined) { settings.headerBannerHeight = 200; updated = true; }
-            if (settings.headerLogoUrl === undefined) { settings.headerLogoUrl = ''; updated = true; }
-            if (settings.headerBannerUrl === undefined) { settings.headerBannerUrl = ''; updated = true; }
-            if (updated) await settings.save();
         }
         res.json(settings);
     } catch (err) {
@@ -40,14 +33,14 @@ router.get('/settings', async (req, res) => {
 // UPDATE SETTINGS
 router.put('/settings', express.json({limit: '30mb'}), async (req, res) => {
     try {
-        const settings = await Setting.findOneAndUpdate({}, { $set: req.body }, { upsert: true, new: true });
+        const settings = await Setting.findOneAndUpdate({}, { $set: req.body }, { upsert: true, new: true, sort: { _id: -1 } });
         res.json({ success: true, data: settings });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// BANNER UPLOAD - DIRECT CLOUDINARY, GOLDEN TOUCH NAHI HOGA
+// BANNER UPLOAD - NAYA UPLOAD = NAYA LINK
 router.post('/upload/banner', bannerMemoryUpload.single('banner'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file' });
@@ -59,20 +52,19 @@ router.post('/upload/banner', bannerMemoryUpload.single('banner'), async (req, r
                 {
                     folder: 'samanlive/banner',
                     resource_type: resourceType,
-                    allowed_formats: ['jpg','png','jpeg','webp','avif','mp4','mov','webm']
                 },
                 (error, result) => error ? reject(error) : resolve(result)
             );
             stream.end(req.file.buffer);
         });
 
-        let settings = await Setting.findOne();
-        if (!settings) settings = await Setting.create({});
-        settings.headerBannerUrl = result.secure_url;
-        settings.headerBannerType = resourceType;
-        await settings.save();
+        // NAYA LINK DB ME SAVE
+        await Setting.findOneAndUpdate({}, 
+            { $set: { headerBannerUrl: result.secure_url, headerBannerType: resourceType } }, 
+            { upsert: true, new: true, sort: { _id: -1 } }
+        );
         
-        console.log("Banner OK:", result.secure_url, resourceType);
+        console.log("Banner Naya Link:", result.secure_url);
         res.json({ success: true, url: result.secure_url, type: resourceType });
     } catch (err) {
         console.error("Banner Error:", err);
@@ -80,15 +72,21 @@ router.post('/upload/banner', bannerMemoryUpload.single('banner'), async (req, r
     }
 });
 
-// LOGO UPLOAD - GOLDEN WALA HI RAHEGA
+// LOGO UPLOAD - GOLDEN WALA, NAYA UPLOAD = NAYA LINK
 router.post('/upload/logo', upload.single('logo'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file' });
-        let settings = await Setting.findOne();
-        if (!settings) settings = await Setting.create({});
-        settings.headerLogoUrl = req.file.path;
-        await settings.save();
-        res.json({ success: true, url: req.file.path });
+        
+        const newUrl = req.file.path; // Cloudinary ka naya permanent link
+
+        // NAYA LINK DB ME SAVE - PURANA HAT JAYEGA, NAYA DIKHEGA
+        await Setting.findOneAndUpdate({},
+            { $set: { headerLogoUrl: newUrl } },
+            { upsert: true, new: true, sort: { _id: -1 } }
+        );
+
+        console.log("Logo Naya Link:", newUrl);
+        res.json({ success: true, url: newUrl });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
