@@ -44,7 +44,7 @@ async function loadSettings() {
     const res = await fetch('/api/settings').catch(()=>({ok:false}));
     if(res.ok){ 
         siteSettings = await res.json();
-        console.log("Settings Loaded:", siteSettings); // check karne ke liye
+        console.log("Settings Loaded:", siteSettings);
         
         // LOGO LOAD
         const logoImg = document.getElementById('headerLogoImg');
@@ -53,22 +53,36 @@ async function loadSettings() {
         }
         
         const bannerHeader = document.getElementById('mainHeaderBanner');
-        if(bannerHeader && siteSettings.headerBannerUrl && siteSettings.headerBannerUrl !== '') {
-            const url = siteSettings.headerBannerUrl;
-            const isVideo = siteSettings.headerBannerType === 'video' || url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.webm') || url.toLowerCase().includes('.mov') || url.includes('/video/');
+        if(bannerHeader) {
+            // NAYA LOGIC - ACTIVE KE HISAB SE URL NIKALO
+            let finalUrl = '';
+            let isVideo = false;
 
-            if(isVideo){
-                bannerHeader.innerHTML = `<video src="${url}" autoplay muted loop playsinline controls style="width:100%;height:100%;object-fit:cover;"></video>`;
+            if(siteSettings.headerBannerActive === 'video' && siteSettings.headerBannerVideoUrl){
+                finalUrl = siteSettings.headerBannerVideoUrl;
+                isVideo = true;
+            } else if(siteSettings.headerBannerActive === 'image' && siteSettings.headerBannerImageUrl){
+                finalUrl = siteSettings.headerBannerImageUrl;
+                isVideo = false;
             } else {
-                bannerHeader.innerHTML = `<img src="${url}?v=${Date.now()}" style="width:100%;height:100%;object-fit:cover;">`;
+                // PURANA FALLBACK - AGAR NAYA FIELD NA HO TO
+                finalUrl = siteSettings.headerBannerUrl || '';
+                isVideo = siteSettings.headerBannerType === 'video' || finalUrl.toLowerCase().includes('.mp4') || finalUrl.toLowerCase().includes('.webm') || finalUrl.includes('/video/');
             }
-            bannerHeader.style.display = 'block';
-            if(siteSettings.headerBannerHeight) bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
+
+            if(finalUrl && finalUrl !== ''){
+                if(isVideo){
+                    bannerHeader.innerHTML = `<video src="${finalUrl}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>`;
+                } else {
+                    bannerHeader.innerHTML = `<img src="${finalUrl}?v=${Date.now()}" style="width:100%;height:100%;object-fit:cover;">`;
+                }
+                bannerHeader.style.display = 'block';
+                if(siteSettings.headerBannerHeight) bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
+            }
         }
          renderFooter();
     }
 }
-
 
 // 2. CITY NAME SET KARO
 async function showUserLocationInHeader() {
