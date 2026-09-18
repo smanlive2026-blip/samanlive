@@ -23,7 +23,7 @@ const settingSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  headerBannerType: { // <-- NAYA ADD KIYA
+  headerBannerType: {
     type: String,
     default: 'image',
     enum: ['image', 'video']
@@ -31,6 +31,20 @@ const settingSchema = new mongoose.Schema({
   headerBannerHeight: {
     type: Number,
     default: 200
+  },
+  // ============ NAYA 3 FIELD - PHOTO / VIDEO ALAG KE LIYE ============
+  headerBannerImageUrl: {
+    type: String,
+    default: ''
+  },
+  headerBannerVideoUrl: {
+    type: String,
+    default: ''
+  },
+  headerBannerActive: {
+    type: String,
+    default: 'image',
+    enum: ['image', 'video']
   },
   // ============ KHATAM ============
 
