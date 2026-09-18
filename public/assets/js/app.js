@@ -44,33 +44,31 @@ async function loadSettings() {
     const res = await fetch('/api/settings').catch(()=>({ok:false}));
     if(res.ok){ 
         siteSettings = await res.json();
+        console.log("Settings Loaded:", siteSettings); // check karne ke liye
         
-        // LOGO LOAD - NAYA LINK TURANT
+        // LOGO LOAD
         const logoImg = document.getElementById('headerLogoImg');
         if(logoImg) {
             logoImg.src = (siteSettings.headerLogoUrl || '/assets/images/samanlive-logo.png') + '?v=' + Date.now();
         }
         
         const bannerHeader = document.getElementById('mainHeaderBanner');
-        
-        // BANNER IMAGE YA VIDEO LOAD - NAYA LINK TURANT DIKHEGA
         if(bannerHeader && siteSettings.headerBannerUrl && siteSettings.headerBannerUrl !== '') {
-            if(siteSettings.headerBannerType === 'video'){
-                bannerHeader.innerHTML = `<video src="${siteSettings.headerBannerUrl}?v=${Date.now()}" autoplay muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;"></video>`;
+            const url = siteSettings.headerBannerUrl;
+            const isVideo = siteSettings.headerBannerType === 'video' || url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.webm') || url.toLowerCase().includes('.mov') || url.includes('/video/');
+
+            if(isVideo){
+                bannerHeader.innerHTML = `<video src="${url}" autoplay muted loop playsinline controls style="width:100%;height:100%;object-fit:cover;"></video>`;
             } else {
-                bannerHeader.innerHTML = `<img id="headerBannerImg" src="${siteSettings.headerBannerUrl}?v=${Date.now()}" style="width:100%;height:100%;object-fit:cover;">`;
+                bannerHeader.innerHTML = `<img src="${url}?v=${Date.now()}" style="width:100%;height:100%;object-fit:cover;">`;
             }
             bannerHeader.style.display = 'block';
-            if(siteSettings.headerBannerHeight) {
-                bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
-            }
-        } else {
-            if(bannerHeader) bannerHeader.innerHTML = '';
+            if(siteSettings.headerBannerHeight) bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
         }
-        
-        renderFooter();
+         renderFooter();
     }
 }
+
 
 // 2. CITY NAME SET KARO
 async function showUserLocationInHeader() {
