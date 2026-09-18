@@ -90,11 +90,12 @@ async function apiCall(url, method = 'GET', data = null) {
 // HELPER FUNCTION - YAHI NAYA ADD KIYA
 function renderBannerPreview(url, type) {
     const bannerBox = document.getElementById('bannerPreviewBox');
-    if(!url) return;
+    if(!url) { bannerBox.innerHTML = '<p style="opacity:0.6">No Banner</p>'; return; }
+    const cacheUrl = url + (url.includes('blob:') ? '' : '?v=' + Date.now());
     if(type === 'video'){
-        bannerBox.innerHTML = `<video src="${url}" autoplay muted loop playsinline controls style="width:100%;height:120px;object-fit:cover;border-radius:10px;"></video>`;
+        bannerBox.innerHTML = `<video src="${cacheUrl}" autoplay muted loop playsinline controls style="width:100%;height:120px;object-fit:cover;border-radius:10px;"></video>`;
     } else {
-        bannerBox.innerHTML = `<img id="bannerPreview" src="${url}?v=${Date.now()}" style="width:100%;height:120px;object-fit:cover;border-radius:10px;background:#f3f4f6;">`;
+        bannerBox.innerHTML = `<img src="${cacheUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:10px;background:#f3f4f6;">`;
     }
 }
 

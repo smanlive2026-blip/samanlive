@@ -45,7 +45,7 @@ async function loadSettings() {
     if(res.ok){ 
         siteSettings = await res.json();
         
-        // LOGO LOAD
+        // LOGO LOAD - NAYA LINK TURANT
         const logoImg = document.getElementById('headerLogoImg');
         if(logoImg) {
             logoImg.src = (siteSettings.headerLogoUrl || '/assets/images/samanlive-logo.png') + '?v=' + Date.now();
@@ -53,34 +53,22 @@ async function loadSettings() {
         
         const bannerHeader = document.getElementById('mainHeaderBanner');
         
-        // BANNER IMAGE YA VIDEO LOAD
+        // BANNER IMAGE YA VIDEO LOAD - NAYA LINK TURANT DIKHEGA
         if(bannerHeader && siteSettings.headerBannerUrl && siteSettings.headerBannerUrl !== '') {
             if(siteSettings.headerBannerType === 'video'){
-                // VIDEO HAI TO - MOBILE KE LIYE OPTIMIZED
-                bannerHeader.innerHTML = `
-                <video 
-                    src="${siteSettings.headerBannerUrl}" 
-                    autoplay 
-                    muted 
-                    loop 
-                    playsinline 
-                    preload="metadata"
-                    style="width:100%;height:100%;object-fit:cover;">
-                </video>`;
+                bannerHeader.innerHTML = `<video src="${siteSettings.headerBannerUrl}?v=${Date.now()}" autoplay muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;"></video>`;
             } else {
-                // IMAGE HAI TO
                 bannerHeader.innerHTML = `<img id="headerBannerImg" src="${siteSettings.headerBannerUrl}?v=${Date.now()}" style="width:100%;height:100%;object-fit:cover;">`;
             }
+            bannerHeader.style.display = 'block';
+            if(siteSettings.headerBannerHeight) {
+                bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
+            }
         } else {
-            bannerHeader.innerHTML = ''; // agar banner nahi hai to khali kar do
+            if(bannerHeader) bannerHeader.innerHTML = '';
         }
         
-        if(bannerHeader) bannerHeader.style.display = 'block';
-        
-        if(bannerHeader && siteSettings.headerBannerHeight) {
-            bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
-        }
-         renderFooter();
+        renderFooter();
     }
 }
 

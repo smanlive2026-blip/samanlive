@@ -11,6 +11,21 @@ const bannerMemoryUpload = multer({
     limits: { fileSize: 25 * 1024 * 1024 }
 });
 
+// HELPER - HAMESHA LATEST SETTING LAO (DUPLICATE BUG FIX)
+async function getLatestSettings() {
+    let settings = await Setting.findOne().sort({ _id: -1 });
+    if (!settings) {
+        settings = await Setting.create({ 
+            headerBannerUrl: '', 
+            headerBannerType: 'image',
+            headerBannerHeight: 200,
+            headerLogoUrl: '', 
+            appName: 'SAMAN LIVE'
+        });
+    }
+    return settings;
+}
+
 // GET SETTINGS - HAMESHA LATEST WALA
 router.get('/settings', async (req, res) => {
     try {
@@ -33,7 +48,9 @@ router.get('/settings', async (req, res) => {
 // UPDATE SETTINGS
 router.put('/settings', express.json({limit: '30mb'}), async (req, res) => {
     try {
-        const settings = await Setting.findOneAndUpdate({}, { $set: req.body }, { upsert: true, new: true, sort: { _id: -1 } });
+        let settings = await getLatestSettings();
+        Object.assign(settings, req.body);
+        await settings.save();
         res.json({ success: true, data: settings });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -58,11 +75,11 @@ router.post('/upload/banner', bannerMemoryUpload.single('banner'), async (req, r
             stream.end(req.file.buffer);
         });
 
-        // NAYA LINK DB ME SAVE
-        await Setting.findOneAndUpdate({}, 
-            { $set: { headerBannerUrl: result.secure_url, headerBannerType: resourceType } }, 
-            { upsert: true, new: true, sort: { _id: -1 } }
-        );
+        // NAYA LINK DB ME SAVE - AB FINDONE+SAVE SE (100% KAAM KAREGA)
+        let settings = await getLatestSettings();
+        settings.headerBannerUrl = result.secure_url;
+        settings.headerBannerType = resourceType;
+        await settings.save();
         
         console.log("Banner Naya Link:", result.secure_url);
         res.json({ success: true, url: result.secure_url, type: resourceType });
@@ -80,10 +97,9 @@ router.post('/upload/logo', upload.single('logo'), async (req, res) => {
         const newUrl = req.file.path; // Cloudinary ka naya permanent link
 
         // NAYA LINK DB ME SAVE - PURANA HAT JAYEGA, NAYA DIKHEGA
-        await Setting.findOneAndUpdate({},
-            { $set: { headerLogoUrl: newUrl } },
-            { upsert: true, new: true, sort: { _id: -1 } }
-        );
+        let settings = await getLatestSettings();
+        settings.headerLogoUrl = newUrl;
+        await settings.save();
 
         console.log("Logo Naya Link:", newUrl);
         res.json({ success: true, url: newUrl });
