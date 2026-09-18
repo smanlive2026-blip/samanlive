@@ -72,10 +72,11 @@ async function loadSettings() {
 
             if(finalUrl && finalUrl !== ''){
                 if(isVideo){
-                    bannerHeader.innerHTML = `<video src="${finalUrl}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>`;
-                } else {
-                    bannerHeader.innerHTML = `<img src="${finalUrl}?v=${Date.now()}" style="width:100%;height:100%;object-fit:cover;">`;
-                }
+                bannerHeader.innerHTML = `<video src="${finalUrl}" autoplay muted loop playsinline preload="auto" style="width:100%;height:100%;object-fit:cover;display:block;"></video>`;
+            }
+            else {
+                bannerHeader.innerHTML = `<img src="${finalUrl}?v=${Date.now()}" style="width:100%;height:100%;object-fit:cover;display:block;">`;
+            }
                 bannerHeader.style.display = 'block';
                 if(siteSettings.headerBannerHeight) bannerHeader.style.height = siteSettings.headerBannerHeight + 'px';
             }
