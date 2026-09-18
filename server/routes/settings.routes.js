@@ -57,23 +57,35 @@ router.put('/settings', express.json({limit: '30mb'}), async (req, res) => {
     }
 });
 
-// BANNER UPLOAD - NAYA UPLOAD = NAYA LINK
+// BANNER UPLOAD - NAYA UPLOAD = NAYA LINK - VIDEO FIX
 router.post('/upload/banner', bannerMemoryUpload.single('banner'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file' });
-        const isVideo = req.file.mimetype.startsWith('video/');
-        const resourceType = isVideo ? 'video' : 'image';
+        
+        console.log("Banner File:", req.file.originalname, req.file.mimetype, req.file.size);
 
+        const isVideo = req.file.mimetype.startsWith('video/');
+        
+        // VIDEO KE LIYE AUTO + CHUNK_SIZE - YAHI FIX HAI
         const result = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
                 {
                     folder: 'samanlive/banner',
-                    resource_type: resourceType,
+                    resource_type: 'auto',
+                    chunk_size: 6000000,
                 },
-                (error, result) => error ? reject(error) : resolve(result)
+                (error, result) => {
+                    if(error) {
+                        console.error("Cloudinary Video Error:", error);
+                        return reject(error);
+                    }
+                    resolve(result);
+                }
             );
             stream.end(req.file.buffer);
         });
+
+        const resourceType = result.resource_type === 'video' ? 'video' : 'image';
 
         // NAYA LINK DB ME SAVE - AB FINDONE+SAVE SE (100% KAAM KAREGA)
         let settings = await getLatestSettings();
@@ -81,7 +93,7 @@ router.post('/upload/banner', bannerMemoryUpload.single('banner'), async (req, r
         settings.headerBannerType = resourceType;
         await settings.save();
         
-        console.log("Banner Naya Link:", result.secure_url);
+        console.log("Banner Naya Link:", result.secure_url, "Type:", resourceType);
         res.json({ success: true, url: result.secure_url, type: resourceType });
     } catch (err) {
         console.error("Banner Error:", err);
