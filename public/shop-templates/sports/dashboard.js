@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/sports/dashboard.js - V5 WORLD CLASS
+// LOCATION: public/shop-templates/sports/dashboard.js - V5 WORLD CLASS - FULL CODE
 const params = new URLSearchParams(location.search);
 const shopId = params.get('shopId') || params.get('id') || localStorage.getItem('last_sports_shopId') || '';
 
@@ -151,7 +151,7 @@ function renderCategories() {
   }).join('');
 }
 
-// Search
+// Search - NEW WALA (ye chalega)
 if (els.searchInput) {
   els.searchInput.addEventListener('input', () => {
     const q = els.searchInput.value.toLowerCase();
@@ -164,7 +164,7 @@ if (els.searchInput) {
   });
 }
 
-// Actions
+// Search - OLD WALA (tera wala hi rakha hai, delete nahi kiya)
 window.filter = function() {
   const q = document.getElementById('searchInput')?.value.toLowerCase() || '';
   const filtered = allProducts.filter(p => p.name.toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q));
