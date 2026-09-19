@@ -1,459 +1,152 @@
+<!-- LOCATION: public/shop-templates/kirana/user-view.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shop - SAMANLIVE</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-            min-height: 100vh;
-        }
-      .loading-screen {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 20px;
-            z-index: 9999;
-        }
-      .loading-screen i {
-            font-size: 50px;
-            color: #84fab0;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      .loading-screen p { color: #64748b; font-weight: 600; }
-
-      .shop-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding-bottom: 100px;
-        }
-
-      .shop-hero {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            margin: 16px;
-            border-radius: 20px;
-            padding: 30px 20px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-      .shop-logo-wrap {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 16px;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            background: linear-gradient(135deg, #84fab0, #8fd3f4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-      .shop-logo-wrap img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-      .shop-logo-wrap.icon-fallback {
-            font-size: 50px;
-        }
-      .shop-name {
-            font-size: 26px;
-            font-weight: 800;
-            color: #1e293b;
-            margin-bottom: 6px;
-        }
-      .shop-city {
-            font-size: 14px;
-            color: #64748b;
-            font-weight: 600;
-        }
-      .shop-status {
-            display: inline-block;
-            margin-top: 12px;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-      .shop-status.open { background: #dcfce7; color: #166534; }
-      .shop-status.closed { background: #fee2e2; color: #991b1b; }
-
-      .info-card {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            margin: 16px;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-        }
-      .info-card h3 {
-            font-size: 16px;
-            color: #1e293b;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-      .info-card p {
-            color: #64748b;
-            font-size: 14px;
-            line-height: 1.6;
-            margin: 0;
-        }
-      .info-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-      .info-row:last-child { border-bottom: none; }
-      .info-row i {
-            width: 24px;
-            color: #84fab0;
-            font-size: 18px;
-        }
-      .info-row span {
-            flex: 1;
-            font-size: 14px;
-            color: #334155;
-            font-weight: 600;
-        }
-
-      .products-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            padding: 0 16px;
-        }
-      .product-card {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-            transition: all 0.3s;
-        }
-      .product-card:active { transform: scale(0.98); }
-      .product-img {
-            width: 100%;
-            height: 140px;
-            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-        }
-      .product-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-      .product-info {
-            padding: 12px;
-        }
-      .product-name {
-            font-size: 14px;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-      .product-weight {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-bottom: 6px;
-        }
-      .product-price-wrap {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-      .product-price {
-            font-size: 18px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #84fab0, #8fd3f4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-      .product-mrp {
-            font-size: 12px;
-            color: #94a3b8;
-            text-decoration: line-through;
-        }
-
-      .bottom-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255,255,255,0.98);
-            backdrop-filter: blur(10px);
-            padding: 16px;
-            box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
-            z-index: 100;
-        }
-      .call-btn {
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-            display: flex;
-            background: linear-gradient(135deg, #25D366, #128C7E);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 14px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 6px 20px rgba(37,211,102,0.4);
-            transition: all 0.2s;
-        }
-      .call-btn:active { transform: scale(0.98); }
-
-      .share-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            color: #1e293b;
-            font-size: 18px;
-            z-index: 10;
-        }
-
-      .empty-products {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 60px 20px;
-            color: #94a3b8;
-        }
-      .empty-products i {
-            font-size: 60px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        @media (min-width: 768px) {
-          .products-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kirana Store - SamanLive</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap');
+*{box-sizing:border-box;font-family:'Outfit',sans-serif}body{margin:0;background:#f8fafc}
+.top{background:#16a34a;color:#fff;padding:16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.shop-info{padding:16px;background:#fff;border-bottom:1px solid #e2e8f0}
+.cat-bar{display:flex;gap:8px;overflow:auto;padding:10px 16px;background:#fff;position:sticky;top:62px;z-index:9;border-bottom:1px solid #e2e8f0}
+.cat-bar button{white-space:nowrap;padding:8px 14px;border:1px solid #e2e8f0;border-radius:20px;background:#fff;cursor:pointer;font-weight:700;font-size:12px}
+.cat-bar button.active{background:#16a34a;color:#fff;border-color:#16a34a}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;padding:16px}
+.card{background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.card img{width:100%;height:120px;object-fit:cover;background:#f1f5f9}
+.card .p{padding:10px}.card b{font-size:13px;display:block;line-height:1.2}
+.card small{font-size:11px;color:#64748b}
+.price{font-weight:800;margin-top:6px;display:flex;justify-content:space-between}
+.add-btn{width:100%;margin-top:8px;background:#16a34a;color:#fff;border:none;padding:8px;border-radius:10px;font-weight:800;cursor:pointer}
+.cart-bar{position:fixed;bottom:0;left:0;right:0;background:#0f172a;color:#fff;padding:12px 16px;display:none;justify-content:space-between;align-items:center;z-index:20;border-radius:16px 16px 0 0}
+#cartModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;z-index:30;align-items:end}
+#cartBox{background:#fff;width:100%;max-width:500px;margin:0 auto;border-radius:20px 20px 0 0;max-height:85vh;display:flex;flex-direction:column}
+</style>
 </head>
 <body>
-    <div id="loadingScreen" class="loading-screen">
-        <i class="fa fa-spinner"></i>
-        <p>Loading Shop...</p>
+
+<div class="top">
+  <div><b id="shopName">Kirana Store</b><br><small id="shopStatus" style="opacity:.8">Open • Fast Delivery</small></div>
+  <div style="display:flex;gap:8px">
+    <button onclick="openCart()" style="background:#fff;color:#16a34a;border:none;padding:8px 12px;border-radius:20px;font-weight:800"><i class="fa fa-shopping-cart"></i> <span id="cartCount">0</span></button>
+  </div>
+</div>
+
+<div class="shop-info">
+  <div style="display:flex;gap:10px;align-items:center"><i class="fa-solid fa-location-dot" style="color:#16a34a"></i> <span id="shopAddress">Loading address...</span></div>
+  <div style="display:flex;gap:10px;align-items:center;margin-top:6px"><i class="fa-solid fa-phone" style="color:#16a34a"></i> <span id="shopPhone">...</span></div>
+</div>
+
+<div class="cat-bar" id="catBar"><button class="active" onclick="filterCat('All')">All</button></div>
+
+<div class="grid" id="productGrid"></div>
+
+<div class="cart-bar" id="cartBar">
+  <div><b id="cartTotalItems">0 items</b> | ₹<span id="cartTotal">0</span></div>
+  <button onclick="openCart()" style="background:#22c55e;color:#fff;border:none;padding:8px 16px;border-radius:10px;font-weight:800">View Cart</button>
+</div>
+
+<div id="cartModal">
+  <div id="cartBox">
+    <div style="padding:16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between"><h3 style="margin:0">Your Cart</h3><button onclick="closeCart()" style="border:none;background:#f1f5f9;padding:6px 10px;border-radius:8px">✕</button></div>
+    <div id="cartItems" style="flex:1;overflow:auto;padding:12px"></div>
+    <div style="padding:16px;border-top:1px solid #e2e8f0">
+      <div style="display:flex;justify-content:space-between;font-weight:800;margin-bottom:10px"><span>Total</span><span>₹<span id="cartTotal2">0</span></span></div>
+      <button onclick="checkout()" style="width:100%;background:#16a34a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:800;font-size:15px"><i class="fa-brands fa-whatsapp"></i> Order on WhatsApp</button>
     </div>
+  </div>
+</div>
 
-    <div class="shop-container" id="shopContainer" style="display: none;">
-        <button class="share-btn" onclick="shareShop()">
-            <i class="fa fa-share-alt"></i>
-        </button>
+<script>
+// LOCATION: public/shop-templates/kirana/user-view.html (inline JS)
+const urlParams = new URLSearchParams(window.location.search);
+const shopId = urlParams.get('shopId');
+if(!shopId) document.body.innerHTML='<h2>shopId missing</h2>';
+let allProducts=[], cart=JSON.parse(localStorage.getItem('kirana_cart_'+shopId)||'[]'), shopData=null;
 
-        <div class="shop-hero">
-            <div class="shop-logo-wrap" id="logoWrap">
-                <div class="icon-fallback">🛒</div>
-            </div>
-            <div class="shop-name" id="shopName">Shop Name</div>
-            <div class="shop-city" id="shopCity">City</div>
-            <span class="shop-status open" id="shopStatus">OPEN NOW</span>
-        </div>
-
-        <div class="info-card">
-            <h3><i class="fa fa-info-circle"></i> About</h3>
-            <p id="shopDesc">Welcome to our kirana store!</p>
-        </div>
-
-        <div class="info-card">
-            <h3><i class="fa fa-store"></i> Shop Info</h3>
-            <div class="info-row">
-                <i class="fa fa-phone"></i>
-                <span id="shopPhone">-</span>
-            </div>
-            <div class="info-row">
-                <i class="fa fa-map-marker-alt"></i>
-                <span id="shopAddress">-</span>
-            </div>
-            <div class="info-row">
-                <i class="fa fa-truck"></i>
-                <span>Delivery within <b id="shopRange">5</b> KM</span>
-            </div>
-            <div class="info-row">
-                <i class="fa fa-clock"></i>
-                <span id="shopHours">Mon-Sat: 8AM - 9PM</span>
-            </div>
-        </div>
-
-        <div style="padding: 0 16px; margin: 24px 0 16px;">
-            <h3 style="font-size: 18px; color: #1e293b; margin: 0;"><i class="fa fa-box"></i> Our Products</h3>
-        </div>
-
-        <div class="products-grid" id="productsGrid">
-            <div class="empty-products">
-                <i class="fa fa-box-open"></i>
-                <p>No products available yet</p>
-            </div>
-        </div>
+loadShop();
+function loadShop(){
+  fetch(`/api/shops/kirana/${shopId}`, {cache:'no-store'}).then(r=>r.json()).then(result=>{
+    if(!result.success) return;
+    shopData=result.shop;
+    document.getElementById('shopName').innerText=shopData.settings?.shopName||shopData.shopName;
+    document.getElementById('shopAddress').innerText=shopData.settings?.address||'Fast delivery available';
+    document.getElementById('shopPhone').innerText=shopData.settings?.phone||'';
+    const isOpen = shopData.settings?.isOpen??true;
+    document.getElementById('shopStatus').innerText = isOpen? 'Open • Fast Delivery' : 'Closed Now';
+    allProducts=shopData.products||[];
+    renderCategories();
+    renderProducts(allProducts);
+    updateCartUI();
+  });
+}
+function renderCategories(){
+  const cats=[...new Set(allProducts.map(p=>p.category||'General'))];
+  const bar=document.getElementById('catBar');
+  bar.innerHTML='<button class="active" onclick="filterCat(\'All\')">All</button>'+cats.map(c=>`<button onclick="filterCat('${c}')">${c}</button>`).join('');
+}
+function renderProducts(list){
+  const grid=document.getElementById('productGrid');
+  if(!list.length){ grid.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:40px;color:#94a3b8">No products</p>'; return; }
+  grid.innerHTML=list.map(p=>`
+    <div class="card">
+      <img src="${p.image||'https://placehold.co/400/16a34a/fff?text='+encodeURIComponent(p.name.slice(0,10))}">
+      <div class="p">
+        <b>${p.name}</b><small>${p.brand||''} ${p.weight||''}</small>
+        <div class="price"><span>₹${p.price} <small style="text-decoration:line-through;color:#94a3b8">${p.mrp?'₹'+p.mrp:''}</small></span><small style="color:${p.stock>0?'#16a34a':'#ef4444'}">${p.stock>0?p.stock+' left':'Out'}</small></div>
+        <button class="add-btn" onclick="addToCart('${p._id}')" ${p.stock<=0?'disabled style="background:#94a3b8"':''}>${p.stock<=0?'Out of Stock':'Add to Cart'}</button>
+      </div>
     </div>
-
-    <div class="bottom-bar" id="bottomBar" style="display: none;">
-        <button class="call-btn" onclick="callShop()">
-            <i class="fa fa-phone"></i> Call Shop Now
-        </button>
+  `).join('');
+}
+function filterCat(cat){
+  document.querySelectorAll('.cat-bar button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  if(cat==='All') renderProducts(allProducts); else renderProducts(allProducts.filter(p=>(p.category||'General')===cat));
+}
+function addToCart(id){
+  const prod=allProducts.find(p=>p._id===id); if(!prod) return;
+  const ex=cart.find(c=>c._id===id);
+  if(ex) ex.qty+=1; else cart.push({...prod, qty:1});
+  saveCart();
+}
+function saveCart(){
+  localStorage.setItem('kirana_cart_'+shopId, JSON.stringify(cart));
+  updateCartUI();
+}
+function updateCartUI(){
+  const count=cart.reduce((s,c)=>s+c.qty,0);
+  const total=cart.reduce((s,c)=>s+c.price*c.qty,0);
+  document.getElementById('cartCount').innerText=count;
+  document.getElementById('cartTotal').innerText=total;
+  document.getElementById('cartTotal2').innerText=total;
+  document.getElementById('cartTotalItems').innerText=count+' items';
+  document.getElementById('cartBar').style.display=count>0?'flex':'none';
+  document.getElementById('cartItems').innerHTML=cart.map(c=>`
+    <div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9">
+      <img src="${c.image||'https://placehold.co/100'}" style="width:50px;height:50px;border-radius:10px;object-fit:cover">
+      <div style="flex:1"><b style="font-size:13px">${c.name}</b><br><small>₹${c.price} x ${c.qty} = ₹${c.price*c.qty}</small></div>
+      <div style="display:flex;gap:6px;align-items:center"><button onclick="changeQty('${c._id}',-1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff">-</button><b>${c.qty}</b><button onclick="changeQty('${c._id}',1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#16a34a;color:#fff">+</button></div>
     </div>
-
-    <script>
-        let shopData = null;
-        const urlParams = new URLSearchParams(window.location.search);
-        const shopId = urlParams.get('shopId');
-
-        if (!shopId) {
-            alert('Invalid shop link');
-            window.location.href = '/';
-        }
-
-        async function loadShop() {
-            try {
-                const res = await fetch(`/api/local-market/shops/${shopId}`);
-                shopData = await res.json();
-
-                if (!shopData._id) {
-                    alert('Shop not found');
-                    window.location.href = '/';
-                    return;
-                }
-
-                renderShop();
-                loadProducts();
-
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('shopContainer').style.display = 'block';
-                document.getElementById('bottomBar').style.display = 'block';
-
-            } catch (err) {
-                console.error(err);
-                alert('Failed to load shop');
-                document.getElementById('loadingScreen').style.display = 'none';
-            }
-        }
-
-        function renderShop() {
-            const logoWrap = document.getElementById('logoWrap');
-            if (shopData.logo) {
-                logoWrap.innerHTML = `<img src="${shopData.logo}" alt="${shopData.shopName}">`;
-            } else {
-                logoWrap.innerHTML = `<div class="icon-fallback">${shopData.icon || '🛒'}</div>`;
-            }
-
-            document.getElementById('shopName').textContent = shopData.shopName;
-            document.getElementById('shopCity').textContent = shopData.address?.city || '';
-            document.getElementById('shopDesc').textContent = shopData.description || 'Welcome to our kirana store! We offer fresh groceries and daily essentials at best prices.';
-            document.getElementById('shopPhone').textContent = shopData.phone || 'Not available';
-            document.getElementById('shopAddress').textContent = `${shopData.address?.line1 || ''}, ${shopData.address?.city || ''}`;
-            document.getElementById('shopRange').textContent = (shopData.range / 1000) || 5;
-
-            const statusEl = document.getElementById('shopStatus');
-            if (shopData.isActive && shopData.status === 'approved') {
-                statusEl.textContent = 'OPEN NOW';
-                statusEl.className = 'shop-status open';
-            } else {
-                statusEl.textContent = 'CLOSED';
-                statusEl.className = 'shop-status closed';
-            }
-
-            document.title = shopData.shopName + ' - SAMANLIVE';
-        }
-
-        async function loadProducts() {
-            try {
-                const items = shopData.items || shopData.products || [];
-                const grid = document.getElementById('productsGrid');
-
-                if (items.length === 0) {
-                    grid.innerHTML = `
-                        <div class="empty-products">
-                            <i class="fa fa-box-open"></i>
-                            <p>No products available yet</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                grid.innerHTML = items.map(item => {
-                    const img = item.images?.[0] || item.image || '';
-                    const mrp = item.mrp || item.price;
-                    const price = item.price;
-                    const hasDiscount = mrp > price;
-
-                    return `
-                        <div class="product-card">
-                            <div class="product-img">
-                                ${img? `<img src="${img}" alt="${item.name}">` : '📦'}
-                            </div>
-                            <div class="product-info">
-                                <div class="product-name">${item.name}</div>
-                                <div class="product-weight">${item.weight || ''} ${item.unit || ''}</div>
-                                <div class="product-price-wrap">
-                                    <div class="product-price">₹${price}</div>
-                                    ${hasDiscount? `<div class="product-mrp">₹${mrp}</div>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-            } catch (err) {
-                console.error('Failed to load products:', err);
-            }
-        }
-
-        function callShop() {
-            if (shopData?.phone) {
-                window.location.href = `tel:${shopData.phone}`;
-            } else {
-                alert('Phone number not available');
-            }
-        }
-
-        function shareShop() {
-            const url = window.location.href;
-            if (navigator.share) {
-                navigator.share({
-                    title: shopData.shopName,
-                    text: `Check out ${shopData.shopName} on SAMANLIVE`,
-                    url: url
-                });
-            } else {
-                navigator.clipboard.writeText(url).then(() => {
-                    alert('Shop link copied!');
-                });
-            }
-        }
-
-        loadShop();
-    </script>
+  `).join('')||'<p style="text-align:center;color:#94a3b8;padding:20px">Cart empty</p>';
+}
+function changeQty(id,delta){
+  const item=cart.find(c=>c._id===id); if(!item) return;
+  item.qty+=delta; if(item.qty<=0) cart=cart.filter(c=>c._id!==id); saveCart();
+}
+function openCart(){ document.getElementById('cartModal').style.display='flex'; }
+function closeCart(){ document.getElementById('cartModal').style.display='none'; }
+function checkout(){
+  const total=cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const phone = (shopData.settings?.phone||'').replace(/\D/g,'');
+  const text = `*New Kirana Order*%0A*Shop:* ${shopData.settings?.shopName}%0A%0A${cart.map(c=>`${c.name} x${c.qty} = ₹${c.price*c.qty}`).join('%0A')}%0A%0A*Total: ₹${total}*%0A%0AAddress: `;
+  const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+  window.open(url,'_blank');
+  cart=[]; saveCart(); closeCart();
+}
+window.filterCat=filterCat; window.addToCart=addToCart; window.changeQty=changeQty; window.openCart=openCart; window.closeCart=closeCart; window.checkout=checkout;
+</script>
 </body>
 </html>

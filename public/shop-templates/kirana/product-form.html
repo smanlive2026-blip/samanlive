@@ -1,269 +1,163 @@
+<!-- LOCATION: public/shop-templates/kirana/product-form.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Product - Kirana Store</title>
-    <link rel="stylesheet" href="/local-market/assets/css/common.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { 
-            margin: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .form-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-        .form-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-        .back-btn {
-            background: #f1f5f9;
-            border: none;
-            padding: 10px 14px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 14px;
-            color: #334155;
-        }
-        .form-header h1 {
-            margin: 0;
-            font-size: 24px;
-            color: #1e293b;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 8px;
-        }
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 15px;
-            box-sizing: border-box;
-        }
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #f5576c;
-        }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        .submit-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-        .submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Product - Kirana</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap');
+*{box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:#f1f5f9;margin:0;padding:16px}
+.card{background:#fff;max-width:650px;margin:auto;border-radius:18px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid #e2e8f0}
+h2{margin:0 0 14px 0}
+label{font-size:13px;font-weight:700;margin-top:12px;display:block;color:#334155}
+input,select,textarea{width:100%;padding:11px 12px;margin-top:6px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;padding:12px;border:none;border-radius:12px;font-weight:800;cursor:pointer;margin-top:16px;font-size:15px}
+.btn-green{background:#16a34a;color:#fff}
+.btn-orange{background:#fff7ed;color:#f97316;border:2px dashed #f97316}
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-height:60vh;overflow:auto;margin-top:12px}
+.quick-item{border:1px solid #e2e8f0;padding:10px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;background:#fff}
+.quick-item b{font-size:13px}
+.quick-item small{font-size:11px;color:#64748b}
+.quick-item button{background:#0f172a;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:12px}
+</style>
 </head>
 <body>
-    <div class="form-container">
-        <div class="form-header">
-            <button class="back-btn" onclick="window.history.back()">
-                <i class="fa fa-arrow-left"></i>
-            </button>
-            <h1 id="formTitle">Add Product</h1>
-        </div>
 
-        <form id="productForm">
-            <input type="hidden" id="itemId">
-            
-            <div class="form-group">
-                <label>Product Name *</label>
-                <input type="text" id="name" placeholder="Example: Aashirvaad Atta" required>
-            </div>
+<div class="card" id="formCard">
+  <h2><i class="fa-solid fa-plus"></i> <span id="formTitle">Add Product</span></h2>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Weight *</label>
-                    <input type="number" id="weight" placeholder="5" required>
-                </div>
-                <div class="form-group">
-                    <label>Unit *</label>
-                    <select id="unit" required>
-                        <option value="kg">KG</option>
-                        <option value="gram">Gram</option>
-                        <option value="litre">Litre</option>
-                        <option value="ml">ML</option>
-                        <option value="piece">Piece</option>
-                        <option value="packet">Packet</option>
-                    </select>
-                </div>
-            </div>
+  <label>Product Name *</label>
+  <input id="name" placeholder="Ex: Aashirvaad Aata 10kg">
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>MRP *</label>
-                    <input type="number" id="mrp" placeholder="250" required>
-                </div>
-                <div class="form-group">
-                    <label>Selling Price *</label>
-                    <input type="number" id="price" placeholder="240" required>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Stock Quantity *</label>
-                    <input type="number" id="stock" placeholder="50" required>
-                </div>
-                <div class="form-group">
-                    <label>Category</label>
-                    <select id="category">
-                        <option value="groceries">Groceries</option>
-                        <option value="snacks">Snacks</option>
-                        <option value="beverages">Beverages</option>
-                        <option value="dairy">Dairy</option>
-                        <option value="personal-care">Personal Care</option>
-                        <option value="household">Household</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Description</label>
-                <textarea id="description" rows="3" placeholder="Product details..."></textarea>
-            </div>
-
-            <button type="submit" class="submit-btn" id="submitBtn">
-                <i class="fa fa-save"></i> Save Product
-            </button>
-        </form>
+  <div class="row">
+    <div><label>Brand</label><input id="brand" placeholder="Aashirvaad"></div>
+    <div><label>Category</label>
+      <select id="category">
+        <option>Aata & Flour</option><option>Rice</option><option>Dal & Pulses</option>
+        <option>Oil & Ghee</option><option>Masala</option><option>Daily Needs</option><option>Cleaning</option>
+        <option>General</option>
+      </select>
     </div>
+  </div>
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const shopId = urlParams.get('shopId');
-        const itemId = urlParams.get('itemId');
-        let isEdit = false;
+  <div class="row">
+    <div><label>Price (Selling) *</label><input id="price" type="number" placeholder="460"></div>
+    <div><label>MRP</label><input id="mrp" type="number" placeholder="520"></div>
+  </div>
 
-        if (!shopId) {
-            alert('Invalid shop link');
-            window.history.back();
-        }
+  <div class="row">
+    <div><label>Stock *</label><input id="stock" type="number" placeholder="20"></div>
+    <div><label>Unit</label><select id="unit"><option>pcs</option><option>kg</option><option>gm</option><option>litre</option><option>ml</option></select></div>
+  </div>
 
-        // Load existing item if editing
-        if (itemId) {
-            isEdit = true;
-            document.getElementById('formTitle').innerText = 'Edit Product';
-            loadItemData();
-        }
+  <div class="row">
+    <div><label>Weight / Pack</label><input id="weight" placeholder="10kg / 1L / 500gm"></div>
+    <div><label>Low Stock Limit</label><input id="lowStockLimit" type="number" value="10"></div>
+  </div>
 
-        async function loadItemData() {
-            try {
-                const res = await fetch(`/api/local-market/products/${itemId}`);
-                const item = await res.json();
-                
-                if (item._id) {
-                    document.getElementById('itemId').value = item._id;
-                    document.getElementById('name').value = item.name || '';
-                    document.getElementById('weight').value = item.weight || '';
-                    document.getElementById('unit').value = item.unit || 'kg';
-                    document.getElementById('mrp').value = item.mrp || '';
-                    document.getElementById('price').value = item.price || '';
-                    document.getElementById('stock').value = item.stock || '';
-                    document.getElementById('category').value = item.category || 'groceries';
-                    document.getElementById('description').value = item.description || '';
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Failed to load item');
-            }
-        }
+  <label>Image URL (optional)</label>
+  <input id="image" placeholder="https://...">
 
-        document.getElementById('productForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+  <button class="btn btn-green" onclick="saveProduct()" id="saveBtn">Save Product</button>
+  <button class="btn btn-orange" onclick="showQuick()" id="quickToggleBtn"><i class="fa-solid fa-bolt"></i> Show 100 Quick Products</button>
 
-            const productData = {
-                shopId: shopId,
-                name: document.getElementById('name').value.trim(),
-                weight: parseFloat(document.getElementById('weight').value),
-                unit: document.getElementById('unit').value,
-                mrp: parseFloat(document.getElementById('mrp').value),
-                price: parseFloat(document.getElementById('price').value),
-                stock: parseInt(document.getElementById('stock').value),
-                category: document.getElementById('category').value,
-                description: document.getElementById('description').value.trim(),
-                available: true
-            };
+  <div id="quickBox" style="display:none">
+    <h3 style="margin-top:18px">⚡ 100 Quick Products - 1 Click Add</h3>
+    <input id="quickSearch" placeholder="Search quick product..." onkeyup="filterQuick()" style="margin-top:8px">
+    <div id="quickGrid" class="quick-grid"></div>
+  </div>
+</div>
 
-            try {
-                const url = isEdit 
-                    ? `/api/local-market/products/${itemId}`
-                    : `/api/local-market/products`;
-                
-                const method = isEdit ? 'PUT' : 'POST';
-                
-                const res = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(productData)
-                });
+<script src="./quick-add-products.js"></script>
+<script>
+// LOCATION: public/shop-templates/kirana/product-form.html (inline JS)
+const urlParams = new URLSearchParams(window.location.search);
+const shopId = urlParams.get('shopId');
+const editId = urlParams.get('editId');
+const isQuickMode = urlParams.get('quick') === '1';
+if(!shopId) alert('ShopId missing');
 
-                const data = await res.json();
+if(isQuickMode){
+  document.getElementById('quickBox').style.display='block';
+  document.getElementById('formCard').querySelectorAll('label,input,select').forEach(el=>{ if(!el.closest('#quickBox')) el.style.display='none' });
+  document.getElementById('formTitle').innerText='Quick Add Products';
+  document.getElementById('saveBtn').style.display='none';
+}
 
-                if (data._id || data.success) {
-                    alert('Product saved successfully!');
-                    window.location.href = `/local-market/shop-templates/kirana/dashboard.html?shopId=${shopId}`;
-                } else {
-                    alert('Error: ' + (data.error || 'Failed to save'));
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa fa-save"></i> Save Product';
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Failed to save product');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa fa-save"></i> Save Product';
-            }
-        });
-    </script>
+if(editId){
+  document.getElementById('formTitle').innerText='Edit Product';
+  loadEditData();
+}
+async function loadEditData(){
+  const res = await fetch(`/api/shops/kirana/${shopId}`, {cache:'no-store'});
+  const data = await res.json();
+  const p = data.shop.products.find(x=>x._id===editId);
+  if(!p) return;
+  document.getElementById('name').value=p.name;
+  document.getElementById('brand').value=p.brand;
+  document.getElementById('category').value=p.category;
+  document.getElementById('price').value=p.price;
+  document.getElementById('mrp').value=p.mrp;
+  document.getElementById('stock').value=p.stock;
+  document.getElementById('unit').value=p.unit;
+  document.getElementById('weight').value=p.weight;
+  document.getElementById('lowStockLimit').value=p.lowStockLimit;
+  document.getElementById('image').value=p.image;
+}
+
+async function saveProduct(){
+  const payload = {
+    name: document.getElementById('name').value.trim(),
+    brand: document.getElementById('brand').value.trim(),
+    category: document.getElementById('category').value,
+    price: Number(document.getElementById('price').value),
+    mrp: Number(document.getElementById('mrp').value)||0,
+    stock: Number(document.getElementById('stock').value),
+    unit: document.getElementById('unit').value,
+    weight: document.getElementById('weight').value,
+    lowStockLimit: Number(document.getElementById('lowStockLimit').value)||10,
+    image: document.getElementById('image').value.trim()
+  };
+  if(!payload.name || !payload.price || isNaN(payload.stock)) return alert('Name, Price, Stock bharo');
+  
+  const url = editId ? `/api/shops/kirana/${shopId}/item/${editId}` : `/api/shops/kirana/${shopId}/item`;
+  const method = editId ? 'PUT' : 'POST';
+  const res = await fetch(url,{method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+  const data = await res.json();
+  if(data.success){ alert('Saved!'); window.location.href=`/shop-templates/kirana/dashboard.html?shopId=${shopId}` }
+  else alert(data.message);
+}
+
+function showQuick(){
+  const box = document.getElementById('quickBox');
+  box.style.display = box.style.display==='none' ? 'block' : 'none';
+  if(box.style.display==='block') renderQuick(window.KIRANA_QUICK_PRODUCTS);
+}
+let quickAll = window.KIRANA_QUICK_PRODUCTS||[];
+function renderQuick(list){
+  const grid = document.getElementById('quickGrid');
+  grid.innerHTML = list.map((p,i)=>`
+    <div class="quick-item">
+      <div><b>${p.name}</b><br><small>${p.category} • ₹${p.price}</small></div>
+      <button onclick='quickAdd(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Add</button>
+    </div>
+  `).join('');
+}
+function filterQuick(){
+  const q = document.getElementById('quickSearch').value.toLowerCase();
+  const filtered = quickAll.filter(p=>p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+  renderQuick(filtered);
+}
+async function quickAdd(p){
+  const res = await fetch(`/api/shops/kirana/${shopId}/item`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(p)});
+  const data = await res.json();
+  if(data.success){ alert(p.name+' Added'); }
+}
+if(isQuickMode) renderQuick(quickAll);
+window.saveProduct=saveProduct; window.showQuick=showQuick; window.filterQuick=filterQuick; window.quickAdd=quickAdd;
+</script>
 </body>
 </html>

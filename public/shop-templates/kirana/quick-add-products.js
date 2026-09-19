@@ -1,139 +1,106 @@
-// ========================================
-// QUICK ADD 50+ KIRANA PRODUCTS
-// File: /public/shop-templates/kirana-shop/quick-add-products.js
-// KAAM: Common API /api/products/add use karke 50+ kirana add karega
-// ========================================
+// LOCATION: public/shop-templates/kirana/quick-add-products.js
+window.KIRANA_QUICK_PRODUCTS = [
+  // AATA - 10
+  { name: "Aashirvaad Aata 10kg", brand: "Aashirvaad", price: 460, mrp: 520, category: "Aata & Flour", weight: "10kg", unit: "kg", stock: 20, image: "https://placehold.co/400/16a34a/fff?text=Aata" },
+  { name: "Fortune Chakki Fresh Aata 5kg", brand: "Fortune", price: 240, mrp: 280, category: "Aata & Flour", weight: "5kg", unit: "kg", stock: 25, image: "" },
+  { name: "Pillsbury Atta 5kg", brand: "Pillsbury", price: 235, mrp: 275, category: "Aata & Flour", weight: "5kg", unit: "kg", stock: 15, image: "" },
+  { name: "Besan 1kg", brand: "Fortune", price: 85, mrp: 100, category: "Aata & Flour", weight: "1kg", unit: "kg", stock: 30, image: "" },
+  { name: "Maida 1kg", brand: "", price: 45, mrp: 50, category: "Aata & Flour", weight: "1kg", unit: "kg", stock: 30, image: "" },
+  { name: "Sooji 1kg", brand: "", price: 55, mrp: 65, category: "Aata & Flour", weight: "1kg", unit: "kg", stock: 30, image: "" },
+  { name: "Makka Atta 1kg", brand: "", price: 60, mrp: 70, category: "Aata & Flour", weight: "1kg", unit: "kg", stock: 20, image: "" },
+  { name: "Ragi Flour 1kg", brand: "", price: 70, mrp: 85, category: "Aata & Flour", weight: "1kg", unit: "kg", stock: 15, image: "" },
+  { name: "Multigrain Atta 5kg", brand: "Aashirvaad", price: 320, mrp: 380, category: "Aata & Flour", weight: "5kg", unit: "kg", stock: 12, image: "" },
+  { name: "Rice Flour 1kg", brand: "", price: 65, mrp: 75, category: "Aata & Flour", weight: "1kg", unit: "kg", stock: 20, image: "" },
 
-const kiranaProductsList = [
-    { name: 'Tata Salt 1kg', category: 'Grocery', brand: 'Tata', unit: '1kg', price: 25, mrp: 30, stock: 50, description: 'Iodized Namak', image: 'https://placehold.co/400/22C55E/fff?text=Tata+Salt' },
-    { name: 'Aashirvaad Atta 5kg', category: 'Flour', brand: 'Aashirvaad', unit: '5kg', price: 280, mrp: 320, stock: 30, description: 'Shudh Chakki Atta', image: 'https://placehold.co/400/22C55E/fff?text=Aashirvaad+Atta' },
-    { name: 'Fortune Sunflower Oil 1L', category: 'Oil', brand: 'Fortune', unit: '1L', price: 160, mrp: 180, stock: 40, description: 'Refined Oil', image: 'https://placehold.co/400/22C55E/fff?text=Fortune+Oil' },
-    { name: 'Sugar 1kg', category: 'Grocery', brand: 'Local', unit: '1kg', price: 45, mrp: 50, stock: 100, description: 'Cheeni', image: 'https://placehold.co/400/22C55E/fff?text=Sugar' },
-    { name: 'Toor Dal 1kg', category: 'Dal', brand: 'Tata Sampann', unit: '1kg', price: 140, mrp: 160, stock: 35, description: 'Arhar Dal', image: 'https://placehold.co/400/22C55E/fff?text=Toor+Dal' },
-    { name: 'Moong Dal 1kg', category: 'Dal', brand: 'Tata Sampann', unit: '1kg', price: 130, mrp: 150, stock: 35, description: 'Dhuli Moong Dal', image: 'https://placehold.co/400/22C55E/fff?text=Moong+Dal' },
-    { name: 'Chana Dal 1kg', category: 'Dal', brand: 'Tata Sampann', unit: '1kg', price: 110, mrp: 130, stock: 30, description: 'Bengal Gram', image: 'https://placehold.co/400/22C55E/fff?text=Chana+Dal' },
-    { name: 'Basmati Rice 1kg', category: 'Rice', brand: 'India Gate', unit: '1kg', price: 120, mrp: 140, stock: 45, description: 'Classic Basmati', image: 'https://placehold.co/400/22C55E/fff?text=Basmati+Rice' },
-    { name: 'Colgate Toothpaste 100g', category: 'Personal Care', brand: 'Colgate', unit: '100g', price: 80, mrp: 90, stock: 60, description: 'MaxFresh', image: 'https://placehold.co/400/22C55E/fff?text=Colgate' },
-    { name: 'Surf Excel 1kg', category: 'Detergent', brand: 'Surf Excel', unit: '1kg', price: 160, mrp: 180, stock: 25, description: 'Washing Powder', image: 'https://placehold.co/400/22C55E/fff?text=Surf+Excel' },
-    { name: 'Lipton Tea 250g', category: 'Beverages', brand: 'Lipton', unit: '250g', price: 110, mrp: 120, stock: 40, description: 'Dust Tea', image: 'https://placehold.co/400/22C55E/fff?text=Lipton+Tea' },
-    { name: 'Nescafe Coffee 100g', category: 'Beverages', brand: 'Nescafe', unit: '100g', price: 220, mrp: 250, stock: 30, description: 'Classic', image: 'https://placehold.co/400/22C55E/fff?text=Nescafe' },
-    { name: 'Britannia Biscuit', category: 'Snacks', brand: 'Britannia', unit: '200g', price: 30, mrp: 35, stock: 80, description: 'Good Day', image: 'https://placehold.co/400/22C55E/fff?text=Good+Day' },
-    { name: 'Parle-G 100g', category: 'Snacks', brand: 'Parle', unit: '100g', price: 10, mrp: 10, stock: 200, description: 'Glucose Biscuit', image: 'https://placehold.co/400/22C55E/fff?text=ParleG' },
-    { name: 'Maggi Noodles 70g', category: 'Snacks', brand: 'Maggi', unit: '70g', price: 15, mrp: 15, stock: 150, description: '2-Minute', image: 'https://placehold.co/400/22C55E/fff?text=Maggi' },
-    { name: 'Red Chilli Powder 200g', category: 'Spices', brand: 'MDH', unit: '200g', price: 90, mrp: 100, stock: 50, description: 'Deghi Mirch', image: 'https://placehold.co/400/22C55E/fff?text=MDH+Mirch' },
-    { name: 'Turmeric Powder 200g', category: 'Spices', brand: 'MDH', unit: '200g', price: 60, mrp: 70, stock: 50, description: 'Haldi', image: 'https://placehold.co/400/22C55E/fff?text=MDH+Haldi' },
-    { name: 'Garam Masala 100g', category: 'Spices', brand: 'MDH', unit: '100g', price: 80, mrp: 90, stock: 40, description: 'Mix Masala', image: 'https://placehold.co/400/22C55E/fff?text=Garam+Masala' },
-    { name: 'Amul Milk 500ml', category: 'Dairy', brand: 'Amul', unit: '500ml', price: 30, mrp: 32, stock: 60, description: 'Toned Milk', image: 'https://placehold.co/400/22C55E/fff?text=Amul+Milk' },
-    { name: 'Amul Butter 100g', category: 'Dairy', brand: 'Amul', unit: '100g', price: 60, mrp: 65, stock: 50, description: 'Salted Butter', image: 'https://placehold.co/400/22C55E/fff?text=Amul+Butter' },
-    { name: 'Bread 400g', category: 'Bakery', brand: 'Britannia', unit: '400g', price: 40, mrp: 45, stock: 30, description: 'White Bread', image: 'https://placehold.co/400/22C55E/fff?text=Bread' },
-    { name: 'Eggs 12pc', category: 'Dairy', brand: 'Farm', unit: '12pc', price: 70, mrp: 80, stock: 40, description: 'Fresh Eggs', image: 'https://placehold.co/400/22C55E/fff?text=Eggs' },
-    { name: 'Shampoo 200ml', category: 'Personal Care', brand: 'Dove', unit: '200ml', price: 180, mrp: 200, stock: 25, description: 'Hairfall Care', image: 'https://placehold.co/400/22C55E/fff?text=Dove+Shampoo' },
-    { name: 'Soap 125g', category: 'Personal Care', brand: 'Lux', unit: '125g', price: 45, mrp: 50, stock: 100, description: 'Beauty Soap', image: 'https://placehold.co/400/22C55E/fff?text=Lux+Soap' },
-    { name: 'Hair Oil 200ml', category: 'Personal Care', brand: 'Parachute', unit: '200ml', price: 70, mrp: 80, stock: 50, description: 'Coconut Oil', image: 'https://placehold.co/400/22C55E/fff?text=Parachute+Oil' },
-    { name: 'Face Wash 100ml', category: 'Personal Care', brand: 'Himalaya', unit: '100ml', price: 120, mrp: 140, stock: 35, description: 'Neem Facewash', image: 'https://placehold.co/400/22C55E/fff?text=Face+Wash' },
-    { name: 'Dish Wash 500ml', category: 'Cleaning', brand: 'Vim', unit: '500ml', price: 90, mrp: 100, stock: 40, description: 'Liquid Gel', image: 'https://placehold.co/400/22C55E/fff?text=Vim+Liquid' },
-    { name: 'Floor Cleaner 500ml', category: 'Cleaning', brand: 'Lizol', unit: '500ml', price: 110, mrp: 120, stock: 30, description: 'Disinfectant', image: 'https://placehold.co/400/22C55E/fff?text=Lizol' },
-    { name: 'Chips 50g', category: 'Snacks', brand: 'Lays', unit: '50g', price: 20, mrp: 20, stock: 120, description: 'Classic Salted', image: 'https://placehold.co/400/22C55E/fff?text=Lays' },
-    { name: 'Cold Drink 750ml', category: 'Beverages', brand: 'Coca Cola', unit: '750ml', price: 40, mrp: 45, stock: 80, description: 'Thums Up', image: 'https://placehold.co/400/22C55E/fff?text=ThumsUp' },
-    { name: 'Water Bottle 1L', category: 'Beverages', brand: 'Bisleri', unit: '1L', price: 20, mrp: 20, stock: 100, description: 'Drinking Water', image: 'https://placehold.co/400/22C55E/fff?text=Bisleri' },
-    { name: 'Ketchup 500g', category: 'Sauces', brand: 'Kissan', unit: '500g', price: 80, mrp: 90, stock: 40, description: 'Tomato Ketchup', image: 'https://placehold.co/400/22C55E/fff?text=Ketchup' },
-    { name: 'Mayonnaise 400g', category: 'Sauces', brand: 'Veeba', unit: '400g', price: 130, mrp: 150, stock: 25, description: 'Veg Mayo', image: 'https://placehold.co/400/22C55E/fff?text=Mayo' },
-    { name: 'Peanut Butter 340g', category: 'Spreads', brand: 'Sundrop', unit: '340g', price: 220, mrp: 250, stock: 20, description: 'Creamy', image: 'https://placehold.co/400/22C55E/fff?text=Peanut+Butter' },
-    { name: 'Jam 500g', category: 'Spreads', brand: 'Kissan', unit: '500g', price: 120, mrp: 140, stock: 25, description: 'Mixed Fruit Jam', image: 'https://placehold.co/400/22C55E/fff?text=Jam' },
-    { name: 'Cornflakes 500g', category: 'Breakfast', brand: 'Kelloggs', unit: '500g', price: 200, mrp: 230, stock: 30, description: 'Original', image: 'https://placehold.co/400/22C55E/fff?text=Cornflakes' },
-    { name: 'Oats 500g', category: 'Breakfast', brand: 'Quaker', unit: '500g', price: 90, mrp: 100, stock: 35, description: 'Instant Oats', image: 'https://placehold.co/400/22C55E/fff?text=Quaker+Oats' },
-    { name: 'Honey 500g', category: 'Grocery', brand: 'Dabur', unit: '500g', price: 250, mrp: 280, stock: 20, description: 'Pure Honey', image: 'https://placehold.co/400/22C55E/fff?text=Dabur+Honey' },
-    { name: 'Pickle 400g', category: 'Grocery', brand: 'Mother', unit: '400g', price: 110, mrp: 130, stock: 30, description: 'Mixed Pickle', image: 'https://placehold.co/400/22C55E/fff?text=Pickle' },
-    { name: 'Papad 200g', category: 'Snacks', brand: 'Lijjat', unit: '200g', price: 60, mrp: 70, stock: 50, description: 'Urad Papad', image: 'https://placehold.co/400/22C55E/fff?text=Papad' },
-    { name: 'Namkeen 400g', category: 'Snacks', brand: 'Haldiram', unit: '400g', price: 100, mrp: 120, stock: 60, description: 'Aloo Bhujia', image: 'https://placehold.co/400/22C55E/fff?text=Bhujia' },
-    { name: 'Dry Fruits 250g', category: 'Grocery', brand: 'Tulsi', unit: '250g', price: 300, mrp: 350, stock: 15, description: 'Mix Dry Fruits', image: 'https://placehold.co/400/22C55E/fff?text=Dry+Fruits' },
-    { name: 'Sewai 200g', category: 'Grocery', brand: 'MTR', unit: '200g', price: 40, mrp: 50, stock: 40, description: 'Vermicelli', image: 'https://placehold.co/400/22C55E/fff?text=Sewai' },
-    { name: 'Poha 500g', category: 'Grocery', brand: 'Tata', unit: '500g', price: 50, mrp: 60, stock: 45, description: 'Flattened Rice', image: 'https://placehold.co/400/22C55E/fff?text=Poha' },
-    { name: 'Suji 500g', category: 'Flour', brand: 'Tata', unit: '500g', price: 45, mrp: 50, stock: 50, description: 'Rava', image: 'https://placehold.co/400/22C55E/fff?text=Suji' },
-    { name: 'Besan 1kg', category: 'Flour', brand: 'Tata', unit: '1kg', price: 110, mrp: 120, stock: 40, description: 'Gram Flour', image: 'https://placehold.co/400/22C55E/fff?text=Besan' },
-    { name: 'Jeera 100g', category: 'Spices', brand: 'Tata', unit: '100g', price: 60, mrp: 70, stock: 50, description: 'Cumin Seeds', image: 'https://placehold.co/400/22C55E/fff?text=Jeera' },
-    { name: 'Mustard Oil 1L', category: 'Oil', brand: 'Patanjali', unit: '1L', price: 170, mrp: 190, stock: 30, description: 'Kachi Ghani', image: 'https://placehold.co/400/22C55E/fff?text=Mustard+Oil' },
-    { name: 'Ghee 1L', category: 'Dairy', brand: 'Amul', unit: '1L', price: 600, mrp: 650, stock: 20, description: 'Pure Ghee', image: 'https://placehold.co/400/22C55E/fff?text=Amul+Ghee' }
+  // CHAWAL - 10
+  { name: "India Gate Basmati 5kg", brand: "India Gate", price: 650, mrp: 750, category: "Rice", weight: "5kg", unit: "kg", stock: 15, image: "" },
+  { name: "Daawat Rozana Basmati 5kg", brand: "Daawat", price: 480, mrp: 560, category: "Rice", weight: "5kg", unit: "kg", stock: 18, image: "" },
+  { name: "Sona Masoori 10kg", brand: "", price: 550, mrp: 620, category: "Rice", weight: "10kg", unit: "kg", stock: 10, image: "" },
+  { name: "Kolam Rice 5kg", brand: "", price: 280, mrp: 320, category: "Rice", weight: "5kg", unit: "kg", stock: 12, image: "" },
+  { name: "Brown Rice 1kg", brand: "", price: 90, mrp: 110, category: "Rice", weight: "1kg", unit: "kg", stock: 15, image: "" },
+  { name: "Jeera Samba Rice 1kg", brand: "", price: 110, mrp: 130, category: "Rice", weight: "1kg", unit: "kg", stock: 10, image: "" },
+  { name: "Poha 1kg", brand: "", price: 65, mrp: 75, category: "Rice", weight: "1kg", unit: "kg", stock: 20, image: "" },
+  { name: "Murmura 500gm", brand: "", price: 40, mrp: 50, category: "Rice", weight: "500gm", unit: "gm", stock: 25, image: "" },
+  { name: "Idli Rice 2kg", brand: "", price: 120, mrp: 140, category: "Rice", weight: "2kg", unit: "kg", stock: 15, image: "" },
+  { name: "Seeraga Samba 1kg", brand: "", price: 140, mrp: 160, category: "Rice", weight: "1kg", unit: "kg", stock: 10, image: "" },
+
+  // DAL - 15
+  { name: "Toor Dal 1kg", brand: "Tata Sampann", price: 165, mrp: 190, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 20, image: "" },
+  { name: "Moong Dal 1kg", brand: "Tata Sampann", price: 140, mrp: 165, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 20, image: "" },
+  { name: "Chana Dal 1kg", brand: "", price: 95, mrp: 115, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 20, image: "" },
+  { name: "Masoor Dal 1kg", brand: "", price: 110, mrp: 130, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 20, image: "" },
+  { name: "Urad Dal 1kg", brand: "", price: 135, mrp: 155, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 18, image: "" },
+  { name: "Kabuli Chana 1kg", brand: "", price: 120, mrp: 140, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 15, image: "" },
+  { name: "Kala Chana 1kg", brand: "", price: 85, mrp: 100, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 15, image: "" },
+  { name: "Rajma 1kg", brand: "", price: 140, mrp: 165, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 15, image: "" },
+  { name: "Moong Whole 1kg", brand: "", price: 125, mrp: 145, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 15, image: "" },
+  { name: "Matar White 1kg", brand: "", price: 90, mrp: 110, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 15, image: "" },
+  { name: "Lobia 1kg", brand: "", price: 110, mrp: 130, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 12, image: "" },
+  { name: "Soya Chunks 200gm", brand: "Fortune", price: 45, mrp: 55, category: "Dal & Pulses", weight: "200gm", unit: "gm", stock: 30, image: "" },
+  { name: "Peanuts 1kg", brand: "", price: 130, mrp: 150, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 20, image: "" },
+  { name: "Makhana 100gm", brand: "", price: 120, mrp: 150, category: "Dal & Pulses", weight: "100gm", unit: "gm", stock: 20, image: "" },
+  { name: "Mixed Dal 1kg", brand: "", price: 130, mrp: 150, category: "Dal & Pulses", weight: "1kg", unit: "kg", stock: 15, image: "" },
+
+  // OIL & GHEE - 10
+  { name: "Fortune Sunflower Oil 1L", brand: "Fortune", price: 145, mrp: 170, category: "Oil & Ghee", weight: "1L", unit: "litre", stock: 25, image: "" },
+  { name: "Saffola Gold Oil 1L", brand: "Saffola", price: 165, mrp: 195, category: "Oil & Ghee", weight: "1L", unit: "litre", stock: 20, image: "" },
+  { name: "Mustard Oil 1L", brand: "Fortune", price: 160, mrp: 185, category: "Oil & Ghee", weight: "1L", unit: "litre", stock: 20, image: "" },
+  { name: "Olive Oil 250ml", brand: "Borges", price: 220, mrp: 260, category: "Oil & Ghee", weight: "250ml", unit: "ml", stock: 10, image: "" },
+  { name: "Amul Ghee 500ml", brand: "Amul", price: 310, mrp: 350, category: "Oil & Ghee", weight: "500ml", unit: "ml", stock: 15, image: "" },
+  { name: "Patanjali Ghee 500ml", brand: "Patanjali", price: 340, mrp: 390, category: "Oil & Ghee", weight: "500ml", unit: "ml", stock: 12, image: "" },
+  { name: "Groundnut Oil 1L", brand: "", price: 180, mrp: 210, category: "Oil & Ghee", weight: "1L", unit: "litre", stock: 15, image: "" },
+  { name: "Coconut Oil 500ml", brand: "Parachute", price: 180, mrp: 210, category: "Oil & Ghee", weight: "500ml", unit: "ml", stock: 15, image: "" },
+  { name: "Vanaspati Ghee 1L", brand: "Dalda", price: 130, mrp: 150, category: "Oil & Ghee", weight: "1L", unit: "litre", stock: 15, image: "" },
+  { name: "Til Oil 500ml", brand: "", price: 160, mrp: 185, category: "Oil & Ghee", weight: "500ml", unit: "ml", stock: 10, image: "" },
+
+  // MASALA - 15
+  { name: "MDH Kitchen King 100gm", brand: "MDH", price: 45, mrp: 55, category: "Masala", weight: "100gm", unit: "gm", stock: 40, image: "" },
+  { name: "Everest Garam Masala 100gm", brand: "Everest", price: 48, mrp: 58, category: "Masala", weight: "100gm", unit: "gm", stock: 40, image: "" },
+  { name: "Haldi Powder 200gm", brand: "MDH", price: 52, mrp: 62, category: "Masala", weight: "200gm", unit: "gm", stock: 30, image: "" },
+  { name: "Mirch Powder 200gm", brand: "MDH", price: 68, mrp: 80, category: "Masala", weight: "200gm", unit: "gm", stock: 30, image: "" },
+  { name: "Dhaniya Powder 200gm", brand: "MDH", price: 55, mrp: 65, category: "Masala", weight: "200gm", unit: "gm", stock: 30, image: "" },
+  { name: "Jeera 100gm", brand: "", price: 45, mrp: 55, category: "Masala", weight: "100gm", unit: "gm", stock: 30, image: "" },
+  { name: "Rai 100gm", brand: "", price: 15, mrp: 20, category: "Masala", weight: "100gm", unit: "gm", stock: 25, image: "" },
+  { name: "Ajwain 100gm", brand: "", price: 25, mrp: 30, category: "Masala", weight: "100gm", unit: "gm", stock: 20, image: "" },
+  { name: "Saunf 100gm", brand: "", price: 30, mrp: 38, category: "Masala", weight: "100gm", unit: "gm", stock: 20, image: "" },
+  { name: "Kali Mirch 50gm", brand: "", price: 40, mrp: 50, category: "Masala", weight: "50gm", unit: "gm", stock: 15, image: "" },
+  { name: "Laung 20gm", brand: "", price: 30, mrp: 38, category: "Masala", weight: "20gm", unit: "gm", stock: 15, image: "" },
+  { name: "Elaichi 20gm", brand: "", price: 85, mrp: 105, category: "Masala", weight: "20gm", unit: "gm", stock: 15, image: "" },
+  { name: "Dalchini 50gm", brand: "", price: 25, mrp: 32, category: "Masala", weight: "50gm", unit: "gm", stock: 15, image: "" },
+  { name: "Chicken Masala 50gm", brand: "MDH", price: 38, mrp: 45, category: "Masala", weight: "50gm", unit: "gm", stock: 25, image: "" },
+  { name: "Biryani Masala 50gm", brand: "Everest", price: 40, mrp: 48, category: "Masala", weight: "50gm", unit: "gm", stock: 25, image: "" },
+
+  // DAILY NEEDS - 20
+  { name: "Tata Salt 1kg", brand: "Tata", price: 28, mrp: 32, category: "Daily Needs", weight: "1kg", unit: "kg", stock: 40, image: "" },
+  { name: "Sugar 1kg", brand: "", price: 46, mrp: 52, category: "Daily Needs", weight: "1kg", unit: "kg", stock: 40, image: "" },
+  { name: "Jaggery 1kg", brand: "", price: 70, mrp: 80, category: "Daily Needs", weight: "1kg", unit: "kg", stock: 20, image: "" },
+  { name: "Tea Tata Gold 250gm", brand: "Tata Tea", price: 130, mrp: 150, category: "Daily Needs", weight: "250gm", unit: "gm", stock: 30, image: "" },
+  { name: "Red Label Tea 250gm", brand: "Brooke Bond", price: 125, mrp: 145, category: "Daily Needs", weight: "250gm", unit: "gm", stock: 30, image: "" },
+  { name: "Bru Coffee 100gm", brand: "Bru", price: 180, mrp: 210, category: "Daily Needs", weight: "100gm", unit: "gm", stock: 15, image: "" },
+  { name: "Nescafe Classic 50gm", brand: "Nescafe", price: 140, mrp: 160, category: "Daily Needs", weight: "50gm", unit: "gm", stock: 15, image: "" },
+  { name: "Amul Milk Powder 500gm", brand: "Amul", price: 220, mrp: 250, category: "Daily Needs", weight: "500gm", unit: "gm", stock: 15, image: "" },
+  { name: "Maggi 280gm (4 pack)", brand: "Maggi", price: 56, mrp: 60, category: "Daily Needs", weight: "280gm", unit: "gm", stock: 40, image: "" },
+  { name: "Yippee Noodles 280gm", brand: "Sunfeast", price: 56, mrp: 60, category: "Daily Needs", weight: "280gm", unit: "gm", stock: 30, image: "" },
+  { name: "Ketchup 500gm", brand: "Kissan", price: 75, mrp: 90, category: "Daily Needs", weight: "500gm", unit: "gm", stock: 20, image: "" },
+  { name: "Vinegar 500ml", brand: "", price: 40, mrp: 50, category: "Daily Needs", weight: "500ml", unit: "ml", stock: 15, image: "" },
+  { name: "Soya Sauce 200ml", brand: "", price: 45, mrp: 55, category: "Daily Needs", weight: "200ml", unit: "ml", stock: 15, image: "" },
+  { name: "Pickle Mango 500gm", brand: "Priya", price: 90, mrp: 110, category: "Daily Needs", weight: "500gm", unit: "gm", stock: 15, image: "" },
+  { name: "Papad 200gm", brand: "Lijjat", price: 45, mrp: 55, category: "Daily Needs", weight: "200gm", unit: "gm", stock: 25, image: "" },
+  { name: "Honey 250gm", brand: "Dabur", price: 120, mrp: 145, category: "Daily Needs", weight: "250gm", unit: "gm", stock: 12, image: "" },
+  { name: "Cornflakes 500gm", brand: "Kelloggs", price: 185, mrp: 210, category: "Daily Needs", weight: "500gm", unit: "gm", stock: 12, image: "" },
+  { name: "Oats 1kg", brand: "Saffola", price: 190, mrp: 220, category: "Daily Needs", weight: "1kg", unit: "kg", stock: 12, image: "" },
+  { name: "Biscuit Good Day 200gm", brand: "Britannia", price: 35, mrp: 40, category: "Daily Needs", weight: "200gm", unit: "gm", stock: 30, image: "" },
+  { name: "Toor Dal 500gm Quick", brand: "", price: 85, mrp: 95, category: "Daily Needs", weight: "500gm", unit: "gm", stock: 20, image: "" },
+
+  // SOAP & CLEANING - 20
+  { name: "Surf Excel 1kg", brand: "Surf Excel", price: 140, mrp: 165, category: "Cleaning", weight: "1kg", unit: "kg", stock: 20, image: "" },
+  { name: "Ariel 1kg", brand: "Ariel", price: 135, mrp: 155, category: "Cleaning", weight: "1kg", unit: "kg", stock: 18, image: "" },
+  { name: "Vim Dishwash 500ml", brand: "Vim", price: 65, mrp: 75, category: "Cleaning", weight: "500ml", unit: "ml", stock: 25, image: "" },
+  { name: "Harpic 500ml", brand: "Harpic", price: 85, mrp: 95, category: "Cleaning", weight: "500ml", unit: "ml", stock: 15, image: "" },
+  { name: "Colin 500ml", brand: "Colin", price: 85, mrp: 95, category: "Cleaning", weight: "500ml", unit: "ml", stock: 15, image: "" },
+  { name: "Lizol 500ml", brand: "Lizol", price: 95, mrp: 110, category: "Cleaning", weight: "500ml", unit: "ml", stock: 15, image: "" },
+  { name: "Lux Soap 100gm x 3", brand: "Lux", price: 75, mrp: 90, category: "Cleaning", weight: "300gm", unit: "gm", stock: 30, image: "" },
+  { name: "Dove Soap 100gm", brand: "Dove", price: 52, mrp: 60, category: "Cleaning", weight: "100gm", unit: "gm", stock: 20, image: "" },
+  { name: "Lifebuoy Soap 100gm", brand: "Lifebuoy", price: 32, mrp: 38, category: "Cleaning", weight: "100gm", unit: "gm", stock: 30, image: "" },
+  { name: "Colgate 150gm", brand: "Colgate", price: 85, mrp: 95, category: "Cleaning", weight: "150gm", unit: "gm", stock: 25, image: "" }
 ];
-
-let isAdding = false;
-
-async function quickAddProducts() {
-    const shopId = new URLSearchParams(window.location.search).get('shopId');
-
-    if(isAdding) return alert('Pehle wale add ho rahe hain');
-    if(!shopId) return alert('ShopId nahi mila');
-    if(!confirm(`50+ Kirana products add karein?`)) return;
-
-    isAdding = true;
-    const btn = document.getElementById('quickAddBtn');
-    if(btn) {
-        btn.innerText = 'Adding 0/50...';
-        btn.disabled = true;
-    }
-
-    let success = 0;
-    let failed = 0;
-
-    for(let i = 0; i < kiranaProductsList.length; i++) {
-        let p = {...kiranaProductsList[i]};
-
-        // === COMMON DB FORMAT ===
-        const productData = {
-            shopId: shopId,
-            template: 'kirana', // ZAROORI: kirana template
-            name: p.name,
-            description: p.description,
-            price: p.price,
-            mrp: p.mrp,
-            image: p.image,
-            images: [p.image],
-            stock: p.stock,
-            category: p.category,
-            isActive: true,
-            // === KIRANA KE SPECIFIC FIELD ===
-            extra: {
-                brand: p.brand,
-                unit: p.unit,
-                expiry: '' // baad me add karna ho to
-            }
-        };
-
-        try {
-            const res = await fetch(`/api/products/add`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(productData)
-            });
-
-            const data = await res.json();
-
-            if(res.ok && data.success) {
-                success++;
-            } else {
-                failed++;
-                console.log('Failed:', p.name, data.message);
-            }
-
-            if(btn) btn.innerText = `Adding ${success}/${kiranaProductsList.length}...`;
-            await new Promise(r => setTimeout(r, 150));
-
-        } catch(e) {
-            failed++;
-            console.log('Error', p.name, e)
-        }
-    }
-
-    alert(`${success} products add ho gaye!\n${failed} fail hue`);
-    isAdding = false;
-    if(btn) {
-        btn.innerText = '⚡ 50+ Products Add Karein';
-        btn.disabled = false;
-    }
-
-    // RELOAD
-    if(window.ProductCore) {
-        const products = await ProductCore.loadProducts(shopId, 'kirana');
-        ProductCore.renderProducts('productList', products);
-    }
-}
