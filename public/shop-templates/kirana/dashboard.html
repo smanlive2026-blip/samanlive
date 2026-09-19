@@ -1,60 +1,163 @@
-<!-- LOCATION: public/shop-templates/kirana/dashboard.html -->
+<!-- LOCATION: public/shop-templates/kirana/dashboard.html - V2 WORLD CLASS -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kirana Pro Dashboard - SamanLive</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kirana Dashboard - Pro</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="./dashboard.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--green:#10b981;--dark:#020617;--card:#ffffff;--bg:#f8fafc}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:var(--bg);color:var(--dark)}
+.header{height:64px;background:rgba(255,255,255,.8);backdrop-filter:blur(20px);border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100}
+.logo{font-weight:900;font-size:20px;display:flex;gap:10px;align-items:center}.logo span{background:var(--dark);color:#fff;padding:4px 10px;border-radius:8px}
+.header-actions{display:flex;gap:10px;align-items:center}
+.icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;display:grid;place-items:center;cursor:pointer}
+.btn{padding:10px 18px;border-radius:12px;border:none;font-weight:800;cursor:pointer;display:flex;gap:8px;align-items:center;font-size:14px}
+.btn-dark{background:var(--dark);color:#fff}
+.btn-green{background:var(--green);color:#fff;box-shadow:0 8px 20px rgba(16,185,129,.3)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:20px}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:#fff;border-radius:20px;padding:18px;border:1px solid #f1f5f9;position:relative;overflow:hidden}
+.stat::after{content:'';position:absolute;width:80px;height:80px;background:var(--bg);border-radius:50%;right:-20px;top:-20px}
+.stat b{font-size:28px;font-weight:900}.stat p{font-size:12px;color:#64748b;font-weight:600;margin-top:2px}
+.stat i{position:absolute;right:18px;top:18px;width:40px;height:40px;display:grid;place-items:center;background:#f1f5f9;border-radius:12px}
+
+.main{display:grid;grid-template-columns:1fr 360px;gap:20px;padding:0 20px 20px 20px}
+@media(max-width:1100px){.main{grid-template-columns:1fr}}
+.left{background:#fff;border-radius:24px;border:1px solid #e2e8f0;overflow:hidden}
+.left-head{padding:18px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;gap:12px}
+.search{flex:1;min-width:200px;display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid #e2e8f0;padding:10px 14px;border-radius:12px}
+.search input{border:none;background:transparent;outline:none;width:100%;font-weight:600}
+
+.p-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;padding:16px}
+.p-card{border:1px solid #f1f5f9;border-radius:20px;overflow:hidden;background:#fff;transition:.25s;cursor:pointer}
+.p-card:hover{transform:translateY(-5px);box-shadow:0 20px 30px rgba(0,0,0,.06);border-color:#e2e8f0}
+.p-card img{width:100%;height:150px;object-fit:cover;background:#f8fafc}
+.p-info{padding:12px}.p-info b{font-size:14px;line-height:1.3}.p-info .meta{font-size:11px;color:#94a3b8;margin-top:4px;font-weight:600}
+.price-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.price{font-weight:900;font-size:16px}.price del{font-size:11px;color:#94a3b8;margin-left:4px}
+.stock{font-size:10px;font-weight:800;padding:4px 8px;border-radius:20px}
+.stock.ok{background:#dcfce7;color:#15803d}.stock.low{background:#fee2e2;color:#b91c1c}
+
+.right .box{background:#fff;border-radius:24px;border:1px solid #e2e8f0;padding:18px;margin-bottom:16px}
+.toggle{display:flex;align-items:center;justify-content:space-between;background:#0f172a;color:#fff;padding:12px 14px;border-radius:14px}
+.switch{width:46px;height:28px;background:#334155;border-radius:20px;position:relative;transition:.3s;cursor:pointer}
+.switch.on{background:var(--green)}.switch::after{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:4px;left:4px;transition:.3s}.switch.on::after{left:22px}
+
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 20px;border-radius:30px;font-weight:700;font-size:13px;display:none;z-index:999;box-shadow:0 10px 20px rgba(0,0,0,.2)}
+</style>
 </head>
 <body>
 
-<header class="topbar">
+<div class="header">
+  <div class="logo"><span>SL</span> SamanLive Kirana PRO</div>
+  <div class="header-actions">
+    <div style="font-size:11px;font-weight:800;background:#f1f5f9;padding:6px 10px;border-radius:8px" id="shopIdDisplay">ID: loading...</div>
+    <button class="icon-btn" onclick="location.reload()"><i class="fa-solid fa-rotate"></i></button>
+    <button class="btn btn-dark" onclick="window.open(`/shop-templates/kirana/user-view.html?shopId=${shopId}`,'_blank')"><i class="fa-solid fa-eye"></i> View Shop</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><i class="fa-solid fa-box" style="color:#6366f1"></i><b id="productCount">0</b><p>Total Products</p></div>
+  <div class="stat"><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i><b id="lowStockCount">0</b><p>Low Stock Alert</p></div>
+  <div class="stat"><i class="fa-solid fa-indian-rupee-sign" style="color:#10b981"></i><b id="revenue">0</b><p>Total Revenue</p></div>
+  <div class="stat"><i class="fa-solid fa-cart-shopping" style="color:#0ea5e9"></i><b id="orderCount">0</b><p>Total Orders</p></div>
+</div>
+
+<div class="main">
   <div class="left">
-    <div class="logo"><i class="fa-solid fa-store"></i> <span id="shopName">Kirana Store</span></div>
-    <small id="shopIdDisplay" style="opacity:.6">ID...</small>
+    <div class="left-head">
+      <h3 style="font-weight:900">Your Products <span id="prodCountText" style="color:#94a3b8">(0)</span></h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="search"><i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i><input id="searchInput" placeholder="Search atta, dal, oil..." onkeyup="filterProducts()"></div>
+        <button class="btn btn-dark" onclick="goForm()"><i class="fa-solid fa-plus"></i> New Product</button>
+        <button class="btn btn-green" onclick="goQuick()"><i class="fa-solid fa-bolt"></i> Quick Add 100</button>
+      </div>
+    </div>
+    <div class="p-grid" id="productList"></div>
   </div>
   <div class="right">
-    <div class="toggle-wrap" id="toggleWrap">
-      <div class="toggle-switch on" id="toggleSwitch"></div>
-      <span id="toggleText">Open</span>
+    <div class="box">
+      <div class="toggle"><span><i class="fa-solid fa-store"></i> Shop Status: <b id="toggleText">Open</b></span><div class="switch on" id="toggleSwitch" onclick="toggleShop()"></div></div>
+      <p style="font-size:11px;color:#64748b;margin-top:10px;font-weight:600">Band karne par customer order nahi kar payega.</p>
     </div>
-    <button id="viewShopBtn" class="btn-light"><i class="fa fa-eye"></i> View Shop</button>
-  </div>
-</header>
-
-<div class="stats-grid">
-  <div class="stat-card"><i class="fa-solid fa-box"></i><div><b id="productCount">0</b><p>Total Products</p></div></div>
-  <div class="stat-card warn"><i class="fa-solid fa-triangle-exclamation"></i><div><b id="lowStockCount">0</b><p>Low Stock</p></div></div>
-  <div class="stat-card green"><i class="fa-solid fa-indian-rupee-sign"></i><div><b id="revenue">0</b><p>Revenue</p></div></div>
-  <div class="stat-card blue"><i class="fa-solid fa-truck-fast"></i><div><b id="orderCount">0</b><p>Orders Today</p></div></div>
-</div>
-
-<div class="action-bar">
-  <button id="addProductBtn" class="btn-primary"><i class="fa fa-plus"></i> Add Product</button>
-  <button id="quickAddBtn" class="btn-orange"><i class="fa-solid fa-bolt"></i> Quick Add 100 Products</button>
-  <input type="text" id="searchInput" placeholder="Search product..." onkeyup="filterProducts()">
-</div>
-
-<div class="main-grid">
-  <div class="left-panel">
-    <h3><i class="fa-solid fa-basket-shopping"></i> Products <span id="prodCountText"></span></h3>
-    <div id="productList" class="product-grid"></div>
-  </div>
-  <div class="right-panel">
-    <div class="card">
-      <h4><i class="fa-solid fa-arrow-trend-down"></i> Low Stock Alert</h4>
-      <div id="lowStock"></div>
-    </div>
-    <div class="card">
-      <h4><i class="fa-solid fa-qrcode"></i> Shop QR</h4>
-      <div id="qrBox" style="text-align:center;padding:15px;background:#f8fafc;border-radius:12px;">QR yaha ayega</div>
-    </div>
+    <div class="box"><h4 style="font-weight:900;margin-bottom:12px"><i class="fa-solid fa-fire" style="color:#ef4444"></i> Low Stock</h4><div id="lowStock"></div></div>
   </div>
 </div>
 
-<script src="../common/shop-toggle.js"></script>
-<script src="./dashboard.js"></script>
+<div id="toast"></div>
+
+<script>
+const p = new URLSearchParams(location.search);
+window.shopId = p.get('shopId') || p.get('id') || localStorage.getItem('last_shopId') || '';
+if(shopId) localStorage.setItem('last_shopId', shopId);
+document.getElementById('shopIdDisplay').innerText = 'ID: '+(shopId?shopId.slice(-6):'MISSING');
+if(!shopId) alert('shopId missing in URL! Add ?shopId=YOUR_ID');
+
+function goForm(){ location.href=`/shop-templates/kirana/product-form.html?shopId=${shopId}` }
+function goQuick(){ location.href=`/shop-templates/kirana/product-form.html?shopId=${shopId}&quick=1` }
+
+function toast(msg){ const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',3000) }
+
+let allProducts=[];
+async function loadKiranaData(){
+  try{
+    const r = await fetch(`/api/shops/kirana/${shopId}?t=${Date.now()}`);
+    const data = await r.json();
+    if(!data.success) throw new Error(data.message);
+    const s = data.shop;
+    document.getElementById('productCount').innerText = s.products?.length||0;
+    document.getElementById('prodCountText').innerText = `(${s.products?.length||0})`;
+    document.getElementById('lowStockCount').innerText = data.shop.lowStock?.length||0;
+    document.getElementById('revenue').innerText = s.stats?.revenue||0;
+    document.getElementById('orderCount').innerText = s.stats?.totalOrders||0;
+    const isOpen = s.settings?.isOpen??true;
+    document.getElementById('toggleSwitch').className = 'switch '+(isOpen?'on':'');
+    document.getElementById('toggleText').innerText = isOpen?'Open':'Closed';
+    allProducts = s.products||[];
+    render(allProducts);
+    renderLow(data.shop.lowStock||[]);
+  }catch(e){ document.getElementById('productList').innerHTML=`<p style="padding:20px;color:red">Error: ${e.message} <br><br> Check console & backend route</p>`; console.error(e) }
+}
+
+function render(list){
+  const c = document.getElementById('productList');
+  if(!list.length){ c.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:60px 20px"><div style="font-size:50px">🛒</div><h3 style="margin-top:10px">No products yet</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#10b981">Quick Add 100</b> to add 100 products in 1 second</p></div>`; return; }
+  c.innerHTML = list.map(p=>`
+    <div class="p-card">
+      <img src="${p.image||`https://source.unsplash.com/400x300/?${encodeURIComponent(p.category)},grocery`}" onerror="this.src='https://placehold.co/400/16a34a/fff?text=${encodeURIComponent(p.name.slice(0,10))}'">
+      <div class="p-info">
+        <b>${p.name}</b>
+        <div class="meta">${p.brand||''} • ${p.weight||p.unit} • ${p.category}</div>
+        <div class="price-row">
+          <div class="price">₹${p.price}<del>${p.mrp?'₹'+p.mrp:''}</del></div>
+          <div class="stock ${p.stock<=(p.lowStockLimit||10)?'low':'ok'}">${p.stock} LEFT</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button onclick="editProduct('${p._id}')" style="flex:1;background:#f1f5f9;border:1px solid #e2e8f0;padding:8px;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer">Edit</button>
+          <button onclick="deleteProduct('${p._id}')" style="width:40px;background:#fff;border:1px solid #fee2e2;color:#ef4444;border-radius:10px;cursor:pointer"><i class="fa fa-trash"></i></button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderLow(list){
+  const c=document.getElementById('lowStock');
+  if(!list.length){ c.innerHTML=`<div style="background:#f0fdf4;color:#15803d;padding:12px;border-radius:12px;font-weight:800;font-size:13px;text-align:center">✓ All Stock OK</div>`; return; }
+  c.innerHTML=list.slice(0,5).map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;margin-bottom:8px"><div><b style="font-size:13px">${p.name}</b><br><small style="color:#92400e">${p.category}</small></div><span style="background:#92400e;color:#fff;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:900">${p.stock}</span></div>`).join('');
+}
+
+function filterProducts(){ const q=document.getElementById('searchInput').value.toLowerCase(); render(allProducts.filter(p=>p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q))) }
+async function deleteProduct(id){ if(!confirm('Delete?'))return; const r=await fetch(`/api/shops/kirana/${shopId}/item/${id}`,{method:'DELETE'}); const d=await r.json(); if(d.success){toast('Deleted'); loadKiranaData()} }
+function editProduct(id){ location.href=`/shop-templates/kirana/product-form.html?shopId=${shopId}&editId=${id}` }
+async function toggleShop(){ const sw=document.getElementById('toggleSwitch'); const isOpen=!sw.classList.contains('on'); sw.classList.toggle('on',isOpen); document.getElementById('toggleText').innerText=isOpen?'Open':'Closed'; await fetch(`/api/shops/kirana/${shopId}/settings`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({isOpen})}); toast(isOpen?'Shop Opened':'Shop Closed') }
+
+loadKiranaData();
+</script>
 </body>
 </html>
