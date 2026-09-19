@@ -64,13 +64,17 @@
 
         @media(max-width: 900px) { .hero-inner { grid-template-columns: 1fr; } .hero h1 { font-size: 32px; } .search-box { display: none; } .product-grid { grid-template-columns: 1fr 1fr; } }
         @media(max-width: 600px) { .product-grid { grid-template-columns: 1fr; } }
+        /* === ONLY NEW CSS ADDED === */
+        .shop-status { padding:5px 10px; border-radius:20px; font-size:11px; font-weight:800; margin-left:10px; }
+        .shop-status.open { background:#dcfce7; color:#166534; }
+        .shop-status.closed { background:#fee2e2; color:#dc2626; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="top-strip"><i class="fa-solid fa-bolt"></i> FREE PICKUP & DROP • 6 MONTH WARRANTY • GENUINE PARTS</div>
         <div class="nav">
-            <div class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> <span id="shopName">Auto Care Center</span></div>
+            <div class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> <span id="shopName">Auto Care Center</span><span class="shop-status open" id="shopStatus">Open</span></div>
             <div class="nav-actions">
                 <div class="search-box"><i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i><input id="searchInput" placeholder="Search parts, oil, tyre..."></div>
                 <div class="cart-btn" onclick="openCart()"><i class="fa-solid fa-cart-shopping"></i> Cart <span class="cart-count" id="cartCount">0</span></div>
@@ -148,6 +152,20 @@
 
          // YAHAN JODNA HAI - announcement dynamic hoga
                 document.querySelector('.top-strip').innerText = shop.settings?.announcement || 'FREE PICKUP & DROP • 6 MONTH WARRANTY • GENUINE PARTS';
+
+                // === ONLY NEW 8 LINES ADDED FOR TOGGLE ===
+                try {
+                    const r2 = await fetch(`/api/shop-toggle/${shopId}`);
+                    const d2 = await r2.json();
+                    const sEl = document.getElementById('shopStatus');
+                    if(d2.isOpen === false) {
+                        sEl.innerText = 'Closed';
+                        sEl.className = 'shop-status closed';
+                    } else {
+                        sEl.innerText = 'Open';
+                        sEl.className = 'shop-status open';
+                    }
+                } catch(e) {}
 
                 const dbServices = (shop.services || []).map((s,i) => ({ id: `srv-db-${i}`, name: s, price: 999, mrp: 1299, cat: 'Service', stock: 99, image: '', desc: 'Professional service' }));
                 const services = dbServices.length ? dbServices : defaultServices;

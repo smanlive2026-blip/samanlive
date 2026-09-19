@@ -1,6 +1,6 @@
 // LOCATION: public/shop-templates/common/shop-toggle.js
 
-// COMMON TOGGLE - 60 Shops ke liye ek hi file
+// COMMON TOGGLE - sab Shops ke liye ek hi file
 // Isko har dashboard.html me include karna hai
 
 const ShopToggle = {
