@@ -1,62 +1,73 @@
-<!-- LOCATION: public/shop-templates/kirana/user-view.html - V3 WORLD CLASS PRO MAX -->
+<!-- LOCATION: public/shop-templates/kirana/user-view.html - V5 COLORFUL + V3 MERGED -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Kirana Store</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Kirana Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--green:#10b981;--dark:#0f172a;--yellow:#facc15}
-*{box-sizing:border-box;font-family:'Outfit',sans-serif;margin:0;padding:0}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}
+:root{--green:#16a34a;--dark:#0f172a;--yellow:#facc15}
 body{background:#f8fafc;color:#0f172a;padding-bottom:90px}
-a{color:inherit;text-decoration:none}
 
-/* HEADER */
-.header{height:70px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:100}
+/* HEADER - AUTO WALA COLORFUL + V3 STRUCTURE */
+.header{background:var(--dark);color:#fff;position:sticky;top:0;z-index:100}
+.top-strip{background:var(--green);color:#fff;text-align:center;padding:8px;font-size:12px;font-weight:800;letter-spacing:.5px}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;max-width:1400px;margin:0 auto;width:100%}
 .h-left{display:flex;gap:12px;align-items:center}
-.h-logo{width:44px;height:44px;background:var(--dark);color:#fff;display:grid;place-items:center;border-radius:14px;font-weight:900;font-size:18px}
-.h-info b{font-size:15px;font-weight:900;display:block;line-height:1}.h-info small{font-size:11px;color:#64748b;font-weight:600}
-.h-right{display:flex;gap:8px}
-.h-btn{height:44px;padding:0 16px;border-radius:14px;border:1px solid #e2e8f0;background:#fff;display:flex;align-items:center;gap:8px;font-weight:800;font-size:13px;cursor:pointer}
-.h-cart{background:var(--dark);color:#fff;border-color:var(--dark)}
+.h-logo{width:42px;height:42px;background:var(--green);color:#fff;display:grid;place-items:center;border-radius:12px;font-weight:900;font-size:18px}
+.h-info b{font-size:15px;font-weight:900;display:block;line-height:1}
+.h-info small{font-size:11px;color:#94a3b8;font-weight:600;display:flex;align-items:center;gap:5px}
+.shop-status{padding:4px 8px;border-radius:20px;font-size:10px;font-weight:900}
+.shop-status.open{background:#dcfce7;color:#166534}
+.shop-status.closed{background:#fee2e2;color:#dc2626}
+.h-right{display:flex;gap:8px;align-items:center}
+.search-box{background:#1e293b;border:1px solid #334155;padding:10px 14px;border-radius:12px;display:flex;align-items:center;gap:8px;width:280px}
+.search-box input{background:transparent;border:none;color:#fff;outline:none;width:100%;font-size:13px}
+.search-box input::placeholder{color:#94a3b8}
+.h-btn{height:42px;padding:0 16px;border-radius:12px;border:none;background:#fff;color:#0f172a;display:flex;align-items:center;gap:8px;font-weight:800;font-size:13px;cursor:pointer}
+.h-cart{background:#fff;color:#0f172a}
+.stock-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.stock-dot.ok{background:#22c55e}.stock-dot.low{background:#ef4444}
+.cart-count{background:#ef4444;color:#fff;min-width:20px;height:20px;border-radius:20px;display:grid;place-items:center;font-size:11px;padding:0 5px}
 
-/* HERO */
-.hero{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;margin:12px;border-radius:24px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden}
-.hero::after{content:'';position:absolute;width:180px;height:180px;background:radial-gradient(circle,rgba(16,185,129,.3),transparent);right:-40px;top:-40px}
-.hero h2{font-weight:900;font-size:18px;line-height:1.2}.hero p{font-size:12px;opacity:.7;margin-top:4px}
-.hero-badge{background:var(--yellow);color:#000;padding:8px 14px;border-radius:30px;font-weight:900;font-size:12px;z-index:1}
+/* HERO - COLORFUL GRADIENT + FAST BADGE (V3 WALA HI) */
+.hero{background:linear-gradient(105deg,#0f172a 0%,#14532d 60%,#16a34a 100%);color:#fff;margin:12px;border-radius:24px;padding:20px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden;max-width:1400px;margin-left:auto;margin-right:auto}
+.hero::after{content:'';position:absolute;width:200px;height:200px;background:radial-gradient(circle,rgba(74,222,128,.3),transparent);right:-40px;top:-40px}
+.hero h2{font-weight:900;font-size:20px;line-height:1.2;position:relative;z-index:1}
+.hero p{font-size:12px;opacity:.8;margin-top:4px;position:relative;z-index:1;color:#cbd5e1}
+.hero-badge{background:var(--yellow);color:#000;padding:8px 14px;border-radius:30px;font-weight:900;font-size:12px;z-index:1;box-shadow:0 4px 15px rgba(0,0,0,.2)}
 
 /* CATEGORIES */
-.cats{display:flex;gap:8px;overflow:auto;padding:0 16px 12px 16px;scrollbar-width:none}
+.cats{display:flex;gap:8px;overflow:auto;padding:0 16px 12px 16px;scrollbar-width:none;max-width:1400px;margin:0 auto}
 .cats::-webkit-scrollbar{display:none}
 .cat{white-space:nowrap;padding:10px 16px;border-radius:30px;background:#fff;border:1px solid #e2e8f0;font-weight:800;font-size:12px;cursor:pointer;transition:.2s;display:flex;gap:6px;align-items:center}
-.cat.active{background:var(--dark);color:#fff;border-color:var(--dark);transform:scale(1.05)}
+.cat.active{background:var(--dark);color:#fff;border-color:var(--dark);transform:scale(1.05);box-shadow:0 6px 20px rgba(15,23,42,.2)}
 
-/* PRODUCTS - BLINKIT STYLE */
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:0 12px}
+/* PRODUCTS - V3 BLINKIT STYLE BUT COLORFUL */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:0 12px;max-width:1400px;margin:0 auto}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
-.card{background:#fff;border-radius:20px;border:1px solid #f1f5f9;overflow:hidden;position:relative;transition:.25s}
-.card:hover{transform:translateY(-3px);box-shadow:0 15px 30px rgba(0,0,0,.06)}
-.card.img-wrap{position:relative;background:#f8fafc;height:140px;display:grid;place-items:center;overflow:hidden}
-.card img{width:100%;height:100%;object-fit:cover}
-.card.off{position:absolute;top:8px;left:8px;background:var(--green);color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px}
-.card.wishlist{position:absolute;top:8px;right:8px;width:28px;height:28px;background:#fff;border-radius:50%;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.card{background:#fff;border-radius:20px;border:1px solid #f1f5f9;overflow:hidden;position:relative;transition:.25s;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-3px);box-shadow:0 15px 30px rgba(0,0,0,.08)}
+.img-wrap{position:relative;background:#f8fafc;height:140px;display:grid;place-items:center;overflow:hidden}
+.img-wrap img{width:100%;height:100%;object-fit:cover}
+.off{position:absolute;top:8px;left:8px;background:var(--green);color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px}
+.brand-tag{position:absolute;top:8px;right:8px;background:var(--dark);color:#fff;font-size:9px;font-weight:800;padding:4px 8px;border-radius:20px}
 .p{padding:10px 12px 12px 12px}
 .p b{font-size:13px;font-weight:800;line-height:1.2;display:block;min-height:32px}
-.p.meta{font-size:10px;color:#94a3b8;font-weight:600;margin-top:2px}
-.p.row{display:flex;justify-content:space-between;align-items:end;margin-top:10px}
-.p.price{font-weight:900;font-size:16px}.p.price small{font-size:10px;color:#94a3b8;text-decoration:line-through;margin-left:4px;font-weight:600}
+.meta{font-size:10px;color:#94a3b8;font-weight:600;margin-top:2px}
+.row{display:flex;justify-content:space-between;align-items:end;margin-top:10px}
+.price{font-weight:900;font-size:16px}.price small{font-size:10px;color:#94a3b8;text-decoration:line-through;margin-left:4px;font-weight:600}
 .add{height:32px;padding:0 14px;border-radius:10px;background:#fff;border:1.5px solid var(--green);color:var(--green);font-weight:900;font-size:12px;cursor:pointer;transition:.2s}
 .add.added{background:var(--green);color:#fff}
-.stock-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
-.stock-dot.ok{background:var(--green)}.stock-dot.low{background:#ef4444}
+.add:disabled{opacity:.4;cursor:not-allowed}
 
-/* CART BAR */
-.cart-bar{position:fixed;bottom:12px;left:12px;right:12px;background:var(--dark);color:#fff;padding:14px 18px;border-radius:18px;display:none;justify-content:space-between;align-items:center;z-index:50;box-shadow:0 20px 40px rgba(0,0,0,.3)}
+/* CART BAR - V3 WALA HI */
+.cart-bar{position:fixed;bottom:12px;left:12px;right:12px;background:var(--dark);color:#fff;padding:14px 18px;border-radius:18px;display:none;justify-content:space-between;align-items:center;z-index:50;box-shadow:0 20px 40px rgba(0,0,0,.3);max-width:500px;margin:0 auto}
 .cart-bar b{font-weight:900}.cart-bar small{opacity:.7;font-size:11px}
 
-/* CART MODAL */
+/* CART MODAL - V3 WALA HI */
 #cartModal{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(10px);display:none;z-index:200;align-items:end}
 #cartBox{background:#fff;width:100%;max-width:520px;margin:0 auto;border-radius:28px 28px 0 0;max-height:88vh;display:flex;flex-direction:column;animation:slideUp.3s ease}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -66,17 +77,23 @@ a{color:inherit;text-decoration:none}
 .qty-box{display:flex;align-items:center;gap:0;background:#f1f5f9;border-radius:10px;overflow:hidden}
 .qty-box button{width:32px;height:32px;border:none;background:transparent;font-weight:900;cursor:pointer}
 .qty-box button.add-q{background:var(--green);color:#fff}
+
+@media(max-width:900px){.search-box{display:none}}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="h-left">
-    <div class="h-logo">K</div>
-    <div class="h-info"><b id="shopName">Kirana Store</b><small><span class="stock-dot ok"></span><span id="shopStatus">Open • 10 min delivery</span></small></div>
-  </div>
-  <div class="h-right">
-    <button class="h-btn h-cart" onclick="openCart()"><i class="fa-solid fa-bag-shopping"></i> <span id="cartCount">0</span></button>
+  <div class="top-strip"><i class="fa-solid fa-bolt"></i> <span id="topStrip">FREE DELIVERY ABOVE ₹199 • 10 MIN DELIVERY • FRESH STOCK DAILY</span></div>
+  <div class="nav">
+    <div class="h-left">
+      <div class="h-logo">K</div>
+      <div class="h-info"><b id="shopName">Kirana Store</b><small><span class="stock-dot ok"></span><span id="shopStatus">Open • 10 min delivery</span><span class="shop-status open" id="shopStatusBadge">Open</span></small></div>
+    </div>
+    <div class="h-right">
+      <div class="search-box"><i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i><input id="searchInput" placeholder="Search aata, dal, oil..."></div>
+      <button class="h-btn h-cart" onclick="openCart()"><i class="fa-solid fa-bag-shopping"></i> Cart <span class="cart-count" id="cartCount">0</span></button>
+    </div>
   </div>
 </div>
 
@@ -90,7 +107,7 @@ a{color:inherit;text-decoration:none}
 
 <div class="cart-bar" id="cartBar">
   <div><b id="cartTotalItems">0 items</b><br><small>₹<span id="cartTotal">0</span> • Extra charges may apply</small></div>
-  <button onclick="openCart()" style="background:#10b981;color:#fff;border:none;padding:12px 20px;border-radius:12px;font-weight:900">View Cart <i class="fa-solid fa-arrow-right"></i></button>
+  <button onclick="openCart()" style="background:#16a34a;color:#fff;border:none;padding:12px 20px;border-radius:12px;font-weight:900">View Cart <i class="fa-solid fa-arrow-right"></i></button>
 </div>
 
 <div id="cartModal" onclick="if(event.target==this)closeCart()">
@@ -100,7 +117,7 @@ a{color:inherit;text-decoration:none}
     <div style="padding:20px;border-top:1px solid #f1f5f9;background:#f8fafc;border-radius:0 0 28px 28px">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;color:#64748b"><span>Subtotal</span><span>₹<span id="subTotal">0</span></span></div>
       <div style="display:flex;justify-content:space-between;margin-bottom:14px;font-weight:900;font-size:16px"><span>Total</span><span>₹<span id="cartTotal2">0</span></span></div>
-      <button onclick="checkout()" style="width:100%;background:#10b981;color:#fff;border:none;padding:16px;border-radius:16px;font-weight:900;font-size:15px;display:flex;justify-content:center;gap:10px;align-items:center"><i class="fa-brands fa-whatsapp" style="font-size:20px"></i> Order on WhatsApp</button>
+      <button onclick="checkout()" style="width:100%;background:#16a34a;color:#fff;border:none;padding:16px;border-radius:16px;font-weight:900;font-size:15px;display:flex;justify-content:center;gap:10px;align-items:center"><i class="fa-brands fa-whatsapp" style="font-size:20px"></i> Order on WhatsApp</button>
       <p style="text-align:center;font-size:10px;color:#94a3b8;margin-top:10px;font-weight:600">Delivery address WhatsApp par puch liya jayega</p>
     </div>
   </div>
@@ -110,7 +127,7 @@ a{color:inherit;text-decoration:none}
 const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId') || urlParams.get('id');
 let allProducts=[], cart=JSON.parse(localStorage.getItem('kirana_cart_'+shopId)||'[]'), shopData=null;
-if(!shopId) document.body.innerHTML='<div style="padding:40px;text-align:center"><h2>Shop ID Missing</h2><p>Add?shopId= in URL</p></div>';
+if(!shopId) document.body.innerHTML='<div style="padding:40px;text-align:center"><h2>Shop ID Missing</h2></div>';
 
 loadShop();
 async function loadShop(){
@@ -119,13 +136,16 @@ async function loadShop(){
   if(!result.success) return;
   shopData=result.shop;
   document.getElementById('shopName').innerText=shopData.settings?.shopName||shopData.shopName;
+  document.getElementById('pageTitle').innerText=shopData.settings?.shopName||'Kirana Store';
   document.getElementById('heroTitle').innerText=shopData.settings?.shopName||'Fresh Kirana at your doorstep';
   document.getElementById('shopAddress').innerText=shopData.settings?.address||'Fast delivery • Open now';
-  document.getElementById('shopStatus').innerText=(shopData.settings?.isOpen? 'Open • 10 min delivery' : 'Closed Now');
+  document.getElementById('topStrip').innerText=shopData.settings?.announcement||'FREE DELIVERY ABOVE ₹199 • 10 MIN DELIVERY • FRESH STOCK DAILY';
+  const isOpen=shopData.settings?.isOpen??true;
+  document.getElementById('shopStatus').innerText=isOpen?'Open • 10 min delivery':'Closed Now';
+  const badge=document.getElementById('shopStatusBadge');
+  badge.innerText=isOpen?'Open':'Closed'; badge.className='shop-status '+(isOpen?'open':'closed');
   allProducts=shopData.products||[];
-  renderCats();
-  renderProducts(allProducts);
-  updateCartUI();
+  renderCats(); renderProducts(allProducts); updateCartUI();
 }
 function renderCats(){
   const cats=[...new Set(allProducts.map(p=>p.category||'General'))];
@@ -143,13 +163,14 @@ function renderProducts(list){
       <div class="img-wrap">
         <img src="${p.image||`https://source.unsplash.com/400x400/?${encodeURIComponent(p.name.split(' ')[0])},grocery`}" onerror="this.src='https://placehold.co/400/16a34a/fff?text=${encodeURIComponent(p.name.slice(0,10))}'">
         ${discount>5?`<div class="off">${discount}% OFF</div>`:''}
+        ${p.brand?`<div class="brand-tag">${p.brand}</div>`:''}
       </div>
       <div class="p">
         <b>${p.name}</b>
         <div class="meta">${p.weight||p.unit} • ${p.brand||''}</div>
         <div class="row">
-          <div class="price">₹${p.price}<small>${p.mrp?'₹'+p.mrp:''}</small><br><span style="font-size:10px;font-weight:700;color:${p.stock>0?'#10b981':'#ef4444'}"><span class="stock-dot ${p.stock>0?'ok':'low'}"></span>${p.stock>0?p.stock+' in stock':'Out of stock'}</span></div>
-          ${p.stock>0?`<button class="add ${inCart?'added':''}" onclick="addToCart('${p._id}')">${inCart?`${inCart.qty} Added`:'ADD'}</button>`:`<button class="add" disabled style="opacity:.4">OUT</button>`}
+          <div class="price">₹${p.price}<small>${p.mrp?'₹'+p.mrp:''}</small><br><span style="font-size:10px;font-weight:700;color:${p.stock>0?'#16a34a':'#ef4444'}"><span class="stock-dot ${p.stock>0?'ok':'low'}"></span>${p.stock>0?p.stock+' in stock':'Out of stock'}</span></div>
+          ${p.stock>0?`<button class="add ${inCart?'added':''}" onclick="addToCart('${p._id}')">${inCart?`${inCart.qty} Added`:'ADD'}</button>`:`<button class="add" disabled>OUT</button>`}
         </div>
       </div>
     </div>`;
@@ -160,13 +181,17 @@ function filterCat(cat,el){
   if(el) el.classList.add('active');
   if(cat==='All') renderProducts(allProducts); else renderProducts(allProducts.filter(p=>(p.category||'General')===cat));
 }
+document.getElementById('searchInput')?.addEventListener('input',e=>{
+  const q=e.target.value.toLowerCase();
+  renderProducts(allProducts.filter(p=>p.name.toLowerCase().includes(q)||(p.category||'').toLowerCase().includes(q)));
+});
 function addToCart(id){
   const prod=allProducts.find(p=>p._id===id); if(!prod) return;
   const ex=cart.find(c=>c._id===id);
   if(ex) ex.qty+=1; else cart.push({...prod, qty:1});
   saveCart();
 }
-function saveCart(){ localStorage.setItem('kirana_cart_'+shopId, JSON.stringify(cart)); updateCartUI(); renderProducts(document.querySelector('.cat.active')?.innerText.includes('All')?allProducts:allProducts.filter(p=>(p.category||'General')===document.querySelector('.cat.active')?.innerText) || allProducts); }
+function saveCart(){ localStorage.setItem('kirana_cart_'+shopId, JSON.stringify(cart)); updateCartUI(); const active=document.querySelector('.cat.active'); renderProducts(active?.innerText.includes('All')?allProducts:allProducts.filter(p=>(p.category||'General')===active?.innerText.replace(/^[^\w]+/,'').trim())||allProducts); }
 function updateCartUI(){
   const count=cart.reduce((s,c)=>s+c.qty,0);
   const total=cart.reduce((s,c)=>s+c.price*c.qty,0);
