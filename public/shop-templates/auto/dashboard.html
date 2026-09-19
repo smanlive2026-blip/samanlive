@@ -10,18 +10,13 @@
         :root { --orange: #f97316; --orange2: #ea580c; --dark: #0f172a; --card: #ffffff; --muted: #64748b; --green: #22c55e; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: #f1f5f9; min-height: 100vh; color: var(--dark); }
-        
-        /* TOP NAV */
         .topbar { background: #0f172a; color: white; padding: 14px 28px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
         .topbar .brand { font-weight: 800; font-size: 20px; display: flex; align-items: center; gap: 10px; }
         .topbar .brand i { background: var(--orange); width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; }
         .topbar .live { background: #1e293b; padding: 8px 14px; border-radius: 30px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
         .dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 4px rgba(34,197,94,.2); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,.4) } 70% { box-shadow: 0 0 0 10px rgba(34,197,94,0) } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0) } }
-
         .container { max-width: 1600px; margin: 0 auto; padding: 26px; }
-        
-        /* HEADER CARD */
         .header { background: linear-gradient(135deg, #ffffff 0%, #fff7ed 100%); padding: 28px 32px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,.05); border: 1px solid #ffedd5; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
         .header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
         .header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
@@ -31,9 +26,7 @@
         .btn-primary { background: var(--dark); color: white; }
         .btn-orange { background: linear-gradient(135deg, var(--orange), var(--orange2)); color: white; box-shadow: 0 8px 20px rgba(249,115,22,.3); }
         .btn-green { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; box-shadow: 0 8px 20px rgba(34,197,94,.3); }
-        .btn-light { background: white; border: 1px solid #e2e8f0; }
-
-        /* STATS */
+        .btn-light { background: white; border: 1px solid #e2e8f0; color: var(--dark); }
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 22px; }
         .stat-card { background: white; padding: 22px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,.04); border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
         .stat-card::after { content: ''; position: absolute; top: 0; right: 0; width: 90px; height: 90px; background: radial-gradient(circle, rgba(249,115,22,.12) 0%, transparent 70%); }
@@ -44,14 +37,10 @@
         .stat-card:nth-child(4) .icon { background: #f3f4f6; color: var(--dark); }
         .stat-card h3 { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .8px; font-weight: 700; }
         .stat-card .value { font-size: 32px; font-weight: 800; margin-top: 4px; }
-
-        /* GRID */
         .content-grid { display: grid; grid-template-columns: 1.8fr .9fr; gap: 22px; }
         .content-card { background: white; padding: 26px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,.04); border: 1px solid #f1f5f9; }
         .content-card h2 { font-size: 18px; font-weight: 800; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; }
         .content-card h2 span { font-size: 12px; background: #f1f5f9; padding: 6px 10px; border-radius: 20px; color: var(--muted); }
-
-        /* SERVICE JOB */
         .service-card { border: 1px solid #f1f5f9; background: #f8fafc; border-radius: 16px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .service-card .meta { display: flex; gap: 12px; align-items: center; }
         .avatar { width: 44px; height: 44px; background: var(--dark); color: white; border-radius: 12px; display: grid; place-items: center; font-weight: 800; }
@@ -59,8 +48,6 @@
         .status.pending { background: #fef3c7; color: #92400e; }
         .status.service { background: #dbeafe; color: #1e40af; }
         .status.delivered { background: #dcfce7; color: #166534; }
-
-        /* PARTS GRID */
         #partsList { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
         .part-box { border: 1px solid #f1f5f9; border-radius: 16px; overflow: hidden; background: white; transition: .2s; }
         .part-box:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,.08); }
@@ -68,17 +55,13 @@
         .part-box .p { padding: 12px; }
         .part-box .p b { font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .part-box .p small { color: var(--muted); font-size: 11px; }
-
-        /* SERVICES */
         .service-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .srv { background: #f8fafc; border: 1px solid #f1f5f9; padding: 16px; border-radius: 14px; display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 13px; }
         .srv i { width: 36px; height: 36px; background: white; border-radius: 10px; display: grid; place-items: center; color: var(--orange); box-shadow: 0 2px 10px rgba(0,0,0,.05); }
-
         @media(max-width: 1100px) { .stats-grid { grid-template-columns: 1fr 1fr; } .content-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-
     <div class="topbar">
         <div class="brand"><i class="fa-solid fa-screwdriver-wrench"></i> SAMAN AUTO PRO</div>
         <div style="display:flex; gap:12px; align-items:center;">
@@ -86,7 +69,6 @@
             <div style="width:36px;height:36px;background:white;color:#0f172a;border-radius:10px;display:grid;place-items:center;font-weight:800;">A</div>
         </div>
     </div>
-
     <div class="container">
         <div class="header">
             <div>
@@ -97,36 +79,32 @@
                 <button class="btn btn-green" id="quickAddBtn" onclick="quickAddAutoProducts()"><i class="fa-solid fa-bolt"></i> 50+ Quick Add</button>
                 <button class="btn btn-orange" id="newServiceBtn"><i class="fa-solid fa-plus"></i> New Job</button>
                 <button class="btn btn-primary" id="addPartBtn"><i class="fa-solid fa-box"></i> Add Part</button>
-                <button class="btn btn-light"><i class="fa-solid fa-store"></i> View Shop</button>
+                <button class="btn btn-light" id="settingsBtn"><i class="fa-solid fa-gear"></i> Settings</button>
+                <button class="btn btn-light" id="viewShopBtn"><i class="fa-solid fa-store"></i> View Shop</button>
             </div>
         </div>
-
         <div class="stats-grid">
             <div class="stat-card"><div class="icon"><i class="fa-solid fa-car-side"></i></div><h3>Vehicles in Garage</h3><div class="value" id="vehicles">0</div><small style="color:#22c55e;font-weight:700;">+2 today</small></div>
             <div class="stat-card"><div class="icon"><i class="fa-solid fa-list-check"></i></div><h3>Today Service Jobs</h3><div class="value" id="service">0</div><small style="color:#64748b;">Pending + In Service</small></div>
             <div class="stat-card"><div class="icon"><i class="fa-solid fa-indian-rupee-sign"></i></div><h3>Today Revenue</h3><div class="value">₹<span id="revenue">0</span></div><small style="color:#22c55e;font-weight:700;">↑ 12% vs yesterday</small></div>
             <div class="stat-card"><div class="icon"><i class="fa-solid fa-boxes-stacked"></i></div><h3>Total Inventory</h3><div class="value" id="parts">0</div><small id="lowStockCount" style="color:#ef4444;font-weight:700;">0 low stock</small></div>
         </div>
-
         <div class="content-grid">
             <div>
                 <div class="content-card">
                     <h2><i class="fa-solid fa-wrench"></i> Active Service Jobs <span id="jobCount">0 Jobs</span></h2>
                     <div id="serviceList" style="color:#64748b;">Loading jobs...</div>
                 </div>
-
                 <div class="content-card">
                     <h2><i class="fa-solid fa-gears"></i> Parts Inventory <span>Auto-pro grade parts</span></h2>
                     <div id="partsList">Loading parts...</div>
                 </div>
             </div>
-
             <div>
                 <div class="content-card">
                     <h2><i class="fa-solid fa-triangle-exclamation" style="color:#ef4444"></i> Low Stock Alert</h2>
                     <div id="lowStock">All good! No low stock.</div>
                 </div>
-
                 <div class="content-card">
                     <h2><i class="fa-solid fa-star" style="color:#f97316"></i> World-Class Services</h2>
                     <div class="service-grid" id="services">
@@ -146,7 +124,6 @@
                         <i class="fa-solid fa-phone" style="background:#f97316; width:40px; height:40px; display:grid; place-items:center; border-radius:10px;"></i>
                     </div>
                 </div>
-
                 <div class="content-card" style="background: linear-gradient(135deg,#fff7ed,#ffedd5); border-color:#fed7aa;">
                     <h2><i class="fa-solid fa-fire"></i> Best Sellers Today</h2>
                     <div style="font-size:13px; line-height:1.8;">
@@ -160,6 +137,18 @@
         </div>
     </div>
     
+    <script>
+        // Settings + View Shop Buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            const sid = new URLSearchParams(window.location.search).get('shopId') || '';
+            document.getElementById('settingsBtn')?.addEventListener('click', () => {
+                window.location.href = `/shop-templates/auto/settings.html?shopId=${sid}`;
+            });
+            document.getElementById('viewShopBtn')?.addEventListener('click', () => {
+                window.open(`/shop-templates/auto/customer-view.html?shopId=${sid}`, '_blank');
+            });
+        });
+    </script>
     <script src="quick-add-products.js"></script>
     <script src="dashboard.js"></script>
 </body>

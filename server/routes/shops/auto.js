@@ -174,4 +174,29 @@ router.post('/:shopId/service', async (req, res) => {
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+// SETTINGS UPDATE - shop name, services, warranty etc
+router.put('/:shopId/settings', async (req, res) => {
+  try {
+    const shopId = getShopId(req);
+    const { shopName, address, services, settings } = req.body;
+    
+    if(shopName || address) {
+        await Shop.findByIdAndUpdate(shopId, { name: shopName, address });
+    }
+    
+    let update = {};
+    if(services) update.services = services;
+    if(settings) {
+        if(settings.announcement !== undefined) update['settings.announcement'] = settings.announcement;
+        if(settings.isOpen !== undefined) update['settings.isOpen'] = settings.isOpen;
+    }
+    
+    if(Object.keys(update).length > 0) {
+        await Auto.findOneAndUpdate({ shopId }, { $set: update }, { upsert: true });
+    }
+    
+    res.json({ success: true, message: 'Settings updated' });
+  } catch(e){ res.status(500).json({ success:false, error:e.message }) }
+});
+
 module.exports = router;

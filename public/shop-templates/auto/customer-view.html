@@ -141,10 +141,13 @@
                 const result = await res.json();
                 if(!result.success) return;
 
-                const shop = result.shop;
+        const shop = result.shop;
                 document.getElementById('shopName').innerText = shop.shopName || 'Auto Pro Center';
                 document.getElementById('pageTitle').innerText = shop.shopName || 'Auto Service';
                 document.getElementById('shopAddress').innerText = `${shop.shopName || 'Auto Center'} • Genuine Parts | 6 Month Warranty | Kanodar`;
+
+         // YAHAN JODNA HAI - announcement dynamic hoga
+                document.querySelector('.top-strip').innerText = shop.settings?.announcement || 'FREE PICKUP & DROP • 6 MONTH WARRANTY • GENUINE PARTS';
 
                 const dbServices = (shop.services || []).map((s,i) => ({ id: `srv-db-${i}`, name: s, price: 999, mrp: 1299, cat: 'Service', stock: 99, image: '', desc: 'Professional service' }));
                 const services = dbServices.length ? dbServices : defaultServices;

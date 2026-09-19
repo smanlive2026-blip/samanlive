@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Auto Shop Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}
+body{background:#f8fafc;padding:24px}
+.card{background:white;border-radius:20px;padding:26px;max-width:800px;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,.06);margin-bottom:20px}
+.card h2{font-weight:800;margin-bottom:16px}
+.input{width:100%;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:14px;font-weight:600}
+.btn{background:#0f172a;color:white;padding:12px 20px;border:none;border-radius:12px;font-weight:800;cursor:pointer;width:100%}
+label{font-size:12px;font-weight:800;color:#64748b;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#f1f5f9;padding:8px 12px;border-radius:20px;font-size:13px;font-weight:700;display:flex;gap:8px;align-items:center}
+.chip i{cursor:pointer;color:#ef4444}
+</style>
+</head>
+<body>
+<div class="card">
+<h2><i class="fa-solid fa-store" style="color:#f97316"></i> Shop Settings</h2>
+<label>Shop Name</label><input id="shopName" class="input" placeholder="SAMAN AUTO PRO">
+<label>Address</label><input id="address" class="input" placeholder="Kanodar, Gujarat">
+<label>Top Strip Offer (free pickup etc)</label><input id="offer" class="input" placeholder="FREE PICKUP & DROP • 6 MONTH WARRANTY • GENUINE PARTS">
+<label>Announcement / Warranty Details</label><textarea id="announcement" class="input" rows="3" placeholder="6 Month Warranty on Service, Genuine Parts, 24x7 Support..."></textarea>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div><label>Pickup Drop Free?</label><select id="pickup" class="input"><option value="yes">Yes Free</option><option value="no">No - Paid</option></select></div>
+<div><label>Shop Open?</label><select id="isOpen" class="input"><option value="true">Open</option><option value="false">Closed</option></select></div>
+</div>
+<button class="btn" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button>
+</div>
+
+<div class="card">
+<h2><i class="fa-solid fa-list-check"></i> My Services</h2>
+<p style="color:#64748b;font-size:13px;margin-bottom:12px;">Jo service tu deta hai wahi customer ko dikhegi. Add / Delete kar sakta hai.</p>
+<div style="display:flex;gap:8px;margin-bottom:14px"><input id="newService" class="input" style="margin:0" placeholder="Jaise - ECU Scanning"><button onclick="addService()" style="background:#f97316;color:white;border:none;padding:0 18px;border-radius:12px;font-weight:800;cursor:pointer;">Add</button></div>
+<div id="servicesList" class="chips"></div>
+<button class="btn" style="margin-top:16px;background:#f97316" onclick="saveServices()"><i class="fa-solid fa-bolt"></i> Save Services</button>
+</div>
+
+<script>
+const shopId = new URLSearchParams(window.location.search).get('shopId');
+let services = [];
+
+async function load(){
+ const res = await fetch(`/api/shops/auto/${shopId}`); const d = await res.json();
+ if(!d.success) return;
+ document.getElementById('shopName').value = d.shop.shopName || '';
+ document.getElementById('address').value = d.shop.address || '';
+ document.getElementById('offer').value = localStorage.getItem(`offer_${shopId}`) || 'FREE PICKUP & DROP • 6 MONTH WARRANTY';
+ document.getElementById('announcement').value = d.shop.settings?.announcement || '';
+ document.getElementById('isOpen').value = d.shop.settings?.isOpen ? 'true':'false';
+ services = d.shop.services || [];
+ render();
+}
+function render(){
+ document.getElementById('servicesList').innerHTML = services.map((s,i)=>`<div class="chip">${s} <i class="fa-solid fa-xmark" onclick="removeService(${i})"></i></div>`).join('');
+}
+function addService(){
+ const v = document.getElementById('newService').value.trim(); if(!v) return;
+ services.push(v); document.getElementById('newService').value=''; render();
+}
+function removeService(i){ services.splice(i,1); render(); }
+
+async function saveSettings(){
+ const payload = {
+   shopName: document.getElementById('shopName').value,
+   address: document.getElementById('address').value,
+   settings: { announcement: document.getElementById('announcement').value, isOpen: document.getElementById('isOpen').value==='true' }
+ };
+ localStorage.setItem(`offer_${shopId}`, document.getElementById('offer').value);
+ await fetch(`/api/shops/auto/${shopId}/settings`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+ alert('Settings Saved! Customer view me ab yehi dikhega');
+}
+
+async function saveServices(){
+ await fetch(`/api/shops/auto/${shopId}/settings`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({services})});
+ alert('Services Saved!');
+}
+load();
+</script>
+</body>
+</html>
