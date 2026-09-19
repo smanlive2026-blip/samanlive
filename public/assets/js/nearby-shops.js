@@ -60,11 +60,11 @@ async function initNearby(){
 async function loadNearbyShops() {
     let shopsData = [];
     if(userLocation) {
-        const res = await fetch(`/api/shop-view/nearby-shops?lat=${userLocation.lat}&lng=${userLocation.lng}`).catch(()=>({ok:false}));
+        const res = await fetch(`/api/shop-view/nearby-shops?lat=${userLocation.lat}&lng=${userLocation.lng}`, {cache: 'no-store'}).catch(()=>({ok:false}));
         if(res.ok) shopsData = (await res.json()).data || [];
     }
     if(shopsData.length === 0) {
-        const allRes = await fetch(`/api/shop-view/nearby-shops`).catch(()=>({ok:false}));
+        const allRes = await fetch(`/api/shop-view/nearby-shops`, {cache: 'no-store'}).catch(()=>({ok:false}));
         if(allRes.ok) shopsData = (await allRes.json()).data || [];
     }
 
@@ -89,7 +89,7 @@ async function checkAreaAndUpdateAds(loc){
     if(!loc) { renderNearbyShopsWithAds([]); return; }
     try {
         // 1. Sabse pehle area nikalo user ki location se
-        const areasRes = await fetch(`/api/areas`).then(r=>r.json()).catch(()=>[]);
+        const areasRes = await fetch(`/api/areas`, {cache: 'no-store'}).then(r=>r.json()).catch(()=>[]);
         let foundArea = null;
         let minDist = Infinity;
         areasRes.forEach(area => {
@@ -106,7 +106,7 @@ async function checkAreaAndUpdateAds(loc){
                 console.log(`📍 Area Changed: ${currentAreaCode} -> ${foundArea.areaCode}`);
                 currentAreaCode = foundArea.areaCode;
                 // 2. Is area ke ads lao
-                const contentRes = await fetch(`/api/content?areaCode=${foundArea.areaCode}`).then(r=>r.json()).catch(()=>[]);
+                const contentRes = await fetch(`/api/content?areaCode=${foundArea.areaCode}`, {cache: 'no-store'}).then(r=>r.json()).catch(()=>[]);
                 areaAdsCache = contentRes.filter(c => c.type === 'ad' && c.status === 'active');
                 const cityEl = document.getElementById('userCity');
                 if(cityEl) cityEl.textContent = `${foundArea.city} (${foundArea.areaCode})`;

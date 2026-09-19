@@ -45,11 +45,13 @@ const shopId = new URLSearchParams(window.location.search).get('shopId');
 let services = [];
 
 async function load(){
- const res = await fetch(`/api/shops/auto/${shopId}`); const d = await res.json();
+ const res = await fetch(`/api/shops/auto/${shopId}`, {cache:'no-store'}); 
+ const d = await res.json();
  if(!d.success) return;
  document.getElementById('shopName').value = d.shop.shopName || '';
- document.getElementById('address').value = d.shop.address || '';
- document.getElementById('offer').value = localStorage.getItem(`offer_${shopId}`) || 'FREE PICKUP & DROP • 6 MONTH WARRANTY';
+ document.getElementById('address').value = d.shop.address || d.shop.shopAddress || '';
+ // offer aur announcement ek hi hai, dono field se lo
+ document.getElementById('offer').value = d.shop.settings?.announcement || 'FREE PICKUP & DROP • 6 MONTH WARRANTY • GENUINE PARTS';
  document.getElementById('announcement').value = d.shop.settings?.announcement || '';
  document.getElementById('isOpen').value = d.shop.settings?.isOpen ? 'true':'false';
  services = d.shop.services || [];
@@ -65,13 +67,21 @@ function addService(){
 function removeService(i){ services.splice(i,1); render(); }
 
 async function saveSettings(){
+ const announcementText = document.getElementById('offer').value.trim() || document.getElementById('announcement').value.trim();
+ const isOpenBool = document.getElementById('isOpen').value === 'true';
+ 
  const payload = {
    shopName: document.getElementById('shopName').value,
    address: document.getElementById('address').value,
-   settings: { announcement: document.getElementById('announcement').value, isOpen: document.getElementById('isOpen').value==='true' }
+   settings: { announcement: announcementText, isOpen: isOpenBool }
  };
- localStorage.setItem(`offer_${shopId}`, document.getElementById('offer').value);
+
+ // 1. Main settings API
  await fetch(`/api/shops/auto/${shopId}/settings`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+ 
+ // 2. Common toggle API bhi update karo taaki nearby-shops.js pe bhi dikhe
+ await fetch(`/api/shop-toggle/${shopId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ isOpen: isOpenBool })});
+
  alert('Settings Saved! Customer view me ab yehi dikhega');
 }
 

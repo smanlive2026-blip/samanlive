@@ -188,11 +188,15 @@ router.put('/:shopId/settings', async (req, res) => {
     if(services) update.services = services;
     if(settings) {
         if(settings.announcement !== undefined) update['settings.announcement'] = settings.announcement;
-        if(settings.isOpen !== undefined) update['settings.isOpen'] = settings.isOpen;
+        if(settings.isOpen !== undefined) {
+            update['settings.isOpen'] = settings.isOpen;
+            // nearby-shops API Shop model se bhi isOpen padhta hai toh waha bhi update
+            await Shop.findByIdAndUpdate(shopId, { isOpen: settings.isOpen });
+        }
     }
     
     if(Object.keys(update).length > 0) {
-        await Auto.findOneAndUpdate({ shopId }, { $set: update }, { upsert: true });
+        await Auto.findOneAndUpdate({ shopId }, { $set: update }, { upsert: true, new: true });
     }
     
     res.json({ success: true, message: 'Settings updated' });
