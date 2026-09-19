@@ -1,109 +1,163 @@
-<!-- LOCATION: public/shop-templates/kirana/user-view.html -->
+<!-- LOCATION: public/shop-templates/kirana/user-view.html - V3 WORLD CLASS PRO MAX -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kirana Store - SamanLive</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kirana Store</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap');
-*{box-sizing:border-box;font-family:'Outfit',sans-serif}body{margin:0;background:#f8fafc}
-.top{background:#16a34a;color:#fff;padding:16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
-.shop-info{padding:16px;background:#fff;border-bottom:1px solid #e2e8f0}
-.cat-bar{display:flex;gap:8px;overflow:auto;padding:10px 16px;background:#fff;position:sticky;top:62px;z-index:9;border-bottom:1px solid #e2e8f0}
-.cat-bar button{white-space:nowrap;padding:8px 14px;border:1px solid #e2e8f0;border-radius:20px;background:#fff;cursor:pointer;font-weight:700;font-size:12px}
-.cat-bar button.active{background:#16a34a;color:#fff;border-color:#16a34a}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;padding:16px}
-.card{background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-.card img{width:100%;height:120px;object-fit:cover;background:#f1f5f9}
-.card .p{padding:10px}.card b{font-size:13px;display:block;line-height:1.2}
-.card small{font-size:11px;color:#64748b}
-.price{font-weight:800;margin-top:6px;display:flex;justify-content:space-between}
-.add-btn{width:100%;margin-top:8px;background:#16a34a;color:#fff;border:none;padding:8px;border-radius:10px;font-weight:800;cursor:pointer}
-.cart-bar{position:fixed;bottom:0;left:0;right:0;background:#0f172a;color:#fff;padding:12px 16px;display:none;justify-content:space-between;align-items:center;z-index:20;border-radius:16px 16px 0 0}
-#cartModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;z-index:30;align-items:end}
-#cartBox{background:#fff;width:100%;max-width:500px;margin:0 auto;border-radius:20px 20px 0 0;max-height:85vh;display:flex;flex-direction:column}
+:root{--green:#10b981;--dark:#0f172a;--yellow:#facc15}
+*{box-sizing:border-box;font-family:'Outfit',sans-serif;margin:0;padding:0}
+body{background:#f8fafc;color:#0f172a;padding-bottom:90px}
+a{color:inherit;text-decoration:none}
+
+/* HEADER */
+.header{height:70px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:100}
+.h-left{display:flex;gap:12px;align-items:center}
+.h-logo{width:44px;height:44px;background:var(--dark);color:#fff;display:grid;place-items:center;border-radius:14px;font-weight:900;font-size:18px}
+.h-info b{font-size:15px;font-weight:900;display:block;line-height:1}.h-info small{font-size:11px;color:#64748b;font-weight:600}
+.h-right{display:flex;gap:8px}
+.h-btn{height:44px;padding:0 16px;border-radius:14px;border:1px solid #e2e8f0;background:#fff;display:flex;align-items:center;gap:8px;font-weight:800;font-size:13px;cursor:pointer}
+.h-cart{background:var(--dark);color:#fff;border-color:var(--dark)}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;margin:12px;border-radius:24px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;width:180px;height:180px;background:radial-gradient(circle,rgba(16,185,129,.3),transparent);right:-40px;top:-40px}
+.hero h2{font-weight:900;font-size:18px;line-height:1.2}.hero p{font-size:12px;opacity:.7;margin-top:4px}
+.hero-badge{background:var(--yellow);color:#000;padding:8px 14px;border-radius:30px;font-weight:900;font-size:12px;z-index:1}
+
+/* CATEGORIES */
+.cats{display:flex;gap:8px;overflow:auto;padding:0 16px 12px 16px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat{white-space:nowrap;padding:10px 16px;border-radius:30px;background:#fff;border:1px solid #e2e8f0;font-weight:800;font-size:12px;cursor:pointer;transition:.2s;display:flex;gap:6px;align-items:center}
+.cat.active{background:var(--dark);color:#fff;border-color:var(--dark);transform:scale(1.05)}
+
+/* PRODUCTS - BLINKIT STYLE */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:0 12px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{background:#fff;border-radius:20px;border:1px solid #f1f5f9;overflow:hidden;position:relative;transition:.25s}
+.card:hover{transform:translateY(-3px);box-shadow:0 15px 30px rgba(0,0,0,.06)}
+.card.img-wrap{position:relative;background:#f8fafc;height:140px;display:grid;place-items:center;overflow:hidden}
+.card img{width:100%;height:100%;object-fit:cover}
+.card.off{position:absolute;top:8px;left:8px;background:var(--green);color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px}
+.card.wishlist{position:absolute;top:8px;right:8px;width:28px;height:28px;background:#fff;border-radius:50%;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.p{padding:10px 12px 12px 12px}
+.p b{font-size:13px;font-weight:800;line-height:1.2;display:block;min-height:32px}
+.p.meta{font-size:10px;color:#94a3b8;font-weight:600;margin-top:2px}
+.p.row{display:flex;justify-content:space-between;align-items:end;margin-top:10px}
+.p.price{font-weight:900;font-size:16px}.p.price small{font-size:10px;color:#94a3b8;text-decoration:line-through;margin-left:4px;font-weight:600}
+.add{height:32px;padding:0 14px;border-radius:10px;background:#fff;border:1.5px solid var(--green);color:var(--green);font-weight:900;font-size:12px;cursor:pointer;transition:.2s}
+.add.added{background:var(--green);color:#fff}
+.stock-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.stock-dot.ok{background:var(--green)}.stock-dot.low{background:#ef4444}
+
+/* CART BAR */
+.cart-bar{position:fixed;bottom:12px;left:12px;right:12px;background:var(--dark);color:#fff;padding:14px 18px;border-radius:18px;display:none;justify-content:space-between;align-items:center;z-index:50;box-shadow:0 20px 40px rgba(0,0,0,.3)}
+.cart-bar b{font-weight:900}.cart-bar small{opacity:.7;font-size:11px}
+
+/* CART MODAL */
+#cartModal{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(10px);display:none;z-index:200;align-items:end}
+#cartBox{background:#fff;width:100%;max-width:520px;margin:0 auto;border-radius:28px 28px 0 0;max-height:88vh;display:flex;flex-direction:column;animation:slideUp.3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.cart-head{padding:20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f1f5f9}
+.cart-items{flex:1;overflow:auto;padding:0 16px}
+.c-item{display:flex;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #f8fafc}
+.qty-box{display:flex;align-items:center;gap:0;background:#f1f5f9;border-radius:10px;overflow:hidden}
+.qty-box button{width:32px;height:32px;border:none;background:transparent;font-weight:900;cursor:pointer}
+.qty-box button.add-q{background:var(--green);color:#fff}
 </style>
 </head>
 <body>
 
-<div class="top">
-  <div><b id="shopName">Kirana Store</b><br><small id="shopStatus" style="opacity:.8">Open • Fast Delivery</small></div>
-  <div style="display:flex;gap:8px">
-    <button onclick="openCart()" style="background:#fff;color:#16a34a;border:none;padding:8px 12px;border-radius:20px;font-weight:800"><i class="fa fa-shopping-cart"></i> <span id="cartCount">0</span></button>
+<div class="header">
+  <div class="h-left">
+    <div class="h-logo">K</div>
+    <div class="h-info"><b id="shopName">Kirana Store</b><small><span class="stock-dot ok"></span><span id="shopStatus">Open • 10 min delivery</span></small></div>
+  </div>
+  <div class="h-right">
+    <button class="h-btn h-cart" onclick="openCart()"><i class="fa-solid fa-bag-shopping"></i> <span id="cartCount">0</span></button>
   </div>
 </div>
 
-<div class="shop-info">
-  <div style="display:flex;gap:10px;align-items:center"><i class="fa-solid fa-location-dot" style="color:#16a34a"></i> <span id="shopAddress">Loading address...</span></div>
-  <div style="display:flex;gap:10px;align-items:center;margin-top:6px"><i class="fa-solid fa-phone" style="color:#16a34a"></i> <span id="shopPhone">...</span></div>
+<div class="hero">
+  <div><h2 id="heroTitle">Fresh Kirana<br>at your doorstep</h2><p id="shopAddress">Loading address...</p></div>
+  <div class="hero-badge"><i class="fa-solid fa-bolt"></i> FAST</div>
 </div>
 
-<div class="cat-bar" id="catBar"><button class="active" onclick="filterCat('All')">All</button></div>
-
+<div class="cats" id="catBar"></div>
 <div class="grid" id="productGrid"></div>
 
 <div class="cart-bar" id="cartBar">
-  <div><b id="cartTotalItems">0 items</b> | ₹<span id="cartTotal">0</span></div>
-  <button onclick="openCart()" style="background:#22c55e;color:#fff;border:none;padding:8px 16px;border-radius:10px;font-weight:800">View Cart</button>
+  <div><b id="cartTotalItems">0 items</b><br><small>₹<span id="cartTotal">0</span> • Extra charges may apply</small></div>
+  <button onclick="openCart()" style="background:#10b981;color:#fff;border:none;padding:12px 20px;border-radius:12px;font-weight:900">View Cart <i class="fa-solid fa-arrow-right"></i></button>
 </div>
 
-<div id="cartModal">
+<div id="cartModal" onclick="if(event.target==this)closeCart()">
   <div id="cartBox">
-    <div style="padding:16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between"><h3 style="margin:0">Your Cart</h3><button onclick="closeCart()" style="border:none;background:#f1f5f9;padding:6px 10px;border-radius:8px">✕</button></div>
-    <div id="cartItems" style="flex:1;overflow:auto;padding:12px"></div>
-    <div style="padding:16px;border-top:1px solid #e2e8f0">
-      <div style="display:flex;justify-content:space-between;font-weight:800;margin-bottom:10px"><span>Total</span><span>₹<span id="cartTotal2">0</span></span></div>
-      <button onclick="checkout()" style="width:100%;background:#16a34a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:800;font-size:15px"><i class="fa-brands fa-whatsapp"></i> Order on WhatsApp</button>
+    <div class="cart-head"><h3 style="font-weight:900">Your Basket</h3><button onclick="closeCart()" style="width:36px;height:36px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;cursor:pointer"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="cart-items" id="cartItems"></div>
+    <div style="padding:20px;border-top:1px solid #f1f5f9;background:#f8fafc;border-radius:0 0 28px 28px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;color:#64748b"><span>Subtotal</span><span>₹<span id="subTotal">0</span></span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:14px;font-weight:900;font-size:16px"><span>Total</span><span>₹<span id="cartTotal2">0</span></span></div>
+      <button onclick="checkout()" style="width:100%;background:#10b981;color:#fff;border:none;padding:16px;border-radius:16px;font-weight:900;font-size:15px;display:flex;justify-content:center;gap:10px;align-items:center"><i class="fa-brands fa-whatsapp" style="font-size:20px"></i> Order on WhatsApp</button>
+      <p style="text-align:center;font-size:10px;color:#94a3b8;margin-top:10px;font-weight:600">Delivery address WhatsApp par puch liya jayega</p>
     </div>
   </div>
 </div>
 
 <script>
-// LOCATION: public/shop-templates/kirana/user-view.html (inline JS)
 const urlParams = new URLSearchParams(window.location.search);
-const shopId = urlParams.get('shopId');
-if(!shopId) document.body.innerHTML='<h2>shopId missing</h2>';
+const shopId = urlParams.get('shopId') || urlParams.get('id');
 let allProducts=[], cart=JSON.parse(localStorage.getItem('kirana_cart_'+shopId)||'[]'), shopData=null;
+if(!shopId) document.body.innerHTML='<div style="padding:40px;text-align:center"><h2>Shop ID Missing</h2><p>Add?shopId= in URL</p></div>';
 
 loadShop();
-function loadShop(){
-  fetch(`/api/shops/kirana/${shopId}`, {cache:'no-store'}).then(r=>r.json()).then(result=>{
-    if(!result.success) return;
-    shopData=result.shop;
-    document.getElementById('shopName').innerText=shopData.settings?.shopName||shopData.shopName;
-    document.getElementById('shopAddress').innerText=shopData.settings?.address||'Fast delivery available';
-    document.getElementById('shopPhone').innerText=shopData.settings?.phone||'';
-    const isOpen = shopData.settings?.isOpen??true;
-    document.getElementById('shopStatus').innerText = isOpen? 'Open • Fast Delivery' : 'Closed Now';
-    allProducts=shopData.products||[];
-    renderCategories();
-    renderProducts(allProducts);
-    updateCartUI();
-  });
+async function loadShop(){
+  const r = await fetch(`/api/shops/kirana/${shopId}?t=${Date.now()}`);
+  const result = await r.json();
+  if(!result.success) return;
+  shopData=result.shop;
+  document.getElementById('shopName').innerText=shopData.settings?.shopName||shopData.shopName;
+  document.getElementById('heroTitle').innerText=shopData.settings?.shopName||'Fresh Kirana at your doorstep';
+  document.getElementById('shopAddress').innerText=shopData.settings?.address||'Fast delivery • Open now';
+  document.getElementById('shopStatus').innerText=(shopData.settings?.isOpen? 'Open • 10 min delivery' : 'Closed Now');
+  allProducts=shopData.products||[];
+  renderCats();
+  renderProducts(allProducts);
+  updateCartUI();
 }
-function renderCategories(){
+function renderCats(){
   const cats=[...new Set(allProducts.map(p=>p.category||'General'))];
   const bar=document.getElementById('catBar');
-  bar.innerHTML='<button class="active" onclick="filterCat(\'All\')">All</button>'+cats.map(c=>`<button onclick="filterCat('${c}')">${c}</button>`).join('');
+  bar.innerHTML=`<button class="cat active" onclick="filterCat('All',this)"><i class="fa-solid fa-border-all"></i> All</button>`+cats.map(c=>`<button class="cat" onclick="filterCat('${c}',this)">${c}</button>`).join('');
 }
 function renderProducts(list){
   const grid=document.getElementById('productGrid');
-  if(!list.length){ grid.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:40px;color:#94a3b8">No products</p>'; return; }
-  grid.innerHTML=list.map(p=>`
+  if(!list.length){ grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:60px 20px"><div style="font-size:48px">🛒</div><h3 style="margin-top:10px;font-weight:900">No products</h3><p style="color:#94a3b8;font-size:13px">Owner ne abhi products add nahi kiye</p></div>`; return; }
+  grid.innerHTML=list.map(p=>{
+    const discount = p.mrp? Math.round(((p.mrp-p.price)/p.mrp)*100) : 0;
+    const inCart = cart.find(c=>c._id===p._id);
+    return `
     <div class="card">
-      <img src="${p.image||'https://placehold.co/400/16a34a/fff?text='+encodeURIComponent(p.name.slice(0,10))}">
-      <div class="p">
-        <b>${p.name}</b><small>${p.brand||''} ${p.weight||''}</small>
-        <div class="price"><span>₹${p.price} <small style="text-decoration:line-through;color:#94a3b8">${p.mrp?'₹'+p.mrp:''}</small></span><small style="color:${p.stock>0?'#16a34a':'#ef4444'}">${p.stock>0?p.stock+' left':'Out'}</small></div>
-        <button class="add-btn" onclick="addToCart('${p._id}')" ${p.stock<=0?'disabled style="background:#94a3b8"':''}>${p.stock<=0?'Out of Stock':'Add to Cart'}</button>
+      <div class="img-wrap">
+        <img src="${p.image||`https://source.unsplash.com/400x400/?${encodeURIComponent(p.name.split(' ')[0])},grocery`}" onerror="this.src='https://placehold.co/400/16a34a/fff?text=${encodeURIComponent(p.name.slice(0,10))}'">
+        ${discount>5?`<div class="off">${discount}% OFF</div>`:''}
       </div>
-    </div>
-  `).join('');
+      <div class="p">
+        <b>${p.name}</b>
+        <div class="meta">${p.weight||p.unit} • ${p.brand||''}</div>
+        <div class="row">
+          <div class="price">₹${p.price}<small>${p.mrp?'₹'+p.mrp:''}</small><br><span style="font-size:10px;font-weight:700;color:${p.stock>0?'#10b981':'#ef4444'}"><span class="stock-dot ${p.stock>0?'ok':'low'}"></span>${p.stock>0?p.stock+' in stock':'Out of stock'}</span></div>
+          ${p.stock>0?`<button class="add ${inCart?'added':''}" onclick="addToCart('${p._id}')">${inCart?`${inCart.qty} Added`:'ADD'}</button>`:`<button class="add" disabled style="opacity:.4">OUT</button>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
-function filterCat(cat){
-  document.querySelectorAll('.cat-bar button').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
+function filterCat(cat,el){
+  document.querySelectorAll('.cat').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
   if(cat==='All') renderProducts(allProducts); else renderProducts(allProducts.filter(p=>(p.category||'General')===cat));
 }
 function addToCart(id){
@@ -112,41 +166,35 @@ function addToCart(id){
   if(ex) ex.qty+=1; else cart.push({...prod, qty:1});
   saveCart();
 }
-function saveCart(){
-  localStorage.setItem('kirana_cart_'+shopId, JSON.stringify(cart));
-  updateCartUI();
-}
+function saveCart(){ localStorage.setItem('kirana_cart_'+shopId, JSON.stringify(cart)); updateCartUI(); renderProducts(document.querySelector('.cat.active')?.innerText.includes('All')?allProducts:allProducts.filter(p=>(p.category||'General')===document.querySelector('.cat.active')?.innerText) || allProducts); }
 function updateCartUI(){
   const count=cart.reduce((s,c)=>s+c.qty,0);
   const total=cart.reduce((s,c)=>s+c.price*c.qty,0);
   document.getElementById('cartCount').innerText=count;
   document.getElementById('cartTotal').innerText=total;
   document.getElementById('cartTotal2').innerText=total;
+  document.getElementById('subTotal').innerText=total;
   document.getElementById('cartTotalItems').innerText=count+' items';
   document.getElementById('cartBar').style.display=count>0?'flex':'none';
   document.getElementById('cartItems').innerHTML=cart.map(c=>`
-    <div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9">
-      <img src="${c.image||'https://placehold.co/100'}" style="width:50px;height:50px;border-radius:10px;object-fit:cover">
-      <div style="flex:1"><b style="font-size:13px">${c.name}</b><br><small>₹${c.price} x ${c.qty} = ₹${c.price*c.qty}</small></div>
-      <div style="display:flex;gap:6px;align-items:center"><button onclick="changeQty('${c._id}',-1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff">-</button><b>${c.qty}</b><button onclick="changeQty('${c._id}',1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#16a34a;color:#fff">+</button></div>
+    <div class="c-item">
+      <img src="${c.image||'https://placehold.co/100'}" style="width:56px;height:56px;border-radius:12px;object-fit:cover;background:#f8fafc">
+      <div style="flex:1"><b style="font-size:13px;font-weight:800">${c.name}</b><br><small style="font-size:11px;color:#64748b">${c.weight||''} • ₹${c.price}</small><br><b style="font-size:13px">₹${c.price*c.qty}</b></div>
+      <div class="qty-box"><button onclick="changeQty('${c._id}',-1)">−</button><b style="width:28px;text-align:center;font-size:13px">${c.qty}</b><button class="add-q" onclick="changeQty('${c._id}',1)">+</button></div>
     </div>
-  `).join('')||'<p style="text-align:center;color:#94a3b8;padding:20px">Cart empty</p>';
+  `).join('')||`<p style="text-align:center;padding:40px;color:#94a3b8">Your basket is empty<br><small>Add products to order</small></p>`;
 }
-function changeQty(id,delta){
-  const item=cart.find(c=>c._id===id); if(!item) return;
-  item.qty+=delta; if(item.qty<=0) cart=cart.filter(c=>c._id!==id); saveCart();
-}
+function changeQty(id,d){ const it=cart.find(c=>c._id===id); if(!it) return; it.qty+=d; if(it.qty<=0) cart=cart.filter(c=>c._id!==id); saveCart(); }
 function openCart(){ document.getElementById('cartModal').style.display='flex'; }
 function closeCart(){ document.getElementById('cartModal').style.display='none'; }
 function checkout(){
   const total=cart.reduce((s,c)=>s+c.price*c.qty,0);
-  const phone = (shopData.settings?.phone||'').replace(/\D/g,'');
-  const text = `*New Kirana Order*%0A*Shop:* ${shopData.settings?.shopName}%0A%0A${cart.map(c=>`${c.name} x${c.qty} = ₹${c.price*c.qty}`).join('%0A')}%0A%0A*Total: ₹${total}*%0A%0AAddress: `;
-  const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
-  window.open(url,'_blank');
-  cart=[]; saveCart(); closeCart();
+  const phone=(shopData.settings?.phone||'').replace(/\D/g,'');
+  const lines=cart.map(c=>`• ${c.name} (${c.weight||''}) x${c.qty} = ₹${c.price*c.qty}`).join('%0A');
+  const text=`*New Order - ${shopData.settings?.shopName||'Kirana'}*%0A%0A${lines}%0A%0A*Total: ₹${total}*%0A%0ACustomer Address: `;
+  const url=phone?`https://wa.me/${phone}?text=${text}`:`https://wa.me/?text=${text}`;
+  window.open(url,'_blank'); cart=[]; saveCart(); closeCart();
 }
-window.filterCat=filterCat; window.addToCart=addToCart; window.changeQty=changeQty; window.openCart=openCart; window.closeCart=closeCart; window.checkout=checkout;
 </script>
 </body>
 </html>
