@@ -3,7 +3,11 @@ const mongoose = require('mongoose');
 const autoPartSchema = new mongoose.Schema({
     id: { type: String, default: () => Date.now().toString() },
     name: { type: String, required: true, trim: true },
-    category: { type: String, enum: ['Engine', 'Brake', 'Electrical', 'Body', 'Oil', 'Tyre', 'Battery', 'Other'], default: 'Other' },
+    category: {
+        type: String,
+        enum: ['Engine', 'Brake', 'Electrical', 'Body', 'Oil', 'Tyre', 'Battery', 'Filter', 'Belt', 'Suspension', 'Accessories', 'Light', 'Clutch', 'Other'],
+        default: 'Other'
+    },
     sku: { type: String, default: '' },
     partNo: { type: String, default: '' },
     description: { type: String, default: '' },
@@ -12,6 +16,13 @@ const autoPartSchema = new mongoose.Schema({
     stock: { type: Number, default: 0 },
     lowStockLimit: { type: Number, default: 5 },
     image: { type: String, default: 'https://placehold.co/400/f97316/fff?text=Part' },
+
+    // Quick-add fields
+    brand: { type: String, default: '' },
+    partNumber: { type: String, default: '' },
+    compatibleVehicle: { type: String, default: '' },
+    warranty: { type: String, default: '' },
+
     isActive: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now }
 }, { _id: false });
@@ -36,7 +47,7 @@ const autoSchema = new mongoose.Schema({
     shopId: { type: String, required: true, unique: true, index: true },
     parts: [autoPartSchema],
     serviceJobs: [serviceJobSchema],
-    services: { type: [String], default: ['Engine Oil Change', 'Brake Service', 'AC Repair', 'Engine Work', 'Tyre Change', 'Battery Change', 'Car Wash', 'Denting Painting'] },
+    services: { type: [String], default: ['Engine Oil Change', 'Brake Service', 'AC Repair', 'Engine Work', 'Tyre Change', 'Battery Change', 'Car Wash', 'Denting Painting', 'ECU Scanning', 'Roadside Assistance'] },
     settings: {
         isOpen: { type: Boolean, default: true },
         announcement: { type: String, default: '' }

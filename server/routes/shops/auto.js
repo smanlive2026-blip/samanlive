@@ -42,7 +42,7 @@ router.get('/:shopId', async (req, res) => {
         revenue: auto.serviceJobs.filter(s => new Date(s.createdAt).toDateString() === new Date().toDateString()).reduce((sum, s) => sum + (s.totalAmount || 0), 0)
     };
 
-    const lowStock = auto.parts.filter(p => p.stock < p.lowStockLimit);
+    const lowStock = auto.parts.filter(p => p.stock < (p.lowStockLimit || 5));
 
     res.json({
         success: true,
@@ -58,6 +58,65 @@ router.get('/:shopId', async (req, res) => {
         }
     });
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// ========== NAYA QUICK ADD 50+ - FIXED ==========
+router.post('/:shopId/quick-add', async (req, res) => {
+  try {
+    const shopId = getShopId(req);
+    const products = req.body.products;
+
+    if(!products || !Array.isArray(products)) {
+        return res.status(400).json({ success: false, message: 'products array required' });
+    }
+
+    let auto = await Auto.findOne({ shopId });
+    if(!auto) auto = await Auto.create({ shopId, parts: [], serviceJobs: [] });
+
+    // Allowed categories map
+    const allowed = ['Engine', 'Brake', 'Electrical', 'Body', 'Oil', 'Tyre', 'Battery', 'Other'];
+    const mapCategory = (cat) => {
+        if(!cat) return 'Other';
+        if(allowed.includes(cat)) return cat;
+        // map extra categories to Other
+        if(['Filter','Belt','Suspension','Accessories','Light','Clutch'].includes(cat)) {
+            if(cat === 'Filter' || cat === 'Belt' || cat === 'Clutch') return 'Engine';
+            if(cat === 'Suspension') return 'Other';
+            if(cat === 'Accessories') return 'Other';
+            if(cat === 'Light') return 'Electrical';
+        }
+        return 'Other';
+    };
+
+    const newParts = products.map((p, index) => ({
+        id: `${Date.now()}${index}${Math.random().toString(36).substring(2,6)}`, // unique
+        name: p.name,
+        description: p.description || '',
+        category: mapCategory(p.category), // FIX - enum safe
+        price: Number(p.price) || 0,
+        mrp: Number(p.mrp) || 0,
+        stock: Number(p.stock) || 0,
+        image: p.image || 'https://placehold.co/400/f97316/fff?text=Part',
+        sku: p.partNo || p.sku || '',
+        partNo: p.partNo || '',
+        brand: p.brand || '',
+        partNumber: p.partNo || p.partNumber || '',
+        compatibleVehicle: p.compatible || p.compatibleVehicle || '',
+        warranty: p.warranty || '',
+        lowStockLimit: 5,
+        isActive: true,
+        createdAt: new Date()
+    }));
+
+    auto.parts.push(...newParts);
+    await auto.save();
+
+    res.json({ success: true, count: newParts.length, message: `${newParts.length} parts added` });
+
+  } catch(err) { 
+    console.error('Quick-add error:', err);
+    res.status(500).json({ success: false, error: err.message }); 
+  }
 });
 
 router.post('/:shopId/item', async (req, res) => {

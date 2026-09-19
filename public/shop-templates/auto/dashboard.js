@@ -1,107 +1,119 @@
 // ========================================
-// AUTO PARTS DASHBOARD JS - FULL v1.1
+// AUTO PRO DASHBOARD JS - WORLD CLASS v3.0
+// Supports: /api/shops/auto/:shopId (parts array wala)
+// No Common Product dependency
 // ========================================
 
 const urlParams = new URLSearchParams(window.location.search);
-const shopId = urlParams.get('shopId');
+const shopId = urlParams.get('shopId') || urlParams.get('id') || localStorage.getItem('shopId');
 
 if(!shopId) {
-    alert('Shop ID nahi mila. URL me ?shopId=xxx add karo');
+    alert('Shop ID nahi mila. URL me ?shopId=xxx lagao');
 }
 
-document.getElementById('shopIdDisplay').innerText = shopId.substring(0, 8) + '...';
+const shopIdDisplay = document.getElementById('shopIdDisplay');
+if(shopIdDisplay) shopIdDisplay.innerText = shopId ? shopId.substring(0, 8) + '...' : 'NO-ID';
 
-let globalShopData = {};
+let globalShop = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     loadShopData();
 
-    document.getElementById('newServiceBtn').onclick = () => {
-        window.location.href = `/shop-templates/auto-parts/service-form.html?shopId=${shopId}`;
-    };
-    document.getElementById('addPartBtn').onclick = () => {
-        window.open(`/shop-templates/auto-parts/part-form.html?shopId=${shopId}`, '_blank');
-    };
+    document.getElementById('newServiceBtn')?.addEventListener('click', () => {
+        window.location.href = `/shop-templates/auto/book-service.html?shopId=${shopId}`;
+    });
+    document.getElementById('addPartBtn')?.addEventListener('click', () => {
+        window.location.href = `/shop-templates/auto/product-form.html?shopId=${shopId}`;
+    });
 });
 
 async function loadShopData() {
     try {
         const res = await fetch(`/api/shops/auto/${shopId}`);
         const result = await res.json();
-        if (!result.success) { alert('Shop not found'); return; }
+
+        if(!result.success) throw new Error(result.message);
 
         const shop = result.shop;
-        globalShopData = shop;
+        globalShop = shop;
 
-        document.getElementById('shopName').innerText = shop.shopName || shop.name || 'Auto Parts & Service';
+        // Header
+        document.getElementById('shopName').innerText = shop.shopName || 'Auto Parts & Service Hub';
+        document.getElementById('partsCountText') && (document.getElementById('partsCountText').innerText = `${shop.parts?.length || 0} Parts`);
+        
+        // Stats
+        document.getElementById('vehicles').innerText = shop.stats?.vehicles ?? shop.serviceJobs?.filter(s => s.status !== 'delivered').length ?? 0;
+        document.getElementById('service').innerText = shop.stats?.service ?? shop.serviceJobs?.filter(s => new Date(s.createdAt).toDateString() === new Date().toDateString()).length ?? 0;
+        document.getElementById('revenue').innerText = shop.stats?.revenue ?? 0;
+        document.getElementById('parts').innerText = shop.parts?.length || 0;
+        
+        document.getElementById('jobCount') && (document.getElementById('jobCount').innerText = `${shop.serviceJobs?.length || 0} Jobs`);
+        document.getElementById('lowStockCount') && (document.getElementById('lowStockCount').innerText = `${shop.lowStock?.length || 0} low stock`);
 
-        const services = shop.serviceJobs || [];
-        const parts = shop.parts || [];
-        const serviceList = shop.services || ['Engine Oil Change', 'Brake Service', 'AC Repair', 'Engine Work', 'Tyre Change', 'Battery Change', 'Car Wash', 'Denting Painting'];
-
-        // STATS
-        document.getElementById('vehicles').innerText = shop.stats?.vehicles || services.filter(s => s.status !== 'delivered').length;
-        document.getElementById('service').innerText = shop.stats?.service || services.filter(s => new Date(s.createdAt).toDateString() === new Date().toDateString()).length;
-        document.getElementById('parts').innerText = shop.stats?.parts || parts.length;
-        document.getElementById('revenue').innerText = shop.stats?.revenue || services.filter(s => new Date(s.createdAt).toDateString() === new Date().toDateString()).reduce((sum, s) => sum + (s.totalAmount || 0), 0);
-
-        loadServices(services);
-        loadParts(parts);
-        loadLowStock(parts);
-        loadServiceList(serviceList);
+        // Render
+        loadServices(shop.serviceJobs || []);
+        loadParts(shop.parts || []);
+        loadLowStock(shop.lowStock || shop.parts?.filter(p => p.stock < (p.lowStockLimit || 5)) || []);
 
     } catch(e) {
-        console.error("Dashboard Load Error:", e);
-        alert("Failed to load shop data");
+        console.error("Dashboard Error:", e);
+        document.getElementById('serviceList').innerHTML = `<p style="color:red">Error: ${e.message}</p>`;
     }
 }
 
 function loadServices(services) {
     const container = document.getElementById('serviceList');
-    if(services.length === 0) {
-        container.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px;">No active jobs</p>';
+    if(!container) return;
+    
+    if(!services.length) {
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:#94a3b8;"><i class="fa-solid fa-car-side" style="font-size:32px; margin-bottom:10px; display:block;"></i>No active jobs<br><small>New Job se start karo</small></div>`;
         return;
     }
-    container.innerHTML = services.map(s => `
+
+    container.innerHTML = services.slice(0,10).reverse().map(s => `
         <div class="service-card">
-            <div style="display:flex; justify-content:space-between; align-items:start;">
-                <div style="flex:1;">
-                    <h4>${s.customerName} - ${s.vehicleNo}</h4>
-                    <p style="color:#64748b; font-size:14px;">Issue: ${s.problem}</p>
-                    <p style="color:#f97316; font-weight:700; margin-top:5px;">₹${s.totalAmount}</p>
+            <div class="meta">
+                <div class="avatar">${(s.customerName || 'C')[0].toUpperCase()}</div>
+                <div>
+                    <b style="font-size:14px;">${s.customerName || 'Customer'} • ${s.vehicleNo || '-'}</b>
+                    <p style="font-size:12px; color:#64748b; margin-top:2px;">${s.problem || 'General Service'} • ₹${s.totalAmount || 0}</p>
                 </div>
-                <span class="status ${s.status}">${s.status}</span>
             </div>
-            <select onchange="updateStatus('${s._id}', this.value)" class="btn" style="margin-top:10px; width:100%; background:#1f2937; border:none;">
-                <option value="">Update Status</option>
-                <option value="pending" ${s.status==='pending'?'selected':''}>Pending</option>
-                <option value="service" ${s.status==='service'?'selected':''}>In Service</option>
-                <option value="delivered" ${s.status==='delivered'?'selected':''}>Delivered</option>
-            </select>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span class="status ${s.status || 'pending'}">${s.status || 'pending'}</span>
+                <select onchange="updateStatus('${s._id || s.id}', this.value)" style="border:1px solid #e2e8f0; padding:6px 8px; border-radius:8px; font-size:12px; font-weight:700;">
+                    <option value="">Change</option>
+                    <option value="pending" ${s.status==='pending'?'selected':''}>Pending</option>
+                    <option value="service" ${s.status==='service'?'selected':''}>In Service</option>
+                    <option value="delivered" ${s.status==='delivered'?'selected':''}>Delivered</option>
+                </select>
+            </div>
         </div>
     `).join('');
 }
 
 function loadParts(parts) {
     const container = document.getElementById('partsList');
-    if(parts.length === 0) {
-        container.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px;">No parts added yet</p>';
+    if(!container) return;
+
+    if(!parts.length) {
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#94a3b8;"><i class="fa-solid fa-boxes-stacked" style="font-size:32px; margin-bottom:10px; display:block;"></i>No parts yet<br><b style="color:#f97316">⚡ Quick Add</b> dabao</div>`;
         return;
     }
+
     container.innerHTML = parts.map(p => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #ffedd5;">
-            <div style="display:flex; gap:10px; align-items:center;">
-                <img src="${p.image || 'https://placehold.co/40/f97316/fff?text=P'}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">
-                <div>
-                    <strong>${p.name}</strong>
-                    <p style="color:#64748b; font-size:12px;">Stock: ${p.stock} | SKU: ${p.sku || '-'}</p>
+        <div class="part-box">
+            <img src="${p.image || 'https://placehold.co/400/f97316/fff?text=Part'}" loading="lazy">
+            <div class="p">
+                <b>${p.name}</b>
+                <small>${p.brand || ''} • ${p.partNumber || p.partNo || p.sku || ''}</small>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                    <span style="font-weight:800; color:#0f172a;">₹${p.price}</span>
+                    <span style="font-size:11px; color:${p.stock < 5 ? '#ef4444' : '#16a34a'}; font-weight:700;">${p.stock} in stock</span>
                 </div>
-            </div>
-            <div style="text-align:right;">
-                <strong style="color:#f97316;">₹${p.price}</strong>
-                <div style="display:flex; gap:5px; margin-top:5px;">
-                    <button onclick="editPart('${p._id}')" style="background:#2563eb; color:white; border:none; padding:4px 8px; border-radius:6px; cursor:pointer;"><i class="fa fa-pen"></i></button>
-                    <button onclick="deletePart('${p._id}')" style="background:#dc2626; color:white; border:none; padding:4px 8px; border-radius:6px; cursor:pointer;"><i class="fa fa-trash"></i></button>
+                <div style="display:flex; gap:6px; margin-top:10px;">
+                    <button onclick="editPart('${p.id}')" style="flex:1; background:#0f172a; color:white; border:none; padding:7px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;"><i class="fa fa-pen"></i> Edit</button>
+                    <button onclick="deletePart('${p.id}')" style="background:#fee2e2; color:#dc2626; border:none; padding:7px 10px; border-radius:8px; cursor:pointer;"><i class="fa fa-trash"></i></button>
                 </div>
             </div>
         </div>
@@ -109,21 +121,22 @@ function loadParts(parts) {
 }
 
 function loadLowStock(parts) {
-    const low = globalShopData.lowStock || parts.filter(p => p.stock < (p.lowStockLimit || 5));
     const container = document.getElementById('lowStock');
-    container.innerHTML = low.length === 0 ? '<p style="color:#16a34a;">All stock OK ✓</p>' : 
-        low.map(p => `<div style="background:#fef3c7; padding:12px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between;">
-            <strong>${p.name}</strong> <span style="color:#78350f;">Only ${p.stock} left</span>
-        </div>`).join('');
-}
+    if(!container) return;
+    
+    if(!parts.length) {
+        container.innerHTML = `<p style="color:#16a34a; font-weight:700; font-size:13px;"><i class="fa-solid fa-check"></i> All stock OK ✓</p>`;
+        return;
+    }
 
-function loadServiceList(services) {
-    document.getElementById('services').innerHTML = services.map(s => `
-        <div style="padding:8px; border-bottom:1px solid #ffedd5;">✓ ${s.name || s}</div>
+    container.innerHTML = parts.slice(0,5).map(p => `
+        <div style="background:#fef3c7; padding:12px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+            <div><b>${p.name}</b><br><small style="color:#92400e;">${p.brand || ''}</small></div>
+            <span style="background:#92400e; color:white; padding:4px 8px; border-radius:20px; font-weight:800; font-size:11px;">${p.stock} LEFT</span>
+        </div>
     `).join('');
 }
 
-// STATUS UPDATE API CALL
 async function updateStatus(jobId, newStatus) {
     if(!newStatus) return;
     try {
@@ -133,31 +146,26 @@ async function updateStatus(jobId, newStatus) {
             body: JSON.stringify({ status: newStatus })
         });
         const data = await res.json();
-        if(data.success) {
-            alert('Status Updated!');
-            loadShopData(); // reload
-        } else {
-            alert('Update failed: ' + data.message);
-        }
-    } catch(e) {
-        alert('Failed to update');
-    }
+        if(data.success) loadShopData();
+        else alert('Failed');
+    } catch(e) { alert('Failed: ' + e.message); }
 }
 
-// DELETE PART
 async function deletePart(id) {
-    if(!confirm('Part delete karein?')) return;
+    if(!confirm('Is part ko delete karna hai?')) return;
     try {
-        const res = await fetch(`/api/shops/auto/${shopId}/item/${id}`, {method: 'DELETE'});
+        const res = await fetch(`/api/shops/auto/${shopId}/item/${id}`, { method: 'DELETE' });
         const data = await res.json();
         if(data.success) {
-            alert('Deleted');
             loadShopData();
-        }
-    } catch(e) { alert('Delete failed'); }
+        } else alert('Delete fail');
+    } catch(e) { alert('Error: ' + e.message); }
 }
 
-// EDIT PART
 function editPart(id) {
-    window.open(`/shop-templates/auto-parts/part-form.html?shopId=${shopId}&editId=${id}`, '_blank');
+    window.location.href = `/shop-templates/auto/product-form.html?shopId=${shopId}&editId=${id}`;
 }
+
+// For quick-add-products.js to reload
+window.reloadAutoParts = loadShopData;
+window.loadShopData = loadShopData;

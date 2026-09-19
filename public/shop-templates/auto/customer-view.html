@@ -3,41 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">Auto Service Center</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title id="pageTitle">Auto Pro Service</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #fff7ed; }
-       .header { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); color: white; padding: 50px 20px; text-align: center; position:relative; }
-       .header h1 { font-size: 36px; }
-       .cart-btn { position:absolute; top:20px; right:20px; background:white; color:#f97316; padding:10px 16px; border-radius:12px; font-weight:700; cursor:pointer; }
-       .cart-count { background:#dc2626; color:white; border-radius:50%; padding:2px 7px; font-size:12px; margin-left:5px; }
-       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
-       .tabs { display: flex; gap: 10px; overflow-x: auto; margin: 20px 0; }
-       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
-       .tab.active { background: #f97316; color: white; }
-       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-       .product-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition:0.3s; }
-       .product-card:hover { transform:translateY(-5px); }
-       .product-price { font-size: 22px; font-weight: 800; color: #f97316; }
-       .btn-book { background: #f97316; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
-       .btn-book:disabled { background:#ccc; cursor:not-allowed; }
-       .stock { font-size:12px; color:#16a34a; }
-       .out { color:#dc2626; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: #f8fafc; color: #0f172a; }
+        
+        /* HEADER */
+        .header { background: #0f172a; color: white; padding: 0; position: sticky; top: 0; z-index: 100; }
+        .top-strip { background: #f97316; color: white; text-align: center; padding: 8px; font-size: 12px; font-weight: 700; letter-spacing: .5px; }
+        .nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; max-width: 1400px; margin: 0 auto; width: 100%; }
+        .logo { font-weight: 800; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        .logo i { background: #f97316; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; }
+        .nav-actions { display: flex; gap: 12px; align-items: center; }
+        .search-box { background: #1e293b; border: 1px solid #334155; padding: 10px 16px; border-radius: 12px; display: flex; align-items: center; gap: 10px; width: 320px; }
+        .search-box input { background: transparent; border: none; color: white; outline: none; width: 100%; font-size: 14px; }
+        .search-box input::placeholder { color: #94a3b8; }
+        .cart-btn { background: white; color: #0f172a; padding: 11px 18px; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; position: relative; }
+        .cart-count { background: #ef4444; color: white; min-width: 20px; height: 20px; border-radius: 20px; display: grid; place-items: center; font-size: 11px; padding: 0 5px; }
+
+        /* HERO */
+        .hero { background: linear-gradient(105deg, #0f172a 0%, #1e293b 60%, #f97316 100%); color: white; padding: 50px 28px; }
+        .hero-inner { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1.2fr .8fr; gap: 30px; align-items: center; }
+        .hero h1 { font-size: 48px; font-weight: 800; line-height: 1.1; letter-spacing: -1px; }
+        .hero h1 span { color: #fb923c; }
+        .hero p { color: #cbd5e1; margin-top: 12px; font-size: 15px; line-height: 1.6; max-width: 520px; }
+        .hero-stats { display: flex; gap: 24px; margin-top: 22px; }
+        .hero-stats div b { font-size: 22px; display: block; }
+        .hero-stats div small { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: .8px; font-weight: 700; }
+        .hero-card { background: white; color: #0f172a; border-radius: 20px; padding: 22px; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+        .hero-card h3 { font-weight: 800; font-size: 16px; margin-bottom: 12px; }
+        .badge { background: #f1f5f9; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; margin: 4px; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 24px 28px; }
+
+        /* TABS */
+        .tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin: 10px 0 22px; scrollbar-width: none; }
+        .tab { background: white; border: 1px solid #e2e8f0; padding: 11px 18px; border-radius: 30px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; transition: .2s; display: flex; align-items: center; gap: 7px; }
+        .tab.active { background: #0f172a; color: white; border-color: #0f172a; box-shadow: 0 6px 20px rgba(15,23,42,.2); }
+        .tab:hover { transform: translateY(-1px); }
+
+        /* PRODUCTS */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+        .product-card { background: white; border-radius: 20px; padding: 18px; border: 1px solid #f1f5f9; box-shadow: 0 4px 20px rgba(0,0,0,.04); transition: .25s; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        .product-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.1); }
+        .product-card .img { width: 100%; height: 160px; background: #f8fafc; border-radius: 14px; display: grid; place-items: center; font-size: 42px; margin-bottom: 14px; position: relative; overflow: hidden; }
+        .product-card .img img { width: 100%; height: 100%; object-fit: cover; }
+        .product-card .cat { font-size: 10px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: #f97316; background: #fff7ed; padding: 4px 8px; border-radius: 20px; display: inline-block; margin-bottom: 8px; }
+        .product-card h3 { font-size: 15px; font-weight: 800; line-height: 1.3; min-height: 38px; }
+        .product-price { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+        .product-price b { font-size: 20px; font-weight: 800; color: #0f172a; }
+        .product-price s { font-size: 13px; color: #94a3b8; }
+        .stock { font-size: 11px; font-weight: 700; margin-top: 6px; }
+        .stock.ok { color: #16a34a; } .stock.low { color: #f97316; } .stock.out { color: #ef4444; }
+        .btn-book { margin-top: 14px; background: #0f172a; color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: 800; font-size: 13px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: .2s; }
+        .btn-book.service { background: linear-gradient(135deg, #f97316, #ea580c); }
+        .btn-book:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+        .btn-book:hover:not(:disabled) { transform: scale(1.02); }
+
+        @media(max-width: 900px) { .hero-inner { grid-template-columns: 1fr; } .hero h1 { font-size: 32px; } .search-box { display: none; } .product-grid { grid-template-columns: 1fr 1fr; } }
+        @media(max-width: 600px) { .product-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1><i class="fa fa-car-wrench"></i> <span id="shopName">Auto Care Center</span></h1>
-        <p id="shopAddress">Car & Bike Service | Genuine Parts | 6 Month Warranty</p>
-        <div class="cart-btn" onclick="openCart()"><i class="fa fa-cart-shopping"></i> Cart <span class="cart-count" id="cartCount">0</span></div>
+        <div class="top-strip"><i class="fa-solid fa-bolt"></i> FREE PICKUP & DROP • 6 MONTH WARRANTY • GENUINE PARTS</div>
+        <div class="nav">
+            <div class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> <span id="shopName">Auto Care Center</span></div>
+            <div class="nav-actions">
+                <div class="search-box"><i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i><input id="searchInput" placeholder="Search parts, oil, tyre..."></div>
+                <div class="cart-btn" onclick="openCart()"><i class="fa-solid fa-cart-shopping"></i> Cart <span class="cart-count" id="cartCount">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero">
+        <div class="hero-inner">
+            <div>
+                <h1>Premium <span>Auto Care</span><br>Parts & Service</h1>
+                <p id="shopAddress">Car & Bike Service | Genuine OEM Parts | 6 Month Warranty | Expert Mechanics in Kanodar</p>
+                <div class="hero-stats">
+                    <div><b>500+</b><small>Happy Clients</small></div>
+                    <div><b>4.8★</b><small>Rated Service</small></div>
+                    <div><b>24/7</b><small>Support</small></div>
+                </div>
+            </div>
+            <div class="hero-card">
+                <h3><i class="fa-solid fa-shield-halved" style="color:#f97316"></i> Why Choose Us?</h3>
+                <div>
+                    <span class="badge"><i class="fa-solid fa-check"></i> Genuine Parts</span>
+                    <span class="badge"><i class="fa-solid fa-check"></i> Warranty</span>
+                    <span class="badge"><i class="fa-solid fa-check"></i> Expert Team</span>
+                    <span class="badge"><i class="fa-solid fa-check"></i> Fast Service</span>
+                    <span class="badge"><i class="fa-solid fa-check"></i> Affordable Price</span>
+                    <span class="badge"><i class="fa-solid fa-check"></i> Pickup Drop</span>
+                </div>
+                <button onclick="document.getElementById('tabsContainer').scrollIntoView({behavior:'smooth'})" style="margin-top:14px; background:#0f172a; color:white; border:none; padding:10px 16px; border-radius:10px; font-weight:700; width:100%;">Explore Parts <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+        </div>
     </div>
 
     <div class="container">
-        <div class="tabs" id="tabsContainer">
-            <div class="tab active" onclick="filterTab('All', this)">All</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h2 style="font-weight:800; font-size:22px;">Browse Categories</h2>
+            <small style="color:#64748b; font-weight:700;" id="totalItems">0 items</small>
         </div>
-        <div class="product-grid" id="productGrid">Loading...</div>
+        <div class="tabs" id="tabsContainer"></div>
+        <div class="product-grid" id="productGrid">Loading premium parts...</div>
     </div>
 
     <script>
@@ -47,19 +120,19 @@
         let cart = JSON.parse(localStorage.getItem(`cart_${shopId}`)) || [];
 
         const defaultServices = [
-            {name: "Engine Oil Change", price: 800, cat: "Service", icon: "🛢️"},
-            {name: "Brake Service", price: 1200, cat: "Service", icon: "🛑"},
-            {name: "AC Service", price: 1500, cat: "Service", icon: "❄️"},
-            {name: "Engine Work", price: 8000, cat: "Service", icon: "⚙️"},
-            {name: "Car Wash", price: 300, cat: "Service", icon: "🚿"},
-            {name: "Battery Change", price: 6500, cat: "Service", icon: "🔋"},
-            {name: "Tyre Change", price: 2500, cat: "Service", icon: "🛞"},
-            {name: "Denting Painting", price: 10000, cat: "Service", icon: "🎨"}
+            {id: 'srv1', name: "Engine Oil Change", price: 800, mrp: 1000, cat: "Service", stock: 99, image: '', desc: 'Full synthetic oil + filter'},
+            {id: 'srv2', name: "Brake Service", price: 1200, mrp: 1500, cat: "Service", stock: 99, image: '', desc: 'Brake pad cleaning & adjustment'},
+            {id: 'srv3', name: "AC Service & Gas", price: 1500, mrp: 2000, cat: "Service", stock: 99, image: '', desc: 'AC cooling check & gas refill'},
+            {id: 'srv4', name: "Engine Overhaul", price: 8000, mrp: 10000, cat: "Service", stock: 99, image: '', desc: 'Complete engine repair'},
+            {id: 'srv5', name: "Car Wash & Detailing", price: 300, mrp: 500, cat: "Service", stock: 99, image: '', desc: 'Premium foam wash'},
+            {id: 'srv6', name: "Battery Check & Change", price: 6500, mrp: 7800, cat: "Service", stock: 99, image: '', desc: 'Exide battery with warranty'},
+            {id: 'srv7', name: "Tyre Change & Alignment", price: 2500, mrp: 3000, cat: "Service", stock: 99, image: '', desc: 'Wheel balancing + alignment'},
+            {id: 'srv8', name: "Denting & Painting", price: 10000, mrp: 12000, cat: "Service", stock: 99, image: '', desc: 'Full body paint job'}
         ];
 
-        const iconMap = {
-            'Engine': '🛢️', 'Brake': '🛑', 'Electrical': '🔋', 'Tyre': '🛞',
-            'Body': '🚗', 'Oil': '🛢️', 'Battery': '🔋', 'Service': '⚙️', 'Other': '🔧'
+        const catIcons = {
+            'Engine': '🛢️', 'Brake': '🛑', 'Electrical': '⚡', 'Tyre': '🛞',
+            'Body': '🚗', 'Oil': '🛢️', 'Battery': '🔋', 'Service': '🔧', 'Other': '⚙️', 'Filter': '🔧', 'Clutch': '⚙️'
         };
 
         async function loadShop() {
@@ -69,21 +142,21 @@
                 if(!result.success) return;
 
                 const shop = result.shop;
-                document.getElementById('shopName').innerText = shop.shopName;
-                document.getElementById('pageTitle').innerText = shop.shopName;
-                document.getElementById('shopAddress').innerText = shop.address || 'Genuine Parts | Service';
+                document.getElementById('shopName').innerText = shop.shopName || 'Auto Pro Center';
+                document.getElementById('pageTitle').innerText = shop.shopName || 'Auto Service';
+                document.getElementById('shopAddress').innerText = `${shop.shopName || 'Auto Center'} • Genuine Parts | 6 Month Warranty | Kanodar`;
 
-                const dbServices = (shop.services || []).map(s => ({ name: s, price: 0, cat: 'Service', icon: '⚙️' }));
-                const services = dbServices.length > 0? dbServices : defaultServices;
+                const dbServices = (shop.services || []).map((s,i) => ({ id: `srv-db-${i}`, name: s, price: 999, mrp: 1299, cat: 'Service', stock: 99, image: '', desc: 'Professional service' }));
+                const services = dbServices.length ? dbServices : defaultServices;
 
-                const parts = (shop.parts || []).map(p => {
-                    let cat = p.category || 'Other'; // ✅ DB se category lo
-                    return {
-                        id: p.id, name: p.name, price: p.price, cat: cat, icon: iconMap[cat] || '🔧', stock: p.stock
-                    }
-                });
+                const parts = (shop.parts || []).map(p => ({
+                    id: p.id, name: p.name, price: p.price, mrp: p.mrp, cat: p.category || 'Other',
+                    stock: p.stock, image: p.image || '', brand: p.brand || '', sku: p.sku || p.partNo || '',
+                    desc: p.description || `${p.brand || ''} ${p.compatibleVehicle || ''}`
+                }));
 
-                allItems = [...services,...parts];
+                allItems = [...services, ...parts];
+                document.getElementById('totalItems').innerText = `${allItems.length} premium items`;
                 updateCartCount();
                 buildTabs();
                 display(allItems);
@@ -96,41 +169,58 @@
         }
 
         function buildTabs() {
-            const categories = ['All',...new Set(allItems.map(i => i.cat))];
+            const categories = ['All', ...new Set(allItems.map(i => i.cat))];
             document.getElementById('tabsContainer').innerHTML = categories.map((cat, i) => `
-                <div class="tab ${i===0?'active':''}" onclick="filterTab('${cat}', this)">${cat}</div>
+                <div class="tab ${i===0?'active':''}" onclick="filterTab('${cat}', this)">${catIcons[cat] || '🔧'} ${cat}</div>
             `).join('');
         }
 
         function display(items) {
-            if(items.length === 0) {
-                document.getElementById('productGrid').innerHTML = '<p style="text-align:center; grid-column:1/-1;">No items found</p>';
+            const grid = document.getElementById('productGrid');
+            if(!items.length) {
+                grid.innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px; color:#94a3b8;">No items in this category</p>';
                 return;
             }
-            document.getElementById('productGrid').innerHTML = items.map(p => `
+            grid.innerHTML = items.map(p => {
+                const isService = p.cat === 'Service';
+                const stockClass = p.stock === 0 ? 'out' : p.stock < 5 ? 'low' : 'ok';
+                const stockText = p.stock === 0 ? 'Out of stock' : p.stock < 5 ? `Only ${p.stock} left` : `${p.stock} in stock`;
+                return `
                 <div class="product-card">
-                    <div style="font-size:30px; margin-bottom:10px;">${p.icon}</div>
+                    <div class="img">
+                        ${p.image ? `<img src="${p.image}" alt="${p.name}" onerror="this.style.display='none'">` : ''}
+                        <span style="${p.image ? 'position:absolute;' : ''} font-size:${isService ? '36px' : '42px'}">${isService ? '🔧' : (catIcons[p.cat] || '🔧')}</span>
+                        ${!isService && p.brand ? `<span style="position:absolute; top:8px; left:8px; background:#0f172a; color:white; font-size:10px; font-weight:800; padding:4px 8px; border-radius:20px;">${p.brand}</span>` : ''}
+                    </div>
+                    <span class="cat">${p.cat} ${p.sku ? '• ' + p.sku : ''}</span>
                     <h3>${p.name}</h3>
-                    <p style="color:#64748b; font-size:12px;">${p.cat}</p>
-                    <div class="product-price">₹${p.price}</div>
-                    ${p.stock!== undefined? `<div class="stock ${p.stock < 1? 'out' : ''}">Stock: ${p.stock}</div>` : ''}
-                    <button class="btn-book" onclick="addToCart('${p.id}', '${p.name}', ${p.price}, '${p.cat}')" ${p.stock===0?'disabled':''}>
-                        ${p.cat==='Service'?'Book Service':'Add to Cart'}
+                    <p style="font-size:12px; color:#64748b; margin-top:4px; line-height:1.4; min-height:28px;">${p.desc || ''}</p>
+                    <div class="product-price"><b>₹${p.price}</b> ${p.mrp && p.mrp > p.price ? `<s>₹${p.mrp}</s><span style="background:#dcfce7; color:#166534; font-size:10px; font-weight:800; padding:3px 6px; border-radius:20px;">${Math.round((1-p.price/p.mrp)*100)}% OFF</span>` : ''}</div>
+                    <div class="stock ${stockClass}"><i class="fa-solid fa-circle" style="font-size:6px;"></i> ${isService ? 'Available 24/7' : stockText}</div>
+                    <button class="btn-book ${isService ? 'service' : ''}" onclick="addToCart('${p.id}', '${p.name.replace(/'/g, "\\'")}', ${p.price}, '${p.cat}')" ${p.stock===0 && !isService ? 'disabled' : ''}>
+                        ${isService ? '<i class="fa-solid fa-calendar-check"></i> Book Service' : '<i class="fa-solid fa-cart-plus"></i> Add to Cart'}
                     </button>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function filterTab(cat, el) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
-            const filtered = cat==='All'? allItems : allItems.filter(p => p.cat === cat);
+            const filtered = cat === 'All' ? allItems : allItems.filter(p => p.cat === cat);
             display(filtered);
         }
 
+        // Search
+        document.getElementById('searchInput')?.addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            const filtered = allItems.filter(p => p.name.toLowerCase().includes(q) || p.cat.toLowerCase().includes(q) || (p.brand && p.brand.toLowerCase().includes(q)));
+            display(filtered);
+        });
+
         function addToCart(id, name, price, cat) {
             if(cat === 'Service') {
-                window.location.href = `/shop-templates/auto/book-service.html?shopId=${shopId}&service=${name}`;
+                window.location.href = `/shop-templates/auto/book-service.html?shopId=${shopId}&service=${encodeURIComponent(name)}`;
                 return;
             }
             const existing = cart.find(i => i.id === id);
@@ -138,7 +228,12 @@
             else cart.push({id, name, price, qty: 1});
             localStorage.setItem(`cart_${shopId}`, JSON.stringify(cart));
             updateCartCount();
-            alert(`${name} added to cart!`);
+            // mini toast
+            const t = document.createElement('div');
+            t.innerText = `✓ ${name} added`;
+            t.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#0f172a; color:white; padding:12px 20px; border-radius:30px; font-weight:700; font-size:13px; z-index:9999;';
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 2000);
         }
 
         function updateCartCount() {
