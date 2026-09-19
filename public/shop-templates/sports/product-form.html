@@ -1,4 +1,4 @@
-<!-- LOCATION: public/shop-templates/sports/product-form.html -->
+<!-- LOCATION: public/shop-templates/sports/product-form.html - FIXED AUTO ADD -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,11 +15,10 @@ body{background:#f8fafc;color:#0f172a}
 @media(max-width:700px){.row{grid-template-columns:1fr}}
 .input label{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#64748b;margin-bottom:6px;display:block}
 .input input,.input select,.input textarea{width:100%;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;font-weight:600;font-size:13px;outline:none;background:#fff}
-.input input:focus,.input select:focus,.input textarea:focus{border-color:#f97316;box-shadow:0 0 0 3px rgba(249,115,22,.15)}
 .btn{width:100%;padding:14px;border:none;border-radius:14px;font-weight:900;font-size:14px;cursor:pointer;display:flex;justify-content:center;gap:8px;align-items:center;margin-top:6px}
-.btn-orange{background:#f97316;color:#fff;box-shadow:0 10px 25px rgba(249,115,22,.3)}
+.btn-orange{background:#f97316;color:#fff}
 .btn-dark{background:#0f172a;color:#fff}
-.quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;max-height:400px;overflow:auto;padding:10px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0}
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;max-height:450px;overflow:auto;padding:10px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0}
 .q-item{background:#fff;border-radius:12px;padding:10px;border:1px solid #e2e8f0;display:flex;gap:8px;align-items:center}
 .q-item.selected{border-color:#f97316;background:#fff7ed}
 .q-item input[type=checkbox]{width:18px;height:18px}
@@ -32,26 +31,11 @@ body{background:#f8fafc;color:#0f172a}
 </div>
 
 <div class="card" id="singleCard">
-  <div style="background:linear-gradient(135deg,#0f172a,#7c2d12);color:#fff;padding:14px 16px;border-radius:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
-    <div><b style="font-size:14px">🏏 Add Single Item</b><br><small style="opacity:.7;font-size:11px">Cricket bat, jersey, shoes sab add karo</small></div>
-    <i class="fa-solid fa-trophy" style="font-size:20px;opacity:.5"></i>
-  </div>
-  <div class="row">
-    <div class="input"><label>Product Name *</label><input id="name" placeholder="Ex: MRF Cricket Bat"></div>
-    <div class="input"><label>Brand *</label><input id="brand" placeholder="Ex: MRF, Adidas, Nike"></div>
-  </div>
-  <div class="row" style="margin-top:12px">
-    <div class="input"><label>Category *</label><select id="category"><option value="Cricket">🏏 Cricket</option><option value="Football">⚽ Football</option><option value="Badminton">🏸 Badminton</option><option value="Gym">🏋️ Gym</option><option value="Jersey">👕 Jersey</option><option value="Shoes">👟 Shoes</option><option value="Accessories">🎒 Accessories</option><option value="Tennis">🎾 Tennis</option><option value="Hockey">🏑 Hockey</option><option value="General">📦 General</option></select></div>
-    <div class="input"><label>Price ₹ *</label><input id="price" type="number" placeholder="1500"></div>
-  </div>
-  <div class="row" style="margin-top:12px">
-    <div class="input"><label>MRP ₹</label><input id="mrp" type="number" placeholder="2000"></div>
-    <div class="input"><label>Stock Qty *</label><input id="stock" type="number" placeholder="10" value="10"></div>
-  </div>
-  <div class="row" style="margin-top:12px">
-    <div class="input"><label>Size (optional)</label><input id="size" placeholder="Ex: M, L, 8, 9, 10"></div>
-    <div class="input"><label>Color (optional)</label><input id="color" placeholder="Ex: Red, Blue, Black"></div>
-  </div>
+  <div style="background:linear-gradient(135deg,#0f172a,#7c2d12);color:#fff;padding:14px 16px;border-radius:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:14px">🏏 Add Single Item</b><br><small style="opacity:.7;font-size:11px">Cricket bat, jersey, shoes sab add karo</small></div><i class="fa-solid fa-trophy" style="font-size:20px;opacity:.5"></i></div>
+  <div class="row"><div class="input"><label>Product Name *</label><input id="name" placeholder="Ex: MRF Cricket Bat"></div><div class="input"><label>Brand *</label><input id="brand" placeholder="Ex: MRF, Adidas, Nike"></div></div>
+  <div class="row" style="margin-top:12px"><div class="input"><label>Category *</label><select id="category"><option value="Cricket">🏏 Cricket</option><option value="Football">⚽ Football</option><option value="Badminton">🏸 Badminton</option><option value="Gym">🏋️ Gym</option><option value="Jersey">👕 Jersey</option><option value="Shoes">👟 Shoes</option><option value="Accessories">🎒 Accessories</option><option value="Tennis">🎾 Tennis</option><option value="Hockey">🏑 Hockey</option><option value="General">📦 General</option></select></div><div class="input"><label>Price ₹ *</label><input id="price" type="number" placeholder="1500"></div></div>
+  <div class="row" style="margin-top:12px"><div class="input"><label>MRP ₹</label><input id="mrp" type="number" placeholder="2000"></div><div class="input"><label>Stock Qty *</label><input id="stock" type="number" placeholder="10" value="10"></div></div>
+  <div class="row" style="margin-top:12px"><div class="input"><label>Size (optional)</label><input id="size" placeholder="Ex: M, L, 8, 9, 10"></div><div class="input"><label>Color (optional)</label><input id="color" placeholder="Ex: Red, Blue, Black"></div></div>
   <div class="input" style="margin-top:12px"><label>Image URL</label><input id="image" placeholder="https://..."></div>
   <div class="input" style="margin-top:12px"><label>Description</label><textarea id="description" rows="3" placeholder="Genuine product with warranty..."></textarea></div>
   <button class="btn btn-orange" onclick="saveSingle()"><i class="fa-solid fa-check"></i> <span id="saveText">Save Product</span></button>
@@ -59,20 +43,17 @@ body{background:#f8fafc;color:#0f172a}
 </div>
 
 <div class="card" id="quickCard" style="display:none;max-width:1000px">
-  <div style="background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:16px;border-radius:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
-    <div><b>⚡ Quick Add - 100 Pro Sports Items</b><br><small>Select karke ek click me add</small></div>
-    <button onclick="toggleSingle()" style="background:#fff;color:#f97316;border:none;padding:8px 12px;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer">Single Form</button>
-  </div>
+  <div style="background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:16px;border-radius:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center"><div><b>⚡ Quick Add - 100 Pro Sports Items</b><br><small>Select karke ek click me add</small></div><button onclick="toggleSingle()" style="background:#fff;color:#f97316;border:none;padding:8px 12px;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer">Single Form</button></div>
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-    <button onclick="selectCat('All')" class="cat-btn active" style="padding:8px 14px;border-radius:30px;border:1px solid #e2e8f0;background:#0f172a;color:#fff;font-weight:800;font-size:12px;cursor:pointer">All (100)</button>
-    <button onclick="selectCat('Cricket')" class="cat-btn" style="padding:8px 14px;border-radius:30px;border:1px solid #e2e8f0;background:#fff;font-weight:800;font-size:12px;cursor:pointer">🏏 Cricket</button>
-    <button onclick="selectCat('Jersey')" class="cat-btn" style="padding:8px 14px;border-radius:30px;border:1px solid #e2e8f0;background:#fff;font-weight:800;font-size:12px;cursor:pointer">👕 Jersey</button>
-    <button onclick="selectCat('Shoes')" class="cat-btn" style="padding:8px 14px;border-radius:30px;border:1px solid #e2e8f0;background:#fff;font-weight:800;font-size:12px;cursor:pointer">👟 Shoes</button>
+    <button onclick="selectCat('All', this)" class="cat-btn active" style="padding:8px 14px;border-radius:30px;border:1px solid #e2e8f0;background:#0f172a;color:#fff;font-weight:800;font-size:12px;cursor:pointer">All (100)</button>
+    <button onclick="selectCat('Cricket', this)" class="cat-btn" style="padding:8px 14px;border-radius:30px;border:1px solid #e2e8f0;background:#fff;font-weight:800;font-size:12px;cursor:pointer">🏏 Cricket</button>
+    <button onclick="selectCat('Jersey', this)" class="cat-btn" style="padding:8px 14px;border-radius:30px;border:1px solid #e2e8f0;background:#fff;font-weight:800;font-size:12px;cursor:pointer">👕 Jersey</button>
+    <button onclick="selectCat('Shoes', this)" class="cat-btn" style="padding:8px 14px;border-radius:30px;border:1px solid #e2e8f0;background:#fff;font-weight:800;font-size:12px;cursor:pointer">👟 Shoes</button>
     <button onclick="selectAll(true)" style="padding:8px 14px;border-radius:30px;border:none;background:#f97316;color:#fff;font-weight:800;font-size:12px;cursor:pointer">Select All</button>
     <button onclick="selectAll(false)" style="padding:8px 14px;border-radius:30px;border:1px solid #e2e8f0;background:#fff;font-weight:800;font-size:12px;cursor:pointer">Unselect</button>
   </div>
   <div class="quick-grid" id="quickGrid"></div>
-  <button class="btn btn-orange" onclick="saveBulk()" style="margin-top:14px"><i class="fa-solid fa-bolt"></i> Add <span id="selectedCount">0</span> Items to Shop</button>
+  <button class="btn btn-orange" id="bulkBtn" onclick="saveBulk()" style="margin-top:14px"><i class="fa-solid fa-bolt"></i> Add <span id="selectedCount">0</span> Items to Shop</button>
 </div>
 
 <div id="toast" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 20px;border-radius:30px;font-weight:800;font-size:13px;display:none;z-index:9999"></div>
@@ -82,17 +63,13 @@ const params = new URLSearchParams(location.search);
 const shopId = params.get('shopId');
 const editId = params.get('editId');
 const quickMode = params.get('quick')==='1';
-
 document.getElementById('backBtn').href = `/shop-templates/sports/dashboard.html?shopId=${shopId}`;
-
 function goDashboard(){ location.href=`/shop-templates/sports/dashboard.html?shopId=${shopId}` }
 function toast(m){const t=document.getElementById('toast');t.innerText=m;t.style.display='block';setTimeout(()=>t.style.display='none',2500)}
 function toggleSingle(){document.getElementById('singleCard').style.display='block';document.getElementById('quickCard').style.display='none';}
 document.getElementById('quickBtn').onclick = ()=>{document.getElementById('singleCard').style.display='none';document.getElementById('quickCard').style.display='block';loadQuick();}
-
 if(quickMode){document.getElementById('singleCard').style.display='none';document.getElementById('quickCard').style.display='block';loadQuick();}
 
-// 100 PRODUCTS LIST
 const bulkProducts = [
 {name:"MRF Genius Cricket Bat",brand:"MRF",category:"Cricket",price:2499,mrp:3200,stock:15,size:"Short Handle",image:""},
 {name:"SG Sunny Tonny Bat",brand:"SG",category:"Cricket",price:1899,mrp:2500,stock:20,size:"Long Handle",image:""},
@@ -104,7 +81,6 @@ const bulkProducts = [
 {name:"Abdominal Guard",brand:"SG",category:"Cricket",price:250,mrp:350,stock:40,size:"M",image:""},
 {name:"Thigh Guard",brand:"DSC",category:"Cricket",price:450,mrp:600,stock:20,size:"M",image:""},
 {name:"Cricket Kit Bag (Large)",brand:"SS",category:"Cricket",price:1999,mrp:2800,stock:8,size:"Large",image:""},
-
 {name:"Nivia Football Size 5",brand:"Nivia",category:"Football",price:899,mrp:1200,stock:30,size:"5",image:""},
 {name:"Adidas Football Studs",brand:"Adidas",category:"Shoes",price:3499,mrp:5000,stock:10,size:"9",image:""},
 {name:"Nivia Goalkeeper Gloves",brand:"Nivia",category:"Football",price:799,mrp:1100,stock:15,size:"M",image:""},
@@ -115,7 +91,6 @@ const bulkProducts = [
 {name:"Football Pump",brand:"Nivia",category:"Accessories",price:199,mrp:300,stock:40,size:"",image:""},
 {name:"Nivia Football Socks",brand:"Nivia",category:"Accessories",price:199,mrp:299,stock:50,size:"Free",image:""},
 {name:"Football Goal Net",brand:"Generic",category:"Football",price:2499,mrp:3500,stock:5,size:"",image:""},
-
 {name:"Yonex Badminton Racket GR-303",brand:"Yonex",category:"Badminton",price:899,mrp:1300,stock:20,size:"",image:""},
 {name:"Li-Ning Badminton Shoes",brand:"Li-Ning",category:"Shoes",price:2799,mrp:4000,stock:12,size:"9",image:""},
 {name:"Yonex Mavis 350 Shuttlecock",brand:"Yonex",category:"Badminton",price:599,mrp:800,stock:30,size:"Pack of 6",image:""},
@@ -126,7 +101,6 @@ const bulkProducts = [
 {name:"Nivia Badminton Shorts",brand:"Nivia",category:"Jersey",price:299,mrp:499,stock:30,size:"M",image:""},
 {name:"Skipping Rope",brand:"Generic",category:"Gym",price:199,mrp:300,stock:40,size:"",image:""},
 {name:"Wrist Band Pair",brand:"Nivia",category:"Accessories",price:99,mrp:149,stock:60,size:"Free",image:""},
-
 {name:"Gym Gloves",brand:"Nivia",category:"Gym",price:399,mrp:600,stock:30,size:"M",image:""},
 {name:"Dumbbells 5kg Pair",brand:"Generic",category:"Gym",price:999,mrp:1500,stock:15,size:"5kg",image:""},
 {name:"Resistance Band",brand:"Generic",category:"Gym",price:299,mrp:450,stock:40,size:"Medium",image:""},
@@ -137,7 +111,6 @@ const bulkProducts = [
 {name:"Gym T-Shirt Dry Fit",brand:"Nivia",category:"Jersey",price:399,mrp:599,stock:30,size:"L",image:""},
 {name:"Gym Lower",brand:"Nivia",category:"Jersey",price:499,mrp:799,stock:25,size:"L",image:""},
 {name:"Protein Shaker",brand:"Generic",category:"Accessories",price:199,mrp:299,stock:40,size:"500ml",image:""},
-
 {name:"Team India Cricket Jersey",brand:"Adidas",category:"Jersey",price:799,mrp:1299,stock:25,size:"L",image:""},
 {name:"CSK IPL Jersey",brand:"Generic",category:"Jersey",price:499,mrp:799,stock:30,size:"L",image:""},
 {name:"MI IPL Jersey",brand:"Generic",category:"Jersey",price:499,mrp:799,stock:30,size:"L",image:""},
@@ -148,7 +121,6 @@ const bulkProducts = [
 {name:"Sunglasses Sports",brand:"Generic",category:"Accessories",price:499,mrp:800,stock:20,size:"Free",image:""},
 {name:"Running Shoes Nike",brand:"Nike",category:"Shoes",price:3999,mrp:5999,stock:10,size:"9",image:""},
 {name:"Running Shoes Adidas",brand:"Adidas",category:"Shoes",price:3799,mrp:5500,stock:10,size:"9",image:""},
-
 {name:"Tennis Racket Wilson",brand:"Wilson",category:"Tennis",price:2999,mrp:4500,stock:8,size:"",image:""},
 {name:"Tennis Ball Pack (3pcs)",brand:"Cosco",category:"Tennis",price:299,mrp:450,stock:30,size:"",image:""},
 {name:"Hockey Stick",brand:"Nivia",category:"Hockey",price:1499,mrp:2200,stock:10,size:"36 inch",image:""},
@@ -159,7 +131,6 @@ const bulkProducts = [
 {name:"Chess Board",brand:"Generic",category:"General",price:399,mrp:600,stock:20,size:"",image:""},
 {name:"Ludo Board",brand:"Generic",category:"General",price:199,mrp:300,stock:30,size:"",image:""},
 {name:"Volleyball Nivia",brand:"Nivia",category:"General",price:799,mrp:1100,stock:15,size:"4",image:""},
-
 {name:"Basketball Nivia",brand:"Nivia",category:"General",price:899,mrp:1200,stock:12,size:"7",image:""},
 {name:"Knee Cap Support",brand:"Nivia",category:"Accessories",price:199,mrp:300,stock:40,size:"M",image:""},
 {name:"Ankle Support",brand:"Nivia",category:"Accessories",price:199,mrp:300,stock:40,size:"M",image:""},
@@ -170,7 +141,6 @@ const bulkProducts = [
 {name:"Agility Ladder",brand:"Generic",category:"Gym",price:599,mrp:900,stock:12,size:"",image:""},
 {name:"Trophy Small",brand:"Generic",category:"General",price:299,mrp:500,stock:25,size:"10 inch",image:""},
 {name:"Medal Gold",brand:"Generic",category:"General",price:49,mrp:99,stock:100,size:"",image:""},
-
 {name:"Cricket Bat English Willow",brand:"SS",category:"Cricket",price:5499,mrp:7500,stock:5,size:"SH",image:""},
 {name:"Cricket Bat Kashmir Willow",brand:"DSC",category:"Cricket",price:999,mrp:1500,stock:20,size:"SH",image:""},
 {name:"Keeping Gloves SG",brand:"SG",category:"Cricket",price:1199,mrp:1700,stock:10,size:"M",image:""},
@@ -181,7 +151,6 @@ const bulkProducts = [
 {name:"Umpire Counter",brand:"Generic",category:"Cricket",price:99,mrp:149,stock:50,size:"",image:""},
 {name:"Cricket Score Book",brand:"Generic",category:"Cricket",price:149,mrp:250,stock:30,size:"",image:""},
 {name:"Arm Sleeves Pair",brand:"Nivia",category:"Accessories",price:149,mrp:250,stock:40,size:"Free",image:""},
-
 {name:"Football Size 4 (Junior)",brand:"Nivia",category:"Football",price:699,mrp:999,stock:20,size:"4",image:""},
 {name:"Football Studs Nivia",brand:"Nivia",category:"Shoes",price:1799,mrp:2500,stock:12,size:"8",image:""},
 {name:"Shin Guard With Socks",brand:"Nivia",category:"Football",price:499,mrp:700,stock:20,size:"M",image:""},
@@ -194,26 +163,26 @@ const bulkProducts = [
 {name:"Boxing Gloves",brand:"Nivia",category:"Gym",price:999,mrp:1500,stock:10,size:"M",image:""}
 ];
 
-function loadQuick(){
-  renderQuick(bulkProducts);
-}
+let currentList = [];
+function loadQuick(){ renderQuick(bulkProducts.map((p,i)=>({...p, _origIndex:i}))); }
 
 function renderQuick(list){
+  currentList = list;
   const grid=document.getElementById('quickGrid');
-  grid.innerHTML=list.map((p,i)=>`
+  grid.innerHTML=list.map((p)=>`
     <div class="q-item" data-cat="${p.category}">
-      <input type="checkbox" id="chk${i}" value="${i}" onchange="updateCount()">
-      <div style="flex:1"><b style="font-size:12px">${p.name}</b><br><small style="font-size:10px;color:#64748b">${p.brand} • ₹${p.price} • Stock:${p.stock}</small></div>
+      <input type="checkbox" value="${p._origIndex}" onchange="updateCount()">
+      <div style="flex:1"><b style="font-size:12px">${p.name}</b><br><small style="font-size:10px;color:#64748b">${p.brand} • ₹${p.price} • ${p.category}</small></div>
     </div>
   `).join('');
   updateCount();
 }
 
-function selectCat(cat){
+function selectCat(cat, btn){
   document.querySelectorAll('.cat-btn').forEach(b=>{b.style.background='#fff';b.style.color='#0f172a';});
-  event.target.style.background='#0f172a';event.target.style.color='#fff';
-  if(cat==='All') renderQuick(bulkProducts);
-  else renderQuick(bulkProducts.map((p,i)=>({...p,idx:i})).filter(p=>p.category===cat));
+  if(btn){btn.style.background='#0f172a';btn.style.color='#fff';}
+  if(cat==='All') renderQuick(bulkProducts.map((p,i)=>({...p,_origIndex:i})));
+  else renderQuick(bulkProducts.map((p,i)=>({...p,_origIndex:i})).filter(p=>p.category===cat));
 }
 
 function selectAll(val){
@@ -234,14 +203,14 @@ function updateCount(){
 async function saveBulk(){
   const checked=[...document.querySelectorAll('#quickGrid input:checked')].map(c=>bulkProducts[parseInt(c.value)]);
   if(!checked.length) return toast('Koi item select karo bhai!');
-  const btn=event.target; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Adding...'; btn.disabled=true;
+  const btn=document.getElementById('bulkBtn'); btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Adding...'; btn.disabled=true;
   try{
     const res=await fetch(`/api/shops/sports/${shopId}/bulk`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({products:checked})});
     const data=await res.json();
     if(data.success){toast(`✅ ${checked.length} items added!`);setTimeout(()=>location.href=`/shop-templates/sports/dashboard.html?shopId=${shopId}`,1200)}
-    else toast(data.message);
+    else toast(data.message||'Failed');
   }catch(e){toast(e.message)}
-  btn.disabled=false; btn.innerHTML=`<i class="fa-solid fa-bolt"></i> Add ${checked.length} Items to Shop`;
+  btn.disabled=false; btn.innerHTML=`<i class="fa-solid fa-bolt"></i> Add ${document.querySelectorAll('#quickGrid input:checked').length} Items to Shop`;
 }
 
 async function saveSingle(){
@@ -260,8 +229,7 @@ async function saveSingle(){
   if(!payload.name||!payload.price) return toast('Name & Price required!');
   const btn=event.target; const old=btn.innerHTML; btn.innerHTML='Saving...'; btn.disabled=true;
   try{
-    let url=`/api/shops/sports/${shopId}/item`;
-    let method='POST';
+    let url=`/api/shops/sports/${shopId}/item`; let method='POST';
     if(editId){url=`/api/shops/sports/${shopId}/item/${editId}`;method='PUT';}
     const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const data=await res.json();
@@ -271,7 +239,6 @@ async function saveSingle(){
   btn.disabled=false; btn.innerHTML=old;
 }
 
-// EDIT LOAD
 async function loadEdit(){
   if(!editId) return;
   document.getElementById('formTitle').innerText='Edit Product';
