@@ -7,69 +7,46 @@ const fs = require('fs');
 require('dotenv').config();
 const cloudinary = require('./utils/cloudinary');
 const uploadRoutes = require('./routes/upload');
-//const deliveryManagerRoutes = require('./routes/deliveryManager'); // ✅ SAHI
 const deliveryManagerRoutes = require('./routes/deliveryManager'); 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const orderRoutes = require('./routes/orders');  // fruit ke liye 
-const fruitItemRoutes = require('./routes/fruit-item'); // UPAR IMPORT KAR
-//const acharRoutes = require('./routes/shoporder/acharRoutes');
+const orderRoutes = require('./routes/orders');
+const fruitItemRoutes = require('./routes/fruit-item');
 const acharRoutes = require('./routes/shops/achar-route');   
 const autoRoutes = require('./routes/shops/auto');
-// UPAR IMPORT KE SAATH
 const productRoutes = require('./routes/product.routes');
-//app.use(express.json({ limit: '10mb' })); // YE BHI UPAR RAKH DE
-// TERE PURANE ROUTES
-// app.use('/api/shops', shopRoutes);
 const settingsRoutes = require('./routes/settings.routes');
-// UPDATED: NAYA FRUIT ROUTE JOD DIYA
-//app.use('/api/shops', fruitItemRoutes); // YE 1 LINE ADD KAR
-
 
 // ==================== MIDDLEWARE ====================
-app.use(compression());
+app.use(compression({ level: 6 }));
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-//app.use('/api', deliveryManagerRoutes);
-app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-manager banega
-app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
+app.use('/api', deliveryManagerRoutes);
+app.use('/api/shops', fruitItemRoutes);
 const shopViewRoutes = require('./routes/shopViewRoutes');
-app.use('/api/shop-view', shopViewRoutes);  // isko delet krna h 
-app.use('/api/shop-view', require('./routes/shopViewRoutes'));  // ye nya h 
-app.use('/api/shop', require('./routes/shopViewRoutes')); // admin ke liye
+app.use('/api/shop-view', shopViewRoutes);
+app.use('/api/shop-view', require('./routes/shopViewRoutes'));
+app.use('/api/shop', require('./routes/shopViewRoutes'));
 app.use('/api/shops/auto', require('./routes/shops/auto'));
 app.use('/shop', require('./routes/shopViewRoutes'));
-//app.use('/api/shops/achar', require('./routes/shops/achar-route'));
 app.use('/api/shops/auto', autoRoutes);
 app.use('/api/shops/achar', acharRoutes);
-//app.use('/api/shops/achar', acharRoutes);
-// LOCATION: server.js me routes ke section me
 app.use('/api/media', require('./routes/media'));
-//app.use('/api/shops', require('./routes/shopRoutes')); // 2. BAAD ME YE
-//app.use('/api/shops', require('./routes/shops/furniture-route')); // <- YE LINE ADD KAR
-//app.use('/api/shops', require('./routes/shops/furniture-route'));
-//app.use('/api/shops', require('./routes/shops/Furniture-route'));
-//app.use('/api/shops', require('./routes/shops/furniture-route'));
-//app.use('/api/furniture', require('./routes/shops/furniture-route'));
-//app.use('/api/shops/fruit', fruitItemRoutes); // 1. FRUIT ALAG
-app.use('/api/shops/furniture', require('./routes/shops/furniture-route')); // 2. FURNITURE ALAG
-app.use('/api/shops', require('./routes/shopRoutes')); // 3. BAAKI SAB GENERIC
-//app.use('/api/shops/general', require('./routes/shops/general'));
-// Request Logger - Development ke liye
-// MIDDLEWARE KE BAAD
+app.use('/api/shops/furniture', require('./routes/shops/furniture-route'));
+app.use('/api/shops', require('./routes/shopRoutes'));
 app.use('/api/shops/sports', require('./routes/shops/sports-route'));
 app.use('/api/shops/kirana', require('./routes/shops/kirana-route'));
 app.use('/api/shop-toggle', require('./routes/common/shop-toggle'));
 app.use('/api/products', productRoutes);
-app.use('/api/admin', settingsRoutes); // /api/admin/settings aur /api/admin/upload/banner
+app.use('/api/admin', settingsRoutes);
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'development') {
         console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
     }
     next();
 });
-//furniture
+
 app.get('/api/orders/shop/:shopId', async (req, res) => {
   try {
     const Order = require('./models/Order');
@@ -78,38 +55,31 @@ app.get('/api/orders/shop/:shopId', async (req, res) => {
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// Static files serve karo
-app.use(express.static(path.join(__dirname, '../public')));
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
-app.use('/logos', express.static(path.join(__dirname, '../public/logos')));
-app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
-app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
+// Static files - CACHE ADDED BAS YAHI NAYA HAI
+app.use(express.static(path.join(__dirname, '../public'), { maxAge: '1d', etag: true }));
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads'), { maxAge: '1d' }));
+app.use('/logos', express.static(path.join(__dirname, '../public/logos'), { maxAge: '7d' }));
+app.use('/videos', express.static(path.join(__dirname, '../public/videos'), { maxAge: '7d' }));
+app.use('/banners', express.static(path.join(__dirname, '../public/banners'), { maxAge: '1d' }));
 app.use('/api/orders', orderRoutes);
+app.use('/shop-templates', express.static(path.join(__dirname, '../public/shop-templates'), { maxAge: '1d' }));
 
-// ✅ Shop templates static serve
-app.use('/shop-templates', express.static(path.join(__dirname, '../public/shop-templates')));
-
-// YEH cloudnary se related file 
-//app.use('/api', uploadRoutes);
-
-// ==================== MONGODB CONNECT ====================
+// ==================== MONGODB CONNECT - POOL BADHAYA BAS ====================
 mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/samanlive', {
-    maxPoolSize: 10,
-    serverSelectionTimeoutMS: 5000
+    maxPoolSize: 50,
+    minPoolSize: 5,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000
 })
 .then(async () => {
     console.log('✅ MongoDB Connected Successfully');
     console.log(`📦 Database: ${mongoose.connection.name}`);
-
-    // ✅ AUTO-MIGRATION: Purani shops ko 'active' se 'approved' me convert
     try {
         const Shop = require('./models/Shop');
-        const result = await Shop.updateMany(
-            { status: 'active' },
-            { $set: { status: 'approved' } }
-        );
-        if (result.modifiedCount > 0) {
-            console.log(`🔄 Auto-migrated ${result.modifiedCount} shops from 'active' to 'approved'`);
+        const pending = await Shop.countDocuments({ status: 'active' });
+        if(pending > 0){
+            const result = await Shop.updateMany({ status: 'active' }, { $set: { status: 'approved' } });
+            console.log(`🔄 Auto-migrated ${result.modifiedCount} shops`);
         }
     } catch (err) {
         console.log('⚠️ Migration skipped:', err.message);
@@ -120,16 +90,10 @@ mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://
     process.exit(1);
 });
 
-mongoose.connection.on('error', err => {
-    console.error('❌ MongoDB Error:', err);
-});
-
-mongoose.connection.on('disconnected', () => {
-    console.log('⚠️ MongoDB Disconnected');
-});
+mongoose.connection.on('error', err => { console.error('❌ MongoDB Error:', err); });
+mongoose.connection.on('disconnected', () => { console.log('⚠️ MongoDB Disconnected'); });
 
 // ==================== API ROUTES ====================
-// Health Check
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,
@@ -141,153 +105,55 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Auth Routes
 app.use('/api/auth', require('./routes/auth'));
-
-// Admin Routes
 app.use('/api', require('./routes/adminRoutes'));
-
-// Manager Routes - ✅ SIRF YAHI SE MANAGER KAAM KAREGA AB
 app.use('/api/manager', require('./routes/managerRoutes'));
-
-// Area Routes
 app.use('/api', require('./routes/areaRoutes'));
-
-// Market/Public Routes
 app.use('/api', require('./routes/market'));
-
-// Public Modules Routes
 app.use('/api', require('./routes/public-modules'));
-
-// Stats Routes
 app.use('/api', require('./routes/stats'));
 
-// Shop Routes - ✅ User side + Products + Public
-//app.use('/api/local-market', require('./routes/shopRoutes'));
-// ✅ NAYA: direct /api/shop/view bhi chale
-//app.use('/api/shop', require('./routes/shopRoutes'));
-
-// ==================== LOCATION ROUTES new ====================
 const locationRoutes = require('./routes/location');
-//const locationRoutes = require('./modules/locationRoutes');
 app.use('/api/location', locationRoutes);
-//app.use('/api/location', require('./modules/locationRoutes'));
 app.use('/api/location', require('./routes/location'));
 app.use('/api/location', require('./routes/user.location.routes'));
-//app.use('/api', require('./routes/shop.location.routes'));
-
-// ============== UPLOAD ROUTES ==============
-// Alag prefix de dete hai taaki takkar na ho
 app.use('/api/upload', require('./routes/upload'));
-
-// user profilr ke liye bnaya tha 
 const userRoutes = require('./routes/user');
 app.use('/api/user', userRoutes);
-
-// ✅ NEW: Admin user management
 app.use('/api/admin', require('./routes/userAdmin'));
 
-// ✅ CLOUDINARY UPLOAD ROUTE - NEW
-//const uploadRoutesCloud = require('./routes/upload');
-//app.use('/api', uploadRoutesCloud);
-
-// ❌ PURANA CLAIM SYSTEM WALA FILE HATA DIYA
-// app.use('/api', require('./routes/shop'));
-
 // ==================== ADMIN PANEL ROUTES ====================
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin-panel/modules.html'));
-});
-
-app.get('/admin-panel', (req, res) => {
-    res.redirect('/admin');
-});
-
+app.get('/admin', (req, res) => { res.sendFile(path.join(__dirname, '../public/admin-panel/modules.html')); });
+app.get('/admin-panel', (req, res) => { res.redirect('/admin'); });
 app.get('/admin/:page', (req, res) => {
     const filePath = path.join(__dirname, `../public/admin-panel/${req.params.page}.html`);
-    res.sendFile(filePath, (err) => {
-        if (err) res.sendFile(path.join(__dirname, '../public/404.html'));
-    });
+    res.sendFile(filePath, (err) => { if (err) res.sendFile(path.join(__dirname, '../public/404.html')); });
 });
-
-app.get('/module-detail.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin-panel/module-detail.html'));
-});
-
-//   user ke liye   
-//app.use('/api', require('./routes/admin.routes'));
-
-
-// ==================== AREA MANAGER ROUTE ====================
-app.get('/area-manager.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/area-manager.html'));
-});
-
+app.get('/module-detail.html', (req, res) => { res.sendFile(path.join(__dirname, '../public/admin-panel/module-detail.html')); });
+app.get('/area-manager.html', (req, res) => { res.sendFile(path.join(__dirname, '../public/area-manager.html')); });
 app.get('/area-manager/:page', (req, res) => {
     const filePath = path.join(__dirname, `../public/area-manager/${req.params.page}.html`);
-    res.sendFile(filePath, (err) => {
-        if (err) res.sendFile(path.join(__dirname, '../public/404.html'));
-    });
+    res.sendFile(filePath, (err) => { if (err) res.sendFile(path.join(__dirname, '../public/404.html')); });
 });
+app.get('/areas.html', (req, res) => { res.sendFile(path.join(__dirname, '../public/areas.html')); });
+app.get('/area-detail.html', (req, res) => { res.sendFile(path.join(__dirname, '../public/area-detail.html')); });
+app.get('/managers.html', (req, res) => { res.sendFile(path.join(__dirname, '../public/managers.html')); });
+app.get('/', (req, res) => { res.sendFile(path.join(__dirname, '../public/index.html')); });
+app.get('/local-market.html', (req, res) => { res.sendFile(path.join(__dirname, '../public/local-market.html')); });
 
-// ==================== AREA SYSTEM ROUTES ====================
-app.get('/areas.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/areas.html'));
-});
-
-app.get('/area-detail.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/area-detail.html'));
-});
-
-app.get('/managers.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/managers.html'));
-});
-
-// ==================== USER APP ROUTES ====================
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
-});
-
-app.get('/local-market.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/local-market.html'));
-});
-
-// ❌ OLD: Shop detail page HATA DIYA - Ab template se chalega
-// app.get('/shop/:id', (req, res) => {
-// res.sendFile(path.join(__dirname, '../public/shop-detail.html'));
-// });
-
-// ✅ NEW: SHOP DASHBOARD - TEMPLATE BASED
 app.get('/shop/:id/dashboard', async (req, res) => {
     try {
         const Shop = require('./models/Shop');
         const shop = await Shop.findById(req.params.id);
-
-        if (!shop) {
-            return res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
-        }
-
-        const shopTypeMap = {
-            'General Store': 'general',
-            'Kirana': 'kirana',
-            'Medical': 'medical',
-            'Restaurant': 'restaurant',
-            'Cloth': 'cloth',
-            'Furniture': 'furniture' 
-        };
-
+        if (!shop) { return res.status(404).sendFile(path.join(__dirname, '../public/404.html')); }
+        const shopTypeMap = { 'General Store': 'general', 'Kirana': 'kirana', 'Medical': 'medical', 'Restaurant': 'restaurant', 'Cloth': 'cloth', 'Furniture': 'furniture' };
         const templateFolder = shopTypeMap[shop.shopType] || shop.shopType?.toLowerCase() || 'general';
         const templatePath = path.join(__dirname, `../public/shop-templates/${templateFolder}/dashboard.html`);
-
         console.log(`🏪 Loading template: ${templateFolder} for shop: ${shop.shopName}`);
-
         res.sendFile(templatePath, (err) => {
             if (err) {
-                console.log(`⚠️ Template ${templateFolder} not found, serving general`);
                 const fallbackPath = path.join(__dirname, '../public/shop-templates/general/dashboard.html');
-                res.sendFile(fallbackPath, (err2) => {
-                    if (err2) res.status(404).send('Shop template not found');
-                });
+                res.sendFile(fallbackPath, (err2) => { if (err2) res.status(404).send('Shop template not found'); });
             }
         });
     } catch (err) {
@@ -295,21 +161,13 @@ app.get('/shop/:id/dashboard', async (req, res) => {
         res.status(500).send('Error loading shop dashboard');
     }
 });
+app.get('/profile.html', (req, res) => { res.sendFile(path.join(__dirname, '../public/profile.html')); });
+app.get('/wishlist.html', (req, res) => { res.sendFile(path.join(__dirname, '../public/wishlist.html')); });
 
-app.get('/profile.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/profile.html'));
-});
-
-app.get('/wishlist.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/wishlist.html'));
-});
-
-// ==================== ADMIN API DOCS ROUTE ====================
 app.get('/api/admin/routes', (req, res) => {
     try {
         const allRoutes = [];
         const routesDir = path.join(__dirname, './routes');
-
         function scanProjectTree(dir, basePath = '') {
             const items = [];
             if (!fs.existsSync(dir)) return items;
@@ -326,7 +184,6 @@ app.get('/api/admin/routes', (req, res) => {
             });
             return items;
         }
-
         if (app._router && app._router.stack) {
             app._router.stack.forEach(layer => {
                 if (layer.route) {
@@ -336,7 +193,6 @@ app.get('/api/admin/routes', (req, res) => {
                 }
             });
         }
-
         if (fs.existsSync(routesDir)) {
             const files = fs.readdirSync(routesDir);
             files.forEach(file => {
@@ -364,17 +220,14 @@ app.get('/api/admin/routes', (req, res) => {
                 }
             });
         }
-
         const uniqueRoutes = [];
         const seen = new Set();
         allRoutes.forEach(r => {
             const key = `${r.methods[0]}_${r.path}`;
             if (!seen.has(key)) { seen.add(key); uniqueRoutes.push(r); }
         });
-
         const projectRoot = path.join(__dirname, '..');
         const projectTree = scanProjectTree(projectRoot);
-
         res.json({ success: true, total: uniqueRoutes.length, routes: uniqueRoutes.sort((a, b) => a.path.localeCompare(b.path)), models: mongoose.modelNames(), projectTree: projectTree });
     } catch (err) {
         console.error('API Routes Error:', err);
@@ -382,7 +235,6 @@ app.get('/api/admin/routes', (req, res) => {
     }
 });
 
-// ==================== ROUTE CODE VIEWER + EDITOR ====================
 app.post('/api/admin/get-route-code', express.json(), (req, res) => {
     try {
         const { file } = req.body;
@@ -390,9 +242,7 @@ app.post('/api/admin/get-route-code', express.json(), (req, res) => {
         if (!fs.existsSync(filePath)) return res.json({ success: false, error: 'File not found: ' + file });
         const fileContent = fs.readFileSync(filePath, 'utf8');
         res.json({ success: true, file: file, code: fileContent });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
+    } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/update-route-code', express.json(), (req, res) => {
@@ -406,65 +256,27 @@ app.post('/api/admin/update-route-code', express.json(), (req, res) => {
         fs.copyFileSync(filePath, backupPath);
         fs.writeFileSync(filePath, code);
         res.json({ success: true, message: `File ${file} updated! Server restart karo. Backup: ${path.basename(backupPath)}` });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
+    } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// ==================== CLOUDINARY ERROR HANDLER ====================
 app.use((err, req, res, next) => {
-    if (err.name === 'MulterError') {
-        return res.status(400).json({ success: false, error: err.message });
-    }
+    if (err.name === 'MulterError') { return res.status(400).json({ success: false, error: err.message }); }
     next(err);
 });
-
-// ==================== 404 FALLBACK ====================
-app.get('*', (req, res) => {
-    res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
-});
-
-// ==================== ERROR HANDLER ====================
+app.get('*', (req, res) => { res.status(404).sendFile(path.join(__dirname, '../public/404.html')); });
 app.use((err, req, res, next) => {
     console.error('❌ Error:', err.stack);
-    if (err.name === 'ValidationError') {
-        return res.status(400).json({ success: false, error: 'Validation Error', details: Object.values(err.errors).map(e => e.message) });
-    }
-    if (err.code === 11000) {
-        return res.status(400).json({ success: false, error: 'Duplicate Entry', field: Object.keys(err.keyPattern)[0] });
-    }
-    if (err.name === 'JsonWebTokenError') {
-        return res.status(401).json({ success: false, error: 'Invalid Token' });
-    }
-    if (err.name === 'TokenExpiredError') {
-        return res.status(401).json({ success: false, error: 'Token Expired' });
-    }
+    if (err.name === 'ValidationError') { return res.status(400).json({ success: false, error: 'Validation Error', details: Object.values(err.errors).map(e => e.message) }); }
+    if (err.code === 11000) { return res.status(400).json({ success: false, error: 'Duplicate Entry', field: Object.keys(err.keyPattern)[0] }); }
+    if (err.name === 'JsonWebTokenError') { return res.status(401).json({ success: false, error: 'Invalid Token' }); }
+    if (err.name === 'TokenExpiredError') { return res.status(401).json({ success: false, error: 'Token Expired' }); }
     res.status(err.status || 500).json({ success: false, error: err.message || 'Something went wrong!',...(process.env.NODE_ENV === 'development' && { stack: err.stack }) });
 });
-
-// ==================== GRACEFUL SHUTDOWN ====================
-process.on('SIGINT', async () => {
-    console.log('\n⚠️ SIGINT received. Closing server gracefully...');
-    await mongoose.connection.close();
-    console.log('✅ MongoDB connection closed');
-    process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-    console.log('\n⚠️ SIGTERM received. Closing server gracefully...');
-    await mongoose.connection.close();
-    console.log('✅ MongoDB connection closed');
-    process.exit(0);
-});
-
-// ==================== START SERVER ====================
+process.on('SIGINT', async () => { await mongoose.connection.close(); process.exit(0); });
+process.on('SIGTERM', async () => { await mongoose.connection.close(); process.exit(0); });
 const server = app.listen(PORT, () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log(`📊 Admin Panel: http://localhost:${PORT}/admin`);
-    console.log(`👤 Area Manager: http://localhost:${PORT}/area-manager.html`);
-    console.log(`🛒 User App: http://localhost:${PORT}`);
-    console.log(`💚 Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+    console.log(`🛒 User App: http://localhost:${PORT}\n`);
 });
-
 module.exports = app;
