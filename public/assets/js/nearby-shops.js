@@ -1,9 +1,9 @@
-// LOCATION: public/assets/js/nearby-shops.js - FINAL WITH REAL-TIME AREA ADS - FAST + 100M FEATURE SAFE
+// LOCATION: public/assets/js/nearby-shops.js - FINAL WITH REAL-TIME AREA ADS
+
 let allServices = [];
 let userLocation = null;
 let currentAreaCode = null;
 let areaAdsCache = [];
-let allAreasCache = null; // NEW: areas cache
 
 // LOCATION
 window.LocationManager = {
@@ -16,7 +16,7 @@ window.LocationManager = {
                     resolve(userLocation);
                 },
                 () => { resolve(null); },
-                { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 } // FAST: pehli baar fast GPS
+                { enableHighAccuracy: true, timeout: 10000 }
             );
         });
     },
@@ -25,14 +25,14 @@ window.LocationManager = {
         navigator.geolocation.watchPosition(
             (pos) => {
                 const newLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                // Agar 100 meter se zyada hila toh hi area check karo - TERA FEATURE SAME HAI
+                // Agar 100 meter se zyada hila toh hi area check karo
                 if(!userLocation || getDistance(userLocation.lat, userLocation.lng, newLoc.lat, newLoc.lng) > 0.1){
                     userLocation = newLoc;
                     callback(newLoc);
                 }
             },
             ()=>{},
-            { enableHighAccuracy: true, maximumAge: 10000 } // 100m tracking ke liye high accuracy rehne diya
+            { enableHighAccuracy: true, maximumAge: 10000 }
         );
     }
 };
@@ -48,12 +48,10 @@ function getDistance(lat1, lon1, lat2, lon2){
 document.addEventListener('DOMContentLoaded', initNearby);
 
 async function initNearby(){
-    // Areas pehle se cache kar lo taaki 100m pe baar baar fetch na ho
-    fetch(`/api/areas`, {cache: 'force-cache'}).then(r=>r.json()).then(d=>{ allAreasCache = d; }).catch(()=>{});
     await window.LocationManager.getManual();
     await loadNearbyShops();
     showUserLocationInHeader();
-    // REAL-TIME TRACKING START - 100M FEATURE SAME HAI
+    // REAL-TIME TRACKING START
     window.LocationManager.watch(async (loc) => {
         await checkAreaAndUpdateAds(loc);
     });
@@ -90,12 +88,8 @@ async function loadNearbyShops() {
 async function checkAreaAndUpdateAds(loc){
     if(!loc) { renderNearbyShopsWithAds([]); return; }
     try {
-        // 1. Sabse pehle area nikalo user ki location se - CACHE SE
-        let areasRes = allAreasCache;
-        if(!areasRes){
-            areasRes = await fetch(`/api/areas`, {cache: 'no-store'}).then(r=>r.json()).catch(()=>[]);
-            allAreasCache = areasRes;
-        }
+        // 1. Sabse pehle area nikalo user ki location se
+        const areasRes = await fetch(`/api/areas`, {cache: 'no-store'}).then(r=>r.json()).catch(()=>[]);
         let foundArea = null;
         let minDist = Infinity;
         areasRes.forEach(area => {
