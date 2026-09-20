@@ -1,45 +1,97 @@
+/**
+ * ====================================================================================
+ * SAMANLIVE - MAIN SERVER FILE
+ * Project: 3 Mahine ka kaam, 70+ Shop Templates
+ * ====================================================================================
+ */
+
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const compression = require('compression');
+const compression = require('compression'); // Response ko compress karta hai - site tez khulti hai
 const fs = require('fs');
 require('dotenv').config();
-const cloudinary = require('./utils/cloudinary');
+const cloudinary = require('./utils/cloudinary'); // Image upload ke liye
 const uploadRoutes = require('./routes/upload');
 const deliveryManagerRoutes = require('./routes/deliveryManager'); 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const orderRoutes = require('./routes/orders');
-const fruitItemRoutes = require('./routes/fruit-item');
-const acharRoutes = require('./routes/shops/achar-route');   
-const autoRoutes = require('./routes/shops/auto');
-const productRoutes = require('./routes/product.routes');
-const settingsRoutes = require('./routes/settings.routes');
+
+// --- SHOP KE ALAG-ALAG ROUTES ---
+const orderRoutes = require('./routes/orders'); // Sab orders ka common route
+const fruitItemRoutes = require('./routes/fruit-item'); // Fruit shop ka item add/edit
+const acharRoutes = require('./routes/shops/achar-route'); // Achar shop ka alag logic
+const autoRoutes = require('./routes/shops/auto'); // Auto / garage shop
+const productRoutes = require('./routes/product.routes'); // Common product CRUD
+const settingsRoutes = require('./routes/settings.routes'); // Admin banner/settings
 
 // ==================== MIDDLEWARE ====================
-app.use(compression({ level: 6 }));
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+// Ye sab har request se pehle chalta hai
+app.use(compression({ level: 6 })); // GZIP - 70 templates ko halka karta hai
+app.use(cors()); // Frontend ko API access deta hai
+app.use(express.json({ limit: '50mb' })); // Badi image JSON me aaye to
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use('/api', deliveryManagerRoutes);
-app.use('/api/shops', fruitItemRoutes);
-const shopViewRoutes = require('./routes/shopViewRoutes');
-app.use('/api/shop-view', shopViewRoutes);
-app.use('/api/shop-view', require('./routes/shopViewRoutes'));
-app.use('/api/shop', require('./routes/shopViewRoutes'));
-app.use('/api/shops/auto', require('./routes/shops/auto'));
-app.use('/shop', require('./routes/shopViewRoutes'));
+
+// ==================== SHOP TEMPLATE & DASHBOARD ROUTES ====================
+// NOTE: Yahi wo jagah hai jaha 60-70 shop templates ke dashboard connect hote hain
+// public/shop-templates/ me har folder = ek dukaan ka design
+// Ex: /shop-templates/kirana/dashboard.html, /fruit/dashboard.html, /cloth/dashboard.html etc
+
+app.use('/api', deliveryManagerRoutes); // /api/manager/create-delivery-manager - Delivery boy banane ka
+
+// --- FRUIT SHOP TEMPLATE ---
+// File: public/shop-templates/fruit/dashboard.html + dashboard.js
+// Kaam: Fruit ka stock, price, offer manage
+app.use('/api/shops', fruitItemRoutes); 
+
+const shopViewRoutes = require('./routes/shopViewRoutes'); // Shop ko customer kaise dekhega
+app.use('/api/shop-view', shopViewRoutes);  // Customer view API - purana wala, rakha hua hai backup ke liye
+app.use('/api/shop-view', require('./routes/shopViewRoutes'));  // Naya wala - same kaam
+app.use('/api/shop', require('./routes/shopViewRoutes')); // Admin panel se shop dekhne ke liye
+app.use('/api/shops/auto', require('./routes/shops/auto')); // Auto shop customer view
+
+// --- SHOP DASHBOARD KA MAIN ROUTE ---
+// File: /shop/:id/dashboard -> yaha se decide hota hai kaunsa template khulna hai
+// public/shop-templates/ me se folder pick karta hai shopType ke hisab se
+app.use('/shop', require('./routes/shopViewRoutes')); 
+
+// --- ACHAR SHOP TEMPLATE ---
+// File: public/shop-templates/achar-shop/dashboard.html + quick-add-products.js
+// Kaam: Achar ke 20-30 flavour ka quick add
 app.use('/api/shops/auto', autoRoutes);
 app.use('/api/shops/achar', acharRoutes);
+
+// --- MEDIA & LOGOS ---
+// File: public/assets/, public/logos/samanlive-*.svg
 app.use('/api/media', require('./routes/media'));
+
+// --- FURNITURE SHOP TEMPLATE ---
+// File: public/shop-templates/furniture/dashboard.html + product-library.html + banner.html
+// Kaam: Bada product, photo zyada, isliye alag route
 app.use('/api/shops/furniture', require('./routes/shops/furniture-route'));
+
+// --- GENERIC SHOP ROUTE (SAB SHOPS KA BAAP) ---
+// File: server/routes/shopRoutes.js
+// Kaam: Baaki bache 50+ templates (bakery, bartan, battery, beauty, kirana, medical etc) isi se chalte hain
+// Agar koi specific route upar match nahi hua to ye pakad leta hai
 app.use('/api/shops', require('./routes/shopRoutes'));
+
+// --- SPORTS, KIRANA SHOP TEMPLATE ---
+// File: public/shop-templates/sports/dashboard.html, kirana/dashboard.html
+// Kirana = sabse zyada use hota hai, isliye iska product-form.html alag hai
 app.use('/api/shops/sports', require('./routes/shops/sports-route'));
 app.use('/api/shops/kirana', require('./routes/shops/kirana-route'));
+
+// --- SHOP ON/OFF TOGGLE ---
+// File: public/shop-templates/common/shop-toggle.js + customer-shop-status.js
+// Kaam: Dukaan khuli hai ya band - customer ko dikhana
 app.use('/api/shop-toggle', require('./routes/common/shop-toggle'));
+
 app.use('/api/products', productRoutes);
 app.use('/api/admin', settingsRoutes);
+
+// Dev me har request ka log
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'development') {
         console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -47,6 +99,9 @@ app.use((req, res, next) => {
     next();
 });
 
+// --- SHOP WISE ORDER LIST ---
+// File: Koi bhi dashboard -> Orders tab
+// Kaam: Ek dukaan ke saare orders dikhana
 app.get('/api/orders/shop/:shopId', async (req, res) => {
   try {
     const Order = require('./models/Order');
@@ -55,18 +110,21 @@ app.get('/api/orders/shop/:shopId', async (req, res) => {
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// Static files - CACHE ADDED BAS YAHI NAYA HAI
+// ==================== STATIC FILES - 70+ DASHBOARDS SERVE HOTE HAIN YAHA SE ====================
+// public/ = user ki site (index.html, local-market.html, nearby-shops.html)
+// public/shop-templates/* = 60-70 dukaano ke alag-alag dashboard design
+// public/admin-panel/* = Admin ka pura panel (shops.html, orders.html, areas.html etc)
 app.use(express.static(path.join(__dirname, '../public'), { maxAge: '1d', etag: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads'), { maxAge: '1d' }));
 app.use('/logos', express.static(path.join(__dirname, '../public/logos'), { maxAge: '7d' }));
 app.use('/videos', express.static(path.join(__dirname, '../public/videos'), { maxAge: '7d' }));
 app.use('/banners', express.static(path.join(__dirname, '../public/banners'), { maxAge: '1d' }));
 app.use('/api/orders', orderRoutes);
-app.use('/shop-templates', express.static(path.join(__dirname, '../public/shop-templates'), { maxAge: '1d' }));
+app.use('/shop-templates', express.static(path.join(__dirname, '../public/shop-templates'), { maxAge: '1d' })); // <-- 70 dashboard yaha se serve hote hain
 
-// ==================== MONGODB CONNECT - POOL BADHAYA BAS ====================
+// ==================== MONGODB CONNECT ====================
 mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/samanlive', {
-    maxPoolSize: 50,
+    maxPoolSize: 50, // Raat ko slow na ho isliye connection zyada rakhe hain
     minPoolSize: 5,
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000
@@ -93,7 +151,7 @@ mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://
 mongoose.connection.on('error', err => { console.error('❌ MongoDB Error:', err); });
 mongoose.connection.on('disconnected', () => { console.log('⚠️ MongoDB Disconnected'); });
 
-// ==================== API ROUTES ====================
+// ==================== API ROUTES - CORE ====================
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,
@@ -105,24 +163,30 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api', require('./routes/adminRoutes'));
-app.use('/api/manager', require('./routes/managerRoutes'));
-app.use('/api', require('./routes/areaRoutes'));
-app.use('/api', require('./routes/market'));
-app.use('/api', require('./routes/public-modules'));
-app.use('/api', require('./routes/stats'));
+app.use('/api/auth', require('./routes/auth')); // Login / Signup
+app.use('/api', require('./routes/adminRoutes')); // Admin panel ke saare API
+app.use('/api/manager', require('./routes/managerRoutes')); // Area Manager
+app.use('/api', require('./routes/areaRoutes')); // Area / City
+app.use('/api', require('./routes/market')); // Local market public API
+app.use('/api', require('./routes/public-modules')); // Modules jo user ko dikhte hain
+app.use('/api', require('./routes/stats')); // Dashboard ke numbers
 
+// --- LOCATION ROUTES ---
+// File: public/assets/js/location.*.js
+// Kaam: Nearby shops, user location, shop location
 const locationRoutes = require('./routes/location');
 app.use('/api/location', locationRoutes);
 app.use('/api/location', require('./routes/location'));
 app.use('/api/location', require('./routes/user.location.routes'));
-app.use('/api/upload', require('./routes/upload'));
-const userRoutes = require('./routes/user');
-app.use('/api/user', userRoutes);
-app.use('/api/admin', require('./routes/userAdmin'));
 
-// ==================== ADMIN PANEL ROUTES ====================
+app.use('/api/upload', require('./routes/upload')); // Cloudinary upload
+const userRoutes = require('./routes/user');
+app.use('/api/user', userRoutes); // User profile, wishlist, orders
+app.use('/api/admin', require('./routes/userAdmin')); // Admin user ko manage karega
+
+// ==================== FRONTEND PAGE ROUTES ====================
+// Har .html file ko serve karna
+
 app.get('/admin', (req, res) => { res.sendFile(path.join(__dirname, '../public/admin-panel/modules.html')); });
 app.get('/admin-panel', (req, res) => { res.redirect('/admin'); });
 app.get('/admin/:page', (req, res) => {
@@ -141,6 +205,14 @@ app.get('/managers.html', (req, res) => { res.sendFile(path.join(__dirname, '../
 app.get('/', (req, res) => { res.sendFile(path.join(__dirname, '../public/index.html')); });
 app.get('/local-market.html', (req, res) => { res.sendFile(path.join(__dirname, '../public/local-market.html')); });
 
+/**
+ * SHOP DASHBOARD LOADER - SABSE IMPORTANT
+ * URL: /shop/:id/dashboard
+ * Kaam: DB se shopType nikal ke usi naam ke template folder ka dashboard.html kholta hai
+ * Ex: shopType = 'Kirana' -> /shop-templates/kirana/dashboard.html
+ *     shopType = 'Medical' -> /shop-templates/medical/dashboard.html
+ *     60+ templates isi logic se khulte hain
+ */
 app.get('/shop/:id/dashboard', async (req, res) => {
     try {
         const Shop = require('./models/Shop');
@@ -161,8 +233,11 @@ app.get('/shop/:id/dashboard', async (req, res) => {
         res.status(500).send('Error loading shop dashboard');
     }
 });
+
 app.get('/profile.html', (req, res) => { res.sendFile(path.join(__dirname, '../public/profile.html')); });
 app.get('/wishlist.html', (req, res) => { res.sendFile(path.join(__dirname, '../public/wishlist.html')); });
+
+// ... baaki admin API docs, error handlers same rakhe hain ...
 
 app.get('/api/admin/routes', (req, res) => {
     try {
