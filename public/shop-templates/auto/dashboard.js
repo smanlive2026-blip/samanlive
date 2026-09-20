@@ -1,10 +1,12 @@
 // ========================================
-// AUTO PRO DASHBOARD JS - WORLD CLASS v3.0 FINAL
+// AUTO PRO DASHBOARD JS - WORLD CLASS v3.0 FINAL - NO LOCALSTORAGE
 // ========================================
 const urlParams = new URLSearchParams(window.location.search);
-const shopId = urlParams.get('shopId') || urlParams.get('id') || localStorage.getItem('shopId');
+const shopId = urlParams.get('shopId') || urlParams.get('id');
 
 if(!shopId) alert('Shop ID nahi mila. URL me ?shopId=xxx lagao');
+
+window.shopId = shopId;
 
 const shopIdDisplay = document.getElementById('shopIdDisplay');
 if(shopIdDisplay) shopIdDisplay.innerText = shopId ? shopId.substring(0, 8) + '...' : 'NO-ID';
@@ -19,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('addPartBtn')?.addEventListener('click', () => {
         window.location.href = `/shop-templates/auto/product-form.html?shopId=${shopId}`;
     });
-    // NEW BUTTONS
     document.getElementById('settingsBtn')?.addEventListener('click', () => {
         window.location.href = `/shop-templates/auto/settings.html?shopId=${shopId}`;
     });
@@ -30,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadShopData() {
     try {
-        const res = await fetch(`/api/shops/auto/${shopId}`);
+        const res = await fetch(`/api/shops/auto/${shopId}`, {cache:'no-store'});
         const result = await res.json();
         if(!result.success) throw new Error(result.message);
         const shop = result.shop;
@@ -43,6 +44,16 @@ async function loadShopData() {
         document.getElementById('parts').innerText = shop.parts?.length || 0;
         document.getElementById('jobCount') && (document.getElementById('jobCount').innerText = `${shop.serviceJobs?.length || 0} Jobs`);
         document.getElementById('lowStockCount') && (document.getElementById('lowStockCount').innerText = `${shop.lowStock?.length || 0} low stock`);
+        
+        const toggleSwitch = document.getElementById('toggleSwitch');
+        const toggleText = document.getElementById('toggleText');
+        if(toggleSwitch && toggleText){
+            const isOpen = shop.settings?.isOpen ?? true;
+            toggleSwitch.classList.toggle('on', isOpen);
+            toggleSwitch.classList.toggle('off', !isOpen);
+            toggleText.innerText = isOpen ? 'Open' : 'Closed';
+        }
+
         loadServices(shop.serviceJobs || []);
         loadParts(shop.parts || []);
         loadLowStock(shop.lowStock || shop.parts?.filter(p => p.stock < (p.lowStockLimit || 5)) || []);
@@ -89,7 +100,7 @@ function loadParts(parts) {
         return;
     }
     container.innerHTML = parts.map(p => {
-        const pid = p._id || p.id; // FIX: _id fallback
+        const pid = p._id || p.id;
         return `
         <div class="part-box">
             <img src="${p.image || 'https://placehold.co/400/f97316/fff?text=Part'}" loading="lazy">
