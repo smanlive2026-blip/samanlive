@@ -21,7 +21,7 @@ window.LocationManager = {
                     resolve(userLocation);
                 },
                 () => { resolve(null); },
-                { enableHighAccuracy: true, timeout: 10000 }
+                { enableHighAccuracy: false, timeout: 3000, maximumAge: 60000 } // FAST FIX - pehle 10000 tha
             );
         });
     },
@@ -76,13 +76,14 @@ async function initNearby(){
         }
     } catch(e){}
 
-    // NAYA STEP - OPEN HOTE HI SAB SHOPS TURANT (LOCATION WAIT NAHI)
-    await loadAllShopsInstant();
+    // FAST FIX - DONO EK SATH, WAIT NAHI
+    await Promise.allSettled([loadAllShopsInstant(), window.LocationManager.getManual()]);
 
-    // 2. Background me location
-    await window.LocationManager.getManual();
     if(userLocation){
-        await loadNearbyShops(true); // location milne pe distance ke sath update
+        await loadNearbyShops(true);
+    } else {
+        // location nahi mila to bhi all shops to dikh hi rahe hain
+        console.log('Location nahi mila, All Shops dikh rahe hain');
     }
     showUserLocationInHeader();
 
@@ -101,7 +102,6 @@ async function loadAllShopsInstant(){
         const shopsData = (await allRes.json()).data || [];
         if(shopsData.length === 0) return;
 
-        // Agar pehle se cache se dikh raha hai to overwrite mat karo jab tak location nahi hai
         if(allServices.length > 0 &&!userLocation) return;
 
         allServices = shopsData.map(shop => ({
@@ -357,8 +357,8 @@ function showUserLocationInHeader() {
         return;
     }
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
-  .then(r => r.json())
-  .then(data => {
+ .then(r => r.json())
+ .then(data => {
         const el = document.getElementById('userCity');
         if(el &&!currentAreaCode) el.textContent = data.address.city || 'Your Area';
     }).catch(()=>{
