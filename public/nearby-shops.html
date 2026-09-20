@@ -6,17 +6,160 @@
     <title>Nearby Shops - SAMANLIVE</title>
     <link rel="stylesheet" href="/assets/css/nearby.css?v=2">
     <script src="/assets/js/shop-template-map.js"></script>
+    <style>
+        /* WORLD CLASS COLORFUL OVERRIDE */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+        *{font-family:'Poppins',sans-serif}
+        body{
+            margin:0;
+            background: radial-gradient(1200px at 10% -10%, #a5b4fc 0%, transparent 60%),
+                        radial-gradient(1000px at 90% 10%, #f9a8d4 0%, transparent 50%),
+                        radial-gradient(800px at 50% 120%, #6ee7b7 0%, transparent 60%),
+                        #f8fafc;
+            min-height:100vh;
+        }
+        .video-bg{display:none}
+        .video-overlay{display:none}
+
+        /* HEADER - Glass + Gradient */
+        .header{
+            position:sticky; top:0; z-index:100;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+        }
+        .header-container{
+            display:flex; align-items:center; justify-content:space-between;
+            padding:14px 16px; gap:12px;
+        }
+        .back-btn{
+            width:42px; height:42px; border-radius:14px; border:none;
+            background: linear-gradient(135deg,#6366f1,#8b5cf6);
+            color:white; font-size:20px; font-weight:800;
+            box-shadow:0 8px 16px rgba(99,102,241,0.3); cursor:pointer;
+        }
+        .logo-text{
+            font-weight:800; font-size:20px;
+            background: linear-gradient(135deg,#111827 0%,#6366f1 100%);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            letter-spacing:-0.5px;
+        }
+        .location-display{
+            background: linear-gradient(135deg,#ecfdf5,#d1fae5);
+            border:1px solid #a7f3d0;
+            padding:8px 14px; border-radius:100px;
+            font-weight:700; font-size:13px; color:#065f46;
+        }
+
+        /* FILTER CHIPS - Colorful */
+        #filterChips{
+            display:flex; gap:10px; padding:16px;
+            overflow-x:auto; scrollbar-width:none;
+        }
+        #filterChips::-webkit-scrollbar{display:none}
+        .chip{
+            white-space:nowrap; padding:10px 18px; border-radius:100px;
+            border:2px solid transparent; font-weight:700; font-size:13px;
+            cursor:pointer; transition:0.2s; background:white;
+            box-shadow:0 4px 12px rgba(0,0,0,0.05);
+        }
+        .chip.active{
+            background: linear-gradient(135deg,#111827,#374151);
+            color:white; transform:scale(1.05);
+            box-shadow:0 8px 20px rgba(0,0,0,0.2);
+        }
+        .chip:nth-child(2).active{background:linear-gradient(135deg,#10b981,#059669)}
+        .chip:nth-child(3).active{background:linear-gradient(135deg,#f59e0b,#d97706)}
+        .chip:nth-child(4).active{background:linear-gradient(135deg,#ef4444,#dc2626)}
+        .chip:nth-child(5).active{background:linear-gradient(135deg,#ec4899,#be185d)}
+
+        /* GRID - World Class Cards */
+        .container{padding:0 12px 100px}
+        .six-line-carousel{
+            display:grid; grid-template-columns:repeat(2,1fr); gap:14px;
+        }
+        @media(min-width:600px){ .six-line-carousel{grid-template-columns:repeat(3,1fr)} }
+        @media(min-width:900px){ .six-line-carousel{grid-template-columns:repeat(4,1fr)} }
+
+        .shop-circle{
+            position:relative; background:white;
+            border-radius:24px; padding:14px 12px;
+            text-align:center; cursor:pointer;
+            border:1px solid rgba(0,0,0,0.06);
+            box-shadow:0 8px 24px rgba(0,0,0,0.06);
+            transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            overflow:hidden;
+        }
+        .shop-circle::before{
+            content:''; position:absolute; top:0; left:0; right:0; height:4px;
+            background: linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899,#f59e0b);
+        }
+        .shop-circle:hover{ transform:translateY(-6px) scale(1.02); box-shadow:0 20px 40px rgba(0,0,0,0.12) }
+        .shop-circle.closed-shop{ opacity:0.7; filter:grayscale(0.5) }
+        
+        .shop-logo-circle{
+            width:72px; height:72px; border-radius:20px; object-fit:cover;
+            border:3px solid white; box-shadow:0 8px 20px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg,#f3f4f6,#e5e7eb);
+        }
+        .shop-circle p{ font-weight:800; font-size:14px; margin:10px 0 2px; color:#111827; line-height:1.2 }
+        .shop-circle small{ display:block; font-size:11px; margin-top:2px }
+
+        .status-dot{
+            position:absolute; top:12px; right:12px; width:12px; height:12px;
+            border-radius:50%; background:#10b981; border:2px solid white;
+            box-shadow:0 0 0 4px rgba(16,185,129,0.2); animation:pulse 2s infinite;
+        }
+        .status-dot.closed{ background:#ef4444; box-shadow:0 0 0 4px rgba(239,68,68,0.2) }
+        @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,0.4)}70%{box-shadow:0 0 0 8px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+
+        .offer-badge{
+            position:absolute; top:10px; left:10px;
+            background: linear-gradient(135deg,#ef4444,#f59e0b);
+            color:white; font-size:10px; font-weight:800;
+            padding:4px 8px; border-radius:100px;
+            box-shadow:0 4px 12px rgba(239,68,68,0.4);
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+        .quick-actions button{
+            background:white!important; border:1.5px solid #e5e7eb!important;
+            width:36px; height:36px; border-radius:12px; font-size:14px;
+            box-shadow:0 4px 10px rgba(0,0,0,0.05); transition:0.2s;
+        }
+        .quick-actions button:hover{ transform:scale(1.15); background:#f3f4f6!important }
+
+        .ad-full-width{
+            grid-column:1/-1;
+            background: linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#ec4899 100%)!important;
+            border-radius:20px; padding:20px!important; position:relative; overflow:hidden;
+            box-shadow:0 12px 32px rgba(99,102,241,0.3);
+        }
+        .ad-full-width::before{
+            content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px);
+            background-size:20px 20px; animation: move 20s linear infinite;
+        }
+        @keyframes move{0%{transform:translate(0,0)}100%{transform:translate(20px,20px)}}
+    </style>
 </head>
 <body>
-    <div class="video-bg"></div>
-    <div class="video-overlay"></div>
-    
     <!-- HEADER -->
     <header class="header">
         <div class="header-container">
             <button class="back-btn" onclick="history.back()">←</button>
             <span class="logo-text">Nearby Shops</span>
             <div class="location-display">📍 <span id="userCity">Detecting...</span></div>
+        </div>
+        <!-- FILTERS INSIDE HEADER FOR WORLD CLASS LOOK -->
+        <div id="filterChips">
+            <button onclick="setFilter('all')" class="chip active">✨ All Shops</button>
+            <button onclick="setFilter('open')" class="chip">🟢 Open Now</button>
+            <button onclick="setFilter('near')" class="chip">📍 Under 1km</button>
+            <button onclick="setFilter('offer')" class="chip">🔥 Offers</button>
+            <button onclick="setFilter('fav')" class="chip">❤️ Favourites</button>
         </div>
     </header>
 
