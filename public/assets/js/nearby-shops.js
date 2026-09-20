@@ -1,9 +1,10 @@
-// LOCATION: public/assets/js/nearby-shops.js - FINAL WITH REAL-TIME AREA ADS
-
+// LOCATION: public/assets/js/nearby-shops.js - FINAL WITH REAL-TIME AREA ADS + LAST SHOP CACHE
 let allServices = [];
 let userLocation = null;
 let currentAreaCode = null;
 let areaAdsCache = [];
+
+const LAST_SHOP_CACHE_KEY = 'last_nearby_shops_cache';
 
 // LOCATION
 window.LocationManager = {
@@ -25,7 +26,7 @@ window.LocationManager = {
         navigator.geolocation.watchPosition(
             (pos) => {
                 const newLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                // Agar 100 meter se zyada hila toh hi area check karo
+                // Agar 100 meter se zyada hila toh hi area check karo - SAME FEATURE
                 if(!userLocation || getDistance(userLocation.lat, userLocation.lng, newLoc.lat, newLoc.lng) > 0.1){
                     userLocation = newLoc;
                     callback(newLoc);
@@ -48,25 +49,47 @@ function getDistance(lat1, lon1, lat2, lon2){
 document.addEventListener('DOMContentLoaded', initNearby);
 
 async function initNearby(){
+    // 1. LAST TIME KI SHOP TURANT DIKHA DO - location ka wait mat karo
+    try {
+        const cached = JSON.parse(localStorage.getItem(LAST_SHOP_CACHE_KEY) || 'null');
+        if(cached && cached.shops && cached.shops.length > 0){
+            allServices = cached.shops;
+            currentAreaCode = cached.areaCode || null;
+            areaAdsCache = cached.ads || [];
+            console.log('⚡ Last shops dikha diye cache se');
+            renderNearbyShopsWithAds(areaAdsCache);
+            if(currentAreaCode){
+                const cityEl = document.getElementById('userCity');
+                if(cityEl) cityEl.textContent = cached.cityText || currentAreaCode;
+            }
+        }
+    } catch(e){}
+
+    // 2. Background me location detect karo
     await window.LocationManager.getManual();
     await loadNearbyShops();
     showUserLocationInHeader();
-    // REAL-TIME TRACKING START
+    
+    // REAL-TIME TRACKING START - CONTINUE DETECT
     window.LocationManager.watch(async (loc) => {
+        console.log('📍 100m hila, background me update:', loc);
         await checkAreaAndUpdateAds(loc);
+        // shop list ko bhi background me refresh karo par UI pehle se dikh raha hai
+        await loadNearbyShops(true); 
     });
 }
 
-async function loadNearbyShops() {
+async function loadNearbyShops(isBackground = false) {
     let shopsData = [];
     if(userLocation) {
         const res = await fetch(`/api/shop-view/nearby-shops?lat=${userLocation.lat}&lng=${userLocation.lng}`, {cache: 'no-store'}).catch(()=>({ok:false}));
         if(res.ok) shopsData = (await res.json()).data || [];
     }
-    if(shopsData.length === 0) {
+    if(shopsData.length === 0 && !isBackground) {
         const allRes = await fetch(`/api/shop-view/nearby-shops`, {cache: 'no-store'}).catch(()=>({ok:false}));
         if(allRes.ok) shopsData = (await allRes.json()).data || [];
     }
+    if(shopsData.length === 0 && isBackground) return; // background me empty aaye to purani hi rehne do
 
     allServices = shopsData.map(shop => ({
         _id: String(shop.shopId || shop._id || shop.id),
@@ -83,12 +106,25 @@ async function loadNearbyShops() {
         await ShopBannerExt.loadBannersForMainApp(allServices);
     }
     await checkAreaAndUpdateAds(userLocation);
+
+    // Cache me save kar do agli baar turant dikhane ke liye
+    try {
+        localStorage.setItem(LAST_SHOP_CACHE_KEY, JSON.stringify({
+            shops: allServices,
+            ads: areaAdsCache,
+            areaCode: currentAreaCode,
+            cityText: document.getElementById('userCity')?.textContent || '',
+            time: Date.now()
+        }));
+    } catch(e){}
 }
 
 async function checkAreaAndUpdateAds(loc){
-    if(!loc) { renderNearbyShopsWithAds([]); return; }
+    if(!loc) { 
+        if(allServices.length === 0) renderNearbyShopsWithAds([]);
+        return; 
+    }
     try {
-        // 1. Sabse pehle area nikalo user ki location se
         const areasRes = await fetch(`/api/areas`, {cache: 'no-store'}).then(r=>r.json()).catch(()=>[]);
         let foundArea = null;
         let minDist = Infinity;
@@ -105,20 +141,21 @@ async function checkAreaAndUpdateAds(loc){
             if(currentAreaCode !== foundArea.areaCode){
                 console.log(`📍 Area Changed: ${currentAreaCode} -> ${foundArea.areaCode}`);
                 currentAreaCode = foundArea.areaCode;
-                // 2. Is area ke ads lao
                 const contentRes = await fetch(`/api/content?areaCode=${foundArea.areaCode}`, {cache: 'no-store'}).then(r=>r.json()).catch(()=>[]);
                 areaAdsCache = contentRes.filter(c => c.type === 'ad' && c.status === 'active');
                 const cityEl = document.getElementById('userCity');
                 if(cityEl) cityEl.textContent = `${foundArea.city} (${foundArea.areaCode})`;
             }
         } else {
-            currentAreaCode = null;
-            areaAdsCache = [];
+            // Area nahi mila to purana wala hi rehne do, clear mat karo
+            // currentAreaCode = null;
+            // areaAdsCache = [];
         }
         renderNearbyShopsWithAds(areaAdsCache);
     } catch(err){
         console.error(err);
-        renderNearbyShopsWithAds([]);
+        if(allServices.length > 0) renderNearbyShopsWithAds(areaAdsCache);
+        else renderNearbyShopsWithAds([]);
     }
 }
 
@@ -181,7 +218,7 @@ function renderNearbyShopsWithAds(areaAds = areaAdsCache){
 function showUserLocationInHeader() {
     if (!userLocation) {
         const el = document.getElementById('userCity');
-        if(el) el.textContent = 'Location Off';
+        if(el && !currentAreaCode) el.textContent = 'Location Off';
         return;
     }
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
