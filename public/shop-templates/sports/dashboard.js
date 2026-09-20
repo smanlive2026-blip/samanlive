@@ -1,8 +1,6 @@
-// LOCATION: public/shop-templates/sports/dashboard.js - V5 WORLD CLASS - FULL CODE
+// LOCATION: public/shop-templates/sports/dashboard.js - V5 WORLD CLASS - FULL CODE - NO LOCALSTORAGE FIX
 const params = new URLSearchParams(location.search);
-const shopId = params.get('shopId') || params.get('id') || localStorage.getItem('last_sports_shopId') || '';
-
-if (shopId) localStorage.setItem('last_sports_shopId', shopId);
+const shopId = params.get('shopId') || params.get('id') || '';
 
 let allProducts = [];
 let shopData = null;

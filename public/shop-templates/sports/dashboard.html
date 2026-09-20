@@ -1,4 +1,4 @@
-<!-- LOCATION: public/shop-templates/sports/dashboard.html - V5 FIXED FINAL -->
+<!-- LOCATION: public/shop-templates/sports/dashboard.html - V6 NO LOCALSTORAGE FINAL -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -86,8 +86,7 @@ body{background:var(--bg);color:var(--dark)}
 
 <script>
 const params = new URLSearchParams(location.search);
-window.shopId = params.get('shopId') || params.get('id') || localStorage.getItem('last_sports_shopId') || '';
-if (shopId) localStorage.setItem('last_sports_shopId', shopId);
+window.shopId = params.get('shopId') || params.get('id') || '';
 document.getElementById('shopIdDisplay').innerText = 'ID: ' + (shopId ? shopId.slice(-6) : 'MISSING');
 if (!shopId) alert('shopId missing! Add ?shopId= in URL');
 
@@ -144,7 +143,6 @@ function renderCats() {
   document.getElementById('categories').innerHTML = cats.map(cat => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f8fafc;font-size:13px;font-weight:600"><span>${cat}</span><span style="background:#f1f5f9;padding:2px 8px;border-radius:20px;font-size:11px">${allProducts.filter(p => (p.category || 'General') === cat).length}</span></div>`).join('') || '<p style="color:#94a3b8;font-size:12px">No categories</p>';
 }
 
-// FIXED: filter naam badla -> searchFilter
 function searchFilter() {
   const q = document.getElementById('searchInput').value.toLowerCase();
   render(allProducts.filter(p => p.name.toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q)));

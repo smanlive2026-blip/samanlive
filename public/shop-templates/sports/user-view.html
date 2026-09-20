@@ -1,4 +1,4 @@
-<!-- LOCATION: public/shop-templates/sports/user-view.html - V5 COLORFUL WORLD CLASS -->
+<!-- LOCATION: public/shop-templates/sports/user-view.html - V6 NO SHOP LOCALSTORAGE -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,8 +10,6 @@
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}
 :root{--orange:#f97316;--dark:#0f172a;--yellow:#facc15}
 body{background:#f8fafc;color:#0f172a;padding-bottom:90px}
-
-/* HEADER */
 .header{background:var(--dark);color:#fff;position:sticky;top:0;z-index:100}
 .top-strip{background:var(--orange);color:#fff;text-align:center;padding:8px;font-size:12px;font-weight:800;letter-spacing:.5px}
 .nav{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;max-width:1400px;margin:0 auto;width:100%}
@@ -29,22 +27,16 @@ body{background:#f8fafc;color:#0f172a;padding-bottom:90px}
 .cart-count{background:#ef4444;color:#fff;min-width:20px;height:20px;border-radius:20px;display:grid;place-items:center;font-size:11px;padding:0 5px}
 .stock-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 .stock-dot.ok{background:#22c55e}.stock-dot.low{background:#ef4444}
-
-/* HERO */
 .hero{background:linear-gradient(105deg,#0f172a 0%,#7c2d12 60%,#f97316 100%);color:#fff;margin:12px;border-radius:24px;padding:20px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden;max-width:1400px;margin-left:auto;margin-right:auto}
 .hero::after{content:'';position:absolute;width:200px;height:200px;background:radial-gradient(circle,rgba(251,146,60,.3),transparent);right:-40px;top:-40px}
 .hero h2{font-weight:900;font-size:20px;line-height:1.2;position:relative;z-index:1}
 .hero h2 span{color:#fb923c}
 .hero p{font-size:12px;opacity:.8;margin-top:4px;position:relative;z-index:1;color:#cbd5e1}
 .hero-badge{background:var(--yellow);color:#000;padding:8px 14px;border-radius:30px;font-weight:900;font-size:12px;z-index:1}
-
-/* CATS */
 .cats{display:flex;gap:8px;overflow:auto;padding:0 16px 12px 16px;scrollbar-width:none;max-width:1400px;margin:0 auto}
 .cats::-webkit-scrollbar{display:none}
 .cat{white-space:nowrap;padding:10px 16px;border-radius:30px;background:#fff;border:1px solid #e2e8f0;font-weight:800;font-size:12px;cursor:pointer;transition:.2s;display:flex;gap:6px;align-items:center}
 .cat.active{background:var(--dark);color:#fff;border-color:var(--dark);transform:scale(1.05)}
-
-/* PRODUCTS */
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:0 12px;max-width:1400px;margin:0 auto}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
 .card{background:#fff;border-radius:20px;border:1px solid #f1f5f9;overflow:hidden;position:relative;transition:.25s;display:flex;flex-direction:column}
@@ -60,8 +52,6 @@ body{background:#f8fafc;color:#0f172a;padding-bottom:90px}
 .price{font-weight:900;font-size:16px}.price small{font-size:10px;color:#94a3b8;text-decoration:line-through;margin-left:4px;font-weight:600}
 .add{height:32px;padding:0 14px;border-radius:10px;background:#fff;border:1.5px solid var(--orange);color:var(--orange);font-weight:900;font-size:12px;cursor:pointer;transition:.2s}
 .add.added{background:var(--orange);color:#fff}
-
-/* CART */
 .cart-bar{position:fixed;bottom:12px;left:12px;right:12px;background:var(--dark);color:#fff;padding:14px 18px;border-radius:18px;display:none;justify-content:space-between;align-items:center;z-index:50;box-shadow:0 20px 40px rgba(0,0,0,.3);max-width:500px;margin:0 auto}
 #cartModal{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(10px);display:none;z-index:200;align-items:end}
 #cartBox{background:#fff;width:100%;max-width:520px;margin:0 auto;border-radius:28px 28px 0 0;max-height:88vh;display:flex;flex-direction:column;animation:slideUp.3s ease}
@@ -117,24 +107,29 @@ body{background:#f8fafc;color:#0f172a;padding-bottom:90px}
 
 <script>
 const urlParams = new URLSearchParams(window.location.search);
-const shopId = urlParams.get('shopId') || urlParams.get('id');
+const shopId = urlParams.get('shopId') || urlParams.get('id') || '';
+if(!shopId){ alert('shopId missing! URL me ?shopId= lagao'); }
+
 let allProducts=[], cart=JSON.parse(localStorage.getItem('sports_cart_'+shopId)||'[]'), shopData=null;
 
 async function loadShop(){
-  const res = await fetch(`/api/shops/sports/${shopId}?t=${Date.now()}`);
-  const result = await res.json();
-  if(!result.success) return;
-  shopData=result.shop;
-  document.getElementById('shopName').innerText=shopData.settings?.shopName||shopData.shopName||'Sports Store';
-  document.getElementById('pageTitle').innerText=shopData.settings?.shopName||'Sports Store';
-  document.getElementById('heroTitle').innerHTML=`Premium <span>${(shopData.settings?.shopName||'Sports').split(' ')[0]}</span><br>For Champions`;
-  document.getElementById('shopAddress').innerText=shopData.settings?.address||'Cricket, Football, Gym - Original brands';
-  document.getElementById('topStrip').innerText=shopData.settings?.announcement||'FREE SHIPPING ABOVE ₹499 • 6 MONTH WARRANTY • GENUINE BRANDS';
-  const isOpen=shopData.settings?.isOpen??true;
-  document.getElementById('shopStatus').innerText=isOpen?'Open • Fast Delivery':'Closed Now';
-  const badge=document.getElementById('shopStatusBadge'); badge.innerText=isOpen?'Open':'Closed'; badge.className='shop-status '+(isOpen?'open':'closed');
-  allProducts=shopData.products||shopData.items||[];
-  renderCats(); renderProducts(allProducts); updateCartUI();
+  if(!shopId) return;
+  try{
+    const res = await fetch(`/api/shops/sports/${shopId}?t=${Date.now()}`, { cache: 'no-store' });
+    const result = await res.json();
+    if(!result.success) throw new Error(result.message);
+    shopData=result.shop;
+    document.getElementById('shopName').innerText=shopData.settings?.shopName||shopData.shopName||'Sports Store';
+    document.getElementById('pageTitle').innerText=shopData.settings?.shopName||'Sports Store';
+    document.getElementById('heroTitle').innerHTML=`Premium <span>${(shopData.settings?.shopName||'Sports').split(' ')[0]}</span><br>For Champions`;
+    document.getElementById('shopAddress').innerText=shopData.settings?.address||'Cricket, Football, Gym - Original brands';
+    document.getElementById('topStrip').innerText=shopData.settings?.announcement||'FREE SHIPPING ABOVE ₹499 • 6 MONTH WARRANTY • GENUINE BRANDS';
+    const isOpen=shopData.settings?.isOpen??true;
+    document.getElementById('shopStatus').innerText=isOpen?'Open • Fast Delivery':'Closed Now';
+    const badge=document.getElementById('shopStatusBadge'); badge.innerText=isOpen?'Open':'Closed'; badge.className='shop-status '+(isOpen?'open':'closed');
+    allProducts=shopData.products||shopData.items||[];
+    renderCats(); renderProducts(allProducts); updateCartUI();
+  }catch(e){ document.getElementById('productGrid').innerHTML=`<p style="grid-column:1/-1;padding:40px;text-align:center;color:red">Error: ${e.message}<br>URL me sahi shopId lagao</p>`; }
 }
 function renderCats(){
   const cats=[...new Set(allProducts.map(p=>p.category||'General'))];
@@ -143,7 +138,7 @@ function renderCats(){
 }
 function renderProducts(list){
   const grid=document.getElementById('productGrid');
-  if(!list.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:50px;color:#94a3b8">No sports products</div>';return;}
+  if(!list.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:50px;color:#94a3b8">No sports products<br><small>Dashboard se Quick Add karo</small></div>';return;}
   grid.innerHTML=list.map(p=>{
     const disc=p.mrp?Math.round(((p.mrp-p.price)/p.mrp)*100):0;
     const inCart=cart.find(c=>c._id===p._id);
