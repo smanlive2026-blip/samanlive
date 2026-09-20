@@ -1,10 +1,11 @@
-// LOCATION: public/assets/js/nearby-shops.js - FINAL WITH REAL-TIME AREA ADS + LAST SHOP CACHE + FACILITIES
+// LOCATION: public/assets/js/nearby-shops.js - FINAL WITH REAL-TIME AREA ADS + LAST SHOP CACHE + FACILITIES + KM FILTER
 let allServices = [];
 let filteredServices = [];
 let userLocation = null;
 let currentAreaCode = null;
 let areaAdsCache = [];
 let currentFilter = 'all';
+let currentKm = 'all'; // NAYA - KM FILTER
 
 const LAST_SHOP_CACHE_KEY = 'last_nearby_shops_cache';
 const FAV_KEY = 'fav_shops';
@@ -50,7 +51,7 @@ function getDistance(lat1, lon1, lat2, lon2){
 
 function getWalkingTime(distKm){
     if(!distKm) return '';
-    const mins = Math.round(distKm * 12); // 5km/h avg
+    const mins = Math.round(distKm * 12);
     if(mins < 1) return '1 min walk';
     return `${mins} min walk`;
 }
@@ -75,9 +76,14 @@ async function initNearby(){
         }
     } catch(e){}
 
+    // NAYA STEP - OPEN HOTE HI SAB SHOPS TURANT (LOCATION WAIT NAHI)
+    await loadAllShopsInstant();
+
     // 2. Background me location
     await window.LocationManager.getManual();
-    await loadNearbyShops();
+    if(userLocation){
+        await loadNearbyShops(true); // location milne pe distance ke sath update
+    }
     showUserLocationInHeader();
 
     window.LocationManager.watch(async (loc) => {
@@ -85,6 +91,43 @@ async function initNearby(){
         await checkAreaAndUpdateAds(loc);
         await loadNearbyShops(true);
     });
+}
+
+// NAYA FUNCTION - TURANT ALL SHOPS
+async function loadAllShopsInstant(){
+    try {
+        const allRes = await fetch(`/api/shop-view/nearby-shops`, {cache: 'no-store'}).catch(()=>({ok:false}));
+        if(!allRes.ok) return;
+        const shopsData = (await allRes.json()).data || [];
+        if(shopsData.length === 0) return;
+
+        // Agar pehle se cache se dikh raha hai to overwrite mat karo jab tak location nahi hai
+        if(allServices.length > 0 &&!userLocation) return;
+
+        allServices = shopsData.map(shop => ({
+            _id: String(shop.shopId || shop._id || shop.id),
+            shopName: shop.shopName || shop.name || 'Shop',
+            distance: shop.distance || 0,
+            shopType: shop.shopType || 'general',
+            template: shop.template || null,
+            logo: shop.logo || '/assets/default-shop.png',
+            banner: shop.banner || null,
+            isOpen: shop.isOpen?? true,
+            phone: shop.phone || shop.mobile || '',
+            lat: shop.lat || shop.latitude || null,
+            lng: shop.lng || shop.longitude || null,
+            hasOffer: shop.hasOffer || shop.offer || false,
+            offerText: shop.offerText || '🔥 Offer',
+            productCount: shop.productCount || 0
+        }));
+
+        filteredServices = [...allServices];
+        if(typeof ShopBannerExt!== 'undefined'){
+            await ShopBannerExt.loadBannersForMainApp(allServices);
+        }
+        console.log(`✅ TURANT ${allServices.length} shops dikha diye`);
+        applyFilter();
+    } catch(e){ console.log('instant load fail', e); }
 }
 
 async function loadNearbyShops(isBackground = false) {
@@ -115,8 +158,6 @@ async function loadNearbyShops(isBackground = false) {
         offerText: shop.offerText || '🔥 Offer',
         productCount: shop.productCount || 0
     }));
-
-    filteredServices = [...allServices];
 
     if(typeof ShopBannerExt!== 'undefined'){
         await ShopBannerExt.loadBannersForMainApp(allServices);
@@ -172,40 +213,60 @@ async function checkAreaAndUpdateAds(loc){
     }
 }
 
-// ========== NEW FACILITY: FILTERS ==========
+// ========== FILTERS ==========
 function setFilter(type){
     currentFilter = type;
-    document.querySelectorAll('.filter-chips.chip').forEach(b=>b.classList.remove('active'));
-    const activeBtn = document.querySelector(`.filter-chips.chip[onclick="setFilter('${type}')"]`);
-    if(activeBtn) activeBtn.classList.add('active');
+    applyFilter();
+}
+
+// NAYA KM FILTER BUTTON
+function setKmFilter(km){
+    currentKm = km;
     applyFilter();
 }
 
 function applyFilter(){
     const favs = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
-    if(currentFilter === 'open'){
-        filteredServices = allServices.filter(s=>s.isOpen);
-    } else if(currentFilter === 'near'){
-        filteredServices = allServices.filter(s=> (s.distance/1000) <= 1);
-    } else if(currentFilter === 'offer'){
-        filteredServices = allServices.filter(s=>s.hasOffer);
-    } else if(currentFilter === 'fav'){
-        filteredServices = allServices.filter(s=>favs.includes(s._id));
-    } else {
-        filteredServices = [...allServices];
+    let list = [...allServices];
+
+    // 1. KM FILTER - NAYA LOGIC
+    if(currentKm!== 'all'){
+        if(!userLocation){
+            alert('📍 Pehle location on karo KM filter ke liye');
+            currentKm = 'all';
+        } else {
+            const kmNum = parseFloat(currentKm);
+            list = list.filter(s => (s.distance/1000) <= kmNum);
+        }
     }
+
+    // 2. OLD FILTERS
+    if(currentFilter === 'open'){
+        list = list.filter(s=>s.isOpen);
+    } else if(currentFilter === 'near'){
+        list = list.filter(s=> (s.distance/1000) <= 1);
+    } else if(currentFilter === 'offer'){
+        list = list.filter(s=>s.hasOffer);
+    } else if(currentFilter === 'fav'){
+        list = list.filter(s=>favs.includes(s._id));
+    }
+
+    // Sort by distance if location available
+    if(userLocation){
+        list.sort((a,b)=>a.distance - b.distance);
+    }
+
+    filteredServices = list;
     renderNearbyShopsWithAds(areaAdsCache);
 }
 
-// ========== NEW FACILITY: FAV, CALL, DIRECTION ==========
+// ========== FAV, CALL, DIRECTION ==========
 function toggleWishlist(shopId){
     let favs = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
     if(favs.includes(shopId)){
         favs = favs.filter(id=>id!==shopId);
-        alert('❌ Fav se hataya');
     } else {
         favs.push(shopId);
-        alert('❤️ Fav me joda');
     }
     localStorage.setItem(FAV_KEY, JSON.stringify(favs));
     renderNearbyShopsWithAds(areaAdsCache);
@@ -225,10 +286,10 @@ function renderNearbyShopsWithAds(areaAds = areaAdsCache){
     const container = document.getElementById('nearbyShopsGrid');
     if (!container) return;
 
-    const list = filteredServices.length? filteredServices : allServices;
+    const list = filteredServices.length || currentKm!== 'all' || currentFilter!== 'all'? filteredServices : allServices;
 
     if(list.length === 0){
-        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏪</div><h3>Aas paas koi shop nahi mili</h3><p>Filter: ${currentFilter}</p></div>`;
+        container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;text-align:center;padding:30px;background:white;border-radius:16px"><div class="empty-state-icon" style="font-size:40px">🏪</div><h3>Koi shop nahi mili</h3><p>${currentKm!=='all'? currentKm+'km me koi shop nahi' : 'Filter: '+currentFilter}</p><button onclick="setKmFilter('all');setFilter('all')" style="margin-top:12px;padding:10px 18px;border-radius:20px;border:none;background:#111;color:white;font-weight:700">🌍 All Shops Dikhao</button></div>`;
         return;
     }
 
@@ -256,10 +317,9 @@ function renderNearbyShopsWithAds(areaAds = areaAdsCache){
             <img src="${shop.logo}" class="shop-logo-circle" onerror="this.src='/assets/default-shop.png'">
             <p>${shop.shopName}</p>
             <small style="font-weight:700; color:${isOpen? '#16a34a' : '#dc2626'}">${statusText}</small>
-            ${distanceKm? `<small>${distanceKm}Km • ${getWalkingTime(parseFloat(distanceKm))}</small>` : ''}
+            ${distanceKm? `<small>${distanceKm}Km • ${getWalkingTime(parseFloat(distanceKm))}</small>` : `<small style="opacity:0.6">📍 All Shops</small>`}
             ${shop.productCount? `<small style="opacity:0.7">${shop.productCount} items</small>` : ''}
 
-            <!-- NEW QUICK ACTIONS -->
             <div class="quick-actions" style="display:flex;gap:6px;margin-top:6px;justify-content:center" onclick="event.stopPropagation()">
                 <button style="padding:4px 8px;border-radius:12px;border:1px solid #ddd;background:white" onclick="callShop('${shop.phone}')">📞</button>
                 <button style="padding:4px 8px;border-radius:12px;border:1px solid #ddd;background:white" onclick="openMap(${shop.lat},${shop.lng})">📍</button>
@@ -293,12 +353,12 @@ function renderNearbyShopsWithAds(areaAds = areaAdsCache){
 function showUserLocationInHeader() {
     if (!userLocation) {
         const el = document.getElementById('userCity');
-        if(el &&!currentAreaCode) el.textContent = 'Location Off';
+        if(el &&!currentAreaCode) el.textContent = 'All Shops (Location Off)';
         return;
     }
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
-   .then(r => r.json())
-   .then(data => {
+  .then(r => r.json())
+  .then(data => {
         const el = document.getElementById('userCity');
         if(el &&!currentAreaCode) el.textContent = data.address.city || 'Your Area';
     }).catch(()=>{
