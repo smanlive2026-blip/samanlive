@@ -454,7 +454,7 @@ process.on('SIGTERM', async () => {
 });
 
 // ==================== START SERVER ====================
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log(`📊 Admin Panel: http://localhost:${PORT}/admin`);
     console.log(`👤 Area Manager: http://localhost:${PORT}/area-manager.html`);
