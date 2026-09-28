@@ -1,3 +1,5 @@
+const nodeCrypto = require('crypto');
+if (!global.crypto) global.crypto = nodeCrypto;
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
