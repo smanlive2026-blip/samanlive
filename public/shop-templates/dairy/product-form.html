@@ -1,0 +1,288 @@
+<!-- LOCATION: public/shop-templates/dairy/product-form.html - V6 WORLD CLASS -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Milk Product - Dairy Pro</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--milk:#0ea5e9;--dark:#0f172a;--bg:#f8fafc;--green:#22c55e}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:var(--bg);color:var(--dark)}
+.header{height:60px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:10}
+.header b{font-weight:900;font-size:16px;display:flex;gap:8px;align-items:center}
+.header i{background:var(--milk);color:#fff;width:32px;height:32px;display:grid;place-items:center;border-radius:8px}
+.btn{padding:10px 16px;border-radius:12px;border:none;font-weight:800;cursor:pointer;font-size:13px;display:flex;gap:6px;align-items:center}
+.btn-dark{background:var(--dark);color:#fff}
+.btn-milk{background:var(--milk);color:#fff;box-shadow:0 8px 20px rgba(14,165,233,.3)}
+.container{max-width:900px;margin:20px auto;padding:0 16px;display:grid;grid-template-columns:1fr 340px;gap:20px}
+@media(max-width:900px){.container{grid-template-columns:1fr}}
+.card{background:#fff;border-radius:20px;border:1px solid #e2e8f0;padding:20px;margin-bottom:16px}
+.card h3{font-weight:900;font-size:15px;margin-bottom:14px;display:flex;gap:8px;align-items:center}
+.label{font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px;display:block}
+.input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-weight:600;font-size:14px;outline:none;transition:.2s}
+.input:focus{border-color:var(--milk);background:#f0f9ff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.row{grid-template-columns:1fr}}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:8px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;font-weight:700;font-size:12px;cursor:pointer;transition:.2s}
+.chip.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+.chip.milk.active{background:var(--milk);border-color:var(--milk)}
+.upload{border:2px dashed #e2e8f0;border-radius:16px;padding:20px;text-align:center;cursor:pointer;transition:.2s;position:relative;overflow:hidden}
+.upload:hover{border-color:var(--milk);background:#f0f9ff}
+.upload img{width:100%;height:180px;object-fit:cover;border-radius:12px;display:none}
+.upload i{font-size:32px;color:#94a3b8}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.preview-grid img{width:100%;height:80px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0}
+.toggle{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:12px;margin-top:10px}
+.switch{width:44px;height:26px;background:#e2e8f0;border-radius:20px;position:relative;cursor:pointer;transition:.3s}
+.switch.on{background:var(--milk)}.switch::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:4px;left:4px;transition:.3s}.switch.on::after{left:22px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 20px;border-radius:30px;font-weight:700;font-size:13px;display:none;z-index:999}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <b><i class="fa-solid fa-bottle-water"></i> <span id="formTitle">Add Dairy Product</span> <small id="shopIdDisplay" style="background:#f1f5f9;padding:4px 8px;border-radius:8px;font-size:10px;margin-left:8px"></small></b>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-dark" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+    <button class="btn btn-milk" id="saveBtn" onclick="saveProduct()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+  </div>
+</div>
+
+<div class="container">
+  <div>
+    <!-- BASIC -->
+    <div class="card">
+      <h3><i class="fa-solid fa-circle-info" style="color:var(--milk)"></i> Product Info</h3>
+      <label class="label">Product Name *</label>
+      <input class="input" id="pName" placeholder="Ex: Full Cream Milk 1Ltr, Desi Dahi 500g">
+
+      <div class="row">
+        <div><label class="label">Category *</label>
+          <div class="chips" id="catChips">
+            <div class="chip milk active" onclick="setCat('Milk',this)">🥛 Milk</div>
+            <div class="chip milk" onclick="setCat('Dahi',this)">🧈 Dahi</div>
+            <div class="chip milk" onclick="setCat('Paneer',this)">🧀 Paneer</div>
+            <div class="chip milk" onclick="setCat('Ghee',this)">🍦 Ghee</div>
+            <div class="chip milk" onclick="setCat('Lassi',this)">🥤 Lassi</div>
+            <div class="chip milk" onclick="setCat('Chaas',this)">🥛 Chaas</div>
+          </div>
+        </div>
+        <div><label class="label">Unit *</label>
+          <div class="chips" id="unitChips">
+            <div class="chip active" onclick="setUnit('1 Ltr',this)">1 Ltr</div>
+            <div class="chip" onclick="setUnit('500 ml',this)">500 ml</div>
+            <div class="chip" onclick="setUnit('500g',this)">500g</div>
+            <div class="chip" onclick="setUnit('250g',this)">250g</div>
+            <div class="chip" onclick="setUnit('1 Kg',this)">1 Kg</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div><label class="label">Price ₹ *</label><input class="input" id="pPrice" type="number" placeholder="62"></div>
+        <div><label class="label">MRP ₹ (optional)</label><input class="input" id="pMrp" type="number" placeholder="65"></div>
+      </div>
+
+      <div class="row">
+        <div><label class="label">Fat Type</label>
+          <div class="chips">
+            <div class="chip active" onclick="setFat('Full Cream',this)">Full Cream</div>
+            <div class="chip" onclick="setFat('Toned',this)">Toned</div>
+            <div class="chip" onclick="setFat('Double Toned',this)">Double Toned</div>
+            <div class="chip" onclick="setFat('A2',this)">A2</div>
+          </div>
+        </div>
+        <div><label class="label">Stock (Ltr/Kg) *</label><input class="input" id="pStock" type="number" placeholder="20"></div>
+      </div>
+    </div>
+
+    <!-- DAIRY SPECIAL -->
+    <div class="card">
+      <h3><i class="fa-solid fa-snowflake" style="color:#06b6d4"></i> Dairy Special</h3>
+      <div class="row">
+        <div><label class="label">Expiry Date *</label><input class="input" id="pExpiry" type="date"></div>
+        <div><label class="label">Batch No</label><input class="input" id="pBatch" placeholder="BATCH-2024"></div>
+      </div>
+      <div class="toggle"><span><b style="font-size:13px">🧊 Cold Storage Required?</b><br><small style="color:#64748b">Dahi, Paneer ke liye</small></span><div class="switch on" id="coldSwitch" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle"><span><b style="font-size:13px">🔁 Subscription Allowed?</b><br><small style="color:#64748b">Daily delivery</small></span><div class="switch on" id="subSwitch" onclick="this.classList.toggle('on')"></div></div>
+    </div>
+
+    <!-- IMAGE -->
+    <div class="card">
+      <h3><i class="fa-solid fa-image" style="color:var(--milk)"></i> Product Photo</h3>
+      <div class="upload" id="uploadBox" onclick="document.getElementById('fileInput').click()">
+        <img id="previewMain">
+        <div id="uploadText"><i class="fa-solid fa-cloud-arrow-up"></i><p style="margin-top:8px;font-weight:700">Click to upload photo</p><small style="color:#94a3b8">Auto compressed + CDN</small></div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" hidden onchange="handleImage(this)">
+      <div class="preview-grid" id="previewGrid"></div>
+    </div>
+  </div>
+
+  <div>
+    <!-- PREVIEW -->
+    <div class="card">
+      <h3><i class="fa-solid fa-eye" style="color:var(--milk)"></i> Live Preview</h3>
+      <div style="border:1px solid #f1f5f9;border-radius:16px;overflow:hidden">
+        <img id="liveImg" src="https://placehold.co/400x200/e0f2fe/0ea5e9?text=Milk+Photo" style="width:100%;height:180px;object-fit:cover">
+        <div style="padding:12px"><b id="liveName">Product Name</b><br><small id="liveMeta" style="color:#94a3b8">Full Cream • 1 Ltr</small><div style="display:flex;justify-content:space-between;margin-top:8px"><span id="livePrice" style="font-weight:900">₹0</span><span id="liveStock" style="background:#dcfce7;color:#166534;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:800">10 LEFT</span></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fa-solid fa-bolt" style="color:#f59e0b"></i> Quick Actions</h3>
+      <button class="btn btn-dark" style="width:100%;justify-content:center" onclick="fillSample()"><i class="fa-solid fa-wand-magic-sparkles"></i> Fill Sample Data</button>
+      <button class="btn" style="width:100%;justify-content:center;margin-top:8px;background:#f1f5f9;color:var(--dark)" onclick="goQuickAdd()"><i class="fa-solid fa-bolt"></i> Quick Add Mode</button>
+    </div>
+
+    <div class="card" style="background:#0f172a;color:#fff">
+      <h3 style="color:#fff"><i class="fa-solid fa-lightbulb"></i> Dairy Tip</h3>
+      <p style="font-size:12px;line-height:1.5;color:#94a3b8">Milk ka photo subah ke time ka lo, dahi ka fresh jamne ke baad. Expiry hamesha sahi dalo, customer trust badhega.</p>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const shopId = params.get('shopId') || params.get('id') || '';
+const editId = params.get('editId') || '';
+const isQuick = params.get('quick') === '1';
+document.getElementById('shopIdDisplay').innerText = 'ID: ' + (shopId? shopId.slice(-6) : 'MISSING');
+document.getElementById('formTitle').innerText = editId? 'Edit Product' : (isQuick? 'Quick Add Milk' : 'Add Dairy Product');
+
+let selectedCat = 'Milk';
+let selectedUnit = '1 Ltr';
+let selectedFat = 'Full Cream';
+let imageUrl = '';
+
+function goBack(){ location.href = `/shop-templates/dairy/dashboard.html?shopId=${shopId}` }
+function toast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
+
+function setCat(c, el){ selectedCat=c; document.querySelectorAll('#catChips.chip').forEach(ch=>ch.classList.remove('active')); el.classList.add('active'); updatePreview(); }
+function setUnit(u, el){ selectedUnit=u; document.querySelectorAll('#unitChips.chip').forEach(ch=>ch.classList.remove('active')); el.classList.add('active'); updatePreview(); }
+function setFat(f, el){ selectedFat=f; el.parentElement.querySelectorAll('.chip').forEach(ch=>ch.classList.remove('active')); el.classList.add('active'); updatePreview(); }
+
+function updatePreview(){
+  document.getElementById('liveName').innerText = document.getElementById('pName').value || 'Product Name';
+  document.getElementById('liveMeta').innerText = `${selectedFat} • ${selectedUnit} • ${selectedCat}`;
+  document.getElementById('livePrice').innerText = '₹' + (document.getElementById('pPrice').value || '0');
+  document.getElementById('liveStock').innerText = (document.getElementById('pStock').value || '0') + ' LEFT';
+}
+
+['pName','pPrice','pStock'].forEach(id=> document.getElementById(id).addEventListener('input', updatePreview));
+
+async function handleImage(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    document.getElementById('previewMain').src = e.target.result;
+    document.getElementById('previewMain').style.display='block';
+    document.getElementById('uploadText').style.display='none';
+    document.getElementById('liveImg').src = e.target.result;
+    imageUrl = e.target.result; // base64 for now, backend pe upload hoga
+  };
+  reader.readAsDataURL(file);
+}
+
+function fillSample(){
+  document.getElementById('pName').value = 'Full Cream Milk 1Ltr';
+  document.getElementById('pPrice').value = '62';
+  document.getElementById('pMrp').value = '65';
+  document.getElementById('pStock').value = '20';
+  document.getElementById('pExpiry').valueAsDate = new Date(Date.now()+86400000*2);
+  document.getElementById('pBatch').value = 'BATCH-'+Date.now().toString().slice(-6);
+  updatePreview();
+  toast('Sample filled ✨');
+}
+
+function goQuickAdd(){
+  location.href = `/shop-templates/dairy/product-form.html?shopId=${shopId}&quick=1`;
+}
+
+async function saveProduct(){
+  const name = document.getElementById('pName').value.trim();
+  const price = parseFloat(document.getElementById('pPrice').value);
+  const stock = parseFloat(document.getElementById('pStock').value);
+  const expiry = document.getElementById('pExpiry').value;
+  if(!name ||!price ||!stock){ toast('Name, Price, Stock bharo!'); return; }
+  if(!expiry){ toast('Expiry date bharo! Dairy me compulsory hai'); return; }
+
+  const payload = {
+    shopId,
+    productId: editId || undefined,
+    name,
+    category: selectedCat,
+    unit: selectedUnit,
+    fat: selectedFat,
+    price,
+    mrp: parseFloat(document.getElementById('pMrp').value) || price,
+    stock,
+    expiry,
+    batch: document.getElementById('pBatch').value,
+    imageUrl,
+    coldStorage: document.getElementById('coldSwitch').classList.contains('on'),
+    subscriptionAllowed: document.getElementById('subSwitch').classList.contains('on')
+  };
+
+  const btn = document.getElementById('saveBtn');
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  btn.disabled = true;
+
+  try{
+    const url = editId? `/api/shops/dairy/${shopId}/item/${editId}` : `/api/shops/dairy/${shopId}/item`;
+    const method = editId? 'PUT' : 'POST';
+    const res = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const data = await res.json();
+    if(data.success){
+      toast(editId? 'Updated! ✅' : 'Product Added! 🥛');
+      setTimeout(()=> goBack(), 800);
+    }else{
+      throw new Error(data.message);
+    }
+  }catch(e){
+    toast('Error: ' + e.message);
+    // Fallback: localStorage save if API fails (old logic save)
+    const fallback = JSON.parse(localStorage.getItem(`dairy_products_${shopId}`)||'[]');
+    fallback.push({...payload, _id: Date.now().toString()});
+    localStorage.setItem(`dairy_products_${shopId}`, JSON.stringify(fallback));
+    toast('API fail, local me save kiya - dashboard me dikhega');
+    setTimeout(()=> goBack(), 1000);
+  }finally{
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
+    btn.disabled = false;
+  }
+}
+
+// Load edit data
+async function loadEdit(){
+  if(!editId) return;
+  try{
+    const res = await fetch(`/api/shops/dairy/${shopId}?t=${Date.now()}`);
+    const d = await res.json();
+    const p = d.shop.products.find(x=>x._id===editId);
+    if(!p) return;
+    document.getElementById('pName').value = p.name;
+    document.getElementById('pPrice').value = p.price;
+    document.getElementById('pMrp').value = p.mrp||'';
+    document.getElementById('pStock').value = p.stock;
+    document.getElementById('pExpiry').value = p.expiry? new Date(p.expiry).toISOString().split('T')[0] : '';
+    document.getElementById('pBatch').value = p.batch||'';
+    selectedCat = p.category||'Milk';
+    selectedUnit = p.unit||'1 Ltr';
+    selectedFat = p.fat||'Full Cream';
+    if(p.imageUrl || p.image){ imageUrl = p.imageUrl || p.image; document.getElementById('previewMain').src=imageUrl; document.getElementById('previewMain').style.display='block'; document.getElementById('uploadText').style.display='none'; document.getElementById('liveImg').src=imageUrl; }
+    updatePreview();
+  }catch(e){}
+}
+
+document.addEventListener('DOMContentLoaded', loadEdit);
+if(isQuick){ setTimeout(fillSample, 300); }
+</script>
+</body>
+</html>

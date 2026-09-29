@@ -1,5 +1,5 @@
- // public/shop-templates/shop-core.js 
-//   bhai iss file ko hath nhi lgana h ye golden rule h samjha na 
+// public/shop-templates/shop-core.js
+// bhai iss file ko hath nhi lgana h ye golden rule h samjha na
 // NOTE: Photo Local + Cloudinary dono. Har photo ka alag storage key
 // CHANGED: Added auto compress + DB save + SAFETY CHECK
 
@@ -126,3 +126,79 @@ const ShopCore = {
         }
     }
 }
+
+// ==========================================================
+// ===== NEW ADDED: BANDWIDTH SAVER - COMMON MODULE LOADER ==
+// ===== Iske upar ka code bilkul touch nahi kiya ===========
+// ===== Ye common wale sab ek sath load na ho iske liye ===
+// ==========================================================
+(function() {
+    const PAGE = document.body.dataset.page || 'customer';
+    console.log("[ShopCore] Bandwidth Saver Active, Page:", PAGE);
+
+    // Helper: script ko tabhi load karo jab jarurat ho
+    function loadScript(path) {
+        return new Promise((resolve, reject) => {
+            // Already loaded check
+            if (document.querySelector(`script[src*="${path}"]`)) {
+                resolve();
+                return;
+            }
+            const s = document.createElement('script');
+            s.src = path;
+            s.async = true;
+            s.onload = resolve;
+            s.onerror = reject;
+            document.body.appendChild(s);
+        });
+    }
+
+    async function initCommonLoader() {
+        // Base path - common ka path auto-detect
+        const basePath = '/shop-templates/common';
+
+        // 1. Halke wale - sab page pe chahiye
+        // Note: lazy-load aur currency formatter halke hai
+        try {
+            await loadScript(`${basePath}/utils/lazy-load.js`);
+        } catch(e) {}
+
+        // 2. PAGE ke hisab se load karo - sab ek sath nahi
+        if (PAGE === 'customer') {
+            // Customer ko sirf count chahiye, pura cart nahi
+            await loadScript(`${basePath}/cart/cart-count.js`);
+            // Wishlist bhi lazy
+            if (document.querySelector('.wishlist-btn, #wishlist')) {
+                await loadScript(`${basePath}/wishlist/wishlist.js`);
+            }
+        }
+
+        if (PAGE === 'cart') {
+            await loadScript(`${basePath}/cart/cart-core.js`);
+        }
+
+        if (PAGE === 'checkout') {
+            await loadScript(`${basePath}/cart/cart-core.js`);
+            await loadScript(`${basePath}/checkout/checkout.js`);
+        }
+
+        if (PAGE === 'dashboard') {
+            await loadScript(`${basePath}/core/dashboard-core.js`);
+            await loadScript(`${basePath}/orders/orders.js`);
+        }
+
+        // 3. On-demand functions - button dabane pe hi load hoga
+        window.loadShareModule = () => loadScript(`${basePath}/share/whatsapp-share.js`);
+        window.loadQrModule = () => loadScript(`${basePath}/share/qr-share.js`);
+        window.loadChatbot = () => loadScript(`${basePath}/ai/chatbot.js`);
+
+        console.log("[ShopCore] Common modules loaded conditionally for:", PAGE);
+    }
+
+    // Page load ke baad chalao
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCommonLoader);
+    } else {
+        initCommonLoader();
+    }
+})();

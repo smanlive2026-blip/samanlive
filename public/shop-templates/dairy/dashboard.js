@@ -1,187 +1,196 @@
-// public/shop-templates/dairy/dashboard.js
-// DAIRY OWNER DASHBOARD - FULL LOGIC WITH COMMON MODULES
+// LOCATION: public/shop-templates/dairy/dashboard.js - V7 WORLD CLASS FINAL - FULL
+// NO LOCALSTORAGE - ONLY API - SPORTS LEVEL
 
-let SHOP_ID = new URLSearchParams(window.location.search).get('shopId') || localStorage.getItem('lastShopId') || 'DAIRY123';
-let PRODUCTS = [];
+(function(){
+  if(window.DairyDashboardLoaded) return;
+  window.DairyDashboardLoaded = true;
 
-// ===== INIT =====
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log("DAIRY DASHBOARD INIT:", SHOP_ID);
-    ShopCore.init(SHOP_ID, 'dairy');
+  const API_BASE = '/api/shops/dairy';
+  const params = new URLSearchParams(location.search);
+  window.shopId = params.get('shopId') || params.get('id') || '';
+  const shopId = window.shopId;
 
-    loadShopInfo();
-    loadInventory();
-    loadSubscriptions();
-    loadOrders();
-    loadWallet();
-    loadAnalytics();
-    checkExpiryAndLowStock();
-});
+  if(!shopId){
+    document.body.innerHTML = '<div style="padding:40px;text-align:center"><h2>shopId missing! URL me ?shopId=DAIRY123 lagao</h2></div>';
+    return;
+  }
 
-// ===== 1. SHOP INFO - common/profile/shop-info.js =====
-async function loadShopInfo() {
-    try {
-        const res = await fetch(`/api/shops/${SHOP_ID}`);
-        const data = await res.json();
-        if (data.shop) {
-            document.getElementById('shopName').innerText = data.shop.shopName || 'Gopal Dairy';
-            document.getElementById('todaySale').innerText = `₹${data.shop.todaySale || 0}`;
-            // owner photo DB se - golden rule
-            if (data.shop.ownerPhotoUrl) {
-                document.getElementById('ownerPhoto').src = data.shop.ownerPhotoUrl;
-                localStorage.setItem(`photo_${SHOP_ID}_owner_cloud`, data.shop.ownerPhotoUrl);
-            }
-        }
-    } catch (e) { console.warn("Shop info load failed, local se chal raha"); }
-}
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const el = document.getElementById('shopIdDisplay');
+    if(el) el.innerText = 'ID: ' + shopId.slice(-6);
+  });
 
-// ===== 2. INVENTORY - common/inventory/inventory.js CONNECTED =====
-async function loadInventory() {
-    try {
-        // Tera common API core use hoga agar hai
-        const res = await fetch(`/api/products?shopId=${SHOP_ID}`);
-        const data = await res.json();
-        PRODUCTS = data.products || [];
-        renderProducts(PRODUCTS);
-        document.getElementById('milkStock').innerText = calculateMilkStock() + ' Ltr';
-    } catch (e) {
-        // Fallback local data
-        PRODUCTS = JSON.parse(localStorage.getItem(`products_${SHOP_ID}`) || '[]');
-        renderProducts(PRODUCTS);
+  let allProducts = [];
+  let currentCat = 'all';
+
+  // ===== TOAST =====
+  function toast(m){
+    const t = document.getElementById('toast');
+    if(!t) return alert(m);
+    t.innerText = m;
+    t.style.display = 'block';
+    setTimeout(()=> t.style.display='none', 2500);
+  }
+  window.dairyToast = toast;
+
+  // ===== API LOAD =====
+  async function load(){
+    try{
+      const r = await fetch(`${API_BASE}/${shopId}?t=${Date.now()}`, { cache:'no-store' });
+      const d = await r.json();
+      if(!d.success) throw new Error(d.message);
+      const s = d.shop;
+
+      const totalLtr = s.products?.reduce((sum,p)=>sum+(parseFloat(p.stock)||0),0) || 0;
+      const saleEl = document.getElementById('items');
+      if(saleEl) saleEl.innerText = totalLtr + ' L';
+      const pc = document.getElementById('prodCount');
+      if(pc) pc.innerText = `(${s.products?.length || 0})`;
+      const sale = document.getElementById('sale');
+      if(sale) sale.innerText = s.stats?.todaySale || 0;
+      const rev = document.getElementById('revenue');
+      if(rev) rev.innerText = '₹' + (s.stats?.revenue || 0);
+      const exp = document.getElementById('expiry');
+      if(exp) exp.innerText = s.stats?.expiryToday || checkExpiry(s.products||[]).length;
+
+      const isOpen = s.settings?.isOpen ?? true;
+      const sw = document.getElementById('toggleSwitch');
+      const tt = document.getElementById('toggleText');
+      if(sw) sw.className = 'switch ' + (isOpen ? 'on' : '');
+      if(tt) tt.innerText = isOpen ? 'Open' : 'Closed';
+
+      allProducts = s.products || [];
+      render(allProducts);
+      renderLow(s.lowStock || allProducts.filter(p => (p.stock||0) <= 5));
+      renderSubs(s.subscriptions || []);
+      renderLiveOrders(s.liveOrders || []);
+
+      if(window.CartCount && window.CartCount.refresh) CartCount.refresh(shopId);
+
+    }catch(e){
+      const c = document.getElementById('inventoryList');
+      if(c) c.innerHTML = `<p style="padding:20px;color:red">Error: ${e.message}<br>API: ${API_BASE}/${shopId} check karo</p>`;
     }
-}
+  }
 
-function renderProducts(list) {
-    const box = document.getElementById('productList');
-    if (!box) return;
-    if (!list.length) { box.innerHTML = '<p style="color:gray">No products yet</p>'; return; }
-    box.innerHTML = list.map(p => `
-        <div class="list-item">
-            <div><b>${p.name}</b><br><small>${p.stock} ${p.unit || 'Ltr'} | Exp: ${p.expiry || 'N/A'}</small></div>
-            <div><b>₹${p.price}</b><br><span class="badge">${p.stock < 10? 'Low Stock' : 'In Stock'}</span></div>
-        </div>
-    `).join('');
-}
-
-function calculateMilkStock() {
-    return PRODUCTS.reduce((sum, p) => sum + (Number(p.stock) || 0), 0);
-}
-
-// Quick Add - Dairy Special
-window.addProduct = async function() {
-    const name = document.getElementById('pName').value;
-    const price = document.getElementById('pPrice').value;
-    const stock = document.getElementById('pStock').value;
-    const expiry = document.getElementById('pExpiry').value;
-
-    if (!name ||!price) return alert('Naam aur Price bharo');
-
-    const newProduct = { name, price, stock, expiry, unit: 'Ltr', shopId: SHOP_ID };
-
-    // 1. Local save fast
-    PRODUCTS.push(newProduct);
-    localStorage.setItem(`products_${SHOP_ID}`, JSON.stringify(PRODUCTS));
-    renderProducts(PRODUCTS);
-
-    // 2. DB save
-    try {
-        await fetch('/api/products', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newProduct)
-        });
-        console.log('Product saved to DB');
-    } catch (e) { console.error('DB save failed'); }
-
-    document.getElementById('pName').value = '';
-    alert('Dairy Product Added!');
-    checkExpiryAndLowStock();
-}
-
-// ===== 3. LOW STOCK & EXPIRY - common/inventory/low-stock-alert.html =====
-function checkExpiryAndLowStock() {
-    const lowStock = PRODUCTS.filter(p => p.stock < 10);
-    const expiryToday = PRODUCTS.filter(p => {
-        if (!p.expiry) return false;
-        const today = new Date().toISOString().split('T')[0];
-        return p.expiry === today;
+  function checkExpiry(products){
+    const today = new Date().toDateString();
+    return products.filter(p=>{
+      if(!p.expiry) return false;
+      return new Date(p.expiry).toDateString() === today;
     });
+  }
 
-    document.getElementById('expiryToday').innerText = expiryToday.length + ' Item';
-    document.getElementById('lowStockCard')?.classList.toggle('alert', lowStock.length > 0);
-
-    const box = document.getElementById('lowStockList');
-    if (box) {
-        box.innerHTML = [...lowStock,...expiryToday].map(p => `
-            <div class="list-item" style="background:#fef2f2">
-                <span>⚠️ ${p.name} - ${p.stock < 10? 'Low Stock' : 'Expiry Today'}</span>
-                <button class="btn" style="width:auto;padding:6px 12px" onclick="reorder('${p.name}')">Reorder</button>
-            </div>
-        `).join('') || '<p style="color:green">Sab OK hai ✅</p>';
+  // ===== RENDER INVENTORY =====
+  function render(list){
+    const c = document.getElementById('inventoryList');
+    if(!c) return;
+    if(!list.length){
+      c.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:50px"><div style="font-size:50px">🥛</div><h3 style="margin-top:10px;font-weight:900">No dairy items</h3><p style="color:#94a3b8;font-size:13px">Click Add Milk to add</p></div>`;
+      return;
     }
-}
+    c.innerHTML = list.map(p => `
+      <div class="p-card">
+        <img src="${p.image || `https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400`}" onerror="this.src='https://placehold.co/400/0ea5e9/fff?text=${encodeURIComponent((p.name||'Milk').slice(0,10))}'">
+        <div class="p-info">
+          <b>${p.name}</b><div class="meta">${p.unit || '1 Ltr'} • Exp: ${p.expiry? new Date(p.expiry).toLocaleDateString(): '3 days'}</div>
+          <div class="price-row"><div class="price">₹${p.price}<br><span class="brand-badge">${p.fat || 'Full Cream'}</span></div><div class="stock ${(p.stock||0) <= 2 ? 'low' : p.expiryAlert? 'exp':'ok'}">${p.stock||0} ${p.unit||'L'} LEFT</div></div>
+          <div style="display:flex;gap:6px;margin-top:10px"><button onclick="editDairy('${p._id}')" style="flex:1;background:#f1f5f9;border:1px solid #e2e8f0;padding:7px;border-radius:10px;font-weight:800;font-size:11px;cursor:pointer">Edit</button><button onclick="deleteDairyItem('${p._id}')" style="width:36px;background:#fff;border:1px solid #fee2e2;color:#ef4444;border-radius:10px;cursor:pointer"><i class="fa fa-trash"></i></button></div>
+        </div>
+      </div>
+    `).join('');
+  }
 
-window.reorder = (name) => alert(name + ' ke liye supplier ko message bheja - common/orders/bulk-orders.html');
+  function renderLow(list){
+    const c = document.getElementById('lowStock');
+    if(!c) return;
+    if(!list.length){ c.innerHTML = '<div style="background:#f0fdf4;color:#166534;padding:10px;border-radius:10px;font-weight:800;font-size:12px;text-align:center">✓ All Fresh</div>'; return; }
+    c.innerHTML = list.slice(0,5).map(p=>`<div style="display:flex;justify-content:space-between;padding:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-bottom:6px"><div><b style="font-size:12px">${p.name}</b><br><small style="color:#92400e;font-size:10px">Exp: ${p.expiry? new Date(p.expiry).toLocaleDateString() : 'Today'}</small></div><span style="background:#92400e;color:#fff;padding:3px 7px;border-radius:20px;font-size:10px;font-weight:900">${p.stock}L</span></div>`).join('');
+  }
 
-// ===== 4. SUBSCRIPTION - DAIRY SPECIAL - common/subscription/subscription.js =====
-async function loadSubscriptions() {
-    try {
-        const res = await fetch(`/api/subscriptions?shopId=${SHOP_ID}`);
-        const data = await res.json();
-        const subs = data.subscriptions || [
-            { name: 'Ramesh Kumar', qty: '2 Ltr Daily', time: 'Subah 6 AM', status: 'Active' },
-            { name: 'Sunita Devi', qty: '1 Ltr Daily', time: 'Sham 5 PM', status: 'Active' }
-        ];
-        document.getElementById('subCount').innerText = subs.length;
-        document.getElementById('subscriptionList').innerHTML = subs.map(s => `
-            <div class="list-item"><span>${s.name} - ${s.qty} (${s.time})</span><span class="badge">${s.status}</span></div>
-        `).join('');
-    } catch (e) {}
-}
+  function renderSubs(list){
+    const c = document.getElementById('subBox');
+    if(!c) return;
+    if(!list.length){ c.innerHTML = '<p style="color:#94a3b8;font-size:12px">No active subscription</p>'; return; }
+    c.innerHTML = list.map(s=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f8fafc;font-size:13px;font-weight:600"><span>${s.customer} - ${s.qty}L Daily</span><span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:20px;font-size:11px">${s.slot}</span></div>`).join('');
+  }
 
-// ===== 5. ORDERS - common/orders/orders.js + live-orders.html =====
-async function loadOrders() {
-    try {
-        const res = await fetch(`/api/orders?shopId=${SHOP_ID}&status=pending`);
-        const data = await res.json();
-        const orders = data.orders || [];
-        document.getElementById('orderList').innerHTML = orders.length? orders.map(o => `
-            <div class="list-item"><span>#${o._id?.slice(-5)} - ${o.customerName} - ₹${o.total}</span><button class="btn" style="width:auto">Accept</button></div>
-        `).join('') : 'No pending orders - common/orders/live-orders.html se live ayega';
+  function renderLiveOrders(list){
+    const c = document.getElementById('liveOrders');
+    if(!c) return;
+    if(!list.length){ c.innerHTML = '<p style="color:#94a3b8;font-size:12px">No live orders</p>'; return; }
+    c.innerHTML = list.map(o=>`<div style="padding:8px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:6px;font-size:12px"><b>${o.customer}</b> - ₹${o.total}<br><small>${o.slot||'Morning'}</small></div>`).join('');
+  }
 
-        // Socket - common/core/socket-core.js se connect hoga
-        if (window.io) {
-            const socket = io();
-            socket.on(`new-order-${SHOP_ID}`, () => {
-                loadOrders();
-                new Audio('/shop-templates/common/orders/new-order-sound.mp3').play().catch(()=>{});
-            });
-        }
-    } catch (e) {}
-}
+  // ===== ACTIONS - HTML BUTTONS KE LIYE =====
+  window.viewShop = () => window.open(`/shop-templates/dairy/customer-view.html?shopId=${shopId}`, '_blank');
+  window.goForm = () => location.href = `/shop-templates/dairy/product-form.html?shopId=${shopId}`;
+  window.goQuick = () => location.href = `/shop-templates/dairy/product-form.html?shopId=${shopId}&quick=1`;
+  window.editDairy = (id) => location.href = `/shop-templates/dairy/product-form.html?shopId=${shopId}&editId=${id}`;
+  window.edit = window.editDairy; // purana naam bhi kaam kare
 
-// ===== 6. WALLET - common/finance/wallet.js / wallet/wallet.js =====
-async function loadWallet() {
-    try {
-        const res = await fetch(`/api/finance/wallet?shopId=${SHOP_ID}`);
-        const data = await res.json();
-        document.getElementById('walletBalance').innerText = `₹${data.balance || 0}`;
-        document.getElementById('payoutHistory').innerHTML = (data.history || []).map(h => `<div class="list-item"><span>${h.date}</span><span>₹${h.amount}</span></div>`).join('') || 'No history';
-    } catch (e) {}
-}
+  window.deleteDairyItem = async function(id){
+    if(!confirm('Delete karna hai?')) return;
+    try{
+      const r = await fetch(`${API_BASE}/${shopId}/item/${id}`, { method:'DELETE' });
+      const d = await r.json();
+      if(d.success){ toast('Deleted 🗑️'); load(); } else toast('Failed: '+d.message);
+    }catch(e){ toast('Error: '+e.message); }
+  };
+  window.del = window.deleteDairyItem;
 
-// ===== 7. ANALYTICS - common/analytics/sales-chart.js =====
-function loadAnalytics() {
-    const ctx = document.getElementById('salesChart');
-    if (!ctx) return;
-    // Simple chart without library
-    ctx.getContext('2d').fillStyle = '#0ea5e9';
-    ctx.getContext('2d').fillRect(0, 0, 100, 100);
-    // Agar chart.js hai toh - common/analytics/sales-chart.js load hoga shop-core.js se
-    if (window.Chart) {
-        new Chart(ctx, {
-            type: 'line',
-            data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'Milk Sale (Ltr)', data: [40, 60, 55, 80, 70, 90, 75], borderColor: '#0ea5e9' }] }
-        });
-    }
-}
+  window.toggleShop = async function(){
+    const sw = document.getElementById('toggleSwitch');
+    if(!sw) return;
+    const isOpen = !sw.classList.contains('on');
+    sw.classList.toggle('on', isOpen);
+    const tt = document.getElementById('toggleText');
+    if(tt) tt.innerText = isOpen ? 'Open' : 'Closed';
+    try{
+      await fetch(`${API_BASE}/${shopId}/settings`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ isOpen }) });
+      toast(isOpen ? 'Shop Opened - Doodh chalu 🥛' : 'Closed');
+    }catch(e){ toast('Toggle failed'); }
+  };
+
+  window.filterCat = function(cat, el){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    if(el) el.classList.add('active');
+    currentCat = cat;
+    if(cat==='all') render(allProducts);
+    else render(allProducts.filter(p => (p.category||'').toLowerCase().includes(cat.toLowerCase()) || (p.name||'').toLowerCase().includes(cat.toLowerCase())));
+  };
+
+  window.searchDairy = function(q){
+    const query = (q || document.getElementById('searchInput')?.value || '').toLowerCase();
+    if(!query) render(currentCat==='all'? allProducts : allProducts.filter(p => (p.category||'').toLowerCase().includes(currentCat.toLowerCase())));
+    else render(allProducts.filter(p => (p.name||'').toLowerCase().includes(query) || (p.category||'').toLowerCase().includes(query)));
+  };
+
+  // Search input bind
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const si = document.getElementById('searchInput');
+    if(si) si.addEventListener('input', (e)=> searchDairy(e.target.value));
+  });
+
+  // INIT
+  function init(){ load(); }
+  document.addEventListener('DOMContentLoaded', init);
+  if(document.readyState !== 'loading') init();
+
+  // SOCKET - Live orders
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setTimeout(()=>{
+      if(window.io){
+        try{
+          const socket = io();
+          socket.on(`new-order-${shopId}`, (order)=>{
+            toast(`New Order: ${order.customer} - ₹${order.total}`);
+            load();
+          });
+          socket.on(`dairy-order-${shopId}`, ()=> load());
+        }catch(e){}
+      }
+    }, 1000);
+  });
+
+})();

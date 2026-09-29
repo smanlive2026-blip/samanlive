@@ -1,154 +1,51 @@
+<!-- LOCATION: public/shop-templates/dairy/track-order.html - V7 WORLD CLASS + SOCKET -->
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Track Order - Gopal Dairy</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--milk:#0ea5e9;--dark:#0f172a;--bg:#f8fafc;--green:#22c55e}
-*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
 body{background:var(--bg)}
-.header{background:white;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px #0001;position:sticky;top:0;z-index:10}
-.status-card{background:var(--dark);color:white;margin:16px;border-radius:20px;padding:20px;text-align:center}
-.status-card h2{font-size:22px;margin-bottom:6px}
-.status-card p{opacity:.8;font-size:13px}
-.timeline{background:white;margin:16px;border-radius:16px;padding:20px;box-shadow:0 2px 8px #00006}
+.header{height:60px;background:#fff;padding:0 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;border-bottom:1px solid #e2e8f0}
+.status-card{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;margin:16px;border-radius:24px;padding:20px;text-align:center;position:relative;overflow:hidden}
+.timeline{background:#fff;margin:16px;border-radius:20px;padding:20px;border:1px solid #e2e8f0}
 .step{display:flex;gap:14px;margin-bottom:20px;position:relative}
 .step::before{content:'';position:absolute;left:15px;top:32px;width:2px;height:30px;background:#e2e8f0}
 .step:last-child::before{display:none}
-.circle{width:32px;height:32px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1}
-.step.active.circle{background:var(--green);color:white}
-.step.active2.circle{background:var(--milk);color:white;animation:pulse 1.5s infinite}
-.step.done.circle{background:var(--green);color:white}
+.circle{width:32px;height:32px;border-radius:50%;background:#f1f5f9;display:grid;place-items:center;flex-shrink:0;z-index:1;font-size:14px}
+.step.done.circle{background:var(--green);color:#fff}
+.step.active2.circle{background:var(--milk);color:#fff;animation:pulse 1.5s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 #0ea5e966}70%{box-shadow:0 0 0 10px #0ea5e900}100%{box-shadow:0 0 0 0 #0ea5e900}}
-.content{flex:1}
-.content b{font-size:14px}.content small{color:gray;display:block}
-.delivery-boy{background:white;margin:16px;border-radius:16px;padding:16px;display:flex;gap:12px;align-items:center;box-shadow:0 2px 8px #00006}
-.delivery-boy img{width:50px;height:50px;border-radius:50%}
-.actions{margin:16px;display:flex;gap:10px}
-.btn{flex:1;padding:12px;border-radius:12px;border:1px solid #e2e8f0;background:white;font-weight:600;cursor:pointer}
-.btn-dark{background:var(--dark);color:white;border:none}
-.map-placeholder{height:150px;background:#e0f2fe;border-radius:16px;margin:16px;display:flex;align-items:center;justify-content:center;color:var(--milk);font-weight:700}
+.map-placeholder{height:150px;background:linear-gradient(135deg,#e0f2fe,#bae6fd);border-radius:20px;margin:16px;display:flex;align-items:center;justify-content:center;color:#0369a1;font-weight:800;border:1px solid #bae6fd}
+.boy{background:#fff;margin:16px;border-radius:20px;padding:16px;display:flex;gap:12px;align-items:center;border:1px solid #e2e8f0}
+.btn{flex:1;padding:12px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;font-weight:800;cursor:pointer}
+.btn-dark{background:var(--dark);color:#fff;border:none}
 </style>
 </head>
 <body data-page="track" data-shop="dairy">
-
-<div class="header"><i class="fa-solid fa-arrow-left" onclick="location.href='./customer-view.html?shopId='+SHOP_ID"></i><h3>Order Tracking</h3></div>
-
-<div class="status-card" id="mainStatus">
-  <h2 id="statusTitle">🥛 Order Received!</h2>
-  <p id="statusSub">Gopal Dairy ne aapka order dekh liya hai</p>
-  <small id="orderIdShow" style="opacity:.7">Order ID: #DAIRY12345</small>
-</div>
-
-<div class="timeline">
-  <div class="step done active" id="s1">
-    <div class="circle"><i class="fa-solid fa-check"></i></div>
-    <div class="content"><b>Order Placed</b><small id="t1">Aaj 6:30 AM - Payment: COD</small></div>
-  </div>
-  <div class="step" id="s2">
-    <div class="circle"><i class="fa-solid fa-store"></i></div>
-    <div class="content"><b>Dairy ne Accept kiya</b><small id="t2">Wait kar rahe hain...</small></div>
-  </div>
-  <div class="step" id="s3">
-    <div class="circle"><i class="fa-solid fa-bottle-water"></i></div>
-    <div class="content"><b>Packing ho raha hai</b><small id="t3">Taaza doodh bottle me</small></div>
-  </div>
-  <div class="step" id="s4">
-    <div class="circle"><i class="fa-solid fa-motorcycle"></i></div>
-    <div class="content"><b>Out for Delivery</b><small id="t4">Ramu bhaiya nikal gaye</small></div>
-  </div>
-  <div class="step" id="s5">
-    <div class="circle"><i class="fa-solid fa-house"></i></div>
-    <div class="content"><b>Delivered</b><small id="t5">Gate pe latka dena bola tha</small></div>
-  </div>
-</div>
-
+<div class="header"><i class="fa-solid fa-arrow-left" onclick="location.href='./customer-view.html?shopId='+SHOP_ID" style="width:36px;height:36px;background:#f1f5f9;display:grid;place-items:center;border-radius:10px;cursor:pointer"></i><h3 style="font-weight:900">Order Tracking</h3><small id="shopIdDisplay" style="margin-left:auto;background:#f1f5f9;padding:4px 8px;border-radius:8px;font-size:10px"></small></div>
+<div class="status-card" id="mainStatus"><h2 id="statusTitle" style="font-weight:900">🥛 Order Received!</h2><p id="statusSub" style="opacity:.8;font-size:13px;margin-top:4px">Gopal Dairy ne aapka order dekh liya hai</p><small id="orderIdShow" style="opacity:.7">Order ID: #DAIRY12345</small></div>
+<div class="timeline"><div class="step done active" id="s1"><div class="circle"><i class="fa-solid fa-check"></i></div><div class="content"><b style="font-size:14px">Order Placed</b><br><small id="t1" style="color:#94a3b8">Aaj 6:30 AM - Payment: COD</small></div></div><div class="step" id="s2"><div class="circle"><i class="fa-solid fa-store"></i></div><div class="content"><b>Dairy ne Accept kiya</b><br><small id="t2" style="color:#94a3b8">Wait kar rahe hain...</small></div></div><div class="step" id="s3"><div class="circle"><i class="fa-solid fa-bottle-water"></i></div><div class="content"><b>Packing ho raha hai</b><br><small id="t3" style="color:#94a3b8">Taaza doodh bottle me</small></div></div><div class="step" id="s4"><div class="circle"><i class="fa-solid fa-motorcycle"></i></div><div class="content"><b>Out for Delivery</b><br><small id="t4" style="color:#94a3b8">Ramu bhaiya nikal gaye</small></div></div><div class="step" id="s5"><div class="circle"><i class="fa-solid fa-house"></i></div><div class="content"><b>Delivered</b><br><small id="t5" style="color:#94a3b8">Gate pe latka dena bola tha</small></div></div></div>
 <div class="map-placeholder"><i class="fa-solid fa-map-location-dot"></i> &nbsp; Live Location - common/track/track-map.html</div>
-
-<div class="delivery-boy" id="boyBox">
-  <img src="https://via.placeholder.com/100">
-  <div style="flex:1"><b id="boyName">Ramu Yadav</b><br><small>⭐ 4.9 | Dairy Boy - 3 saal se</small></div>
-  <a id="callBtn" href="tel:9000000000" style="padding:10px 16px;background:var(--green);color:white;border-radius:30px;text-decoration:none"><i class="fa-solid fa-phone"></i></a>
-</div>
-
-<div class="actions">
-  <button class="btn" onclick="cancelOrder()"><i class="fa-solid fa-xmark"></i> Cancel</button>
-  <button class="btn btn-dark" onclick="window.loadChatbot()"><i class="fa-solid fa-headset"></i> Help</button>
-</div>
-
-<!-- COMMON TRACK CORE -->
-<script src="../common/core/socket-core.js"></script>
+<div class="boy" id="boyBox"><img src="https://i.pravatar.cc/100?img=12" style="width:50px;height:50px;border-radius:50%"><div style="flex:1"><b id="boyName" style="font-size:14px">Ramu Yadav</b><br><small style="color:#94a3b8">⭐ 4.9 | Dairy Boy - 3 saal se</small></div><a id="callBtn" href="tel:9000000000" style="padding:10px 16px;background:var(--green);color:#fff;border-radius:30px;text-decoration:none"><i class="fa-solid fa-phone"></i></a></div>
+<div style="margin:16px;display:flex;gap:10px"><button class="btn" onclick="cancelOrder()"><i class="fa-solid fa-xmark"></i> Cancel</button><button class="btn btn-dark" onclick="window.loadChatbot && window.loadChatbot()"><i class="fa-solid fa-headset"></i> Help</button></div>
 <script src="../shop-templates/shop-core.js"></script>
+<script src="../common/core/socket-core.js"></script>
 <script src="../common/track/track-core.js"></script>
-
 <script>
-const SHOP_ID = new URLSearchParams(window.location.search).get('shopId') || localStorage.getItem('lastShopId') || 'DAIRY123';
-const ORDER_ID = new URLSearchParams(window.location.search).get('orderId') || 'NEW';
-
-function initTrack(){
-  ShopCore.init(SHOP_ID, 'dairy');
-  document.getElementById('orderIdShow').innerText = 'Order ID: #' + ORDER_ID.slice(-8).toUpperCase();
-
-  // Socket se live status - common/track/track-core.js + socket-core.js
-  if(window.io){
-    const socket = io();
-    socket.on(`order-status-${ORDER_ID}`, (data)=>{
-      updateStatus(data.status);
-    });
-    socket.on(`order-status-${SHOP_ID}`, (data)=>{
-      if(data.orderId===ORDER_ID) updateStatus(data.status);
-    });
-  }
-
-  // Demo ke liye auto status change (real me owner dashboard se hoga)
-  simulateStatus();
-}
-
-function updateStatus(status){
-  // status: placed, accepted, packing, out_for_delivery, delivered
-  const map = {placed:1, accepted:2, packing:3, out_for_delivery:4, delivered:5};
-  const idx = map[status] || 1;
-
-  for(let i=1;i<=5;i++){
-    const el = document.getElementById('s'+i);
-    el.classList.remove('active','active2','done');
-    if(i<idx) el.classList.add('done');
-    if(i===idx) el.classList.add('active2');
-    if(i<=idx) el.classList.add('active');
-  }
-
-  const titles = {
-    placed: ['🥛 Order Received!','Gopal Dairy ne dekh liya'],
-    accepted: ['✅ Order Accepted!','Dairy wala doodh nikaal raha hai'],
-    packing: ['🧴 Packing...','Taaza doodh bottle me pack ho raha'],
-    out_for_delivery: ['🛵 Nikal Gaya!','Ramu bhaiya 10 min me aayenge'],
-    delivered: ['🎉 Delivered!','Gate pe latka diya, check karo']
-  };
-  if(titles[status]){
-    document.getElementById('statusTitle').innerText = titles[status][0];
-    document.getElementById('statusSub').innerText = titles[status][1];
-  }
-}
-
-function simulateStatus(){
-  // Demo - har 4 sec me status badlega, real me owner karega
-  setTimeout(()=>updateStatus('accepted'), 3000);
-  setTimeout(()=>updateStatus('packing'), 7000);
-  setTimeout(()=>updateStatus('out_for_delivery'), 12000);
-}
-
-window.cancelOrder = async()=>{
-  if(!confirm('Order cancel karna hai?')) return;
-  try{
-    await fetch(`/api/orders/${ORDER_ID}/cancel`, {method:'POST'});
-    alert('Order Cancelled');
-    location.href=`./customer-view.html?shopId=${SHOP_ID}`;
-  }catch(e){ alert('Cancel fail'); }
-}
-
-document.addEventListener('DOMContentLoaded', initTrack);
+const SHOP_ID=new URLSearchParams(location.search).get('shopId')||localStorage.getItem('lastShopId')||'DAIRY123';
+const ORDER_ID=new URLSearchParams(location.search).get('orderId')||'NEW';
+document.getElementById('shopIdDisplay').innerText='ID: '+SHOP_ID.slice(-6);
+function initTrack(){ if(window.ShopCore) ShopCore.init(SHOP_ID,'dairy'); document.getElementById('orderIdShow').innerText='Order ID: #'+ORDER_ID.slice(-8).toUpperCase(); if(window.TrackCore) TrackCore.init(ORDER_ID, SHOP_ID); // Socket live
+  if(window.io){ const socket=io(); socket.on(`order-status-${ORDER_ID}`,(data)=>updateStatus(data.status)); socket.on(`order-status-${SHOP_ID}`,(data)=>{ if(data.orderId===ORDER_ID) updateStatus(data.status); }); socket.on(`dairy-order-${SHOP_ID}`,(data)=>{ if(data.orderId===ORDER_ID) updateStatus(data.status); }); } simulateStatus(); }
+function updateStatus(status){ const map={placed:1,accepted:2,packing:3,out_for_delivery:4,delivered:5,received:1}; const idx=map[status]||1; for(let i=1;i<=5;i++){ const el=document.getElementById('s'+i); el.classList.remove('active','active2','done'); if(i<idx) el.classList.add('done'); if(i===idx) el.classList.add('active2'); if(i<=idx) el.classList.add('active'); } const titles={ placed:['🥛 Order Received!','Gopal Dairy ne dekh liya'], accepted:['✅ Order Accepted!','Dairy wala doodh nikaal raha hai'], packing:['🧴 Packing...','Taaza doodh bottle me pack ho raha'], out_for_delivery:['🛵 Nikal Gaya!','Ramu bhaiya 10 min me aayenge'], delivered:['🎉 Delivered!','Gate pe latka diya, check karo'] }; if(titles[status]){ document.getElementById('statusTitle').innerText=titles[status][0]; document.getElementById('statusSub').innerText=titles[status][1]; } }
+function simulateStatus(){ setTimeout(()=>updateStatus('accepted'),3000); setTimeout(()=>updateStatus('packing'),7000); setTimeout(()=>updateStatus('out_for_delivery'),12000); }
+window.cancelOrder=async()=>{ if(!confirm('Order cancel karna hai?')) return; try{ await fetch(`/api/orders/${ORDER_ID}/cancel`,{method:'POST'}); if(window.TrackCore) TrackCore.cancel(ORDER_ID); alert('Order Cancelled'); location.href=`./customer-view.html?shopId=${SHOP_ID}`; }catch(e){ alert('Cancel fail'); } };
+document.addEventListener('DOMContentLoaded',initTrack);
 </script>
 </body>
 </html>

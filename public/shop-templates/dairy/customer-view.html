@@ -1,159 +1,325 @@
+<!-- LOCATION: public/shop-templates/dairy/customer-view.html - V7 FINAL WORLD CLASS + OLD LOGIC SAVE -->
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gopal Dairy - Fresh Milk Daily</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--milk:#0ea5e9;--dark:#0f172a;--bg:#f8fafc;--green:#22c55e}
-*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
-body{background:var(--bg)}
-.header{position:sticky;top:0;z-index:50;background:white;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px #0001}
-.logo{font-weight:800;color:var(--milk)} .logo span{color:var(--dark)}
-.icons{display:flex;gap:16px;font-size:20px;position:relative}
-.cart-count{position:absolute;top:-8px;right:-8px;background:red;color:white;font-size:10px;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.banner{background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:white;padding:24px;border-radius:0 0 24px 24px}
-.banner h1{font-size:28px;line-height:1.1} .banner p{opacity:.9;margin:8px 0 16px}
-.banner-btn{background:white;color:var(--milk);padding:10px 20px;border-radius:30px;border:none;font-weight:700}
-.categories{display:flex;gap:10px;overflow:auto;padding:16px}
-.cat{flex-shrink:0;background:white;padding:10px 16px;border-radius:30px;border:1px solid #e2e8f0;font-size:13px;cursor:pointer}
-.cat.active{background:var(--dark);color:white}
-.section{padding:16px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.card{background:white;border-radius:18px;overflow:hidden;box-shadow:0 4px 12px #00008}
-.card img{width:100%;height:130px;object-fit:cover}
-.card-body{padding:10px}
-.card-body h4{font-size:14px;margin-bottom:4px} .price{font-weight:800;color:var(--dark)}
-.add-btn{width:100%;margin-top:8px;padding:8px;background:var(--dark);color:white;border:none;border-radius:10px;font-weight:600}
-.sub-card{background:white;border-radius:16px;padding:14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border:1px dashed var(--milk)}
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #e2e8f0;z-index:100}
-.bottom-nav i{font-size:20px}
+:root{--milk:#0ea5e9;--milk2:#0284c7;--dark:#0f172a;--bg:#f8fafc;--green:#22c55e}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:var(--bg);color:var(--dark);padding-bottom:90px}
+.header{height:64px;background:rgba(255,255,255,.9);backdrop-filter:blur(20px);border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:50}
+.logo{font-weight:900;font-size:18px;display:flex;gap:8px;align-items:center}
+.logo i{background:var(--milk);color:#fff;width:36px;height:36px;display:grid;place-items:center;border-radius:10px}
+.hdr-icons{display:flex;gap:12px;align-items:center}
+.icon-btn{width:38px;height:38px;background:#f1f5f9;border-radius:12px;display:grid;place-items:center;cursor:pointer;position:relative;border:none}
+.cart-btn{position:relative;background:var(--dark);color:#fff;padding:10px 16px;border-radius:12px;border:none;font-weight:800;display:flex;gap:8px;align-items:center;cursor:pointer}
+.cart-count{position:absolute;top:-6px;right:-6px;background:var(--milk);color:#fff;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900}
+.hero{margin:16px;background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);border-radius:24px;padding:20px;color:#fff;position:relative;overflow:hidden}
+.hero h1{font-size:24px;font-weight:900;line-height:1.1}.hero p{font-size:13px;opacity:.9;margin-top:6px;font-weight:600}
+.hero-badges{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.badge{background:rgba(255,255,255,.2);backdrop-filter:blur(10px);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800;display:flex;gap:6px;align-items:center}
+.slot-bar{display:flex;gap:8px;padding:0 16px;margin-top:16px}
+.slot{flex:1;padding:12px;border-radius:14px;border:2px solid #e2e8f0;background:#fff;font-weight:800;font-size:13px;display:flex;justify-content:center;gap:8px;align-items:center;cursor:pointer;transition:.2s}
+.slot.active{border-color:var(--milk);background:#e0f2fe;color:#0369a1}
+.filters{display:flex;gap:8px;padding:12px 16px;overflow:auto}
+.filter{padding:8px 16px;border-radius:20px;border:1px solid #e2e8f0;background:#fff;font-weight:700;font-size:12px;white-space:nowrap;cursor:pointer}
+.filter.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+.products{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:0 16px}
+@media(min-width:700px){.products{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1000px){.products{grid-template-columns:repeat(4,1fr)}}
+.p-card{background:#fff;border-radius:20px;border:1px solid #f1f5f9;overflow:hidden;position:relative;transition:.25s}
+.p-card:hover{transform:translateY(-4px);box-shadow:0 15px 30px rgba(0,0,0,.08)}
+.p-card img{width:100%;height:160px;object-fit:cover}
+.p-body{padding:12px}
+.p-body b{font-size:14px;line-height:1.2;display:block;min-height:34px}
+.p-meta{font-size:11px;color:#94a3b8;font-weight:600;margin-top:2px}
+.p-price{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.price{font-weight:900;font-size:16px}.price small{font-size:11px;color:#64748b;font-weight:600}
+.add-btn{background:var(--dark);color:#fff;border:none;padding:8px 14px;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer;display:flex;gap:6px;align-items:center}
+.qty-bar{display:none;align-items:center;gap:8px;background:#f1f5f9;border-radius:12px;padding:4px}
+.qty-bar.show{display:flex}
+.qty-btn{width:28px;height:28px;border-radius:8px;border:none;background:var(--dark);color:#fff;font-weight:900;cursor:pointer}
+.exp{position:absolute;top:8px;left:8px;background:#ef4444;color:#fff;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:900}
+.fresh{position:absolute;top:8px;left:8px;background:var(--green);color:#fff;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:900}
+.sub-toggle{margin:16px;background:#fff;border:2px solid #e0f2fe;border-radius:16px;padding:14px;display:flex;justify-content:space-between;align-items:center}
+.switch{width:44px;height:26px;background:#e2e8f0;border-radius:20px;position:relative;cursor:pointer;transition:.3s}
+.switch.on{background:var(--milk)}.switch::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:4px;left:4px;transition:.3s}.switch.on::after{left:22px}
+.cart-drawer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e2e8f0;border-radius:24px 24px 0 0;padding:16px;transform:translateY(100%);transition:.35s cubic-bezier(.16,1,.3,1);z-index:100;max-height:80vh;overflow:auto}
+.cart-drawer.open{transform:translateY(0)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);display:none;z-index:99}
+.overlay.show{display:block}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #e2e8f0;z-index:80}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 20px;border-radius:30px;font-weight:700;font-size:13px;display:none;z-index:200}
 </style>
 </head>
 <body data-page="customer" data-shop="dairy">
 
-<header class="header">
-  <div class="logo">🥛 <span id="shopName">Gopal Dairy</span></div>
-  <div class="icons">
-    <span onclick="window.loadChatbot()"><i class="fa-regular fa-message"></i></span>
-    <span id="wishlistIcon"><i class="fa-regular fa-heart"></i></span>
-    <span id="cartIcon" style="position:relative"><i class="fa-solid fa-bag-shopping"></i><div class="cart-count" id="cartCount">0</div></span>
-  </div>
-</header>
-
-<div class="banner">
-  <h1 id="bannerTitle">Taaza Doodh,<br>Har Subah Aapke Ghar</h1>
-  <p id="bannerSub">100% Pure | No Powder | Direct Farm</p>
-  <button class="banner-btn" onclick="document.getElementById('subscription').scrollIntoView()">Monthly Lo - 10% OFF</button>
-</div>
-
-<div class="categories" id="categoryList">
-  <div class="cat active">All</div><div class="cat">🥛 Milk</div><div class="cat">🧈 Dahi</div><div class="cat">🧀 Paneer</div><div class="cat">🍦 Ghee</div><div class="cat">🥤 Lassi</div>
-</div>
-
-<!-- SUBSCRIPTION CARD - DAIRY SPECIAL -->
-<div class="section" id="subscription">
-  <div class="sub-card">
-    <div><b>🔄 Daily Milk Subscription</b><br><small>Subah 6AM - Cancel anytime</small></div>
-    <button class="banner-btn" style="background:var(--dark);color:white">Subscribe</button>
+<div class="header">
+  <div class="logo"><i class="fa-solid fa-bottle-water"></i> <span id="shopName">Gopal Dairy</span> <small id="shopIdDisplay" style="background:#f1f5f9;padding:4px 8px;border-radius:8px;font-size:10px;margin-left:6px"></small></div>
+  <div class="hdr-icons">
+    <button class="icon-btn" onclick="window.loadChatbot && window.loadChatbot()"><i class="fa-regular fa-message"></i></button>
+    <button class="icon-btn" id="wishlistIcon"><i class="fa-regular fa-heart"></i></button>
+    <button class="cart-btn" onclick="toggleCart()"><i class="fa-solid fa-bag-shopping"></i> <span id="cartText">Cart</span> <span class="cart-count" id="cartCount">0</span></button>
   </div>
 </div>
 
-<div class="section">
-  <div style="display:flex;justify-content:space-between;margin-bottom:12px"><h3>Fresh Today</h3><small id="openStatus" style="color:var(--green)">● OPEN</small></div>
-  <div class="grid" id="productGrid">
-    <!-- Products yaha ayenge - common/components/product-card.html se -->
+<div class="hero">
+  <h1 id="bannerTitle">Fresh Milk<br>Daily at 6AM 🥛</h1>
+  <p id="bannerSub">Full Cream • No Water • Lab Tested</p>
+  <div class="hero-badges">
+    <div class="badge"><i class="fa-solid fa-truck-fast"></i> 30 min delivery</div>
+    <div class="badge"><i class="fa-solid fa-award"></i> <span id="ratingBadge">4.9 Rating</span></div>
+    <div class="badge" id="openStatus"><i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN</div>
   </div>
 </div>
 
-<!-- REVIEWS - common/reviews/reviews.html -->
-<div class="section">
-  <div style="background:white;border-radius:16px;padding:14px">
-    <h4>⭐ 4.8 (230 Reviews)</h4><p style="font-size:13px;color:gray">Customers love our pure milk - common/reviews/reviews.js se load hoga</p>
-  </div>
+<div class="slot-bar">
+  <div class="slot active" onclick="setSlot('morning',this)"><i class="fa-solid fa-sun"></i> Subah 6-9 AM</div>
+  <div class="slot" onclick="setSlot('evening',this)"><i class="fa-solid fa-moon"></i> Sham 5-8 PM</div>
 </div>
+
+<div class="sub-toggle" id="subscription">
+  <div><b style="font-size:14px">🔄 Daily Milk Subscription</b><p style="font-size:11px;color:#64748b;font-weight:600">Subah 6AM - Cancel anytime - 10% OFF</p></div>
+  <div class="switch" id="subSwitch" onclick="toggleSub()"></div>
+</div>
+
+<div class="filters" id="filters">
+  <div class="filter active" onclick="filterProd('all',this)">All</div>
+  <div class="filter" onclick="filterProd('Milk',this)">🥛 Milk</div>
+  <div class="filter" onclick="filterProd('Dahi',this)">🧈 Dahi</div>
+  <div class="filter" onclick="filterProd('Ghee',this)">🍦 Ghee</div>
+  <div class="filter" onclick="filterProd('Paneer',this)">🧀 Paneer</div>
+  <div class="filter" onclick="filterProd('Lassi',this)">🥤 Lassi</div>
+</div>
+
+<div style="padding:0 16px;display:flex;justify-content:space-between;margin-bottom:8px"><h3 style="font-weight:900">Fresh Today</h3><small id="prodCount" style="color:#94a3b8;font-weight:700"></small></div>
+<div class="products" id="productGrid">Loading fresh stock...</div>
+
+<div style="padding:16px"><div style="background:white;border-radius:16px;padding:14px;border:1px solid #f1f5f9"><h4>⭐ <span id="reviewCount">4.8 (230 Reviews)</span></h4><p style="font-size:13px;color:gray" id="reviewText">Customers love our pure milk - common/reviews/reviews.js se load hoga</p></div></div>
 
 <div style="height:80px"></div>
 
 <nav class="bottom-nav">
   <span><i class="fa-solid fa-house"></i></span>
   <span><i class="fa-solid fa-magnifying-glass"></i></span>
-  <span><i class="fa-solid fa-qrcode" onclick="window.loadQrModule()"></i></span>
+  <span onclick="window.loadQrModule && window.loadQrModule()"><i class="fa-solid fa-qrcode"></i></span>
   <span><i class="fa-solid fa-user"></i></span>
 </nav>
 
-<!-- CORE SCRIPTS -->
+<!-- CART DRAWER -->
+<div class="overlay" id="overlay" onclick="toggleCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h3 style="font-weight:900">Your Milk Basket</h3>
+    <button onclick="toggleCart()" style="background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div id="cartItems">Cart empty</div>
+  <div style="margin-top:12px;padding-top:12px;border-top:1px dashed #e2e8f0">
+    <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>Slot</span><span id="cartSlot">Morning 6-9 AM</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:4px"><span>Type</span><span id="cartType">One-time</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:900;margin-top:8px"><span>Total</span><span id="cartTotal">₹0</span></div>
+    <button onclick="goCheckout()" style="width:100%;margin-top:12px;background:var(--milk);color:#fff;border:none;padding:14px;border-radius:14px;font-weight:900;font-size:14px;cursor:pointer"><i class="fa-solid fa-bolt"></i> Checkout - Fresh Delivery</button>
+    <button onclick="goOldCart()" style="width:100%;margin-top:8px;background:#f1f5f9;color:var(--dark);border:1px solid #e2e8f0;padding:12px;border-radius:14px;font-weight:800;font-size:13px;cursor:pointer">View Full Cart (Old)</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- CORE - OLD LOGIC SAVE -->
 <script src="../shop-templates/shop-core.js"></script>
 <script>
-// CUSTOMER VIEW LOGIC - DAIRY
-const SHOP_ID = new URLSearchParams(window.location.search).get('shopId') || 'DAIRY123';
-let CART = JSON.parse(localStorage.getItem(`cart_${SHOP_ID}`)||'[]');
+const params = new URLSearchParams(location.search);
+const shopId = params.get('shopId') || params.get('id') || 'DAIRY123';
+window.shopId = shopId;
+document.getElementById('shopIdDisplay').innerText = 'ID: ' + shopId.slice(-6);
+if(!shopId) alert('shopId missing! Add ?shopId= in URL');
 
-async function loadCustomerView(){
-  // 1. Shop info - common/profile/shop-info.js
+let allProducts = [];
+let cart = {}; // new: {productId: qty}
+let currentSlot = 'morning';
+let isSub = false;
+let currentFilter = 'all';
+
+// ===== OLD LOGIC SYNC - TERA PURANA CODE =====
+let CART_OLD = JSON.parse(localStorage.getItem(`cart_${shopId}`)||'[]');
+function syncCartToLocalStorage(){
+  const arr = Object.entries(cart).map(([id,qty])=>({id, productId:id, qty}));
+  localStorage.setItem(`cart_${shopId}`, JSON.stringify(arr));
+  localStorage.setItem(`cart_${shopId}_new`, JSON.stringify(cart));
+  // common/cart-count ke liye
+  if(window.updateCartCount) window.updateCartCount();
+}
+
+function toast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
+
+async function loadShop(){
   try{
-    const res = await fetch(`/api/shops/${SHOP_ID}`);
-    const data = await res.json();
-    if(data.shop){
-      document.getElementById('shopName').innerText = data.shop.shopName;
-      document.getElementById('bannerTitle').innerHTML = data.shop.bannerTitle || 'Taaza Doodh,<br>Har Subah';
-      document.getElementById('openStatus').innerText = data.shop.isOpen? '● OPEN' : '● CLOSED';
+    const r = await fetch(`/api/shops/dairy/${shopId}?t=${Date.now()}`, {cache:'no-store'});
+    const d = await r.json();
+    if(d.success){
+      document.getElementById('shopName').innerText = d.shop.shopName || d.shop.name || 'Gopal Dairy';
+      document.getElementById('bannerTitle').innerHTML = d.shop.bannerTitle || 'Taaza Doodh,<br>Har Subah';
+      document.getElementById('openStatus').innerHTML = (d.shop.isOpen? '<i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN' : '<i class="fa-solid fa-circle" style="color:red"></i> CLOSED');
+      allProducts = d.shop.products || [];
+    } else {
+      allProducts = mockProducts();
     }
-  }catch(e){}
-
-  // 2. Products - common se
-  try{
-    const res = await fetch(`/api/products?shopId=${SHOP_ID}`);
-    const data = await res.json();
-    renderGrid(data.products || mockProducts());
-  }catch(e){ renderGrid(mockProducts()); }
-
-  updateCartCount();
+  }catch(e){
+    // API fail toh mock
+    allProducts = mockProducts();
+  }
+  document.getElementById('prodCount').innerText = `(${allProducts.length})`;
+  render(allProducts);
+  restoreCartFromLocalStorage();
 }
 
 function mockProducts(){
   return [
-    {name:'Full Cream Milk 1Ltr', price:62, img:'https://images.unsplash.com/photo-1550583724-b2692b85b150', unit:'1 Ltr'},
-    {name:'Desi Dahi 500g', price:45, img:'https://images.unsplash.com/photo-1488477181946-64290103bbd6', unit:'500g'},
-    {name:'Fresh Paneer 250g', price:90, img:'https://images.unsplash.com/photo-1634487359989-3e90c9432133', unit:'250g'},
-    {name:'Desi Ghee 500ml', price:320, img:'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d', unit:'500ml'},
+    {_id:'m1', name:'Full Cream Milk 1Ltr', price:62, imageUrl:'https://images.unsplash.com/photo-1550583724-b2692b85b150', unit:'1 Ltr', category:'Milk', fat:'Full Cream', stock:10, expiry: new Date(Date.now()+86400000*2)},
+    {_id:'m2', name:'Desi Dahi 500g', price:45, imageUrl:'https://images.unsplash.com/photo-1488477181946-64290103bbd6', unit:'500g', category:'Dahi', stock:5},
+    {_id:'m3', name:'Fresh Paneer 250g', price:90, imageUrl:'https://images.unsplash.com/photo-1634487359989-3e90c9432133', unit:'250g', category:'Paneer', stock:8},
+    {_id:'m4', name:'Desi Ghee 500ml', price:320, imageUrl:'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d', unit:'500ml', category:'Ghee', stock:3},
   ];
 }
 
-function renderGrid(products){
-  document.getElementById('productGrid').innerHTML = products.map((p,i)=>`
-    <div class="card">
-      <img src="${p.imageUrl || p.img}">
-      <div class="card-body">
-        <h4>${p.name}</h4><small style="color:gray">${p.unit}</small>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-          <span class="price">₹${p.price}</span><span style="font-size:12px">⭐ 4.8</span>
+function restoreCartFromLocalStorage(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(`cart_${shopId}_new`)||'{}');
+    if(Object.keys(saved).length){ cart = saved; }
+    updateCartUI();
+  }catch(e){}
+}
+
+function render(list){
+  const g = document.getElementById('productGrid');
+  if(!list.length){ g.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px"><div style="font-size:50px">🥛</div><h3>No items in ${currentFilter}</h3></div>`; return; }
+  g.innerHTML = list.map(p=>{
+    const qty = cart[p._id] || 0;
+    const isExp = p.expiry && (new Date(p.expiry) - new Date() < 86400000);
+    const img = p.imageUrl || p.image || p.img || 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400';
+    return `
+    <div class="p-card">
+      ${isExp? `<div class="exp">EXP TODAY</div>` : `<div class="fresh">FRESH</div>`}
+      <img src="${img}" onerror="this.src='https://placehold.co/400/0ea5e9/fff?text=${encodeURIComponent(p.name.slice(0,10))}'">
+      <div class="p-body">
+        <b>${p.name}</b>
+        <div class="p-meta">${p.fat||'Full Cream'} • ${p.unit||'1 Ltr'} • Exp ${p.expiry? new Date(p.expiry).toLocaleDateString() : '2 days'}</div>
+        <div class="p-price">
+          <div class="price">₹${p.price} <small>/${p.unit||'Ltr'}</small></div>
+          <div class="${qty>0? 'qty-bar show':'qty-bar'}" id="qty-${p._id}">
+            <button class="qty-btn" onclick="updateQty('${p._id}',-1)">-</button>
+            <b style="min-width:20px;text-align:center">${qty}</b>
+            <button class="qty-btn" onclick="updateQty('${p._id}',1)">+</button>
+          </div>
+          <button class="add-btn" id="add-${p._id}" onclick="updateQty('${p._id}',1)" style="${qty>0?'display:none':''}"><i class="fa-solid fa-plus"></i> Add</button>
         </div>
-        <button class="add-btn" onclick="addToCart(${i})">Add +</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
-window.addToCart = function(idx){
-  CART.push({idx, qty:1});
-  localStorage.setItem(`cart_${SHOP_ID}`, JSON.stringify(CART));
-  updateCartCount();
-  // common/cart/cart-count.js auto update karega + common/components/product-card.js ka animation
-  // Vibrate feedback
+function updateQty(id, delta){
+  const p = allProducts.find(x=>x._id===id);
+  if(!p) return;
+  let q = (cart[id]||0) + delta;
+  if(q<0) q=0;
+  if(q> (p.stock||10)) { toast('Stock limit: '+p.stock+'L'); return; }
+  if(q===0) delete cart[id]; else cart[id]=q;
+
+  const qtyEl = document.getElementById(`qty-${id}`);
+  const addEl = document.getElementById(`add-${id}`);
+  if(qtyEl && addEl){
+    if(q>0){
+      qtyEl.classList.add('show');
+      addEl.style.display='none';
+      qtyEl.querySelector('b').innerText = q;
+    }else{
+      qtyEl.classList.remove('show');
+      addEl.style.display='flex';
+    }
+  }
+  updateCartUI();
+  syncCartToLocalStorage();
+  if(window.CartCount && window.CartCount.refresh) window.CartCount.refresh(shopId);
   navigator.vibrate && navigator.vibrate(50);
+  if(delta>0) toast(`${p.name} added 🥛`);
 }
 
-function updateCartCount(){
-  document.getElementById('cartCount').innerText = CART.length;
-  document.getElementById('cartCount').style.display = CART.length? 'flex':'none';
+function updateCartUI(){
+  const count = Object.values(cart).reduce((a,b)=>a+b,0);
+  document.getElementById('cartCount').innerText = count;
+  document.getElementById('cartText').innerText = count? `₹${getTotal()}` : 'Cart';
+  const itemsDiv = document.getElementById('cartItems');
+  if(!count){ itemsDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px">Cart khali hai, doodh add karo</p>'; document.getElementById('cartTotal').innerText='₹0'; return; }
+  let total=0; let html='';
+  for(const id in cart){
+    const p = allProducts.find(x=>x._id===id);
+    if(!p) continue;
+    const qty = cart[id];
+    total += p.price * qty;
+    html += `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f8fafc"><div><b style="font-size:13px">${p.name}</b><br><small style="color:#94a3b8">${qty} x ₹${p.price}</small></div><b>₹${p.price*qty}</b></div>`;
+  }
+  itemsDiv.innerHTML = html;
+  document.getElementById('cartTotal').innerText = '₹'+total;
 }
 
-// Cart icon -> common/cart/cart.html pe le jao
-document.getElementById('cartIcon').onclick = ()=> location.href=`/shop-templates/common/cart/cart.html?shopId=${SHOP_ID}`;
+function getTotal(){
+  let t=0; for(const id in cart){ const p=allProducts.find(x=>x._id===id); if(p) t+=p.price*cart[id]; } return t;
+}
 
-document.addEventListener('DOMContentLoaded', loadCustomerView);
+function setSlot(slot, el){
+  currentSlot=slot;
+  document.querySelectorAll('.slot').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('cartSlot').innerText = slot==='morning'? 'Morning 6-9 AM' : 'Evening 5-8 PM';
+  toast(slot==='morning'? 'Subah delivery set ☀️' : 'Sham delivery set 🌙');
+}
+
+function toggleSub(){
+  isSub=!isSub;
+  document.getElementById('subSwitch').classList.toggle('on', isSub);
+  document.getElementById('cartType').innerText = isSub? 'Daily Subscription (10% OFF)' : 'One-time';
+  toast(isSub? 'Daily subscription ON 🔁' : 'One-time order');
+}
+
+function filterProd(cat, el){
+  currentFilter=cat;
+  document.querySelectorAll('.filter').forEach(f=>f.classList.remove('active'));
+  el.classList.add('active');
+  if(cat==='all') render(allProducts);
+  else render(allProducts.filter(p=> (p.category||'').toLowerCase().includes(cat.toLowerCase()) || p.name.toLowerCase().includes(cat.toLowerCase())));
+}
+
+function toggleCart(){
+  const d = document.getElementById('cartDrawer');
+  const o = document.getElementById('overlay');
+  d.classList.toggle('open');
+  o.classList.toggle('show');
+}
+
+function goCheckout(){
+  if(!Object.keys(cart).length){ toast('Cart khali hai!'); return; }
+  const cartData = btoa(JSON.stringify({cart, shopId, slot: currentSlot, isSub}));
+  // Naya world class checkout
+  location.href = `/shop-templates/dairy/checkout.html?shopId=${shopId}&data=${cartData}`;
+}
+
+function goOldCart(){
+  // Purana common cart - backward compatibility
+  location.href = `/shop-templates/common/cart/cart.html?shopId=${shopId}`;
+}
+
+// Search
+document.addEventListener('DOMContentLoaded', loadShop);
+if(document.readyState!=='loading') loadShop();
 </script>
+
+<!-- COMMON MODULES - OLD LOGIC KE LIYE -->
+<script src="../common/cart/cart-count.js"></script>
+<script src="../common/qr/qr.js"></script>
+<script src="../common/reviews/reviews.js"></script>
 </body>
 </html>
