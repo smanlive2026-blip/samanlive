@@ -1,115 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dairy Store</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #f0f9ff; }
-       .header { background: linear-gradient(135deg, #0284c7 0%, #075985 100%); color: white; padding: 50px 20px; text-align: center; }
-       .header h1 { font-size: 36px; }
-       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
-        
-       .tabs { display: flex; gap: 10px; margin-bottom: 30px; }
-       .tab { background: white; padding: 15px 30px; border-radius: 12px; cursor: pointer; font-weight: 600; }
-       .tab.active { background: #0284c7; color: white; }
-        
-       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-       .product-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
-       .product-icon { font-size: 40px; color: #0284c7; margin-bottom: 15px; }
-       .product-price { font-size: 24px; font-weight: 800; color: #0284c7; }
-       .btn-subscribe { background: #0284c7; color: white; padding: 12px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
-        
-       .delivery-info { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gopal Dairy - Fresh Milk Daily</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{--milk:#0ea5e9;--dark:#0f172a;--bg:#f8fafc;--green:#22c55e}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+body{background:var(--bg)}
+.header{position:sticky;top:0;z-index:50;background:white;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px #0001}
+.logo{font-weight:800;color:var(--milk)} .logo span{color:var(--dark)}
+.icons{display:flex;gap:16px;font-size:20px;position:relative}
+.cart-count{position:absolute;top:-8px;right:-8px;background:red;color:white;font-size:10px;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.banner{background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:white;padding:24px;border-radius:0 0 24px 24px}
+.banner h1{font-size:28px;line-height:1.1} .banner p{opacity:.9;margin:8px 0 16px}
+.banner-btn{background:white;color:var(--milk);padding:10px 20px;border-radius:30px;border:none;font-weight:700}
+.categories{display:flex;gap:10px;overflow:auto;padding:16px}
+.cat{flex-shrink:0;background:white;padding:10px 16px;border-radius:30px;border:1px solid #e2e8f0;font-size:13px;cursor:pointer}
+.cat.active{background:var(--dark);color:white}
+.section{padding:16px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{background:white;border-radius:18px;overflow:hidden;box-shadow:0 4px 12px #00008}
+.card img{width:100%;height:130px;object-fit:cover}
+.card-body{padding:10px}
+.card-body h4{font-size:14px;margin-bottom:4px} .price{font-weight:800;color:var(--dark)}
+.add-btn{width:100%;margin-top:8px;padding:8px;background:var(--dark);color:white;border:none;border-radius:10px;font-weight:600}
+.sub-card{background:white;border-radius:16px;padding:14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border:1px dashed var(--milk)}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #e2e8f0;z-index:100}
+.bottom-nav i{font-size:20px}
+</style>
 </head>
-<body>
-    <div class="header">
-        <h1><i class="fa fa-cow"></i> <span id="shopName">Fresh Dairy</span></h1>
-        <p>100% Pure | Farm Fresh | Daily Delivery</p>
+<body data-page="customer" data-shop="dairy">
+
+<header class="header">
+  <div class="logo">🥛 <span id="shopName">Gopal Dairy</span></div>
+  <div class="icons">
+    <span onclick="window.loadChatbot()"><i class="fa-regular fa-message"></i></span>
+    <span id="wishlistIcon"><i class="fa-regular fa-heart"></i></span>
+    <span id="cartIcon" style="position:relative"><i class="fa-solid fa-bag-shopping"></i><div class="cart-count" id="cartCount">0</div></span>
+  </div>
+</header>
+
+<div class="banner">
+  <h1 id="bannerTitle">Taaza Doodh,<br>Har Subah Aapke Ghar</h1>
+  <p id="bannerSub">100% Pure | No Powder | Direct Farm</p>
+  <button class="banner-btn" onclick="document.getElementById('subscription').scrollIntoView()">Monthly Lo - 10% OFF</button>
+</div>
+
+<div class="categories" id="categoryList">
+  <div class="cat active">All</div><div class="cat">🥛 Milk</div><div class="cat">🧈 Dahi</div><div class="cat">🧀 Paneer</div><div class="cat">🍦 Ghee</div><div class="cat">🥤 Lassi</div>
+</div>
+
+<!-- SUBSCRIPTION CARD - DAIRY SPECIAL -->
+<div class="section" id="subscription">
+  <div class="sub-card">
+    <div><b>🔄 Daily Milk Subscription</b><br><small>Subah 6AM - Cancel anytime</small></div>
+    <button class="banner-btn" style="background:var(--dark);color:white">Subscribe</button>
+  </div>
+</div>
+
+<div class="section">
+  <div style="display:flex;justify-content:space-between;margin-bottom:12px"><h3>Fresh Today</h3><small id="openStatus" style="color:var(--green)">● OPEN</small></div>
+  <div class="grid" id="productGrid">
+    <!-- Products yaha ayenge - common/components/product-card.html se -->
+  </div>
+</div>
+
+<!-- REVIEWS - common/reviews/reviews.html -->
+<div class="section">
+  <div style="background:white;border-radius:16px;padding:14px">
+    <h4>⭐ 4.8 (230 Reviews)</h4><p style="font-size:13px;color:gray">Customers love our pure milk - common/reviews/reviews.js se load hoga</p>
+  </div>
+</div>
+
+<div style="height:80px"></div>
+
+<nav class="bottom-nav">
+  <span><i class="fa-solid fa-house"></i></span>
+  <span><i class="fa-solid fa-magnifying-glass"></i></span>
+  <span><i class="fa-solid fa-qrcode" onclick="window.loadQrModule()"></i></span>
+  <span><i class="fa-solid fa-user"></i></span>
+</nav>
+
+<!-- CORE SCRIPTS -->
+<script src="../shop-templates/shop-core.js"></script>
+<script>
+// CUSTOMER VIEW LOGIC - DAIRY
+const SHOP_ID = new URLSearchParams(window.location.search).get('shopId') || 'DAIRY123';
+let CART = JSON.parse(localStorage.getItem(`cart_${SHOP_ID}`)||'[]');
+
+async function loadCustomerView(){
+  // 1. Shop info - common/profile/shop-info.js
+  try{
+    const res = await fetch(`/api/shops/${SHOP_ID}`);
+    const data = await res.json();
+    if(data.shop){
+      document.getElementById('shopName').innerText = data.shop.shopName;
+      document.getElementById('bannerTitle').innerHTML = data.shop.bannerTitle || 'Taaza Doodh,<br>Har Subah';
+      document.getElementById('openStatus').innerText = data.shop.isOpen? '● OPEN' : '● CLOSED';
+    }
+  }catch(e){}
+
+  // 2. Products - common se
+  try{
+    const res = await fetch(`/api/products?shopId=${SHOP_ID}`);
+    const data = await res.json();
+    renderGrid(data.products || mockProducts());
+  }catch(e){ renderGrid(mockProducts()); }
+
+  updateCartCount();
+}
+
+function mockProducts(){
+  return [
+    {name:'Full Cream Milk 1Ltr', price:62, img:'https://images.unsplash.com/photo-1550583724-b2692b85b150', unit:'1 Ltr'},
+    {name:'Desi Dahi 500g', price:45, img:'https://images.unsplash.com/photo-1488477181946-64290103bbd6', unit:'500g'},
+    {name:'Fresh Paneer 250g', price:90, img:'https://images.unsplash.com/photo-1634487359989-3e90c9432133', unit:'250g'},
+    {name:'Desi Ghee 500ml', price:320, img:'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d', unit:'500ml'},
+  ];
+}
+
+function renderGrid(products){
+  document.getElementById('productGrid').innerHTML = products.map((p,i)=>`
+    <div class="card">
+      <img src="${p.imageUrl || p.img}">
+      <div class="card-body">
+        <h4>${p.name}</h4><small style="color:gray">${p.unit}</small>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <span class="price">₹${p.price}</span><span style="font-size:12px">⭐ 4.8</span>
+        </div>
+        <button class="add-btn" onclick="addToCart(${i})">Add +</button>
+      </div>
     </div>
+  `).join('');
+}
 
-    <div class="container">
-        <div class="tabs">
-            <div class="tab active" onclick="showTab('subscription')"><i class="fa fa-calendar"></i> Subscription</div>
-            <div class="tab" onclick="showTab('products')"><i class="fa fa-shopping-bag"></i> Buy Now</div>
-        </div>
+window.addToCart = function(idx){
+  CART.push({idx, qty:1});
+  localStorage.setItem(`cart_${SHOP_ID}`, JSON.stringify(CART));
+  updateCartCount();
+  // common/cart/cart-count.js auto update karega + common/components/product-card.js ka animation
+  // Vibrate feedback
+  navigator.vibrate && navigator.vibrate(50);
+}
 
-        <div id="subscription" class="product-grid">
-            <div class="product-card">
-                <div class="product-icon"><i class="fa fa-droplet"></i></div>
-                <h3>Cow Milk</h3>
-                <div class="product-price">₹60 <span style="font-size:14px;">/L</span></div>
-                <p style="color:#64748b; font-size:12px; margin:10px 0;">Monthly: 30L = ₹1800</p>
-                <button class="btn-subscribe" onclick="subscribe('Cow Milk', 60)">Subscribe</button>
-            </div>
-            <div class="product-card">
-                <div class="product-icon"><i class="fa fa-droplet"></i></div>
-                <h3>Buffalo Milk</h3>
-                <div class="product-price">₹70 <span style="font-size:14px;">/L</span></div>
-                <p style="color:#64748b; font-size:12px; margin:10px 0;">Monthly: 30L = ₹2100</p>
-                <button class="btn-subscribe" onclick="subscribe('Buffalo Milk', 70)">Subscribe</button>
-            </div>
-            <div class="product-card">
-                <div class="product-icon"><i class="fa fa-cheese"></i></div>
-                <h3>Paneer</h3>
-                <div class="product-price">₹320 <span style="font-size:14px;">/kg</span></div>
-                <p style="color:#64748b; font-size:12px; margin:10px 0;">Weekly: 2kg = ₹640</p>
-                <button class="btn-subscribe" onclick="subscribe('Paneer', 320)">Subscribe</button>
-            </div>
-        </div>
+function updateCartCount(){
+  document.getElementById('cartCount').innerText = CART.length;
+  document.getElementById('cartCount').style.display = CART.length? 'flex':'none';
+}
 
-        <div id="products" class="product-grid" style="display:none;">
-            <div class="product-card">
-                <div class="product-icon"><i class="fa fa-bowl-food"></i></div>
-                <h3>Fresh Curd</h3>
-                <div class="product-price">₹80 <span style="font-size:14px;">/kg</span></div>
-                <button class="btn-subscribe" onclick="addToCart('Curd')">Add to Cart</button>
-            </div>
-            <div class="product-card">
-                <div class="product-icon"><i class="fa fa-jar"></i></div>
-                <h3>Desi Ghee</h3>
-                <div class="product-price">₹600 <span style="font-size:14px;">/kg</span></div>
-                <button class="btn-subscribe" onclick="addToCart('Ghee')">Add to Cart</button>
-            </div>
-        </div>
+// Cart icon -> common/cart/cart.html pe le jao
+document.getElementById('cartIcon').onclick = ()=> location.href=`/shop-templates/common/cart/cart.html?shopId=${SHOP_ID}`;
 
-        <div class="delivery-info">
-            <h3><i class="fa fa-truck"></i> Delivery Timings</h3>
-            <p style="margin-top:10px;"><strong>Morning:</strong> 6:00 AM - 8:00 AM</p>
-            <p><strong>Evening:</strong> 5:00 PM - 7:00 PM</p>
-            <p style="margin-top:10px; color:#0284c7;"><i class="fa fa-phone"></i> Contact: +91 98765 43210</p>
-        </div>
-    </div>
-
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const shopId = urlParams.get('shopId');
-
-        async function loadShop() {
-            const res = await fetch(`/api/local-market/shops/${shopId}`);
-            const shop = await res.json();
-            document.getElementById('shopName').innerText = shop.shopName;
-        }
-
-        function showTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('subscription').style.display = tab==='subscription'? 'grid' : 'none';
-            document.getElementById('products').style.display = tab==='products'? 'grid' : 'none';
-        }
-
-        function subscribe(product, price) {
-            alert(`${product} subscription started! Daily delivery at your doorstep.`);
-        }
-
-        function addToCart(item) {
-            alert(`${item} added to cart!`);
-        }
-
-        loadShop();
-    </script>
+document.addEventListener('DOMContentLoaded', loadCustomerView);
+</script>
 </body>
 </html>

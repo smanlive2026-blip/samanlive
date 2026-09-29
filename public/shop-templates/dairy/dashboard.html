@@ -1,62 +1,153 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dairy Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: linear-gradient(135deg, #0284c7 0%, #075985 100%); min-height: 100vh; padding: 20px; }
-       .container { max-width: 1400px; margin: 0 auto; }
-        
-       .header { background: white; padding: 25px 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
-       .header h1 { font-size: 28px; color: #0c4a6e; display: flex; align-items: center; gap: 12px; }
-        
-       .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px; }
-       .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); border-left: 5px solid #0284c7; }
-       .stat-card .icon { font-size: 32px; color: #0284c7; margin-bottom: 12px; }
-       .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 8px; }
-       .stat-card .value { font-size: 32px; font-weight: 700; color: #1e293b; }
-        
-       .content-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px; }
-       .content-card h2 { font-size: 22px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
-        
-       .btn { background: linear-gradient(135deg, #0284c7 0%, #075985 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-        
-       .subscription-card { border: 2px solid #e0f2fe; border-radius: 16px; padding: 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-       .status { padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; }
-       .status.active { background: #dcfce7; color: #166534; }
-       .status.pause { background: #fef3c7; color: #78350f; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dairy Dashboard - SamanLive</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{--milk:#0ea5e9;--milk-light:#e0f2fe;--dark:#0f172a;--green:#22c55e;--red:#ef4444;--bg:#f8fafc}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
+body{background:var(--bg);color:var(--dark)}
+.dairy-header{background:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px #0001}
+.logo{font-weight:800;font-size:22px;color:var(--milk)} .logo span{color:var(--dark)}
+.toggle{padding:6px 14px;border-radius:20px;border:1px solid var(--green);color:var(--green);cursor:pointer}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:20px}
+.stat-card{background:white;border-radius:16px;padding:16px;box-shadow:0 4px 12px #00005}
+.stat-card i{font-size:24px;color:var(--milk);margin-bottom:8px}
+.stat-card h3{font-size:28px} .stat-card p{font-size:13px;color:gray}
+.stat-card.alert{border-left:5px solid var(--red)} .stat-card.milk{border-left:5px solid var(--milk)}
+.tabs{display:flex;gap:8px;padding:0 20px;overflow:auto}
+.tab-btn{padding:10px 18px;border-radius:30px;border:1px solid #e2e8f0;background:white;cursor:pointer;white-space:nowrap}
+.tab-btn.active{background:var(--dark);color:white}
+.content{padding:20px}
+.panel{display:none} .panel.active{display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card-white{background:white;border-radius:16px;padding:16px;box-shadow:0 4px 12px #00005}
+.quick-form input{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:1px solid #e2e8f0}
+.btn{padding:12px 18px;border-radius:10px;border:none;background:var(--milk);color:white;font-weight:600;cursor:pointer;width:100%}
+.btn-dark{background:var(--dark)}
+.list-item{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #f1f5f9}
+.badge{padding:4px 10px;border-radius:20px;font-size:12px;background:var(--milk-light);color:var(--milk)}
+@media(max-width:768px){.stats{grid-template-columns:repeat(2,1fr)} .grid2{grid-template-columns:1fr}}
+</style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div>
-                <h1><i class="fa fa-cow"></i> <span id="shopName">Dairy Shop</span></h1>
-                <div style="color:#64748b; font-size:14px;">Shop ID: <span id="shopIdDisplay"></span></div>
-            </div>
-            <button class="btn" id="addProductBtn"><i class="fa fa-plus"></i> Add Product</button>
-        </div>
+<body data-page="dashboard" data-shop="dairy">
 
-        <div class="stats-grid">
-            <div class="stat-card"><div class="icon"><i class="fa fa-users"></i></div><h3>Active Subscriptions</h3><div class="value" id="subscriptions">0</div></div>
-            <div class="stat-card"><div class="icon"><i class="fa fa-droplet"></i></div><h3>Today Milk Sold</h3><div class="value"><span id="milkSold">0</span> L</div></div>
-            <div class="stat-card"><div class="icon"><i class="fa fa-boxes"></i></div><h3>Products</h3><div class="value" id="products">0</div></div>
-            <div class="stat-card"><div class="icon"><i class="fa fa-rupee-sign"></i></div><h3>Today Collection</h3><div class="value">₹<span id="collection">0</span></div></div>
-        </div>
+<!-- ===== HEADER ===== -->
+<header class="dairy-header">
+  <div class="logo">🥛 <span id="shopName">Gopal Dairy</span> <span>Live</span></div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <span id="uploadLoader" style="display:none">Uploading...</span>
+    <div class="toggle" id="shopStatusBtn"><i class="fa-solid fa-circle" style="color:var(--green)"></i> OPEN</div>
+    <img id="ownerPhoto" src="https://via.placeholder.com/40" style="width:40px;height:40px;border-radius:50%;object-fit:cover;cursor:pointer">
+    <input type="file" id="ownerPhotoInput" hidden>
+  </div>
+</header>
 
-        <div class="content-card">
-            <h2><i class="fa fa-calendar-check"></i> Today's Subscriptions</h2>
-            <div id="subscriptionList">Loading...</div>
-        </div>
+<!-- ===== STATS - COMMON ANALYTICS CONNECTED ===== -->
+<section class="stats">
+  <div class="stat-card milk"><i class="fa-solid fa-bottle-water"></i><p>Total Milk Stock</p><h3 id="milkStock">120 Ltr</h3></div>
+  <div class="stat-card alert"><i class="fa-solid fa-triangle-exclamation"></i><p>Aaj Expiry</p><h3 id="expiryToday">5 Item</h3></div>
+  <div class="stat-card"><i class="fa-solid fa-repeat"></i><p>Active Subscription</p><h3 id="subCount">42</h3></div>
+  <div class="stat-card"><i class="fa-solid fa-indian-rupee-sign"></i><p>Aaj Ki Sale</p><h3 id="todaySale">₹0</h3></div>
+</section>
 
-        <div class="content-card">
-            <h2><i class="fa fa-list"></i> Product Stock</h2>
-            <div id="productList">Loading...</div>
+<!-- ===== TABS - SAB COMMON MODULES ===== -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="openTab('overview')"><i class="fa-solid fa-chart-line"></i> Overview</button>
+  <button class="tab-btn" onclick="openTab('inventory')"><i class="fa-solid fa-boxes-stacked"></i> Inventory</button>
+  <button class="tab-btn" onclick="openTab('subscription')"><i class="fa-solid fa-calendar-check"></i> Subscriptions</button>
+  <button class="tab-btn" onclick="openTab('orders')"><i class="fa-solid fa-truck"></i> Live Orders</button>
+  <button class="tab-btn" onclick="openTab('finance')"><i class="fa-solid fa-wallet"></i> Wallet</button>
+  <button class="tab-btn" onclick="openTab('marketing')"><i class="fa-solid fa-bullhorn"></i> Marketing</button>
+  <button class="tab-btn" onclick="openTab('settings')"><i class="fa-solid fa-gear"></i> Settings</button>
+</div>
+
+<div class="content">
+  <!-- OVERVIEW PANEL -->
+  <div id="overview" class="panel active">
+    <div class="grid2">
+      <div class="card-white"><h4>Sales Chart</h4><canvas id="salesChart" height="150"></canvas></div>
+      <div class="card-white">
+        <h4>⚡ Quick Add - Dairy Product</h4>
+        <div class="quick-form">
+          <input id="pName" placeholder="Ex: Desi Ghee 1kg, Dahi 500g">
+          <div style="display:flex;gap:8px"><input id="pPrice" type="number" placeholder="Price"><input id="pStock" type="number" placeholder="Stock Ltr/Kg"></div>
+          <input id="pExpiry" type="date">
+          <img id="productPreview" src="https://via.placeholder.com/300x150?text=Product+Photo" style="width:100%;border-radius:12px;margin:8px 0;cursor:pointer">
+          <input type="file" id="productInput" hidden>
+          <button class="btn" onclick="addProduct()">Product Add Karo</button>
         </div>
+      </div>
     </div>
-    <script src="dashboard.js"></script>
+    <div class="card-white" style="margin-top:16px"><h4>🔔 Low Stock & Expiry Alert - common/inventory/low-stock-alert.html</h4><div id="lowStockList"></div></div>
+  </div>
+
+  <!-- INVENTORY -->
+  <div id="inventory" class="panel">
+    <div class="card-white">
+      <div style="display:flex;justify-content:space-between"><h4>All Dairy Items</h4><button class="btn" style="width:auto" onclick="window.loadShareModule()"><i class="fa-solid fa-qrcode"></i> QR Share</button></div>
+      <div id="productList"></div>
+    </div>
+  </div>
+
+  <!-- SUBSCRIPTION - DAIRY KA SPECIAL -->
+  <div id="subscription" class="panel">
+    <div class="card-white"><h4>Monthly Milk Wale Customers</h4><div id="subscriptionList"><div class="list-item"><span>Ramesh - 2 Ltr Daily (Subah)</span><span class="badge">Active</span></div></div></div>
+  </div>
+
+  <!-- ORDERS - common/orders/orders.html -->
+  <div id="orders" class="panel"><div class="card-white"><h4>Live Orders - common/orders/live-orders.html</h4><div id="orderList">Yaha common/orders/orders.js auto load hoga</div></div></div>
+
+  <!-- FINANCE - common/wallet/wallet.html -->
+  <div id="finance" class="panel"><div class="grid2"><div class="card-white"><h4>Wallet - common/wallet/wallet.html</h4><h2 id="walletBalance">₹0</h2></div><div class="card-white"><h4>Payout History</h4><div id="payoutHistory"></div></div></div></div>
+
+  <!-- MARKETING - common/marketing/coupons.html -->
+  <div id="marketing" class="panel"><div class="card-white"><h4>Coupons & WhatsApp Marketing</h4><button class="btn btn-dark" onclick="window.loadShareModule()">WhatsApp pe Share Karo</button></div></div>
+
+  <!-- SETTINGS - common/settings/settings.html -->
+  <div id="settings" class="panel"><div class="card-white"><h4>Shop Timing, Delivery, Verification</h4><div id="settingsBox">common/settings/ se load hoga</div></div></div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2/dist/browser-image-compression.js"></script>
+<script src="../shop-templates/shop-core.js"></script>
+<script>
+  // ShopCore Init
+  const urlParams = new URLSearchParams(window.location.search);
+  const shopId = urlParams.get('shopId') || localStorage.getItem('lastShopId') || 'DAIRY123';
+  ShopCore.init(shopId, 'dairy');
+
+  // Photo Bind - Tera Golden Logic
+  ShopCore.bindImageUpload('ownerPhoto','ownerPhotoInput','profile','owner');
+  ShopCore.bindImageUpload('productPreview','productInput','product','product1');
+
+  // Tab Logic
+  function openTab(id){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.currentTarget.classList.add('active');
+    
+    // On-demand common modules load
+    if(id==='orders') { /* shop-core.js ka loader already orders.js load kar dega */ }
+    if(id==='finance' && window.loadQrModule) window.loadQrModule();
+  }
+
+  // Dummy Add Product
+  async function addProduct(){
+    const name=document.getElementById('pName').value;
+    alert(name+' Added! Ab common/inventory/inventory.js me save hoga');
+  }
+
+  // Shop Open/Close - common/settings/open-close.html ka logic
+  document.getElementById('shopStatusBtn').onclick = async ()=>{
+    const res = await fetch('/api/shops/toggle-status',{method:'POST',body:JSON.stringify({shopId})});
+    alert('Shop Status Changed');
+  }
+</script>
+<!-- Dashboard Logic -->
+<script src="./dashboard.js"></script>
 </body>
 </html>

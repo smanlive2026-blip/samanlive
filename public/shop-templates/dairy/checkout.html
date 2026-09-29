@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout - Gopal Dairy</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{--milk:#0ea5e9;--dark:#0f172a;--bg:#f8fafc;--green:#22c55e;--red:#ef4444}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+body{background:var(--bg);padding-bottom:150px}
+.header{background:white;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px #0001;position:sticky;top:0;z-index:10}
+.step{display:flex;gap:8px;padding:16px;overflow:auto}
+.step div{flex:1;text-align:center;padding:8px;border-radius:20px;background:white;border:1px solid #e2e8f0;font-size:12px}
+.step div.active{background:var(--dark);color:white}
+.card{background:white;margin:12px 16px;border-radius:16px;padding:16px;box-shadow:0 2px 8px #00006}
+.card h4{margin-bottom:12px}
+.input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin:6px 0}
+.row{display:flex;gap:10px}
+.pay-option{border:1px solid #e2e8f0;border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center;margin:8px 0;cursor:pointer}
+.pay-option.active{border-color:var(--milk);background:#e0f2fe}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:white;padding:16px;box-shadow:0 -4px 20px #0001}
+.btn{width:100%;padding:14px;background:var(--green);color:white;border:none;border-radius:14px;font-weight:800;font-size:16px;cursor:pointer}
+.btn:disabled{background:gray}
+.summary{display:flex;justify-content:space-between;margin:6px 0;font-size:14px}
+.summary.total{font-weight:800;font-size:16px;border-top:1px dashed #e2e8f0;padding-top:10px}
+</style>
+</head>
+<body data-page="checkout" data-shop="dairy">
+
+<div class="header"><i class="fa-solid fa-arrow-left" onclick="history.back()"></i><h3>Checkout</h3></div>
+
+<div class="step">
+  <div class="active">1. Address</div><div>2. Payment</div><div>3. Confirm</div>
+</div>
+
+<!-- ADDRESS - common/address/address.html -->
+<div class="card" id="addressCard">
+  <h4><i class="fa-solid fa-location-dot"></i> Delivery Address</h4>
+  <input class="input" id="custName" placeholder="Aapka Naam">
+  <input class="input" id="custPhone" placeholder="Mobile Number" type="number">
+  <input class="input" id="custAddress" placeholder="Full Address - Gali, Mohalla">
+  <div class="row">
+    <input class="input" id="landmark" placeholder="Landmark">
+    <input class="input" id="pincode" placeholder="Pincode" type="number">
+  </div>
+  <small style="color:gray">Dairy Special: Gate pe doodh tangne ki jagah hai? Yaha likho</small>
+  <input class="input" id="deliveryNote" placeholder="Ex: Kundi pe latka dena / 2nd Floor">
+</div>
+
+<!-- SLOT SUMMARY -->
+<div class="card">
+  <h4>🕕 Delivery Info</h4>
+  <div class="summary"><span>Slot</span><span id="slotShow">Subah 6-9 AM</span></div>
+  <div class="summary"><span>Type</span><span id="typeShow">One Time</span></div>
+  <div class="summary"><span>To Pay</span><span id="payShow">₹0</span></div>
+</div>
+
+<!-- PAYMENT - common/payment/payment.html -->
+<div class="card">
+  <h4><i class="fa-solid fa-credit-card"></i> Payment Method</h4>
+  <div class="pay-option active" onclick="selectPay(this,'cod')">
+    <div><b>Cash on Delivery</b><br><small>Doodh aane par paisa</small></div><i class="fa-solid fa-money-bill"></i>
+  </div>
+  <div class="pay-option" onclick="selectPay(this,'upi')">
+    <div><b>UPI / QR</b><br><small>GPay, PhonePe, Paytm</small></div><i class="fa-solid fa-qrcode"></i>
+  </div>
+  <div class="pay-option" onclick="selectPay(this,'wallet')">
+    <div><b>Wallet</b><br><small>SamanLive Wallet se</small></div><i class="fa-solid fa-wallet"></i>
+  </div>
+  <div id="upiBox" style="display:none;margin-top:10px;text-align:center">
+    <img src="https://via.placeholder.com/180x180?text=UPI+QR" style="border-radius:12px"><p style="font-size:13px;margin-top:6px">QR Scan karo - common/qr/qr.html</p>
+  </div>
+</div>
+
+<div class="bottom">
+  <div class="summary total"><span>Total Payable</span><span id="finalPay">₹0</span></div>
+  <button class="btn" id="placeBtn" onclick="placeOrder()">Order Place Karo - <span id="btnPay">₹0</span></button>
+</div>
+
+<!-- COMMON CHECKOUT CORE -->
+<script src="../common/cart/cart-core.js"></script>
+<script src="../common/checkout/checkout.js"></script>
+<script src="../common/core/socket-core.js"></script>
+<script src="../shop-templates/shop-core.js"></script>
+
+<script>
+const SHOP_ID = new URLSearchParams(window.location.search).get('shopId') || localStorage.getItem('lastShopId') || 'DAIRY123';
+let PAY_METHOD = 'cod';
+let TOTAL = localStorage.getItem(`cart_total_${SHOP_ID}`) || 0;
+
+function initCheckout(){
+  ShopCore.init(SHOP_ID, 'dairy');
+  document.getElementById('payShow').innerText = `₹${TOTAL}`;
+  document.getElementById('finalPay').innerText = `₹${TOTAL}`;
+  document.getElementById('btnPay').innerText = `₹${TOTAL}`;
+  
+  const slot = localStorage.getItem(`delivery_slot_${SHOP_ID}`) || 'morning';
+  const isSub = localStorage.getItem(`is_sub_${SHOP_ID}`) === 'true';
+  document.getElementById('slotShow').innerText = slot==='morning'? 'Subah 6-9 AM' : 'Sham 5-8 PM';
+  document.getElementById('typeShow').innerText = isSub? 'Daily Subscription (10% OFF)' : 'One Time';
+  
+  // Load old address - common/address/address.js
+  const oldAddr = JSON.parse(localStorage.getItem(`address_${SHOP_ID}`)||'{}');
+  if(oldAddr.name) document.getElementById('custName').value = oldAddr.name;
+  if(oldAddr.phone) document.getElementById('custPhone').value = oldAddr.phone;
+  if(oldAddr.address) document.getElementById('custAddress').value = oldAddr.address;
+}
+
+window.selectPay = (el, method)=>{
+  document.querySelectorAll('.pay-option').forEach(d=>d.classList.remove('active'));
+  el.classList.add('active');
+  PAY_METHOD = method;
+  document.getElementById('upiBox').style.display = method==='upi'? 'block':'none';
+}
+
+window.placeOrder = async ()=>{
+  const name = document.getElementById('custName').value;
+  const phone = document.getElementById('custPhone').value;
+  const address = document.getElementById('custAddress').value;
+
+  if(!name || !phone || !address){ return alert('Naam, Mobile, Address bharo'); }
+  if(phone.length<10){ return alert('Sahi mobile number dalo'); }
+
+  const btn = document.getElementById('placeBtn');
+  btn.innerText = 'Placing...'; btn.disabled = true;
+
+  // Save address for next time - common/address/
+  localStorage.setItem(`address_${SHOP_ID}`, JSON.stringify({name, phone, address}));
+
+  const orderData = {
+    shopId: SHOP_ID,
+    customerName: name,
+    customerPhone: phone,
+    fullAddress: address + ' ' + document.getElementById('landmark').value,
+    deliveryNote: document.getElementById('deliveryNote').value,
+    pincode: document.getElementById('pincode').value,
+    deliverySlot: localStorage.getItem(`delivery_slot_${SHOP_ID}`),
+    isSubscription: localStorage.getItem(`is_sub_${SHOP_ID}`)==='true',
+    paymentMethod: PAY_METHOD,
+    total: TOTAL,
+    items: CommonCart? CommonCart.getCart(SHOP_ID) : [],
+    orderType: 'dairy'
+  };
+
+  try{
+    // 1. Try common/checkout/checkout.js se
+    if(window.CommonCheckout && window.CommonCheckout.placeOrder){
+      await CommonCheckout.placeOrder(orderData);
+    } else {
+      // 2. Direct API
+      await fetch('/api/orders', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(orderData)
+      });
+    }
+
+    // 3. Clear cart - common/cart/
+    if(window.CommonCart) CommonCart.clear(SHOP_ID);
+    
+    // 4. Success -> common/track/track-order.html
+    alert('Order Placed! 🥛 Doodh wala aayega ' + document.getElementById('slotShow').innerText);
+    location.href = `./track-order.html?shopId=${SHOP_ID}&orderId=NEW`;
+
+  }catch(e){
+    console.error(e);
+    alert('Order fail ho gaya, network check karo');
+    btn.innerText = 'Order Place Karo'; btn.disabled = false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initCheckout);
+</script>
+</body>
+</html>
