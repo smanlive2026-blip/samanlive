@@ -1,0 +1,208 @@
+<!-- LOCATION: common/customer-orders/cancel-order.html - WORLD CLASS CANCEL ORDER -->
+<div id="cancelRoot" class="cancel-root">
+  <div class="cancel-header">
+    <button id="cancelBack" class="back-btn">‹</button>
+    <b>Cancel Order</b>
+  </div>
+
+  <div class="cancel-order-info">
+    <div class="order-icon">😔</div>
+    <b>Why do you want to cancel?</b>
+    <span>Order <b id="cancelOrderId">#ORD----</b> • <span id="cancelOrderTotal">₹0</span></span>
+    <p>Please select a reason so we can improve our service</p>
+  </div>
+
+  <div class="cancel-reasons">
+    <label class="reason-option">
+      <input type="radio" name="reason" value="ordered_by_mistake">
+      <div class="reason-content">
+        <b>Ordered by mistake</b>
+        <span>I ordered wrong item by mistake</span>
+      </div>
+      <span class="reason-check">✓</span>
+    </label>
+
+    <label class="reason-option">
+      <input type="radio" name="reason" value="found_better_price">
+      <div class="reason-content">
+        <b>Found better price elsewhere</b>
+        <span>Got cheaper deal in other shop</span>
+      </div>
+      <span class="reason-check">✓</span>
+    </label>
+
+    <label class="reason-option">
+      <input type="radio" name="reason" value="delivery_time_long">
+      <div class="reason-content">
+        <b>Delivery time is too long</b>
+        <span>Taking too much time to deliver</span>
+      </div>
+      <span class="reason-check">✓</span>
+    </label>
+
+    <label class="reason-option">
+      <input type="radio" name="reason" value="change_mind">
+      <div class="reason-content">
+        <b>Changed my mind</b>
+        <span>I don't need this anymore</span>
+      </div>
+      <span class="reason-check">✓</span>
+    </label>
+
+    <label class="reason-option">
+      <input type="radio" name="reason" value="other">
+      <div class="reason-content">
+        <b>Other reason</b>
+        <span>Any other reason</span>
+      </div>
+      <span class="reason-check">✓</span>
+    </label>
+  </div>
+
+  <div class="cancel-extra" id="cancelExtra" style="display:none">
+    <label>Tell us more (optional)</label>
+    <textarea id="cancelExtraText" placeholder="Write your reason here..."></textarea>
+  </div>
+
+  <div class="cancel-refund-info">
+    <div class="refund-icon">💰</div>
+    <div class="refund-text">
+      <b>Refund Information</b>
+      <span id="refundText">Amount will be refunded to your original payment method within 2-3 business days</span>
+    </div>
+  </div>
+
+  <div class="cancel-actions">
+    <button id="keepOrderBtn" class="secondary-btn">Keep Order</button>
+    <button id="confirmCancelBtn" class="primary-btn danger" disabled>Confirm Cancel</button>
+  </div>
+
+  <div id="cancelSuccess" class="cancel-success" style="display:none">
+    <div class="success-icon">✅</div>
+    <b>Order Cancelled Successfully</b>
+    <span id="cancelSuccessText">Your order has been cancelled. Refund will be processed soon.</span>
+    <button id="backToOrdersBtn" class="primary-btn">Back to Orders</button>
+  </div>
+</div>
+
+<style>
+.cancel-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; }
+.cancel-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid #f1f5f9; position:sticky; top:0; z-index:10; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.cancel-header b{ font-weight:900; font-size:16px; }
+.cancel-order-info{ background:#fff; text-align:center; padding:24px 16px; border-bottom:1px solid #f1f5f9; }
+.order-icon{ font-size:48px; margin-bottom:8px; }
+.cancel-order-info b{ display:block; font-weight:900; font-size:18px; }
+.cancel-order-info span{ font-size:13px; color:#64748b; font-weight:600; margin-top:4px; display:block; }
+.cancel-order-info p{ font-size:12px; color:#94a3b8; margin:8px 0 0; }
+.cancel-reasons{ background:#fff; padding:12px; display:flex; flex-direction:column; gap:8px; }
+.reason-option{ display:flex; align-items:center; gap:12px; padding:12px; border:2px solid #f1f5f9; border-radius:12px; cursor:pointer; transition:.2s; }
+.reason-option:hover{ border-color:#e2e8f0; }
+.reason-option:has(input:checked){ border-color:#0f172a; background:#f8fafc; }
+.reason-option input{ display:none; }
+.reason-content{ flex:1; }
+.reason-content b{ display:block; font-weight:800; font-size:13px; }
+.reason-content span{ font-size:11px; color:#64748b; font-weight:600; }
+.reason-check{ width:24px; height:24px; border:2px solid #e2e8f0; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:900; color:transparent; transition:.2s; }
+.reason-option:has(input:checked) .reason-check{ background:#0f172a; border-color:#0f172a; color:#fff; }
+.cancel-extra{ background:#fff; padding:0 16px 16px; }
+.cancel-extra label{ font-size:12px; font-weight:800; display:block; margin-bottom:6px; }
+.cancel-extra textarea{ width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px; font-family:Outfit,sans-serif; font-weight:600; font-size:13px; min-height:80px; resize:none; }
+.cancel-refund-info{ background:#fff; margin:12px; border:1px dashed #10b981; border-radius:12px; padding:12px; display:flex; gap:10px; }
+.refund-icon{ font-size:24px; }
+.refund-text b{ display:block; font-weight:900; font-size:13px; color:#166534; }
+.refund-text span{ font-size:11px; color:#15803d; font-weight:600; line-height:1.4; display:block; margin-top:2px; }
+.cancel-actions{ padding:16px; display:flex; gap:10px; position:sticky; bottom:0; background:#fff; border-top:1px solid #f1f5f9; }
+.cancel-actions button{ flex:1; padding:14px; border-radius:12px; font-weight:900; border:none; cursor:pointer; }
+.secondary-btn{ background:#f1f5f9; color:#475569; }
+.primary-btn{ background:#0f172a; color:#fff; }
+.primary-btn.danger{ background:#ef4444; }
+.primary-btn:disabled{ background:#e2e8f0; color:#94a3b8; cursor:not-allowed; }
+.cancel-success{ position:fixed; inset:0; background:#fff; z-index:9999; display:grid; place-items:center; text-align:center; padding:24px; }
+.success-icon{ font-size:64px; margin-bottom:16px; }
+.cancel-success b{ font-weight:900; font-size:20px; display:block; }
+.cancel-success span{ font-size:13px; color:#64748b; margin:8px 0 20px; display:block; line-height:1.5; }
+</style>
+
+<script>
+class CancelOrder {
+  constructor(){
+    this.orderId = new URLSearchParams(location.search).get('orderId') || '';
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.selectedReason = null;
+  }
+
+  async init(){
+    document.getElementById('cancelOrderId').innerText = `#${this.orderId.slice(-6).toUpperCase()}`;
+
+    try{
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/orders/${this.shopId}/${this.orderId}`);
+        const order = data.order || data;
+        if(order.total) document.getElementById('cancelOrderTotal').innerText = `₹${order.total}`;
+
+        if(order.paymentMethod==='COD'){
+          document.getElementById('refundText').innerText = 'This was a COD order - no refund needed. Order will be cancelled.';
+        }
+      }
+    }catch(e){}
+
+    this.bindEvents();
+  }
+
+  bindEvents(){
+    document.querySelectorAll('input[name="reason"]').forEach(radio=>{
+      radio.addEventListener('change', (e)=>{
+        this.selectedReason = e.target.value;
+        document.getElementById('confirmCancelBtn').disabled = false;
+        document.getElementById('cancelExtra').style.display = e.target.value==='other'? 'block' : 'none';
+      });
+    });
+
+    document.getElementById('cancelBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('keepOrderBtn')?.addEventListener('click', ()=> history.back());
+
+    document.getElementById('confirmCancelBtn')?.addEventListener('click', ()=> this.confirmCancel());
+    document.getElementById('backToOrdersBtn')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/customer-orders/my-orders.html?shopId=${this.shopId}`);
+  }
+
+  async confirmCancel(){
+    if(!this.selectedReason){
+      if(window.Toast) Toast.show('Select a reason', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('confirmCancelBtn');
+    btn.innerText = 'Cancelling...';
+    btn.disabled = true;
+
+    try{
+      const extra = document.getElementById('cancelExtraText').value;
+
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/customer-orders/${this.orderId}/cancel`, {
+          reason: this.selectedReason,
+          extraText: extra,
+          shopId: this.shopId
+        });
+      }
+
+      document.getElementById('cancelSuccess').style.display='grid';
+      document.getElementById('cancelSuccessText').innerText = `Order #${this.orderId.slice(-6)} cancelled. ${this.shopId? 'Refund will be processed in 2-3 days.' : ''}`;
+
+      if(window.Toast) Toast.show('Order cancelled successfully', 'success');
+
+      if(navigator.vibrate) navigator.vibrate(50);
+
+    }catch(e){
+      console.error(e);
+      if(window.Toast) Toast.show('Failed to cancel order', 'error');
+      btn.innerText = 'Confirm Cancel';
+      btn.disabled = false;
+    }
+  }
+}
+
+window.CancelOrderInstance = new CancelOrder();
+document.addEventListener('DOMContentLoaded', ()=> window.CancelOrderInstance.init());
+</script>

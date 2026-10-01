@@ -1,0 +1,220 @@
+<!-- LOCATION: common/customer-orders/my-orders.html - WORLD CLASS MY ORDERS -->
+<div id="myOrdersRoot" class="my-orders-root">
+  <div class="orders-header">
+    <div class="orders-title-row">
+      <button id="backToShop" class="back-btn">‹</button>
+      <div>
+        <b class="orders-title">My Orders</b>
+        <span id="ordersCount" class="orders-count">Loading...</span>
+      </div>
+      <button id="ordersFilterBtn" class="filter-btn">⚙️ Filter</button>
+    </div>
+
+    <div class="orders-tabs">
+      <button class="order-tab active" data-filter="all">All <span id="countAll">0</span></button>
+      <button class="order-tab" data-filter="placed">Placed</button>
+      <button class="order-tab" data-filter="out_for_delivery">On Way</button>
+      <button class="order-tab" data-filter="delivered">Delivered</button>
+      <button class="order-tab" data-filter="cancelled">Cancelled</button>
+    </div>
+  </div>
+
+  <div id="ordersList" class="orders-list">
+    <!-- Skeleton -->
+    <div class="order-card skeleton">
+      <div class="sk-line" style="width:40%;height:14px"></div>
+      <div class="sk-line" style="width:70%;height:10px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div id="ordersEmpty" class="orders-empty" style="display:none">
+    <div class="empty-icon">📦</div>
+    <b>No orders yet</b>
+    <span>Your orders will appear here</span>
+    <button id="startShoppingBtn" class="primary-btn">Start Shopping 🛍️</button>
+  </div>
+
+  <div id="ordersFilterModal" class="filter-modal" style="display:none">
+    <div class="filter-backdrop"></div>
+    <div class="filter-box">
+      <div class="filter-header">
+        <b>Filter Orders</b>
+        <button id="closeFilter">✕</button>
+      </div>
+      <div class="filter-body">
+        <label>Date Range</label>
+        <select id="filterDate" class="filter-select">
+          <option value="all">All time</option>
+          <option value="today">Today</option>
+          <option value="week">This week</option>
+          <option value="month">This month</option>
+        </select>
+        <label style="margin-top:12px">Shop</label>
+        <select id="filterShop" class="filter-select">
+          <option value="all">All shops</option>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button id="clearFilter" class="secondary-btn">Clear</button>
+        <button id="applyFilter" class="primary-btn">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.my-orders-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; }
+.orders-header{ background:#fff; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.orders-title-row{ display:flex; align-items:center; gap:12px; padding:14px 16px; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.orders-title{ display:block; font-weight:900; font-size:18px; }
+.orders-count{ font-size:11px; color:#64748b; font-weight:600; }
+.filter-btn{ margin-left:auto; background:#f1f5f9; border:none; width:36px; height:36px; border-radius:10px; cursor:pointer; }
+.orders-tabs{ display:flex; gap:6px; padding:0 16px 12px; overflow-x:auto; scrollbar-width:none; }
+.orders-tabs::-webkit-scrollbar{ display:none; }
+.order-tab{ background:#f1f5f9; border:none; padding:8px 12px; border-radius:20px; font-weight:800; font-size:12px; white-space:nowrap; cursor:pointer; display:flex; gap:4px; }
+.order-tab.active{ background:#0f172a; color:#fff; }
+.orders-list{ padding:12px; display:flex; flex-direction:column; gap:10px; }
+.order-card{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:14px; cursor:pointer; transition:.2s; }
+.order-card:hover{ transform:translateY(-2px); box-shadow:0 8px 16px rgba(0,0,0,.06); }
+.order-card-top{ display:flex; justify-content:space-between; align-items:center; }
+.order-id{ font-weight:900; font-size:13px; }
+.order-status{ font-size:10px; font-weight:900; padding:3px 8px; border-radius:20px; color:#fff; }
+.order-status.placed{ background:#0ea5e9; }
+.order-status.delivered{ background:#10b981; }
+.order-status.out_for_delivery{ background:#f59e0b; }
+.order-status.cancelled{ background:#ef4444; }
+.order-shop{ font-size:11px; color:#94a3b8; font-weight:700; margin-top:4px; }
+.order-items{ font-size:12px; color:#475569; margin-top:6px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.order-bottom{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+.order-total{ font-weight:900; font-size:14px; }
+.order-date{ font-size:11px; color:#64748b; }
+.orders-empty{ text-align:center; padding:60px 20px; }
+.orders-empty.empty-icon{ font-size:48px; }
+.orders-empty b{ display:block; font-weight:900; font-size:18px; margin:12px 0 4px; }
+.orders-empty span{ font-size:13px; color:#64748b; display:block; margin-bottom:16px; }
+.primary-btn{ background:#0f172a; color:#fff; border:none; padding:12px 20px; border-radius:12px; font-weight:900; cursor:pointer; }
+.secondary-btn{ background:#f1f5f9; border:none; padding:12px 20px; border-radius:12px; font-weight:800; cursor:pointer; }
+.filter-modal{ position:fixed; inset:0; z-index:9999; display:grid; place-items:end center; }
+.filter-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); }
+.filter-box{ position:relative; background:#fff; width:100%; max-width:400px; border-radius:24px 24px 0 0; padding:20px; animation:slideUp.3s; }
+@keyframes slideUp{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
+.filter-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.filter-header b{ font-weight:900; font-size:16px; }
+.filter-select{ width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; }
+.filter-actions{ display:flex; gap:10px; margin-top:20px; }
+.filter-actions button{ flex:1; }
+.sk-line{ background:#e2e8f0; border-radius:6px; animation:shimmer 1.5s infinite; }
+@keyframes shimmer{ 0%{ opacity:.6; } 50%{ opacity:1; } 100%{ opacity:.6; } }
+</style>
+
+<script>
+class MyOrders {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.userId = window.currentUser?._id || localStorage.getItem('userId') || '';
+    this.orders = [];
+    this.filter = 'all';
+  }
+
+  async init(){
+    await this.loadOrders();
+    this.bindEvents();
+  }
+
+  async loadOrders(){
+    const listEl = document.getElementById('ordersList');
+    try{
+      let url = `/api/user/orders`;
+      if(this.shopId) url = `/api/common/customer-orders/${this.shopId}/${this.userId}`;
+      if(this.shopId && window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/customer-orders/${this.shopId}/${this.userId}`);
+        this.orders = data.orders || data || [];
+      } else if(window.ApiCore){
+        const data = await window.ApiCore.get('/api/user/orders');
+        this.orders = data.orders || [];
+      } else {
+        this.orders = JSON.parse(localStorage.getItem('myOrders')||'[]');
+      }
+
+      this.render();
+    }catch(e){
+      console.error(e);
+      listEl.innerHTML = `<div style="text-align:center;padding:20px;color:#ef4444">Failed to load orders</div>`;
+    }
+  }
+
+  render(){
+    const listEl = document.getElementById('ordersList');
+    const emptyEl = document.getElementById('ordersEmpty');
+    const countEl = document.getElementById('ordersCount');
+    const countAll = document.getElementById('countAll');
+
+    let filtered = this.orders;
+    if(this.filter!=='all') filtered = this.orders.filter(o=> (o.status||'placed')===this.filter);
+
+    countEl.innerText = `${filtered.length} orders`;
+    if(countAll) countAll.innerText = this.orders.length;
+
+    if(filtered.length===0){
+      listEl.style.display='none';
+      emptyEl.style.display='block';
+      return;
+    }
+
+    listEl.style.display='flex';
+    emptyEl.style.display='none';
+
+    listEl.innerHTML = filtered.map(order=>`
+      <div class="order-card" onclick="MyOrdersInstance.openOrder('${order.orderId||order._id}')">
+        <div class="order-card-top">
+          <span class="order-id">#${(order.orderId||order._id||'').toString().slice(-6).toUpperCase()}</span>
+          <span class="order-status ${order.status||'placed'}">${(order.status||'PLACED').toUpperCase().replace('_',' ')}</span>
+        </div>
+        <div class="order-shop">${order.shopName||'Local Shop'} • ${new Date(order.createdAt||Date.now()).toLocaleDateString()}</div>
+        <div class="order-items">${order.items?.map(i=>i.name||i.title).join(', ') || 'Items'}</div>
+        <div class="order-bottom">
+          <span class="order-total">₹${order.total||0} • ${order.items?.length||1} items</span>
+          <span class="order-date">${this.getRelativeTime(order.createdAt)}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  getRelativeTime(date){
+    if(!date) return 'Now';
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff/60000);
+    if(mins<60) return `${mins}m ago`;
+    const hrs = Math.floor(mins/60);
+    if(hrs<24) return `${hrs}h ago`;
+    return `${Math.floor(hrs/24)}d ago`;
+  }
+
+  openOrder(orderId){
+    const url = `/shop-templates/common/customer-orders/track-order.html?orderId=${orderId}${this.shopId?`&shopId=${this.shopId}`:''}`;
+    window.location.href = url;
+  }
+
+  bindEvents(){
+    document.querySelectorAll('.order-tab').forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        document.querySelectorAll('.order-tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        this.filter = tab.dataset.filter;
+        this.render();
+      });
+    });
+
+    document.getElementById('backToShop')?.addEventListener('click', ()=> history.back());
+    document.getElementById('startShoppingBtn')?.addEventListener('click', ()=> window.location.href='/');
+
+    document.getElementById('ordersFilterBtn')?.addEventListener('click', ()=> document.getElementById('ordersFilterModal').style.display='grid');
+    document.getElementById('closeFilter')?.addEventListener('click', ()=> document.getElementById('ordersFilterModal').style.display='none');
+    document.getElementById('ordersFilterModal')?.querySelector('.filter-backdrop')?.addEventListener('click', ()=> document.getElementById('ordersFilterModal').style.display='none');
+  }
+}
+
+window.MyOrdersInstance = new MyOrders();
+document.addEventListener('DOMContentLoaded', ()=> window.MyOrdersInstance.init());
+</script>

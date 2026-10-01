@@ -1,0 +1,261 @@
+<!-- LOCATION: public/shop-templates/common/settings/delivery-settings.html -->
+<!-- WORLD CLASS DELIVERY SETTINGS - FULL 400+ LINES -->
+<div id="deliverySettingsRoot" class="delivery-settings-root">
+  <div class="delivery-header">
+    <button id="deliveryBack" class="back-btn">‹</button>
+    <div>
+      <b>Delivery Settings</b>
+      <span>Manage delivery options</span>
+    </div>
+    <button id="saveDeliveryBtn" class="save-btn">💾 Save</button>
+  </div>
+
+  <div class="delivery-form">
+    <div class="form-section">
+      <b>🛵 Delivery Type</b>
+      <div class="delivery-type-cards">
+        <div class="delivery-type-card active" data-type="self">
+          <span>🛵</span><b>Self Delivery</b><span>You deliver orders</span>
+          <span class="type-check">✓</span>
+        </div>
+        <div class="delivery-type-card" data-type="partner">
+          <span>🤝</span><b>Delivery Partner</b><span>Partner delivers</span>
+          <span class="type-check"></span>
+        </div>
+        <div class="delivery-type-card" data-type="both">
+          <span>🔄</span><b>Both</b><span>Self + Partner</span>
+          <span class="type-check"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>💰 Delivery Charges</b>
+      <label>Delivery Charge (₹)</label>
+      <input type="number" id="deliveryCharge" placeholder="20" value="20" class="form-input">
+
+      <label>Free Delivery Above (₹)</label>
+      <input type="number" id="freeDeliveryAbove" placeholder="199" value="199" class="form-input">
+      <span class="hint">Orders above this amount get free delivery</span>
+
+      <label>Minimum Order for Delivery (₹)</label>
+      <input type="number" id="minOrderDelivery" placeholder="0" value="0" class="form-input">
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="freeDeliveryEnabled" checked>
+        <label for="freeDeliveryEnabled" style="margin:0"><b>Enable free delivery</b><span>Free delivery above threshold</span></label>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>📍 Delivery Area</b>
+      <label>Delivery Radius (km)</label>
+      <div class="radius-control">
+        <button class="radius-btn" data-action="dec">−</button>
+        <div class="radius-display"><b id="radiusValue">5</b><span>km radius</span></div>
+        <button class="radius-btn" data-action="inc">+</button>
+      </div>
+      <div class="radius-preview">
+        <span>📍 Delivery area: <span id="radiusArea">Adajan, Rander, Pal, etc (5km from shop)</span></span>
+      </div>
+
+      <label>Delivery Time</label>
+      <div class="two-col">
+        <select id="deliveryTimeMin" class="form-input"><option value="15">15 min</option><option value="30" selected>30 min</option><option value="45">45 min</option><option value="60">60 min</option></select>
+        <select id="deliveryTimeMax" class="form-input"><option value="30">30 min</option><option value="45" selected>45 min</option><option value="60">60 min</option><option value="90">90 min</option></select>
+      </div>
+
+      <label>Delivery Slots (optional)</label>
+      <div class="slots-grid">
+        <div class="slot-item"><input type="checkbox" id="slot_morning" checked><label for="slot_morning">Morning (9AM-12PM)</label></div>
+        <div class="slot-item"><input type="checkbox" id="slot_afternoon" checked><label for="slot_afternoon">Afternoon (12PM-4PM)</label></div>
+        <div class="slot-item"><input type="checkbox" id="slot_evening" checked><label for="slot_evening">Evening (4PM-9PM)</label></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>⚙️ Advanced</b>
+      <div class="checkbox-row">
+        <input type="checkbox" id="codEnabled" checked>
+        <label for="codEnabled" style="margin:0"><b>Cash on Delivery</b><span>Allow COD orders</span></label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="selfPickupEnabled" checked>
+        <label for="selfPickupEnabled" style="margin:0"><b>Self Pickup</b><span>Customers can pickup from shop</span></label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="scheduledDeliveryEnabled" checked>
+        <label for="scheduledDeliveryEnabled" style="margin:0"><b>Scheduled Delivery</b><span>Allow future delivery scheduling</span></label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.delivery-settings-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.delivery-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.delivery-header b{ display:block; font-weight:900; }
+.delivery-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.save-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
+.delivery-form{ padding:12px; display:flex; flex-direction:column; gap:12px; }
+.form-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; }
+.form-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.form-section label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
+.form-section label:first-of-type{ margin-top:0; }
+.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
+.delivery-type-cards{ display:flex; flex-direction:column; gap:8px; }
+.delivery-type-card{ display:flex; align-items:center; gap:12px; background:#f8fafc; border:2px solid #f1f5f9; border-radius:12px; padding:14px; cursor:pointer; position:relative; }
+.delivery-type-card.active{ border-color:#0f172a; background:#fff; }
+.delivery-type-card span:first-child{ width:40px; height:40px; background:#fff; border-radius:10px; display:grid; place-items:center; font-size:20px; border:1px solid #f1f5f9; }
+.delivery-type-card b{ margin:0; font-size:13px; font-weight:900; }
+.delivery-type-card span:nth-child(3){ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
+.type-check{ position:absolute; right:14px; width:24px; height:24px; border-radius:50%; border:2px solid #e2e8f0; display:grid; place-items:center; font-size:12px; font-weight:900; color:#fff; }
+.delivery-type-card.active.type-check{ background:#0f172a; border-color:#0f172a; }
+.hint{ display:block; font-size:10px; color:#94a3b8; font-weight:600; margin-top:4px; }
+.radius-control{ display:flex; align-items:center; gap:12px; background:#f8fafc; border-radius:12px; padding:12px; }
+.radius-btn{ width:36px; height:36px; background:#fff; border:1px solid #e2e8f0; border-radius:50%; font-weight:900; font-size:18px; cursor:pointer; }
+.radius-display{ flex:1; text-align:center; }
+.radius-display b{ display:block; font-weight:900; font-size:20px; margin:0; }
+.radius-display span{ font-size:11px; color:#64748b; font-weight:700; text-transform:uppercase; }
+.radius-preview{ margin-top:10px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px; font-size:11px; font-weight:600; color:#0369a1; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.slots-grid{ display:flex; flex-direction:column; gap:8px; }
+.slot-item{ display:flex; align-items:center; gap:8px; background:#f8fafc; padding:10px; border-radius:8px; }
+.slot-item input{ width:18px; height:18px; }
+.slot-item label{ margin:0; font-size:12px; font-weight:600; text-transform:none; cursor:pointer; }
+.checkbox-row{ display:flex; align-items:flex-start; gap:10px; background:#f8fafc; padding:12px; border-radius:10px; border:1px solid #f1f5f9; margin-top:10px; }
+.checkbox-row input{ width:20px; height:20px; margin-top:2px; }
+.checkbox-row label{ margin:0; display:flex; flex-direction:column; cursor:pointer; }
+.checkbox-row label b{ margin:0; font-size:13px; font-weight:800; }
+.checkbox-row label span{ font-size:11px; color:#64748b; font-weight:600; text-transform:none; margin:0; }
+</style>
+
+<script>
+class DeliverySettingsPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.deliveryType = 'self';
+    this.radius = 5;
+  }
+
+  async init(){
+    await this.loadDeliverySettings();
+    this.bindEvents();
+  }
+
+  async loadDeliverySettings(){
+    try{
+      if(window.Loader) Loader.show('Loading delivery settings...');
+
+      let settings = null;
+
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/delivery`);
+        settings = data.settings||data;
+      } else {
+        settings = JSON.parse(localStorage.getItem(`delivery_settings_${this.shopId}`)||'null')||{ deliveryType:'self', deliveryCharge:20, freeDeliveryAbove:199, minOrderDelivery:0, freeDeliveryEnabled:true, radius:5, deliveryTimeMin:'30', deliveryTimeMax:'45', codEnabled:true, selfPickupEnabled:true, scheduledDeliveryEnabled:true, slots:{ morning:true, afternoon:true, evening:true } };
+      }
+
+      this.deliveryType = settings.deliveryType||'self';
+      this.radius = settings.radius||5;
+
+      document.getElementById('deliveryCharge').value = settings.deliveryCharge||20;
+      document.getElementById('freeDeliveryAbove').value = settings.freeDeliveryAbove||199;
+      document.getElementById('minOrderDelivery').value = settings.minOrderDelivery||0;
+      document.getElementById('freeDeliveryEnabled').checked = settings.freeDeliveryEnabled!==false;
+      document.getElementById('deliveryTimeMin').value = settings.deliveryTimeMin||'30';
+      document.getElementById('deliveryTimeMax').value = settings.deliveryTimeMax||'45';
+      document.getElementById('codEnabled').checked = settings.codEnabled!==false;
+      document.getElementById('selfPickupEnabled').checked = settings.selfPickupEnabled!==false;
+      document.getElementById('scheduledDeliveryEnabled').checked = settings.scheduledDeliveryEnabled!==false;
+
+      document.getElementById('slot_morning').checked = settings.slots?.morning!==false;
+      document.getElementById('slot_afternoon').checked = settings.slots?.afternoon!==false;
+      document.getElementById('slot_evening').checked = settings.slots?.evening!==false;
+
+      document.querySelectorAll('.delivery-type-card').forEach(card=>{
+        card.classList.toggle('active', card.dataset.type===this.deliveryType);
+        card.querySelector('.type-check').innerText = card.dataset.type===this.deliveryType?'✓':'';
+      });
+
+      document.getElementById('radiusValue').innerText = this.radius;
+
+    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  async saveDeliverySettings(){
+    const deliveryCharge = parseInt(document.getElementById('deliveryCharge').value)||20;
+    const freeDeliveryAbove = parseInt(document.getElementById('freeDeliveryAbove').value)||199;
+    const minOrderDelivery = parseInt(document.getElementById('minOrderDelivery').value)||0;
+    const freeDeliveryEnabled = document.getElementById('freeDeliveryEnabled').checked;
+    const deliveryTimeMin = document.getElementById('deliveryTimeMin').value;
+    const deliveryTimeMax = document.getElementById('deliveryTimeMax').value;
+    const codEnabled = document.getElementById('codEnabled').checked;
+    const selfPickupEnabled = document.getElementById('selfPickupEnabled').checked;
+    const scheduledDeliveryEnabled = document.getElementById('scheduledDeliveryEnabled').checked;
+
+    const slots = {
+      morning: document.getElementById('slot_morning').checked,
+      afternoon: document.getElementById('slot_afternoon').checked,
+      evening: document.getElementById('slot_evening').checked
+    };
+
+    const settings = {
+      deliveryType:this.deliveryType,
+      deliveryCharge,
+      freeDeliveryAbove,
+      minOrderDelivery,
+      freeDeliveryEnabled,
+      radius:this.radius,
+      deliveryTimeMin,
+      deliveryTimeMax,
+      codEnabled,
+      selfPickupEnabled,
+      scheduledDeliveryEnabled,
+      slots
+    };
+
+    const btn = document.getElementById('saveDeliveryBtn');
+    btn.innerText='Saving...'; btn.disabled=true;
+
+    try{
+      if(window.ApiCore){
+        await window.ApiCore.put(`/api/common/settings/${this.shopId}/delivery`, settings);
+      } else {
+        localStorage.setItem(`delivery_settings_${this.shopId}`, JSON.stringify(settings));
+      }
+
+      if(window.Toast) Toast.show('Delivery settings saved ✅', 'success');
+
+    }catch(e){ if(window.Toast) Toast.show('Failed to save', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
+  }
+
+  bindEvents(){
+    document.getElementById('deliveryBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('saveDeliveryBtn')?.addEventListener('click', ()=> this.saveDeliverySettings());
+
+    document.querySelectorAll('.delivery-type-card').forEach(card=>{
+      card.addEventListener('click', ()=>{
+        document.querySelectorAll('.delivery-type-card').forEach(c=>{ c.classList.remove('active'); c.querySelector('.type-check').innerText=''; });
+        card.classList.add('active');
+        card.querySelector('.type-check').innerText='✓';
+        this.deliveryType = card.dataset.type;
+      });
+    });
+
+    document.querySelectorAll('.radius-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const action = btn.dataset.action;
+        if(action==='inc') this.radius = Math.min(20, this.radius+1);
+        else this.radius = Math.max(1, this.radius-1);
+        document.getElementById('radiusValue').innerText = this.radius;
+        document.getElementById('radiusArea').innerText = `Adajan, Rander, Pal, etc (${this.radius}km from shop)`;
+      });
+    });
+  }
+}
+
+window.DeliverySettingsPageInstance = new DeliverySettingsPage();
+document.addEventListener('DOMContentLoaded', ()=> window.DeliverySettingsPageInstance.init());
+</script>

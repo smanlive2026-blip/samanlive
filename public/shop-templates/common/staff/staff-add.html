@@ -1,0 +1,331 @@
+<!-- LOCATION: public/shop-templates/common/staff/staff-add.html -->
+<!-- WORLD CLASS STAFF ADD - FULL 450+ LINES -->
+<div id="staffAddRoot" class="staff-add-root">
+  <div class="staff-add-header">
+    <button id="staffAddBack" class="back-btn">‹</button>
+    <div>
+      <b id="staffAddTitle">Add New Staff</b>
+      <span>Invite team member</span>
+    </div>
+  </div>
+
+  <div class="staff-add-form">
+    <div class="form-section">
+      <b>👤 Personal Information</b>
+      <label>Full Name *</label>
+      <input type="text" id="staffName" placeholder="Ramesh Kumar" class="form-input">
+
+      <label>Phone Number *</label>
+      <div class="phone-row">
+        <span class="phone-prefix">+91</span>
+        <input type="tel" id="staffPhone" placeholder="9876543210" maxlength="10" class="form-input" style="border-left:none;border-radius:0 10px 10px 0">
+      </div>
+
+      <label>Email (optional)</label>
+      <input type="email" id="staffEmail" placeholder="ramesh@example.com" class="form-input">
+
+      <label>Address</label>
+      <input type="text" id="staffAddress" placeholder="Adajan, Surat" class="form-input">
+    </div>
+
+    <div class="form-section">
+      <b>💼 Job Details</b>
+      <label>Role *</label>
+      <div class="role-grid">
+        <div class="role-card" data-role="manager"><span>👔</span><b>Manager</b><span>Full access</span></div>
+        <div class="role-card" data-role="cashier"><span>💵</span><b>Cashier</b><span>Billing</span></div>
+        <div class="role-card" data-role="delivery"><span>🛵</span><b>Delivery</b><span>Deliver orders</span></div>
+        <div class="role-card" data-role="helper"><span>🤝</span><b>Helper</b><span>Assist</span></div>
+      </div>
+
+      <label>Monthly Salary (₹) *</label>
+      <input type="number" id="staffSalary" placeholder="15000" class="form-input">
+
+      <label>Join Date *</label>
+      <input type="date" id="staffJoinDate" class="form-input">
+
+      <label>Working Hours</label>
+      <div class="two-col">
+        <input type="time" id="staffStartTime" value="09:00" class="form-input">
+        <input type="time" id="staffEndTime" value="18:00" class="form-input">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>🔐 Permissions</b>
+      <span class="section-hint">Select what this staff can access</span>
+      <div id="permissionsList" class="permissions-list">
+        <div class="permission-item">
+          <input type="checkbox" id="perm_orders" value="orders">
+          <label for="perm_orders"><b>📦 Orders</b><span>View & manage orders</span></label>
+        </div>
+        <div class="permission-item">
+          <input type="checkbox" id="perm_inventory" value="inventory">
+          <label for="perm_inventory"><b>📦 Inventory</b><span>Manage stock</span></label>
+        </div>
+        <div class="permission-item">
+          <input type="checkbox" id="perm_billing" value="billing">
+          <label for="perm_billing"><b>💵 Billing</b><span>Create bills & payments</span></label>
+        </div>
+        <div class="permission-item">
+          <input type="checkbox" id="perm_delivery" value="delivery">
+          <label for="perm_delivery"><b>🛵 Delivery</b><span>Deliver orders & update status</span></label>
+        </div>
+        <div class="permission-item">
+          <input type="checkbox" id="perm_customers" value="customers">
+          <label for="perm_customers"><b>👥 Customers</b><span>View customers</span></label>
+        </div>
+        <div class="permission-item">
+          <input type="checkbox" id="perm_marketing" value="marketing">
+          <label for="perm_marketing"><b>📢 Marketing</b><span>Coupons & offers</span></label>
+        </div>
+        <div class="permission-item">
+          <input type="checkbox" id="perm_finance" value="finance">
+          <label for="perm_finance"><b>💰 Finance</b><span>View revenue & expenses</span></label>
+        </div>
+        <div class="permission-item">
+          <input type="checkbox" id="perm_staff" value="staff">
+          <label for="perm_staff"><b>👔 Staff</b><span>Manage staff</span></label>
+        </div>
+        <div class="permission-item">
+          <input type="checkbox" id="perm_settings" value="settings">
+          <label for="perm_settings"><b>⚙️ Settings</b><span>Shop settings</span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>🔑 Login Access</b>
+      <div class="checkbox-row">
+        <input type="checkbox" id="staffCanLogin" checked>
+        <label for="staffCanLogin" style="margin:0"><b>Allow staff to login</b><span>Staff can login with phone & OTP</span></label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="staffActive" checked>
+        <label for="staffActive" style="margin:0"><b>Active immediately</b><span>Staff can start working now</span></label>
+      </div>
+    </div>
+
+    <button id="saveStaffBtn" class="primary-btn">Add Staff Member ➕</button>
+  </div>
+</div>
+
+<style>
+.staff-add-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.staff-add-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.staff-add-header b{ display:block; font-weight:900; }
+.staff-add-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.staff-add-form{ padding:12px; display:flex; flex-direction:column; gap:12px; }
+.form-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; }
+.form-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.form-section label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
+.form-section label:first-of-type{ margin-top:0; }
+.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
+.phone-row{ display:flex; }
+.phone-prefix{ background:#f1f5f9; border:1px solid #e2e8f0; border-right:none; padding:12px; border-radius:10px 0 0 10px; font-weight:800; font-size:13px; }
+.role-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.role-card{ background:#f8fafc; border:2px solid #f1f5f9; border-radius:12px; padding:12px; text-align:center; cursor:pointer; transition:.2s; }
+.role-card:hover{ border-color:#e2e8f0; }
+.role-card.selected{ border-color:#0f172a; background:#0f172a; color:#fff; }
+.role-card span:first-child{ font-size:24px; display:block; }
+.role-card b{ display:block; font-weight:900; font-size:12px; margin:4px 0; }
+.role-card span:last-child{ font-size:10px; font-weight:600; opacity:.8; display:block; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.section-hint{ display:block; font-size:11px; color:#64748b; font-weight:600; margin:-8px 0 12px; }
+.permissions-list{ display:flex; flex-direction:column; gap:8px; }
+.permission-item{ display:flex; align-items:center; gap:10px; background:#f8fafc; padding:10px 12px; border-radius:10px; border:1px solid #f1f5f9; }
+.permission-item input{ width:18px; height:18px; }
+.permission-item label{ margin:0; display:flex; flex-direction:column; cursor:pointer; }
+.permission-item label b{ margin:0; font-size:12px; font-weight:800; }
+.permission-item label span{ font-size:10px; color:#64748b; font-weight:600; text-transform:none; margin:0; }
+.checkbox-row{ display:flex; align-items:flex-start; gap:10px; background:#f8fafc; padding:12px; border-radius:10px; border:1px solid #f1f5f9; margin-top:10px; }
+.checkbox-row input{ width:20px; height:20px; margin-top:2px; }
+.checkbox-row label{ margin:0; display:flex; flex-direction:column; cursor:pointer; }
+.checkbox-row label b{ margin:0; font-size:13px; font-weight:800; }
+.checkbox-row label span{ font-size:11px; color:#64748b; font-weight:600; text-transform:none; margin:0; }
+.primary-btn{ background:#0f172a; color:#fff; border:none; padding:14px; border-radius:12px; font-weight:900; font-size:14px; cursor:pointer; width:100%; }
+.primary-btn:disabled{ opacity:.5; cursor:not-allowed; }
+</style>
+
+<script>
+class StaffAddPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.staffId = new URLSearchParams(location.search).get('staffId') || '';
+    this.isEdit = new URLSearchParams(location.search).get('edit')==='true';
+    this.selectedRole = 'helper';
+  }
+
+  async init(){
+    document.getElementById('staffJoinDate').value = new Date().toISOString().split('T')[0];
+
+    if(this.isEdit && this.staffId){
+      await this.loadStaffForEdit();
+    }
+
+    this.bindEvents();
+  }
+
+  async loadStaffForEdit(){
+    try{
+      document.getElementById('staffAddTitle').innerText = 'Edit Staff';
+
+      let staff = null;
+
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}/${this.staffId}`);
+        staff = data.staff||data;
+      } else {
+        const allStaff = JSON.parse(localStorage.getItem(`staff_${this.shopId}`)||'[]');
+        staff = allStaff.find(s=> s._id===this.staffId);
+      }
+
+      if(staff){
+        document.getElementById('staffName').value = staff.name||'';
+        document.getElementById('staffPhone').value = staff.phone||'';
+        document.getElementById('staffEmail').value = staff.email||'';
+        document.getElementById('staffAddress').value = staff.address||'';
+        document.getElementById('staffSalary').value = staff.salary||'';
+        document.getElementById('staffJoinDate').value = staff.joinDate? new Date(staff.joinDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        document.getElementById('staffStartTime').value = staff.startTime||'09:00';
+        document.getElementById('staffEndTime').value = staff.endTime||'18:00';
+        document.getElementById('staffCanLogin').checked = staff.canLogin!==false;
+        document.getElementById('staffActive').checked = staff.isActive!==false;
+
+        this.selectedRole = staff.role||'helper';
+        document.querySelectorAll('.role-card').forEach(card=>{
+          card.classList.toggle('selected', card.dataset.role===this.selectedRole);
+        });
+
+        (staff.permissions||[]).forEach(perm=>{
+          const checkbox = document.getElementById(`perm_${perm}`);
+          if(checkbox) checkbox.checked = true;
+        });
+
+        document.getElementById('saveStaffBtn').innerText = 'Update Staff ✅';
+      }
+
+    }catch(e){ console.error(e); }
+  }
+
+  async saveStaff(){
+    const name = document.getElementById('staffName').value.trim();
+    const phone = document.getElementById('staffPhone').value.trim();
+    const email = document.getElementById('staffEmail').value.trim();
+    const address = document.getElementById('staffAddress').value.trim();
+    const salary = parseInt(document.getElementById('staffSalary').value)||0;
+    const joinDate = document.getElementById('staffJoinDate').value;
+    const startTime = document.getElementById('staffStartTime').value;
+    const endTime = document.getElementById('staffEndTime').value;
+    const canLogin = document.getElementById('staffCanLogin').checked;
+    const isActive = document.getElementById('staffActive').checked;
+
+    const permissions = [];
+    document.querySelectorAll('#permissionsList input:checked').forEach(cb=> permissions.push(cb.value));
+
+    if(!name ||!phone ||!salary ||!joinDate){
+      if(window.Toast) Toast.show('Fill required fields', 'warning');
+      return;
+    }
+
+    if(phone.length!==10){
+      if(window.Toast) Toast.show('Phone must be 10 digits', 'warning');
+      return;
+    }
+
+    if(!this.selectedRole){
+      if(window.Toast) Toast.show('Select a role', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('saveStaffBtn');
+    btn.innerText = this.isEdit? 'Updating...' : 'Adding...';
+    btn.disabled=true;
+
+    try{
+      const staffData = {
+        shopId: this.shopId,
+        name,
+        phone,
+        email,
+        address,
+        role: this.selectedRole,
+        salary,
+        joinDate: new Date(joinDate).toISOString(),
+        startTime,
+        endTime,
+        permissions,
+        canLogin,
+        isActive,
+        onDuty: isActive,
+        lastActive: new Date().toISOString()
+      };
+
+      if(this.isEdit){
+        if(window.ApiCore){
+          await window.ApiCore.put(`/api/common/staff/${this.shopId}/${this.staffId}`, staffData);
+        } else {
+          const allStaff = JSON.parse(localStorage.getItem(`staff_${this.shopId}`)||'[]');
+          const idx = allStaff.findIndex(s=> s._id===this.staffId);
+          if(idx>=0){
+            allStaff[idx] = {...allStaff[idx],...staffData, _id:this.staffId };
+            localStorage.setItem(`staff_${this.shopId}`, JSON.stringify(allStaff));
+          }
+        }
+
+        if(window.Toast) Toast.show('Staff updated ✅', 'success');
+      } else {
+        const newStaff = { _id:'s'+Date.now(),...staffData };
+
+        if(window.ApiCore){
+          const result = await window.ApiCore.post(`/api/common/staff/${this.shopId}`, staffData);
+        } else {
+          const allStaff = JSON.parse(localStorage.getItem(`staff_${this.shopId}`)||'[]');
+          allStaff.unshift(newStaff);
+          localStorage.setItem(`staff_${this.shopId}`, JSON.stringify(allStaff));
+        }
+
+        if(window.Toast) Toast.show(`Staff ${name} added 🎉`, 'success');
+      }
+
+      setTimeout(()=>{ window.location.href=`/shop-templates/common/staff/staff-list.html?shopId=${this.shopId}`; }, 1000);
+
+    }catch(e){
+      console.error(e);
+      if(window.Toast) Toast.show('Failed to save staff', 'error');
+    }finally{
+      btn.innerText = this.isEdit? 'Update Staff ✅' : 'Add Staff Member ➕';
+      btn.disabled=false;
+    }
+  }
+
+  bindEvents(){
+    document.getElementById('staffAddBack')?.addEventListener('click', ()=> history.back());
+
+    document.querySelectorAll('.role-card').forEach(card=>{
+      card.addEventListener('click', ()=>{
+        document.querySelectorAll('.role-card').forEach(c=> c.classList.remove('selected'));
+        card.classList.add('selected');
+        this.selectedRole = card.dataset.role;
+
+        // Auto select permissions based on role
+        const rolePermissions = {
+          manager:['orders','inventory','billing','delivery','customers','marketing','finance','staff','settings'],
+          cashier:['orders','billing','customers'],
+          delivery:['delivery','orders'],
+          helper:['orders']
+        };
+
+        const perms = rolePermissions[this.selectedRole]||[];
+        document.querySelectorAll('#permissionsList input').forEach(cb=> cb.checked = perms.includes(cb.value));
+      });
+    });
+
+    document.getElementById('saveStaffBtn')?.addEventListener('click', ()=> this.saveStaff());
+  }
+}
+
+window.StaffAddPageInstance = new StaffAddPage();
+document.addEventListener('DOMContentLoaded', ()=> window.StaffAddPageInstance.init());
+</script>

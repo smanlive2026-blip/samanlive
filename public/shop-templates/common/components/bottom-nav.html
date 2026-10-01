@@ -1,0 +1,225 @@
+<!-- LOCATION: common/components/bottom-nav.html - WORLD CLASS BOTTOM NAV - FULL CODE -->
+<nav id="bottomNav" class="bottom-nav-wrapper">
+  <div class="bottom-nav-container">
+    <a href="#" data-nav="home" class="nav-item active">
+      <div class="nav-icon-wrap">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-active-dot"></span>
+      </div>
+      <span class="nav-label">Home</span>
+    </a>
+
+    <a href="#" data-nav="search" class="nav-item">
+      <div class="nav-icon-wrap">
+        <span class="nav-icon">🔍</span>
+      </div>
+      <span class="nav-label">Search</span>
+    </a>
+
+    <a href="#" data-nav="categories" class="nav-item">
+      <div class="nav-icon-wrap">
+        <span class="nav-icon">📦</span>
+      </div>
+      <span class="nav-label">Categories</span>
+    </a>
+
+    <a href="#" data-nav="cart" class="nav-item" data-open-cart>
+      <div class="nav-icon-wrap">
+        <span class="nav-icon">🛒</span>
+        <span class="nav-badge" data-cart-count style="display:none">0</span>
+      </div>
+      <span class="nav-label">Cart</span>
+    </a>
+
+    <a href="#" data-nav="profile" class="nav-item">
+      <div class="nav-icon-wrap">
+        <span class="nav-icon">👤</span>
+        <img id="bottomNavAvatar" class="nav-avatar" src="" style="display:none">
+      </div>
+      <span class="nav-label">You</span>
+    </a>
+  </div>
+
+  <!-- Safe area spacer for iPhone -->
+  <div class="safe-area-spacer"></div>
+</nav>
+
+<style>
+.bottom-nav-wrapper{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid #f1f5f9;
+  z-index:100;
+  font-family:Outfit,sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav-container{
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  padding:6px 0 4px;
+  max-width:600px;
+  margin:0 auto;
+}
+.nav-item{
+  text-decoration:none;
+  color:#94a3b8;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
+  position:relative;
+  padding:4px 12px;
+  border-radius:12px;
+  transition:all .2s;
+  min-width:60px;
+}
+.nav-item.active{
+  color:#0f172a;
+  background:#f8fafc;
+}
+.nav-item:active{
+  transform:scale(.92);
+}
+.nav-icon-wrap{
+  position:relative;
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+}
+.nav-icon{
+  font-size:22px;
+  line-height:1;
+  transition:transform .2s;
+}
+.nav-item.active .nav-icon{
+  transform:translateY(-1px);
+}
+.nav-active-dot{
+  position:absolute;
+  bottom:-2px;
+  left:50%;
+  transform:translateX(-50%);
+  width:4px;
+  height:4px;
+  background:#0f172a;
+  border-radius:50%;
+  display:none;
+}
+.nav-item.active .nav-active-dot{
+  display:block;
+}
+.nav-label{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.2px;
+}
+.nav-item.active .nav-label{
+  font-weight:900;
+}
+.nav-badge{
+  position:absolute;
+  top:-4px;
+  right:-8px;
+  background:#ef4444;
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+  min-width:16px;
+  height:16px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  padding:0 4px;
+  border:2px solid #fff;
+  animation:badgePop .3s;
+}
+.nav-avatar{
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid #f1f5f9;
+}
+.safe-area-spacer{
+  height: env(safe-area-inset-bottom);
+}
+@keyframes badgePop{
+  0%{transform:scale(0)}
+  50%{transform:scale(1.2)}
+  100%{transform:scale(1)}
+}
+@media(min-width:768px){
+  .bottom-nav-wrapper{ display:none; }
+}
+</style>
+
+<script>
+(function(){
+  const shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('currentShopId') || '';
+  
+  const nav = document.getElementById('bottomNav');
+  if(!nav) return;
+
+  // Set links dynamically
+  const links = {
+    home: `/shop.html?shopId=${shopId}`,
+    search: `/shop-templates/common/search.html?shopId=${shopId}`,
+    categories: `#categories`,
+    cart: `/shop-templates/common/cart/cart.html?shopId=${shopId}`,
+    profile: `/profile.html?shopId=${shopId}`
+  };
+
+  Object.entries(links).forEach(([key, url])=>{
+    const el = nav.querySelector(`[data-nav="${key}"]`);
+    if(el) el.href = url;
+  });
+
+  // Active state based on current page
+  const currentPath = location.pathname;
+  nav.querySelectorAll('.nav-item').forEach(item=> item.classList.remove('active'));
+
+  if(currentPath.includes('shop.html') || currentPath === '/' || currentPath.includes('index.html')){
+    nav.querySelector('[data-nav="home"]')?.classList.add('active');
+  } else if(currentPath.includes('cart')){
+    nav.querySelector('[data-nav="cart"]')?.classList.add('active');
+  } else if(currentPath.includes('profile') || currentPath.includes('orders')){
+    nav.querySelector('[data-nav="profile"]')?.classList.add('active');
+  }
+
+  // Avatar
+  if(window.currentUser?.avatar){
+    const avatar = document.getElementById('bottomNavAvatar');
+    if(avatar){
+      avatar.src = window.currentUser.avatar;
+      avatar.style.display = 'block';
+      avatar.previousElementSibling.style.display = 'none';
+    }
+  }
+
+  // Cart count listener
+  window.addEventListener('cart:updated', (e)=>{
+    const count = e.detail.count || 0;
+    const badge = nav.querySelector('[data-cart-count]');
+    if(badge){
+      badge.innerText = count > 99 ? '99+' : count;
+      badge.style.display = count > 0 ? 'grid' : 'none';
+    }
+  });
+
+  // If cart drawer exists, override cart click to open drawer on mobile
+  nav.querySelector('[data-nav="cart"]')?.addEventListener('click', (e)=>{
+    if(window.innerWidth < 768 && window.openCartDrawer){
+      e.preventDefault();
+      window.openCartDrawer();
+    }
+  });
+
+})();
+</script>

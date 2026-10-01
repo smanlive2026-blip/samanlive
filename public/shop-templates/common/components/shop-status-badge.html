@@ -1,0 +1,246 @@
+<!-- LOCATION: common/components/shop-status-badge.html - FULL WORLD CLASS STATUS BADGE -->
+<div id="shopStatusBadgeWrapper" class="shop-status-wrapper">
+  <span id="shopStatusBadge" class="shop-status-badge-main closed">
+    <span class="status-dot-main"></span>
+    <span id="shopStatusText" class="status-text">Checking...</span>
+    <span id="shopStatusTime" class="status-time"></span>
+  </span>
+
+  <!-- Detailed status modal -->
+  <div id="shopStatusDetail" class="status-detail-modal" style="display:none">
+    <div class="status-detail-backdrop"></div>
+    <div class="status-detail-box">
+      <div class="status-detail-header">
+        <b>Shop Status</b>
+        <button id="closeStatusDetail" class="close-detail">✕</button>
+      </div>
+      <div class="status-detail-body">
+        <div class="status-detail-row">
+          <span>Current Status</span>
+          <b id="detailStatus">Checking...</b>
+        </div>
+        <div class="status-detail-row">
+          <span>Today's Timing</span>
+          <b id="detailTiming">9:00 AM - 9:00 PM</b>
+        </div>
+        <div class="status-detail-row">
+          <span>Next Open</span>
+          <b id="detailNextOpen">Tomorrow 9:00 AM</b>
+        </div>
+        <div class="status-detail-note" id="detailNote">
+          Shop is currently closed. We will open soon.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.shop-status-wrapper{
+  display:inline-block;
+  font-family:Outfit,sans-serif;
+}
+.shop-status-badge-main{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:5px 10px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.3px;
+  cursor:pointer;
+  transition:.2s;
+  border:1px solid transparent;
+}
+.shop-status-badge-main:hover{ transform:translateY(-1px); }
+.shop-status-badge-main.open{
+  background:#dcfce7;
+  color:#166534;
+  border-color:#bbf7d0;
+}
+.shop-status-badge-main.closed{
+  background:#fee2e2;
+  color:#991b1b;
+  border-color:#fecaca;
+}
+.shop-status-badge-main.busy{
+  background:#fef3c7;
+  color:#92400e;
+  border-color:#fde68a;
+}
+.status-dot-main{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:currentColor;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{
+  0%{ box-shadow:0 0 0 0 currentColor; }
+  70%{ box-shadow:0 0 0 6px transparent; }
+  100%{ box-shadow:0 0 0 0 transparent; }
+}
+.status-text{ font-weight:900; }
+.status-time{
+  font-weight:600;
+  opacity:.8;
+  font-size:10px;
+}
+.status-detail-modal{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:grid;
+  place-items:center;
+  padding:20px;
+}
+.status-detail-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  backdrop-filter:blur(4px);
+}
+.status-detail-box{
+  position:relative;
+  background:#fff;
+  width:100%;
+  max-width:360px;
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 24px 48px rgba(0,0,0,.2);
+  animation:modalPop.3s;
+}
+.status-detail-header{
+  padding:16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid #f1f5f9;
+}
+.status-detail-header b{ font-weight:900; font-size:16px; }
+.close-detail{
+  background:#f1f5f9;
+  border:none;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  font-weight:900;
+  cursor:pointer;
+}
+.status-detail-body{
+  padding:16px;
+}
+.status-detail-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 0;
+  border-bottom:1px solid #f8fafc;
+  font-size:13px;
+}
+.status-detail-row span{ color:#64748b; font-weight:600; }
+.status-detail-row b{ font-weight:800; }
+.status-detail-note{
+  margin-top:12px;
+  background:#f8fafc;
+  padding:10px;
+  border-radius:10px;
+  font-size:12px;
+  color:#475569;
+  line-height:1.5;
+  text-align:center;
+}
+@keyframes modalPop{
+  from{ transform:scale(.9); opacity:0; }
+  to{ transform:scale(1); opacity:1; }
+}
+</style>
+
+<script>
+class ShopStatusBadge {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.status = 'closed';
+    this.timing = null;
+  }
+
+  async init(){
+    if(!this.shopId) return;
+
+    await this.fetchStatus();
+    this.bindEvents();
+
+    // Refresh every 60 sec
+    setInterval(()=> this.fetchStatus(), 60000);
+  }
+
+  async fetchStatus(){
+    try{
+      const res = await fetch(`/api/common/shop-status/${this.shopId}?t=${Date.now()}`, { cache:'no-store', credentials:'include' });
+      const data = await res.json();
+
+      const isOpen = data.isOpen || data.open || data.shop?.isOpen || false;
+      const timing = data.timing || data.shop?.timing || '9:00 AM - 9:00 PM';
+
+      this.status = isOpen? 'open' : 'closed';
+      this.timing = timing;
+
+      this.render(isOpen, timing, data);
+
+    }catch(e){
+      console.error('Status fetch failed', e);
+      // Default to open in dev
+      this.render(true, '9:00 AM - 9:00 PM', {});
+    }
+  }
+
+  render(isOpen, timing, data){
+    const badge = document.getElementById('shopStatusBadge');
+    const text = document.getElementById('shopStatusText');
+    const time = document.getElementById('shopStatusTime');
+
+    if(!badge) return;
+
+    badge.className = `shop-status-badge-main ${isOpen? 'open' : 'closed'}`;
+    text.innerText = isOpen? 'Open' : 'Closed';
+    time.innerText = isOpen? '• Closes 9 PM' : '';
+
+    // Detail modal
+    document.getElementById('detailStatus').innerText = isOpen? 'Open Now' : 'Currently Closed';
+    document.getElementById('detailStatus').style.color = isOpen? '#166534' : '#991b1b';
+    document.getElementById('detailTiming').innerText = timing;
+    document.getElementById('detailNextOpen').innerText = isOpen? 'Closes at 9:00 PM' : 'Opens tomorrow 9:00 AM';
+    document.getElementById('detailNote').innerText = isOpen
+     ? 'Shop is open and accepting orders. Delivery in 30-45 mins.'
+      : 'Shop is currently closed. You can still browse products and place pre-orders.';
+
+    // Update all other status badges on page
+    document.querySelectorAll('[data-shop-status]').forEach(el=>{
+      el.innerText = isOpen? '● Open' : '● Closed';
+      el.className = isOpen? 'open' : 'closed';
+    });
+  }
+
+  bindEvents(){
+    const badge = document.getElementById('shopStatusBadge');
+    const detail = document.getElementById('shopStatusDetail');
+    const closeBtn = document.getElementById('closeStatusDetail');
+
+    badge?.addEventListener('click', ()=>{
+      if(detail) detail.style.display = 'grid';
+    });
+
+    closeBtn?.addEventListener('click', ()=>{
+      if(detail) detail.style.display = 'none';
+    });
+
+    detail?.querySelector('.status-detail-backdrop')?.addEventListener('click', ()=>{
+      detail.style.display = 'none';
+    });
+  }
+}
+
+window.ShopStatusBadge = new ShopStatusBadge();
+document.addEventListener('DOMContentLoaded', ()=> window.ShopStatusBadge.init());
+</script>

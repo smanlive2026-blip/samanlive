@@ -1,0 +1,25 @@
+<!-- LOCATION: common/checkout/cod-confirm.html - COD CONFIRM MODAL -->
+<div id="codModal" style="max-width:400px;margin:40px auto;background:#fff;border-radius:20px;padding:20px;text-align:center;font-family:Outfit,sans-serif;border:1px solid #f1f5f9;box-shadow:0 20px 40px rgba(0,0,0,.1)">
+  <div style="font-size:48px">💵</div>
+  <h2 style="font-weight:900;margin:10px 0 6px">Cash on Delivery</h2>
+  <p style="color:#64748b;font-size:13px;margin:0">You will pay <b id="codAmount">₹0</b> when your order is delivered. Please keep exact change.</p>
+  <div style="background:#f8fafc;border-radius:12px;padding:12px;margin:16px 0;text-align:left;font-size:13px"><div style="display:flex;justify-content:space-between"><span>Amount to Pay</span><b id="codAmount2">₹0</b></div><div style="display:flex;justify-content:space-between;margin-top:6px;color:#64748b"><span>Payment</span><span>Cash on Delivery</span></div></div>
+  <button id="codConfirmBtn" style="width:100%;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900">Confirm Order • <span id="codAmountBtn">₹0</span></button>
+  <button onclick="history.back()" style="width:100%;margin-top:8px;background:#f1f5f9;border:none;padding:12px;border-radius:12px;font-weight:800">Cancel</button>
+</div>
+<script>
+const params = new URLSearchParams(location.search);
+const shopId = params.get('shopId')||'';
+const amount = params.get('amount')|| localStorage.getItem('cartTotal')||'0';
+document.getElementById('codAmount').innerText = `₹${amount}`;
+document.getElementById('codAmount2').innerText = `₹${amount}`;
+document.getElementById('codAmountBtn').innerText = `₹${amount}`;
+document.getElementById('codConfirmBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('codConfirmBtn'); btn.disabled=true; btn.innerText='Placing...';
+  if(window.CheckoutCore){
+    const res = await window.CheckoutCore.placeOrder({ paymentMethod:'cod', amount });
+    if(!res.success){ btn.disabled=false; btn.innerText='Confirm Order'; alert(res.message||'Failed'); }
+  }
+});
+</script>
+<script src="./checkout.js"></script>

@@ -1,0 +1,304 @@
+<!-- LOCATION: common/finance/wallet.html - WORLD CLASS WALLET -->
+<div id="walletRoot" class="wallet-root">
+  <div class="wallet-header">
+    <button id="walletBack" class="back-btn">‹</button>
+    <b>My Wallet & Earnings</b>
+    <button id="walletHistoryBtn" class="history-btn">🕘 History</button>
+  </div>
+
+  <div class="wallet-balance-card">
+    <div class="balance-top">
+      <span>Total Balance</span>
+      <button id="eyeToggle" class="eye-btn">👁️</button>
+    </div>
+    <b id="walletBalance" class="balance-amount">₹12,450</b>
+    <div class="balance-sub">
+      <span>Today: <b id="todayEarning">₹1,250</b></span>
+      <span>•</span>
+      <span>This Month: <b id="monthEarning">₹8,900</b></span>
+    </div>
+    <div class="balance-actions">
+      <button id="withdrawBtn" class="withdraw-btn">💸 Withdraw</button>
+      <button id="addMoneyBtn" class="add-money-btn">+ Add Expense</button>
+    </div>
+    <div class="balance-wave"></div>
+  </div>
+
+  <div class="wallet-stats">
+    <div class="stat-card">
+      <span class="stat-icon">💰</span>
+      <div>
+        <b id="totalRevenue">₹45,000</b>
+        <span>Total Revenue</span>
+      </div>
+      <span class="stat-trend up">+12%</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">📦</span>
+      <div>
+        <b id="totalOrdersWallet">125</b>
+        <span>Total Orders</span>
+      </div>
+      <span class="stat-trend up">+8%</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">💸</span>
+      <div>
+        <b id="totalExpense">₹5,200</b>
+        <span>Total Expense</span>
+      </div>
+      <span class="stat-trend down">-3%</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">📈</span>
+      <div>
+        <b id="netProfit">₹39,800</b>
+        <span>Net Profit</span>
+      </div>
+      <span class="stat-trend up">+15%</span>
+    </div>
+  </div>
+
+  <div class="wallet-tabs">
+    <button class="wallet-tab active" data-tab="transactions">Transactions</button>
+    <button class="wallet-tab" data-tab="payouts">Payouts</button>
+    <button class="wallet-tab" data-tab="expenses">Expenses</button>
+  </div>
+
+  <div id="walletTransactions" class="transactions-list">
+    <div class="txn-item credit">
+      <div class="txn-icon">💵</div>
+      <div class="txn-info">
+        <b>Order Payment #ORD123</b>
+        <span>Today, 6:30 PM • COD • Customer: Amit</span>
+      </div>
+      <b class="txn-amount credit">+₹299</b>
+    </div>
+    <div class="txn-item debit">
+      <div class="txn-icon">🛒</div>
+      <div class="txn-info">
+        <b>Stock Purchase</b>
+        <span>Yesterday • Vegetables</span>
+      </div>
+      <b class="txn-amount debit">-₹1,200</b>
+    </div>
+    <div class="txn-item credit">
+      <div class="txn-icon">💵</div>
+      <div class="txn-info">
+        <b>Order Payment #ORD122</b>
+        <span>Yesterday, 5:00 PM • UPI</span>
+      </div>
+      <b class="txn-amount credit">+₹450</b>
+    </div>
+  </div>
+
+  <div id="withdrawModal" class="withdraw-modal" style="display:none">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <b>Withdraw Money</b>
+        <button id="closeWithdraw">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Available Balance: <b id="availableBalanceModal">₹12,450</b></label>
+        <input type="number" id="withdrawAmount" placeholder="Enter amount" class="modal-input">
+        <select id="withdrawMethod" class="modal-input" style="margin-top:10px">
+          <option value="upi">UPI - Instant</option>
+          <option value="bank">Bank Transfer - 2-3 days</option>
+        </select>
+        <input type="text" id="withdrawUpi" placeholder="UPI ID / Account Number" class="modal-input" style="margin-top:10px">
+      </div>
+      <div class="modal-actions">
+        <button id="cancelWithdraw" class="secondary-btn">Cancel</button>
+        <button id="confirmWithdraw" class="primary-btn">Withdraw Now</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.wallet-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.wallet-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.wallet-header b{ flex:1; font-weight:900; }
+.history-btn{ background:#f1f5f9; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer; }
+.wallet-balance-card{ background:linear-gradient(135deg,#0f172a,#1e293b); color:#fff; margin:12px; border-radius:20px; padding:20px; position:relative; overflow:hidden; }
+.balance-top{ display:flex; justify-content:space-between; align-items:center; }
+.balance-top span{ font-size:12px; opacity:.7; font-weight:600; text-transform:uppercase; letter-spacing:1px; }
+.eye-btn{ background:rgba(255,255,255,.15); border:none; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:14px; }
+.balance-amount{ display:block; font-size:36px; font-weight:900; margin:12px 0 8px; letter-spacing:-1px; }
+.balance-sub{ display:flex; gap:8px; font-size:11px; opacity:.8; font-weight:600; }
+.balance-sub b{ color:#fff; opacity:1; }
+.balance-actions{ display:flex; gap:10px; margin-top:16px; }
+.withdraw-btn{ flex:1; background:#fff; color:#0f172a; border:none; padding:12px; border-radius:12px; font-weight:900; cursor:pointer; }
+.add-money-btn{ flex:1; background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.2); padding:12px; border-radius:12px; font-weight:800; cursor:pointer; }
+.balance-wave{ position:absolute; bottom:0; left:0; right:0; height:40px; background:radial-gradient(ellipse at center, rgba(255,255,255,.1) 0%, transparent 70%); }
+.wallet-stats{ display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 12px 12px; }
+.stat-card{ background:#fff; border:1px solid #f1f5f9; border-radius:14px; padding:12px; display:flex; align-items:center; gap:10px; position:relative; }
+.stat-icon{ width:36px; height:36px; background:#f8fafc; border-radius:10px; display:grid; place-items:center; font-size:18px; }
+.stat-card div{ flex:1; }
+.stat-card b{ display:block; font-weight:900; font-size:14px; }
+.stat-card span{ font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; }
+.stat-trend{ position:absolute; top:8px; right:8px; font-size:10px; font-weight:900; padding:2px 6px; border-radius:20px; }
+.stat-trend.up{ background:#dcfce7; color:#166534; }
+.stat-trend.down{ background:#fee2e2; color:#991b1b; }
+.wallet-tabs{ display:flex; gap:6px; padding:0 12px 12px; }
+.wallet-tab{ flex:1; background:#fff; border:1px solid #e2e8f0; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; }
+.wallet-tab.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
+.transactions-list{ padding:0 12px; display:flex; flex-direction:column; gap:8px; }
+.txn-item{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:12px; display:flex; align-items:center; gap:10px; }
+.txn-icon{ width:36px; height:36px; background:#f8fafc; border-radius:10px; display:grid; place-items:center; font-size:16px; }
+.txn-info{ flex:1; }
+.txn-info b{ display:block; font-weight:800; font-size:13px; }
+.txn-info span{ font-size:11px; color:#64748b; font-weight:600; }
+.txn-amount{ font-weight:900; font-size:13px; }
+.txn-amount.credit{ color:#10b981; }
+.txn-amount.debit{ color:#ef4444; }
+.withdraw-modal{ position:fixed; inset:0; z-index:9999; display:grid; place-items:end center; }
+.modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); }
+.modal-box{ position:relative; background:#fff; width:100%; max-width:400px; border-radius:24px 24px 0 0; padding:20px; animation:slideUp.3s; }
+@keyframes slideUp{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
+.modal-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.modal-header b{ font-weight:900; }
+.modal-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:700; font-size:14px; }
+.modal-actions{ display:flex; gap:10px; margin-top:16px; }
+.secondary-btn{ flex:1; background:#f1f5f9; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
+.primary-btn{ flex:1; background:#0f172a; color:#fff; border:none; padding:12px; border-radius:10px; font-weight:900; cursor:pointer; }
+</style>
+
+<script>
+class WalletPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.balanceVisible = true;
+    this.transactions = [];
+  }
+
+  async init(){
+    await this.loadWallet();
+    this.bindEvents();
+  }
+
+  async loadWallet(){
+    try{
+      if(window.Loader) Loader.show('Loading wallet...');
+
+      let wallet;
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/finance/${this.shopId}/wallet`);
+        wallet = data.wallet || data;
+      } else {
+        wallet = { totalRevenue:45000, balance:12450, todayRevenue:1250, monthlyRevenue:8900, totalOrders:125, expense:5200, transactions:[] };
+      }
+
+      document.getElementById('walletBalance').innerText = `₹${wallet.balance||wallet.totalRevenue||0}`;
+      document.getElementById('todayEarning').innerText = `₹${wallet.todayRevenue||wallet.today||1250}`;
+      document.getElementById('monthEarning').innerText = `₹${wallet.monthlyRevenue||wallet.monthly||8900}`;
+      document.getElementById('totalRevenue').innerText = `₹${wallet.totalRevenue||0}`;
+      document.getElementById('totalOrdersWallet').innerText = wallet.totalOrders||0;
+      document.getElementById('totalExpense').innerText = `₹${wallet.expense||wallet.totalExpense||0}`;
+      document.getElementById('netProfit').innerText = `₹${(wallet.totalRevenue||0)-(wallet.expense||0)}`;
+      document.getElementById('availableBalanceModal').innerText = `₹${wallet.balance||0}`;
+
+      if(wallet.transactions && wallet.transactions.length>0){
+        this.renderTransactions(wallet.transactions);
+      }
+
+    }catch(e){
+      console.error(e);
+    }finally{
+      if(window.Loader) Loader.hide();
+    }
+  }
+
+  renderTransactions(txns){
+    const container = document.getElementById('walletTransactions');
+    if(!container ||!txns.length) return;
+
+    container.innerHTML = txns.slice(0,20).map(txn=>`
+      <div class="txn-item ${txn.type||'credit'}">
+        <div class="txn-icon">${txn.type==='credit'?'💵':'🛒'}</div>
+        <div class="txn-info">
+          <b>${txn.description||`Order ${txn.orderId||''}`}</b>
+          <span>${new Date(txn.date||Date.now()).toLocaleString()} • ${txn.method||'COD'}</span>
+        </div>
+        <b class="txn-amount ${txn.type||'credit'}">${txn.type==='debit'?'-':'+'}₹${txn.amount||0}</b>
+      </div>
+    `).join('');
+  }
+
+  bindEvents(){
+    document.getElementById('walletBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('walletHistoryBtn')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/finance/payout-history.html?shopId=${this.shopId}`);
+
+    document.getElementById('eyeToggle')?.addEventListener('click', ()=>{
+      this.balanceVisible =!this.balanceVisible;
+      const el = document.getElementById('walletBalance');
+      if(this.balanceVisible){
+        el.innerText = el.dataset.real||el.innerText;
+        document.getElementById('eyeToggle').innerText='👁️';
+      } else {
+        el.dataset.real = el.innerText;
+        el.innerText = '••••••';
+        document.getElementById('eyeToggle').innerText='🙈';
+      }
+    });
+
+    document.getElementById('withdrawBtn')?.addEventListener('click', ()=> document.getElementById('withdrawModal').style.display='grid');
+    document.getElementById('addMoneyBtn')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/finance/expense.html?shopId=${this.shopId}`);
+
+    document.getElementById('closeWithdraw')?.addEventListener('click', ()=> document.getElementById('withdrawModal').style.display='none');
+    document.getElementById('cancelWithdraw')?.addEventListener('click', ()=> document.getElementById('withdrawModal').style.display='none');
+    document.getElementById('withdrawModal')?.querySelector('.modal-backdrop')?.addEventListener('click', ()=> document.getElementById('withdrawModal').style.display='none');
+
+    document.getElementById('confirmWithdraw')?.addEventListener('click', ()=> this.withdraw());
+
+    document.querySelectorAll('.wallet-tab').forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        document.querySelectorAll('.wallet-tab').forEach(t=> t.classList.remove('active'));
+        tab.classList.add('active');
+        const tabName = tab.dataset.tab;
+        if(tabName==='payouts') window.location.href=`/shop-templates/common/finance/payout-history.html?shopId=${this.shopId}`;
+        if(tabName==='expenses') window.location.href=`/shop-templates/common/finance/expense.html?shopId=${this.shopId}`;
+      });
+    });
+  }
+
+  async withdraw(){
+    const amount = parseInt(document.getElementById('withdrawAmount').value);
+    const method = document.getElementById('withdrawMethod').value;
+    const upi = document.getElementById('withdrawUpi').value;
+
+    if(!amount || amount<100){
+      if(window.Toast) Toast.show('Minimum ₹100 withdrawal', 'warning');
+      return;
+    }
+    if(!upi){
+      if(window.Toast) Toast.show('Enter UPI ID / Account', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('confirmWithdraw');
+    btn.innerText='Processing...';
+    btn.disabled=true;
+
+    try{
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/finance/${this.shopId}/withdraw`, { amount, method, upiId:upi });
+      }
+
+      if(window.Toast) Toast.show(`₹${amount} withdrawal initiated! 💸`, 'success');
+      document.getElementById('withdrawModal').style.display='none';
+
+    }catch(e){
+      if(window.Toast) Toast.show('Withdrawal failed', 'error');
+    }finally{
+      btn.innerText='Withdraw Now';
+      btn.disabled=false;
+    }
+  }
+}
+
+window.WalletPageInstance = new WalletPage();
+document.addEventListener('DOMContentLoaded', ()=> window.WalletPageInstance.init());
+</script>

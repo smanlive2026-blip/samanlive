@@ -1,0 +1,497 @@
+<!-- LOCATION: public/shop-templates/common/marketing/coupons.html -->
+<!-- WORLD CLASS COUPONS MANAGEMENT - FULL 450+ LINES -->
+<div id="couponsRoot" class="coupons-root">
+  <div class="coupons-header">
+    <button id="couponsBack" class="back-btn">‹</button>
+    <div>
+      <b>Coupons & Offers</b>
+      <span id="couponsSubHeader">0 active coupons • ₹0 saved by customers</span>
+    </div>
+    <button id="createCouponBtn" class="create-btn">+ Create</button>
+  </div>
+
+  <div class="coupons-stats">
+    <div class="c-stat-card">
+      <span class="c-icon" style="background:#f0fdf4">🎟️</span>
+      <div><b id="totalCoupons">0</b><span>Total Coupons</span></div>
+    </div>
+    <div class="c-stat-card">
+      <span class="c-icon" style="background:#f0f9ff">✅</span>
+      <div><b id="activeCoupons">0</b><span>Active</span></div>
+    </div>
+    <div class="c-stat-card">
+      <span class="c-icon" style="background:#fef3c7">💰</span>
+      <div><b id="totalRedemptions">0</b><span>Used</span></div>
+    </div>
+    <div class="c-stat-card">
+      <span class="c-icon" style="background:#fee2e2">💸</span>
+      <div><b id="totalSavings">₹0</b><span>Customer Savings</span></div>
+    </div>
+  </div>
+
+  <div class="coupons-tabs">
+    <button class="coupons-tab active" data-filter="all">All Coupons</button>
+    <button class="coupons-tab" data-filter="active">Active ✅</button>
+    <button class="coupons-tab" data-filter="expired">Expired ❌</button>
+    <button class="coupons-tab" data-filter="festival">Festival 🎉</button>
+  </div>
+
+  <div id="couponsList" class="coupons-list"></div>
+
+  <div id="couponsEmpty" class="coupons-empty" style="display:none">
+    <div class="empty-icon">🎟️</div>
+    <b>No coupons yet</b>
+    <span>Create your first coupon to boost sales</span>
+    <button id="emptyCreateCoupon" class="primary-btn">+ Create Coupon</button>
+  </div>
+
+  <div id="createCouponModal" class="coupon-modal" style="display:none">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <b>Create New Coupon</b>
+        <button id="closeCouponModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Coupon Code *</label>
+        <div class="code-row">
+          <input type="text" id="couponCode" placeholder="DIWALI50" class="modal-input" style="text-transform:uppercase">
+          <button id="generateCode" class="gen-btn">🎲 Generate</button>
+        </div>
+
+        <label>Discount Type *</label>
+        <div class="discount-type-tabs">
+          <button class="dtype-tab active" data-type="percent">% Percent</button>
+          <button class="dtype-tab" data-type="flat">₹ Flat</button>
+        </div>
+
+        <label id="discountLabel">Discount Percent * (1-100%)</label>
+        <input type="number" id="couponDiscount" placeholder="50" min="1" max="100" class="modal-input">
+
+        <div class="two-col">
+          <div>
+            <label>Min Order Value (₹)</label>
+            <input type="number" id="couponMinOrder" placeholder="199" class="modal-input">
+          </div>
+          <div>
+            <label>Max Discount (₹) - for %</label>
+            <input type="number" id="couponMaxDiscount" placeholder="100" class="modal-input">
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <label>Usage Limit (total)</label>
+            <input type="number" id="couponUsageLimit" placeholder="100" class="modal-input">
+          </div>
+          <div>
+            <label>Per User Limit</label>
+            <input type="number" id="couponPerUserLimit" placeholder="1" value="1" class="modal-input">
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <label>Start Date</label>
+            <input type="date" id="couponStartDate" class="modal-input">
+          </div>
+          <div>
+            <label>Expiry Date *</label>
+            <input type="date" id="couponExpiryDate" class="modal-input">
+          </div>
+        </div>
+
+        <label>Description</label>
+        <input type="text" id="couponDescription" placeholder="Diwali special 50% off" class="modal-input">
+
+        <label>Applicable For</label>
+        <select id="couponApplicable" class="modal-input">
+          <option value="all">All Products</option>
+          <option value="category">Specific Category</option>
+          <option value="product">Specific Product</option>
+          <option value="first_order">First Order Only</option>
+        </select>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="couponActive" checked>
+          <label for="couponActive" style="margin:0">Active immediately</label>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="couponAutoApply">
+          <label for="couponAutoApply" style="margin:0">Auto apply at checkout (festival)</label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="cancelCoupon" class="secondary-btn">Cancel</button>
+        <button id="saveCoupon" class="primary-btn">Create Coupon</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.coupons-root{ font-family:Outfit,sans-serif; max-width:700px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.coupons-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.coupons-header b{ display:block; font-weight:900; }
+.coupons-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.create-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
+.coupons-stats{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; padding:12px; }
+.c-stat-card{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:10px; display:flex; gap:8px; align-items:center; }
+.c-icon{ width:32px; height:32px; border-radius:8px; display:grid; place-items:center; font-size:16px; }
+.c-stat-card b{ display:block; font-weight:900; font-size:14px; }
+.c-stat-card span{ font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; }
+.coupons-tabs{ display:flex; gap:6px; padding:0 12px 12px; overflow-x:auto; scrollbar-width:none; }
+.coupons-tabs::-webkit-scrollbar{ display:none; }
+.coupons-tab{ background:#fff; border:1px solid #e2e8f0; padding:8px 12px; border-radius:20px; font-weight:800; font-size:11px; white-space:nowrap; cursor:pointer; }
+.coupons-tab.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
+.coupons-list{ padding:0 12px; display:flex; flex-direction:column; gap:10px; }
+.coupon-card{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:14px; position:relative; overflow:hidden; }
+.coupon-card.active{ border-color:#10b981; }
+.coupon-card.expired{ opacity:.6; background:#f8fafc; }
+.coupon-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+.coupon-code{ font-weight:900; font-size:18px; letter-spacing:1px; background:#0f172a; color:#fff; padding:6px 12px; border-radius:8px; }
+.coupon-discount{ font-weight:900; font-size:24px; }
+.coupon-discount.percent{ color:#10b981; }
+.coupon-discount.flat{ color:#0ea5e9; }
+.coupon-info{ margin-top:10px; }
+.coupon-info b{ display:block; font-weight:800; font-size:13px; }
+.coupon-info span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; line-height:1.3; }
+.coupon-progress{ margin-top:10px; }
+.progress-bar{ width:100%; height:6px; background:#e2e8f0; border-radius:10px; overflow:hidden; }
+.progress-fill{ height:100%; background:#10b981; border-radius:10px; transition:.3s; }
+.coupon-actions{ display:flex; gap:6px; margin-top:10px; }
+.coupon-action-btn{ flex:1; background:#f1f5f9; border:none; padding:8px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
+.coupon-action-btn.primary{ background:#0f172a; color:#fff; }
+.coupons-empty{ text-align:center; padding:60px 20px; }
+.empty-icon{ font-size:48px; margin-bottom:12px; }
+.coupons-empty b{ display:block; font-weight:900; }
+.coupons-empty span{ font-size:12px; color:#64748b; font-weight:600; margin:4px 0 16px; display:block; }
+.primary-btn{ background:#0f172a; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-weight:900; cursor:pointer; }
+.coupon-modal{ position:fixed; inset:0; z-index:9999; display:grid; place-items:end center; }
+.modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); }
+.modal-box{ position:relative; background:#fff; width:100%; max-width:500px; border-radius:24px 24px 0 0; max-height:90vh; overflow-y:auto; animation:slideUp.3s; }
+@keyframes slideUp{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
+.modal-header{ display:flex; justify-content:space-between; align-items:center; padding:20px 20px 0; position:sticky; top:0; background:#fff; z-index:1; }
+.modal-body{ padding:20px; }
+.modal-body label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
+.modal-body label:first-child{ margin-top:0; }
+.modal-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
+.code-row{ display:flex; gap:8px; }
+.gen-btn{ background:#f1f5f9; border:1px solid #e2e8f0; padding:12px; border-radius:10px; font-weight:800; font-size:11px; cursor:pointer; white-space:nowrap; }
+.discount-type-tabs{ display:flex; gap:6px; }
+.dtype-tab{ flex:1; background:#f1f5f9; border:1px solid #e2e8f0; padding:10px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
+.dtype-tab.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.checkbox-row{ display:flex; align-items:center; gap:8px; margin-top:12px; background:#f8fafc; padding:10px; border-radius:8px; }
+.checkbox-row input{ width:18px; height:18px; }
+.modal-actions{ display:flex; gap:10px; padding:16px 20px 20px; position:sticky; bottom:0; background:#fff; border-top:1px solid #f1f5f9; }
+.secondary-btn{ flex:1; background:#f1f5f9; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
+</style>
+
+<script>
+class CouponsPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.coupons = [];
+    this.filter = 'all';
+    this.discountType = 'percent';
+  }
+
+  async init(){
+    await this.loadCoupons();
+    this.bindEvents();
+  }
+
+  async loadCoupons(){
+    try{
+      if(window.Loader) Loader.show('Loading coupons...');
+
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/marketing/${this.shopId}/coupons`);
+        this.coupons = data.coupons||data||[];
+      } else {
+        this.coupons = JSON.parse(localStorage.getItem(`coupons_${this.shopId}`)||'[]');
+        if(this.coupons.length===0){
+          this.coupons = [
+            { _id:'c1', code:'DIWALI50', discountType:'percent', discount:50, minOrder:199, maxDiscount:100, usageLimit:100, used:25, perUserLimit:1, startDate:new Date().toISOString(), expiryDate:new Date(Date.now()+30*86400000).toISOString(), description:'Diwali special 50% off', applicable:'all', isActive:true, isFestival:true, createdAt:new Date().toISOString() },
+            { _id:'c2', code:'FIRST100', discountType:'flat', discount:100, minOrder:299, usageLimit:50, used:12, perUserLimit:1, expiryDate:new Date(Date.now()+15*86400000).toISOString(), description:'First order flat 100 off', applicable:'first_order', isActive:true, createdAt:new Date().toISOString() },
+            { _id:'c3', code:'SAVE20', discountType:'percent', discount:20, minOrder:99, usageLimit:200, used:180, perUserLimit:2, expiryDate:new Date(Date.now()-2*86400000).toISOString(), description:'Save 20% on all orders', applicable:'all', isActive:false, createdAt:new Date().toISOString() }
+          ];
+        }
+      }
+
+      this.updateStats();
+      this.render();
+
+    }catch(e){ console.error(e); }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  updateStats(){
+    const total = this.coupons.length;
+    const active = this.coupons.filter(c=> c.isActive && new Date(c.expiryDate) > new Date()).length;
+    const redemptions = this.coupons.reduce((s,c)=> s+(c.used||0),0);
+    const savings = this.coupons.reduce((s,c)=> s+(c.used||0)*(c.maxDiscount||c.discount||0),0);
+
+    document.getElementById('totalCoupons').innerText = total;
+    document.getElementById('activeCoupons').innerText = active;
+    document.getElementById('totalRedemptions').innerText = redemptions;
+    document.getElementById('totalSavings').innerText = `₹${savings}`;
+    document.getElementById('couponsSubHeader').innerText = `${active} active coupons • ₹${savings} saved by customers • ${redemptions} total uses`;
+  }
+
+  render(){
+    const container = document.getElementById('couponsList');
+    const empty = document.getElementById('couponsEmpty');
+
+    let filtered = [...this.coupons];
+
+    if(this.filter==='active') filtered = filtered.filter(c=> c.isActive && new Date(c.expiryDate) > new Date());
+    if(this.filter==='expired') filtered = filtered.filter(c=> !c.isActive || new Date(c.expiryDate) <= new Date());
+    if(this.filter==='festival') filtered = filtered.filter(c=> c.isFestival);
+
+    filtered.sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt));
+
+    if(filtered.length===0){
+      container.style.display='none';
+      empty.style.display='block';
+      return;
+    }
+
+    container.style.display='flex';
+    empty.style.display='none';
+
+    container.innerHTML = filtered.map(coupon=>{
+      const isExpired = new Date(coupon.expiryDate) <= new Date();
+      const isActive = coupon.isActive && !isExpired;
+      const usagePercent = coupon.usageLimit? Math.round((coupon.used/coupon.usageLimit)*100) : 0;
+
+      return `
+        <div class="coupon-card ${isActive?'active': isExpired?'expired':''}">
+          <div class="coupon-top">
+            <div class="coupon-code">${coupon.code}</div>
+            <div class="coupon-discount ${coupon.discountType}">${coupon.discountType==='percent'? `${coupon.discount}% OFF` : `₹${coupon.discount} OFF`}</div>
+          </div>
+          <div class="coupon-info">
+            <b>${coupon.description||'No description'} ${coupon.isFestival?'🎉':''}</b>
+            <span>Min order: ₹${coupon.minOrder||0} ${coupon.maxDiscount? `• Max discount: ₹${coupon.maxDiscount}`:''} • Per user: ${coupon.perUserLimit||1}</span>
+            <span>Valid: ${new Date(coupon.startDate||coupon.createdAt).toLocaleDateString()} - ${new Date(coupon.expiryDate).toLocaleDateString()} • ${coupon.applicable||'all'}</span>
+            <span>Used: ${coupon.used||0}/${coupon.usageLimit||'∞'} • Status: ${isActive?'✅ Active': isExpired?'❌ Expired':'⏸️ Inactive'}</span>
+          </div>
+          ${coupon.usageLimit? `
+            <div class="coupon-progress">
+              <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;margin-bottom:4px"><span>Usage</span><span>${usagePercent}%</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:${usagePercent}%"></div></div>
+            </div>
+          `:''}
+          <div class="coupon-actions">
+            <button class="coupon-action-btn" onclick="CouponsPageInstance.shareCoupon('${coupon._id}')">📤 Share</button>
+            <button class="coupon-action-btn" onclick="CouponsPageInstance.editCoupon('${coupon._id}')">✏️ Edit</button>
+            <button class="coupon-action-btn ${isActive?'':'primary'}" onclick="CouponsPageInstance.toggleCoupon('${coupon._id}')">${isActive?'⏸️ Disable':'✅ Enable'}</button>
+            <button class="coupon-action-btn" onclick="CouponsPageInstance.deleteCoupon('${coupon._id}')" style="background:#fee2e2;color:#991b1b">🗑️</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  generateCode(){
+    const festivals = ['DIWALI','HOLI','NEWYEAR','SALE','OFFER','SAVE','FIRST','WELCOME'];
+    const festival = festivals[Math.floor(Math.random()*festivals.length)];
+    const num = Math.floor(10+Math.random()*90);
+    return `${festival}${num}`;
+  }
+
+  async saveCoupon(){
+    const code = document.getElementById('couponCode').value.trim().toUpperCase();
+    const discount = parseInt(document.getElementById('couponDiscount').value);
+    const minOrder = parseInt(document.getElementById('couponMinOrder').value)||0;
+    const maxDiscount = parseInt(document.getElementById('couponMaxDiscount').value)||0;
+    const usageLimit = parseInt(document.getElementById('couponUsageLimit').value)||100;
+    const perUserLimit = parseInt(document.getElementById('couponPerUserLimit').value)||1;
+    const startDate = document.getElementById('couponStartDate').value;
+    const expiryDate = document.getElementById('couponExpiryDate').value;
+    const description = document.getElementById('couponDescription').value;
+    const applicable = document.getElementById('couponApplicable').value;
+    const isActive = document.getElementById('couponActive').checked;
+    const autoApply = document.getElementById('couponAutoApply').checked;
+
+    if(!code ||!discount ||!expiryDate){
+      if(window.Toast) Toast.show('Fill required fields', 'warning');
+      return;
+    }
+
+    if(this.discountType==='percent' && (discount<1 || discount>100)){
+      if(window.Toast) Toast.show('Percent must be 1-100', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('saveCoupon');
+    btn.innerText='Creating...';
+    btn.disabled=true;
+
+    try{
+      const couponData = {
+        code,
+        discountType:this.discountType,
+        discount,
+        minOrder,
+        maxDiscount: this.discountType==='percent'? maxDiscount : 0,
+        usageLimit,
+        perUserLimit,
+        startDate: startDate? new Date(startDate).toISOString() : new Date().toISOString(),
+        expiryDate: new Date(expiryDate).toISOString(),
+        description,
+        applicable,
+        isActive,
+        isFestival: autoApply,
+        autoApply,
+        shopId:this.shopId,
+        used:0
+      };
+
+      if(window.ApiCore){
+        const result = await window.ApiCore.post(`/api/common/marketing/${this.shopId}/coupons`, couponData);
+        this.coupons.unshift(result.coupon||result);
+      } else {
+        const newCoupon = { _id:'c'+Date.now(),...couponData, createdAt:new Date().toISOString() };
+        this.coupons.unshift(newCoupon);
+        localStorage.setItem(`coupons_${this.shopId}`, JSON.stringify(this.coupons));
+      }
+
+      this.updateStats();
+      this.render();
+      this.closeModal();
+
+      if(window.Toast) Toast.show(`Coupon ${code} created 🎉`, 'success');
+
+    }catch(e){
+      if(window.Toast) Toast.show('Failed to create coupon', 'error');
+    }finally{
+      btn.innerText='Create Coupon';
+      btn.disabled=false;
+    }
+  }
+
+  shareCoupon(couponId){
+    const coupon = this.coupons.find(c=> c._id===couponId);
+    if(!coupon) return;
+
+    const text = `🎉 Use code ${coupon.code} to get ${coupon.discountType==='percent'? `${coupon.discount}% OFF` : `₹${coupon.discount} OFF`} on orders above ₹${coupon.minOrder||0}!\nShop now: ${window.location.origin}/shop/${this.shopId}\nValid till ${new Date(coupon.expiryDate).toLocaleDateString()}`;
+
+    if(navigator.share){
+      navigator.share({ title:`Coupon ${coupon.code}`, text });
+    } else {
+      navigator.clipboard.writeText(text);
+      if(window.Toast) Toast.show('Coupon shared 📋', 'success');
+    }
+  }
+
+  async toggleCoupon(couponId){
+    const coupon = this.coupons.find(c=> c._id===couponId);
+    if(!coupon) return;
+
+    coupon.isActive = !coupon.isActive;
+
+    if(window.ApiCore){
+      await window.ApiCore.put(`/api/common/marketing/${this.shopId}/coupons/${couponId}`, { isActive:coupon.isActive });
+    } else {
+      localStorage.setItem(`coupons_${this.shopId}`, JSON.stringify(this.coupons));
+    }
+
+    this.updateStats();
+    this.render();
+  }
+
+  async deleteCoupon(couponId){
+    if(!confirm('Delete this coupon?')) return;
+
+    this.coupons = this.coupons.filter(c=> c._id!==couponId);
+
+    if(window.ApiCore){
+      await window.ApiCore.delete(`/api/common/marketing/${this.shopId}/coupons/${couponId}`);
+    } else {
+      localStorage.setItem(`coupons_${this.shopId}`, JSON.stringify(this.coupons));
+    }
+
+    this.updateStats();
+    this.render();
+    if(window.Toast) Toast.show('Coupon deleted 🗑️', 'success');
+  }
+
+  editCoupon(couponId){
+    const coupon = this.coupons.find(c=> c._id===couponId);
+    if(!coupon) return;
+
+    document.getElementById('couponCode').value = coupon.code;
+    document.getElementById('couponDiscount').value = coupon.discount;
+    document.getElementById('couponMinOrder').value = coupon.minOrder||'';
+    document.getElementById('couponMaxDiscount').value = coupon.maxDiscount||'';
+    document.getElementById('couponUsageLimit').value = coupon.usageLimit||'';
+    document.getElementById('couponPerUserLimit').value = coupon.perUserLimit||1;
+    document.getElementById('couponExpiryDate').value = coupon.expiryDate? new Date(coupon.expiryDate).toISOString().split('T')[0] : '';
+    document.getElementById('couponStartDate').value = coupon.startDate? new Date(coupon.startDate).toISOString().split('T')[0] : '';
+    document.getElementById('couponDescription').value = coupon.description||'';
+    document.getElementById('couponApplicable').value = coupon.applicable||'all';
+    document.getElementById('couponActive').checked = coupon.isActive;
+    document.getElementById('couponAutoApply').checked = coupon.isFestival||false;
+
+    this.discountType = coupon.discountType||'percent';
+    document.querySelectorAll('.dtype-tab').forEach(tab=>{ tab.classList.toggle('active', tab.dataset.type===this.discountType); });
+
+    // Delete old and create new on save (simplified)
+    this.coupons = this.coupons.filter(c=> c._id!==couponId);
+
+    document.getElementById('createCouponModal').style.display='grid';
+  }
+
+  openModal(){
+    document.getElementById('couponCode').value = this.generateCode();
+    document.getElementById('couponStartDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('couponExpiryDate').value = new Date(Date.now()+30*86400000).toISOString().split('T')[0];
+    document.getElementById('createCouponModal').style.display='grid';
+  }
+
+  closeModal(){
+    document.getElementById('createCouponModal').style.display='none';
+    document.getElementById('couponCode').value='';
+    document.getElementById('couponDiscount').value='';
+    document.getElementById('couponDescription').value='';
+  }
+
+  bindEvents(){
+    document.getElementById('couponsBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('createCouponBtn')?.addEventListener('click', ()=> this.openModal());
+    document.getElementById('emptyCreateCoupon')?.addEventListener('click', ()=> this.openModal());
+    document.getElementById('closeCouponModal')?.addEventListener('click', ()=> this.closeModal());
+    document.getElementById('cancelCoupon')?.addEventListener('click', ()=> this.closeModal());
+    document.getElementById('createCouponModal')?.querySelector('.modal-backdrop')?.addEventListener('click', ()=> this.closeModal());
+    document.getElementById('saveCoupon')?.addEventListener('click', ()=> this.saveCoupon());
+    document.getElementById('generateCode')?.addEventListener('click', ()=>{ document.getElementById('couponCode').value = this.generateCode(); });
+
+    document.querySelectorAll('.dtype-tab').forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        document.querySelectorAll('.dtype-tab').forEach(t=> t.classList.remove('active'));
+        tab.classList.add('active');
+        this.discountType = tab.dataset.type;
+        document.getElementById('discountLabel').innerText = this.discountType==='percent'? 'Discount Percent * (1-100%)' : 'Discount Amount * (₹)';
+        document.getElementById('couponDiscount').placeholder = this.discountType==='percent'? '50' : '100';
+        document.getElementById('couponDiscount').max = this.discountType==='percent'? '100' : '';
+      });
+    });
+
+    document.querySelectorAll('.coupons-tab').forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        document.querySelectorAll('.coupons-tab').forEach(t=> t.classList.remove('active'));
+        tab.classList.add('active');
+        this.filter = tab.dataset.filter;
+        this.render();
+      });
+    });
+  }
+}
+
+window.CouponsPageInstance = new CouponsPage();
+document.addEventListener('DOMContentLoaded', ()=> window.CouponsPageInstance.init());
+</script>

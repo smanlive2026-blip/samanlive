@@ -1,0 +1,102 @@
+<!-- LOCATION: common/checkout/payment-select.html -->
+<div style="max-width:600px;margin:auto;background:#f8fafc;min-height:100vh;font-family:Outfit,sans-serif">
+  <div style="padding:14px;background:#fff;display:flex;align-items:center;gap:12px;position:sticky;top:0;border-bottom:1px solid #f1f5f9"><button onclick="history.back()">‹</button><h3 style="margin:0;font-weight:900">Payment 💳</h3></div>
+  <div style="padding:12px">
+    <div id="addrPreview" style="background:#fff;border-radius:12px;padding:12px;border:1px solid #f1f5f9;margin-bottom:12px;font-size:13px;color:#475569"></div>
+
+    <h4 style="font-weight:900;margin:12px 0 8px">Select Payment Method</h4>
+
+    <div class="pay-card selected" data-method="cod"><span style="font-size:20px">💵</span><div><b>Cash on Delivery</b><p>Pay when you receive</p></div><span class="radio"></span></div>
+    <div class="pay-card" data-method="upi"><span style="font-size:20px">📱</span><div><b>UPI</b><p>Google Pay, PhonePe, Paytm</p></div><span class="radio"></span></div>
+    <div class="pay-card" data-method="online"><span style="font-size:20px">💳</span><div><b>Card / Netbanking</b><p>Secure payment via Razorpay</p></div><span class="radio"></span></div>
+
+    <div id="upiApps" style="display:none;margin-top:12px"><h5 style="font-weight:800;margin:0 0 8px">Pay via UPI App</h5><div style="display:flex;gap:8px"><button class="upi-btn" data-app="gpay">GPay</button><button class="upi-btn" data-app="phonepe">PhonePe</button><button class="upi-btn" data-app="paytm">Paytm</button><button class="upi-btn" data-app="upi">Other UPI</button></div></div>
+
+    <div style="background:#fff;border-radius:12px;padding:12px;border:1px solid #f1f5f9;margin-top:16px">
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin:4px 0"><span>Subtotal</span><span id="paySubtotal">₹0</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin:4px 0"><span>Delivery</span><span style="color:#10b981;font-weight:800">FREE</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:900;font-size:18px;border-top:1px dashed #e2e8f0;padding-top:8px;margin-top:8px"><span>Total</span><span id="payTotal">₹0</span></div>
+      <button id="payBtn" style="width:100%;margin-top:12px;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:15px">Place Order • <span id="payTotalBtn">₹0</span></button>
+    </div>
+  </div>
+</div>
+<style>
+.pay-card{background:#fff;border:2px solid #f1f5f9;border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px}
+.pay-card.selected{border-color:#0f172a;background:#f8fafc}
+.pay-card div{flex:1}
+.pay-card b{font-size:14px;font-weight:800;display:block}
+.pay-card p{font-size:11px;color:#64748b;margin:2px 0 0}
+.pay-card.radio{width:18px;height:18px;border-radius:50%;border:2px solid #cbd5e1;display:grid;place-items:center}
+.pay-card.selected.radio{border-color:#0f172a}
+.pay-card.selected.radio::after{content:'';width:8px;height:8px;background:#0f172a;border-radius:50%}
+.upi-btn{flex:1;background:#fff;border:1px solid #e2e8f0;padding:10px;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer}
+</style>
+<script>
+const shopId = new URLSearchParams(location.search).get('shopId')||'';
+document.getElementById('addrPreview').innerText = localStorage.getItem('selectedAddressText') || 'Deliver to selected address';
+
+let selectedMethod = 'cod';
+document.querySelectorAll('.pay-card').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    document.querySelectorAll('.pay-card').forEach(x=> x.classList.remove('selected'));
+    c.classList.add('selected');
+    selectedMethod = c.dataset.method;
+    document.getElementById('upiApps').style.display = selectedMethod==='upi'? 'block' : 'none';
+    document.getElementById('payBtn').innerText = selectedMethod==='cod'? `Place Order • ${document.getElementById('payTotal').innerText}` : `Pay • ${document.getElementById('payTotal').innerText}`;
+  });
+});
+
+async function loadCartTotal(){
+  if(!window.CartCore){
+    const mod = await import('../cart/cart-core.js');
+  }
+  try{
+    const res = await fetch(`/api/common/cart/${shopId}?userId=guest_${localStorage.getItem('guestId')||'guest'}&t=${Date.now()}`, {cache:'no-store'});
+    const data = await res.json();
+    const total = data.cart?.total || data.total || 0;
+    document.getElementById('paySubtotal').innerText = `₹${total}`;
+    document.getElementById('payTotal').innerText = `₹${total}`;
+    document.getElementById('payTotalBtn').innerText = `₹${total}`;
+    return total;
+  }catch(e){ return 0; }
+}
+loadCartTotal();
+
+document.getElementById('payBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('payBtn');
+  btn.disabled=true; btn.innerText='Placing...';
+
+  const total = document.getElementById('payTotal').innerText.replace('₹','');
+  const addressId = new URLSearchParams(location.search).get('addressId') || localStorage.getItem('selectedAddressId');
+
+  try{
+    if(selectedMethod==='upi'){
+      // UPI Intent
+      if(window.UpiIntent){ window.UpiIntent.pay(total); return; }
+      alert('UPI opening...');
+    } else if(selectedMethod==='cod'){
+      const res = await fetch(`/api/common/checkout/${shopId}/place`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
+        body: JSON.stringify({ paymentMethod:'cod', addressId, amount: total })
+      });
+      const data = await res.json();
+      if(data.success){
+        window.location.href = `./order-success.html?shopId=${shopId}&orderId=${data.orderId || data.order?.orderId || 'ORD'+Date.now()}`;
+      } else { alert(data.message || 'Order failed'); btn.disabled=false; }
+    } else {
+      // Online via PaymentGateway
+      if(window.PaymentGateway){ window.PaymentGateway.pay(total, shopId); }
+      else alert('Online payment integration pending');
+    }
+  }catch(e){ console.error(e); btn.disabled=false; btn.innerText='Place Order'; }
+});
+
+document.querySelectorAll('.upi-btn').forEach(b=>{
+  b.addEventListener('click', ()=> {
+    const total = document.getElementById('payTotal').innerText.replace('₹','');
+    if(window.UpiIntent) window.UpiIntent.pay(total, b.dataset.app);
+  });
+});
+</script>
+<script src="./payment-gateway.js"></script>
+<script src="./upi-intent.js"></script>

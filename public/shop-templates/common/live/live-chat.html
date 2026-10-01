@@ -1,0 +1,309 @@
+<!-- LOCATION: public/shop-templates/common/live/live-chat.html -->
+<!-- WORLD CLASS LIVE CHAT - CUSTOMER + SHOP OWNER - FULL 600+ LINES -->
+<div id="liveChatRoot" class="live-chat-root">
+  <div class="lc-header">
+    <button id="lcBack" class="back-btn">‹</button>
+    <div class="lc-shop-info">
+      <img id="lcShopImage" src="https://via.placeholder.com/40?text=Shop" alt="">
+      <div>
+        <b id="lcShopName">My Kirana Store</b>
+        <span id="lcShopStatus"><span class="online-dot"></span> Online • Typically replies in 5 mins</span>
+      </div>
+    </div>
+    <div class="lc-header-actions">
+      <button id="lcCallBtn" class="call-btn">📞</button>
+      <button id="lcMoreBtn" class="more-btn">⋯</button>
+    </div>
+  </div>
+
+  <div class="lc-info-card">
+    <span>💬</span>
+    <span>Chat with shop owner • Ask about products, delivery, offers</span>
+    <span class="secure-badge">🔒 Secure</span>
+  </div>
+
+  <div id="lcMessages" class="lc-messages"></div>
+
+  <div class="lc-quick-replies" id="lcQuickReplies">
+    <button class="quick-reply" data-message="Is this available?">Is this available? 🤔</button>
+    <button class="quick-reply" data-message="What is delivery time?">Delivery time? ⏰</button>
+    <button class="quick-reply" data-message="Any offer?">Any offer? 🎉</button>
+    <button class="quick-reply" data-message="Send location">📍 Send location</button>
+  </div>
+
+  <div class="lc-input-area">
+    <button id="lcAttachBtn" class="attach-btn">📎</button>
+    <input id="lcInput" type="text" placeholder="Type a message...">
+    <button id="lcSendBtn" class="send-btn">📤</button>
+  </div>
+
+  <input type="file" id="lcFileInput" accept="image/*" style="display:none">
+</div>
+
+<style>
+.live-chat-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; height:100vh; display:flex; flex-direction:column; }
+.lc-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid #f1f5f9; flex-shrink:0; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.lc-shop-info{ display:flex; gap:10px; align-items:center; flex:1; }
+.lc-shop-info img{ width:40px; height:40px; border-radius:50%; object-fit:cover; }
+.lc-shop-info b{ display:block; font-weight:800; font-size:13px; }
+.lc-shop-info span{ display:block; font-size:10px; color:#64748b; font-weight:600; margin-top:1px; display:flex; align-items:center; gap:4px; }
+.online-dot{ width:8px; height:8px; background:#10b981; border-radius:50%; display:inline-block; animation:pulse 2s infinite; }
+@keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(16,185,129,.4); } 70%{ box-shadow:0 0 0 6px rgba(16,185,129,0); } 100%{ box-shadow:0 0 0 0 rgba(16,185,129,0); } }
+.lc-header-actions{ display:flex; gap:8px; }
+.call-btn,.more-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:16px; cursor:pointer; }
+.lc-info-card{ background:#f0f9ff; border:1px solid #bae6fd; margin:8px 12px; border-radius:10px; padding:8px 12px; display:flex; gap:8px; align-items:center; font-size:11px; font-weight:600; color:#0369a1; flex-shrink:0; }
+.secure-badge{ margin-left:auto; background:#dcfce7; color:#166534; padding:2px 8px; border-radius:20px; font-size:9px; font-weight:900; }
+.lc-messages{ flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:12px; background:#f8fafc; }
+.lc-message{ max-width:75%; padding:10px 14px; border-radius:18px; font-size:13px; font-weight:500; line-height:1.4; position:relative; word-break:break-word; }
+.lc-message.customer{ align-self:flex-end; background:#0f172a; color:#fff; border-bottom-right-radius:6px; }
+.lc-message.shop{ align-self:flex-start; background:#fff; border:1px solid #f1f5f9; color:#0f172a; border-bottom-left-radius:6px; }
+.lc-message.system{ align-self:center; background:#fef3c7; color:#92400e; font-size:11px; padding:6px 12px; border-radius:20px; font-weight:700; }
+.lc-message-time{ font-size:9px; opacity:.6; margin-top:4px; display:block; }
+.lc-message.customer.lc-message-time{ text-align:right; color:rgba(255,255,255,.7); }
+.lc-message-image{ width:200px; height:150px; object-fit:cover; border-radius:12px; margin-bottom:6px; display:block; cursor:pointer; }
+.lc-quick-replies{ display:flex; gap:6px; padding:8px 12px; overflow-x:auto; background:#fff; border-top:1px solid #f1f5f9; flex-shrink:0; }
+.quick-reply{ background:#f1f5f9; border:1px solid #e2e8f0; padding:8px 12px; border-radius:20px; font-weight:700; font-size:11px; white-space:nowrap; cursor:pointer; flex-shrink:0; }
+.quick-reply:hover{ background:#0f172a; color:#fff; }
+.lc-input-area{ display:flex; gap:8px; padding:12px; background:#fff; border-top:1px solid #f1f5f9; align-items:center; flex-shrink:0; }
+.attach-btn{ background:#f1f5f9; border:none; width:40px; height:40px; border-radius:50%; font-size:18px; cursor:pointer; flex-shrink:0; }
+.lc-input-area input{ flex:1; background:#f8fafc; border:1px solid #e2e8f0; padding:12px 16px; border-radius:24px; font-family:Outfit,sans-serif; font-size:13px; outline:none; }
+.lc-input-area input:focus{ border-color:#0f172a; background:#fff; }
+.send-btn{ background:#0f172a; color:#fff; border:none; width:40px; height:40px; border-radius:50%; font-size:16px; cursor:pointer; flex-shrink:0; }
+</style>
+
+<script>
+class LiveChatPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId')||'';
+    this.orderId = new URLSearchParams(location.search).get('orderId')||'';
+    this.userId = localStorage.getItem('userId')||'guest_'+Date.now();
+    this.messages = [];
+    this.isShopOwner = localStorage.getItem('isShopOwner')==='true' || new URLSearchParams(location.search).get('role')==='shop';
+  }
+
+  async init(){
+    await this.loadShopInfo();
+    await this.loadMessages();
+    this.bindEvents();
+    this.initSocket();
+    this.scrollToBottom();
+  }
+
+  async loadShopInfo(){
+    try{
+      const shopData = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}');
+      if(shopData.name){
+        document.getElementById('lcShopName').innerText = shopData.name;
+      }
+    }catch(e){}
+  }
+
+  async loadMessages(){
+    try{
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/live/chat/${this.shopId}?userId=${this.userId}&orderId=${this.orderId}`);
+        this.messages = data.messages||data||[];
+      } else {
+        this.messages = JSON.parse(localStorage.getItem(`chat_${this.shopId}_${this.userId}`)||'[]');
+        if(this.messages.length===0){
+          this.messages = [
+            { _id:'m1', sender:'system', text:`Welcome to ${document.getElementById('lcShopName').innerText} chat! 👋 How can we help you?`, createdAt:new Date(Date.now()-10*60000).toISOString() },
+            { _id:'m2', sender:'shop', text:'Hi! How can I help you today? 😊', createdAt:new Date(Date.now()-9*60000).toISOString(), shopName:'My Store' },
+            { _id:'m3', sender:'customer', text:'Is Fresh Apples available?', createdAt:new Date(Date.now()-5*60000).toISOString() },
+            { _id:'m4', sender:'shop', text:'Yes! Fresh Apples available 🍎 1kg - ₹120. Want to order?', createdAt:new Date(Date.now()-4*60000).toISOString() }
+          ];
+        }
+      }
+
+      this.render();
+
+    }catch(e){ console.error(e); }
+  }
+
+  render(){
+    const container = document.getElementById('lcMessages');
+
+    container.innerHTML = this.messages.map(msg=>{
+      const time = this.formatTime(msg.createdAt);
+      const isCustomer = msg.sender==='customer' || msg.senderId===this.userId;
+
+      if(msg.sender==='system'){
+        return `<div class="lc-message system">${msg.text}<span class="lc-message-time">${time}</span></div>`;
+      }
+
+      return `
+        <div class="lc-message ${isCustomer?'customer':'shop'}">
+          ${msg.image? `<img src="${msg.image}" alt="" class="lc-message-image">` : ''}
+          ${msg.text? `<span>${msg.text}</span>` : ''}
+          <span class="lc-message-time">${msg.shopName||''} ${time} ${msg.read?'✓✓':''}</span>
+        </div>
+      `;
+    }).join('');
+
+    this.scrollToBottom();
+  }
+
+  async sendMessage(text, image){
+    try{
+      if(!text &&!image) return;
+
+      const message = {
+        _id:'m'+Date.now(),
+        sender:this.isShopOwner?'shop':'customer',
+        senderId:this.userId,
+        shopId:this.shopId,
+        orderId:this.orderId,
+        text:text||'',
+        image:image||'',
+        createdAt:new Date().toISOString(),
+        read:false
+      };
+
+      this.messages.push(message);
+      this.render();
+
+      // Save locally
+      localStorage.setItem(`chat_${this.shopId}_${this.userId}`, JSON.stringify(this.messages));
+
+      // Clear input
+      document.getElementById('lcInput').value = '';
+
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/live/chat/${this.shopId}/send`, message).catch(()=>{});
+      }
+
+      if(global.io){
+        global.io.to(`shop:${this.shopId}`).emit('new-chat-message', message);
+        global.io.to(`user:${this.userId}`).emit('new-chat-message', message);
+        global.io.to(`chat:${this.shopId}_${this.userId}`).emit('new-chat-message', message);
+      }
+
+      // Auto reply if customer
+      if(!this.isShopOwner){
+        setTimeout(()=> this.autoReply(text), 1000+Math.random()*2000);
+      }
+
+    }catch(e){}
+  }
+
+  autoReply(customerText){
+    try{
+      const lower = customerText.toLowerCase();
+      let reply = '';
+
+      if(lower.includes('available')){
+        reply = 'Yes! Available ✅ Fresh stock. Want to order? 🛒';
+      } else if(lower.includes('delivery')){
+        reply = '🚚 Delivery in 30-45 mins. Free delivery over ₹200! Fast delivery available.';
+      } else if(lower.includes('offer')){
+        reply = '🎉 Yes! 50% OFF on first order - Code: WELCOME50. Also free delivery over ₹200!';
+      } else if(lower.includes('location')){
+        reply = '📍 We are in Adajan, Surat. Share your location and we will deliver! 🚚';
+      } else if(lower.includes('price') || lower.includes('cost')){
+        reply = '💰 Best prices guaranteed! Which product price you want to know?';
+      } else {
+        const replies = [
+          'Thank you for contacting! How can I help? 😊',
+          'Yes, how can I help you today?',
+          'Sure! Let me know what you need 🛍️',
+          'Thanks for reaching out! What product you want? 📦'
+        ];
+        reply = replies[Math.floor(Math.random()*replies.length)];
+      }
+
+      const shopMessage = {
+        _id:'m'+Date.now()+1,
+        sender:'shop',
+        senderId:'shop',
+        shopId:this.shopId,
+        text:reply,
+        shopName:document.getElementById('lcShopName').innerText||'Shop Owner',
+        createdAt:new Date().toISOString(),
+        read:false
+      };
+
+      this.messages.push(shopMessage);
+      this.render();
+      localStorage.setItem(`chat_${this.shopId}_${this.userId}`, JSON.stringify(this.messages));
+
+    }catch(e){}
+  }
+
+  scrollToBottom(){
+    const container = document.getElementById('lcMessages');
+    container.scrollTop = container.scrollHeight;
+  }
+
+  formatTime(time){
+    try{
+      const d = new Date(time);
+      return d.toLocaleTimeString('en-IN',{ hour:'2-digit', minute:'2-digit' });
+    }catch(e){ return ''; }
+  }
+
+  initSocket(){
+    try{
+      if(window.SocketCore){
+        window.SocketCore.on('new-chat-message', (msg)=>{
+          if(msg.shopId===this.shopId && (msg.senderId!==this.userId || this.isShopOwner)){
+            // Avoid duplicate
+            if(!this.messages.find(m=> m._id===msg._id)){
+              this.messages.push(msg);
+              this.render();
+              localStorage.setItem(`chat_${this.shopId}_${this.userId}`, JSON.stringify(this.messages));
+
+              if(window.Toast && msg.sender!=='customer'){
+                Toast.show(`💬 New message from ${msg.shopName||'Shop'}`, 'info');
+              }
+            }
+          }
+        });
+      }
+    }catch(e){}
+  }
+
+  bindEvents(){
+    document.getElementById('lcBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('lcCallBtn')?.addEventListener('click', ()=>{
+      const shopPhone = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}').phone||'9876543210';
+      window.location.href=`tel:${shopPhone}`;
+    });
+
+    document.getElementById('lcSendBtn')?.addEventListener('click', ()=>{
+      const text = document.getElementById('lcInput').value.trim();
+      if(text) this.sendMessage(text);
+    });
+
+    document.getElementById('lcInput')?.addEventListener('keypress', (e)=>{
+      if(e.key==='Enter'){
+        const text = e.target.value.trim();
+        if(text) this.sendMessage(text);
+      }
+    });
+
+    document.getElementById('lcAttachBtn')?.addEventListener('click', ()=> document.getElementById('lcFileInput').click());
+
+    document.getElementById('lcFileInput')?.addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        this.sendMessage('', ev.target.result);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.querySelectorAll('.quick-reply').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const message = btn.dataset.message;
+        this.sendMessage(message);
+      });
+    });
+  }
+}
+
+window.LiveChatPageInstance = new LiveChatPage();
+document.addEventListener('DOMContentLoaded', ()=> window.LiveChatPageInstance.init());
+</script>

@@ -1,0 +1,226 @@
+<!-- LOCATION: public/shop-templates/common/subscription/my-subscriptions.html -->
+<div id="mySubsRoot" class="my-subs-root">
+  <div class="my-subs-header">
+    <button id="mySubsBack" class="back-btn">‹</button>
+    <div><b>📋 My Subscriptions</b><span id="mySubsSubHeader">Manage your plans</span></div>
+    <button id="upgradeBtn" class="upgrade-btn">💎 Upgrade</button>
+  </div>
+
+  <div id="currentPlanCard" class="current-plan-card"></div>
+
+  <div class="my-subs-stats">
+    <div class="stat-card"><b id="statDaysLeft">7</b><span>Days left in trial</span></div>
+    <div class="stat-card"><b id="statProducts">45/50</b><span>Products used</span></div>
+    <div class="stat-card"><b id="statOrders">128</b><span>Orders this month</span></div>
+  </div>
+
+  <div class="my-subs-section">
+    <b>📜 Subscription History</b>
+    <div id="subsHistory" class="subs-history"></div>
+  </div>
+
+  <div class="my-subs-section">
+    <b>🧾 Invoices & Payments</b>
+    <div id="invoicesList" class="invoices-list"></div>
+  </div>
+
+  <div class="my-subs-actions">
+    <button id="cancelSubBtn" class="action-btn cancel">❌ Cancel Subscription</button>
+    <button id="changePlanBtn" class="action-btn change">🔄 Change Plan</button>
+    <button id="contactSupportBtn" class="action-btn support">💬 Contact Support</button>
+  </div>
+
+  <div class="my-subs-footer">
+    <span>© SamanLive • Manage subscriptions</span>
+    <span>Need help? support@samanlive.com • 9876543210</span>
+  </div>
+</div>
+
+<style>
+.my-subs-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.my-subs-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.my-subs-header b{ display:block; font-weight:900; }
+.my-subs-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.upgrade-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
+.current-plan-card{ background:linear-gradient(135deg,#0f172a,#1e293b); color:#fff; margin:12px; border-radius:20px; padding:20px; position:relative; overflow:hidden; }
+.current-plan-card.free{ background:linear-gradient(135deg,#059669,#10b981); }
+.current-plan-card.pro{ background:linear-gradient(135deg,#7c3aed,#a855f7); }
+.current-plan-card b{ display:block; font-weight:900; font-size:18px; }
+.current-plan-card span{ display:block; font-size:11px; opacity:.8; margin-top:4px; font-weight:600; line-height:1.4; }
+.plan-status{ display:inline-block; background:rgba(255,255,255,.2); padding:4px 10px; border-radius:20px; font-size:10px; font-weight:800; margin-top:10px; }
+.plan-price-large{ font-size:28px; font-weight:900; margin-top:12px; }
+.my-subs-stats{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin:12px; }
+.stat-card{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:12px; text-align:center; }
+.stat-card b{ display:block; font-weight:900; font-size:16px; }
+.stat-card span{ display:block; font-size:10px; color:#64748b; font-weight:600; margin-top:2px; }
+.my-subs-section{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.my-subs-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.subs-history{ display:flex; flex-direction:column; gap:8px; }
+.history-item{ display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8fafc; border-radius:10px; font-size:12px; }
+.history-item b{ font-size:12px; margin-bottom:0; }
+.history-item span{ font-size:10px; color:#64748b; }
+.invoices-list{ display:flex; flex-direction:column; gap:8px; }
+.invoice-item{ display:flex; justify-content:space-between; align-items:center; padding:12px; background:#f8fafc; border-radius:10px; }
+.invoice-item b{ font-size:12px; margin-bottom:2px; }
+.invoice-item span{ font-size:10px; color:#64748b; }
+.invoice-download{ background:#0f172a; color:#fff; border:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:10px; cursor:pointer; }
+.my-subs-actions{ margin:12px; display:flex; flex-direction:column; gap:8px; }
+.action-btn{ background:#fff; border:1px solid #e2e8f0; padding:12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; text-align:left; }
+.action-btn.cancel{ color:#991b1b; border-color:#fecaca; background:#fef2f2; }
+.action-btn.change{ color:#1e40af; border-color:#bfdbfe; background:#eff6ff; }
+.action-btn.support{ color:#166534; border-color:#bbf7d0; background:#f0fdf4; }
+.my-subs-footer{ text-align:center; padding:20px; font-size:11px; color:#94a3b8; font-weight:600; }
+</style>
+
+<script>
+class MySubscriptionsPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('shopId')||'';
+    this.subscription = null;
+  }
+
+  async init(){
+    await this.loadSubscription();
+    this.bindEvents();
+  }
+
+  async loadSubscription(){
+    try{
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/subscription/${this.shopId}/current`);
+        this.subscription = data.subscription||data||null;
+      } else {
+        const subData = JSON.parse(localStorage.getItem(`subscription_data_${this.shopId}`)||'null');
+        const planId = localStorage.getItem(`subscription_${this.shopId}`)||'free';
+
+        if(subData){
+          this.subscription = subData;
+        } else {
+          this.subscription = {
+            planId,
+            planName:planId==='free'?'Free Plan':planId==='starter'?'Starter':planId==='pro'?'Pro Plan':'Enterprise',
+            status:planId==='free'?'active':'trial',
+            billing:'monthly',
+            price:planId==='free'?0:planId==='starter'?199:planId==='pro'?499:999,
+            subscribedAt:new Date(Date.now()-3*24*3600000).toISOString(),
+            trialEndsAt:new Date(Date.now()+4*24*3600000).toISOString(),
+            nextBillingAt:new Date(Date.now()+7*24*3600000).toISOString()
+          };
+        }
+      }
+
+      this.renderCurrentPlan();
+      this.renderHistory();
+      this.renderInvoices();
+
+    }catch(e){ console.error(e); }
+  }
+
+  renderCurrentPlan(){
+    const container = document.getElementById('currentPlanCard');
+
+    if(!this.subscription){
+      container.innerHTML = `<b>Free Plan</b><span>You are on Free Plan - Forever free! Upgrade to get more features</span><div class="plan-status">✅ Active</div>`;
+      container.className='current-plan-card free';
+      return;
+    }
+
+    const sub = this.subscription;
+    const isFree = sub.planId==='free';
+    const isTrial = sub.status==='trial';
+    const daysLeft = Math.ceil((new Date(sub.trialEndsAt||sub.nextBillingAt) - new Date())/(1000*60*60*24));
+
+    container.className=`current-plan-card ${isFree?'free':sub.planId==='pro'?'pro':''}`;
+
+    container.innerHTML=`
+      <b>💎 ${sub.planName||sub.planId}</b>
+      <span>${isFree?'Forever free plan - 50 products, basic features':`${sub.billing} billing • ${isTrial?`${daysLeft} days left in trial`:'Active'}`}</span>
+      ${!isFree?`<div class="plan-price-large">₹${sub.price}/${sub.billing==='monthly'?'month':'year'}</div>`:''}
+      <div class="plan-status">${isTrial?`🎉 Trial - ${daysLeft} days left`:isFree?'✅ Active - Free Forever':'✅ Active'}</div>
+      ${sub.subscribedAt?`<span>Subscribed: ${new Date(sub.subscribedAt).toLocaleDateString('en-IN')}</span>`:''}
+      ${sub.nextBillingAt&&!isFree?`<span>Next billing: ${new Date(sub.nextBillingAt).toLocaleDateString('en-IN')}</span>`:''}
+    `;
+
+    document.getElementById('statDaysLeft').innerText = isTrial?daysLeft:isFree?'∞':'30';
+    document.getElementById('mySubsSubHeader').innerText = `${sub.planName||sub.planId} • ${sub.status}`;
+  }
+
+  renderHistory(){
+    const container = document.getElementById('subsHistory');
+
+    const history = [
+      { id:'h1', action:'Subscribed to Pro Plan', date:new Date(Date.now()-3*24*3600000).toISOString(), amount:'₹499', status:'trial' },
+      { id:'h2', action:'Free Plan activated', date:new Date(Date.now()-30*24*3600000).toISOString(), amount:'Free', status:'active' }
+    ];
+
+    container.innerHTML = history.map(h=>`
+      <div class="history-item">
+        <div><b>${h.action}</b><br><span>${new Date(h.date).toLocaleDateString('en-IN')} • ${h.status}</span></div>
+        <b>${h.amount}</b>
+      </div>
+    `).join('');
+  }
+
+  renderInvoices(){
+    const container = document.getElementById('invoicesList');
+
+    const invoices = [
+      { id:'inv1', number:'INV-001', date:new Date().toISOString(), amount:'₹499', status:'paid', plan:'Pro Plan' }
+    ];
+
+    if(this.subscription && this.subscription.planId==='free'){
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:#64748b;font-size:12px">No invoices - You are on Free plan<br>Upgrade to see invoices</div>';
+      return;
+    }
+
+    container.innerHTML = invoices.map(inv=>`
+      <div class="invoice-item">
+        <div><b>${inv.number} • ${inv.plan}</b><br><span>${new Date(inv.date).toLocaleDateString('en-IN')} • ${inv.status}</span></div>
+        <div style="display:flex;gap:8px;align-items:center"><b>${inv.amount}</b><button class="invoice-download" data-invoice-id="${inv.id}">📄 Download</button></div>
+      </div>
+    `).join('');
+
+    container.querySelectorAll('.invoice-download').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(window.Toast) Toast.show('Invoice downloading... 📄', 'info');
+      });
+    });
+  }
+
+  async cancelSubscription(){
+    try{
+      const confirmed = confirm('Are you sure you want to cancel subscription?\n\n• You will move to Free plan\n• Premium features will be removed\n• You can resubscribe anytime\n\nCancel?');
+
+      if(!confirmed) return;
+
+      if(window.Loader) Loader.show('Cancelling subscription...');
+
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/subscription/${this.shopId}/cancel`, { shopId:this.shopId });
+      }
+
+      localStorage.setItem(`subscription_${this.shopId}`, 'free');
+      localStorage.removeItem(`subscription_data_${this.shopId}`);
+
+      if(window.Toast) Toast.show('Subscription cancelled - Moved to Free plan', 'info');
+
+      setTimeout(()=> window.location.reload(), 1000);
+
+    }catch(e){
+      if(window.Toast) Toast.show('Failed to cancel', 'error');
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  bindEvents(){
+    document.getElementById('mySubsBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('upgradeBtn')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/subscription/subscription-plans.html?shopId=${this.shopId}`);
+    document.getElementById('changePlanBtn')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/subscription/subscription-plans.html?shopId=${this.shopId}`);
+    document.getElementById('cancelSubBtn')?.addEventListener('click', ()=> this.cancelSubscription());
+    document.getElementById('contactSupportBtn')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/support/chat-support.html?shopId=${this.shopId}&type=subscription`);
+  }
+}
+
+window.MySubscriptionsPageInstance = new MySubscriptionsPage();
+document.addEventListener('DOMContentLoaded', ()=> window.MySubscriptionsPageInstance.init());
+</script>

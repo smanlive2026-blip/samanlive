@@ -1,0 +1,582 @@
+<!-- LOCATION: common/components/product-quick-view.html - FULL WORLD CLASS QUICK VIEW -->
+<div id="quickViewModal" class="quick-view-modal" style="display:none">
+  <div class="quick-view-backdrop"></div>
+
+  <div class="quick-view-box">
+    <button id="closeQuickView" class="quick-view-close">✕</button>
+
+    <div class="quick-view-images">
+      <div class="quick-view-main-image-wrap">
+        <img id="qvMainImg" src="https://via.placeholder.com/400" alt="Product" class="quick-view-main-img" data-zoom>
+        <div class="quick-view-image-nav">
+          <button id="qvPrevImg" class="qv-nav-btn">‹</button>
+          <button id="qvNextImg" class="qv-nav-btn">›</button>
+        </div>
+        <span id="qvDiscountBadge" class="qv-discount-badge" style="display:none">20% OFF</span>
+      </div>
+
+      <div id="qvThumbs" class="quick-view-thumbs"></div>
+    </div>
+
+    <div class="quick-view-info">
+      <div class="qv-category" id="qvCategory">Category</div>
+      <h2 id="qvName" class="qv-name">Product Name Loading...</h2>
+
+      <div class="qv-rating-row">
+        <span class="qv-stars" id="qvStars">⭐⭐⭐⭐⭐</span>
+        <span class="qv-rating" id="qvRating">4.5</span>
+        <span class="qv-reviews" id="qvReviews">(124 reviews)</span>
+        <span class="qv-separator">•</span>
+        <span class="qv-stock" id="qvStock">In Stock</span>
+      </div>
+
+      <div class="qv-pricing">
+        <span id="qvPrice" class="qv-price">₹0</span>
+        <span id="qvMrp" class="qv-mrp" style="display:none">₹0</span>
+        <span id="qvOff" class="qv-off" style="display:none">0% OFF</span>
+      </div>
+
+      <div class="qv-offers" id="qvOffers">
+        <div class="offer-item"><span class="offer-icon">🏷️</span><span>Extra 10% OFF on first order - Use code <b>WELCOME10</b></span></div>
+        <div class="offer-item"><span class="offer-icon">🚚</span><span>Free delivery on orders above ₹199</span></div>
+      </div>
+
+      <div class="qv-description">
+        <b>Description</b>
+        <p id="qvDesc">Fresh and high quality product directly from local shop. Best price guaranteed.</p>
+      </div>
+
+      <div class="qv-variants" id="qvVariants" style="display:none">
+        <b>Variants</b>
+        <div id="qvVariantOptions" class="qv-variant-options"></div>
+      </div>
+
+      <div class="qv-quantity">
+        <b>Quantity</b>
+        <div class="qv-qty-controls">
+          <button id="qvMinus" class="qv-qty-btn">−</button>
+          <span id="qvQty" class="qv-qty-count">1</span>
+          <button id="qvPlus" class="qv-qty-btn">+</button>
+          <span id="qvStockLeft" class="qv-stock-left">12 left</span>
+        </div>
+      </div>
+
+      <div class="qv-actions">
+        <button id="qvAddToCart" class="qv-btn add-cart"><span>🛒</span> Add to Cart</button>
+        <button id="qvBuyNow" class="qv-btn buy-now">Buy Now</button>
+        <button id="qvWishlist" class="qv-btn wishlist">♡</button>
+      </div>
+
+      <div class="qv-meta">
+        <div class="qv-meta-item"><span class="meta-icon">📦</span><span>7 day return policy</span></div>
+        <div class="qv-meta-item"><span class="meta-icon">🔒</span><span>100% secure payment</span></div>
+        <div class="qv-meta-item"><span class="meta-icon">✅</span><span>FSSAI certified shop</span></div>
+      </div>
+
+      <div class="qv-share">
+        <span>Share:</span>
+        <button class="share-btn" data-share="whatsapp">💬 WhatsApp</button>
+        <button class="share-btn" data-share="copy">🔗 Copy Link</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.quick-view-modal{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:grid;
+  place-items:center;
+  padding:16px;
+  font-family:Outfit,sans-serif;
+}
+.quick-view-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(15,23,42,.6);
+  backdrop-filter:blur(8px);
+}
+.quick-view-box{
+  position:relative;
+  background:#fff;
+  width:100%;
+  max-width:900px;
+  max-height:90vh;
+  border-radius:24px;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:1fr;
+  box-shadow:0 24px 64px rgba(0,0,0,.2);
+  animation:modalPop.4s cubic-bezier(.34,1.56,.64,1);
+}
+@media(min-width:768px){
+.quick-view-box{ grid-template-columns:1fr 1fr; max-height:85vh; }
+}
+@keyframes modalPop{
+  from{ transform:scale(.9) translateY(20px); opacity:0; }
+  to{ transform:scale(1) translateY(0); opacity:1; }
+}
+.quick-view-close{
+  position:absolute;
+  top:12px;
+  right:12px;
+  background:#fff;
+  border:1px solid #f1f5f9;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  font-weight:900;
+  cursor:pointer;
+  z-index:10;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+.quick-view-images{
+  background:#f8fafc;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.quick-view-main-image-wrap{
+  position:relative;
+  aspect-ratio:1/1;
+  background:#fff;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid #f1f5f9;
+}
+.quick-view-main-img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  cursor:zoom-in;
+}
+.quick-view-image-nav{
+  position:absolute;
+  top:50%;
+  left:8px;
+  right:8px;
+  transform:translateY(-50%);
+  display:flex;
+  justify-content:space-between;
+  pointer-events:none;
+}
+.qv-nav-btn{
+  background:rgba(255,255,255,.9);
+  border:none;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+  pointer-events:auto;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+.qv-discount-badge{
+  position:absolute;
+  top:12px;
+  left:12px;
+  background:#ef4444;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+  padding:4px 10px;
+  border-radius:20px;
+}
+.quick-view-thumbs{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.quick-view-thumbs::-webkit-scrollbar{ display:none; }
+.qv-thumb{
+  width:56px;
+  height:56px;
+  border-radius:10px;
+  object-fit:cover;
+  border:2px solid transparent;
+  cursor:pointer;
+  flex-shrink:0;
+  background:#fff;
+}
+.qv-thumb.active{ border-color:#0f172a; }
+.quick-view-info{
+  padding:20px;
+  overflow-y:auto;
+  max-height:90vh;
+}
+.qv-category{
+  font-size:11px;
+  font-weight:800;
+  color:#94a3b8;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.qv-name{
+  font-weight:900;
+  font-size:20px;
+  line-height:1.3;
+  color:#0f172a;
+  margin:6px 0 8px;
+}
+.qv-rating-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  font-weight:600;
+  color:#64748b;
+  flex-wrap:wrap;
+}
+.qv-stars{ color:#f59e0b; }
+.qv-rating{ font-weight:900; color:#0f172a; }
+.qv-reviews{ text-decoration:underline; cursor:pointer; }
+.qv-stock{ color:#10b981; font-weight:800; }
+.qv-separator{ opacity:.3; }
+.qv-pricing{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:16px 0;
+}
+.qv-price{
+  font-weight:900;
+  font-size:28px;
+  color:#0f172a;
+}
+.qv-mrp{
+  font-size:16px;
+  color:#94a3b8;
+  text-decoration:line-through;
+  font-weight:600;
+}
+.qv-off{
+  background:#dcfce7;
+  color:#166534;
+  font-size:12px;
+  font-weight:900;
+  padding:4px 8px;
+  border-radius:20px;
+}
+.qv-offers{
+  background:#f8fafc;
+  border:1px dashed #cbd5e1;
+  border-radius:12px;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:16px;
+}
+.offer-item{
+  display:flex;
+  gap:6px;
+  font-size:11px;
+  font-weight:600;
+  color:#475569;
+}
+.offer-item b{ color:#0f172a; font-weight:900; }
+.qv-description b,.qv-variants b,.qv-quantity b{
+  display:block;
+  font-weight:900;
+  font-size:13px;
+  margin-bottom:6px;
+  color:#0f172a;
+}
+.qv-description p{
+  font-size:13px;
+  color:#64748b;
+  line-height:1.5;
+  margin:0 0 16px;
+}
+.qv-variant-options{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.variant-btn{
+  border:2px solid #e2e8f0;
+  background:#fff;
+  padding:6px 12px;
+  border-radius:10px;
+  font-weight:700;
+  font-size:12px;
+  cursor:pointer;
+}
+.variant-btn.active{ border-color:#0f172a; background:#0f172a; color:#fff; }
+.qv-qty-controls{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:20px;
+}
+.qv-qty-btn{
+  width:36px;
+  height:36px;
+  background:#f1f5f9;
+  border:none;
+  border-radius:10px;
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+}
+.qv-qty-count{
+  font-weight:900;
+  font-size:18px;
+  min-width:20px;
+  text-align:center;
+}
+.qv-stock-left{
+  font-size:11px;
+  font-weight:800;
+  color:#ef4444;
+  background:#fee2e2;
+  padding:2px 8px;
+  border-radius:20px;
+}
+.qv-actions{
+  display:flex;
+  gap:8px;
+  margin-bottom:16px;
+}
+.qv-btn{
+  flex:1;
+  padding:14px;
+  border-radius:12px;
+  font-weight:900;
+  font-size:14px;
+  border:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:.2s;
+}
+.qv-btn:active{ transform:scale(.97); }
+.qv-btn.add-cart{ background:#fff; border:2px solid #0f172a; color:#0f172a; }
+.qv-btn.buy-now{ background:#0f172a; color:#fff; flex:1.2; }
+.qv-btn.wishlist{
+  flex:0 0 48px;
+  background:#f1f5f9;
+  color:#475569;
+}
+.qv-meta{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding:12px;
+  background:#f8fafc;
+  border-radius:12px;
+  margin-bottom:12px;
+}
+.qv-meta-item{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  font-weight:600;
+  color:#475569;
+}
+.qv-share{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  font-weight:700;
+  color:#64748b;
+}
+.share-btn{
+  background:#f1f5f9;
+  border:none;
+  padding:6px 10px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+}
+</style>
+
+<script>
+window.ProductQuickView = {
+  currentProduct: null,
+  currentImages: [],
+  currentImageIndex: 0,
+  qty: 1,
+
+  open(productId){
+    const modal = document.getElementById('quickViewModal');
+    modal.style.display = 'grid';
+    document.body.style.overflow = 'hidden';
+
+    this.qty = 1;
+    document.getElementById('qvQty').innerText = '1';
+
+    this.loadProduct(productId);
+  },
+
+  async loadProduct(productId){
+    try{
+      if(window.Loader) Loader.show('Loading product...');
+
+      // Try to get from DOM first
+      const card = document.querySelector(`[data-product-id="${productId}"]`);
+      if(card){
+        try{
+          const product = JSON.parse(card.dataset.product.replace(/&#39;/g, "'"));
+          this.renderProduct(product);
+          if(window.Loader) Loader.hide();
+          return;
+        }catch(e){}
+      }
+
+      // Fetch from API
+      const shopId = new URLSearchParams(location.search).get('shopId') || '';
+      const res = await fetch(`/api/shops/${shopId}/products/${productId}?t=${Date.now()}`, { cache:'no-store', credentials:'include' });
+      const data = await res.json();
+      const product = data.product || data;
+
+      this.renderProduct(product);
+
+    }catch(e){
+      console.error('Quick view load failed', e);
+      document.getElementById('qvName').innerText = 'Failed to load product';
+    }finally{
+      if(window.Loader) Loader.hide();
+    }
+  },
+
+  renderProduct(product){
+    this.currentProduct = product;
+    this.currentImages = product.images || [product.image || product.img || 'https://via.placeholder.com/400'];
+
+    document.getElementById('qvMainImg').src = this.currentImages[0];
+    document.getElementById('qvName').innerText = product.name || product.title || 'Product';
+    document.getElementById('qvCategory').innerText = product.category || 'General';
+    document.getElementById('qvPrice').innerText = `₹${product.price}`;
+    document.getElementById('qvDesc').innerText = product.description || 'Fresh and high quality product from local shop. Best price guaranteed.';
+
+    // MRP & discount
+    if(product.mrp && product.mrp > product.price){
+      const off = Math.round(((product.mrp - product.price)/product.mrp)*100);
+      document.getElementById('qvMrp').innerText = `₹${product.mrp}`;
+      document.getElementById('qvMrp').style.display = 'inline';
+      document.getElementById('qvOff').innerText = `${off}% OFF`;
+      document.getElementById('qvOff').style.display = 'inline';
+      document.getElementById('qvDiscountBadge').innerText = `${off}% OFF`;
+      document.getElementById('qvDiscountBadge').style.display = 'block';
+    } else {
+      document.getElementById('qvMrp').style.display = 'none';
+      document.getElementById('qvOff').style.display = 'none';
+      document.getElementById('qvDiscountBadge').style.display = 'none';
+    }
+
+    // Rating
+    document.getElementById('qvRating').innerText = product.rating || '4.5';
+    document.getElementById('qvReviews').innerText = `(${product.totalReviews || product.reviews || 124} reviews)`;
+    document.getElementById('qvStock').innerText = product.stock > 0? 'In Stock' : 'Out of Stock';
+    document.getElementById('qvStock').style.color = product.stock > 0? '#10b981' : '#ef4444';
+    document.getElementById('qvStockLeft').innerText = `${product.stock || 12} left`;
+
+    // Thumbs
+    const thumbsEl = document.getElementById('qvThumbs');
+    if(this.currentImages.length > 1){
+      thumbsEl.innerHTML = this.currentImages.map((img, i)=>`
+        <img src="${img}" class="qv-thumb ${i===0?'active':''}" data-index="${i}" onclick="ProductQuickView.showImage(${i})">
+      `).join('');
+      thumbsEl.style.display = 'flex';
+    } else {
+      thumbsEl.style.display = 'none';
+    }
+
+    // Bind actions
+    document.getElementById('qvAddToCart').onclick = ()=> this.addToCart();
+    document.getElementById('qvBuyNow').onclick = ()=> this.buyNow();
+    document.getElementById('qvWishlist').onclick = ()=> this.toggleWishlist();
+  },
+
+  showImage(index){
+    if(index < 0 || index >= this.currentImages.length) return;
+    this.currentImageIndex = index;
+    document.getElementById('qvMainImg').src = this.currentImages[index];
+    document.querySelectorAll('.qv-thumb').forEach((t,i)=> t.classList.toggle('active', i===index));
+  },
+
+  addToCart(){
+    if(!this.currentProduct) return;
+
+    const product = {...this.currentProduct, qty: this.qty };
+
+    if(window.CartCore){
+      window.CartCore.addItem(product);
+    } else if(window.ProductCardRenderer){
+      for(let i=0; i<this.qty; i++){
+        ProductCardRenderer.addToCart(this.currentProduct._id || this.currentProduct.productId);
+      }
+    }
+
+    if(window.Toast) Toast.show(`${this.currentProduct.name} added to cart 🛒`, 'success');
+    this.close();
+  },
+
+  buyNow(){
+    this.addToCart();
+    const shopId = new URLSearchParams(location.search).get('shopId') || '';
+    setTimeout(()=>{
+      window.location.href = `/shop-templates/common/cart/cart.html?shopId=${shopId}`;
+    }, 500);
+  },
+
+  toggleWishlist(){
+    if(!this.currentProduct) return;
+    ProductCardRenderer.toggleWishlist(this.currentProduct._id);
+    const btn = document.getElementById('qvWishlist');
+    const isWishlisted = JSON.parse(localStorage.getItem('wishlist')||'[]').includes(this.currentProduct._id);
+    btn.innerText = isWishlisted? '♥' : '♡';
+    btn.style.color = isWishlisted? '#ef4444' : '';
+  },
+
+  close(){
+    document.getElementById('quickViewModal').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+};
+
+// Events
+document.getElementById('closeQuickView')?.addEventListener('click', ()=> ProductQuickView.close());
+document.getElementById('quickViewModal')?.querySelector('.quick-view-backdrop')?.addEventListener('click', ()=> ProductQuickView.close());
+document.getElementById('qvPrevImg')?.addEventListener('click', ()=> ProductQuickView.showImage(ProductQuickView.currentImageIndex - 1));
+document.getElementById('qvNextImg')?.addEventListener('click', ()=> ProductQuickView.showImage(ProductQuickView.currentImageIndex + 1));
+document.getElementById('qvMinus')?.addEventListener('click', ()=>{
+  if(ProductQuickView.qty > 1){
+    ProductQuickView.qty--;
+    document.getElementById('qvQty').innerText = ProductQuickView.qty;
+  }
+});
+document.getElementById('qvPlus')?.addEventListener('click', ()=>{
+  if(ProductQuickView.qty < 10){
+    ProductQuickView.qty++;
+    document.getElementById('qvQty').innerText = ProductQuickView.qty;
+  }
+});
+
+// Share
+document.querySelectorAll('[data-share]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const shopId = new URLSearchParams(location.search).get('shopId') || '';
+    const productId = ProductQuickView.currentProduct?._id || '';
+    const url = `${location.origin}/shop.html?shopId=${shopId}&productId=${productId}`;
+
+    if(btn.dataset.share === 'whatsapp'){
+      window.open(`https://wa.me/?text=${encodeURIComponent(`Check this product: ${url}`)}`, '_blank');
+    } else if(btn.dataset.share === 'copy'){
+      navigator.clipboard.writeText(url).then(()=> Toast.show('Link copied! 🔗', 'success'));
+    }
+  });
+});
+</script>

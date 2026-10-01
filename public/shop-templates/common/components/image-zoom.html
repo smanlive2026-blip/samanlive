@@ -1,0 +1,365 @@
+<!-- LOCATION: common/components/image-zoom.html - FULL WORLD CLASS IMAGE ZOOM -->
+<div id="imgZoomModal" class="img-zoom-modal" style="display:none">
+  <div class="img-zoom-backdrop"></div>
+
+  <div class="img-zoom-header">
+    <div class="img-zoom-info">
+      <b id="imgZoomTitle">Product Image</b>
+      <span id="imgZoomCounter">1 / 1</span>
+    </div>
+    <div class="img-zoom-actions">
+      <button id="imgZoomShare" class="img-zoom-btn" title="Share">↗️</button>
+      <button id="imgZoomDownload" class="img-zoom-btn" title="Download">⬇️</button>
+      <button id="imgZoomClose" class="img-zoom-btn close" title="Close">✕</button>
+    </div>
+  </div>
+
+  <div class="img-zoom-body">
+    <button id="imgZoomPrev" class="img-nav-btn prev">‹</button>
+
+    <div class="img-zoom-container">
+      <img id="imgZoomMain" src="" alt="Zoomed Image" class="img-zoom-main">
+      <div id="imgZoomLoader" class="img-zoom-loader" style="display:none">
+        <div class="zoom-spinner"></div>
+      </div>
+    </div>
+
+    <button id="imgZoomNext" class="img-nav-btn next">›</button>
+  </div>
+
+  <div class="img-zoom-footer">
+    <div id="imgZoomThumbs" class="img-zoom-thumbs"></div>
+    <div class="img-zoom-hint">Pinch to zoom • Swipe to navigate • Double tap to zoom</div>
+  </div>
+</div>
+
+<style>
+.img-zoom-modal{
+  position:fixed;
+  inset:0;
+  z-index:100000;
+  background:#000;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  font-family:Outfit,sans-serif;
+}
+.img-zoom-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.95);
+}
+.img-zoom-header{
+  position:relative;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 16px;
+  background:linear-gradient(to bottom, rgba(0,0,0,.8), transparent);
+  z-index:2;
+}
+.img-zoom-info b{
+  display:block;
+  color:#fff;
+  font-weight:900;
+  font-size:14px;
+}
+.img-zoom-info span{
+  color:rgba(255,255,255,.6);
+  font-size:11px;
+  font-weight:600;
+}
+.img-zoom-actions{
+  display:flex;
+  gap:8px;
+}
+.img-zoom-btn{
+  background:rgba(255,255,255,.15);
+  border:none;
+  color:#fff;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  font-size:16px;
+  backdrop-filter:blur(10px);
+  transition:.2s;
+}
+.img-zoom-btn:hover{ background:rgba(255,255,255,.25); }
+.img-zoom-btn.close{ background:rgba(239,68,68,.8); }
+.img-zoom-body{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1;
+  overflow:hidden;
+}
+.img-zoom-container{
+  position:relative;
+  width:100%;
+  height:100%;
+  display:grid;
+  place-items:center;
+  padding:20px;
+}
+.img-zoom-main{
+  max-width:100%;
+  max-height:80vh;
+  object-fit:contain;
+  border-radius:12px;
+  transition:transform.3s cubic-bezier(.4,0,.2,1);
+  cursor:zoom-in;
+  touch-action:none;
+}
+.img-zoom-main.zoomed{
+  cursor:zoom-out;
+  transform:scale(2);
+}
+.img-zoom-loader{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  background:rgba(0,0,0,.5);
+}
+.zoom-spinner{
+  width:32px;
+  height:32px;
+  border:3px solid rgba(255,255,255,.2);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin.8s linear infinite;
+}
+.img-nav-btn{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(255,255,255,.15);
+  border:none;
+  color:#fff;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  font-size:24px;
+  font-weight:900;
+  cursor:pointer;
+  z-index:2;
+  backdrop-filter:blur(10px);
+  transition:.2s;
+}
+.img-nav-btn:hover{ background:rgba(255,255,255,.25); }
+.img-nav-btn.prev{ left:12px; }
+.img-nav-btn.next{ right:12px; }
+.img-nav-btn:disabled{
+  opacity:.3;
+  pointer-events:none;
+}
+.img-zoom-footer{
+  position:relative;
+  padding:12px 16px;
+  background:linear-gradient(to top, rgba(0,0,0,.8), transparent);
+  z-index:2;
+}
+.img-zoom-thumbs{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding-bottom:8px;
+  scrollbar-width:none;
+}
+.img-zoom-thumbs::-webkit-scrollbar{ display:none; }
+.img-thumb{
+  width:56px;
+  height:56px;
+  border-radius:8px;
+  object-fit:cover;
+  border:2px solid transparent;
+  cursor:pointer;
+  flex-shrink:0;
+  opacity:.6;
+  transition:.2s;
+}
+.img-thumb.active{
+  border-color:#fff;
+  opacity:1;
+  transform:scale(1.05);
+}
+.img-zoom-hint{
+  text-align:center;
+  color:rgba(255,255,255,.4);
+  font-size:10px;
+  font-weight:600;
+  margin-top:8px;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+
+<script>
+class ImageZoom {
+  constructor(){
+    this.images = [];
+    this.currentIndex = 0;
+    this.isZoomed = false;
+    this.startX = 0;
+    this.currentX = 0;
+  }
+
+  open(images, index = 0, title = 'Product Image'){
+    // Normalize images to array
+    if(typeof images === 'string') images = [images];
+    this.images = images;
+    this.currentIndex = index;
+
+    const modal = document.getElementById('imgZoomModal');
+    document.getElementById('imgZoomTitle').innerText = title;
+
+    this.showImage(index);
+    this.renderThumbs();
+
+    modal.style.display = 'grid';
+    document.body.style.overflow = 'hidden';
+
+    // Preload next images
+    this.preloadImages();
+  }
+
+  showImage(index){
+    if(index < 0 || index >= this.images.length) return;
+
+    this.currentIndex = index;
+    const mainImg = document.getElementById('imgZoomMain');
+    const loader = document.getElementById('imgZoomLoader');
+    const counter = document.getElementById('imgZoomCounter');
+
+    loader.style.display = 'grid';
+    mainImg.style.opacity = '.5';
+
+    const img = new Image();
+    img.onload = ()=>{
+      mainImg.src = this.images[index];
+      loader.style.display = 'none';
+      mainImg.style.opacity = '1';
+      counter.innerText = `${index + 1} / ${this.images.length}`;
+
+      // Update thumbs
+      document.querySelectorAll('.img-thumb').forEach((thumb, i)=>{
+        thumb.classList.toggle('active', i === index);
+      });
+
+      // Update nav buttons
+      document.getElementById('imgZoomPrev').disabled = index === 0;
+      document.getElementById('imgZoomNext').disabled = index === this.images.length - 1;
+    };
+    img.onerror = ()=>{
+      loader.style.display = 'none';
+      mainImg.style.opacity = '1';
+    };
+    img.src = this.images[index];
+
+    this.isZoomed = false;
+    mainImg.classList.remove('zoomed');
+  }
+
+  renderThumbs(){
+    const container = document.getElementById('imgZoomThumbs');
+    if(this.images.length <= 1){
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'flex';
+    container.innerHTML = this.images.map((src, i)=>`
+      <img src="${src}" class="img-thumb ${i === this.currentIndex? 'active' : ''}" data-index="${i}" alt="Thumb ${i+1}">
+    `).join('');
+
+    container.querySelectorAll('.img-thumb').forEach(thumb=>{
+      thumb.addEventListener('click', ()=>{
+        this.showImage(parseInt(thumb.dataset.index));
+      });
+    });
+  }
+
+  preloadImages(){
+    this.images.forEach(src=>{
+      const img = new Image();
+      img.src = src;
+    });
+  }
+
+  close(){
+    document.getElementById('imgZoomModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this.isZoomed = false;
+  }
+
+  next(){
+    if(this.currentIndex < this.images.length - 1){
+      this.showImage(this.currentIndex + 1);
+    }
+  }
+
+  prev(){
+    if(this.currentIndex > 0){
+      this.showImage(this.currentIndex - 1);
+    }
+  }
+
+  toggleZoom(){
+    const mainImg = document.getElementById('imgZoomMain');
+    this.isZoomed =!this.isZoomed;
+    mainImg.classList.toggle('zoomed', this.isZoomed);
+  }
+}
+
+window.ImageZoom = new ImageZoom();
+
+// Events
+document.getElementById('imgZoomClose')?.addEventListener('click', ()=> window.ImageZoom.close());
+document.getElementById('imgZoomModal')?.querySelector('.img-zoom-backdrop')?.addEventListener('click', (e)=>{
+  if(e.target.classList.contains('img-zoom-backdrop')) window.ImageZoom.close();
+});
+document.getElementById('imgZoomNext')?.addEventListener('click', ()=> window.ImageZoom.next());
+document.getElementById('imgZoomPrev')?.addEventListener('click', ()=> window.ImageZoom.prev());
+document.getElementById('imgZoomMain')?.addEventListener('click', ()=> window.ImageZoom.toggleZoom());
+document.getElementById('imgZoomMain')?.addEventListener('dblclick', ()=> window.ImageZoom.toggleZoom());
+
+// Keyboard
+document.addEventListener('keydown', (e)=>{
+  const modal = document.getElementById('imgZoomModal');
+  if(modal.style.display === 'none') return;
+
+  if(e.key === 'Escape') window.ImageZoom.close();
+  else if(e.key === 'ArrowRight') window.ImageZoom.next();
+  else if(e.key === 'ArrowLeft') window.ImageZoom.prev();
+});
+
+// Touch swipe
+let touchStartX = 0;
+document.getElementById('imgZoomMain')?.addEventListener('touchstart', (e)=>{
+  touchStartX = e.touches[0].clientX;
+}, { passive:true });
+
+document.getElementById('imgZoomMain')?.addEventListener('touchend', (e)=>{
+  const touchEndX = e.changedTouches[0].clientX;
+  const diff = touchStartX - touchEndX;
+
+  if(Math.abs(diff) > 50){
+    if(diff > 0) window.ImageZoom.next();
+    else window.ImageZoom.prev();
+  }
+}, { passive:true });
+
+// Global shortcut - click on any image with data-zoom
+document.addEventListener('click', (e)=>{
+  const img = e.target.closest('[data-zoom]');
+  if(img){
+    e.preventDefault();
+    const src = img.src || img.dataset.zoom;
+    const allImages = Array.from(document.querySelectorAll('[data-zoom]')).map(i=> i.src || i.dataset.zoom);
+    const index = allImages.indexOf(src);
+    window.ImageZoom.open(allImages.length > 0? allImages : src, index >=0? index : 0, img.alt || 'Product Image');
+  }
+});
+</script>

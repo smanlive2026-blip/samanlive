@@ -1,0 +1,241 @@
+<!-- LOCATION: common/delivery/self-delivery.html - WORLD CLASS SELF DELIVERY -->
+<div id="selfDeliveryRoot" class="self-delivery-root">
+  <div class="delivery-header">
+    <button id="selfDeliveryBack" class="back-btn">‹</button>
+    <div>
+      <b>Self Delivery Settings</b>
+      <span>Manage your own delivery</span>
+    </div>
+    <label class="toggle-switch">
+      <input type="checkbox" id="selfDeliveryToggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="delivery-card">
+    <div class="card-header">
+      <b>🚚 Delivery Charges</b>
+      <span class="card-badge">Live</span>
+    </div>
+    <div class="charge-row">
+      <div class="charge-input-wrap">
+        <label>Delivery Charge (₹)</label>
+        <input type="number" id="deliveryCharge" value="30" min="0" max="200" class="charge-input">
+      </div>
+      <div class="charge-input-wrap">
+        <label>Free Delivery Above (₹)</label>
+        <input type="number" id="freeDeliveryAbove" value="199" min="0" class="charge-input">
+      </div>
+    </div>
+    <div class="charge-info">
+      <span>💡 Customers get free delivery when order is above ₹<b id="freeAboveDisplay">199</b></span>
+    </div>
+  </div>
+
+  <div class="delivery-card">
+    <div class="card-header">
+      <b>⏱️ Delivery Time</b>
+    </div>
+    <div class="time-options">
+      <button class="time-option active" data-time="30">30 mins</button>
+      <button class="time-option" data-time="45">45 mins</button>
+      <button class="time-option" data-time="60">60 mins</button>
+      <button class="time-option" data-time="90">90 mins</button>
+    </div>
+    <div class="custom-time">
+      <label>Custom time (mins)</label>
+      <input type="number" id="customDeliveryTime" value="45" min="15" max="180" class="charge-input">
+    </div>
+  </div>
+
+  <div class="delivery-card">
+    <div class="card-header">
+      <b>📍 Delivery Radius</b>
+    </div>
+    <div class="radius-control">
+      <input type="range" id="deliveryRadius" min="1" max="15" value="5" class="radius-slider">
+      <div class="radius-display">
+        <span>Delivery within</span>
+        <b id="radiusValue">5 km</b>
+      </div>
+    </div>
+    <div class="radius-info">Covering ~78 km² area around your shop</div>
+  </div>
+
+  <div class="delivery-card">
+    <div class="card-header">
+      <b>👦 My Delivery Boys</b>
+      <button id="addDeliveryBoyBtn" class="add-btn">+ Add Boy</button>
+    </div>
+    <div id="deliveryBoysList" class="delivery-boys-list">
+      <div class="boy-card">
+        <img src="https://i.pravatar.cc/100?img=11" class="boy-avatar">
+        <div class="boy-info">
+          <b>Ravi Kumar</b>
+          <span>📞 98765 43210 • 🟢 Online</span>
+          <span>5 deliveries today</span>
+        </div>
+        <button class="boy-action">⋮</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="delivery-save-bar">
+    <button id="saveSelfDelivery" class="save-btn">Save Settings ✅</button>
+  </div>
+</div>
+
+<style>
+.self-delivery-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:80px; }
+.delivery-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.delivery-header b{ display:block; font-weight:900; font-size:16px; }
+.delivery-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.toggle-switch{ margin-left:auto; position:relative; width:48px; height:28px; }
+.toggle-switch input{ display:none; }
+.slider{ position:absolute; inset:0; background:#e2e8f0; border-radius:20px; transition:.3s; cursor:pointer; }
+.slider::before{ content:''; position:absolute; width:20px; height:20px; background:#fff; border-radius:50%; top:4px; left:4px; transition:.3s; box-shadow:0 2px 4px rgba(0,0,0,.1); }
+input:checked + .slider{ background:#0f172a; }
+input:checked + .slider::before{ transform:translateX(20px); }
+.delivery-card{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.card-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.card-header b{ font-weight:900; font-size:14px; }
+.card-badge{ background:#dcfce7; color:#166534; font-size:10px; font-weight:900; padding:2px 8px; border-radius:20px; }
+.charge-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.charge-input-wrap label{ display:block; font-size:11px; font-weight:800; color:#64748b; margin-bottom:6px; text-transform:uppercase; }
+.charge-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:800; font-size:14px; }
+.charge-info{ margin-top:10px; background:#f0f9ff; padding:8px 10px; border-radius:8px; font-size:11px; color:#0c4a6e; font-weight:600; }
+.time-options{ display:flex; gap:8px; flex-wrap:wrap; }
+.time-option{ background:#f1f5f9; border:2px solid transparent; padding:10px 14px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; transition:.2s; }
+.time-option.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
+.custom-time{ margin-top:12px; }
+.custom-time label{ font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; display:block; margin-bottom:6px; }
+.radius-control{ text-align:center; }
+.radius-slider{ width:100%; height:6px; -webkit-appearance:none; background:#e2e8f0; border-radius:10px; outline:none; }
+.radius-slider::-webkit-slider-thumb{ -webkit-appearance:none; width:24px; height:24px; background:#0f172a; border-radius:50%; cursor:pointer; }
+.radius-display{ margin-top:12px; }
+.radius-display span{ font-size:12px; color:#64748b; font-weight:600; }
+.radius-display b{ font-size:24px; font-weight:900; color:#0f172a; display:block; }
+.radius-info{ text-align:center; font-size:11px; color:#94a3b8; font-weight:600; margin-top:4px; }
+.add-btn{ background:#f1f5f9; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer; }
+.delivery-boys-list{ display:flex; flex-direction:column; gap:8px; }
+.boy-card{ display:flex; align-items:center; gap:10px; padding:10px; background:#f8fafc; border-radius:12px; border:1px solid #f1f5f9; }
+.boy-avatar{ width:40px; height:40px; border-radius:50%; }
+.boy-info{ flex:1; }
+.boy-info b{ display:block; font-weight:900; font-size:13px; }
+.boy-info span{ display:block; font-size:11px; color:#64748b; font-weight:600; line-height:1.3; }
+.boy-action{ background:#fff; border:1px solid #e2e8f0; width:32px; height:32px; border-radius:8px; font-weight:900; cursor:pointer; }
+.delivery-save-bar{ position:fixed; bottom:0; left:0; right:0; background:#fff; padding:12px 16px; border-top:1px solid #f1f5f9; max-width:600px; margin:0 auto; }
+.save-btn{ width:100%; background:#0f172a; color:#fff; border:none; padding:14px; border-radius:12px; font-weight:900; font-size:14px; cursor:pointer; }
+</style>
+
+<script>
+class SelfDelivery {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.settings = { deliveryCharge:30, freeAbove:199, deliveryTime:45, radius:5, selfDelivery:true, boys:[] };
+  }
+
+  async init(){
+    await this.loadSettings();
+    this.bindEvents();
+  }
+
+  async loadSettings(){
+    try{
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/delivery/self/${this.shopId}`);
+        this.settings = {...this.settings,...(data.settings||data)};
+      } else {
+        const cached = JSON.parse(localStorage.getItem(`delivery_${this.shopId}`)||'{}');
+        this.settings = {...this.settings,...cached};
+      }
+
+      document.getElementById('deliveryCharge').value = this.settings.deliveryCharge;
+      document.getElementById('freeDeliveryAbove').value = this.settings.freeAbove;
+      document.getElementById('customDeliveryTime').value = this.settings.deliveryTime;
+      document.getElementById('deliveryRadius').value = this.settings.radius;
+      document.getElementById('radiusValue').innerText = `${this.settings.radius} km`;
+      document.getElementById('freeAboveDisplay').innerText = this.settings.freeAbove;
+      document.getElementById('selfDeliveryToggle').checked = this.settings.selfDelivery!==false;
+
+      // Active time option
+      document.querySelectorAll('.time-option').forEach(btn=>{
+        btn.classList.toggle('active', parseInt(btn.dataset.time)===parseInt(this.settings.deliveryTime));
+      });
+
+    }catch(e){ console.error(e); }
+  }
+
+  bindEvents(){
+    document.getElementById('selfDeliveryBack')?.addEventListener('click', ()=> history.back());
+
+    document.getElementById('deliveryCharge')?.addEventListener('input', (e)=>{
+      this.settings.deliveryCharge = parseInt(e.target.value)||0;
+    });
+
+    document.getElementById('freeDeliveryAbove')?.addEventListener('input', (e)=>{
+      this.settings.freeAbove = parseInt(e.target.value)||0;
+      document.getElementById('freeAboveDisplay').innerText = e.target.value;
+    });
+
+    document.querySelectorAll('.time-option').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.time-option').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        this.settings.deliveryTime = parseInt(btn.dataset.time);
+        document.getElementById('customDeliveryTime').value = this.settings.deliveryTime;
+      });
+    });
+
+    document.getElementById('customDeliveryTime')?.addEventListener('input', (e)=>{
+      this.settings.deliveryTime = parseInt(e.target.value)||45;
+      document.querySelectorAll('.time-option').forEach(b=>{
+        b.classList.toggle('active', parseInt(b.dataset.time)===this.settings.deliveryTime);
+      });
+    });
+
+    document.getElementById('deliveryRadius')?.addEventListener('input', (e)=>{
+      this.settings.radius = parseInt(e.target.value);
+      document.getElementById('radiusValue').innerText = `${e.target.value} km`;
+    });
+
+    document.getElementById('selfDeliveryToggle')?.addEventListener('change', (e)=>{
+      this.settings.selfDelivery = e.target.checked;
+    });
+
+    document.getElementById('saveSelfDelivery')?.addEventListener('click', ()=> this.saveSettings());
+
+    document.getElementById('addDeliveryBoyBtn')?.addEventListener('click', ()=>{
+      window.location.href=`/shop-templates/common/delivery/delivery-boy-assign.html?shopId=${this.shopId}`;
+    });
+  }
+
+  async saveSettings(){
+    const btn = document.getElementById('saveSelfDelivery');
+    btn.innerText = 'Saving...';
+    btn.disabled = true;
+
+    try{
+      localStorage.setItem(`delivery_${this.shopId}`, JSON.stringify(this.settings));
+
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/delivery/self/${this.shopId}`, this.settings);
+      }
+
+      if(window.Toast) Toast.show('Delivery settings saved ✅', 'success');
+      btn.innerText = 'Saved ✅';
+      setTimeout(()=> btn.innerText='Save Settings ✅', 2000);
+
+    }catch(e){
+      if(window.Toast) Toast.show('Failed to save', 'error');
+      btn.innerText='Save Settings ✅';
+    }finally{
+      btn.disabled = false;
+    }
+  }
+}
+
+window.SelfDeliveryInstance = new SelfDelivery();
+document.addEventListener('DOMContentLoaded', ()=> window.SelfDeliveryInstance.init());
+</script>

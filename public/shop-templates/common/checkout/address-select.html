@@ -1,0 +1,32 @@
+<!-- LOCATION: common/checkout/address-select.html -->
+<div id="addressSelectWrapper" class="addr-wrapper">
+  <div class="addr-header"><button onclick="history.back()">‹</button><h3>Select Address 📍</h3><button onclick="AddressSelect.openAddModal()" style="background:#0f172a;color:#fff;border:none;padding:6px 10px;border-radius:8px;font-weight:800">+ Add</button></div>
+  <div id="addressList" class="addr-list"><div class="skeleton"></div><div class="skeleton"></div></div>
+  <div class="addr-footer"><button id="addrContinue" class="continue-btn" disabled>Deliver to this Address</button></div>
+</div>
+
+<!-- Add Modal -->
+<div id="addAddrModal" class="modal" style="display:none"><div class="modal-box">
+  <h3 style="font-weight:900">Add New Address</h3>
+  <input id="addrName" placeholder="Full Name"><input id="addrPhone" placeholder="Phone"><input id="addrHouse" placeholder="House / Building"><input id="addrArea" placeholder="Area / Locality"><input id="addrCity" placeholder="City"><input id="addrPincode" placeholder="Pincode">
+  <div style="display:flex;gap:8px;margin-top:12px"><button onclick="AddressSelect.closeAddModal()" style="flex:1;background:#f1f5f9;border:none;padding:12px;border-radius:10px;font-weight:800">Cancel</button><button onclick="AddressSelect.saveAddress()" style="flex:1;background:#0f172a;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800">Save</button></div>
+</div></div>
+
+<style>
+.addr-wrapper{max-width:600px;margin:auto;background:#f8fafc;min-height:100vh;font-family:Outfit,sans-serif}
+.addr-header{padding:14px;background:#fff;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.addr-header h3{margin:0;font-weight:900;font-size:16px}
+.addr-list{padding:12px;display:flex;flex-direction:column;gap:10px}
+.addr-card{background:#fff;border:2px solid #f1f5f9;border-radius:14px;padding:12px;cursor:pointer;transition:.2s}
+.addr-card.selected{border-color:#0f172a;background:#f8fafc}
+.addr-card b{font-size:14px;font-weight:800;display:block}
+.addr-card p{font-size:12px;color:#64748b;margin:4px 0 0;line-height:1.4}
+.addr-footer{position:sticky;bottom:0;background:#fff;padding:12px;border-top:1px solid #f1f5f9}
+.continue-btn{width:100%;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:15px}
+.continue-btn:disabled{background:#cbd5e1}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:999;padding:20px}
+.modal-box{background:#fff;width:100%;max-width:400px;border-radius:16px;padding:16px}
+.modal-box input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-top:8px;font-family:Outfit,sans-serif}
+.skeleton{height:80px;background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:12px}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+</style>

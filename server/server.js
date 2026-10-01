@@ -41,6 +41,12 @@ app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-mana
 // [COMMENT] FRUIT SHOP TEMPLATE - public/shop-templates/fruit/dashboard.html
 app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
 
+// FULL COMMON 100+ FILES - 2 LINE ONLY
+app.use('/api/common', require('./routes/common'));
+app.use('/api', require('./routes/common'));
+
+app.use('/api/shops/mobile', require('./routes/shops/mobile-route'));
+
 const shopViewRoutes = require('./routes/shopViewRoutes');
 
 // [COMMENT] SHOP VIEW - Customer ko shop kaise dikhegi - public/shop-templates/*/customer-view.html

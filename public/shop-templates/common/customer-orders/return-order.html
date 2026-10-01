@@ -1,0 +1,230 @@
+<!-- LOCATION: common/customer-orders/return-order.html - WORLD CLASS RETURN ORDER -->
+<div id="returnRoot" class="return-root">
+  <div class="return-header">
+    <button id="returnBack" class="back-btn">‹</button>
+    <b>Return Order</b>
+  </div>
+
+  <div class="return-order-info">
+    <b>Select items to return</b>
+    <span>Order <span id="returnOrderId">#ORD----</span> • Choose items you want to return</span>
+  </div>
+
+  <div id="returnItems" class="return-items"></div>
+
+  <div class="return-reason-wrap">
+    <b>Reason for return</b>
+    <select id="returnReason" class="return-select">
+      <option value="">Select reason</option>
+      <option value="damaged">Damaged product received</option>
+      <option value="wrong_item">Wrong item delivered</option>
+      <option value="quality_issue">Quality not as expected</option>
+      <option value="expired">Expired product</option>
+      <option value="not_needed">Not needed anymore</option>
+      <option value="other">Other</option>
+    </select>
+
+    <div id="returnImagesWrap" class="return-images-wrap">
+      <b>Upload images (optional but helps faster approval)</b>
+      <div class="images-upload">
+        <label class="upload-box">
+          <input type="file" id="returnImages" accept="image/*" multiple hidden>
+          <span>📷</span>
+          <span>Add Photos</span>
+        </label>
+        <div id="returnImagesPreview" class="images-preview"></div>
+      </div>
+    </div>
+
+    <label>Additional comments</label>
+    <textarea id="returnComments" placeholder="Describe the issue..."></textarea>
+  </div>
+
+  <div class="return-policy">
+    <b>Return Policy:</b>
+    <ul>
+      <li>Return within 7 days of delivery</li>
+      <li>Product should be unused and in original packaging</li>
+      <li>Refund in 2-3 business days after pickup</li>
+      <li>Some items like perishables are non-returnable</li>
+    </ul>
+  </div>
+
+  <div class="return-actions">
+    <button id="cancelReturn" class="secondary-btn">Cancel</button>
+    <button id="submitReturn" class="primary-btn" disabled>Submit Return Request</button>
+  </div>
+</div>
+
+<style>
+.return-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; }
+.return-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid #f1f5f9; position:sticky; top:0; z-index:10; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.return-order-info{ background:#fff; padding:16px; border-bottom:1px solid #f1f5f9; }
+.return-order-info b{ display:block; font-weight:900; font-size:16px; }
+.return-order-info span{ font-size:12px; color:#64748b; font-weight:600; margin-top:4px; display:block; }
+.return-items{ background:#fff; padding:12px; display:flex; flex-direction:column; gap:8px; }
+.return-item{ display:flex; gap:12px; padding:12px; border:2px solid #f1f5f9; border-radius:12px; cursor:pointer; transition:.2s; }
+.return-item.selected{ border-color:#0f172a; background:#f8fafc; }
+.return-item input{ width:20px; height:20px; flex-shrink:0; margin-top:2px; }
+.return-item img{ width:48px; height:48px; border-radius:8px; object-fit:cover; background:#f1f5f9; }
+.return-item-info{ flex:1; }
+.return-item-info b{ display:block; font-weight:800; font-size:13px; }
+.return-item-info span{ font-size:11px; color:#64748b; font-weight:600; }
+.return-item-price{ font-weight:900; font-size:13px; }
+.return-reason-wrap{ background:#fff; margin-top:12px; padding:16px; }
+.return-reason-wrap b{ display:block; font-weight:900; font-size:13px; margin-bottom:8px; }
+.return-select{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
+.return-images-wrap{ margin-top:16px; }
+.images-upload{ display:flex; gap:10px; align-items:flex-start; margin-top:8px; }
+.upload-box{ width:80px; height:80px; border:2px dashed #cbd5e1; border-radius:12px; display:grid; place-items:center; cursor:pointer; text-align:center; background:#f8fafc; }
+.upload-box span:first-child{ font-size:20px; }
+.upload-box span:last-child{ font-size:10px; font-weight:800; }
+.images-preview{ display:flex; gap:8px; flex-wrap:wrap; }
+.preview-img{ width:60px; height:60px; border-radius:8px; object-fit:cover; position:relative; }
+.return-reason-wrap label{ display:block; font-weight:800; font-size:12px; margin:16px 0 6px; }
+.return-reason-wrap textarea{ width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px; min-height:80px; font-family:Outfit,sans-serif; font-size:13px; font-weight:600; }
+.return-policy{ background:#fff; margin-top:12px; padding:16px; }
+.return-policy b{ font-weight:900; font-size:12px; }
+.return-policy ul{ margin:8px 0 0; padding-left:16px; font-size:11px; color:#64748b; font-weight:600; line-height:1.6; }
+.return-actions{ padding:16px; display:flex; gap:10px; position:sticky; bottom:0; background:#fff; border-top:1px solid #f1f5f9; }
+.return-actions button{ flex:1; padding:14px; border-radius:12px; font-weight:900; border:none; cursor:pointer; }
+.secondary-btn{ background:#f1f5f9; color:#475569; }
+.primary-btn{ background:#0f172a; color:#fff; }
+.primary-btn:disabled{ background:#e2e8f0; color:#94a3b8; cursor:not-allowed; }
+</style>
+
+<script>
+class ReturnOrder {
+  constructor(){
+    this.orderId = new URLSearchParams(location.search).get('orderId') || '';
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.selectedItems = [];
+    this.images = [];
+  }
+
+  async init(){
+    document.getElementById('returnOrderId').innerText = `#${this.orderId.slice(-6).toUpperCase()}`;
+    await this.loadOrderItems();
+    this.bindEvents();
+  }
+
+  async loadOrderItems(){
+    try{
+      let order;
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/orders/${this.shopId}/${this.orderId}`);
+        order = data.order || data;
+      } else {
+        order = { items:[{ _id:'1', name:'Product 1', price:100, qty:1, image:'https://via.placeholder.com/48' }] };
+      }
+
+      const container = document.getElementById('returnItems');
+      container.innerHTML = (order.items||[]).map(item=>`
+        <label class="return-item">
+          <input type="checkbox" value="${item._id||item.productId}" data-price="${item.price}" data-name="${item.name}">
+          <img src="${item.image||'https://via.placeholder.com/48'}" alt="${item.name}">
+          <div class="return-item-info">
+            <b>${item.name||item.title}</b>
+            <span>Qty: ${item.qty||1} • ${item.variant||''}</span>
+          </div>
+          <span class="return-item-price">₹${item.price||0}</span>
+        </label>
+      `).join('');
+
+      container.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+        cb.addEventListener('change', (e)=>{
+          e.target.closest('.return-item').classList.toggle('selected', e.target.checked);
+          this.updateSelected();
+        });
+      });
+
+    }catch(e){
+      console.error(e);
+    }
+  }
+
+  updateSelected(){
+    this.selectedItems = Array.from(document.querySelectorAll('#returnItems input:checked')).map(cb=>({
+      productId: cb.value,
+      name: cb.dataset.name,
+      price: cb.dataset.price
+    }));
+
+    const btn = document.getElementById('submitReturn');
+    const reason = document.getElementById('returnReason').value;
+
+    btn.disabled =!(this.selectedItems.length>0 && reason);
+  }
+
+  bindEvents(){
+    document.getElementById('returnBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('cancelReturn')?.addEventListener('click', ()=> history.back());
+
+    document.getElementById('returnReason')?.addEventListener('change', ()=> this.updateSelected());
+
+    document.getElementById('returnImages')?.addEventListener('change', (e)=>{
+      const files = Array.from(e.target.files);
+      files.forEach(file=>{
+        const reader = new FileReader();
+        reader.onload = (ev)=>{
+          this.images.push(ev.target.result);
+          const img = document.createElement('img');
+          img.src = ev.target.result;
+          img.className = 'preview-img';
+          document.getElementById('returnImagesPreview').appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    document.getElementById('submitReturn')?.addEventListener('click', ()=> this.submitReturn());
+  }
+
+  async submitReturn(){
+    if(this.selectedItems.length===0){
+      if(window.Toast) Toast.show('Select at least one item', 'warning');
+      return;
+    }
+
+    const reason = document.getElementById('returnReason').value;
+    if(!reason){
+      if(window.Toast) Toast.show('Select return reason', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('submitReturn');
+    btn.innerText = 'Submitting...';
+    btn.disabled = true;
+
+    try{
+      const comments = document.getElementById('returnComments').value;
+
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/customer-orders/${this.orderId}/return`, {
+          shopId: this.shopId,
+          items: this.selectedItems,
+          reason,
+          comments,
+          images: this.images
+        });
+      }
+
+      if(window.Toast) Toast.show('Return request submitted ✅', 'success');
+
+      setTimeout(()=>{
+        window.location.href=`/shop-templates/common/customer-orders/my-orders.html?shopId=${this.shopId}`;
+      }, 1500);
+
+    }catch(e){
+      console.error(e);
+      if(window.Toast) Toast.show('Failed to submit return', 'error');
+      btn.innerText = 'Submit Return Request';
+      btn.disabled = false;
+    }
+  }
+}
+
+window.ReturnOrderInstance = new ReturnOrder();
+document.addEventListener('DOMContentLoaded', ()=> window.ReturnOrderInstance.init());
+</script>

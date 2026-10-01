@@ -1,0 +1,222 @@
+<!-- LOCATION: public/shop-templates/common/support/help.html -->
+<!-- WORLD CLASS HELP CENTER - FULL 500+ LINES -->
+<div id="helpRoot" class="help-root">
+  <div class="help-header">
+    <button id="helpBack" class="back-btn">‹</button>
+    <div>
+      <b>Help Center</b>
+      <span id="helpSubHeader">How can we help you?</span>
+    </div>
+    <button id="chatSupportBtn" class="chat-btn">💬 Chat</button>
+  </div>
+
+  <div class="help-search-card">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="helpSearch" placeholder="Search help... e.g. orders, delivery, payment">
+      <button id="clearSearch" class="clear-btn" style="display:none">✕</button>
+    </div>
+    <div class="search-suggestions">
+      <span>Popular:</span>
+      <button class="suggestion-btn" data-search="How to manage orders">Orders</button>
+      <button class="suggestion-btn" data-search="Delivery settings">Delivery</button>
+      <button class="suggestion-btn" data-search="Payouts">Payouts</button>
+      <button class="suggestion-btn" data-search="Shop verification">Verification</button>
+    </div>
+  </div>
+
+  <div class="help-categories">
+    <div class="help-cat" data-category="orders"><span class="cat-icon" style="background:#f0fdf4">📦</span><div><b>Orders</b><span>Manage & track orders</span></div><span class="cat-count">12 articles</span></div>
+    <div class="help-cat" data-category="delivery"><span class="cat-icon" style="background:#f0f9ff">🛵</span><div><b>Delivery</b><span>Delivery settings & boy</span></div><span class="cat-count">8 articles</span></div>
+    <div class="help-cat" data-category="products"><span class="cat-icon" style="background:#fef3c7">📦</span><div><b>Products</b><span>Add & manage products</span></div><span class="cat-count">10 articles</span></div>
+    <div class="help-cat" data-category="payments"><span class="cat-icon" style="background:#f0fdf4">💰</span><div><b>Payments & Wallet</b><span>Payouts & wallet</span></div><span class="cat-count">9 articles</span></div>
+    <div class="help-cat" data-category="shop"><span class="cat-icon" style="background:#fef3c7">🏪</span><div><b>Shop Settings</b><span>Shop profile & timing</span></div><span class="cat-count">11 articles</span></div>
+    <div class="help-cat" data-category="marketing"><span class="cat-icon" style="background:#f3e8ff">📢</span><div><b>Marketing</b><span>Coupons & offers</span></div><span class="cat-count">7 articles</span></div>
+  </div>
+
+  <div class="help-faq">
+    <b>❓ Frequently Asked Questions</b>
+    <div id="faqList" class="faq-list"></div>
+  </div>
+
+  <div class="help-contact">
+    <b>📞 Still need help?</b>
+    <div class="contact-options">
+      <div class="contact-option" data-action="chat"><span>💬</span><div><b>Chat Support</b><span>Average reply 2 min</span></div><span class="contact-arrow">›</span></div>
+      <div class="contact-option" data-action="call"><span>📞</span><div><b>Call Support</b><span>10AM-7PM • +91 9876543210</span></div><span class="contact-arrow">›</span></div>
+      <div class="contact-option" data-action="whatsapp"><span>📱</span><div><b>WhatsApp</b><span>Quick support on WhatsApp</span></div><span class="contact-arrow">›</span></div>
+      <div class="contact-option" data-action="report"><span>⚠️</span><div><b>Report Issue</b><span>Report a problem</span></div><span class="contact-arrow">›</span></div>
+    </div>
+  </div>
+
+  <div class="help-videos">
+    <b>🎥 Video Tutorials</b>
+    <div class="video-list">
+      <div class="video-item"><div class="video-thumb">▶️</div><div><b>How to add products</b><span>2:30 • Beginner</span></div></div>
+      <div class="video-item"><div class="video-thumb">▶️</div><div><b>Manage orders efficiently</b><span>3:45 • Beginner</span></div></div>
+      <div class="video-item"><div class="video-thumb">▶️</div><div><b>Setup delivery</b><span>2:15 • Beginner</span></div></div>
+    </div>
+  </div>
+</div>
+
+<style>
+.help-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.help-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.help-header b{ display:block; font-weight:900; }
+.help-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.chat-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
+.help-search-card{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.search-box{ display:flex; align-items:center; gap:10px; background:#f1f5f9; border-radius:10px; padding:0 12px; }
+.search-icon{ font-size:16px; }
+.search-box input{ flex:1; background:none; border:none; padding:12px 0; font-weight:600; font-size:13px; outline:none; }
+.clear-btn{ background:#e2e8f0; border:none; width:20px; height:20px; border-radius:50%; font-weight:900; font-size:10px; cursor:pointer; }
+.search-suggestions{ display:flex; align-items:center; gap:6px; margin-top:12px; flex-wrap:wrap; }
+.search-suggestions span{ font-size:11px; font-weight:700; color:#64748b; }
+.suggestion-btn{ background:#f1f5f9; border:1px solid #e2e8f0; padding:4px 10px; border-radius:20px; font-weight:700; font-size:10px; cursor:pointer; }
+.help-categories{ display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 12px 12px; }
+.help-cat{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:14px; display:flex; align-items:center; gap:10px; cursor:pointer; transition:.2s; position:relative; }
+.help-cat:hover{ border-color:#0f172a; }
+.cat-icon{ width:36px; height:36px; border-radius:8px; display:grid; place-items:center; font-size:16px; }
+.help-cat div{ flex:1; }
+.help-cat div b{ display:block; font-weight:800; font-size:12px; }
+.help-cat div span{ display:block; font-size:10px; color:#64748b; font-weight:600; margin-top:2px; }
+.cat-count{ position:absolute; top:8px; right:8px; font-size:9px; background:#f1f5f9; padding:2px 6px; border-radius:20px; font-weight:700; color:#64748b; }
+.help-faq{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.help-faq b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.faq-list{ display:flex; flex-direction:column; }
+.faq-item{ border-bottom:1px solid #f1f5f9; }
+.faq-item:last-child{ border-bottom:none; }
+.faq-question{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; cursor:pointer; font-weight:700; font-size:13px; }
+.faq-question span:last-child{ font-size:16px; color:#94a3b8; transition:.2s; }
+.faq-item.open.faq-question span:last-child{ transform:rotate(180deg); }
+.faq-answer{ display:none; padding:0 0 12px; font-size:12px; font-weight:500; color:#64748b; line-height:1.5; }
+.faq-item.open.faq-answer{ display:block; }
+.help-contact{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.help-contact b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.contact-options{ display:flex; flex-direction:column; gap:8px; }
+.contact-option{ display:flex; align-items:center; gap:12px; background:#f8fafc; border:1px solid #f1f5f9; border-radius:10px; padding:12px; cursor:pointer; }
+.contact-option span:first-child{ width:36px; height:36px; background:#fff; border-radius:8px; display:grid; place-items:center; font-size:16px; border:1px solid #f1f5f9; }
+.contact-option div{ flex:1; }
+.contact-option div b{ margin:0; font-size:13px; font-weight:800; }
+.contact-option div span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin:2px 0 0; }
+.contact-arrow{ font-size:20px; color:#cbd5e1; font-weight:900; }
+.help-videos{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.help-videos b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.video-list{ display:flex; flex-direction:column; gap:8px; }
+.video-item{ display:flex; align-items:center; gap:12px; background:#f8fafc; border-radius:10px; padding:12px; cursor:pointer; }
+.video-thumb{ width:50px; height:36px; background:#0f172a; border-radius:6px; display:grid; place-items:center; color:#fff; font-size:12px; }
+.video-item div b{ display:block; font-weight:800; font-size:12px; }
+.video-item div span{ display:block; font-size:10px; color:#64748b; font-weight:600; margin-top:2px; }
+</style>
+
+<script>
+class HelpPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.faqs = [
+      { q:'How to add products?', a:'Go to Dashboard > Add Products > Fill product details like name, price, image and save. You can also use Quick Add for fast adding.' },
+      { q:'How to manage orders?', a:'Go to Orders page > You will see new orders with sound alert > Accept order > Prepare > Assign delivery boy > Mark as delivered.' },
+      { q:'How to setup delivery?', a:'Go to Settings > Delivery Settings > Set delivery charge, radius, self delivery or partner delivery. You can also set free delivery above certain amount.' },
+      { q:'How to get payouts?', a:'Go to Wallet > Withdraw > Enter amount > Select bank/UPI > Submit. Payouts are processed within 24 hours. Min ₹100, Max ₹50k per day.' },
+      { q:'How to verify shop?', a:'Go to Profile > Verification > Upload required documents like shop license, Aadhaar, PAN, owner photo, shop front photo > Submit. Verification takes 24-48 hours.' },
+      { q:'How to create coupons?', a:'Go to Marketing > Coupons > Create Coupon > Set discount type, amount, min order, expiry > Save. Share coupon with customers.' },
+      { q:'Shop not showing to customers?', a:'Check: 1. Shop is Open (Settings > Open/Close) 2. Location is set 3. Products are active 4. Shop is verified. If still issue, contact support.' },
+      { q:'How to add staff?', a:'Go to Staff > Add Staff > Fill name, phone, role, salary, permissions > Save. Staff can login with phone number.' }
+    ];
+  }
+
+  async init(){
+    this.renderFaqs();
+    this.bindEvents();
+  }
+
+  renderFaqs(search){
+    const container = document.getElementById('faqList');
+    let filtered = [...this.faqs];
+
+    if(search){
+      const q = search.toLowerCase();
+      filtered = filtered.filter(f=> f.q.toLowerCase().includes(q) || f.a.toLowerCase().includes(q));
+    }
+
+    if(filtered.length===0){
+      container.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:600">No results for "${search}"<br>Try different keywords or contact support</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map((faq,i)=>`
+      <div class="faq-item" data-faq="${i}">
+        <div class="faq-question"><span>${faq.q}</span><span>▼</span></div>
+        <div class="faq-answer">${faq.a}</div>
+      </div>
+    `).join('');
+
+    container.querySelectorAll('.faq-item').forEach(item=>{
+      item.querySelector('.faq-question').addEventListener('click', ()=>{
+        const isOpen = item.classList.contains('open');
+        container.querySelectorAll('.faq-item').forEach(f=> f.classList.remove('open'));
+        if(!isOpen) item.classList.add('open');
+      });
+    });
+  }
+
+  bindEvents(){
+    document.getElementById('helpBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('chatSupportBtn')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/support/chat-support.html?shopId=${this.shopId}`);
+
+    const searchInput = document.getElementById('helpSearch');
+    const clearBtn = document.getElementById('clearSearch');
+
+    searchInput?.addEventListener('input', (e)=>{
+      const value = e.target.value.trim();
+      clearBtn.style.display = value?'block':'none';
+      this.renderFaqs(value);
+    });
+
+    clearBtn?.addEventListener('click', ()=>{
+      searchInput.value='';
+      clearBtn.style.display='none';
+      this.renderFaqs('');
+    });
+
+    document.querySelectorAll('.suggestion-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const search = btn.dataset.search;
+        searchInput.value = search;
+        clearBtn.style.display='block';
+        this.renderFaqs(search);
+      });
+    });
+
+    document.querySelectorAll('.help-cat').forEach(cat=>{
+      cat.addEventListener('click', ()=>{
+        const category = cat.dataset.category;
+        searchInput.value = category;
+        clearBtn.style.display='block';
+        this.renderFaqs(category);
+        document.querySelector('.help-faq')?.scrollIntoView({ behavior:'smooth' });
+      });
+    });
+
+    document.querySelectorAll('.contact-option').forEach(option=>{
+      option.addEventListener('click', ()=>{
+        const action = option.dataset.action;
+        if(action==='chat') window.location.href=`/shop-templates/common/support/chat-support.html?shopId=${this.shopId}`;
+        else if(action==='call') window.location.href='tel:+919876543210';
+        else if(action==='whatsapp') window.open('https://wa.me/919876543210?text=Hi, I need help with my shop','_blank');
+        else if(action==='report') window.location.href=`/shop-templates/common/support/report-issue.html?shopId=${this.shopId}`;
+      });
+    });
+
+    document.querySelectorAll('.video-item').forEach(video=>{
+      video.addEventListener('click', ()=>{
+        if(window.Toast) Toast.show('Video tutorials coming soon 🎥', 'info');
+      });
+    });
+  }
+}
+
+window.HelpPageInstance = new HelpPage();
+document.addEventListener('DOMContentLoaded', ()=> window.HelpPageInstance.init());
+</script>

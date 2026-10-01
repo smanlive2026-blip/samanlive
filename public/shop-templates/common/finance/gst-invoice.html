@@ -1,0 +1,384 @@
+<!-- LOCATION: public/shop-templates/common/finance/gst-invoice.html -->
+<!-- WORLD CLASS GST INVOICE - FULL 350+ LINES -->
+<div id="gstRoot" class="gst-root">
+  <div class="gst-header">
+    <button id="gstBack" class="back-btn">‹</button>
+    <div>
+      <b>GST Invoice</b>
+      <span>GST compliant billing</span>
+    </div>
+    <button id="gstSettingsBtn" class="settings-btn">⚙️ GST Settings</button>
+  </div>
+
+  <div class="gst-shop-info">
+    <div class="shop-gst-card">
+      <b id="gstShopName">Shop Name</b>
+      <span id="gstShopGstin">GSTIN: 24ABCDE1234F1Z5</span>
+      <span id="gstShopAddress">Shop Address, Surat, Gujarat - 395007</span>
+      <span id="gstShopState">State: Gujarat (24) • State Code: 24</span>
+    </div>
+    <div class="gst-status">
+      <span class="gst-badge">GST Registered</span>
+      <span id="gstInvoiceNumber">Invoice: #INV-GST-001</span>
+    </div>
+  </div>
+
+  <div class="gst-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Customer Name *</label>
+        <input type="text" id="gstCustomerName" placeholder="Customer Name" class="gst-input">
+      </div>
+      <div class="form-group">
+        <label>Customer GSTIN (optional)</label>
+        <input type="text" id="gstCustomerGstin" placeholder="24ABCDE1234F1Z5" class="gst-input">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Customer Address</label>
+        <input type="text" id="gstCustomerAddress" placeholder="Customer Address" class="gst-input">
+      </div>
+      <div class="form-group">
+        <label>State</label>
+        <select id="gstCustomerState" class="gst-input">
+          <option value="24">Gujarat (24)</option>
+          <option value="27">Maharashtra (27)</option>
+          <option value="29">Karnataka (29)</option>
+          <option value="07">Delhi (07)</option>
+          <option value="09">Uttar Pradesh (09)</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="gst-items-header">
+      <b>Items</b>
+      <button id="addGstItem" class="add-item-btn">+ Add Item</button>
+    </div>
+
+    <div id="gstItemsList" class="gst-items-list">
+      <div class="gst-item-row">
+        <div class="item-row-top">
+          <input type="text" placeholder="Item Name" class="gst-input item-name" value="Sample Product">
+          <button class="remove-item-btn">✕</button>
+        </div>
+        <div class="item-row-bottom">
+          <div class="item-field">
+            <label>Qty</label>
+            <input type="number" class="gst-input item-qty" value="1" min="1">
+          </div>
+          <div class="item-field">
+            <label>Rate (₹)</label>
+            <input type="number" class="gst-input item-rate" value="100">
+          </div>
+          <div class="item-field">
+            <label>GST %</label>
+            <select class="gst-input item-gst">
+              <option value="0">0% (Exempt)</option>
+              <option value="5">5%</option>
+              <option value="12">12%</option>
+              <option value="18" selected>18%</option>
+              <option value="28">28%</option>
+            </select>
+          </div>
+          <div class="item-field">
+            <label>Amount</label>
+            <input type="text" class="gst-input item-amount" value="₹118" readonly>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gst-totals">
+      <div class="total-row">
+        <span>Subtotal (without GST)</span>
+        <b id="gstSubtotal">₹100.00</b>
+      </div>
+      <div class="total-row">
+        <span>CGST</span>
+        <b id="gstCgst">₹9.00</b>
+      </div>
+      <div class="total-row">
+        <span>SGST</span>
+        <b id="gstSgst">₹9.00</b>
+      </div>
+      <div class="total-row" id="igstRow" style="display:none">
+        <span>IGST</span>
+        <b id="gstIgst">₹0.00</b>
+      </div>
+      <div class="total-row total-final">
+        <span>Total with GST</span>
+        <b id="gstTotal">₹118.00</b>
+      </div>
+      <div class="total-row">
+        <span>Round Off</span>
+        <b id="gstRoundOff">₹0.00</b>
+      </div>
+      <div class="total-row grand-total">
+        <span>Grand Total</span>
+        <b id="gstGrandTotal">₹118.00</b>
+      </div>
+    </div>
+
+    <div class="gst-actions">
+      <button id="previewGstInvoice" class="secondary-btn">👁️ Preview</button>
+      <button id="saveGstInvoice" class="primary-btn">💾 Save & Generate GST Invoice</button>
+    </div>
+  </div>
+
+  <div id="gstPreviewModal" class="gst-preview-modal" style="display:none">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box large">
+      <div class="modal-header">
+        <b>GST Invoice Preview</b>
+        <button id="closeGstPreview">✕</button>
+      </div>
+      <div id="gstPreviewContent" class="preview-content"></div>
+      <div class="modal-actions">
+        <button id="printGstInvoice" class="secondary-btn">🖨️ Print</button>
+        <button id="downloadGstPdf" class="primary-btn">⬇️ Download PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.gst-root{ font-family:Outfit,sans-serif; max-width:700px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.gst-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.gst-header b{ display:block; font-weight:900; }
+.gst-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.settings-btn{ margin-left:auto; background:#f1f5f9; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer; }
+.gst-shop-info{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; display:flex; justify-content:space-between; }
+.shop-gst-card b{ display:block; font-weight:900; font-size:14px; }
+.shop-gst-card span{ display:block; font-size:11px; color:#64748b; font-weight:600; line-height:1.4; margin-top:2px; }
+.gst-badge{ background:#dcfce7; color:#166534; font-size:10px; font-weight:900; padding:4px 8px; border-radius:20px; display:inline-block; margin-bottom:6px; }
+.gst-status{ text-align:right; }
+.gst-status span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:4px; }
+.gst-form{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.form-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.form-group label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin-bottom:6px; }
+.gst-input{ width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; font-weight:600; font-size:13px; }
+.gst-items-header{ display:flex; justify-content:space-between; align-items:center; margin:20px 0 12px; padding-top:16px; border-top:1px solid #f1f5f9; }
+.gst-items-header b{ font-weight:900; }
+.add-item-btn{ background:#f1f5f9; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
+.gst-items-list{ display:flex; flex-direction:column; gap:12px; }
+.gst-item-row{ border:1px solid #e2e8f0; border-radius:12px; padding:12px; background:#f8fafc; }
+.item-row-top{ display:flex; gap:8px; align-items:center; }
+.item-name{ flex:1; }
+.remove-item-btn{ background:#fee2e2; color:#991b1b; border:none; width:28px; height:28px; border-radius:6px; font-weight:900; cursor:pointer; }
+.item-row-bottom{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; margin-top:10px; }
+.item-field label{ display:block; font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; margin-bottom:4px; }
+.gst-totals{ background:#f8fafc; border-radius:12px; padding:12px; margin-top:16px; }
+.total-row{ display:flex; justify-content:space-between; padding:8px 0; font-size:13px; font-weight:600; border-bottom:1px solid #f1f5f9; }
+.total-row:last-child{ border-bottom:none; }
+.total-final{ font-weight:800; }
+.grand-total{ font-weight:900; font-size:16px; background:#0f172a; color:#fff; margin:8px -12px -12px; padding:12px; border-radius:0 0 12px 12px; }
+.gst-actions{ display:flex; gap:10px; margin-top:16px; }
+.secondary-btn{ flex:1; background:#f1f5f9; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
+.primary-btn{ flex:2; background:#0f172a; color:#fff; border:none; padding:12px; border-radius:10px; font-weight:900; cursor:pointer; }
+.gst-preview-modal{ position:fixed; inset:0; z-index:9999; display:grid; place-items:center; padding:20px; }
+.modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); }
+.modal-box{ position:relative; background:#fff; width:100%; border-radius:20px; padding:20px; max-height:90vh; overflow-y:auto; }
+.modal-box.large{ max-width:700px; }
+.modal-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.preview-content{ border:1px solid #e2e8f0; border-radius:12px; padding:16px; }
+.modal-actions{ display:flex; gap:10px; margin-top:16px; }
+</style>
+
+<script>
+class GstInvoice {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.items = [{ name:'Sample Product', qty:1, rate:100, gst:18 }];
+    this.shopState = '24';
+  }
+  async init(){
+    await this.loadShop();
+    this.bindEvents();
+    this.calculateTotals();
+  }
+  async loadShop(){
+    try{
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/core/shops/${this.shopId}`);
+        const shop = data.shop||data;
+        document.getElementById('gstShopName').innerText = shop.shopName||shop.name||'Shop Name';
+        document.getElementById('gstShopAddress').innerText = shop.address||'Shop Address';
+        document.getElementById('gstShopGstin').innerText = `GSTIN: ${shop.gstin||'24ABCDE1234F1Z5'}`;
+      }
+    }catch(e){}
+    document.getElementById('gstInvoiceNumber').innerText = `Invoice: #INV-GST-${Date.now().toString().slice(-6)}`;
+  }
+  bindEvents(){
+    document.getElementById('gstBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('addGstItem')?.addEventListener('click', ()=> this.addItem());
+    document.getElementById('saveGstInvoice')?.addEventListener('click', ()=> this.saveInvoice());
+    document.getElementById('previewGstInvoice')?.addEventListener('click', ()=> this.previewInvoice());
+    document.getElementById('closeGstPreview')?.addEventListener('click', ()=> document.getElementById('gstPreviewModal').style.display='none');
+    document.getElementById('gstPreviewModal')?.querySelector('.modal-backdrop')?.addEventListener('click', ()=> document.getElementById('gstPreviewModal').style.display='none');
+    document.getElementById('printGstInvoice')?.addEventListener('click', ()=> window.print());
+    document.getElementById('downloadGstPdf')?.addEventListener('click', ()=> window.print());
+    document.getElementById('gstCustomerState')?.addEventListener('change', (e)=>{
+      this.shopState = e.target.value;
+      this.calculateTotals();
+    });
+
+    // Live calculation on item change
+    document.getElementById('gstItemsList')?.addEventListener('input', ()=> this.calculateTotals());
+    document.getElementById('gstItemsList')?.addEventListener('change', ()=> this.calculateTotals());
+  }
+  addItem(){
+    const list = document.getElementById('gstItemsList');
+    const row = document.createElement('div');
+    row.className = 'gst-item-row';
+    row.innerHTML = `
+      <div class="item-row-top">
+        <input type="text" placeholder="Item Name" class="gst-input item-name">
+        <button class="remove-item-btn">✕</button>
+      </div>
+      <div class="item-row-bottom">
+        <div class="item-field"><label>Qty</label><input type="number" class="gst-input item-qty" value="1" min="1"></div>
+        <div class="item-field"><label>Rate (₹)</label><input type="number" class="gst-input item-rate" value="0"></div>
+        <div class="item-field"><label>GST %</label><select class="gst-input item-gst"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option></select></div>
+        <div class="item-field"><label>Amount</label><input type="text" class="gst-input item-amount" value="₹0" readonly></div>
+      </div>
+    `;
+    list.appendChild(row);
+    row.querySelector('.remove-item-btn').addEventListener('click', ()=>{ row.remove(); this.calculateTotals(); });
+  }
+  calculateTotals(){
+    const rows = document.querySelectorAll('.gst-item-row');
+    let subtotal = 0;
+    let totalCgst = 0;
+    let totalSgst = 0;
+    let totalIgst = 0;
+    let grandTotal = 0;
+
+    rows.forEach(row=>{
+      const qty = parseFloat(row.querySelector('.item-qty').value)||0;
+      const rate = parseFloat(row.querySelector('.item-rate').value)||0;
+      const gstPercent = parseFloat(row.querySelector('.item-gst').value)||0;
+
+      const itemSubtotal = qty * rate;
+      const gstAmount = itemSubtotal * (gstPercent/100);
+      const itemTotal = itemSubtotal + gstAmount;
+
+      subtotal += itemSubtotal;
+      grandTotal += itemTotal;
+
+      // CGST/SGST split if same state, else IGST
+      const customerState = document.getElementById('gstCustomerState').value;
+      if(customerState===this.shopState || customerState==='24'){
+        totalCgst += gstAmount/2;
+        totalSgst += gstAmount/2;
+        document.getElementById('igstRow').style.display='none';
+      } else {
+        totalIgst += gstAmount;
+        document.getElementById('igstRow').style.display='flex';
+      }
+
+      row.querySelector('.item-amount').value = `₹${itemTotal.toFixed(2)}`;
+    });
+
+    const roundOff = Math.round(grandTotal) - grandTotal;
+
+    document.getElementById('gstSubtotal').innerText = `₹${subtotal.toFixed(2)}`;
+    document.getElementById('gstCgst').innerText = `₹${totalCgst.toFixed(2)}`;
+    document.getElementById('gstSgst').innerText = `₹${totalSgst.toFixed(2)}`;
+    document.getElementById('gstIgst').innerText = `₹${totalIgst.toFixed(2)}`;
+    document.getElementById('gstTotal').innerText = `₹${grandTotal.toFixed(2)}`;
+    document.getElementById('gstRoundOff').innerText = `₹${roundOff.toFixed(2)}`;
+    document.getElementById('gstGrandTotal').innerText = `₹${Math.round(grandTotal).toFixed(2)}`;
+  }
+  getInvoiceData(){
+    const rows = document.querySelectorAll('.gst-item-row');
+    const items = Array.from(rows).map(row=>({
+      name: row.querySelector('.item-name').value,
+      qty: parseFloat(row.querySelector('.item-qty').value)||0,
+      rate: parseFloat(row.querySelector('.item-rate').value)||0,
+      gst: parseFloat(row.querySelector('.item-gst').value)||0,
+      amount: row.querySelector('.item-amount').value
+    }));
+
+    return {
+      shopId: this.shopId,
+      shopName: document.getElementById('gstShopName').innerText,
+      shopGstin: document.getElementById('gstShopGstin').innerText,
+      invoiceNumber: document.getElementById('gstInvoiceNumber').innerText,
+      customerName: document.getElementById('gstCustomerName').value,
+      customerGstin: document.getElementById('gstCustomerGstin').value,
+      customerAddress: document.getElementById('gstCustomerAddress').value,
+      customerState: document.getElementById('gstCustomerState').value,
+      items,
+      subtotal: document.getElementById('gstSubtotal').innerText,
+      cgst: document.getElementById('gstCgst').innerText,
+      sgst: document.getElementById('gstSgst').innerText,
+      igst: document.getElementById('gstIgst').innerText,
+      grandTotal: document.getElementById('gstGrandTotal').innerText,
+      date: new Date().toISOString()
+    };
+  }
+  previewInvoice(){
+    const data = this.getInvoiceData();
+    const content = document.getElementById('gstPreviewContent');
+
+    content.innerHTML = `
+      <div style="border-bottom:2px solid #0f172a;padding-bottom:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between">
+          <div><b style="font-size:18px">${data.shopName}</b><br><span style="font-size:11px;color:#64748b">${data.shopGstin}<br>${data.shopName}</span></div>
+          <div style="text-align:right"><h2 style="margin:0">TAX INVOICE</h2><span style="font-size:11px">${data.invoiceNumber}<br>Date: ${new Date().toLocaleDateString()}</span></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;background:#f8fafc;padding:10px;border-radius:8px;margin-bottom:12px">
+        <div><b style="font-size:12px">Bill To:</b><br><span style="font-size:11px">${data.customerName||'Customer'}<br>${data.customerGstin||''}<br>${data.customerAddress||''}</span></div>
+        <div><b style="font-size:12px">Details:</b><br><span style="font-size:11px">State: ${data.customerState}<br>Place of Supply: Gujarat</span></div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:#f8fafc"><th style="text-align:left;padding:8px;border:1px solid #e2e8f0">Item</th><th style="padding:8px;border:1px solid #e2e8f0">Qty</th><th style="padding:8px;border:1px solid #e2e8f0">Rate</th><th style="padding:8px;border:1px solid #e2e8f0">GST</th><th style="padding:8px;border:1px solid #e2e8f0">Amount</th></tr></thead>
+        <tbody>${data.items.map(i=> `<tr><td style="padding:8px;border:1px solid #f1f5f9">${i.name}</td><td style="padding:8px;border:1px solid #f1f5f9;text-align:center">${i.qty}</td><td style="padding:8px;border:1px solid #f1f5f9;text-align:right">₹${i.rate}</td><td style="padding:8px;border:1px solid #f1f5f9;text-align:center">${i.gst}%</td><td style="padding:8px;border:1px solid #f1f5f9;text-align:right">${i.amount}</td></tr>`).join('')}</tbody>
+      </table>
+      <div style="margin-top:12px;text-align:right;font-size:12px">
+        <div>Subtotal: ${data.subtotal}</div>
+        <div>CGST: ${data.cgst} | SGST: ${data.sgst} ${data.igst!=='₹0.00'?` | IGST: ${data.igst}`:''}</div>
+        <div style="font-weight:900;font-size:14px;margin-top:8px;background:#0f172a;color:#fff;padding:8px 12px;border-radius:8px;display:inline-block">Grand Total: ${data.grandTotal}</div>
+      </div>
+      <div style="margin-top:16px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px dashed #e2e8f0;padding-top:10px">This is a computer generated GST invoice. Thank you for your business! 🙏<br>GSTIN: ${data.shopGstin}</div>
+    `;
+
+    document.getElementById('gstPreviewModal').style.display='grid';
+  }
+  async saveInvoice(){
+    const data = this.getInvoiceData();
+
+    if(!data.customerName){
+      if(window.Toast) Toast.show('Enter customer name', 'warning');
+      return;
+    }
+    if(data.items.length===0 ||!data.items[0].name){
+      if(window.Toast) Toast.show('Add at least one item', 'warning');
+      return;
+    }
+
+    try{
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/finance/${this.shopId}/gst-invoice`, data);
+      } else {
+        const existing = JSON.parse(localStorage.getItem(`gst_invoices_${this.shopId}`)||'[]');
+        existing.push(data);
+        localStorage.setItem(`gst_invoices_${this.shopId}`, JSON.stringify(existing));
+      }
+
+      if(window.Toast) Toast.show('GST Invoice generated ✅', 'success');
+      this.previewInvoice();
+
+    }catch(e){
+      if(window.Toast) Toast.show('Failed to save invoice', 'error');
+    }
+  }
+}
+window.GstInvoiceInstance = new GstInvoice();
+document.addEventListener('DOMContentLoaded', ()=> window.GstInvoiceInstance.init());
+</script>

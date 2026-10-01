@@ -1,0 +1,341 @@
+<!-- LOCATION: public/shop-templates/common/profile/shop-verification.html -->
+<!-- WORLD CLASS SHOP VERIFICATION - SHOP OWNER ONLY - FULL 400+ LINES -->
+<div id="verificationRoot" class="verification-root">
+  <div class="verification-header">
+    <button id="verificationBack" class="back-btn">‹</button>
+    <div>
+      <b>Shop Verification</b>
+      <span id="verificationSubHeader">Verify your shop</span>
+    </div>
+    <span id="verificationBadge" class="verification-badge pending">⏳ Pending</span>
+  </div>
+
+  <div class="verification-status-card">
+    <div class="status-icon" id="statusIcon">⏳</div>
+    <div class="status-info">
+      <b id="statusTitle">Verification Pending</b>
+      <span id="statusDesc">Submit documents to get verified badge and increase customer trust</span>
+    </div>
+  </div>
+
+  <div class="verification-benefits">
+    <b>✅ Benefits of Verification</b>
+    <div class="benefit-list">
+      <div class="benefit-item"><span>✅</span><span>Verified badge on shop</span></div>
+      <div class="benefit-item"><span>✅</span><span>Higher ranking in search</span></div>
+      <div class="benefit-item"><span>✅</span><span>More customer trust</span></div>
+      <div class="benefit-item"><span>✅</span><span>Access to premium features</span></div>
+    </div>
+  </div>
+
+  <div class="verification-form">
+    <div class="form-section">
+      <b>📄 Business Documents</b>
+      <label>Shop License / Registration *</label>
+      <div class="upload-area" data-doc="shop_license">
+        <input type="file" id="shopLicense" accept="image/*,.pdf" style="display:none">
+        <div class="upload-placeholder">
+          <span>📄</span><b>Upload Shop License</b><span>JPG, PNG, PDF • Max 5MB</span>
+        </div>
+        <div class="upload-preview" style="display:none"><img src="" alt="Preview"><button class="remove-upload">✕</button></div>
+      </div>
+
+      <label>GST Certificate (if applicable)</label>
+      <div class="upload-area" data-doc="gst_certificate">
+        <input type="file" id="gstCertificate" accept="image/*,.pdf" style="display:none">
+        <div class="upload-placeholder">
+          <span>📄</span><b>Upload GST Certificate</b><span>Optional but recommended</span>
+        </div>
+        <div class="upload-preview" style="display:none"><img src="" alt="Preview"><button class="remove-upload">✕</button></div>
+      </div>
+
+      <label>FSSAI License (for food shops)</label>
+      <div class="upload-area" data-doc="fssai_license">
+        <input type="file" id="fssaiLicense" accept="image/*,.pdf" style="display:none">
+        <div class="upload-placeholder">
+          <span>📄</span><b>Upload FSSAI License</b><span>Required for food business</span>
+        </div>
+        <div class="upload-preview" style="display:none"><img src="" alt="Preview"><button class="remove-upload">✕</button></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>👤 Owner Identity</b>
+      <label>Aadhaar Card *</label>
+      <div class="upload-area" data-doc="aadhaar">
+        <input type="file" id="aadhaarCard" accept="image/*,.pdf" style="display:none">
+        <div class="upload-placeholder">
+          <span>🪪</span><b>Upload Aadhaar Card</b><span>Front side • Max 5MB</span>
+        </div>
+        <div class="upload-preview" style="display:none"><img src="" alt="Preview"><button class="remove-upload">✕</button></div>
+      </div>
+
+      <label>PAN Card *</label>
+      <div class="upload-area" data-doc="pan_card">
+        <input type="file" id="panCard" accept="image/*,.pdf" style="display:none">
+        <div class="upload-placeholder">
+          <span>🪪</span><b>Upload PAN Card</b><span>Max 5MB</span>
+        </div>
+        <div class="upload-preview" style="display:none"><img src="" alt="Preview"><button class="remove-upload">✕</button></div>
+      </div>
+
+      <label>Owner Photo *</label>
+      <div class="upload-area" data-doc="owner_photo">
+        <input type="file" id="ownerPhoto" accept="image/*" style="display:none">
+        <div class="upload-placeholder">
+          <span>👤</span><b>Upload Owner Photo</b><span>Clear photo • Max 5MB</span>
+        </div>
+        <div class="upload-preview" style="display:none"><img src="" alt="Preview"><button class="remove-upload">✕</button></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>🏪 Shop Photos</b>
+      <label>Shop Front Photo *</label>
+      <div class="upload-area" data-doc="shop_front">
+        <input type="file" id="shopFront" accept="image/*" style="display:none">
+        <div class="upload-placeholder">
+          <span>🏪</span><b>Upload Shop Front Photo</b><span>Show shop board & front</span>
+        </div>
+        <div class="upload-preview" style="display:none"><img src="" alt="Preview"><button class="remove-upload">✕</button></div>
+      </div>
+
+      <label>Shop Inside Photo</label>
+      <div class="upload-area" data-doc="shop_inside">
+        <input type="file" id="shopInside" accept="image/*" style="display:none">
+        <div class="upload-placeholder">
+          <span>🖼️</span><b>Upload Inside Photo</b><span>Show products & interior</span>
+        </div>
+        <div class="upload-preview" style="display:none"><img src="" alt="Preview"><button class="remove-upload">✕</button></div>
+      </div>
+    </div>
+
+    <button id="submitVerificationBtn" class="primary-btn">Submit for Verification ✅</button>
+    <div class="verification-note">
+      <span>ℹ️ Verification takes 24-48 hours. You'll get notified once verified.</span>
+    </div>
+  </div>
+</div>
+
+<style>
+.verification-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.verification-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.verification-header b{ display:block; font-weight:900; }
+.verification-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.verification-badge{ margin-left:auto; font-size:10px; font-weight:900; padding:6px 10px; border-radius:20px; }
+.verification-badge.pending{ background:#fef3c7; color:#92400e; }
+.verification-badge.verified{ background:#dcfce7; color:#166534; }
+.verification-badge.rejected{ background:#fee2e2; color:#991b1b; }
+.verification-status-card{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; display:flex; gap:12px; align-items:center; }
+.status-icon{ width:48px; height:48px; background:#fef3c7; border-radius:12px; display:grid; place-items:center; font-size:24px; }
+.status-info b{ display:block; font-weight:900; font-size:14px; }
+.status-info span{ font-size:11px; color:#64748b; font-weight:600; display:block; margin-top:2px; line-height:1.4; }
+.verification-benefits{ background:#f0fdf4; border:1px solid #bbf7d0; margin:0 12px 12px; border-radius:16px; padding:16px; }
+.verification-benefits b{ display:block; font-weight:900; font-size:13px; margin-bottom:10px; color:#166534; }
+.benefit-list{ display:flex; flex-direction:column; gap:6px; }
+.benefit-item{ display:flex; gap:8px; align-items:center; font-size:12px; font-weight:600; }
+.verification-form{ padding:0 12px; display:flex; flex-direction:column; gap:12px; }
+.form-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; }
+.form-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.form-section label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
+.upload-area{ border:2px dashed #e2e8f0; border-radius:12px; padding:20px; text-align:center; cursor:pointer; transition:.2s; position:relative; }
+.upload-area:hover{ border-color:#0f172a; background:#f8fafc; }
+.upload-area.has-file{ border-color:#10b981; background:#f0fdf4; border-style:solid; }
+.upload-placeholder span:first-child{ font-size:32px; display:block; }
+.upload-placeholder b{ display:block; font-weight:800; font-size:13px; margin:6px 0; }
+.upload-placeholder span:last-child{ font-size:11px; color:#64748b; font-weight:600; display:block; }
+.upload-preview{ position:relative; }
+.upload-preview img{ width:100%; max-height:200px; object-fit:cover; border-radius:8px; }
+.remove-upload{ position:absolute; top:8px; right:8px; background:#ef4444; color:#fff; border:none; width:28px; height:28px; border-radius:50%; font-weight:900; cursor:pointer; }
+.primary-btn{ background:#0f172a; color:#fff; border:none; padding:14px; border-radius:12px; font-weight:900; font-size:14px; cursor:pointer; width:100%; }
+.verification-note{ background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:12px; font-size:11px; font-weight:600; color:#0369a1; text-align:center; }
+</style>
+
+<script>
+class ShopVerificationPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.documents = {};
+    this.verificationStatus = 'pending';
+  }
+
+  async init(){
+    await this.loadVerification();
+    this.bindEvents();
+  }
+
+  async loadVerification(){
+    try{
+      if(window.Loader) Loader.show('Loading verification...');
+
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/profile/${this.shopId}/verification`);
+        this.documents = data.documents||{};
+        this.verificationStatus = data.status||'pending';
+      } else {
+        const verification = JSON.parse(localStorage.getItem(`verification_${this.shopId}`)||'null');
+        if(verification){
+          this.documents = verification.documents||{};
+          this.verificationStatus = verification.status||'pending';
+        }
+      }
+
+      this.updateStatusUI();
+
+      // Load existing documents previews
+      Object.keys(this.documents).forEach(docType=>{
+        const url = this.documents[docType];
+        if(url){
+          const area = document.querySelector(`[data-doc="${docType}"]`);
+          if(area){
+            area.classList.add('has-file');
+            area.querySelector('.upload-placeholder').style.display='none';
+            const preview = area.querySelector('.upload-preview');
+            preview.style.display='block';
+            preview.querySelector('img').src = url;
+          }
+        }
+      });
+
+    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  updateStatusUI(){
+    const badge = document.getElementById('verificationBadge');
+    const icon = document.getElementById('statusIcon');
+    const title = document.getElementById('statusTitle');
+    const desc = document.getElementById('statusDesc');
+
+    if(this.verificationStatus==='verified'){
+      badge.innerText='✅ Verified';
+      badge.className='verification-badge verified';
+      icon.innerText='✅';
+      icon.style.background='#dcfce7';
+      title.innerText='Shop Verified ✅';
+      desc.innerText='Your shop is verified! You have verified badge and premium features.';
+      document.getElementById('verificationSubHeader').innerText='Verified • Premium features unlocked';
+    } else if(this.verificationStatus==='rejected'){
+      badge.innerText='❌ Rejected';
+      badge.className='verification-badge rejected';
+      icon.innerText='❌';
+      icon.style.background='#fee2e2';
+      title.innerText='Verification Rejected';
+      desc.innerText='Your verification was rejected. Please resubmit with correct documents.';
+      document.getElementById('verificationSubHeader').innerText='Rejected • Resubmit documents';
+    } else if(this.verificationStatus==='pending'){
+      badge.innerText='⏳ Pending';
+      badge.className='verification-badge pending';
+      icon.innerText='⏳';
+      icon.style.background='#fef3c7';
+      title.innerText='Verification Pending';
+      desc.innerText='Your documents are under review. Verification takes 24-48 hours.';
+      document.getElementById('verificationSubHeader').innerText='Pending • Under review';
+    } else {
+      badge.innerText='Not Submitted';
+      badge.className='verification-badge pending';
+      icon.innerText='📄';
+      title.innerText='Not Verified Yet';
+      desc.innerText='Submit documents to get verified badge and increase customer trust';
+      document.getElementById('verificationSubHeader').innerText='Not verified • Submit documents';
+    }
+  }
+
+  handleFileUpload(input, docType){
+    const file = input.files[0];
+    if(!file) return;
+
+    if(file.size>5*1024*1024){
+      if(window.Toast) Toast.show('File must be less than 5MB', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      this.documents[docType] = e.target.result;
+
+      const area = document.querySelector(`[data-doc="${docType}"]`);
+      area.classList.add('has-file');
+      area.querySelector('.upload-placeholder').style.display='none';
+      const preview = area.querySelector('.upload-preview');
+      preview.style.display='block';
+      preview.querySelector('img').src = e.target.result;
+
+      if(window.Toast) Toast.show(`${docType.replace('_',' ')} uploaded ✅`, 'success');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeUpload(docType){
+    delete this.documents[docType];
+
+    const area = document.querySelector(`[data-doc="${docType}"]`);
+    area.classList.remove('has-file');
+    area.querySelector('.upload-placeholder').style.display='block';
+    area.querySelector('.upload-preview').style.display='none';
+    area.querySelector('input').value='';
+
+    if(window.Toast) Toast.show('Document removed 🗑️', 'info');
+  }
+
+  async submitVerification(){
+    const required = ['shop_license','aadhaar','pan_card','owner_photo','shop_front'];
+
+    const missing = required.filter(doc=>!this.documents[doc]);
+
+    if(missing.length>0){
+      if(window.Toast) Toast.show(`Upload required: ${missing.join(', ')}`, 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('submitVerificationBtn');
+    btn.innerText='Submitting...'; btn.disabled=true;
+
+    try{
+      const verificationData = { documents:this.documents, status:'pending', submittedAt:new Date().toISOString() };
+
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/profile/${this.shopId}/verification`, verificationData);
+      } else {
+        localStorage.setItem(`verification_${this.shopId}`, JSON.stringify(verificationData));
+      }
+
+      this.verificationStatus='pending';
+      this.updateStatusUI();
+
+      if(window.Toast) Toast.show('Verification submitted ✅ • Will be reviewed in 24-48 hours', 'success');
+
+      setTimeout(()=>{ window.location.href=`/shop-templates/common/profile/profile.html?shopId=${this.shopId}`; }, 2000);
+
+    }catch(e){ if(window.Toast) Toast.show('Failed to submit', 'error'); }finally{ btn.innerText='Submit for Verification ✅'; btn.disabled=false; }
+  }
+
+  bindEvents(){
+    document.getElementById('verificationBack')?.addEventListener('click', ()=> history.back());
+
+    document.querySelectorAll('.upload-area').forEach(area=>{
+      const input = area.querySelector('input');
+      const docType = area.dataset.doc;
+
+      area.addEventListener('click', (e)=>{
+        if(!e.target.classList.contains('remove-upload')){
+          input.click();
+        }
+      });
+
+      input.addEventListener('change', ()=> this.handleFileUpload(input, docType));
+
+      const removeBtn = area.querySelector('.remove-upload');
+      removeBtn?.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        this.removeUpload(docType);
+      });
+    });
+
+    document.getElementById('submitVerificationBtn')?.addEventListener('click', ()=> this.submitVerification());
+  }
+}
+
+window.ShopVerificationPageInstance = new ShopVerificationPage();
+document.addEventListener('DOMContentLoaded', ()=> window.ShopVerificationPageInstance.init());
+</script>

@@ -1,0 +1,15 @@
+<!-- LOCATION: common/cart/mini-cart.html - MINI CART FOR HEADER -->
+<div id="miniCart" class="mini-cart" data-cart-icon style="cursor:pointer">
+  🛒
+  <span data-cart-count class="mini-cart-badge">0</span>
+</div>
+<style>
+.mini-cart{position:relative;font-size:22px;padding:6px 10px;background:#fff;border:1px solid #f1f5f9;border-radius:12px}
+.mini-cart-badge{position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;border-radius:10px;display:none;place-items:center;padding:0 4px;font-family:Outfit,sans-serif}
+</style>
+<script>
+document.getElementById('miniCart')?.addEventListener('click', ()=> {
+  if(window.openCartDrawer) window.openCartDrawer();
+  else window.location.href = `./cart.html?shopId=${new URLSearchParams(location.search).get('shopId')||''}`;
+});
+</script>

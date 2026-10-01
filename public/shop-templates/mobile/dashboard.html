@@ -1,77 +1,320 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Repair Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); min-height: 100vh; padding: 20px; }
-       .container { max-width: 1600px; margin: 0 auto; }
-        
-       .header { background: white; padding: 25px 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
-       .header h1 { font-size: 28px; color: #1e3a8a; display: flex; align-items: center; gap: 12px; }
-        
-       .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
-       .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); border-left: 5px solid #2563eb; }
-       .stat-card .icon { font-size: 32px; color: #2563eb; margin-bottom: 12px; }
-       .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 8px; }
-       .stat-card .value { font-size: 32px; font-weight: 700; color: #1e293b; }
-        
-       .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
-       .content-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-       .content-card h2 { font-size: 22px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
-        
-       .btn { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-        
-       .repair-card { border: 2px solid #dbeafe; border-radius: 16px; padding: 18px; margin-bottom: 15px; }
-       .status { padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; }
-       .status.pending { background: #fef3c7; color: #78350f; }
-       .status.working { background: #dbeafe; color: #1e40af; }
-       .status.ready { background: #dcfce7; color: #166534; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mobile Shop Dashboard - SamanLive</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+*{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body{ font-family:'Outfit',sans-serif; background:#f8fafc; color:#0f172a; overflow-x:hidden; padding-bottom:80px; }
+::-webkit-scrollbar{ width:0; }
+/* COMMON STYLES */
+.stats-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:12px; }
+.stat-card{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:14px; position:relative; overflow:hidden; }
+.stat-card::before{ content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:var(--accent); }
+.stat-card.orders{ --accent:#0f172a; } .stat-card.revenue{ --accent:#10b981; } .stat-card.products{ --accent:#3b82f6; } .stat-card.customers{ --accent:#f59e0b; }
+.stat-top{ display:flex; justify-content:space-between; align-items:center; }
+.stat-icon{ width:32px; height:32px; background:#f1f5f9; border-radius:8px; display:grid; place-items:center; font-size:16px; }
+.stat-trend{ font-size:10px; font-weight:800; padding:2px 6px; border-radius:20px; } .trend-up{ background:#dcfce7; color:#166534; }
+.stat-value{ font-size:20px; font-weight:900; margin-top:8px; display:block; } .stat-label{ font-size:10px; color:#64748b; font-weight:600; margin-top:2px; display:block; }
+
+/* QUICK ACTIONS - 8 CONNECTED TO COMMON */
+.quick-actions{ padding:0 12px; display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.quick-action{ background:#fff; border:1px solid #f1f5f9; border-radius:14px; padding:12px 6px; text-align:center; cursor:pointer; transition:.2s; }
+.quick-action:active{ transform:scale(.95); } .quick-action-icon{ width:40px; height:40px; margin:0 auto 6px; border-radius:12px; display:grid; place-items:center; font-size:20px; }
+.quick-action b{ display:block; font-size:10px; font-weight:800; line-height:1.2; }
+
+/* TABS */
+.tabs{ display:flex; gap:6px; padding:12px; overflow-x:auto; background:#fff; margin:12px; border-radius:14px; border:1px solid #f1f5f9; }
+.tab{ background:#f1f5f9; border:none; padding:10px 14px; border-radius:20px; font-weight:800; font-size:11px; white-space:nowrap; cursor:pointer; }
+.tab.active{ background:#0f172a; color:#fff; }
+
+/* SECTIONS */
+.section{ background:#fff; margin:12px; border-radius:16px; border:1px solid #f1f5f9; overflow:hidden; }
+.section-header{ padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f8fafc; }
+.section-header b{ font-weight:900; font-size:14px; display:flex; align-items:center; gap:6px; } .section-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.add-btn{ background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:20px; font-weight:800; font-size:11px; cursor:pointer; }
+
+.products-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:12px; }
+.product-card{ border:1px solid #f1f5f9; border-radius:14px; overflow:hidden; cursor:pointer; position:relative; }
+.product-image{ width:100%; height:110px; object-fit:cover; background:#f8fafc; } .product-info{ padding:10px; }
+.product-info b{ display:block; font-size:12px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.product-info span{ display:block; font-size:10px; color:#64748b; font-weight:600; margin-top:2px; }
+.product-price{ display:flex; justify-content:space-between; align-items:center; margin-top:6px; } .product-price b{ font-size:13px; }
+.stock-badge{ font-size:9px; padding:2px 6px; border-radius:20px; font-weight:800; } .stock-in{ background:#dcfce7; color:#166534; } .stock-low{ background:#fef3c7; color:#92400e; } .stock-out{ background:#fee2e2; color:#991b1b; }
+.product-actions{ position:absolute; top:6px; right:6px; display:flex; gap:4px; } .product-action{ width:28px; height:28px; background:rgba(255,255,255,.9); border:none; border-radius:50%; display:grid; place-items:center; font-size:12px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.1); }
+
+.orders-list{ padding:12px; display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto; }
+.order-item{ border:1px solid #f1f5f9; border-radius:14px; padding:12px; display:flex; gap:10px; align-items:center; cursor:pointer; }
+.order-item.new{ background:#f0f9ff; border-color:#bae6fd; border-left:4px solid #0f172a; animation:pulse 2s infinite; }
+@keyframes pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(15,23,42,.1); } 50%{ box-shadow:0 0 0 8px rgba(15,23,42,0); } }
+.order-icon{ width:40px; height:40px; background:#f1f5f9; border-radius:10px; display:grid; place-items:center; font-size:18px; } .order-info{ flex:1; } .order-info b{ display:block; font-size:12px; font-weight:800; } .order-info span{ display:block; font-size:10px; color:#64748b; font-weight:600; margin-top:2px; } .order-price{ text-align:right; } .order-price b{ display:block; font-size:13px; font-weight:900; }
+.order-status{ font-size:9px; padding:3px 8px; border-radius:20px; font-weight:800; margin-top:4px; display:inline-block; } .status-pending{ background:#fef3c7; color:#92400e; } .status-confirmed{ background:#dbeafe; color:#1e40af; } .status-delivered{ background:#dcfce7; color:#166534; }
+
+.live-banner{ background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; margin:12px; border-radius:16px; padding:14px; display:flex; align-items:center; gap:12px; cursor:pointer; }
+.live-dot{ width:12px; height:12px; background:#fff; border-radius:50%; animation:blink 1.5s infinite; } @keyframes blink{ 0%,100%{ opacity:1; } 50%{ opacity:.3; } }
+
+.bottom-nav{ position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #f1f5f9; display:flex; padding:6px 0 calc(6px + env(safe-area-inset-bottom)); z-index:100; }
+.nav-item{ flex:1; text-align:center; padding:6px; cursor:pointer; } .nav-item.active{ color:#0f172a; } .nav-item span{ display:block; font-size:18px; } .nav-item b{ display:block; font-size:9px; font-weight:800; margin-top:2px; }
+
+.empty-state{ text-align:center; padding:40px 20px; } .empty-icon{ font-size:48px; margin-bottom:12px; } .empty-state b{ display:block; font-weight:900; font-size:14px; } .empty-state span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:4px; line-height:1.4; }
+
+.toast{ position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(100px); background:#0f172a; color:#fff; padding:12px 20px; border-radius:20px; font-weight:700; font-size:12px; z-index:300; transition:.3s; opacity:0; pointer-events:none; } .toast.show{ transform:translateX(-50%) translateY(0); opacity:1; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div>
-                <h1><i class="fa fa-mobile-screen"></i> <span id="shopName">Mobile Repair Center</span></h1>
-                <div style="color:#64748b; font-size:14px;">Shop ID: <span id="shopIdDisplay"></span></div>
-            </div>
-            <button class="btn" id="newRepairBtn"><i class="fa fa-plus"></i> New Repair</button>
-        </div>
 
-        <div class="stats-grid">
-            <div class="stat-card"><div class="icon"><i class="fa fa-tools"></i></div><h3>Active Repairs</h3><div class="value" id="active">0</div></div>
-            <div class="stat-card"><div class="icon"><i class="fa fa-check-circle"></i></div><h3>Today Delivered</h3><div class="value" id="delivered">0</div></div>
-            <div class="stat-card"><div class="icon"><i class="fa fa-rupee-sign"></i></div><h3>Today Revenue</h3><div class="value">₹<span id="revenue">0</span></div></div>
-            <div class="stat-card"><div class="icon"><i class="fa fa-clock"></i></div><h3>Waiting</h3><div class="value" id="waiting">0</div></div>
-        </div>
+<!-- ============ BRIDGE PLACEHOLDERS - COMMON SE LOAD HONGE ============ -->
+<div id="saman-d-header"></div>
+<div id="saman-new-order-popup"></div>
+<div id="saman-banner"></div>
+<div id="saman-toast"></div>
+<div id="saman-loader"></div>
 
-        <div class="content-grid">
-            <div>
-                <div class="content-card">
-                    <h2><i class="fa fa-list"></i> Repair Jobs</h2>
-                    <div id="repairList">Loading...</div>
-                </div>
-                <div class="content-card">
-                    <h2><i class="fa fa-box"></i> Parts Stock</h2>
-                    <div id="partsList">Loading...</div>
-                </div>
-            </div>
-            <div>
-                <div class="content-card">
-                    <h2><i class="fa fa-bell"></i> Ready for Delivery</h2>
-                    <div id="readyList">Loading...</div>
-                </div>
-                <div class="content-card">
-                    <h2><i class="fa fa-star"></i> Services Offered</h2>
-                    <div id="services">Loading...</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script src="dashboard.js"></script>
+<!-- LIVE BANNER - CONNECTED TO common/live/live-orders.html -->
+<div class="live-banner" id="liveBanner" style="display:none">
+  <div class="live-dot"></div>
+  <div><b>🔴 LIVE - <span id="liveOrdersCount">0</span> new orders!</b><br><span>Tap to view live orders</span></div>
+  <span style="margin-left:auto;font-size:20px">›</span>
+</div>
+
+<!-- STATS - CONNECTED TO common/analytics/analytics.js -->
+<div class="stats-grid">
+  <div class="stat-card orders"><div class="stat-top"><div class="stat-icon">📦</div><span class="stat-trend trend-up" id="ordersTrend">+12%</span></div><b class="stat-value" id="statOrders">0</b><span class="stat-label">Today Orders</span></div>
+  <div class="stat-card revenue"><div class="stat-top"><div class="stat-icon">💰</div><span class="stat-trend trend-up">+8%</span></div><b class="stat-value" id="statRevenue">₹0</b><span class="stat-label">Today Revenue</span></div>
+  <div class="stat-card products"><div class="stat-top"><div class="stat-icon">📱</div><span class="stat-trend trend-up" id="productsTrend">12 models</span></div><b class="stat-value" id="statProducts">0</b><span class="stat-label">Products Live</span></div>
+  <div class="stat-card customers"><div class="stat-top"><div class="stat-icon">👥</div><span class="stat-trend trend-up">+5 new</span></div><b class="stat-value" id="statCustomers">0</b><span class="stat-label">Customers</span></div>
+</div>
+
+<!-- QUICK ACTIONS - ALL CONNECTED TO COMMON MODULES -->
+<div class="quick-actions">
+  <div class="quick-action" onclick="window.location.href='../common/orders/orders.html?shopId='+shopId"><div class="quick-action-icon" style="background:#fef3c7">📦</div><b>Orders</b></div>
+  <div class="quick-action" onclick="window.location.href='../common/inventory/inventory.html?shopId='+shopId"><div class="quick-action-icon" style="background:#ffedd5">📦</div><b>Stock</b></div>
+  <div class="quick-action" onclick="window.location.href='../common/analytics/analytics.html?shopId='+shopId"><div class="quick-action-icon" style="background:#dcfce7">📊</div><b>Analytics</b></div>
+  <div class="quick-action" onclick="window.location.href='../common/marketing/coupons.html?shopId='+shopId"><div class="quick-action-icon" style="background:#f3e8ff">🎉</div><b>Offers</b></div>
+  <div class="quick-action" onclick="window.location.href='../common/banner/banner.html?shopId='+shopId"><div class="quick-action-icon" style="background:#fce7f3">🖼️</div><b>Banners</b></div>
+  <div class="quick-action" onclick="window.location.href='../common/delivery/delivery-boy-assign.html?shopId='+shopId"><div class="quick-action-icon" style="background:#e0f2fe">🛵</div><b>Delivery</b></div>
+  <div class="quick-action" onclick="window.location.href='../common/finance/wallet.html?shopId='+shopId"><div class="quick-action-icon" style="background:#dcfce7">💰</div><b>Wallet</b></div>
+  <div class="quick-action" onclick="window.location.href='../common/staff/staff-list.html?shopId='+shopId"><div class="quick-action-icon" style="background:#dbeafe">👥</div><b>Staff</b></div>
+</div>
+
+<!-- SECOND ROW - MOBILE SPECIAL -->
+<div class="quick-actions" style="margin-top:8px">
+  <div class="quick-action" onclick="window.location.href='../common/notifications/notifications.html?shopId='+shopId"><div class="quick-action-icon" style="background:#fef3c7">🔔</div><b>Notifications</b></div>
+  <div class="quick-action" onclick="window.location.href='../common/reviews/reviews.html?shopId='+shopId"><div class="quick-action-icon" style="background:#fef3c7">⭐</div><b>Reviews</b></div>
+  <div class="quick-action" onclick="window.location.href='../common/share/qr-share.html?shopId='+shopId"><div class="quick-action-icon" style="background:#f3e8ff">📤</div><b>Share QR</b></div>
+  <div class="quick-action" onclick="window.location.href='../common/support/help.html?shopId='+shopId"><div class="quick-action-icon" style="background:#f0fdf4">💬</div><b>Support</b></div>
+</div>
+
+<!-- TABS - CONNECTED TO common/js/filter.js -->
+<div class="tabs" id="tabs">
+  <button class="tab active" data-tab="all">All Mobiles</button>
+  <button class="tab" data-tab="smartphone">📱 Smartphones</button>
+  <button class="tab" data-tab="feature">📞 Feature Phones</button>
+  <button class="tab" data-tab="accessories">🎧 Accessories</button>
+  <button class="tab" data-tab="repair">🔧 Repair</button>
+  <button class="tab" data-tab="lowstock">⚠️ Low Stock</button>
+</div>
+
+<!-- PRODUCTS - CONNECTED TO common/js/filter.js + search.js + product-card.js -->
+<div class="section" id="productsSection">
+  <div class="section-header">
+    <b>📱 Mobile Products <span id="productsCount">0 products</span></b>
+    <button class="add-btn" id="addProductBtn">+ Add Mobile</button>
+  </div>
+  <div class="products-grid" id="productsGrid"></div>
+  <div class="empty-state" id="productsEmpty" style="display:none"><div class="empty-icon">📱</div><b>No mobiles added yet</b><span>Add first mobile - iPhone, Samsung, Xiaomi etc<br>Quick add with ready templates</span><button class="add-btn" style="margin-top:12px" onclick="openAddProduct()">+ Add First Mobile</button></div>
+</div>
+
+<!-- ORDERS - CONNECTED TO common/orders/orders.html -->
+<div class="section" id="ordersSection">
+  <div class="section-header">
+    <b>📦 Recent Orders <span id="ordersCount">0 orders</span></b>
+    <button class="add-btn" style="background:#f1f5f9;color:#0f172a" onclick="window.location.href='../common/orders/orders.html?shopId='+shopId">View All ›</button>
+  </div>
+  <div class="orders-list" id="ordersList"></div>
+  <div class="empty-state" id="ordersEmpty" style="display:none"><div class="empty-icon">📦</div><b>No orders yet</b><span>Share shop link to get orders!</span></div>
+</div>
+
+<!-- MOBILE SHOP SPECIAL - CONNECTED TO COMMON -->
+<div class="section">
+  <div class="section-header"><b>🔧 Mobile Shop Special</b><span>For mobile shop</span></div>
+  <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button class="quick-action" style="border:1px solid #e0f2fe;background:#f0f9ff" onclick="window.location.href='../common/delivery/delivery-status.html?shopId='+shopId"><div class="quick-action-icon" style="background:#e0f2fe">🔧</div><b>Repair Status</b></button>
+    <button class="quick-action" style="border:1px solid #dcfce7;background:#f0fdf4" onclick="window.location.href='../common/wallet/profit-loss.html?shopId='+shopId"><div class="quick-action-icon" style="background:#dcfce7">💳</div><b>Profit/Loss</b></button>
+    <button class="quick-action" style="border:1px solid #fef3c7;background:#fffbeb" onclick="window.location.href='../common/inventory/barcode-scanner.html?shopId='+shopId"><div class="quick-action-icon" style="background:#fef3c7">📷</div><b>IMEI Scanner</b></div></button>
+    <button class="quick-action" style="border:1px solid #f3e8ff;background:#faf5ff" onclick="window.location.href='../common/subscription/subscription-plans.html?shopId='+shopId"><div class="quick-action-icon" style="background:#f3e8ff">💎</div><b>Subscription</b></button>
+  </div>
+</div>
+
+<!-- BRIDGE SIDEBAR + FOOTER PLACEHOLDERS -->
+<div id="saman-d-sidebar"></div>
+<div id="saman-d-footer"></div>
+<div id="saman-confirm"></div>
+
+<!-- BOTTOM NAV - CONNECTED TO COMMON PROFILE + SETTINGS -->
+<div class="bottom-nav">
+  <div class="nav-item active"><span>🏠</span><b>Dashboard</b></div>
+  <div class="nav-item" onclick="scrollToSection('productsSection')"><span>📱</span><b>Products</b></div>
+  <div class="nav-item" onclick="window.location.href='../common/orders/orders.html?shopId='+shopId"><span>📦</span><b>Orders</b></div>
+  <div class="nav-item" onclick="window.location.href='../common/analytics/analytics.html?shopId='+shopId"><span>📊</span><b>Analytics</b></div>
+  <div class="nav-item" onclick="window.location.href='../common/profile/profile.html?shopId='+shopId"><span>👤</span><b>Profile</b></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ SAMANLIVE BRIDGE - EK HI FILE SE SAB CONNECT ============ -->
+<script src="../common/samanlive-bridge.js"></script>
+<script>
+// INIT DASHBOARD WITH BRIDGE - SAB COMMON MODULES AUTO LOAD HONGE
+SAMAN.initDashboard().then(()=>{
+  console.log("✅ BRIDGE LOADED - ALL COMMON MODULES CONNECTED");
+  console.log("✅ Loaded:", SAMAN.core, SAMAN.cart, SAMAN.ownerOrders, SAMAN.analytics, SAMAN.wallet, SAMAN.inventory, SAMAN.delivery, SAMAN.marketing, SAMAN.reviews, SAMAN.share, SAMAN.banner, SAMAN.notifications, SAMAN.subscription);
+  initMobileDashboard();
+}).catch(e=>{ console.error("Bridge failed, loading manual", e); initMobileDashboard(); });
+
+// GLOBAL
+let shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('shopId') || 'mobile_'+Date.now();
+localStorage.setItem('shopId', shopId);
+let products = [];
+let orders = [];
+let socket = null;
+
+function getProducts(){ return JSON.parse(localStorage.getItem(`products_${shopId}`)||'[]'); }
+function saveProducts(p){ localStorage.setItem(`products_${shopId}`, JSON.stringify(p)); }
+function getOrders(){ return JSON.parse(localStorage.getItem(`orders_${shopId}`)||'[]'); }
+
+const MOBILE_READY_PRODUCTS = [
+  { id:'m1', name:'iPhone 15 Pro Max 256GB', category:'smartphone', brand:'Apple', price:134900, originalPrice:159900, stock:5, image:'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=300', ram:'8GB', storage:'256GB', color:'Natural Titanium', warranty:'1 Year', emi:true },
+  { id:'m2', name:'Samsung Galaxy S24 Ultra 512GB', category:'smartphone', brand:'Samsung', price:129999, originalPrice:139999, stock:8, image:'https://images.unsplash.com/photo-1610945265064-0e34e730d4d0?w=300', ram:'12GB', storage:'512GB', color:'Titanium Black', warranty:'1 Year', emi:true },
+  { id:'m3', name:'OnePlus 12R 256GB', category:'smartphone', brand:'OnePlus', price:42999, originalPrice:49999, stock:12, image:'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=300', ram:'16GB', storage:'256GB', color:'Iron Gray', warranty:'1 Year', emi:true },
+  { id:'m4', name:'Redmi Note 13 Pro 256GB', category:'smartphone', brand:'Xiaomi', price:24999, originalPrice:29999, stock:20, image:'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=300', ram:'12GB', storage:'256GB', color:'Midnight Black', warranty:'1 Year', emi:true },
+  { id:'m5', name:'Vivo V30 Pro 256GB', category:'smartphone', brand:'Vivo', price:41999, originalPrice:46999, stock:6, image:'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=300', ram:'12GB', storage:'256GB', color:'Peacock Green', warranty:'1 Year', emi:true },
+  { id:'m6', name:'AirPods Pro 2nd Gen', category:'accessories', brand:'Apple', price:24900, originalPrice:26900, stock:15, image:'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?w=300', warranty:'1 Year' },
+  { id:'m7', name:'Samsung Galaxy Watch 6', category:'accessories', brand:'Samsung', price:29999, originalPrice:32999, stock:10, image:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300', warranty:'1 Year' },
+  { id:'m8', name:'Nokia 105 Feature Phone', category:'feature', brand:'Nokia', price:1499, originalPrice:1999, stock:30, image:'https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=300', warranty:'1 Year' }
+];
+
+function initMobileDashboard(){
+  products = getProducts();
+  if(products.length===0){ products = MOBILE_READY_PRODUCTS; saveProducts(products); }
+
+  orders = getOrders();
+  if(orders.length===0){
+    orders = [
+      { _id:'ord1', orderId:'ORD-001', customerName:'Rahul Kumar', customerPhone:'9876543210', products:[products[0]], total:134900, status:'pending', createdAt:new Date(Date.now()-10*60000).toISOString(), paymentMethod:'cod' },
+      { _id:'ord2', orderId:'ORD-002', customerName:'Priya Sharma', customerPhone:'9876543211', products:[products[2]], total:42999, status:'confirmed', createdAt:new Date(Date.now()-30*60000).toISOString(), paymentMethod:'upi' }
+    ];
+    localStorage.setItem(`orders_${shopId}`, JSON.stringify(orders));
+  }
+
+  renderProducts(products);
+  renderOrders(orders);
+  updateStats();
+  initSocketBridge();
+  bindEventsBridge();
+}
+
+function renderProducts(productsToRender){
+  const grid = document.getElementById('productsGrid');
+  const empty = document.getElementById('productsEmpty');
+  const count = document.getElementById('productsCount');
+  count.innerText = `${productsToRender.length} products`;
+  if(productsToRender.length===0){ grid.style.display='none'; empty.style.display='block'; return; }
+  grid.style.display='grid'; empty.style.display='none';
+  grid.innerHTML = productsToRender.map(p=>{
+    const stockClass = p.stock===0?'stock-out':p.stock<=3?'stock-low':'stock-in';
+    const stockText = p.stock===0?'Out of stock':p.stock<=3?`Only ${p.stock} left`:`${p.stock} in stock`;
+    return `<div class="product-card" onclick="openProductDetail('${p.id}')"><img src="${p.image}" class="product-image" onerror="this.src='https://via.placeholder.com/150?text=📱'"><div class="product-actions"><button class="product-action" onclick="event.stopPropagation(); shareProductBridge('${p.id}')">📤</button><button class="product-action" onclick="event.stopPropagation(); editProduct('${p.id}')">✏️</button></div><div class="product-info"><b>${p.name}</b><span>${p.brand||''} • ${p.ram||''} ${p.storage||''}</span><div class="product-price"><b>₹${p.price.toLocaleString('en-IN')}</b><span class="stock-badge ${stockClass}">${stockText}</span></div>${p.emi?`<span style="font-size:9px;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:20px;font-weight:700;margin-top:4px;display:inline-block">💳 EMI</span>`:''}</div></div>`;
+  }).join('');
+}
+
+function renderOrders(ordersToRender){
+  const list = document.getElementById('ordersList');
+  const empty = document.getElementById('ordersEmpty');
+  const count = document.getElementById('ordersCount');
+  const today = ordersToRender.filter(o=> new Date(o.createdAt).toDateString()===new Date().toDateString());
+  count.innerText = `${today.length} today • ${ordersToRender.length} total`;
+  if(ordersToRender.length===0){ list.style.display='none'; empty.style.display='block'; return; }
+  list.style.display='flex'; empty.style.display='none';
+  list.innerHTML = ordersToRender.slice(0,5).map(o=>{
+    const isNew = o.status==='pending' && (new Date()-new Date(o.createdAt))<3600000;
+    return `<div class="order-item ${isNew?'new':''}" onclick="window.location.href='../common/orders/order-detail.html?orderId=${o.orderId}&shopId=${shopId}'"><div class="order-icon">📦</div><div class="order-info"><b>${o.orderId} • ${o.customerName}</b><span>${o.products.map(p=>p.name).join(', ').substring(0,40)} • ${new Date(o.createdAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span></div><div class="order-price"><b>₹${o.total.toLocaleString('en-IN')}</b><span class="order-status status-${o.status}">${o.status}</span></div></div>`;
+  }).join('');
+}
+
+function updateStats(){
+  const todayOrders = orders.filter(o=> new Date(o.createdAt).toDateString()===new Date().toDateString());
+  const todayRevenue = todayOrders.reduce((sum,o)=> sum+o.total,0);
+  document.getElementById('statOrders').innerText = todayOrders.length;
+  document.getElementById('statRevenue').innerText = `₹${(todayRevenue/1000).toFixed(1)}k`;
+  document.getElementById('statProducts').innerText = products.length;
+  document.getElementById('statCustomers').innerText = new Set(orders.map(o=>o.customerPhone)).size;
+  const newOrders = orders.filter(o=> o.status==='pending').length;
+  if(newOrders>0){ document.getElementById('liveBanner').style.display='flex'; document.getElementById('liveOrdersCount').innerText = newOrders; }
+  document.getElementById('liveBanner').onclick = ()=> window.location.href=`../common/live/live-orders.html?shopId=${shopId}`;
+}
+
+function bindEventsBridge(){
+  document.getElementById('addProductBtn')?.addEventListener('click', ()=> window.location.href=`product-form.html?shopId=${shopId}`);
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(t=> t.classList.remove('active'));
+      tab.classList.add('active');
+      const filter = tab.dataset.tab;
+      let filtered = [...products];
+      if(filter==='smartphone') filtered = products.filter(p=> p.category==='smartphone');
+      else if(filter==='feature') filtered = products.filter(p=> p.category==='feature');
+      else if(filter==='accessories') filtered = products.filter(p=> p.category==='accessories');
+      else if(filter==='lowstock') filtered = products.filter(p=> p.stock<=3);
+      else if(filter==='repair'){ showToast('Repair - Check common/delivery/delivery-status.html', 'info'); return; }
+      renderProducts(filtered);
+      // USE COMMON FILTER JS IF LOADED
+      if(window.FilterCore){ window.FilterCore.applyFilters({ category:filter==='all'?'':filter }); }
+    });
+  });
+}
+
+function initSocketBridge(){
+  try{
+    const sock = io();
+    sock.on('connect', ()=>{ sock.emit('join-shop', shopId); console.log('✅ Mobile shop socket connected - common/live/live-orders.html se linked'); });
+    sock.on('new-order', (data)=>{
+      if(data.shopId===shopId){
+        orders.unshift(data.order||data);
+        localStorage.setItem(`orders_${shopId}`, JSON.stringify(orders));
+        renderOrders(orders); updateStats();
+        showToast(`🔔 New order! ${data.orderId||''}`, 'success');
+        try{ const audio = new Audio('../common/orders/new-order-sound.mp3'); audio.play().catch(()=>{}); }catch(e){}
+        document.getElementById('liveBanner').style.display='flex';
+        // USE COMMON NEW ORDER POPUP
+        const popup = document.getElementById('saman-new-order-popup');
+        if(popup) popup.style.display='block';
+      }
+    });
+    // USE COMMON NOTIFICATIONS
+    sock.on('new-notification', (notif)=>{
+      if(window.NotificationsCore){ window.NotificationsCore.addNotification(notif); }
+    });
+  }catch(e){ console.log('Socket fallback - common/core/socket-core.js se handle hoga'); }
+}
+
+function openProductDetail(id){ window.location.href=`product-form.html?shopId=${shopId}&productId=${id}`; }
+function editProduct(id){ window.location.href=`product-form.html?shopId=${shopId}&productId=${id}`; }
+function shareProductBridge(id){
+  const p = products.find(x=> x.id===id);
+  // USE COMMON SHARE MODULE - common/share/whatsapp-share.js
+  if(window.ShareCore){ window.ShareCore.shareProductOnWhatsApp(p, { shopId, name:'Mobile World', address:'Surat' }); }
+  else if(p){ window.open(`https://wa.me/?text=${encodeURIComponent(`📱 ${p.name} - ₹${p.price}\n🔗 ${location.origin}/shop.html?shopId=${shopId}&productId=${id}`)}`, '_blank'); }
+}
+function openAddProduct(){ window.location.href=`product-form.html?shopId=${shopId}`; }
+function scrollToSection(id){ document.getElementById(id)?.scrollIntoView({ behavior:'smooth' }); }
+function showToast(msg){ const t=document.getElementById('toast'); if(!t) return; t.innerText=msg; t.className='toast show'; setTimeout(()=> t.className='toast',3000); }
+
+window.shopId = shopId;
+</script>
+
 </body>
 </html>

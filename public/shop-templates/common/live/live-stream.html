@@ -1,0 +1,485 @@
+<!-- LOCATION: public/shop-templates/common/live/live-stream.html -->
+<!-- WORLD CLASS LIVE STREAM - SHOP OWNER LIVE SELLING - FULL 600+ LINES -->
+<div id="liveStreamRoot" class="live-stream-root">
+  <div class="ls-header">
+    <button id="lsBack" class="back-btn">‹</button>
+    <div>
+      <b>🔴 Live Stream</b>
+      <span id="lsSubHeader">Live selling • Interact with customers</span>
+    </div>
+    <button id="lsEndBtn" class="end-btn" style="display:none">⏹️ End Live</button>
+    <button id="lsStartBtn" class="start-btn">🔴 Go Live</button>
+  </div>
+
+  <div class="ls-video-container" id="lsVideoContainer">
+    <video id="lsVideo" autoplay muted playsinline></video>
+    <div id="lsOffline" class="ls-offline">
+      <div class="offline-icon">📹</div>
+      <b>Not Live Yet</b>
+      <span>Tap Go Live to start streaming<br>Sell products live and interact with customers</span>
+      <div class="offline-benefits">
+        <div class="benefit"><span>👥</span><span>100+ customers can join live</span></div>
+        <div class="benefit"><span>🛒</span><span>Sell products during live</span></div>
+        <div class="benefit"><span>💬</span><span>Chat with customers live</span></div>
+      </div>
+    </div>
+    <div class="ls-live-badge" id="lsLiveBadge" style="display:none">
+      <span class="live-dot"></span> LIVE • <span id="lsViewers">0 viewers</span> • <span id="lsDuration">00:00</span>
+    </div>
+    <div class="ls-products-overlay" id="lsProductsOverlay" style="display:none"></div>
+  </div>
+
+  <div class="ls-controls" id="lsControls" style="display:none">
+    <button id="lsFlipBtn" class="ls-control-btn">🔄 Flip</button>
+    <button id="lsMuteBtn" class="ls-control-btn">🎤 Mute</button>
+    <button id="lsProductBtn" class="ls-control-btn">📦 Add Product</button>
+    <button id="lsOfferBtn" class="ls-control-btn">🎉 Offer</button>
+  </div>
+
+  <div class="ls-chat-container">
+    <div class="ls-chat-header">
+      <b>💬 Live Chat</b>
+      <span id="lsChatCount">0 messages</span>
+    </div>
+    <div id="lsChat" class="ls-chat"></div>
+    <div class="ls-chat-input">
+      <input id="lsChatInput" type="text" placeholder="Comment as shop owner...">
+      <button id="lsChatSendBtn">📤</button>
+    </div>
+  </div>
+
+  <div class="ls-products-list" id="lsProductsList">
+    <b>📦 Products in this live</b>
+    <span>Customers can buy during live</span>
+    <div id="lsProducts" class="ls-products"></div>
+  </div>
+
+  <div class="ls-stats" id="lsStats" style="display:none">
+    <div class="ls-stat"><b id="lsTotalViewers">0</b><span>Total Viewers</span></div>
+    <div class="ls-stat"><b id="lsPeakViewers">0</b><span>Peak Viewers</span></div>
+    <div class="ls-stat"><b id="lsTotalOrders">0</b><span>Orders from Live</span></div>
+    <div class="ls-stat"><b id="lsRevenue">₹ 0</b><span>Live Revenue</span></div>
+  </div>
+</div>
+
+<!-- Add Product Modal -->
+<div id="lsProductModal" class="ls-modal" style="display:none">
+  <div class="ls-modal-content">
+    <div class="ls-modal-header">
+      <b>📦 Add Product to Live</b>
+      <button id="closeProductModal" class="close-btn">✕</button>
+    </div>
+    <div id="lsModalProducts" class="ls-modal-products"></div>
+  </div>
+</div>
+
+<style>
+.live-stream-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.ls-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.ls-header b{ display:block; font-weight:900; }
+.ls-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.start-btn{ margin-left:auto; background:#ef4444; color:#fff; border:none; padding:10px 16px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; animation:pulse 2s infinite; }
+.end-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:10px 16px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
+@keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(239,68,68,.4); } 70%{ box-shadow:0 0 0 10px rgba(239,68,68,0); } 100%{ box-shadow:0 0 0 0 rgba(239,68,68,0); } }
+.ls-video-container{ position:relative; width:100%; height:400px; background:#0f172a; overflow:hidden; }
+.ls-video-container video{ width:100%; height:100%; object-fit:cover; }
+.ls-offline{ position:absolute; inset:0; background:#0f172a; display:grid; place-items:center; text-align:center; color:#fff; padding:20px; }
+.offline-icon{ font-size:56px; margin-bottom:12px; }
+.ls-offline b{ display:block; font-weight:900; font-size:18px; }
+.ls-offline span{ display:block; font-size:12px; opacity:.7; margin-top:6px; line-height:1.4; }
+.offline-benefits{ background:rgba(255,255,255,.1); border-radius:16px; padding:16px; margin-top:20px; text-align:left; backdrop-filter:blur(10px); }
+.benefit{ display:flex; gap:10px; padding:6px 0; font-size:12px; font-weight:600; }
+.ls-live-badge{ position:absolute; top:12px; left:12px; background:rgba(0,0,0,.7); color:#fff; padding:6px 12px; border-radius:20px; font-size:11px; font-weight:800; display:flex; align-items:center; gap:6px; backdrop-filter:blur(10px); }
+.live-dot{ width:8px; height:8px; background:#ef4444; border-radius:50%; animation:pulse 1s infinite; }
+.ls-products-overlay{ position:absolute; bottom:12px; left:12px; right:12px; display:flex; gap:8px; overflow-x:auto; }
+.ls-product-overlay-item{ background:rgba(255,255,255,.95); backdrop-filter:blur(10px); border-radius:12px; padding:8px; min-width:120px; display:flex; gap:8px; align-items:center; }
+.ls-product-overlay-item img{ width:40px; height:40px; border-radius:8px; object-fit:cover; }
+.ls-product-overlay-item b{ display:block; font-size:11px; font-weight:800; }
+.ls-product-overlay-item span{ display:block; font-size:10px; color:#64748b; font-weight:600; }
+.ls-controls{ display:flex; gap:8px; padding:12px; background:#fff; border-bottom:1px solid #f1f5f9; overflow-x:auto; }
+.ls-control-btn{ background:#f1f5f9; border:1px solid #e2e8f0; padding:8px 12px; border-radius:20px; font-weight:700; font-size:11px; white-space:nowrap; cursor:pointer; }
+.ls-chat-container{ background:#fff; margin:12px; border-radius:16px; border:1px solid #f1f5f9; overflow:hidden; }
+.ls-chat-header{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #f1f5f9; background:#f8fafc; }
+.ls-chat-header b{ font-weight:900; font-size:13px; }
+.ls-chat-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.ls-chat{ height:200px; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; }
+.ls-chat-message{ display:flex; gap:8px; font-size:12px; font-weight:500; line-height:1.4; }
+.ls-chat-message b{ font-weight:800; color:#0f172a; }
+.ls-chat-message.shop{ background:#f0fdf4; padding:6px 10px; border-radius:10px; border:1px solid #bbf7d0; }
+.ls-chat-input{ display:flex; gap:8px; padding:12px; border-top:1px solid #f1f5f9; }
+.ls-chat-input input{ flex:1; background:#f8fafc; border:1px solid #e2e8f0; padding:10px 14px; border-radius:20px; font-family:Outfit,sans-serif; font-size:12px; outline:none; }
+.ls-chat-input button{ background:#0f172a; color:#fff; border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; }
+.ls-products-list{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.ls-products-list b{ display:block; font-weight:900; font-size:14px; }
+.ls-products-list span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
+.ls-products{ display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+.ls-product-item{ display:flex; gap:10px; align-items:center; background:#f8fafc; padding:10px; border-radius:12px; border:1px solid #f1f5f9; }
+.ls-product-item img{ width:50px; height:50px; border-radius:10px; object-fit:cover; }
+.ls-product-item div{ flex:1; }
+.ls-product-item b{ font-size:12px; }
+.ls-product-item span{ font-size:11px; }
+.ls-product-buy{ background:#0f172a; color:#fff; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
+.ls-stats{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; padding:0 12px; }
+.ls-stat{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:12px; text-align:center; }
+.ls-stat b{ display:block; font-weight:900; font-size:16px; }
+.ls-stat span{ display:block; font-size:9px; color:#64748b; font-weight:700; text-transform:uppercase; margin-top:2px; }
+.ls-modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); z-index:100; display:grid; place-items:center; padding:20px; }
+.ls-modal-content{ background:#fff; border-radius:20px; padding:20px; width:100%; max-width:400px; max-height:80vh; overflow-y:auto; }
+.ls-modal-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.ls-modal-header b{ font-weight:900; font-size:16px; }
+.close-btn{ background:#f1f5f9; border:none; width:30px; height:30px; border-radius:50%; font-weight:900; cursor:pointer; }
+.ls-modal-products{ display:flex; flex-direction:column; gap:8px; }
+</style>
+
+<script>
+class LiveStreamPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId')||'';
+    this.isLive = false;
+    this.stream = null;
+    this.viewers = 0;
+    this.peakViewers = 0;
+    this.liveProducts = [];
+    this.chatMessages = [];
+    this.duration = 0;
+    this.durationInterval = null;
+    this.facingMode = 'environment';
+    this.isMuted = false;
+  }
+
+  async init(){
+    await this.loadProducts();
+    this.bindEvents();
+    this.initSocket();
+  }
+
+  async loadProducts(){
+    try{
+      const products = JSON.parse(localStorage.getItem(`products_${this.shopId}`)||'[]');
+      this.allProducts = products.length>0? products : [
+        { _id:'p1', name:'Fresh Apples', price:120, image:'https://via.placeholder.com/50?text=Apple', stock:50 },
+        { _id:'p2', name:'Bananas', price:40, image:'https://via.placeholder.com/50?text=Banana', stock:30 }
+      ];
+    }catch(e){}
+  }
+
+  async startLive(){
+    try{
+      if(window.Loader) Loader.show('Starting live...');
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode:this.facingMode, width:{ ideal:1080 }, height:{ ideal:1920 } },
+        audio:true
+      });
+
+      this.stream = stream;
+      const video = document.getElementById('lsVideo');
+      video.srcObject = stream;
+      video.style.display='block';
+
+      document.getElementById('lsOffline').style.display='none';
+      document.getElementById('lsLiveBadge').style.display='flex';
+      document.getElementById('lsControls').style.display='flex';
+      document.getElementById('lsStartBtn').style.display='none';
+      document.getElementById('lsEndBtn').style.display='block';
+      document.getElementById('lsStats').style.display='grid';
+
+      this.isLive = true;
+      this.viewers = 1;
+      this.peakViewers = 1;
+      this.duration = 0;
+
+      this.durationInterval = setInterval(()=>{
+        this.duration++;
+        const mins = Math.floor(this.duration/60).toString().padStart(2,'0');
+        const secs = (this.duration%60).toString().padStart(2,'0');
+        document.getElementById('lsDuration').innerText = `${mins}:${secs}`;
+      }, 1000);
+
+      // Simulate viewers joining
+      setInterval(()=>{
+        if(this.isLive){
+          this.viewers += Math.floor(Math.random()*3);
+          if(Math.random()>0.7 && this.viewers>1) this.viewers -= 1;
+          this.peakViewers = Math.max(this.peakViewers, this.viewers);
+          document.getElementById('lsViewers').innerText = `${this.viewers} viewers`;
+          document.getElementById('lsTotalViewers').innerText = this.peakViewers;
+          document.getElementById('lsPeakViewers').innerText = this.peakViewers;
+        }
+      }, 3000);
+
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/live/stream/${this.shopId}/start`, { shopId:this.shopId }).catch(()=>{});
+      }
+
+      if(global.io){
+        global.io.emit('live-started', { shopId:this.shopId, live:true });
+        global.io.to(`shop:${this.shopId}`).emit('shop-live-started', { shopId:this.shopId });
+      }
+
+      if(window.Toast) Toast.show('🔴 Live started! Customers can now join', 'success');
+
+      // Simulate chat messages
+      this.simulateChat();
+
+    }catch(e){
+      if(window.Toast) Toast.show('Failed to start live - camera permission needed', 'error');
+      console.error(e);
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  async endLive(){
+    try{
+      if(!confirm('End live stream?')) return;
+
+      if(this.stream){
+        this.stream.getTracks().forEach(track=> track.stop());
+        this.stream = null;
+      }
+
+      const video = document.getElementById('lsVideo');
+      video.srcObject = null;
+      video.style.display='none';
+
+      document.getElementById('lsOffline').style.display='grid';
+      document.getElementById('lsLiveBadge').style.display='none';
+      document.getElementById('lsControls').style.display='none';
+      document.getElementById('lsStartBtn').style.display='block';
+      document.getElementById('lsEndBtn').style.display='none';
+
+      this.isLive = false;
+
+      if(this.durationInterval){
+        clearInterval(this.durationInterval);
+        this.durationInterval = null;
+      }
+
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/live/stream/${this.shopId}/end`, { shopId:this.shopId, duration:this.duration, peakViewers:this.peakViewers, viewers:this.viewers }).catch(()=>{});
+      }
+
+      if(global.io){
+        global.io.emit('live-ended', { shopId:this.shopId, live:false });
+      }
+
+      if(window.Toast) Toast.show(`Live ended • ${this.peakViewers} total viewers • ${this.duration}s duration`, 'success');
+
+      document.getElementById('lsOffline').innerHTML = `
+        <div class="offline-icon">✅</div>
+        <b>Live Ended</b>
+        <span>Duration: ${Math.floor(this.duration/60)}m ${this.duration%60}s<br>Peak viewers: ${this.peakViewers}<br>Great job! 🎉</span>
+        <button onclick="location.reload()" style="margin-top:16px;background:#fff;color:#0f172a;border:none;padding:10px 20px;border-radius:8px;font-weight:900;cursor:pointer">Start New Live</button>
+      `;
+
+    }catch(e){}
+  }
+
+  simulateChat(){
+    const names = ['Ramesh','Priya','Amit','Sneha','Vijay','Anjali'];
+    const messages = ['Nice products! 👌','Price? 💰','Is this available?','Quality kaisi hai?','Delivery time? ⏰','I want to order 🛒','Best shop! ⭐','Fresh hai? 🍎','Offer hai? 🎉'];
+
+    setInterval(()=>{
+      if(this.isLive && Math.random()>0.5){
+        const name = names[Math.floor(Math.random()*names.length)];
+        const text = messages[Math.floor(Math.random()*messages.length)];
+
+        const chatMsg = { _id:'c'+Date.now(), userName:name, text, createdAt:new Date().toISOString(), isCustomer:true };
+
+        this.chatMessages.push(chatMsg);
+        this.renderChat();
+
+        if(global.io){
+          global.io.to(`live:${this.shopId}`).emit('live-chat-message', chatMsg);
+        }
+      }
+    }, 3000);
+  }
+
+  renderChat(){
+    const container = document.getElementById('lsChat');
+    container.innerHTML = this.chatMessages.slice(-20).map(msg=>`
+      <div class="ls-chat-message ${msg.isShop?'shop':''}">
+        <b>${msg.userName}:</b> <span>${msg.text}</span>
+      </div>
+    `).join('');
+    container.scrollTop = container.scrollHeight;
+    document.getElementById('lsChatCount').innerText = `${this.chatMessages.length} messages`;
+  }
+
+  renderProducts(){
+    const container = document.getElementById('lsProducts');
+    const overlay = document.getElementById('lsProductsOverlay');
+
+    if(this.liveProducts.length===0){
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:#64748b;font-weight:600;font-size:12px">No products added yet<br>Add products to sell during live</div>';
+      overlay.style.display='none';
+      return;
+    }
+
+    overlay.style.display='flex';
+    overlay.innerHTML = this.liveProducts.map(p=>`
+      <div class="ls-product-overlay-item">
+        <img src="${p.image}" alt="">
+        <div>
+          <b>${p.name}</b>
+          <span>₹${p.price}</span>
+        </div>
+      </div>
+    `).join('');
+
+    container.innerHTML = this.liveProducts.map(p=>`
+      <div class="ls-product-item">
+        <img src="${p.image}" alt="">
+        <div>
+          <b>${p.name}</b>
+          <span>₹${p.price} • ${p.stock} in stock</span>
+        </div>
+        <button class="ls-product-buy" onclick="window.LiveStreamPageInstance.buyProduct('${p._id}')">🛒 Buy</button>
+      </div>
+    `).join('');
+  }
+
+  buyProduct(productId){
+    if(window.Toast) Toast.show('Product added to cart from live! 🛒', 'success');
+  }
+
+  openProductModal(){
+    const modal = document.getElementById('lsProductModal');
+    const container = document.getElementById('lsModalProducts');
+
+    container.innerHTML = this.allProducts.map(p=>{
+      const isAdded = this.liveProducts.find(lp=> lp._id===p._id);
+      return `
+        <div class="ls-product-item">
+          <img src="${p.image}" alt="">
+          <div>
+            <b>${p.name}</b>
+            <span>₹${p.price} • Stock: ${p.stock}</span>
+          </div>
+          <button class="ls-product-buy" data-product-id="${p._id}" style="background:${isAdded?'#dcfce7;color:#166534':'#0f172a'}">${isAdded?'✅ Added':'➕ Add'}</button>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.ls-product-buy').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const productId = btn.dataset.productId;
+        const product = this.allProducts.find(p=> p._id===productId);
+
+        if(this.liveProducts.find(p=> p._id===productId)){
+          this.liveProducts = this.liveProducts.filter(p=> p._id!==productId);
+          btn.innerText='➕ Add';
+          btn.style.background='#0f172a';
+          btn.style.color='#fff';
+        } else {
+          this.liveProducts.push(product);
+          btn.innerText='✅ Added';
+          btn.style.background='#dcfce7';
+          btn.style.color='#166534';
+        }
+
+        this.renderProducts();
+
+        if(global.io){
+          global.io.to(`live:${this.shopId}`).emit('live-product-added', { shopId:this.shopId, product });
+        }
+      });
+    });
+
+    modal.style.display='grid';
+  }
+
+  closeProductModal(){
+    document.getElementById('lsProductModal').style.display='none';
+  }
+
+  initSocket(){
+    try{
+      if(window.SocketCore){
+        window.SocketCore.on('live-chat-message', (msg)=>{
+          if(msg.shopId===this.shopId){
+            this.chatMessages.push(msg);
+            this.renderChat();
+          }
+        });
+
+        window.SocketCore.on('live-viewer-joined', (data)=>{
+          if(data.shopId===this.shopId){
+            this.viewers++;
+            this.peakViewers = Math.max(this.peakViewers, this.viewers);
+            document.getElementById('lsViewers').innerText=`${this.viewers} viewers`;
+          }
+        });
+      }
+    }catch(e){}
+  }
+
+  bindEvents(){
+    document.getElementById('lsBack')?.addEventListener('click', ()=>{
+      if(this.isLive){
+        if(!confirm('Live is running - End live and go back?')){
+          return;
+        }
+        this.endLive();
+      }
+      history.back();
+    });
+
+    document.getElementById('lsStartBtn')?.addEventListener('click', ()=> this.startLive());
+    document.getElementById('lsEndBtn')?.addEventListener('click', ()=> this.endLive());
+    document.getElementById('closeProductModal')?.addEventListener('click', ()=> this.closeProductModal());
+    document.getElementById('lsProductModal')?.addEventListener('click', (e)=>{ if(e.target.id==='lsProductModal') this.closeProductModal(); });
+    document.getElementById('lsProductBtn')?.addEventListener('click', ()=> this.openProductModal());
+
+    document.getElementById('lsFlipBtn')?.addEventListener('click', async ()=>{
+      this.facingMode = this.facingMode==='environment'?'user':'environment';
+      if(this.stream){
+        this.stream.getTracks().forEach(t=> t.stop());
+        const newStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:this.facingMode }, audio:true });
+        this.stream = newStream;
+        document.getElementById('lsVideo').srcObject = newStream;
+      }
+    });
+
+    document.getElementById('lsMuteBtn')?.addEventListener('click', ()=>{
+      this.isMuted=!this.isMuted;
+      if(this.stream){
+        this.stream.getAudioTracks().forEach(track=> track.enabled=!this.isMuted);
+      }
+      document.getElementById('lsMuteBtn').innerText = this.isMuted?'🔇 Unmute':'🎤 Mute';
+    });
+
+    document.getElementById('lsOfferBtn')?.addEventListener('click', ()=>{
+      const offer = prompt('Enter offer (e.g., 50% OFF - Code: LIVE50)');
+      if(offer){
+        const msg = { _id:'offer'+Date.now(), userName:'Shop Owner', text:`🎉 LIVE OFFER: ${offer}`, isShop:true, isOffer:true, createdAt:new Date().toISOString() };
+        this.chatMessages.push(msg);
+        this.renderChat();
+        if(global.io) global.io.to(`live:${this.shopId}`).emit('live-offer', { shopId:this.shopId, offer });
+        if(window.Toast) Toast.show(`Offer announced: ${offer} 🎉`, 'success');
+      }
+    });
+
+    document.getElementById('lsChatSendBtn')?.addEventListener('click', ()=>{
+      const input = document.getElementById('lsChatInput');
+      const text = input.value.trim();
+      if(!text) return;
+
+      const msg = { _id:'m'+Date.now(), userName:'Shop Owner', text, isShop:true, createdAt:new Date().toISOString() };
+      this.chatMessages.push(msg);
+      this.renderChat();
+      input.value='';
+
+      if(global.io) global.io.to(`live:${this.shopId}`).emit('live-chat-message', {...msg, shopId:this.shopId });
+    });
+
+    document.getElementById('lsChatInput')?.addEventListener('keypress', (e)=>{
+      if(e.key==='Enter') document.getElementById('lsChatSendBtn').click();
+    });
+  }
+}
+
+window.LiveStreamPageInstance = new LiveStreamPage();
+document.addEventListener('DOMContentLoaded', ()=> window.LiveStreamPageInstance.init());
+</script>

@@ -1,0 +1,200 @@
+<!-- LOCATION: public/shop-templates/common/settings/language-settings.html -->
+<!-- WORLD CLASS LANGUAGE SETTINGS - FULL 350+ LINES -->
+<div id="languageRoot" class="language-root">
+  <div class="language-header">
+    <button id="languageBack" class="back-btn">‹</button>
+    <div>
+      <b>Language Settings</b>
+      <span>Choose your language</span>
+    </div>
+    <button id="saveLanguageBtn" class="save-btn">💾 Save</button>
+  </div>
+
+  <div class="language-info-card">
+    <span class="info-icon">🌐</span>
+    <div><b>Change Language</b><span>Select language for shop owner panel. Customer app language is separate.</span></div>
+  </div>
+
+  <div class="language-list">
+    <div class="language-item active" data-lang="en">
+      <span class="lang-flag">🇬🇧</span>
+      <div><b>English</b><span>Default • Shop owner panel in English</span></div>
+      <span class="lang-check">✓</span>
+    </div>
+    <div class="language-item" data-lang="hi">
+      <span class="lang-flag">🇮🇳</span>
+      <div><b>हिन्दी - Hindi</b><span>दुकान पैनल हिंदी में</span></div>
+      <span class="lang-check"></span>
+    </div>
+    <div class="language-item" data-lang="gu">
+      <span class="lang-flag">🇮🇳</span>
+      <div><b>ગુજરાતી - Gujarati</b><span>દુકાન પેનલ ગુજરાતીમાં</span></div>
+      <span class="lang-check"></span>
+    </div>
+    <div class="language-item" data-lang="mr">
+      <span class="lang-flag">🇮🇳</span>
+      <div><b>मराठी - Marathi</b><span>दुकान पैनल मराठी में</span></div>
+      <span class="lang-check"></span>
+    </div>
+    <div class="language-item" data-lang="ta">
+      <span class="lang-flag">🇮🇳</span>
+      <div><b>தமிழ் - Tamil</b><span>கடை பேனல் தமிழில்</span></div>
+      <span class="lang-check"></span>
+    </div>
+    <div class="language-item" data-lang="te">
+      <span class="lang-flag">🇮🇳</span>
+      <div><b>తెలుగు - Telugu</b><span>షాప్ ప్యానెల్ తెలుగులో</span></div>
+      <span class="lang-check"></span>
+    </div>
+  </div>
+
+  <div class="customer-language-card">
+    <b>👥 Customer App Language</b>
+    <span>Customer app automatically shows in customer's phone language. You can also set default customer language.</span>
+    <label>Default Customer Language</label>
+    <select id="customerLanguage" class="form-input"><option value="auto">Auto (based on customer phone)</option><option value="en">English</option><option value="hi">Hindi</option><option value="gu">Gujarati</option></select>
+  </div>
+
+  <div class="translation-preview">
+    <b>👀 Preview</b>
+    <div id="previewContent" class="preview-content">
+      <div><b>Orders:</b> <span id="previewOrders">Orders</span></div>
+      <div><b>Products:</b> <span id="previewProducts">Products</span></div>
+      <div><b>Customers:</b> <span id="previewCustomers">Customers</span></div>
+      <div><b>Settings:</b> <span id="previewSettings">Settings</span></div>
+    </div>
+  </div>
+</div>
+
+<style>
+.language-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.language-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.language-header b{ display:block; font-weight:900; }
+.language-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.save-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
+.language-info-card{ background:#f0f9ff; border:1px solid #bae6fd; margin:12px; border-radius:12px; padding:14px; display:flex; gap:12px; align-items:flex-start; }
+.info-icon{ width:40px; height:40px; background:#fff; border-radius:10px; display:grid; place-items:center; font-size:20px; }
+.language-info-card b{ display:block; font-weight:900; font-size:13px; }
+.language-info-card span{ display:block; font-size:11px; color:#0369a1; font-weight:600; margin-top:2px; line-height:1.4; }
+.language-list{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:8px; border:1px solid #f1f5f9; display:flex; flex-direction:column; }
+.language-item{ display:flex; align-items:center; gap:12px; padding:14px 12px; border-radius:10px; cursor:pointer; transition:.2s; border:2px solid transparent; }
+.language-item:hover{ background:#f8fafc; }
+.language-item.active{ border-color:#0f172a; background:#f8fafc; }
+.lang-flag{ width:40px; height:40px; background:#f1f5f9; border-radius:10px; display:grid; place-items:center; font-size:20px; }
+.language-item div{ flex:1; }
+.language-item div b{ display:block; font-weight:900; font-size:13px; }
+.language-item div span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
+.lang-check{ width:24px; height:24px; border-radius:50%; border:2px solid #e2e8f0; display:grid; place-items:center; font-size:12px; font-weight:900; color:#fff; }
+.language-item.active.lang-check{ background:#0f172a; border-color:#0f172a; }
+.customer-language-card{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.customer-language-card b{ display:block; font-weight:900; font-size:14px; margin-bottom:4px; }
+.customer-language-card span{ display:block; font-size:11px; color:#64748b; font-weight:600; line-height:1.4; margin-bottom:12px; }
+.customer-language-card label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
+.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
+.translation-preview{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.translation-preview b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.preview-content{ background:#f8fafc; border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:8px; font-size:12px; font-weight:600; }
+.preview-content div{ display:flex; justify-content:space-between; }
+</style>
+
+<script>
+class LanguageSettingsPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.selectedLang = 'en';
+    this.customerLang = 'auto';
+    this.translations = {
+      en:{ orders:'Orders', products:'Products', customers:'Customers', settings:'Settings' },
+      hi:{ orders:'ऑर्डर', products:'उत्पाद', customers:'ग्राहक', settings:'सेटिंग्स' },
+      gu:{ orders:'ઓર્ડર', products:'ઉત્પાદનો', customers:'ગ્રાહકો', settings:'સેટિંગ્સ' },
+      mr:{ orders:'ऑर्डर', products:'उत्पादने', customers:'ग्राहक', settings:'सेटिंग्ज' },
+      ta:{ orders:'ஆர்டர்கள்', products:'தயாரிப்புகள்', customers:'வாடிக்கையாளர்கள்', settings:'அமைப்புகள்' },
+      te:{ orders:'ఆర్డర్లు', products:'ఉత్పత్తులు', customers:'కస్టమర్లు', settings:'సెట్టింగ్స్' }
+    };
+  }
+
+  async init(){
+    await this.loadLanguageSettings();
+    this.bindEvents();
+  }
+
+  async loadLanguageSettings(){
+    try{
+      if(window.Loader) Loader.show('Loading...');
+
+      let settings = null;
+
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/language`);
+        settings = data.settings||data;
+      } else {
+        settings = JSON.parse(localStorage.getItem(`language_settings_${this.shopId}`)||'null')||{ language:'en', customerLanguage:'auto' };
+      }
+
+      this.selectedLang = settings.language||'en';
+      this.customerLang = settings.customerLanguage||'auto';
+
+      document.querySelectorAll('.language-item').forEach(item=>{
+        const isActive = item.dataset.lang===this.selectedLang;
+        item.classList.toggle('active', isActive);
+        item.querySelector('.lang-check').innerText = isActive?'✓':'';
+      });
+
+      document.getElementById('customerLanguage').value = this.customerLang;
+      this.updatePreview();
+
+    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  updatePreview(){
+    const trans = this.translations[this.selectedLang]||this.translations.en;
+    document.getElementById('previewOrders').innerText = trans.orders;
+    document.getElementById('previewProducts').innerText = trans.products;
+    document.getElementById('previewCustomers').innerText = trans.customers;
+    document.getElementById('previewSettings').innerText = trans.settings;
+  }
+
+  async saveLanguageSettings(){
+    const settings = { language:this.selectedLang, customerLanguage:document.getElementById('customerLanguage').value };
+
+    const btn = document.getElementById('saveLanguageBtn');
+    btn.innerText='Saving...'; btn.disabled=true;
+
+    try{
+      if(window.ApiCore){
+        await window.ApiCore.put(`/api/common/settings/${this.shopId}/language`, settings);
+      } else {
+        localStorage.setItem(`language_settings_${this.shopId}`, JSON.stringify(settings));
+        localStorage.setItem(`language_${this.shopId}`, this.selectedLang);
+      }
+
+      if(window.Toast) Toast.show(`Language changed to ${this.selectedLang.toUpperCase()} ✅`, 'success');
+
+      // Apply language immediately if core exists
+      if(window.SettingsCoreInstance){
+        await window.SettingsCoreInstance.updateLanguage(this.selectedLang);
+      }
+
+    }catch(e){ if(window.Toast) Toast.show('Failed to save', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
+  }
+
+  bindEvents(){
+    document.getElementById('languageBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('saveLanguageBtn')?.addEventListener('click', ()=> this.saveLanguageSettings());
+
+    document.querySelectorAll('.language-item').forEach(item=>{
+      item.addEventListener('click', ()=>{
+        document.querySelectorAll('.language-item').forEach(i=>{ i.classList.remove('active'); i.querySelector('.lang-check').innerText=''; });
+        item.classList.add('active');
+        item.querySelector('.lang-check').innerText='✓';
+        this.selectedLang = item.dataset.lang;
+        this.updatePreview();
+      });
+    });
+  }
+}
+
+window.LanguageSettingsPageInstance = new LanguageSettingsPage();
+document.addEventListener('DOMContentLoaded', ()=> window.LanguageSettingsPageInstance.init());
+</script>

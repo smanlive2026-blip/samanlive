@@ -1,0 +1,258 @@
+<!-- LOCATION: public/shop-templates/common/subscription/subscription-plans.html -->
+<div id="subscriptionRoot" class="subscription-root">
+  <div class="sub-header">
+    <button id="subBack" class="back-btn">‹</button>
+    <div><b>💎 Subscription Plans</b><span id="subSubHeader">Grow your shop faster</span></div>
+    <button id="mySubsBtn" class="my-subs-btn">📋 My Plans</button>
+  </div>
+
+  <div class="sub-hero">
+    <div class="hero-icon">🚀</div>
+    <b>Grow Your Shop with SamanLive</b>
+    <span>Choose plan that fits your business - More features, more orders!</span>
+    <div class="hero-features">
+      <span>✅ No Commission (Free Plan)</span>
+      <span>✅ 1000+ Shops Trust Us</span>
+      <span>✅ Cancel Anytime</span>
+    </div>
+  </div>
+
+  <div class="billing-toggle">
+    <button class="billing-btn active" data-billing="monthly">Monthly</button>
+    <button class="billing-btn" data-billing="yearly">Yearly <span class="save-badge">Save 20%</span></button>
+  </div>
+
+  <div id="plansList" class="plans-list"></div>
+
+  <div class="sub-compare">
+    <b>📊 Compare Plans</b>
+    <div id="compareTable" class="compare-table"></div>
+  </div>
+
+  <div class="sub-faq">
+    <b>❓ FAQs</b>
+    <div class="faq-item"><b>Can I change plan anytime?</b><span>Yes! Upgrade/downgrade anytime. Extra charges prorated.</span></div>
+    <div class="faq-item"><b>What payment methods?</b><span>UPI, Card, Net Banking, Wallet - Secure payments.</span></div>
+    <div class="faq-item"><b>Is there free trial?</b><span>Free plan forever! Premium plans have 7-day free trial.</span></div>
+    <div class="faq-item"><b>Can I cancel anytime?</b><span>Yes! Cancel anytime - No questions asked. Free plan continues.</span></div>
+  </div>
+
+  <div class="sub-footer">
+    <span>© SamanLive • Plans for every shop size</span>
+    <span>Need help? Contact: support@samanlive.com • 9876543210</span>
+  </div>
+</div>
+
+<style>
+.subscription-root{ font-family:Outfit,sans-serif; max-width:800px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.sub-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.sub-header b{ display:block; font-weight:900; }
+.sub-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.my-subs-btn{ margin-left:auto; background:#f1f5f9; border:1px solid #e2e8f0; padding:8px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
+.sub-hero{ background:linear-gradient(135deg,#0f172a,#1e293b); color:#fff; border-radius:20px; margin:12px; padding:24px; text-align:center; }
+.hero-icon{ font-size:48px; margin-bottom:8px; }
+.sub-hero b{ display:block; font-weight:900; font-size:18px; }
+.sub-hero span{ display:block; font-size:11px; opacity:.8; margin-top:6px; font-weight:600; line-height:1.4; }
+.hero-features{ display:flex; flex-direction:column; gap:4px; margin-top:16px; background:rgba(255,255,255,.1); border-radius:12px; padding:12px; }
+.hero-features span{ font-size:11px; text-align:left; opacity:.9; }
+.billing-toggle{ display:flex; background:#fff; margin:12px; border-radius:12px; padding:4px; border:1px solid #f1f5f9; }
+.billing-btn{ flex:1; background:transparent; border:none; padding:10px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer; position:relative; }
+.billing-btn.active{ background:#0f172a; color:#fff; }
+.save-badge{ background:#10b981; color:#fff; font-size:8px; padding:2px 6px; border-radius:20px; margin-left:6px; }
+.plans-list{ padding:0 12px; display:flex; flex-direction:column; gap:12px; }
+.plan-card{ background:#fff; border:1px solid #f1f5f9; border-radius:20px; padding:20px; position:relative; overflow:hidden; transition:.3s; }
+.plan-card.popular{ border-color:#0f172a; border-width:2px; transform:scale(1.02); box-shadow:0 8px 24px rgba(0,0,0,.1); }
+.plan-card.free{ border-color:#10b981; }
+.popular-badge{ position:absolute; top:0; right:0; background:#0f172a; color:#fff; font-size:10px; font-weight:900; padding:6px 12px; border-radius:0 20px 0 12px; }
+.free-badge{ position:absolute; top:0; right:0; background:#10b981; color:#fff; font-size:10px; font-weight:900; padding:6px 12px; border-radius:0 20px 0 12px; }
+.plan-header{ margin-bottom:16px; }
+.plan-header b{ display:block; font-weight:900; font-size:18px; }
+.plan-header span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:4px; }
+.plan-price{ display:flex; align-items:baseline; gap:8px; margin:12px 0; }
+.plan-price b{ font-size:32px; font-weight:900; }
+.plan-price span{ font-size:12px; color:#64748b; font-weight:600; }
+.plan-price.original{ text-decoration:line-through; font-size:14px; color:#94a3b8; }
+.plan-features{ display:flex; flex-direction:column; gap:8px; margin:16px 0; }
+.plan-feature{ display:flex; gap:8px; align-items:center; font-size:12px; font-weight:500; }
+.plan-feature.yes{ color:#0f172a; }
+.plan-feature.no{ color:#94a3b8; }
+.plan-btn{ width:100%; background:#0f172a; color:#fff; border:none; padding:14px; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; transition:.2s; }
+.plan-btn.free{ background:#10b981; }
+.plan-btn:hover{ transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.15); }
+.plan-btn:disabled{ background:#e2e8f0; color:#94a3b8; cursor:not-allowed; transform:none; }
+.sub-compare{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.sub-compare b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.compare-table{ overflow-x:auto; }
+.compare-table table{ width:100%; border-collapse:collapse; font-size:11px; }
+.compare-table th,.compare-table td{ padding:8px; border:1px solid #f1f5f9; text-align:left; font-weight:600; }
+.compare-table th{ background:#f8fafc; font-weight:900; }
+.sub-faq{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.sub-faq b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.faq-item{ padding:12px 0; border-bottom:1px solid #f8fafc; }
+.faq-item:last-child{ border-bottom:none; }
+.faq-item b{ font-size:12px; margin-bottom:4px; }
+.faq-item span{ font-size:11px; color:#64748b; font-weight:500; line-height:1.4; display:block; }
+.sub-footer{ text-align:center; padding:20px; font-size:11px; color:#94a3b8; font-weight:600; }
+.sub-footer span{ display:block; margin:4px 0; }
+</style>
+
+<script>
+class SubscriptionPlansPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('shopId')||'';
+    this.billing = 'monthly';
+    this.currentPlan = localStorage.getItem(`subscription_${this.shopId}`)||'free';
+    this.plans = [];
+  }
+
+  async init(){
+    await this.loadPlans();
+    this.bindEvents();
+  }
+
+  async loadPlans(){
+    try{
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/subscription/${this.shopId}/plans?billing=${this.billing}`);
+        this.plans = data.plans||data||[];
+      } else {
+        this.plans = [
+          { id:'free', name:'Free Plan', subtitle:'For small shops starting', priceMonthly:0, priceYearly:0, popular:false, free:true, features:[{ text:'Up to 50 products', yes:true },{ text:'Basic analytics', yes:true },{ text:'WhatsApp share', yes:true },{ text:'QR code', yes:true },{ text:'Commission: 0% (Free)', yes:true },{ text:'No premium support', yes:false },{ text:'No custom domain', yes:false },{ text:'No advanced analytics', yes:false }], btnText:'Current Plan', btnDisabled:true },
+          { id:'starter', name:'Starter', subtitle:'For growing shops', priceMonthly:199, priceYearly:1990, originalMonthly:299, originalYearly:2990, popular:false, features:[{ text:'Up to 500 products', yes:true },{ text:'Advanced analytics', yes:true },{ text:'Coupons & offers', yes:true },{ text:'Loyalty points', yes:true },{ text:'Push notifications', yes:true },{ text:'Premium support', yes:true },{ text:'0% commission', yes:true },{ text:'No custom domain', yes:false }], btnText:'Choose Starter' },
+          { id:'pro', name:'Pro Plan', subtitle:'Most popular for shops', priceMonthly:499, priceYearly:4990, originalMonthly:799, originalYearly:7990, popular:true, features:[{ text:'Unlimited products', yes:true },{ text:'All analytics + heatmap', yes:true },{ text:'All marketing tools', yes:true },{ text:'Staff accounts (5)', yes:true },{ text:'Custom domain', yes:true },{ text:'Priority support', yes:true },{ text:'0% commission', yes:true },{ text:'Instagram auto-share', yes:true }], btnText:'Choose Pro 🚀' },
+          { id:'enterprise', name:'Enterprise', subtitle:'For large shops & chains', priceMonthly:999, priceYearly:9990, originalMonthly:1499, originalYearly:14990, popular:false, features:[{ text:'Unlimited everything', yes:true },{ text:'Multi-branch support', yes:true },{ text:'White label app', yes:true },{ text:'API access', yes:true },{ text:'Dedicated manager', yes:true },{ text:'Custom features', yes:true },{ text:'0% commission forever', yes:true },{ text:'24/7 support', yes:true }], btnText:'Contact Sales' }
+        ];
+      }
+
+      this.renderPlans();
+      this.renderCompareTable();
+
+    }catch(e){ console.error(e); }
+  }
+
+  renderPlans(){
+    const container = document.getElementById('plansList');
+
+    container.innerHTML = this.plans.map(plan=>{
+      const isCurrent = plan.id===this.currentPlan;
+      const price = this.billing==='monthly'? plan.priceMonthly : plan.priceYearly;
+      const original = this.billing==='monthly'? plan.originalMonthly : plan.originalYearly;
+      const per = this.billing==='monthly'? '/month' : '/year';
+
+      return `
+        <div class="plan-card ${plan.popular?'popular':''} ${plan.free?'free':''}">
+          ${plan.popular?'<div class="popular-badge">⭐ Most Popular</div>':''}
+          ${plan.free?'<div class="free-badge">Free Forever</div>':''}
+          <div class="plan-header">
+            <b>${plan.name}</b>
+            <span>${plan.subtitle}</span>
+          </div>
+          <div class="plan-price">
+            <b>${price===0?'Free':`₹${price}`}</b>
+            ${original?`<span class="original">₹${original}</span>`:''}
+            ${price>0?`<span>${per}</span>`:''}
+          </div>
+          <div class="plan-features">
+            ${plan.features.map(f=>`<div class="plan-feature ${f.yes?'yes':'no'}">${f.yes?'✅':'❌'} ${f.text}</div>`).join('')}
+          </div>
+          <button class="plan-btn ${plan.free?'free':''}" data-plan-id="${plan.id}" ${isCurrent||plan.btnDisabled?'disabled':''}>${isCurrent?'✅ Current Plan':plan.btnText}</button>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.plan-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const planId = btn.dataset.planId;
+        this.choosePlan(planId);
+      });
+    });
+  }
+
+  renderCompareTable(){
+    const container = document.getElementById('compareTable');
+
+    const features = ['Products Limit','Analytics','Marketing Tools','Staff Accounts','Custom Domain','Commission','Support','Free Trial'];
+
+    const plansForCompare = this.plans.slice(0,4);
+
+    let html = `<table><tr><th>Feature</th>${plansForCompare.map(p=>`<th>${p.name}</th>`).join('')}</tr>`;
+
+    const featureValues = {
+      'Products Limit':['50','500','Unlimited','Unlimited'],
+      'Analytics':['Basic','Advanced','Advanced+','All'],
+      'Marketing Tools':['Basic','All','All','All+API'],
+      'Staff Accounts':['1','3','5','Unlimited'],
+      'Custom Domain':['❌','❌','✅','✅'],
+      'Commission':['0%','0%','0%','0%'],
+      'Support':['Basic','Premium','Priority','Dedicated'],
+      'Free Trial':['Forever Free','7 days','7 days','7 days']
+    };
+
+    features.forEach(feature=>{
+      html += `<tr><td><b>${feature}</b></td>${featureValues[feature].map(v=>`<td>${v}</td>`).join('')}</tr>`;
+    });
+
+    html += `</table>`;
+
+    container.innerHTML = html;
+  }
+
+  async choosePlan(planId){
+    try{
+      const plan = this.plans.find(p=> p.id===planId);
+
+      if(!plan) return;
+
+      if(planId==='free'){
+        if(window.Toast) Toast.show('You are already on Free plan ✅', 'info');
+        return;
+      }
+
+      if(planId==='enterprise'){
+        window.location.href=`/shop-templates/common/support/chat-support.html?shopId=${this.shopId}&type=enterprise&plan=${planId}`;
+        return;
+      }
+
+      // Show confirmation
+      const confirmed = confirm(`Choose ${plan.name} - ₹${this.billing==='monthly'?plan.priceMonthly:plan.priceYearly}/${this.billing}? \n\n✅ 7-day free trial\n✅ Cancel anytime\n✅ 0% commission\n\nProceed to payment?`);
+
+      if(!confirmed) return;
+
+      if(window.Loader) Loader.show(`Subscribing to ${plan.name}...`);
+
+      if(window.ApiCore){
+        const result = await window.ApiCore.post(`/api/common/subscription/${this.shopId}/subscribe`, { planId, billing:this.billing, shopId:this.shopId });
+        localStorage.setItem(`subscription_${this.shopId}`, planId);
+        if(window.Toast) Toast.show(`${plan.name} subscribed! 🎉 7-day free trial started`, 'success');
+        window.location.href=`/shop-templates/common/subscription/my-subscriptions.html?shopId=${this.shopId}`;
+      } else {
+        localStorage.setItem(`subscription_${this.shopId}`, planId);
+        localStorage.setItem(`subscription_data_${this.shopId}`, JSON.stringify({ planId, billing:this.billing, subscribedAt:new Date().toISOString(), trialEndsAt:new Date(Date.now()+7*24*3600000).toISOString(), status:'trial' }));
+        if(window.Toast) Toast.show(`${plan.name} subscribed! Trial started 🎉`, 'success');
+        setTimeout(()=> window.location.href=`/shop-templates/common/subscription/my-subscriptions.html?shopId=${this.shopId}`, 1000);
+      }
+
+    }catch(e){
+      if(window.Toast) Toast.show('Failed to subscribe', 'error');
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  bindEvents(){
+    document.getElementById('subBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('mySubsBtn')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/subscription/my-subscriptions.html?shopId=${this.shopId}`);
+
+    document.querySelectorAll('.billing-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.billing-btn').forEach(b=> b.classList.remove('active'));
+        btn.classList.add('active');
+        this.billing = btn.dataset.billing;
+        this.loadPlans();
+      });
+    });
+  }
+}
+
+window.SubscriptionPlansPageInstance = new SubscriptionPlansPage();
+document.addEventListener('DOMContentLoaded', ()=> window.SubscriptionPlansPageInstance.init());
+</script>

@@ -1,0 +1,97 @@
+<!-- LOCATION: public/shop-templates/common/notifications/push-notification.html -->
+<div id="pushRoot" class="push-root">
+  <div class="push-header">
+    <button onclick="history.back()" class="back-btn">‹</button>
+    <div><b>🔔 Push Notifications</b><span>Manage push settings</span></div>
+  </div>
+
+  <div class="push-card">
+    <div class="push-icon">🔔</div>
+    <b>Enable Push Notifications</b>
+    <span>Get real-time order updates, offers, and alerts even when app is closed</span>
+    <button id="pushEnableBtn" class="primary-btn">🔔 Enable Push</button>
+    <span id="pushStatus" class="push-status">Checking permission...</span>
+  </div>
+
+  <div class="push-settings">
+    <b>⚙️ Notification Settings</b>
+    <div class="push-setting"><span>📦 Order Updates</span><label class="switch"><input type="checkbox" id="pushOrder" checked><span class="slider"></span></label></div>
+    <div class="push-setting"><span>🎉 Offers & Promotions</span><label class="switch"><input type="checkbox" id="pushOffer" checked><span class="slider"></span></label></div>
+    <div class="push-setting"><span>🔔 System Alerts</span><label class="switch"><input type="checkbox" id="pushSystem" checked><span class="slider"></span></label></div>
+    <div class="push-setting"><span>🔊 Sound</span><label class="switch"><input type="checkbox" id="pushSound" checked><span class="slider"></span></label></div>
+    <div class="push-setting"><span>📳 Vibrate</span><label class="switch"><input type="checkbox" id="pushVibrate" checked><span class="slider"></span></label></div>
+  </div>
+
+  <button id="pushTestBtn" class="secondary-btn">🧪 Send Test Push</button>
+</div>
+
+<style>
+.push-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.push-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.push-card{ background:#fff; margin:12px; border-radius:16px; padding:20px; text-align:center; border:1px solid #f1f5f9; }
+.push-icon{ font-size:48px; margin-bottom:12px; }
+.push-card b{ display:block; font-weight:900; font-size:16px; }
+.push-card span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:6px; line-height:1.4; }
+.primary-btn{ width:100%; background:#0f172a; color:#fff; border:none; padding:12px; border-radius:10px; font-weight:900; cursor:pointer; margin-top:16px; }
+.push-status{ font-size:10px; color:#94a3b8; margin-top:8px; }
+.push-settings{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.push-settings b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.push-setting{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f8fafc; font-size:13px; font-weight:600; }
+.push-setting:last-child{ border-bottom:none; }
+.switch{ position:relative; display:inline-block; width:44px; height:24px; }
+.switch input{ opacity:0; width:0; height:0; }
+.slider{ position:absolute; cursor:pointer; inset:0; background:#e2e8f0; border-radius:24px; transition:.3s; }
+.slider:before{ position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
+input:checked +.slider{ background:#10b981; }
+input:checked +.slider:before{ transform:translateX(20px); }
+.secondary-btn{ width:calc(100% - 24px); margin:12px; background:#fff; border:1px solid #e2e8f0; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
+</style>
+
+<script>
+async function initPushPage(){
+  const statusEl = document.getElementById('pushStatus');
+  const enableBtn = document.getElementById('pushEnableBtn');
+
+  if(!('Notification' in window)){
+    statusEl.innerText='❌ Push not supported in this browser';
+    enableBtn.disabled=true;
+    return;
+  }
+
+  statusEl.innerText=`Permission: ${Notification.permission}`;
+
+  if(Notification.permission==='granted'){
+    enableBtn.innerText='✅ Push Enabled';
+    enableBtn.style.background='#dcfce7';
+    enableBtn.style.color='#166534';
+    statusEl.innerText='✅ Push enabled - You will get real-time updates';
+  } else if(Notification.permission==='denied'){
+    enableBtn.innerText='❌ Blocked - Enable from settings';
+    enableBtn.style.background='#fee2e2';
+    enableBtn.style.color='#991b1b';
+    statusEl.innerText='❌ Blocked - Enable from browser settings > Site settings > Notifications';
+  }
+
+  enableBtn.addEventListener('click', async ()=>{
+    const perm = await Notification.requestPermission();
+    statusEl.innerText=`Permission: ${perm}`;
+    if(perm==='granted'){
+      enableBtn.innerText='✅ Push Enabled';
+      new Notification('SamanLive 🔔', { body:'Push enabled! You will get order updates real-time' });
+      if(window.Toast) Toast.show('Push enabled ✅', 'success');
+    }
+  });
+
+  document.getElementById('pushTestBtn')?.addEventListener('click', ()=>{
+    if(Notification.permission==='granted'){
+      new Notification('Test Push 🔔', { body:'This is test push notification from SamanLive - Works! 🎉' });
+      if(window.Toast) Toast.show('Test push sent 🧪', 'success');
+    } else {
+      if(window.Toast) Toast.show('Enable push first', 'warning');
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initPushPage);
+</script>

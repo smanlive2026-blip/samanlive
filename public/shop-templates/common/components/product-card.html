@@ -1,0 +1,266 @@
+<!-- LOCATION: common/components/product-card.html - FULL WORLD CLASS PRODUCT CARD -->
+<div class="product-card-template" id="productCardTemplate" style="display:none">
+  <div class="product-card">
+    <div class="product-image-wrap">
+      <img class="product-image" src="" alt="Product" loading="lazy">
+      <div class="product-image-overlay"></div>
+      <button class="product-wishlist-btn" title="Add to Wishlist"><span class="wish-icon">♡</span></button>
+      <span class="product-badge discount">20% OFF</span>
+      <span class="product-badge out-of-stock" style="display:none">Out of Stock</span>
+      <span class="product-badge bestseller" style="display:none">🔥 Bestseller</span>
+      <div class="product-quick-actions">
+        <button class="quick-action-btn" title="Quick View">👁️</button>
+        <button class="quick-action-btn" title="Share">↗️</button>
+      </div>
+    </div>
+
+    <div class="product-info">
+      <div class="product-category">Category</div>
+      <b class="product-name">Product Name</b>
+      <div class="product-rating"><span class="stars">⭐⭐⭐⭐⭐</span><span class="rating-count">(124)</span></div>
+      <div class="product-pricing">
+        <span class="product-price">₹100</span>
+        <span class="product-mrp">₹120</span>
+        <span class="product-off">17% OFF</span>
+      </div>
+      <div class="product-stock">
+        <div class="stock-bar"><div class="stock-fill" style="width:70%"></div></div>
+        <span class="stock-text">12 left • Selling fast</span>
+      </div>
+      <button class="product-add-btn"><span class="add-icon">🛒</span><span class="add-text">Add to Cart</span></button>
+      <div class="product-add-controls" style="display:none">
+        <button class="qty-btn minus">−</button>
+        <span class="qty-count">1</span>
+        <button class="qty-btn plus">+</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.product-card{
+  background:#fff;
+  border:1px solid #f1f5f9;
+  border-radius:18px;
+  overflow:hidden;
+  font-family:Outfit,sans-serif;
+  transition:.3s;
+  position:relative;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+}
+.product-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 24px rgba(0,0,0,.08);
+  border-color:#e2e8f0;
+}
+.product-image-wrap{
+  position:relative;
+  aspect-ratio:1/1;
+  background:#f8fafc;
+  overflow:hidden;
+}
+.product-image{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transition:.4s;
+}
+.product-card:hover.product-image{ transform:scale(1.05); }
+.product-image-overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top, rgba(0,0,0,.2), transparent);
+  opacity:0;
+  transition:.3s;
+}
+.product-card:hover.product-image-overlay{ opacity:1; }
+.product-wishlist-btn{
+  position:absolute;
+  top:8px;
+  right:8px;
+  background:rgba(255,255,255,.9);
+  backdrop-filter:blur(8px);
+  border:none;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  font-size:16px;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+  transition:.2s;
+  z-index:2;
+}
+.product-wishlist-btn:hover{ background:#fff; transform:scale(1.1); }
+.product-wishlist-btn.active{ color:#ef4444; }
+.product-badge{
+  position:absolute;
+  bottom:8px;
+  left:8px;
+  font-size:9px;
+  font-weight:900;
+  padding:4px 8px;
+  border-radius:20px;
+  letter-spacing:.3px;
+  z-index:2;
+}
+.product-badge.discount{ background:#ef4444; color:#fff; }
+.product-badge.out-of-stock{ background:#0f172a; color:#fff; bottom:8px; left:8px; right:8px; text-align:center; }
+.product-badge.bestseller{ background:#f59e0b; color:#fff; bottom:8px; left:8px; }
+.product-quick-actions{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  display:flex;
+  gap:8px;
+  opacity:0;
+  transition:.3s;
+  z-index:3;
+}
+.product-card:hover.product-quick-actions{ opacity:1; }
+.quick-action-btn{
+  background:#fff;
+  border:none;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  font-size:16px;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+  transition:.2s;
+}
+.quick-action-btn:hover{ transform:scale(1.1); }
+.product-info{
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  flex:1;
+}
+.product-category{
+  font-size:10px;
+  font-weight:800;
+  color:#94a3b8;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.product-name{
+  font-weight:800;
+  font-size:13px;
+  line-height:1.3;
+  color:#0f172a;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  min-height:34px;
+}
+.product-rating{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:11px;
+}
+.stars{ color:#f59e0b; letter-spacing:-1px; }
+.rating-count{ color:#94a3b8; font-weight:600; }
+.product-pricing{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-top:4px;
+}
+.product-price{
+  font-weight:900;
+  font-size:16px;
+  color:#0f172a;
+}
+.product-mrp{
+  font-size:12px;
+  color:#94a3b8;
+  text-decoration:line-through;
+  font-weight:600;
+}
+.product-off{
+  font-size:10px;
+  font-weight:900;
+  color:#10b981;
+  background:#dcfce7;
+  padding:2px 6px;
+  border-radius:20px;
+}
+.product-stock{
+  margin-top:6px;
+}
+.stock-bar{
+  width:100%;
+  height:4px;
+  background:#f1f5f9;
+  border-radius:20px;
+  overflow:hidden;
+}
+.stock-fill{
+  height:100%;
+  background:linear-gradient(90deg,#f59e0b,#ef4444);
+  border-radius:20px;
+}
+.stock-text{
+  font-size:10px;
+  font-weight:700;
+  color:#ef4444;
+  margin-top:4px;
+  display:block;
+}
+.product-add-btn{
+  margin-top:10px;
+  width:100%;
+  background:#0f172a;
+  color:#fff;
+  border:none;
+  padding:10px;
+  border-radius:12px;
+  font-weight:900;
+  font-size:13px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:.2s;
+}
+.product-add-btn:hover{ background:#1e293b; transform:translateY(-1px); }
+.product-add-btn:active{ transform:scale(.97); }
+.product-add-btn.added{ background:#10b981; }
+.product-add-controls{
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#0f172a;
+  border-radius:12px;
+  padding:4px;
+}
+.qty-btn{
+  background:#1e293b;
+  color:#fff;
+  border:none;
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+}
+.qty-count{
+  color:#fff;
+  font-weight:900;
+  font-size:14px;
+}
+</style>

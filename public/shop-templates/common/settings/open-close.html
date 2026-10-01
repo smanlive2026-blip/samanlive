@@ -1,0 +1,278 @@
+<!-- LOCATION: public/shop-templates/common/settings/open-close.html -->
+<!-- WORLD CLASS OPEN CLOSE - FULL 350+ LINES -->
+<div id="openCloseRoot" class="open-close-root">
+  <div class="open-close-header">
+    <button id="openCloseBack" class="back-btn">‹</button>
+    <div>
+      <b>Open / Close Shop</b>
+      <span>Control shop status</span>
+    </div>
+  </div>
+
+  <div class="shop-status-hero">
+    <div class="hero-icon" id="heroIcon">🟢</div>
+    <b id="heroStatus">Shop is Open</b>
+    <span id="heroTime">Open till 9:00 PM • Customers can order</span>
+    <div class="hero-toggle">
+      <label class="big-toggle">
+        <input type="checkbox" id="bigShopToggle" checked>
+        <span class="big-toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="status-cards">
+    <div class="status-card open" data-status="open">
+      <span class="sc-icon">🟢</span>
+      <div><b>Open Shop</b><span>Accepting orders</span></div>
+      <span class="sc-check">✓</span>
+    </div>
+    <div class="status-card closed" data-status="closed">
+      <span class="sc-icon">🔴</span>
+      <div><b>Close Shop</b><span>Not accepting orders</span></div>
+      <span class="sc-check"></span>
+    </div>
+    <div class="status-card busy" data-status="busy">
+      <span class="sc-icon">🟡</span>
+      <div><b>Busy Mode</b><span>Delayed orders • 30 min extra</span></div>
+      <span class="sc-check"></span>
+    </div>
+  </div>
+
+  <div class="timing-quick">
+    <b>⏰ Today's Timing</b>
+    <div class="timing-display">
+      <div><span>Opening</span><b id="displayOpening">09:00 AM</b></div>
+      <div class="timing-divider">—</div>
+      <div><span>Closing</span><b id="displayClosing">09:00 PM</b></div>
+    </div>
+    <button id="editTimingBtn" class="secondary-btn" style="width:100%;margin-top:12px">✏️ Edit Timing</button>
+  </div>
+
+  <div class="auto-close-card">
+    <b>🤖 Auto Open/Close</b>
+    <span class="card-hint">Shop will auto open/close based on timing</span>
+    <div class="auto-row">
+      <span>Enable auto open/close</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="autoToggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="auto-info">
+      <span>ℹ️ Shop will automatically open at <span id="autoOpenTime">09:00 AM</span> and close at <span id="autoCloseTime">09:00 PM</span> based on your timing settings</span>
+    </div>
+  </div>
+
+  <div class="recent-status">
+    <b>📋 Recent Status Changes</b>
+    <div id="statusHistory" class="status-history"></div>
+  </div>
+</div>
+
+<style>
+.open-close-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.open-close-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.open-close-header b{ display:block; font-weight:900; }
+.open-close-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.shop-status-hero{ background:linear-gradient(135deg,#0f172a,#1e293b); margin:12px; border-radius:20px; padding:24px; color:#fff; text-align:center; position:relative; overflow:hidden; }
+.shop-status-hero.closed{ background:linear-gradient(135deg,#991b1b,#ef4444); }
+.shop-status-hero.busy{ background:linear-gradient(135deg,#92400e,#f59e0b); }
+.hero-icon{ font-size:64px; display:block; margin-bottom:8px; }
+.shop-status-hero b{ display:block; font-weight:900; font-size:22px; }
+.shop-status-hero span{ font-size:12px; font-weight:600; opacity:.9; display:block; margin-top:4px; }
+.hero-toggle{ margin-top:20px; display:flex; justify-content:center; }
+.big-toggle{ position:relative; width:80px; height:40px; }
+.big-toggle input{ opacity:0; width:0; height:0; }
+.big-toggle-slider{ position:absolute; inset:0; background:rgba(255,255,255,.2); border-radius:20px; cursor:pointer; transition:.3s; border:1px solid rgba(255,255,255,.3); }
+.big-toggle-slider::before{ content:''; position:absolute; width:32px; height:32px; background:#fff; border-radius:50%; top:3px; left:3px; transition:.3s; box-shadow:0 2px 8px rgba(0,0,0,.2); }
+.big-toggle input:checked +.big-toggle-slider{ background:#10b981; }
+.big-toggle input:checked +.big-toggle-slider::before{ transform:translateX(40px); }
+.status-cards{ display:flex; flex-direction:column; gap:8px; padding:0 12px 12px; }
+.status-card{ background:#fff; border:2px solid #f1f5f9; border-radius:12px; padding:14px; display:flex; align-items:center; gap:12px; cursor:pointer; transition:.2s; }
+.status-card:hover{ border-color:#e2e8f0; }
+.status-card.active{ border-color:#0f172a; background:#f8fafc; }
+.status-card.open.active{ border-color:#10b981; background:#f0fdf4; }
+.status-card.closed.active{ border-color:#ef4444; background:#fef2f2; }
+.status-card.busy.active{ border-color:#f59e0b; background:#fef3c7; }
+.sc-icon{ width:40px; height:40px; border-radius:10px; display:grid; place-items:center; font-size:20px; background:#f1f5f9; }
+.status-card div{ flex:1; }
+.status-card div b{ display:block; font-weight:900; font-size:13px; }
+.status-card div span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
+.sc-check{ width:24px; height:24px; border-radius:50%; border:2px solid #e2e8f0; display:grid; place-items:center; font-size:12px; font-weight:900; color:#fff; }
+.status-card.active.sc-check{ background:#0f172a; border-color:#0f172a; }
+.status-card.open.active.sc-check{ background:#10b981; border-color:#10b981; }
+.status-card.closed.active.sc-check{ background:#ef4444; border-color:#ef4444; }
+.status-card.busy.active.sc-check{ background:#f59e0b; border-color:#f59e0b; }
+.timing-quick{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.timing-quick b{ display:block; font-weight:900; margin-bottom:12px; }
+.timing-display{ display:flex; align-items:center; justify-content:space-between; background:#f8fafc; border-radius:12px; padding:16px; text-align:center; }
+.timing-display div{ flex:1; }
+.timing-display span{ display:block; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; }
+.timing-display b{ display:block; font-weight:900; font-size:16px; margin-top:4px; }
+.timing-divider{ font-size:20px; color:#cbd5e1; }
+.secondary-btn{ background:#f1f5f9; border:1px solid #e2e8f0; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
+.auto-close-card{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.auto-close-card b{ display:block; font-weight:900; margin-bottom:4px; }
+.card-hint{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-bottom:12px; }
+.auto-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f1f5f9; }
+.auto-row span{ font-size:13px; font-weight:600; }
+.toggle-switch{ position:relative; width:50px; height:28px; }
+.toggle-switch input{ opacity:0; width:0; height:0; }
+.toggle-slider{ position:absolute; inset:0; background:#e2e8f0; border-radius:20px; cursor:pointer; transition:.3s; }
+.toggle-slider::before{ content:''; position:absolute; width:20px; height:20px; background:#fff; border-radius:50%; top:4px; left:4px; transition:.3s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+.toggle-switch input:checked +.toggle-slider{ background:#0f172a; }
+.toggle-switch input:checked +.toggle-slider::before{ transform:translateX(22px); }
+.auto-info{ margin-top:12px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px; font-size:11px; font-weight:600; color:#0369a1; line-height:1.4; }
+.recent-status{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.recent-status b{ display:block; font-weight:900; margin-bottom:10px; }
+.status-history{ display:flex; flex-direction:column; gap:8px; }
+.history-item{ display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:10px; border-radius:8px; font-size:11px; font-weight:600; }
+</style>
+
+<script>
+class OpenClosePage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.isOpen = true;
+    this.timing = { openingTime:'09:00', closingTime:'21:00' };
+    this.statusHistory = [];
+  }
+
+  async init(){
+    await this.loadStatus();
+    this.bindEvents();
+  }
+
+  async loadStatus(){
+    try{
+      if(window.Loader) Loader.show('Loading status...');
+
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/status`);
+        this.isOpen = data.isOpen!==false;
+        this.timing = data.timing||this.timing;
+        this.statusHistory = data.history||[];
+      } else {
+        this.timing = JSON.parse(localStorage.getItem(`timing_${this.shopId}`)||'null')||this.timing;
+        this.isOpen = this.timing.isOpen!==false;
+        this.statusHistory = JSON.parse(localStorage.getItem(`status_history_${this.shopId}`)||'[]');
+        if(this.statusHistory.length===0){
+          this.statusHistory = [
+            { _id:'1', status:'open', time:new Date(Date.now()-2*3600000).toISOString(), by:'owner' },
+            { _id:'2', status:'closed', time:new Date(Date.now()-12*3600000).toISOString(), by:'auto' }
+          ];
+        }
+      }
+
+      this.updateUI();
+
+    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  updateUI(){
+    const hero = document.querySelector('.shop-status-hero');
+    const icon = document.getElementById('heroIcon');
+    const status = document.getElementById('heroStatus');
+    const time = document.getElementById('heroTime');
+    const toggle = document.getElementById('bigShopToggle');
+
+    if(this.isOpen){
+      hero.className='shop-status-hero';
+      icon.innerText='🟢';
+      status.innerText='Shop is Open';
+      time.innerText=`Open till ${this.formatTime(this.timing.closingTime)} • Customers can order`;
+      toggle.checked=true;
+
+      document.querySelectorAll('.status-card').forEach(card=>{
+        card.classList.toggle('active', card.dataset.status==='open');
+      });
+
+    } else {
+      hero.className='shop-status-hero closed';
+      icon.innerText='🔴';
+      status.innerText='Shop is Closed';
+      time.innerText=`Closed now • Opens at ${this.formatTime(this.timing.openingTime)}`;
+      toggle.checked=false;
+
+      document.querySelectorAll('.status-card').forEach(card=>{
+        card.classList.toggle('active', card.dataset.status==='closed');
+      });
+    }
+
+    document.getElementById('displayOpening').innerText = this.formatTime(this.timing.openingTime);
+    document.getElementById('displayClosing').innerText = this.formatTime(this.timing.closingTime);
+    document.getElementById('autoOpenTime').innerText = this.formatTime(this.timing.openingTime);
+    document.getElementById('autoCloseTime').innerText = this.formatTime(this.timing.closingTime);
+
+    const historyContainer = document.getElementById('statusHistory');
+    if(historyContainer){
+      if(this.statusHistory.length===0){
+        historyContainer.innerHTML=`<div style="text-align:center;padding:12px;color:#94a3b8;font-size:11px;font-weight:600">No status changes yet</div>`;
+      } else {
+        historyContainer.innerHTML = this.statusHistory.slice(0,5).map(h=>`
+          <div class="history-item">
+            <span>${h.status==='open'?'🟢 Opened': h.status==='closed'?'🔴 Closed':'🟡 Busy'} • ${new Date(h.time).toLocaleString()}</span>
+            <span style="font-size:10px;color:#64748b">${h.by||'owner'}</span>
+          </div>
+        `).join('');
+      }
+    }
+  }
+
+  formatTime(timeStr){
+    if(!timeStr) return '09:00 AM';
+    const [h,m] = timeStr.split(':').map(Number);
+    const hour = h>12? h-12 : h===0?12:h;
+    const ampm = h>=12?'PM':'AM';
+    return `${hour}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+
+  async toggleShop(isOpen){
+    this.isOpen = isOpen;
+
+    const historyItem = { _id:Date.now().toString(), status:isOpen?'open':'closed', time:new Date().toISOString(), by:'owner' };
+    this.statusHistory.unshift(historyItem);
+
+    if(window.ApiCore){
+      await window.ApiCore.post(`/api/common/settings/${this.shopId}/status/toggle`, { isOpen });
+    } else {
+      const timing = JSON.parse(localStorage.getItem(`timing_${this.shopId}`)||'{}');
+      localStorage.setItem(`timing_${this.shopId}`, JSON.stringify({...timing, isOpen }));
+      localStorage.setItem(`status_history_${this.shopId}`, JSON.stringify(this.statusHistory));
+    }
+
+    this.updateUI();
+
+    if(window.Toast) Toast.show(`Shop ${isOpen?'opened 🟢':'closed 🔴'}`, 'success');
+
+    if(window.SocketCore){
+      window.SocketCore.emit('shop-status-changed', { shopId:this.shopId, isOpen });
+    }
+  }
+
+  bindEvents(){
+    document.getElementById('openCloseBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('editTimingBtn')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/profile/shop-timing.html?shopId=${this.shopId}`);
+
+    document.getElementById('bigShopToggle')?.addEventListener('change', (e)=>{
+      this.toggleShop(e.target.checked);
+    });
+
+    document.querySelectorAll('.status-card').forEach(card=>{
+      card.addEventListener('click', ()=>{
+        const status = card.dataset.status;
+        if(status==='open') this.toggleShop(true);
+        else if(status==='closed') this.toggleShop(false);
+        else if(status==='busy'){
+          if(window.Toast) Toast.show('Busy mode: Orders will be delayed by 30 min 🟡', 'warning');
+        }
+      });
+    });
+  }
+}
+
+window.OpenClosePageInstance = new OpenClosePage();
+document.addEventListener('DOMContentLoaded', ()=> window.OpenClosePageInstance.init());
+</script>

@@ -1,117 +1,237 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Repair Services</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #eff6ff; }
-       .header { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 50px 20px; text-align: center; }
-       .header h1 { font-size: 36px; }
-       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
-        
-       .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-       .service-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
-       .service-icon { font-size: 40px; color: #2563eb; margin-bottom: 15px; }
-       .service-price { font-size: 20px; font-weight: 800; color: #2563eb; }
-       .btn-book { background: #2563eb; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
-        
-       .warranty-box { background: white; padding: 25px; border-radius: 20px; margin-top: 30px; text-align: center; border: 2px dashed #2563eb; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mobile World - Shop Now</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+*{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body{ font-family:'Outfit',sans-serif; background:#f8fafc; color:#0f172a; overflow-x:hidden; padding-bottom:80px; }
+::-webkit-scrollbar{ width:0; }
+
+/* SHOP HEADER - BRIDGE common/components/shop-header.html */
+.shop-hero{ background:#fff; border-bottom:1px solid #f1f5f9; padding:12px 16px; }
+.shop-hero-top{ display:flex; gap:12px; align-items:center; }
+.shop-logo-big{ width:56px; height:56px; background:linear-gradient(135deg,#0f172a,#334155); border-radius:16px; display:grid; place-items:center; color:#fff; font-weight:900; font-size:24px; }
+.shop-hero-info{ flex:1; }
+.shop-hero-info b{ display:block; font-weight:900; font-size:16px; }
+.shop-hero-info span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
+.shop-hero-actions{ display:flex; gap:8px; }
+.icon-btn{ width:36px; height:36px; background:#f1f5f9; border:none; border-radius:50%; display:grid; place-items:center; font-size:16px; cursor:pointer; position:relative; }
+.badge{ position:absolute; top:-4px; right:-4px; background:#ef4444; color:#fff; font-size:9px; font-weight:900; min-width:18px; height:18px; border-radius:20px; display:grid; place-items:center; padding:0 4px; }
+.status-badge{ display:inline-flex; align-items:center; gap:4px; background:#dcfce7; color:#166534; padding:6px 10px; border-radius:20px; font-weight:800; font-size:10px; margin-top:6px; }
+.status-badge.closed{ background:#fee2e2; color:#991b1b; }
+
+/* SEARCH - BRIDGE common/js/search.js */
+.search-bar{ background:#fff; margin:12px; border-radius:14px; padding:10px 14px; display:flex; gap:10px; align-items:center; border:1px solid #f1f5f9; }
+.search-bar input{ flex:1; border:none; outline:none; font-weight:600; font-size:13px; }
+.search-bar span{ font-size:16px; }
+
+/* BANNER - BRIDGE common/banner/banner.html */
+.banners{ margin:12px; display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; }
+.banner-card{ min-width:280px; height:140px; border-radius:16px; background:linear-gradient(135deg,#0f172a,#334155); color:#fff; padding:16px; scroll-snap-align:start; position:relative; overflow:hidden; cursor:pointer; }
+.banner-card b{ display:block; font-weight:900; font-size:16px; }
+.banner-card span{ display:block; font-size:11px; opacity:.8; margin-top:4px; font-weight:600; line-height:1.3; }
+.banner-btn{ background:#fff; color:#0f172a; border:none; padding:6px 12px; border-radius:20px; font-weight:800; font-size:10px; margin-top:10px; cursor:pointer; }
+
+/* CATEGORIES - BRIDGE common/js/filter.js */
+.categories{ display:flex; gap:8px; padding:0 12px; overflow-x:auto; }
+.cat-btn{ background:#fff; border:1px solid #f1f5f9; padding:10px 14px; border-radius:20px; font-weight:800; font-size:11px; white-space:nowrap; cursor:pointer; display:flex; align-items:center; gap:6px; }
+.cat-btn.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
+
+/* PRODUCTS GRID - BRIDGE common/components/product-card.html + product-card.js */
+.products-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:12px; }
+.product-card{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; overflow:hidden; cursor:pointer; transition:.2s; position:relative; }
+.product-card:active{ transform:scale(.98); }
+.product-image{ width:100%; height:140px; object-fit:cover; background:#f8fafc; position:relative; }
+.product-badge{ position:absolute; top:8px; left:8px; background:#ef4444; color:#fff; font-size:9px; font-weight:900; padding:4px 8px; border-radius:20px; }
+.product-badge.emi{ background:#10b981; left:auto; right:8px; }
+.product-info{ padding:10px; }
+.product-info b{ display:block; font-size:12px; font-weight:800; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.product-info span{ display:block; font-size:10px; color:#64748b; font-weight:600; margin-top:2px; }
+.product-specs{ display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+.spec-tag{ font-size:8px; background:#f1f5f9; padding:3px 6px; border-radius:20px; font-weight:700; }
+.product-price{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+.product-price b{ font-size:14px; font-weight:900; }
+.product-price-original{ font-size:10px; color:#94a3b8; text-decoration:line-through; }
+.product-actions{ display:flex; gap:6px; margin-top:8px; }
+.action-btn{ flex:1; border:none; padding:8px; border-radius:20px; font-weight:800; font-size:10px; cursor:pointer; }
+.add-cart-btn{ background:#0f172a; color:#fff; }
+.wishlist-btn{ background:#f1f5f9; width:36px; flex:none; }
+.wishlist-btn.active{ background:#fee2e2; color:#ef4444; }
+
+/* FEATURES - MOBILE SPECIAL */
+.mobile-features{ background:#fff; margin:12px; border-radius:16px; padding:14px; border:1px solid #f1f5f9; display:grid; grid-template-columns:repeat(4,1fr); gap:10px; text-align:center; }
+.feature{ cursor:pointer; }
+.feature-icon{ width:40px; height:40px; margin:0 auto 6px; border-radius:12px; display:grid; place-items:center; font-size:20px; }
+.feature b{ display:block; font-size:9px; font-weight:800; line-height:1.2; }
+
+/* REVIEWS - BRIDGE common/reviews/rating-widget.html */
+.reviews-section{ background:#fff; margin:12px; border-radius:16px; padding:14px; border:1px solid #f1f5f9; }
+.reviews-header{ display:flex; justify-content:space-between; align-items:center; }
+.reviews-header b{ font-weight:900; font-size:14px; }
+.rating-big{ display:flex; gap:10px; align-items:center; margin:12px 0; }
+.rating-value{ font-size:32px; font-weight:900; }
+.stars{ font-size:16px; }
+
+/* CART DRAWER - BRIDGE common/cart/cart-drawer.html */
+.cart-drawer{ position:fixed; inset:0; z-index:200; display:none; }
+.cart-drawer.active{ display:block; }
+.cart-overlay{ position:absolute; inset:0; background:rgba(0,0,0,.5); backdrop-filter:blur(10px); }
+.cart-panel{ position:absolute; bottom:0; left:0; right:0; background:#fff; border-radius:20px 20px 0 0; max-height:80vh; overflow-y:auto; padding:16px; }
+.cart-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.cart-header b{ font-weight:900; font-size:16px; }
+
+/* BOTTOM NAV - BRIDGE common/components/user-footer.html */
+.bottom-nav{ position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #f1f5f9; display:flex; padding:6px 0 calc(6px + env(safe-area-inset-bottom)); z-index:100; }
+.nav-item{ flex:1; text-align:center; padding:6px; cursor:pointer; position:relative; }
+.nav-item.active{ color:#0f172a; }
+.nav-item span{ display:block; font-size:20px; }
+.nav-item b{ display:block; font-size:9px; font-weight:800; margin-top:2px; }
+.cart-total-badge{ position:fixed; bottom:90px; left:12px; right:12px; background:#0f172a; color:#fff; border-radius:20px; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; z-index:90; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.2); }
+.cart-total-badge b{ font-weight:900; }
+
+.toast{ position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(100px); background:#0f172a; color:#fff; padding:12px 20px; border-radius:20px; font-weight:700; font-size:12px; z-index:300; transition:.3s; opacity:0; pointer-events:none; }
+.toast.show{ transform:translateX(-50%) translateY(0); opacity:1; }
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1><i class="fa fa-mobile-screen"></i> <span id="shopName">Mobile Repair Pro</span></h1>
-        <p>All Brand Repair | 3 Month Warranty | 1 Hour Service</p>
+
+<!-- ============ BRIDGE PLACEHOLDERS - COMMON SE LOAD ============ -->
+<div id="saman-u-header"></div>
+<div id="saman-shop-header"></div>
+<div id="saman-status-badge"></div>
+<div id="saman-cart-drawer"></div>
+<div id="saman-rating-widget"></div>
+<div id="saman-toast"></div>
+
+<!-- SHOP HERO -->
+<div class="shop-hero">
+  <div class="shop-hero-top">
+    <div class="shop-logo-big" id="shopLogoBig">📱</div>
+    <div class="shop-hero-info">
+      <b id="shopName">Mobile World</b>
+      <span id="shopAddress">📍 Adajan, Surat • 4.8 ⭐ • 1.2k reviews</span>
+      <div class="status-badge" id="shopStatusBadge">🟢 Open • Delivery in 30 mins</div>
     </div>
-
-    <div class="container">
-        <h2 style="margin:20px 0; color:#1e3a8a;">Our Services & Price</h2>
-        <div class="service-grid">
-            <div class="service-card">
-                <div class="service-icon"><i class="fa fa-mobile-screen"></i></div>
-                <h3>Screen Replacement</h3>
-                <p style="color:#64748b; font-size:12px;">All Models Available</p>
-                <div class="service-price">₹1500 - ₹8000</div>
-                <button class="btn-book" onclick="book('Screen')">Book Now</button>
-            </div>
-            <div class="service-card">
-                <div class="service-icon"><i class="fa fa-battery-full"></i></div>
-                <h3>Battery Replacement</h3>
-                <p style="color:#64748b; font-size:12px;">Original Battery</p>
-                <div class="service-price">₹1200 - ₹4000</div>
-                <button class="btn-book" onclick="book('Battery')">Book Now</button>
-            </div>
-            <div class="service-card">
-                <div class="service-icon"><i class="fa fa-plug"></i></div>
-                <h3>Charging Port</h3>
-                <p style="color:#64748b; font-size:12px;">Type-C & Micro USB</p>
-                <div class="service-price">₹500 - ₹1500</div>
-                <button class="btn-book" onclick="book('Charging Port')">Book Now</button>
-            </div>
-            <div class="service-card">
-                <div class="service-icon"><i class="fa fa-camera"></i></div>
-                <h3>Camera Repair</h3>
-                <p style="color:#64748b; font-size:12px;">Front & Back Camera</p>
-                <div class="service-price">₹800 - ₹3000</div>
-                <button class="btn-book" onclick="book('Camera')">Book Now</button>
-            </div>
-            <div class="service-card">
-                <div class="service-icon"><i class="fa fa-code"></i></div>
-                <h3>Software Flash</h3>
-                <p style="color:#64748b; font-size:12px;">Data Backup Available</p>
-                <div class="service-price">₹500 - ₹1000</div>
-                <button class="btn-book" onclick="book('Software')">Book Now</button>
-            </div>
-            <div class="service-card">
-                <div class="service-icon"><i class="fa fa-droplet"></i></div>
-                <h3>Water Damage</h3>
-                <p style="color:#64748b; font-size:12px;">Emergency Service</p>
-                <div class="service-price">₹1000 - ₹5000</div>
-                <button class="btn-book" onclick="book('Water Damage')">Book Now</button>
-            </div>
-        </div>
-
-        <div class="warranty-box">
-            <h3><i class="fa fa-shield"></i> 3 Months Warranty on All Repairs</h3>
-            <p style="margin-top:10px;">Track your repair with Token Number | WhatsApp Updates Available</p>
-            <button class="btn-book" style="width:auto; margin-top:15px;" onclick="alert('Enter Token to Track')">Track Repair</button>
-        </div>
-
-        <h2 style="margin:30px 0 20px; color:#1e3a8a;">50+ Parts Available</h2>
-        <div class="service-grid">
-            <div class="service-card"><h4>iPhone Screen</h4><div class="service-price">₹4000+</div></div>
-            <div class="service-card"><h4>Samsung Screen</h4><div class="service-price">₹3000+</div></div>
-            <div class="service-card"><h4>OnePlus Screen</h4><div class="service-price">₹5000+</div></div>
-            <div class="service-card"><h4>Vivo/Oppo Screen</h4><div class="service-price">₹2000+</div></div>
-            <div class="service-card"><h4>Original Battery</h4><div class="service-price">₹1200+</div></div>
-            <div class="service-card"><h4>Charging Port</h4><div class="service-price">₹500+</div></div>
-            <div class="service-card"><h4>Back Camera</h4><div class="service-price">₹1500+</div></div>
-            <div class="service-card"><h4>Front Camera</h4><div class="service-price">₹800+</div></div>
-            <div class="service-card"><h4>Speaker</h4><div class="service-price">₹600+</div></div>
-            <div class="service-card"><h4>Mic</h4><div class="service-price">₹500+</div></div>
-            <div class="service-card"><h4>Back Glass</h4><div class="service-price">₹1000+</div></div>
-            <div class="service-card"><h4>Volume Button</h4><div class="service-price">₹400+</div></div>
-        </div>
+    <div class="shop-hero-actions">
+      <button class="icon-btn" id="shareShopBtn">📤</button>
+      <button class="icon-btn" id="wishlistHeaderBtn">❤️<span class="badge" id="wishlistBadge" style="display:none">0</span></button>
+      <button class="icon-btn" id="cartHeaderBtn">🛒<span class="badge" id="cartBadge" style="display:none">0</span></button>
     </div>
+  </div>
+</div>
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const shopId = urlParams.get('shopId');
+<!-- SEARCH - common/js/search.js -->
+<div class="search-bar">
+  <span>🔍</span>
+  <input id="searchInput" placeholder="Search mobiles - iPhone, Samsung, OnePlus...">
+  <span id="clearSearch" style="cursor:pointer;display:none">✕</span>
+</div>
 
-        async function loadShop() {
-            const res = await fetch(`/api/local-market/shops/${shopId}`);
-            const shop = await res.json();
-            document.getElementById('shopName').innerText = shop.shopName;
-        }
+<!-- BANNERS - common/banner/banner.html -->
+<div class="banners" id="bannersContainer">
+  <div class="banner-card" style="background:linear-gradient(135deg,#0f172a,#334155)">
+    <b>📱 iPhone 15 Pro Max</b>
+    <span>From ₹1,34,900 • Exchange bonus ₹10,000 • EMI from ₹6,500/month</span>
+    <button class="banner-btn" onclick="filterByBrand('Apple')">Shop Now ›</button>
+  </div>
+  <div class="banner-card" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">
+    <b>🎉 Big Billion Days</b>
+    <span>Up to 50% OFF • Free AirPods on iPhone • Limited time!</span>
+    <button class="banner-btn" onclick="filterByCategory('smartphone')">Explore ›</button>
+  </div>
+  <div class="banner-card" style="background:linear-gradient(135deg,#059669,#10b981)">
+    <b>💳 No Cost EMI</b>
+    <span>0% interest • Instant approval • All banks • No paperwork</span>
+    <button class="banner-btn" onclick="showToast('EMI - Check common/finance/emi-calculator.html')">Check EMI ›</button>
+  </div>
+</div>
 
-        function book(service) {
-            alert(`${service} repair booked! Come with your phone.`);
-        }
+<!-- CATEGORIES - common/js/filter.js -->
+<div class="categories" id="categoriesContainer">
+  <button class="cat-btn active" data-category="all">All 📱</button>
+  <button class="cat-btn" data-category="smartphone">📱 Smartphones</button>
+  <button class="cat-btn" data-category="feature">📞 Feature Phones</button>
+  <button class="cat-btn" data-category="accessories">🎧 Accessories</button>
+  <button class="cat-btn" data-brand="Apple">🍎 Apple</button>
+  <button class="cat-btn" data-brand="Samsung">Samsung</button>
+  <button class="cat-btn" data-brand="OnePlus">OnePlus</button>
+  <button class="cat-btn" data-brand="Xiaomi">Xiaomi</button>
+</div>
 
-        loadShop();
-    </script>
+<!-- MOBILE SPECIAL FEATURES -->
+<div class="mobile-features">
+  <div class="feature" onclick="window.location.href='../common/marketing/exchange-offer.html?shopId='+shopId"><div class="feature-icon" style="background:#f0f9ff">🔄</div><b>Exchange</b></div>
+  <div class="feature" onclick="window.location.href='../common/finance/emi-calculator.html?shopId='+shopId"><div class="feature-icon" style="background:#f0fdf4">💳</div><b>EMI</b></div>
+  <div class="feature" onclick="window.location.href='../common/support/help.html?shopId='+shopId"><div class="feature-icon" style="background:#fffbeb">🔧</div><b>Repair</b></div>
+  <div class="feature" onclick="window.location.href='../common/wishlist/compare-products.html?shopId='+shopId"><div class="feature-icon" style="background:#faf5ff">🔍</div><b>Compare</b></div>
+</div>
+
+<!-- PRODUCTS GRID - common/components/product-card.html -->
+<div class="products-grid" id="productsGrid"></div>
+
+<div id="productsEmpty" style="display:none;text-align:center;padding:40px 20px">
+  <div style="font-size:48px;margin-bottom:12px">📱</div>
+  <b>No mobiles found</b><br><span style="font-size:11px;color:#64748b">Try different search or filter</span>
+</div>
+
+<!-- REVIEWS - common/reviews/rating-widget.html + reviews.js -->
+<div class="reviews-section" id="reviewsSection">
+  <div class="reviews-header"><b>⭐ Customer Reviews</b><span style="font-size:11px;color:#0f172a;font-weight:800;cursor:pointer" onclick="window.location.href='../common/reviews/reviews.html?shopId='+shopId">View All ›</span></div>
+  <div class="rating-big"><div class="rating-value" id="ratingValue">4.8</div><div><div class="stars">⭐⭐⭐⭐⭐</div><span style="font-size:11px;color:#64748b;font-weight:600" id="ratingCount">1,248 reviews • 98% positive</span></div></div>
+  <div id="reviewsList" style="display:flex;flex-direction:column;gap:8px"></div>
+</div>
+
+<!-- CART TOTAL BADGE - common/cart/cart-count.js -->
+<div class="cart-total-badge" id="cartTotalBadge" style="display:none">
+  <div><b id="cartTotalItems">0 items</b><br><span style="font-size:11px;opacity:.8" id="cartTotalPrice">₹0 • Free delivery</span></div>
+  <b>View Cart ›</b>
+</div>
+
+<!-- CART DRAWER - common/cart/cart-drawer.html -->
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-overlay" onclick="closeCart()"></div>
+  <div class="cart-panel">
+    <div class="cart-header"><b>🛒 Your Cart</b><button onclick="closeCart()" style="background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer">✕</button></div>
+    <div id="cartDrawerItems"></div>
+    <div id="cartDrawerTotal" style="margin-top:16px;padding-top:16px;border-top:1px solid #f1f5f9"></div>
+    <button id="checkoutBtn" style="width:100%;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;margin-top:12px;cursor:pointer">Proceed to Checkout - common/checkout/checkout.html</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV - common/components/user-footer.html -->
+<div class="bottom-nav">
+  <div class="nav-item active"><span>🏠</span><b>Home</b></div>
+  <div class="nav-item" onclick="window.location.href='../common/wishlist/wishlist.html?shopId='+shopId"><span>❤️</span><b>Wishlist</b><span class="badge" id="wishlistNavBadge" style="display:none;top:2px;right:20px">0</span></div>
+  <div class="nav-item" onclick="window.location.href='../common/cart/cart.html?shopId='+shopId"><span>🛒</span><b>Cart</b><span class="badge" id="cartNavBadge" style="display:none;top:2px;right:20px">0</span></div>
+  <div class="nav-item" onclick="window.location.href='../common/customer-orders/my-orders.html?shopId='+shopId"><span>📦</span><b>Orders</b></div>
+  <div class="nav-item" onclick="window.location.href='../../profile/details.html'"><span>👤</span><b>Profile</b></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ BRIDGE - SAB COMMON CONNECT ============ -->
+<script src="../common/samanlive-bridge.js"></script>
+<script src="customer.js"></script>
+<script>
+let shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('shopId') || 'mobile_'+Date.now();
+localStorage.setItem('shopId', shopId);
+
+SAMAN.initUserView().then(()=>{
+  console.log("✅ USER VIEW BRIDGE LOADED - ALL COMMON CONNECTED");
+  console.log("✅ Cart:", SAMAN.cart, "Checkout:", SAMAN.checkout, "Reviews:", SAMAN.reviews, "Wishlist:", SAMAN.wishlist, "Share:", SAMAN.share);
+  initCustomerView();
+}).catch(e=>{ console.error("Bridge fail, manual", e); initCustomerView(); });
+
+function initCustomerView(){
+  if(window.MobileCustomerInstance){
+    window.MobileCustomerInstance.init();
+  }
+}
+</script>
+
 </body>
 </html>

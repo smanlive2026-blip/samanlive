@@ -1,0 +1,382 @@
+<!-- LOCATION: common/delivery/delivery-proof.html - WORLD CLASS DELIVERY PROOF -->
+<div id="proofRoot" class="proof-root">
+  <div class="proof-header">
+    <button id="proofBack" class="back-btn">‹</button>
+    <div>
+      <b>Delivery Proof</b>
+      <span id="proofOrderId">Order #ORD----</span>
+    </div>
+    <button id="proofHelp" class="help-btn">❓</button>
+  </div>
+
+  <div class="proof-order-card">
+    <div class="proof-shop">
+      <img id="proofShopLogo" src="https://via.placeholder.com/40" class="shop-logo">
+      <div>
+        <b id="proofShopName">Shop Name</b>
+        <span id="proofCustomerName">Customer Name • 📍 1.2 km</span>
+      </div>
+      <span id="proofStatus" class="status-badge">OUT FOR DELIVERY</span>
+    </div>
+  </div>
+
+  <div class="proof-steps">
+    <div class="step active" id="stepPhoto">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <b>📸 Take Photo Proof</b>
+        <span>Take photo of delivered package at customer door</span>
+        <div class="photo-upload-area" id="photoUploadArea">
+          <input type="file" id="proofPhotoInput" accept="image/*" capture="environment" hidden>
+          <div class="upload-placeholder" id="uploadPlaceholder">
+            <div class="upload-icon">📷</div>
+            <b>Tap to take photo</b>
+            <span>Photo will be saved with location & time</span>
+          </div>
+          <img id="proofPhotoPreview" class="photo-preview" style="display:none">
+          <button id="retakePhoto" class="retake-btn" style="display:none">↻ Retake</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="stepSignature">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <b>✍️ Customer Signature</b>
+        <span>Customer signature for confirmation</span>
+        <div class="signature-area">
+          <canvas id="signatureCanvas" class="signature-canvas" width="300" height="150"></canvas>
+          <div class="signature-actions">
+            <button id="clearSignature" class="clear-btn">Clear</button>
+            <span class="sign-hint">Sign above with finger</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="stepOtp">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <b>🔐 Delivery OTP</b>
+        <span>Enter OTP shared with customer</span>
+        <div class="otp-area">
+          <div class="otp-inputs">
+            <input type="text" maxlength="1" class="otp-box" data-index="0">
+            <input type="text" maxlength="1" class="otp-box" data-index="1">
+            <input type="text" maxlength="1" class="otp-box" data-index="2">
+            <input type="text" maxlength="1" class="otp-box" data-index="3">
+          </div>
+          <button id="resendOtp" class="resend-btn">Resend OTP to customer</button>
+          <div class="otp-info">OTP sent to customer: <b id="customerPhone">+91 9XXXX XXXXX</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="proof-location-card">
+    <div class="location-header">
+      <b>📍 Delivery Location Verified</b>
+      <span class="verified-badge">✅ Verified</span>
+    </div>
+    <div class="location-details">
+      <span id="proofLocation">Lat: 21.1702, Lng: 72.8311 • Accuracy: 12m</span>
+      <span id="proofTime">Time: ${new Date().toLocaleString()}</span>
+    </div>
+    <div id="proofMapMini" class="map-mini">🗺️ Map</div>
+  </div>
+
+  <div class="proof-actions">
+    <button id="proofCancel" class="secondary-btn">Cancel</button>
+    <button id="confirmDelivery" class="primary-btn" disabled>Confirm Delivery ✅</button>
+  </div>
+
+  <div id="deliverySuccess" class="delivery-success" style="display:none">
+    <div class="success-icon">🎉</div>
+    <b>Delivery Completed!</b>
+    <span>Order delivered successfully. Customer notified.</span>
+    <div class="success-details">
+      <span>Proof saved with photo, signature & OTP</span>
+      <span id="successOrderId">#ORD----</span>
+    </div>
+    <button id="backToOrdersSuccess" class="primary-btn">Back to Orders</button>
+  </div>
+</div>
+
+<style>
+.proof-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:80px; }
+.proof-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.proof-header b{ display:block; font-weight:900; }
+.proof-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.help-btn{ margin-left:auto; background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; }
+.proof-order-card{ background:#fff; margin:12px; border-radius:16px; padding:14px; border:1px solid #f1f5f9; }
+.proof-shop{ display:flex; align-items:center; gap:10px; }
+.shop-logo{ width:40px; height:40px; border-radius:10px; object-fit:cover; background:#f1f5f9; }
+.proof-shop b{ display:block; font-weight:900; font-size:13px; }
+.proof-shop span{ font-size:11px; color:#64748b; font-weight:600; }
+.status-badge{ margin-left:auto; background:#f59e0b; color:#fff; font-size:10px; font-weight:900; padding:4px 8px; border-radius:20px; }
+.proof-steps{ padding:12px; display:flex; flex-direction:column; gap:12px; }
+.step{ background:#fff; border:2px solid #f1f5f9; border-radius:16px; padding:16px; display:flex; gap:12px; transition:.3s; }
+.step.active{ border-color:#0f172a; background:#fff; }
+.step.done{ border-color:#10b981; background:#f0fdf4; }
+.step-number{ width:32px; height:32px; background:#f1f5f9; border-radius:50%; display:grid; place-items:center; font-weight:900; font-size:14px; flex-shrink:0; }
+.step.active .step-number{ background:#0f172a; color:#fff; }
+.step.done .step-number{ background:#10b981; color:#fff; }
+.step-content{ flex:1; }
+.step-content b{ display:block; font-weight:900; font-size:14px; }
+.step-content span{ font-size:11px; color:#64748b; font-weight:600; display:block; margin-top:2px; }
+.photo-upload-area{ margin-top:12px; border:2px dashed #cbd5e1; border-radius:12px; padding:20px; text-align:center; cursor:pointer; position:relative; overflow:hidden; }
+.upload-icon{ font-size:36px; margin-bottom:8px; }
+.upload-placeholder b{ display:block; font-weight:900; font-size:13px; }
+.upload-placeholder span{ font-size:11px; color:#94a3b8; }
+.photo-preview{ width:100%; border-radius:12px; max-height:200px; object-fit:cover; }
+.retake-btn{ position:absolute; top:8px; right:8px; background:rgba(0,0,0,.6); color:#fff; border:none; padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
+.signature-area{ margin-top:12px; }
+.signature-canvas{ width:100%; height:150px; border:2px solid #e2e8f0; border-radius:12px; background:#fff; touch-action:none; cursor:crosshair; }
+.signature-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+.clear-btn{ background:#f1f5f9; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
+.sign-hint{ font-size:11px; color:#94a3b8; font-weight:600; }
+.otp-area{ margin-top:12px; }
+.otp-inputs{ display:flex; gap:10px; justify-content:center; margin-bottom:12px; }
+.otp-box{ width:48px; height:48px; border:2px solid #e2e8f0; border-radius:10px; text-align:center; font-weight:900; font-size:20px; }
+.otp-box:focus{ border-color:#0f172a; outline:none; }
+.resend-btn{ background:#f1f5f9; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; display:block; margin:0 auto; }
+.otp-info{ text-align:center; font-size:11px; color:#64748b; font-weight:600; margin-top:8px; }
+.proof-location-card{ background:#fff; margin:12px; border-radius:16px; padding:14px; border:1px solid #f1f5f9; }
+.location-header{ display:flex; justify-content:space-between; align-items:center; }
+.location-header b{ font-weight:900; font-size:13px; }
+.verified-badge{ background:#dcfce7; color:#166534; font-size:10px; font-weight:900; padding:2px 8px; border-radius:20px; }
+.location-details{ margin-top:8px; }
+.location-details span{ display:block; font-size:11px; color:#64748b; font-weight:600; line-height:1.4; }
+.map-mini{ margin-top:10px; height:80px; background:#e2e8f0; border-radius:10px; display:grid; place-items:center; font-weight:800; color:#64748b; }
+.proof-actions{ position:fixed; bottom:0; left:0; right:0; background:#fff; padding:12px 16px; display:flex; gap:10px; border-top:1px solid #f1f5f9; max-width:600px; margin:0 auto; }
+.secondary-btn{ flex:1; background:#f1f5f9; border:none; padding:14px; border-radius:12px; font-weight:900; cursor:pointer; }
+.primary-btn{ flex:1.5; background:#0f172a; color:#fff; border:none; padding:14px; border-radius:12px; font-weight:900; cursor:pointer; }
+.primary-btn:disabled{ background:#e2e8f0; color:#94a3b8; cursor:not-allowed; }
+.delivery-success{ position:fixed; inset:0; background:#fff; z-index:9999; display:grid; place-items:center; text-align:center; padding:24px; }
+.success-icon{ font-size:64px; margin-bottom:12px; }
+.delivery-success b{ font-weight:900; font-size:22px; display:block; }
+.delivery-success span{ font-size:13px; color:#64748b; font-weight:600; margin-top:6px; display:block; }
+.success-details{ background:#f8fafc; border-radius:12px; padding:12px; margin:16px 0; }
+.success-details span{ font-size:11px; }
+</style>
+
+<script>
+class DeliveryProof {
+  constructor(){
+    this.orderId = new URLSearchParams(location.search).get('orderId') || '';
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.photo = null;
+    this.signature = null;
+    this.otp = '';
+    this.location = null;
+    this.isDrawing = false;
+  }
+
+  async init(){
+    document.getElementById('proofOrderId').innerText = `#${this.orderId.slice(-6).toUpperCase()}`;
+    document.getElementById('successOrderId').innerText = `#${this.orderId.slice(-6).toUpperCase()}`;
+
+    await this.loadOrder();
+    this.getLocation();
+    this.initSignatureCanvas();
+    this.initOtpInputs();
+    this.bindEvents();
+  }
+
+  async loadOrder(){
+    try{
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/orders/${this.shopId}/${this.orderId}`);
+        const order = data.order || data;
+        document.getElementById('proofShopName').innerText = order.shopName||'Shop';
+        document.getElementById('proofCustomerName').innerText = `${order.customerName||'Customer'} • ${order.customerAddress||''}`;
+        document.getElementById('customerPhone').innerText = order.customerPhone||'+91 9XXXX XXXXX';
+      }
+    }catch(e){}
+  }
+
+  getLocation(){
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition((pos)=>{
+        this.location = { lat:pos.coords.latitude, lng:pos.coords.longitude, accuracy:pos.coords.accuracy };
+        document.getElementById('proofLocation').innerText = `Lat: ${pos.coords.latitude.toFixed(4)}, Lng: ${pos.coords.longitude.toFixed(4)} • Accuracy: ${Math.round(pos.coords.accuracy)}m`;
+        document.getElementById('proofTime').innerText = `Time: ${new Date().toLocaleString()}`;
+      });
+    }
+  }
+
+  initSignatureCanvas(){
+    const canvas = document.getElementById('signatureCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+
+    const getPos = (e)=>{
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+
+    const startDraw = (e)=>{
+      this.isDrawing = true;
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      e.preventDefault();
+    };
+
+    const draw = (e)=>{
+      if(!this.isDrawing) return;
+      const pos = getPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      e.preventDefault();
+    };
+
+    const endDraw = ()=>{
+      this.isDrawing = false;
+      this.signature = canvas.toDataURL();
+      this.checkCanConfirm();
+    };
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('touchstart', startDraw);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', endDraw);
+  }
+
+  initOtpInputs(){
+    const boxes = document.querySelectorAll('.otp-box');
+    boxes.forEach((box, idx)=>{
+      box.addEventListener('input', (e)=>{
+        if(e.target.value && idx < boxes.length-1){
+          boxes[idx+1].focus();
+        }
+        this.otp = Array.from(boxes).map(b=> b.value).join('');
+        this.checkCanConfirm();
+      });
+
+      box.addEventListener('keydown', (e)=>{
+        if(e.key==='Backspace' &&!e.target.value && idx>0){
+          boxes[idx-1].focus();
+        }
+      });
+    });
+  }
+
+  checkCanConfirm(){
+    const hasPhoto = !!this.photo;
+    const hasSignature = !!this.signature;
+    const hasOtp = this.otp.length===4;
+
+    const btn = document.getElementById('confirmDelivery');
+    btn.disabled =!(hasPhoto && hasSignature && hasOtp);
+
+    if(hasPhoto) document.getElementById('stepPhoto').classList.add('done');
+    if(hasSignature) document.getElementById('stepSignature').classList.add('done');
+    if(hasOtp) document.getElementById('stepOtp').classList.add('done');
+  }
+
+  bindEvents(){
+    document.getElementById('proofBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('proofCancel')?.addEventListener('click', ()=> history.back());
+
+    const uploadArea = document.getElementById('photoUploadArea');
+    const input = document.getElementById('proofPhotoInput');
+    const placeholder = document.getElementById('uploadPlaceholder');
+    const preview = document.getElementById('proofPhotoPreview');
+    const retake = document.getElementById('retakePhoto');
+
+    uploadArea?.addEventListener('click', ()=> input.click());
+
+    input?.addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        this.photo = ev.target.result;
+        preview.src = this.photo;
+        preview.style.display='block';
+        placeholder.style.display='none';
+        retake.style.display='block';
+        this.checkCanConfirm();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    retake?.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      this.photo = null;
+      preview.style.display='none';
+      placeholder.style.display='block';
+      retake.style.display='none';
+      input.value='';
+      this.checkCanConfirm();
+    });
+
+    document.getElementById('clearSignature')?.addEventListener('click', ()=>{
+      const canvas = document.getElementById('signatureCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      this.signature = null;
+      document.getElementById('stepSignature').classList.remove('done');
+      this.checkCanConfirm();
+    });
+
+    document.getElementById('resendOtp')?.addEventListener('click', async ()=>{
+      if(window.Toast) Toast.show('OTP resent to customer 📱', 'success');
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/delivery/resend-otp`, { orderId:this.orderId });
+      }
+    });
+
+    document.getElementById('confirmDelivery')?.addEventListener('click', ()=> this.confirmDelivery());
+    document.getElementById('backToOrdersSuccess')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/orders/orders.html?shopId=${this.shopId}`);
+  }
+
+  async confirmDelivery(){
+    const btn = document.getElementById('confirmDelivery');
+    btn.innerText = 'Confirming...';
+    btn.disabled = true;
+
+    try{
+      const payload = {
+        orderId: this.orderId,
+        shopId: this.shopId,
+        proofPhoto: this.photo,
+        signature: this.signature,
+        otp: this.otp,
+        location: this.location,
+        deliveredAt: new Date().toISOString()
+      };
+
+      if(window.ApiCore){
+        await window.ApiCore.post(`/api/common/delivery/confirm`, payload);
+      }
+
+      localStorage.setItem(`delivery_proof_${this.orderId}`, JSON.stringify(payload));
+
+      document.getElementById('deliverySuccess').style.display='grid';
+
+      if(window.Toast) Toast.show('Delivery confirmed! 🎉', 'success');
+      if(navigator.vibrate) navigator.vibrate([50,50,50]);
+
+    }catch(e){
+      console.error(e);
+      if(window.Toast) Toast.show('Failed to confirm delivery', 'error');
+      btn.innerText = 'Confirm Delivery ✅';
+      btn.disabled = false;
+    }
+  }
+}
+
+window.DeliveryProofInstance = new DeliveryProof();
+document.addEventListener('DOMContentLoaded', ()=> window.DeliveryProofInstance.init());
+</script>

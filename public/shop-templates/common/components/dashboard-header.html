@@ -1,0 +1,283 @@
+<!-- LOCATION: common/components/dashboard-header.html - FULL DASHBOARD HEADER -->
+<header id="dashHeader" class="dashboard-header">
+  <div class="dash-header-left">
+    <button id="dashSidebarToggle" class="icon-btn menu-btn" aria-label="Menu">
+      <span class="menu-line"></span>
+      <span class="menu-line"></span>
+      <span class="menu-line"></span>
+    </button>
+
+    <div class="dash-logo-wrap">
+      <img id="dashShopLogo" src="https://via.placeholder.com/32" alt="Shop" class="dash-shop-logo">
+      <div class="dash-shop-info">
+        <b id="dashShopName" class="dash-shop-name">My Shop</b>
+        <div class="dash-shop-meta">
+          <span id="shopStatusBadgeHeader" class="status-badge-mini open">● Open</span>
+          <span class="dash-meta-dot">•</span>
+          <span id="dashShopIdShort" class="dash-shop-id">ID: ----</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-header-right">
+    <button id="dashSearchBtn" class="icon-btn" title="Search">🔍</button>
+    
+    <button id="dashCartBtn" class="icon-btn cart-btn" data-open-cart title="Cart">
+      🛒
+      <span class="cart-badge" data-cart-count style="display:none">0</span>
+    </button>
+
+    <button id="dashNotifBtn" class="icon-btn notif-btn" title="Notifications">
+      🔔
+      <span id="notifDot" class="notif-dot" style="display:none"></span>
+    </button>
+
+    <div class="dash-profile-wrap" id="dashProfileWrap">
+      <img id="dashAvatar" src="https://i.pravatar.cc/100?img=12" alt="Owner" class="dash-avatar">
+      <div class="dash-profile-dropdown" id="dashProfileDropdown" style="display:none">
+        <div class="dropdown-header">
+          <b id="dashUserName">Shop Owner</b>
+          <span id="dashUserEmail">owner@shop.com</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <a href="/shop-templates/common/profile/profile.html" class="dropdown-item">👤 Profile</a>
+        <a href="/shop-templates/common/settings/settings.html" class="dropdown-item">⚙️ Settings</a>
+        <a href="/shop-templates/common/support/help.html" class="dropdown-item">💬 Help & Support</a>
+        <div class="dropdown-divider"></div>
+        <button data-logout class="dropdown-item danger">🚪 Logout</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+.dashboard-header{
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid #f1f5f9;
+  padding:10px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-family:Outfit,sans-serif;
+}
+.dash-header-left, .dash-header-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.icon-btn{
+  width:40px;
+  height:40px;
+  background:#fff;
+  border:1px solid #f1f5f9;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  font-size:18px;
+  transition:.2s;
+  position:relative;
+}
+.icon-btn:hover{ background:#f8fafc; transform:translateY(-1px); }
+.icon-btn:active{ transform:scale(.95); }
+.menu-btn{
+  flex-direction:column;
+  gap:3px;
+  padding:10px;
+}
+.menu-line{
+  width:16px;
+  height:2px;
+  background:#0f172a;
+  border-radius:2px;
+  display:block;
+}
+.dash-logo-wrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.dash-shop-logo{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  object-fit:cover;
+  background:#f1f5f9;
+  border:1px solid #f1f5f9;
+}
+.dash-shop-info{
+  line-height:1.2;
+}
+.dash-shop-name{
+  font-weight:900;
+  font-size:14px;
+  display:block;
+  max-width:140px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.dash-shop-meta{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:10px;
+  color:#64748b;
+  margin-top:2px;
+}
+.status-badge-mini{
+  font-weight:800;
+  font-size:9px;
+  padding:1px 5px;
+  border-radius:10px;
+}
+.status-badge-mini.open{ background:#dcfce7; color:#166534; }
+.status-badge-mini.closed{ background:#fee2e2; color:#991b1b; }
+.dash-meta-dot{ opacity:.5; }
+.dash-shop-id{ font-weight:700; }
+
+.cart-badge{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  background:#ef4444;
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+  min-width:18px;
+  height:18px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  border:2px solid #fff;
+}
+.notif-dot{
+  position:absolute;
+  top:8px;
+  right:10px;
+  width:8px;
+  height:8px;
+  background:#ef4444;
+  border-radius:50%;
+  border:2px solid #fff;
+}
+.dash-profile-wrap{
+  position:relative;
+  cursor:pointer;
+}
+.dash-avatar{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid #f1f5f9;
+}
+.dash-profile-dropdown{
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  background:#fff;
+  border:1px solid #f1f5f9;
+  border-radius:16px;
+  box-shadow:0 20px 40px rgba(0,0,0,.12);
+  width:220px;
+  overflow:hidden;
+  animation:dropdownIn .25s;
+}
+@keyframes dropdownIn{
+  from{ opacity:0; transform:translateY(-8px) scale(.96); }
+  to{ opacity:1; transform:translateY(0) scale(1); }
+}
+.dropdown-header{
+  padding:14px;
+  background:#f8fafc;
+}
+.dropdown-header b{
+  display:block;
+  font-weight:900;
+  font-size:14px;
+}
+.dropdown-header span{
+  font-size:11px;
+  color:#64748b;
+  display:block;
+  margin-top:2px;
+}
+.dropdown-divider{
+  height:1px;
+  background:#f1f5f9;
+}
+.dropdown-item{
+  display:block;
+  width:100%;
+  text-align:left;
+  padding:10px 14px;
+  background:transparent;
+  border:none;
+  font-family:Outfit,sans-serif;
+  font-weight:600;
+  font-size:13px;
+  color:#334155;
+  cursor:pointer;
+  text-decoration:none;
+}
+.dropdown-item:hover{ background:#f8fafc; }
+.dropdown-item.danger{ color:#ef4444; }
+</style>
+
+<script>
+(function(){
+  const shopId = new URLSearchParams(location.search).get('shopId') || '';
+  document.getElementById('dashShopIdShort').innerText = `ID: ${shopId.slice(-6).toUpperCase() || '----'}`;
+
+  // Load shop data
+  async function loadHeaderShop(){
+    try{
+      const res = await fetch(`/api/shops/${shopId}?t=${Date.now()}`, { cache:'no-store', credentials:'include' });
+      const data = await res.json();
+      const shop = data.shop || data;
+      if(shop){
+        document.getElementById('dashShopName').innerText = shop.shopName || shop.name || 'My Shop';
+        if(shop.logo) document.getElementById('dashShopLogo').src = shop.logo;
+      }
+    }catch(e){}
+  }
+
+  if(shopId) loadHeaderShop();
+
+  // Profile dropdown
+  const wrap = document.getElementById('dashProfileWrap');
+  const dropdown = document.getElementById('dashProfileDropdown');
+  wrap?.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+  });
+  document.addEventListener('click', ()=> { if(dropdown) dropdown.style.display='none'; });
+
+  // Shop status
+  fetch(`/api/common/shop-status/${shopId}?t=${Date.now()}`).then(r=>r.json()).then(d=>{
+    const badge = document.getElementById('shopStatusBadgeHeader');
+    if(badge){
+      const isOpen = d.isOpen || d.open || true;
+      badge.className = `status-badge-mini ${isOpen?'open':'closed'}`;
+      badge.innerText = isOpen ? '● Open' : '● Closed';
+    }
+  }).catch(()=>{});
+
+  // Current user
+  if(window.currentUser){
+    const nameEl = document.getElementById('dashUserName');
+    const emailEl = document.getElementById('dashUserEmail');
+    const avatarEl = document.getElementById('dashAvatar');
+    if(nameEl) nameEl.innerText = window.currentUser.name || 'Owner';
+    if(emailEl) emailEl.innerText = window.currentUser.email || window.currentUser.phone || '';
+    if(avatarEl && window.currentUser.avatar) avatarEl.src = window.currentUser.avatar;
+  }
+})();
+</script>

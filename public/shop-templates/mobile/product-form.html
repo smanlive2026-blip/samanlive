@@ -1,0 +1,137 @@
+<!-- LOCATION: public/shop-templates/mobile/product-form.html -->
+<div id="productFormRoot" style="font-family:Outfit,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:80px">
+  <div style="background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9">
+    <button onclick="history.back()" style="background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer">‹</button>
+    <div><b id="formTitle">Add Mobile</b><br><span style="font-size:11px;color:#64748b;font-weight:600">Mobile details</span></div>
+    <button id="quickAddToggle" style="margin-left:auto;background:#f1f5f9;border:1px solid #e2e8f0;padding:8px 12px;border-radius:8px;font-weight:800;font-size:11px;cursor:pointer">⚡ Quick Add</button>
+  </div>
+
+  <div id="quickAddSection" style="display:none;background:#fff;margin:12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9">
+    <b>⚡ Quick Add - Ready Mobiles</b>
+    <div style="display:flex;gap:6px;margin:12px 0;overflow-x:auto">
+      <button class="quick-filter active" data-category="all" style="background:#0f172a;color:#fff;border:none;padding:8px 12px;border-radius:20px;font-weight:700;font-size:11px;white-space:nowrap;cursor:pointer">All</button>
+      <button class="quick-filter" data-category="smartphone" style="background:#f1f5f9;border:none;padding:8px 12px;border-radius:20px;font-weight:700;font-size:11px;white-space:nowrap;cursor:pointer">📱 Smartphones</button>
+      <button class="quick-filter" data-category="accessories" style="background:#f1f5f9;border:none;padding:8px 12px;border-radius:20px;font-weight:700;font-size:11px;white-space:nowrap;cursor:pointer">🎧 Accessories</button>
+      <button class="quick-filter" data-category="feature" style="background:#f1f5f9;border:none;padding:8px 12px;border-radius:20px;font-weight:700;font-size:11px;white-space:nowrap;cursor:pointer">📞 Feature</button>
+    </div>
+    <div id="quickAddList"></div>
+  </div>
+
+  <form id="productForm" style="background:#fff;margin:12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9;display:flex;flex-direction:column;gap:12px">
+    <div><label style="font-size:11px;font-weight:800;display:block;margin-bottom:4px">Mobile Name *</label><input id="pName" required placeholder="e.g. iPhone 15 Pro Max 256GB" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label style="font-size:11px;font-weight:800;display:block;margin-bottom:4px">Brand *</label><select id="pBrand" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px"><option>Apple</option><option>Samsung</option><option>OnePlus</option><option>Xiaomi</option><option>Vivo</option><option>Oppo</option><option>Nokia</option><option>Boat</option><option>Other</option></select></div>
+      <div><label style="font-size:11px;font-weight:800;display:block;margin-bottom:4px">Category *</label><select id="pCategory" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px"><option value="smartphone">📱 Smartphone</option><option value="feature">📞 Feature Phone</option><option value="accessories">🎧 Accessories</option><option value="repair">🔧 Repair Service</option></select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label style="font-size:11px;font-weight:800;display:block;margin-bottom:4px">Price (₹) *</label><input id="pPrice" type="number" required placeholder="e.g. 49999" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px"></div>
+      <div><label style="font-size:11px;font-weight:800;display:block;margin-bottom:4px">Original Price</label><input id="pOriginalPrice" type="number" placeholder="e.g. 59999" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div><label style="font-size:11px;font-weight:800;display:block;margin-bottom:4px">RAM</label><select id="pRam" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px"><option>4GB</option><option>6GB</option><option>8GB</option><option>12GB</option><option>16GB</option><option>N/A</option></select></div>
+      <div><label style="font-size:11px;font-weight:800;display:block;margin-bottom:4px">Storage</label><select id="pStorage" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px"><option>32GB</option><option>64GB</option><option>128GB</option><option selected>256GB</option><option>512GB</option><option>1TB</option></select></div>
+      <div><label style="font-size:11px;font-weight:800;display:block;margin-bottom:4px">Stock *</label><input id="pStock" type="number" required value="10" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px"></div>
+    </div>
+    <div><label style="font-size:11px;font-weight:800;display:block;margin-bottom:4px">Image URL</label><input id="pImage" placeholder="https://..." style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px"><div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="scanBarcodeBtn" style="background:#f1f5f9;border:1px solid #e2e8f0;padding:8px 12px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer">📷 Scan IMEI/Barcode - common/inventory/barcode-scanner.html</button><button type="button" id="uploadImageBtn" style="background:#f1f5f9;border:1px solid #e2e8f0;padding:8px 12px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer">🖼️ Upload - common/core/api-core.js</button></div></div>
+    <div><label style="font-size:11px;font-weight:800;display:block;margin-bottom:4px">Specs</label><textarea id="pSpecs" placeholder="e.g. Snapdragon 8 Gen 3, 200MP, 5000mAh, 5G" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px;height:60px"></textarea></div>
+    <div style="display:flex;gap:10px;align-items:center"><label style="display:flex;gap:6px;align-items:center;font-size:12px;font-weight:700"><input type="checkbox" id="pEmi" checked> 💳 EMI Available</label><label style="display:flex;gap:6px;align-items:center;font-size:12px;font-weight:700"><input type="checkbox" id="pExchange"> 🔄 Exchange Offer</label></div>
+    <button type="submit" id="saveProductBtn" style="background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:14px;cursor:pointer;margin-top:8px">💾 Save Mobile - common/inventory/inventory.js se linked</button>
+  </form>
+</div>
+
+<script src="../common/samanlive-bridge.js"></script>
+<script src="quick-add-products.js"></script>
+<script>
+let shopId = new URLSearchParams(location.search).get('shopId')||localStorage.getItem('shopId')||'';
+let editId = new URLSearchParams(location.search).get('productId')||'';
+
+SAMAN.initDashboard().then(()=>{
+  initProductForm();
+});
+
+function initProductForm(){
+  const quickAddSection = document.getElementById('quickAddSection');
+  document.getElementById('quickAddToggle').addEventListener('click', ()=>{
+    quickAddSection.style.display = quickAddSection.style.display==='none'?'block':'none';
+    if(quickAddSection.style.display==='block'){
+      window.MobileQuickAdd.renderQuickAddList('quickAddList', 'all');
+    }
+  });
+
+  document.querySelectorAll('.quick-filter').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.quick-filter').forEach(b=>{ b.style.background='#f1f5f9'; b.style.color='#0f172a'; });
+      btn.style.background='#0f172a'; btn.style.color='#fff';
+      window.MobileQuickAdd.renderQuickAddList('quickAddList', btn.dataset.category);
+    });
+  });
+
+  // Edit mode
+  if(editId){
+    document.getElementById('formTitle').innerText='Edit Mobile';
+    document.getElementById('saveProductBtn').innerText='✏️ Update Mobile';
+    const products = JSON.parse(localStorage.getItem(`products_${shopId}`)||'[]');
+    const product = products.find(p=> p.id===editId);
+    if(product){
+      document.getElementById('pName').value=product.name||'';
+      document.getElementById('pBrand').value=product.brand||'Apple';
+      document.getElementById('pCategory').value=product.category||'smartphone';
+      document.getElementById('pPrice').value=product.price||'';
+      document.getElementById('pOriginalPrice').value=product.originalPrice||'';
+      document.getElementById('pStock').value=product.stock||10;
+      document.getElementById('pImage').value=product.image||'';
+      document.getElementById('pSpecs').value=product.specs||'';
+      document.getElementById('pRam').value=product.ram||'8GB';
+      document.getElementById('pStorage').value=product.storage||'256GB';
+    }
+  }
+
+  document.getElementById('scanBarcodeBtn').addEventListener('click', ()=> window.location.href=`../common/inventory/barcode-scanner.html?shopId=${shopId}`);
+  document.getElementById('uploadImageBtn').addEventListener('click', ()=> window.location.href=`../common/core/api-core.js`); // In real, open upload
+
+  document.getElementById('productForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+
+    const productData = {
+      id:editId||'m'+Date.now(),
+      name:document.getElementById('pName').value,
+      brand:document.getElementById('pBrand').value,
+      category:document.getElementById('pCategory').value,
+      price:parseInt(document.getElementById('pPrice').value)||0,
+      originalPrice:parseInt(document.getElementById('pOriginalPrice').value)||parseInt(document.getElementById('pPrice').value),
+      stock:parseInt(document.getElementById('pStock').value)||0,
+      image:document.getElementById('pImage').value||'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=300',
+      specs:document.getElementById('pSpecs').value||'',
+      ram:document.getElementById('pRam').value||'',
+      storage:document.getElementById('pStorage').value||'',
+      emi:document.getElementById('pEmi').checked,
+      exchange:document.getElementById('pExchange').checked,
+      shopId
+    };
+
+    if(productData.price<=0){ alert('Price required'); return; }
+
+    let products = JSON.parse(localStorage.getItem(`products_${shopId}`)||'[]');
+
+    if(editId){
+      products = products.map(p=> p.id===editId?{...p,...productData}:p);
+    } else {
+      products.unshift({ ...productData, createdAt:new Date().toISOString() });
+    }
+
+    localStorage.setItem(`products_${shopId}`, JSON.stringify(products));
+
+    // Use common inventory - common/inventory/inventory.js
+    if(window.InventoryCore){
+      await window.InventoryCore.addProduct(productData).catch(()=>{});
+    }
+
+    if(window.ApiCore){
+      await window.ApiCore.post(`/api/common/inventory/${shopId}/add`, productData).catch(()=>{});
+    }
+
+    alert(`${productData.name} ${editId?'updated':'added'} ✅ - common/inventory se synced`);
+    window.location.href=`dashboard.html?shopId=${shopId}`;
+  });
+}
+</script>

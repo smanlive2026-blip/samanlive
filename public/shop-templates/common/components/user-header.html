@@ -1,0 +1,326 @@
+<!-- LOCATION: common/components/user-header.html - FULL WORLD CLASS USER HEADER -->
+<header id="userHeader" class="user-header">
+  <div class="user-header-main">
+    <div class="user-header-left">
+      <button class="user-back-btn" onclick="history.back()" aria-label="Back">‹</button>
+      
+      <div class="user-shop-identity">
+        <img id="userHeaderLogo" src="https://via.placeholder.com/40" alt="Shop" class="user-shop-logo">
+        <div class="user-shop-text">
+          <b id="userHeaderTitle" class="user-shop-name">Shop Name Loading...</b>
+          <div class="user-shop-sub">
+            <span id="userHeaderStatus" class="user-status open">● Open • 30 mins delivery</span>
+            <span class="user-shop-rating" id="userHeaderRating">⭐ 4.5 (120)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-header-right">
+      <button class="user-icon-btn" id="userSearchBtn" title="Search">🔍</button>
+      <button class="user-icon-btn" id="userWishlistBtn" title="Wishlist">♡</button>
+      <button class="user-icon-btn user-cart-btn" data-open-cart title="Cart">
+        🛒
+        <span class="user-cart-count" data-cart-count style="display:none">0</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Search bar (hidden by default) -->
+  <div id="userSearchBar" class="user-search-bar" style="display:none">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input id="userSearchInput" type="text" placeholder="Search products in this shop..." autocomplete="off">
+      <button id="userSearchClose" class="search-close">✕</button>
+    </div>
+    <div id="userSearchResults" class="search-results" style="display:none"></div>
+  </div>
+
+  <!-- Location bar -->
+  <div id="userLocationBar" class="user-location-bar">
+    <span class="loc-icon">📍</span>
+    <span id="userLocationText" class="loc-text">Delivering to Surat, Gujarat • Change</span>
+    <span class="loc-arrow">›</span>
+  </div>
+</header>
+
+<style>
+.user-header{
+  position:sticky;
+  top:0;
+  z-index:90;
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid #f1f5f9;
+  font-family:Outfit,sans-serif;
+}
+.user-header-main{
+  padding:10px 14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.user-header-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex:1;
+  min-width:0;
+}
+.user-back-btn{
+  width:36px;
+  height:36px;
+  background:#f8fafc;
+  border:1px solid #f1f5f9;
+  border-radius:10px;
+  font-size:20px;
+  font-weight:900;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  flex-shrink:0;
+}
+.user-shop-identity{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  flex:1;
+}
+.user-shop-logo{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  object-fit:cover;
+  background:#f1f5f9;
+  border:1px solid #f1f5f9;
+  flex-shrink:0;
+}
+.user-shop-text{
+  min-width:0;
+  flex:1;
+}
+.user-shop-name{
+  font-weight:900;
+  font-size:14px;
+  display:block;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:#0f172a;
+}
+.user-shop-sub{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  color:#64748b;
+  margin-top:2px;
+  white-space:nowrap;
+  overflow:hidden;
+}
+.user-status.open{ color:#166534; font-weight:800; }
+.user-status.closed{ color:#991b1b; font-weight:800; }
+.user-shop-rating{
+  background:#fef3c7;
+  color:#92400e;
+  padding:1px 6px;
+  border-radius:20px;
+  font-weight:800;
+  font-size:10px;
+}
+.user-header-right{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-shrink:0;
+}
+.user-icon-btn{
+  width:36px;
+  height:36px;
+  background:#fff;
+  border:1px solid #f1f5f9;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  font-size:16px;
+  position:relative;
+  transition:.2s;
+}
+.user-icon-btn:hover{ background:#f8fafc; }
+.user-cart-btn{
+  background:#0f172a;
+  color:#fff;
+  border-color:#0f172a;
+}
+.user-cart-count{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  background:#ef4444;
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+  min-width:18px;
+  height:18px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  border:2px solid #fff;
+}
+.user-search-bar{
+  padding:0 14px 10px;
+  animation:slideDown .25s;
+}
+.search-input-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#f1f5f9;
+  border-radius:12px;
+  padding:10px 12px;
+  border:2px solid transparent;
+  transition:.2s;
+}
+.search-input-wrap:focus-within{
+  background:#fff;
+  border-color:#0f172a;
+}
+.search-icon{ font-size:16px; opacity:.6; }
+.search-input-wrap input{
+  flex:1;
+  border:none;
+  background:transparent;
+  outline:none;
+  font-family:Outfit,sans-serif;
+  font-weight:600;
+  font-size:14px;
+}
+.search-close{
+  background:#e2e8f0;
+  border:none;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  font-size:12px;
+  cursor:pointer;
+}
+.search-results{
+  margin-top:8px;
+  background:#fff;
+  border:1px solid #f1f5f9;
+  border-radius:12px;
+  max-height:300px;
+  overflow:auto;
+  box-shadow:0 12px 24px rgba(0,0,0,.08);
+}
+.user-location-bar{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 14px;
+  background:#f8fafc;
+  font-size:11px;
+  font-weight:600;
+  color:#475569;
+  cursor:pointer;
+  border-top:1px solid #f1f5f9;
+}
+.loc-icon{ font-size:12px; }
+.loc-text{ flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.loc-arrow{ font-weight:900; }
+@keyframes slideDown{
+  from{ opacity:0; transform:translateY(-10px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+</style>
+
+<script>
+(function(){
+  const shopId = new URLSearchParams(location.search).get('shopId') || '';
+  
+  async function loadUserHeader(){
+    try{
+      const res = await fetch(`/api/shops/${shopId}?t=${Date.now()}`, { cache:'no-store' });
+      const data = await res.json();
+      const shop = data.shop || data;
+      
+      if(shop){
+        document.getElementById('userHeaderTitle').innerText = shop.shopName || shop.name || 'Shop';
+        if(shop.logo) document.getElementById('userHeaderLogo').src = shop.logo;
+        
+        const ratingEl = document.getElementById('userHeaderRating');
+        if(ratingEl && shop.rating){
+          ratingEl.innerText = `⭐ ${shop.rating} (${shop.reviews||0})`;
+        }
+      }
+    }catch(e){}
+
+    // Location
+    try{
+      const loc = JSON.parse(localStorage.getItem('userLocation') || '{}');
+      if(loc.address){
+        document.getElementById('userLocationText').innerText = `📍 ${loc.address.slice(0,40)} • Change`;
+      }
+    }catch(e){}
+  }
+
+  if(shopId) loadUserHeader();
+
+  // Search bar toggle
+  const searchBtn = document.getElementById('userSearchBtn');
+  const searchBar = document.getElementById('userSearchBar');
+  const searchClose = document.getElementById('userSearchClose');
+  const searchInput = document.getElementById('userSearchInput');
+
+  searchBtn?.addEventListener('click', ()=>{
+    searchBar.style.display = searchBar.style.display === 'none' ? 'block' : 'none';
+    if(searchBar.style.display === 'block') searchInput.focus();
+  });
+
+  searchClose?.addEventListener('click', ()=>{
+    searchBar.style.display = 'none';
+    searchInput.value = '';
+    document.getElementById('userSearchResults').style.display = 'none';
+  });
+
+  // Live search
+  let searchTimeout;
+  searchInput?.addEventListener('input', (e)=>{
+    clearTimeout(searchTimeout);
+    const q = e.target.value.trim();
+    if(q.length < 2){
+      document.getElementById('userSearchResults').style.display = 'none';
+      return;
+    }
+    searchTimeout = setTimeout(async ()=>{
+      try{
+        const res = await fetch(`/api/shops/${shopId}/products?search=${encodeURIComponent(q)}&t=${Date.now()}`, { cache:'no-store' });
+        const data = await res.json();
+        const products = data.products || [];
+        
+        const resultsEl = document.getElementById('userSearchResults');
+        if(products.length === 0){
+          resultsEl.innerHTML = `<div style="padding:16px;text-align:center;color:#94a3b8;font-size:13px">No products found for "${q}"</div>`;
+        } else {
+          resultsEl.innerHTML = products.slice(0,5).map(p=>`
+            <div style="display:flex;gap:10px;padding:10px;border-bottom:1px solid #f8fafc;cursor:pointer" onclick="window.location.href='/shop-templates/common/components/product-quick-view.html?shopId=${shopId}&productId=${p._id}'">
+              <img src="${p.image||'https://via.placeholder.com/40'}" style="width:40px;height:40px;border-radius:8px;object-fit:cover">
+              <div><b style="font-size:13px">${p.name}</b><br><span style="font-size:12px;color:#64748b">₹${p.price}</span></div>
+            </div>
+          `).join('');
+        }
+        resultsEl.style.display = 'block';
+      }catch(err){}
+    }, 400);
+  });
+
+  // Location change
+  document.getElementById('userLocationBar')?.addEventListener('click', ()=>{
+    if(window.LocationCore) window.LocationCore.openLocationModal();
+    else window.location.href = `/nearby-shops.html`;
+  });
+})();
+</script>

@@ -1,0 +1,198 @@
+<!-- LOCATION: common/components/dashboard-footer.html - FULL WORLD CLASS FOOTER -->
+<footer id="dashboardFooter" class="dashboard-footer">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-logo-wrap">
+        <img src="/admin-panel/assets/logo.png" alt="Logo" class="footer-logo" onerror="this.src='https://via.placeholder.com/32'">
+        <b>Local Market</b>
+      </div>
+      <p class="footer-tagline">Your trusted local shops, now online. Fresh, fast & nearby. Empowering 1000+ local businesses across India.</p>
+      
+      <div class="footer-social">
+        <a href="#" class="social-btn" title="Instagram">📸</a>
+        <a href="#" class="social-btn" title="WhatsApp">💬</a>
+        <a href="#" class="social-btn" title="Facebook">📘</a>
+        <a href="#" class="social-btn" title="YouTube">▶️</a>
+      </div>
+    </div>
+
+    <div class="footer-links-grid">
+      <div class="footer-col">
+        <b>Shop Management</b>
+        <a href="/shop-templates/common/orders/orders.html">Orders</a>
+        <a href="/shop-templates/common/inventory/inventory.html">Products</a>
+        <a href="/shop-templates/common/analytics/analytics.html">Analytics</a>
+        <a href="/shop-templates/common/marketing/coupons.html">Coupons</a>
+        <a href="/shop-templates/common/finance/wallet.html">Finance</a>
+      </div>
+
+      <div class="footer-col">
+        <b>Support</b>
+        <a href="/shop-templates/common/support/help.html">Help Center</a>
+        <a href="/shop-templates/common/support/chat-support.html">Chat Support</a>
+        <a href="/shop-templates/common/support/report-issue.html">Report Issue</a>
+        <a href="/shop-templates/common/legal/contact.html">Contact Us</a>
+        <a href="/shop-templates/common/legal/about.html">About Us</a>
+      </div>
+
+      <div class="footer-col">
+        <b>Legal</b>
+        <a href="/shop-templates/common/legal/privacy-policy.html">Privacy Policy</a>
+        <a href="/shop-templates/common/legal/terms.html">Terms of Service</a>
+        <a href="/shop-templates/common/legal/return-policy.html">Return Policy</a>
+        <a href="/shop-templates/common/legal/shipping-policy.html">Shipping Policy</a>
+        <a href="/shop-templates/common/legal/fssai-license.html">FSSAI License</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="footer-bottom-left">
+      <span>© 2026 Local Market • Made with ❤️ in Surat, Gujarat</span>
+      <span class="footer-dot">•</span>
+      <span id="footerShopId">Shop ID: LOADING</span>
+    </div>
+    <div class="footer-bottom-right">
+      <span class="footer-version">v7.2.0 • Build 2026</span>
+      <span class="footer-status"><span class="status-dot"></span> All systems operational</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+.dashboard-footer{
+  background:#0f172a;
+  color:#e2e8f0;
+  font-family:Outfit,sans-serif;
+  margin-top:32px;
+  border-radius:24px 24px 0 0;
+  overflow:hidden;
+}
+.footer-top{
+  padding:24px 20px;
+  display:grid;
+  gap:24px;
+}
+@media(min-width:768px){
+  .footer-top{ grid-template-columns:1.2fr 2fr; padding:32px 24px; }
+}
+.footer-logo-wrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:900;
+  font-size:18px;
+  color:#fff;
+}
+.footer-logo{
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  background:#fff;
+  object-fit:cover;
+}
+.footer-tagline{
+  font-size:12px;
+  color:#94a3b8;
+  line-height:1.6;
+  margin:12px 0 16px;
+  max-width:320px;
+}
+.footer-social{
+  display:flex;
+  gap:8px;
+}
+.social-btn{
+  width:36px;
+  height:36px;
+  background:#1e293b;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  text-decoration:none;
+  font-size:16px;
+  transition:.2s;
+}
+.social-btn:hover{ background:#334155; transform:translateY(-2px); }
+.footer-links-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:20px;
+}
+@media(min-width:768px){
+  .footer-links-grid{ grid-template-columns:repeat(3,1fr); }
+}
+.footer-col b{
+  display:block;
+  font-weight:900;
+  font-size:12px;
+  color:#fff;
+  margin-bottom:10px;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+}
+.footer-col a{
+  display:block;
+  color:#94a3b8;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:600;
+  padding:4px 0;
+  transition:.2s;
+}
+.footer-col a:hover{ color:#fff; transform:translateX(2px); }
+.footer-bottom{
+  border-top:1px solid #1e293b;
+  padding:14px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  font-size:11px;
+  color:#64748b;
+}
+@media(min-width:768px){
+  .footer-bottom{ flex-direction:row; justify-content:space-between; align-items:center; padding:14px 24px; }
+}
+.footer-bottom-left, .footer-bottom-right{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.footer-dot{ opacity:.5; }
+.footer-version{
+  background:#1e293b;
+  padding:3px 8px;
+  border-radius:20px;
+  font-weight:700;
+}
+.footer-status{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  color:#10b981;
+  font-weight:700;
+}
+.status-dot{
+  width:6px;
+  height:6px;
+  background:#10b981;
+  border-radius:50%;
+  animation:blink 2s infinite;
+}
+@keyframes blink{ 0%,100%{opacity:1} 50%{opacity:.3} }
+</style>
+
+<script>
+(function(){
+  const shopId = new URLSearchParams(location.search).get('shopId') || '';
+  const el = document.getElementById('footerShopId');
+  if(el) el.innerText = `Shop ID: ${shopId ? shopId.slice(-8).toUpperCase() : 'GUEST'}`;
+
+  // Auto update year
+  const year = new Date().getFullYear();
+  document.querySelectorAll('.dashboard-footer').forEach(f=>{
+    f.innerHTML = f.innerHTML.replace('© 2026', `© ${year}`);
+  });
+})();
+</script>

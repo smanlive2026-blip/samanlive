@@ -1,0 +1,250 @@
+<!-- LOCATION: common/components/user-footer.html - FULL WORLD CLASS USER FOOTER -->
+<footer id="userFooter" class="user-footer">
+  <div class="user-footer-main">
+    <div class="user-footer-brand">
+      <div class="user-footer-logo-row">
+        <img src="/admin-panel/assets/logo.png" alt="Local Market" class="user-footer-logo" onerror="this.src='https://via.placeholder.com/36'">
+        <b>Local Market</b>
+        <span class="user-footer-badge">LOCAL • FAST • TRUSTED</span>
+      </div>
+      <p class="user-footer-desc">India's first hyperlocal shopping platform. Connecting you to your nearby kirana, bakery, medical, and 50+ shop types. Fresh products, 30 min delivery, COD available.</p>
+      
+      <div class="user-footer-stats">
+        <div class="footer-stat"><b>1000+</b><span>Local Shops</span></div>
+        <div class="footer-stat"><b>50k+</b><span>Happy Customers</span></div>
+        <div class="footer-stat"><b>4.8⭐</b><span>Rating</span></div>
+      </div>
+    </div>
+
+    <div class="user-footer-links">
+      <div class="user-footer-col">
+        <b>Shop Categories</b>
+        <a href="#">Kirana & Grocery</a>
+        <a href="#">Bakery & Sweets</a>
+        <a href="#">Medical & Pharmacy</a>
+        <a href="#">Fruits & Vegetables</a>
+        <a href="#">Clothes & Fashion</a>
+        <a href="#">More Categories →</a>
+      </div>
+
+      <div class="user-footer-col">
+        <b>Customer Care</b>
+        <a href="/shop-templates/common/support/help.html">Help Center</a>
+        <a href="/shop-templates/common/customer-orders/my-orders.html">My Orders</a>
+        <a href="/shop-templates/common/track/track-order.html">Track Order</a>
+        <a href="/shop-templates/common/legal/return-policy.html">Return & Refund</a>
+        <a href="/shop-templates/common/legal/contact.html">Contact Us</a>
+      </div>
+
+      <div class="user-footer-col">
+        <b>Legal & Info</b>
+        <a href="/shop-templates/common/legal/about.html">About Us</a>
+        <a href="/shop-templates/common/legal/privacy-policy.html">Privacy Policy</a>
+        <a href="/shop-templates/common/legal/terms.html">Terms of Use</a>
+        <a href="/shop-templates/common/legal/shipping-policy.html">Shipping Policy</a>
+        <a href="/shop-templates/common/pages/fssai-license.html">FSSAI License</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="user-footer-app">
+    <div class="app-promo">
+      <div class="app-icon">📱</div>
+      <div class="app-text">
+        <b>Download Local Market App</b>
+        <span>Get extra 10% OFF on first order • Faster checkout</span>
+      </div>
+      <button class="app-download-btn">Download</button>
+    </div>
+  </div>
+
+  <div class="user-footer-bottom">
+    <div class="footer-bottom-left">
+      <span>© 2026 Local Market Pvt Ltd • Surat, Gujarat, India</span>
+      <div class="payment-icons">
+        <span title="COD">💵 COD</span>
+        <span title="UPI">📱 UPI</span>
+        <span title="Cards">💳 Cards</span>
+        <span title="Netbanking">🏦 NetBanking</span>
+      </div>
+    </div>
+    <div class="footer-bottom-right">
+      <span class="made-in">Made with ❤️ in India • For Local Shops</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+.user-footer{
+  background:#0f172a;
+  color:#e2e8f0;
+  font-family:Outfit,sans-serif;
+  margin-top:32px;
+  border-radius:28px 28px 0 0;
+  overflow:hidden;
+}
+.user-footer-main{
+  padding:24px 16px;
+  display:grid;
+  gap:24px;
+}
+@media(min-width:768px){
+  .user-footer-main{ grid-template-columns:1.2fr 2fr; padding:32px 20px; gap:32px; }
+}
+.user-footer-logo-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:900;
+  font-size:20px;
+  color:#fff;
+}
+.user-footer-logo{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  background:#fff;
+  object-fit:cover;
+}
+.user-footer-badge{
+  background:#1e293b;
+  color:#94a3b8;
+  font-size:8px;
+  font-weight:900;
+  padding:3px 6px;
+  border-radius:20px;
+  letter-spacing:.5px;
+}
+.user-footer-desc{
+  font-size:12px;
+  color:#94a3b8;
+  line-height:1.6;
+  margin:12px 0 16px;
+  max-width:340px;
+}
+.user-footer-stats{
+  display:flex;
+  gap:16px;
+}
+.footer-stat{
+  background:#1e293b;
+  padding:8px 12px;
+  border-radius:12px;
+  text-align:center;
+  min-width:70px;
+}
+.footer-stat b{
+  display:block;
+  font-weight:900;
+  font-size:14px;
+  color:#fff;
+}
+.footer-stat span{
+  font-size:10px;
+  color:#94a3b8;
+  font-weight:700;
+}
+.user-footer-links{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:20px;
+}
+@media(min-width:768px){
+  .user-footer-links{ grid-template-columns:repeat(3,1fr); }
+}
+.user-footer-col b{
+  display:block;
+  font-weight:900;
+  font-size:11px;
+  color:#fff;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  margin-bottom:10px;
+}
+.user-footer-col a{
+  display:block;
+  color:#94a3b8;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:600;
+  padding:4px 0;
+  transition:.2s;
+}
+.user-footer-col a:hover{ color:#fff; transform:translateX(3px); }
+.user-footer-app{
+  padding:0 16px 16px;
+}
+@media(min-width:768px){ .user-footer-app{ padding:0 20px 20px; } }
+.app-promo{
+  background:linear-gradient(135deg,#1e293b 0%,#334155 100%);
+  border-radius:16px;
+  padding:14px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  border:1px solid #334155;
+}
+.app-icon{ font-size:28px; }
+.app-text{ flex:1; }
+.app-text b{
+  display:block;
+  font-weight:900;
+  font-size:13px;
+  color:#fff;
+}
+.app-text span{
+  font-size:11px;
+  color:#94a3b8;
+  display:block;
+  margin-top:2px;
+}
+.app-download-btn{
+  background:#fff;
+  color:#0f172a;
+  border:none;
+  padding:8px 14px;
+  border-radius:10px;
+  font-weight:900;
+  font-size:12px;
+  cursor:pointer;
+}
+.user-footer-bottom{
+  border-top:1px solid #1e293b;
+  padding:14px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  font-size:11px;
+  color:#64748b;
+}
+@media(min-width:768px){
+  .user-footer-bottom{ flex-direction:row; justify-content:space-between; align-items:center; padding:14px 20px; }
+}
+.footer-bottom-left{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+@media(min-width:768px){ .footer-bottom-left{ flex-direction:row; align-items:center; gap:12px; } }
+.payment-icons{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.payment-icons span{
+  background:#1e293b;
+  padding:3px 8px;
+  border-radius:20px;
+  font-size:10px;
+  font-weight:800;
+  color:#94a3b8;
+}
+.made-in{
+  background:linear-gradient(90deg,#f59e0b,#ef4444);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  font-weight:900;
+  font-size:11px;
+}
+</style>

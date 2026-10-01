@@ -1,0 +1,98 @@
+<!-- LOCATION: common/cart/cart-drawer.html - WORLD CLASS SLIDE DRAWER -->
+<div id="cartDrawerOverlay" class="cart-drawer-overlay" style="display:none"></div>
+<div id="cartDrawer" class="cart-drawer">
+  <div class="cart-drawer-header">
+    <h3>Your Cart 🛒 <span data-cart-count style="background:#ef4444;color:#fff;font-size:11px;padding:2px 6px;border-radius:10px">0</span></h3>
+    <button id="closeCartDrawer" class="close-drawer">✕</button>
+  </div>
+  <div id="cartDrawerBody" class="cart-drawer-body">
+    <div id="cartDrawerLoader" class="cart-loader">Loading...</div>
+    <div id="cartDrawerItems"></div>
+    <div id="cartDrawerEmpty" style="display:none;text-align:center;padding:40px 20px;color:#94a3b8">
+      <div style="font-size:48px">🛒</div>
+      <p style="font-weight:800;margin-top:10px">Cart is empty</p>
+      <button onclick="document.getElementById('cartDrawer').classList.remove('open')" style="margin-top:12px;background:#0f172a;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:800">Continue Shopping</button>
+    </div>
+  </div>
+  <div id="cartDrawerFooter" class="cart-drawer-footer" style="display:none">
+    <div class="cart-total-row"><span>Total</span><b data-cart-total>₹0</b></div>
+    <button id="cartDrawerCheckout" class="checkout-btn">Checkout • <span data-cart-total>₹0</span></button>
+  </div>
+</div>
+<style>
+.cart-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:998;backdrop-filter:blur(4px)}
+.cart-drawer{position:fixed;top:0;right:0;width:92%;max-width:400px;height:100%;background:#fff;z-index:999;transform:translateX(100%);transition:.35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;border-radius:20px 0 0 20px;box-shadow:-8px 0 32px rgba(0,0,0,.15)}
+.cart-drawer.open{transform:translateX(0)}
+.cart-drawer-header{padding:16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f1f5f9}
+.cart-drawer-header h3{font-family:Outfit,sans-serif;font-weight:900;margin:0;font-size:18px}
+.close-drawer{border:none;background:#f1f5f9;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer}
+.cart-drawer-body{flex:1;overflow:auto;padding:12px}
+.cart-drawer-footer{padding:16px;border-top:1px solid #f1f5f9;background:#fff}
+.cart-total-row{display:flex;justify-content:space-between;font-weight:800;margin-bottom:12px;font-family:Outfit,sans-serif}
+.checkout-btn{width:100%;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:15px;cursor:pointer}
+.cart-item{display:flex;gap:12px;padding:12px;border:1px solid #f1f5f9;border-radius:12px;margin-bottom:10px}
+.cart-item img{width:56px;height:56px;border-radius:10px;object-fit:cover;background:#f8fafc}
+.cart-item-info{flex:1}
+.cart-item-info b{font-size:14px;font-weight:800;display:block}
+.cart-item-info span{font-size:12px;color:#64748b}
+.cart-qty{display:flex;align-items:center;gap:8px;margin-top:6px}
+.cart-qty button{width:26px;height:26px;border-radius:50%;border:1px solid #e2e8f0;background:#fff;font-weight:900;cursor:pointer}
+</style>
+<script>
+(function(){
+  const drawer = document.getElementById('cartDrawer');
+  const overlay = document.getElementById('cartDrawerOverlay');
+  function openDrawer(){
+    if(!drawer) return;
+    drawer.classList.add('open');
+    if(overlay) overlay.style.display='block';
+    renderDrawer();
+  }
+  function closeDrawer(){
+    drawer.classList.remove('open');
+    if(overlay) overlay.style.display='none';
+  }
+  document.addEventListener('click', (e)=>{
+    if(e.target.closest('[data-open-cart]')){ e.preventDefault(); openDrawer(); }
+  });
+  document.getElementById('closeCartDrawer')?.addEventListener('click', closeDrawer);
+  overlay?.addEventListener('click', closeDrawer);
+  document.getElementById('cartDrawerCheckout')?.addEventListener('click', ()=> {
+    if(window.CartCore) window.CartCore.goToCheckout();
+  });
+
+  async function renderDrawer(){
+    const body = document.getElementById('cartDrawerItems');
+    const empty = document.getElementById('cartDrawerEmpty');
+    const footer = document.getElementById('cartDrawerFooter');
+    const loader = document.getElementById('cartDrawerLoader');
+    if(!window.CartCore) return;
+
+    loader.style.display='block';
+    const cart = await window.CartCore.getCart();
+    loader.style.display='none';
+
+    if(!cart.items || cart.items.length===0){
+      body.innerHTML=''; empty.style.display='block'; footer.style.display='none'; return;
+    }
+    empty.style.display='none'; footer.style.display='block';
+    body.innerHTML = cart.items.map(it=>`
+      <div class="cart-item">
+        <img src="${it.image || 'https://via.placeholder.com/56'}" />
+        <div class="cart-item-info">
+          <b>${it.name}</b>
+          <span>₹${it.price} x ${it.qty} = ₹${it.price*it.qty}</span>
+          <div class="cart-qty">
+            <button onclick="CartCore.updateQty('${it.productId||it._id}', ${it.qty-1})">-</button>
+            <span style="font-weight:800">${it.qty}</span>
+            <button onclick="CartCore.updateQty('${it.productId||it._id}', ${it.qty+1})">+</button>
+            <button onclick="CartCore.removeItem('${it.productId||it._id}')" style="margin-left:auto;color:#ef4444;border-color:#fee2e2;background:#fff0f0">🗑️</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+  window.addEventListener('cart:updated', renderDrawer);
+  window.openCartDrawer = openDrawer;
+})();
+</script>

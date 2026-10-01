@@ -1,0 +1,315 @@
+<!-- LOCATION: common/components/shop-header.html - WORLD CLASS SHOP HEADER FULL -->
+<div id="shopHeader" class="shop-header-wrapper">
+  <div class="shop-header-top">
+    <div class="shop-header-left">
+      <img id="shopHeaderLogo" src="https://via.placeholder.com/48" alt="Shop Logo" class="shop-header-logo">
+      <div class="shop-header-info">
+        <div class="shop-name-row">
+          <b id="shopHeaderName" class="shop-header-name">Loading Shop...</b>
+          <span id="shopHeaderVerified" class="verified-badge" style="display:none">✓ Verified</span>
+          <span id="shopHeaderStatus" class="shop-status-badge open">● Open</span>
+        </div>
+        <div class="shop-header-meta">
+          <span class="shop-meta-item">
+            <span class="meta-icon">⭐</span>
+            <span id="shopHeaderRating">4.8 (124 reviews)</span>
+          </span>
+          <span class="meta-dot">•</span>
+          <span class="shop-meta-item">
+            <span class="meta-icon">🕒</span>
+            <span id="shopHeaderDelivery">30-45 mins</span>
+          </span>
+          <span class="meta-dot">•</span>
+          <span class="shop-meta-item">
+            <span class="meta-icon">📍</span>
+            <span id="shopHeaderDistance">1.2 km away</span>
+          </span>
+        </div>
+        <div class="shop-header-address" id="shopHeaderAddress">Loading address...</div>
+      </div>
+    </div>
+
+    <div class="shop-header-actions">
+      <button id="shopHeaderShare" class="shop-action-btn share-btn" title="Share Shop">↗️</button>
+      <button id="shopHeaderCall" class="shop-action-btn call-btn" title="Call Shop">📞</button>
+      <button id="shopHeaderFav" class="shop-action-btn fav-btn" title="Add to Favorites">♡</button>
+    </div>
+  </div>
+
+  <!-- Shop highlights -->
+  <div id="shopHighlights" class="shop-highlights">
+    <div class="highlight-item">
+      <span class="highlight-icon">🚚</span>
+      <div class="highlight-text"><b>Free Delivery</b><span>On orders above ₹199</span></div>
+    </div>
+    <div class="highlight-item">
+      <span class="highlight-icon">💵</span>
+      <div class="highlight-text"><b>COD Available</b><span>Pay on delivery</span></div>
+    </div>
+    <div class="highlight-item">
+      <span class="highlight-icon">↩️</span>
+      <div class="highlight-text"><b>Easy Returns</b><span>7 day return policy</span></div>
+    </div>
+  </div>
+
+  <!-- Shop announcement -->
+  <div id="shopAnnouncement" class="shop-announcement" style="display:none">
+    <span class="announce-icon">📢</span>
+    <span id="shopAnnouncementText" class="announce-text">Special offer today!</span>
+    <button id="closeAnnouncement" class="announce-close">✕</button>
+  </div>
+</div>
+
+<style>
+.shop-header-wrapper{
+  background:#fff;
+  border-bottom:1px solid #f1f5f9;
+  font-family:Outfit,sans-serif;
+  position:sticky;
+  top:0;
+  z-index:40;
+}
+.shop-header-top{
+  padding:14px 16px;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+.shop-header-left{
+  display:flex;
+  gap:12px;
+  flex:1;
+  min-width:0;
+}
+.shop-header-logo{
+  width:48px;
+  height:48px;
+  border-radius:14px;
+  object-fit:cover;
+  background:#f8fafc;
+  border:1px solid #f1f5f9;
+  flex-shrink:0;
+}
+.shop-header-info{
+  flex:1;
+  min-width:0;
+}
+.shop-name-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.shop-header-name{
+  font-weight:900;
+  font-size:16px;
+  color:#0f172a;
+  line-height:1.2;
+}
+.verified-badge{
+  background:#0ea5e9;
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+  padding:2px 6px;
+  border-radius:20px;
+  display:inline-grid;
+  place-items:center;
+}
+.shop-status-badge{
+  font-size:9px;
+  font-weight:900;
+  padding:3px 7px;
+  border-radius:20px;
+  letter-spacing:.3px;
+}
+.shop-status-badge.open{ background:#dcfce7; color:#166534; }
+.shop-status-badge.closed{ background:#fee2e2; color:#991b1b; }
+.shop-status-badge.busy{ background:#fef3c7; color:#92400e; }
+.shop-header-meta{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  flex-wrap:wrap;
+  margin-top:4px;
+  font-size:11px;
+  color:#64748b;
+  font-weight:600;
+}
+.shop-meta-item{
+  display:flex;
+  align-items:center;
+  gap:2px;
+}
+.meta-icon{ font-size:12px; }
+.meta-dot{ opacity:.4; }
+.shop-header-address{
+  font-size:11px;
+  color:#94a3b8;
+  margin-top:4px;
+  line-height:1.3;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:260px;
+}
+.shop-header-actions{
+  display:flex;
+  gap:6px;
+  flex-shrink:0;
+  align-items:flex-start;
+}
+.shop-action-btn{
+  width:36px;
+  height:36px;
+  background:#f8fafc;
+  border:1px solid #f1f5f9;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  font-size:16px;
+  transition:.2s;
+}
+.shop-action-btn:hover{ background:#f1f5f9; transform:translateY(-1px); }
+.shop-action-btn:active{ transform:scale(.93); }
+.share-btn{ background:#0f172a; color:#fff; border-color:#0f172a; }
+.shop-highlights{
+  display:flex;
+  gap:8px;
+  padding:0 16px 12px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.shop-highlights::-webkit-scrollbar{ display:none; }
+.highlight-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#f8fafc;
+  border:1px solid #f1f5f9;
+  padding:8px 10px;
+  border-radius:12px;
+  min-width:140px;
+  flex-shrink:0;
+}
+.highlight-icon{ font-size:18px; }
+.highlight-text b{
+  display:block;
+  font-size:11px;
+  font-weight:900;
+  color:#0f172a;
+}
+.highlight-text span{
+  display:block;
+  font-size:10px;
+  color:#64748b;
+  font-weight:600;
+  margin-top:1px;
+}
+.shop-announcement{
+  margin:0 16px 12px;
+  background:linear-gradient(90deg,#fef3c7,#fde68a);
+  border:1px solid #fbbf24;
+  border-radius:10px;
+  padding:8px 10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  font-weight:700;
+  color:#92400e;
+}
+.announce-icon{ font-size:14px; }
+.announce-text{ flex:1; }
+.announce-close{
+  background:#f59e0b;
+  color:#fff;
+  border:none;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  font-size:10px;
+  cursor:pointer;
+}
+</style>
+
+<script>
+(function(){
+  const shopId = new URLSearchParams(location.search).get('shopId') || '';
+
+  async function loadShopHeader(){
+    if(!shopId) return;
+
+    try{
+      const res = await fetch(`/api/shops/${shopId}?t=${Date.now()}`, { cache:'no-store', credentials:'include' });
+      const data = await res.json();
+      const shop = data.shop || data.data || data;
+
+      if(shop){
+        document.getElementById('shopHeaderName').innerText = shop.shopName || shop.name || 'Shop';
+        document.getElementById('shopHeaderAddress').innerText = shop.address || shop.fullAddress || 'Local area, Surat';
+
+        if(shop.logo) document.getElementById('shopHeaderLogo').src = shop.logo;
+        if(shop.isVerified || shop.verified) document.getElementById('shopHeaderVerified').style.display = 'grid';
+        if(shop.rating) document.getElementById('shopHeaderRating').innerText = `${shop.rating} (${shop.totalReviews||shop.reviews||0} reviews)`;
+        if(shop.deliveryTime) document.getElementById('shopHeaderDelivery').innerText = shop.deliveryTime;
+
+        // Announcement
+        if(shop.announcement){
+          document.getElementById('shopAnnouncement').style.display = 'flex';
+          document.getElementById('shopAnnouncementText').innerText = shop.announcement;
+        }
+
+        // Status
+        fetch(`/api/common/shop-status/${shopId}?t=${Date.now()}`).then(r=>r.json()).then(d=>{
+          const statusEl = document.getElementById('shopHeaderStatus');
+          const isOpen = d.isOpen || shop.isOpen || true;
+          statusEl.className = `shop-status-badge ${isOpen?'open':'closed'}`;
+          statusEl.innerText = isOpen? '● Open' : '● Closed';
+        });
+      }
+    }catch(e){
+      console.error('Shop header load failed', e);
+    }
+  }
+
+  if(shopId) loadShopHeader();
+
+  // Share
+  document.getElementById('shopHeaderShare')?.addEventListener('click', async ()=>{
+    const url = `${location.origin}/shop.html?shopId=${shopId}`;
+    if(navigator.share){
+      try{ await navigator.share({ title: document.getElementById('shopHeaderName').innerText, url }); }catch(e){}
+    } else {
+      await navigator.clipboard.writeText(url);
+      if(window.Toast) Toast.show('Shop link copied! 🔗', 'success');
+      else alert('Link copied: '+url);
+    }
+  });
+
+  // Call
+  document.getElementById('shopHeaderCall')?.addEventListener('click', async ()=>{
+    try{
+      const res = await fetch(`/api/shops/${shopId}?t=${Date.now()}`);
+      const data = await res.json();
+      const shop = data.shop || data;
+      if(shop.phone) window.location.href = `tel:${shop.phone}`;
+      else alert('Phone number not available');
+    }catch(e){ alert('Call not available'); }
+  });
+
+  // Fav
+  document.getElementById('shopHeaderFav')?.addEventListener('click', function(){
+    const isFav = this.innerText === '♥';
+    this.innerText = isFav? '♡' : '♥';
+    this.style.color = isFav? '' : '#ef4444';
+    if(window.Toast) Toast.show(isFav? 'Removed from favorites' : 'Added to favorites ❤️', 'success');
+  });
+
+  // Close announcement
+  document.getElementById('closeAnnouncement')?.addEventListener('click', ()=>{
+    document.getElementById('shopAnnouncement').style.display = 'none';
+  });
+})();
+</script>

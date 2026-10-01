@@ -1,0 +1,302 @@
+<!-- LOCATION: common/components/language-switcher.html - FULL WORLD CLASS LANGUAGE SWITCHER -->
+<div id="languageSwitcher" class="language-switcher">
+  <button id="langToggleBtn" class="lang-toggle-btn">
+    <span class="lang-icon">🌐</span>
+    <span id="currentLangLabel" class="current-lang">EN</span>
+    <span class="lang-arrow">▼</span>
+  </button>
+
+  <div id="langDropdown" class="lang-dropdown" style="display:none">
+    <div class="lang-dropdown-header">
+      <b>Select Language</b>
+      <span>भाषा चुनें</span>
+    </div>
+
+    <div class="lang-options">
+      <button class="lang-option active" data-lang="en" data-label="EN">
+        <span class="lang-flag">🇬🇧</span>
+        <div class="lang-info">
+          <b>English</b>
+          <span>Default</span>
+        </div>
+        <span class="lang-check">✓</span>
+      </button>
+
+      <button class="lang-option" data-lang="hi" data-label="हि">
+        <span class="lang-flag">🇮🇳</span>
+        <div class="lang-info">
+          <b>हिंदी</b>
+          <span>Hindi</span>
+        </div>
+        <span class="lang-check">✓</span>
+      </button>
+
+      <button class="lang-option" data-lang="gu" data-label="ગુ">
+        <span class="lang-flag">🇮🇳</span>
+        <div class="lang-info">
+          <b>ગુજરાતી</b>
+          <span>Gujarati</span>
+        </div>
+        <span class="lang-check">✓</span>
+      </button>
+
+      <button class="lang-option" data-lang="hinglish" data-label="Hi">
+        <span class="lang-flag">🇮🇳</span>
+        <div class="lang-info">
+          <b>Hinglish</b>
+          <span>Hindi + English</span>
+        </div>
+        <span class="lang-check">✓</span>
+      </button>
+    </div>
+
+    <div class="lang-dropdown-footer">
+      More languages coming soon
+    </div>
+  </div>
+</div>
+
+<style>
+.language-switcher{
+  position:relative;
+  font-family:Outfit,sans-serif;
+}
+.lang-toggle-btn{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:#fff;
+  border:1px solid #e2e8f0;
+  padding:6px 10px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:800;
+  font-size:12px;
+  transition:.2s;
+}
+.lang-toggle-btn:hover{ background:#f8fafc; border-color:#cbd5e1; }
+.lang-icon{ font-size:14px; }
+.current-lang{ min-width:20px; }
+.lang-arrow{ font-size:8px; opacity:.5; transition:.2s; }
+.language-switcher.open.lang-arrow{ transform:rotate(180deg); }
+.lang-dropdown{
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  background:#fff;
+  border:1px solid #f1f5f9;
+  border-radius:16px;
+  box-shadow:0 20px 40px rgba(0,0,0,.12);
+  width:240px;
+  overflow:hidden;
+  animation:dropdownIn.25s;
+  z-index:100;
+}
+@keyframes dropdownIn{
+  from{ opacity:0; transform:translateY(-8px) scale(.96); }
+  to{ opacity:1; transform:translateY(0) scale(1); }
+}
+.lang-dropdown-header{
+  padding:14px;
+  background:#f8fafc;
+  border-bottom:1px solid #f1f5f9;
+}
+.lang-dropdown-header b{
+  display:block;
+  font-weight:900;
+  font-size:13px;
+}
+.lang-dropdown-header span{
+  font-size:11px;
+  color:#64748b;
+  font-weight:600;
+}
+.lang-options{
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.lang-option{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  background:transparent;
+  border:1px solid transparent;
+  border-radius:10px;
+  cursor:pointer;
+  text-align:left;
+  transition:.2s;
+  width:100%;
+}
+.lang-option:hover{ background:#f8fafc; }
+.lang-option.active{
+  background:#0f172a;
+  color:#fff;
+  border-color:#0f172a;
+}
+.lang-flag{ font-size:20px; }
+.lang-info{ flex:1; }
+.lang-info b{
+  display:block;
+  font-weight:800;
+  font-size:13px;
+  line-height:1.2;
+}
+.lang-info span{
+  font-size:11px;
+  opacity:.7;
+  font-weight:600;
+}
+.lang-option.active.lang-info span{ color:#94a3b8; }
+.lang-check{
+  width:20px;
+  height:20px;
+  background:#10b981;
+  color:#fff;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:12px;
+  font-weight:900;
+  opacity:0;
+  transform:scale(.5);
+  transition:.2s;
+}
+.lang-option.active.lang-check{
+  opacity:1;
+  transform:scale(1);
+}
+.lang-dropdown-footer{
+  padding:10px 14px;
+  background:#f8fafc;
+  font-size:10px;
+  color:#94a3b8;
+  text-align:center;
+  font-weight:700;
+  border-top:1px solid #f1f5f9;
+}
+</style>
+
+<script>
+class LanguageSwitcher {
+  constructor(){
+    this.currentLang = localStorage.getItem('lang') || 'en';
+    this.translations = {
+      en: {
+        search: 'Search products...',
+        addToCart: 'Add to Cart',
+        buyNow: 'Buy Now',
+        cart: 'Cart',
+        orders: 'Orders',
+        profile: 'Profile'
+      },
+      hi: {
+        search: 'प्रोडक्ट खोजें...',
+        addToCart: 'कार्ट में जोड़ें',
+        buyNow: 'अभी खरीदें',
+        cart: 'कार्ट',
+        orders: 'ऑर्डर',
+        profile: 'प्रोफाइल'
+      },
+      gu: {
+        search: 'પ્રોડક્ટ શોધો...',
+        addToCart: 'કાર્ટમાં ઉમેરો',
+        buyNow: 'હમણાં ખરીદો',
+        cart: 'કાર્ટ',
+        orders: 'ઓર્ડર',
+        profile: 'પ્રોફાઇલ'
+      }
+    };
+  }
+
+  init(){
+    this.updateUI();
+    this.bindEvents();
+    this.applyLanguage(this.currentLang);
+  }
+
+  updateUI(){
+    const label = document.getElementById('currentLangLabel');
+    const activeOption = document.querySelector(`.lang-option[data-lang="${this.currentLang}"]`);
+
+    if(label && activeOption){
+      label.innerText = activeOption.dataset.label;
+    }
+
+    document.querySelectorAll('.lang-option').forEach(opt=>{
+      opt.classList.toggle('active', opt.dataset.lang === this.currentLang);
+    });
+  }
+
+  bindEvents(){
+    const toggleBtn = document.getElementById('langToggleBtn');
+    const dropdown = document.getElementById('langDropdown');
+    const switcher = document.getElementById('languageSwitcher');
+
+    toggleBtn?.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const isOpen = dropdown.style.display!== 'none';
+      dropdown.style.display = isOpen? 'none' : 'block';
+      switcher.classList.toggle('open',!isOpen);
+    });
+
+    document.addEventListener('click', ()=>{
+      if(dropdown) dropdown.style.display = 'none';
+      if(switcher) switcher.classList.remove('open');
+    });
+
+    document.querySelectorAll('.lang-option').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const lang = btn.dataset.lang;
+        this.setLanguage(lang);
+        dropdown.style.display = 'none';
+        switcher.classList.remove('open');
+      });
+    });
+  }
+
+  setLanguage(lang){
+    this.currentLang = lang;
+    localStorage.setItem('lang', lang);
+    this.updateUI();
+    this.applyLanguage(lang);
+
+    // Dispatch event
+    window.dispatchEvent(new CustomEvent('language:changed', { detail: lang }));
+
+    if(window.Toast){
+      const langNames = { en:'English', hi:'हिंदी', gu:'ગુજરાતી', hinglish:'Hinglish' };
+      Toast.show(`Language changed to ${langNames[lang] || lang} 🌐`, 'success');
+    }
+  }
+
+  applyLanguage(lang){
+    const t = this.translations[lang] || this.translations['en'];
+
+    // Update all elements with data-translate
+    document.querySelectorAll('[data-translate]').forEach(el=>{
+      const key = el.dataset.translate;
+      if(t[key]) el.innerText = t[key];
+    });
+
+    // Update search placeholder
+    const searchInput = document.querySelector('input[type="search"], #userSearchInput, input[placeholder*="Search"]');
+    if(searchInput && t.search){
+      searchInput.placeholder = t.search;
+    }
+
+    document.documentElement.lang = lang;
+  }
+
+  getCurrentLang(){ return this.currentLang; }
+  getTranslation(key){
+    const t = this.translations[this.currentLang] || this.translations['en'];
+    return t[key] || key;
+  }
+}
+
+window.LanguageSwitcher = new LanguageSwitcher();
+document.addEventListener('DOMContentLoaded', ()=> window.LanguageSwitcher.init());
+</script>

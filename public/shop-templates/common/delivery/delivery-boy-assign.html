@@ -1,0 +1,213 @@
+<!-- LOCATION: common/delivery/delivery-boy-assign.html - WORLD CLASS ASSIGN BOY -->
+<div id="assignRoot" class="assign-root">
+  <div class="assign-header">
+    <button id="assignBack" class="back-btn">‹</button>
+    <div>
+      <b>Assign Delivery Boy</b>
+      <span id="assignOrderId">Order #ORD----</span>
+    </div>
+  </div>
+
+  <div class="order-info-card">
+    <b>Order to Deliver</b>
+    <div id="assignOrderInfo" class="order-info">
+      <span>Loading order...</span>
+    </div>
+  </div>
+
+  <div class="boys-header">
+    <b>Available Delivery Boys (🟢 Online)</b>
+    <span id="onlineCount">3 online</span>
+  </div>
+
+  <div id="availableBoys" class="available-boys">
+    <div class="boy-select-card">
+      <img src="https://i.pravatar.cc/100?img=12" class="boy-avatar">
+      <div class="boy-details">
+        <b>Ravi Kumar</b>
+        <span>⭐ 4.8 • 125 deliveries • 1.2 km away</span>
+        <span>📞 98765 43210 • Last delivery 10 mins ago</span>
+        <div class="boy-stats">
+          <span class="stat">⚡ Fast</span>
+          <span class="stat">💰 COD trusted</span>
+        </div>
+      </div>
+      <label class="boy-radio">
+        <input type="radio" name="deliveryBoy" value="boy1" checked>
+        <span class="radio-check">✓</span>
+      </label>
+    </div>
+
+    <div class="boy-select-card">
+      <img src="https://i.pravatar.cc/100?img=15" class="boy-avatar">
+      <div class="boy-details">
+        <b>Amit Patel</b>
+        <span>⭐ 4.9 • 89 deliveries • 0.8 km away</span>
+        <span>📞 98765 43211 • Available now</span>
+        <div class="boy-stats">
+          <span class="stat">🏆 Top rated</span>
+        </div>
+      </div>
+      <label class="boy-radio">
+        <input type="radio" name="deliveryBoy" value="boy2">
+        <span class="radio-check">✓</span>
+      </label>
+    </div>
+
+    <div class="boy-select-card offline">
+      <img src="https://i.pravatar.cc/100?img=16" class="boy-avatar">
+      <div class="boy-details">
+        <b>Suresh - Offline</b>
+        <span>⭐ 4.7 • 200 deliveries • Last seen 2h ago</span>
+        <span>📞 98765 43212 • Offline</span>
+      </div>
+      <label class="boy-radio">
+        <input type="radio" name="deliveryBoy" value="boy3" disabled>
+        <span class="radio-check">✓</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="assign-options">
+    <label class="option-row">
+      <input type="checkbox" id="notifyCustomer" checked>
+      <span>Notify customer via SMS/WhatsApp about delivery boy</span>
+    </label>
+    <label class="option-row">
+      <input type="checkbox" id="codCollect" checked>
+      <span>Collect COD amount: <b id="codAmount">₹0</b></span>
+    </label>
+  </div>
+
+  <div class="assign-actions">
+    <button id="cancelAssign" class="secondary-btn">Cancel</button>
+    <button id="confirmAssign" class="primary-btn">Assign & Notify 🚚</button>
+  </div>
+</div>
+
+<style>
+.assign-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:80px; }
+.assign-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.assign-header b{ display:block; font-weight:900; }
+.assign-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.order-info-card{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.order-info-card b{ display:block; font-weight:900; font-size:14px; margin-bottom:8px; }
+.order-info{ font-size:12px; color:#475569; font-weight:600; line-height:1.5; }
+.boys-header{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; }
+.boys-header b{ font-weight:900; font-size:14px; }
+.boys-header span{ font-size:11px; background:#dcfce7; color:#166534; padding:4px 8px; border-radius:20px; font-weight:900; }
+.available-boys{ padding:0 12px; display:flex; flex-direction:column; gap:10px; }
+.boy-select-card{ background:#fff; border:2px solid #f1f5f9; border-radius:16px; padding:14px; display:flex; gap:12px; align-items:flex-start; cursor:pointer; transition:.2s; }
+.boy-select-card:hover{ border-color:#e2e8f0; }
+.boy-select-card:has(input:checked){ border-color:#0f172a; background:#f8fafc; }
+.boy-select-card.offline{ opacity:.6; }
+.boy-avatar{ width:48px; height:48px; border-radius:50%; }
+.boy-details{ flex:1; }
+.boy-details b{ display:block; font-weight:900; font-size:14px; }
+.boy-details span{ display:block; font-size:11px; color:#64748b; font-weight:600; line-height:1.4; margin-top:2px; }
+.boy-stats{ display:flex; gap:6px; margin-top:6px; }
+.stat{ background:#f1f5f9; font-size:10px; font-weight:800; padding:2px 6px; border-radius:20px; }
+.boy-radio{ position:relative; }
+.boy-radio input{ display:none; }
+.radio-check{ width:28px; height:28px; border:2px solid #e2e8f0; border-radius:50%; display:grid; place-items:center; color:transparent; font-weight:900; transition:.2s; }
+.boy-select-card:has(input:checked).radio-check{ background:#0f172a; border-color:#0f172a; color:#fff; }
+.boy-radio input:checked + .radio-check{ background:#0f172a; border-color:#0f172a; color:#fff; }
+.assign-options{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; display:flex; flex-direction:column; gap:10px; }
+.option-row{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; cursor:pointer; }
+.option-row input{ width:18px; height:18px; }
+.assign-actions{ position:fixed; bottom:0; left:0; right:0; background:#fff; padding:12px 16px; display:flex; gap:10px; border-top:1px solid #f1f5f9; max-width:600px; margin:0 auto; }
+.secondary-btn{ flex:1; background:#f1f5f9; border:none; padding:14px; border-radius:12px; font-weight:900; cursor:pointer; }
+.primary-btn{ flex:1.5; background:#0f172a; color:#fff; border:none; padding:14px; border-radius:12px; font-weight:900; cursor:pointer; }
+</style>
+
+<script>
+class DeliveryBoyAssign {
+  constructor(){
+    this.orderId = new URLSearchParams(location.search).get('orderId') || '';
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.order = null;
+  }
+
+  async init(){
+    document.getElementById('assignOrderId').innerText = `Order #${this.orderId.slice(-6).toUpperCase()}`;
+    await this.loadOrder();
+    this.bindEvents();
+  }
+
+  async loadOrder(){
+    try{
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/orders/${this.shopId}/${this.orderId}`);
+        this.order = data.order || data;
+        document.getElementById('assignOrderInfo').innerHTML = `
+          <b>${this.order.customerName||'Customer'}</b><br>
+          📍 ${this.order.customerAddress||this.order.address||'Address'}<br>
+          📦 ${this.order.items?.length||1} items • ₹${this.order.total||0} • ${this.order.paymentMethod||'COD'}<br>
+          📞 ${this.order.customerPhone||'Phone not available'}
+        `;
+        document.getElementById('codAmount').innerText = `₹${this.order.paymentMethod==='COD'? this.order.total : 0}`;
+      }
+    }catch(e){ console.error(e); }
+  }
+
+  bindEvents(){
+    document.getElementById('assignBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('cancelAssign')?.addEventListener('click', ()=> history.back());
+
+    document.querySelectorAll('.boy-select-card').forEach(card=>{
+      card.addEventListener('click', ()=>{
+        const radio = card.querySelector('input[type="radio"]');
+        if(radio &&!radio.disabled){
+          radio.checked = true;
+          document.querySelectorAll('.boy-select-card').forEach(c=> c.classList.remove('selected'));
+          card.classList.add('selected');
+        }
+      });
+    });
+
+    document.getElementById('confirmAssign')?.addEventListener('click', ()=> this.assignBoy());
+  }
+
+  async assignBoy(){
+    const selected = document.querySelector('input[name="deliveryBoy"]:checked');
+    if(!selected){
+      if(window.Toast) Toast.show('Select a delivery boy', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('confirmAssign');
+    btn.innerText = 'Assigning...';
+    btn.disabled = true;
+
+    try{
+      const boyId = selected.value;
+      const notify = document.getElementById('notifyCustomer').checked;
+
+      if(window.ApiCore){
+        await window.ApiCore.post('/api/common/delivery/assign', {
+          orderId: this.orderId,
+          shopId: this.shopId,
+          deliveryBoyId: boyId,
+          notifyCustomer: notify
+        });
+      }
+
+      if(window.Toast) Toast.show(`Delivery boy assigned! 🚚`, 'success');
+
+      setTimeout(()=>{
+        window.location.href=`/shop-templates/common/orders/order-detail.html?shopId=${this.shopId}&orderId=${this.orderId}`;
+      }, 1000);
+
+    }catch(e){
+      console.error(e);
+      if(window.Toast) Toast.show('Failed to assign', 'error');
+      btn.innerText = 'Assign & Notify 🚚';
+      btn.disabled = false;
+    }
+  }
+}
+
+window.DeliveryBoyAssignInstance = new DeliveryBoyAssign();
+document.addEventListener('DOMContentLoaded', ()=> window.DeliveryBoyAssignInstance.init());
+</script>

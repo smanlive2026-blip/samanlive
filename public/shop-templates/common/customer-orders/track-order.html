@@ -1,0 +1,256 @@
+<!-- LOCATION: common/customer-orders/track-order.html - WORLD CLASS TRACK ORDER -->
+<div id="trackRoot" class="track-root">
+  <div class="track-header">
+    <button id="trackBack" class="back-btn">‹</button>
+    <div>
+      <b>Track Order</b>
+      <span id="trackOrderId">#ORD----</span>
+    </div>
+    <button id="trackHelp" class="help-btn">💬 Help</button>
+  </div>
+
+  <div class="track-map-wrap">
+    <div id="trackMap" class="track-map">
+      <div class="map-placeholder">🗺️ Live tracking map<br><span>Map will show delivery boy location</span></div>
+    </div>
+    <div class="delivery-boy-card" id="deliveryBoyCard" style="display:none">
+      <img id="deliveryBoyAvatar" src="https://i.pravatar.cc/100?img=32" class="delivery-avatar">
+      <div class="delivery-info">
+        <b id="deliveryBoyName">Ravi - Delivery Boy</b>
+        <span id="deliveryBoyPhone">📞 +91 9XXXX XXXXX</span>
+        <span id="deliveryBoyStatus">On the way - 5 mins away</span>
+      </div>
+      <button id="callDeliveryBoy" class="call-btn">📞</button>
+    </div>
+  </div>
+
+  <div class="track-timeline-wrap">
+    <div class="timeline-header">
+      <b>Order Status</b>
+      <span id="estimatedDelivery">Estimated delivery: Today, 7:30 PM</span>
+    </div>
+
+    <div id="trackTimeline" class="track-timeline">
+      <div class="timeline-item done">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <b>Order Placed</b>
+          <span id="timePlaced">Today, 6:00 PM</span>
+          <p>Your order has been placed successfully</p>
+        </div>
+        <span class="timeline-icon">✅</span>
+      </div>
+
+      <div class="timeline-item active">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <b>Order Confirmed</b>
+          <span id="timeConfirmed">Waiting for shop</span>
+          <p>Shop will confirm your order soon</p>
+        </div>
+        <span class="timeline-icon">⏳</span>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <b>Preparing</b>
+          <span>Shop is preparing your items</span>
+        </div>
+        <span class="timeline-icon">👨‍🍳</span>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <b>Out for Delivery</b>
+          <span>Your order is on the way</span>
+        </div>
+        <span class="timeline-icon">🚚</span>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <b>Delivered</b>
+          <span>Order delivered successfully</span>
+        </div>
+        <span class="timeline-icon">🏠</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="track-order-summary">
+    <b>Order Summary</b>
+    <div id="trackItems" class="track-items"></div>
+    <div class="track-total-row">
+      <span>Total Paid</span>
+      <b id="trackTotal">₹0</b>
+    </div>
+  </div>
+
+  <div class="track-actions">
+    <button id="cancelOrderBtn" class="secondary-btn" style="display:none">Cancel Order</button>
+    <button id="reorderBtn" class="primary-btn" style="display:none">Reorder 🔄</button>
+    <button id="downloadInvoiceBtn" class="secondary-btn">Download Invoice 🧾</button>
+  </div>
+</div>
+
+<style>
+.track-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; }
+.track-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.track-header b{ display:block; font-weight:900; }
+.track-header span{ font-size:11px; color:#64748b; }
+.help-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 12px; border-radius:20px; font-weight:800; font-size:12px; }
+.track-map-wrap{ position:relative; }
+.track-map{ height:220px; background:#e2e8f0; display:grid; place-items:center; text-align:center; color:#64748b; font-weight:700; }
+.map-placeholder span{ font-size:11px; font-weight:600; }
+.delivery-boy-card{ position:absolute; bottom:12px; left:12px; right:12px; background:#fff; border-radius:14px; padding:12px; display:flex; align-items:center; gap:10px; box-shadow:0 8px 24px rgba(0,0,0,.12); }
+.delivery-avatar{ width:40px; height:40px; border-radius:50%; }
+.delivery-info{ flex:1; }
+.delivery-info b{ display:block; font-size:13px; font-weight:900; }
+.delivery-info span{ display:block; font-size:11px; color:#64748b; font-weight:600; }
+.call-btn{ background:#10b981; color:#fff; border:none; width:36px; height:36px; border-radius:50%; font-size:16px; cursor:pointer; }
+.track-timeline-wrap{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.timeline-header b{ display:block; font-weight:900; }
+.timeline-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.track-timeline{ margin-top:16px; position:relative; }
+.track-timeline::before{ content:''; position:absolute; left:15px; top:10px; bottom:10px; width:2px; background:#f1f5f9; }
+.timeline-item{ display:flex; gap:12px; padding:12px 0; position:relative; }
+.timeline-dot{ width:32px; height:32px; background:#f1f5f9; border-radius:50%; flex-shrink:0; border:3px solid #fff; box-shadow:0 0 0 2px #f1f5f9; z-index:1; }
+.timeline-item.done.timeline-dot{ background:#10b981; box-shadow:0 0 0 2px #10b981; }
+.timeline-item.active.timeline-dot{ background:#0ea5e9; box-shadow:0 0 0 2px #0ea5e9; animation:pulse 2s infinite; }
+@keyframes pulse{ 0%{ box-shadow:0 0 0 0 #0ea5e9; } 70%{ box-shadow:0 0 0 10px transparent; } 100%{ box-shadow:0 0 0 0 transparent; } }
+.timeline-content{ flex:1; }
+.timeline-content b{ display:block; font-weight:900; font-size:13px; }
+.timeline-content span{ font-size:11px; color:#64748b; font-weight:600; }
+.timeline-content p{ font-size:11px; color:#94a3b8; margin:2px 0 0; }
+.timeline-icon{ font-size:20px; }
+.track-order-summary{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.track-order-summary b{ font-weight:900; display:block; margin-bottom:10px; }
+.track-items{ display:flex; flex-direction:column; gap:8px; }
+.track-item{ display:flex; justify-content:space-between; font-size:12px; font-weight:600; color:#475569; }
+.track-total-row{ display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px dashed #e2e8f0; font-weight:900; }
+.track-actions{ padding:16px; display:flex; gap:10px; }
+.track-actions button{ flex:1; padding:12px; border-radius:12px; font-weight:900; border:none; cursor:pointer; }
+.primary-btn{ background:#0f172a; color:#fff; }
+.secondary-btn{ background:#fff; border:1px solid #e2e8f0!important; color:#475569; }
+</style>
+
+<script>
+class TrackOrder {
+  constructor(){
+    this.orderId = new URLSearchParams(location.search).get('orderId') || '';
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.order = null;
+  }
+
+  async init(){
+    if(!this.orderId){ this.showError('Order ID missing'); return; }
+    await this.loadOrder();
+    this.initSocket();
+    this.bindEvents();
+  }
+
+  async loadOrder(){
+    try{
+      if(window.Loader) Loader.show('Tracking order...');
+
+      let data;
+      if(window.ApiCore){
+        data = await window.ApiCore.get(`/api/common/track/${this.orderId}`);
+      } else {
+        data = { success:true, status:'placed', order:{ orderId:this.orderId, total:299, items:[{name:'Product', qty:1}], status:'placed', createdAt:new Date() } };
+      }
+
+      this.order = data.order || data;
+      this.render(data);
+    }catch(e){
+      console.error(e);
+      this.showError('Failed to load order');
+    }finally{
+      if(window.Loader) Loader.hide();
+    }
+  }
+
+  render(data){
+    const order = this.order || {};
+    document.getElementById('trackOrderId').innerText = `#${(order.orderId||this.orderId).toString().slice(-6).toUpperCase()}`;
+    document.getElementById('trackTotal').innerText = `₹${order.total||0}`;
+
+    const itemsEl = document.getElementById('trackItems');
+    if(order.items){
+      itemsEl.innerHTML = order.items.map(i=>`
+        <div class="track-item"><span>${i.name||i.title} x ${i.qty||1}</span><span>₹${i.price||0}</span></div>
+      `).join('');
+    }
+
+    // Update timeline based on status
+    const statusOrder = ['placed','confirmed','preparing','out_for_delivery','delivered'];
+    const currentStatus = (data.status || order.status || 'placed').toLowerCase();
+    const currentIndex = statusOrder.indexOf(currentStatus);
+
+    document.querySelectorAll('.timeline-item').forEach((item, idx)=>{
+      item.classList.remove('done','active');
+      if(idx < currentIndex) item.classList.add('done');
+      else if(idx===currentIndex) item.classList.add('active');
+    });
+
+    // Show delivery boy if out for delivery
+    if(currentStatus==='out_for_delivery' || currentStatus==='delivered'){
+      document.getElementById('deliveryBoyCard').style.display='flex';
+    }
+
+    // Actions
+    if(currentStatus==='placed' || currentStatus==='confirmed'){
+      document.getElementById('cancelOrderBtn').style.display='block';
+    }
+    if(currentStatus==='delivered' || currentStatus==='cancelled'){
+      document.getElementById('reorderBtn').style.display='block';
+    }
+  }
+
+  initSocket(){
+    if(window.SocketCore){
+      window.SocketCore.on('delivery-update', (data)=>{
+        if((data.orderId||'')===(this.orderId||'')){
+          this.loadOrder();
+        }
+      });
+      window.SocketCore.on('order-updated', (order)=>{
+        if((order.orderId||order._id)===this.orderId){
+          this.order = order;
+          this.render({ status:order.status, order });
+        }
+      });
+    }
+  }
+
+  showError(msg){
+    document.getElementById('trackRoot').innerHTML = `<div style="text-align:center;padding:60px 20px"><div style="font-size:48px">⚠️</div><h2 style="font-weight:900;margin:12px 0">${msg}</h2><button onclick="history.back()" style="background:#0f172a;color:#fff;border:none;padding:12px 20px;border-radius:12px;font-weight:900;cursor:pointer">Go Back</button></div>`;
+  }
+
+  bindEvents(){
+    document.getElementById('trackBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('callDeliveryBoy')?.addEventListener('click', ()=>{
+      const phone = document.getElementById('deliveryBoyPhone')?.innerText.replace(/[^0-9+]/g,'') || '';
+      if(phone) window.location.href=`tel:${phone}`;
+    });
+    document.getElementById('cancelOrderBtn')?.addEventListener('click', ()=>{
+      if(confirm('Cancel this order?')){
+        window.location.href=`/shop-templates/common/customer-orders/cancel-order.html?orderId=${this.orderId}&shopId=${this.shopId}`;
+      }
+    });
+    document.getElementById('downloadInvoiceBtn')?.addEventListener('click', ()=>{
+      window.location.href=`/shop-templates/common/customer-orders/invoice-download.html?orderId=${this.orderId}&shopId=${this.shopId}`;
+    });
+    document.getElementById('reorderBtn')?.addEventListener('click', ()=>{
+      if(window.MyOrdersCore) window.MyOrdersCore.reorder(this.orderId);
+    });
+  }
+}
+
+window.TrackOrderInstance = new TrackOrder();
+document.addEventListener('DOMContentLoaded', ()=> window.TrackOrderInstance.init());
+</script>

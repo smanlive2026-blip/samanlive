@@ -1,0 +1,203 @@
+<!-- LOCATION: public/shop-templates/common/legal/contact.html -->
+<div id="contactRoot" class="legal-root">
+  <div class="legal-header">
+    <button id="legalBack" class="back-btn">‹</button>
+    <div>
+      <b>📞 Contact Us</b>
+      <span>We are here to help • 10 AM - 8 PM</span>
+    </div>
+  </div>
+
+  <div class="legal-content">
+    <div class="contact-hero">
+      <div class="hero-icon">📞</div>
+      <b>We are Here to Help!</b>
+      <span>Have question? Need help? Want to give feedback?</span>
+      <span>Contact us - We reply quickly ❤️</span>
+    </div>
+
+    <div class="contact-cards">
+      <div class="contact-card" onclick="window.location.href='tel:+919876543210'">
+        <div class="contact-icon phone">📞</div>
+        <div class="contact-info">
+          <b>Call Us</b>
+          <span>+91 9876543210</span>
+          <span>10 AM - 8 PM • All days</span>
+        </div>
+        <span class="contact-action">Call Now →</span>
+      </div>
+
+      <div class="contact-card" onclick="window.location.href='mailto:support@samanlive.com'">
+        <div class="contact-icon email">📧</div>
+        <div class="contact-info">
+          <b>Email Us</b>
+          <span>support@samanlive.com</span>
+          <span>Reply within 2 hours</span>
+        </div>
+        <span class="contact-action">Email →</span>
+      </div>
+
+      <div class="contact-card" onclick="window.location.href='https://wa.me/919876543210'">
+        <div class="contact-icon whatsapp">📤</div>
+        <div class="contact-info">
+          <b>WhatsApp Us</b>
+          <span>+91 9876543210</span>
+          <span>Fast reply • 10 AM - 8 PM</span>
+        </div>
+        <span class="contact-action">Chat →</span>
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-icon address">📍</div>
+        <div class="contact-info">
+          <b>Visit Us</b>
+          <span>SamanLive, Adajan, Surat</span>
+          <span>Gujarat - 395009 • India</span>
+        </div>
+        <span class="contact-action">Map →</span>
+      </div>
+    </div>
+
+    <div class="legal-section">
+      <b>📝 Send Message</b>
+      <p>Fill form and we will reply quickly</p>
+      <div class="contact-form">
+        <input id="contactName" type="text" placeholder="Your Name">
+        <input id="contactPhone" type="tel" placeholder="Phone Number">
+        <input id="contactEmail" type="email" placeholder="Email (optional)">
+        <select id="contactType">
+          <option value="general">General Inquiry</option>
+          <option value="order">Order Issue</option>
+          <option value="shop">Shop Owner Help</option>
+          <option value="delivery">Delivery Issue</option>
+          <option value="payment">Payment Issue</option>
+          <option value="feedback">Feedback/Suggestion</option>
+          <option value="other">Other</option>
+        </select>
+        <textarea id="contactMessage" placeholder="Your message..."></textarea>
+        <button id="contactSubmitBtn" class="primary-btn">📤 Send Message</button>
+      </div>
+    </div>
+
+    <div class="legal-section">
+      <b>🕐 Support Hours</b>
+      <p><b>Phone Support:</b> 10 AM - 8 PM, All days (Monday-Sunday)</p>
+      <p><b>Chat Support:</b> 10 AM - 8 PM, All days - In app: Profile → Help → Chat</p>
+      <p><b>Email Support:</b> 24/7 - Reply within 2 hours during support hours, within 12 hours otherwise</p>
+      <p><b>WhatsApp:</b> 10 AM - 8 PM, All days</p>
+      <p>For urgent order issues, call directly - fastest response.</p>
+    </div>
+
+    <div class="legal-section">
+      <b>❓ Quick Help</b>
+      <p><b>For Order Issues:</b> Profile → My Orders → Select Order → Help/Contact</p>
+      <p><b>For Delivery Issues:</b> Profile → My Orders → Track Order → Contact Support</p>
+      <p><b>For Shop Owners:</b> Shop Dashboard → Help → Support</p>
+      <p><b>For Payments:</b> Profile → Payments → Help</p>
+      <p><b>FAQs:</b> Profile → Help → FAQs</p>
+    </div>
+
+    <div class="legal-contact" style="background:#0f172a">
+      <b>📞 Other Contacts</b>
+      <p><b>General:</b> hello@samanlive.com</p>
+      <p><b>Support:</b> support@samanlive.com</p>
+      <p><b>Returns:</b> returns@samanlive.com</p>
+      <p><b>Delivery:</b> delivery@samanlive.com</p>
+      <p><b>Legal:</b> legal@samanlive.com</p>
+      <p><b>Privacy:</b> privacy@samanlive.com</p>
+      <p><b>Shop Onboarding:</b> shops@samanlive.com</p>
+      <p><b>Partnerships:</b> partners@samanlive.com</p>
+      <p style="margin-top:10px"><b>Social Media:</b></p>
+      <p>📘 Facebook: /samanlive • 📸 Instagram: @samanlive</p>
+      <p>🐦 Twitter: @samanlive • 📺 YouTube: SamanLive</p>
+    </div>
+
+    <div class="legal-footer">
+      <span>© 2024 SamanLive • Contact Us</span>
+      <span>We are here to help • Your satisfaction matters ❤️</span>
+    </div>
+  </div>
+</div>
+
+<style>
+.legal-root{ font-family:Outfit,sans-serif; max-width:800px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.legal-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.legal-header b{ display:block; font-weight:900; }
+.legal-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.legal-content{ padding:12px; }
+.contact-hero{ background:linear-gradient(135deg,#0f172a,#1e293b); color:#fff; border-radius:20px; padding:24px; text-align:center; margin-bottom:16px; }
+.hero-icon{ font-size:48px; margin-bottom:8px; }
+.contact-hero b{ display:block; font-weight:900; font-size:18px; }
+.contact-hero span{ display:block; font-size:12px; opacity:.8; margin-top:4px; font-weight:600; }
+.contact-cards{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+.contact-card{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; display:flex; gap:12px; align-items:center; cursor:pointer; transition:.2s; }
+.contact-card:hover{ border-color:#0f172a; transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+.contact-icon{ width:48px; height:48px; border-radius:12px; display:grid; place-items:center; font-size:22px; color:#fff; flex-shrink:0; }
+.contact-icon.phone{ background:#10b981; }
+.contact-icon.email{ background:#3b82f6; }
+.contact-icon.whatsapp{ background:#25D366; }
+.contact-icon.address{ background:#f59e0b; }
+.contact-info{ flex:1; }
+.contact-info b{ display:block; font-weight:800; font-size:13px; }
+.contact-info span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
+.contact-action{ font-size:11px; font-weight:800; color:#0f172a; background:#f1f5f9; padding:6px 10px; border-radius:20px; }
+.legal-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; margin-bottom:12px; }
+.legal-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:10px; color:#0f172a; }
+.legal-section p{ font-size:12px; font-weight:500; line-height:1.6; color:#334155; margin:6px 0; }
+.contact-form{ display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+.contact-form input,.contact-form select,.contact-form textarea{ background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; font-family:Outfit,sans-serif; font-size:13px; outline:none; }
+.contact-form input:focus,.contact-form select:focus,.contact-form textarea:focus{ border-color:#0f172a; background:#fff; }
+.contact-form textarea{ min-height:100px; resize:vertical; }
+.primary-btn{ background:#0f172a; color:#fff; border:none; padding:14px; border-radius:10px; font-weight:900; cursor:pointer; }
+.legal-contact{ border-radius:16px; padding:16px; margin-top:16px; }
+.legal-contact b{ display:block; font-weight:900; font-size:14px; margin-bottom:8px; }
+.legal-contact p{ font-size:12px; opacity:.9; margin:4px 0; font-weight:600; }
+.legal-footer{ text-align:center; padding:20px; font-size:11px; color:#94a3b8; font-weight:600; }
+</style>
+
+<script>
+document.getElementById('legalBack')?.addEventListener('click', ()=> history.back());
+
+document.getElementById('contactSubmitBtn')?.addEventListener('click', async ()=>{
+  const name = document.getElementById('contactName').value.trim();
+  const phone = document.getElementById('contactPhone').value.trim();
+  const email = document.getElementById('contactEmail').value.trim();
+  const type = document.getElementById('contactType').value;
+  const message = document.getElementById('contactMessage').value.trim();
+
+  if(!name ||!phone ||!message){
+    if(window.Toast) Toast.show('Please fill name, phone, and message', 'warning');
+    return;
+  }
+
+  if(message.length<10){
+    if(window.Toast) Toast.show('Message too short', 'warning');
+    return;
+  }
+
+  if(window.Loader) Loader.show('Sending message...');
+
+  try{
+    if(window.ApiCore){
+      await window.ApiCore.post('/api/common/legal/contact', { name, phone, email, type, message });
+    } else {
+      const contacts = JSON.parse(localStorage.getItem('contacts')||'[]');
+      contacts.unshift({ name, phone, email, type, message, createdAt:new Date().toISOString() });
+      localStorage.setItem('contacts', JSON.stringify(contacts));
+    }
+
+    if(window.Toast) Toast.show('Message sent! We will reply soon ❤️', 'success');
+
+    document.getElementById('contactName').value='';
+    document.getElementById('contactPhone').value='';
+    document.getElementById('contactEmail').value='';
+    document.getElementById('contactMessage').value='';
+
+  }catch(e){
+    if(window.Toast) Toast.show('Failed to send message', 'error');
+  }finally{
+    if(window.Loader) Loader.hide();
+  }
+});
+</script>

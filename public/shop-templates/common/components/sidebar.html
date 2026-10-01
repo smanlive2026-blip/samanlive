@@ -1,0 +1,385 @@
+<!-- LOCATION: common/components/sidebar.html - FULL WORLD CLASS SIDEBAR -->
+<div id="sidebarOverlay" class="sidebar-overlay" style="display:none"></div>
+
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">
+      <img src="/admin-panel/assets/logo.png" alt="Logo" class="sidebar-logo" onerror="this.src='https://via.placeholder.com/32'">
+      <div class="sidebar-brand-text">
+        <b id="sidebarShopName">My Shop</b>
+        <span id="sidebarShopId">ID: ----</span>
+      </div>
+    </div>
+    <button id="closeSidebar" class="sidebar-close">✕</button>
+  </div>
+
+  <div class="sidebar-shop-switch">
+    <div class="shop-switch-info">
+      <span class="switch-label">Switch Shop</span>
+      <span class="switch-shop-name" id="sidebarCurrentShop">Current Shop</span>
+    </div>
+    <button class="switch-btn">⇄</button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <span class="nav-section-title">MAIN</span>
+      <a href="#" class="nav-link active" data-link="dashboard"><span class="nav-icon">📊</span><span>Dashboard</span><span class="nav-badge" id="sidebarLiveOrders">Live</span></a>
+      <a href="#" class="nav-link" data-link="orders"><span class="nav-icon">📦</span><span>Orders</span><span class="nav-count" id="sidebarOrdersCount" style="display:none">0</span></a>
+      <a href="#" class="nav-link" data-link="products"><span class="nav-icon">📋</span><span>Products</span></a>
+      <a href="#" class="nav-link" data-link="inventory"><span class="nav-icon">📦</span><span>Inventory</span><span class="nav-alert" id="sidebarLowStock" style="display:none">!</span></a>
+    </div>
+
+    <div class="nav-section">
+      <span class="nav-section-title">BUSINESS</span>
+      <a href="#" class="nav-link" data-link="analytics"><span class="nav-icon">📈</span><span>Analytics</span></a>
+      <a href="#" class="nav-link" data-link="finance"><span class="nav-icon">💰</span><span>Finance</span></a>
+      <a href="#" class="nav-link" data-link="marketing"><span class="nav-icon">📢</span><span>Marketing</span></a>
+      <a href="#" class="nav-link" data-link="reviews"><span class="nav-icon">⭐</span><span>Reviews</span></a>
+    </div>
+
+    <div class="nav-section">
+      <span class="nav-section-title">MANAGE</span>
+      <a href="#" class="nav-link" data-link="banner"><span class="nav-icon">🖼️</span><span>Banner</span></a>
+      <a href="#" class="nav-link" data-link="delivery"><span class="nav-icon">🚚</span><span>Delivery</span></a>
+      <a href="#" class="nav-link" data-link="staff"><span class="nav-icon">👥</span><span>Staff</span></a>
+      <a href="#" class="nav-link" data-link="settings"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+    </div>
+
+    <div class="nav-section">
+      <span class="nav-section-title">SUPPORT</span>
+      <a href="#" class="nav-link" data-link="help"><span class="nav-icon">💬</span><span>Help & Support</span></a>
+      <a href="#" class="nav-link" data-link="legal"><span class="nav-icon">📄</span><span>Legal</span></a>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <img id="sidebarAvatar" src="https://i.pravatar.cc/100" alt="User" class="sidebar-avatar">
+      <div class="sidebar-user-info">
+        <b id="sidebarUserName">Shop Owner</b>
+        <span id="sidebarUserRole">Owner • Verified</span>
+      </div>
+      <button class="sidebar-user-menu">⋮</button>
+    </div>
+
+    <div class="sidebar-actions">
+      <button id="sidebarViewShop" class="sidebar-action-btn secondary"><span>👁️</span> View Shop</button>
+      <button data-logout class="sidebar-action-btn danger"><span>🚪</span> Logout</button>
+    </div>
+
+    <div class="sidebar-version">v7.2.0 • Local Market • Made in India 🇮🇳</div>
+  </div>
+</aside>
+
+<style>
+.sidebar-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.5);
+  backdrop-filter:blur(4px);
+  z-index:998;
+  animation:fadeIn.2s;
+}
+.sidebar{
+  position:fixed;
+  top:0;
+  left:0;
+  width:300px;
+  height:100%;
+  background:#fff;
+  z-index:999;
+  transform:translateX(-100%);
+  transition:.35s cubic-bezier(.4,0,.2,1);
+  display:flex;
+  flex-direction:column;
+  font-family:Outfit,sans-serif;
+  box-shadow:8px 0 32px rgba(0,0,0,.12);
+}
+.sidebar.open{ transform:translateX(0); }
+.sidebar-header{
+  padding:16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid #f1f5f9;
+}
+.sidebar-brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.sidebar-logo{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  object-fit:cover;
+  background:#f1f5f9;
+}
+.sidebar-brand-text b{
+  display:block;
+  font-weight:900;
+  font-size:14px;
+  line-height:1.2;
+}
+.sidebar-brand-text span{
+  font-size:10px;
+  color:#64748b;
+  font-weight:700;
+}
+.sidebar-close{
+  background:#f1f5f9;
+  border:none;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  font-weight:900;
+  cursor:pointer;
+}
+.sidebar-shop-switch{
+  margin:12px;
+  background:#f8fafc;
+  border:1px solid #f1f5f9;
+  border-radius:12px;
+  padding:10px 12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+.shop-switch-info span{ display:block; }
+.switch-label{ font-size:10px; color:#94a3b8; font-weight:800; text-transform:uppercase; }
+.switch-shop-name{ font-size:13px; font-weight:900; margin-top:2px; }
+.switch-btn{
+  background:#fff;
+  border:1px solid #e2e8f0;
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:900;
+}
+.sidebar-nav{
+  flex:1;
+  overflow-y:auto;
+  padding:12px;
+}
+.nav-section{ margin-bottom:20px; }
+.nav-section-title{
+  font-size:10px;
+  font-weight:900;
+  color:#94a3b8;
+  letter-spacing:.8px;
+  display:block;
+  margin-bottom:8px;
+  padding-left:8px;
+}
+.nav-link{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:10px;
+  text-decoration:none;
+  color:#475569;
+  font-weight:600;
+  font-size:13px;
+  transition:.2s;
+  position:relative;
+}
+.nav-link:hover{ background:#f8fafc; color:#0f172a; }
+.nav-link.active{ background:#0f172a; color:#fff; font-weight:800; }
+.nav-icon{ font-size:16px; width:20px; text-align:center; }
+.nav-link span:nth-child(2){ flex:1; }
+.nav-badge{
+  background:#10b981;
+  color:#fff;
+  font-size:8px;
+  font-weight:900;
+  padding:2px 6px;
+  border-radius:20px;
+  animation:pulse 2s infinite;
+}
+.nav-count{
+  background:#ef4444;
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+  min-width:18px;
+  height:18px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  padding:0 5px;
+}
+.nav-alert{
+  background:#f59e0b;
+  color:#fff;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:10px;
+  font-weight:900;
+}
+.sidebar-footer{
+  border-top:1px solid #f1f5f9;
+  padding:12px;
+  background:#f8fafc;
+}
+.sidebar-user{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:#fff;
+  border:1px solid #f1f5f9;
+  border-radius:12px;
+  padding:10px;
+}
+.sidebar-avatar{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  object-fit:cover;
+}
+.sidebar-user-info{ flex:1; }
+.sidebar-user-info b{ display:block; font-weight:900; font-size:13px; }
+.sidebar-user-info span{ font-size:11px; color:#64748b; font-weight:600; }
+.sidebar-user-menu{
+  background:#f1f5f9;
+  border:none;
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:900;
+}
+.sidebar-actions{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+.sidebar-action-btn{
+  flex:1;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  font-weight:800;
+  font-size:12px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+}
+.sidebar-action-btn.secondary{ background:#fff; border:1px solid #e2e8f0; color:#475569; }
+.sidebar-action-btn.danger{ background:#fee2e2; color:#991b1b; }
+.sidebar-version{
+  text-align:center;
+  font-size:10px;
+  color:#94a3b8;
+  margin-top:10px;
+  font-weight:700;
+}
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+@keyframes pulse{ 0%{box-shadow:0 0 0 0 #10b981} 70%{box-shadow:0 0 0 8px transparent} 100%{box-shadow:0 0 0 0 transparent} }
+</style>
+
+<script>
+(function(){
+  const shopId = new URLSearchParams(location.search).get('shopId') || '';
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+
+  function openSidebar(){
+    sidebar.classList.add('open');
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSidebar(){
+    sidebar.classList.remove('open');
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  // Toggle buttons
+  document.getElementById('dashSidebarToggle')?.addEventListener('click', openSidebar);
+  document.getElementById('closeSidebar')?.addEventListener('click', closeSidebar);
+  overlay?.addEventListener('click', closeSidebar);
+
+  // Set links
+  const base = `/shop-templates/common`;
+  const links = {
+    dashboard: `/shop-templates/dairy/dashboard.html?shopId=${shopId}`,
+    orders: `${base}/orders/orders.html?shopId=${shopId}`,
+    products: `${base}/inventory/inventory.html?shopId=${shopId}`,
+    inventory: `${base}/inventory/inventory.html?shopId=${shopId}`,
+    analytics: `${base}/analytics/analytics.html?shopId=${shopId}`,
+    finance: `${base}/finance/wallet.html?shopId=${shopId}`,
+    marketing: `${base}/marketing/coupons.html?shopId=${shopId}`,
+    reviews: `${base}/reviews/reviews.html?shopId=${shopId}`,
+    banner: `${base}/banner/banner.html?shopId=${shopId}`,
+    delivery: `${base}/delivery/self-delivery.html?shopId=${shopId}`,
+    staff: `${base}/staff/staff-list.html?shopId=${shopId}`,
+    settings: `${base}/settings/settings.html?shopId=${shopId}`,
+    help: `${base}/support/help.html?shopId=${shopId}`,
+    legal: `${base}/legal/about.html?shopId=${shopId}`
+  };
+
+  document.querySelectorAll('.nav-link[data-link]').forEach(link=>{
+    const key = link.dataset.link;
+    if(links[key]) link.href = links[key];
+  });
+
+  // Load counts
+  async function loadSidebarCounts(){
+    try{
+      const [ordersRes, inventoryRes] = await Promise.allSettled([
+        fetch(`/api/common/orders/${shopId}?status=placed&t=${Date.now()}`).then(r=>r.json()),
+        fetch(`/api/common/inventory/${shopId}/low-stock?t=${Date.now()}`).then(r=>r.json())
+      ]);
+
+      if(ordersRes.status === 'fulfilled'){
+        const count = ordersRes.value.orders?.length || ordersRes.value.count || 0;
+        const el = document.getElementById('sidebarOrdersCount');
+        if(count > 0 && el){
+          el.innerText = count > 99? '99+' : count;
+          el.style.display = 'grid';
+        }
+      }
+
+      if(inventoryRes.status === 'fulfilled'){
+        const lowStock = inventoryRes.value.products?.length || inventoryRes.value.count || 0;
+        const el = document.getElementById('sidebarLowStock');
+        if(lowStock > 0 && el) el.style.display = 'grid';
+      }
+    }catch(e){}
+  }
+
+  if(shopId) loadSidebarCounts();
+
+  // Shop info
+  document.getElementById('sidebarShopId').innerText = `ID: ${shopId.slice(-6).toUpperCase() || '----'}`;
+  document.getElementById('sidebarCurrentShop').innerText = `Shop • ${shopId.slice(-4) || '----'}`;
+
+  if(window.currentUser){
+    document.getElementById('sidebarUserName').innerText = window.currentUser.name || 'Owner';
+  }
+
+  document.getElementById('sidebarViewShop')?.addEventListener('click', ()=>{
+    window.location.href = `/shop.html?shopId=${shopId}`;
+  });
+
+  // Active link
+  const currentPath = location.pathname;
+  document.querySelectorAll('.nav-link').forEach(l=> l.classList.remove('active'));
+  if(currentPath.includes('dashboard')) document.querySelector('[data-link="dashboard"]')?.classList.add('active');
+  else if(currentPath.includes('orders')) document.querySelector('[data-link="orders"]')?.classList.add('active');
+  else if(currentPath.includes('inventory') || currentPath.includes('products')) document.querySelector('[data-link="products"]')?.classList.add('active');
+
+  window.openSidebar = openSidebar;
+  window.closeSidebar = closeSidebar;
+})();
+</script>

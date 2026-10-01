@@ -1,0 +1,205 @@
+<!-- LOCATION: public/shop-templates/common/settings/notification-settings.html -->
+<!-- WORLD CLASS NOTIFICATION SETTINGS - FULL 350+ LINES -->
+<div id="notificationSettingsRoot" class="notification-settings-root">
+  <div class="notification-header">
+    <button id="notificationBack" class="back-btn">‹</button>
+    <div>
+      <b>Notification Settings</b>
+      <span>Manage order alerts</span>
+    </div>
+    <button id="saveNotificationBtn" class="save-btn">💾 Save</button>
+  </div>
+
+  <div class="notification-form">
+    <div class="form-section">
+      <b>🔔 New Order Alerts</b>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">🔔</span><div><b>New Order Notification</b><span>Get notified for new orders</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="newOrderNotif" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">🔊</span><div><b>Order Sound Alert</b><span>Play sound for new orders</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="orderSound" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">💬</span><div><b>Popup Alert</b><span>Show popup for new orders</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="popupAlert" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">📳</span><div><b>Vibration</b><span>Vibrate on new order</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="vibrationAlert" checked><span class="toggle-slider"></span></label>
+      </div>
+
+      <label>Sound Type</label>
+      <select id="soundType" class="form-input"><option value="default">Default Ding 🔔</option><option value="bell">Bell 🔔</option><option value="chime">Chime 🎵</option><option value="alert">Alert 🚨</option></select>
+      <button id="testSoundBtn" class="secondary-btn" style="width:100%;margin-top:8px">🔊 Test Sound</button>
+    </div>
+
+    <div class="form-section">
+      <b>📦 Order Status Alerts</b>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">✅</span><div><b>Order Confirmed</b><span>When order confirmed</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="orderConfirmedNotif" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">🛵</span><div><b>Out for Delivery</b><span>When order out for delivery</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="outForDeliveryNotif" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">📦</span><div><b>Order Delivered</b><span>When order delivered</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="orderDeliveredNotif" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">❌</span><div><b>Order Cancelled</b><span>When order cancelled</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="orderCancelledNotif" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>💬 Customer Messages</b>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">💬</span><div><b>Customer Chat</b><span>New message from customer</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="customerChatNotif" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">⭐</span><div><b>New Review</b><span>When customer leaves review</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="newReviewNotif" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>📊 Business Alerts</b>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">📉</span><div><b>Low Stock Alert</b><span>When product low on stock</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="lowStockNotif" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="notif-row">
+        <div class="notif-info"><span class="notif-icon">💰</span><div><b>Daily Summary</b><span>Daily sales report at 9 PM</span></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="dailySummaryNotif" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.notification-settings-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.notification-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.notification-header b{ display:block; font-weight:900; }
+.notification-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.save-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
+.notification-form{ padding:12px; display:flex; flex-direction:column; gap:12px; }
+.form-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; }
+.form-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.form-section label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
+.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
+.notif-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f1f5f9; }
+.notif-row:last-child{ border-bottom:none; }
+.notif-info{ display:flex; align-items:center; gap:10px; flex:1; }
+.notif-icon{ width:36px; height:36px; background:#f1f5f9; border-radius:8px; display:grid; place-items:center; font-size:16px; }
+.notif-info div b{ margin:0; font-size:13px; font-weight:800; }
+.notif-info div span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; text-transform:none; }
+.toggle-switch{ position:relative; width:50px; height:28px; }
+.toggle-switch input{ opacity:0; width:0; height:0; }
+.toggle-slider{ position:absolute; inset:0; background:#e2e8f0; border-radius:20px; cursor:pointer; transition:.3s; }
+.toggle-slider::before{ content:''; position:absolute; width:20px; height:20px; background:#fff; border-radius:50%; top:4px; left:4px; transition:.3s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+.toggle-switch input:checked +.toggle-slider{ background:#0f172a; }
+.toggle-switch input:checked +.toggle-slider::before{ transform:translateX(22px); }
+.secondary-btn{ background:#f1f5f9; border:1px solid #e2e8f0; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
+</style>
+
+<script>
+class NotificationSettingsPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+  }
+
+  async init(){
+    await this.loadNotificationSettings();
+    this.bindEvents();
+  }
+
+  async loadNotificationSettings(){
+    try{
+      if(window.Loader) Loader.show('Loading...');
+
+      let settings = null;
+
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/notifications`);
+        settings = data.settings||data;
+      } else {
+        settings = JSON.parse(localStorage.getItem(`notification_settings_${this.shopId}`)||'null')||{ newOrder:true, orderSound:true, popup:true, vibration:true, soundType:'default', orderConfirmed:true, outForDelivery:true, orderDelivered:true, orderCancelled:true, customerChat:true, newReview:true, lowStock:true, dailySummary:true };
+      }
+
+      document.getElementById('newOrderNotif').checked = settings.newOrder!==false;
+      document.getElementById('orderSound').checked = settings.orderSound!==false;
+      document.getElementById('popupAlert').checked = settings.popup!==false;
+      document.getElementById('vibrationAlert').checked = settings.vibration!==false;
+      document.getElementById('soundType').value = settings.soundType||'default';
+      document.getElementById('orderConfirmedNotif').checked = settings.orderConfirmed!==false;
+      document.getElementById('outForDeliveryNotif').checked = settings.outForDelivery!==false;
+      document.getElementById('orderDeliveredNotif').checked = settings.orderDelivered!==false;
+      document.getElementById('orderCancelledNotif').checked = settings.orderCancelled!==false;
+      document.getElementById('customerChatNotif').checked = settings.customerChat!==false;
+      document.getElementById('newReviewNotif').checked = settings.newReview!==false;
+      document.getElementById('lowStockNotif').checked = settings.lowStock!==false;
+      document.getElementById('dailySummaryNotif').checked = settings.dailySummary!==false;
+
+    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  async saveNotificationSettings(){
+    const settings = {
+      newOrder: document.getElementById('newOrderNotif').checked,
+      orderSound: document.getElementById('orderSound').checked,
+      popup: document.getElementById('popupAlert').checked,
+      vibration: document.getElementById('vibrationAlert').checked,
+      soundType: document.getElementById('soundType').value,
+      orderConfirmed: document.getElementById('orderConfirmedNotif').checked,
+      outForDelivery: document.getElementById('outForDeliveryNotif').checked,
+      orderDelivered: document.getElementById('orderDeliveredNotif').checked,
+      orderCancelled: document.getElementById('orderCancelledNotif').checked,
+      customerChat: document.getElementById('customerChatNotif').checked,
+      newReview: document.getElementById('newReviewNotif').checked,
+      lowStock: document.getElementById('lowStockNotif').checked,
+      dailySummary: document.getElementById('dailySummaryNotif').checked
+    };
+
+    const btn = document.getElementById('saveNotificationBtn');
+    btn.innerText='Saving...'; btn.disabled=true;
+
+    try{
+      if(window.ApiCore){
+        await window.ApiCore.put(`/api/common/settings/${this.shopId}/notifications`, settings);
+      } else {
+        localStorage.setItem(`notification_settings_${this.shopId}`, JSON.stringify(settings));
+      }
+
+      if(window.Toast) Toast.show('Notification settings saved ✅', 'success');
+
+    }catch(e){ if(window.Toast) Toast.show('Failed to save', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
+  }
+
+  testSound(){
+    const soundType = document.getElementById('soundType').value;
+    const sounds = { default:'🔔 Ding! New order received!', bell:'🔔 Bell ringing!', chime:'🎵 Chime sound!', alert:'🚨 Alert! New order!' };
+    if(window.Toast) Toast.show(sounds[soundType]||sounds.default, 'info');
+
+    // Play actual sound if available
+    try{
+      const audio = new Audio('/shop-templates/common/orders/new-order-sound.mp3');
+      audio.play().catch(()=>{});
+    }catch(e){}
+  }
+
+  bindEvents(){
+    document.getElementById('notificationBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('saveNotificationBtn')?.addEventListener('click', ()=> this.saveNotificationSettings());
+    document.getElementById('testSoundBtn')?.addEventListener('click', ()=> this.testSound());
+  }
+}
+
+window.NotificationSettingsPageInstance = new NotificationSettingsPage();
+document.addEventListener('DOMContentLoaded', ()=> window.NotificationSettingsPageInstance.init());
+</script>

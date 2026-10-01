@@ -1,0 +1,259 @@
+<!-- LOCATION: common/components/empty-state.html - FULL WORLD CLASS EMPTY STATE -->
+<div id="emptyState" class="empty-state-wrapper" style="display:none">
+  <div class="empty-state-box">
+    <div class="empty-icon-wrap">
+      <span id="emptyIcon" class="empty-icon">📦</span>
+      <div class="empty-icon-bg"></div>
+    </div>
+    <h3 id="emptyTitle" class="empty-title">No data found</h3>
+    <p id="emptyMessage" class="empty-message">We couldn't find anything here. Try adjusting your filters or check back later.</p>
+
+    <div id="emptyActions" class="empty-actions">
+      <button id="emptyPrimaryBtn" class="empty-btn primary">Retry</button>
+      <button id="emptySecondaryBtn" class="empty-btn secondary" style="display:none">Go Home</button>
+    </div>
+
+    <div id="emptySuggestions" class="empty-suggestions" style="display:none">
+      <b>Try this:</b>
+      <ul id="emptySuggestionsList"></ul>
+    </div>
+  </div>
+</div>
+
+<style>
+.empty-state-wrapper{
+  display:grid;
+  place-items:center;
+  padding:40px 20px;
+  min-height:300px;
+  font-family:Outfit,sans-serif;
+}
+.empty-state-box{
+  text-align:center;
+  max-width:360px;
+  width:100%;
+}
+.empty-icon-wrap{
+  position:relative;
+  width:80px;
+  height:80px;
+  margin:0 auto 20px;
+  display:grid;
+  place-items:center;
+}
+.empty-icon-bg{
+  position:absolute;
+  inset:0;
+  background:#f1f5f9;
+  border-radius:50%;
+  animation:emptyPulse 2s infinite;
+}
+@keyframes emptyPulse{
+  0%{ transform:scale(1); opacity:1; }
+  50%{ transform:scale(1.1); opacity:.8; }
+  100%{ transform:scale(1); opacity:1; }
+}
+.empty-icon{
+  position:relative;
+  font-size:40px;
+  z-index:1;
+}
+.empty-title{
+  font-weight:900;
+  font-size:18px;
+  color:#0f172a;
+  margin:0 0 8px;
+}
+.empty-message{
+  font-size:13px;
+  color:#64748b;
+  line-height:1.5;
+  margin:0 0 20px;
+  font-weight:600;
+}
+.empty-actions{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+}
+.empty-btn{
+  padding:10px 20px;
+  border-radius:12px;
+  font-weight:900;
+  font-size:13px;
+  border:none;
+  cursor:pointer;
+  transition:.2s;
+}
+.empty-btn:active{ transform:scale(.97); }
+.empty-btn.primary{
+  background:#0f172a;
+  color:#fff;
+}
+.empty-btn.secondary{
+  background:#f1f5f9;
+  color:#475569;
+}
+.empty-suggestions{
+  margin-top:20px;
+  background:#f8fafc;
+  border:1px solid #f1f5f9;
+  border-radius:12px;
+  padding:12px;
+  text-align:left;
+}
+.empty-suggestions b{
+  font-size:12px;
+  font-weight:900;
+  color:#0f172a;
+  display:block;
+  margin-bottom:6px;
+}
+.empty-suggestions ul{
+  margin:0;
+  padding-left:16px;
+  font-size:12px;
+  color:#64748b;
+  font-weight:600;
+  line-height:1.6;
+}
+</style>
+
+<script>
+window.EmptyState = {
+  presets: {
+    products: {
+      icon: '🛍️',
+      title: 'No products found',
+      message: 'This shop has no products yet or your search did not match any product.',
+      primaryText: 'Clear Filters',
+      secondaryText: 'Browse Shops',
+      suggestions: ['Try different keywords', 'Clear all filters', 'Check other shops nearby']
+    },
+    orders: {
+      icon: '📋',
+      title: 'No orders yet',
+      message: 'You have not placed any orders yet. Start shopping from your nearby shops!',
+      primaryText: 'Start Shopping',
+      secondaryText: null,
+      suggestions: ['Browse nearby shops', 'Check for offers', 'Add items to cart']
+    },
+    cart: {
+      icon: '🛒',
+      title: 'Your cart is empty',
+      message: 'Add some products from shop to see them here. Fresh products waiting for you!',
+      primaryText: 'Browse Products',
+      secondaryText: null,
+      suggestions: ['Add favorite products', 'Check shop offers', 'Get free delivery above ₹199']
+    },
+    wishlist: {
+      icon: '❤️',
+      title: 'Wishlist is empty',
+      message: 'Save your favorite products here to buy them later. Tap heart icon on products.',
+      primaryText: 'Explore Products',
+      secondaryText: null
+    },
+    search: {
+      icon: '🔍',
+      title: 'No results found',
+      message: 'We could not find anything matching your search. Try different keywords.',
+      primaryText: 'Clear Search',
+      secondaryText: null,
+      suggestions: ['Check spelling', 'Try different keywords', 'Use category filter']
+    },
+    ordersDashboard: {
+      icon: '📦',
+      title: 'No live orders',
+      message: 'No new orders right now. Orders will appear here when customers place them.',
+      primaryText: 'Refresh',
+      secondaryText: null
+    },
+    inventory: {
+      icon: '📋',
+      title: 'No products in inventory',
+      message: 'Add your first product to start selling. It takes less than 2 minutes.',
+      primaryText: 'Add Product',
+      secondaryText: null
+    },
+    network: {
+      icon: '📡',
+      title: 'Connection failed',
+      message: 'Unable to load data. Please check your internet connection and try again.',
+      primaryText: 'Retry',
+      secondaryText: null
+    }
+  },
+
+  show(typeOrOptions = 'products', containerId = null){
+    const options = typeof typeOrOptions === 'string'? this.presets[typeOrOptions] || this.presets.products : typeOrOptions;
+
+    const wrapper = containerId? document.getElementById(containerId) : document.getElementById('emptyState');
+    if(!wrapper){
+      // If container is product grid, inject there
+      if(containerId){
+        document.getElementById(containerId).innerHTML = this.getHTML(options);
+        return;
+      }
+      return;
+    }
+
+    wrapper.style.display = 'grid';
+    wrapper.innerHTML = this.getHTML(options);
+
+    // Bind buttons
+    wrapper.querySelector('#emptyPrimaryBtn')?.addEventListener('click', ()=>{
+      if(options.onPrimary) options.onPrimary();
+      else location.reload();
+    });
+
+    wrapper.querySelector('#emptySecondaryBtn')?.addEventListener('click', ()=>{
+      if(options.onSecondary) options.onSecondary();
+      else window.location.href = '/';
+    });
+  },
+
+  getHTML(options){
+    const {
+      icon = '📦',
+      title = 'No data found',
+      message = 'We could not find anything here',
+      primaryText = 'Retry',
+      secondaryText = null,
+      suggestions = null
+    } = options;
+
+    return `
+      <div class="empty-state-box">
+        <div class="empty-icon-wrap">
+          <span class="empty-icon">${icon}</span>
+          <div class="empty-icon-bg"></div>
+        </div>
+        <h3 class="empty-title">${title}</h3>
+        <p class="empty-message">${message}</p>
+        <div class="empty-actions">
+          <button id="emptyPrimaryBtn" class="empty-btn primary">${primaryText}</button>
+          ${secondaryText? `<button id="emptySecondaryBtn" class="empty-btn secondary">${secondaryText}</button>` : ''}
+        </div>
+        ${suggestions? `
+          <div class="empty-suggestions" style="display:block">
+            <b>Try this:</b>
+            <ul>${suggestions.map(s=> `<li>${s}</li>`).join('')}</ul>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  },
+
+  hide(containerId = null){
+    const wrapper = containerId? document.getElementById(containerId) : document.getElementById('emptyState');
+    if(wrapper) wrapper.style.display = 'none';
+  },
+
+  showInGrid(containerId, type = 'products'){
+    this.show(type, containerId);
+  }
+};
+
+// Global shortcut
+window.showEmptyState = (type, containerId) => window.EmptyState.show(type, containerId);
+</script>

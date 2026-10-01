@@ -1,0 +1,29 @@
+<!-- LOCATION: common/cart/cart.html -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cart</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800;900&display=swap" rel="stylesheet"><style>body{font-family:Outfit,sans-serif;background:#f8fafc;margin:0}.header{padding:16px;background:#fff;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}.header a{text-decoration:none;font-size:20px}.header h1{font-size:18px;font-weight:900;margin:0}.container{padding:12px;max-width:600px;margin:auto}#cartItems{display:flex;flex-direction:column;gap:10px}.cart-summary{background:#fff;border-radius:16px;padding:16px;margin-top:16px;border:1px solid #f1f5f9}.row{display:flex;justify-content:space-between;margin:6px 0;font-size:14px}.row.total{font-weight:900;font-size:18px;border-top:1px dashed #e2e8f0;padding-top:10px;margin-top:10px}.checkout{width:100%;margin-top:14px;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:16px}</style></head><body>
+<div class="header"><a href="javascript:history.back()">‹</a><h1>My Cart • <span data-cart-count>0</span></h1></div>
+<div class="container"><div id="cartItems">Loading...</div><div id="cartSummary" class="cart-summary" style="display:none"><div class="row"><span>Subtotal</span><span data-cart-total>₹0</span></div><div class="row"><span>Delivery</span><span style="color:#10b981;font-weight:800">FREE</span></div><div class="row total"><span>Total</span><span data-cart-total>₹0</span></div><button class="checkout" onclick="CartCore.goToCheckout()">Proceed to Checkout</button></div></div>
+<script src="./cart-core.js"></script>
+<script src="./cart-count.js"></script>
+<script>
+async function loadPageCart(){
+  const cart = await CartCore.getCart();
+  const container = document.getElementById('cartItems');
+  const summary = document.getElementById('cartSummary');
+  if(!cart.items || cart.items.length===0){
+    container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#94a3b8"><div style="font-size:56px">🛒</div><p style="font-weight:800;margin-top:12px">Your cart is empty</p><a href="/" style="display:inline-block;margin-top:12px;background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:800">Shop Now</a></div>`;
+    summary.style.display='none'; return;
+  }
+  summary.style.display='block';
+  container.innerHTML = cart.items.map(it=>`
+    <div style="background:#fff;border-radius:16px;padding:12px;display:flex;gap:12px;border:1px solid #f1f5f9">
+      <img src="${it.image||'https://via.placeholder.com/64'}" style="width:64px;height:64px;border-radius:12px;object-fit:cover">
+      <div style="flex:1"><b style="font-size:14px">${it.name}</b><br><span style="font-size:12px;color:#64748b">₹${it.price}</span>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><button onclick="CartCore.updateQty('${it.productId||it._id}', ${it.qty-1})" style="width:28px;height:28px;border-radius:50%;border:1px solid #e2e8f0;background:#fff;font-weight:900">-</button><span style="font-weight:900">${it.qty}</span><button onclick="CartCore.updateQty('${it.productId||it._id}', ${it.qty+1})" style="width:28px;height:28px;border-radius:50%;border:1px solid #e2e8f0;background:#fff;font-weight:900">+</button><button onclick="CartCore.removeItem('${it.productId||it._id}')" style="margin-left:auto;background:#fff0f0;border:1px solid #fee2e2;color:#ef4444;border-radius:8px;padding:4px 8px;font-weight:800">Remove</button></div>
+      </div>
+    </div>
+  `).join('');
+}
+document.addEventListener('DOMContentLoaded', loadPageCart);
+window.addEventListener('cart:updated', loadPageCart);
+</script>
+</body></html>

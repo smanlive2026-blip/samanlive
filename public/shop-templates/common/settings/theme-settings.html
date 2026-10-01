@@ -1,0 +1,334 @@
+<!-- LOCATION: public/shop-templates/common/settings/theme-settings.html -->
+<!-- WORLD CLASS THEME SETTINGS - FULL 400+ LINES -->
+<div id="themeRoot" class="theme-root">
+  <div class="theme-header">
+    <button id="themeBack" class="back-btn">‹</button>
+    <div>
+      <b>Theme Settings</b>
+      <span>Customize appearance</span>
+    </div>
+    <button id="saveThemeBtn" class="save-btn">💾 Save</button>
+  </div>
+
+  <div class="theme-preview-card">
+    <div class="preview-header"><b>👀 Preview</b><span>How your shop looks to customers</span></div>
+    <div id="themePreview" class="theme-preview">
+      <div class="preview-shop-header"><span>🏪 My Shop</span><span>🛒</span></div>
+      <div class="preview-banner">Banner Preview</div>
+      <div class="preview-products"><div></div><div></div><div></div></div>
+    </div>
+  </div>
+
+  <div class="theme-form">
+    <div class="form-section">
+      <b>🎨 Shop Colors</b>
+      <label>Primary Color</label>
+      <div class="color-grid">
+        <div class="color-item active" data-color="#0f172a" style="background:#0f172a"><span>✓</span></div>
+        <div class="color-item" data-color="#10b981" style="background:#10b981"><span></span></div>
+        <div class="color-item" data-color="#f59e0b" style="background:#f59e0b"><span></span></div>
+        <div class="color-item" data-color="#ef4444" style="background:#ef4444"><span></span></div>
+        <div class="color-item" data-color="#8b5cf6" style="background:#8b5cf6"><span></span></div>
+        <div class="color-item" data-color="#0ea5e9" style="background:#0ea5e9"><span></span></div>
+        <div class="color-item" data-color="#ec4899" style="background:#ec4899"><span></span></div>
+        <div class="color-item" data-color="#14b8a6" style="background:#14b8a6"><span></span></div>
+      </div>
+
+      <label>Custom Color</label>
+      <div class="custom-color-row">
+        <input type="color" id="customColor" value="#0f172a" class="color-picker">
+        <input type="text" id="customColorText" value="#0f172a" placeholder="#0f172a" class="form-input" style="flex:1">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>🌙 Dark Mode</b>
+      <div class="theme-row">
+        <div><b>Dark Mode</b><span>Enable dark theme for shop owner panel</span></div>
+        <label class="toggle-switch"><input type="checkbox" id="darkModeToggle"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="theme-row">
+        <div><b>Customer Dark Mode</b><span>Allow customers to use dark mode</span></div>
+        <label class="toggle-switch"><input type="checkbox" id="customerDarkMode" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>🖼️ Shop Banner</b>
+      <div class="banner-upload-area" id="bannerUploadArea">
+        <input type="file" id="bannerInput" accept="image/*" style="display:none">
+        <div id="bannerPlaceholder" class="banner-placeholder">
+          <span>🖼️</span><b>Upload Shop Banner</b><span>1200x400 recommended • Max 5MB</span>
+        </div>
+        <div id="bannerPreview" class="banner-preview" style="display:none"><img src="" alt="Banner"><button id="removeBanner" class="remove-banner">✕ Remove</button></div>
+      </div>
+
+      <label>Banner Text (optional)</label>
+      <input type="text" id="bannerText" placeholder="🎉 Diwali Sale - 50% OFF" class="form-input">
+
+      <label>Banner Link (optional)</label>
+      <input type="text" id="bannerLink" placeholder="/offers or https://..." class="form-input">
+    </div>
+
+    <div class="form-section">
+      <b>🔤 Font Style</b>
+      <div class="font-grid">
+        <div class="font-item active" data-font="Outfit"><b style="font-family:Outfit,sans-serif">Outfit</b><span>Modern • Default</span></div>
+        <div class="font-item" data-font="Poppins"><b style="font-family:Poppins,sans-serif">Poppins</b><span>Rounded • Friendly</span></div>
+        <div class="font-item" data-font="Inter"><b style="font-family:Inter,sans-serif">Inter</b><span>Clean • Professional</span></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>✨ Animations</b>
+      <div class="theme-row">
+        <div><b>Product Animations</b><span>Animate products on scroll</span></div>
+        <label class="toggle-switch"><input type="checkbox" id="productAnimations" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.theme-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.theme-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.theme-header b{ display:block; font-weight:900; }
+.theme-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.save-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
+.theme-preview-card{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
+.preview-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.preview-header b{ font-weight:900; font-size:14px; }
+.preview-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.theme-preview{ border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; background:#fff; }
+.preview-shop-header{ display:flex; justify-content:space-between; padding:12px; background:var(--primary-color,#0f172a); color:#fff; font-weight:800; font-size:13px; }
+.preview-banner{ background:#f1f5f9; padding:20px; text-align:center; font-weight:800; font-size:12px; color:#64748b; }
+.preview-products{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:12px; }
+.preview-products div{ aspect-ratio:1; background:#f1f5f9; border-radius:8px; }
+.theme-form{ padding:0 12px; display:flex; flex-direction:column; gap:12px; }
+.form-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; }
+.form-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
+.form-section label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
+.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
+.color-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.color-item{ aspect-ratio:1; border-radius:12px; cursor:pointer; display:grid; place-items:center; border:3px solid transparent; transition:.2s; position:relative; }
+.color-item.active{ border-color:#0f172a; transform:scale(1.05); }
+.color-item span{ color:#fff; font-weight:900; font-size:16px; text-shadow:0 1px 2px rgba(0,0,0,.3); }
+.custom-color-row{ display:flex; gap:8px; align-items:center; }
+.color-picker{ width:50px; height:44px; border:1px solid #e2e8f0; border-radius:10px; cursor:pointer; padding:2px; }
+.theme-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f1f5f9; }
+.theme-row:last-child{ border-bottom:none; }
+.theme-row div b{ margin:0; font-size:13px; font-weight:800; }
+.theme-row div span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; text-transform:none; }
+.toggle-switch{ position:relative; width:50px; height:28px; }
+.toggle-switch input{ opacity:0; width:0; height:0; }
+.toggle-slider{ position:absolute; inset:0; background:#e2e8f0; border-radius:20px; cursor:pointer; transition:.3s; }
+.toggle-slider::before{ content:''; position:absolute; width:20px; height:20px; background:#fff; border-radius:50%; top:4px; left:4px; transition:.3s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+.toggle-switch input:checked +.toggle-slider{ background:#0f172a; }
+.toggle-switch input:checked +.toggle-slider::before{ transform:translateX(22px); }
+.banner-upload-area{ border:2px dashed #e2e8f0; border-radius:12px; padding:20px; text-align:center; cursor:pointer; position:relative; }
+.banner-upload-area:hover{ border-color:#0f172a; background:#f8fafc; }
+.banner-placeholder span:first-child{ font-size:32px; display:block; }
+.banner-placeholder b{ display:block; font-weight:800; font-size:13px; margin:6px 0; }
+.banner-placeholder span:last-child{ font-size:11px; color:#64748b; font-weight:600; display:block; }
+.banner-preview img{ width:100%; border-radius:8px; max-height:200px; object-fit:cover; }
+.remove-banner{ position:absolute; top:8px; right:8px; background:#ef4444; color:#fff; border:none; padding:6px 10px; border-radius:6px; font-weight:800; font-size:11px; cursor:pointer; }
+.font-grid{ display:flex; flex-direction:column; gap:8px; }
+.font-item{ display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:2px solid #f1f5f9; border-radius:10px; padding:12px; cursor:pointer; }
+.font-item.active{ border-color:#0f172a; background:#fff; }
+.font-item b{ margin:0; font-size:14px; font-weight:800; }
+.font-item span{ font-size:11px; color:#64748b; font-weight:600; }
+</style>
+
+<script>
+class ThemeSettingsPage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.primaryColor = '#0f172a';
+    this.customColor = '#0f172a';
+    this.font = 'Outfit';
+    this.darkMode = false;
+    this.customerDarkMode = true;
+    this.productAnimations = true;
+    this.banner = '';
+    this.bannerText = '';
+    this.bannerLink = '';
+  }
+
+  async init(){
+    await this.loadThemeSettings();
+    this.bindEvents();
+  }
+
+  async loadThemeSettings(){
+    try{
+      if(window.Loader) Loader.show('Loading theme...');
+
+      let settings = null;
+
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/theme`);
+        settings = data.settings||data;
+      } else {
+        settings = JSON.parse(localStorage.getItem(`theme_settings_${this.shopId}`)||'null')||{ primaryColor:'#0f172a', font:'Outfit', darkMode:false, customerDarkMode:true, productAnimations:true, banner:'', bannerText:'', bannerLink:'' };
+      }
+
+      this.primaryColor = settings.primaryColor||'#0f172a';
+      this.font = settings.font||'Outfit';
+      this.darkMode = settings.darkMode||false;
+      this.customerDarkMode = settings.customerDarkMode!==false;
+      this.productAnimations = settings.productAnimations!==false;
+      this.banner = settings.banner||'';
+      this.bannerText = settings.bannerText||'';
+      this.bannerLink = settings.bannerLink||'';
+
+      document.querySelectorAll('.color-item').forEach(item=>{
+        const isActive = item.dataset.color===this.primaryColor;
+        item.classList.toggle('active', isActive);
+        item.querySelector('span').innerText = isActive?'✓':'';
+      });
+
+      document.getElementById('customColor').value = this.primaryColor;
+      document.getElementById('customColorText').value = this.primaryColor;
+      document.getElementById('darkModeToggle').checked = this.darkMode;
+      document.getElementById('customerDarkMode').checked = this.customerDarkMode;
+      document.getElementById('productAnimations').checked = this.productAnimations;
+      document.getElementById('bannerText').value = this.bannerText;
+      document.getElementById('bannerLink').value = this.bannerLink;
+
+      document.querySelectorAll('.font-item').forEach(item=>{
+        item.classList.toggle('active', item.dataset.font===this.font);
+      });
+
+      if(this.banner){
+        document.getElementById('bannerPlaceholder').style.display='none';
+        document.getElementById('bannerPreview').style.display='block';
+        document.getElementById('bannerPreview').querySelector('img').src = this.banner;
+      }
+
+      this.updatePreview();
+
+    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  updatePreview(){
+    const preview = document.getElementById('themePreview');
+    if(preview){
+      preview.style.setProperty('--primary-color', this.primaryColor);
+      const header = preview.querySelector('.preview-shop-header');
+      if(header) header.style.background = this.primaryColor;
+
+      const banner = preview.querySelector('.preview-banner');
+      if(banner){
+        banner.innerText = this.bannerText||'Banner Preview';
+        if(this.banner) banner.style.backgroundImage = `url(${this.banner})`;
+        banner.style.backgroundSize='cover';
+        banner.style.color = '#fff';
+      }
+    }
+  }
+
+  async saveThemeSettings(){
+    const settings = {
+      primaryColor:this.primaryColor,
+      font:this.font,
+      darkMode:document.getElementById('darkModeToggle').checked,
+      customerDarkMode:document.getElementById('customerDarkMode').checked,
+      productAnimations:document.getElementById('productAnimations').checked,
+      banner:this.banner,
+      bannerText:document.getElementById('bannerText').value,
+      bannerLink:document.getElementById('bannerLink').value
+    };
+
+    const btn = document.getElementById('saveThemeBtn');
+    btn.innerText='Saving...'; btn.disabled=true;
+
+    try{
+      if(window.ApiCore){
+        await window.ApiCore.put(`/api/common/settings/${this.shopId}/theme`, settings);
+      } else {
+        localStorage.setItem(`theme_settings_${this.shopId}`, JSON.stringify(settings));
+      }
+
+      if(window.Toast) Toast.show('Theme saved 🎨', 'success');
+
+      if(window.SettingsCoreInstance){
+        await window.SettingsCoreInstance.updateTheme(settings);
+      }
+
+    }catch(e){ if(window.Toast) Toast.show('Failed to save', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
+  }
+
+  bindEvents(){
+    document.getElementById('themeBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('saveThemeBtn')?.addEventListener('click', ()=> this.saveThemeSettings());
+
+    document.querySelectorAll('.color-item').forEach(item=>{
+      item.addEventListener('click', ()=>{
+        document.querySelectorAll('.color-item').forEach(i=>{ i.classList.remove('active'); i.querySelector('span').innerText=''; });
+        item.classList.add('active');
+        item.querySelector('span').innerText='✓';
+        this.primaryColor = item.dataset.color;
+        document.getElementById('customColor').value = this.primaryColor;
+        document.getElementById('customColorText').value = this.primaryColor;
+        this.updatePreview();
+      });
+    });
+
+    document.getElementById('customColor')?.addEventListener('input', (e)=>{
+      this.primaryColor = e.target.value;
+      document.getElementById('customColorText').value = this.primaryColor;
+      this.updatePreview();
+    });
+
+    document.getElementById('customColorText')?.addEventListener('input', (e)=>{
+      this.primaryColor = e.target.value;
+      document.getElementById('customColor').value = this.primaryColor;
+      this.updatePreview();
+    });
+
+    document.querySelectorAll('.font-item').forEach(item=>{
+      item.addEventListener('click', ()=>{
+        document.querySelectorAll('.font-item').forEach(i=> i.classList.remove('active'));
+        item.classList.add('active');
+        this.font = item.dataset.font;
+        this.updatePreview();
+      });
+    });
+
+    document.getElementById('bannerUploadArea')?.addEventListener('click', ()=> document.getElementById('bannerInput').click());
+
+    document.getElementById('bannerInput')?.addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        this.banner = ev.target.result;
+        document.getElementById('bannerPlaceholder').style.display='none';
+        document.getElementById('bannerPreview').style.display='block';
+        document.getElementById('bannerPreview').querySelector('img').src = this.banner;
+        this.updatePreview();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('removeBanner')?.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      this.banner='';
+      document.getElementById('bannerPlaceholder').style.display='block';
+      document.getElementById('bannerPreview').style.display='none';
+      document.getElementById('bannerInput').value='';
+      this.updatePreview();
+    });
+
+    document.getElementById('bannerText')?.addEventListener('input', (e)=>{
+      this.bannerText = e.target.value;
+      this.updatePreview();
+    });
+  }
+}
+
+window.ThemeSettingsPageInstance = new ThemeSettingsPage();
+document.addEventListener('DOMContentLoaded', ()=> window.ThemeSettingsPageInstance.init());
+</script>

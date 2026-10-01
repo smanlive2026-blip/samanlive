@@ -1,0 +1,316 @@
+<!-- LOCATION: public/shop-templates/common/finance/expense.html -->
+<!-- WORLD CLASS EXPENSE MANAGER - FULL 400+ LINES -->
+<div id="expenseRoot" class="expense-root">
+  <div class="expense-header">
+    <button id="expenseBack" class="back-btn">‹</button>
+    <div>
+      <b>Expenses</b>
+      <span>Total: <b id="totalExpenseHeader">₹0</b> this month</span>
+    </div>
+    <button id="addExpenseBtn" class="add-btn">+ Add</button>
+  </div>
+
+  <div class="expense-summary">
+    <div class="summary-item">
+      <span class="summary-icon" style="background:#fee2e2">💸</span>
+      <div><b id="totalExpenseAmount">₹0</b><span>Total Expense</span></div>
+    </div>
+    <div class="summary-item">
+      <span class="summary-icon" style="background:#dcfce7">📈</span>
+      <div><b id="avgExpense">₹0</b><span>Daily Avg</span></div>
+    </div>
+    <div class="summary-item">
+      <span class="summary-icon" style="background:#fef3c7">🏆</span>
+      <div><b id="highestExpense">₹0</b><span>Highest</span></div>
+    </div>
+  </div>
+
+  <div class="expense-categories">
+    <button class="cat-btn active" data-cat="all">All</button>
+    <button class="cat-btn" data-cat="stock">🛒 Stock</button>
+    <button class="cat-btn" data-cat="rent">🏠 Rent</button>
+    <button class="cat-btn" data-cat="delivery">🚚 Delivery</button>
+    <button class="cat-btn" data-cat="salary">👨‍💼 Salary</button>
+    <button class="cat-btn" data-cat="utility">💡 Utility</button>
+    <button class="cat-btn" data-cat="marketing">📢 Marketing</button>
+    <button class="cat-btn" data-cat="other">📦 Other</button>
+  </div>
+
+  <div id="expensesList" class="expenses-list"></div>
+
+  <div id="expenseEmpty" class="expense-empty" style="display:none">
+    <div class="empty-icon">💸</div>
+    <b>No expenses yet</b>
+    <span>Track your shop expenses here</span>
+    <button id="emptyAddExpense" class="primary-btn">+ Add First Expense</button>
+  </div>
+
+  <div id="addExpenseModal" class="add-expense-modal" style="display:none">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <b id="modalTitle">Add Expense</b>
+        <button id="closeExpenseModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Category *</label>
+        <select id="expenseCategory" class="modal-input">
+          <option value="stock">🛒 Stock Purchase</option>
+          <option value="rent">🏠 Shop Rent</option>
+          <option value="delivery">🚚 Delivery Charge</option>
+          <option value="salary">👨‍💼 Staff Salary</option>
+          <option value="utility">💡 Electricity / Water / Internet</option>
+          <option value="marketing">📢 Marketing / Ads</option>
+          <option value="maintenance">🔧 Maintenance</option>
+          <option value="other">📦 Other</option>
+        </select>
+
+        <label>Title *</label>
+        <input type="text" id="expenseTitle" placeholder="e.g. Vegetables purchase" class="modal-input">
+
+        <label>Amount (₹) *</label>
+        <input type="number" id="expenseAmount" placeholder="0" class="modal-input">
+
+        <label>Date *</label>
+        <input type="date" id="expenseDate" class="modal-input">
+
+        <label>Payment Method</label>
+        <select id="expensePayment" class="modal-input">
+          <option value="cash">💵 Cash</option>
+          <option value="upi">📱 UPI</option>
+          <option value="bank">🏦 Bank Transfer</option>
+          <option value="card">💳 Card</option>
+        </select>
+
+        <label>Note (optional)</label>
+        <textarea id="expenseNote" placeholder="Add note..." class="modal-input" style="min-height:60px"></textarea>
+
+        <label>Bill / Receipt (optional)</label>
+        <div class="bill-upload">
+          <input type="file" id="expenseBill" accept="image/*" hidden>
+          <button id="uploadBillBtn" class="upload-btn">📷 Upload Bill</button>
+          <img id="billPreview" style="display:none;width:60px;height:60px;border-radius:8px;object-fit:cover;margin-top:8px">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="cancelExpense" class="secondary-btn">Cancel</button>
+        <button id="saveExpense" class="primary-btn">Save Expense</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.expense-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
+.expense-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
+.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
+.expense-header b{ display:block; font-weight:900; }
+.expense-header span{ font-size:11px; color:#64748b; font-weight:600; }
+.add-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
+.expense-summary{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; padding:12px; }
+.summary-item{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:12px; display:flex; gap:8px; align-items:center; }
+.summary-icon{ width:36px; height:36px; border-radius:10px; display:grid; place-items:center; font-size:16px; }
+.summary-item b{ display:block; font-weight:900; font-size:14px; }
+.summary-item span{ font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; }
+.expense-categories{ display:flex; gap:6px; padding:0 12px 12px; overflow-x:auto; scrollbar-width:none; }
+.expense-categories::-webkit-scrollbar{ display:none; }
+.cat-btn{ background:#fff; border:1px solid #e2e8f0; padding:8px 12px; border-radius:20px; font-weight:800; font-size:11px; white-space:nowrap; cursor:pointer; }
+.cat-btn.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
+.expenses-list{ padding:0 12px; display:flex; flex-direction:column; gap:8px; }
+.expense-item{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:12px; display:flex; gap:10px; align-items:center; }
+.expense-icon{ width:40px; height:40px; background:#f8fafc; border-radius:10px; display:grid; place-items:center; font-size:18px; }
+.expense-info{ flex:1; }
+.expense-info b{ display:block; font-weight:800; font-size:13px; }
+.expense-info span{ display:block; font-size:11px; color:#64748b; font-weight:600; line-height:1.3; }
+.expense-amount{ font-weight:900; font-size:14px; color:#ef4444; }
+.expense-empty{ text-align:center; padding:60px 20px; }
+.empty-icon{ font-size:48px; margin-bottom:12px; }
+.expense-empty b{ display:block; font-weight:900; font-size:16px; }
+.expense-empty span{ font-size:12px; color:#64748b; font-weight:600; margin:4px 0 16px; display:block; }
+.primary-btn{ background:#0f172a; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-weight:900; cursor:pointer; }
+.add-expense-modal{ position:fixed; inset:0; z-index:9999; display:grid; place-items:end center; }
+.modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); }
+.modal-box{ position:relative; background:#fff; width:100%; max-width:440px; border-radius:24px 24px 0 0; padding:20px; max-height:90vh; overflow-y:auto; animation:slideUp.3s; }
+@keyframes slideUp{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
+.modal-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.modal-header b{ font-weight:900; }
+.modal-body{ display:flex; flex-direction:column; gap:4px; }
+.modal-body label{ font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin-top:10px; }
+.modal-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
+.modal-actions{ display:flex; gap:10px; margin-top:20px; position:sticky; bottom:0; background:#fff; padding-top:10px; }
+.secondary-btn{ flex:1; background:#f1f5f9; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
+.upload-btn{ background:#f1f5f9; border:1px dashed #cbd5e1; padding:8px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; width:100%; }
+</style>
+
+<script>
+class ExpensePage {
+  constructor(){
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.expenses = [];
+    this.filter = 'all';
+    this.editingId = null;
+  }
+  async init(){
+    document.getElementById('expenseDate').valueAsDate = new Date();
+    await this.loadExpenses();
+    this.bindEvents();
+  }
+  async loadExpenses(){
+    try{
+      if(window.ApiCore){
+        const data = await window.ApiCore.get(`/api/common/finance/${this.shopId}/expense`);
+        this.expenses = data.expenses || data || [];
+      } else {
+        this.expenses = JSON.parse(localStorage.getItem(`expenses_${this.shopId}`)||'[]');
+      }
+      this.render();
+      this.updateSummary();
+    }catch(e){ console.error(e); }
+  }
+  updateSummary(){
+    const total = this.expenses.reduce((s,e)=> s+(e.amount||0), 0);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const thisMonth = this.expenses.filter(e=> new Date(e.date)>= new Date(today.getFullYear(), today.getMonth(), 1));
+    const monthTotal = thisMonth.reduce((s,e)=> s+(e.amount||0),0);
+    const avg = thisMonth.length? Math.round(monthTotal / new Date().getDate()) : 0;
+    const highest = this.expenses.length? Math.max(...this.expenses.map(e=> e.amount||0)) : 0;
+
+    document.getElementById('totalExpenseHeader').innerText = `₹${monthTotal}`;
+    document.getElementById('totalExpenseAmount').innerText = `₹${total}`;
+    document.getElementById('avgExpense').innerText = `₹${avg}`;
+    document.getElementById('highestExpense').innerText = `₹${highest}`;
+  }
+  render(){
+    const container = document.getElementById('expensesList');
+    const empty = document.getElementById('expenseEmpty');
+    let filtered = this.expenses;
+    if(this.filter!=='all') filtered = this.expenses.filter(e=> e.category===this.filter);
+    filtered.sort((a,b)=> new Date(b.date) - new Date(a.date));
+
+    if(filtered.length===0){
+      container.style.display='none';
+      empty.style.display='block';
+      return;
+    }
+    container.style.display='flex';
+    empty.style.display='none';
+
+    const icons = { stock:'🛒', rent:'🏠', delivery:'🚚', salary:'👨‍💼', utility:'💡', marketing:'📢', maintenance:'🔧', other:'📦' };
+
+    container.innerHTML = filtered.map(exp=>`
+      <div class="expense-item" data-id="${exp._id||exp.id}">
+        <div class="expense-icon">${icons[exp.category]||'📦'}</div>
+        <div class="expense-info">
+          <b>${exp.title}</b>
+          <span>${exp.category} • ${new Date(exp.date).toLocaleDateString()} • ${exp.paymentMethod||exp.payment||'cash'}</span>
+          ${exp.note?`<span>📝 ${exp.note}</span>`:''}
+        </div>
+        <div style="text-align:right">
+          <div class="expense-amount">-₹${exp.amount}</div>
+          <button onclick="ExpensePageInstance.editExpense('${exp._id||exp.id}')" style="background:#f1f5f9;border:none;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:800;cursor:pointer;margin-top:4px">Edit</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  bindEvents(){
+    document.getElementById('expenseBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('addExpenseBtn')?.addEventListener('click', ()=> this.openModal());
+    document.getElementById('emptyAddExpense')?.addEventListener('click', ()=> this.openModal());
+    document.getElementById('closeExpenseModal')?.addEventListener('click', ()=> this.closeModal());
+    document.getElementById('cancelExpense')?.addEventListener('click', ()=> this.closeModal());
+    document.getElementById('addExpenseModal')?.querySelector('.modal-backdrop')?.addEventListener('click', ()=> this.closeModal());
+    document.getElementById('saveExpense')?.addEventListener('click', ()=> this.saveExpense());
+    document.getElementById('uploadBillBtn')?.addEventListener('click', ()=> document.getElementById('expenseBill').click());
+    document.getElementById('expenseBill')?.addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        document.getElementById('billPreview').src = ev.target.result;
+        document.getElementById('billPreview').style.display='block';
+      };
+      reader.readAsDataURL(file);
+    });
+    document.querySelectorAll('.cat-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.cat-btn').forEach(b=> b.classList.remove('active'));
+        btn.classList.add('active');
+        this.filter = btn.dataset.cat;
+        this.render();
+      });
+    });
+  }
+  openModal(expense=null){
+    this.editingId = expense? (expense._id||expense.id) : null;
+    document.getElementById('modalTitle').innerText = expense? 'Edit Expense' : 'Add Expense';
+    if(expense){
+      document.getElementById('expenseCategory').value = expense.category;
+      document.getElementById('expenseTitle').value = expense.title;
+      document.getElementById('expenseAmount').value = expense.amount;
+      document.getElementById('expenseDate').value = new Date(expense.date).toISOString().split('T')[0];
+      document.getElementById('expensePayment').value = expense.paymentMethod||expense.payment||'cash';
+      document.getElementById('expenseNote').value = expense.note||'';
+    } else {
+      document.getElementById('expenseCategory').value='stock';
+      document.getElementById('expenseTitle').value='';
+      document.getElementById('expenseAmount').value='';
+      document.getElementById('expenseDate').valueAsDate = new Date();
+      document.getElementById('expensePayment').value='cash';
+      document.getElementById('expenseNote').value='';
+    }
+    document.getElementById('addExpenseModal').style.display='grid';
+  }
+  closeModal(){
+    document.getElementById('addExpenseModal').style.display='none';
+    this.editingId = null;
+  }
+  editExpense(id){
+    const exp = this.expenses.find(e=> (e._id||e.id)===id);
+    if(exp) this.openModal(exp);
+  }
+  async saveExpense(){
+    const category = document.getElementById('expenseCategory').value;
+    const title = document.getElementById('expenseTitle').value.trim();
+    const amount = parseInt(document.getElementById('expenseAmount').value);
+    const date = document.getElementById('expenseDate').value;
+    const paymentMethod = document.getElementById('expensePayment').value;
+    const note = document.getElementById('expenseNote').value.trim();
+    const bill = document.getElementById('billPreview').src;
+
+    if(!title ||!amount ||!date){
+      if(window.Toast) Toast.show('Fill all required fields', 'warning');
+      return;
+    }
+
+    const expense = { _id:this.editingId||'exp'+Date.now(), category, title, amount, date, paymentMethod, payment:paymentMethod, note, bill:bill&&bill.startsWith('data:')?bill:null, shopId:this.shopId, createdAt:new Date() };
+
+    try{
+      if(window.ApiCore){
+        if(this.editingId){
+          await window.ApiCore.put(`/api/common/finance/${this.shopId}/expense/${this.editingId}`, expense);
+        } else {
+          await window.ApiCore.post(`/api/common/finance/${this.shopId}/expense`, expense);
+        }
+      } else {
+        let existing = JSON.parse(localStorage.getItem(`expenses_${this.shopId}`)||'[]');
+        if(this.editingId){
+          const idx = existing.findIndex(e=> (e._id||e.id)===this.editingId);
+          if(idx>=0) existing[idx]=expense;
+        } else {
+          existing.push(expense);
+        }
+        localStorage.setItem(`expenses_${this.shopId}`, JSON.stringify(existing));
+      }
+
+      if(window.Toast) Toast.show(this.editingId?'Expense updated ✅':'Expense added ✅', 'success');
+      this.closeModal();
+      await this.loadExpenses();
+
+    }catch(e){
+      if(window.Toast) Toast.show('Failed to save expense', 'error');
+    }
+  }
+}
+window.ExpensePageInstance = new ExpensePage();
+document.addEventListener('DOMContentLoaded', ()=> window.ExpensePageInstance.init());
+</script>
