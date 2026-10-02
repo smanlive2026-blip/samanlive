@@ -13,6 +13,7 @@ const Content = require('../models/Content');
 const Setting = require('../models/Setting');
 const User = require('../models/User');
 const ShopHistory = require('../models/ShopHistory');
+const TemplateProduct = require('../models/TemplateProduct');
 const Banner = require('../models/banner');
 
 // ==================== MANAGER AUTH MIDDLEWARE ====================

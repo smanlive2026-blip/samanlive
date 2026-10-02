@@ -85,6 +85,12 @@ function getUrlParam(param) {
 }
 
 async function loadPage(pageName, btnElement) {
+    // Deleted pages block
+    if(pageName === 'local-market-shops' || pageName === 'coupons'){
+        showToast('Ye page hata diya gaya hai', 'error');
+        return loadPage('dashboard', document.querySelector(".nav-btn"));
+    }
+
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     if (btnElement) btnElement.classList.add('active');
 
@@ -93,7 +99,7 @@ async function loadPage(pageName, btnElement) {
         if (window.shopMap) { window.shopMap.remove(); window.shopMap = null; }
         if (window.areaMap) { window.areaMap.remove(); window.areaMap = null; }
 
-        const res = await fetch(pageName + '.html');
+        const res = await fetch(pageName + '.html?v=3&t=' + Date.now()); // cache bust added
         if (!res.ok) throw new Error('Page not found: ' + pageName + '.html');
         const html = await res.text();
         document.getElementById('mainContainer').innerHTML = html;
