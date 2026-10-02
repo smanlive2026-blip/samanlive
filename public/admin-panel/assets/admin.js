@@ -1,6 +1,5 @@
 const API_BASE = '/api';
 
-// ========== GLOBAL VARIABLES - WINDOW PE DALO ==========
 window.allModules = window.allModules || [];
 window.allCategories = window.allCategories || [];
 window.allShops = window.allShops || [];
@@ -9,16 +8,11 @@ window.allContent = window.allContent || [];
 window.allAreas = window.allAreas || [];
 window.allUsers = window.allUsers || [];
 
-// ========== UTILITY FUNCTIONS ==========
 async function apiCall(endpoint, method = 'GET', data = null) {
     try {
         const token = localStorage.getItem('userToken');
         const options = { method, headers: {} };
-        
-        if (token) {
-            options.headers['Authorization'] = `Bearer ${token}`;
-        }
-
+        if (token) options.headers['Authorization'] = `Bearer ${token}`;
         if (data) {
             if (data instanceof FormData) options.body = data;
             else {
@@ -27,13 +21,11 @@ async function apiCall(endpoint, method = 'GET', data = null) {
             }
         }
         const response = await fetch(API_BASE + endpoint, options);
-        
         if (response.status === 401) {
             localStorage.removeItem('userToken');
             window.location.href = '/auth/login.html';
             throw new Error('Session expired. Login karo');
         }
-
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
             throw new Error(errorData.error || `HTTP ${response.status}`);
@@ -87,63 +79,34 @@ function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 
-// ========== URL PARAM HELPER ==========
 function getUrlParam(param) {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
 }
 
-// ========== PAGE LOADER - FIXED ==========
 async function loadPage(pageName, btnElement) {
-    // Active class update
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    if (btnElement) {
-        btnElement.classList.add('active');
-    }
+    if (btnElement) btnElement.classList.add('active');
 
     try {
-        // Cleanup previous maps
         if (window.moduleMap) { window.moduleMap.remove(); window.moduleMap = null; }
         if (window.shopMap) { window.shopMap.remove(); window.shopMap = null; }
         if (window.areaMap) { window.areaMap.remove(); window.areaMap = null; }
 
-        // ========= TEMPLATE CATALOG CASE =========
-        if(pageName === 'template-catalog') {
-            document.getElementById('mainContainer').innerHTML = `
-                <iframe src="/admin/template-catalog.html" 
-                        style="width:100%; height:calc(100vh - 180px); border:none; border-radius:12px; background:white;">
-                </iframe>
-            `;
-            
-            if (history.pushState) {
-                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?page=' + pageName;
-                window.history.pushState({path: newUrl}, '', newUrl);
-            }
-            return;
-        }
-        // ===========================================
-
-        // NORMAL PAGE LOAD - SIRF 1 BAAR
         const res = await fetch(pageName + '.html');
         if (!res.ok) throw new Error('Page not found: ' + pageName + '.html');
         const html = await res.text();
         document.getElementById('mainContainer').innerHTML = html;
 
-        // Page ke scripts execute karo
         const container = document.getElementById('mainContainer');
         const scripts = container.querySelectorAll('script');
         scripts.forEach(oldScript => {
             if (!oldScript.src) {
-                try {
-                    eval(oldScript.textContent);
-                } catch(e) {
-                    console.error('Script eval error:', e);
-                }
+                try { eval(oldScript.textContent); } catch(e) { console.error('Script eval error:', e); }
             }
             oldScript.remove();
         });
 
-        // Update URL without reload
         if (history.pushState) {
             const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?page=' + pageName;
             window.history.pushState({path: newUrl}, '', newUrl);
@@ -159,7 +122,6 @@ async function loadPage(pageName, btnElement) {
     }
 }
 
-// ========== AREA HELPER FUNCTIONS ==========
 async function loadAllAreas() {
     try {
         const data = await apiCall('/areas');
@@ -172,51 +134,25 @@ async function loadAllAreas() {
 }
 
 async function loadAreaByCode(areaCode) {
-    try {
-        return await apiCall('/area/' + areaCode);
-    } catch (err) {
-        return null;
-    }
+    try { return await apiCall('/area/' + areaCode); } catch (err) { return null; }
 }
-
-// 15 Bucket List - Global constant
-const BUCKET_LIST = [
-    { id: 'Grocery', name: 'Grocery Manager', icon: '🛒', desc: 'Ration, FMCG, Oil, Masala' },
-    { id: 'Fresh', name: 'Fresh Manager', icon: '🥬', desc: 'Sabzi, Fruit, Dairy, Bakery' },
-    { id: 'Food', name: 'Food Manager', icon: '🍕', desc: 'Restaurant, Tiffin, Cloud Kitchen' },
-    { id: 'Medicine', name: 'Medicine Manager', icon: '💊', desc: 'Dawai, Medical, Surgical' },
-    { id: 'Electronics', name: 'Electronics Manager', icon: '📱', desc: 'Mobile, TV, Fridge, Appliances' },
-    { id: 'Fashion', name: 'Fashion Manager', icon: '👗', desc: 'Kapde, Footwear, Accessories' },
-    { id: 'Home', name: 'Home Manager', icon: '🏠', desc: 'Furniture, Decor, Kitchenware' },
-    { id: 'Hardware', name: 'Hardware Manager', icon: '🔧', desc: 'Cement, Paint, Tools, Electric' },
-    { id: 'Beauty', name: 'Beauty Manager', icon: '💄', desc: 'Cosmetics, Salon, Parlour' },
-    { id: 'Auto', name: 'Auto Manager', icon: '🚗', desc: 'Bike/Car, Parts, Garage, Petrol' },
-    { id: 'Stationery', name: 'Stationery Manager', icon: '📚', desc: 'Books, School, Office Supply' },
-    { id: 'Service', name: 'Service Manager', icon: '⚙️', desc: 'Plumber, Electrician, Carpenter' },
-    { id: 'Meat', name: 'Meat Manager', icon: '🍖', desc: 'Chicken, Mutton, Fish, Eggs' },
-    { id: 'Puja', name: 'Puja Manager', icon: '🪔', desc: 'Agarbatti, Murti, Religious Items' },
-    { id: 'Others', name: 'Others Manager', icon: '🎁', desc: 'Pet, Toy, Gift, Sports' }
-];
 
 function generateManagerCode(areaCode, bucket) {
     return `${areaCode}-${bucket}`.toUpperCase();
 }
 
-// ========== GLOBAL MAPS CLEANUP ==========
 window.addEventListener('beforeunload', () => {
     if (window.moduleMap) window.moduleMap.remove();
     if (window.shopMap) window.shopMap.remove();
     if (window.areaMap) window.areaMap.remove();
 });
 
-// ========== INITIALIZE ON LOAD ==========
 document.addEventListener('DOMContentLoaded', () => {
     const pageParam = getUrlParam('page') || 'dashboard';
     const navBtn = document.querySelector(`.nav-btn[onclick*="'${pageParam}'"]`);
     loadPage(pageParam, navBtn);
 });
 
-// Make functions globally available
 window.loadPage = loadPage;
 window.apiCall = apiCall;
 window.showToast = showToast;
@@ -227,5 +163,4 @@ window.formatDate = formatDate;
 window.getUrlParam = getUrlParam;
 window.loadAllAreas = loadAllAreas;
 window.loadAreaByCode = loadAreaByCode;
-window.BUCKET_LIST = BUCKET_LIST;
 window.generateManagerCode = generateManagerCode;
