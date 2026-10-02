@@ -83,7 +83,26 @@ app.get('/api/orders/shop/:shopId', async (req, res) => {
 });
 
 // [COMMENT] STATIC FILES - 70+ Dashboard yahi se serve hote hain - public/shop-templates/*
-app.use(express.static(path.join(__dirname, '../public')));
+// ==================== NO CACHE - HAR BAAR REFRESH ====================
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
+  next();
+});
+
+// Static files bhi no-cache se serve honge
+app.use(express.static(path.join(__dirname, '../public'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res, path) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+}));
+
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 app.use('/logos', express.static(path.join(__dirname, '../public/logos')));
 app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
