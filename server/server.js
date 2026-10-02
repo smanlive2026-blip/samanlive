@@ -127,7 +127,16 @@ app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 app.use('/logos', express.static(path.join(__dirname, '../public/logos')));
 app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
 app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
-app.use('/shop-templates', express.static(path.join(__dirname, '../public/shop-templates')));
+app.use('/shop-templates', noCacheMiddleware, express.static(path.join(__dirname, '../public/shop-templates'), {
+  etag: false,
+  lastModified: false,
+  maxAge: 0,
+  setHeaders: (res, path) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+}));
 
 app.use('/api/orders', orderRoutes);
 
