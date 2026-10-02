@@ -186,18 +186,85 @@ app.get('/shop/:id/dashboard', async (req, res) => {
 app.get('/profile.html', (req, res) => res.sendFile(path.join(__dirname, '../public/profile.html')));
 app.get('/wishlist.html', (req, res) => res.sendFile(path.join(__dirname, '../public/wishlist.html')));
 
-// ==================== ADMIN API DOCS ROUTE ====================
+// ==================== ADMIN API DOCS + FILE EXPLORER - FULL ====================
 app.get('/api/admin/routes', (req, res) => {
     try {
         const allRoutes = [];
+        const routesDir = path.join(__dirname, './routes');
+        function scanProjectTree(dir, basePath = '') {
+            const items = [];
+            if (!fs.existsSync(dir)) return items;
+            const files = fs.readdirSync(dir);
+            files.forEach(file => {
+                const filePath = path.join(dir, file);
+                const stat = fs.statSync(filePath);
+                const relativePath = path.join(basePath, file);
+                if (stat.isDirectory()) {
+                    items.push({ name: file, type: 'folder', path: relativePath, children: scanProjectTree(filePath, relativePath) });
+                } else {
+                    items.push({ name: file, type: 'file', path: relativePath });
+                }
+            });
+            return items;
+        }
         if (app._router && app._router.stack) {
             app._router.stack.forEach(layer => {
-                if (layer.route) allRoutes.push({ path: layer.route.path, methods: Object.keys(layer.route.methods).map(m => m.toUpperCase()) });
+                if (layer.route) {
+                    allRoutes.push({ path: layer.route.path, methods: Object.keys(layer.route.methods).map(m => m.toUpperCase()), file: 'server.js' });
+                }
             });
         }
-        res.json({ success: true, total: allRoutes.length, routes: allRoutes, models: mongoose.modelNames() });
+        if (fs.existsSync(routesDir)) {
+            const files = fs.readdirSync(routesDir);
+            files.forEach(file => {
+                if (file.endsWith('.js')) {
+                    const content = fs.readFileSync(path.join(routesDir, file), 'utf8');
+                    const routeRegex = /router\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]/g;
+                    let match;
+                    while ((match = routeRegex.exec(content)) !== null) {
+                        let basePath = '/api';
+                        if (file === 'adminRoutes.js') basePath = '/api';
+                        const fullPath = basePath + match[2];
+                        allRoutes.push({ path: fullPath, methods: [match[1].toUpperCase()], file: file });
+                    }
+                }
+            });
+        }
+        const projectRoot = path.join(__dirname, '..');
+        const projectTree = scanProjectTree(projectRoot);
+        res.json({ success: true, total: allRoutes.length, routes: allRoutes, models: mongoose.modelNames(), projectTree });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message, routes: [], projectTree: [] });
+    }
+});
+
+app.post('/api/admin/get-route-code', (req, res) => {
+    try {
+        const { file } = req.body;
+        let filePath = file === 'server.js' ? path.join(__dirname, 'server.js') : path.join(__dirname, './routes', file);
+        if (!fs.existsSync(filePath)) {
+             filePath = path.join(__dirname, '..', file);
+        }
+        if (!fs.existsSync(filePath)) return res.json({ success: false, error: 'File not found: ' + file });
+        res.json({ success: true, file, code: fs.readFileSync(filePath, 'utf8') });
     } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
+
+app.post('/api/admin/update-route-code', (req, res) => {
+    try {
+        if (process.env.NODE_ENV === 'production') {
+            return res.status(403).json({ success: false, error: 'File editing disabled in production' });
+        }
+        const { file, code } = req.body;
+        let filePath = file === 'server.js' ? path.join(__dirname, 'server.js') : path.join(__dirname, './routes', file);
+        if (!fs.existsSync(filePath)) filePath = path.join(__dirname, '..', file);
+        const backupPath = filePath + '.backup-' + Date.now();
+        fs.copyFileSync(filePath, backupPath);
+        fs.writeFileSync(filePath, code);
+        res.json({ success: true, message: `File ${file} updated! Backup: ${path.basename(backupPath)}` });
+    } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+// ==================== END FILE EXPLORER ====================
 
 // ==================== ERROR HANDLERS - LAST ME RAKHNA HAI ====================
 app.use((err, req, res, next) => {
