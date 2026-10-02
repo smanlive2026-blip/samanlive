@@ -16,7 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 // ==================== IMPORTS ====================
-const uploadRoutes = require('./routes/upload');
+//const uploadRoutes = require('./routes/upload');
 const deliveryManagerRoutes = require('./routes/deliveryManager');
 const orderRoutes = require('./routes/orders');
 const fruitItemRoutes = require('./routes/fruit-item');
@@ -139,7 +139,7 @@ app.use('/api/location', locationRoutes);
 app.use('/api/location', require('./routes/user.location.routes'));
 
 // [COMMENT] UPLOAD - Cloudinary image upload
-app.use('/api/upload', require('./routes/upload'));
+//app.use('/api/upload', require('./routes/upload'));
 
 // user profile ke liye
 app.use('/api/user', userRoutes);
