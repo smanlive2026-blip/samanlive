@@ -83,25 +83,43 @@ app.get('/api/orders/shop/:shopId', async (req, res) => {
 });
 
 // [COMMENT] STATIC FILES - 70+ Dashboard yahi se serve hote hain - public/shop-templates/*
-// ==================== NO CACHE - HAR BAAR REFRESH ====================
-app.use((req, res, next) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  res.set('Surrogate-Control', 'no-store');
+// ==================== FORCE NO CACHE FOR ALL PANELS ====================
+const noCacheMiddleware = (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
   next();
-});
+};
 
-// Static files bhi no-cache se serve honge
+// Sab admin/manager/user panels ke liye no-cache
+app.use(['/admin', '/admin-panel', '/area-manager', '/manager-panel', '/dashboard'], noCacheMiddleware);
+
 app.use(express.static(path.join(__dirname, '../public'), {
   etag: false,
   lastModified: false,
-  setHeaders: (res, path) => {
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
+  maxAge: 0,
+  setHeaders: (res, filePath) => {
+    // HTML files ko kabhi cache mat kar
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
   }
 }));
+
+// Admin route - har baar fresh file
+app.get('/admin', noCacheMiddleware, (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/admin-panel/modules.html'), {
+    headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+  });
+});
+app.get('/admin/*', noCacheMiddleware, (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/admin-panel/modules.html'), {
+    headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+  });
+});
 
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 app.use('/logos', express.static(path.join(__dirname, '../public/logos')));
