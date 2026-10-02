@@ -871,7 +871,7 @@ router.delete('/shop/:shopId/product/:productId', async (req, res) => {
 })
 
 // ==================== TEMPLATE PRODUCTS - READY MADE CATALOG ====================
-const TemplateProduct = require('../models/TemplateProduct'); // upar models ke sath ye bhi add kar lena
+//const TemplateProduct = require('../models/TemplateProduct'); // upar models ke sath ye bhi add kar lena
 
 // 1. SAARI TEMPLATE PRODUCTS LANA - Filter: shopType se
 router.get('/template-products', authenticateToken, async (req, res) => {
