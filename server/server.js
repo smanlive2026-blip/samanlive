@@ -39,6 +39,8 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // [COMMENT] Delivery Manager - delivery boy banane ka API
 app.use('/api', deliveryManagerRoutes);
 
+app.use('/api/common', require('./routes/common/index'));
+
 // [COMMENT] FRUIT SHOP TEMPLATE - public/shop-templates/fruit/dashboard.html
 app.use('/api/shops', fruitItemRoutes);
 
@@ -61,7 +63,7 @@ app.use('/api/shops/kirana', require('./routes/shops/kirana-route'));
 app.use('/api/shops', require('./routes/shopRoutes'));
 
 // [COMMENT] SHOP TOGGLE - public/shop-templates/common/shop-toggle.js
-app.use('/api/shop-toggle', require('./routes/common/shop-toggle'));
+//app.use('/api/shop-toggle', require('./routes/common/shop-toggle'));
 app.use('/api/products', productRoutes);
 app.use('/api/admin', settingsRoutes);
 

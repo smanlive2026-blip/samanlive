@@ -1,7 +1,7 @@
 // LOCATION: common/core/api-core.js - WORLD CLASS API CORE - PRODUCTION GRADE
 class ApiCore {
   constructor(){
-    this.baseUrl = '';
+    //this.baseUrl = '';
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.timeout = 15000;
     this.retryCount = 2;
@@ -69,7 +69,7 @@ class ApiCore {
      ...options
     };
 
-    delete config.headers; // will rebuild after interceptors
+    //delete config.headers; // will rebuild after interceptors
     config.headers = { 'Content-Type':'application/json',...(options.headers||{}) };
 
     // Deduplication - if same request pending, return same promise
@@ -191,8 +191,11 @@ class ApiCore {
 
   // Shop specific APIs
   getShop(shopId){
+  // Pehle common route try kar, fir old route fallback
+  return this.get(`/api/common/profile/${shopId}`).catch(()=>{
     return this.get(`/api/shops/${shopId}`);
-  }
+  });
+}
 
   getShopProducts(shopId, filters = {}){
     return this.get(`/api/shops/${shopId}/products`, filters);

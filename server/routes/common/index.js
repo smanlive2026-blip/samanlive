@@ -19,7 +19,7 @@ const ALLOWED_ROUTE_FILES = [
   'customer-orders.routes.js',
   'wishlist.routes.js',
   'reviews.routes.js',
-  'track.routes.js',
+  'track.js',
   'share.routes.js',
   'legal.routes.js',
 

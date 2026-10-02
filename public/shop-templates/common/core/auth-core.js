@@ -1,191 +1,471 @@
-// LOCATION: common/core/auth-core.js - WORLD CLASS AUTH CORE - FULL
-class CoreAuthCore {
-  constructor(){
-    this.user = null;
-    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
-    this.isChecking = false;
-    this.listeners = [];
-    this.init();
-  }
+// LOCATION: server/routes/common/auth.js - WORLD CLASS AUTH - FULL PRODUCTION GRADE - V10 FINAL
+const express = require('express');
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 
-  init(){
-    // Check auth on load for dashboard pages
-    if(location.pathname.includes('dashboard') || location.pathname.includes('admin')){
-      this.checkAuthSilently();
+// ========== MODELS - SAFE LOAD ==========
+let User, Shop, Otp;
+try{ User = require('../../models/User'); }catch(e){ console.log('⚠️ User model missing'); }
+try{ Shop = require('../../models/Shop'); }catch(e){ console.log('⚠️ Shop model missing'); }
+try{ Otp = require('../../models/Otp'); }catch(e){ Otp = null; }
+
+const JWT_SECRET = process.env.JWT_SECRET || 'localmarket_secret_world_class_v10_2024_secure';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refresh_secret_v10';
+const COOKIE_NAME = 'lm_token';
+const REFRESH_COOKIE = 'lm_refresh';
+
+// ========== RATE LIMITERS ==========
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { success:false, message:'Too many login attempts, try after 15 mins ⏳' },
+  standardHeaders: true
+});
+
+const otpLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 5,
+  message: { success:false, message:'Too many OTP requests, try after 5 mins' }
+});
+
+// ========== IN-MEMORY STORES FOR PRODUCTION FALLBACK ==========
+const otpStore = new Map(); // phone -> { otp, expiry, attempts }
+const failedAttempts = new Map(); // ip/phone -> count
+const blacklistedTokens = new Set();
+
+// ========== AUTH MIDDLEWARE - WORLD CLASS ==========
+function authMiddleware(req, res, next){
+  try{
+    const token = req.cookies[COOKIE_NAME] ||
+                  req.headers.authorization?.replace('Bearer ','') ||
+                  req.headers['x-auth-token'] ||
+                  req.query.token;
+
+    if(!token){
+      req.user = null;
+      req.isAuthenticated = false;
+      return next();
+    }
+
+    if(blacklistedTokens.has(token)){
+      req.user = null;
+      req.isAuthenticated = false;
+      return next();
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    req.isAuthenticated = true;
+    req.token = token;
+
+    // Extend expiry on activity
+    if(decoded.exp && (decoded.exp * 1000 - Date.now()) < 24 * 60 * 60 * 1000){
+      // Less than 24h left, issue new token in background
+      const newToken = jwt.sign({ id: decoded.id, role: decoded.role, email: decoded.email }, JWT_SECRET, { expiresIn: '7d' });
+      res.cookie(COOKIE_NAME, newToken, getCookieOptions());
+    }
+
+  }catch(e){
+    req.user = null;
+    req.isAuthenticated = false;
+    if(e.name === 'TokenExpiredError'){
+      req.tokenExpired = true;
     }
   }
+  next();
+}
 
-  // Silent check without redirect
-  async checkAuthSilently(){
-    if(this.isChecking) return this.user;
-    this.isChecking = true;
+function getCookieOptions(){
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/'
+  };
+}
 
-    try{
-      if(!window.ApiCore) throw new Error('ApiCore not loaded');
-
-      const data = await window.ApiCore.get('/api/common/auth/check');
-
-      if(data.success && data.authenticated){
-        this.user = data.user;
-        window.currentUser = data.user;
-        this.notifyListeners('login', data.user);
-        return data.user;
-      } else {
-        this.user = null;
-        window.currentUser = null;
-        this.notifyListeners('logout', null);
-        return null;
-      }
-    }catch(e){
-      console.error('Auth check failed', e);
-      this.user = null;
-      return null;
-    }finally{
-      this.isChecking = false;
-    }
-  }
-
-  // Strict check with redirect
-  async requireAuth(redirectUrl = '/index.html'){
-    const user = await this.checkAuthSilently();
-    if(!user){
-      this.showAuthModal(redirectUrl);
-      return false;
-    }
-    return true;
-  }
-
-  showAuthModal(redirectUrl){
-    // Create login required modal if not exists
-    if(document.getElementById('authRequiredModal')) return;
-
-    const modal = document.createElement('div');
-    modal.id = 'authRequiredModal';
-    modal.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:grid;place-items:center;padding:20px;backdrop-filter:blur(8px);font-family:Outfit,sans-serif`;
-    modal.innerHTML = `
-      <div style="background:#fff;width:100%;max-width:380px;border-radius:24px;padding:24px;text-align:center;animation:pop.3s">
-        <div style="width:64px;height:64px;background:#f1f5f9;border-radius:50%;display:grid;place-items:center;margin:0 auto 16px;font-size:28px">🔒</div>
-        <h2 style="font-weight:900;margin:0 0 8px;font-size:20px">Login Required</h2>
-        <p style="color:#64748b;font-size:13px;margin:0 0 20px">Please login to access dashboard and manage your shop</p>
-        <button id="authGoLogin" style="width:100%;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:15px">Go to Login</button>
-        <button id="authCancel" style="width:100%;margin-top:8px;background:#f1f5f9;border:none;padding:12px;border-radius:12px;font-weight:800">Cancel</button>
-      </div>
-      <style>@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}</style>
-    `;
-    document.body.appendChild(modal);
-
-    modal.querySelector('#authGoLogin').addEventListener('click', ()=>{
-      window.location.href = redirectUrl + `?redirect=${encodeURIComponent(location.href)}`;
+function requireAuth(req, res, next){
+  if(!req.isAuthenticated){
+    return res.status(401).json({
+      success:false,
+      authenticated:false,
+      message:'Authentication required 🔒',
+      code:'AUTH_REQUIRED'
     });
-    modal.querySelector('#authCancel').addEventListener('click', ()=>{
-      modal.remove();
-      history.back();
-    });
   }
+  next();
+}
 
-  async getUser(){
-    if(this.user) return this.user;
-    return await this.checkAuthSilently();
-  }
+router.use(authMiddleware);
 
-  async getRole(){
-    const user = await this.getUser();
-    return user?.role || 'guest';
-  }
+// ========== HELPER FUNCTIONS ==========
+function generateOtp(){ return Math.floor(100000 + Math.random() * 900000).toString(); }
 
-  async isShopOwner(shopId){
-    shopId = shopId || this.shopId;
-    if(!shopId) return false;
+function generateTokens(user){
+  const payload = { id: user._id, role: user.role || 'customer', email: user.email, phone: user.phone };
+  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+  const refreshToken = jwt.sign({ id: user._id }, JWT_REFRESH_SECRET, { expiresIn: '30d' });
+  return { accessToken, refreshToken };
+}
 
-    try{
-      const data = await window.ApiCore.get(`/api/common/auth/verify/${shopId}`);
-      return data.isOwner || false;
-    }catch(e){
-      return false;
-    }
-  }
-
-  async protectDashboard(){
-    const isOwner = await this.isShopOwner();
-    const user = await this.getUser();
-
-    if(!user){
-      document.body.innerHTML = `
-        <div style="height:100vh;display:grid;place-items:center;font-family:Outfit,sans-serif;text-align:center;padding:20px;background:#f8fafc">
-          <div style="background:#fff;padding:32px;border-radius:24px;box-shadow:0 20px 40px rgba(0,0,0,.08);max-width:360px;width:100%">
-            <div style="font-size:48px">🔒</div>
-            <h2 style="font-weight:900;margin:12px 0 8px">Authentication Required</h2>
-            <p style="color:#64748b;font-size:13px;margin:0 0 20px">You need to login to view dashboard</p>
-            <a href="/index.html?redirect=${encodeURIComponent(location.href)}" style="display:block;background:#0f172a;color:#fff;padding:14px;border-radius:12px;text-decoration:none;font-weight:900">Login Now</a>
-          </div>
-        </div>
-      `;
-      return false;
-    }
-
-    if(!isOwner){
-      document.body.innerHTML = `
-        <div style="height:100vh;display:grid;place-items:center;font-family:Outfit,sans-serif;text-align:center;padding:20px;background:#f8fafc">
-          <div style="background:#fff;padding:32px;border-radius:24px;box-shadow:0 20px 40px rgba(0,0,0,.08);max-width:360px;width:100%">
-            <div style="font-size:48px">⛔</div>
-            <h2 style="font-weight:900;margin:12px 0 8px">Access Denied</h2>
-            <p style="color:#64748b;font-size:13px;margin:0 0 20px">You don't own this shop. You can only manage your own shop.</p>
-            <a href="/" style="display:block;background:#0f172a;color:#fff;padding:14px;border-radius:12px;text-decoration:none;font-weight:900">Go Home</a>
-          </div>
-        </div>
-      `;
-      return false;
-    }
-
-    // Update UI with user info
-    this.updateDashboardUI(user);
-    return true;
-  }
-
-  updateDashboardUI(user){
-    const avatar = document.getElementById('dashAvatar');
-    const nameEl = document.getElementById('dashUserName');
-
-    if(avatar && user.avatar) avatar.src = user.avatar;
-    if(nameEl) nameEl.innerText = user.name || user.email || 'Owner';
-
-    // Show owner badge
-    const badge = document.createElement('span');
-    badge.style.cssText = 'background:#dcfce7;color:#166534;font-size:10px;font-weight:900;padding:2px 6px;border-radius:6px;margin-left:6px';
-    badge.innerText = 'OWNER';
-
-    const title = document.querySelector('#dashHeader b');
-    if(title &&!title.querySelector('span')) title.appendChild(badge);
-  }
-
-  // Observer pattern for auth changes
-  onAuthChange(callback){
-    this.listeners.push(callback);
-  }
-
-  notifyListeners(event, user){
-    this.listeners.forEach(cb=> cb(event, user));
-  }
-
-  // Logout
-  async logout(){
-    try{
-      await window.ApiCore.post('/api/common/auth/logout', {});
-      this.user = null;
-      window.currentUser = null;
-      this.notifyListeners('logout', null);
-      window.location.href = '/index.html?loggedOut=true';
-    }catch(e){
-      console.error('Logout failed', e);
-      // Force logout
-      window.location.href = '/index.html';
-    }
+async function findUserByPhoneOrEmail(identifier){
+  if(!User) return null;
+  if(identifier.includes('@')){
+    return await User.findOne({ email: identifier.toLowerCase() });
+  } else {
+    const cleanPhone = identifier.replace(/\D/g,'').slice(-10);
+    return await User.findOne({ $or: [{ phone: cleanPhone }, { phone: identifier }] });
   }
 }
 
-window.AuthCore = new CoreAuthCore();
-window.CoreAuthCore = window.AuthCore;
+// ========== 1. CHECK AUTH - MAIN FOR auth-core.js ==========
+router.get('/check', async (req, res)=>{
+  try{
+    if(!req.isAuthenticated ||!req.user){
+      return res.json({ success:true, authenticated:false, user:null, isLoggedIn:false });
+    }
 
-// Global helper
-window.requireAuth = ()=> window.AuthCore.requireAuth();
-window.isShopOwner = (shopId)=> window.AuthCore.isShopOwner(shopId);
+    let user = null;
+    if(User){
+      try{
+        user = await User.findById(req.user.id).select('-password -otp -__v');
+        if(!user){
+          res.clearCookie(COOKIE_NAME);
+          return res.json({ success:true, authenticated:false, user:null });
+        }
+      }catch(e){
+        // Fallback to token data if DB fails
+        user = req.user;
+      }
+    } else {
+      user = req.user;
+    }
+
+    res.json({
+      success:true,
+      authenticated:true,
+      isLoggedIn:true,
+      user:{
+        _id: user._id || user.id,
+        id: user._id || user.id,
+        name: user.name || user.email?.split('@')[0] || 'User',
+        email: user.email,
+        phone: user.phone,
+        role: user.role || 'customer',
+        avatar: user.avatar || `https://i.pravatar.cc/150?u=${user._id || user.id}`,
+        shops: user.shops || [],
+        isVerified: user.isVerified || false,
+        createdAt: user.createdAt
+      },
+      token: req.token
+    });
+
+  }catch(e){
+    console.error('Auth check error', e);
+    res.json({ success:false, authenticated:false, error:e.message });
+  }
+});
+
+// ========== 2. VERIFY SHOP OWNER - FOR protectDashboard() ==========
+router.get('/verify/:shopId', async (req, res)=>{
+  try{
+    const { shopId } = req.params;
+    if(!req.isAuthenticated){
+      return res.json({ success:true, isOwner:false, reason:'not_logged_in' });
+    }
+
+    if(!Shop){
+      // If shop model missing, allow if user has shops array containing shopId
+      const user = await User?.findById(req.user.id);
+      const hasShop = user?.shops?.some(s=> s.toString() === shopId);
+      return res.json({ success:true, isOwner:!!hasShop, shopId, fallback:true });
+    }
+
+    const shop = await Shop.findById(shopId);
+    if(!shop) return res.json({ success:true, isOwner:false, reason:'shop_not_found' });
+
+    const userId = req.user.id.toString();
+    const isOwner = shop.ownerId?.toString() === userId ||
+                    shop.owner?.toString() === userId ||
+                    shop.userId?.toString() === userId ||
+                    shop.createdBy?.toString() === userId;
+
+    res.json({
+      success:true,
+      isOwner,
+      shopId,
+      role: isOwner? 'owner' : 'viewer',
+      shopName: shop.shopName || shop.name
+    });
+
+  }catch(e){
+    console.error('Verify owner error', e);
+    res.json({ success:true, isOwner:false, error:e.message });
+  }
+});
+
+// ========== 3. LOGIN WITH PASSWORD ==========
+router.post('/login', loginLimiter, async (req, res)=>{
+  try{
+    const { email, phone, password, identifier } = req.body;
+    const loginId = email || phone || identifier;
+
+    if(!loginId ||!password){
+      return res.status(400).json({ success:false, message:'Email/Phone and password required' });
+    }
+
+    // Check brute force
+    const attemptKey = req.ip + ':' + loginId;
+    const attempts = failedAttempts.get(attemptKey) || 0;
+    if(attempts >= 5){
+      return res.status(429).json({ success:false, message:'Account locked for 15 mins due to many failed attempts 🔒' });
+    }
+
+    const user = await findUserByPhoneOrEmail(loginId);
+    if(!user){
+      failedAttempts.set(attemptKey, attempts+1);
+      setTimeout(()=> failedAttempts.delete(attemptKey), 15*60*1000);
+      return res.status(401).json({ success:false, message:'User not found 🔍', code:'USER_NOT_FOUND' });
+    }
+
+    let isMatch = false;
+    if(user.password){
+      try{
+        isMatch = await bcrypt.compare(password, user.password);
+        if(!isMatch) isMatch = password === user.password; // fallback plain
+      }catch(e){ isMatch = password === user.password; }
+    } else {
+      isMatch = false;
+    }
+
+    if(!isMatch){
+      failedAttempts.set(attemptKey, attempts+1);
+      return res.status(401).json({ success:false, message:'Invalid password ❌', code:'INVALID_PASSWORD' });
+    }
+
+    failedAttempts.delete(attemptKey);
+    const { accessToken, refreshToken } = generateTokens(user);
+
+    res.cookie(COOKIE_NAME, accessToken, getCookieOptions());
+    res.cookie(REFRESH_COOKIE, refreshToken, {...getCookieOptions(), maxAge: 30*24*60*60*1000 });
+
+    res.json({
+      success:true,
+      message:'Login successful ✅',
+      authenticated:true,
+      user:{
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        avatar: user.avatar
+      },
+      token: accessToken,
+      refreshToken
+    });
+
+  }catch(e){
+    console.error('Login error', e);
+    res.status(500).json({ success:false, message:'Login failed - ' + e.message });
+  }
+});
+
+// ========== 4. SEND OTP ==========
+router.post('/send-otp', otpLimiter, async (req, res)=>{
+  try{
+    const { phone, email } = req.body;
+    const identifier = phone || email;
+    if(!identifier) return res.status(400).json({ success:false, message:'Phone or email required' });
+
+    const otp = generateOtp();
+    const expiry = Date.now() + 5 * 60 * 1000;
+
+    otpStore.set(identifier, { otp, expiry, attempts:0 });
+
+    if(Otp){
+      await Otp.create({ identifier, otp, expiry }).catch(()=>{});
+    }
+
+    console.log(`🔐 OTP for ${identifier}: ${otp} - Valid 5 mins`);
+
+    // TODO: Integrate Fast2SMS / Twilio here
+    // await sendSms(phone, `Your LocalMarket OTP is ${otp}`)
+
+    res.json({
+      success:true,
+      message:`OTP sent to ${identifier} 📱`,
+      otp: process.env.NODE_ENV!== 'production'? otp : undefined, // Show in dev only
+      expiry: 300
+    });
+
+  }catch(e){
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+// ========== 5. VERIFY OTP & LOGIN ==========
+router.post('/verify-otp', async (req, res)=>{
+  try{
+    const { phone, email, otp, name } = req.body;
+    const identifier = phone || email;
+    if(!identifier ||!otp) return res.status(400).json({ success:false, message:'Identifier and OTP required' });
+
+    const stored = otpStore.get(identifier);
+    if(!stored) return res.status(400).json({ success:false, message:'OTP expired or not sent, request again' });
+
+    if(Date.now() > stored.expiry){
+      otpStore.delete(identifier);
+      return res.status(400).json({ success:false, message:'OTP expired ⏰' });
+    }
+
+    if(stored.attempts >= 3){
+      otpStore.delete(identifier);
+      return res.status(400).json({ success:false, message:'Too many wrong attempts, request new OTP' });
+    }
+
+    if(stored.otp!== otp){
+      stored.attempts++;
+      return res.status(400).json({ success:false, message:`Invalid OTP ❌ - ${3-stored.attempts} attempts left` });
+    }
+
+    otpStore.delete(identifier);
+
+    // Find or create user
+    let user = await findUserByPhoneOrEmail(identifier);
+    if(!user && User){
+      user = await User.create({
+        phone: phone? phone.replace(/\D/g,'').slice(-10) : undefined,
+        email: email?.toLowerCase(),
+        name: name || identifier.split('@')[0] || 'User',
+        role: 'customer',
+        isVerified: true
+      });
+    }
+
+    if(!user) return res.status(500).json({ success:false, message:'User creation failed' });
+
+    const { accessToken, refreshToken } = generateTokens(user);
+    res.cookie(COOKIE_NAME, accessToken, getCookieOptions());
+    res.cookie(REFRESH_COOKIE, refreshToken, {...getCookieOptions(), maxAge: 30*24*60*60*1000 });
+
+    res.json({
+      success:true,
+      message:'OTP verified - Login successful ✅',
+      authenticated:true,
+      user,
+      token: accessToken
+    });
+
+  }catch(e){
+    console.error('OTP verify error', e);
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+// ========== 6. REGISTER ==========
+router.post('/register', async (req, res)=>{
+  try{
+    const { name, email, phone, password } = req.body;
+    if(!name || (!email &&!phone) ||!password){
+      return res.status(400).json({ success:false, message:'Name, email/phone, password required' });
+    }
+
+    if(!User) return res.status(500).json({ success:false, message:'User model missing' });
+
+    const existing = await findUserByPhoneOrEmail(email || phone);
+    if(existing) return res.status(409).json({ success:false, message:'User already exists', code:'USER_EXISTS' });
+
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name,
+      email: email?.toLowerCase(),
+      phone: phone?.replace(/\D/g,'').slice(-10),
+      password: hashed,
+      role: 'customer',
+      isVerified: false
+    });
+
+    const { accessToken, refreshToken } = generateTokens(user);
+    res.cookie(COOKIE_NAME, accessToken, getCookieOptions());
+
+    res.json({ success:true, message:'Registration successful 🎉', user, token: accessToken, refreshToken });
+
+  }catch(e){
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+// ========== 7. LOGOUT - WORLD CLASS ==========
+router.post('/logout', async (req, res)=>{
+  try{
+    if(req.token) blacklistedTokens.add(req.token);
+    // Auto clear blacklist after 7 days
+    setTimeout(()=> blacklistedTokens.delete(req.token), 7*24*60*60*1000);
+
+    res.clearCookie(COOKIE_NAME, { path:'/' });
+    res.clearCookie(REFRESH_COOKIE, { path:'/' });
+
+    res.json({ success:true, message:'Logged out successfully 👋', loggedOut:true });
+  }catch(e){
+    res.clearCookie(COOKIE_NAME);
+    res.json({ success:true, message:'Logged out' });
+  }
+});
+
+// ========== 8. REFRESH TOKEN ==========
+router.post('/refresh', async (req, res)=>{
+  try{
+    const refreshToken = req.cookies[REFRESH_COOKIE] || req.body.refreshToken;
+    if(!refreshToken) return res.status(401).json({ success:false, message:'Refresh token missing' });
+
+    const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+    const user = await User?.findById(decoded.id);
+    if(!user) return res.status(401).json({ success:false, message:'User not found' });
+
+    const { accessToken, refreshToken: newRefresh } = generateTokens(user);
+    res.cookie(COOKIE_NAME, accessToken, getCookieOptions());
+    res.cookie(REFRESH_COOKIE, newRefresh, {...getCookieOptions(), maxAge: 30*24*60*60*1000 });
+
+    res.json({ success:true, token: accessToken, refreshToken: newRefresh });
+  }catch(e){
+    res.status(401).json({ success:false, message:'Invalid refresh token' });
+  }
+});
+
+// ========== 9. ME ==========
+router.get('/me', requireAuth, async (req, res)=>{
+  try{
+    const user = await User?.findById(req.user.id).select('-password');
+    res.json({ success:true, user, authenticated:true });
+  }catch(e){
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+// ========== 10. HEALTH ==========
+router.get('/health', (req, res)=>{
+  res.json({
+    success:true,
+    message:'AUTH V10 WORLD CLASS - READY',
+    endpoints:{
+      check:'GET /api/common/auth/check - for auth-core.js',
+      verify:'GET /api/common/auth/verify/:shopId - for protectDashboard',
+      login:'POST /api/common/auth/login',
+      sendOtp:'POST /api/common/auth/send-otp',
+      verifyOtp:'POST /api/common/auth/verify-otp',
+      register:'POST /api/common/auth/register',
+      logout:'POST /api/common/auth/logout',
+      refresh:'POST /api/common/auth/refresh',
+      me:'GET /api/common/auth/me'
+    },
+    features:['JWT + Cookies','OTP Login','Brute Force Protection','Rate Limit','Token Blacklist','Auto Refresh'],
+    timestamp:new Date().toISOString()
+  });
+});
+
+module.exports = router;
