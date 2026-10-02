@@ -139,7 +139,9 @@ mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://
 })
 .catch(err => {
     console.error('❌ MongoDB Error:', err);
-    process.exit(1);
+    if (process.env.NODE_ENV !== 'production') {
+        process.exit(1);
+    }
 });
 
 mongoose.connection.on('error', err => {
