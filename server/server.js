@@ -42,10 +42,10 @@ app.use('/api', deliveryManagerRoutes); // ✅ /api/manager/create-delivery-mana
 app.use('/api/shops', fruitItemRoutes); // 1. PEHLE YE
 
 // FULL COMMON 100+ FILES - 2 LINE ONLY
-app.use('/api/common', require('./routes/common'));
-app.use('/api', require('./routes/common'));
+//app.use('/api/common', require('./routes/common'));
+//app.use('/api', require('./routes/common'));
 
-app.use('/api/shops/mobile', require('./routes/shops/mobile-route'));
+//1111111111app.use('/api/shops/mobile', require('./routes/shops/mobile-route'));
 
 const shopViewRoutes = require('./routes/shopViewRoutes');
 
