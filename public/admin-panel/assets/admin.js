@@ -19,7 +19,10 @@ async function apiCall(endpoint, method = 'GET', data = null) {
                 options.body = JSON.stringify(data);
             }
         }
-        const response = await fetch(API_BASE + endpoint, options);
+        const response = await fetch(API_BASE + endpoint, {
+            ...options,
+            cache: 'no-store'
+        });
         if (response.status === 401) {
             localStorage.removeItem('userToken');
             window.location.href = '/auth/login.html';
@@ -35,6 +38,7 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         throw err;
     }
 }
+
 function showToast(message, type = 'success') {
     const existing = document.querySelector('.toast-notification');
     if (existing) existing.remove();
@@ -45,12 +49,14 @@ function showToast(message, type = 'success') {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }
+
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
+
 function showLoading(tableId) {
     const tbody = document.querySelector(`#${tableId} tbody`);
     if (tbody) {
@@ -58,6 +64,7 @@ function showLoading(tableId) {
         tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;padding:40px;color:#64748b;">Loading...</td></tr>`;
     }
 }
+
 function filterTable(tableId, query) {
     const table = document.getElementById(tableId);
     if (!table) return;
@@ -68,47 +75,77 @@ function filterTable(tableId, query) {
         row.style.display = row.textContent.toLowerCase().includes(searchTerm)? '' : 'none';
     });
 }
+
 function formatDate(dateString) {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
+
 function getUrlParam(param) {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
 }
+
+// ===== SUPER FIX - CACHE BUSTER v99 =====
 async function loadPage(pageName, btnElement) {
-    if(pageName === 'ai-explorer') pageName = 'api-routes'; // extra support
+    if(pageName === 'ai-explorer') pageName = 'api-routes';
     if(pageName === 'local-market-shops' || pageName === 'coupons'){
         showToast('Ye page hata diya gaya hai', 'error');
         return loadPage('dashboard', document.querySelector(".nav-btn"));
     }
+
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     if (btnElement) btnElement.classList.add('active');
+
     try {
         if (window.moduleMap) { window.moduleMap.remove(); window.moduleMap = null; }
         if (window.shopMap) { window.shopMap.remove(); window.shopMap = null; }
         if (window.areaMap) { window.areaMap.remove(); window.areaMap = null; }
-        const res = await fetch(pageName + '.html?v=3&t=' + Date.now());
+
+        const bust = Date.now();
+        // v=99 + timestamp + no-store - ab kabhi cache nahi lagega
+        const res = await fetch(`${pageName}.html?v=99&t=${bust}&_=${bust}`, {
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
+
         if (!res.ok) throw new Error('Page not found: ' + pageName + '.html');
         const html = await res.text();
-        document.getElementById('mainContainer').innerHTML = html;
+        
         const container = document.getElementById('mainContainer');
+        container.innerHTML = html;
+
+        // script ko sahi tarike se chalao - eval nahi, proper element banao
         const scripts = container.querySelectorAll('script');
         scripts.forEach(oldScript => {
-            if (!oldScript.src) {
-                try { eval(oldScript.textContent); } catch(e) { console.error('Script eval error:', e); }
+            const newScript = document.createElement('script');
+            if (oldScript.src) {
+                // external src nahi hai orders me, but safe rakha
+                newScript.src = oldScript.src;
+            } else {
+                newScript.textContent = oldScript.textContent;
             }
+            // purana hata ke naya body me daalo taaki execute ho
+            document.body.appendChild(newScript);
             oldScript.remove();
         });
+
         if (history.pushState) {
-            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?page=' + pageName;
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?page=${pageName}&v=99&t=${bust}`;
             window.history.pushState({path: newUrl}, '', newUrl);
         }
+
+        console.log(`✅ Loaded fresh: ${pageName}.html?v=99&t=${bust}`);
+
     } catch (err) {
         console.error(err);
-        document.getElementById('mainContainer').innerHTML = `<div class="card" style="text-align:center;padding:60px;"><h2 style="color:#ef4444;">⚠️ Error loading ${pageName}</h2><p style="color:#64748b;margin-top:10px;">${err.message}</p><button class="btn btn-primary" onclick="location.reload()" style="margin-top:20px;">Reload Page</button></div>`;
+        document.getElementById('mainContainer').innerHTML = `<div class="card" style="text-align:center;padding:60px;"><h2 style="color:#ef4444;">⚠️ Error loading ${pageName} v99</h2><p style="color:#64748b;margin-top:10px;">${err.message}</p><button class="btn btn-primary" onclick="location.reload()" style="margin-top:20px;">Reload Page</button><br><br><small>Try: ${pageName}.html?v=99</small></div>`;
     }
 }
+
 async function loadAllAreas() {
     try {
         const data = await apiCall('/areas');
@@ -119,22 +156,28 @@ async function loadAllAreas() {
         return [];
     }
 }
+
 async function loadAreaByCode(areaCode) {
     try { return await apiCall('/area/' + areaCode); } catch (err) { return null; }
 }
+
 function generateManagerCode(areaCode, bucket) {
     return `${areaCode}-${bucket}`.toUpperCase();
 }
+
 window.addEventListener('beforeunload', () => {
     if (window.moduleMap) window.moduleMap.remove();
     if (window.shopMap) window.shopMap.remove();
     if (window.areaMap) window.areaMap.remove();
 });
+
 document.addEventListener('DOMContentLoaded', () => {
     const pageParam = getUrlParam('page') || 'dashboard';
     const navBtn = document.querySelector(`.nav-btn[onclick*="'${pageParam}'"]`);
+    // pehle dashboard nahi, jo page url me hai wahi
     loadPage(pageParam, navBtn);
 });
+
 window.loadPage = loadPage;
 window.apiCall = apiCall;
 window.showToast = showToast;

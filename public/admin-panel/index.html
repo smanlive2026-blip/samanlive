@@ -1,91 +1,149 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAMANLIVE Admin Panel v3</title>
-    <script>window.addEventListener('pageshow',function(e){if(e.persisted)location.reload()})</script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-    <link rel="stylesheet" href="assets/admin.css?v=3">
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f8fafc;color:#0f172a}
-        .container{max-width:1600px;margin:0 auto}
-        .admin-header{background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 50%,#8b5cf6 100%);padding:16px 20px;position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center}
-        .admin-header h1{font-size:20px;font-weight:800;color:white;display:flex;align-items:center;gap:10px}
-        .admin-header h1::before{content:'⚡';font-size:24px}
-        .menu-toggle{display:none;background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;cursor:pointer;color:white;font-size:24px}
-        .admin-navbar{background:white;padding:12px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);position:sticky;top:64px;z-index:99;display:flex;flex-wrap:wrap;gap:8px}
-        .nav-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:#f8fafc;border:2px solid transparent;border-radius:10px;color:#475569;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s}
-        .nav-btn:hover{background:#eff6ff;border-color:#dbeafe;color:#1e40af;transform:translateY(-2px)}
-        .nav-btn.active{background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);color:white;box-shadow:0 4px 14px rgba(59,130,246,0.4);border-color:transparent}
-        #mainContainer{padding:24px;min-height:calc(100vh - 140px)}
-        .page-loading{display:flex;justify-content:center;align-items:center;min-height:400px;flex-direction:column;gap:16px}
-        .loading-spinner{width:50px;height:50px;border:4px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .nav-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:98}
-        .nav-overlay.show{display:block}
-        @media(max-width:1024px){
-            .admin-navbar{position:fixed;top:0;left:-280px;width:280px;height:100vh;flex-direction:column;padding:80px 16px 16px;overflow-y:auto;transition:left 0.3s;box-shadow:4px 0 20px rgba(0,0,0,0.15)}
-            .admin-navbar.show{left:0}
-            .nav-btn{width:100%;justify-content:flex-start}
-            .menu-toggle{display:block}
-        }
-    </style>
-</head>
-<body>
-<div class="container">
-    <div class="admin-header">
-        <h1>SAMANLIVE Control Panel</h1>
-        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-    </div>
-    <div class="nav-overlay" id="navOverlay" onclick="toggleMenu()"></div>
-    <div class="admin-navbar" id="adminNavbar">
-        <button class="nav-btn active" onclick="loadPage('dashboard', this)">📊 Dashboard</button>
-        <button class="nav-btn" onclick="loadPage('orders', this)">📋 Orders</button>
-        <button class="nav-btn" onclick="loadPage('users', this)">👥 Users</button>
-        <button class="nav-btn" onclick="loadPage('shops', this)">🏪 Shops</button>
-        <button class="nav-btn" onclick="loadPage('area-dashboard', this)">🗺️ Area Dashboard</button>
-        <button class="nav-btn" onclick="loadPage('areas', this)">🗺️ Areas</button>
-        <button class="nav-btn" onclick="loadPage('cities', this)">🏙️ Cities</button>
-        <button class="nav-btn" onclick="loadPage('delivery', this)">🚚 Delivery</button>
-        <button class="nav-btn" onclick="loadPage('reports', this)">📈 Reports</button>
-        <button class="nav-btn" onclick="loadPage('managers', this)">👔 Managers</button>
-        <button class="nav-btn" onclick="loadPage('content', this)">📝 Content</button>
-        <button class="nav-btn" onclick="loadPage('api-routes', this)">🔍 API Routes</button>
-        <button class="nav-btn" onclick="loadPage('settings', this)">⚙️ Settings</button>
-    </div>
-    <div id="mainContainer">
-        <div class="page-loading">
-            <div class="loading-spinner"></div>
-            <div>Loading dashboard...</div>
+<div class="orders-pro-wrapper">
+    <div class="pro-header">
+        <div>
+            <h1>🔥 SamanLive Super Orders v99</h1>
+            <p>Full Control • Live Tracking • Instant Action • Cache Busted</p>
         </div>
+        <div class="header-actions">
+            <button class="btn-glow" onclick="loadOrders()">🔄 Refresh Live</button>
+            <button class="btn-glow green" onclick="exportOrders()">📥 Export CSV</button>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card c1"><span class="stat-icon">📦</span><div><h3 id="statTotal">0</h3><p>Total Orders</p></div></div>
+        <div class="stat-card c2"><span class="stat-icon">⏳</span><div><h3 id="statPending">0</h3><p>Pending</p></div></div>
+        <div class="stat-card c3"><span class="stat-icon">🔥</span><div><h3 id="statPreparing">0</h3><p>Preparing</p></div></div>
+        <div class="stat-card c4"><span class="stat-icon">🛵</span><div><h3 id="statDelivery">0</h3><p>Out for Delivery</p></div></div>
+        <div class="stat-card c5"><span class="stat-icon">✅</span><div><h3 id="statDelivered">0</h3><p>Delivered</p></div></div>
+        <div class="stat-card c6"><span class="stat-icon">💰</span><div><h3 id="statRevenue">₹0</h3><p>Total Revenue</p></div></div>
+    </div>
+
+    <div class="controls-bar">
+        <div class="search-box"><span>🔍</span><input type="text" id="orderSearch" placeholder="Search Order ID, Customer, Shop, Phone..." oninput="searchOrders()"></div>
+        <select id="statusFilter" onchange="filterByStatus()" class="pro-select">
+            <option value="all">All Status</option>
+            <option value="pending">⏳ Pending</option>
+            <option value="accepted">✅ Accepted</option>
+            <option value="preparing">🔥 Preparing</option>
+            <option value="out_for_delivery">🛵 Out for Delivery</option>
+            <option value="delivered">📦 Delivered</option>
+            <option value="cancelled">❌ Cancelled</option>
+        </select>
+        <input type="date" id="dateFilter" onchange="filterByDate()" class="pro-select">
+        <select id="bulkAction" class="pro-select"><option value="">Bulk Action</option><option value="accepted">Accept All</option><option value="preparing">Mark Preparing</option><option value="out_for_delivery">Out for Delivery</option><option value="delivered">Mark Delivered</option><option value="cancelled">Cancel All</option></select>
+        <button onclick="applyBulk()" class="btn-apply">Apply</button>
+    </div>
+
+    <div class="table-card">
+        <table id="ordersTable"><thead><tr><th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th><th>Order</th><th>Customer</th><th>Shop & Items</th><th>Amount</th><th>Status</th><th>Time</th><th>Super Action</th></tr></thead><tbody></tbody></table>
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-<script src="assets/admin.js?v=3"></script>
+<div id="orderModal" class="modal" style="display:none;"><div class="modal-content pro-modal"><span class="close" onclick="closeModal()">&times;</span><div id="modalBody"></div></div></div>
+
+<style>
+.orders-pro-wrapper{font-family:'Poppins',sans-serif;padding:10px;}
+.pro-header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px;border-radius:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;box-shadow:0 10px 30px rgba(102,126,234,.3);}
+.pro-header h1{margin:0;font-size:24px;}.pro-header p{margin:5px 0 0;opacity:.8;}
+.btn-glow{background:white;color:#667eea;border:none;padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;margin-left:8px;transition:.2s;}.btn-glow:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(0,0,0,.2);}.btn-glow.green{background:#10b981;color:white;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px;}
+.stat-card{background:white;border-radius:14px;padding:15px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(0,0,0,.07);border-left:5px solid transparent;}
+.stat-card.c1{border-color:#667eea;background:linear-gradient(135deg,#eef2ff,#fff);}.stat-card.c2{border-color:#f59e0b;background:linear-gradient(135deg,#fef3c7,#fff);}.stat-card.c3{border-color:#ef4444;background:linear-gradient(135deg,#fee2e2,#fff);}.stat-card.c4{border-color:#8b5cf6;background:linear-gradient(135deg,#ede9fe,#fff);}.stat-card.c5{border-color:#10b981;background:linear-gradient(135deg,#d1fae5,#fff);}.stat-card.c6{border-color:#06b6d4;background:linear-gradient(135deg,#cffafe,#fff);}
+.stat-icon{font-size:28px;}.stat-card h3{margin:0;font-size:22px;}.stat-card p{margin:0;font-size:12px;color:#64748b;}
+.controls-bar{background:white;padding:14px;border-radius:12px;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);}
+.search-box{flex:1;min-width:250px;display:flex;align-items:center;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:0 12px;}
+.search-box input{border:none;background:transparent;flex:1;padding:10px;outline:none;}
+.pro-select{padding:10px 12px;border-radius:10px;border:1px solid #e2e8f0;background:white;font-weight:600;cursor:pointer;}
+.btn-apply{background:#1e293b;color:white;border:none;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:700;}
+.table-card{background:white;border-radius:14px;overflow:hidden;box-shadow:0 5px 20px rgba(0,0,0,.06);overflow-x:auto;}
+#ordersTable{width:100%;border-collapse:collapse;min-width:900px;}
+#ordersTable th{background:#0f172a;color:white;padding:14px 10px;font-size:13px;text-align:left;}
+#ordersTable td{padding:12px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;vertical-align:top;}
+#ordersTable tr:hover{background:#f8fafc;}
+.status-pill{padding:5px 10px;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;display:inline-block;}
+.status-pending{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;}.status-accepted{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;}.status-preparing{background:#fce7f3;color:#9d174d;border:1px solid #f9a8d4;}.status-out_for_delivery{background:#e0e7ff;color:#4338ca;border:1px solid #a5b4fc;animation:pulse 2s infinite;}.status-delivered{background:#dcfce7;color:#166534;border:1px solid #86efac;}.status-cancelled{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+@keyframes pulse{0%{opacity:1}50%{opacity:.6}100%{opacity:1}}
+.action-btn{padding:6px 10px;border:none;border-radius:8px;cursor:pointer;margin:2px;font-weight:600;font-size:12px;}
+.btn-view{background:#f1f5f9;}.btn-call{background:#dcfce7;color:#166534;}.btn-print{background:#dbeafe;color:#1e40af;}.btn-cancel{background:#fee2e2;color:#991b1b;}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;display:flex;justify-content:center;align-items:center;padding:20px;}
+.pro-modal{background:white;width:100%;max-width:650px;border-radius:20px;padding:0;overflow:hidden;max-height:90vh;overflow-y:auto;}
+.modal-header-pro{background:linear-gradient(135deg,#0f172a,#334155);color:white;padding:20px;}
+.timeline{display:flex;justify-content:space-between;margin:20px 0;position:relative;}
+.timeline::before{content:'';position:absolute;top:15px;left:10%;right:10%;height:3px;background:#e2e8f0;z-index:0;}
+.timeline-step{text-align:center;z-index:1;position:relative;}
+.dot{width:30px;height:30px;border-radius:50%;background:#e2e8f0;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.timeline-step.active.dot{background:#10b981;color:white;}
+.close{position:absolute;top:15px;right:20px;font-size:28px;color:white;cursor:pointer;z-index:10;}
+</style>
+
 <script>
-function toggleMenu(){
-    const nav = document.getElementById('adminNavbar');
-    const overlay = document.getElementById('navOverlay');
-    nav.classList.toggle('show');
-    overlay.classList.toggle('show');
-}
-// ye wrapper sahi hai - menu band karne ke liye
-const _origLoad = window.loadPage;
-window.loadPage = function(p,b){
-    if(_origLoad) _origLoad(p,b);
-    if(window.innerWidth <= 1024){
-        const nav = document.getElementById('adminNavbar');
-        if(nav.classList.contains('show')) toggleMenu();
+let allOrders = [];
+let selectedIds = new Set();
+
+async function loadOrders() {
+    const tbody = document.querySelector('#ordersTable tbody');
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:50px;font-size:16px;">🔄 Loading super orders v99...</td></tr>`;
+    try {
+        allOrders = await apiCall('/orders') || [];
+        if(!Array.isArray(allOrders) && allOrders.data) allOrders = allOrders.data;
+        updateStats(allOrders);
+        renderOrders(allOrders);
+        if(typeof showToast!== 'undefined') showToast(`🔥 ${allOrders.length} orders loaded`, 'success');
+    } catch(err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#ef4444;">❌ Failed to load - ${err.message}</td></tr>`;
     }
 }
+function updateStats(orders){
+    document.getElementById('statTotal').innerText = orders.length;
+    document.getElementById('statPending').innerText = orders.filter(o=>o.status==='pending').length;
+    document.getElementById('statPreparing').innerText = orders.filter(o=>o.status==='preparing' || o.status==='accepted').length;
+    document.getElementById('statDelivery').innerText = orders.filter(o=>o.status==='out_for_delivery').length;
+    document.getElementById('statDelivered').innerText = orders.filter(o=>o.status==='delivered').length;
+    const rev = orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.totalAmount||0),0);
+    document.getElementById('statRevenue').innerText = '₹'+rev;
+}
+function renderOrders(orders) {
+    const tbody = document.querySelector('#ordersTable tbody');
+    if(orders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:60px;color:#64748b;">Koi order nahi mila 😔</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = orders.map(order => `
+        <tr>
+            <td><input type="checkbox" value="${order._id}" onchange="toggleSelect('${order._id}',this)" ${selectedIds.has(order._id)?'checked':''}></td>
+            <td><strong style="color:#6366f1">#${order._id.slice(-6).toUpperCase()}</strong><br><small style="color:#64748b">${formatDate? formatDate(order.createdAt) : new Date(order.createdAt).toLocaleString()}</small></td>
+            <td><strong>${escapeHtml? escapeHtml(order.userId?.name || 'Guest') : (order.userId?.name||'Guest')}</strong><br><small>📞 ${order.userId?.phone || order.customerPhone || '-'}</small></td>
+            <td><strong>${order.shopId?.name || 'Shop'}</strong><br><small>${order.items?.length || 0} items</small></td>
+            <td><strong style="font-size:15px;color:#059669">₹${order.totalAmount||0}</strong><br><small>${order.paymentMethod||'COD'}</small></td>
+            <td><span class="status-pill status-${order.status}">${order.status.replace('_',' ')}</span><br><select onchange="updateStatus('${order._id}', this.value)" class="pro-select" style="margin-top:6px;padding:4px 6px;font-size:11px;width:140px;"><option value="pending" ${order.status==='pending'?'selected':''}>⏳ Pending</option><option value="accepted" ${order.status==='accepted'?'selected':''}>✅ Accepted</option><option value="preparing" ${order.status==='preparing'?'selected':''}>🔥 Preparing</option><option value="out_for_delivery" ${order.status==='out_for_delivery'?'selected':''}>🛵 Out for Delivery</option><option value="delivered" ${order.status==='delivered'?'selected':''}>📦 Delivered</option><option value="cancelled" ${order.status==='cancelled'?'selected':''}>❌ Cancelled</option></select></td>
+            <td><small>${new Date(order.createdAt).toLocaleTimeString()}<br>${new Date(order.createdAt).toLocaleDateString()}</small></td>
+            <td><button class="action-btn btn-view" onclick="viewOrder('${order._id}')">👁️ View</button><button class="action-btn btn-call" onclick="callCustomer('${order.userId?.phone||''}')">📞 Call</button><button class="action-btn btn-print" onclick="printInvoice('${order._id}')">🧾 Bill</button><button class="action-btn btn-cancel" onclick="cancelOrder('${order._id}')">❌</button></td>
+        </tr>
+    `).join('');
+}
+async function updateStatus(orderId, newStatus) {
+    try { await apiCall(`/orders/${orderId}/status`, 'PUT', { status: newStatus }); const order = allOrders.find(o => o._id === orderId); if(order) order.status = newStatus; updateStats(allOrders); renderOrders(getFiltered()); if(typeof showToast!== 'undefined') showToast(`✅ ${newStatus}`, 'success'); } catch(err) { if(typeof showToast!== 'undefined') showToast('❌ Failed', 'error'); }
+}
+function viewOrder(orderId) {
+    const order = allOrders.find(o => o._id === orderId); if(!order) return;
+    const itemsHtml = order.items?.map(i=> `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #e2e8f0"><span>${i.name} x ${i.quantity}</span><span>₹${i.price * i.quantity}</span></div>`).join('') || 'No items';
+    document.getElementById('modalBody').innerHTML = `<div class="modal-header-pro"><h2 style="margin:0">#${order._id.slice(-6).toUpperCase()} - ${order.status.toUpperCase()}</h2><p style="margin:5px 0 0;opacity:.8">${order.shopId?.name} • ₹${order.totalAmount}</p></div><div style="padding:20px;"><div class="timeline">${['pending','accepted','preparing','out_for_delivery','delivered'].map(s=> `<div class="timeline-step ${['pending','accepted','preparing','out_for_delivery','delivered'].indexOf(order.status)>=['pending','accepted','preparing','out_for_delivery','delivered'].indexOf(s)?'active':''}"><div class="dot">${s==='pending'?'⏳':s==='accepted'?'✅':s==='preparing'?'🔥':s==='out_for_delivery'?'🛵':'📦'}</div><small>${s}</small></div>`).join('')}</div><h3>👤 Customer</h3><p><strong>${order.userId?.name||'Guest'}</strong> - ${order.userId?.phone||''}</p><h3>🛒 Items</h3><div style="background:#f8fafc;padding:12px;border-radius:10px;">${itemsHtml}</div><div style="display:flex;gap:10px;margin-top:20px;"><button onclick="printInvoice('${order._id}')" class="btn-glow" style="background:#0f172a;color:white;flex:1">🧾 Print Bill</button><button onclick="assignDelivery('${order._id}')" class="btn-glow green" style="flex:1">🛵 Assign Rider</button></div></div>`;
+    document.getElementById('orderModal').style.display='flex';
+}
+function closeModal(){ document.getElementById('orderModal').style.display='none'; }
+function callCustomer(phone){ if(!phone){alert('Phone nahi hai');return;} window.open(`tel:${phone}`); }
+function printInvoice(orderId){ const order = allOrders.find(o=>o._id===orderId); const w = window.open('', '_blank'); w.document.write(`<html><body><h2>Invoice #${orderId.slice(-6)}</h2><p>Shop: ${order.shopId?.name}</p><p>Customer: ${order.userId?.name}</p><p>Amount: ₹${order.totalAmount}</p><hr>${order.items?.map(i=>`${i.name} x ${i.quantity} = ₹${i.price*i.quantity}`).join('<br>')}<br><br><button onclick="window.print()">Print</button></body></html>`); w.document.close(); }
+async function cancelOrder(orderId){ const reason = prompt('Cancel reason:'); if(!reason) return; if(!confirm('Pakka cancel?')) return; try{ await apiCall(`/orders/${orderId}/status`,'PUT',{status:'cancelled',cancelReason:reason}); loadOrders(); }catch(e){ alert('Fail'); } }
+async function assignDelivery(orderId){ const boy = prompt('Rider naam/phone:'); if(!boy) return; try{ await apiCall(`/orders/${orderId}/assign`,'PUT',{deliveryBoy:boy}); }catch(e){ await updateStatus(orderId,'out_for_delivery'); } }
+function searchOrders(){ renderOrders(getFiltered()); }
+function filterByStatus(){ renderOrders(getFiltered()); }
+function filterByDate(){ renderOrders(getFiltered()); }
+function getFiltered(){ let filtered = [...allOrders]; const q = document.getElementById('orderSearch').value.toLowerCase(); const status = document.getElementById('statusFilter').value; const date = document.getElementById('dateFilter').value; if(q) filtered = filtered.filter(o=> o._id.toLowerCase().includes(q) || o.userId?.name?.toLowerCase().includes(q) || o.shopId?.name?.toLowerCase().includes(q) ); if(status!=='all') filtered = filtered.filter(o=>o.status===status); if(date) filtered = filtered.filter(o=> new Date(o.createdAt).toISOString().slice(0,10)===date); return filtered; }
+function toggleSelect(id,el){ if(el.checked) selectedIds.add(id); else selectedIds.delete(id); }
+function toggleSelectAll(el){ const checks = document.querySelectorAll('#ordersTable tbody input[type=checkbox]'); checks.forEach(c=>{ c.checked=el.checked; if(el.checked) selectedIds.add(c.value); else selectedIds.delete(c.value); }); }
+async function applyBulk(){ const action = document.getElementById('bulkAction').value; if(!action){ alert('Bulk action select karo'); return; } if(selectedIds.size===0){ alert('Orders select karo'); return; } if(!confirm(`${selectedIds.size} orders ko ${action}?`)) return; for(let id of selectedIds){ try{ await apiCall(`/orders/${id}/status`,'PUT',{status:action}); }catch(e){} } selectedIds.clear(); loadOrders(); }
+function exportOrders(){ let csv = 'OrderID,Customer,Shop,Amount,Status,Date\n'; getFiltered().forEach(o=>{ csv+=`${o._id},${o.userId?.name||''},${o.shopId?.name||''},${o.totalAmount},${o.status},${o.createdAt}\n`; }); const blob = new Blob([csv],{type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='orders.csv'; a.click(); }
+window.onclick = function(e){ if(e.target==document.getElementById('orderModal')) closeModal(); }
+loadOrders();
 </script>
-</body>
-</html>
