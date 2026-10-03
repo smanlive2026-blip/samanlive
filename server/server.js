@@ -1,4 +1,4 @@
-// LOCATION: server/server.js - V10 FINAL FIXED - NO LOGIC BREAK - COMMON CONNECTED - NO OLD DASHBOARD
+// LOCATION: server/server.js - V11 FINAL - FULL FILE - ORDER FIX - NO OLD DASHBOARD
 const nodeCrypto = require('crypto');
 try {
   if (!global.crypto) global.crypto = nodeCrypto.webcrypto || nodeCrypto;
@@ -42,13 +42,56 @@ const noCacheMiddleware = (req, res, next) => {
   next();
 };
 
-// ==================== ROUTES - ORDER IS IMPORTANT - LOGIC SAME ====================
+// ==================== AUTO INJECTOR FOR RENDER->VERCEL - HAZAAR DASHBOARD FIX ====================
+const GLOBAL_CONFIG_INJECT = `<script>(function(){const O=window.location.origin;window.API_BASE=O;window.EnvConfig={API_BASE:O};const OLD=['onrender.com'];const _f=window.fetch;window.fetch=function(u,o){if(typeof u==='string'){OLD.forEach(e=>{if(u.includes(e))u=u.replace(/https:\\/\\/[^\\/]+\\.onrender\\.com/g,O)})}return _f.call(this,u,o)};const _o=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){OLD.forEach(e=>{if(typeof u==='string'&&u.includes(e))u=u.replace(/https:\\/\\/[^\\/]+\\.onrender\\.com/g,O)});return _o.apply(this,arguments)}})();</script><meta http-equiv="Cache-Control" content="no-store">`;
+
+function serveHtmlFresh(filePath, res){
+  try{
+    if(!fs.existsSync(filePath)) return res.status(404).sendFile(path.join(__dirname,'../public/404.html'));
+    let html = fs.readFileSync(filePath,'utf8');
+    if(html.includes('<head>')) html = html.replace('<head>', `<head>${GLOBAL_CONFIG_INJECT}`);
+    res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma','no-cache');
+    res.setHeader('Expires','0');
+    res.setHeader('Content-Type','text/html');
+    res.send(html);
+  }catch(e){ 
+    console.error(e);
+    res.status(500).send('Error loading file'); 
+  }
+}
+
+// ==================== ROUTES - ORDER FIXED - SABSE PEHLE DASHBOARD ====================
+
+// 1. SHOP DASHBOARD - ISKO SABSE PEHLE RAKHNA ZARURI HAI - SHOPVIEW SE PEHLE
+app.get('/shop/:id/dashboard', async (req, res) => {
+    try {
+        const Shop = require('./models/Shop');
+        const shop = await Shop.findById(req.params.id);
+        if (!shop) return res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
+        const shopTypeMap = { 'General Store': 'general', 'Kirana': 'kirana', 'Medical': 'medical', 'Restaurant': 'restaurant', 'Cloth': 'cloth', 'Furniture': 'furniture' };
+        const templateFolder = shopTypeMap[shop.shopType] || shop.shopType?.toLowerCase() || 'general';
+        const templatePath = path.join(__dirname, `../public/shop-templates/${templateFolder}/dashboard.html`);
+        serveHtmlFresh(templatePath, res);
+    } catch (err) { 
+        console.error(err);
+        res.status(500).send('Error loading shop dashboard'); 
+    }
+});
+
+// 2. SHOP TEMPLATES HTML - DIRECT ACCESS - FRESH SERVE
+app.get('/shop-templates/*/*.html', (req,res)=>{
+  const fp = path.join(__dirname,'../public', req.path);
+  serveHtmlFresh(fp, res);
+});
+
+// 3. AB BAKI KE API ROUTES - DASHBOARD KE BAAD
 app.use('/api', deliveryManagerRoutes);
 app.use('/api/common', require('./routes/common/index')); // COMMON INDEX CONNECTED ✅
 app.use('/api/shops', fruitItemRoutes);
 app.use('/api/shop-view', shopViewRoutes);
 app.use('/api/shop', shopViewRoutes);
-app.use('/shop', shopViewRoutes);
+app.use('/shop', shopViewRoutes); // YE AB DASHBOARD KE BAAD HAI - ISLIYE PURANA NAHI KHULEGA
 app.use('/api/shops/auto', autoRoutes);
 app.use('/api/shops/achar', acharRoutes);
 app.use('/api/media', require('./routes/media'));
@@ -75,22 +118,6 @@ app.get('/api/orders/shop/:shopId', async (req, res) => {
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// ==================== AUTO INJECTOR FOR RENDER->VERCEL - HAZAAR DASHBOARD FIX ====================
-const GLOBAL_CONFIG_INJECT = `<script>(function(){const O=window.location.origin;window.API_BASE=O;window.EnvConfig={API_BASE:O};const OLD=['onrender.com'];const _f=window.fetch;window.fetch=function(u,o){if(typeof u==='string'){OLD.forEach(e=>{if(u.includes(e))u=u.replace(/https:\\/\\/[^\\/]+\\.onrender\\.com/g,O)})}return _f.call(this,u,o)};const _o=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){OLD.forEach(e=>{if(typeof u==='string'&&u.includes(e))u=u.replace(/https:\\/\\/[^\\/]+\\.onrender\\.com/g,O)});return _o.apply(this,arguments)}})();</script><meta http-equiv="Cache-Control" content="no-store">`;
-
-function serveHtmlFresh(filePath, res){
-  try{
-    if(!fs.existsSync(filePath)) return res.status(404).sendFile(path.join(__dirname,'../public/404.html'));
-    let html = fs.readFileSync(filePath,'utf8');
-    if(html.includes('<head>')) html = html.replace('<head>', `<head>${GLOBAL_CONFIG_INJECT}`);
-    res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-    res.setHeader('Pragma','no-cache');
-    res.setHeader('Expires','0');
-    res.setHeader('Content-Type','text/html');
-    res.send(html);
-  }catch(e){ res.status(500).send('Error loading file'); }
-}
-
 // ==================== STATIC FILES - SINGLE STATIC ONLY - FIXED DUPLICATE BUG ====================
 app.use(['/admin','/admin-panel','/area-manager','/manager-panel','/dashboard'], noCacheMiddleware);
 
@@ -99,24 +126,6 @@ app.get('/admin', noCacheMiddleware, (req, res) => {
 });
 app.get('/admin/*', noCacheMiddleware, (req, res) => {
   serveHtmlFresh(path.join(__dirname, '../public/admin-panel/modules.html'), res);
-});
-
-// Shop templates HTML - auto fresh serve
-app.get('/shop-templates/*/*.html', (req,res)=>{
-  const fp = path.join(__dirname,'../public', req.path);
-  serveHtmlFresh(fp, res);
-});
-
-app.get('/shop/:id/dashboard', async (req, res) => {
-    try {
-        const Shop = require('./models/Shop');
-        const shop = await Shop.findById(req.params.id);
-        if (!shop) return res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
-        const shopTypeMap = { 'General Store': 'general', 'Kirana': 'kirana', 'Medical': 'medical', 'Restaurant': 'restaurant', 'Cloth': 'cloth', 'Furniture': 'furniture' };
-        const templateFolder = shopTypeMap[shop.shopType] || shop.shopType?.toLowerCase() || 'general';
-        const templatePath = path.join(__dirname, `../public/shop-templates/${templateFolder}/dashboard.html`);
-        serveHtmlFresh(templatePath, res);
-    } catch (err) { res.status(500).send('Error loading shop dashboard'); }
 });
 
 // Single static for all assets - NO DUPLICATE
@@ -161,7 +170,7 @@ mongoose.connection.on('disconnected', () => console.log('⚠️ MongoDB Disconn
 // ==================== API ROUTES ====================
 app.get('/api/health', (req, res) => {
     res.json({
-        success: true, message: 'Server V10 Fixed - Common Connected - No Old Dashboard',
+        success: true, message: 'Server V11 FINAL - Order Fixed - No Old Dashboard',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
@@ -255,7 +264,7 @@ app.get('*', (req, res) => {
 
 if (!process.env.VERCEL) {
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 Server V10 Fixed running on http://localhost:${PORT}`);
+    console.log(`\n🚀 Server V11 FINAL running on http://localhost:${PORT}`);
     console.log(`📊 Admin: http://localhost:${PORT}/admin`);
     console.log(`💚 Health: /api/health`);
     console.log(`🔥 Common: /api/common/health`);
