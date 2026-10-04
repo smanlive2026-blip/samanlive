@@ -1,10 +1,12 @@
-// LOCATION: public/shop-templates/kirana/dashboard.js - WORLD CLASS KIRANA DASHBOARD JS - V10 FINAL - PURA COMMON FOLDER CONNECTED - FULL PRODUCTION GRADE
+// LOCATION: public/shop-templates/kirana/dashboard.js - WORLD CLASS KIRANA DASHBOARD JS - V13 FINAL WORLD + COMMON + OLD - FULL 500+ LINES - NO CUT
 class KiranaDashboardCore {
   constructor(){
     this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || '';
     this.shopData = null;
     this.allProducts = [];
     this.filteredProducts = [];
+    this.worldProducts = [];
+    this.oldProducts = [];
     this.stats = null;
     this.orders = [];
     this.lowStock = [];
@@ -15,8 +17,10 @@ class KiranaDashboardCore {
     this.searchDebounce = null;
     this.currentTab = 'overview';
 
-    // Config
+    // Config - OLD + WORLD + COMMON
     this.API_OLD = `/api/shops/kirana/${this.shopId}`;
+    this.API_WORLD = `/api/world-products?shopId=${this.shopId}&type=kirana`;
+    this.API_WORLD_BASE = `/api/world-products`;
     this.API_COMMON = {
       analytics: `/api/common/analytics/${this.shopId}/stats`,
       lowStock: `/api/common/inventory/${this.shopId}/low-stock`,
@@ -34,7 +38,7 @@ class KiranaDashboardCore {
   }
 
   async init(){
-    console.log(`🛒 KiranaDashboardCore V10 WORLD CLASS - shopId: ${this.shopId} - Common Connected`);
+    console.log(`🛒 KiranaDashboardCore V13 WORLD CLASS - shopId: ${this.shopId} - World + Common + Old Connected`);
 
     if(!this.shopId){
       this.showErrorPage('Shop ID Missing', 'Please open dashboard from My Shops with?shopId=YOUR_ID');
@@ -63,7 +67,7 @@ class KiranaDashboardCore {
     this.bindToggles();
     this.bindSocket();
 
-    // 3. LOAD DATA - PURA COMMON + OLD
+    // 3. LOAD DATA - PURA WORLD + COMMON + OLD
     await this.loadDashboard();
 
     // 4. AUTO REFRESH EVERY 30 SEC
@@ -71,10 +75,11 @@ class KiranaDashboardCore {
 
     // 5. LOAD COMMON COMPONENTS
     this.loadCommonStatus();
+    this.loadWorldStatus();
 
     // 6. TRACK
     if(window.ApiCore){
-      window.ApiCore.trackEvent('kirana_dashboard_js_v10_loaded', { shopId: this.shopId, timestamp: Date.now() });
+      window.ApiCore.trackEvent('kirana_dashboard_js_v13_world_loaded', { shopId: this.shopId, timestamp: Date.now() });
     }
   }
 
@@ -132,7 +137,9 @@ class KiranaDashboardCore {
             (p.name||'').toLowerCase().includes(q) ||
             (p.category||'').toLowerCase().includes(q) ||
             (p.brand||'').toLowerCase().includes(q) ||
-            (p.barcode||'').toLowerCase().includes(q)
+            (p.barcode||'').toLowerCase().includes(q) ||
+            (p.extraData?.brand||'').toLowerCase().includes(q) ||
+            (p.extraData?.weight||'').toLowerCase().includes(q)
           );
         }
         this.renderProducts(this.filteredProducts);
@@ -218,9 +225,10 @@ class KiranaDashboardCore {
     this.showLoader(true);
 
     try{
-      // Parallel loading - Old + Common both
+      // Parallel loading - Old + World + Common
       const results = await Promise.allSettled([
         window.ApiCore.get(`/api/shops/kirana/${this.shopId}`),
+        fetch(this.API_WORLD).then(r=>r.json()).catch(()=>({ success:false, data:[] })),
         window.ApiCore.get(this.API_COMMON.analytics),
         window.ApiCore.get(this.API_COMMON.lowStock),
         window.ApiCore.get(this.API_COMMON.orders),
@@ -228,23 +236,28 @@ class KiranaDashboardCore {
       ]);
 
       const kiranaRes = results[0].status === 'fulfilled'? results[0].value : null;
-      const analyticsRes = results[1].status === 'fulfilled'? results[1].value : null;
-      const lowStockRes = results[2].status === 'fulfilled'? results[2].value : null;
-      const ordersRes = results[3].status === 'fulfilled'? results[3].value : null;
+      const worldRes = results[1].status === 'fulfilled'? results[1].value : { data:[] };
+      const analyticsRes = results[2].status === 'fulfilled'? results[2].value : null;
+      const lowStockRes = results[3].status === 'fulfilled'? results[3].value : null;
+      const ordersRes = results[4].status === 'fulfilled'? results[4].value : null;
 
       if(!kiranaRes ||!kiranaRes.success){
-        throw new Error(kiranaRes?.message || 'Failed to load kirana shop - check /api/shops/kirana/:shopId route');
+        console.warn('Old kirana API failed, continuing with world only', kiranaRes);
       }
 
-      this.shopData = kiranaRes.shop;
-      this.allProducts = this.shopData.products || [];
+      this.shopData = kiranaRes?.shop || { shopName:'Kirana World', products:[], stats:{} };
+      this.oldProducts = this.shopData.products || [];
+      this.worldProducts = worldRes?.data || [];
+      this.allProducts = [...this.worldProducts,...this.oldProducts];
       this.filteredProducts = [...this.allProducts];
-      this.lowStock = lowStockRes?.products || this.shopData.lowStock || [];
+      this.lowStock = lowStockRes?.products || this.allProducts.filter(p=> (p.stock||0) <= (p.lowStockAlert||10));
       this.orders = ordersRes?.orders || [];
       this.stats = {
-       ...this.shopData.stats,
-       ...analyticsRes,
+      ...this.shopData.stats,
+      ...analyticsRes,
         totalProducts: this.allProducts.length,
+        worldCount: this.worldProducts.length,
+        oldCount: this.oldProducts.length,
         lowStockCount: this.lowStock.length,
         todayOrders: analyticsRes?.todayOrders || ordersRes?.orders?.length || 0,
         todayRevenue: analyticsRes?.todayRevenue || this.shopData.stats?.revenue || 0
@@ -261,6 +274,7 @@ class KiranaDashboardCore {
         window.DashboardCore.shopId = this.shopId;
         window.DashboardCore.shopData = this.shopData;
         window.DashboardCore.stats = this.stats;
+        window.DashboardCore.worldProducts = this.worldProducts;
       }
 
       // Cache shopData in StorageCore
@@ -304,7 +318,7 @@ class KiranaDashboardCore {
       }
 
       if(data){
-        box.innerHTML = `<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:12px"><pre style="font-size:11px;white-space:pre-wrap;word-break:break-all">${JSON.stringify(data, null, 2).slice(0, 3000)}</pre><div style="margin-top:8px;font-size:10px;color:#94a3b8">Source: /api/common/${tab}/:shopId - Connected ✅</div></div>`;
+        box.innerHTML = `<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:12px"><pre style="font-size:11px;white-space:pre-wrap;word-break:break-all">${JSON.stringify(data, null, 2).slice(0, 3000)}</pre><div style="margin-top:8px;font-size:10px;color:#94a3b8">Source: /api/common/${tab}/:shopId - Connected ✅ + World: ${this.worldProducts.length}</div></div>`;
       } else {
         box.innerHTML = `<div style="color:#94a3b8;font-size:12px">No data - Common API /api/common/${tab} not ready yet. Check server/routes/common/${tab}.routes.js</div>`;
       }
@@ -325,6 +339,19 @@ class KiranaDashboardCore {
       }
     }catch(e){
       el.innerHTML = `❌ Common not connected<br><small>${e.message}<br>Check server/routes/common/index.js - safeMount</small>`;
+    }
+  }
+
+  async loadWorldStatus(){
+    const el = document.getElementById('commonStatus');
+    if(!el) return;
+    try{
+      const res = await fetch(this.API_WORLD).then(r=>r.json());
+      if(res.success){
+        el.innerHTML = `✅ WORLD + Common Connected<br><b style="color:#f59e0b">World: ${res.data?.length||0} products</b> • Old: ${this.oldProducts.length} = Total ${this.allProducts.length}<br><small>/api/world-products?type=kirana&shopId=...</small><br><div style="margin-top:6px;background:#0f172a;padding:6px;border-radius:8px;font-size:10px">World form:../common/product-form-world.html?type=kirana&shopId=${this.shopId}</div>`;
+      }
+    }catch(e){
+      console.warn('World status load failed', e);
     }
   }
 
@@ -353,29 +380,29 @@ class KiranaDashboardCore {
     const $ = (id)=> document.getElementById(id);
     if($('productCount')) $('productCount').innerText = this.stats.totalProducts || this.allProducts.length || 0;
     if($('menuProdCount')) $('menuProdCount').innerText = this.allProducts.length || 0;
-    if($('prodCountText')) $('prodCountText').innerText = `(${this.allProducts.length||0})`;
+    if($('prodCountText')) $('prodCountText').innerText = `(${this.allProducts.length||0}) W:${this.worldProducts.length} O:${this.oldProducts.length}`;
     if($('lowStockCount')) $('lowStockCount').innerText = this.stats.lowStockCount || this.lowStock.length || 0;
     if($('revenue')) $('revenue').innerText = `₹${this.stats.todayRevenue||this.stats.revenue||0}`;
     if($('orderCount')) $('orderCount').innerText = this.stats.todayOrders || this.stats.totalOrders || this.orders.length || 0;
-    if($('shopNameHead')) $('shopNameHead').innerText = this.shopData.shopName || this.shopData.name || 'Kirana';
+    if($('shopNameHead')) $('shopNameHead').innerText = this.shopData.shopName || this.shopData.name || 'Kirana World';
   }
 
   renderProducts(list){
     const c = document.getElementById('productList');
     if(!c) return;
     if(!list.length){
-      c.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px"><div style="font-size:50px">🛒</div><h3 style="margin-top:10px;font-weight:900">No products yet</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#10b981">Quick Add 100</b> to add 100 products in 1 sec<br><small style="font-size:11px">Uses /api/shops/kirana/:shopId + common inventory</small></p><button onclick="window.KiranaDashboardCore.goQuickAdd()" class="btn btn-green" style="margin:12px auto 0">Quick Add 100</button></div>`;
+      c.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px"><div style="font-size:50px">🛒</div><h3 style="margin-top:10px;font-weight:900">No products yet</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#10b981">Quick Add 100</b> to add 100 products in 1 sec<br><small style="font-size:11px">Uses World: /api/world-products + Old: /api/shops/kirana/:shopId</small></p><button onclick="window.KiranaDashboardCore.goQuickAdd()" class="btn btn-green" style="margin:12px auto 0">Quick Add 100 World</button></div>`;
       return;
     }
     c.innerHTML = list.map(p=>`
       <div class="p-card" data-id="${p._id}">
-        <img src="${p.image||`https://source.unsplash.com/400x300/?grocery,${encodeURIComponent(p.category||'kirana')}`}" loading="lazy" onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=${encodeURIComponent((p.name||'Product').slice(0,12))}'">
+        <img src="${p.thumbnail || p.images?.[0]?.url || p.image||`https://source.unsplash.com/400x300/?grocery,${encodeURIComponent(p.category||'kirana')}`}" loading="lazy" onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=${encodeURIComponent((p.name||'Product').slice(0,12))}'">
         <div class="p-info">
           <b title="${p.name}">${p.name||'Unnamed'}</b>
-          <div class="meta">${p.brand||''} ${p.brand?'•':''} ${p.weight||p.unit||''} • ${p.category||'general'}</div>
+          <div class="meta">${p.brand||p.extraData?.brand||''} ${p.brand?'•':''} ${p.weight||p.extraData?.weight||p.unit||''} • ${p.shopType||p.category||'kirana'}</div>
           <div class="price-row">
-            <div class="price">₹${p.price||0}${p.mrp?`<del>₹${p.mrp}</del>`:''}</div>
-            <div class="stock ${(p.stock||0) <= (p.lowStockLimit||10)? 'low' : 'ok'}">${p.stock||0} LEFT</div>
+            <div class="price">₹${p.price||0}${p.mrp?`<del style="color:#94a3b8;font-size:10px;margin-left:4px">₹${p.mrp}</del>`:''}</div>
+            <div class="stock ${(p.stock||0) <= (p.lowStockAlert||p.lowStockLimit||10)? 'low' : 'ok'}">${p.stock||0} LEFT</div>
           </div>
           <div style="display:flex;gap:6px;margin-top:10px">
             <button onclick="window.KiranaDashboardCore.editProduct('${p._id}')" style="flex:1;background:#f1f5f9;border:1px solid #e2e8f0;padding:7px;border-radius:9px;font-weight:800;font-size:11px;cursor:pointer"><i class="fa-solid fa-pen"></i> Edit</button>
@@ -387,7 +414,7 @@ class KiranaDashboardCore {
   }
 
   renderLowStock(list){
-    const html =!list.length? `<div style="background:#f0fdf4;color:#15803d;padding:10px;border-radius:10px;font-weight:800;font-size:12px;text-align:center">✓ All Stock OK<br><small style="font-weight:600">Common: /api/common/inventory/:shopId/low-stock</small></div>` : list.slice(0,8).map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-bottom:6px"><div><b style="font-size:12px">${p.name}</b><br><small style="color:#92400e;font-size:10px">${p.category}</small></div><span style="background:#92400e;color:#fff;padding:3px 7px;border-radius:20px;font-size:10px;font-weight:900">${p.stock}</span></div>`).join('');
+    const html =!list.length? `<div style="background:#f0fdf4;color:#15803d;padding:10px;border-radius:10px;font-weight:800;font-size:12px;text-align:center">✓ All Stock OK<br><small style="font-weight:600">Common: /api/common/inventory/:shopId/low-stock + World</small></div>` : list.slice(0,8).map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-bottom:6px"><div><b style="font-size:12px">${p.name}</b><br><small style="color:#92400e;font-size:10px">${p.shopType||p.category}</small></div><span style="background:#92400e;color:#fff;padding:3px 7px;border-radius:20px;font-size:10px;font-weight:900">${p.stock}</span></div>`).join('');
 
     ['lowStock','lowStockRight','lowStockList'].forEach(id=>{
       const el = document.getElementById(id);
@@ -421,7 +448,7 @@ class KiranaDashboardCore {
 
   showErrorInGrid(msg){
     const c = document.getElementById('productList');
-    if(c) c.innerHTML = `<div style="grid-column:1/-1;padding:20px;color:#ef4444;background:#fef2f2;border:1px solid #fee2e2;border-radius:12px"><b>Error:</b> ${msg}<br><br><small>Check:<br>1. /api/shops/kirana/${this.shopId} route exists in server/routes/shops/kirana-route.js<br>2. /api/common/health - common/index.js mounted<br>3. MongoDB connected</small></div>`;
+    if(c) c.innerHTML = `<div style="grid-column:1/-1;padding:20px;color:#ef4444;background:#fef2f2;border:1px solid #fee2e2;border-radius:12px"><b>Error:</b> ${msg}<br><br><small>Check:<br>1. /api/shops/kirana/${this.shopId} route exists in server/routes/shops/kirana-route.js<br>2. /api/world-products?shopId=${this.shopId}&type=kirana - world-product.routes.js mounted<br>3. /api/common/health - common/index.js mounted<br>4. MongoDB connected</small></div>`;
   }
 
   showErrorPage(title, message){
@@ -448,25 +475,31 @@ class KiranaDashboardCore {
     if(navigator.vibrate) navigator.vibrate([100,50,100]);
   }
 
-  // ACTIONS
-  goProductForm(){ location.href=`./product-form.html?shopId=${this.shopId}`; }
-  goQuickAdd(){ location.href=`./product-form.html?shopId=${this.shopId}&quick=1`; }
-  editProduct(id){ location.href=`./product-form.html?shopId=${this.shopId}&editId=${id}`; }
+  // ACTIONS - WORLD PRODUCT FORM
+  goProductForm(){ location.href=`../common/product-form-world.html?type=kirana&shopId=${this.shopId}`; }
+  goQuickAdd(){ location.href=`../common/product-form-world.html?type=kirana&shopId=${this.shopId}&quick=1`; }
+  editProduct(id){
+    const isWorld = this.worldProducts.find(p=> p._id === id);
+    if(isWorld) location.href=`../common/product-form-world.html?type=kirana&shopId=${this.shopId}&editId=${id}`;
+    else location.href=`./product-form.html?shopId=${this.shopId}&editId=${id}`;
+  }
 
   async deleteProduct(id){
-    if(!confirm('Delete this product? This will also clear common inventory cache.')) return;
+    if(!confirm('Delete this product? World + Old dono se delete hoga.')) return;
     try{
-      const res = await window.ApiCore.delete(`/api/shops/kirana/${this.shopId}/item/${id}`);
-      if(res.success){
-        this.toast('Deleted ✅');
-        window.ApiCore.clearCache(`/api/shops/kirana/${this.shopId}`);
-        window.ApiCore.clearCache(`/api/common/inventory`);
-        await this.loadDashboard();
-      } else {
-        throw new Error(res.message||'Delete failed');
+      // Try World first
+      let worldDel = await fetch(`${this.API_WORLD_BASE}/${id}`, { method:'DELETE', headers:{ 'Authorization':'Bearer '+(localStorage.getItem('token')||'') } }).then(r=>r.json()).catch(()=>null);
+      if(!worldDel?.success){
+        const res = await window.ApiCore.delete(`/api/shops/kirana/${this.shopId}/item/${id}`);
+        if(!res.success) throw new Error(res.message||'Delete failed');
       }
+      this.toast('Deleted ✅ World + Old');
+      window.ApiCore.clearCache(`/api/shops/kirana/${this.shopId}`);
+      window.ApiCore.clearCache(this.API_WORLD);
+      window.ApiCore.clearCache(`/api/common/inventory`);
+      await this.loadDashboard();
     }catch(e){
-      window.ErrorHandler?.handleApiError(e, 'delete_product');
+      window.ErrorHandler?.handleApiError(e, 'delete_product_v13');
       this.toast('Delete failed: '+e.message);
     }
   }
@@ -478,7 +511,7 @@ class KiranaDashboardCore {
   startAutoRefresh(){
     this.stopAutoRefresh();
     this.refreshInterval = setInterval(()=>{
-      console.log('Kirana auto refresh - common orders + stats');
+      console.log('Kirana V13 auto refresh - world + common orders + stats');
       this.loadOrders();
       this.loadStats();
     }, 30000);
@@ -488,10 +521,9 @@ class KiranaDashboardCore {
     if(this.refreshInterval) clearInterval(this.refreshInterval);
   }
 
-  // PUBLIC API FOR HTML INLINE CALLS
   filterProducts(q){
     const query = q.toLowerCase();
-    this.renderProducts(this.allProducts.filter(p=> (p.name||'').toLowerCase().includes(query) || (p.category||'').toLowerCase().includes(query)));
+    this.renderProducts(this.allProducts.filter(p=> (p.name||'').toLowerCase().includes(query) || (p.category||'').toLowerCase().includes(query) || (p.brand||'').toLowerCase().includes(query)));
   }
 }
 
@@ -513,5 +545,4 @@ window.toggleShop = ()=> {
   if(sw) sw.click();
 };
 
-// Listen for storage events
 window.addEventListener('storage:cart', ()=> console.log('Cart updated via common StorageCore'));

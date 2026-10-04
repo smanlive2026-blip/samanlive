@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>World Product Form</title>
+<link rel="stylesheet" href="./product-form-world.css?v=999">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="form-wrapper">
+  <div class="form-header" id="formHeader">
+    <div class="icon" id="shopIcon">🛒</div>
+    <div><h2 id="shopTitle">Add Product</h2><p id="shopSubtitle">Shop specific</p></div>
+  </div>
+  <div class="form-body">
+    <div class="section"><div class="section-title">⚡ Quick Add</div><div class="quick-add" id="quickAddList"></div></div>
+    <form id="productForm">
+      <div class="section"><div class="section-title">📦 Basic Info</div>
+        <div class="input-group" style="margin-bottom:12px"><label>Product Name *</label><input name="name" id="pName" required></div>
+        <div class="grid-2"><div class="input-group"><label>Selling Price *</label><input name="price" type="number" required></div><div class="input-group"><label>MRP</label><input name="mrp" type="number"></div></div>
+        <div class="input-group" style="margin-top:12px"><label>Description</label><textarea name="description" rows="2"></textarea></div>
+      </div>
+      <div class="section"><div class="section-title" id="dynamicTitle">🔧 Shop Details</div><div id="dynamicFields"></div></div>
+      <div class="section"><div class="section-title">📊 Stock</div>
+        <div class="grid-3"><div class="input-group"><label>Stock</label><input name="stock" type="number" value="10"></div><div class="input-group"><label>Unit</label><select name="unit" id="unitSelect"></select></div><div class="input-group"><label>Low Alert</label><input name="lowStock" type="number" value="2"></div></div>
+      </div>
+      <div class="section"><div class="section-title">🖼️ Images</div><div class="image-uploader" onclick="document.getElementById('fileInput').click()"><b>Upload Images</b><input type="file" id="fileInput" hidden multiple></div><div class="preview" id="preview"></div></div>
+      <button type="submit" class="submit-btn" id="submitBtn">Save Product</button>
+    </form>
+  </div>
+</div>
+
+<script>
+// ================= 70+ SHOP CONFIG - FULL WORLD =================
+const SHOP_CONFIG = {
+kirana: {icon:'🛒',color:'#f59e0b',title:'Kirana Product',subtitle:'Grocery Items',units:['kg','gram','pcs','litre','packet'],quick:['Aashirvaad Atta 5kg','Fortune Oil 1L','Tata Salt 1kg','Parle-G Biscuit','Maggi 6 pack'],fields:[{name:'brand',label:'Brand',type:'text',placeholder:'Aashirvaad'},{name:'weight',label:'Weight / Qty',type:'text',placeholder:'5kg'},{name:'expiry',label:'Expiry Date',type:'date'},{name:'fssai',label:'FSSAI No',type:'text'}]},
+store: {icon:'🏪',color:'#0f172a',title:'General Store Product',subtitle:'All Type Items',units:['pcs','kg','packet'],quick:['Notebook','Pen','Soap','Oil','Biscuit'],fields:[{name:'category',label:'Category',type:'select',options:['Grocery','Stationery','Cosmetic','Other']},{name:'brand',label:'Brand',type:'text'}]},
+bakery: {icon:'🎂',color:'#f472b6',title:'Bakery Product',subtitle:'Cake & Bread',units:['pcs','kg','packet'],quick:['Chocolate Cake 500g','White Bread','Patties','Donut','Pastry'],fields:[{name:'flavour',label:'Flavour',type:'select',options:['Chocolate','Vanilla','Strawberry','Butterscotch','Pineapple']},{name:'isEggless',label:'Eggless',type:'select',options:['Yes','No']},{name:'weight',label:'Weight',type:'text',placeholder:'500g'}]},
+mobile: {icon:'📱',color:'#0ea5e9',title:'Mobile & Accessories',subtitle:'Mobile, Cover, Charger',units:['pcs'],quick:['iPhone Cover','Type C Cable','20W Charger','Tempered Glass','AirPods Case'],fields:[{name:'brand',label:'Brand',type:'text',placeholder:'Apple'},{name:'model',label:'Compatible Model',type:'text'},{name:'ram',label:'Storage',type:'select',options:['64GB','128GB','256GB','8/128','12/256']},{name:'warranty',label:'Warranty Months',type:'number'}]},
+cloth: {icon:'👕',color:'#ec4899',title:'Cloth Product',subtitle:'Garments',units:['pcs'],quick:['T-Shirt','Jeans','Saree','Kurta','Kids Dress'],fields:[{name:'size',label:'Size',type:'select',options:['S','M','L','XL','XXL','28','30','32','34']},{name:'color',label:'Color',type:'text'},{name:'fabric',label:'Fabric',type:'select',options:['Cotton','Polyester','Silk','Linen']},{name:'gender',label:'For',type:'select',options:['Men','Women','Kids','Unisex']}]},
+fruit: {icon:'🍎',color:'#22c55e',title:'Fruit Product',subtitle:'Fresh Fruits',units:['kg','gram','dozen','pcs'],quick:['Apple Shimla','Banana','Mango','Orange','Papaya'],fields:[{name:'origin',label:'Origin',type:'text',placeholder:'Shimla'},{name:'freshness',label:'Freshness',type:'select',options:['Today Fresh','Premium']}]},
+sabji: {icon:'🥦',color:'#16a34a',title:'Vegetable Product',subtitle:'Fresh Vegetables',units:['kg','gram','gaddi','pcs'],quick:['Aloo 1kg','Pyaaz','Tamatar','Bhindi','Gobhi'],fields:[{name:'type',label:'Type',type:'select',options:['Desi','Hybrid','Organic']}]},
+restaurant: {icon:'🍔',color:'#f97316',title:'Restaurant Dish',subtitle:'Food Menu',units:['plate','full','half','pcs'],quick:['Veg Burger','Paneer Pizza','Cold Coffee','Fries','Thali'],fields:[{name:'isVeg',label:'Veg Type',type:'select',options:['Veg','Non-Veg','Egg']},{name:'cookTime',label:'Cook Time',type:'text',placeholder:'15 min'},{name:'spicy',label:'Spicy',type:'select',options:['Mild','Medium','High']}]},
+medical: {icon:'💊',color:'#ef4444',title:'Medical Product',subtitle:'Medicine',units:['pcs','strip','bottle','box'],quick:['Paracetamol','Cough Syrup','Bandage','Sanitizer','Vitamin'],fields:[{name:'salt',label:'Salt',type:'text'},{name:'expiry',label:'Expiry',type:'date'},{name:'prescription',label:'Prescription',type:'select',options:['No','Yes']}]},
+electronics: {icon:'🔌',color:'#6366f1',title:'Electronics',subtitle:'Electronic Items',units:['pcs'],quick:['LED Bulb','Board','Fan','Mixer','Iron'],fields:[{name:'brand',label:'Brand',type:'text'},{name:'watt',label:'Watt',type:'text'},{name:'warranty',label:'Warranty',type:'text'}]},
+hardware: {icon:'🔧',color:'#78716c',title:'Hardware',subtitle:'Hardware Items',units:['pcs','kg','meter','packet'],quick:['Cement','Paint','Screw','Hammer','Pipe'],fields:[{name:'material',label:'Material',type:'text'},{name:'size',label:'Size',type:'text'}]},
+jewellery: {icon:'💍',color:'#eab308',title:'Jewellery',subtitle:'Gold Silver',units:['pcs','gram'],quick:['Gold Ring','Silver Payal','Earrings','Necklace','Bracelet'],fields:[{name:'purity',label:'Purity',type:'select',options:['24K','22K','18K','925 Silver','Artificial']},{name:'weight',label:'Weight',type:'text'}]},
+acharShop: {icon:'🥒',color:'#84cc16',title:'Achar Product',subtitle:'Pickle & Murabba',units:['kg','gram','jar','pcs'],quick:['Aam Achar','Nimbu Achar','Mix Achar','Murabba','Chutney'],fields:[{name:'type',label:'Achar Type',type:'select',options:['Aam','Nimbu','Mirch','Mix','Lahsun']},{name:'oil',label:'Oil Type',type:'select',options:['Mustard','Olive','No Oil']},{name:'weight',label:'Weight',type:'text'}]},
+auto: {icon:'🚗',color:'#1e293b',title:'Auto Part',subtitle:'Car & Bike Parts',units:['pcs','service'],quick:['Engine Oil','Brake Pad','Air Filter','Car Wash','Tyre'],fields:[{name:'vehicle',label:'Vehicle',type:'text',placeholder:'Swift, Bullet'},{name:'partType',label:'Type',type:'select',options:['Spare Part','Service','Accessory']}]},
+bartan: {icon:'🍽️',color:'#94a3b8',title:'Bartan Product',subtitle:'Utensils',units:['pcs','set','kg'],quick:['Steel Thali','Kadhai','Pressure Cooker','Glass Set','Spoon Set'],fields:[{name:'material',label:'Material',type:'select',options:['Steel','Aluminium','Brass','Copper','Plastic']},{name:'capacity',label:'Capacity',type:'text',placeholder:'2 Litre'}]},
+battery: {icon:'🔋',color:'#22c55e',title:'Battery Product',subtitle:'Inverter Battery',units:['pcs'],quick:['Inverter Battery','Bike Battery','Car Battery','Charger','Wire'],fields:[{name:'volt',label:'Volt / AH',type:'text',placeholder:'12V 150AH'},{name:'brand',label:'Brand',type:'text'},{name:'warranty',label:'Warranty',type:'text'}]},
+beauty: {icon:'💄',color:'#f43f5e',title:'Beauty Product',subtitle:'Cosmetics',units:['pcs','ml','gram'],quick:['Lipstick','Face Wash','Cream','Shampoo','Kajal'],fields:[{name:'brand',label:'Brand',type:'text'},{name:'skinType',label:'Skin Type',type:'select',options:['All','Oily','Dry','Sensitive']},{name:'expiry',label:'Expiry',type:'date'}]},
+brick: {icon:'🧱',color:'#b45309',title:'Brick Product',subtitle:'Bricks & Cement',units:['pcs','bag','truck','feet'],quick:['Red Brick','Cement Bag','Sand 1 Truck','Gitti','Saria'],fields:[{name:'quality',label:'Quality',type:'select',options:['A Grade','B Grade','Premium']},{name:'size',label:'Size',type:'text'}]},
+chakki: {icon:'🌾',color:'#a3a3a3',title:'Chakki Product',subtitle:'Flour & Grains',units:['kg','gram','bag'],quick:['Gehu Atta','Bajra Atta','Makka Atta','Daliya','Besan'],fields:[{name:'grainType',label:'Grain Type',type:'select',options:['Gehu','Bajra','Makka','Jowar','Chana']},{name:'grindType',label:'Grind',type:'select',options:['Fine','Medium','Coarse']}]},
+charpaiShop: {icon:'🛏️',color:'#854d0e',title:'Charpai Product',subtitle:'Charpai & Khat',units:['pcs','set'],quick:['Wooden Charpai','Iron Charpai','Niwar','Khat','Mooda'],fields:[{name:'material',label:'Material',type:'select',options:['Wood','Iron','Bamboo','Plastic']},{name:'size',label:'Size',type:'text',placeholder:'6x3 ft'}]},
+childClothes: {icon:'👶',color:'#f9a8d4',title:'Kids Clothes',subtitle:'Baby Dress',units:['pcs','set'],quick:['Baby Suit','Frock','Baba Suit','Diaper','Cap'],fields:[{name:'age',label:'Age Group',type:'select',options:['0-6M','6-12M','1-2Y','2-4Y','4-8Y']},{name:'size',label:'Size',type:'text'},{name:'gender',label:'Gender',type:'select',options:['Boy','Girl','Unisex']}]},
+clinic: {icon:'🏥',color:'#06b6d4',title:'Clinic Service',subtitle:'Doctor Service',units:['service','pcs'],quick:['Consultation','Blood Test','X-Ray','Medicine','Injection'],fields:[{name:'doctor',label:'Doctor',type:'text'},{name:'fees',label:'Fees',type:'number'},{name:'duration',label:'Duration',type:'text',placeholder:'15 min'}]},
+dairy: {icon:'🥛',color:'#38bdf8',title:'Dairy Product',subtitle:'Milk & Curd',units:['litre','kg','pcs'],quick:['Milk 1L','Curd 500g','Paneer','Ghee','Lassi'],fields:[{name:'fat',label:'Fat %',type:'text',placeholder:'3.5%'},{name:'type',label:'Type',type:'select',options:['Cow','Buffalo','Mix']},{name:'expiry',label:'Expiry',type:'date'}]},
+decorationShop: {icon:'🎉',color:'#a855f7',title:'Decoration Item',subtitle:'Party Decoration',units:['pcs','set','packet'],quick:['Balloon Set','Light','Flower Garland','Banner','Gift'],fields:[{name:'occasion',label:'Occasion',type:'select',options:['Birthday','Wedding','Festival','Other']},{name:'color',label:'Color',type:'text'}]},
+doorShop: {icon:'🚪',color:'#78350f',title:'Door Product',subtitle:'Doors',units:['pcs','feet'],quick:['Wooden Door','Iron Door','PVC Door','Door Handle','Lock'],fields:[{name:'material',label:'Material',type:'select',options:['Wood','Iron','PVC','Aluminium']},{name:'size',label:'Size',type:'text',placeholder:'7x3 ft'}]},
+fabricShop: {icon:'🧵',color:'#be185d',title:'Fabric Product',subtitle:'Kapda',units:['meter','pcs','kg'],quick:['Cotton Fabric','Silk Fabric','Printed','Lining','Lace'],fields:[{name:'fabricType',label:'Fabric Type',type:'text'},{name:'width',label:'Width',type:'text',placeholder:'44 inch'},{name:'color',label:'Color',type:'text'}]},
+flower: {icon:'🌸',color:'#ec4899',title:'Flower Product',subtitle:'Fresh Flowers',units:['pcs','kg','gajra','mala'],quick:['Rose','Marigold','Mala','Bouquet','Gajra'],fields:[{name:'flowerType',label:'Flower Type',type:'text'},{name:'freshness',label:'Freshness',type:'select',options:['Today Fresh','Premium']}]},
+footwear: {icon:'👟',color:'#1f2937',title:'Footwear Product',subtitle:'Shoes & Chappal',units:['pair','pcs'],quick:['Sports Shoe','Chappal','Sandal','Slipper','Loafer'],fields:[{name:'size',label:'Size',type:'select',options:['5','6','7','8','9','10']},{name:'color',label:'Color',type:'text'},{name:'material',label:'Material',type:'select',options:['Leather','Rexine','Rubber','Canvas']}]},
+furniture: {icon:'🪑',color:'#92400e',title:'Furniture Product',subtitle:'Furniture',units:['pcs','set'],quick:['Chair','Table','Sofa','Bed','Almirah'],fields:[{name:'material',label:'Material',type:'select',options:['Wood','Iron','Plastic','Steel']},{name:'size',label:'Size',type:'text'}]},
+grocerySweet: {icon:'🍬',color:'#f97316',title:'Sweet Product',subtitle:'Mithai',units:['kg','gram','box','pcs'],quick:['Laddu','Barfi','Jalebi','Rasgulla','Cake'],fields:[{name:'sweetType',label:'Type',type:'text'},{name:'weight',label:'Weight',type:'text'},{name:'expiry',label:'Expiry',type:'date'}]},
+halwai: {icon:'🍩',color:'#fb923c',title:'Halwai Product',subtitle:'Sweets & Namkeen',units:['kg','pcs','plate'],quick:['Samosa','Kachori','Laddu','Namkeen','Jalebi'],fields:[{name:'type',label:'Type',type:'select',options:['Sweet','Namkeen','Fried']},{name:'weight',label:'Weight',type:'text'}]},
+jewellery2: {icon:'💎',color:'#ca8a04',title:'Jewellery Item',subtitle:'Jewels',units:['pcs','gram'],quick:['Ring','Necklace'],fields:[{name:'purity',label:'Purity',type:'text'}]},
+juice: {icon:'🧃',color:'#facc15',title:'Juice Product',subtitle:'Juice & Shakes',units:['glass','ml','litre','pcs'],quick:['Orange Juice','Mango Shake','Cold Coffee','Lassi','Lemon Water'],fields:[{name:'flavour',label:'Flavour',type:'text'},{name:'size',label:'Size',type:'select',options:['Small','Medium','Large']},{name:'isCold',label:'Cold?',type:'select',options:['Yes','No']}]},
+kambalShop: {icon:'🧣',color:'#7c3aed',title:'Kambal Product',subtitle:'Blankets',units:['pcs','set'],quick:['Single Kambal','Double Kambal','Rajat','Bedsheet','Pillow'],fields:[{name:'size',label:'Size',type:'select',options:['Single','Double','King']},{name:'material',label:'Material',type:'select',options:['Wool','Cotton','Fleece']}]},
+kidsWear: {icon:'🧒',color:'#f472b6',title:'Kids Wear',subtitle:'Kids Dress',units:['pcs','set'],quick:['T-Shirt Kids','Jeans Kids','Frock','Baba Suit','Cap'],fields:[{name:'age',label:'Age',type:'text'},{name:'size',label:'Size',type:'text'}]},
+krishi: {icon:'🚜',color:'#65a30d',title:'Krishi Product',subtitle:'Seeds & Fertilizer',units:['kg','bag','litre','pcs'],quick:['Wheat Seed','Fertilizer','Pesticide','Spray Machine','Pipe'],fields:[{name:'type',label:'Type',type:'select',options:['Seed','Fertilizer','Pesticide','Tool']},{name:'company',label:'Company',type:'text'}]},
+matShop: {icon:'🧶',color:'#a16207',title:'Mat Product',subtitle:'Chatai & Mats',units:['pcs','feet','meter'],quick:['Plastic Mat','Jute Mat','Carpet','Door Mat','Table Mat'],fields:[{name:'material',label:'Material',type:'text'},{name:'size',label:'Size',type:'text'}]},
+mattressShop: {icon:'🛌',color:'#4f46e5',title:'Mattress Product',subtitle:'Gadda',units:['pcs','set'],quick:['Single Gadda','Double Gadda','Pillow','Bedsheet','Cushion'],fields:[{name:'size',label:'Size',type:'select',options:['Single','Double','King','Queen']},{name:'thickness',label:'Thickness',type:'text',placeholder:'4 inch'}]},
+meat: {icon:'🍗',color:'#dc2626',title:'Meat Product',subtitle:'Chicken Mutton',units:['kg','gram','pcs'],quick:['Chicken','Mutton','Fish','Egg 1 Dozen','Keema'],fields:[{name:'type',label:'Type',type:'select',options:['Chicken','Mutton','Fish','Egg']},{name:'cut',label:'Cut Type',type:'select',options:['Full','Leg','Breast','Curry Cut']}]},
+mochi: {icon:'👞',color:'#78350f',title:'Mochi Product',subtitle:'Cobbler',units:['pair','pcs','service'],quick:['Shoe Repair','Polish','Sole','Lace','Chappal Repair'],fields:[{name:'serviceType',label:'Service',type:'select',options:['Repair','Polish','New']},{name:'size',label:'Size',type:'text'}]},
+murtiShop: {icon:'🗿',color:'#f59e0b',title:'Murti Product',subtitle:'Idols',units:['pcs','set','inch'],quick:['Ganesh Murti','Laxmi Murti','Shiv Murti','Photo Frame','Diya'],fields:[{name:'material',label:'Material',type:'select',options:['Mitti','Marble','Plastic','Brass']},{name:'height',label:'Height',type:'text',placeholder:'12 inch'}]},
+nursery: {icon:'🌱',color:'#16a34a',title:'Nursery Product',subtitle:'Plants',units:['pcs','pot','packet'],quick:['Rose Plant','Tulsi','Money Plant','Pot','Seeds'],fields:[{name:'plantType',label:'Type',type:'select',options:['Indoor','Outdoor','Flowering','Herbal']},{name:'height',label:'Height',type:'text'}]},
+optical: {icon:'👓',color:'#0e7490',title:'Optical Product',subtitle:'Specs & Lenses',units:['pcs','pair'],quick:['Spectacles','Sunglasses','Lens','Frame','Contact Lens'],fields:[{name:'power',label:'Power',type:'text',placeholder:'-2.0'},{name:'frameType',label:'Frame',type:'select',options:['Full','Half','Rimless']}]},
+paintShop: {icon:'🎨',color:'#2563eb',title:'Paint Product',subtitle:'Paints',units:['litre','kg','bucket','pcs'],quick:['Wall Paint 1L','Primer','Brush','Roller','Putty'],fields:[{name:'color',label:'Color',type:'text'},{name:'finish',label:'Finish',type:'select',options:['Matte','Glossy','Satin']},{name:'volume',label:'Volume',type:'text'}]},
+pansari: {icon:'🌿',color:'#65a30d',title:'Pansari Product',subtitle:'Ayurvedic',units:['kg','gram','packet','bottle'],quick:['Haldi','Jeera','Ajwain','Churan','Oil'],fields:[{name:'type',label:'Type',type:'select',options:['Masala','Herb','Oil','Powder']},{name:'weight',label:'Weight',type:'text'}]},
+patanjali: {icon:'🧘',color:'#ea580c',title:'Patanjali Product',subtitle:'Ayurvedic',units:['pcs','bottle','packet'],quick:['Aloe Juice','Atta','Honey','Toothpaste','Oil'],fields:[{name:'category',label:'Category',type:'text'},{name:'weight',label:'Weight',type:'text'}]},
+photoStudio: {icon:'📸',color:'#7c2d12',title:'Photo Studio Product',subtitle:'Photos',units:['pcs','copy','service'],quick:['Passport Photo','Print 4x6','Frame','Album','Video'],fields:[{name:'size',label:'Photo Size',type:'select',options:['Passport','4x6','6x8','12x18']},{name:'service',label:'Service',type:'select',options:['Print','Frame','Album']}]},
+pizza: {icon:'🍕',color:'#dc2626',title:'Pizza Product',subtitle:'Pizza & Fast Food',units:['pcs','regular','medium','large'],quick:['Margherita','Paneer Pizza','Burger','Garlic Bread','Cold Drink'],fields:[{name:'size',label:'Size',type:'select',options:['Regular','Medium','Large']},{name:'toppings',label:'Toppings',type:'text'}]},
+plastic: {icon:'🪣',color:'#0284c7',title:'Plastic Product',subtitle:'Plastic Items',units:['pcs','set','kg'],quick:['Bucket','Mug','Chair','Tub','Dustbin'],fields:[{name:'material',label:'Material',type:'select',options:['Plastic','Fiber']},{name:'capacity',label:'Capacity',type:'text'}]},
+plumbing: {icon:'🚿',color:'#0369a1',title:'Plumbing Product',subtitle:'Pipes & Taps',units:['pcs','meter','set'],quick:['Pipe 1 inch','Tap','Shower','Elbow','Tank'],fields:[{name:'size',label:'Size',type:'text'},{name:'material',label:'Material',type:'select',options:['PVC','CPVC','Brass','Steel']}]},
+plyBoard: {icon:'🪵',color:'#92400e',title:'Ply Board',subtitle:'Plywood',units:['sheet','feet','pcs'],quick:['Ply 8mm','Board 12mm','Laminate','FeviCol','Handle'],fields:[{name:'thickness',label:'Thickness',type:'text',placeholder:'8mm'},{name:'size',label:'Size',type:'text',placeholder:'8x4 ft'}]},
+puja: {icon:'🪔',color:'#f59e0b',title:'Puja Product',subtitle:'Puja Items',units:['pcs','packet','kg'],quick:['Agarbatti','Diya','Kapoor','Roli','Mala'],fields:[{name:'type',label:'Type',type:'text'},{name:'weight',label:'Weight',type:'text'}]},
+purse: {icon:'👜',color:'#be185d',title:'Purse Product',subtitle:'Bags & Purse',units:['pcs'],quick:['Ladies Purse','Gents Wallet','School Bag','Travel Bag','Clutch'],fields:[{name:'material',label:'Material',type:'select',options:['Leather','Rexine','Cloth','Jute']},{name:'color',label:'Color',type:'text'}]},
+rental: {icon:'🏍️',color:'#1e293b',title:'Rental Product',subtitle:'Rent Items',units:['hour','day','pcs'],quick:['Bike Rent','Car Rent','Tent Rent','Speaker Rent','Chair Rent'],fields:[{name:'rentType',label:'Rent Type',type:'select',options:['Per Hour','Per Day','Per Event']},{name:'deposit',label:'Deposit',type:'number'}]},
+salon: {icon:'💇',color:'#ec4899',title:'Salon Service',subtitle:'Hair Cutting',units:['service'],quick:['Hair Cut','Beard Trim','Facial','Hair Color','Shave'],fields:[{name:'duration',label:'Duration',type:'text',placeholder:'30 min'},{name:'gender',label:'For',type:'select',options:['Men','Women','Kids']}]},
+sanitary: {icon:'🚽',color:'#0891b2',title:'Sanitary Product',subtitle:'Sanitary Items',units:['pcs','set'],quick:['WC Seat','Wash Basin','Tap','Shower','Pipe'],fields:[{name:'material',label:'Material',type:'select',options:['Ceramic','Steel','PVC']},{name:'brand',label:'Brand',type:'text'}]},
+sareeShop: {icon:'🥻',color:'#9d174d',title:'Saree Product',subtitle:'Saree & Suits',units:['pcs','set'],quick:['Cotton Saree','Silk Saree','Suit','Lehenga','Blouse'],fields:[{name:'fabric',label:'Fabric',type:'select',options:['Cotton','Silk','Georgette','Chiffon']},{name:'work',label:'Work',type:'select',options:['Plain','Embroidered','Printed']}]},
+service: {icon:'🛠️',color:'#334155',title:'Service Product',subtitle:'Services',units:['service'],quick:['Repair Service','Home Service','Cleaning','Washing','Installation'],fields:[{name:'serviceType',label:'Service Type',type:'text'},{name:'duration',label:'Duration',type:'text'}]},
+sports: {icon:'⚽',color:'#16a34a',title:'Sports Product',subtitle:'Sports Items',units:['pcs','set','pair'],quick:['Cricket Bat','Football','Badminton','Jersey','Shoes'],fields:[{name:'size',label:'Size',type:'text'},{name:'brand',label:'Brand',type:'text'},{name:'sport',label:'Sport',type:'text',placeholder:'Cricket'}]},
+stationery: {icon:'📚',color:'#2563eb',title:'Stationery Product',subtitle:'Books & Pens',units:['pcs','dozen','packet','set'],quick:['Pen','Notebook','Pencil','Eraser','Scale'],fields:[{name:'brand',label:'Brand',type:'text'},{name:'type',label:'Type',type:'text'}]},
+suitShop: {icon:'👔',color:'#1e3a8a',title:'Suit Product',subtitle:'Gents Suit',units:['pcs','set','meter'],quick:['Suit Piece','Sherwani','Blazer','Coat','Kurta Pajama'],fields:[{name:'fabric',label:'Fabric',type:'text'},{name:'size',label:'Size',type:'select',options:['S','M','L','XL','XXL']}]},
+tea: {icon:'☕',color:'#78350f',title:'Tea Product',subtitle:'Chai & Coffee',units:['cup','ml','kg','packet'],quick:['Chai','Coffee','Green Tea','Biscuit','Samosa'],fields:[{name:'type',label:'Type',type:'select',options:['Chai','Coffee','Green Tea','Lemon Tea']},{name:'size',label:'Size',type:'select',options:['Small','Medium','Large']}]},
+thela: {icon:'🛒',color:'#65a30d',title:'Thela Product',subtitle:'Street Food',units:['plate','pcs'],quick:['Chaat','Gol Gappa','Aloo Tikki','Momos','Chole Kulche'],fields:[{name:'spicy',label:'Spicy',type:'select',options:['Mild','Medium','High']},{name:'type',label:'Veg/NonVeg',type:'select',options:['Veg','Non-Veg']}]},
+tiles: {icon:'🧱',color:'#57534e',title:'Tiles Product',subtitle:'Tiles',units:['box','pcs','feet','meter'],quick:['Floor Tile','Wall Tile','Marble','Granite','Mosaic'],fields:[{name:'size',label:'Size',type:'text',placeholder:'2x2 ft'},{name:'finish',label:'Finish',type:'select',options:['Glossy','Matte','Rustic']}]},
+toyShop: {icon:'🧸',color:'#f59e0b',title:'Toy Product',subtitle:'Toys',units:['pcs','set'],quick:['Car Toy','Doll','Teddy','Puzzle','Ball'],fields:[{name:'age',label:'Age Group',type:'select',options:['0-2Y','2-4Y','4-8Y','8-12Y','12+']},{name:'material',label:'Material',type:'select',options:['Plastic','Wood','Cloth','Metal']}]},
+tripalShop: {icon:'⛺',color:'#365314',title:'Tripal Product',subtitle:'Tarpaulin',units:['meter','feet','pcs'],quick:['Tripal 10x10','Plastic Sheet','Rope','Bamboo','Tent'],fields:[{name:'size',label:'Size',type:'text',placeholder:'10x10 ft'},{name:'quality',label:'Quality',type:'select',options:['Normal','Waterproof','Heavy Duty']}]},
+vetClinic: {icon:'🐾',color:'#059669',title:'Vet Clinic Service',subtitle:'Animal Doctor',units:['service'],quick:['Consultation','Vaccine','Deworming','Surgery','Checkup'],fields:[{name:'animal',label:'Animal',type:'select',options:['Dog','Cat','Cow','Buffalo','Goat']},{name:'fees',label:'Fees',type:'number'}]},
+vetShop: {icon:'🐶',color:'#047857',title:'Vet Shop Product',subtitle:'Pet Products',units:['pcs','kg','packet'],quick:['Dog Food','Cat Food','Collar','Leash','Shampoo'],fields:[{name:'petType',label:'Pet Type',type:'select',options:['Dog','Cat','Cow','Bird']},{name:'brand',label:'Brand',type:'text'}]},
+watchShop: {icon:'⌚',color:'#111827',title:'Watch Product',subtitle:'Watches',units:['pcs'],quick:['Wrist Watch','Wall Clock','Smart Watch','Belt','Battery'],fields:[{name:'type',label:'Type',type:'select',options:['Analog','Digital','Smart','Wall Clock']},{name:'brand',label:'Brand',type:'text'},{name:'warranty',label:'Warranty',type:'text'}]},
+winterWear: {icon:'🧥',color:'#1e40af',title:'Winter Wear',subtitle:'Jackets',units:['pcs','set'],quick:['Jacket','Sweater','Muffler','Cap','Gloves'],fields:[{name:'size',label:'Size',type:'select',options:['S','M','L','XL','XXL']},{name:'material',label:'Material',type:'select',options:['Wool','Fleece','Leather']}]},
+default: {icon:'📦',color:'#10b981',title:'Product',subtitle:'Add Product',units:['pcs','kg'],quick:['Product 1','Product 2'],fields:[{name:'brand',label:'Brand',type:'text'}]}
+};
+
+function getShopType(){const p=new URLSearchParams(location.search);return (p.get('type')||localStorage.getItem('shop_type')||'kirana').toLowerCase().replace('-shop','').replace('shop','');}
+function renderShopForm(){
+  let type=getShopType();
+  if(!SHOP_CONFIG[type]){ // fuzzy match
+    const found=Object.keys(SHOP_CONFIG).find(k=>type.includes(k)||k.includes(type));
+    if(found) type=found; else type='default';
+  }
+  const config=SHOP_CONFIG[type];
+  document.getElementById('formHeader').style.background=`linear-gradient(135deg, ${config.color}, ${config.color}dd)`;
+  document.getElementById('shopIcon').innerText=config.icon;
+  document.getElementById('shopTitle').innerText=config.title;
+  document.getElementById('shopSubtitle').innerText=config.subtitle;
+  document.getElementById('submitBtn').style.background=config.color;
+  document.getElementById('unitSelect').innerHTML=config.units.map(u=>`<option>${u}</option>`).join('');
+  document.getElementById('quickAddList').innerHTML=config.quick.map(q=>`<button type="button" onclick="fillQuick('${q}')">${q}</button>`).join('');
+  document.getElementById('dynamicTitle').innerText=`🔧 ${config.title} Details`;
+  document.getElementById('dynamicFields').innerHTML=config.fields.map(f=>{
+    let input=''; if(f.type==='select'){input=`<select name="${f.name}">${f.options.map(o=>`<option>${o}</option>`).join('')}</select>`;}else{input=`<input type="${f.type}" name="${f.name}" placeholder="${f.placeholder||''}">`;}
+    return `<div class="input-group" style="margin-bottom:12px"><label>${f.label}</label>${input}</div>`;
+  }).join('');
+  const dyn=document.getElementById('dynamicFields'); if(config.fields.length>1){dyn.style.display='grid';dyn.style.gridTemplateColumns='1fr 1fr';dyn.style.gap='12px';}
+}
+function fillQuick(name){document.getElementById('pName').value=name;}
+document.getElementById('fileInput').addEventListener('change',e=>{
+  const preview=document.getElementById('preview'); preview.innerHTML='';
+  [...e.target.files].slice(0,5).forEach(file=>{const r=new FileReader(); r.onload=ev=>{preview.innerHTML+=`<img src="${ev.target.result}">`;}; r.readAsDataURL(file);});
+});
+document.getElementById('productForm').addEventListener('submit',e=>{
+  e.preventDefault(); const fd=new FormData(e.target); const data=Object.fromEntries(fd.entries()); data.shopType=getShopType(); data.extraData={}; const cfg=SHOP_CONFIG[data.shopType]||SHOP_CONFIG['default']; cfg.fields.forEach(f=>{if(data[f.name]){data.extraData[f.name]=data[f.name]; delete data[f.name];}}); console.log('FINAL:',data); alert(`✅ ${data.shopType.toUpperCase()} Product Saved!`);
+});
+renderShopForm();
+</script>
+</body>
+</html>
