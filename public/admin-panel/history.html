@@ -1,0 +1,22 @@
+<div style="padding:20px;font-family:Outfit">
+<h2>📜 SL History - Last 100 Pages</h2>
+<div style="display:flex;gap:10px;margin:15px 0">
+<button onclick="renderHistory()" style="padding:8px 14px;background:#0f172a;color:#fff;border:none;border-radius:8px">↻ Refresh</button>
+<button onclick="if(confirm('Clear?')) SLHistory.clear()" style="padding:8px 14px;background:#ef4444;color:#fff;border:none;border-radius:8px">🗑️ Clear All</button>
+</div>
+<div id="analytics" style="background:#f1f5f9;padding:12px;border-radius:10px;margin-bottom:12px"></div>
+<div id="historyList"></div>
+<script>
+function renderHistory(){
+  const list = SLHistory.getAll();
+  const analytics = SLHistory.getAnalytics();
+  document.getElementById('analytics').innerHTML = `<b>Most Visited:</b> ${analytics.map(a=>`${a[0]} (${a[1]})`).join(' • ') || 'No data'}`;
+  document.getElementById('historyList').innerHTML = list.map(r=>`
+    <div style="display:flex;justify-content:space-between;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;margin:6px 0;background:#fff">
+      <span><b>${r.page}.html</b> <small style="color:#64748b">${r.time}</small></span>
+      <span style="font-size:11px;background:#0f172a;color:#fff;padding:3px 8px;border-radius:20px">${r.duration || '0s'}</span>
+    </div>`).join('') || '<p>No history yet</p>';
+}
+renderHistory();
+</script>
+</div>

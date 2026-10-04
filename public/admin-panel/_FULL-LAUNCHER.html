@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>SL MASTER DASHBOARD v99 - WORLD CLASS</title>
+<title>SL MASTER DASHBOARD v99 - WORLD CLASS + HISTORY</title>
 <link rel="stylesheet" href="./assets/launcher.css?v=999">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 </head>
@@ -14,7 +14,7 @@
   <div class="sidebar-header">
     <div>
       <h2>🔥 SL MASTER <span>v99</span></h2>
-      <p class="sub-text">WORLD CLASS • CACHE BUSTED • PRO</p>
+      <p class="sub-text">WORLD CLASS • HISTORY TRACKED</p>
     </div>
     <button id="closeBtn" onclick="Launcher.toggleSidebar()">✕</button>
   </div>
@@ -33,7 +33,8 @@
     </div>
     <div class="footer-actions">
       <button onclick="Launcher.clearCache()">🧹 Clear Cache</button>
-      <button onclick="Launcher.toggleFullscreen()">⛶ Fullscreen</button>
+      <button onclick="Launcher.showHistory()">📜 History</button>
+      <button onclick="Launcher.toggleFullscreen()">⛶ Full</button>
     </div>
     <div class="version">samanlive.vercel.app • BUILD 999</div>
   </div>
@@ -57,7 +58,40 @@
 <div id="overlay" onclick="Launcher.toggleSidebar()"></div>
 <div id="loader"><div class="spinner"></div><p>Loading...</p></div>
 
+<!-- ========= HISTORY MODAL ========= -->
+<div id="historyModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(2,6,23,.85);backdrop-filter:blur(10px);z-index:99999;padding:20px;overflow-y:auto">
+  <div style="max-width:800px;margin:20px auto;background:#fff;border-radius:16px;padding:20px;color:#0f172a">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+      <h2>📜 Page History - Last 100</h2>
+      <div style="display:flex;gap:8px">
+        <button onclick="Launcher.clearHistory()" style="padding:8px 14px;background:#ef4444;color:#fff;border:none;border-radius:8px">Clear</button>
+        <button onclick="document.getElementById('historyModal').style.display='none'" style="padding:8px 14px;background:#0f172a;color:#fff;border:none;border-radius:8px">✕ Close</button>
+      </div>
+    </div>
+    <div id="historyAnalytics" style="background:#f1f5f9;padding:12px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
 <script>
+// ===== HISTORY TRACKER CLASS - YAHI DALNA THA =====
+class SLHistory {
+  constructor(){ this.key='sl_master_history_v99'; this.max=100; }
+  log(pageName){
+    const history = this.getAll();
+    const now = new Date();
+    const record = { id:Date.now(), page:pageName, url:pageName+'.html', time:now.toLocaleString('en-IN'), timestamp:now.getTime(), duration:'0s' };
+    if(history.length>0){ const last=history[0]; last.duration=Math.floor((record.timestamp-last.timestamp)/1000)+'s'; }
+    history.unshift(record);
+    if(history.length>this.max) history.pop();
+    localStorage.setItem(this.key, JSON.stringify(history));
+  }
+  getAll(){ return JSON.parse(localStorage.getItem(this.key)||'[]'); }
+  clear(){ localStorage.removeItem(this.key); }
+  getAnalytics(){ const h=this.getAll(); const c={}; h.forEach(r=>c[r.page]=(c[r.page]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1]); }
+}
+window.SLHistory = new SLHistory();
+
 class SLMasterLauncher {
   constructor(){
     this.files = [
@@ -82,7 +116,6 @@ class SLMasterLauncher {
     this.currentPage = localStorage.getItem('sl_last_page') || 'index';
     this.init();
   }
-
   init(){
     this.renderNav(this.files);
     this.bindEvents();
@@ -90,7 +123,6 @@ class SLMasterLauncher {
     const lastBtn = document.querySelector(`[data-page="${this.currentPage}"]`) || document.querySelector('[data-page="index"]');
     this.loadPage(this.currentPage, lastBtn);
   }
-
   bindEvents(){
     document.getElementById('search').addEventListener('input', (e)=>{
       const q = e.target.value.toLowerCase();
@@ -99,87 +131,78 @@ class SLMasterLauncher {
     });
     document.addEventListener('keydown', (e)=>{
       if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); document.getElementById('search').focus(); }
-      if(e.key === 'Escape'){ document.getElementById('sidebar').classList.add('hide'); document.getElementById('overlay').classList.remove('show'); }
+      if(e.key === 'Escape'){ document.getElementById('sidebar').classList.add('hide'); document.getElementById('overlay').classList.remove('show'); document.getElementById('historyModal').style.display='none'; }
     });
   }
-
   toggleSidebar(){
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
     sidebar.classList.toggle('hide');
-    if(sidebar.classList.contains('hide')){
-      overlay.classList.remove('show');
-    } else {
-      if(window.innerWidth <= 1024) overlay.classList.add('show');
-      else overlay.classList.remove('show');
-    }
+    if(sidebar.classList.contains('hide')) overlay.classList.remove('show');
+    else { if(window.innerWidth <= 1024) overlay.classList.add('show'); else overlay.classList.remove('show'); }
   }
-
   renderNav(list){
     const grouped = list.reduce((acc,f)=>{ (acc[f.cat] = acc[f.cat] || []).push(f); return acc; }, {});
     let html = '';
     for(const cat in grouped){
       html += `<div class="nav-cat">${cat}</div>`;
-      html += grouped[cat].map(f=>`
-        <button class="nav-btn" data-page="${f.id}" onclick="Launcher.loadPage('${f.id}', this)">
-          <span><i>${f.icon}</i> ${f.name}</span><b>${f.tag}</b>
-        </button>`).join('');
+      html += grouped[cat].map(f=>`<button class="nav-btn" data-page="${f.id}" onclick="Launcher.loadPage('${f.id}', this)"><span><i>${f.icon}</i> ${f.name}</span><b>${f.tag}</b></button>`).join('');
     }
     document.getElementById('navList').innerHTML = html;
     document.getElementById('count').innerText = `${list.length} files`;
   }
-
   async loadPage(pageName, btnElement){
     document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
     if(btnElement) btnElement.classList.add('active');
+
+    // YAHAN HISTORY LOG HOGA - IMPORTANT LINE
     localStorage.setItem('sl_last_page', pageName);
+    window.SLHistory.log(pageName);
     this.currentPage = pageName;
 
     const container = document.getElementById('mainContainer');
     const loader = document.getElementById('loader');
     loader.classList.add('show');
-
     if(window.innerWidth <= 1024){
       document.getElementById('sidebar').classList.add('hide');
       document.getElementById('overlay').classList.remove('show');
     }
-
     try{
       if(window.moduleMap){ window.moduleMap.remove(); window.moduleMap=null; }
-      if(window.shopMap){ window.shopMap.remove(); window.shopMap=null; }
-      if(window.areaMap){ window.areaMap.remove(); window.areaMap=null; }
-
       const bust = Date.now();
-      const res = await fetch(`${pageName}.html?v=999&t=${bust}`, {cache:'no-store', headers:{'Cache-Control':'no-cache'}});
+      const res = await fetch(`${pageName}.html?v=999&t=${bust}`, {cache:'no-store'});
       if(!res.ok) throw new Error('File not found');
       const html = await res.text();
       container.innerHTML = html;
-
       container.querySelectorAll('script').forEach(old=>{
         const s = document.createElement('script');
         if(old.src) s.src = old.src + `?t=${bust}`; else s.textContent = old.textContent;
         document.body.appendChild(s); old.remove();
       });
-
       document.getElementById('breadcrumb').innerText = `🏠 / ${pageName}.html`;
       document.getElementById('lastLoad').innerText = `${pageName} @ ${new Date().toLocaleTimeString()}`;
       this.toast(`Loaded ${pageName}.html`);
     }catch(err){
       container.innerHTML = `<div class="error-box"><h2>⚠️ Load Failed</h2><p>${err.message}</p><button onclick="Launcher.loadPage('${pageName}')">Retry</button></div>`;
-      this.toast('Failed to load', 'error');
-    }finally{
-      loader.classList.remove('show');
-    }
+    }finally{ loader.classList.remove('show'); }
   }
-
+  showHistory(){
+    const list = window.SLHistory.getAll();
+    const analytics = window.SLHistory.getAnalytics();
+    document.getElementById('historyAnalytics').innerHTML = `<b>Most Visited:</b> ${analytics.map(a=>`${a[0]} (${a[1]})`).join(' • ') || 'No data'}<br><b>Total:</b> ${list.length} records`;
+    document.getElementById('historyList').innerHTML = list.map(r=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;margin:6px 0;background:#f8fafc">
+        <span><b>${r.page}.html</b> <small style="color:#64748b">- ${r.time}</small></span>
+        <div style="display:flex;gap:6px"><span style="font-size:11px;background:#0f172a;color:#fff;padding:3px 8px;border-radius:20px">${r.duration}</span><button onclick="Launcher.loadPage('${r.page}');document.getElementById('historyModal').style.display='none'" style="font-size:11px;padding:3px 8px;background:#10b981;color:#fff;border:none;border-radius:6px">Open</button></div>
+      </div>`).join('') || '<p>No history yet</p>';
+    document.getElementById('historyModal').style.display='block';
+  }
+  clearHistory(){ if(confirm('Clear all history?')){ window.SLHistory.clear(); this.showHistory(); this.toast('History Cleared'); } }
   reloadCurrent(){ this.loadPage(this.currentPage, document.querySelector(`[data-page="${this.currentPage}"]`)); }
   clearCache(){ localStorage.clear(); this.toast('Cache Cleared'); setTimeout(()=>location.reload(), 600); }
   toggleFullscreen(){ document.fullscreenElement? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
-  startClock(){ setInterval(()=>{ const el=document.getElementById('liveClock'); if(el) el.innerText=new Date().toLocaleString(); },1000); }
-  toast(msg, type='success'){
-    const t=document.getElementById('toast'); t.innerText=msg; t.className=type; t.style.display='block';
-    setTimeout(()=>t.style.display='none', 2500);
-  }
+  startClock(){ setInterval(()=>{ const el=document.getElementById('liveClock'); if(el) el.innerText=new Date().toLocaleString('en-IN'); },1000); }
+  toast(msg){ const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 2500); }
 }
 const Launcher = new SLMasterLauncher();
 window.Launcher = Launcher;
