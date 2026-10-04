@@ -1,68 +1,57 @@
-<!-- LOCATION: public/shop-templates/kirana/user-view.html - V13 WORLD CLASS MOBILE FIRST + WORLD PRODUCT CONNECTED - FULL CODE -->
+<!-- LOCATION: public/shop-templates/kirana/user-view.html - V16 WORLD BOSS FINAL - MOBILE FIRST + COMMON ONLY + WORLD PRODUCT MANAGER V15 CLASS - FULL CODE 1200 LINES -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Kirana Store - SamanLive - V13 World Class</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Kirana Store - SamanLive - V16 World Boss - Common Connected</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
 <style>
-:root{--green:#10b981;--green-dark:#059669;--dark:#020617;--bg:#f8fafc;--border:#e2e8f0;--card:#fff;--text:#0f172a;--muted:#64748b;--radius:16px}
+:root{--green:#10b981;--green-dark:#059669;--dark:#0f172a;--bg:#f8fafc;--border:#e2e8f0;--card:#fff;--text:#0f172a;--muted:#64748b;--radius:16px}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
 body{background:var(--bg);color:var(--text);overflow-x:hidden;padding-bottom:80px}
 ::-webkit-scrollbar{display:none}
-
-/* HEADER - MOBILE FIRST STICKY */
-.header{height:60px;background:rgba(255,255,255,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 12px;position:sticky;top:0;z-index:100;gap:8px}
-.logo{font-weight:900;font-size:16px;display:flex;gap:8px;align-items:center;white-space:nowrap;flex-shrink:0}.logo span#shopLogoLetter{background:var(--dark);color:#fff;padding:4px 8px;border-radius:8px;font-size:14px}
+.header{height:60px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 12px;position:sticky;top:0;z-index:100;gap:8px}
+.logo{font-weight:900;font-size:16px;display:flex;gap:8px;align-items:center;white-space:nowrap;flex-shrink:0}
+.logo span#shopLogoLetter{background:var(--dark);color:#fff;padding:4px 8px;border-radius:8px;font-size:14px}
 .search{flex:1;max-width:500px;display:flex;align-items:center;gap:8px;background:#f1f5f9;border:1px solid var(--border);padding:9px 12px;border-radius:12px;transition:.2s}
 .search:focus-within{border-color:var(--dark);background:#fff;box-shadow:0 0 0 3px #e2e8f0}
 .search input{border:none;background:transparent;outline:none;width:100%;font-weight:600;font-size:13px}
 .actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
 .icon-btn{width:38px;height:38px;border-radius:12px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;cursor:pointer;position:relative;transition:.2s}
 .icon-btn:active{transform:scale(.92)}
-.icon-btn.badge{position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;font-size:9px;font-weight:900;padding:2px 5px;border-radius:20px;min-width:16px;text-align:center;border:1px solid #fff}
-
-/* BANNER - MOBILE SWIPE */
+.badge{position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;font-size:9px;font-weight:900;padding:2px 5px;border-radius:20px;min-width:16px;text-align:center;border:1px solid #fff}
 .banner{margin:12px;border-radius:20px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden}
 .banner::before{content:'';position:absolute;top:-30%;right:-20%;width:200px;height:200px;background:rgba(255,255,255,.15);border-radius:50%}
-.banner h2{font-weight:900;font-size:18px;line-height:1.1;position:relative}.banner p{font-size:11px;opacity:.9;margin-top:4px;position:relative}
-
-/* SHOP PILLS - HORIZONTAL SCROLL */
-.shop-info{padding:0 12px;display:flex;gap:8px;align-items:center;overflow:auto;scrollbar-width:none;white-space:nowrap}
-.shop-info::-webkit-scrollbar{display:none}
+.banner h2{font-weight:900;font-size:18px;line-height:1.1;position:relative}
+.banner p{font-size:11px;opacity:.9;margin-top:4px;position:relative}
+.shop-info{padding:0 12px;display:flex;gap:8px;align-items:center;overflow:auto;white-space:nowrap}
 .pill{background:#fff;border:1px solid var(--border);padding:6px 10px;border-radius:20px;font-size:11px;font-weight:800;display:flex;gap:5px;align-items:center;flex-shrink:0}
-.pill.open{background:#dcfce7;color:#15803d;border-color:#bbf7d0}.pill.closed{background:#fee2e2;color:#b91c1c}
-
-/* CATEGORIES - CHIPS SCROLL */
+.pill.open{background:#dcfce7;color:#15803d;border-color:#bbf7d0}
+.pill.closed{background:#fee2e2;color:#b91c1c}
 .cats{display:flex;gap:8px;overflow:auto;padding:12px;scrollbar-width:none}
 .cat{white-space:nowrap;padding:9px 14px;border-radius:20px;background:#fff;border:1.5px solid var(--border);font-weight:800;font-size:12px;cursor:pointer;transition:.2s;flex-shrink:0}
 .cat.active{background:var(--dark);color:#fff;border-color:var(--dark);transform:translateY(-1px);box-shadow:0 6px 14px rgba(0,0,0,.15)}
-.cat:hover{border-color:var(--dark)}
-
-/* PRODUCT GRID - MOBILE 2 COL, DESKTOP 4 COL */
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px 12px}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr);gap:14px;padding:14px 16px}}
 @media(min-width:1100px){.grid{grid-template-columns:repeat(5,1fr)}}
-
 .card{background:#fff;border-radius:18px;border:1px solid #f1f5f9;overflow:hidden;transition:.25s;position:relative;display:flex;flex-direction:column}
 .card:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(0,0,0,.08)}
 .card img{width:100%;height:140px;object-fit:cover;background:#f8fafc}
 @media(max-width:480px){.card img{height:120px}}
-.card.info{padding:10px;flex:1;display:flex;flex-direction:column}
-.card b{font-size:13px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px}
+.info{padding:10px;flex:1;display:flex;flex-direction:column}
+.info b{font-size:13px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px}
 .meta{font-size:10px;color:#94a3b8;margin-top:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .price-row{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:8px}
-.price{font-weight:900;font-size:14px}.price del{font-size:10px;color:#94a3b8;margin-left:4px;font-weight:600}
+.price{font-weight:900;font-size:14px}
+.price del{font-size:10px;color:#94a3b8;margin-left:4px;font-weight:600}
 .add{width:34px;height:34px;border-radius:11px;background:var(--dark);color:#fff;border:none;display:grid;place-items:center;cursor:pointer;transition:.2s;box-shadow:0 4px 10px rgba(0,0,0,.15)}
 .add:active{transform:scale(.88)}
 .add.added{background:var(--green)}
 .wish{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border:1px solid var(--border);display:grid;place-items:center;cursor:pointer;transition:.2s}
 .wish.active{color:#ef4444;background:#fff;border-color:#fee2e2}
-.wish:active{transform:scale(.9)}
-
-/* CART DRAWER - MOBILE BOTTOM SHEET */
 .cart-drawer{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);z-index:200;display:none;opacity:0;transition:.3s}
 .cart-drawer.open{display:block;opacity:1}
 .cart-panel{position:absolute;right:0;top:0;width:380px;max-width:100vw;height:100%;background:#fff;display:flex;flex-direction:column;transform:translateX(100%);transition:.35s cubic-bezier(.4,0,.2,1);border-radius:20px 0 0 20px}
@@ -75,223 +64,351 @@ body{background:var(--bg);color:var(--text);overflow-x:hidden;padding-bottom:80p
 .cart-foot{padding:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;background:#fff}
 .btn{padding:13px;border-radius:12px;border:none;font-weight:900;cursor:pointer;display:flex;justify-content:center;gap:8px;align-items:center;font-size:13px;transition:.2s}
 .btn:active{transform:scale(.98)}
-.btn-dark{background:var(--dark);color:#fff;box-shadow:0 8px 20px rgba(2,6,23,.2)}.btn-green{background:var(--green);color:#fff}
+.btn-dark{background:var(--dark);color:#fff;box-shadow:0 8px 20px rgba(15,23,42,.2)}
 .btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--dark)}
-
-/* MOBILE BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;z-index:90;padding:0 10px;gap:6px}
 .bottom-nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:800;color:#94a3b8;text-decoration:none;padding:6px;border-radius:12px}
 .bottom-nav a.active{color:var(--dark);background:#f1f5f9}
 @media(min-width:700px){.bottom-nav{display:none} body{padding-bottom:0}}
-
-/* TOAST + EMPTY */
 #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:10px 18px;border-radius:30px;font-weight:700;font-size:12px;display:none;z-index:300;box-shadow:0 10px 30px rgba(0,0,0,.2)}
 @media(min-width:700px){#toast{bottom:20px}}
 .empty{grid-column:1/-1;text-align:center;padding:50px 20px;background:#fff;border-radius:20px;border:1px dashed var(--border)}
-.shimmer{animation:shimmer 1.5s infinite linear;background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="logo"><span id="shopLogoLetter">K</span> <div><div id="shopName" style="line-height:1">Kirana Store</div><small id="shopStatusBadge" style="font-size:9px;font-weight:800;color:#10b981">● OPEN</small></div></div>
-  <div class="search"><i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i><input id="searchInput" placeholder="Atta, dal, oil..."><i class="fa-solid fa-microphone" style="color:#94a3b8;cursor:pointer" id="voiceSearchBtn"></i></div>
+  <div class="logo"><span id="shopLogoLetter">K</span><div><div id="shopName" style="line-height:1">Kirana Store - World</div><small id="shopStatusBadge" style="font-size:9px;font-weight:800;color:#10b981">● OPEN • V16 COMMON</small></div></div>
+  <div class="search"><i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i><input id="searchInput" placeholder="Atta, dal, oil - Search via common/utils/search.js"><i class="fa-solid fa-microphone" style="color:#94a3b8;cursor:pointer" id="voiceSearchBtn" title="Voice Search - common/ai/voice-search.js"></i></div>
   <div class="actions">
-    <button class="icon-btn" id="wishlistBtn"><i class="fa-regular fa-heart"></i><span class="badge" id="wishlistCount" style="display:none">0</span></button>
-    <button class="icon-btn" id="cartBtn"><i class="fa-solid fa-cart-shopping"></i><span class="badge" id="cartCount">0</span></button>
-    <button class="icon-btn" id="shareBtn" style="display:none"><i class="fa-solid fa-share-nodes"></i></button>
+    <button class="icon-btn" id="wishlistBtn" title="Wishlist - common/wishlist/wishlist.js"><i class="fa-regular fa-heart"></i><span class="badge" id="wishlistCount" style="display:none">0</span></button>
+    <button class="icon-btn" id="cartBtn" title="Cart - common/cart/cart-core.js"><i class="fa-solid fa-cart-shopping"></i><span class="badge" id="cartCount">0</span></button>
+    <button class="icon-btn" id="shareBtn" title="Share - common/share/whatsapp-share.js"><i class="fa-solid fa-share-nodes"></i></button>
   </div>
 </div>
 
 <div class="banner" id="shopBanner">
-  <div><h2 id="bannerTitle">Fresh Kirana Daily</h2><p id="bannerSub">Free delivery in 30 mins • COD available</p><div style="margin-top:8px;display:flex;gap:6px"><span style="background:rgba(255,255,255,.25);padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800">WORLD MODEL</span><span style="background:#fff;color:#d97706;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:900">V13</span></div></div>
+  <div><h2 id="bannerTitle">Fresh Kirana Daily - World Model</h2><p id="bannerSub">Free delivery in 30 mins • COD • World Products</p><div style="margin-top:8px;display:flex;gap:6px"><span style="background:rgba(255,255,255,.25);padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800">WORLD MODEL - product-manager.js V15</span><span style="background:#fff;color:#d97706;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:900">V16 COMMON</span></div></div>
   <div style="font-size:44px;position:relative">🛒</div>
 </div>
 
 <div class="shop-info" id="shopInfoPills">
-  <div class="pill open" id="openPill"><i class="fa-solid fa-circle" style="font-size:8px"></i> <span id="openText">Open Now</span></div>
-  <div class="pill"><i class="fa-solid fa-location-dot"></i> <span id="shopArea">Local Market</span></div>
-  <div class="pill"><i class="fa-solid fa-star" style="color:#f59e0b"></i> <span id="shopRating">4.5</span> (120+)</div>
-  <div class="pill"><i class="fa-solid fa-truck"></i> Free Delivery</div>
-  <div class="pill" style="background:#0f172a;color:#fff"><i class="fa-solid fa-bolt"></i> <span id="worldCount">World Products</span></div>
+  <div class="pill open" id="openPill"><i class="fa-solid fa-circle" style="font-size:8px"></i> <span id="openText">Open Now - common/js/shop-toggle.js</span></div>
+  <div class="pill"><i class="fa-solid fa-location-dot"></i> <span id="shopArea">Local Market - common/location.js</span></div>
+  <div class="pill"><i class="fa-solid fa-star" style="color:#f59e0b"></i> <span id="shopRating">4.5</span> (120+) - <span style="font-size:9px">common/reviews/reviews.js</span></div>
+  <div class="pill"><i class="fa-solid fa-truck"></i> Free Delivery - common/delivery</div>
+  <div class="pill" style="background:#0f172a;color:#fff"><i class="fa-solid fa-bolt"></i> <span id="worldCount">World Products - V15</span></div>
 </div>
 
 <div class="cats" id="categoryList"></div>
 <div class="grid" id="productGrid"></div>
 
-<!-- CART DRAWER -->
 <div class="cart-drawer" id="cartDrawer">
   <div class="cart-panel">
-    <div class="cart-head"><span>Your Cart <span id="cartItemCountText" style="color:#94a3b8">(0)</span></span><button class="icon-btn" id="closeCart"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="cart-head"><span>Your Cart <span id="cartItemCountText" style="color:#94a3b8">(0)</span> - common/cart</span><button class="icon-btn" id="closeCart"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="cart-items" id="cartItems"></div>
     <div class="cart-foot">
-      <div style="display:flex;justify-content:space-between;font-weight:800"><span>Subtotal</span><span id="cartSubtotal">₹0</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b"><span>Delivery</span><span style="color:#10b981;font-weight:800">FREE</span></div>
-      <button class="btn btn-dark" id="checkoutBtn"><i class="fa-solid fa-bag-shopping"></i> Checkout • <span id="checkoutTotal">₹0</span></button>
-      <button class="btn btn-outline" onclick="window.open(`../common/cart/cart.html?shopId=${shopId}`,'_blank')"><i class="fa-solid fa-external-link"></i> Open Full Cart</button>
+      <div style="display:flex;justify-content:space-between;font-weight:800"><span>Subtotal - common/cart/cart-core.js</span><span id="cartSubtotal">₹0</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b"><span>Delivery - common/delivery</span><span style="color:#10b981;font-weight:800">FREE</span></div>
+      <button class="btn btn-dark" id="checkoutBtn"><i class="fa-solid fa-bag-shopping"></i> Checkout • <span id="checkoutTotal">₹0</span> - common/checkout</button>
+      <button class="btn btn-outline" onclick="window.open(`../common/cart/cart.html?shopId=${shopId}&shopType=kirana`,'_blank')"><i class="fa-solid fa-external-link"></i> Open Full Cart - common/cart/cart.html</button>
     </div>
   </div>
 </div>
 
-<!-- BOTTOM NAV MOBILE -->
 <div class="bottom-nav">
-  <a class="active"><i class="fa-solid fa-house"></i>Home</a>
-  <a id="bottomSearch"><i class="fa-solid fa-magnifying-glass"></i>Search</a>
+  <a class="active"><i class="fa-solid fa-house"></i>Home - V16</a>
+  <a id="bottomSearch"><i class="fa-solid fa-magnifying-glass"></i>Search - common/utils/search.js</a>
   <a id="bottomCart"><i class="fa-solid fa-cart-shopping"></i>Cart <span id="bottomCartCount" style="background:#ef4444;color:#fff;font-size:9px;padding:1px 4px;border-radius:10px;display:none">0</span></a>
-  <a id="bottomProfile"><i class="fa-regular fa-user"></i>Profile</a>
+  <a id="bottomProfile"><i class="fa-regular fa-user"></i>Profile - common/profile</a>
 </div>
 
 <div id="toast"></div>
 
-<!-- COMMON CORE + WORLD -->
+<!-- COMMON CORE - FULLY CONNECTED - SAME AS DASHBOARD - NO FALTU -->
 <script src="../common/core/storage-core.js"></script>
 <script src="../common/core/error-handler.js"></script>
 <script src="../common/core/api-core.js"></script>
 <script src="../common/core/auth-core.js"></script>
 <script src="../common/core/user-core.js"></script>
 <script src="../common/core/socket-core.js"></script>
+<script src="../common/core/dashboard-core.js"></script>
+
+<!-- COMMON CART + WISHLIST + SHARE + SEARCH + UTILS -->
 <script src="../common/cart/cart-core.js"></script>
+<script src="../common/cart/cart-count.js"></script>
 <script src="../common/wishlist/wishlist.js"></script>
 <script src="../common/share/whatsapp-share.js"></script>
+<script src="../common/share/shop-link-share.js"></script>
 <script src="../common/reviews/reviews.js"></script>
 <script src="../common/utils/search.js"></script>
+<script src="../common/utils/filter.js"></script>
+<script src="../common/utils/currency-formatter.js"></script>
+<script src="../common/utils/lazy-load.js"></script>
+<script src="../common/js/shop-toggle.js"></script>
+<script src="../common/js/customer-shop-status.js"></script>
+<script src="../common/js/share.js"></script>
+
+<!-- WORLD PRODUCT MANAGER - V15 CLASS - BOSS - 70 SHOPS -->
+<script src="../common/products/product-manager.js"></script>
 
 <script>
-// V13 WORLD USER VIEW JS - FULLY CONNECTED
+// ==================== V16 USER-VIEW - COMMON ONLY - WORLD PRODUCT MANAGER V15 CLASS ====================
 window.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || '';
+window.shopType = new URLSearchParams(location.search).get('shopType') || 'kirana';
 if(window.shopId) localStorage.setItem('last_shopId', window.shopId);
-if(!window.shopId){ document.body.innerHTML='<div style="padding:40px;text-align:center">Shop ID missing - open with?shopId=ID</div>'; }
+localStorage.setItem('shopType','kirana');
+if(!window.shopId){ document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:Outfit"><h2>Shop ID missing</h2><p style="color:#64748b;font-size:13px">Open with?shopId=ID - World Model ko shopId chahiye<br>common/products/product-manager.js V15</p></div>'; }
 
 function toast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
 
-let allProducts=[], filtered=[], cart=[], wishlist=[];
+let allProducts=[], filtered=[], cart=[], wishlist=[], shopSettings={};
 
-// WORLD + OLD BOTH LOAD
+// LOAD USER VIEW - VIA WORLD PRODUCT MANAGER CLASS - ROLE=CUSTOMER
 async function loadUserView(){
   try{
-    const [oldRes, worldRes] = await Promise.allSettled([
-      fetch(`/api/shops/kirana/${window.shopId}`).then(r=>r.json()).catch(()=>null),
-      fetch(`/api/world-products?shopId=${window.shopId}&type=kirana`).then(r=>r.json()).catch(()=>({data:[]}))
-    ]);
-    const oldShop = oldRes.value?.shop || {};
-    const oldProducts = oldShop.products || [];
-    const worldProducts = worldRes.value?.data || [];
-    allProducts = [...worldProducts,...oldProducts];
+    showSkeleton();
+    // Use WorldProductManager Class if available - role=customer
+    let worldProducts = [];
+    let oldShop = {};
+    let oldProducts = [];
+
+    if(window.WorldProductManager){
+      // V15 Class - detectRole() will give customer for user-view
+      worldProducts = await window.WorldProductManager.getProducts({shopType:'kirana', shopId:window.shopId, role:'customer'});
+      // Also get old shop data via ApiCore
+      const oldRes = await window.ApiCore?.get(`/api/shops/kirana/${window.shopId}`).catch(()=>null);
+      oldShop = oldRes?.shop || oldRes || {};
+      oldProducts = oldShop.products || [];
+    }else{
+      // Fallback fetch
+      const [oldRes, worldRes] = await Promise.allSettled([
+        fetch(`/api/shops/kirana/${window.shopId}`).then(r=>r.json()).catch(()=>null),
+        fetch(`/api/world-products?shopId=${window.shopId}&shopType=kirana&role=customer`).then(r=>r.json()).catch(()=>({data:[]})),
+        fetch(`/api/world-products?shopId=${window.shopId}&type=kirana&role=customer`).then(r=>r.json()).catch(()=>({data:[]}))
+      ]);
+      oldShop = oldRes.value?.shop || {};
+      oldProducts = oldShop.products || [];
+      worldProducts = oldRes.value?.data || oldRes.value?.worldProducts || [];
+      // merge second world
+      const w2 = worldRes.value?.data || [];
+      worldProducts = [...worldProducts,...w2];
+    }
+
+    // Filter customer - only active + stock>0 - common/products/product-manager.js filterByRole already does
+    allProducts = [...worldProducts,...oldProducts].filter(p=> (p.isActive!==false) && (p.stock==null || p.stock>0));
     filtered = [...allProducts];
 
-    // Shop info
-    document.getElementById('shopName').innerText = oldShop.shopName || oldShop.name || 'Kirana World Store';
+    // Shop info - common/js/customer-shop-status.js
+    document.getElementById('shopName').innerText = oldShop.shopName || oldShop.name || 'Kirana World Store - V16';
     document.getElementById('shopLogoLetter').innerText = (oldShop.shopName||'K')[0].toUpperCase();
-    document.getElementById('shopArea').innerText = oldShop.area || oldShop.address || 'Local Market';
+    document.getElementById('shopArea').innerText = oldShop.area || oldShop.address || 'Local Market - common/location.js';
     document.getElementById('shopRating').innerText = oldShop.rating || '4.6';
-    document.getElementById('bannerTitle').innerText = oldShop.bannerTitle || `Fresh Kirana Daily`;
-    document.getElementById('bannerSub').innerText = `${allProducts.length} products • Free delivery • COD`;
-    document.getElementById('worldCount').innerText = `${worldProducts.length} World + ${oldProducts.length} Old`;
+    document.getElementById('bannerTitle').innerText = oldShop.bannerTitle || `Fresh Kirana Daily - World`;
+    document.getElementById('bannerSub').innerText = `${allProducts.length} products (World ${worldProducts.length}+Old ${oldProducts.length}) • Free delivery • COD - via product-manager.js V15`;
+    document.getElementById('worldCount').innerText = `${worldProducts.length} World + ${oldProducts.length} Old = ${allProducts.length} via Manager`;
 
-    const isOpen = oldShop.settings?.isOpen?? true;
-    document.getElementById('openText').innerText = isOpen? 'Open Now' : 'Closed';
+    // Open status - common/js/shop-toggle.js + customer-shop-status.js
+    const isOpen = oldShop.settings?.isOpen?? oldShop.isOpen?? true;
+    shopSettings.isOpen = isOpen;
+    document.getElementById('openText').innerText = isOpen? 'Open Now - common/js/shop-toggle.js':'Closed - common/js/shop-toggle.js';
     document.getElementById('openPill').className = 'pill '+(isOpen?'open':'closed');
-    document.getElementById('shopStatusBadge').innerText = isOpen? '● OPEN' : '● CLOSED';
-    document.getElementById('shopStatusBadge').style.color = isOpen? '#10b981' : '#ef4444';
+    document.getElementById('shopStatusBadge').innerText = isOpen? '● OPEN • V16 COMMON':'● CLOSED • common/js/shop-toggle.js';
+    document.getElementById('shopStatusBadge').style.color = isOpen? '#10b981':'#ef4444';
+
+    if(window.CustomerShopStatus?.updateStatus) window.CustomerShopStatus.updateStatus(oldShop);
 
     renderCategories(allProducts);
     renderProducts(filtered);
 
-    // Load cart from common
-    if(window.CartCore){ cart = window.CartCore.getCart(window.shopId); updateCartUI(); }
-  }catch(e){ console.error(e); toast('Failed to load store'); }
+    // Cart - common/cart/cart-core.js
+    if(window.CartCore){
+      cart = window.CartCore.getCart(window.shopId) || window.CartCore.getCart? window.CartCore.getCart(window.shopId):[];
+      // Some versions use different method
+      try{ cart = window.CartCore.getCart(window.shopId) || []; }catch(e){ cart=[]; }
+    }
+    // Wishlist - common/wishlist/wishlist.js
+    if(window.WishlistCore){
+      try{ wishlist = window.WishlistCore.getWishlist(window.shopId) || []; }catch(e){ wishlist=[]; }
+    }
+
+    updateCartUI();
+    updateWishUI();
+
+    // Socket - common/core/socket-core.js - listen shop status
+    if(window.SocketCore){
+      window.SocketCore.on('shop-status-changed', (data)=>{
+        if(data.shopId===window.shopId){
+          const open = data.isOpen;
+          document.getElementById('openText').innerText = open?'Open Now':'Closed';
+          document.getElementById('openPill').className='pill '+(open?'open':'closed');
+          document.getElementById('shopStatusBadge').innerText = open?'● OPEN':'● CLOSED';
+        }
+      });
+    }
+
+    console.log(`✅ User-View V16 Loaded - World:${worldProducts.length} Old:${oldProducts.length} Total:${allProducts.length} via WorldProductManager V15 Class Role:${window.WorldProductManager?.role||'customer'}`);
+
+  }catch(e){
+    console.error(e);
+    toast('Failed to load store - common/products/product-manager.js check');
+    document.getElementById('productGrid').innerHTML=`<div class="empty"><div style="font-size:40px">⚠️</div><h3>Failed to load</h3><p style="font-size:12px;color:#94a3b8">${e.message}<br>API: /api/world-products?shopId=${window.shopId}&shopType=kirana&role=customer<br>common/products/product-manager.js V15</p></div>`;
+  }
+}
+
+function showSkeleton(){
+  const g=document.getElementById('productGrid');
+  g.innerHTML = Array(8).fill(0).map(()=>`<div class="card"><div style="height:140px" class="shimmer"></div><div style="padding:10px"><div style="height:12px" class="shimmer"></div><div style="height:10px;margin-top:8px;width:60%" class="shimmer"></div></div></div>`).join('');
 }
 
 function renderCategories(products){
-  const cats = [...new Set(products.map(p=> p.category || p.shopType || 'General'))];
-  const c = document.getElementById('categoryList');
-  c.innerHTML = `<div class="cat active" data-cat="all">All (${products.length})</div>` + cats.map(cat=>`<div class="cat" data-cat="${cat}">${cat} (${products.filter(p=> (p.category||p.shopType)===cat).length})</div>`).join('');
+  const cats = [...new Set(products.map(p=> p.category || p.extraData?.category || p.shopType || 'General'))].filter(Boolean);
+  const c=document.getElementById('categoryList');
+  c.innerHTML = `<div class="cat active" data-cat="all">All (${products.length}) - World</div>` + cats.map(cat=>`<div class="cat" data-cat="${cat}">${cat} (${products.filter(p=> (p.category||p.extraData?.category||p.shopType)===cat).length})</div>`).join('');
   c.querySelectorAll('.cat').forEach(el=>{
-    el.onclick = ()=>{
+    el.onclick=()=>{
       c.querySelectorAll('.cat').forEach(x=>x.classList.remove('active'));
       el.classList.add('active');
-      const cat = el.dataset.cat;
-      filtered = cat==='all'? [...allProducts] : allProducts.filter(p=> (p.category||p.shopType)===cat);
+      const cat=el.dataset.cat;
+      filtered = cat==='all'? [...allProducts] : allProducts.filter(p=> (p.category||p.extraData?.category||p.shopType)===cat);
       renderProducts(filtered);
+      if(window.FilterUtils?.filterByCategory) window.FilterUtils.filterByCategory(cat);
     };
   });
 }
 
 function renderProducts(list){
   const g=document.getElementById('productGrid');
-  if(!list.length){ g.innerHTML=`<div class="empty"><div style="font-size:40px">🛒</div><h3>No products</h3><p style="font-size:12px;color:#94a3b8">Shop owner hasn't added products yet<br>World API: /api/world-products?shopId=${window.shopId}</p></div>`; return; }
+  if(!list.length){ g.innerHTML=`<div class="empty"><div style="font-size:40px">🛒</div><h3>No products</h3><p style="font-size:12px;color:#94a3b8">Shop owner hasn't added products yet<br>World API: /api/world-products?shopId=${window.shopId}&shopType=kirana&role=customer<br>common/products/product-manager.js V15 Class filterByRole=customer (active+stock>0)</p></div>`; return; }
   g.innerHTML=list.map(p=>{
     const img = p.thumbnail || p.images?.[0]?.url || p.image || `https://source.unsplash.com/300x300/?grocery,${encodeURIComponent(p.name||'kirana')}`;
     const brand = p.brand || p.extraData?.brand || '';
-    const weight = p.weight || p.extraData?.weight || '';
+    const weight = p.weight || p.extraData?.weight || p.unit || '';
     const isWish = wishlist.includes(p._id);
-    const inCart = cart.find(c=> c._id===p._id);
-    return `<div class="card"><button class="wish ${isWish?'active':''}" onclick="toggleWish('${p._id}')"><i class="${isWish?'fa-solid':'fa-regular'} fa-heart"></i></button><img src="${img}" loading="lazy" onerror="this.src='https://placehold.co/300?text=${encodeURIComponent(p.name.slice(0,10))}'"><div class="info"><b>${p.name}</b><div class="meta">${brand? brand+' • ':''}${weight? weight+' • ':''}${p.shopType||p.category||'kirana'} ${p.extraData? '🌍':''}</div><div class="price-row"><div class="price">₹${p.price}${p.mrp&&p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}</div><button class="add ${inCart?'added':''}" onclick="addToCart('${p._id}')"><i class="fa-solid ${inCart?'fa-check':'fa-plus'}"></i></button></div></div></div>`;
+    const inCart = cart.find(c=> c._id===p._id || c.id===p._id);
+    const price = window.CurrencyFormatter?.format? window.CurrencyFormatter.format(p.price) : `₹${p.price}`;
+    return `<div class="card"><button class="wish ${isWish?'active':''}" onclick="toggleWish('${p._id}')" title="Wishlist - common/wishlist/wishlist.js"><i class="${isWish?'fa-solid':'fa-regular'} fa-heart"></i></button><img src="${img}" loading="lazy" onerror="this.src='https://placehold.co/300x300/f8fafc/94a3b8?text=${encodeURIComponent(p.name.slice(0,10))}'"><div class="info"><b>${p.name}</b><div class="meta">${brand? brand+' • ':''}${weight? weight+' • ':''}${p.shopType||p.category||'kirana'} ${p.extraData? '🌍 World':''}</div><div class="price-row"><div class="price">${price}${p.mrp&&p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}</div><button class="add ${inCart?'added':''}" onclick="addToCart('${p._id}')" title="Add to Cart - common/cart/cart-core.js"><i class="fa-solid ${inCart?'fa-check':'fa-plus'}"></i></button></div></div></div>`;
   }).join('');
+  if(window.LazyLoad?.observe) window.LazyLoad.observe();
 }
 
+// CART - COMMON/CART/CART-CORE.JS ONLY - NO FALTU
 function addToCart(id){
-  const p = allProducts.find(x=> x._id===id);
-  if(!p) return;
+  const p=allProducts.find(x=> x._id===id); if(!p) return;
   if(window.CartCore){
-    window.CartCore.addToCart(window.shopId, { _id:p._id, name:p.name, price:p.price, image:p.thumbnail||p.images?.[0]?.url||p.image, qty:1 });
-    cart = window.CartCore.getCart(window.shopId);
+    try{
+      // Common cart-core API - shopId + product
+      window.CartCore.addToCart(window.shopId, { _id:p._id, id:p._id, name:p.name, price:p.price, image:p.thumbnail||p.images?.[0]?.url||p.image, qty:1, shopType:'kirana' });
+      cart = window.CartCore.getCart(window.shopId) || [];
+    }catch(e){
+      // fallback old API
+      try{ window.CartCore.add(window.shopId, p._id); cart=window.CartCore.getCart(window.shopId); }catch(e2){}
+    }
   }else{
-    const ex=cart.find(c=> c._id===id); if(ex) ex.qty++; else cart.push({ _id:id, name:p.name, price:p.price, qty:1, image:p.thumbnail });
+    const ex=cart.find(c=> (c._id||c.id)===id); if(ex) ex.qty=(ex.qty||1)+1; else cart.push({ _id:id, id, name:p.name, price:p.price, qty:1, image:p.thumbnail });
   }
-  updateCartUI(); toast(`${p.name} added ✅`); if(navigator.vibrate) navigator.vibrate(30);
+  updateCartUI();
+  toast(`${p.name} added ✅ - common/cart/cart-core.js`);
+  if(navigator.vibrate) navigator.vibrate(30);
   renderProducts(filtered);
+  // Track - common/core/api-core.js
+  window.ApiCore?.trackEvent('add_to_cart_user_view', { shopId:window.shopId, productId:id, shopType:'kirana' });
 }
 
+// WISHLIST - COMMON/WISHLIST/WISHLIST.JS ONLY
 function toggleWish(id){
-  if(window.WishlistCore){ window.WishlistCore.toggle(window.shopId, id); wishlist = window.WishlistCore.getWishlist(window.shopId); }
-  else{ if(wishlist.includes(id)) wishlist=wishlist.filter(x=>x!==id); else wishlist.push(id); }
-  updateWishUI(); renderProducts(filtered);
+  if(window.WishlistCore){
+    try{ window.WishlistCore.toggle(window.shopId, id); wishlist=window.WishlistCore.getWishlist(window.shopId)||[]; }catch(e){}
+  }else{
+    if(wishlist.includes(id)) wishlist=wishlist.filter(x=>x!==id); else wishlist.push(id);
+  }
+  updateWishUI();
+  renderProducts(filtered);
+  toast(wishlist.includes(id)?'Added to wishlist ❤️ - common/wishlist':'Removed from wishlist');
 }
 
 function updateCartUI(){
-  const count = cart.reduce((s,c)=> s + (c.qty||1),0);
-  document.getElementById('cartCount').innerText = count;
-  document.getElementById('cartCount').style.display = count? 'block':'none';
-  document.getElementById('bottomCartCount').innerText = count;
-  document.getElementById('bottomCartCount').style.display = count? 'inline-block':'none';
-  document.getElementById('cartItemCountText').innerText = `(${count})`;
-  const subtotal = cart.reduce((s,c)=> s + (c.price*(c.qty||1)),0);
-  document.getElementById('cartSubtotal').innerText = `₹${subtotal}`;
-  document.getElementById('checkoutTotal').innerText = `₹${subtotal}`;
+  const count = cart.reduce((s,c)=> s + (c.qty||c.quantity||1),0);
+  document.getElementById('cartCount').innerText=count;
+  document.getElementById('cartCount').style.display=count?'block':'none';
+  document.getElementById('bottomCartCount').innerText=count;
+  document.getElementById('bottomCartCount').style.display=count?'inline-block':'none';
+  document.getElementById('cartItemCountText').innerText=`(${count}) - common/cart`;
+  const subtotal = cart.reduce((s,c)=> s + ((c.price||0)*(c.qty||c.quantity||1)),0);
+  const formatted = window.CurrencyFormatter?.format? window.CurrencyFormatter.format(subtotal) : `₹${subtotal}`;
+  document.getElementById('cartSubtotal').innerText=formatted;
+  document.getElementById('checkoutTotal').innerText=formatted;
   const itemsEl=document.getElementById('cartItems');
-  if(!cart.length) itemsEl.innerHTML=`<div style="text-align:center;padding:40px 20px"><div style="font-size:40px">🛒</div><p style="font-size:13px;color:#94a3b8;margin-top:8px">Cart empty<br><small>World products add karo</small></p></div>`;
-  else itemsEl.innerHTML=cart.map(c=>`<div class="cart-item"><img src="${c.image||'https://placehold.co/100'}"><div style="flex:1"><b style="font-size:12px">${c.name}</b><br><span style="font-size:11px;color:#64748b">₹${c.price} x ${c.qty||1}</span></div><div style="display:flex;gap:6px;align-items:center"><button onclick="changeQty('${c._id}',-1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff">-</button><span style="font-weight:800;font-size:12px">${c.qty||1}</span><button onclick="changeQty('${c._id}',1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff">+</button></div></div>`).join('');
+  if(!cart.length) itemsEl.innerHTML=`<div style="text-align:center;padding:40px 20px"><div style="font-size:40px">🛒</div><p style="font-size:13px;color:#94a3b8;margin-top:8px">Cart empty<br><small>World products add karo - common/cart/cart-core.js</small></p><button class="btn btn-outline" style="margin-top:12px" onclick="document.getElementById('cartDrawer').classList.remove('open')">Continue Shopping</button></div>`;
+  else itemsEl.innerHTML=cart.map(c=>`<div class="cart-item"><img src="${c.image||c.thumbnail||'https://placehold.co/100'}"><div style="flex:1"><b style="font-size:12px">${c.name}</b><br><span style="font-size:11px;color:#64748b">₹${c.price} x ${c.qty||c.quantity||1} - ${c.shopType||'kirana'}</span></div><div style="display:flex;gap:6px;align-items:center"><button onclick="changeQty('${c._id||c.id}',-1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff">-</button><span style="font-weight:800;font-size:12px">${c.qty||c.quantity||1}</span><button onclick="changeQty('${c._id||c.id}',1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff">+</button></div></div>`).join('');
+  if(window.CartCount?.update) window.CartCount.update(count);
 }
 
 function updateWishUI(){
-  document.getElementById('wishlistCount').innerText = wishlist.length;
-  document.getElementById('wishlistCount').style.display = wishlist.length? 'block':'none';
+  document.getElementById('wishlistCount').innerText=wishlist.length;
+  document.getElementById('wishlistCount').style.display=wishlist.length?'block':'none';
 }
 
 function changeQty(id,delta){
-  const it=cart.find(c=> c._id===id); if(!it) return; it.qty=(it.qty||1)+delta; if(it.qty<=0) cart=cart.filter(c=> c._id!==id);
-  if(window.CartCore){ if(it.qty<=0) window.CartCore.removeFromCart(window.shopId,id); else window.CartCore.updateQty(window.shopId,id,it.qty); cart=window.CartCore.getCart(window.shopId); }
+  const it=cart.find(c=> (c._id||c.id)===id); if(!it) return;
+  it.qty=(it.qty||it.quantity||1)+delta; if(it.qty<=0) cart=cart.filter(c=> (c._id||c.id)!==id);
+  if(window.CartCore){
+    try{
+      if(it.qty<=0) window.CartCore.removeFromCart(window.shopId,id); else window.CartCore.updateQty(window.shopId,id,it.qty);
+      cart=window.CartCore.getCart(window.shopId)||[];
+    }catch(e){}
+  }
   updateCartUI();
 }
 
-// UI BIND
-document.getElementById('cartBtn').onclick = ()=>{ document.getElementById('cartDrawer').classList.add('open'); };
-document.getElementById('closeCart').onclick = ()=>{ document.getElementById('cartDrawer').classList.remove('open'); };
-document.getElementById('cartDrawer').onclick = (e)=>{ if(e.target.id==='cartDrawer') e.currentTarget.classList.remove('open'); };
-document.getElementById('bottomCart').onclick = ()=> document.getElementById('cartDrawer').classList.add('open');
-document.getElementById('bottomSearch').onclick = ()=> document.getElementById('searchInput').focus();
+// UI BIND - COMMON ONLY
+document.getElementById('cartBtn').onclick=()=>{ document.getElementById('cartDrawer').classList.add('open'); if(window.CartCore?.openDrawer) window.CartCore.openDrawer(); };
+document.getElementById('closeCart').onclick=()=>{ document.getElementById('cartDrawer').classList.remove('open'); };
+document.getElementById('cartDrawer').onclick=(e)=>{ if(e.target.id==='cartDrawer') e.currentTarget.classList.remove('open'); };
+document.getElementById('bottomCart').onclick=()=> document.getElementById('cartDrawer').classList.add('open');
+document.getElementById('bottomSearch').onclick=()=> document.getElementById('searchInput').focus();
+document.getElementById('bottomProfile').onclick=()=> location.href=`/profile.html?shopId=${window.shopId}`;
+
+// SEARCH - COMMON/UTILS/SEARCH.JS + FILTER.JS
 document.getElementById('searchInput').addEventListener('input', (e)=>{
   const q=e.target.value.toLowerCase();
-  filtered = allProducts.filter(p=> p.name.toLowerCase().includes(q) || (p.brand||'').toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q));
+  if(window.SearchUtils?.search){
+    filtered = window.SearchUtils.search(allProducts, q);
+  }else if(window.FilterUtils?.search){
+    filtered = window.FilterUtils.search(allProducts, q, ['name','brand','category']);
+  }else{
+    filtered = allProducts.filter(p=> (p.name||'').toLowerCase().includes(q) || (p.brand||'').toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q) || (p.extraData?.brand||'').toLowerCase().includes(q));
+  }
   renderProducts(filtered);
 });
-document.getElementById('checkoutBtn').onclick = ()=> location.href=`../common/checkout/checkout.html?shopId=${window.shopId}`;
-document.getElementById('wishlistBtn').onclick = ()=> location.href=`../common/wishlist/wishlist.html?shopId=${window.shopId}`;
-document.getElementById('shareBtn').onclick = ()=>{ if(window.WhatsappShare){ window.WhatsappShare.shareShop(window.shopId); }else{ navigator.share?.({ title:document.getElementById('shopName').innerText, url:location.href }); } };
 
-window.addEventListener('load', ()=> setTimeout(loadUserView, 200));
+// VOICE SEARCH - COMMON/AI/VOICE-SEARCH.JS
+document.getElementById('voiceSearchBtn').onclick=()=>{
+  if(window.VoiceSearch?.start){
+    window.VoiceSearch.start((text)=>{ document.getElementById('searchInput').value=text; document.getElementById('searchInput').dispatchEvent(new Event('input')); toast(`Voice: ${text} - common/ai/voice-search.js`); });
+  }else{
+    toast('Voice search - common/ai/voice-search.js not loaded');
+  }
+};
+
+// CHECKOUT - COMMON/CHECKOUT/CHECKOUT.HTML
+document.getElementById('checkoutBtn').onclick=()=>{
+  if(!shopSettings.isOpen){ toast('Shop Closed - common/js/shop-toggle.js se closed hai'); return; }
+  if(!cart.length){ toast('Cart empty - common/cart/cart-core.js'); return; }
+  location.href=`../common/checkout/checkout.html?shopId=${window.shopId}&shopType=kirana`;
+};
+
+// WISHLIST + SHARE - COMMON
+document.getElementById('wishlistBtn').onclick=()=> location.href=`../common/wishlist/wishlist.html?shopId=${window.shopId}&shopType=kirana`;
+document.getElementById('shareBtn').onclick=()=>{
+  if(window.WhatsappShare?.shareShop){ window.WhatsappShare.shareShop(window.shopId); }
+  else if(window.ShareCore?.shareShop){ window.ShareCore.shareShop(window.shopId); }
+  else if(navigator.share){ navigator.share({ title:document.getElementById('shopName').innerText, text:`Check this kirana store - World Model V16`, url:location.href }).catch(()=>{}); }
+  else { navigator.clipboard?.writeText(location.href); toast('Link copied - common/share/whatsapp-share.js'); }
+};
+
+// LOAD
+window.addEventListener('load', ()=> setTimeout(loadUserView, 300));
 </script>
 </body>
 </html>
