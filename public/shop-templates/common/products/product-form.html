@@ -1,0 +1,214 @@
+<!-- LOCATION: public/shop-templates/common/products/product-form.html - UNIVERSAL 1 FILE = 70 SHOPS - WORLD BOSS - SEED SE FORM GENERATE -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Universal Product Form - World</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./product-form.css?v=1">
+</head>
+<body>
+<div class="card" id="formCard">
+  <h2 id="formTitle">Loading...</h2>
+  <small id="shopInfo" style="color:#64748b;font-weight:700"></small>
+  
+  <!-- DYNAMIC FORM - Seed se generate hoga -->
+  <div id="dynamicForm"></div>
+
+  <button class="btn btn-green" id="saveBtn" onclick="saveProduct()">Save to World Model 🌍</button>
+  <button class="btn btn-dark" id="backBtn">Back to Dashboard</button>
+  <button class="btn btn-orange" id="quickToggleBtn" onclick="toggleQuick()"><i class="fa-solid fa-bolt"></i> Show Quick Products</button>
+
+  <div id="quickBox" style="display:none">
+    <h3 id="quickTitle">⚡ Quick Products</h3>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input id="quickSearch" placeholder="Search..." onkeyup="filterQuick()">
+      <button onclick="addAllQuick()" style="background:#16a34a;color:#fff;border:none;padding:10px;border-radius:10px;font-weight:800;cursor:pointer">Add All</button>
+    </div>
+    <div id="quickGrid" class="quick-grid"></div>
+    <div id="quickStatus" style="margin-top:10px;font-weight:800;font-size:12px"></div>
+  </div>
+
+  <div id="status" style="margin-top:12px;font-weight:700;font-size:12px"></div>
+</div>
+
+<script src="./product-manager.js"></script>
+<script type="module">
+// UNIVERSAL FORM LOGIC - 70 SHOP HANDLE
+const urlParams = new URLSearchParams(location.search);
+let shopId = urlParams.get('shopId') || localStorage.getItem('last_shopId');
+let shopType = urlParams.get('type') || urlParams.get('shopType') || localStorage.getItem('shopType') || 'kirana';
+let editId = urlParams.get('editId');
+let isQuick = urlParams.get('quick') === '1';
+
+document.getElementById('shopInfo').innerText = `ShopId: ${shopId} • Type: ${shopType} • World Model`;
+document.getElementById('backBtn').onclick = ()=> location.href=`../${shopType}/dashboard.html?shopId=${shopId}`.replace('../kirana/','../'+shopType+'/');
+
+let CURRENT_CONFIG = null;
+let CURRENT_PRODUCTS = [];
+let formValues = {};
+
+async function init(){
+  try{
+    // 1. Load seed file based on shopType - DYNAMIC IMPORT
+    const seedModule = await import(`./${shopType}.seed.js`);
+    CURRENT_CONFIG = seedModule.FORM_CONFIG || seedModule.default?.FORM_CONFIG;
+    CURRENT_PRODUCTS = seedModule.PRODUCTS || seedModule.default?.PRODUCTS || [];
+
+    if(!CURRENT_CONFIG) throw new Error(`FORM_CONFIG not found in ${shopType}.seed.js`);
+
+    // 2. Render Title
+    document.getElementById('formTitle').innerHTML = `${CURRENT_CONFIG.icon||'📦'} ${editId?'Edit':'Add'} ${CURRENT_CONFIG.title}`;
+    document.getElementById('quickTitle').innerText = `⚡ ${CURRENT_PRODUCTS.length} Quick ${CURRENT_CONFIG.title}s`;
+
+    // 3. Generate Form from FORM_CONFIG.fields
+    renderForm(CURRENT_CONFIG.fields);
+
+    // 4. If edit mode, load data from World Model
+    if(editId) await loadEditData();
+
+    // 5. If quick mode, show quick box
+    if(isQuick){
+      document.getElementById('quickBox').style.display='block';
+      document.getElementById('saveBtn').style.display='none';
+      renderQuick(CURRENT_PRODUCTS);
+    }
+
+  }catch(e){
+    console.error(e);
+    document.getElementById('formTitle').innerText = `Error: Seed file not found for ${shopType}`;
+    document.getElementById('dynamicForm').innerHTML = `<div style="padding:20px;background:#fef2f2;border:1px solid #fee2e2;border-radius:12px;color:#ef4444"><b>Seed file missing:</b> ./common/products/${shopType}.seed.js<br><small>${e.message}</small><br><br>Create file with FORM_CONFIG + PRODUCTS</div>`;
+  }
+}
+
+function renderForm(fields){
+  const container = document.getElementById('dynamicForm');
+  let html = '';
+  let rowOpen = false;
+
+  fields.forEach((f,i)=>{
+    // Handle half columns
+    if(f.col === 'half'){
+      if(!rowOpen){ html += `<div class="row">`; rowOpen=true; }
+    }else{
+      if(rowOpen){ html += `</div>`; rowOpen=false; }
+    }
+
+    const wrapperStart = f.col==='half' ? `<div>` : ``;
+    const wrapperEnd = f.col==='half' ? `</div>` : ``;
+
+    let inputHtml = '';
+    if(f.type === 'select'){
+      inputHtml = `<select id="field_${f.name}">${f.options.map(o=>`<option>${o}</option>`).join('')}</select>`;
+    }else{
+      inputHtml = `<input id="field_${f.name}" type="${f.type}" placeholder="${f.placeholder||''}" value="${f.value||''}">`;
+    }
+
+    html += `${wrapperStart}<label>${f.label}</label>${inputHtml}${wrapperEnd}`;
+
+    if(f.col==='half' && (fields[i+1]?.col!=='half' || i===fields.length-1)){
+      html += `</div>`; rowOpen=false;
+    }
+  });
+  if(rowOpen) html += `</div>`;
+
+  container.innerHTML = html;
+}
+
+async function loadEditData(){
+  try{
+    const res = await fetch(`/api/world-products/${editId}`).then(r=>r.json());
+    const p = res.data||res;
+    // Fill form
+    CURRENT_CONFIG.fields.forEach(f=>{
+      const el = document.getElementById(`field_${f.name}`);
+      if(!el) return;
+      let val = p[f.name] || p.extraData?.[f.name] || '';
+      el.value = val;
+    });
+  }catch(e){ console.warn('Edit load failed', e); }
+}
+
+// SAVE - Via WorldProductManager - Works for all 70 shops
+window.saveProduct = async ()=>{
+  const payload = { shopId, shopType, extraData:{} };
+  
+  CURRENT_CONFIG.fields.forEach(f=>{
+    const el = document.getElementById(`field_${f.name}`);
+    let val = el?.value?.trim();
+    if(f.type==='number') val = Number(val)||0;
+    
+    // Core fields
+    if(['name','price','mrp','stock','lowStockAlert','category','brand','thumbnail','unit','weight'].includes(f.name)){
+      payload[f.name] = val;
+    }else{
+      // Extra fields like size,color,fabric go to extraData
+      payload.extraData[f.name] = val;
+    }
+    
+    // Also put in extraData for safety
+    if(['brand','unit','weight','size','color','fabric'].includes(f.name)){
+      payload.extraData[f.name]=val;
+    }
+  });
+
+  // Validation
+  if(!payload.name || !payload.price) return alert('Name + Price required');
+
+  document.getElementById('status').innerText='Saving to World Model... 🌍';
+  document.getElementById('saveBtn').disabled=true;
+
+  try{
+    let res;
+    if(editId) res = await window.WorldProductManager.updateProduct(editId, payload);
+    else res = await window.WorldProductManager.addProduct(payload);
+
+    if(res.success){
+      document.getElementById('status').innerText=`✅ Saved - ${shopType} product saved - Dashboard + User-View + Admin + Area-Manager me dikhega`;
+      setTimeout(()=> location.href=`../${shopType}/dashboard.html?shopId=${shopId}`, 900);
+    }else throw new Error(res.message);
+  }catch(e){
+    document.getElementById('status').innerText='❌ '+e.message;
+    document.getElementById('saveBtn').disabled=false;
+  }
+};
+
+// QUICK ADD FUNCTIONS
+window.toggleQuick = ()=>{
+  const box=document.getElementById('quickBox');
+  box.style.display = box.style.display==='none'?'block':'none';
+  if(box.style.display==='block') renderQuick(CURRENT_PRODUCTS);
+};
+function renderQuick(list){
+  const grid=document.getElementById('quickGrid');
+  grid.innerHTML = list.map((p,i)=>`<div class="quick-item"><div><b>${p.name}</b><br><small>${p.category||''} • ₹${p.price}</small></div><button onclick="quickAdd(${i})">Add</button></div>`).join('');
+}
+window.filterQuick = ()=>{
+  const q=document.getElementById('quickSearch').value.toLowerCase();
+  const filtered = CURRENT_PRODUCTS.filter(p=> (p.name||'').toLowerCase().includes(q));
+  renderQuick(filtered);
+};
+window.quickAdd = async (i)=>{
+  const p=CURRENT_PRODUCTS[i];
+  document.getElementById('quickStatus').innerText=`Adding ${p.name}...`;
+  const res=await window.WorldProductManager.addProduct({...p, shopId, shopType}).catch(()=>({success:false}));
+  document.getElementById('quickStatus').innerText=res.success?`✅ ${p.name} Added`:`❌ Failed`;
+};
+window.addAllQuick = async ()=>{
+  if(!confirm(`Add ${CURRENT_PRODUCTS.length} ${shopType} products?`)) return;
+  let done=0;
+  for(let p of CURRENT_PRODUCTS){
+    document.getElementById('quickStatus').innerText=`Adding ${done+1}/${CURRENT_PRODUCTS.length} - ${p.name}`;
+    const res=await window.WorldProductManager.addProduct({...p, shopId, shopType}).catch(()=>({success:false}));
+    if(res.success) done++;
+  }
+  document.getElementById('quickStatus').innerText=`✅ ${done}/${CURRENT_PRODUCTS.length} Added to World`;
+  setTimeout(()=> location.href=`../${shopType}/dashboard.html?shopId=${shopId}`,1000);
+};
+
+// START
+init();
+</script>
+</body>
+</html>
