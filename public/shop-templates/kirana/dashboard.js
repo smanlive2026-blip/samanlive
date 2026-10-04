@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/kirana/dashboard.js - WORLD CLASS KIRANA DASHBOARD JS - V13 FINAL WORLD + COMMON + OLD - FULL 500+ LINES - NO CUT
+// LOCATION: public/shop-templates/kirana/dashboard.js - V15 FINAL - common/products/product-manager.js CONNECTED - ROLE BASED - WORLD + OLD + COMMON
 class KiranaDashboardCore {
   constructor(){
     this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || '';
@@ -17,9 +17,10 @@ class KiranaDashboardCore {
     this.searchDebounce = null;
     this.currentTab = 'overview';
 
-    // Config - OLD + WORLD + COMMON
+    // Config - NEW WORLD MANAGER + OLD + COMMON
     this.API_OLD = `/api/shops/kirana/${this.shopId}`;
-    this.API_WORLD = `/api/world-products?shopId=${this.shopId}&type=kirana`;
+    // NEW: common/products se ayega
+    this.API_WORLD = `/api/world-products?shopId=${this.shopId}&shopType=kirana`;
     this.API_WORLD_BASE = `/api/world-products`;
     this.API_COMMON = {
       analytics: `/api/common/analytics/${this.shopId}/stats`,
@@ -38,7 +39,7 @@ class KiranaDashboardCore {
   }
 
   async init(){
-    console.log(`🛒 KiranaDashboardCore V13 WORLD CLASS - shopId: ${this.shopId} - World + Common + Old Connected`);
+    console.log(`🛒 KiranaDashboardCore V15 WORLD BOSS - shopId: ${this.shopId} - common/products/product-manager.js Connected - Role: ${window.WorldProductManager?.role||'dashboard'}`);
 
     if(!this.shopId){
       this.showErrorPage('Shop ID Missing', 'Please open dashboard from My Shops with?shopId=YOUR_ID');
@@ -46,18 +47,14 @@ class KiranaDashboardCore {
     }
 
     localStorage.setItem('last_shopId', this.shopId);
+    localStorage.setItem('shopType', 'kirana');
 
-    // 1. AUTH PROTECTION - COMMON AUTH-CORE
+    // 1. AUTH PROTECTION
     if(window.AuthCore){
       try{
         const ok = await window.AuthCore.protectDashboard();
-        if(!ok){
-          console.warn('Auth protection blocked');
-          return;
-        }
-      }catch(e){
-        console.warn('AuthCore protect failed', e);
-      }
+        if(!ok){ console.warn('Auth protection blocked'); return; }
+      }catch(e){ console.warn('AuthCore protect failed', e); }
     }
 
     // 2. INIT UI
@@ -67,26 +64,24 @@ class KiranaDashboardCore {
     this.bindToggles();
     this.bindSocket();
 
-    // 3. LOAD DATA - PURA WORLD + COMMON + OLD
+    // 3. LOAD DATA - VIA WORLD PRODUCT MANAGER
     await this.loadDashboard();
 
-    // 4. AUTO REFRESH EVERY 30 SEC
+    // 4. AUTO REFRESH
     this.startAutoRefresh();
 
-    // 5. LOAD COMMON COMPONENTS
+    // 5. LOAD COMMON + WORLD STATUS
     this.loadCommonStatus();
     this.loadWorldStatus();
 
     // 6. TRACK
     if(window.ApiCore){
-      window.ApiCore.trackEvent('kirana_dashboard_js_v13_world_loaded', { shopId: this.shopId, timestamp: Date.now() });
+      window.ApiCore.trackEvent('kirana_dashboard_js_v15_world_boss', { shopId: this.shopId, shopType:'kirana', timestamp: Date.now() });
     }
   }
 
   bindUI(){
     const $ = (id)=> document.getElementById(id);
-
-    // Buttons
     $('newProductBtn')?.addEventListener('click', ()=> this.goProductForm());
     $('quickAddBtn')?.addEventListener('click', ()=> this.goQuickAdd());
     $('refreshDashboard')?.addEventListener('click', ()=> this.loadDashboard());
@@ -94,8 +89,6 @@ class KiranaDashboardCore {
     $('btnMenu')?.addEventListener('click', ()=> document.getElementById('sidebar')?.classList.toggle('open'));
     $('viewShopBtn')?.addEventListener('click', ()=> window.open(`/shop-templates/kirana/user-view.html?shopId=${this.shopId}`, '_blank'));
     $('openCommonOrders')?.addEventListener('click', ()=> window.open(`../common/orders/orders.html?shopId=${this.shopId}`, '_blank'));
-
-    // Shop ID display
     if($('shopIdDisplay')){
       $('shopIdDisplay').innerText = this.shopId? this.shopId.slice(0,12)+'...' : 'MISSING';
       $('shopIdDisplay').title = this.shopId;
@@ -112,13 +105,8 @@ class KiranaDashboardCore {
         document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
         const tabEl = document.getElementById('tab-'+tab);
         if(tabEl) tabEl.classList.add('active');
-
-        if(tab!== 'overview'){
-          await this.loadCommonTab(tab);
-        }
-
-        // Track tab view
-        window.ApiCore?.trackEvent(`kirana_tab_${tab}_view`, { shopId: this.shopId });
+        if(tab!== 'overview'){ await this.loadCommonTab(tab); }
+        window.ApiCore?.trackEvent(`kirana_tab_${tab}_view`, { shopId: this.shopId, shopType:'kirana' });
       });
     });
   }
@@ -130,16 +118,16 @@ class KiranaDashboardCore {
       clearTimeout(this.searchDebounce);
       this.searchDebounce = setTimeout(()=>{
         const q = e.target.value.toLowerCase().trim();
-        if(!q){
-          this.filteredProducts = [...this.allProducts];
-        } else {
+        if(!q){ this.filteredProducts = [...this.allProducts]; }
+        else{
           this.filteredProducts = this.allProducts.filter(p=>
             (p.name||'').toLowerCase().includes(q) ||
             (p.category||'').toLowerCase().includes(q) ||
             (p.brand||'').toLowerCase().includes(q) ||
             (p.barcode||'').toLowerCase().includes(q) ||
             (p.extraData?.brand||'').toLowerCase().includes(q) ||
-            (p.extraData?.weight||'').toLowerCase().includes(q)
+            (p.extraData?.weight||'').toLowerCase().includes(q) ||
+            (p.shopType||'').toLowerCase().includes(q)
           );
         }
         this.renderProducts(this.filteredProducts);
@@ -155,54 +143,31 @@ class KiranaDashboardCore {
         const isOpen =!el.classList.contains('on');
         document.querySelectorAll('.switch').forEach(s=> s.className = 'switch '+(isOpen?'on':''));
         document.querySelectorAll('[id^=toggleText]').forEach(t=> t.innerText = isOpen?'Open':'Closed');
-
         try{
-          // Old API
           await window.ApiCore.put(`/api/shops/kirana/${this.shopId}/settings`, { isOpen });
-          // New Common API
           await window.ApiCore.post(this.API_COMMON.toggle, { isOpen }).catch(()=>{});
-
           this.toast(isOpen?'Shop Opened ✅':'Shop Closed 🔴');
           window.SocketCore?.emit('shop-status-changed', { shopId: this.shopId, isOpen });
-
-          // Update shopData
-          if(this.shopData){
-            this.shopData.settings = this.shopData.settings || {};
-            this.shopData.settings.isOpen = isOpen;
-          }
-        }catch(e){
-          window.ErrorHandler?.handleApiError(e, 'toggle_shop');
-          this.toast('Failed to toggle shop');
-        }
+          if(this.shopData){ this.shopData.settings = this.shopData.settings || {}; this.shopData.settings.isOpen = isOpen; }
+        }catch(e){ window.ErrorHandler?.handleApiError(e, 'toggle_shop'); this.toast('Failed to toggle shop'); }
       });
     };
-    bind('toggleSwitch');
-    bind('toggleSwitch2');
+    bind('toggleSwitch'); bind('toggleSwitch2');
   }
 
   bindSocket(){
-    if(!window.SocketCore){
-      console.warn('SocketCore not loaded - live orders disabled');
-      return;
-    }
-
+    if(!window.SocketCore){ console.warn('SocketCore not loaded'); return; }
     window.SocketCore.on('new-order', (order)=>{
-      console.log('🔔 Kirana - New order from common socket', order);
       this.toast(`🔔 New Order #${(order.orderId||'').toString().slice(-6)} - ₹${order.total||0}`);
-      this.playSound();
-      this.vibrate();
-
-      // Add to top of orders
+      this.playSound(); this.vibrate();
       this.orders.unshift(order);
       this.renderOrders(this.orders.slice(0,10));
       this.loadStats();
     });
-
-    window.SocketCore.on('order-updated', (order)=>{
-      console.log('Order updated', order);
-      this.loadOrders();
+    window.SocketCore.on('order-updated', ()=> this.loadOrders());
+    window.SocketCore.on('product-updated', (data)=>{
+      if(data.shopId===this.shopId){ console.log('Product updated via WorldProductManager socket', data); this.loadDashboard(); }
     });
-
     window.SocketCore.on('shop-status-changed', (data)=>{
       if(data.shopId === this.shopId){
         const isOpen = data.isOpen;
@@ -210,51 +175,44 @@ class KiranaDashboardCore {
         document.querySelectorAll('[id^=toggleText]').forEach(t=> t.innerText = isOpen?'Open':'Closed');
       }
     });
-
     window.addEventListener('socket:new-order', (e)=> this.bindSocketNewOrder(e.detail));
   }
 
-  bindSocketNewOrder(order){
-    this.toast(`🔔 New Order! ₹${order.total||0}`);
-    this.loadOrders();
-  }
+  bindSocketNewOrder(order){ this.toast(`🔔 New Order! ₹${order.total||0}`); this.loadOrders(); }
 
   async loadDashboard(){
     if(this.isLoading) return;
     this.isLoading = true;
     this.showLoader(true);
-
     try{
-      // Parallel loading - Old + World + Common
+      // NEW: Via WorldProductManager + Old + Common parallel
       const results = await Promise.allSettled([
-        window.ApiCore.get(`/api/shops/kirana/${this.shopId}`),
-        fetch(this.API_WORLD).then(r=>r.json()).catch(()=>({ success:false, data:[] })),
-        window.ApiCore.get(this.API_COMMON.analytics),
-        window.ApiCore.get(this.API_COMMON.lowStock),
-        window.ApiCore.get(this.API_COMMON.orders),
+        window.ApiCore.get(`/api/shops/kirana/${this.shopId}`).catch(()=>({success:false, shop:{products:[]}})),
+        // WORLD VIA MANAGER - common/products/product-manager.js
+        (window.WorldProductManager? window.WorldProductManager.getProducts({shopType:'kirana', shopId:this.shopId}) : fetch(this.API_WORLD).then(r=>r.json()).then(d=>d.data||[])),
+        window.ApiCore.get(this.API_COMMON.analytics).catch(()=>null),
+        window.ApiCore.get(this.API_COMMON.lowStock).catch(()=>null),
+        window.ApiCore.get(this.API_COMMON.orders).catch(()=>null),
         window.ApiCore.get(this.API_COMMON.finance).catch(()=>null)
       ]);
 
-      const kiranaRes = results[0].status === 'fulfilled'? results[0].value : null;
-      const worldRes = results[1].status === 'fulfilled'? results[1].value : { data:[] };
+      const kiranaRes = results[0].status === 'fulfilled'? results[0].value : { shop:{products:[]} };
+      const worldRes = results[1].status === 'fulfilled'? results[1].value : [];
       const analyticsRes = results[2].status === 'fulfilled'? results[2].value : null;
       const lowStockRes = results[3].status === 'fulfilled'? results[3].value : null;
       const ordersRes = results[4].status === 'fulfilled'? results[4].value : null;
 
-      if(!kiranaRes ||!kiranaRes.success){
-        console.warn('Old kirana API failed, continuing with world only', kiranaRes);
-      }
-
       this.shopData = kiranaRes?.shop || { shopName:'Kirana World', products:[], stats:{} };
       this.oldProducts = this.shopData.products || [];
-      this.worldProducts = worldRes?.data || [];
+      // worldRes can be array or {data:[]}
+      this.worldProducts = Array.isArray(worldRes)? worldRes : (worldRes?.data||[]);
       this.allProducts = [...this.worldProducts,...this.oldProducts];
       this.filteredProducts = [...this.allProducts];
-      this.lowStock = lowStockRes?.products || this.allProducts.filter(p=> (p.stock||0) <= (p.lowStockAlert||10));
+      this.lowStock = lowStockRes?.products || this.allProducts.filter(p=> (p.stock||0) <= (p.lowStockAlert||p.lowStockLimit||10));
       this.orders = ordersRes?.orders || [];
       this.stats = {
-      ...this.shopData.stats,
-      ...analyticsRes,
+       ...this.shopData.stats,
+       ...analyticsRes,
         totalProducts: this.allProducts.length,
         worldCount: this.worldProducts.length,
         oldCount: this.oldProducts.length,
@@ -263,29 +221,27 @@ class KiranaDashboardCore {
         todayRevenue: analyticsRes?.todayRevenue || this.shopData.stats?.revenue || 0
       };
 
-      // RENDER ALL
       this.renderStats();
       this.renderProducts(this.filteredProducts);
       this.renderLowStock(this.lowStock);
       this.renderOrders(this.orders);
 
-      // Update DashboardCore if exists
       if(window.DashboardCore){
         window.DashboardCore.shopId = this.shopId;
         window.DashboardCore.shopData = this.shopData;
         window.DashboardCore.stats = this.stats;
         window.DashboardCore.worldProducts = this.worldProducts;
       }
-
-      // Cache shopData in StorageCore
       if(window.StorageCore){
         window.StorageCore.cacheShopData(this.shopData, 5*60*1000);
         window.StorageCore.set('last_dashboard_load', Date.now(), { ttl: 60000 });
       }
 
+      console.log(`✅ Dashboard V15 Loaded via ProductManager - World: ${this.worldProducts.length} Old: ${this.oldProducts.length} Total: ${this.allProducts.length}`);
+
     }catch(e){
-      console.error('loadDashboard failed', e);
-      window.ErrorHandler?.handleApiError(e, 'kirana_dashboard_load');
+      console.error('loadDashboard V15 failed', e);
+      window.ErrorHandler?.handleApiError(e, 'kirana_dashboard_load_v15');
       this.showErrorInGrid(e.message);
     }finally{
       this.isLoading = false;
@@ -294,86 +250,43 @@ class KiranaDashboardCore {
   }
 
   async loadCommonTab(tab){
-    const boxMap = {
-      analytics: 'analyticsBox',
-      finance: 'financeBox',
-      reviews: 'reviewsBox'
-    };
-    const boxId = boxMap[tab];
-    if(!boxId) return;
-
-    const box = document.getElementById(boxId);
-    if(!box) return;
-
-    box.innerHTML = `<div style="padding:12px;color:#64748b;font-size:12px"><i class="fa-solid fa-spinner fa-spin"></i> Loading common/${tab}...</div>`;
-
+    const boxMap = { analytics: 'analyticsBox', finance: 'financeBox', reviews: 'reviewsBox' };
+    const boxId = boxMap[tab]; if(!boxId) return;
+    const box = document.getElementById(boxId); if(!box) return;
+    box.innerHTML = `<div style="padding:12px;color:#64748b;font-size:12px"><i class="fa-solid fa-spinner fa-spin"></i> Loading common/${tab} + world...</div>`;
     try{
       let data = null;
-      if(tab === 'analytics'){
-        data = await window.ApiCore.get(this.API_COMMON.analytics);
-      } else if(tab === 'finance'){
-        data = await window.ApiCore.get(this.API_COMMON.finance);
-      } else if(tab === 'reviews'){
-        data = await window.ApiCore.get(this.API_COMMON.reviews);
-      }
-
+      if(tab === 'analytics') data = await window.ApiCore.get(this.API_COMMON.analytics);
+      else if(tab === 'finance') data = await window.ApiCore.get(this.API_COMMON.finance);
+      else if(tab === 'reviews') data = await window.ApiCore.get(this.API_COMMON.reviews);
       if(data){
-        box.innerHTML = `<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:12px"><pre style="font-size:11px;white-space:pre-wrap;word-break:break-all">${JSON.stringify(data, null, 2).slice(0, 3000)}</pre><div style="margin-top:8px;font-size:10px;color:#94a3b8">Source: /api/common/${tab}/:shopId - Connected ✅ + World: ${this.worldProducts.length}</div></div>`;
-      } else {
-        box.innerHTML = `<div style="color:#94a3b8;font-size:12px">No data - Common API /api/common/${tab} not ready yet. Check server/routes/common/${tab}.routes.js</div>`;
-      }
-    }catch(e){
-      box.innerHTML = `<div style="color:#ef4444;font-size:12px">Failed to load common/${tab}: ${e.message}<br><small>Check /api/common/health</small></div>`;
-    }
+        box.innerHTML = `<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:12px"><pre style="font-size:11px;white-space:pre-wrap;word-break:break-all">${JSON.stringify(data, null, 2).slice(0, 3000)}</pre><div style="margin-top:8px;font-size:10px;color:#94a3b8">Source: /api/common/${tab}/:shopId + World: ${this.worldProducts.length} via product-manager.js ✅</div></div>`;
+      } else { box.innerHTML = `<div style="color:#94a3b8;font-size:12px">No data</div>`; }
+    }catch(e){ box.innerHTML = `<div style="color:#ef4444;font-size:12px">Failed: ${e.message}</div>`; }
   }
 
   async loadCommonStatus(){
-    const el = document.getElementById('commonStatus');
-    if(!el) return;
+    const el = document.getElementById('commonStatus'); if(!el) return;
     try{
       const data = await window.ApiCore.get(this.API_COMMON.health);
       if(data.success){
-        el.innerHTML = `✅ Common Connected<br><small>${data.mountedRoutes||''} routes • ${data.message||''}</small><br><div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">${Object.keys(data.testEndpoints||{}).slice(0,4).map(k=>`<span style="background:#1e293b;padding:2px 6px;border-radius:6px;font-size:9px">${k}</span>`).join('')}</div>`;
-      } else {
-        el.innerText = '⚠️ Common health check failed';
-      }
-    }catch(e){
-      el.innerHTML = `❌ Common not connected<br><small>${e.message}<br>Check server/routes/common/index.js - safeMount</small>`;
-    }
+        el.innerHTML = `✅ Common Connected<br><small>${data.mountedRoutes||''} routes</small><br><div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">${Object.keys(data.testEndpoints||{}).slice(0,4).map(k=>`<span style="background:#1e293b;padding:2px 6px;border-radius:6px;font-size:9px">${k}</span>`).join('')}</div>`;
+      } else el.innerText = '⚠️ Common health check failed';
+    }catch(e){ el.innerHTML = `❌ Common not connected<br><small>${e.message}</small>`; }
   }
 
   async loadWorldStatus(){
-    const el = document.getElementById('commonStatus');
-    if(!el) return;
+    const el = document.getElementById('commonStatus'); if(!el) return;
     try{
-      const res = await fetch(this.API_WORLD).then(r=>r.json());
-      if(res.success){
-        el.innerHTML = `✅ WORLD + Common Connected<br><b style="color:#f59e0b">World: ${res.data?.length||0} products</b> • Old: ${this.oldProducts.length} = Total ${this.allProducts.length}<br><small>/api/world-products?type=kirana&shopId=...</small><br><div style="margin-top:6px;background:#0f172a;padding:6px;border-radius:8px;font-size:10px">World form:../common/product-form-world.html?type=kirana&shopId=${this.shopId}</div>`;
-      }
-    }catch(e){
-      console.warn('World status load failed', e);
-    }
+      // Via manager
+      const products = await (window.WorldProductManager? window.WorldProductManager.getProducts({shopType:'kirana', shopId:this.shopId}) : fetch(this.API_WORLD).then(r=>r.json()).then(d=>d.data||[]));
+      const count = Array.isArray(products)? products.length : 0;
+      el.innerHTML = `✅ WORLD BOSS + Common Connected<br><b style="color:#f59e0b">World: ${count} products via common/products/product-manager.js</b> • Old: ${this.oldProducts.length} = Total ${this.allProducts.length}<br><small>/api/world-products?shopType=kirana&shopId=... • Role: ${window.WorldProductManager?.role||'dashboard'}</small><br><div style="margin-top:6px;background:#0f172a;padding:6px;border-radius:8px;font-size:10px;color:#fff">Product file: kirana/product-form.html → common/products/kirana.seed.js</div>`;
+    }catch(e){ console.warn('World status V15 failed', e); }
   }
 
-  async loadStats(){
-    try{
-      const s = await window.ApiCore.get(this.API_COMMON.analytics);
-      if(s){
-        document.getElementById('revenue').innerText = `₹${s.todayRevenue||0}`;
-        document.getElementById('orderCount').innerText = s.todayOrders||0;
-      }
-    }catch(e){}
-  }
-
-  async loadOrders(){
-    try{
-      const data = await window.ApiCore.get(this.API_COMMON.orders);
-      if(data?.orders){
-        this.orders = data.orders;
-        this.renderOrders(this.orders);
-      }
-    }catch(e){}
-  }
+  async loadStats(){ try{ const s = await window.ApiCore.get(this.API_COMMON.analytics); if(s){ document.getElementById('revenue').innerText = `₹${s.todayRevenue||0}`; document.getElementById('orderCount').innerText = s.todayOrders||0; } }catch(e){} }
+  async loadOrders(){ try{ const data = await window.ApiCore.get(this.API_COMMON.orders); if(data?.orders){ this.orders = data.orders; this.renderOrders(this.orders); } }catch(e){} }
 
   renderStats(){
     if(!this.stats) return;
@@ -388,10 +301,9 @@ class KiranaDashboardCore {
   }
 
   renderProducts(list){
-    const c = document.getElementById('productList');
-    if(!c) return;
+    const c = document.getElementById('productList'); if(!c) return;
     if(!list.length){
-      c.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px"><div style="font-size:50px">🛒</div><h3 style="margin-top:10px;font-weight:900">No products yet</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#10b981">Quick Add 100</b> to add 100 products in 1 sec<br><small style="font-size:11px">Uses World: /api/world-products + Old: /api/shops/kirana/:shopId</small></p><button onclick="window.KiranaDashboardCore.goQuickAdd()" class="btn btn-green" style="margin:12px auto 0">Quick Add 100 World</button></div>`;
+      c.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px"><div style="font-size:50px">🛒</div><h3 style="margin-top:10px;font-weight:900">No products yet</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#10b981">Quick Add 100</b> from common/products/kirana.seed.js<br><small>Uses WorldProductManager + /api/world-products?shopType=kirana</small></p><button onclick="window.KiranaDashboardCore.goQuickAdd()" class="btn btn-green" style="margin:12px auto 0">Quick Add 100 World Seed</button></div>`;
       return;
     }
     c.innerHTML = list.map(p=>`
@@ -399,7 +311,7 @@ class KiranaDashboardCore {
         <img src="${p.thumbnail || p.images?.[0]?.url || p.image||`https://source.unsplash.com/400x300/?grocery,${encodeURIComponent(p.category||'kirana')}`}" loading="lazy" onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=${encodeURIComponent((p.name||'Product').slice(0,12))}'">
         <div class="p-info">
           <b title="${p.name}">${p.name||'Unnamed'}</b>
-          <div class="meta">${p.brand||p.extraData?.brand||''} ${p.brand?'•':''} ${p.weight||p.extraData?.weight||p.unit||''} • ${p.shopType||p.category||'kirana'}</div>
+          <div class="meta">${p.brand||p.extraData?.brand||''} ${p.brand?'•':''} ${p.weight||p.extraData?.weight||p.unit||''} • ${p.shopType||p.category||'kirana'} ${p.shopType?'🌍':''}</div>
           <div class="price-row">
             <div class="price">₹${p.price||0}${p.mrp?`<del style="color:#94a3b8;font-size:10px;margin-left:4px">₹${p.mrp}</del>`:''}</div>
             <div class="stock ${(p.stock||0) <= (p.lowStockAlert||p.lowStockLimit||10)? 'low' : 'ok'}">${p.stock||0} LEFT</div>
@@ -414,12 +326,8 @@ class KiranaDashboardCore {
   }
 
   renderLowStock(list){
-    const html =!list.length? `<div style="background:#f0fdf4;color:#15803d;padding:10px;border-radius:10px;font-weight:800;font-size:12px;text-align:center">✓ All Stock OK<br><small style="font-weight:600">Common: /api/common/inventory/:shopId/low-stock + World</small></div>` : list.slice(0,8).map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-bottom:6px"><div><b style="font-size:12px">${p.name}</b><br><small style="color:#92400e;font-size:10px">${p.shopType||p.category}</small></div><span style="background:#92400e;color:#fff;padding:3px 7px;border-radius:20px;font-size:10px;font-weight:900">${p.stock}</span></div>`).join('');
-
-    ['lowStock','lowStockRight','lowStockList'].forEach(id=>{
-      const el = document.getElementById(id);
-      if(el) el.innerHTML = html;
-    });
+    const html =!list.length? `<div style="background:#f0fdf4;color:#15803d;padding:10px;border-radius:10px;font-weight:800;font-size:12px;text-align:center">✓ All Stock OK<br><small>WorldProductManager low-stock + World</small></div>` : list.slice(0,8).map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-bottom:6px"><div><b style="font-size:12px">${p.name}</b><br><small style="color:#92400e;font-size:10px">${p.shopType||p.category}</small></div><span style="background:#92400e;color:#fff;padding:3px 7px;border-radius:20px;font-size:10px;font-weight:900">${p.stock}</span></div>`).join('');
+    ['lowStock','lowStockRight','lowStockList'].forEach(id=>{ const el = document.getElementById(id); if(el) el.innerHTML = html; });
   }
 
   renderOrders(orders){
@@ -429,120 +337,57 @@ class KiranaDashboardCore {
         <span style="background:${this.getStatusColor(o.status)};color:#fff;font-size:9px;font-weight:900;padding:4px 8px;border-radius:20px">${(o.status||'PLACED').toUpperCase()}</span>
       </div>
     `).join('');
-
-    ['recentOrders','liveOrdersRight'].forEach(id=>{
-      const el = document.getElementById(id);
-      if(el) el.innerHTML = html;
-    });
+    ['recentOrders','liveOrdersRight'].forEach(id=>{ const el = document.getElementById(id); if(el) el.innerHTML = html; });
   }
 
-  getStatusColor(status){
-    const map = { placed:'#0ea5e9', confirmed:'#8b5cf6', preparing:'#f59e0b', out_for_delivery:'#10b981', delivered:'#059669', cancelled:'#ef4444' };
-    return map[status] || '#64748b';
-  }
+  getStatusColor(status){ const map = { placed:'#0ea5e9', confirmed:'#8b5cf6', preparing:'#f59e0b', out_for_delivery:'#10b981', delivered:'#059669', cancelled:'#ef4444' }; return map[status] || '#64748b'; }
+  showLoader(show){ const el = document.getElementById('loader') || document.getElementById('dashboardLoader'); if(el) el.style.display = show? 'grid' : 'none'; }
+  showErrorInGrid(msg){ const c = document.getElementById('productList'); if(c) c.innerHTML = `<div style="grid-column:1/-1;padding:20px;color:#ef4444;background:#fef2f2;border:1px solid #fee2e2;border-radius:12px"><b>Error:</b> ${msg}<br><br><small>Check: /api/world-products?shopType=kirana&shopId=${this.shopId} via product-manager.js</small></div>`; }
+  showErrorPage(title, message){ document.body.innerHTML = `<div style="height:100vh;display:grid;place-items:center;font-family:Outfit;text-align:center;padding:20px;background:#f8fafc"><div style="background:#fff;padding:32px;border-radius:24px;box-shadow:0 20px 40px rgba(0,0,0,.08);max-width:380px"><div style="font-size:48px">⚠️</div><h2 style="font-weight:900;margin:12px 0">${title}</h2><p style="color:#64748b;font-size:13px">${message}</p><a href="/" style="display:block;margin-top:16px;background:#020617;color:#fff;padding:12px;border-radius:12px;text-decoration:none;font-weight:800">Go Home</a></div></div>`; }
+  toast(msg){ const t = document.getElementById('toast'); if(!t) return; t.innerText = msg; t.style.display = 'block'; setTimeout(()=> t.style.display='none', 3000); }
+  playSound(){ try{ const audio = document.getElementById('newOrderSound') || new Audio('../common/orders/new-order-sound.mp3'); audio.volume = 0.8; audio.play().catch(()=>{}); }catch(e){} }
+  vibrate(){ if(navigator.vibrate) navigator.vibrate([100,50,100]); }
 
-  showLoader(show){
-    const el = document.getElementById('loader') || document.getElementById('dashboardLoader');
-    if(el) el.style.display = show? 'grid' : 'none';
-  }
-
-  showErrorInGrid(msg){
-    const c = document.getElementById('productList');
-    if(c) c.innerHTML = `<div style="grid-column:1/-1;padding:20px;color:#ef4444;background:#fef2f2;border:1px solid #fee2e2;border-radius:12px"><b>Error:</b> ${msg}<br><br><small>Check:<br>1. /api/shops/kirana/${this.shopId} route exists in server/routes/shops/kirana-route.js<br>2. /api/world-products?shopId=${this.shopId}&type=kirana - world-product.routes.js mounted<br>3. /api/common/health - common/index.js mounted<br>4. MongoDB connected</small></div>`;
-  }
-
-  showErrorPage(title, message){
-    document.body.innerHTML = `<div style="height:100vh;display:grid;place-items:center;font-family:Outfit;text-align:center;padding:20px;background:#f8fafc"><div style="background:#fff;padding:32px;border-radius:24px;box-shadow:0 20px 40px rgba(0,0,0,.08);max-width:380px"><div style="font-size:48px">⚠️</div><h2 style="font-weight:900;margin:12px 0">${title}</h2><p style="color:#64748b;font-size:13px">${message}</p><a href="/" style="display:block;margin-top:16px;background:#020617;color:#fff;padding:12px;border-radius:12px;text-decoration:none;font-weight:800">Go Home</a></div></div>`;
-  }
-
-  toast(msg){
-    const t = document.getElementById('toast');
-    if(!t) return;
-    t.innerText = msg;
-    t.style.display = 'block';
-    setTimeout(()=> t.style.display='none', 3000);
-  }
-
-  playSound(){
-    try{
-      const audio = document.getElementById('newOrderSound') || new Audio('../common/orders/new-order-sound.mp3');
-      audio.volume = 0.8;
-      audio.play().catch(()=>{});
-    }catch(e){}
-  }
-
-  vibrate(){
-    if(navigator.vibrate) navigator.vibrate([100,50,100]);
-  }
-
-  // ACTIONS - WORLD PRODUCT FORM
-  goProductForm(){ location.href=`../common/product-form-world.html?type=kirana&shopId=${this.shopId}`; }
-  goQuickAdd(){ location.href=`../common/product-form-world.html?type=kirana&shopId=${this.shopId}&quick=1`; }
-  editProduct(id){
-    const isWorld = this.worldProducts.find(p=> p._id === id);
-    if(isWorld) location.href=`../common/product-form-world.html?type=kirana&shopId=${this.shopId}&editId=${id}`;
-    else location.href=`./product-form.html?shopId=${this.shopId}&editId=${id}`;
-  }
+  // ACTIONS - NOW VIA common/products/product-manager.js
+  goProductForm(){ location.href=`./product-form.html?shopId=${this.shopId}`; }
+  goQuickAdd(){ location.href=`./product-form.html?shopId=${this.shopId}&quick=1`; }
+  editProduct(id){ location.href=`./product-form.html?shopId=${this.shopId}&editId=${id}`; }
 
   async deleteProduct(id){
-    if(!confirm('Delete this product? World + Old dono se delete hoga.')) return;
+    if(!confirm('Delete this product? World Model se delete hoga - Dashboard + User-View + Admin sab se gayab.')) return;
     try{
-      // Try World first
-      let worldDel = await fetch(`${this.API_WORLD_BASE}/${id}`, { method:'DELETE', headers:{ 'Authorization':'Bearer '+(localStorage.getItem('token')||'') } }).then(r=>r.json()).catch(()=>null);
-      if(!worldDel?.success){
-        const res = await window.ApiCore.delete(`/api/shops/kirana/${this.shopId}/item/${id}`);
-        if(!res.success) throw new Error(res.message||'Delete failed');
+      let res;
+      if(window.WorldProductManager){
+        res = await window.WorldProductManager.deleteProduct(id);
+      }else{
+        res = await fetch(`${this.API_WORLD_BASE}/${id}`, { method:'DELETE', headers:{ 'Authorization':'Bearer '+(localStorage.getItem('token')||'') } }).then(r=>r.json());
       }
-      this.toast('Deleted ✅ World + Old');
-      window.ApiCore.clearCache(`/api/shops/kirana/${this.shopId}`);
+      if(!res.success){
+        const oldRes = await window.ApiCore.delete(`/api/shops/kirana/${this.shopId}/item/${id}`).catch(()=>({success:false}));
+        if(!oldRes.success) throw new Error(res.message||'Delete failed');
+      }
+      this.toast('Deleted ✅ World Model');
       window.ApiCore.clearCache(this.API_WORLD);
-      window.ApiCore.clearCache(`/api/common/inventory`);
       await this.loadDashboard();
     }catch(e){
-      window.ErrorHandler?.handleApiError(e, 'delete_product_v13');
+      window.ErrorHandler?.handleApiError(e, 'delete_product_v15');
       this.toast('Delete failed: '+e.message);
     }
   }
 
-  openOrder(orderId){
-    window.open(`../common/orders/order-detail.html?shopId=${this.shopId}&orderId=${orderId}`, '_blank');
-  }
-
-  startAutoRefresh(){
-    this.stopAutoRefresh();
-    this.refreshInterval = setInterval(()=>{
-      console.log('Kirana V13 auto refresh - world + common orders + stats');
-      this.loadOrders();
-      this.loadStats();
-    }, 30000);
-  }
-
-  stopAutoRefresh(){
-    if(this.refreshInterval) clearInterval(this.refreshInterval);
-  }
-
-  filterProducts(q){
-    const query = q.toLowerCase();
-    this.renderProducts(this.allProducts.filter(p=> (p.name||'').toLowerCase().includes(query) || (p.category||'').toLowerCase().includes(query) || (p.brand||'').toLowerCase().includes(query)));
-  }
+  openOrder(orderId){ window.open(`../common/orders/order-detail.html?shopId=${this.shopId}&orderId=${orderId}`, '_blank'); }
+  startAutoRefresh(){ this.stopAutoRefresh(); this.refreshInterval = setInterval(()=>{ this.loadOrders(); this.loadStats(); }, 30000); }
+  stopAutoRefresh(){ if(this.refreshInterval) clearInterval(this.refreshInterval); }
+  filterProducts(q){ const query = q.toLowerCase(); this.renderProducts(this.allProducts.filter(p=> (p.name||'').toLowerCase().includes(query) || (p.category||'').toLowerCase().includes(query))); }
 }
 
 // GLOBAL INIT
 window.KiranaDashboardCore = new KiranaDashboardCore();
 window.kiranaDashboard = window.KiranaDashboardCore;
-
-// GLOBAL HELPERS FOR OLD HTML onclick
 window.deleteProduct = (id)=> window.KiranaDashboardCore.deleteProduct(id);
 window.editProduct = (id)=> window.KiranaDashboardCore.editProduct(id);
-window.filterProducts = ()=> {
-  const q = document.getElementById('searchInput')?.value || '';
-  window.KiranaDashboardCore.filterProducts(q);
-};
+window.filterProducts = ()=> { const q = document.getElementById('searchInput')?.value || ''; window.KiranaDashboardCore.filterProducts(q); };
 window.goForm = ()=> window.KiranaDashboardCore.goProductForm();
 window.goQuick = ()=> window.KiranaDashboardCore.goQuickAdd();
-window.toggleShop = ()=> {
-  const sw = document.getElementById('toggleSwitch');
-  if(sw) sw.click();
-};
-
+window.toggleShop = ()=> { const sw = document.getElementById('toggleSwitch'); if(sw) sw.click(); };
 window.addEventListener('storage:cart', ()=> console.log('Cart updated via common StorageCore'));
