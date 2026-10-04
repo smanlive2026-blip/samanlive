@@ -4,44 +4,49 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>SL MASTER DASHBOARD v99 - ALL 21 FILES</title>
-<link rel="stylesheet" href="./assets/launcher.css?v=100">
-<style>
-/* Extra for dashboard layout */
-body{display:flex;min-height:100vh;margin:0}
-#sidebar{width:280px;background:#0f172a;border-right:1px solid #1e293b;padding:14px;overflow-y:auto;position:sticky;top:0;height:100vh}
-#mainContainer{flex:1;background:#f8fafc;overflow-y:auto;padding:14px;min-width:0}
-.nav-btn{width:100%;text-align:left;padding:11px 12px;border-radius:10px;border:1px solid #1e293b;background:#0f172a;color:#94a3b8;font-weight:700;font-size:13px;cursor:pointer;margin:4px 0;display:flex;justify-content:space-between;align-items:center}
-.nav-btn:hover{background:#1e293b;color:#fff} .nav-btn.active{background:#10b981;color:#fff;border-color:#10b981}
-#search{width:100%;box-sizing:border-box}
-</style>
+<link rel="stylesheet" href="./assets/launcher.css?v=102">
 </head>
 <body>
 
 <div id="sidebar">
-<h2 style="color:#10b981;margin:0;font-size:18px">🔥 SL MASTER v99</h2>
-<p style="color:#64748b;font-size:11px;margin:4px 0 10px">admin.js jaisa loader • Cache busted</p>
+<div class="sidebar-header">
+<h2>🔥 SL MASTER v99</h2>
+<button id="closeBtn" onclick="toggleSidebar()">✕</button>
+</div>
+<p class="sub-text">admin.js jaisa loader • Cache busted</p>
 <input id="search" placeholder="Search file...">
-
-<div id="navList" style="margin-top:10px"></div>
-
-<div style="margin-top:16px;background:#1e293b;padding:10px;border-radius:10px;font-size:11px;color:#94a3b8">
+<div id="navList"></div>
+<div class="sidebar-footer">
 <span id="count">0 files</span> • <span id="lastLoad">Not loaded</span>
 </div>
+</div>
+
+<div id="mainWrapper">
+<div id="topbar">
+<button id="toggleBtn" onclick="toggleSidebar()">☰ MENU</button>
+<span>SL MASTER • v99 Cache Busted</span>
 </div>
 
 <div id="mainContainer">
 <div style="text-align:center;padding:80px 20px;color:#64748b">
 <h2>👈 Sidebar se koi bhi file khol</h2>
 <p>Ye tera admin.js wala hi logic hai - v=99 + Date.now() cache buster</p>
-<p style="margin-top:10px;font-size:12px">index.html (13 button), orders.html, dashboard.html sab yahi khulega</p>
+<p style="margin-top:10px;font-size:12px">Hide karna hai to ☰ MENU dabaa</p>
+</div>
 </div>
 </div>
 
 <div id="toast"></div>
+<div id="overlay" onclick="toggleSidebar()"></div>
+
 <script>
-// ===== SAME LOGIC AS YOUR admin.js =====
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('hide');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
 const files = [
- {id:"index", name:"index.html", icon:"🏠", tag:"13 BTN MAIN", cls:"active"},
+ {id:"index", name:"index.html", icon:"🏠", tag:"13 BTN MAIN"},
  {id:"dashboard", name:"dashboard.html", icon:"📊", tag:"ANALYTICS v99"},
  {id:"orders", name:"orders.html", icon:"📦", tag:"SUPER ORDERS"},
  {id:"shops", name:"shops.html", icon:"🏪", tag:"SHOPS"},
@@ -63,7 +68,7 @@ const files = [
 function renderNav(list){
  document.getElementById('navList').innerHTML = list.map(f=>`
   <button class="nav-btn" data-page="${f.id}" onclick="loadMasterPage('${f.id}', this)">
-    <span>${f.icon} ${f.name}</span><b style="font-size:9px;background:#1e293b;padding:2px 6px;border-radius:10px">${f.tag}</b>
+    <span>${f.icon} ${f.name}</span><b>${f.tag}</b>
   </button>`).join('');
  document.getElementById('count').innerText = list.length + " files";
 }
@@ -77,6 +82,10 @@ async function loadMasterPage(pageName, btnElement){
 
  try{
    if(window.moduleMap){ window.moduleMap.remove(); window.moduleMap=null; }
+   if(window.innerWidth <= 768){
+     document.getElementById('sidebar').classList.add('hide');
+     document.getElementById('overlay').classList.remove('show');
+   }
    const bust = Date.now();
    const res = await fetch(`${pageName}.html?v=99&t=${bust}&_=${bust}`, {
      cache:'no-store',
@@ -86,7 +95,6 @@ async function loadMasterPage(pageName, btnElement){
    const html = await res.text();
    container.innerHTML = html;
 
-   // admin.js wala same script executor
    const scripts = container.querySelectorAll('script');
    scripts.forEach(oldScript=>{
      const newScript = document.createElement('script');
@@ -97,7 +105,6 @@ async function loadMasterPage(pageName, btnElement){
    });
    
    document.getElementById('lastLoad').innerText = pageName + " @ " + new Date().toLocaleTimeString();
-   console.log(`✅ MASTER LOADED: ${pageName}.html?v=99&t=${bust}`);
  }catch(err){
    container.innerHTML = `<div style="padding:40px;text-align:center;color:#ef4444"><h2>⚠️ ${pageName} load fail</h2><p>${err.message}</p><button onclick="loadMasterPage('${pageName}')" style="margin-top:12px;padding:8px 14px;background:#0f172a;color:#fff;border:none;border-radius:8px">Retry</button></div>`;
  }
@@ -109,7 +116,6 @@ window.addEventListener('load', ()=>{
    const q=e.target.value.toLowerCase();
    renderNav(files.filter(f=>f.name.toLowerCase().includes(q) || f.tag.toLowerCase().includes(q)));
  });
- // default index khol
  loadMasterPage('index', document.querySelector('[data-page="index"]'));
 });
 </script>
