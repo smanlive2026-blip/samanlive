@@ -1,4 +1,4 @@
-// LOCATION: common/core/dashboard-core.js - WORLD CLASS DASHBOARD CORE
+// LOCATION: public/shop-templates/common/core/dashboard-core.js - WORLD CLASS DASHBOARD CORE
 class DashboardCore {
   constructor(){
     this.shopId = new URLSearchParams(location.search).get('shopId') || this.getShopIdFromPath() || '';

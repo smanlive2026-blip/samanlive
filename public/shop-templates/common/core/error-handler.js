@@ -1,4 +1,4 @@
-// LOCATION: common/core/error-handler.js - WORLD CLASS ERROR HANDLER - FULL PRODUCTION GRADE
+// LOCATION: public/shop-templates/common/core/error-handler.js - WORLD CLASS ERROR HANDLER - FULL PRODUCTION GRADE
 class ErrorHandler {
   constructor(){
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';

@@ -1,4 +1,4 @@
-// LOCATION: common/core/storage-core.js - WORLD CLASS STORAGE CORE - FULL 400+ LINES
+// LOCATION: public/shop-templates/common/core/storage-core.js - WORLD CLASS STORAGE CORE - FULL 400+ LINES
 class StorageCore {
   constructor(){
     this.prefix = 'lm_';

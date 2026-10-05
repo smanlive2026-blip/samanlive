@@ -1,4 +1,4 @@
-// LOCATION: common/core/user-core.js - WORLD CLASS USER CORE - FULL PRODUCTION GRADE
+// LOCATION: public/shop-templates/common/core/user-core.js - WORLD CLASS USER CORE - FULL PRODUCTION GRADE
 class UserCore {
   constructor(){
     this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('currentShopId') || '';

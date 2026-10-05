@@ -1,4 +1,4 @@
-// LOCATION: common/core/api-core.js - WORLD CLASS API CORE - PRODUCTION GRADE
+// LOCATION: public/shop-templates/common/core/api-core.js - WORLD CLASS API CORE - PRODUCTION GRADE
 class ApiCore {
   constructor(){
     //this.baseUrl = '';

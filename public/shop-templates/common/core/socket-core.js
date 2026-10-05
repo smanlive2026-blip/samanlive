@@ -1,4 +1,4 @@
-// LOCATION: common/core/socket-core.js - WORLD CLASS SOCKET CORE - FULL PRODUCTION GRADE
+// LOCATION: public/shop-templates/common/core/socket-core.js - WORLD CLASS SOCKET CORE - FULL PRODUCTION GRADE
 class SocketCore {
   constructor(){
     this.socket = null;

@@ -15,6 +15,51 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// ==================== SOCKET.IO SETUP - V12 SOCKET FIX ====================
+const http = require('http');
+const { Server } = require('socket.io');
+const server = http.createServer(app); // app ki jagah server banaya
+
+const io = new Server(server, {
+  cors: { origin: "*", methods: ["GET","POST"] },
+  transports: ['websocket','polling'],
+  pingTimeout: 60000,
+  pingInterval: 25000
+});
+
+global.io = io; // <-- tere common-core.routes.js isi ko use karta hai
+console.log('🔌 Socket.IO initialized - global.io set');
+
+io.on('connection', (socket) => {
+  console.log(`✅ Socket connected: ${socket.id} | Query:`, socket.handshake.query);
+
+  socket.on('join-shop', (shopId) => {
+    socket.join(`shop:${shopId}`);
+    console.log(`  -> Joined shop:${shopId}`);
+    socket.emit('pong', { shopId, msg: 'joined' });
+  });
+
+  socket.on('join-user', (userId) => {
+    socket.join(`user:${userId}`);
+  });
+
+  // Shop open/close live
+  socket.on('shop-status-changed', (data) => {
+    console.log(`  -> shop-status:`, data);
+    io.to(`shop:${data.shopId}`).emit('shop-status-changed', data);
+  });
+
+  // New order live - yahi se dashboard pe 🔔 bajega
+  socket.on('new-order', (order) => {
+    io.to(`shop:${order.shopId}`).emit('new-order', order);
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log(`❌ Socket disconnected: ${socket.id} - ${reason}`);
+  });
+});
+// ==================== END SOCKET SETUP ====================
+
 // ==================== MONGODB CONNECT - BUFFERING FIX - SABSE PEHLE ====================
 let mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/samanlive';
 
@@ -288,9 +333,10 @@ app.get('*', (req, res) => {
 });
 
 if (!process.env.VERCEL) {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 Server V12 FINAL running on http://localhost:${PORT}`);
+   server.listen(PORT, '0.0.0.0', () => {  // <-- server.listen not app.listen
+    console.log(`\n🚀 Server V12 FINAL + SOCKET running on http://localhost:${PORT}`);
     console.log(`📊 Admin: http://localhost:${PORT}/admin`);
+    console.log(`🔌 Socket: ws://localhost:${PORT}/socket.io/`);
     console.log(`💚 Health: /api/health\n`);
   });
 }
