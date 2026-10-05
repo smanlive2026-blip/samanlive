@@ -1,4 +1,4 @@
-// LOCATION: common/auth/auth-core.js - WORLD CLASS AUTH CORE - API ONLY, NO LOCALSTORAGE
+// LOCATION: public/shop-templates/common/auth/auth-core.js - WORLD CLASS AUTH CORE - API ONLY, NO LOCALSTORAGE
 class AuthCore {
   constructor(){
     this.api = '/api/common/auth';
