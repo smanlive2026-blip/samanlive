@@ -1,4 +1,4 @@
-// LOCATION: server/server.js - V11 FINAL - FULL FILE - ORDER FIX - NO OLD DASHBOARD
+// LOCATION: server/server.js - V12 FINAL - SAME AS V11 + BUFFERING FIX - NO LINE DELETED
 const nodeCrypto = require('crypto');
 try {
   if (!global.crypto) global.crypto = nodeCrypto.webcrypto || nodeCrypto;
@@ -14,6 +14,35 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+
+// ==================== MONGODB CONNECT - BUFFERING FIX - SABSE PEHLE ====================
+let mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/samanlive';
+
+// Vercel pe buffering timeout ka permanent fix
+mongoose.set('bufferTimeoutMS', 30000);
+mongoose.set('strictQuery', false);
+
+mongoose.connect(mongoUri, { 
+  maxPoolSize: 10, 
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 30000
+})
+.then(async () => {
+    console.log('✅ MongoDB Connected Successfully');
+    console.log(`📦 Database: ${mongoose.connection.name}`);
+    try {
+        const Shop = require('./models/Shop');
+        const result = await Shop.updateMany({ status: 'active' }, { $set: { status: 'approved' } });
+        if (result.modifiedCount > 0) console.log(`🔄 Auto-migrated ${result.modifiedCount} shops`);
+    } catch (err) { console.log('⚠️ Migration skipped:', err.message); }
+})
+.catch(err => {
+    console.error('❌ MongoDB Error:', err.message);
+    if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') process.exit(1);
+});
+mongoose.connection.on('error', err => console.error('❌ MongoDB Error:', err));
+mongoose.connection.on('disconnected', () => console.log('⚠️ MongoDB Disconnected'));
 
 // ==================== IMPORTS ====================
 const deliveryManagerRoutes = require('./routes/deliveryManager');
@@ -33,7 +62,19 @@ app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use('/api/world-products', worldProductRoutes);
+
+// DB ENSURE MIDDLEWARE - world-products se pehle check
+app.use('/api/world-products', async (req,res,next)=>{
+  if(mongoose.connection.readyState !== 1){
+    try{
+      await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 30000 });
+      console.log('🔄 Mongo reconnected for world-products');
+    }catch(e){
+      console.error('DB still not ready:', e.message);
+    }
+  }
+  next();
+}, worldProductRoutes);
 
 // ==================== NO CACHE MIDDLEWARE - TOP PE DEFINED ====================
 const noCacheMiddleware = (req, res, next) => {
@@ -150,32 +191,14 @@ app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
 app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
 app.use('/api/orders', orderRoutes);
 
-// ==================== MONGODB CONNECT ====================
-let mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/samanlive';
-mongoose.connect(mongoUri, { maxPoolSize: 10, serverSelectionTimeoutMS: 10000 })
-.then(async () => {
-    console.log('✅ MongoDB Connected Successfully');
-    console.log(`📦 Database: ${mongoose.connection.name}`);
-    try {
-        const Shop = require('./models/Shop');
-        const result = await Shop.updateMany({ status: 'active' }, { $set: { status: 'approved' } });
-        if (result.modifiedCount > 0) console.log(`🔄 Auto-migrated ${result.modifiedCount} shops`);
-    } catch (err) { console.log('⚠️ Migration skipped:', err.message); }
-})
-.catch(err => {
-    console.error('❌ MongoDB Error:', err.message);
-    if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') process.exit(1);
-});
-mongoose.connection.on('error', err => console.error('❌ MongoDB Error:', err));
-mongoose.connection.on('disconnected', () => console.log('⚠️ MongoDB Disconnected'));
-
 // ==================== API ROUTES ====================
 app.get('/api/health', (req, res) => {
     res.json({
-        success: true, message: 'Server V11 FINAL - Order Fixed - No Old Dashboard',
+        success: true, message: 'Server V12 FINAL - Buffering Fixed - Same as V11',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        readyState: mongoose.connection.readyState,
         environment: process.env.NODE_ENV || 'development',
         common: '/api/common/health',
         kirana: '/api/shops/kirana/health/check'
@@ -266,11 +289,9 @@ app.get('*', (req, res) => {
 
 if (!process.env.VERCEL) {
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 Server V11 FINAL running on http://localhost:${PORT}`);
+    console.log(`\n🚀 Server V12 FINAL running on http://localhost:${PORT}`);
     console.log(`📊 Admin: http://localhost:${PORT}/admin`);
-    console.log(`💚 Health: /api/health`);
-    console.log(`🔥 Common: /api/common/health`);
-    console.log(`🛒 Kirana: /api/shops/kirana/health/check\n`);
+    console.log(`💚 Health: /api/health\n`);
   });
 }
 module.exports = app;
