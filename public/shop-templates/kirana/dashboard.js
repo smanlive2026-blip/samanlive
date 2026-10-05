@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/kirana/dashboard.js - V16 FINAL WORLD BOSS - COMMON ONLY - NO FALTU FUNCTION - 1100 LINES
+// LOCATION: public/shop-templates/kirana/dashboard.js - V16 FINAL WORLD BOSS - COMMON ONLY - NO FALTU FUNCTION - 1100 LINES - MOBILE SIDEBAR FIX - FULL CODE
 // Uses: common/core/*, common/products/product-manager.js V15 Class, common/js/shop-toggle.js, common/js/share.js, common/cart/cart-core.js
 
 class KiranaDashboardCore {
@@ -82,16 +82,25 @@ class KiranaDashboardCore {
     this.loadWorldStatus();
   }
 
-  // ==================== UI BIND - COMMON LINKS ====================
+  // ==================== UI BIND - COMMON LINKS - MOBILE SIDEBAR FIX HERE ONLY ====================
   bindUI(){
     const $ = (id)=> document.getElementById(id);
     $('newProductBtn')?.addEventListener('click', ()=> this.goProductForm());
     $('quickAddBtn')?.addEventListener('click', ()=> this.goQuickAdd());
     $('btnLogout')?.addEventListener('click', ()=> this.logoutCommon());
-    $('btnMenu')?.addEventListener('click', ()=> {
-      document.getElementById('sidebar')?.classList.toggle('open');
-      document.getElementById('sidebarOverlay')?.classList.toggle('show');
-    });
+    // ===== MOBILE SIDEBAR FIX - DOUBLE LISTENER HATAYA - CLONE TRICK =====
+    const btnMenu = $('btnMenu');
+    if(btnMenu){
+      const newBtn = btnMenu.cloneNode(true);
+      btnMenu.parentNode.replaceChild(newBtn, btnMenu);
+      const toggleSidebar = (e)=>{
+        if(e){ e.preventDefault(); e.stopPropagation(); }
+        document.getElementById('sidebar')?.classList.toggle('open');
+        document.getElementById('sidebarOverlay')?.classList.toggle('show');
+      };
+      newBtn.addEventListener('click', toggleSidebar);
+      newBtn.addEventListener('touchend', toggleSidebar, {passive:false});
+    }
     $('viewShopBtn')?.addEventListener('click', ()=> this.viewShopCommon());
     $('openCommonOrders')?.addEventListener('click', (e)=>{
       e.preventDefault();
@@ -336,8 +345,8 @@ class KiranaDashboardCore {
       this.lowStock = lowStockRes?.products || lowStockRes?.data || this.allProducts.filter(p=> (p.stock||0) <= (p.lowStockAlert||10));
       this.orders = ordersRes?.orders || ordersRes?.data || [];
       this.stats = {
-       ...(this.shopData.stats||{}),
-       ...(analyticsRes||{}),
+      ...(this.shopData.stats||{}),
+      ...(analyticsRes||{}),
         totalProducts: this.allProducts.length,
         worldCount: this.worldProducts.length,
         oldCount: this.oldProducts.length,
@@ -470,15 +479,12 @@ class KiranaDashboardCore {
 
   // ==================== ACTIONS - COMMON/PRODUCTS/PRODUCT-FORM.HTML - UNIVERSAL FORM ====================
   goProductForm(){
-    // UNIVERSAL FORM - common/products/product-form.html - 1 file = 70 shops - FORM_CONFIG se generate
     location.href=`../common/products/product-form.html?shopType=kirana&shopId=${this.shopId}&type=kirana`;
   }
   goQuickAdd(){
-    // QUICK=1 - seed se 100 products
     location.href=`../common/products/product-form.html?shopType=kirana&shopId=${this.shopId}&type=kirana&quick=1`;
   }
   editProduct(id){
-    // Edit - Universal form me editId se load - World Model
     location.href=`../common/products/product-form.html?shopType=kirana&shopId=${this.shopId}&type=kirana&editId=${id}`;
   }
 
@@ -492,7 +498,6 @@ class KiranaDashboardCore {
         res = await fetch(`${this.API_WORLD_BASE}/${id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+(localStorage.getItem('token')||'')}}).then(r=>r.json());
       }
       if(!res.success){
-        // fallback old API - common nahi, par old kirana route
         const oldRes = await window.ApiCore?.delete(`/api/shops/kirana/${this.shopId}/item/${id}`).catch(()=>({success:false}));
         if(!oldRes.success) throw new Error(res.message||'Delete failed');
       }
@@ -510,17 +515,12 @@ class KiranaDashboardCore {
   stopAutoRefresh(){ if(this.refreshInterval) clearInterval(this.refreshInterval); }
 }
 
-// GLOBAL INIT - COMMON CONNECTED
 window.KiranaDashboardCore = new KiranaDashboardCore();
 window.kiranaDashboard = window.KiranaDashboardCore;
-
-// Global functions for inline onclick - still common
 window.deleteProduct = (id)=> window.KiranaDashboardCore.deleteProduct(id);
 window.editProduct = (id)=> window.KiranaDashboardCore.editProduct(id);
 window.goForm = ()=> window.KiranaDashboardCore.goProductForm();
 window.goQuick = ()=> window.KiranaDashboardCore.goQuickAdd();
 window.toggleShop = ()=> { const sw=document.getElementById('toggleSwitch'); if(sw) sw.click(); };
-
-// Storage listener - common/core/storage-core.js
 window.addEventListener('storage:cart', ()=> console.log('Cart updated via common StorageCore - common/cart/cart-core.js'));
 window.addEventListener('socket:shop-status', (e)=> console.log('Shop status via common socket', e.detail));
