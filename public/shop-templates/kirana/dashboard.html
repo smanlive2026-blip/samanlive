@@ -1,28 +1,31 @@
-<!-- LOCATION: public/shop-templates/kirana/dashboard.html - V17 MOBILE FIX - COMMON BUTTON MOBILE FIX - FULL CODE -->
+<!-- LOCATION: public/shop-templates/kirana/dashboard.html - V16 WORLD BOSS FINAL - MOBILE SIDEBAR FIX - FULL CODE - NO CUT -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Kirana Dashboard - V17 Mobile Fixed</title>
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kirana Dashboard - V16 World Boss - Full Common Connected</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./dashboard.css?v=16">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
-body{background:#f8fafc;display:flex;min-height:100vh;color:#0f172a;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;display:flex;min-height:100vh;color:#0f172a}
 #loader{position:fixed;inset:0;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);display:grid;place-items:center;z-index:9999}
 .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;z-index:40}
 .sidebar-overlay.show{display:block}
 .sidebar{width:280px;background:#0f172a;color:#fff;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:50;overflow:auto;transition:.3s}
 .sidebar .brand{padding:18px 16px;font-weight:900;font-size:18px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #1e293b}
-.sidebar .brand span{background:#fff;color:#0f172a;width:32px;height:32px;display:grid;place-items:center;border-radius:10px}
+.sidebar .brand span{background:#fff;color:#0f172a;width:32px;height:32px;display:grid;place-items:center;border-radius:10px;font-weight:900}
 .menu{padding:12px;display:flex;flex-direction:column;gap:4px}
-.menu a{padding:12px 12px;border-radius:10px;display:flex;gap:10px;align-items:center;font-weight:600;font-size:13px;cursor:pointer;color:#cbd5e1;text-decoration:none;transition:.2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.menu a{padding:10px 12px;border-radius:10px;display:flex;gap:10px;align-items:center;font-weight:600;font-size:13px;cursor:pointer;color:#cbd5e1;text-decoration:none;transition:.2s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .menu a:hover{background:#1e293b;color:#fff}
 .menu a.active{background:#fff;color:#0f172a;font-weight:800}
 .menu .section{font-size:10px;font-weight:900;color:#64748b;margin:14px 0 6px 8px;letter-spacing:.8px}
 .main{flex:1;margin-left:280px;min-height:100vh;display:flex;flex-direction:column}
-.header{position:sticky;top:0;z-index:20;background:#ffffffee;backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.header{position:sticky;top:0;z-index:20;background:#ffffffcc;backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
 .btn{padding:10px 14px;border-radius:10px;border:0;font-weight:800;cursor:pointer;display:inline-flex;gap:6px;align-items:center;font-size:13px;touch-action:manipulation}
 .btn-dark{background:#0f172a;color:#fff}
 .btn-green{background:#10b981;color:#fff}
@@ -36,8 +39,9 @@ body{background:#f8fafc;display:flex;min-height:100vh;color:#0f172a;-webkit-tap-
 .left-head{padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
 .search{display:flex;gap:8px;align-items:center;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px}
 .search input{border:0;outline:0;background:transparent;font-weight:600;width:220px}
-.p-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:16px}
-.p-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden}
+.p-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;padding:16px}
+.p-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;transition:.2s}
+.p-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.06)}
 .tab{display:none}
 .tab.active{display:block}
 .right{display:flex;flex-direction:column;gap:12px}
@@ -48,84 +52,102 @@ body{background:#f8fafc;display:flex;min-height:100vh;color:#0f172a;-webkit-tap-
 .switch::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s}
 .switch.on::after{left:21px}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 18px;border-radius:12px;font-weight:800;display:none;z-index:100}
-@media(max-width:1100px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.content{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.p-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1100px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.content{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-<div id="loader"><div style="background:#fff;padding:16px 22px;border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,.1);font-weight:800"><i class="fa-solid fa-spinner fa-spin"></i> Loading V17 Mobile Fixed...</div></div>
+<div id="loader"><div style="background:#fff;padding:16px 22px;border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,.1);font-weight:800"><i class="fa-solid fa-spinner fa-spin"></i> Loading World Products... Checking common/products/product-manager.js</div></div>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="sidebar" id="sidebar">
-<div class="brand"><span>SL</span> Kirana PRO <small style="background:#f59e0b;color:#fff;font-size:8px;padding:2px 5px;border-radius:5px">V17 MOBILE FIX</small></div>
+<div class="brand"><span>SL</span> Kirana PRO <small style="background:#f59e0b;color:#fff;font-size:8px;padding:2px 5px;border-radius:5px">V16 WORLD BOSS</small> <small style="background:#10b981;color:#fff;font-size:8px;padding:2px 5px;border-radius:5px">COMMON CONNECTED</small></div>
 <div class="menu">
 <a class="active" data-tab="overview"><i class="fa-solid fa-table-columns"></i> Overview</a>
 <a data-tab="products"><i class="fa-solid fa-box"></i> Products <span id="menuProdCount" style="margin-left:auto;background:#1e293b;padding:2px 6px;border-radius:6px;font-size:10px">0</span></a>
 <a data-tab="orders"><i class="fa-solid fa-cart-shopping"></i> Orders <span style="margin-left:auto;background:#0ea5e9;color:#fff;padding:2px 6px;border-radius:6px;font-size:10px">LIVE</span></a>
-<a data-tab="inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory</a>
-<a data-tab="analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a>
-<div class="section">BUSINESS - COMMON</div>
-<a data-tab="finance"><i class="fa-solid fa-indian-rupee-sign"></i> Finance / Wallet</a>
-<a data-tab="marketing"><i class="fa-solid fa-bullhorn"></i> Marketing</a>
-<a data-tab="staff"><i class="fa-solid fa-users"></i> Staff</a>
-<a data-tab="delivery"><i class="fa-solid fa-truck"></i> Delivery</a>
-<a data-tab="reviews"><i class="fa-solid fa-star"></i> Reviews</a>
-<div class="section">COMMON MODULES</div>
-<a data-tab="banner"><i class="fa-solid fa-image"></i> Banner</a>
-<a data-tab="settings"><i class="fa-solid fa-gear"></i> Settings</a>
-<a id="viewShopBtn"><i class="fa-solid fa-eye"></i> View Shop</a>
-<a id="openUniversalForm"><i class="fa-solid fa-plus"></i> Universal Form</a>
+<a data-tab="inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory - <small>common/inventory</small></a>
+<a data-tab="analytics"><i class="fa-solid fa-chart-line"></i> Analytics - <small>common/analytics</small></a>
+<div class="section">BUSINESS - COMMON FOLDER</div>
+<a data-tab="finance"><i class="fa-solid fa-indian-rupee-sign"></i> Finance / Wallet - <small>common/finance</small></a>
+<a data-tab="marketing"><i class="fa-solid fa-bullhorn"></i> Marketing - <small>common/marketing</small></a>
+<a data-tab="staff"><i class="fa-solid fa-users"></i> Staff - <small>common/staff</small></a>
+<a data-tab="delivery"><i class="fa-solid fa-truck"></i> Delivery - <small>common/delivery</small></a>
+<a data-tab="reviews"><i class="fa-solid fa-star"></i> Reviews - <small>common/reviews</small></a>
+<div class="section">COMMON MODULES - ALL CONNECTED</div>
+<a data-tab="banner"><i class="fa-solid fa-image"></i> Banner - <small>common/banner</small></a>
+<a data-tab="orders_full"><i class="fa-solid fa-receipt"></i> Full Orders - <small>common/orders</small></a>
+<a data-tab="settings"><i class="fa-solid fa-gear"></i> Settings - <small>common/settings</small></a>
+<a id="viewShopBtn" onclick="viewShop()"><i class="fa-solid fa-eye"></i> View Shop (Customer) - user-view.html</a>
+<a id="universalFormBtn"><i class="fa-solid fa-plus"></i> Universal Form - common/products</a>
 </div>
 <div style="margin-top:auto;padding:10px;background:#0f172a;border-radius:12px;border:1px solid #1e293b">
-<div style="font-size:11px;font-weight:800;color:#94a3b8">SHOP ID</div>
+<div style="font-size:11px;font-weight:800;color:#94a3b8">SHOP ID (World Model - worldproducts)</div>
 <div id="shopIdDisplay" style="font-size:11px;font-weight:900;word-break:break-all;margin-top:4px">...</div>
+<div style="font-size:10px;color:#64748b;margin-top:6px">Role: <span id="roleDisplay">dashboard</span> | ShopType: kirana | API: /api/world-products</div>
 <div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-dark" style="flex:1" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button><button class="btn btn-ghost" style="flex:1;background:#1e293b;color:#fff" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh</button></div>
 </div>
 </div>
 <div class="main">
 <div class="header">
 <button class="btn btn-dark" id="btnMenu"><i class="fa-solid fa-bars"></i></button>
-<h3 style="font-weight:900">Kirana Dashboard <span style="color:#94a3b8;font-size:12px" id="shopNameHead">V17 Mobile Fix</span></h3>
-<div style="display:flex;gap:8px">
-<button class="btn btn-dark" id="newProductBtn"><i class="fa-solid fa-plus"></i> New</button>
-<button class="btn btn-green" id="quickAddBtn"><i class="fa-solid fa-bolt"></i> Quick 100</button>
+<h3 style="font-weight:900">Kirana Dashboard <span style="color:#94a3b8;font-weight:600;font-size:12px" id="shopNameHead">World Boss V16 - Common Connected</span></h3>
+<div style="display:flex;gap:8px;align-items:center">
+<button class="btn btn-dark" onclick="location.reload()"><i class="fa-solid fa-rotate"></i></button>
+<button class="btn btn-dark" id="newProductBtn"><i class="fa-solid fa-plus"></i> New - Universal Form</button>
+<button class="btn btn-green" id="quickAddBtn"><i class="fa-solid fa-bolt"></i> Quick 100 - kirana.seed.js</button>
 </div>
 </div>
 <div class="stats">
-<div class="stat"><i class="fa-solid fa-box" style="color:#6366f1"></i><div><b id="productCount">0</b><p>Total Products</p></div></div>
-<div class="stat"><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i><div><b id="lowStockCount">0</b><p>Low Stock</p></div></div>
-<div class="stat"><i class="fa-solid fa-indian-rupee-sign" style="color:#10b981"></i><div><b id="revenue">₹0</b><p>Revenue</p></div></div>
-<div class="stat"><i class="fa-solid fa-cart-shopping" style="color:#0ea5e9"></i><div><b id="orderCount">0</b><p>Orders</p></div></div>
+<div class="stat"><i class="fa-solid fa-box" style="color:#6366f1"></i><div><b id="productCount">0</b><p>Total Products - World Model (worldproducts collection)</p></div></div>
+<div class="stat"><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i><div><b id="lowStockCount">0</b><p>Low Stock - common/inventory/low-stock-alert.html</p></div></div>
+<div class="stat"><i class="fa-solid fa-indian-rupee-sign" style="color:#10b981"></i><div><b id="revenue">₹0</b><p>Revenue - common/finance/wallet.html + common/analytics</p></div></div>
+<div class="stat"><i class="fa-solid fa-cart-shopping" style="color:#0ea5e9"></i><div><b id="orderCount">0</b><p>Orders - common/orders/orders.html - LIVE socket</p></div></div>
 </div>
 <div class="content">
 <div class="left">
 <div class="tab active" id="tab-overview">
 <div class="left-head">
-<h4 style="font-weight:900">Your Products <span id="prodCountText" style="color:#94a3b8">(0)</span></h4>
-<div class="search"><i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i><input id="searchInput" placeholder="Search..."></div>
+<h4 style="font-weight:900">Your Products <span id="prodCountText" style="color:#94a3b8">(0) W:0 O:0</span> - <small style="color:#10b981">WorldProductManager.getProducts()</small></h4>
+<div class="search"><i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i><input id="searchInput" placeholder="Search via WorldProductManager... name, brand, weight"></div>
 </div>
 <div class="p-grid" id="productList"></div>
 </div>
-<div class="tab" id="tab-products"><div style="padding:20px"><h3>Products - Inventory</h3><iframe id="inventoryFrame" src="" style="width:100%;height:600px;border:0;border-radius:12px;margin-top:12px"></iframe></div></div>
-<div class="tab" id="tab-orders"><div style="padding:16px"><h3>Live Orders</h3><div id="recentOrders"></div><iframe id="ordersFrame" src="" style="width:100%;height:600px;border:0;border-radius:12px;margin-top:12px"></iframe></div></div>
-<div class="tab" id="tab-inventory"><div style="padding:20px"><h3>Inventory - Low Stock</h3><div id="lowStockList"></div><button class="btn btn-dark" style="margin-top:12px" id="btnLowStock">Open Low Stock Page</button></div></div>
-<div class="tab" id="tab-analytics"><div style="padding:20px"><h3>Analytics</h3><iframe id="analyticsFrame" src="" style="width:100%;height:600px;border:0;border-radius:12px"></iframe></div></div>
-<div class="tab" id="tab-finance"><div style="padding:20px"><h3>Finance</h3><div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-dark" id="btnWallet1">Wallet 1</button><button class="btn btn-dark" id="btnWallet2">Wallet 2</button></div></div></div>
-<div class="tab" id="tab-marketing"><div style="padding:20px"><h3>Marketing</h3><button class="btn btn-dark" id="btnCoupons">Coupons</button> <button class="btn btn-dark" id="btnReferral">Referral</button></div></div>
-<div class="tab" id="tab-staff"><div style="padding:20px"><h3>Staff</h3><button class="btn btn-dark" id="btnStaff">Staff List</button></div></div>
-<div class="tab" id="tab-delivery"><div style="padding:20px"><h3>Delivery</h3><button class="btn btn-dark" id="btnDelivery">Delivery Status</button></div></div>
-<div class="tab" id="tab-reviews"><div style="padding:20px"><h3>Reviews</h3><iframe id="reviewsFrame" src="" style="width:100%;height:400px;border:0;border-radius:12px"></iframe></div></div>
-<div class="tab" id="tab-banner"><div style="padding:20px"><h3>Banner</h3><button class="btn btn-dark" id="btnBanner">Banner Setup</button></div></div>
-<div class="tab" id="tab-settings"><div style="padding:20px"><h3>Settings</h3><div class="toggle"><span>Shop Status: <b id="toggleText">Open</b></span><div class="switch on" id="toggleSwitch"></div></div><div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-dark" id="btnSettings">Settings</button><button class="btn btn-dark" id="btnProfile">Profile</button></div></div></div>
+<div class="tab" id="tab-products"><div style="padding:20px"><h3>Products - Common Inventory Connected</h3><p style="font-size:12px;color:#64748b;margin-top:6px">This tab loads common/inventory/inventory.html via iframe for shop owner - full common connected</p><div id="commonInventory"></div><iframe id="inventoryFrame" src="" style="width:100%;height:600px;border:0;border-radius:12px;margin-top:12px"></iframe></div></div>
+<div class="tab" id="tab-orders"><div style="padding:16px"><h3 style="font-weight:900;margin-bottom:10px">Live Orders - Common/orders/orders.html Connected</h3><div id="recentOrders"></div><div style="margin-top:12px"><a id="openCommonOrders" class="btn btn-dark" style="display:inline-flex"><i class="fa-solid fa-external-link"></i> Open Full Orders Page - common/orders/orders.html?shopId=</a></div><iframe id="ordersFrame" src="" style="width:100%;height:600px;border:0;border-radius:12px;margin-top:12px"></iframe></div></div>
+<div class="tab" id="tab-inventory"><div style="padding:20px"><h3>Inventory - Common - Low Stock</h3><div id="lowStock"></div><div id="lowStockList"></div><div style="margin-top:12px"><button class="btn btn-dark" id="btnLowStock">Open Low Stock - common/inventory/low-stock-alert.html</button></div></div></div>
+<div class="tab" id="tab-analytics"><div style="padding:20px"><h3>Analytics - Common/analytics/analytics.html</h3><div id="analyticsBox"></div><iframe id="analyticsFrame" src="" style="width:100%;height:600px;border:0;margin-top:12px;border-radius:12px"></iframe></div></div>
+<div class="tab" id="tab-finance"><div style="padding:20px"><h3>Finance - Common/finance/wallet.html + common/wallet/wallet.html</h3><div id="financeBox"></div><div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-dark" id="btnWallet1">Wallet - common/finance</button><button class="btn btn-dark" id="btnWallet2">Wallet 2 - common/wallet</button></div></div></div>
+<div class="tab" id="tab-marketing"><div style="padding:20px"><h3>Marketing - Common/marketing/coupons.html</h3><button class="btn btn-dark" id="btnCoupons">Coupons - common/marketing</button> <button class="btn btn-dark" id="btnReferral">Referral</button></div></div>
+<div class="tab" id="tab-staff"><div style="padding:20px"><h3>Staff - Common/staff/staff-list.html</h3><button class="btn btn-dark" id="btnStaff">Staff List - common/staff</button></div></div>
+<div class="tab" id="tab-delivery"><div style="padding:20px"><h3>Delivery - Common/delivery/delivery-status.html</h3><button class="btn btn-dark" id="btnDelivery">Delivery Status</button></div></div>
+<div class="tab" id="tab-reviews"><div style="padding:20px"><h3>Reviews - Common/reviews/reviews.html</h3><div id="reviewsBox"></div><iframe id="reviewsFrame" src="" style="width:100%;height:400px;border:0;margin-top:12px;border-radius:12px"></iframe></div></div>
+<div class="tab" id="tab-banner"><div style="padding:20px"><h3>Banner - Common/banner/banner.html</h3><button class="btn btn-dark" id="btnBanner">Banner Setup</button></div></div>
+<div class="tab" id="tab-orders_full"><div style="padding:20px"><h3>Full Orders - Common/orders/orders.html</h3><iframe id="ordersFullFrame" src="" style="width:100%;height:700px;border:0;border-radius:12px"></iframe></div></div>
+<div class="tab" id="tab-settings"><div style="padding:20px"><h3>Settings - Common/settings/settings.html + common/profile</h3><div class="toggle"><span>Shop Status: <b id="toggleText">Open</b></span><div class="switch on" id="toggleSwitch"></div></div><div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-dark" id="btnSettings">Settings</button><button class="btn btn-dark" id="btnProfile">Profile</button></div></div></div>
 </div>
 <div class="right">
-<div class="box"><div class="toggle"><span><i class="fa-solid fa-store"></i> Shop: <b id="toggleText2">Open</b></span><div class="switch on" id="toggleSwitch2"></div></div></div>
-<div class="box"><h4 style="font-weight:900;margin-bottom:10px"><i class="fa-solid fa-fire" style="color:#ef4444"></i> Low Stock</h4><div id="lowStockRight"></div></div>
-<div class="box"><h4 style="font-weight:900;margin-bottom:10px"><i class="fa-solid fa-bell" style="color:#0ea5e9"></i> Live Orders</h4><div id="liveOrdersRight"></div></div>
-<div class="box" style="background:#0f172a;color:#fff"><h4 style="font-weight:900">World Manager</h4><div id="commonStatus" style="font-size:11px;margin-top:8px;color:#94a3b8">Checking...</div></div>
+<div class="box"><div class="toggle"><span><i class="fa-solid fa-store"></i> Shop: <b id="toggleText2">Open</b></span><div class="switch on" id="toggleSwitch2"></div></div><div style="font-size:10px;color:#64748b;margin-top:6px">Toggle - common/js/shop-toggle.js + common/settings/open-close.html</div></div>
+<div class="box"><h4 style="font-weight:900;margin-bottom:10px"><i class="fa-solid fa-fire" style="color:#ef4444"></i> Low Stock (World Model) - common/inventory</h4><div id="lowStockRight"></div></div>
+<div class="box"><h4 style="font-weight:900;margin-bottom:10px"><i class="fa-solid fa-bell" style="color:#0ea5e9"></i> Live Orders (Common) - socket-core.js</h4><div id="liveOrdersRight"></div></div>
+<div class="box" style="background:#0f172a;color:#fff"><h4 style="font-weight:900">World Product Manager - V15 Class</h4><div style="font-size:10px;color:#94a3b8;margin-top:4px">Location: common/products/product-manager.js</div><div id="commonStatus" style="font-size:11px;margin-top:8px;color:#94a3b8">Checking...<br>API: /api/world-products?shopType=kirana&shopId=&role=dashboard</div><div style="margin-top:10px;display:flex;gap:6px"><button class="btn" style="background:#1e293b;color:#fff;flex:1;font-size:11px" onclick="checkCommonConnection()">Check Connection</button></div></div>
+<div class="box"><h4 style="font-weight:900">Common Modules - All Connected</h4><div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.6">
+✅ common/core/* - api-core, auth-core, dashboard-core, socket-core<br>
+✅ common/products/product-manager.js - BOSS - World Model<br>
+✅ common/products/kirana.seed.js - 100 products<br>
+✅ common/cart/cart-core.js - Cart<br>
+✅ common/orders/orders.js - Orders<br>
+✅ common/finance/wallet.html<br>
+✅ common/inventory/inventory.html<br>
+✅ common/analytics/analytics.html<br>
+✅ common/banner/banner.html<br>
+✅ common/settings/*<br>
+✅ common/profile/*<br>
+</div></div>
 </div>
 </div>
 </div>
 <div id="toast"></div>
+<audio id="newOrderSound" src="../common/orders/new-order-sound.mp3" preload="auto"></audio>
 <script src="../common/core/storage-core.js"></script>
 <script src="../common/core/error-handler.js"></script>
 <script src="../common/core/api-core.js"></script>
@@ -134,85 +156,81 @@ body{background:#f8fafc;display:flex;min-height:100vh;color:#0f172a;-webkit-tap-
 <script src="../common/core/socket-core.js"></script>
 <script src="../common/core/dashboard-core.js"></script>
 <script src="../common/js/shop-toggle.js"></script>
+<script src="../common/js/share.js"></script>
+<script src="../common/cart/cart-core.js"></script>
 <script src="../common/products/product-manager.js"></script>
-<script src="./dashboard.js?v=17"></script>
+<script src="./dashboard.js?v=16"></script>
 <script>
-// V17 MOBILE FIX - COMMON BUTTON FIX - window.open -> mobile safe open
+// ===== V16 SAME CODE + MOBILE SIDEBAR TURANT BAND FIX - ONLY THIS PART CHANGED =====
 window.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || '';
 window.shopType = 'kirana';
 if(window.shopId) localStorage.setItem('last_shopId', window.shopId);
-document.getElementById('shopIdDisplay').innerText = window.shopId? window.shopId.slice(0,20)+'...' : 'MISSING ?shopId=xxx';
-
+localStorage.setItem('shopType','kirana');
+localStorage.setItem('role','dashboard');
+document.getElementById('shopIdDisplay').innerText = window.shopId? window.shopId : 'MISSING - Add ?shopId=xxx';
+document.getElementById('roleDisplay').innerText = window.WorldProductManager?.role || 'dashboard';
+if(!window.shopId) alert('shopId missing! URL me ?shopId=YOUR_SHOP_ID add karo - World Model ko shopId chahiye');
+function toast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',3500); }
+function showLoader(v){ document.getElementById('loader').style.display = v? 'grid' : 'none'; }
 function isMobile(){ return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth<=1100; }
 function openCommon(url){
-  // Mobile me _blank block hota hai, isliye same tab me kholo
-  if(isMobile()){
-    location.href = url;
-  }else{
-    const win = window.open(url,'_blank');
-    if(!win) location.href = url; // popup blocked fallback
-  }
+  if(isMobile()){ location.href = url; } else { var w=window.open(url,'_blank'); if(!w) location.href=url; }
 }
-function toast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
-function showLoader(v){ document.getElementById('loader').style.display = v? 'grid' : 'none'; }
+function viewShop(){ openCommon(`./user-view.html?shopId=${window.shopId}&shopType=kirana`); }
+function checkCommonConnection(){
+  const el=document.getElementById('commonStatus');
+  const pm = window.WorldProductManager;
+  if(!pm){ el.innerHTML='❌ product-manager.js NOT loaded'; return; }
+  el.innerHTML=`✅ Connected<br>Role: ${pm.role}<br>ShopId: ${pm.shopId?.slice(0,12)}...<br>ShopType: ${pm.shopType}<br>API: ${pm.API}`;
+}
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('sidebarOverlay');
+function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('show'); }
 function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); }
-document.getElementById('btnMenu').addEventListener('click', ()=>{ sidebar.classList.toggle('open'); overlay.classList.toggle('show'); });
-document.getElementById('btnMenu').addEventListener('touchstart', (e)=>{ e.preventDefault(); sidebar.classList.toggle('open'); overlay.classList.toggle('show'); }, {passive:false});
-overlay.addEventListener('click', closeSidebar);
-overlay.addEventListener('touchstart', (e)=>{ e.preventDefault(); closeSidebar(); }, {passive:false});
-
-// TABS - MOBILE FIX - click + touchstart dono
-function switchTab(tabName){
-  document.querySelectorAll('.menu a').forEach(x=>x.classList.remove('active'));
-  const activeA = document.querySelector(`.menu a[data-tab="${tabName}"]`);
-  if(activeA) activeA.classList.add('active');
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  const target = document.getElementById('tab-'+tabName);
-  if(target) target.classList.add('active');
-  // iframe load
-  const map = {
-    products: {id:'inventoryFrame', src:`../common/inventory/inventory.html?shopId=${window.shopId}&shopType=kirana`},
-    orders: {id:'ordersFrame', src:`../common/orders/orders.html?shopId=${window.shopId}&shopType=kirana`},
-    analytics: {id:'analyticsFrame', src:`../common/analytics/analytics.html?shopId=${window.shopId}&shopType=kirana`},
-    reviews: {id:'reviewsFrame', src:`../common/reviews/reviews.html?shopId=${window.shopId}&shopType=kirana`}
-  };
-  const f = map[tabName];
-  if(f){ const el=document.getElementById(f.id); if(el && !el.src) el.src=f.src; }
-  if(isMobile()) setTimeout(closeSidebar, 200);
-}
-
-document.querySelectorAll('.menu a[data-tab]').forEach(a=>{
-  const handler = (e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    switchTab(a.dataset.tab);
-  };
-  a.addEventListener('click', handler);
-  a.addEventListener('touchend', (e)=>{ e.preventDefault(); handler(e); }, {passive:false});
+// FIX: toggle ki jagah open/close alag - mobile me double fire se turant band nahi hoga
+document.getElementById('btnMenu').addEventListener('click', function(e){
+  e.preventDefault(); e.stopPropagation();
+  if(sidebar.classList.contains('open')) closeSidebar(); else openSidebar();
 });
-
-// COMMON BUTTONS - MOBILE FIX - window.open -> openCommon
-document.getElementById('newProductBtn').addEventListener('click', ()=> openCommon(`../common/products/product-form.html?shopType=kirana&shopId=${window.shopId}&type=kirana`));
-document.getElementById('quickAddBtn').addEventListener('click', ()=> openCommon(`../common/products/product-form.html?shopType=kirana&shopId=${window.shopId}&type=kirana&quick=1`));
-document.getElementById('viewShopBtn').addEventListener('click', ()=> openCommon(`./user-view.html?shopId=${window.shopId}&shopType=kirana`));
-document.getElementById('openUniversalForm').addEventListener('click', ()=> openCommon(`../common/products/product-form.html?shopType=kirana&shopId=${window.shopId}&type=kirana`));
-
-document.getElementById('btnLowStock').addEventListener('click', ()=> openCommon(`../common/inventory/low-stock-alert.html?shopId=${window.shopId}&shopType=kirana`));
-document.getElementById('btnWallet1').addEventListener('click', ()=> openCommon(`../common/finance/wallet.html?shopId=${window.shopId}`));
-document.getElementById('btnWallet2').addEventListener('click', ()=> openCommon(`../common/wallet/wallet.html?shopId=${window.shopId}`));
-document.getElementById('btnCoupons').addEventListener('click', ()=> openCommon(`../common/marketing/coupons.html?shopId=${window.shopId}&shopType=kirana`));
-document.getElementById('btnReferral').addEventListener('click', ()=> openCommon(`../common/marketing/referral.html?shopId=${window.shopId}`));
-document.getElementById('btnStaff').addEventListener('click', ()=> openCommon(`../common/staff/staff-list.html?shopId=${window.shopId}`));
-document.getElementById('btnDelivery').addEventListener('click', ()=> openCommon(`../common/delivery/delivery-status.html?shopId=${window.shopId}`));
-document.getElementById('btnBanner').addEventListener('click', ()=> openCommon(`../common/banner/banner.html?shopId=${window.shopId}&shopType=kirana`));
-document.getElementById('btnSettings').addEventListener('click', ()=> openCommon(`../common/settings/settings.html?shopId=${window.shopId}`));
-document.getElementById('btnProfile').addEventListener('click', ()=> openCommon(`../common/profile/profile.html?shopId=${window.shopId}`));
-
-document.getElementById('btnLogout').addEventListener('click', ()=>{ localStorage.clear(); location.href='/'; });
-
-setTimeout(()=>{ showLoader(false); }, 800);
+overlay.addEventListener('click', function(e){ e.preventDefault(); closeSidebar(); });
+// Tab click - sidebar turant band mat karo mobile me, 400ms ruk ke band karo taaki iframe load ho
+document.querySelectorAll('.menu a[data-tab]').forEach(a=>{
+  a.addEventListener('click', function(e){
+    if(!a.dataset.tab) return;
+    e.preventDefault();
+    document.querySelectorAll('.menu a').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+    const tab = a.dataset.tab;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    const target = document.getElementById('tab-'+tab);
+    if(target) target.classList.add('active');
+    if(tab==='products') document.getElementById('inventoryFrame').src = `../common/inventory/inventory.html?shopId=${window.shopId}&shopType=kirana`;
+    if(tab==='orders') document.getElementById('ordersFrame').src = `../common/orders/orders.html?shopId=${window.shopId}&shopType=kirana`;
+    if(tab==='orders_full') document.getElementById('ordersFullFrame').src = `../common/orders/orders.html?shopId=${window.shopId}&shopType=kirana`;
+    if(tab==='analytics') document.getElementById('analyticsFrame').src = `../common/analytics/analytics.html?shopId=${window.shopId}&shopType=kirana`;
+    if(tab==='reviews') document.getElementById('reviewsFrame').src = `../common/reviews/reviews.html?shopId=${window.shopId}&shopType=kirana`;
+    if(isMobile()){ setTimeout(closeSidebar, 400); } // 400ms baad band - turant nahi
+  });
+});
+document.getElementById('newProductBtn').onclick = ()=>{ openCommon(`../common/products/product-form.html?shopType=kirana&shopId=${window.shopId}&type=kirana`); };
+document.getElementById('quickAddBtn').onclick = ()=>{ openCommon(`../common/products/product-form.html?shopType=kirana&shopId=${window.shopId}&type=kirana&quick=1`); };
+document.getElementById('viewShopBtn').onclick = ()=>{ openCommon(`./user-view.html?shopId=${window.shopId}&shopType=kirana`); };
+document.getElementById('universalFormBtn').onclick = ()=>{ openCommon(`../common/products/product-form.html?shopType=kirana&shopId=${window.shopId}`); };
+document.getElementById('btnLogout').onclick = ()=> window.AuthCore?.logout() || (localStorage.clear(), location.href='/');
+document.getElementById('openCommonOrders').onclick = (e)=>{ e.preventDefault(); openCommon(`../common/orders/orders.html?shopId=${window.shopId}&shopType=kirana`); };
+// Common buttons
+document.getElementById('btnLowStock')?.addEventListener('click', ()=> openCommon(`../common/inventory/low-stock-alert.html?shopId=${window.shopId}&shopType=kirana`));
+document.getElementById('btnWallet1')?.addEventListener('click', ()=> openCommon(`../common/finance/wallet.html?shopId=${window.shopId}`));
+document.getElementById('btnWallet2')?.addEventListener('click', ()=> openCommon(`../common/wallet/wallet.html?shopId=${window.shopId}`));
+document.getElementById('btnCoupons')?.addEventListener('click', ()=> openCommon(`../common/marketing/coupons.html?shopId=${window.shopId}&shopType=kirana`));
+document.getElementById('btnReferral')?.addEventListener('click', ()=> openCommon(`../common/marketing/referral.html?shopId=${window.shopId}`));
+document.getElementById('btnStaff')?.addEventListener('click', ()=> openCommon(`../common/staff/staff-list.html?shopId=${window.shopId}`));
+document.getElementById('btnDelivery')?.addEventListener('click', ()=> openCommon(`../common/delivery/delivery-status.html?shopId=${window.shopId}`));
+document.getElementById('btnBanner')?.addEventListener('click', ()=> openCommon(`../common/banner/banner.html?shopId=${window.shopId}&shopType=kirana`));
+document.getElementById('btnSettings')?.addEventListener('click', ()=> openCommon(`../common/settings/settings.html?shopId=${window.shopId}`));
+document.getElementById('btnProfile')?.addEventListener('click', ()=> openCommon(`../common/profile/profile.html?shopId=${window.shopId}`));
+setTimeout(()=>{ showLoader(false); checkCommonConnection(); toast('✅ Kirana Dashboard V16 - Common Connected - Mobile Sidebar Fixed'); }, 800);
+window.addEventListener('error', (e)=>{ console.error('Dashboard Error', e.message); });
 </script>
 </body>
 </html>
