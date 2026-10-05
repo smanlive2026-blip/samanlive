@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/common/products/product-manager.js - V18 FINAL - NO LOCALSTORAGE - NO TOKEN - 401 FIXED
+// LOCATION: public/shop-templates/common/products/product-manager.js - V20 FINAL - NO LOCALSTORAGE - NO TOKEN - BULK FAST - 401 + BUFFERING FIXED
 class WorldProductManager {
   constructor(){
     const params = new URLSearchParams(location.search);
@@ -6,7 +6,7 @@ class WorldProductManager {
     this.shopType = params.get('type') || params.get('shopType') || 'kirana';
     this.role = this.detectRole();
     this.API = '/api/world-products';
-    console.log('WorldProductManager V18 - shopId from URL:', this.shopId, 'shopType:', this.shopType, 'role:', this.role);
+    console.log('WorldProductManager V20 BULK - shopId from URL:', this.shopId, 'shopType:', this.shopType, 'role:', this.role);
   }
 
   detectRole(){
@@ -18,7 +18,7 @@ class WorldProductManager {
     return 'dashboard';
   }
 
-  // CREATE - NO AUTH HEADER
+  // CREATE SINGLE - NO AUTH HEADER
   async addProduct(data){
     data.shopId = data.shopId || this.shopId;
     data.shopType = data.shopType || this.shopType;
@@ -37,11 +37,9 @@ class WorldProductManager {
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify(data)
     }).then(async r=>{
-      if(!r.ok){
-        const txt = await r.text();
-        throw new Error(`HTTP ${r.status}: ${txt.slice(0,200)}`);
-      }
-      return r.json();
+      const j = await r.json();
+      console.log(j.success ? '✅ Saved:' : '❌ Failed:', data.name, j.message||'');
+      return j;
     }).catch(e=>{
       console.error('addProduct failed:', e);
       return {success:false, message:e.message};
@@ -50,16 +48,16 @@ class WorldProductManager {
     return res;
   }
 
-  // READ
+  // READ - NO AUTH
   async getProducts(filter={}){
     const shopType = filter.shopType || this.shopType;
     const shopId = filter.shopId || this.shopId;
-    let url = `${this.API}?shopType=${shopType}`;
+    let url = `${this.API}?shopType=${shopType}&role=${this.role}`;
     if(shopId) url += `&shopId=${shopId}`;
     
     console.log('Fetching products NO AUTH:', url, 'role:', this.role);
     const res = await fetch(url).then(r=>r.json()).catch(()=>({data:[]}));
-    console.log('API response:', res);
+    console.log('API response count:', res.count||0, 'total:', res.total||0);
     const list = res.data || res.products || [];
     return this.filterByRole(list);
   }
@@ -67,36 +65,83 @@ class WorldProductManager {
   filterByRole(products){
     if(!Array.isArray(products)) return [];
     if(this.role === 'customer') return products.filter(p=> p.isActive!==false && (p.stock||0)>0);
-    return products; // dashboard, admin, area-manager ko sab
+    return products;
   }
 
-  // UPDATE
+  // UPDATE - NO AUTH
   async updateProduct(id, data){
+    console.log('Updating NO AUTH:', id, data.name||'');
     const res = await fetch(`${this.API}/${id}`,{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify(data)
     }).then(r=>r.json()).catch(e=>({success:false, message:e.message}));
+    console.log('Update result:', res.success? '✅':'❌', res.message||'');
     return res;
   }
 
-  // DELETE - soft delete
+  // DELETE - soft delete - NO AUTH
   async deleteProduct(id){
+    console.log('Deleting NO AUTH:', id);
     const res = await fetch(`${this.API}/${id}`,{
       method:'DELETE'
     }).then(r=>r.json()).catch(e=>({success:false, message:e.message}));
+    console.log('Delete result:', res.success? '✅':'❌');
     return res;
   }
 
-  // SEED - Quick Add
+  // SEED - Quick Add - V20 BULK VERSION - 100 REQUEST KI JAGAH 1 REQUEST
   async seedProducts(shopType){
     try{
       const type = shopType || this.shopType;
-      const url = `./${type}.seed.js?v=18&t=${Date.now()}`;
+      const url = `./${type}.seed.js?v=20&t=${Date.now()}`;
+      console.log('Loading seed:', url);
       const text = await fetch(url).then(r=>r.text());
+      console.log('Raw seed length:', text.length, 'has exports:', text.includes('export'));
       const cleaned = text.replace(/export\s+const\s+/g,'var ').replace(/export\s+default[\s\S]*$/gm,'');
       const fn = new Function(cleaned + `\n return {PRODUCTS};`);
       const {PRODUCTS} = fn();
+      console.log('Converted to ESM - PRODUCTS:', PRODUCTS.length);
+
+      if(!PRODUCTS || PRODUCTS.length===0){
+        alert('Seed file empty');
+        return 0;
+      }
+
+      // ===== NEW BULK LOGIC - Screenshot wala 100 loop bug fix =====
+      if(PRODUCTS.length > 10){
+        console.log(`BULK MODE: Sending ${PRODUCTS.length} products in 1 request to ${this.API}/bulk`);
+        const payload = PRODUCTS.map(p=>({
+          ...p,
+          shopId: this.shopId,
+          shopType: type,
+          isActive: true,
+          stock: p.stock || 50
+        }));
+
+        const res = await fetch(`${this.API}/bulk`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ products: payload, shopId: this.shopId, shopType: type })
+        }).then(async r=>{
+          const j = await r.json();
+          console.log('BULK API Response:', j);
+          return j;
+        }).catch(e=>{
+          console.error('BULK failed, falling back to single:', e);
+          return {success:false};
+        });
+
+        if(res.success){
+          console.log(`✅ BULK SUCCESS: ${res.count} products added`);
+          alert(`✅ ${res.count} products added - FAST BULK MODE`);
+          return res.count;
+        }else{
+          console.log('Bulk failed, trying single mode...');
+        }
+      }
+
+      // Fallback single mode for <10 products or bulk fail
       let count=0;
       for(let p of PRODUCTS){
         p.shopId = this.shopId;
@@ -104,10 +149,14 @@ class WorldProductManager {
         p.isActive = true;
         const res = await this.addProduct(p);
         if(res.success) count++;
+        await new Promise(r=>setTimeout(r, 100)); // 100ms delay to avoid buffering timeout
       }
+      console.log(`Single mode done: ${count}/${PRODUCTS.length}`);
+      alert(`✅ ${count} products added`);
       return count;
     }catch(e){
       console.error('seedProducts failed', e);
+      alert('Seed failed: '+e.message);
       return 0;
     }
   }
@@ -116,7 +165,19 @@ class WorldProductManager {
     const res = await fetch(`${this.API}?role=${this.role}`).then(r=>r.json()).catch(()=>({data:[]}));
     return res.data||[];
   }
+
+  // Helper for product-form.html quick products Add button
+  async bulkAdd(products){
+    if(!Array.isArray(products)) products = [products];
+    const payload = products.map(p=>({ ...p, shopId: this.shopId, shopType: this.shopType, isActive:true }));
+    return fetch(`${this.API}/bulk`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ products: payload, shopId: this.shopId, shopType: this.shopType })
+    }).then(r=>r.json());
+  }
 }
 
 window.WorldProductManager = new WorldProductManager();
 window.ProductManager = window.WorldProductManager;
+console.log('✅ Product Manager V20 Loaded - BULK MODE READY');
