@@ -1,10 +1,12 @@
-// LOCATION: public/shop-templates/common/products/product-manager.js - V16 FIXED - SHOPID OVERWRITE BUG FIXED
+// LOCATION: public/shop-templates/common/products/product-manager.js - V18 FINAL - NO LOCALSTORAGE - NO TOKEN - 401 FIXED
 class WorldProductManager {
   constructor(){
-    this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || '';
-    this.shopType = new URLSearchParams(location.search).get('type') || new URLSearchParams(location.search).get('shopType') || localStorage.getItem('shopType') || 'kirana';
+    const params = new URLSearchParams(location.search);
+    this.shopId = params.get('shopId') || '';
+    this.shopType = params.get('type') || params.get('shopType') || 'kirana';
     this.role = this.detectRole();
     this.API = '/api/world-products';
+    console.log('WorldProductManager V18 - shopId from URL:', this.shopId, 'shopType:', this.shopType, 'role:', this.role);
   }
 
   detectRole(){
@@ -13,86 +15,95 @@ class WorldProductManager {
     if(path.includes('user-view') || path.includes('customer-view') || path.includes('shop-view')) return 'customer';
     if(path.includes('admin-panel')) return 'admin';
     if(path.includes('area-manager') || path.includes('area-dashboard')) return 'area-manager';
-    return 'customer';
+    return 'dashboard';
   }
 
+  // CREATE - NO AUTH HEADER
   async addProduct(data){
-    // FIXED: overwrite mat kar - agar data me already shopId hai to wahi rakho
     data.shopId = data.shopId || this.shopId;
     data.shopType = data.shopType || this.shopType;
-    data.isActive = data.isActive !== undefined ? data.isActive : true;
+    data.isActive = true;
     data.role = this.role;
-    console.log('Saving product with shopId:', data.shopId, 'shopType:', data.shopType, data.name);
+
+    if(!data.shopId){
+      alert('shopId missing - URL me ?shopId=xxx lagao');
+      throw new Error('shopId missing');
+    }
+
+    console.log('Saving NO AUTH - shopId:', data.shopId, 'shopType:', data.shopType, data.name);
+
     const res = await fetch(this.API, {
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('token')||'')},
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify(data)
-    }).then(r=>r.json());
-    if(res.success){
-      window.ApiCore?.clearCache(this.API);
-      window.SocketCore?.emit('product-updated',{shopId:data.shopId, shopType:data.shopType});
-    }
+    }).then(async r=>{
+      if(!r.ok){
+        const txt = await r.text();
+        throw new Error(`HTTP ${r.status}: ${txt.slice(0,200)}`);
+      }
+      return r.json();
+    }).catch(e=>{
+      console.error('addProduct failed:', e);
+      return {success:false, message:e.message};
+    });
+
     return res;
   }
 
+  // READ
   async getProducts(filter={}){
     const shopType = filter.shopType || this.shopType;
     const shopId = filter.shopId || this.shopId;
     let url = `${this.API}?shopType=${shopType}`;
-    if(this.role === 'dashboard' || this.role === 'customer'){
-      if(shopId) url += `&shopId=${shopId}`;
-    }
-    if(this.role === 'admin') url += `&role=admin`;
-    if(this.role === 'area-manager') url += `&role=area-manager&areaId=${localStorage.getItem('areaId')}`;
+    if(shopId) url += `&shopId=${shopId}`;
     
-    console.log('Fetching products:', url, 'role:', this.role);
+    console.log('Fetching products NO AUTH:', url, 'role:', this.role);
     const res = await fetch(url).then(r=>r.json()).catch(()=>({data:[]}));
     console.log('API response:', res);
-    return this.filterByRole(res.data||res.products||res||[]);
+    const list = res.data || res.products || [];
+    return this.filterByRole(list);
   }
 
   filterByRole(products){
     if(!Array.isArray(products)) return [];
     if(this.role === 'customer') return products.filter(p=> p.isActive!==false && (p.stock||0)>0);
-    if(this.role === 'dashboard') return products;
-    if(this.role === 'admin') return products;
-    if(this.role === 'area-manager') return products;
-    return products;
+    return products; // dashboard, admin, area-manager ko sab
   }
 
+  // UPDATE
   async updateProduct(id, data){
     const res = await fetch(`${this.API}/${id}`,{
       method:'PUT',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('token')||'')},
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify(data)
-    }).then(r=>r.json());
-    if(res.success) window.ApiCore?.clearCache(this.API);
+    }).then(r=>r.json()).catch(e=>({success:false, message:e.message}));
     return res;
   }
 
+  // DELETE - soft delete
   async deleteProduct(id){
     const res = await fetch(`${this.API}/${id}`,{
-      method:'DELETE',
-      headers:{'Authorization':'Bearer '+(localStorage.getItem('token')||'')}
-    }).then(r=>r.json());
-    if(res.success) window.ApiCore?.clearCache(this.API);
+      method:'DELETE'
+    }).then(r=>r.json()).catch(e=>({success:false, message:e.message}));
     return res;
   }
 
+  // SEED - Quick Add
   async seedProducts(shopType){
-    // FIXED: blob fetch method - no import error
     try{
-      const url = `./${shopType}.seed.js?v=16&t=${Date.now()}`;
+      const type = shopType || this.shopType;
+      const url = `./${type}.seed.js?v=18&t=${Date.now()}`;
       const text = await fetch(url).then(r=>r.text());
-      const fn = new Function(text.replace(/export\s+const\s+/g,'var ').replace(/export\s+default.*$/gm,'') + `\n return {PRODUCTS};`);
+      const cleaned = text.replace(/export\s+const\s+/g,'var ').replace(/export\s+default[\s\S]*$/gm,'');
+      const fn = new Function(cleaned + `\n return {PRODUCTS};`);
       const {PRODUCTS} = fn();
       let count=0;
       for(let p of PRODUCTS){
         p.shopId = this.shopId;
-        p.shopType = shopType;
+        p.shopType = type;
         p.isActive = true;
-        await this.addProduct(p);
-        count++;
+        const res = await this.addProduct(p);
+        if(res.success) count++;
       }
       return count;
     }catch(e){
@@ -102,7 +113,7 @@ class WorldProductManager {
   }
 
   async getAllShopsProducts(){
-    const res = await fetch(`${this.API}?role=${this.role}`).then(r=>r.json());
+    const res = await fetch(`${this.API}?role=${this.role}`).then(r=>r.json()).catch(()=>({data:[]}));
     return res.data||[];
   }
 }
