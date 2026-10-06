@@ -305,7 +305,7 @@ function renderShops(shops) {
 }
 
 window.copyShopLink = function(shopId, shopType, shopName) {
-    //const finalFolder = window.getShopTemplateFolder(shopType || 'common'); // ✅ FIX: MAP SE FOLDER LO
+    ////const finalFolder = window.getShopTemplateFolder(shopType || 'common'); // ✅ FIX: MAP SE FOLDER LO
     const shopLink = `${window.location.origin}/shop-templates/common/dashboard.html?shopId=${shopId}&shopType=${shopType || 'common'}`;
     
     navigator.clipboard.writeText(shopLink).then(() => {
