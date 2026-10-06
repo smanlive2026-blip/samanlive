@@ -64,15 +64,28 @@ io.on('connection', (socket) => {
 let mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/samanlive';
 
 // Vercel pe buffering timeout ka permanent fix
-mongoose.set('bufferTimeoutMS', 30000);
+//mongoose.set('bufferTimeoutMS', 30000);
+mongoose.set('bufferTimeoutMS', 5000);
 mongoose.set('strictQuery', false);
+mongoose.set('bufferCommands', false);
 
-mongoose.connect(mongoUri, { 
-  maxPoolSize: 10, 
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
-  connectTimeoutMS: 30000
-})
+//mongoose.connect(mongoUri, { 
+//  maxPoolSize: 10, 
+//  serverSelectionTimeoutMS: 30000,
+//  socketTimeoutMS: 45000,
+//  connectTimeoutMS: 30000
+//})
+let dbPromise = null;
+function connectDB() {
+    if (mongoose.connection.readyState === 1) return Promise.resolve();
+    if (dbPromise) return dbPromise;
+    dbPromise = mongoose.connect(mongoUri, { 
+      maxPoolSize: 10, 
+      minPoolSize: 1,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 5000
+    })
 .then(async () => {
     console.log('✅ MongoDB Connected Successfully');
     console.log(`📦 Database: ${mongoose.connection.name}`);
@@ -83,11 +96,15 @@ mongoose.connect(mongoUri, {
     } catch (err) { console.log('⚠️ Migration skipped:', err.message); }
 })
 .catch(err => {
+    dbPromise = null;
     console.error('❌ MongoDB Error:', err.message);
     if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') process.exit(1);
 });
+    return dbPromise;
+}
+connectDB();
 mongoose.connection.on('error', err => console.error('❌ MongoDB Error:', err));
-mongoose.connection.on('disconnected', () => console.log('⚠️ MongoDB Disconnected'));
+mongoose.connection.on('disconnected', () => { dbPromise = null; console.log('⚠️ MongoDB Disconnected'); });
 
 // ==================== IMPORTS ====================
 const deliveryManagerRoutes = require('./routes/deliveryManager');
@@ -120,6 +137,14 @@ app.use('/api/world-products', async (req,res,next)=>{
   }
   next();
 }, worldProductRoutes);
+
+// DB ENSURE - HAR /api REQUEST KE LIYE - DASHBOARD LATE FIX
+app.use('/api', async (req, res, next) => {
+    if (mongoose.connection.readyState !== 1) {
+        try { await connectDB(); } catch(e) {}
+    }
+    next();
+});
 
 // ==================== NO CACHE MIDDLEWARE - TOP PE DEFINED ====================
 const noCacheMiddleware = (req, res, next) => {
