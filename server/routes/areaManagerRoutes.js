@@ -16,7 +16,14 @@ const Module = require('../models/Module');
 // ========== AUTH - Manager Token ==========
 const authManager = async (req, res, next) => {
     try {
-        const token = (req.headers.authorization || '').replace('Bearer ', '').trim() || req.query.token;
+        //const token = (req.headers.authorization || '').replace('Bearer ', '').trim() || req.query.token;
+        const token = ((req.headers.authorization || '').replace('Bearer ', '').trim()
+            || req.headers['x-manager-token']
+            || req.headers['manager-token']
+            || req.headers.token
+            || req.query.token
+            || req.query.managerToken
+            || (req.body && (req.body.managerToken || req.body.token || req.body.loginToken || req.body.authToken)) || '').toString().trim();
         if (!token) return res.status(401).json({ success: false, error: 'No token provided' });
 
         const manager = await Manager.findOne({ loginToken: token, status: true });
