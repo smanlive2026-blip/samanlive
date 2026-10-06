@@ -76,14 +76,19 @@
 
 <script>
 // ===== GLOBAL HELPERS FOR ALL PAGES =====
-window.showToast = window.showToast || function(msg){ const t=document.getElementById('toast'); if(!t) return; t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); };
+window.showToast = function(msg){ const t=document.getElementById('toast'); if(!t) return; t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); };
 window.loadPage = function(p, el){ if(window.Launcher) window.Launcher.loadPage(p, el); };
-window.apiCall = window.apiCall || async function(url){
-  const base = window.API_BASE || '/api/admin';
+window.apiCall = async function(url, method, body){
+  // Agar page ne apna apiCall banaya hai to use mat roko, ye sirf launcher wala hai
+  const base = window.API_BASE || '/api';
   const token = localStorage.getItem('adminToken') || localStorage.getItem('token') || '';
-  const res = await fetch(base + url, { headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' }, cache:'no-store' });
-  if(!res.ok) throw new Error('API '+res.status);
-  return res.json();
+  const opts = { method: method || 'GET', headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' }, cache:'no-store' };
+  if(body) opts.body = JSON.stringify(body);
+  const fullUrl = url.startsWith('/api')? url : base + (url.startsWith('/')?url:'/'+url);
+  const res = await fetch(fullUrl, opts);
+  const text = await res.text();
+  if(!text ||!text.trim()) return {};
+  try{ return JSON.parse(text); }catch(e){ return {}; }
 };
 
 // ===== HISTORY TRACKER CLASS - YAHI DALNA THA =====
@@ -138,6 +143,8 @@ class SLMasterLauncher {
     // Purane chart saaf karo
     ['__slAreaChart','__slStatusChart','__slAreaRadiusChart'].forEach(k=>{ if(window[k]){ try{window[k].destroy()}catch(e){} window[k]=null; } });
     if(window.moduleMap){ try{window.moduleMap.remove()}catch(e){} window.moduleMap=null; }
+    // Area wale map ko bhi saaf karo, file ko haath nahi lagaya
+    try{ if(window.map && typeof window.map.remove==='function'){ window.map.remove(); window.map=null; } }catch(e){}
   }
   init(){
     this.renderNav(this.files);
@@ -202,7 +209,7 @@ class SLMasterLauncher {
         const s = document.createElement('script');
         s.setAttribute('data-sl-page-script','1');
         if(old.src) { s.src = old.src + (old.src.includes('?')?'&':'?') + `t=${bust}`; }
-        else { s.textContent = old.textContent; }
+        else { s.textContent = '(function(){\n' + old.textContent + '\n})();'; }
         old.remove();
         document.body.appendChild(s);
         this._pageScripts.push(s);
