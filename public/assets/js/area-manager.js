@@ -272,7 +272,8 @@ function renderShops(shops) {
     }
     tbody.innerHTML = shops.map(shop => {
         const shopType = shop.serviceType || shop.shopType || 'common';
-        const dashboardUrl = `${window.location.origin}/shop-templates/common/dashboard.html?shopId=${shop._id}&shopType=${shopType}`;
+        const templateFolder = window.getShopTemplateFolder(shopType);
+const dashboardUrl = `${window.location.origin}/shop-templates/${templateFolder}/dashboard.html?shopId=${shop._id}`;
         
         return `
             <tr>
@@ -305,8 +306,8 @@ function renderShops(shops) {
 }
 
 window.copyShopLink = function(shopId, shopType, shopName) {
-    ////const finalFolder = window.getShopTemplateFolder(shopType || 'common'); // ✅ FIX: MAP SE FOLDER LO
-    const shopLink = `${window.location.origin}/shop-templates/common/dashboard.html?shopId=${shopId}&shopType=${shopType || 'common'}`;
+   const finalFolder = window.getShopTemplateFolder(shopType || 'common'); // ✅ FIX: MAP SE FOLDER LO
+   const shopLink = `${window.location.origin}/shop-templates/${finalFolder}/dashboard.html?shopId=${shopId}`;
     
     navigator.clipboard.writeText(shopLink).then(() => {
         alert(`✅ Dashboard link copied!\n\nShop: ${shopName}\n\nLink: ${shopLink}\n\nAb ye link shop owner ko bhej do.`);
