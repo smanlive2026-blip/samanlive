@@ -65,11 +65,11 @@ router.get('/manager/dashboard', authManager, async (req, res) => {
         const area = await Area.findOne({ areaCode: manager.areaCode }).lean();
 
         const shops = await Shop.find(managerShopFilter(manager))
-            .sort({ createdAt: -1 }).lean();
+           .sort({ createdAt: -1 }).lean();
         shops.forEach(fixShopFolder);
 
         const modules = manager.moduleAccess && manager.moduleAccess.length
-            ? await Module.find({ id: { $in: manager.moduleAccess }, status: true }).lean()
+           ? await Module.find({ id: { $in: manager.moduleAccess }, status: true }).lean()
             : await Module.find({ status: true }).sort({ name: 1 }).lean();
 
         res.json({
@@ -104,7 +104,7 @@ router.get('/manager/shops', authManager, async (req, res) => {
     try {
         const manager = req.manager;
         const shops = await Shop.find({
-            ...managerShopFilter(manager),
+           ...managerShopFilter(manager),
             status: { $in: ['approved', 'active'] }
         }).sort({ createdAt: -1 }).lean();
         shops.forEach(fixShopFolder);
@@ -146,7 +146,7 @@ router.put('/manager/update-profile', authManager, async (req, res) => {
         if (name) manager.name = String(name).trim();
         if (phone) manager.phone = String(phone).trim();
         if (email) manager.email = String(email).toLowerCase().trim();
-        if (photo !== undefined) {
+        if (photo!== undefined) {
             if (photo && photo.length > 700000) {
                 return res.status(400).json({ success: false, error: 'Photo too large. Use image under 300KB' });
             }
@@ -172,21 +172,41 @@ router.put('/manager/shops/:id', authManager, async (req, res) => {
             || String(shop.controlledBy || '') === String(manager._id);
         if (!isMine) return res.status(403).json({ success: false, error: 'Access Denied: This shop is not assigned to you' });
 
-        const { location, areaCode, ownerId, managerCodes, claimedBy, controlledBy, createdBy, ...rest } = req.body;
+        const { location, areaCode, ownerId, managerCodes, claimedBy, controlledBy, createdBy,...rest } = req.body;
 
         // Sirf allowed field hi update honge
         const allowed = {};
         ['shopName','icon','logo','serviceType','categoryId','template','templateFolder','shopType','phone','contact','range','isActive','description'].forEach(k => {
-            if (rest[k] !== undefined) allowed[k] = rest[k];
+            if (rest[k]!== undefined) allowed[k] = rest[k];
         });
         if (rest.address) {
             allowed.address = (typeof rest.address === 'object')
-                ? { ...(shop.address?.toObject ? shop.address.toObject() : shop.address || {}), ...rest.address }
+               ? {...(shop.address?.toObject? shop.address.toObject() : shop.address || {}),...rest.address }
                 : { line1: rest.address };
         }
 
         const updated = await Shop.findByIdAndUpdate(req.params.id, { $set: allowed }, { new: true, runValidators: true });
         res.json({ success: true, shop: updated, message: 'Shop updated successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ========== 5B. SHOP DELETE (Sirf apni shop) ==========
+router.delete('/manager/shops/:id', authManager, async (req, res) => {
+    try {
+        const manager = req.manager;
+        const shop = await Shop.findById(req.params.id);
+        if (!shop) return res.status(404).json({ success: false, error: 'Shop not found' });
+
+        const isMine = shop.areaCode === manager.areaCode
+            || (shop.managerCodes && shop.managerCodes.includes(manager.managerCode))
+            || String(shop.controlledBy || '') === String(manager._id);
+        if (!isMine) return res.status(403).json({ success: false, error: 'Access Denied: This shop is not assigned to you' });
+
+        await Shop.findByIdAndUpdate(req.params.id, { $set: { isActive: false, status: 'deleted' } });
+        await Manager.findByIdAndUpdate(manager._id, { $inc: { currentShopCount: -1 } });
+        res.json({ success: true, message: 'Shop deleted successfully' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -219,11 +239,11 @@ router.get('/modules', async (req, res) => {
 router.post('/manager/create-delivery-manager', authManager, async (req, res) => {
     try {
         const manager = req.manager;
-        if (manager.role && manager.role !== 'area-manager') {
+        if (manager.role && manager.role!== 'area-manager') {
             return res.status(403).json({ success: false, message: 'Sirf Area Manager bana sakta hai' });
         }
         const { name, phone, email, vehicleType } = req.body;
-        if (!name || !phone) return res.status(400).json({ success: false, message: 'Name aur Phone zaruri hai' });
+        if (!name ||!phone) return res.status(400).json({ success: false, message: 'Name aur Phone zaruri hai' });
 
         const exists = await Manager.findOne({ phone });
         if (exists) return res.status(400).json({ success: false, message: 'Phone already exist' });
@@ -235,7 +255,7 @@ router.post('/manager/create-delivery-manager', authManager, async (req, res) =>
         const dm = new Manager({
             name: String(name).trim(),
             phone: String(phone).trim(),
-            email: email ? String(email).toLowerCase().trim() : `${managerCode.toLowerCase()}@samanlive.local`,
+            email: email? String(email).toLowerCase().trim() : `${managerCode.toLowerCase()}@samanlive.local`,
             loginToken, role: 'delivery-manager',
             areaCode: manager.areaCode, areaName: manager.areaName,
             city: manager.city, state: manager.state,
@@ -254,7 +274,7 @@ router.post('/manager/create-delivery-manager', authManager, async (req, res) =>
 router.get('/manager/delivery-managers', authManager, async (req, res) => {
     try {
         const managers = await Manager.find({ role: 'delivery-manager', areaCode: req.manager.areaCode })
-            .sort({ createdAt: -1 }).lean();
+           .sort({ createdAt: -1 }).lean();
         // token frontend ko link banane ke liye chahiye, isiliye bhej rahe hain
         res.json({ success: true, managers });
     } catch (err) {

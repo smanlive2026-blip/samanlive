@@ -28,14 +28,14 @@ const API = '/api';
 async function apiCall(endpoint, options = {}) {
     const opts = {
         method: options.method || 'GET',
-        headers: { 'Authorization': `Bearer ${token}`, ...(options.headers || {}) }
+        headers: { 'Authorization': `Bearer ${token}`,...(options.headers || {}) }
     };
     if (options.body) {
         if (options.body instanceof FormData) {
             opts.body = options.body;
         } else {
             opts.headers['Content-Type'] = 'application/json';
-            opts.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+            opts.body = typeof options.body === 'string'? options.body : JSON.stringify(options.body);
         }
     }
     const res = await fetch(API + endpoint, opts);
@@ -92,8 +92,8 @@ async function loadDashboard() {
 
         managerShops = shopsData.shops || shopsData || [];
         categories = modulesData.modules || modulesData || [];
-        allAreas = Array.isArray(areasRes) ? areasRes : (areasRes.areas || []);
-        allManagers = Array.isArray(managersRes) ? managersRes : (managersRes.managers || []);
+        allAreas = Array.isArray(areasRes)? areasRes : (areasRes.areas || []);
+        allManagers = Array.isArray(managersRes)? managersRes : (managersRes.managers || []);
 
         renderProfile();
         renderStats(stats);
@@ -109,7 +109,7 @@ async function loadDashboard() {
     } catch (err) {
         console.error('Dashboard Error:', err);
         const msg = (err.message.includes('Manager not found') || err.message.includes('Invalid token'))
-            ? 'Session expired. Please login again.' : err.message;
+           ? 'Session expired. Please login again.' : err.message;
         document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:20px;padding:20px;text-align:center"><i class="fas fa-exclamation-triangle" style="font-size:64px;color:#ef4444"></i><h1 style="color:#ef4444">Error Loading Dashboard</h1><p style="color:#64748b;max-width:600px">${escapeHtml(msg)}</p><button onclick="location.reload()" class="btn btn-primary">Retry</button></div>`;
     }
 }
@@ -123,7 +123,7 @@ function renderProfile() {
     setText('managerName', currentManager.name || 'Manager');
     setText('managerBadge', currentManager.bucket || currentManager.managerCode || 'Area Manager');
     setText('managerFullName', currentManager.name || 'Manager Name');
-    setText('managerRole', currentManager.role === 'delivery-manager' ? 'Delivery Manager' : 'Area Manager');
+    setText('managerRole', currentManager.role === 'delivery-manager'? 'Delivery Manager' : 'Area Manager');
     setText('managerAreaName', currentManager.areaName || currentManager.areaCode || '-');
     setText('managerPhone', currentManager.phone || 'Not Set');
     setText('managerEmail', currentManager.email || 'Not Set');
@@ -135,20 +135,20 @@ function renderProfile() {
     setText('managerCodeText2', currentManager.managerCode || '-');
 
     const avatarHtml = currentManager.photo
-        ? `<img src="${currentManager.photo}" alt=""><div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`
+       ? `<img src="${currentManager.photo}" alt=""><div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`
         : `${(currentManager.name || 'A').charAt(0).toUpperCase()}<div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`;
     const avatarEl = document.getElementById('managerAvatar');
     if (avatarEl) avatarEl.innerHTML = avatarHtml;
 
     const chip = document.getElementById('headerManagerAvatar');
-    if (chip) chip.innerHTML = currentManager.photo ? `<img src="${currentManager.photo}" alt="">` : (currentManager.name || 'A').charAt(0).toUpperCase();
+    if (chip) chip.innerHTML = currentManager.photo? `<img src="${currentManager.photo}" alt="">` : (currentManager.name || 'A').charAt(0).toUpperCase();
 }
 function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
 
 // ========== STATS + LIMIT ==========
 function renderStats(stats) {
-    setText('totalShops', stats?.totalShops ?? managerShops.length);
-    setText('activeShops', stats?.activeShops ?? managerShops.filter(s => s.isActive).length);
+    setText('totalShops', stats?.totalShops?? managerShops.length);
+    setText('activeShops', stats?.activeShops?? managerShops.filter(s => s.isActive).length);
 }
 function updateShopLimitUI() {
     if (!currentManager) return;
@@ -170,7 +170,7 @@ function renderAreaMapBlock() {
     setText('detailCity', myArea.city || '-'); setText('detailState', myArea.state || '-');
     setText('detailCenter', `${(myArea.centerLat || 0).toFixed(4)}, ${(myArea.centerLng || 0).toFixed(4)}`);
     setText('detailRadius', myArea.radius || 50);
-    if (!myArea.centerLat || !myArea.centerLng) return;
+    if (!myArea.centerLat ||!myArea.centerLng) return;
     if (managerAreaMapInstance) { managerAreaMapInstance.remove(); managerAreaMapInstance = null; }
     setTimeout(() => {
         const div = document.getElementById('managerAreaMap'); if (!div || typeof L === 'undefined') return;
@@ -183,15 +183,19 @@ function renderAreaMapBlock() {
 }
 function toggleAreaMap() {
     const wrap = document.getElementById('areaMapWrapper'); const btn = document.getElementById('toggleMapBtn');
-    if (!wrap || !btn) return;
-    isMapHidden = !isMapHidden;
-    wrap.style.display = isMapHidden ? 'none' : 'block';
-    btn.innerHTML = isMapHidden ? '<i class="fas fa-eye"></i> Show Map' : '<i class="fas fa-eye-slash"></i> Hide Map';
+    if (!wrap ||!btn) return;
+    isMapHidden =!isMapHidden;
+    wrap.style.display = isMapHidden? 'none' : 'block';
+    btn.innerHTML = isMapHidden? '<i class="fas fa-eye"></i> Show Map' : '<i class="fas fa-eye-slash"></i> Hide Map';
     if (!isMapHidden) setTimeout(() => managerAreaMapInstance && managerAreaMapInstance.invalidateSize(), 200);
 }
 
 // ========== SHOPS LIST - TEMPLATE DASHBOARD HIT ==========
 function getShopFolder(shop) {
+    //const id = shop.template || shop.serviceType || shop.categoryId || shop.shopType || 'common';
+    //if (typeof window.getShopTemplateFolder === 'function') return window.getShopTemplateFolder(id);
+    //return 'common';
+    if (shop.templateFolder || shop.folder) return shop.templateFolder || shop.folder;
     const id = shop.template || shop.serviceType || shop.categoryId || shop.shopType || 'common';
     if (typeof window.getShopTemplateFolder === 'function') return window.getShopTemplateFolder(id);
     return 'common';
@@ -206,26 +210,40 @@ function renderShops(shops) {
     }
     tbody.innerHTML = shops.map(shop => {
         const url = shopDashboardUrl(shop);
-        const iconHtml = shop.logo ? `<img src="${shop.logo}" style="width:40px;height:40px;border-radius:8px;object-fit:cover">` : `<span style="font-size:26px">${shop.icon || '🏪'}</span>`;
+        const iconHtml = shop.logo? `<img src="${shop.logo}" style="width:40px;height:40px;border-radius:8px;object-fit:cover">` : `<span style="font-size:26px">${shop.icon || '🏪'}</span>`;
         return `<tr>
             <td>${iconHtml}</td>
             <td><strong>${escapeHtml(shop.shopName)}</strong><br><small style="color:#64748b">${escapeHtml(getShopFolder(shop))}</small></td>
             <td>${escapeHtml(getCategoryName(shop.serviceType || shop.categoryId || shop.template))}</td>
             <td>${escapeHtml(shop.ownerName || 'N/A')}</td>
             <td>${((shop.range || 5000) / 1000).toFixed(0)} KM</td>
-            <td><span class="badge ${shop.isActive ? 'badge-success' : 'badge-danger'}">${shop.isActive ? 'Active' : 'Inactive'}</span></td>
+            <td><span class="badge ${shop.isActive? 'badge-success' : 'badge-danger'}">${shop.isActive? 'Active' : 'Inactive'}</span></td>
             <td><div style="display:flex;gap:8px;flex-wrap:wrap">
                 <a href="${url}" target="_blank" class="btn btn-small btn-primary"><i class="fas fa-external-link-alt"></i> Open</a>
                 <button class="btn btn-small btn-link" onclick="copyShopLink('${shop._id}')"><i class="fas fa-link"></i> Link</button>
                 <button class="btn btn-small" onclick='editShop(${JSON.stringify(shop).replace(/'/g, "&apos;")})'><i class="fas fa-edit"></i> Edit</button>
+                <button class="btn btn-small btn-danger" onclick="deleteShop('${shop._id}')"><i class="fas fa-trash"></i> Delete</button>
             </div></td></tr>`;
     }).join('');
 }
 window.copyShopLink = function(shopId) {
     const shop = managerShops.find(s => s._id === shopId);
-    const link = shop ? shopDashboardUrl(shop) : `${window.location.origin}/shop-templates/common/dashboard.html?shopId=${shopId}`;
+    const link = shop? shopDashboardUrl(shop) : `${window.location.origin}/shop-templates/common/dashboard.html?shopId=${shopId}`;
     navigator.clipboard.writeText(link).then(() => alert(`✅ Dashboard link copied!\n\n${link}`)).catch(() => prompt('Copy this link:', link));
 };
+
+// ========== SHOP DELETE ==========
+async function deleteShop(shopId) {
+    const shop = managerShops.find(s => s._id === shopId);
+    const shopName = shop? shop.shopName : 'this shop';
+    if (!confirm(`⚠️ Pakka delete karna hai?\n\nShop: ${shopName}\n\nYe shop band ho jayegi, list se hat jayegi aur dashboard nahi khulega.`)) return;
+    try {
+        const data = await apiCall(`/manager/shops/${shopId}`, { method: 'DELETE' });
+        if (data.success) { alert('✅ Shop delete ho gayi'); loadDashboard(); }
+        else alert(data.error || data.message || 'Delete nahi hui');
+    } catch (err) { alert('Error: ' + err.message); }
+}
+window.deleteShop = deleteShop;
 
 // ========== SERVICES ==========
 function renderServiceCards(cats) {
@@ -239,7 +257,7 @@ function getCategoryName(id) {
         if (t) return t.name;
     }
     const cat = categories.find(c => c.id === id || c._id === id || c.name === id);
-    return cat ? cat.name : (id || '-');
+    return cat? cat.name : (id || '-');
 }
 
 // ========== PROFILE MODAL ==========
@@ -250,7 +268,7 @@ function openProfileModal() {
     document.getElementById('profileEmail').value = currentManager?.email || '';
     document.getElementById('profileAreaName').value = currentManager?.areaName || currentManager?.areaCode || '';
     const prev = document.getElementById('photoPreview');
-    prev.innerHTML = currentManager?.photo ? `<img src="${currentManager.photo}" alt="Profile">` : '<i class="fas fa-user" style="font-size:42px"></i>';
+    prev.innerHTML = currentManager?.photo? `<img src="${currentManager.photo}" alt="Profile">` : '<i class="fas fa-user" style="font-size:42px"></i>';
     document.getElementById('profilePhotoBase64').value = currentManager?.photo || '';
 }
 function closeProfileModal() { document.getElementById('profileModal')?.classList.remove('active'); }
@@ -273,7 +291,7 @@ function bindProfileForm() {
                 email: document.getElementById('profileEmail').value.trim(),
                 photo: document.getElementById('profilePhotoBase64').value || currentManager.photo || ''
             }});
-            if (data.success) { alert('✅ Profile updated successfully!'); currentManager = data.manager || { ...currentManager, ...data }; renderProfile(); closeProfileModal(); }
+            if (data.success) { alert('✅ Profile updated successfully!'); currentManager = data.manager || {...currentManager,...data }; renderProfile(); closeProfileModal(); }
             else alert(data.error || 'Error updating profile');
         } catch (err) { alert('Error: ' + err.message); }
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Profile'; }
@@ -296,7 +314,7 @@ function openShopModal(shop = null) {
     document.getElementById('shopPhone').value = shop.phone || shop.contact || '';
     document.getElementById('shopAddress').value = shop.address?.line1 || shop.address || '';
     document.getElementById('shopRange').value = shop.range || 5000;
-    document.getElementById('shopStatus').value = shop.isActive ? 'true' : 'false';
+    document.getElementById('shopStatus').value = shop.isActive? 'true' : 'false';
     document.getElementById('shopDesc').value = shop.description || '';
     document.getElementById('shopLat').value = shop.location?.coordinates?.[1] || '';
     document.getElementById('shopLng').value = shop.location?.coordinates?.[0] || '';
@@ -315,7 +333,7 @@ function bindShopEditForm() {
                 shopName: document.getElementById('shopName').value.trim(),
                 icon: document.getElementById('shopIcon').value || '🏪',
                 serviceType: catId, categoryId: catId, template: catId,
-                shopType: typeof window.mapShopType === 'function' ? window.mapShopType(catId) : 'common',
+                shopType: typeof window.mapShopType === 'function'? window.mapShopType(catId) : 'common',
                 phone: document.getElementById('shopPhone').value.trim(),
                 address: { line1: document.getElementById('shopAddress').value.trim() },
                 range: parseInt(document.getElementById('shopRange').value),
@@ -338,7 +356,7 @@ async function loadDeliveryBoys() {
         if (!data.success || list.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Abhi koi Delivery Boy nahi hai</td></tr>'; return; }
         tbody.innerHTML = list.map(dm => {
             const link = `${window.location.origin}/delivery-boy.html?token=${dm.loginToken || ''}`;
-            return `<tr><td>${escapeHtml(dm.name)}</td><td>${escapeHtml(dm.phone)}</td><td>${escapeHtml(dm.vehicleType || 'bike')}</td><td>${escapeHtml(dm.managerCode)}</td><td><span class="badge ${dm.status ? 'badge-success' : 'badge-danger'}">${dm.status ? 'Active' : 'Inactive'}</span></td><td><button class="btn btn-small btn-primary" onclick="window.open('${link}')">Open</button> <button class="btn btn-small btn-link" onclick="navigator.clipboard.writeText('${link}');alert('Link Copied')">Copy</button></td></tr>`;
+            return `<tr><td>${escapeHtml(dm.name)}</td><td>${escapeHtml(dm.phone)}</td><td>${escapeHtml(dm.vehicleType || 'bike')}</td><td>${escapeHtml(dm.managerCode)}</td><td><span class="badge ${dm.status? 'badge-success' : 'badge-danger'}">${dm.status? 'Active' : 'Inactive'}</span></td><td><button class="btn btn-small btn-primary" onclick="window.open('${link}')">Open</button> <button class="btn btn-small btn-link" onclick="navigator.clipboard.writeText('${link}');alert('Link Copied')">Copy</button></td></tr>`;
         }).join('');
     } catch (err) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Delivery list load nahi hui</td></tr>'; }
 }
@@ -368,7 +386,7 @@ function openDeliveryManagerPanel() { document.getElementById('deliverySection')
 function openProductLibrary() { document.getElementById('libraryPopup')?.classList.add('active'); }
 function closeProductLibrary() { document.getElementById('libraryPopup')?.classList.remove('active'); }
 function openOrderView() { alert('Order View - Coming Soon'); }
-function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text == null ? '' : String(text); return d.innerHTML; }
+function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text == null? '' : String(text); return d.innerHTML; }
 
 window.onclick = e => { if (e.target.classList?.contains('modal')) e.target.classList.remove('active'); };
 window.addEventListener('message', e => { if (e.data?.type === 'ADD_FROM_LIBRARY') { alert(`Selected: ${e.data.name}`); closeProductLibrary(); } });

@@ -5,6 +5,7 @@ ROUTES:
 - GET /api/manager/dashboard
 - GET /api/manager/shops
 - PUT /api/manager/shops/:id
+- DELETE /api/manager/shops/:id
 - PUT /api/manager/update-profile
 - POST /api/manager/create-shop-v2 (routes/managerShopCreate.js)
 - Template: /public/assets/js/shop-template-map.js -> getShopTemplateFolder(id) || 'common'
@@ -126,7 +127,7 @@ ROUTES:
       <!-- SHOPS -->
       <section class="card" id="shopsSection">
         <div class="card-header"><h2><i class="fas fa-store"></i> My Created Shops</h2></div>
-        <div class="info-note"><i class="fas fa-info-circle"></i><span>Open dabate hi shop apne template dashboard pe khulegi: /shop-templates/{folder}/dashboard.html?shopId=</span></div>
+        <div class="info-note"><i class="fas fa-info-circle"></i><span>Open dabate hi shop apne template dashboard pe khulegi: /shop-templates/{folder}/dashboard.html?shopId= | Galat shop ho to Delete se hata sakte ho</span></div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Icon</th><th>Name</th><th>Category</th><th>Owner</th><th>Range</th><th>Status</th><th>Actions</th></tr></thead>
@@ -209,7 +210,8 @@ ROUTES:
 <!-- SHOP EDIT MODAL -->
 <div class="modal" id="shopModal"><div class="modal-content">
   <div class="modal-header"><h2 id="modalTitle"><i class="fas fa-edit"></i> Edit Shop Details</h2><button class="close-btn" onclick="closeShopModal()">×</button></div>
-  <div class="info-note warning"><i class="fas fa-exclamation-triangle"></i><span>You can edit shop details but cannot delete. Location update from shop dashboard.</span></div>
+  <!--<div class="info-note warning"><i class="fas fa-exclamation-triangle"></i><span>You can edit shop details but cannot delete. Location update from shop dashboard.</span></div>-->
+  <div class="info-note warning"><i class="fas fa-exclamation-triangle"></i><span>You can edit shop details. Delete karna ho to Shops list me Delete button hai. Location update from shop dashboard.</span></div>
   <form id="shopForm">
     <input type="hidden" id="shopId">
     <div class="form-row"><div class="form-group"><label>Shop Name *</label><input type="text" id="shopName" required></div><div class="form-group"><label>Icon</label><input type="text" id="shopIcon" placeholder="🏪" maxlength="2"></div></div>
@@ -240,7 +242,7 @@ ROUTES:
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/assets/js/shop-template-map.js?v=2"></script>
-<script src="/assets/js/shop-create.js?v=6"></script>
-<script src="/assets/js/area-manager.js?v=6"></script>
+<script src="/assets/js/shop-create.js?v=7"></script>
+<script src="/assets/js/area-manager.js?v=7"></script>
 </body>
 </html>

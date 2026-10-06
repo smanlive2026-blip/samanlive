@@ -88,6 +88,8 @@ button{font-family:inherit}
 .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
 .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
 .btn-primary:hover{background:var(--primary2)}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn-danger:hover{background:#dc2626}
 .btn-outline{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
 .card .btn-outline,.modal .btn-outline{color:var(--primary);border-color:#bfdbfe;background:#eff6ff}
 .btn-small{padding:7px 11px;font-size:12px;border-radius:10px}
