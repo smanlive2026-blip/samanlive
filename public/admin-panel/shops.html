@@ -181,6 +181,22 @@
 
     <script src="assets/admin.js"></script>
     <script>
+        // === FIX: Launcher me admin.js wala apiCall na mile to page atke nahi ===
+        if (typeof apiCall === 'undefined') {
+            window.apiCall = async function(endpoint, method='GET', body=null){
+                const opts = { method, headers: { 'Content-Type':'application/json' } };
+                if(body) opts.body = JSON.stringify(body);
+                const url = endpoint.startsWith('/api')? endpoint : '/api' + endpoint;
+                const res = await fetch(url, opts);
+                const text = await res.text();
+                if(!text || !text.trim()) return [];
+                let json = {};
+                try{ json = JSON.parse(text); }catch(e){ return []; }
+                if(!res.ok) throw new Error(json.error || json.msg || 'API Error');
+                return json;
+            };
+        }
+
         let allShopsFiltered = [];
         
         // Template types that have specific dashboards
