@@ -7,6 +7,7 @@
 <title>SL MASTER DASHBOARD v99 - WORLD CLASS + HISTORY</title>
 <link rel="stylesheet" href="./assets/launcher.css?v=999">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -74,6 +75,17 @@
 </div>
 
 <script>
+// ===== GLOBAL HELPERS FOR ALL PAGES =====
+window.showToast = window.showToast || function(msg){ const t=document.getElementById('toast'); if(!t) return; t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); };
+window.loadPage = function(p, el){ if(window.Launcher) window.Launcher.loadPage(p, el); };
+window.apiCall = window.apiCall || async function(url){
+  const base = window.API_BASE || '/api/admin';
+  const token = localStorage.getItem('adminToken') || localStorage.getItem('token') || '';
+  const res = await fetch(base + url, { headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' }, cache:'no-store' });
+  if(!res.ok) throw new Error('API '+res.status);
+  return res.json();
+};
+
 // ===== HISTORY TRACKER CLASS - YAHI DALNA THA =====
 class SLHistory {
   constructor(){ this.key='sl_master_history_v99'; this.max=100; }
@@ -86,7 +98,7 @@ class SLHistory {
     if(history.length>this.max) history.pop();
     localStorage.setItem(this.key, JSON.stringify(history));
   }
-  getAll(){ return JSON.parse(localStorage.getItem(this.key)||'[]'); }
+  getAll(){ try{ return JSON.parse(localStorage.getItem(this.key)||'[]'); }catch(e){ return []; } }
   clear(){ localStorage.removeItem(this.key); }
   getAnalytics(){ const h=this.getAll(); const c={}; h.forEach(r=>c[r.page]=(c[r.page]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1]); }
 }
@@ -114,7 +126,18 @@ class SLMasterLauncher {
      {id:"settings", name:"settings.html", icon:"⚙️", tag:"SETTINGS", cat:"SYSTEM"},
     ];
     this.currentPage = localStorage.getItem('sl_last_page') || 'index';
+    this._pageScripts = [];
     this.init();
+  }
+  cleanupPage(){
+    // Purane page ke timer band karo
+    if (window.__slDashTimer) { clearInterval(window.__slDashTimer); window.__slDashTimer = null; }
+    // Purane page ki script saaf karo - dobara declare wala error band
+    this._pageScripts.forEach(s=>{ try{s.remove()}catch(e){} });
+    this._pageScripts = [];
+    // Purane chart saaf karo
+    ['__slAreaChart','__slStatusChart','__slAreaRadiusChart'].forEach(k=>{ if(window[k]){ try{window[k].destroy()}catch(e){} window[k]=null; } });
+    if(window.moduleMap){ try{window.moduleMap.remove()}catch(e){} window.moduleMap=null; }
   }
   init(){
     this.renderNav(this.files);
@@ -168,17 +191,23 @@ class SLMasterLauncher {
       document.getElementById('overlay').classList.remove('show');
     }
     try{
-      if(window.moduleMap){ window.moduleMap.remove(); window.moduleMap=null; }
+      this.cleanupPage();
       const bust = Date.now();
       const res = await fetch(`${pageName}.html?v=999&t=${bust}`, {cache:'no-store'});
       if(!res.ok) throw new Error('File not found');
       const html = await res.text();
       container.innerHTML = html;
-      container.querySelectorAll('script').forEach(old=>{
+      const scripts = Array.from(container.querySelectorAll('script'));
+      for(const old of scripts){
         const s = document.createElement('script');
-        if(old.src) s.src = old.src + `?t=${bust}`; else s.textContent = old.textContent;
-        document.body.appendChild(s); old.remove();
-      });
+        s.setAttribute('data-sl-page-script','1');
+        if(old.src) { s.src = old.src + (old.src.includes('?')?'&':'?') + `t=${bust}`; }
+        else { s.textContent = old.textContent; }
+        old.remove();
+        document.body.appendChild(s);
+        this._pageScripts.push(s);
+        if(old.src){ await new Promise(r=>{ s.onload=r; s.onerror=r; }); }
+      }
       document.getElementById('breadcrumb').innerText = `🏠 / ${pageName}.html`;
       document.getElementById('lastLoad').innerText = `${pageName} @ ${new Date().toLocaleTimeString()}`;
       this.toast(`Loaded ${pageName}.html`);

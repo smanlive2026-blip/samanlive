@@ -53,12 +53,21 @@
 </div>
 
 <script>
-let areaChartInstance = null, statusChartInstance = null, areaRadiusChartInstance = null;
+(function(){
+  // Dobara load pe takrane se rokne ke liye purana timer band
+  if (window.__slDashTimer) { clearInterval(window.__slDashTimer); window.__slDashTimer = null; }
+  if (window.__slAreaChart) { try{window.__slAreaChart.destroy()}catch(e){} window.__slAreaChart=null; }
+  if (window.__slStatusChart) { try{window.__slStatusChart.destroy()}catch(e){} window.__slStatusChart=null; }
+  if (window.__slAreaRadiusChart) { try{window.__slAreaRadiusChart.destroy()}catch(e){} window.__slAreaRadiusChart=null; }
 
-async function loadDashboard() {
-    if (areaChartInstance) { areaChartInstance.destroy(); areaChartInstance = null; }
-    if (statusChartInstance) { statusChartInstance.destroy(); statusChartInstance = null; }
-    if (areaRadiusChartInstance) { areaRadiusChartInstance.destroy(); areaRadiusChartInstance = null; }
+  async function loadDashboard() {
+    // Page pe dashboard hai hi nahi to ruk jao, error mat do
+    if (!document.getElementById('totalUsersCount')) return;
+    if (typeof apiCall!== 'function') { const lu=document.getElementById('lastUpdated'); if(lu) lu.textContent='Ready'; return; }
+
+    if (window.__slAreaChart) { window.__slAreaChart.destroy(); window.__slAreaChart = null; }
+    if (window.__slStatusChart) { window.__slStatusChart.destroy(); window.__slStatusChart = null; }
+    if (window.__slAreaRadiusChart) { window.__slAreaRadiusChart.destroy(); window.__slAreaRadiusChart = null; }
 
     try {
         const bust = Date.now();
@@ -82,9 +91,10 @@ async function loadDashboard() {
         animateValue('totalContentCount', 0, stats.content || 0, 800);
         animateValue('pendingShopsCount', 0, shopsArr.filter(s => s.status === 'pending').length, 800);
 
-        document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second:'2-digit' }) + ' (v99 Fresh)';
+        const lu = document.getElementById('lastUpdated'); if(lu) lu.textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second:'2-digit' }) + ' (v99 Fresh)';
 
         setTimeout(() => {
+            if (!document.getElementById('areaChart')) return;
             renderAreaChart(shopsArr);
             renderStatusChart(shopsArr);
             renderAreaRadiusChart(areasArr);
@@ -94,12 +104,12 @@ async function loadDashboard() {
 
     } catch (err) {
         console.error('Dashboard load error:', err);
-        showToast('Dashboard fail: ' + err.message, 'error');
-        document.getElementById('lastUpdated').textContent = 'Error - ' + err.message;
+        if (typeof showToast === 'function') showToast('Dashboard fail: ' + err.message, 'error');
+        const lu = document.getElementById('lastUpdated'); if(lu) lu.textContent = 'Error - ' + err.message;
     }
-}
+  }
 
-function animateValue(id, start, end, duration) {
+  function animateValue(id, start, end, duration) {
     const element = document.getElementById(id); if (!element) return;
     const range = end - start;
     const increment = range / (duration / 16);
@@ -107,29 +117,34 @@ function animateValue(id, start, end, duration) {
     const timer = setInterval(() => {
         current += increment;
         if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) { current = end; clearInterval(timer); }
-        element.textContent = Math.floor(current);
+        if (document.getElementById(id)) element.textContent = Math.floor(current); else clearInterval(timer);
     }, 16);
-}
+  }
 
-function renderAreaChart(shops) {
+  function renderAreaChart(shops) {
+    if (typeof Chart === 'undefined') return;
     const areaCounts = {}; shops.forEach(s => { if (s.area) areaCounts[s.area] = (areaCounts[s.area] || 0) + 1; });
     const ctx = document.getElementById('areaChart'); if (!ctx) return;
     const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300); gradient.addColorStop(0, '#8b5cf6'); gradient.addColorStop(1, '#a78bfa');
-    areaChartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(areaCounts).length?Object.keys(areaCounts):['No Data'], datasets: [{ label: 'Shops', data: Object.keys(areaCounts).length?Object.values(areaCounts):[0], backgroundColor: gradient, borderRadius: 8, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } } });
-}
+    window.__slAreaChart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(areaCounts).length?Object.keys(areaCounts):['No Data'], datasets: [{ label: 'Shops', data: Object.keys(areaCounts).length?Object.values(areaCounts):[0], backgroundColor: gradient, borderRadius: 8, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } } });
+  }
 
-function renderAreaRadiusChart(areas) {
+  function renderAreaRadiusChart(areas) {
+    if (typeof Chart === 'undefined') return;
     const radiusCounts = {}; areas.forEach(a => { const radius = a.radius || 50; const range = radius <= 25? '1-25 km' : radius <= 50? '26-50 km' : radius <= 100? '51-100 km' : '100+ km'; radiusCounts[range] = (radiusCounts[range] || 0) + 1; });
     const ctx = document.getElementById('areaRadiusChart'); if (!ctx) return;
-    areaRadiusChartInstance = new Chart(ctx, { type: 'pie', data: { labels: Object.keys(radiusCounts).length?Object.keys(radiusCounts):['No Data'], datasets: [{ data: Object.keys(radiusCounts).length?Object.values(radiusCounts):[0], backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0, hoverOffset: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
-}
+    window.__slAreaRadiusChart = new Chart(ctx, { type: 'pie', data: { labels: Object.keys(radiusCounts).length?Object.keys(radiusCounts):['No Data'], datasets: [{ data: Object.keys(radiusCounts).length?Object.values(radiusCounts):[0], backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0, hoverOffset: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+  }
 
-function renderStatusChart(shops) {
+  function renderStatusChart(shops) {
+    if (typeof Chart === 'undefined') return;
     const statusCounts = { active: shops.filter(s => s.status === 'active' || s.status === 'approved').length, pending: shops.filter(s => s.status === 'pending').length, inactive: shops.filter(s => s.status === 'inactive' || s.status === 'hidden').length };
     const ctx = document.getElementById('statusChart'); if (!ctx) return;
-    statusChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: ['Active', 'Pending', 'Inactive'], datasets: [{ data: [statusCounts.active, statusCounts.pending, statusCounts.inactive], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], borderWidth: 0, hoverOffset: 8 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom' } } } });
-}
+    window.__slStatusChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Active', 'Pending', 'Inactive'], datasets: [{ data: [statusCounts.active, statusCounts.pending, statusCounts.inactive], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], borderWidth: 0, hoverOffset: 8 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom' } } } });
+  }
 
-loadDashboard();
-setInterval(loadDashboard, 30000);
+  loadDashboard();
+  // ABHI KE LIYE BAND - baad me sahi karke chalu karenge
+  // window.__slDashTimer = setInterval(loadDashboard, 30000);
+})();
 </script>
