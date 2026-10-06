@@ -254,6 +254,7 @@ app.use('/api/auth', require('./routes/auth'));
 // ===== AREA MANAGER - SABSE PEHLE (areaRoutes se takraye nahi, manager auto banne wala system safe rahega) =====
 app.use('/api', require('./routes/areaManagerRoutes'));
 app.use('/api', require('./routes/managerShopCreate'));
+app.use('/api', deliveryManagerRoutes);
 // ===== END AREA MANAGER =====
 app.use('/api', require('./routes/adminRoutes'));
 //app.use('/api/manager', require('./routes/managerRoutes'));
