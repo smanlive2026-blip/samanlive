@@ -205,15 +205,27 @@ class SLMasterLauncher {
       const html = await res.text();
       container.innerHTML = html;
       const scripts = Array.from(container.querySelectorAll('script'));
+      if(!window.__slLoadedScripts) window.__slLoadedScripts = {};
       for(const old of scripts){
-        const s = document.createElement('script');
-        s.setAttribute('data-sl-page-script','1');
-        if(old.src) { s.src = old.src + (old.src.includes('?')?'&':'?') + `t=${bust}`; }
-        else { s.textContent = '(function(){\n' + old.textContent + '\n})();'; }
         old.remove();
-        document.body.appendChild(s);
-        this._pageScripts.push(s);
-        if(old.src){ await new Promise(r=>{ s.onload=r; s.onerror=r; }); }
+        if(old.src) {
+          const cleanSrc = old.src.split('?')[0];
+          // FIX: admin.js / leaflet.js jaisi bahari file ek baar hi chalegi, API_BASE dobara wala error band
+          if(window.__slLoadedScripts[cleanSrc]) continue;
+          window.__slLoadedScripts[cleanSrc] = true;
+          const s = document.createElement('script');
+          s.setAttribute('data-sl-page-script','1');
+          s.src = old.src + (old.src.includes('?')?'&':'?') + `t=${bust}`;
+          document.body.appendChild(s);
+          this._pageScripts.push(s);
+          await new Promise(r=>{ s.onload=r; s.onerror=r; });
+        } else {
+          const s = document.createElement('script');
+          s.setAttribute('data-sl-page-script','1');
+          s.textContent = '(function(){\n' + old.textContent + '\n})();';
+          document.body.appendChild(s);
+          this._pageScripts.push(s);
+        }
       }
       document.getElementById('breadcrumb').innerText = `🏠 / ${pageName}.html`;
       document.getElementById('lastLoad').innerText = `${pageName} @ ${new Date().toLocaleTimeString()}`;
