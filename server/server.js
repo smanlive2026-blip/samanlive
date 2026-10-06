@@ -251,6 +251,10 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', require('./routes/auth'));
+// ===== AREA MANAGER - SABSE PEHLE (areaRoutes se takraye nahi, manager auto banne wala system safe rahega) =====
+app.use('/api', require('./routes/areaManagerRoutes'));
+app.use('/api', require('./routes/managerShopCreate'));
+// ===== END AREA MANAGER =====
 app.use('/api', require('./routes/adminRoutes'));
 //app.use('/api/manager', require('./routes/managerRoutes'));
 app.use('/api', require('./routes/areaRoutes'));
@@ -261,8 +265,8 @@ app.use('/api/location', locationRoutes);
 app.use('/api/location', require('./routes/user.location.routes'));
 app.use('/api/user', userRoutes);
 app.use('/api/admin', require('./routes/userAdmin'));
-app.use('/api', require('./routes/areaManagerRoutes'));
-app.use('/api', require('./routes/managerShopCreate'));
+//app.use('/api', require('./routes/areaManagerRoutes'));
+//app.use('/api', require('./routes/managerShopCreate'));
 app.get('/admin/:page', (req, res) => {
     const filePath = path.join(__dirname, `../public/admin-panel/${req.params.page}.html`);
     serveHtmlFresh(filePath, res);

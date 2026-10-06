@@ -161,15 +161,16 @@ router.get('/managers', async (req, res) => {
     }
 });
 
-router.get('/manager-by-token/:token', async (req, res) => {
-    try {
-        const manager = await Manager.findOne({ loginToken: req.params.token });
-        if (!manager) return res.status(404).json({ error: 'Manager not found' });
-        res.json({ success: true, manager });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// ===== COMMENTED - Duplicate hai, areaManagerRoutes.js wala chalega =====
+//router.get('/manager-by-token/:token', async (req, res) => {
+//    try {
+//        const manager = await Manager.findOne({ loginToken: req.params.token });
+//        if (!manager) return res.status(404).json({ error: 'Manager not found' });
+//        res.json({ success: true, manager });
+//    } catch (err) {
+//        res.status(500).json({ error: err.message });
+//    }
+//});
 
 router.put('/managers/:id', async (req, res) => {
     try {
@@ -248,6 +249,6 @@ router.delete('/shops/:id', async (req, res) => {
 
 router.get('/users', async (req, res) => res.json([]));
 router.get('/products', async (req, res) => res.json([]));
-router.get('/modules', async (req, res) => res.json({ modules: [] }));
+//router.get('/modules', async (req, res) => res.json({ modules: [] }));
 
 module.exports = router;
