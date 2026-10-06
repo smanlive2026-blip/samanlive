@@ -7,6 +7,8 @@
 // ========================================
 const express = require('express');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
@@ -48,6 +50,14 @@ function managerShopFilter(manager) {
     };
 }
 
+// Dashboard folder check - jiska dashboard hai wahi, nahi hai to common
+function fixShopFolder(shop) {
+    const folder = shop.templateFolder || shop.folder || shop.template || shop.serviceType || shop.categoryId || 'common';
+    const dashPath = path.join(__dirname, '../../public/shop-templates', folder, 'dashboard.html');
+    if (!fs.existsSync(dashPath)) { shop.templateFolder = 'common'; shop.folder = 'common'; }
+    return shop;
+}
+
 // ========== 1. DASHBOARD ==========
 router.get('/manager/dashboard', authManager, async (req, res) => {
     try {
@@ -56,6 +66,7 @@ router.get('/manager/dashboard', authManager, async (req, res) => {
 
         const shops = await Shop.find(managerShopFilter(manager))
             .sort({ createdAt: -1 }).lean();
+        shops.forEach(fixShopFolder);
 
         const modules = manager.moduleAccess && manager.moduleAccess.length
             ? await Module.find({ id: { $in: manager.moduleAccess }, status: true }).lean()
@@ -96,6 +107,7 @@ router.get('/manager/shops', authManager, async (req, res) => {
             ...managerShopFilter(manager),
             status: { $in: ['approved', 'active'] }
         }).sort({ createdAt: -1 }).lean();
+        shops.forEach(fixShopFolder);
 
         res.json({ success: true, shops, total: shops.length, areaCode: manager.areaCode });
     } catch (err) {

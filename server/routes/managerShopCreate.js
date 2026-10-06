@@ -8,6 +8,8 @@
 // Fallback: common
 // ========================================
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 const Shop = require('../models/Shop');
 const Manager = require('../models/Manager');
@@ -54,10 +56,20 @@ const TEMPLATE_MAP = {
     'tripal-shop':'product','vet-clinic':'service','vet-shop':'product','watch-shop':'product','winter-wear':'fashion',
     'common':'common'
 };
+//function resolveTemplate(templateId) {
+// const id = String(templateId || 'common').trim();
+// if (TEMPLATE_MAP[id]) return { id, folder: id, type: TEMPLATE_MAP[id] };
+// return { id: 'common', folder: 'common', type: 'common' };
+//}
 function resolveTemplate(templateId) {
     const id = String(templateId || 'common').trim();
-    if (TEMPLATE_MAP[id]) return { id, folder: id, type: TEMPLATE_MAP[id] };
-    return { id: 'common', folder: 'common', type: 'common' };
+    if (!TEMPLATE_MAP[id]) return { id: 'common', folder: 'common', type: 'common' };
+    const dashPath = path.join(__dirname, '../../public/shop-templates', id, 'dashboard.html');
+    if (!fs.existsSync(dashPath)) {
+        console.log(`⚠️ Dashboard missing for ${id}, fallback to common`);
+        return { id, folder: 'common', type: TEMPLATE_MAP[id] };
+    }
+    return { id, folder: id, type: TEMPLATE_MAP[id] };
 }
 
 // ========== CREATE SHOP ==========
@@ -77,7 +89,10 @@ router.post('/manager/create-shop-v2', authManager, async (req, res) => {
         // 1. Template resolve - dropdown wali id se hi folder banega
         const requestedTemplate = template || serviceType || categoryId || 'common';
         const tpl = resolveTemplate(requestedTemplate);
-        const finalFolder = templateFolder && TEMPLATE_MAP[templateFolder]? templateFolder : tpl.folder;
+        //const finalFolder = templateFolder && TEMPLATE_MAP[templateFolder]? templateFolder : tpl.folder;
+        let finalFolder = templateFolder && TEMPLATE_MAP[templateFolder]? templateFolder : tpl.folder;
+        const reqDashPath = path.join(__dirname, '../../public/shop-templates', finalFolder, 'dashboard.html');
+        if (!fs.existsSync(reqDashPath)) finalFolder = 'common';
         const finalType = shopType || tpl.type;
 
         // 2. Shop limit check
@@ -113,7 +128,7 @@ router.post('/manager/create-shop-v2', authManager, async (req, res) => {
 
         // Address normalize - frontend string bhejta hai
         const addressObj = (address && typeof address === 'object')
-           ? address
+          ? address
             : { line1: address || '', city, state, pincode: area?.pincode || '' };
 
         // 5. Shop create - teeno pehchan ek saath save hogi
