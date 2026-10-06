@@ -149,10 +149,11 @@ router.put('/:shopId/banner', async (req,res)=>{
 
     bannerMemory.set(shopId, banner);
 
-    if(global.io){
-      global.io.to(`shop:${shopId}`).emit('banner-updated', banner);
-      global.io.emit('shop-banner-changed', { shopId, banner });
-    }
+    const io = req.app.get('io') || global.io;
+    if(io){
+    io.to(`shop:${shopId}`).emit('banner-updated', banner);
+    io.emit('shop-banner-changed', { shopId, banner });
+  }
 
     res.json({ success:true, message:'Banner updated 🎨', banner });
 
