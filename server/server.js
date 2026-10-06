@@ -174,7 +174,7 @@ app.get('/shop-templates/*/*.html', (req,res)=>{
 });
 
 // 3. AB BAKI KE API ROUTES - DASHBOARD KE BAAD
-app.use('/api', deliveryManagerRoutes);
+//app.use('/api', deliveryManagerRoutes);
 app.use('/api/common', require('./routes/common/index')); // COMMON INDEX CONNECTED ✅
 app.use('/api/shops', fruitItemRoutes);
 app.use('/api/shop-view', shopViewRoutes);
@@ -252,16 +252,17 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api', require('./routes/adminRoutes'));
-app.use('/api/manager', require('./routes/managerRoutes'));
+//app.use('/api/manager', require('./routes/managerRoutes'));
 app.use('/api', require('./routes/areaRoutes'));
-app.use('/api', require('./routes/market'));
-app.use('/api', require('./routes/public-modules'));
+//app.use('/api', require('./routes/market'));
+//app.use('/api', require('./routes/public-modules'));
 app.use('/api', require('./routes/stats'));
 app.use('/api/location', locationRoutes);
 app.use('/api/location', require('./routes/user.location.routes'));
 app.use('/api/user', userRoutes);
 app.use('/api/admin', require('./routes/userAdmin'));
-
+app.use('/api', require('./routes/areaManagerRoutes'));
+app.use('/api', require('./routes/managerShopCreate'));
 app.get('/admin/:page', (req, res) => {
     const filePath = path.join(__dirname, `../public/admin-panel/${req.params.page}.html`);
     serveHtmlFresh(filePath, res);

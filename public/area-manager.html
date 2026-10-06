@@ -1,543 +1,246 @@
 <!-- 
-
-IMPORTANT: Is file ka CSS /public/assets/css/area-manager.css me hai
-IMPORTANT: Is file ka JS /public/assets/js/area-manager.js me hai
-Yahan <style> ya <script> tag me code mat likhna, sab external file me hai
-Agar styling change karni hai to area-manager.css file edit karo
-Agar logic change karna hai to area-manager.js file edit karo
-
-ROUTES USED:
-- POST /api/manager/create-shop-v2 - Nayi shop create karne ke liye
-- GET /api/manager/shops - Manager ki shops list ke liye  
-- PUT /api/manager/shops/:id - Shop edit karne ke liye
-File: routes/managerShopCreate.js me sab routes hain
-
+IMPORTANT: CSS = /public/assets/css/area-manager.css
+IMPORTANT: JS = /public/assets/js/area-manager.js + shop-create.js
+ROUTES:
+- GET /api/manager/dashboard
+- GET /api/manager/shops
+- PUT /api/manager/shops/:id
+- PUT /api/manager/update-profile
+- POST /api/manager/create-shop-v2 (routes/managerShopCreate.js)
+- Template: /public/assets/js/shop-template-map.js -> getShopTemplateFolder(id) || 'common'
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Area Manager - SAMANLIVE</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/assets/css/area-manager.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Area Manager - SAMANLIVE</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/assets/css/area-manager.css">
 </head>
 <body>
-    <div class="dashboard" id="dashboard">
-<div class="header">
-    <div class="header-content">
-        <!-- LEFT: LOGO + NAME + BADGE -->
-        <div class="header-left">
-            <div class="logo-box">
-                <img src="/assets/images/samanlive-logo.png" alt="SamanLive" id="headerLogo">
-            </div>
-            <div class="header-info">
-                <div class="brand-name">
-                    <span>SAMAN</span>
-                    <span class="brand-live">LIVE</span>
-                </div>
-                <div class="manager-info">
-                    <span id="managerName">SHEKHAR</span>
-                    <span class="manager-badge" id="managerBadge">PRITMA-1</span>
-                </div>
-            </div>
-        </div>
-        <!-- RIGHT: DASHBOARD TITLE -->
-        <div class="header-right">
-            <h1>Area Manager Dashboard</h1>
-        </div>
+<div class="app-shell">
+
+  <!-- HEADER : ADMIN CONTROLLED -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo-box"><img id="headerLogo" src="/assets/images/samanlive-logo.png" alt="Logo"></div>
+      <div>
+        <div class="brand-name"><span id="headerBrandMain">SAMAN</span> <span class="brand-live" id="headerBrandAccent">LIVE</span></div>
+        <div class="brand-sub" id="headerDashboardTitle">Area Manager Dashboard</div>
+      </div>
     </div>
-</div>                    
-                <div class="header-right">
-                    <span id="managerName"></span>
-                    <span class="manager-badge" id="managerBadge">-</span>
-                </div>
-            </div>
+    <div class="topbar-right">
+      <div class="manager-chip">
+        <div class="chip-avatar" id="headerManagerAvatar">A</div>
+        <div class="chip-info"><strong id="managerName">Loading...</strong><span id="managerBadge">-</span></div>
+      </div>
+      <button class="btn btn-outline" onclick="openProfileModal()"><i class="fas fa-user-edit"></i> Profile</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="profile-mini">
+        <div class="profile-avatar" id="managerAvatar" onclick="openProfileModal()">A<div class="profile-avatar-edit"><i class="fas fa-camera"></i></div></div>
+        <h2 id="managerFullName">Loading...</h2>
+        <div class="role" id="managerRole">Area Manager</div>
+        <div class="area-name" id="managerAreaName">-</div>
+        <button class="btn btn-primary btn-block" onclick="openProfileModal()"><i class="fas fa-edit"></i> Edit Profile</button>
+      </div>
+
+      <nav class="side-nav">
+        <a href="#overview" class="active"><i class="fas fa-th-large"></i> Overview</a>
+        <a href="#areaMapCard"><i class="fas fa-map-marked-alt"></i> My Area</a>
+        <a href="#shopsSection"><i class="fas fa-store"></i> My Shops</a>
+        <a href="#createShopSection"><i class="fas fa-plus-circle"></i> Create Shop</a>
+        <a href="#deliverySection"><i class="fas fa-motorcycle"></i> Delivery Boys</a>
+        <a href="#servicesSection"><i class="fas fa-tools"></i> My Services</a>
+      </nav>
+
+      <div class="side-info">
+        <div><span>Area Code</span><strong id="areaCodeText">-</strong></div>
+        <div><span>Manager Code</span><strong id="managerCodeText">-</strong></div>
+        <div><span>Shop Limit</span><strong id="shopLimitText">0 / 10</strong></div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main" id="overview">
+      <!-- PROFILE DETAILS -->
+      <section class="card profile-card">
+        <div class="card-header"><h2><i class="fas fa-id-card"></i> My Profile</h2><span class="badge badge-success">Active</span></div>
+        <div class="profile-details">
+          <div class="profile-detail"><div class="profile-detail-icon"><i class="fas fa-phone"></i></div><div><span>Phone</span><strong id="managerPhone">-</strong></div></div>
+          <div class="profile-detail"><div class="profile-detail-icon"><i class="fas fa-envelope"></i></div><div><span>Email</span><strong id="managerEmail">-</strong></div></div>
+          <div class="profile-detail"><div class="profile-detail-icon"><i class="fas fa-map-marker-alt"></i></div><div><span>Location</span><strong id="managerLocation">-</strong></div></div>
+          <div class="profile-detail"><div class="profile-detail-icon"><i class="fas fa-circle-notch"></i></div><div><span>Coverage</span><strong><span id="managerRadius">-</span> km</strong></div></div>
         </div>
+      </section>
 
-        <div class="container">
-            <!-- ✅ PROFILE CARD - FIXED DIV STRUCTURE -->
-            <div class="profile-card">
-                <div class="profile-edit-btn">
-                    <button class="btn btn-small btn-outline" onclick="openProfileModal()">
-                        <i class="fas fa-edit"></i> Edit Profile
-                    </button>
-                </div>
-                <div class="profile-avatar" id="managerAvatar" onclick="openProfileModal()">
-                    A
-                    <div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>
-                </div>
-                <div class="profile-info">
-                    <h2 id="managerFullName">Loading...</h2>
-                    <div class="role" id="managerRole">Area Manager</div>
-                    <div class="area-name" id="managerAreaName">-</div>
-                    <div class="profile-details">
-                        <div class="profile-detail">
-                            <div class="profile-detail-icon"><i class="fas fa-phone"></i></div>
-                            <div>
-                                <span>Phone</span>
-                                <strong id="managerPhone">-</strong>
-                            </div>
-                        </div>
-                        <div class="profile-detail">
-                            <div class="profile-detail-icon"><i class="fas fa-envelope"></i></div>
-                            <div>
-                                <span>Email</span>
-                                <strong id="managerEmail">-</strong>
-                            </div>
-                        </div>
-                        <div class="profile-detail">
-                            <div class="profile-detail-icon"><i class="fas fa-map-marker-alt"></i></div>
-                            <div>
-                                <span>Location</span>
-                                <strong id="managerLocation">-</strong>
-                            </div>
-                        </div>
-                        <div class="profile-detail">
-                            <div class="profile-detail-icon"><i class="fas fa-circle-notch"></i></div>
-                            <div>
-                                <span>Coverage</span>
-                                <strong id="managerRadius">-</strong> km
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <!-- STATS -->
+      <section class="stats-grid">
+        <div class="stat-card"><h3>Total Shops In Circle</h3><div class="value" id="totalShops">0</div></div>
+        <div class="stat-card"><h3>Active Shops</h3><div class="value" id="activeShops">0</div></div>
+        <div class="stat-card"><h3>Area Code</h3><div class="value small" id="areaCodeText2">-</div></div>
+        <div class="stat-card"><h3>Manager Code</h3><div class="value small" id="managerCodeText2">-</div></div>
+      </section>
 
-            <!-- ===== NAYA MAP CARD ADDED - HIDE/SHOW BUTTON KE SAATH - KUCH DELETE NAHI KIYA ===== -->
-            <div class="card" id="areaMapCard">
-                <div class="card-header">
-                    <h2><i class="fas fa-map-marked-alt"></i> My Area Coverage - <span id="areaMapName">-</span></h2>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <span class="badge" id="areaCoverageBadge" style="background:#eef2ff; color:#4338ca; padding:6px 12px; border-radius:20px;">-</span>
-                        <button class="btn btn-small btn-outline" id="toggleMapBtn" onclick="toggleAreaMap()" style="padding:6px 12px;">
-                            <i class="fas fa-eye-slash"></i> Hide Map
-                        </button>
-                    </div>
-                </div>
-                <div id="areaMapWrapper">
-                    <div id="managerAreaMap" style="height: 380px; border-radius: 12px; border: 1px solid #e2e8f0;"></div>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 12px; margin-top: 14px; background: #f8fafc; padding: 14px; border-radius: 10px; font-size:14px;">
-                        <div><i class="fas fa-city"></i> <b>City:</b> <span id="detailCity">-</span></div>
-                        <div><i class="fas fa-flag"></i> <b>State:</b> <span id="detailState">-</span></div>
-                        <div><i class="fas fa-crosshairs"></i> <b>Center:</b> <span id="detailCenter" style="font-family:monospace;">-</span></div>
-                        <div><i class="fas fa-circle-notch"></i> <b>Radius:</b> <span id="detailRadius">-</span> km</div>
-                    </div>
-                </div>
-            </div>
-            <!-- ===== NAYA MAP CARD END ===== -->
-
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Area Code</h3>
-                    <div class="value" style="font-size: 28px;" id="areaCodeText">-</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Manager Code</h3>
-                    <div class="value" style="font-size: 28px;" id="managerCodeText">-</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Shops In Circle</h3>
-                    <div class="value" id="totalShops">0</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Active Shops</h3>
-                    <div class="value" id="activeShops">0</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h2><i class="fas fa-tools"></i> My Services</h2>
-                </div>
-                <div class="service-cards" id="serviceCards">
-                    <div class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <p>No services assigned yet</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h2><i class="fas fa-plus-circle"></i> Create New Shop</h2>
-                    <div class="shop-limit-badge" id="shopLimitBadge">
-                        <i class="fas fa-store"></i> <span id="shopLimitText">0 / 10</span>
-                    </div>
-                </div>
-                <div class="info-note">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Aap apne area me nayi shop create kar sakte hain. Shop create hote hi active ho jayegi.</span>
-                </div>
-                <div class="create-shop-actions">
-                    <button class="btn btn-primary btn-large" onclick="openCreateShopModal()" id="createShopBtn">
-                        <i class="fas fa-plus"></i> Create New Shop
-                    </button>
-                    <button class="btn btn-large" onclick="openProductLibrary()" id="productLibraryBtn">
-                        <i class="fas fa-book-open"></i> Product Library
-                    </button>
-                    <button class="btn btn-large" onclick="openOrderView()" id="orderViewBtn">
-                        <i class="fas fa-receipt"></i> Order View
-                    </button>
-                    <button class="btn btn-large" onclick="openDeliveryManagerPanel()" id="deliveryManagerBtn">
-                    <i class="fas fa-motorcycle"></i> Delivery Boys
-                    </button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h2><i class="fas fa-store"></i> My Created Shops</h2>
-                </div>
-                <div class="info-note">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Ye shops aapne create ki hain. Aap inko edit kar sakte hain aur dashboard link owner ko bhej sakte hain.</span>
-                </div>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Icon</th>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th>Owner</th>
-                                <th>Range</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="shopsTable">
-                            <tr><td colspan="7" style="text-align:center; padding: 60px;">
-                                <div class="empty-state">
-                                    <i class="fas fa-spinner fa-spin"></i>
-                                    <p>Loading shops...</p>
-                                </div>
-                            </td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+      <!-- MAP -->
+      <section class="card" id="areaMapCard">
+        <div class="card-header">
+          <h2><i class="fas fa-map-marked-alt"></i> My Area Coverage - <span id="areaMapName">-</span></h2>
+          <div class="header-actions"><span class="badge" id="areaCoverageBadge">-</span><button class="btn btn-small btn-outline" id="toggleMapBtn" onclick="toggleAreaMap()"><i class="fas fa-eye-slash"></i> Hide Map</button></div>
         </div>
-    </div>
-<!-- ✅ DELIVERY MANAGERS LIST -->
-<div class="card">
-    <div class="card-header">
-        <h2><i class="fas fa-motorcycle"></i> My Delivery Boys</h2>
-        <button class="btn btn-primary" onclick="openCreateDeliveryModal()">
-            <i class="fas fa-plus"></i> Add Delivery Boy
-        </button>
-    </div>
-    <div style="overflow-x: auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Phone</th>
-                    <th>Vehicle</th>
-                    <th>Manager Code</th>
-                    <th>Status</th>
-                    <th>ACTION</th>
-                </tr>
-            </thead>
-            <tbody id="deliveryBoysTable">
-                <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
-            </tbody>
-        </table>
-    </div>
+        <div id="areaMapWrapper">
+          <div id="managerAreaMap"></div>
+          <div class="map-details">
+            <div><i class="fas fa-city"></i> <b>City:</b> <span id="detailCity">-</span></div>
+            <div><i class="fas fa-flag"></i> <b>State:</b> <span id="detailState">-</span></div>
+            <div><i class="fas fa-crosshairs"></i> <b>Center:</b> <span id="detailCenter">-</span></div>
+            <div><i class="fas fa-circle-notch"></i> <b>Radius:</b> <span id="detailRadius">-</span> km</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SERVICES -->
+      <section class="card" id="servicesSection">
+        <div class="card-header"><h2><i class="fas fa-tools"></i> My Services</h2></div>
+        <div class="service-cards" id="serviceCards"><div class="empty-state"><i class="fas fa-inbox"></i><p>No services assigned yet</p></div></div>
+      </section>
+
+      <!-- CREATE SHOP -->
+      <section class="card" id="createShopSection">
+        <div class="card-header"><h2><i class="fas fa-plus-circle"></i> Create New Shop</h2><div class="shop-limit-badge" id="shopLimitBadge"><i class="fas fa-store"></i> <span id="shopLimitTextMain">0 / 10</span></div></div>
+        <div class="info-note"><i class="fas fa-info-circle"></i><span>Shop aapke area me create hogi. Category select karte hi usi template ka dashboard khulega, nahi mila to Common dashboard khulega.</span></div>
+        <div class="create-shop-actions">
+          <button class="btn btn-primary btn-large" onclick="openCreateShopModal()" id="createShopBtn"><i class="fas fa-plus"></i> Create New Shop</button>
+          <button class="btn btn-large" onclick="openProductLibrary()"><i class="fas fa-book-open"></i> Product Library</button>
+          <button class="btn btn-large" onclick="openOrderView()"><i class="fas fa-receipt"></i> Order View</button>
+          <button class="btn btn-large" onclick="openDeliveryManagerPanel()"><i class="fas fa-motorcycle"></i> Delivery Boys</button>
+        </div>
+      </section>
+
+      <!-- SHOPS -->
+      <section class="card" id="shopsSection">
+        <div class="card-header"><h2><i class="fas fa-store"></i> My Created Shops</h2></div>
+        <div class="info-note"><i class="fas fa-info-circle"></i><span>Open dabate hi shop apne template dashboard pe khulegi: /shop-templates/{folder}/dashboard.html?shopId=</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Icon</th><th>Name</th><th>Category</th><th>Owner</th><th>Range</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="shopsTable"><tr><td colspan="7" class="loading-cell"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading shops...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- DELIVERY -->
+      <section class="card" id="deliverySection">
+        <div class="card-header"><h2><i class="fas fa-motorcycle"></i> My Delivery Boys</h2><button class="btn btn-primary" onclick="openCreateDeliveryModal()"><i class="fas fa-plus"></i> Add Delivery Boy</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Phone</th><th>Vehicle</th><th>Manager Code</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="deliveryBoysTable"><tr><td colspan="6" class="loading-cell">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
 </div>
 
-<!-- CREATE DELIVERY MANAGER MODAL -->
-<div class="modal" id="createDeliveryModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2><i class="fas fa-user-plus"></i> Add Delivery Boy</h2>
-            <button class="close-btn" onclick="closeCreateDeliveryModal()">×</button>
-        </div>
-        <form id="createDeliveryForm">
-            <div class="form-group">
-                <label>Full Name *</label>
-                <input type="text" id="dmName" required>
-            </div>
-            <div class="form-group">
-                <label>Phone *</label>
-                <input type="text" id="dmPhone" required maxlength="10">
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="dmEmail">
-            </div>
-            <div class="form-group">
-                <label>Vehicle Type</label>
-                <select id="dmVehicle">
-                    <option value="bike">Bike</option>
-                    <option value="cycle">Cycle</option>
-                    <option value="auto">Auto</option>
-                    <option value="foot">Foot</option>
-                </select>
-            </div>
-            <button type="submit" class="btn">Create</button>
-        </form>
+<!-- PROFILE MODAL -->
+<div class="modal" id="profileModal"><div class="modal-content">
+  <div class="modal-header"><h2><i class="fas fa-user-edit"></i> Edit Profile</h2><button class="close-btn" onclick="closeProfileModal()">×</button></div>
+  <form id="profileForm">
+    <div class="photo-upload-box">
+      <input type="file" id="profilePhotoInput" accept="image/*" hidden onchange="previewProfilePhoto(event)">
+      <div class="photo-preview" id="photoPreview" onclick="document.getElementById('profilePhotoInput').click()"><i class="fas fa-camera"></i></div>
+      <label class="photo-upload-btn" onclick="event.preventDefault();document.getElementById('profilePhotoInput').click()"><i class="fas fa-upload"></i> Upload Photo</label>
+      <input type="hidden" id="profilePhotoBase64">
     </div>
-</div>
-    <!-- PROFILE EDIT MODAL -->
-    <div class="modal" id="profileModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-user-edit"></i> Edit Profile</h2>
-                <button class="close-btn" onclick="closeProfileModal()">×</button>
-            </div>
-            <form id="profileForm">
-                <div class="photo-upload-box">
-                    <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;" onchange="previewProfilePhoto(event)">
-                    <div class="photo-preview" id="photoPreview" onclick="document.getElementById('profilePhotoInput').click()">
-                        <i class="fas fa-camera"></i>
-                    </div>
-                    <label class="photo-upload-btn" onclick="event.preventDefault(); document.getElementById('profilePhotoInput').click()">
-                        <i class="fas fa-upload"></i> Upload Photo
-                    </label>
-                    <input type="hidden" id="profilePhotoBase64">
-                </div>
-                <div class="form-group">
-                    <label>Full Name * <small style="color: var(--text-muted);">(Aapka asli naam)</small></label>
-                    <input type="text" id="profileName" required placeholder="Rajesh Kumar">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Phone Number</label>
-                        <input type="text" id="profilePhone" placeholder="9876543210">
-                    </div>
-                    <div class="form-group">
-                        <label>Email Address</label>
-                        <input type="email" id="profileEmail" placeholder="rajesh@samanlive.com">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Area Name <small style="color: var(--text-muted);">(Auto-filled, cannot change)</small></label>
-                    <input type="text" id="profileAreaName" disabled>
-                </div>
-                <button type="submit" class="btn" id="profileSaveBtn"><i class="fas fa-save"></i> Save Profile</button>
-            </form>
-        </div>
+    <div class="form-group"><label>Full Name *</label><input type="text" id="profileName" required placeholder="Rajesh Kumar"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Phone Number</label><input type="text" id="profilePhone" placeholder="9876543210"></div>
+      <div class="form-group"><label>Email Address</label><input type="email" id="profileEmail" placeholder="rajesh@samanlive.com"></div>
     </div>
+    <div class="form-group"><label>Area Name (Admin Controlled)</label><input type="text" id="profileAreaName" disabled></div>
+    <button type="submit" class="btn btn-primary btn-block" id="profileSaveBtn"><i class="fas fa-save"></i> Save Profile</button>
+  </form>
+</div></div>
 
-    <!-- CREATE SHOP MODAL -->
-    <div class="modal" id="createShopModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-plus-circle"></i> Create New Shop</h2>
-                <button class="close-btn" onclick="closeCreateShopModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="info-note">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Shop aapke area me create hogi. Location baad me shop dashboard se update kar sakte hain.</span>
-                </div>
-                <form id="createShopForm">
-                    <div class="city-detected-box" id="createShopCityBox" style="display:none;">
-                        <i class="fa fa-map-marker-alt"></i>
-                        <div class="city-detected-info">
-                            <h3 id="createShopDetectedCityName">Detecting your city...</h3>
-                            <p id="createShopDetectedCityMeta">Auto-selected from your area</p>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Shop Name * <small style="color: var(--text-muted);">(Unique hona chahiye)</small></label>
-                        <input type="text" id="createShopName" required placeholder="Rajesh General Store">
-                    </div>
-                    <div class="form-group">
-                        <label>Owner Name *</label>
-                        <input type="text" id="createShopOwnerName" required placeholder="Shop Owner Full Name">
-                    </div>
-                    <div class="form-group">
-                        <label>Shop Category *</label>
-                        <select id="createShopModule" required>
-                            <option value="">Select Shop Category</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Shop Logo/Photo <span style="font-weight: 400; color: #64748b;">(Optional)</span></label>
-                        <div class="logo-upload-box">
-                            <input type="file" id="createShopLogoInput" accept="image/*" style="display: none;" onchange="previewCreateShopLogo(event)">
-                            <div class="logo-preview" id="createShopLogoPreview" onclick="document.getElementById('createShopLogoInput').click()">
-                                <i class="fa fa-camera"></i>
-                                <p>Upload Shop Photo</p>
-                                <span style="font-size: 12px; color: #64748b;">JPG, PNG • Max 2MB</span>
-                            </div>
-                            <button type="button" class="btn-remove-logo" id="createShopRemoveLogoBtn" style="display: none;" onclick="removeCreateShopLogo()">
-                                <i class="fa fa-trash"></i> Remove Photo
-                            </button>
-                        </div>
-                    </div>
-                    <div style="text-align: center; margin: 16px 0; color: #94a3b8; font-size: 14px; font-weight: 600;">
-                        — OR SELECT ICON BELOW —
-                    </div>
-                    <div class="form-group">
-                        <label>Select Shop Icon * <span style="font-size: 12px; color: #666;">(Used if no photo uploaded)</span></label>
-                        <div class="icon-picker" id="createShopIconPicker">
-                            <div class="icon-option selected" data-icon="🏪">🏪</div>
-                            <div class="icon-option" data-icon="🛒">🛒</div>
-                            <div class="icon-option" data-icon="🍕">🍕</div>
-                            <div class="icon-option" data-icon="💊">💊</div>
-                            <div class="icon-option" data-icon="🔧">🔧</div>
-                            <div class="icon-option" data-icon="👗">👗</div>
-                            <div class="icon-option" data-icon="📱">📱</div>
-                            <div class="icon-option" data-icon="💇">💇</div>
-                            <div class="icon-option" data-icon="🚗">🚗</div>
-                            <div class="icon-option" data-icon="🏠">🏠</div>
-                            <div class="icon-option" data-icon="🎓">🎓</div>
-                            <div class="icon-option" data-icon="⚡">⚡</div>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Contact Number *</label>
-                            <input type="text" id="createShopPhone" required placeholder="9876543210" maxlength="10">
-                        </div>
-                        <div class="form-group">
-                            <label>Service Range *</label>
-                            <select id="createShopRange" required>
-                                <option value="1000">1 KM</option>
-                                <option value="2000">2 KM</option>
-                                <option value="5000" selected>5 KM</option>
-                                <option value="10000">10 KM</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Email Address</label>
-                        <input type="email" id="createShopEmail" placeholder="shop@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label>Address *</label>
-                        <textarea id="createShopAddress" rows="2" required placeholder="Full shop address"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Shop Description</label>
-                        <textarea id="createShopDesc" rows="2" placeholder="What services/products you offer?"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Connected Area Manager <span style="font-weight: 400; color: #10b981;">(Auto-connected)</span></label>
-                        <div class="manager-select-box">
-                            <div class="manager-select-header">
-                                <h4 id="createShopManagerCountText">1 Manager Auto-connected</h4>
-                                <button type="button" class="select-all-btn" onclick="toggleSelectAllCreateShopManagers()" style="display:none;">
-                                    Select All
-                                </button>
-                            </div>
-                            <div class="manager-list" id="createShopManagerList">
-                                <p style="text-align:center;color:#64748b;padding:20px;">Loading your manager info...</p>
-                            </div>
-                            <div class="location-note" style="background:#d1fae5;border-left:3px solid #10b981;">
-                                ✅ Shop will be automatically connected to your Area Manager account
-                            </div>
-                        </div>
-                    </div>
-                    <input type="hidden" id="createShopCity">
-                    <input type="hidden" id="createShopState">
-                    <input type="hidden" id="createShopPincode">
-                    <input type="hidden" id="createShopManagerCodes">
-                    <button type="submit" class="btn btn-primary" id="createShopSaveBtn">
-                        <i class="fas fa-plus"></i> Create Shop
-                    </button>
-                </form>
-            </div>
+<!-- CREATE SHOP MODAL -->
+<div class="modal" id="createShopModal"><div class="modal-content large">
+  <div class="modal-header"><h2><i class="fas fa-plus-circle"></i> Create New Shop</h2><button class="close-btn" onclick="closeCreateShopModal()">×</button></div>
+  <div class="modal-body">
+    <div class="info-note"><i class="fas fa-info-circle"></i><span>Category dropdown shop-template-map.js se aayega. Shop usi template ke dashboard pe khulegi.</span></div>
+    <form id="createShopForm">
+      <div class="city-detected-box" id="createShopCityBox" style="display:none"><i class="fa fa-map-marker-alt"></i><div><h3 id="createShopDetectedCityName">Detecting...</h3><p id="createShopDetectedCityMeta">Auto-selected from your area</p></div></div>
+      <div class="form-group"><label>Shop Name *</label><input type="text" id="createShopName" required placeholder="Rajesh General Store"></div>
+      <div class="form-group"><label>Owner Name *</label><input type="text" id="createShopOwnerName" required placeholder="Shop Owner Full Name"></div>
+      <div class="form-group"><label>Shop Category *</label><select id="createShopModule" required><option value="">Select Shop Category</option></select></div>
+      <div class="form-group"><label>Shop Logo/Photo (Optional)</label>
+        <div class="logo-upload-box">
+          <input type="file" id="createShopLogoInput" accept="image/*" hidden onchange="previewCreateShopLogo(event)">
+          <div class="logo-preview" id="createShopLogoPreview" onclick="document.getElementById('createShopLogoInput').click()"><i class="fa fa-camera"></i><p>Upload Shop Photo</p><span>JPG, PNG • Max 2MB</span></div>
+          <button type="button" class="btn-remove-logo" id="createShopRemoveLogoBtn" style="display:none" onclick="removeCreateShopLogo()"><i class="fa fa-trash"></i> Remove Photo</button>
         </div>
-    </div>
+      </div>
+      <div class="or-divider">— OR SELECT ICON BELOW —</div>
+      <div class="form-group"><label>Select Shop Icon *</label><div class="icon-picker" id="createShopIconPicker">
+        <div class="icon-option selected" data-icon="🏪">🏪</div><div class="icon-option" data-icon="🛒">🛒</div><div class="icon-option" data-icon="🍕">🍕</div><div class="icon-option" data-icon="💊">💊</div><div class="icon-option" data-icon="🔧">🔧</div><div class="icon-option" data-icon="👗">👗</div><div class="icon-option" data-icon="📱">📱</div><div class="icon-option" data-icon="💇">💇</div><div class="icon-option" data-icon="🚗">🚗</div><div class="icon-option" data-icon="🏠">🏠</div><div class="icon-option" data-icon="🎓">🎓</div><div class="icon-option" data-icon="⚡">⚡</div>
+      </div></div>
+      <div class="form-row">
+        <div class="form-group"><label>Contact Number *</label><input type="text" id="createShopPhone" required placeholder="9876543210" maxlength="10"></div>
+        <div class="form-group"><label>Service Range *</label><select id="createShopRange" required><option value="1000">1 KM</option><option value="2000">2 KM</option><option value="5000" selected>5 KM</option><option value="10000">10 KM</option></select></div>
+      </div>
+      <div class="form-group"><label>Email Address</label><input type="email" id="createShopEmail" placeholder="shop@example.com"></div>
+      <div class="form-group"><label>Address *</label><textarea id="createShopAddress" rows="2" required placeholder="Full shop address"></textarea></div>
+      <div class="form-group"><label>Shop Description</label><textarea id="createShopDesc" rows="2" placeholder="What services/products you offer?"></textarea></div>
+      <div class="form-group"><label>Connected Area Manager (Auto)</label>
+        <div class="manager-select-box"><div class="manager-select-header"><h4 id="createShopManagerCountText">1 Manager Auto-connected</h4></div><div class="manager-list" id="createShopManagerList"><p>Loading your manager info...</p></div><div class="location-note success">✅ Shop automatically connected to your Area Manager account</div></div>
+      </div>
+      <input type="hidden" id="createShopCity"><input type="hidden" id="createShopState"><input type="hidden" id="createShopPincode"><input type="hidden" id="createShopManagerCodes">
+      <button type="submit" class="btn btn-primary btn-block" id="createShopSaveBtn"><i class="fas fa-plus"></i> Create Shop</button>
+    </form>
+  </div>
+</div></div>
 
-    <!-- SHOP EDIT MODAL -->
-    <div class="modal" id="shopModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle"><i class="fas fa-edit"></i> Edit Shop Details</h2>
-                <button class="close-btn" onclick="closeShopModal()">×</button>
-            </div>
-            <div class="info-note">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>You can edit shop details but cannot delete. Location update from shop dashboard.</span>
-            </div>
-            <form id="shopForm">
-                <input type="hidden" id="shopId">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Shop Name *</label>
-                        <input type="text" id="shopName" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Icon</label>
-                        <input type="text" id="shopIcon" placeholder="🏪" maxlength="2">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Category *</label>
-                        <select id="shopCategory" required></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Phone</label>
-                        <input type="text" id="shopPhone" placeholder="9876543210">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Address</label>
-                    <textarea id="shopAddress" rows="2" placeholder="Full address"></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Service Range *</label>
-                        <select id="shopRange" required>
-                            <option value="1000">1 KM</option>
-                            <option value="2000">2 KM</option>
-                            <option value="5000">5 KM</option>
-                            <option value="10000">10 KM</option>
-                            <option value="15000">15 KM</option>
-                            <option value="20000">20 KM</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Status</label>
-                        <select id="shopStatus">
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="shopDesc" rows="3" placeholder="Shop description"></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Latitude</label>
-                        <input type="text" id="shopLat" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label>Longitude</label>
-                        <input type="text" id="shopLng" disabled>
-                    </div>
-                </div>
-                <small style="color: var(--text-muted); display: block; margin-bottom: 15px;">
-                    <i class="fas fa-map-marker-alt"></i> Location can be updated from Shop Dashboard
-                </small>
-                <button type="submit" class="btn" id="shopSaveBtn"><i class="fas fa-save"></i> Update Shop</button>
-            </form>
-        </div>
-    </div>
+<!-- SHOP EDIT MODAL -->
+<div class="modal" id="shopModal"><div class="modal-content">
+  <div class="modal-header"><h2 id="modalTitle"><i class="fas fa-edit"></i> Edit Shop Details</h2><button class="close-btn" onclick="closeShopModal()">×</button></div>
+  <div class="info-note warning"><i class="fas fa-exclamation-triangle"></i><span>You can edit shop details but cannot delete. Location update from shop dashboard.</span></div>
+  <form id="shopForm">
+    <input type="hidden" id="shopId">
+    <div class="form-row"><div class="form-group"><label>Shop Name *</label><input type="text" id="shopName" required></div><div class="form-group"><label>Icon</label><input type="text" id="shopIcon" placeholder="🏪" maxlength="2"></div></div>
+    <div class="form-row"><div class="form-group"><label>Category *</label><select id="shopCategory" required></select></div><div class="form-group"><label>Phone</label><input type="text" id="shopPhone" placeholder="9876543210"></div></div>
+    <div class="form-group"><label>Address</label><textarea id="shopAddress" rows="2" placeholder="Full address"></textarea></div>
+    <div class="form-row"><div class="form-group"><label>Service Range *</label><select id="shopRange" required><option value="1000">1 KM</option><option value="2000">2 KM</option><option value="5000">5 KM</option><option value="10000">10 KM</option><option value="15000">15 KM</option><option value="20000">20 KM</option></select></div><div class="form-group"><label>Status</label><select id="shopStatus"><option value="true">Active</option><option value="false">Inactive</option></select></div></div>
+    <div class="form-group"><label>Description</label><textarea id="shopDesc" rows="3" placeholder="Shop description"></textarea></div>
+    <div class="form-row"><div class="form-group"><label>Latitude</label><input type="text" id="shopLat" disabled></div><div class="form-group"><label>Longitude</label><input type="text" id="shopLng" disabled></div></div>
+    <small class="muted"><i class="fas fa-map-marker-alt"></i> Location can be updated from Shop Dashboard</small>
+    <button type="submit" class="btn btn-primary btn-block" id="shopSaveBtn"><i class="fas fa-save"></i> Update Shop</button>
+  </form>
+</div></div>
 
-    <!-- PRODUCT LIBRARY POPUP -->
-    <div class="modal" id="libraryPopup">
-        <div class="modal-content" style="max-width:95%; height:90%;">
-            <div class="modal-header">
-                <h2><i class="fas fa-book-open"></i> Product Library</h2>
-                <button class="close-btn" onclick="closeProductLibrary()">×</button>
-            </div>
-            <iframe src="/local-market/library/index.html" style="width:100%; height:calc(100% - 70px); border:none; border-radius:12px;"></iframe>
-        </div>
-    </div>
+<!-- DELIVERY MODAL -->
+<div class="modal" id="createDeliveryModal"><div class="modal-content">
+  <div class="modal-header"><h2><i class="fas fa-user-plus"></i> Add Delivery Boy</h2><button class="close-btn" onclick="closeCreateDeliveryModal()">×</button></div>
+  <form id="createDeliveryForm">
+    <div class="form-group"><label>Full Name *</label><input type="text" id="dmName" required></div>
+    <div class="form-group"><label>Phone *</label><input type="text" id="dmPhone" required maxlength="10"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="dmEmail"></div>
+    <div class="form-group"><label>Vehicle Type</label><select id="dmVehicle"><option value="bike">Bike</option><option value="cycle">Cycle</option><option value="auto">Auto</option><option value="foot">Foot</option></select></div>
+    <button type="submit" class="btn btn-primary btn-block">Create</button>
+  </form>
+</div></div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/assets/js/shop-template-map.js?v=1"></script>
-    <script src="/assets/js/shop-create.js?v=5"></script>
-    <script src="/assets/js/area-manager.js?v=5"></script>
+<!-- PRODUCT LIBRARY -->
+<div class="modal" id="libraryPopup"><div class="modal-content library"><div class="modal-header"><h2><i class="fas fa-book-open"></i> Product Library</h2><button class="close-btn" onclick="closeProductLibrary()">×</button></div><iframe src="/local-market/library/index.html"></iframe></div></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/assets/js/shop-template-map.js?v=2"></script>
+<script src="/assets/js/shop-create.js?v=6"></script>
+<script src="/assets/js/area-manager.js?v=6"></script>
 </body>
 </html>
