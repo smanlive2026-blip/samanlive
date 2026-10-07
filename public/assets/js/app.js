@@ -88,15 +88,15 @@ async function loadSettings() {
 // 2. CITY NAME SET KARO
 async function showUserLocationInHeader() {
     if (!userLocation) {
-        document.getElementById('userCity').textContent = 'Location Off';
+        const uc = document.getElementById('userCity'); if(uc) uc.textContent = 'Location Off';
         return;
     }
     try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`);
         const d = await res.json();
-        document.getElementById('userCity').textContent = d.address.city || d.address.town || d.address.district || 'Your Area';
+        const uc = document.getElementById('userCity'); if(uc) uc.textContent = d.address.city || d.address.town || d.address.district || 'Your Area';
     } catch(e){ 
-        document.getElementById('userCity').textContent = 'Your Area'; 
+        const uc = document.getElementById('userCity'); if(uc) uc.textContent = 'Your Area'; 
     }
 }
 
@@ -171,20 +171,27 @@ async function renderAdminAds() {
         </div>`).join('') || '<p>No Ads</p>';
 }
 
-// 7. NEARBY PRODUCTS REPEAT
+// 7. NEARBY PRODUCTS REPEAT - WORLD MODEL SE - COMMON FOLDER
 async function renderNearbyProductsRepeat() {
     const container = document.getElementById('nearbyProductsRepeat'); 
     if(!container) return;
+    container.innerHTML = '<p style="opacity:0.6">Loading products...</p>';
 
-    let url = `/api/products/admin/all?limit=20`;
-    if(userLocation) url += `&lat=${userLocation.lat}&lng=${userLocation.lng}`;
-
-    const res = await fetch(url).catch(()=>({ok:false}));
-    if(!res.ok){ container.innerHTML = '<p>Products load nahi hue</p>'; return; }
-    const data = await res.json(); 
-    allProducts = data.products || [];
+    try{
+        // COMMON FOLDER WALA MANAGER - ROLE CUSTOMER SET KARO
+        if(window.WorldProductManager){
+            window.WorldProductManager.role = 'customer';
+            allProducts = await window.WorldProductManager.getAllShopsProducts();
+        }else{
+            const res = await fetch(`/api/world-products?role=customer`).then(r=>r.json()).catch(()=>({data:[]}));
+            allProducts = res.data || res.products || [];
+        }
+    }catch(e){
+        console.log('World products load fail', e);
+        allProducts = [];
+    }
     
-    if(allProducts.length === 0) {
+    if(!allProducts || allProducts.length === 0) {
         container.innerHTML = '<p>Aas paas koi product nahi</p>';
         return;
     }
@@ -195,7 +202,7 @@ async function renderNearbyProductsRepeat() {
         html += `<div class="nearby-row">` + 
         doubleData.map(p => `
             <div class="nearby-product-card" onclick="openProduct('${p._id}')">
-                <img src="${p.image}" onerror="this.src='/assets/default-product.png'">
+                <img src="${p.thumbnail || p.image || '/assets/default-product.png'}" onerror="this.src='/assets/default-product.png'">
                 <p>${p.name}</p>
                 <span>₹${p.price}</span>
             </div>`).join('') + `</div>`;
@@ -219,10 +226,10 @@ function scrollToNearbyShops() { document.querySelector('.nearby-product-section
 function scrollToServices() { document.querySelector('.category-row')?.scrollIntoView({behavior:'smooth'}); }
 function trackChild() { alert('Track Child - Coming Soon'); }
 
-// SEARCH + SCANNER + PROFILE PIC
+// SEARCH + SCANNER + PROFILE PIC - shop.html HATA DIYA
 function performSearch() {
     const q = document.getElementById('searchInput').value;
-    if(q) window.location.href = `/shop.html?search=${encodeURIComponent(q)}`;
+    if(q) window.location.href = `/nearby-shops.html?search=${encodeURIComponent(q)}`;
 }
 function openQRScanner() { alert('QR Scanner Open'); }
 async function loadUserProfilePic() {
@@ -231,19 +238,20 @@ async function loadUserProfilePic() {
     if(el) el.src = pic;
 }
 
-// PRODUCT CLICK
+// PRODUCT CLICK - shop.html HATA DIYA, SEEDHA SHOP KE CUSTOMER-VIEW PE
 function openProduct(productId) {
     const prod = allProducts.find(p => p._id === productId);
     if(prod) {
+        const shopUrl = `/shop-templates/${prod.shopType}/customer-view.html?shopId=${prod.shopId}`;
         addToHistory({
             id: prod._id, 
             name: prod.name, 
-            image: prod.image, 
+            image: prod.thumbnail || prod.image, 
             price: prod.price, 
-            url: `/product.html?id=${productId}`
+            url: shopUrl
         });
+        window.location.href = shopUrl;
     }
-    window.location.href = `/product.html?id=${productId}`;
 }
 
 // ========================================
