@@ -7,13 +7,13 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-     .area-grid {
+    .area-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-     .area-card {
+    .area-card {
             background: white;
             border: 2px solid #e2e8f0;
             border-radius: 12px;
@@ -21,60 +21,60 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-     .area-card:hover {
+    .area-card:hover {
             border-color: #6366f1;
             transform: translateY(-4px);
             box-shadow: 0 8px 16px rgba(99,102,241,0.15);
         }
-     .area-card.active {
+    .area-card.active {
             border-color: #10b981;
             background: #f0fdf4;
         }
-     .area-card-header {
+    .area-card-header {
             display: flex;
             justify-content: space-between;
             align-items: start;
             margin-bottom: 12px;
         }
-     .area-code {
+    .area-code {
             font-size: 18px;
             font-weight: 700;
             color: #1e293b;
         }
-     .area-stats {
+    .area-stats {
             display: flex;
             gap: 15px;
             margin-top: 12px;
             font-size: 13px;
             color: #64748b;
         }
-     .manager-section {
+    .manager-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 25px;
             border-radius: 12px;
             margin-bottom: 25px;
         }
-     .manager-info {
+    .manager-info {
             display: flex;
             gap: 20px;
             align-items: center;
             margin-bottom: 20px;
         }
-     .manager-photo {
+    .manager-photo {
             width: 80px;
             height: 80px;
             border-radius: 50%;
             border: 3px solid white;
             object-fit: cover;
         }
-     .module-badges {
+    .module-badges {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-top: 15px;
         }
-     .module-badge {
+    .module-badge {
             background: rgba(255,255,255,0.2);
             padding: 6px 14px;
             border-radius: 20px;
@@ -82,7 +82,7 @@
             font-weight: 600;
             backdrop-filter: blur(10px);
         }
-     .location-badge {
+    .location-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -91,21 +91,21 @@
             font-size: 12px;
             font-weight: 600;
         }
-     .location-badge.fixed {
+    .location-badge.fixed {
             background: #dbeafe;
             color: #1e40af;
         }
-     .location-badge.dynamic {
+    .location-badge.dynamic {
             background: #fef3c7;
             color: #92400e;
         }
-     .hidden { display: none; }
-     .shop-address {
+    .hidden { display: none; }
+    .shop-address {
             font-size: 11px;
             color: #64748b;
             margin-top: 4px;
         }
-     .view-map-btn {
+    .view-map-btn {
             background: #3b82f6;
             color: white;
             border: none;
@@ -115,15 +115,22 @@
             cursor: pointer;
             margin-left: 6px;
         }
-     .view-map-btn:hover {
+    .view-map-btn:hover {
             background: #2563eb;
         }
+    .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-top:14px}
+    .product-card{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:10px}
+    .product-card img{width:100%;height:120px;object-fit:cover;border-radius:8px;background:#f1f5f9}
+    .product-card b{font-size:14px;display:block;margin-top:8px}
+    .product-card small{color:#64748b;font-size:12px}
+    .product-actions{display:flex;gap:6px;margin-top:8px}
+    .product-actions button{flex:1;border:none;padding:6px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer}
     </style>
 </head>
 <body>
     <div class="content">
         <h2>🗺️ Area Dashboard</h2>
-        
+
         <!-- Area Cards Grid -->
         <div id="areaCardsGrid" class="area-grid">
             <div class="loading">Loading areas...</div>
@@ -153,7 +160,7 @@
         <!-- Shops Table - Hidden by default -->
         <div id="shopsSection" class="content hidden" style="margin-top:0;">
             <div class="section-header">
-                <h2>🏪 Shops in <span id="selectedAreaName">Area</span> 
+                <h2>🏪 Shops in <span id="selectedAreaName">Area</span>
                     <span id="shopsCount" class="badge badge-info">0</span>
                 </h2>
                 <input type="text" class="search-box" placeholder="Search shops..." onkeyup="filterShops(this.value)">
@@ -179,6 +186,19 @@
                 </table>
             </div>
         </div>
+
+        <!-- Products Section - AREA KE HISAB SE WORLD PRODUCTS -->
+        <div id="productsSection" class="content hidden" style="margin-top:20px;">
+            <div class="section-header">
+                <h2>📦 Products in <span id="selectedProductAreaName">Area</span>
+                    <span id="productsCount" class="badge badge-info">0</span>
+                </h2>
+                <input type="text" class="search-box" placeholder="Search products..." onkeyup="filterProducts(this.value)">
+            </div>
+            <div id="areaProductsGrid" class="product-grid">
+                <div class="loading">Select an area to view products</div>
+            </div>
+        </div>
     </div>
 
     <!-- Assign Module Modal -->
@@ -198,11 +218,14 @@
         </div>
     </div>
 
+    <script src="/shop-templates/common/products/product-manager.js?v=20"></script>
     <script>
         let allAreas = [];
         let allManagers = [];
         let allShops = [];
         let allModules = [];
+        let allProducts = [];
+        let areaProducts = [];
         let selectedAreaCode = null;
         let selectedManager = null;
 
@@ -214,12 +237,23 @@
                     apiCall('/shops'),
                     apiCall('/modules')
                 ]);
-                
+
                 allAreas = areasData || [];
                 allManagers = managersData || [];
                 allShops = shopsData || [];
                 allModules = modulesData.modules || modulesData || [];
-                
+
+                // WORLD PRODUCTS LOAD - ADMIN ROLE
+                try{
+                    if(window.WorldProductManager){
+                        window.WorldProductManager.role = 'admin';
+                        allProducts = await window.WorldProductManager.getAllShopsProducts();
+                    }else{
+                        const pr = await fetch('/api/world-products?role=admin').then(r=>r.json()).catch(()=>({data:[]}));
+                        allProducts = pr.data || pr.products || [];
+                    }
+                }catch(e){ allProducts = []; }
+
                 renderAreaCards();
 
                 // Auto-select area from localStorage if exists
@@ -238,17 +272,19 @@
 
         function renderAreaCards() {
             const grid = document.getElementById('areaCardsGrid');
-            
+
             if (allAreas.length === 0) {
                 grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#94a3b8;">No areas found. Create areas in Area Master first.</div>';
                 return;
             }
 
             grid.innerHTML = allAreas.map(area => {
-                const shopCount = allShops.filter(s => s.areaCode === area.areaCode && s.status !== 'pending').length;
+                const shopCount = allShops.filter(s => s.areaCode === area.areaCode && s.status!== 'pending').length;
                 const managerCount = allManagers.filter(m => m.areaCode === area.areaCode).length;
+                const shopIds = allShops.filter(s => s.areaCode === area.areaCode).map(s=>String(s._id));
+                const productCount = allProducts.filter(p => shopIds.includes(String(p.shopId))).length;
                 const isActive = area.status;
-                
+
                 return `
                     <div class="area-card" onclick="selectArea('${area.areaCode}', event)">
                         <div class="area-card-header">
@@ -267,6 +303,7 @@
                         <div class="area-stats">
                             <span>🏪 ${shopCount} shops</span>
                             <span>👥 ${managerCount} managers</span>
+                            <span>📦 ${productCount} products</span>
                         </div>
                     </div>
                 `;
@@ -275,25 +312,27 @@
 
         window.selectArea = (areaCode, event) => {
             selectedAreaCode = areaCode;
-            
+
             // ✅ FIX: Save to localStorage
             localStorage.setItem('currentAreaCode', areaCode);
             localStorage.setItem('currentAreaName', allAreas.find(a => a.areaCode === areaCode)?.areaName || areaCode);
-            
+
             // Highlight selected card
             document.querySelectorAll('.area-card').forEach(card => card.classList.remove('active'));
             if (event && event.currentTarget) {
                 event.currentTarget.classList.add('active');
             }
-            
+
             // Load manager and shops
             loadManagerSection(areaCode);
             loadShopsSection(areaCode);
-            
+            loadProductsSection(areaCode);
+
             // Show sections
             document.getElementById('managerSection').classList.remove('hidden');
             document.getElementById('shopsSection').classList.remove('hidden');
-            
+            document.getElementById('productsSection').classList.remove('hidden');
+
             // Scroll to manager section
             document.getElementById('managerSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
@@ -302,7 +341,7 @@
             const manager = allManagers.find(m => m.areaCode === areaCode);
             const area = allAreas.find(a => a.areaCode === areaCode);
             selectedManager = manager;
-            
+
             if (!manager) {
                 document.getElementById('managerName').textContent = 'No Manager Assigned';
                 document.getElementById('managerAddress').textContent = '📍 ' + area.city + ', ' + area.state;
@@ -311,12 +350,12 @@
                 document.getElementById('managerModules').innerHTML = '<span style="opacity:0.7;">No manager assigned</span>';
                 return;
             }
-            
+
             document.getElementById('managerName').textContent = manager.name;
             document.getElementById('managerAddress').textContent = '📍 ' + (manager.address || area.city + ', ' + area.state);
             document.getElementById('managerContact').textContent = `📞 ${manager.phone || 'N/A'} | 📧 ${manager.email || 'N/A'}`;
             document.getElementById('managerPhoto').src = manager.photo || 'https://via.placeholder.com/80?text=' + manager.name.charAt(0);
-            
+
             // Render modules
             const managerModules = manager.modules || [];
             if (managerModules.length === 0) {
@@ -331,18 +370,18 @@
 
         function loadShopsSection(areaCode) {
             const area = allAreas.find(a => a.areaCode === areaCode);
-            const shops = allShops.filter(s => s.areaCode === areaCode && s.status !== 'pending');
-            
+            const shops = allShops.filter(s => s.areaCode === areaCode && s.status!== 'pending');
+
             document.getElementById('selectedAreaName').textContent = area.areaName;
             document.getElementById('shopsCount').textContent = shops.length;
-            
+
             const tbody = document.querySelector('#areaShopsTable tbody');
-            
+
             if (shops.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">No shops in this area yet</td></tr>';
                 return;
             }
-            
+
             tbody.innerHTML = shops.map(s => {
                 const module = allModules.find(m => (m._id || m.id) === s.moduleId || m.id === s.shopType);
                 const locationType = s.locationType || 'fixed';
@@ -350,7 +389,7 @@
                 const coords = s.location?.coordinates || [];
                 const lat = coords[1];
                 const lng = coords[0];
-                
+
                 return `
                     <tr>
                         <td><img src="${s.logo || 'assets/logo.png'}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.src='https://via.placeholder.com/40?text=🏪'"></td>
@@ -384,14 +423,70 @@
             }).join('');
         }
 
+        // ===== PRODUCTS - AREA KE HISAB SE =====
+        function loadProductsSection(areaCode){
+            const area = allAreas.find(a => a.areaCode === areaCode);
+            const shopIds = allShops.filter(s => s.areaCode === areaCode).map(s=>String(s._id));
+            areaProducts = allProducts.filter(p => shopIds.includes(String(p.shopId)));
+            document.getElementById('selectedProductAreaName').textContent = area? area.areaName : areaCode;
+            document.getElementById('productsCount').textContent = areaProducts.length;
+            renderAreaProducts(areaProducts);
+        }
+
+        function renderAreaProducts(list){
+            const grid = document.getElementById('areaProductsGrid');
+            if(!list || list.length===0){
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:#94a3b8;">Is area ki shops me koi product nahi hai</div>';
+                return;
+            }
+            grid.innerHTML = list.map(p=>{
+                const shop = allShops.find(s=>String(s._id)===String(p.shopId));
+                return `
+                <div class="product-card">
+                    <img src="${p.thumbnail || p.image || ''}" onerror="this.src='https://via.placeholder.com/180x120?text=No+Image'">
+                    <b>${escapeHtml(p.name||'')}</b>
+                    <small>${escapeHtml(shop?.shopName || shop?.name || p.shopType || '')} • ${escapeHtml(p.category||'')}</small><br>
+                    <small>₹${p.price||0} ${p.mrp?`<s>₹${p.mrp}</s>`:''} • Stock: ${p.stock||0}</small><br>
+                    <small>Status: ${p.isActive===false?'❌ OFF':'✅ ON'}</small>
+                    <div class="product-actions">
+                        <button style="background:${p.isActive===false?'#dcfce7':'#fee2e2'}" onclick="toggleProduct('${p._id}', ${p.isActive===false})">${p.isActive===false?'ON Karo':'OFF Karo'}</button>
+                        <button style="background:#fef3c7" onclick="deleteProductAdmin('${p._id}')">Delete</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        window.filterProducts = (query) => {
+            const q = (query||'').toLowerCase().trim();
+            const filtered = areaProducts.filter(p => ((p.name||'')+' '+(p.category||'')+' '+(p.brand||'')).toLowerCase().includes(q));
+            renderAreaProducts(filtered);
+        };
+
+        window.toggleProduct = async (id, makeActive) => {
+            if(window.WorldProductManager){
+                const res = await window.WorldProductManager.updateProduct(id, {isActive: makeActive});
+                if(res.success){ showToast(makeActive?'Product ON ho gaya':'Product OFF ho gaya'); await loadDashboard(); if(selectedAreaCode) loadProductsSection(selectedAreaCode); }
+                else showToast('Fail: '+(res.message||''), 'error');
+            }
+        };
+
+        window.deleteProductAdmin = async (id) => {
+            if(!confirm('Product delete karna hai?')) return;
+            if(window.WorldProductManager){
+                const res = await window.WorldProductManager.deleteProduct(id);
+                if(res.success){ showToast('Product delete ho gaya'); await loadDashboard(); if(selectedAreaCode) loadProductsSection(selectedAreaCode); }
+                else showToast('Delete fail', 'error');
+            }
+        };
+
         window.openAssignModule = () => {
             if (!selectedManager) {
                 return showToast('No manager assigned to this area', 'error');
             }
-            
+
             const modal = document.getElementById('assignModuleModal');
             const list = document.getElementById('moduleCheckboxList');
-            
+
             list.innerHTML = allModules.map(mod => {
                 const modId = mod._id || mod.id;
                 const isChecked = selectedManager.modules && selectedManager.modules.includes(modId);
@@ -405,7 +500,7 @@
                     </div>
                 `;
             }).join('');
-            
+
             modal.classList.add('active');
         };
 
@@ -416,7 +511,7 @@
         window.saveModuleAssignment = async () => {
             const checkboxes = document.querySelectorAll('#moduleCheckboxList input[type="checkbox"]:checked');
             const selectedModules = Array.from(checkboxes).map(cb => cb.value);
-            
+
             try {
                 await apiCall(`/managers/${selectedManager._id}`, 'PUT', { modules: selectedModules });
                 showToast('Modules assigned successfully!');
