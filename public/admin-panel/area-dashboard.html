@@ -245,13 +245,9 @@
 
                 // WORLD PRODUCTS LOAD - ADMIN ROLE
                 try{
-                    if(window.WorldProductManager){
-                        window.WorldProductManager.role = 'admin';
-                        allProducts = await window.WorldProductManager.getAllShopsProducts();
-                    }else{
-                        const pr = await fetch('/api/world-products?role=admin').then(r=>r.json()).catch(()=>({data:[]}));
-                        allProducts = pr.data || pr.products || [];
-                    }
+                    const pr = await fetch('/api/world-products?role=admin').then(r=>r.json()).catch(()=>({data:[]}));
+                    allProducts = pr.data || pr.products || [];
+                    console.log('World Products in Admin:', allProducts.length);
                 }catch(e){ allProducts = []; }
 
                 renderAreaCards();
@@ -312,28 +308,18 @@
 
         window.selectArea = (areaCode, event) => {
             selectedAreaCode = areaCode;
-
-            // ✅ FIX: Save to localStorage
             localStorage.setItem('currentAreaCode', areaCode);
             localStorage.setItem('currentAreaName', allAreas.find(a => a.areaCode === areaCode)?.areaName || areaCode);
-
-            // Highlight selected card
             document.querySelectorAll('.area-card').forEach(card => card.classList.remove('active'));
             if (event && event.currentTarget) {
                 event.currentTarget.classList.add('active');
             }
-
-            // Load manager and shops
             loadManagerSection(areaCode);
             loadShopsSection(areaCode);
             loadProductsSection(areaCode);
-
-            // Show sections
             document.getElementById('managerSection').classList.remove('hidden');
             document.getElementById('shopsSection').classList.remove('hidden');
             document.getElementById('productsSection').classList.remove('hidden');
-
-            // Scroll to manager section
             document.getElementById('managerSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
@@ -341,7 +327,6 @@
             const manager = allManagers.find(m => m.areaCode === areaCode);
             const area = allAreas.find(a => a.areaCode === areaCode);
             selectedManager = manager;
-
             if (!manager) {
                 document.getElementById('managerName').textContent = 'No Manager Assigned';
                 document.getElementById('managerAddress').textContent = '📍 ' + area.city + ', ' + area.state;
@@ -350,13 +335,10 @@
                 document.getElementById('managerModules').innerHTML = '<span style="opacity:0.7;">No manager assigned</span>';
                 return;
             }
-
             document.getElementById('managerName').textContent = manager.name;
             document.getElementById('managerAddress').textContent = '📍 ' + (manager.address || area.city + ', ' + area.state);
             document.getElementById('managerContact').textContent = `📞 ${manager.phone || 'N/A'} | 📧 ${manager.email || 'N/A'}`;
             document.getElementById('managerPhoto').src = manager.photo || 'https://via.placeholder.com/80?text=' + manager.name.charAt(0);
-
-            // Render modules
             const managerModules = manager.modules || [];
             if (managerModules.length === 0) {
                 document.getElementById('managerModules').innerHTML = '<span style="opacity:0.7;">No modules assigned</span>';
@@ -371,17 +353,13 @@
         function loadShopsSection(areaCode) {
             const area = allAreas.find(a => a.areaCode === areaCode);
             const shops = allShops.filter(s => s.areaCode === areaCode && s.status!== 'pending');
-
             document.getElementById('selectedAreaName').textContent = area.areaName;
             document.getElementById('shopsCount').textContent = shops.length;
-
             const tbody = document.querySelector('#areaShopsTable tbody');
-
             if (shops.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">No shops in this area yet</td></tr>';
                 return;
             }
-
             tbody.innerHTML = shops.map(s => {
                 const module = allModules.find(m => (m._id || m.id) === s.moduleId || m.id === s.shopType);
                 const locationType = s.locationType || 'fixed';
@@ -389,11 +367,11 @@
                 const coords = s.location?.coordinates || [];
                 const lat = coords[1];
                 const lng = coords[0];
-
+                const shopProdCount = allProducts.filter(p=>String(p.shopId)===String(s._id)).length;
                 return `
                     <tr>
                         <td><img src="${s.logo || 'assets/logo.png'}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.src='https://via.placeholder.com/40?text=🏪'"></td>
-                        <td><b>${escapeHtml(s.shopName || s.name)}</b></td>
+                        <td><b>${escapeHtml(s.shopName || s.name)}</b><br><small style="color:#16a34a;font-weight:700">📦 ${shopProdCount} Products</small></td>
                         <td>
                             <span class="location-badge ${locationType}">
                                 ${locationType === 'fixed'? '📍 Fixed' : '🚚 Dynamic'}
@@ -401,7 +379,7 @@
                             ${locationType === 'dynamic' && lastUpdate? `<br><small style="color:#64748b;font-size:11px;">${lastUpdate}</small>` : ''}
                         </td>
                         <td>
-                            <div>${escapeHtml(s.address || '-')}</div>
+                            <div>${escapeHtml(typeof s.address==='string'?s.address:'-')}</div>
                             ${lat && lng? `
                                 <div class="shop-address">
                                     <small style="color:#64748b;">${lat.toFixed(4)}, ${lng.toFixed(4)}</small>
@@ -417,6 +395,7 @@
                         <td><span class="status-badge status-${s.status}">${s.status}</span></td>
                         <td class="actions">
                             <button class="btn btn-primary btn-sm" onclick="editShop('${s._id}')">Edit</button>
+                            <button class="btn btn-secondary btn-sm" onclick="viewShopProducts('${s._id}')" style="background:#16a34a;color:#fff;margin-top:4px;">📦 Products (${shopProdCount})</button>
                         </td>
                     </tr>
                 `;
@@ -436,7 +415,7 @@
         function renderAreaProducts(list){
             const grid = document.getElementById('areaProductsGrid');
             if(!list || list.length===0){
-                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:#94a3b8;">Is area ki shops me koi product nahi hai</div>';
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:#94a3b8;">Is area / shop me koi product nahi hai. Pehle product-form se add karo.</div>';
                 return;
             }
             grid.innerHTML = list.map(p=>{
@@ -456,6 +435,28 @@
             }).join('');
         }
 
+        window.viewShopProducts = async (shopId) => {
+            // Agar allProducts khali hai to fresh API se le lo
+            if(!allProducts || allProducts.length===0){
+                const pr = await fetch(`/api/world-products?role=admin&shopId=${shopId}`).then(r=>r.json()).catch(()=>({data:[]}));
+                allProducts = pr.data || pr.products || [];
+            }
+            let list = allProducts.filter(p => String(p.shopId) === String(shopId));
+            // Dusri baar direct shopId se try
+            if(list.length===0){
+                const pr2 = await fetch(`/api/world-products?role=admin&shopId=${shopId}`).then(r=>r.json()).catch(()=>({data:[]}));
+                list = pr2.data || pr2.products || [];
+            }
+            document.getElementById('productsSection').classList.remove('hidden');
+            const shop = allShops.find(s=>String(s._id)===String(shopId));
+            document.getElementById('selectedProductAreaName').textContent = shop ? (shop.shopName||shop.name) : 'Shop';
+            document.getElementById('productsCount').textContent = list.length;
+            areaProducts = list;
+            renderAreaProducts(list);
+            document.getElementById('productsSection').scrollIntoView({behavior:'smooth'});
+            console.log('Shop Products:', shopId, list.length, list);
+        };
+
         window.filterProducts = (query) => {
             const q = (query||'').toLowerCase().trim();
             const filtered = areaProducts.filter(p => ((p.name||'')+' '+(p.category||'')+' '+(p.brand||'')).toLowerCase().includes(q));
@@ -463,30 +464,24 @@
         };
 
         window.toggleProduct = async (id, makeActive) => {
-            if(window.WorldProductManager){
-                const res = await window.WorldProductManager.updateProduct(id, {isActive: makeActive});
-                if(res.success){ showToast(makeActive?'Product ON ho gaya':'Product OFF ho gaya'); await loadDashboard(); if(selectedAreaCode) loadProductsSection(selectedAreaCode); }
-                else showToast('Fail: '+(res.message||''), 'error');
-            }
+            const res = await fetch(`/api/world-products/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({isActive:makeActive})}).then(r=>r.json()).catch(e=>({success:false}));
+            if(res.success){ showToast(makeActive?'Product ON ho gaya':'Product OFF ho gaya'); await loadDashboard(); if(selectedAreaCode) setTimeout(()=>selectArea(selectedAreaCode,null),300); }
+            else showToast('Fail', 'error');
         };
 
         window.deleteProductAdmin = async (id) => {
             if(!confirm('Product delete karna hai?')) return;
-            if(window.WorldProductManager){
-                const res = await window.WorldProductManager.deleteProduct(id);
-                if(res.success){ showToast('Product delete ho gaya'); await loadDashboard(); if(selectedAreaCode) loadProductsSection(selectedAreaCode); }
-                else showToast('Delete fail', 'error');
-            }
+            const res = await fetch(`/api/world-products/${id}`,{method:'DELETE'}).then(r=>r.json()).catch(e=>({success:false}));
+            if(res.success){ showToast('Product delete ho gaya'); await loadDashboard(); if(selectedAreaCode) setTimeout(()=>selectArea(selectedAreaCode,null),300); }
+            else showToast('Delete fail', 'error');
         };
 
         window.openAssignModule = () => {
             if (!selectedManager) {
                 return showToast('No manager assigned to this area', 'error');
             }
-
             const modal = document.getElementById('assignModuleModal');
             const list = document.getElementById('moduleCheckboxList');
-
             list.innerHTML = allModules.map(mod => {
                 const modId = mod._id || mod.id;
                 const isChecked = selectedManager.modules && selectedManager.modules.includes(modId);
@@ -500,7 +495,6 @@
                     </div>
                 `;
             }).join('');
-
             modal.classList.add('active');
         };
 
@@ -511,20 +505,18 @@
         window.saveModuleAssignment = async () => {
             const checkboxes = document.querySelectorAll('#moduleCheckboxList input[type="checkbox"]:checked');
             const selectedModules = Array.from(checkboxes).map(cb => cb.value);
-
             try {
                 await apiCall(`/managers/${selectedManager._id}`, 'PUT', { modules: selectedModules });
                 showToast('Modules assigned successfully!');
                 closeAssignModule();
                 await loadDashboard();
-                selectArea(selectedAreaCode, null); // Refresh view
+                selectArea(selectedAreaCode, null);
             } catch (err) {
                 showToast('Failed to assign modules: ' + err.message, 'error');
             }
         };
 
         window.editShop = (shopId) => {
-            // Redirect to shops page with edit mode
             window.location.href = `shops.html?edit=${shopId}`;
         };
 
