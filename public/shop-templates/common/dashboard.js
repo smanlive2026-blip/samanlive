@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/common/dashboard.js - SAMANLIVE COMMON DASHBOARD - FULL LOGIC FROM KIRANA V16 - NO CUT - DYNAMIC SHOP TYPE
+// LOCATION: public/shop-templates/common/dashboard.js - SAMANLIVE COMMON DASHBOARD - FULL LOGIC FROM KIRANA V16 - NO CUT - DYNAMIC SHOP TYPE - LOADER FIX
 class CommonDashboardCore {
   constructor(){
     const params = new URLSearchParams(location.search);
@@ -51,7 +51,7 @@ class CommonDashboardCore {
     this.applyShopBranding();
 
     if(window.AuthCore){
-      try{ const ok = await window.AuthCore.protectDashboard(); if(!ok) return; }catch(e){ console.warn('AuthCore protect failed', e); }
+      try{ const ok = await window.AuthCore.protectDashboard(); if(!ok){ console.warn('AuthCore protect false - still continue dashboard load'); } }catch(e){ console.warn('AuthCore protect failed - still continue', e); }
     }
 
     this.bindUI();
