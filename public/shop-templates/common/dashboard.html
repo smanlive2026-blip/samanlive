@@ -171,4 +171,190 @@
 <script src="./products/product-manager.js"></script>
 <script src="./dashboard.js?v=1"></script>
 </body>
+</html><!-- LOCATION: public/shop-templates/common/dashboard.html - COMMON DASHBOARD - SAMANLIVE - FULL CODE - NO CUT -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAMANLIVE - Shop Dashboard</title>
+<link rel="icon" href="./samanlive-logo.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./dashboard.css?v=2">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+.brand{display:flex!important;align-items:center!important;gap:10px!important}
+.brand-logo{width:52px;height:52px;object-fit:contain;background:#fff;border-radius:12px;padding:3px;flex-shrink:0}
+.brand-name{font-size:20px!important;font-weight:900!important;letter-spacing:.5px;line-height:1}
+.brand-sub{font-size:12px;opacity:.8;margin-top:3px}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-logo{width:42px;height:42px;object-fit:contain;background:#fff;border-radius:10px;padding:2px}
+.samanlive-text{font-weight:900!important;letter-spacing:.5px}
+</style>
+</head>
+<body>
+<div id="loader"><div class="loader-box"><i class="fa-solid fa-spinner fa-spin"></i> Loading SAMANLIVE Dashboard...</div></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="brand">
+    <img src="./samanlive-logo.png" class="brand-logo" alt="SAMANLIVE" onerror="this.src='https://placehold.co/100x100/ffffff/111827?text=SL'">
+    <div>
+      <div class="brand-name">SAMANLIVE</div>
+      <div class="brand-sub" id="brandShopType">Shop Dashboard</div>
+    </div>
+    <small class="badge-pro">PRO</small>
+  </div>
+
+  <!-- PROFILE SYSTEM -->
+  <div class="profile-box" id="profileBox">
+    <img id="profilePhoto" src="https://placehold.co/100x100/1e293b/ffffff?text=SL" alt="Shop">
+    <div class="profile-info">
+      <b id="profileShopName">Loading Shop...</b>
+      <small id="profileOwnerName">Owner</small>
+      <small id="profileShopIdShort">ID: ...</small>
+    </div>
+    <button class="profile-edit-btn" id="btnOpenProfile" title="Profile"><i class="fa-solid fa-pen"></i></button>
+  </div>
+
+  <div class="menu">
+    <a class="active" data-tab="overview"><i class="fa-solid fa-table-columns"></i> Overview</a>
+    <a data-tab="products"><i class="fa-solid fa-box"></i> Products <span id="menuProdCount" class="menu-count">0</span></a>
+    <a data-tab="orders"><i class="fa-solid fa-cart-shopping"></i> Orders <span class="menu-live">LIVE</span></a>
+    <a data-tab="inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory</a>
+    <a data-tab="analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+    <div class="section">BUSINESS</div>
+    <a data-tab="finance"><i class="fa-solid fa-indian-rupee-sign"></i> Finance / Wallet</a>
+    <a data-tab="marketing"><i class="fa-solid fa-bullhorn"></i> Marketing</a>
+    <a data-tab="staff"><i class="fa-solid fa-users"></i> Staff</a>
+    <a data-tab="delivery"><i class="fa-solid fa-truck"></i> Delivery</a>
+    <a data-tab="reviews"><i class="fa-solid fa-star"></i> Reviews</a>
+    <div class="section">MANAGE SHOP</div>
+    <a data-tab="profile"><i class="fa-solid fa-store"></i> Shop Profile</a>
+    <a data-tab="banner"><i class="fa-solid fa-image"></i> Banner</a>
+    <a data-tab="orders_full"><i class="fa-solid fa-receipt"></i> Full Orders</a>
+    <a data-tab="settings"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a id="viewShopBtn"><i class="fa-solid fa-eye"></i> View Shop (Customer)</a>
+    <a id="universalFormBtn"><i class="fa-solid fa-plus"></i> Universal Form</a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="footer-label">SHOP ID</div>
+    <div id="shopIdDisplay">...</div>
+    <div class="footer-meta">Role: <span id="roleDisplay">dashboard</span> | Type: <span id="shopTypeDisplay">-</span></div>
+    <div class="footer-btns">
+      <button class="btn btn-dark flex1" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      <button class="btn btn-ghost flex1" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="header">
+    <button class="btn btn-dark" id="btnMenu"><i class="fa-solid fa-bars"></i></button>
+    <div class="header-brand">
+      <img src="./samanlive-logo.png" class="header-logo" alt="SAMANLIVE" onerror="this.src='https://placehold.co/100x100/ffffff/111827?text=SL'">
+      <div class="header-title">
+        <h3><span class="samanlive-text">SAMANLIVE</span> <span class="dash-sep">|</span> <span id="headerShopName">Shop Dashboard</span></h3>
+        <small id="shopNameHead">Loading...</small>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-dark" onclick="location.reload()"><i class="fa-solid fa-rotate"></i></button>
+      <button class="btn btn-dark" id="newProductBtn"><i class="fa-solid fa-plus"></i> New Product</button>
+      <button class="btn btn-green" id="quickAddBtn"><i class="fa-solid fa-bolt"></i> Quick Add</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><i class="fa-solid fa-box" style="color:#6366f1"></i><div><b id="productCount">0</b><p>Total Products</p></div></div>
+    <div class="stat"><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i><div><b id="lowStockCount">0</b><p>Low Stock</p></div></div>
+    <div class="stat"><i class="fa-solid fa-indian-rupee-sign" style="color:#10b981"></i><div><b id="revenue">₹0</b><p>Revenue</p></div></div>
+    <div class="stat"><i class="fa-solid fa-cart-shopping" style="color:#0ea5e9"></i><div><b id="orderCount">0</b><p>Orders</p></div></div>
+  </div>
+
+  <div class="content">
+    <div class="left">
+      <div class="tab active" id="tab-overview">
+        <div class="left-head">
+          <h4>Your Products <span id="prodCountText">(0)</span></h4>
+          <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" placeholder="Search products... name, brand, weight"></div>
+        </div>
+        <div class="p-grid" id="productList"></div>
+      </div>
+
+      <div class="tab" id="tab-products"><div class="tab-pad"><h3>Products - Inventory</h3><div id="commonInventory"></div><iframe id="inventoryFrame" class="frame"></iframe></div></div>
+      <div class="tab" id="tab-orders"><div class="tab-pad"><h3>Live Orders</h3><div id="recentOrders"></div><div class="mt12"><a id="openCommonOrders" class="btn btn-dark"><i class="fa-solid fa-external-link"></i> Open Full Orders Page</a></div><iframe id="ordersFrame" class="frame"></iframe></div></div>
+      <div class="tab" id="tab-inventory"><div class="tab-pad"><h3>Inventory - Low Stock</h3><div id="lowStock"></div><div id="lowStockList"></div><div class="mt12"><button class="btn btn-dark" id="btnLowStock">Open Low Stock Alert</button></div></div></div>
+      <div class="tab" id="tab-analytics"><div class="tab-pad"><h3>Analytics</h3><div id="analyticsBox"></div><iframe id="analyticsFrame" class="frame"></iframe></div></div>
+      <div class="tab" id="tab-finance"><div class="tab-pad"><h3>Finance / Wallet</h3><div id="financeBox"></div><div class="btn-row"><button class="btn btn-dark" id="btnWallet1">Wallet - Finance</button><button class="btn btn-dark" id="btnWallet2">Wallet</button></div></div></div>
+      <div class="tab" id="tab-marketing"><div class="tab-pad"><h3>Marketing</h3><div class="btn-row"><button class="btn btn-dark" id="btnCoupons">Coupons</button><button class="btn btn-dark" id="btnReferral">Referral</button></div></div></div>
+      <div class="tab" id="tab-staff"><div class="tab-pad"><h3>Staff</h3><button class="btn btn-dark" id="btnStaff">Staff List</button></div></div>
+      <div class="tab" id="tab-delivery"><div class="tab-pad"><h3>Delivery</h3><button class="btn btn-dark" id="btnDelivery">Delivery Status</button></div></div>
+      <div class="tab" id="tab-reviews"><div class="tab-pad"><h3>Reviews</h3><div id="reviewsBox"></div><iframe id="reviewsFrame" class="frame frame-sm"></iframe></div></div>
+
+      <!-- PROFILE TAB - FULL PROFILE SYSTEM -->
+      <div class="tab" id="tab-profile">
+        <div class="tab-pad">
+          <h3>Shop Profile</h3>
+          <div class="profile-form">
+            <div class="profile-photo-row">
+              <img id="profileBigPhoto" src="https://placehold.co/120x120/f1f5f9/64748b?text=SHOP">
+              <div>
+                <b id="profileBigName">Shop Name</b>
+                <p id="profileBigMeta">Shop Type • Area</p>
+                <div class="btn-row">
+                  <button class="btn btn-dark" id="btnEditProfile">Edit Profile</button>
+                  <button class="btn btn-ghost" id="btnShopInfo">Shop Info</button>
+                  <button class="btn btn-ghost" id="btnShopTiming">Timing</button>
+                  <button class="btn btn-ghost" id="btnVerification">Verification</button>
+                </div>
+              </div>
+            </div>
+            <div class="profile-grid">
+              <div class="p-field"><label>Shop Name</label><span id="pfShopName">-</span></div>
+              <div class="p-field"><label>Owner Name</label><span id="pfOwnerName">-</span></div>
+              <div class="p-field"><label>Phone</label><span id="pfPhone">-</span></div>
+              <div class="p-field"><label>Shop Type</label><span id="pfShopType">-</span></div>
+              <div class="p-field"><label>Address</label><span id="pfAddress">-</span></div>
+              <div class="p-field"><label>Status</label><span id="pfStatus">-</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-banner"><div class="tab-pad"><h3>Banner</h3><button class="btn btn-dark" id="btnBanner">Banner Setup</button></div></div>
+      <div class="tab" id="tab-orders_full"><div class="tab-pad"><h3>Full Orders</h3><iframe id="ordersFullFrame" class="frame frame-lg"></iframe></div></div>
+      <div class="tab" id="tab-settings"><div class="tab-pad"><h3>Settings</h3><div class="toggle"><span>Shop Status: <b id="toggleText">Open</b></span><div class="switch on" id="toggleSwitch"></div></div><div class="btn-row"><button class="btn btn-dark" id="btnSettings">Settings</button><button class="btn btn-dark" id="btnProfile2">Profile</button></div></div></div>
+    </div>
+
+    <div class="right">
+      <div class="box"><div class="toggle"><span><i class="fa-solid fa-store"></i> Shop: <b id="toggleText2">Open</b></span><div class="switch on" id="toggleSwitch2"></div></div><div class="box-sub">Live Open / Close</div></div>
+      <div class="box"><h4><i class="fa-solid fa-fire" style="color:#ef4444"></i> Low Stock</h4><div id="lowStockRight"></div></div>
+      <div class="box"><h4><i class="fa-solid fa-bell" style="color:#0ea5e9"></i> Live Orders</h4><div id="liveOrdersRight"></div></div>
+      <div class="box dark-box"><h4>SAMANLIVE System Status</h4><div id="commonStatus">Checking...</div><div class="mt10"><button class="btn dark-btn flex1" onclick="window.CommonDashboard?.checkCommonConnection()">Check Connection</button></div></div>
+      <div class="box"><h4>Profile Quick</h4><div class="profile-quick"><img id="quickPhoto" src="https://placehold.co/60x60/f1f5f9/64748b?text=S"><div><b id="quickShopName">Shop</b><br><small id="quickOwner">Owner</small></div></div><button class="btn btn-dark full-btn" id="btnQuickProfile">Open Profile</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<audio id="newOrderSound" src="./orders/new-order-sound.mp3" preload="auto"></audio>
+
+<script src="./core/storage-core.js"></script>
+<script src="./core/error-handler.js"></script>
+<script src="./core/api-core.js"></script>
+<script src="./core/auth-core.js"></script>
+<script src="./core/user-core.js"></script>
+<script src="./core/socket-core.js"></script>
+<script src="./core/dashboard-core.js"></script>
+<script src="./js/shop-toggle.js"></script>
+<script src="./js/share.js"></script>
+<script src="./cart/cart-core.js"></script>
+<script src="./products/product-manager.js"></script>
+<script src="./dashboard.js?v=1"></script>
+</body>
 </html>
