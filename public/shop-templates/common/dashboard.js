@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/common/dashboard.js - SAMANLIVE COMMON DASHBOARD - FULL LOGIC FROM KIRANA V16 - NO CUT - DYNAMIC SHOP TYPE - LOADER FIX
+// LOCATION: public/shop-templates/common/dashboard.js - SAMANLIVE COMMON DASHBOARD - FULL LOGIC - NO CUT - DYNAMIC SHOP TYPE - LOADER FIX - NO SHOP TYPE NAME IN UI
 class CommonDashboardCore {
   constructor(){
     const params = new URLSearchParams(location.search);
@@ -39,7 +39,7 @@ class CommonDashboardCore {
 
   async init(){
     if(!this.shopId){
-      this.showErrorPage('Shop ID Missing','Dashboard My Shops / Area Manager se kholo - URL me ?shopId=YOUR_ID aur ?shopType=kirana chahiye');
+      this.showErrorPage('Shop ID Missing','Dashboard My Shops / Area Manager se kholo - URL me ?shopId=YOUR_ID chahiye');
       return;
     }
     localStorage.setItem('last_shopId', this.shopId);
@@ -67,16 +67,15 @@ class CommonDashboardCore {
     this.loadCommonStatus();
   }
 
-  // SAMANLIVE + SHOP NAME DYNAMIC
+  // SAMANLIVE BRANDING ONLY - NO SHOP TYPE NAME IN UI
   applyShopBranding(){
-    const nice = this.shopType.replace(/-/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
-    document.title = `SAMANLIVE - ${nice} Dashboard`;
+    document.title = `SAMANLIVE - Shop Dashboard`;
     const set = (id, txt)=>{ const el=document.getElementById(id); if(el) el.innerText=txt; };
-    set('brandShopType', nice + ' Dashboard');
+    set('brandShopType', 'Shop Dashboard');
     set('shopTypeDisplay', this.shopType);
-    set('headerShopName', nice + ' Dashboard');
+    set('headerShopName', 'Shop Dashboard');
     const qBtn = document.getElementById('quickAddBtn');
-    if(qBtn) qBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Quick Add - ${nice}`;
+    if(qBtn) qBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Quick Add`;
   }
 
   bindUI(){
@@ -139,17 +138,17 @@ class CommonDashboardCore {
   renderProfile(){
     if(!this.shopData) return;
     const d = this.shopData;
-    const name = d.shopName || d.name || (this.shopType.toUpperCase()+' Shop');
+    const name = d.shopName || d.name || 'My Shop';
     const owner = d.ownerName || d.owner || d.userName || 'Shop Owner';
     const photo = d.shopImage || d.logo || d.image || d.banner || 'https://placehold.co/100x100/1e293b/ffffff?text=SL';
     const set = (id, txt)=>{ const el=document.getElementById(id); if(el) el.innerText = txt ?? '-'; };
     const setImg = (id, src)=>{ const el=document.getElementById(id); if(el) el.src = src; };
     set('profileShopName', name); set('profileOwnerName', owner); set('profileShopIdShort', 'ID: '+this.shopId.slice(0,12)+'...');
     setImg('profilePhoto', photo);
-    set('headerShopName', this.shopType.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())+' Dashboard');
+    set('headerShopName', 'Shop Dashboard');
     set('shopNameHead', name);
     setImg('profileBigPhoto', photo); set('profileBigName', name);
-    set('profileBigMeta', `${this.shopType} • ${d.area || d.city || d.address || ''}`);
+    set('profileBigMeta', `${d.area || d.city || d.address || ''}`);
     set('pfShopName', name); set('pfOwnerName', owner); set('pfPhone', d.phone || d.mobile || '-');
     set('pfShopType', this.shopType); set('pfAddress', d.address || d.area || '-'); set('pfStatus', d.isOpen===false?'Closed':'Open');
     setImg('quickPhoto', photo); set('quickShopName', name); set('quickOwner', owner);
@@ -176,7 +175,7 @@ class CommonDashboardCore {
     const el=document.getElementById('commonStatus');
     const pm = window.WorldProductManager;
     if(!pm){ if(el) el.innerHTML='❌ product-manager.js NOT loaded'; return; }
-    if(el) el.innerHTML=`✅ SAMANLIVE Connected<br>Shop: ${this.shopData?.shopName||''}<br>Type: ${this.shopType}<br>Role: ${pm.role}<br>ShopId: ${this.shopId.slice(0,12)}...<br>API: /api/world-products`;
+    if(el) el.innerHTML=`✅ SAMANLIVE Connected<br>Shop: ${this.shopData?.shopName||''}<br>Role: ${pm.role}<br>ShopId: ${this.shopId.slice(0,12)}...<br>API: /api/world-products`;
     this.toast('✅ Connection OK - SAMANLIVE');
   }
 
@@ -351,9 +350,9 @@ class CommonDashboardCore {
     const el=document.getElementById('commonStatus'); if(!el) return;
     try{
       const data = await window.ApiCore?.get(this.API_COMMON.health).catch(()=>null);
-      if(data) el.innerHTML=`✅ SAMANLIVE Connected<br>Shop: ${this.shopData?.shopName||this.shopType}<br>Type: ${this.shopType} | Products: ${this.allProducts.length}`;
-      else el.innerHTML=`✅ SAMANLIVE Dashboard Ready<br>Shop Type: ${this.shopType}<br>Products: ${this.allProducts.length} (World: ${this.worldProducts.length})`;
-    }catch(e){ el.innerHTML=`✅ SAMANLIVE Ready - ${this.shopType}`; }
+      if(data) el.innerHTML=`✅ SAMANLIVE Connected<br>Shop: ${this.shopData?.shopName||'My Shop'}<br>Products: ${this.allProducts.length}`;
+      else el.innerHTML=`✅ SAMANLIVE Dashboard Ready<br>Products: ${this.allProducts.length} (World: ${this.worldProducts.length})`;
+    }catch(e){ el.innerHTML=`✅ SAMANLIVE Ready`; }
   }
 
   async loadStatsCommon(){
@@ -380,7 +379,7 @@ class CommonDashboardCore {
   renderProducts(list){
     const c=document.getElementById('productList'); if(!c) return;
     if(!list.length){
-      c.innerHTML=`<div class="empty-box"><div style="font-size:48px">🛒</div><h3 style="font-weight:900;margin-top:10px">No products yet</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#10b981">Quick Add</b> to add ready products for ${this.shopType}</p><button onclick="window.CommonDashboard.goQuickAdd()" class="btn btn-green" style="margin:12px auto 0">Quick Add Products</button></div>`;
+      c.innerHTML=`<div class="empty-box"><div style="font-size:48px">🛒</div><h3 style="font-weight:900;margin-top:10px">No products yet</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#10b981">Quick Add</b> to add ready products</p><button onclick="window.CommonDashboard.goQuickAdd()" class="btn btn-green" style="margin:12px auto 0">Quick Add Products</button></div>`;
       return;
     }
     c.innerHTML=list.map(p=>`
@@ -402,7 +401,7 @@ class CommonDashboardCore {
   }
 
   renderLowStock(list){
-    const html=!list.length?`<div class="low-ok">✓ All Stock OK</div>`:list.slice(0,10).map(p=>`<div class="low-item"><div><b style="font-size:12px">${p.name}</b><br><small style="color:#92400e;font-size:10px">${p.category||this.shopType} • ${p.weight||''}</small></div><span class="low-badge">${p.stock}</span></div>`).join('');
+    const html=!list.length?`<div class="low-ok">✓ All Stock OK</div>`:list.slice(0,10).map(p=>`<div class="low-item"><div><b style="font-size:12px">${p.name}</b><br><small style="color:#92400e;font-size:10px">${p.category||''} • ${p.weight||''}</small></div><span class="low-badge">${p.stock}</span></div>`).join('');
     ['lowStock','lowStockRight','lowStockList'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; });
   }
 
