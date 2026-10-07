@@ -1,116 +1,180 @@
 // LOCATION: server/routes/common/profile.routes.js
-// WORLD CLASS SHOP OWNER PROFILE ROUTE - FULL 600+ LINES - PRODUCTION READY
+// WORLD CLASS SHOP OWNER PROFILE ROUTE - FULL 600+ LINES - PRODUCTION READY - DB CONNECTED FIX
 // NOTE: This is for SHOP OWNER profile only (shop-templates/common/profile/)
 // NOT for customer/user profile (public/profile/) - that's separate
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 
-// ========== IN-MEMORY FALLBACK ==========
-const shopProfileMemory = new Map(); // shopId -> shop profile
-const galleryMemory = new Map(); // shopId -> gallery[]
-const timingMemory = new Map(); // shopId -> timing
-const verificationMemory = new Map(); // shopId -> verification
-const holidayMemory = new Map(); // shopId -> holidays[]
+// ========== DB MODEL - models/common/shop.js ==========
+let CommonShop = null;
+try { CommonShop = require('../../models/common/shop'); } catch(e) { console.error('CommonShop model load failed', e.message); }
 
-function getShopProfile(shopId){
-  if(!shopProfileMemory.has(shopId)){
-    shopProfileMemory.set(shopId, {
-      _id:shopId,
-      name:'My Kirana Store',
-      category:'kirana',
-      description:'Best kirana store in Surat with fresh products and fast delivery. Quality products at affordable prices.',
-      tagline:'Fresh products, fast delivery',
-      ownerName:'Ramesh Kumar',
-      phone:'9876543210',
-      altPhone:'9876543211',
-      email:'myshop@example.com',
-      whatsapp:'9876543210',
-      address:'Shop No 12, Adajan Patiya, Surat',
-      area:'Adajan',
-      city:'Surat',
-      pincode:'395009',
-      landmark:'Near Adajan Patiya',
-      gst:'27ABCDE1234F1Z5',
-      fssai:'12345678901234',
-      estYear:'2020',
-      staffCount:'2-5',
-      avatar:'',
-      cover:'',
-      rating:4.5,
-      reviews:120,
-      orders:450,
-      products:85,
-      customers:320,
-      verified:false,
-      location:{ lat:21.1702, lng:72.8311 },
-      createdAt:new Date(Date.now()-90*86400000).toISOString(),
-      updatedAt:new Date().toISOString()
-    });
+// ========== HELPERS - DB SE SHOP LAO / BANAO ==========
+function isObjectId(id){ try{ return mongoose.Types.ObjectId.isValid(id); }catch(e){ return false; } }
+
+async function findOrCreateShopDoc(shopId){
+  if(!CommonShop) return null;
+  let doc = null;
+  // 1. _id se dhundho (agar shopId ObjectId hai)
+  if(isObjectId(shopId)){
+    doc = await CommonShop.findById(shopId).catch(()=>null);
+    if(doc) return doc;
   }
-  return shopProfileMemory.get(shopId);
+  // 2. shopId field se dhundho
+  doc = await CommonShop.findOne({ shopId: String(shopId) }).catch(()=>null);
+  if(doc) return doc;
+  // 3. Nahi mila to naya bana do - khali, jhoota Kirana data nahi
+  doc = await CommonShop.create({
+    shopId: String(shopId),
+    name: '',
+    shopName: '',
+    category: '',
+    description: '',
+    tagline: '',
+    ownerName: '',
+    phone: '',
+    altPhone: '',
+    email: '',
+    whatsapp: '',
+    address: '',
+    area: '',
+    city: '',
+    pincode: '',
+    landmark: '',
+    gst: '',
+    fssai: '',
+    estYear: '',
+    staffCount: '1',
+    avatar: '',
+    cover: '',
+    rating: 4.5,
+    reviews: 0,
+    orders: 0,
+    products: 0,
+    customers: 0,
+    verified: false,
+    location: {},
+    timing: { openingTime:'09:00', closingTime:'21:00', breakStart:'', breakEnd:'', isOpen:true, is24Hours:false, weeklySchedule:{
+      Monday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Tuesday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Wednesday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Thursday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Friday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Saturday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Sunday:{ open:true, openingTime:'09:00', closingTime:'21:00' }
+    }, holidays: [] },
+    openingTime:'09:00',
+    closingTime:'21:00',
+    isOpen:true,
+    is24Hours:false,
+    weeklySchedule:{
+      Monday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Tuesday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Wednesday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Thursday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Friday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Saturday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Sunday:{ open:true, openingTime:'09:00', closingTime:'21:00' }
+    },
+    holidays: [],
+    gallery: [],
+    verification: { documents:{}, status:'not_submitted' }
+  }).catch(()=>null);
+  return doc;
 }
 
-function getGallery(shopId){
-  if(!galleryMemory.has(shopId)){
-    galleryMemory.set(shopId, [
-      { _id:'g1', shopId, url:'https://via.placeholder.com/300x300/0f172a/fff?text=Shop+Front', category:'shop', type:'image', uploadedAt:new Date().toISOString(), views:120 },
-      { _id:'g2', shopId, url:'https://via.placeholder.com/300x300/10b981/fff?text=Products', category:'products', type:'image', uploadedAt:new Date(Date.now()-2*86400000).toISOString(), views:85 },
-      { _id:'g3', shopId, url:'https://via.placeholder.com/300x300/f59e0b/fff?text=Team', category:'team', type:'image', uploadedAt:new Date(Date.now()-5*86400000).toISOString(), views:45 }
-    ]);
-  }
-  return galleryMemory.get(shopId);
+function docToShop(doc, shopId){
+  if(!doc) return { _id:shopId, shopId:String(shopId), name:'', shopName:'', avatar:'', cover:'', verified:false };
+  const s = doc.toObject? doc.toObject() : {...doc};
+  s._id = shopId;
+  s.shopId = String(shopId);
+  // FIELD SYNC - dashboard shopName padhta hai
+  if(s.name &&!s.shopName) s.shopName = s.name;
+  if(s.shopName &&!s.name) s.name = s.shopName;
+  if(s.avatar &&!s.shopImage) s.shopImage = s.avatar;
+  if(s.shopImage &&!s.avatar) s.avatar = s.shopImage;
+  if(s.cover &&!s.banner) s.banner = s.cover;
+  if(s.banner &&!s.cover) s.cover = s.banner;
+  return s;
 }
 
-function getTiming(shopId){
-  if(!timingMemory.has(shopId)){
-    timingMemory.set(shopId, {
-      _id:'t'+shopId,
-      shopId,
-      openingTime:'09:00',
-      closingTime:'21:00',
-      breakStart:'',
-      breakEnd:'',
-      isOpen:true,
-      is24Hours:false,
-      weeklySchedule:{
-        Monday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
-        Tuesday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
-        Wednesday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
-        Thursday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
-        Friday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
-        Saturday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
-        Sunday:{ open:true, openingTime:'09:00', closingTime:'21:00' }
-      },
-      updatedAt:new Date().toISOString()
-    });
-  }
-  return timingMemory.get(shopId);
+function docToTiming(doc, shopId){
+  const s = docToShop(doc, shopId);
+  const t = s.timing && (s.timing.openingTime || s.timing.closingTime)? s.timing : null;
+  return {
+    _id:'t'+shopId,
+    shopId:String(shopId),
+    openingTime: t?.openingTime || s.openingTime || '09:00',
+    closingTime: t?.closingTime || s.closingTime || '21:00',
+    breakStart: t?.breakStart || s.breakStart || '',
+    breakEnd: t?.breakEnd || s.breakEnd || '',
+    isOpen: (t?.isOpen!==undefined? t.isOpen : (s.isOpen!==undefined? s.isOpen : true)),
+    is24Hours:!!(t?.is24Hours || s.is24Hours),
+    weeklySchedule: t?.weeklySchedule || s.weeklySchedule || {
+      Monday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Tuesday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Wednesday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Thursday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Friday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Saturday:{ open:true, openingTime:'09:00', closingTime:'21:00' },
+      Sunday:{ open:true, openingTime:'09:00', closingTime:'21:00' }
+    },
+    updatedAt: s.updatedAt || new Date().toISOString()
+  };
 }
 
-function getVerification(shopId){
-  if(!verificationMemory.has(shopId)){
-    verificationMemory.set(shopId, {
-      _id:'v'+shopId,
-      shopId,
-      documents:{},
-      status:'not_submitted',
-      submittedAt:null,
-      verifiedAt:null,
-      rejectedReason:'',
-      createdAt:new Date().toISOString()
-    });
-  }
-  return verificationMemory.get(shopId);
+function docToGallery(doc){
+  if(!doc) return [];
+  const s = doc.toObject? doc.toObject() : doc;
+  return (s.gallery||[]).map(g=>{
+    const gg = g.toObject? g.toObject() : g;
+    return { _id:String(gg._id||''), shopId:String(s.shopId||''), url:gg.url||'', category:gg.category||'shop', type:gg.type||'image', uploadedAt:gg.uploadedAt||new Date().toISOString(), views:gg.views||0 };
+  });
 }
 
-function getHolidays(shopId){
-  if(!holidayMemory.has(shopId)){
-    holidayMemory.set(shopId, [
-      { _id:'h1', shopId, date:new Date(Date.now()+10*86400000).toISOString().split('T')[0], reason:'Diwali' },
-      { _id:'h2', shopId, date:new Date(Date.now()+20*86400000).toISOString().split('T')[0], reason:'Holi' }
-    ]);
-  }
-  return holidayMemory.get(shopId);
+function docToHolidays(doc){
+  const s = doc? (doc.toObject? doc.toObject() : doc) : {};
+  const fromTiming = s.timing?.holidays || [];
+  const top = s.holidays || [];
+  const list = top.length? top : fromTiming;
+  return list.map(h=>{
+    const hh = h.toObject? h.toObject() : h;
+    return { _id:String(hh._id||('h'+Date.now())), shopId:String(s.shopId||''), date:hh.date||'', reason:hh.reason||'Holiday', createdAt:hh.createdAt||new Date().toISOString() };
+  });
+}
+
+function docToVerification(doc, shopId){
+  const s = doc? (doc.toObject? doc.toObject() : doc) : {};
+  const v = s.verification || {};
+  return {
+    _id:'v'+shopId,
+    shopId:String(shopId),
+    documents: v.documents || {},
+    status: v.status || 'not_submitted',
+    submittedAt: v.submittedAt || null,
+    verifiedAt: v.reviewedAt || null,
+    rejectedReason: v.rejectReason || '',
+    createdAt: s.createdAt || new Date().toISOString(),
+    updatedAt: s.updatedAt || new Date().toISOString()
+  };
+}
+
+async function saveShopUpdates(shopId, updates){
+  const doc = await findOrCreateShopDoc(shopId);
+  if(!doc) return null;
+  Object.keys(updates||{}).forEach(k=>{
+    if(updates[k]!==undefined){
+      try{ doc.set(k, updates[k]); }catch(e){ doc[k]=updates[k]; }
+    }
+  });
+  // name <-> shopName sync
+  if(updates.name &&!updates.shopName){ try{ doc.set('shopName', updates.name); }catch(e){} }
+  if(updates.shopName &&!updates.name){ try{ doc.set('name', updates.shopName); }catch(e){} }
+  if(updates.avatar &&!updates.shopImage){ try{ doc.set('shopImage', updates.avatar); }catch(e){} }
+  if(updates.cover &&!updates.banner){ try{ doc.set('banner', updates.cover); }catch(e){} }
+  await doc.save();
+  return doc;
 }
 
 // ========== 1. SHOP PROFILE CRUD ==========
@@ -118,12 +182,12 @@ function getHolidays(shopId){
 router.get('/:shopId', async (req,res)=>{
   try{
     const { shopId } = req.params;
-
-    const shop = getShopProfile(shopId);
-    const gallery = getGallery(shopId);
-    const timing = getTiming(shopId);
-    const verification = getVerification(shopId);
-    const holidays = getHolidays(shopId);
+    const doc = await findOrCreateShopDoc(shopId);
+    const shop = docToShop(doc, shopId);
+    const gallery = docToGallery(doc);
+    const timing = docToTiming(doc, shopId);
+    const verification = docToVerification(doc, shopId);
+    const holidays = docToHolidays(doc);
 
     res.json({
       success:true,
@@ -150,32 +214,30 @@ router.put('/:shopId', async (req,res)=>{
     const { shopId } = req.params;
     const updates = req.body;
 
-    const shop = getShopProfile(shopId);
-
     // Validate required fields
     if(updates.name && updates.name.trim().length<3){
       return res.status(400).json({ success:false, message:'Shop name must be at least 3 characters' });
     }
-
     if(updates.phone && updates.phone.toString().length!==10){
       return res.status(400).json({ success:false, message:'Phone must be 10 digits' });
     }
-
     if(updates.pincode && updates.pincode.toString().length!==6){
       return res.status(400).json({ success:false, message:'Pincode must be 6 digits' });
     }
-
     if(updates.gst && updates.gst.length!==15){
       return res.status(400).json({ success:false, message:'GST must be 15 characters' });
     }
-
     if(updates.fssai && updates.fssai.length!==14){
       return res.status(400).json({ success:false, message:'FSSAI must be 14 digits' });
     }
 
-    const updatedShop = {...shop,...updates, _id:shopId, updatedAt:new Date().toISOString() };
+    // FIELD FIX - dono naam save karo
+    const payload = {...updates};
+    if(payload.name &&!payload.shopName) payload.shopName = payload.name;
+    if(payload.shopName &&!payload.name) payload.name = payload.shopName;
 
-    shopProfileMemory.set(shopId, updatedShop);
+    const doc = await saveShopUpdates(shopId, payload);
+    const updatedShop = docToShop(doc, shopId);
 
     if(global.io){
       global.io.to(`shop:${shopId}`).emit('shop-profile-updated', updatedShop);
@@ -192,17 +254,15 @@ router.get('/:shopId/gallery', async (req,res)=>{
   try{
     const { shopId } = req.params;
     const { category, type } = req.query;
-
-    let gallery = getGallery(shopId);
+    const doc = await findOrCreateShopDoc(shopId);
+    let gallery = docToGallery(doc);
 
     if(category && category!=='all'){
       gallery = gallery.filter(g=> g.category===category);
     }
-
     if(type){
       gallery = gallery.filter(g=> g.type===type);
     }
-
     gallery = gallery.sort((a,b)=> new Date(b.uploadedAt)-new Date(a.uploadedAt));
 
     res.json({
@@ -226,26 +286,24 @@ router.post('/:shopId/gallery', async (req,res)=>{
       return res.status(400).json({ success:false, message:'url required' });
     }
 
-    const gallery = getGallery(shopId);
-
+    const doc = await findOrCreateShopDoc(shopId);
     const newPhoto = {
-      _id:'g'+Date.now()+Math.random().toString(36).substr(2,5),
-      shopId,
       url,
       category:category||'shop',
       type:type||'image',
-      uploadedAt:new Date().toISOString(),
+      uploadedAt:new Date(),
       views:0
     };
-
-    gallery.unshift(newPhoto);
-    galleryMemory.set(shopId, gallery);
+    doc.gallery.unshift(newPhoto);
+    await doc.save();
+    const gallery = docToGallery(doc);
+    const savedPhoto = gallery[0];
 
     if(global.io){
-      global.io.to(`shop:${shopId}`).emit('gallery-photo-added', newPhoto);
+      global.io.to(`shop:${shopId}`).emit('gallery-photo-added', savedPhoto);
     }
 
-    res.json({ success:true, message:'Photo added to gallery', photo:newPhoto, gallery });
+    res.json({ success:true, message:'Photo added to gallery', photo:savedPhoto, gallery });
 
   }catch(e){ res.status(500).json({ success:false, error:e.message }); }
 });
@@ -254,16 +312,17 @@ router.post('/:shopId/gallery', async (req,res)=>{
 router.delete('/:shopId/gallery/:photoId', async (req,res)=>{
   try{
     const { shopId, photoId } = req.params;
-
-    let gallery = getGallery(shopId);
+    const doc = await findOrCreateShopDoc(shopId);
+    let gallery = docToGallery(doc);
     const photo = gallery.find(g=> g._id===photoId);
 
     if(!photo){
       return res.status(404).json({ success:false, message:'Photo not found' });
     }
 
-    gallery = gallery.filter(g=> g._id!==photoId);
-    galleryMemory.set(shopId, gallery);
+    doc.gallery = doc.gallery.filter(g=> String(g._id)!==String(photoId));
+    await doc.save();
+    gallery = docToGallery(doc);
 
     if(global.io){
       global.io.to(`shop:${shopId}`).emit('gallery-photo-deleted', { photoId });
@@ -278,19 +337,18 @@ router.delete('/:shopId/gallery/:photoId', async (req,res)=>{
 router.put('/:shopId/gallery/:photoId/cover', async (req,res)=>{
   try{
     const { shopId, photoId } = req.params;
-
-    const gallery = getGallery(shopId);
+    const doc = await findOrCreateShopDoc(shopId);
+    const gallery = docToGallery(doc);
     const photo = gallery.find(g=> g._id===photoId);
 
     if(!photo){
       return res.status(404).json({ success:false, message:'Photo not found' });
     }
 
-    const shop = getShopProfile(shopId);
-    shop.cover = photo.url;
-    shop.updatedAt = new Date().toISOString();
-
-    shopProfileMemory.set(shopId, shop);
+    doc.cover = photo.url;
+    try{ doc.set('banner', photo.url); }catch(e){}
+    await doc.save();
+    const shop = docToShop(doc, shopId);
 
     if(global.io){
       global.io.to(`shop:${shopId}`).emit('shop-cover-updated', { cover:photo.url });
@@ -306,9 +364,9 @@ router.put('/:shopId/gallery/:photoId/cover', async (req,res)=>{
 router.get('/:shopId/timing', async (req,res)=>{
   try{
     const { shopId } = req.params;
-
-    const timing = getTiming(shopId);
-    const holidays = getHolidays(shopId);
+    const doc = await findOrCreateShopDoc(shopId);
+    const timing = docToTiming(doc, shopId);
+    const holidays = docToHolidays(doc);
 
     res.json({
       success:true,
@@ -331,26 +389,37 @@ router.put('/:shopId/timing', async (req,res)=>{
     if(timingData.openingTime &&!timingData.openingTime.includes(':')){
       return res.status(400).json({ success:false, message:'Invalid openingTime format, use HH:MM' });
     }
-
     if(timingData.closingTime &&!timingData.closingTime.includes(':')){
       return res.status(400).json({ success:false, message:'Invalid closingTime format, use HH:MM' });
     }
 
-    let timing = getTiming(shopId);
+    const doc = await findOrCreateShopDoc(shopId);
+    const currentTiming = docToTiming(doc, shopId);
+    const newTiming = {...currentTiming,...timingData, shopId:String(shopId), _id:'t'+shopId, updatedAt:new Date().toISOString() };
+    delete newTiming._id;
 
-    timing = {...timing,...timingData, shopId, _id:'t'+shopId, updatedAt:new Date().toISOString() };
-
-    timingMemory.set(shopId, timing);
-
+    try{ doc.set('timing', newTiming); }catch(e){}
+    // top-level bhi sync rakho dashboard toggle ke liye
+    if(newTiming.openingTime) doc.openingTime = newTiming.openingTime;
+    if(newTiming.closingTime) doc.closingTime = newTiming.closingTime;
+    if(newTiming.breakStart!==undefined) doc.breakStart = newTiming.breakStart;
+    if(newTiming.breakEnd!==undefined) doc.breakEnd = newTiming.breakEnd;
+    if(newTiming.isOpen!==undefined) doc.isOpen = newTiming.isOpen;
+    if(newTiming.is24Hours!==undefined) doc.is24Hours = newTiming.is24Hours;
+    if(newTiming.weeklySchedule) doc.weeklySchedule = newTiming.weeklySchedule;
     if(timingData.holidays){
-      holidayMemory.set(shopId, timingData.holidays);
+      doc.holidays = timingData.holidays;
+      try{ doc.set('timing.holidays', timingData.holidays); }catch(e){}
     }
+    await doc.save();
+
+    const timing = docToTiming(doc, shopId);
 
     if(global.io){
       global.io.to(`shop:${shopId}`).emit('shop-timing-updated', timing);
     }
 
-    res.json({ success:true, message:'Shop timing updated', timing, holidays:getHolidays(shopId) });
+    res.json({ success:true, message:'Shop timing updated', timing, holidays:docToHolidays(doc) });
 
   }catch(e){ res.status(500).json({ success:false, error:e.message }); }
 });
@@ -360,12 +429,11 @@ router.post('/:shopId/timing/toggle', async (req,res)=>{
   try{
     const { shopId } = req.params;
     const { isOpen } = req.body;
-
-    let timing = getTiming(shopId);
-    timing.isOpen = isOpen!==false;
-    timing.updatedAt = new Date().toISOString();
-
-    timingMemory.set(shopId, timing);
+    const doc = await findOrCreateShopDoc(shopId);
+    doc.isOpen = isOpen!==false;
+    try{ doc.set('timing.isOpen', doc.isOpen); }catch(e){}
+    await doc.save();
+    const timing = docToTiming(doc, shopId);
 
     if(global.io){
       global.io.to(`shop:${shopId}`).emit('shop-status-toggled', { isOpen:timing.isOpen });
@@ -382,8 +450,8 @@ router.post('/:shopId/timing/toggle', async (req,res)=>{
 router.get('/:shopId/holidays', async (req,res)=>{
   try{
     const { shopId } = req.params;
-
-    const holidays = getHolidays(shopId).sort((a,b)=> new Date(a.date)-new Date(b.date));
+    const doc = await findOrCreateShopDoc(shopId);
+    const holidays = docToHolidays(doc).sort((a,b)=> new Date(a.date)-new Date(b.date));
 
     res.json({ success:true, holidays, count:holidays.length, upcoming:holidays.filter(h=> new Date(h.date)>=new Date()).length });
 
@@ -400,18 +468,11 @@ router.post('/:shopId/holidays', async (req,res)=>{
       return res.status(400).json({ success:false, message:'date required' });
     }
 
-    const holidays = getHolidays(shopId);
-
-    const newHoliday = {
-      _id:'h'+Date.now(),
-      shopId,
-      date,
-      reason:reason||'Holiday',
-      createdAt:new Date().toISOString()
-    };
-
-    holidays.push(newHoliday);
-    holidayMemory.set(shopId, holidays);
+    const doc = await findOrCreateShopDoc(shopId);
+    doc.holidays.push({ date, reason:reason||'Holiday' });
+    await doc.save();
+    const holidays = docToHolidays(doc);
+    const newHoliday = holidays[holidays.length-1];
 
     if(global.io){
       global.io.to(`shop:${shopId}`).emit('holiday-added', newHoliday);
@@ -426,11 +487,10 @@ router.post('/:shopId/holidays', async (req,res)=>{
 router.delete('/:shopId/holidays/:holidayId', async (req,res)=>{
   try{
     const { shopId, holidayId } = req.params;
-
-    let holidays = getHolidays(shopId);
-    holidays = holidays.filter(h=> h._id!==holidayId);
-
-    holidayMemory.set(shopId, holidays);
+    const doc = await findOrCreateShopDoc(shopId);
+    doc.holidays = (doc.holidays||[]).filter(h=> String(h._id)!==String(holidayId));
+    await doc.save();
+    const holidays = docToHolidays(doc);
 
     if(global.io){
       global.io.to(`shop:${shopId}`).emit('holiday-deleted', { holidayId });
@@ -446,9 +506,9 @@ router.delete('/:shopId/holidays/:holidayId', async (req,res)=>{
 router.get('/:shopId/verification', async (req,res)=>{
   try{
     const { shopId } = req.params;
-
-    const verification = getVerification(shopId);
-    const shop = getShopProfile(shopId);
+    const doc = await findOrCreateShopDoc(shopId);
+    const verification = docToVerification(doc, shopId);
+    const shop = docToShop(doc, shopId);
 
     res.json({
       success:true,
@@ -481,14 +541,17 @@ router.post('/:shopId/verification', async (req,res)=>{
       return res.status(400).json({ success:false, message:`Missing required documents: ${missing.join(', ')}`, missing });
     }
 
-    const verification = getVerification(shopId);
-
-    verification.documents = {...verification.documents,...documents };
-    verification.status = status||'pending';
-    verification.submittedAt = new Date().toISOString();
-    verification.updatedAt = new Date().toISOString();
-
-    verificationMemory.set(shopId, verification);
+    const doc = await findOrCreateShopDoc(shopId);
+    const oldDocs = doc.verification?.documents || {};
+    const newVerification = {
+      documents: {...oldDocs,...documents },
+      status: status||'pending',
+      submittedAt: new Date(),
+      rejectReason: doc.verification?.rejectReason || ''
+    };
+    try{ doc.set('verification', newVerification); }catch(e){ doc.verification = newVerification; }
+    await doc.save();
+    const verification = docToVerification(doc, shopId);
 
     if(global.io){
       global.io.to(`shop:${shopId}`).emit('verification-submitted', verification);
@@ -510,23 +573,17 @@ router.put('/:shopId/verification/status', async (req,res)=>{
       return res.status(400).json({ success:false, message:'status must be verified, rejected, or pending' });
     }
 
-    const verification = getVerification(shopId);
-    const shop = getShopProfile(shopId);
+    const doc = await findOrCreateShopDoc(shopId);
+    const v = doc.verification? (doc.verification.toObject? doc.verification.toObject() : doc.verification) : {};
+    v.status = status;
+    v.rejectReason = rejectedReason||'';
+    if(status==='verified'){ v.reviewedAt = new Date(); doc.verified = true; }
+    else if(status==='rejected'){ doc.verified = false; }
+    try{ doc.set('verification', v); }catch(e){ doc.verification = v; }
+    await doc.save();
 
-    verification.status = status;
-    verification.rejectedReason = rejectedReason||'';
-    verification.updatedAt = new Date().toISOString();
-
-    if(status==='verified'){
-      verification.verifiedAt = new Date().toISOString();
-      shop.verified = true;
-      shopProfileMemory.set(shopId, shop);
-    } else if(status==='rejected'){
-      shop.verified = false;
-      shopProfileMemory.set(shopId, shop);
-    }
-
-    verificationMemory.set(shopId, verification);
+    const verification = docToVerification(doc, shopId);
+    const shop = docToShop(doc, shopId);
 
     if(global.io){
       global.io.to(`shop:${shopId}`).emit('verification-status-updated', { status, shopId });
@@ -551,11 +608,8 @@ router.post('/:shopId/avatar', async (req,res)=>{
       return res.status(400).json({ success:false, message:'avatar url required' });
     }
 
-    const shop = getShopProfile(shopId);
-    shop.avatar = avatar;
-    shop.updatedAt = new Date().toISOString();
-
-    shopProfileMemory.set(shopId, shop);
+    const doc = await saveShopUpdates(shopId, { avatar, shopImage: avatar });
+    const shop = docToShop(doc, shopId);
 
     if(global.io){
       global.io.to(`shop:${shopId}`).emit('shop-avatar-updated', { avatar });
@@ -576,11 +630,8 @@ router.post('/:shopId/cover', async (req,res)=>{
       return res.status(400).json({ success:false, message:'cover url required' });
     }
 
-    const shop = getShopProfile(shopId);
-    shop.cover = cover;
-    shop.updatedAt = new Date().toISOString();
-
-    shopProfileMemory.set(shopId, shop);
+    const doc = await saveShopUpdates(shopId, { cover, banner: cover });
+    const shop = docToShop(doc, shopId);
 
     if(global.io){
       global.io.to(`shop:${shopId}`).emit('shop-cover-updated', { cover });
@@ -596,12 +647,12 @@ router.post('/:shopId/cover', async (req,res)=>{
 router.get('/:shopId/stats', async (req,res)=>{
   try{
     const { shopId } = req.params;
-
-    const shop = getShopProfile(shopId);
-    const gallery = getGallery(shopId);
-    const timing = getTiming(shopId);
-    const verification = getVerification(shopId);
-    const holidays = getHolidays(shopId);
+    const doc = await findOrCreateShopDoc(shopId);
+    const shop = docToShop(doc, shopId);
+    const gallery = docToGallery(doc);
+    const timing = docToTiming(doc, shopId);
+    const verification = docToVerification(doc, shopId);
+    const holidays = docToHolidays(doc);
 
     res.json({
       success:true,
