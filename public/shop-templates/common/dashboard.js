@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/common/dashboard.js - SAMANLIVE COMMON DASHBOARD - FULL LOGIC - NO CUT - DYNAMIC SHOP TYPE - LOADER FIX - NO SHOP TYPE NAME IN UI
+// LOCATION: public/shop-templates/common/dashboard.js - SAMANLIVE COMMON DASHBOARD - FULL LOGIC - NO CUT - PROFILE CONNECTED FIX
 class CommonDashboardCore {
   constructor(){
     const params = new URLSearchParams(location.search);
@@ -16,6 +16,7 @@ class CommonDashboardCore {
     this.currentTab = 'overview';
     this.searchDebounce = null;
     this.refreshInterval = null;
+    this.lastShopUpdate = localStorage.getItem('shop_updated') || '0';
 
     this.API_WORLD = `/api/world-products?shopId=${this.shopId}&shopType=${this.shopType}`;
     this.API_WORLD_BASE = `/api/world-products`;
@@ -39,12 +40,13 @@ class CommonDashboardCore {
 
   async init(){
     if(!this.shopId){
-      this.showErrorPage('Shop ID Missing','Dashboard My Shops / Area Manager se kholo - URL me ?shopId=YOUR_ID chahiye');
+      this.showErrorPage('Shop ID Missing','Dashboard My Shops / Area Manager se kholo - URL me?shopId=YOUR_ID chahiye');
       return;
     }
     localStorage.setItem('last_shopId', this.shopId);
     localStorage.setItem('shopType', this.shopType);
     localStorage.setItem('role','dashboard');
+    localStorage.setItem('shopId', this.shopId);
     window.shopId = this.shopId;
     window.shopType = this.shopType;
 
@@ -61,10 +63,34 @@ class CommonDashboardCore {
     this.bindSocketCommon();
     this.bindShareCommon();
     this.bindProfile();
+    this.bindProfileSync();
 
     await this.loadDashboard();
     this.startAutoRefresh();
     this.loadCommonStatus();
+  }
+
+  // PROFILE CONNECT - Profile page se wapas aate hi auto refresh
+  bindProfileSync(){
+    const checkUpdate = ()=>{
+      const now = localStorage.getItem('shop_updated') || '0';
+      if(now!== this.lastShopUpdate){
+        this.lastShopUpdate = now;
+        this.isLoading = false;
+        try{ window.ApiCore?.clearCache?.(); }catch(e){}
+        this.loadDashboard();
+      }
+    };
+    window.addEventListener('focus', checkUpdate);
+    window.addEventListener('pageshow', checkUpdate);
+    window.addEventListener('storage', (e)=>{ if(e.key==='shop_updated') checkUpdate(); });
+    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkUpdate(); });
+  }
+
+  markShopUpdated(){
+    const t = Date.now().toString();
+    localStorage.setItem('shop_updated', t);
+    this.lastShopUpdate = t;
   }
 
   // SAMANLIVE BRANDING ONLY - NO SHOP TYPE NAME IN UI
@@ -105,7 +131,6 @@ class CommonDashboardCore {
     if($('shopIdDisplay')){ $('shopIdDisplay').innerText = this.shopId; $('shopIdDisplay').title = this.shopId; }
     if($('roleDisplay')) $('roleDisplay').innerText = window.WorldProductManager?.role || 'dashboard';
 
-    // Common module buttons
     $('btnLowStock')?.addEventListener('click', ()=> this.openCommon(`./inventory/low-stock-alert.html?shopId=${this.shopId}&shopType=${this.shopType}`));
     $('btnWallet1')?.addEventListener('click', ()=> this.openCommon(`./finance/wallet.html?shopId=${this.shopId}&shopType=${this.shopType}`));
     $('btnWallet2')?.addEventListener('click', ()=> this.openCommon(`./wallet/wallet.html?shopId=${this.shopId}&shopType=${this.shopType}`));
@@ -138,19 +163,26 @@ class CommonDashboardCore {
   renderProfile(){
     if(!this.shopData) return;
     const d = this.shopData;
+    // FIELD FIX - name/shopName dono chalega, avatar/shopImage dono chalega
     const name = d.shopName || d.name || 'My Shop';
     const owner = d.ownerName || d.owner || d.userName || 'Shop Owner';
-    const photo = d.shopImage || d.logo || d.image || d.banner || 'https://placehold.co/100x100/1e293b/ffffff?text=SL';
-    const set = (id, txt)=>{ const el=document.getElementById(id); if(el) el.innerText = txt ?? '-'; };
+    const localAvatar = localStorage.getItem(`shop_avatar_${this.shopId}`) || '';
+    const localCover = localStorage.getItem(`shop_cover_${this.shopId}`) || '';
+    const photo = localAvatar || d.avatar || d.shopImage || d.logo || d.image || d.banner || d.cover || localCover || 'https://placehold.co/100x100/1e293b/ffffff?text=SL';
+    const localShop = (()=>{ try{ return JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}'); }catch(e){ return {}; } })();
+    const phoneVal = d.phone || d.mobile || localShop.phone || '-';
+    const addrVal = d.address || localShop.address || d.area || localShop.area || '-';
+
+    const set = (id, txt)=>{ const el=document.getElementById(id); if(el) el.innerText = txt?? '-'; };
     const setImg = (id, src)=>{ const el=document.getElementById(id); if(el) el.src = src; };
     set('profileShopName', name); set('profileOwnerName', owner); set('profileShopIdShort', 'ID: '+this.shopId.slice(0,12)+'...');
     setImg('profilePhoto', photo);
     set('headerShopName', 'Shop Dashboard');
     set('shopNameHead', name);
     setImg('profileBigPhoto', photo); set('profileBigName', name);
-    set('profileBigMeta', `${d.area || d.city || d.address || ''}`);
-    set('pfShopName', name); set('pfOwnerName', owner); set('pfPhone', d.phone || d.mobile || '-');
-    set('pfShopType', this.shopType); set('pfAddress', d.address || d.area || '-'); set('pfStatus', d.isOpen===false?'Closed':'Open');
+    set('profileBigMeta', `${d.area || localShop.area || d.city || localShop.city || ''}`);
+    set('pfShopName', name); set('pfOwnerName', owner); set('pfPhone', phoneVal);
+    set('pfShopType', this.shopType); set('pfAddress', addrVal); set('pfStatus', d.isOpen===false?'Closed':'Open');
     setImg('quickPhoto', photo); set('quickShopName', name); set('quickOwner', owner);
   }
 
@@ -160,7 +192,6 @@ class CommonDashboardCore {
   }
 
   viewShopCommon(){
-    // Customer view sabka alag - apne folder se khulega
     const mapView = { kirana:'user-view.html' };
     const file = mapView[this.shopType] || 'customer-view.html';
     this.openCommon(`../${this.shopType}/${file}?shopId=${this.shopId}&shopType=${this.shopType}`);
@@ -175,7 +206,7 @@ class CommonDashboardCore {
     const el=document.getElementById('commonStatus');
     const pm = window.WorldProductManager;
     if(!pm){ if(el) el.innerHTML='❌ product-manager.js NOT loaded'; return; }
-    if(el) el.innerHTML=`✅ SAMANLIVE Connected<br>Shop: ${this.shopData?.shopName||''}<br>Role: ${pm.role}<br>ShopId: ${this.shopId.slice(0,12)}...<br>API: /api/world-products`;
+    if(el) el.innerHTML=`✅ SAMANLIVE Connected<br>Shop: ${this.shopData?.shopName||this.shopData?.name||''}<br>Role: ${pm.role}<br>ShopId: ${this.shopId.slice(0,12)}...<br>API: /api/world-products`;
     this.toast('✅ Connection OK - SAMANLIVE');
   }
 
@@ -189,6 +220,7 @@ class CommonDashboardCore {
         this.currentTab = tab;
         document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
         document.getElementById('tab-'+tab)?.classList.add('active');
+        if(tab==='profile'){ this.isLoading=false; this.loadDashboard(); }
         await this.loadCommonTab(tab);
         window.ApiCore?.trackEvent(`dashboard_tab_${tab}`, { shopId:this.shopId, shopType:this.shopType });
         if(window.innerWidth<=1100){ setTimeout(()=>{ document.getElementById('sidebar')?.classList.remove('open'); document.getElementById('sidebarOverlay')?.classList.remove('show'); },400); }
@@ -201,7 +233,7 @@ class CommonDashboardCore {
     const boxId = boxMap[tab];
     if(boxId){
       const box = document.getElementById(boxId);
-      if(box && !box.dataset.loaded){
+      if(box &&!box.dataset.loaded){
         box.innerHTML = `<div style="padding:12px;color:#64748b;font-size:12px"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>`;
         try{
           let url = null;
@@ -226,7 +258,7 @@ class CommonDashboardCore {
       reviews:{id:'reviewsFrame',src:`./reviews/reviews.html?shopId=${this.shopId}&shopType=${this.shopType}`}
     };
     const f = iframeMap[tab];
-    if(f){ const el=document.getElementById(f.id); if(el && !el.src) el.src=f.src; }
+    if(f){ const el=document.getElementById(f.id); if(el &&!el.src) el.src=f.src; }
   }
 
   bindSearch(){
@@ -257,16 +289,20 @@ class CommonDashboardCore {
             const newState = await window.ShopToggleCore.toggle(this.shopId);
             this.updateToggleUI(newState);
             this.toast(newState?'Shop Opened ✅':'Shop Closed 🔴');
+            this.markShopUpdated();
             return;
           }catch(e){ console.warn('ShopToggleCore failed', e); }
         }
-        const isOpen = !el.classList.contains('on');
+        const isOpen =!el.classList.contains('on');
         this.updateToggleUI(isOpen);
         try{
           await window.ApiCore?.put(this.API_COMMON.shopToggle, { isOpen }).catch(()=>{});
           await window.ApiCore?.post(this.API_COMMON.toggle, { isOpen }).catch(()=>{});
+          try{ await window.ApiCore?.put(`/api/shops/${this.shopId}`, { isOpen }).catch(()=>{}); }catch(e){}
+          try{ await window.ApiCore?.put(`/api/common/profile/${this.shopId}/timing`, { isOpen }).catch(()=>{}); }catch(e){}
           window.SocketCore?.emit('shop-status-changed', { shopId:this.shopId, shopType:this.shopType, isOpen });
           if(window.DashboardCore?.updateShopStatus) window.DashboardCore.updateShopStatus(isOpen);
+          this.markShopUpdated();
           this.toast(isOpen?'Shop Opened ✅':'Shop Closed 🔴');
         }catch(e){
           window.ErrorHandler?.handleApiError(e,'toggle_shop_common');
@@ -296,6 +332,9 @@ class CommonDashboardCore {
     window.SocketCore.on('order-updated', (data)=>{ if(data.shopId===this.shopId) this.loadOrdersCommon(); });
     window.SocketCore.on('product-updated', (data)=>{ if(data.shopId===this.shopId) this.loadDashboard(); });
     window.SocketCore.on('shop-status-changed', (data)=>{ if(data.shopId===this.shopId) this.updateToggleUI(data.isOpen); });
+    window.SocketCore.on('shop-profile-updated', (data)=>{ if(data.shopId===this.shopId){ this.markShopUpdated(); this.loadDashboard(); } });
+    window.SocketCore.on('shop-info-updated', (data)=>{ if(data.shopId===this.shopId){ this.markShopUpdated(); this.loadDashboard(); } });
+    window.SocketCore.on('shop-timing-updated', (data)=>{ if(data.shopId===this.shopId){ this.markShopUpdated(); this.loadDashboard(); } });
   }
 
   bindShareCommon(){ if(window.ShareCore) console.log('✅ ShareCore connected'); }
@@ -306,12 +345,13 @@ class CommonDashboardCore {
     try{
       const results = await Promise.allSettled([
         window.ApiCore?.get(this.API_OLD).catch(()=>({shop:{products:[]}})),
-        window.WorldProductManager ? window.WorldProductManager.getProducts({shopType:this.shopType, shopId:this.shopId, role:'dashboard'}) : fetch(this.API_WORLD).then(r=>r.json()).then(d=>d.data||[]),
+        window.WorldProductManager? window.WorldProductManager.getProducts({shopType:this.shopType, shopId:this.shopId, role:'dashboard'}) : fetch(this.API_WORLD).then(r=>r.json()).then(d=>d.data||[]),
         window.ApiCore?.get(this.API_COMMON.analytics).catch(()=>null),
         window.ApiCore?.get(this.API_COMMON.lowStock).catch(()=>null),
         window.ApiCore?.get(this.API_COMMON.orders).catch(()=>null),
         window.ApiCore?.get(this.API_COMMON.finance).catch(()=>null),
-        window.ApiCore?.get(this.API_COMMON.shopInfo).catch(()=>null)
+        window.ApiCore?.get(this.API_COMMON.shopInfo).catch(()=>null),
+        window.ApiCore?.get(`/api/common/profile/${this.shopId}`).catch(()=>null)
       ]);
       const oldRes = results[0].status==='fulfilled'? results[0].value : {shop:{products:[]}};
       const worldRes = results[1].status==='fulfilled'? results[1].value : [];
@@ -319,16 +359,35 @@ class CommonDashboardCore {
       const lowStockRes = results[3].status==='fulfilled'? results[3].value : null;
       const ordersRes = results[4].status==='fulfilled'? results[4].value : null;
       const shopInfoRes = results[6].status==='fulfilled'? results[6].value : null;
+      const profileRes = results[7].status==='fulfilled'? results[7].value : null;
 
       this.shopData = shopInfoRes?.shop || shopInfoRes?.data || oldRes?.shop || oldRes || { shopName:'', products:[] };
-      if(oldRes?.shop) this.shopData = {...this.shopData, ...oldRes.shop};
+      if(oldRes?.shop) this.shopData = {...this.shopData,...oldRes.shop};
+      // PROFILE MERGE FIX - /api/common/profile wala data bhi jodo
+      const profShop = profileRes?.shop || profileRes?.data || profileRes;
+      if(profShop && typeof profShop==='object'){
+        this.shopData = {...this.shopData,...profShop};
+      }
+      // LOCALSTORAGE MERGE FIX - profile page local save bhi dikhe
+      try{
+        const localShop = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}');
+        if(localShop && localShop.name) this.shopData = {...this.shopData,...localShop, shopName: localShop.shopName||localShop.name, name: localShop.name||localShop.shopName};
+        const timingLocal = JSON.parse(localStorage.getItem(`timing_${this.shopId}`)||'null');
+        if(timingLocal && timingLocal.isOpen!==undefined) this.shopData.isOpen = timingLocal.isOpen;
+      }catch(e){}
+
+      // NAME NORMALIZE - dashboard har jagah shopName use karega
+      if(this.shopData.name &&!this.shopData.shopName) this.shopData.shopName = this.shopData.name;
+      if(this.shopData.shopName &&!this.shopData.name) this.shopData.name = this.shopData.shopName;
+      if(this.shopData.avatar &&!this.shopData.shopImage) this.shopData.shopImage = this.shopData.avatar;
+
       this.oldProducts = this.shopData.products || [];
       this.worldProducts = Array.isArray(worldRes)? worldRes : (worldRes?.data||[]);
       this.allProducts = [...this.worldProducts,...this.oldProducts];
       this.filteredProducts = [...this.allProducts];
       this.lowStock = lowStockRes?.products || lowStockRes?.data || this.allProducts.filter(p=> (p.stock||0) <= (p.lowStockAlert||10));
       this.orders = ordersRes?.orders || ordersRes?.data || [];
-      this.stats = { ...(this.shopData.stats||{}), ...(analyticsRes||{}), totalProducts:this.allProducts.length, worldCount:this.worldProducts.length, oldCount:this.oldProducts.length, lowStockCount:this.lowStock.length, todayOrders: analyticsRes?.todayOrders || this.orders.length, todayRevenue: analyticsRes?.todayRevenue || 0 };
+      this.stats = {...(this.shopData.stats||{}),...(analyticsRes||{}), totalProducts:this.allProducts.length, worldCount:this.worldProducts.length, oldCount:this.oldProducts.length, lowStockCount:this.lowStock.length, todayOrders: analyticsRes?.todayOrders || this.orders.length, todayRevenue: analyticsRes?.todayRevenue || 0 };
 
       this.renderStats();
       this.renderProducts(this.filteredProducts);
@@ -350,7 +409,7 @@ class CommonDashboardCore {
     const el=document.getElementById('commonStatus'); if(!el) return;
     try{
       const data = await window.ApiCore?.get(this.API_COMMON.health).catch(()=>null);
-      if(data) el.innerHTML=`✅ SAMANLIVE Connected<br>Shop: ${this.shopData?.shopName||'My Shop'}<br>Products: ${this.allProducts.length}`;
+      if(data) el.innerHTML=`✅ SAMANLIVE Connected<br>Shop: ${this.shopData?.shopName||this.shopData?.name||'My Shop'}<br>Products: ${this.allProducts.length}`;
       else el.innerHTML=`✅ SAMANLIVE Dashboard Ready<br>Products: ${this.allProducts.length} (World: ${this.worldProducts.length})`;
     }catch(e){ el.innerHTML=`✅ SAMANLIVE Ready`; }
   }

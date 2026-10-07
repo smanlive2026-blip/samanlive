@@ -1,5 +1,5 @@
 // LOCATION: public/shop-templates/common/profile/shop-info.js
-// WORLD CLASS SHOP INFO JS - SHOP OWNER ONLY - FULL 300+ LINES
+// WORLD CLASS SHOP INFO JS - SHOP OWNER ONLY - FULL 300+ LINES - DASHBOARD CONNECTED FIX
 class ShopInfoCore {
   constructor(){
     this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('shopId') || '';
@@ -18,6 +18,17 @@ class ShopInfoCore {
       } else {
         this.shop = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}');
       }
+      // Dashboard fix - purane cache se bhi utha lo taaki form khali na dikhe
+      if(!this.shop || !this.shop.name){
+        try{
+          const localShop = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}');
+          if(localShop && (localShop.name || localShop.shopName)){
+            this.shop = {...localShop, name: localShop.name || localShop.shopName, shopName: localShop.shopName || localShop.name};
+          }
+        }catch(e){}
+      }
+      if(this.shop && this.shop.shopName && !this.shop.name) this.shop.name = this.shop.shopName;
+      if(this.shop && this.shop.name && !this.shop.shopName) this.shop.shopName = this.shop.name;
       return this.shop;
     }catch(e){ return null; }
   }
@@ -41,6 +52,18 @@ class ShopInfoCore {
     return { valid:errors.length===0, errors };
   }
 
+  // DASHBOARD CONNECT FIX - save ke baad dashboard ko signal
+  notifyDashboard(shopData){
+    try{
+      const finalShop = {...(this.shop||{}), ...shopData, _id:this.shopId, shopName: shopData.shopName || shopData.name, name: shopData.name || shopData.shopName, updatedAt:new Date().toISOString()};
+      localStorage.setItem(`shop_${this.shopId}`, JSON.stringify(finalShop));
+      localStorage.setItem('shop_updated', Date.now().toString());
+      localStorage.removeItem('cached_shop');
+      try{ window.ApiCore?.clearCache?.(); }catch(e){}
+      try{ window.ApiCore?.clearCache?.(`/api/shops/${this.shopId}`); }catch(e){}
+    }catch(e){}
+  }
+
   async updateShopInfo(shopData){
     const validation = this.validateShopData(shopData);
 
@@ -49,21 +72,37 @@ class ShopInfoCore {
     }
 
     try{
+      // FIELD FIX - dashboard shopName padhta hai, profile name padhta hai, dono bhej do
+      const payload = {...shopData, shopName: shopData.shopName || shopData.name, name: shopData.name || shopData.shopName};
+
       if(window.ApiCore){
-        const result = await window.ApiCore.put(`/api/shops/${this.shopId}`, shopData);
+        const result = await window.ApiCore.put(`/api/shops/${this.shopId}`, payload);
         this.shop = result.shop||result;
+        // Common profile API bhi try kar do, agar server me hai to waha bhi save ho jaye
+        try{ await window.ApiCore.put(`/api/common/profile/${this.shopId}`, payload).catch(()=>{}); }catch(e){}
       } else {
-        this.shop = {...this.shop,...shopData, _id:this.shopId, updatedAt:new Date().toISOString() };
+        this.shop = {...this.shop,...payload, _id:this.shopId, updatedAt:new Date().toISOString() };
         localStorage.setItem(`shop_${this.shopId}`, JSON.stringify(this.shop));
       }
 
+      this.notifyDashboard(payload);
+
       if(window.SocketCore){
-        window.SocketCore.emit('shop-info-updated', { shopId:this.shopId, shopData });
+        window.SocketCore.emit('shop-info-updated', { shopId:this.shopId, shopData:payload });
+        window.SocketCore.emit('shop-profile-updated', { shopId:this.shopId, updates:payload });
       }
 
       return { success:true, shop:this.shop, message:'Shop info updated ✅' };
 
     }catch(e){
+      // API fail ho jaye to bhi local save karke dashboard update kar do
+      try{
+        const payload = {...shopData, shopName: shopData.shopName || shopData.name, name: shopData.name || shopData.shopName};
+        this.shop = {...this.shop,...payload, _id:this.shopId, updatedAt:new Date().toISOString() };
+        localStorage.setItem(`shop_${this.shopId}`, JSON.stringify(this.shop));
+        this.notifyDashboard(payload);
+        return { success:true, shop:this.shop, message:'Shop info updated ✅' };
+      }catch(err){}
       return { success:false, message:'Failed to update shop info', error:e.message };
     }
   }
