@@ -1,5 +1,5 @@
 <!-- LOCATION: public/shop-templates/common/profile/shop-info.html -->
-<!-- WORLD CLASS SHOP INFO - SHOP OWNER ONLY - FULL 450+ LINES -->
+<!-- WORLD CLASS SHOP INFO - SHOP OWNER ONLY - FULL 450+ LINES - SAVE BUTTON FIX -->
 <div id="shopInfoRoot" class="shop-info-root">
   <div class="shop-info-header">
     <button id="shopInfoBack" class="back-btn">‹</button>
@@ -7,7 +7,7 @@
       <b>Shop Information</b>
       <span>Update shop details</span>
     </div>
-    <button id="saveShopInfoBtn" class="save-btn">💾 Save</button>
+    <button id="saveShopInfoBtn" class="save-btn" type="button">💾 Save</button>
   </div>
 
   <div class="shop-info-form">
@@ -101,10 +101,10 @@
     <div class="form-section">
       <b>🏷️ Additional Info</b>
       <label>GST Number (optional)</label>
-      <input type="text" id="shopGst" placeholder="27ABCDE1234F1Z5" class="form-input" style="text-transform:uppercase">
+      <input type="text" id="shopGst" placeholder="27ABCDE1234F1Z5" class="form-input" style="text-transform:uppercase" maxlength="15">
 
       <label>FSSAI License (for food shops)</label>
-      <input type="text" id="shopFssai" placeholder="12345678901234" class="form-input">
+      <input type="text" id="shopFssai" placeholder="12345678901234" class="form-input" maxlength="14">
 
       <label>Shop Established Year</label>
       <input type="number" id="shopEstYear" placeholder="2020" min="1990" max="2026" class="form-input">
@@ -127,12 +127,13 @@
 .shop-info-header b{ display:block; font-weight:900; }
 .shop-info-header span{ font-size:11px; color:#64748b; font-weight:600; }
 .save-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
+.save-btn:disabled{ opacity:.6; }
 .shop-info-form{ padding:12px; display:flex; flex-direction:column; gap:12px; }
 .form-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; }
 .form-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
 .form-section label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
 .form-section label:first-of-type{ margin-top:0; }
-.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
+.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; box-sizing:border-box; }
 .phone-row{ display:flex; }
 .phone-prefix{ background:#f1f5f9; border:1px solid #e2e8f0; border-right:none; padding:12px; border-radius:10px 0 0 10px; font-weight:800; font-size:13px; }
 .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -141,60 +142,74 @@
 .secondary-btn{ background:#f1f5f9; border:1px solid #e2e8f0; padding:12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; }
 </style>
 
+<script src="./shop-info.js"></script>
 <script>
 class ShopInfoPage {
   constructor(){
-    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
     this.shop = null;
     this.location = null;
   }
 
+  showMsg(msg, type){
+    console.log('[ShopInfo]', msg);
+    if(window.Toast){ Toast.show(msg, type||'info'); }
+    else { alert(msg); }
+  }
+
   async init(){
-    await this.loadShopInfo();
     this.bindEvents();
+    await this.loadShopInfo();
   }
 
   async loadShopInfo(){
     try{
       if(window.Loader) Loader.show('Loading shop info...');
 
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/shops/${this.shopId}`);
-        this.shop = data.shop||data;
-      } else {
-        this.shop = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}');
+      // Pehle shop-info.js wala core use karo, wahi dashboard se juda hai
+      if(window.ShopInfoCoreInstance){
+        window.ShopInfoCoreInstance.shopId = this.shopId;
+        this.shop = await window.ShopInfoCoreInstance.loadShop();
+      }
+      if(!this.shop ||!this.shop.name){
+        if(window.ApiCore){
+          const data = await window.ApiCore.get(`/api/common/profile/${this.shopId}`);
+          this.shop = data.shop||data.profile||data;
+        } else {
+          this.shop = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}');
+        }
       }
 
       if(this.shop){
-        document.getElementById('shopInfoName').value = this.shop.name||'';
-        document.getElementById('shopInfoCategory').value = this.shop.category||'';
-        document.getElementById('shopInfoDescription').value = this.shop.description||'';
-        document.getElementById('shopInfoTagline').value = this.shop.tagline||'';
-        document.getElementById('shopOwnerName').value = this.shop.ownerName||'';
-        document.getElementById('shopPhone').value = this.shop.phone||'';
-        document.getElementById('shopAltPhone').value = this.shop.altPhone||'';
-        document.getElementById('shopEmail').value = this.shop.email||'';
-        document.getElementById('shopWhatsapp').value = this.shop.whatsapp||this.shop.phone||'';
-        document.getElementById('shopAddress').value = this.shop.address||'';
-        document.getElementById('shopArea').value = this.shop.area||'';
-        document.getElementById('shopCity').value = this.shop.city||'Surat';
-        document.getElementById('shopPincode').value = this.shop.pincode||'';
-        document.getElementById('shopLandmark').value = this.shop.landmark||'';
-        document.getElementById('shopGst').value = this.shop.gst||'';
-        document.getElementById('shopFssai').value = this.shop.fssai||'';
-        document.getElementById('shopEstYear').value = this.shop.estYear||'';
-        document.getElementById('shopStaffCount').value = this.shop.staffCount||'1';
+        const s = this.shop;
+        document.getElementById('shopInfoName').value = s.name||s.shopName||'';
+        document.getElementById('shopInfoCategory').value = s.category||'';
+        document.getElementById('shopInfoDescription').value = s.description||'';
+        document.getElementById('shopInfoTagline').value = s.tagline||'';
+        document.getElementById('shopOwnerName').value = s.ownerName||'';
+        document.getElementById('shopPhone').value = s.phone||'';
+        document.getElementById('shopAltPhone').value = s.altPhone||'';
+        document.getElementById('shopEmail').value = s.email||'';
+        document.getElementById('shopWhatsapp').value = s.whatsapp||s.phone||'';
+        document.getElementById('shopAddress').value = s.address||'';
+        document.getElementById('shopArea').value = s.area||'';
+        document.getElementById('shopCity').value = s.city||'Surat';
+        document.getElementById('shopPincode').value = s.pincode||'';
+        document.getElementById('shopLandmark').value = s.landmark||'';
+        document.getElementById('shopGst').value = s.gst||'';
+        document.getElementById('shopFssai').value = s.fssai||'';
+        document.getElementById('shopEstYear').value = s.estYear||'';
+        document.getElementById('shopStaffCount').value = s.staffCount||'1';
 
-        if(this.shop.location){
-          this.location = this.shop.location;
+        if(s.location && (s.location.lat || s.location.lng)){
+          this.location = s.location;
           document.getElementById('locationPreview').style.display='block';
           document.getElementById('locationText').innerText = `${this.location.lat}, ${this.location.lng}`;
         }
-
-        document.getElementById('taglineCount').innerText = (this.shop.tagline||'').length;
+        document.getElementById('taglineCount').innerText = (s.tagline||'').length;
       }
 
-    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+    }catch(e){ console.error('loadShopInfo failed', e); }finally{ if(window.Loader) Loader.hide(); }
   }
 
   async saveShopInfo(){
@@ -203,7 +218,7 @@ class ShopInfoPage {
     const description = document.getElementById('shopInfoDescription').value.trim();
     const tagline = document.getElementById('shopInfoTagline').value.trim();
     const ownerName = document.getElementById('shopOwnerName').value.trim();
-    const phone = document.getElementById('shopPhone').value.trim();
+    const phone = document.getElementById('shopPhone').value.trim().replace(/\D/g,'').slice(-10);
     const altPhone = document.getElementById('shopAltPhone').value.trim();
     const email = document.getElementById('shopEmail').value.trim();
     const whatsapp = document.getElementById('shopWhatsapp').value.trim();
@@ -212,44 +227,91 @@ class ShopInfoPage {
     const city = document.getElementById('shopCity').value.trim();
     const pincode = document.getElementById('shopPincode').value.trim();
     const landmark = document.getElementById('shopLandmark').value.trim();
-    const gst = document.getElementById('shopGst').value.trim().toUpperCase();
-    const fssai = document.getElementById('shopFssai').value.trim();
+    let gst = document.getElementById('shopGst').value.trim().toUpperCase().replace(/\s/g,'');
+    let fssai = document.getElementById('shopFssai').value.trim().replace(/\D/g,'');
     const estYear = document.getElementById('shopEstYear').value;
     const staffCount = document.getElementById('shopStaffCount').value;
 
+    // Screenshot wali galti yahi pakdegi - galat GST/FSSAI ho to saaf batao, chup mat raho
+    if(gst && gst.length!==15){ this.showMsg('GST must be 15 characters - ya to sahi GST dalo ya khali chhod do', 'warning'); document.getElementById('shopGst').focus(); return; }
+    if(fssai && fssai.length!==14){ this.showMsg('FSSAI must be 14 digits - ya to sahi dalo ya khali chhod do', 'warning'); document.getElementById('shopFssai').focus(); return; }
+
     if(!name ||!category ||!ownerName ||!phone ||!address ||!area ||!city ||!pincode){
-      if(window.Toast) Toast.show('Fill required fields', 'warning');
+      this.showMsg('Fill required fields (*)', 'warning');
       return;
     }
-
     if(phone.length!==10){
-      if(window.Toast) Toast.show('Phone must be 10 digits', 'warning');
+      this.showMsg('Phone must be 10 digits', 'warning');
+      return;
+    }
+    if(pincode.length!==6){
+      this.showMsg('Pincode must be 6 digits', 'warning');
+      return;
+    }
+    if(!this.shopId){
+      this.showMsg('Shop ID missing - dashboard se kholo', 'error');
       return;
     }
 
     const btn = document.getElementById('saveShopInfoBtn');
+    const oldText = btn.innerText;
     btn.innerText='Saving...'; btn.disabled=true;
 
     try{
-      const shopData = { name, category, description, tagline, ownerName, phone, altPhone, email, whatsapp, address, area, city, pincode, landmark, gst, fssai, estYear, staffCount, location:this.location };
+      const shopData = { name, shopName:name, category, description, tagline, ownerName, phone, altPhone, email, whatsapp: whatsapp||phone, address, area, city, pincode, landmark, gst, fssai, estYear, staffCount, location:this.location };
 
-      if(window.ApiCore){
-        await window.ApiCore.put(`/api/shops/${this.shopId}`, shopData);
+      let result = null;
+      // 1. shop-info.js wala core - yahi dashboard ko shop_updated signal bhejta hai
+      if(window.ShopInfoCoreInstance && typeof window.ShopInfoCoreInstance.updateShopInfo==='function'){
+        window.ShopInfoCoreInstance.shopId = this.shopId;
+        result = await window.ShopInfoCoreInstance.updateShopInfo(shopData);
+        if(result && result.success===false){
+          this.showMsg(result.message || (result.errors && result.errors[0]) || 'Failed to save', 'error');
+          return;
+        }
+      } else if(window.ApiCore){
+        // 2. Direct sahi API
+        result = await window.ApiCore.put(`/api/common/profile/${this.shopId}`, shopData);
+        // Dashboard signal
+        try{
+          const finalShop = {...shopData, _id:this.shopId, shopId:this.shopId, updatedAt:new Date().toISOString()};
+          localStorage.setItem(`shop_${this.shopId}`, JSON.stringify(finalShop));
+          localStorage.setItem('shop_updated', Date.now().toString());
+          localStorage.removeItem('cached_shop');
+          window.ApiCore?.clearCache?.();
+        }catch(e){}
       } else {
         const existing = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}');
         localStorage.setItem(`shop_${this.shopId}`, JSON.stringify({...existing,...shopData, _id:this.shopId }));
+        localStorage.setItem('shop_updated', Date.now().toString());
       }
 
-      if(window.Toast) Toast.show('Shop info saved ✅', 'success');
+      this.showMsg('Shop info saved ✅', 'success');
 
-      setTimeout(()=>{ window.location.href=`/shop-templates/common/profile/profile.html?shopId=${this.shopId}`; }, 1000);
+      setTimeout(()=>{
+        // Dashboard pe wapas bhejo taaki waha turant dikhe, profile pe nahi
+        if(document.referrer && document.referrer.includes('dashboard')){
+          history.back();
+        } else {
+          window.location.href=`../dashboard.html?shopId=${this.shopId}`;
+        }
+      }, 800);
 
-    }catch(e){ if(window.Toast) Toast.show('Failed to save', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
+    }catch(e){
+      console.error('saveShopInfo failed', e);
+      this.showMsg('Failed to save: '+(e.message||'server error'), 'error');
+    }finally{ btn.innerText=oldText; btn.disabled=false; }
   }
 
   bindEvents(){
     document.getElementById('shopInfoBack')?.addEventListener('click', ()=> history.back());
-    document.getElementById('saveShopInfoBtn')?.addEventListener('click', ()=> this.saveShopInfo());
+    // FIX - purana listener double na lage, isiliye clone karke naya lagaya
+    const saveBtn = document.getElementById('saveShopInfoBtn');
+    if(saveBtn){
+      const newBtn = saveBtn.cloneNode(true);
+      saveBtn.parentNode.replaceChild(newBtn, saveBtn);
+      newBtn.addEventListener('click', (e)=>{ e.preventDefault(); this.saveShopInfo(); });
+    }
     document.getElementById('shopInfoTagline')?.addEventListener('input', (e)=>{ document.getElementById('taglineCount').innerText = e.target.value.length; });
     document.getElementById('sameAsPhone')?.addEventListener('change', (e)=>{
       if(e.target.checked){
@@ -262,12 +324,16 @@ class ShopInfoPage {
       }
     });
     document.getElementById('pickLocationBtn')?.addEventListener('click', ()=>{
-      window.location.href=`/shop-templates/common/profile/shop-info.html?shopId=${this.shopId}&pickLocation=true`;
       if(window.Toast) Toast.show('📍 Map picker coming soon - manually enter lat lng for now', 'info');
     });
   }
 }
 
 window.ShopInfoPageInstance = new ShopInfoPage();
-document.addEventListener('DOMContentLoaded', ()=> window.ShopInfoPageInstance.init());
+// Script file ke end me hai, DOM ready ka wait mat karo - turant chalao warna button dead rahega
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', ()=> window.ShopInfoPageInstance.init());
+} else {
+  window.ShopInfoPageInstance.init();
+}
 </script>
