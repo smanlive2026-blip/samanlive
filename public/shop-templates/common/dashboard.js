@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/common/dashboard.js - SAMANLIVE COMMON DASHBOARD - FULL LOGIC - NO CUT - PROFILE CONNECTED FIX
+// LOCATION: public/shop-templates/common/dashboard.js - SAMANLIVE COMMON DASHBOARD - FULL LOGIC - NO CUT - PROFILE CONNECTED FIX + SPECIAL CARD
 class CommonDashboardCore {
   constructor(){
     const params = new URLSearchParams(location.search);
@@ -437,18 +437,24 @@ class CommonDashboardCore {
     if($('orderCount')) $('orderCount').innerText=this.stats.todayOrders||this.orders.length||0;
   }
 
-  renderProducts(list){
-    const c=document.getElementById('productList'); if(!c) return;
-    if(!list.length){
-      c.innerHTML=`<div class="empty-box"><div style="font-size:48px">🛒</div><h3 style="font-weight:900;margin-top:10px">No products yet</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#10b981">Quick Add</b> to add ready products</p><button onclick="window.CommonDashboard.goQuickAdd()" class="btn btn-green" style="margin:12px auto 0">Quick Add Products</button></div>`;
-      return;
-    }
-    c.innerHTML=list.map(p=>`
+  // ========== SPECIAL CARD HELPERS - NEW, PURANA LOGIC SAME ==========
+  isSpecialProduct(p){
+    if(!p) return false;
+    const ex = p.extraData || {};
+    return p.isSpecial===true || p.isSpecial==='true' || ex.isSpecial===true || ex.isSpecial==='true' || p.layout==='special' || ex.layout==='special' || p.cardType==='special' || ex.cardType==='special' || (p.category||'').toLowerCase()==='special' || (ex.specialCategory===true);
+  }
+
+  getProductImage(p){
+    return p.thumbnail || p.images?.[0]?.url || p.image || p.extraData?.thumbnail || `https://placehold.co/400x300/f8fafc/94a3b8?text=${encodeURIComponent((p.name||'Product').slice(0,12))}`;
+  }
+
+  renderNormalCard(p){
+    return `
       <div class="p-card" data-id="${p._id}">
-        <img src="${p.thumbnail || p.images?.[0]?.url || p.image || `https://placehold.co/400x300/f8fafc/94a3b8?text=${encodeURIComponent((p.name||'Product').slice(0,12))}`}" loading="lazy" onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=Product'">
+        <img src="${this.getProductImage(p)}" loading="lazy" onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=Product'">
         <div style="padding:10px">
           <b style="font-size:13px" title="${p.name||''}">${(p.name||'').slice(0,28)}</b>
-          <div style="font-size:10px;color:#64748b;margin-top:2px">${p.brand||p.extraData?.brand||''} ${p.brand?'•':''} ${p.weight||p.extraData?.weight||p.unit||''}</div>
+          <div style="font-size:10px;color:#64748b;margin-top:2px">${p.brand||p.extraData?.brand||''} ${p.brand||p.extraData?.brand?'•':''} ${p.weight||p.extraData?.weight||p.unit||''}</div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
             <div style="font-weight:900">₹${p.price||0}<del style="color:#94a3b8;font-size:10px;margin-left:4px">₹${p.mrp||p.price||0}</del></div>
             <div class="stock-badge" style="background:${(p.stock||0)<=10?'#fee2e2;color:#ef4444':'#dcfce7;color:#15803d'}">${p.stock||0} LEFT</div>
@@ -458,7 +464,114 @@ class CommonDashboardCore {
             <button onclick="window.CommonDashboard.deleteProduct('${p._id}')" style="width:36px;background:#fff;border:1px solid #fee2e2;color:#ef4444;border-radius:9px;cursor:pointer"><i class="fa-solid fa-trash"></i></button>
           </div>
         </div>
-      </div>`).join('');
+      </div>`;
+  }
+
+  renderSpecialCard(p){
+    const ex = p.extraData || {};
+    const img = this.getProductImage(p);
+    const desc = p.description || ex.description || ex.desc || '';
+    const brand = p.brand || ex.brand || ex.company || '';
+    const quality = ex.quality || ex.qualityText || p.quality || '';
+    const weight = p.weight || ex.weight || p.unit || ex.unit || '';
+    const badge = ex.badge || p.badge || 'SPECIAL';
+    const color = ex.cardColor || p.cardColor || '#fff7ed';
+    const border = ex.borderColor || p.borderColor || '#fed7aa';
+    const layout = (ex.layout || p.layout || 'big').toString().toLowerCase(); // big | scroll | list
+    const isPaid = p.isPaidSpecial===true || ex.isPaidSpecial===true;
+
+    // LIST TYPE - ek line me chhota special
+    if(layout==='list'){
+      return `
+      <div class="p-card p-special-card" data-id="${p._id}" style="grid-column:1/-1;display:flex;gap:12px;background:${color};border:1px solid ${border};overflow:hidden">
+        <img src="${img}" loading="lazy" onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=Product'" style="width:110px;height:110px;object-fit:cover;flex-shrink:0">
+        <div style="padding:10px;flex:1;min-width:0">
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="background:#f97316;color:#fff;font-size:9px;font-weight:900;padding:3px 7px;border-radius:999px">⭐ ${badge}</span>${isPaid?`<span style="background:#0f172a;color:#fff;font-size:9px;font-weight:900;padding:3px 7px;border-radius:999px">PAID</span>`:''}</div>
+          <b style="font-size:14px;display:block;margin-top:5px" title="${p.name||''}">${p.name||''}</b>
+          <div style="font-size:10px;color:#64748b;margin-top:2px">${brand} ${brand?'•':''} ${weight} ${quality?'• '+quality:''}</div>
+          ${desc?`<div style="font-size:11px;color:#475569;margin-top:5px">${desc.slice(0,120)}</div>`:''}
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px">
+            <div style="font-weight:900;font-size:15px">₹${p.price||0}<del style="color:#94a3b8;font-size:11px;margin-left:5px">₹${p.mrp||p.price||0}</del></div>
+            <div class="stock-badge" style="background:${(p.stock||0)<=10?'#fee2e2;color:#ef4444':'#dcfce7;color:#15803d'}">${p.stock||0} LEFT</div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:9px">
+            <button onclick="window.CommonDashboard.editProduct('${p._id}')" style="flex:1;background:#fff;border:1px solid #e2e8f0;padding:7px;border-radius:9px;font-weight:800;font-size:11px;cursor:pointer"><i class="fa-solid fa-pen"></i> Edit</button>
+            <button onclick="window.CommonDashboard.deleteProduct('${p._id}')" style="width:36px;background:#fff;border:1px solid #fee2e2;color:#ef4444;border-radius:9px;cursor:pointer"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    // SCROLL TYPE - bada card, dashboard grid me full width, app me horizontal scroll ke liye same data chalega
+    if(layout==='scroll'){
+      return `
+      <div class="p-card p-special-card" data-id="${p._id}" style="grid-column:1/-1;background:${color};border:1px solid ${border};overflow:hidden">
+        <div style="display:flex;gap:0;overflow-x:auto;scroll-snap-type:x mandatory">
+          <div style="min-width:100%;scroll-snap-align:start;display:flex;gap:12px">
+            <img src="${img}" loading="lazy" onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=Product'" style="width:45%;max-height:220px;object-fit:cover">
+            <div style="padding:12px;flex:1">
+              <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="background:#f97316;color:#fff;font-size:9px;font-weight:900;padding:3px 7px;border-radius:999px">⭐ ${badge}</span><span style="background:#fff;border:1px solid ${border};font-size:9px;font-weight:900;padding:3px 7px;border-radius:999px">SCROLL</span>${isPaid?`<span style="background:#0f172a;color:#fff;font-size:9px;font-weight:900;padding:3px 7px;border-radius:999px">PAID</span>`:''}</div>
+              <b style="font-size:16px;display:block;margin-top:6px">${p.name||''}</b>
+              <div style="font-size:11px;color:#64748b;margin-top:3px">${brand} ${brand?'•':''} ${weight} ${quality?'• '+quality:''}</div>
+              ${desc?`<div style="font-size:12px;color:#475569;margin-top:7px;line-height:1.5">${desc}</div>`:''}
+              <div style="font-weight:900;font-size:18px;margin-top:9px">₹${p.price||0}<del style="color:#94a3b8;font-size:12px;margin-left:6px">₹${p.mrp||p.price||0}</del></div>
+              <div style="display:flex;gap:6px;margin-top:10px">
+                <button onclick="window.CommonDashboard.editProduct('${p._id}')" style="flex:1;background:#0f172a;color:#fff;border:none;padding:9px;border-radius:9px;font-weight:800;font-size:11px;cursor:pointer"><i class="fa-solid fa-pen"></i> Edit Special</button>
+                <button onclick="window.CommonDashboard.deleteProduct('${p._id}')" style="width:40px;background:#fff;border:1px solid #fee2e2;color:#ef4444;border-radius:9px;cursor:pointer"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    // BIG TYPE - DEFAULT SPECIAL - ek line me ek bada card
+    return `
+      <div class="p-card p-special-card" data-id="${p._id}" style="grid-column:1/-1;background:${color};border:1px solid ${border};overflow:hidden">
+        <div style="position:relative">
+          <img src="${img}" loading="lazy" onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=Product'" style="width:100%;height:200px;object-fit:cover;display:block">
+          <span style="position:absolute;top:10px;left:10px;background:#f97316;color:#fff;font-size:10px;font-weight:900;padding:5px 9px;border-radius:999px">⭐ ${badge}</span>
+          ${isPaid?`<span style="position:absolute;top:10px;right:10px;background:#0f172a;color:#fff;font-size:10px;font-weight:900;padding:5px 9px;border-radius:999px">PAID SPECIAL</span>`:''}
+        </div>
+        <div style="padding:12px">
+          <b style="font-size:16px" title="${p.name||''}">${p.name||''}</b>
+          <div style="font-size:11px;color:#64748b;margin-top:3px">${brand} ${brand?'•':''} ${weight} ${quality?'• '+quality:''} ${p.category?'• '+p.category:''}</div>
+          ${desc?`<div style="font-size:12px;color:#475569;margin-top:7px;line-height:1.5">${desc}</div>`:''}
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px">
+            <div style="font-weight:900;font-size:18px">₹${p.price||0}<del style="color:#94a3b8;font-size:12px;margin-left:6px">₹${p.mrp||p.price||0}</del></div>
+            <div class="stock-badge" style="background:${(p.stock||0)<=10?'#fee2e2;color:#ef4444':'#dcfce7;color:#15803d'}">${p.stock||0} LEFT</div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:11px">
+            <button onclick="window.CommonDashboard.editProduct('${p._id}')" style="flex:1;background:#0f172a;color:#fff;border:none;padding:9px;border-radius:9px;font-weight:800;font-size:11px;cursor:pointer"><i class="fa-solid fa-pen"></i> Edit Special</button>
+            <button onclick="window.CommonDashboard.deleteProduct('${p._id}')" style="width:40px;background:#fff;border:1px solid #fee2e2;color:#ef4444;border-radius:9px;cursor:pointer"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  renderProducts(list){
+    const c=document.getElementById('productList'); if(!c) return;
+    if(!list.length){
+      c.innerHTML=`<div class="empty-box"><div style="font-size:48px">🛒</div><h3 style="font-weight:900;margin-top:10px">No products yet</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#10b981">Quick Add</b> to add ready products</p><button onclick="window.CommonDashboard.goQuickAdd()" class="btn btn-green" style="margin:12px auto 0">Quick Add Products</button></div>`;
+      return;
+    }
+
+    // SPECIAL vs NORMAL ALAG KARO - Special wale upar Special Category me jayenge
+    const specialList = list.filter(p=> this.isSpecialProduct(p));
+    const normalList = list.filter(p=>!this.isSpecialProduct(p));
+
+    let html = '';
+
+    if(specialList.length){
+      html += `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;background:#fff7ed;border:1px solid #fed7aa;padding:10px 12px;border-radius:12px"><b style="font-size:13px">⭐ Special Products</b><span style="font-size:11px;font-weight:800;color:#9a3412">${specialList.length} items • Admin Paid Control Ready</span></div>`;
+      html += specialList.map(p=> this.renderSpecialCard(p)).join('');
+      if(normalList.length){
+        html += `<div style="grid-column:1/-1;font-weight:900;font-size:13px;margin-top:6px">All Products</div>`;
+      }
+    }
+
+    html += normalList.map(p=> this.renderNormalCard(p)).join('');
+    c.innerHTML = html;
   }
 
   renderLowStock(list){
