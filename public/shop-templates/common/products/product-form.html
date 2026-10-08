@@ -1,4 +1,4 @@
-<!-- LOCATION: public/shop-templates/common/products/product-form.html - UNIVERSAL 1 FILE = 70 SHOPS - WORLD BOSS - V18 FIXED - EXPORTS ERROR FIXED -->
+<!-- LOCATION: public/shop-templates/common/products/product-form.html - UNIVERSAL 1 FILE = 70 SHOPS - WORLD BOSS - V18 FIXED - EXPORTS ERROR FIXED - SMART RETURN FIX -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,7 +37,32 @@ let editId = urlParams.get('editId');
 let isQuick = urlParams.get('quick') === '1';
 
 document.getElementById('shopInfo').innerText = `ShopId: ${shopId} • Type: ${shopType} • World Model - V18 Fixed`;
-document.getElementById('backBtn').onclick = ()=> location.href=`../${shopType}/dashboard.html?shopId=${shopId}`;
+
+// ===== SMART RETURN - JAHA SE AAYA, WAHI WAPAS - COMMON / KIRANA / CLOTH SAB KE LIYE =====
+function getBackUrl(){
+  const p = new URLSearchParams(location.search);
+  const explicit = p.get('returnUrl') || p.get('return') || p.get('fromDashboard');
+  if(explicit) return explicit;
+  try{
+    const saved = sessionStorage.getItem('product_return_' + shopId);
+    if(saved) return saved;
+  }catch(e){}
+  const ref = document.referrer || '';
+  if(ref.includes('/shop-templates/') && ref.includes('dashboard.html')){
+    try{
+      const u = new URL(ref);
+      return `${u.pathname}?shopId=${shopId}&shopType=${shopType}`;
+    }catch(e){}
+  }
+  return `../dashboard.html?shopId=${shopId}&shopType=${shopType}`;
+}
+const BACK_URL = getBackUrl();
+try{
+  if(document.referrer && document.referrer.includes('dashboard.html')){
+    sessionStorage.setItem('product_return_' + shopId, document.referrer);
+  }
+}catch(e){}
+document.getElementById('backBtn').onclick = ()=> location.href = BACK_URL;
 
 let CURRENT_CONFIG = null;
 let CURRENT_PRODUCTS = [];
@@ -137,7 +162,7 @@ window.saveProduct = async ()=>{
   document.getElementById('status').innerText='Saving to World Model... 🌍'; document.getElementById('saveBtn').disabled=true;
   try{
     let res; if(editId) res=await window.WorldProductManager.updateProduct(editId,payload); else res=await window.WorldProductManager.addProduct(payload);
-    if(res.success){ document.getElementById('status').innerText=`✅ Saved - ${shopType} product saved`; setTimeout(()=> location.href=`../${shopType}/dashboard.html?shopId=${shopId}`,900); }else throw new Error(res.message);
+    if(res.success){ document.getElementById('status').innerText=`✅ Saved - ${shopType} product saved`; setTimeout(()=> location.href = BACK_URL,900); }else throw new Error(res.message);
   }catch(e){ document.getElementById('status').innerText='❌ '+e.message; document.getElementById('saveBtn').disabled=false; }
 };
 
@@ -145,7 +170,7 @@ window.toggleQuick=()=>{ const box=document.getElementById('quickBox'); box.styl
 function renderQuick(list){ const grid=document.getElementById('quickGrid'); grid.innerHTML=list.map((p,i)=>`<div class="quick-item"><div><b>${p.name}</b><br><small>${p.category||''} • ₹${p.price}</small></div><button onclick="quickAdd(${i})">Add</button></div>`).join(''); }
 window.filterQuick=()=>{ const q=document.getElementById('quickSearch').value.toLowerCase(); const filtered=CURRENT_PRODUCTS.filter(p=>(p.name||'').toLowerCase().includes(q)); renderQuick(filtered); };
 window.quickAdd=async(i)=>{ const p=CURRENT_PRODUCTS[i]; document.getElementById('quickStatus').innerText=`Adding ${p.name}...`; const res=await window.WorldProductManager.addProduct({...p, shopId, shopType}).catch(()=>({success:false})); document.getElementById('quickStatus').innerText=res.success?`✅ ${p.name} Added`:`❌ Failed`; };
-window.addAllQuick=async()=>{ if(!confirm(`Add ${CURRENT_PRODUCTS.length} ${shopType} products?`)) return; let done=0; for(let p of CURRENT_PRODUCTS){ document.getElementById('quickStatus').innerText=`Adding ${done+1}/${CURRENT_PRODUCTS.length} - ${p.name}`; const res=await window.WorldProductManager.addProduct({...p, shopId, shopType}).catch(()=>({success:false})); if(res.success) done++; } document.getElementById('quickStatus').innerText=`✅ ${done}/${CURRENT_PRODUCTS.length} Added to World`; setTimeout(()=> location.href=`../${shopType}/dashboard.html?shopId=${shopId}`,1000); };
+window.addAllQuick=async()=>{ if(!confirm(`Add ${CURRENT_PRODUCTS.length} ${shopType} products?`)) return; let done=0; for(let p of CURRENT_PRODUCTS){ document.getElementById('quickStatus').innerText=`Adding ${done+1}/${CURRENT_PRODUCTS.length} - ${p.name}`; const res=await window.WorldProductManager.addProduct({...p, shopId, shopType}).catch(()=>({success:false})); if(res.success) done++; } document.getElementById('quickStatus').innerText=`✅ ${done}/${CURRENT_PRODUCTS.length} Added to World`; setTimeout(()=> location.href = BACK_URL,1000); };
 
 init();
 </script>
