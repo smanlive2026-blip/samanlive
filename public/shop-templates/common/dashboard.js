@@ -33,7 +33,7 @@ class CommonDashboardCore {
       health: `/api/common/health`,
       toggle: `/api/common/shop-toggle/${this.shopId}`,
       shopToggle: `/api/shops/${this.shopType}/${this.shopId}/settings`,
-      shopInfo: `/api/shops/${this.shopId}`
+      shopInfo: `/api/common/profile/${this.shopId}`
     };
     this.init();
   }
@@ -361,12 +361,13 @@ class CommonDashboardCore {
       const shopInfoRes = results[6].status==='fulfilled'? results[6].value : null;
       const profileRes = results[7].status==='fulfilled'? results[7].value : null;
 
-      this.shopData = shopInfoRes?.shop || shopInfoRes?.data || oldRes?.shop || oldRes || { shopName:'', products:[] };
-      if(oldRes?.shop) this.shopData = {...this.shopData,...oldRes.shop};
-      // PROFILE MERGE FIX - /api/common/profile wala data bhi jodo
-      const profShop = profileRes?.shop || profileRes?.data || profileRes;
+      this.shopData = oldRes?.shop || oldRes || { shopName:'', products:[] };
+      // PROFILE MERGE FIX - /api/common/profile wala data sabse upar, purana data isko nahi dabayega
+      const profShop = profileRes?.shop || profileRes?.profile || profileRes?.data || shopInfoRes?.shop || shopInfoRes?.profile || shopInfoRes?.data || null;
       if(profShop && typeof profShop==='object'){
-        this.shopData = {...this.shopData,...profShop};
+        // products purane wale se lo, profile fields naye wale se
+        const oldProducts = this.shopData.products || [];
+        this.shopData = {...this.shopData,...profShop, products: profShop.products && profShop.products.length? profShop.products : oldProducts };
       }
       // LOCALSTORAGE MERGE FIX - profile page local save bhi dikhe
       try{
@@ -380,6 +381,7 @@ class CommonDashboardCore {
       if(this.shopData.name &&!this.shopData.shopName) this.shopData.shopName = this.shopData.name;
       if(this.shopData.shopName &&!this.shopData.name) this.shopData.name = this.shopData.shopName;
       if(this.shopData.avatar &&!this.shopData.shopImage) this.shopData.shopImage = this.shopData.avatar;
+      if(this.shopData.cover &&!this.shopData.banner) this.shopData.banner = this.shopData.cover;
 
       this.oldProducts = this.shopData.products || [];
       this.worldProducts = Array.isArray(worldRes)? worldRes : (worldRes?.data||[]);
