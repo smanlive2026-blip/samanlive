@@ -1,224 +1,350 @@
-// LOCATION: public/shop-templates/sports/dashboard.js - V5 WORLD CLASS - FULL CODE - NO LOCALSTORAGE FIX
-const params = new URLSearchParams(location.search);
-const shopId = params.get('shopId') || params.get('id') || '';
+// LOCATION: public/shop-templates/sports/dashboard.js - SPORTS DASHBOARD - COMMON CONNECTED - V7 - WORLD MODEL + SPECIAL CARD
+class SportsDashboardCore {
+  constructor(){
+    const params = new URLSearchParams(location.search);
+    this.shopId = params.get('shopId') || localStorage.getItem('last_shopId') || '';
+    this.shopType = 'sports';
+    this.shopData = null;
+    this.allProducts = [];
+    this.filteredProducts = [];
+    this.worldProducts = [];
+    this.oldProducts = [];
+    this.orders = [];
+    this.lowStock = [];
+    this.stats = {};
+    this.isLoading = false;
+    this.searchDebounce = null;
+    this.refreshInterval = null;
+    this.lastShopUpdate = localStorage.getItem('shop_updated') || '0';
 
-let allProducts = [];
-let shopData = null;
+    this.API_WORLD_BASE = `/api/world-products`;
+    this.API_OLD = `/api/shops/sports/${this.shopId}`;
+    this.API_COMMON = {
+      analytics: `/api/common/analytics/${this.shopId}/stats`,
+      lowStock: `/api/common/inventory/${this.shopId}/low-stock`,
+      orders: `/api/common/orders/${this.shopId}?limit=20`,
+      health: `/api/common/health`,
+      toggle: `/api/common/shop-toggle/${this.shopId}`,
+      shopInfo: `/api/common/profile/${this.shopId}`
+    };
+    this.init();
+  }
 
-// Elements
-const els = {
-  shopName: document.getElementById('shopName'),
-  shopIdDisplay: document.getElementById('shopIdDisplay'),
-  items: document.getElementById('items'),
-  sale: document.getElementById('sale'),
-  revenue: document.getElementById('revenue'),
-  jersey: document.getElementById('jersey'),
-  prodCount: document.getElementById('prodCount'),
-  inventoryList: document.getElementById('inventoryList'),
-  lowStock: document.getElementById('lowStock'),
-  categories: document.getElementById('categories'),
-  searchInput: document.getElementById('searchInput'),
-  toggleSwitch: document.getElementById('toggleSwitch'),
-  toggleText: document.getElementById('toggleText'),
-  toast: document.getElementById('toast')
-};
-
-// INIT
-if (!shopId) {
-  alert('shopId missing in URL! Add?shopId=YOUR_ID');
-} else {
-  if (els.shopIdDisplay) els.shopIdDisplay.innerText = `ID: ${shopId.slice(-6)}`;
-  loadShopData();
-}
-
-function toast(msg) {
-  if (!els.toast) return alert(msg);
-  els.toast.innerText = msg;
-  els.toast.style.display = 'block';
-  setTimeout(() => els.toast.style.display = 'none', 3000);
-}
-
-async function loadShopData() {
-  try {
-    const res = await fetch(`/api/shops/sports/${shopId}?t=${Date.now()}`, { cache: 'no-store' });
-    const data = await res.json();
-
-    if (!data.success) throw new Error(data.message || 'Failed to load');
-
-    shopData = data.shop;
-    const products = shopData.products || shopData.items || [];
-    allProducts = products;
-
-    // Update header
-    if (els.shopName) els.shopName.innerHTML = `<i class="fa fa-trophy"></i> ${shopData.settings?.shopName || shopData.shopName || 'Sports World'}`;
-
-    // Stats
-    if (els.items) els.items.innerText = products.length;
-    if (els.prodCount) els.prodCount.innerText = `(${products.length})`;
-    if (els.sale) els.sale.innerText = shopData.stats?.todaySale || shopData.stats?.totalOrders || 0;
-    if (els.revenue) els.revenue.innerText = shopData.stats?.revenue || 0;
-    if (els.jersey) els.jersey.innerText = shopData.stats?.jerseyOrders || products.filter(p => (p.category||'').toLowerCase().includes('jersey')).length;
-
-    // Toggle
-    const isOpen = shopData.settings?.isOpen?? true;
-    if (els.toggleSwitch) els.toggleSwitch.className = `switch ${isOpen? 'on' : ''}`;
-    if (els.toggleText) els.toggleText.innerText = isOpen? 'Open' : 'Closed';
-
-    renderProducts(products);
-    renderLowStock(data.shop.lowStock || products.filter(p => p.stock <= 5));
-    renderCategories();
-
-  } catch (err) {
-    console.error(err);
-    if (els.inventoryList) {
-      els.inventoryList.innerHTML = `<div style="grid-column:1/-1;padding:30px;text-align:center;color:#ef4444">
-        <i class="fa-solid fa-triangle-exclamation" style="font-size:24px"></i><br><br>
-        <b>Error loading shop</b><br><small>${err.message}</small><br><br>
-        <small>Check: server.js me route hai kya?<br><code>app.use('/api/shops/sports', require('./routes/shops/sports-route'))</code></small>
-      </div>`;
+  async init(){
+    if(!this.shopId){
+      document.getElementById('inventoryList').innerHTML = `<div class="empty-box"><div style="font-size:48px">⚠️</div><h3 style="font-weight:900;margin-top:10px">Shop ID Missing</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">URL me?shopId=YOUR_ID lagao</p></div>`;
+      this.showLoader(false);
+      return;
     }
-  }
-}
+    localStorage.setItem('last_shopId', this.shopId);
+    localStorage.setItem('shopType', this.shopType);
+    window.shopId = this.shopId; window.shopType = this.shopType;
 
-function renderProducts(list) {
-  if (!els.inventoryList) return;
-  if (!list.length) {
-    els.inventoryList.innerHTML = `
-      <div style="grid-column:1/-1;text-align:center;padding:60px 20px">
-        <div style="font-size:60px">🏏</div>
-        <h3 style="margin-top:10px;font-weight:900">No items yet</h3>
-        <p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#f97316">Quick Add</b> or <b>Add Item</b> to add products</p>
-      </div>`;
-    return;
+    const sid = document.getElementById('shopIdDisplay');
+    if(sid) sid.innerText = 'ID: ' + this.shopId.slice(-6);
+
+    if(window.AuthCore){
+      try{ await window.AuthCore.protectDashboard(); }catch(e){ console.warn('AuthCore protect failed - still continue', e); }
+    }
+
+    this.bindUI();
+    this.bindSearch();
+    this.bindToggle();
+    this.bindSocket();
+    this.bindProfileSync();
+    await this.loadDashboard();
+    this.startAutoRefresh();
   }
 
-  els.inventoryList.innerHTML = list.map(p => `
+  bindProfileSync(){
+    const check = ()=>{
+      const now = localStorage.getItem('shop_updated') || '0';
+      if(now!== this.lastShopUpdate){ this.lastShopUpdate = now; this.isLoading = false; this.loadDashboard(); }
+    };
+    window.addEventListener('focus', check);
+    window.addEventListener('pageshow', check);
+    window.addEventListener('storage', (e)=>{ if(e.key==='shop_updated') check(); });
+  }
+  markShopUpdated(){ const t = Date.now().toString(); localStorage.setItem('shop_updated', t); this.lastShopUpdate = t; }
+
+  bindUI(){
+    const $ = (id)=> document.getElementById(id);
+    $('newProductBtn')?.addEventListener('click', ()=> this.goProductForm());
+    $('quickAddBtn')?.addEventListener('click', ()=> this.goQuickAdd());
+    $('viewShopBtn')?.addEventListener('click', ()=> this.viewShop());
+  }
+
+  bindSearch(){
+    const input = document.getElementById('searchInput');
+    if(!input) return;
+    input.addEventListener('input', (e)=>{
+      clearTimeout(this.searchDebounce);
+      this.searchDebounce = setTimeout(()=>{
+        const q = e.target.value.toLowerCase().trim();
+        if(!q) this.filteredProducts = [...this.allProducts];
+        else this.filteredProducts = this.allProducts.filter(p=>
+          (p.name||'').toLowerCase().includes(q) ||
+          (p.brand||p.extraData?.brand||'').toLowerCase().includes(q) ||
+          (p.category||'').toLowerCase().includes(q) ||
+          (p.extraData?.size||'').toLowerCase().includes(q)
+        );
+        this.renderProducts(this.filteredProducts);
+      }, 200);
+    });
+  }
+
+  bindToggle(){
+    const el = document.getElementById('toggleSwitch');
+    if(!el) return;
+    el.addEventListener('click', async ()=>{
+      const isOpen =!el.classList.contains('on');
+      this.updateToggleUI(isOpen);
+      try{
+        if(window.ShopToggleCore?.toggle){
+          const state = await window.ShopToggleCore.toggle(this.shopId);
+          this.updateToggleUI(state);
+        }else{
+          await fetch(this.API_COMMON.toggle, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ isOpen }) }).catch(()=>{});
+          await fetch(`/api/shops/sports/${this.shopId}/settings`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ isOpen }) }).catch(()=>{});
+        }
+        this.markShopUpdated();
+        this.toast(isOpen? 'Shop Opened ✅' : 'Shop Closed 🔴');
+      }catch(e){ this.updateToggleUI(!isOpen); this.toast('Toggle failed'); }
+    });
+  }
+  updateToggleUI(isOpen){
+    const sw = document.getElementById('toggleSwitch');
+    if(sw) sw.className = 'switch ' + (isOpen? 'on' : '');
+    const tt = document.getElementById('toggleText');
+    if(tt) tt.innerText = isOpen? 'Open' : 'Closed';
+  }
+
+  bindSocket(){
+    if(!window.SocketCore){ console.warn('SocketCore not loaded'); return; }
+    window.SocketCore.on('new-order', (order)=>{
+      if(order.shopId && order.shopId!== this.shopId) return;
+      this.toast(`🔔 New Order - ₹${order.total||0}`);
+      this.playSound(); if(navigator.vibrate) navigator.vibrate([100,50,100]);
+      this.orders.unshift(order);
+      this.renderOrders(this.orders.slice(0,10));
+      this.loadDashboard();
+    });
+    window.SocketCore.on('shop-status-changed', (d)=>{ if(d.shopId===this.shopId) this.updateToggleUI(d.isOpen); });
+    window.SocketCore.on('shop-profile-updated', (d)=>{ if(d.shopId===this.shopId){ this.markShopUpdated(); this.loadDashboard(); } });
+  }
+
+  async loadDashboard(){
+    if(this.isLoading) return;
+    this.isLoading = true; this.showLoader(true);
+    try{
+      const results = await Promise.allSettled([
+        window.WorldProductManager? window.WorldProductManager.getProducts({ shopType:this.shopType, shopId:this.shopId }) : fetch(`${this.API_WORLD_BASE}?shopId=${this.shopId}&shopType=${this.shopType}`).then(r=>r.json()).then(d=>d.data||[]),
+        fetch(`${this.API_OLD}?t=${Date.now()}`, { cache:'no-store' }).then(r=>r.json()).catch(()=>({})),
+        window.ApiCore? window.ApiCore.get(this.API_COMMON.analytics).catch(()=>null) : null,
+        window.ApiCore? window.ApiCore.get(this.API_COMMON.lowStock).catch(()=>null) : null,
+        window.ApiCore? window.ApiCore.get(this.API_COMMON.orders).catch(()=>null) : null,
+        window.ApiCore? window.ApiCore.get(this.API_COMMON.shopInfo).catch(()=>null) : null
+      ]);
+
+      const worldRes = results[0].status==='fulfilled'? results[0].value : [];
+      const oldRes = results[1].status==='fulfilled'? results[1].value : {};
+      const analyticsRes = results[2].status==='fulfilled'? results[2].value : null;
+      const lowStockRes = results[3].status==='fulfilled'? results[3].value : null;
+      const ordersRes = results[4].status==='fulfilled'? results[4].value : null;
+      const profileRes = results[5].status==='fulfilled'? results[5].value : null;
+
+      this.shopData = oldRes?.shop || oldRes || {};
+      const profShop = profileRes?.shop || profileRes?.profile || profileRes?.data || null;
+      if(profShop && typeof profShop==='object'){
+        const oldProducts = this.shopData.products || [];
+        this.shopData = {...this.shopData,...profShop, products: profShop.products?.length? profShop.products : oldProducts };
+      }
+      try{
+        const localShop = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}');
+        if(localShop && (localShop.name || localShop.shopName)) this.shopData = {...this.shopData,...localShop };
+      }catch(e){}
+
+      this.oldProducts = (this.shopData.products || []).filter(p=>!p.shopType || p.shopType==='sports');
+      // purane sports route wale products me _id World se takraye to World wala rakho
+      this.worldProducts = Array.isArray(worldRes)? worldRes : (worldRes?.data || []);
+      const worldIds = new Set(this.worldProducts.map(p=>p._id));
+      this.allProducts = [...this.worldProducts,...this.oldProducts.filter(p=>!worldIds.has(p._id))];
+      this.filteredProducts = [...this.allProducts];
+
+      this.lowStock = lowStockRes?.products || lowStockRes?.data || this.allProducts.filter(p=> (p.stock||0) <= (p.lowStockAlert||10));
+      this.orders = ordersRes?.orders || ordersRes?.data || [];
+      this.stats = {
+        totalProducts: this.allProducts.length,
+        todaySale: analyticsRes?.todayOrders || analyticsRes?.todaySale || this.orders.length || 0,
+        todayRevenue: analyticsRes?.todayRevenue || analyticsRes?.revenue || 0,
+        lowStockCount: this.lowStock.length
+      };
+
+      this.renderStats();
+      this.renderProducts(this.filteredProducts);
+      this.renderLowStock(this.lowStock);
+      this.renderCategories();
+      this.renderOrders(this.orders);
+      this.renderProfile();
+      if(this.shopData.isOpen!== undefined) this.updateToggleUI(!!this.shopData.isOpen);
+      if(this.shopData.settings?.isOpen!== undefined) this.updateToggleUI(!!this.shopData.settings.isOpen);
+      this.renderStatus();
+    }catch(e){
+      console.error('Sports loadDashboard failed', e);
+      document.getElementById('inventoryList').innerHTML = `<div class="empty-box" style="color:#ef4444"><b>Error:</b> ${e.message}</div>`;
+    }finally{ this.isLoading = false; this.showLoader(false); }
+  }
+
+  renderStatus(){
+    const el = document.getElementById('commonStatus');
+    if(el) el.innerHTML = `✅ SAMANLIVE Connected<br>Shop: ${this.shopData?.shopName || this.shopData?.name || 'Sports Shop'}<br>Products: ${this.allProducts.length} (World: ${this.worldProducts.length})<br>Type: sports`;
+  }
+
+  renderProfile(){
+    if(!this.shopData) return;
+    const d = this.shopData;
+    const name = d.shopName || d.name || 'Sports Shop';
+    const owner = d.ownerName || d.owner || 'Owner';
+    const photo = localStorage.getItem(`shop_avatar_${this.shopId}`) || d.avatar || d.shopImage || d.logo || d.image || 'https://placehold.co/100x100/1e293b/ffffff?text=SP';
+    const set = (id, txt)=>{ const el=document.getElementById(id); if(el) el.innerText = txt; };
+    const img = document.getElementById('shopPhoto'); if(img) img.src = photo;
+    set('shopName', name);
+    set('shopMeta', `${owner} • ${d.area || d.city || 'Sports'}`);
+  }
+
+  renderStats(){
+    const $ = (id)=> document.getElementById(id);
+    if($('items')) $('items').innerText = this.stats.totalProducts || 0;
+    if($('prodCount')) $('prodCount').innerText = `(${this.allProducts.length})`;
+    if($('sale')) $('sale').innerText = this.stats.todaySale || 0;
+    if($('revenue')) $('revenue').innerText = `₹${this.stats.todayRevenue || 0}`;
+    if($('lowStockCount')) $('lowStockCount').innerText = this.stats.lowStockCount || 0;
+  }
+
+  // ===== SPECIAL CARD - COMMON WALA HI LOGIC =====
+  isSpecialProduct(p){
+    if(!p) return false;
+    const ex = p.extraData || {};
+    return p.isSpecial===true || p.isSpecial==='true' || ex.isSpecial===true || ex.isSpecial==='true';
+  }
+  getProductImage(p){
+    return p.thumbnail || p.image || p.extraData?.thumbnail || `https://placehold.co/400x300/f97316/ffffff?text=${encodeURIComponent((p.name||'Sports').slice(0,10))}`;
+  }
+
+  renderProducts(list){
+    const c = document.getElementById('inventoryList');
+    if(!c) return;
+    if(!list.length){
+      c.innerHTML = `<div class="empty-box"><div style="font-size:50px">🏏</div><h3 style="font-weight:900;margin-top:10px">No items</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#f97316">Quick Add</b> to add 1000 sports items</p><button onclick="window.SportsDashboard.goQuickAdd()" class="btn btn-orange" style="margin:14px auto 0">Quick Add Products</button></div>`;
+      return;
+    }
+    const specialList = list.filter(p=> this.isSpecialProduct(p));
+    const normalList = list.filter(p=>!this.isSpecialProduct(p));
+    let html = '';
+    if(specialList.length){
+      html += `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;background:#fff7ed;border:1px solid #fed7aa;padding:10px 12px;border-radius:12px"><b style="font-size:13px">⭐ Special Products</b><span style="font-size:11px;font-weight:800;color:#9a3412">${specialList.length} items</span></div>`;
+      html += specialList.map(p=> this.renderSpecialCard(p)).join('');
+      if(normalList.length) html += `<div style="grid-column:1/-1;font-weight:900;font-size:13px;margin-top:4px">All Products</div>`;
+    }
+    html += normalList.map(p=> this.renderNormalCard(p)).join('');
+    c.innerHTML = html;
+  }
+
+  renderNormalCard(p){
+    const brand = p.brand || p.extraData?.brand || 'Generic';
+    const size = p.extraData?.size || p.size || '';
+    const color = p.extraData?.color || p.color || '';
+    return `
     <div class="p-card">
-      <img src="${p.image || `https://source.unsplash.com/400x300/?${encodeURIComponent(p.category || 'sports')},${encodeURIComponent(p.name.split(' ')[0])}`}"
-           onerror="this.src='https://placehold.co/400/f97316/fff?text=${encodeURIComponent(p.name.slice(0,12))}'">
+      <img src="${this.getProductImage(p)}" loading="lazy" onerror="this.src='https://placehold.co/400x300/f97316/ffffff?text=Sports'">
       <div class="p-info">
-        <b>${p.name}</b>
-        <div class="meta">${p.brand || 'Generic'} • ${p.category || 'General'} ${p.size? '• Size: '+p.size : ''}</div>
-        <div class="price-row">
-          <div class="price">₹${p.price}
-            ${p.mrp && p.mrp > p.price? `<small style="text-decoration:line-through;color:#94a3b8;margin-left:4px">₹${p.mrp}</small>` : ''}
-            <br><span class="brand-badge">${p.brand || 'Sports'}</span>
-          </div>
-          <div class="stock ${p.stock <= 5? 'low' : 'ok'}">${p.stock} LEFT</div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button onclick="editProduct('${p._id}')" style="flex:1;background:#f1f5f9;border:1px solid #e2e8f0;padding:8px;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer">
-            <i class="fa-solid fa-pen"></i> Edit
-          </button>
-          <button onclick="deleteProduct('${p._id}')" style="width:40px;background:#fff;border:1px solid #fee2e2;color:#ef4444;border-radius:10px;cursor:pointer">
-            <i class="fa-solid fa-trash"></i>
-          </button>
+        <b title="${p.name||''}">${(p.name||'').slice(0,40)}</b>
+        <div class="meta">${brand} • ${p.category||'General'} ${size?'• '+size:''} ${color?'• '+color:''}</div>
+        <div class="price-row"><div class="price">₹${p.price||0}<br><span class="brand-badge">${brand}</span></div><div class="stock ${(p.stock||0)<=10?'low':'ok'}">${p.stock||0} LEFT</div></div>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <button onclick="window.SportsDashboard.editProduct('${p._id}')" style="flex:1;background:#f1f5f9;border:1px solid #e2e8f0;padding:7px;border-radius:10px;font-weight:800;font-size:11px;cursor:pointer">Edit</button>
+          <button onclick="window.SportsDashboard.deleteProduct('${p._id}')" style="width:36px;background:#fff;border:1px solid #fee2e2;color:#ef4444;border-radius:10px;cursor:pointer"><i class="fa fa-trash"></i></button>
         </div>
       </div>
-    </div>
-  `).join('');
-}
-
-function renderLowStock(list) {
-  if (!els.lowStock) return;
-  if (!list.length) {
-    els.lowStock.innerHTML = `<div style="background:#f0fdf4;color:#166534;padding:12px;border-radius:12px;font-weight:800;font-size:13px;text-align:center">✓ All Stock OK</div>`;
-    return;
-  }
-  els.lowStock.innerHTML = list.slice(0, 6).map(p => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;margin-bottom:8px">
-      <div><b style="font-size:13px">${p.name}</b><br><small style="color:#92400e;font-size:11px">${p.category || ''}</small></div>
-      <span style="background:#92400e;color:#fff;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:900">${p.stock}</span>
-    </div>
-  `).join('');
-}
-
-function renderCategories() {
-  if (!els.categories) return;
-  const cats = [...new Set(allProducts.map(p => p.category || 'General'))];
-  if (!cats.length) {
-    els.categories.innerHTML = `<p style="color:#94a3b8;font-size:12px">No categories yet</p>`;
-    return;
-  }
-  els.categories.innerHTML = cats.map(cat => {
-    const count = allProducts.filter(p => (p.category || 'General') === cat).length;
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f8fafc">
-      <span style="font-weight:700;font-size:13px">${cat}</span>
-      <span style="background:#f1f5f9;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800">${count}</span>
     </div>`;
-  }).join('');
-}
+  }
 
-// Search - NEW WALA (ye chalega)
-if (els.searchInput) {
-  els.searchInput.addEventListener('input', () => {
-    const q = els.searchInput.value.toLowerCase();
-    const filtered = allProducts.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      (p.category || '').toLowerCase().includes(q) ||
-      (p.brand || '').toLowerCase().includes(q)
-    );
-    renderProducts(filtered);
-  });
-}
-
-// Search - OLD WALA (tera wala hi rakha hai, delete nahi kiya)
-window.filter = function() {
-  const q = document.getElementById('searchInput')?.value.toLowerCase() || '';
-  const filtered = allProducts.filter(p => p.name.toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q));
-  renderProducts(filtered);
-}
-
-window.editProduct = function(id) {
-  location.href = `/shop-templates/sports/product-form.html?shopId=${shopId}&editId=${id}`;
-}
-
-window.deleteProduct = async function(id) {
-  if (!confirm('Delete this item?')) return;
-  try {
-    const res = await fetch(`/api/shops/sports/${shopId}/item/${id}`, { method: 'DELETE' });
-    const data = await res.json();
-    if (data.success) {
-      toast('Deleted successfully');
-      loadShopData();
-    } else {
-      toast('Delete failed: ' + data.message);
+  renderSpecialCard(p){
+    const ex = p.extraData || {};
+    const brand = p.brand || ex.brand || '';
+    const badge = ex.badge || p.badge || 'SPECIAL';
+    const colorBg = ex.cardColor || p.cardColor || '#fff7ed';
+    const layout = (ex.layout || p.layout || 'big').toString().toLowerCase();
+    if(layout==='list'){
+      return `<div class="p-card" style="grid-column:1/-1;display:flex;background:${colorBg};border:1px solid #fed7aa">
+        <img src="${this.getProductImage(p)}" style="width:110px;height:110px" onerror="this.src='https://placehold.co/400x300/f97316/ffffff?text=Sports'">
+        <div class="p-info" style="flex:1"><span style="background:#f97316;color:#fff;font-size:9px;font-weight:900;padding:3px 7px;border-radius:999px">⭐ ${badge}</span><b style="margin-top:5px">${p.name||''}</b><div class="meta">${brand} • ${p.category||''}</div><div class="price-row"><div class="price">₹${p.price||0}</div><div class="stock ${(p.stock||0)<=10?'low':'ok'}">${p.stock||0} LEFT</div></div>
+        <div style="display:flex;gap:6px;margin-top:8px"><button onclick="window.SportsDashboard.editProduct('${p._id}')" style="flex:1;background:#fff;border:1px solid #e2e8f0;padding:7px;border-radius:9px;font-weight:800;font-size:11px;cursor:pointer">Edit</button><button onclick="window.SportsDashboard.deleteProduct('${p._id}')" style="width:36px;background:#fff;border:1px solid #fee2e2;color:#ef4444;border-radius:9px;cursor:pointer"><i class="fa fa-trash"></i></button></div></div></div>`;
     }
-  } catch (e) {
-    toast('Error: ' + e.message);
+    return `<div class="p-card" style="grid-column:1/-1;background:${colorBg};border:1px solid #fed7aa">
+      <div style="position:relative"><img src="${this.getProductImage(p)}" style="height:190px" onerror="this.src='https://placehold.co/400x300/f97316/ffffff?text=Sports'"><span style="position:absolute;top:10px;left:10px;background:#f97316;color:#fff;font-size:10px;font-weight:900;padding:5px 9px;border-radius:999px">⭐ ${badge}</span></div>
+      <div class="p-info"><b style="font-size:15px;min-height:auto">${p.name||''}</b><div class="meta">${brand} • ${p.category||''} ${ex.quality?'• '+ex.quality:''}</div>${p.description||ex.description?`<div style="font-size:12px;color:#475569;margin-top:6px">${(p.description||ex.description).slice(0,140)}</div>`:''}
+      <div class="price-row"><div class="price" style="font-size:17px">₹${p.price||0} <del style="color:#94a3b8;font-size:12px">₹${p.mrp||p.price||0}</del></div><div class="stock ${(p.stock||0)<=10?'low':'ok'}">${p.stock||0} LEFT</div></div>
+      <div style="display:flex;gap:6px;margin-top:10px"><button onclick="window.SportsDashboard.editProduct('${p._id}')" style="flex:1;background:#0f172a;color:#fff;border:none;padding:9px;border-radius:9px;font-weight:800;font-size:11px;cursor:pointer">Edit Special</button><button onclick="window.SportsDashboard.deleteProduct('${p._id}')" style="width:40px;background:#fff;border:1px solid #fee2e2;color:#ef4444;border-radius:9px;cursor:pointer"><i class="fa fa-trash"></i></button></div></div></div>`;
   }
-}
 
-window.toggleShop = async function() {
-  if (!els.toggleSwitch) return;
-  const isOpen =!els.toggleSwitch.classList.contains('on');
-  els.toggleSwitch.classList.toggle('on', isOpen);
-  if (els.toggleText) els.toggleText.innerText = isOpen? 'Open' : 'Closed';
-
-  try {
-    await fetch(`/api/shops/sports/${shopId}/settings`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isOpen })
-    });
-    toast(isOpen? 'Shop Opened' : 'Shop Closed');
-  } catch (e) {
-    toast('Failed to update status');
+  renderLowStock(list){
+    const c = document.getElementById('lowStock');
+    if(!c) return;
+    if(!list.length){ c.innerHTML = '<div style="background:#f0fdf4;color:#166534;padding:10px;border-radius:10px;font-weight:800;font-size:12px;text-align:center">✓ All Stock OK</div>'; return; }
+    c.innerHTML = list.slice(0,8).map(p=>`<div class="low-item"><div style="min-width:0"><b style="font-size:12px">${p.name}</b><br><small style="color:#92400e;font-size:10px">${p.category||''}</small></div><span style="background:#92400e;color:#fff;padding:3px 7px;border-radius:20px;font-size:10px;font-weight:900;height:fit-content">${p.stock||0}</span></div>`).join('');
   }
+
+  renderCategories(){
+    const c = document.getElementById('categories');
+    if(!c) return;
+    const cats = [...new Set(this.allProducts.map(p=> p.category || 'General'))];
+    if(!cats.length){ c.innerHTML = '<p style="color:#94a3b8;font-size:12px">No categories</p>'; return; }
+    c.innerHTML = cats.map(cat=>`<div class="cat-item"><span>${cat}</span><span style="background:#f1f5f9;padding:2px 8px;border-radius:20px;font-size:11px">${this.allProducts.filter(p=> (p.category||'General')===cat).length}</span></div>`).join('');
+  }
+
+  renderOrders(orders){
+    const c = document.getElementById('liveOrders');
+    if(!c) return;
+    if(!orders.length){ c.innerHTML = '<div style="text-align:center;padding:10px;color:#94a3b8;font-size:12px">No live orders</div>'; return; }
+    c.innerHTML = orders.slice(0,8).map(o=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f1f5f9"><div><b style="font-size:12px">#${(o.orderId||o._id||'').toString().slice(-6).toUpperCase()}</b><br><small style="color:#64748b;font-size:10px">₹${o.total||0} • ${o.customerName||'Customer'}</small></div><span style="font-size:10px;font-weight:900;background:#e0f2fe;color:#0369a1;padding:3px 7px;border-radius:999px;height:fit-content">${(o.status||'PLACED').toUpperCase()}</span></div>`).join('');
+  }
+
+  showLoader(show){ const el = document.getElementById('loader'); if(el) el.style.display = show? 'grid' : 'none'; }
+  toast(msg){ const t = document.getElementById('toast'); if(!t) return; t.innerText = msg; t.style.display = 'block'; setTimeout(()=> t.style.display='none', 2800); }
+  playSound(){ try{ const a = document.getElementById('newOrderSound'); if(a){ a.volume = 0.8; a.play().catch(()=>{}); } }catch(e){} }
+
+  // ===== PRODUCT FORM - SEED KE SAATH - sports.seed.js =====
+  goProductForm(){ location.href = `../common/products/product-form.html?shopType=sports&shopId=${this.shopId}&type=sports`; }
+  goQuickAdd(){ location.href = `../common/products/product-form.html?shopType=sports&shopId=${this.shopId}&type=sports&quick=1`; }
+  editProduct(id){ location.href = `../common/products/product-form.html?shopType=sports&shopId=${this.shopId}&type=sports&editId=${id}`; }
+  viewShop(){ window.open(`./user-view.html?shopId=${this.shopId}&shopType=sports`, '_blank'); }
+
+  async deleteProduct(id){
+    if(!confirm('Delete? Ye item dashboard aur customer view dono se hat jayega.')) return;
+    try{
+      let res;
+      if(window.WorldProductManager?.deleteProduct) res = await window.WorldProductManager.deleteProduct(id);
+      else res = await fetch(`${this.API_WORLD_BASE}/${id}`, { method:'DELETE' }).then(r=>r.json());
+      if(!res.success){
+        const old = await fetch(`/api/shops/sports/${this.shopId}/item/${id}`, { method:'DELETE' }).then(r=>r.json()).catch(()=>({success:false}));
+        if(!old.success) throw new Error(res.message || 'Delete failed');
+      }
+      this.toast('Deleted ✅');
+      this.isLoading = false;
+      await this.loadDashboard();
+    }catch(e){ this.toast('Delete failed: ' + e.message); }
+  }
+
+  startAutoRefresh(){ this.stopAutoRefresh(); this.refreshInterval = setInterval(()=>{ this.isLoading = false; this.loadDashboard(); }, 30000); }
+  stopAutoRefresh(){ if(this.refreshInterval) clearInterval(this.refreshInterval); }
 }
 
-window.goForm = function() {
-  location.href = `/shop-templates/sports/product-form.html?shopId=${shopId}`;
-}
-
-window.goQuick = function() {
-  location.href = `/shop-templates/sports/product-form.html?shopId=${shopId}&quick=1`;
-}
-
-window.viewShop = function() {
-  window.open(`/shop-templates/sports/user-view.html?shopId=${shopId}`, '_blank');
-}
-
-// For old buttons id
-document.getElementById('addItemBtn')?.addEventListener('click', () => window.goForm());
-document.getElementById('newSaleBtn')?.addEventListener('click', () => window.viewShop());
+window.SportsDashboard = new SportsDashboardCore();
+window.sportsDashboard = window.SportsDashboard;
+window.goForm = ()=> window.SportsDashboard.goProductForm();
+window.goQuick = ()=> window.SportsDashboard.goQuickAdd();
+window.viewShop = ()=> window.SportsDashboard.viewShop();
+window.editProduct = (id)=> window.SportsDashboard.editProduct(id);
+window.deleteProduct = (id)=> window.SportsDashboard.deleteProduct(id);
+setTimeout(()=>{ const l=document.getElementById('loader'); if(l) l.style.display='none'; window.SportsDashboard?.toast('✅ Sports Dashboard Ready'); }, 1200);
