@@ -1,4 +1,4 @@
-<!-- LOCATION: public/shop-templates/sports/user-view.html - V6 NO SHOP LOCALSTORAGE -->
+<!-- LOCATION: public/shop-templates/sports/user-view.html - SPORTS CUSTOMER VIEW - WORLD CONNECTED - V7 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,14 +43,14 @@ body{background:#f8fafc;color:#0f172a;padding-bottom:90px}
 .card:hover{transform:translateY(-3px);box-shadow:0 15px 30px rgba(0,0,0,.08)}
 .img-wrap{position:relative;background:#f8fafc;height:150px;display:grid;place-items:center;overflow:hidden}
 .img-wrap img{width:100%;height:100%;object-fit:cover}
-.off{position:absolute;top:8px;left:8px;background:var(--orange);color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px}
-.brand-tag{position:absolute;top:8px;right:8px;background:var(--dark);color:#fff;font-size:9px;font-weight:800;padding:4px 8px;border-radius:20px}
+.off{position:absolute;top:8px;left:8px;background:var(--orange);color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px;z-index:2}
+.brand-tag{position:absolute;top:8px;right:8px;background:var(--dark);color:#fff;font-size:9px;font-weight:800;padding:4px 8px;border-radius:20px;z-index:2}
 .p{padding:10px 12px 12px 12px}
 .p b{font-size:13px;font-weight:800;line-height:1.2;display:block;min-height:32px}
 .meta{font-size:10px;color:#94a3b8;font-weight:600;margin-top:2px}
-.row{display:flex;justify-content:space-between;align-items:end;margin-top:10px}
+.row{display:flex;justify-content:space-between;align-items:end;margin-top:10px;gap:8px}
 .price{font-weight:900;font-size:16px}.price small{font-size:10px;color:#94a3b8;text-decoration:line-through;margin-left:4px;font-weight:600}
-.add{height:32px;padding:0 14px;border-radius:10px;background:#fff;border:1.5px solid var(--orange);color:var(--orange);font-weight:900;font-size:12px;cursor:pointer;transition:.2s}
+.add{height:32px;padding:0 14px;border-radius:10px;background:#fff;border:1.5px solid var(--orange);color:var(--orange);font-weight:900;font-size:12px;cursor:pointer;transition:.2s;white-space:nowrap}
 .add.added{background:var(--orange);color:#fff}
 .cart-bar{position:fixed;bottom:12px;left:12px;right:12px;background:var(--dark);color:#fff;padding:14px 18px;border-radius:18px;display:none;justify-content:space-between;align-items:center;z-index:50;box-shadow:0 20px 40px rgba(0,0,0,.3);max-width:500px;margin:0 auto}
 #cartModal{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(10px);display:none;z-index:200;align-items:end}
@@ -87,7 +87,7 @@ body{background:#f8fafc;color:#0f172a;padding-bottom:90px}
 </div>
 
 <div class="cats" id="catBar"></div>
-<div class="grid" id="productGrid"></div>
+<div class="grid" id="productGrid"><div style="grid-column:1/-1;text-align:center;padding:50px;color:#94a3b8"><i class="fa-solid fa-spinner fa-spin"></i> Loading sports products...</div></div>
 
 <div class="cart-bar" id="cartBar">
   <div><b id="cartTotalItems">0 items</b><br><small>₹<span id="cartTotal">0</span> • Free shipping above ₹499</small></div>
@@ -105,56 +105,99 @@ body{background:#f8fafc;color:#0f172a;padding-bottom:90px}
   </div>
 </div>
 
+<script src="../common/products/product-manager.js"></script>
 <script>
 const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('shopId') || urlParams.get('id') || '';
 if(!shopId){ alert('shopId missing! URL me ?shopId= lagao'); }
 
-let allProducts=[], cart=JSON.parse(localStorage.getItem('sports_cart_'+shopId)||'[]'), shopData=null;
+let allProducts=[], cart=JSON.parse(localStorage.getItem('sports_cart_'+shopId)||'[]'), shopData=null, currentCat='All';
+
+function getImg(p){ return p.thumbnail || p.image || p.extraData?.thumbnail || `https://placehold.co/400x400/f97316/ffffff?text=${encodeURIComponent((p.name||'Sports').slice(0,10))}`; }
+function isSpecial(p){ const ex=p.extraData||{}; return p.isSpecial===true||p.isSpecial==='true'||ex.isSpecial===true||ex.isSpecial==='true'; }
 
 async function loadShop(){
   if(!shopId) return;
   try{
-    const res = await fetch(`/api/shops/sports/${shopId}?t=${Date.now()}`, { cache: 'no-store' });
-    const result = await res.json();
-    if(!result.success) throw new Error(result.message);
-    shopData=result.shop;
-    document.getElementById('shopName').innerText=shopData.settings?.shopName||shopData.shopName||'Sports Store';
-    document.getElementById('pageTitle').innerText=shopData.settings?.shopName||'Sports Store';
-    document.getElementById('heroTitle').innerHTML=`Premium <span>${(shopData.settings?.shopName||'Sports').split(' ')[0]}</span><br>For Champions`;
-    document.getElementById('shopAddress').innerText=shopData.settings?.address||'Cricket, Football, Gym - Original brands';
-    document.getElementById('topStrip').innerText=shopData.settings?.announcement||'FREE SHIPPING ABOVE ₹499 • 6 MONTH WARRANTY • GENUINE BRANDS';
-    const isOpen=shopData.settings?.isOpen??true;
-    document.getElementById('shopStatus').innerText=isOpen?'Open • Fast Delivery':'Closed Now';
+    // 1. SHOP INFO - purane route se naam/address/open-close
+    let shopInfo = {};
+    try{
+      const res = await fetch(`/api/shops/sports/${shopId}?t=${Date.now()}`, { cache: 'no-store' });
+      const result = await res.json();
+      if(result.success){ shopData=result.shop; shopInfo=result.shop; }
+    }catch(e){ console.warn('old sports shop info failed', e); }
+
+    if(!shopData){
+      try{
+        const pr = await fetch(`/api/common/profile/${shopId}`).then(r=>r.json()).catch(()=>null);
+        shopData = pr?.shop || pr?.data || {};
+      }catch(e){}
+    }
+    shopData = shopData || {};
+
+    const sName = shopData.settings?.shopName || shopData.shopName || shopData.name || 'Sports Store';
+    document.getElementById('shopName').innerText = sName;
+    document.getElementById('pageTitle').innerText = sName;
+    document.getElementById('heroTitle').innerHTML = `Premium <span>${sName.split(' ')[0]}</span><br>For Champions`;
+    document.getElementById('shopAddress').innerText = shopData.settings?.address || shopData.address || 'Cricket, Football, Gym - Original brands';
+    document.getElementById('topStrip').innerText = shopData.settings?.announcement || 'FREE SHIPPING ABOVE ₹499 • 6 MONTH WARRANTY • GENUINE BRANDS';
+    const isOpen = shopData.settings?.isOpen ?? shopData.isOpen ?? true;
+    document.getElementById('shopStatus').innerText = isOpen? 'Open • Fast Delivery' : 'Closed Now';
     const badge=document.getElementById('shopStatusBadge'); badge.innerText=isOpen?'Open':'Closed'; badge.className='shop-status '+(isOpen?'open':'closed');
-    allProducts=shopData.products||shopData.items||[];
+
+    // 2. PRODUCTS - WORLD MODEL SE (Quick Add wale 1000 items yahi aayenge) + purane mila ke
+    let worldProducts = [];
+    if(window.WorldProductManager){
+      // customer role - stock 0 aur band product apne aap filter hoga product-manager me
+      worldProducts = await window.WorldProductManager.getProducts({ shopType:'sports', shopId }).catch(()=>[]);
+    }else{
+      worldProducts = await fetch(`/api/world-products?shopId=${shopId}&shopType=sports&role=customer`).then(r=>r.json()).then(d=>d.data||[]).catch(()=>[]);
+    }
+    const oldProducts = shopInfo.products || shopInfo.items || [];
+    const worldIds = new Set(worldProducts.map(p=>p._id));
+    allProducts = [...worldProducts, ...oldProducts.filter(p=>!worldIds.has(p._id) && (p.stock||0)>0 && p.isActive!==false)];
+
+    console.log('Sports customer products:', allProducts.length, 'world:', worldProducts.length, 'old:', oldProducts.length);
     renderCats(); renderProducts(allProducts); updateCartUI();
-  }catch(e){ document.getElementById('productGrid').innerHTML=`<p style="grid-column:1/-1;padding:40px;text-align:center;color:red">Error: ${e.message}<br>URL me sahi shopId lagao</p>`; }
+  }catch(e){
+    document.getElementById('productGrid').innerHTML=`<p style="grid-column:1/-1;padding:40px;text-align:center;color:red">Error: ${e.message}<br>URL me sahi shopId lagao</p>`;
+  }
 }
+
 function renderCats(){
   const cats=[...new Set(allProducts.map(p=>p.category||'General'))];
   const bar=document.getElementById('catBar');
-  bar.innerHTML=`<button class="cat active" onclick="filterCat('All',this)">🏆 All</button>`+cats.map(c=>`<button class="cat" onclick="filterCat('${c}',this)">${c}</button>`).join('');
+  bar.innerHTML=`<button class="cat active" onclick="filterCat('All',this)">🏆 All</button>`+cats.map(c=>`<button class="cat" onclick="filterCat('${c.replace(/'/g,"\\'")}',this)">${c}</button>`).join('');
 }
+
 function renderProducts(list){
   const grid=document.getElementById('productGrid');
-  if(!list.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:50px;color:#94a3b8">No sports products<br><small>Dashboard se Quick Add karo</small></div>';return;}
-  grid.innerHTML=list.map(p=>{
-    const disc=p.mrp?Math.round(((p.mrp-p.price)/p.mrp)*100):0;
+  if(!list.length){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:50px;color:#94a3b8">No sports products<br><small>Dashboard se Quick Add karo</small></div>'; return; }
+
+  // Special wale pehle, phir normal - dono ek hi grid me, design purana hi
+  const sorted = [...list.filter(isSpecial), ...list.filter(p=>!isSpecial(p))];
+  grid.innerHTML=sorted.map(p=>{
+    const disc=p.mrp && p.mrp>p.price ? Math.round(((p.mrp-p.price)/p.mrp)*100):0;
     const inCart=cart.find(c=>c._id===p._id);
-    return `<div class="card">
-      <div class="img-wrap"><img src="${p.image||`https://source.unsplash.com/400x400/?${encodeURIComponent(p.category||'sports')}`}" onerror="this.src='https://placehold.co/400/f97316/fff?text=${encodeURIComponent(p.name.slice(0,10))}'">${disc>5?`<div class="off">${disc}% OFF</div>`:''}${p.brand?`<div class="brand-tag">${p.brand}</div>`:''}</div>
-      <div class="p"><b>${p.name}</b><div class="meta">${p.category||''} • ${p.size||''}</div><div class="row"><div class="price">₹${p.price}<small>${p.mrp?'₹'+p.mrp:''}</small><br><span style="font-size:10px;color:${p.stock>0?'#16a34a':'#ef4444'}"><span class="stock-dot ${p.stock>0?'ok':'low'}"></span>${p.stock>0?p.stock+' in stock':'Out'}</span></div><button class="add ${inCart?'added':''}" onclick="addToCart('${p._id}')">${inCart?`${inCart.qty} Added`:'ADD'}</button></div></div></div>`;
+    const brand=p.brand||p.extraData?.brand||'';
+    const size=p.extraData?.size||p.size||'';
+    const sp=isSpecial(p);
+    return `<div class="card" ${sp?'style="border-color:#fed7aa;background:#fffbeb"':''}>
+      <div class="img-wrap"><img src="${getImg(p)}" loading="lazy" onerror="this.src='https://placehold.co/400/f97316/fff?text=${encodeURIComponent((p.name||'S').slice(0,10))}'">${disc>5?`<div class="off">${disc}% OFF</div>`:''}${brand?`<div class="brand-tag">${brand}</div>`:''}${sp?`<div class="off" style="top:auto;bottom:8px;background:#0f172a">⭐ SPECIAL</div>`:''}</div>
+      <div class="p"><b>${p.name}</b><div class="meta">${p.category||''} ${size?'• '+size:''}</div><div class="row"><div class="price">₹${p.price||0}<small>${p.mrp?'₹'+p.mrp:''}</small><br><span style="font-size:10px;color:${(p.stock||0)>0?'#16a34a':'#ef4444'}"><span class="stock-dot ${(p.stock||0)>0?'ok':'low'}"></span>${(p.stock||0)>0?(p.stock+' in stock'):'Out'}</span></div><button class="add ${inCart?'added':''}" onclick="addToCart('${p._id}')">${inCart?`${inCart.qty} Added`:'ADD'}</button></div></div></div>`;
   }).join('');
 }
-function filterCat(cat,el){document.querySelectorAll('.cat').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');renderProducts(cat==='All'?allProducts:allProducts.filter(p=>(p.category||'General')===cat));}
-document.getElementById('searchInput')?.addEventListener('input',e=>{const q=e.target.value.toLowerCase();renderProducts(allProducts.filter(p=>p.name.toLowerCase().includes(q)));});
-function addToCart(id){const prod=allProducts.find(p=>p._id===id);if(!prod)return;const ex=cart.find(c=>c._id===id);if(ex)ex.qty+=1;else cart.push({...prod,qty:1});localStorage.setItem('sports_cart_'+shopId,JSON.stringify(cart));updateCartUI();renderProducts(allProducts);}
-function updateCartUI(){const count=cart.reduce((s,c)=>s+c.qty,0),total=cart.reduce((s,c)=>s+c.price*c.qty,0);document.getElementById('cartCount').innerText=count;document.getElementById('cartTotal').innerText=total;document.getElementById('cartTotal2').innerText=total;document.getElementById('cartTotalItems').innerText=count+' items';document.getElementById('cartBar').style.display=count>0?'flex':'none';document.getElementById('cartItems').innerHTML=cart.map(c=>`<div class="c-item"><img src="${c.image||'https://placehold.co/100'}" style="width:52px;height:52px;border-radius:12px;object-fit:cover"><div style="flex:1"><b style="font-size:13px">${c.name}</b><br><small>₹${c.price} x ${c.qty}</small></div><div class="qty-box"><button onclick="changeQty('${c._id}',-1)">−</button><b style="width:28px;text-align:center">${c.qty}</b><button class="add-q" onclick="changeQty('${c._id}',1)">+</button></div></div>`).join('')||'<p style="text-align:center;padding:30px;color:#94a3b8">Empty</p>';}
-function changeQty(id,d){const it=cart.find(c=>c._id===id);if(!it)return;it.qty+=d;if(it.qty<=0)cart=cart.filter(c=>c._id!==id);localStorage.setItem('sports_cart_'+shopId,JSON.stringify(cart));updateCartUI();}
-function openCart(){document.getElementById('cartModal').style.display='flex';}
-function closeCart(){document.getElementById('cartModal').style.display='none';}
-function checkout(){const total=cart.reduce((s,c)=>s+c.price*c.qty,0);const phone=(shopData.settings?.phone||'').replace(/\D/g,'');const lines=cart.map(c=>`• ${c.name} x${c.qty} = ₹${c.price*c.qty}`).join('%0A');const text=`*Sports Order - ${shopData.settings?.shopName||''}*%0A%0A${lines}%0A%0A*Total: ₹${total}*`;const url=phone?`https://wa.me/${phone}?text=${text}`:`https://wa.me/?text=${text}`;window.open(url,'_blank');cart=[];localStorage.setItem('sports_cart_'+shopId,JSON.stringify([]));updateCartUI();closeCart();}
+
+function filterCat(cat,el){ currentCat=cat; document.querySelectorAll('.cat').forEach(b=>b.classList.remove('active')); if(el)el.classList.add('active'); renderProducts(cat==='All'?allProducts:allProducts.filter(p=>(p.category||'General')===cat)); }
+document.getElementById('searchInput')?.addEventListener('input',e=>{ const q=e.target.value.toLowerCase(); const base=currentCat==='All'?allProducts:allProducts.filter(p=>(p.category||'General')===currentCat); renderProducts(base.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.brand||'').toLowerCase().includes(q))); });
+
+function addToCart(id){ const prod=allProducts.find(p=>p._id===id); if(!prod || (prod.stock||0)<=0) return; const ex=cart.find(c=>c._id===id); if(ex) ex.qty+=1; else cart.push({...prod, qty:1}); localStorage.setItem('sports_cart_'+shopId, JSON.stringify(cart)); updateCartUI(); const base=currentCat==='All'?allProducts:allProducts.filter(p=>(p.category||'General')===currentCat); renderProducts(base); }
+function updateCartUI(){ const count=cart.reduce((s,c)=>s+c.qty,0), total=cart.reduce((s,c)=>s+c.price*c.qty,0); document.getElementById('cartCount').innerText=count; document.getElementById('cartTotal').innerText=total; document.getElementById('cartTotal2').innerText=total; document.getElementById('cartTotalItems').innerText=count+' items'; document.getElementById('cartBar').style.display=count>0?'flex':'none'; document.getElementById('cartItems').innerHTML=cart.map(c=>`<div class="c-item"><img src="${getImg(c)}" style="width:52px;height:52px;border-radius:12px;object-fit:cover"><div style="flex:1"><b style="font-size:13px">${c.name}</b><br><small>₹${c.price} x ${c.qty}</small></div><div class="qty-box"><button onclick="changeQty('${c._id}',-1)">−</button><b style="width:28px;text-align:center">${c.qty}</b><button class="add-q" onclick="changeQty('${c._id}',1)">+</button></div></div>`).join('')||'<p style="text-align:center;padding:30px;color:#94a3b8">Empty</p>'; }
+function changeQty(id,d){ const it=cart.find(c=>c._id===id); if(!it) return; it.qty+=d; if(it.qty<=0) cart=cart.filter(c=>c._id!==id); localStorage.setItem('sports_cart_'+shopId, JSON.stringify(cart)); updateCartUI(); }
+function openCart(){ document.getElementById('cartModal').style.display='flex'; }
+function closeCart(){ document.getElementById('cartModal').style.display='none'; }
+function checkout(){ if(!cart.length) return; const total=cart.reduce((s,c)=>s+c.price*c.qty,0); const phone=((shopData?.settings?.phone||shopData?.phone||'').replace(/\D/g,'')); const lines=cart.map(c=>`• ${c.name} x${c.qty} = ₹${c.price*c.qty}`).join('%0A'); const text=`*Sports Order - ${shopData?.settings?.shopName||shopData?.shopName||shopData?.name||''}*%0A%0A${lines}%0A%0A*Total: ₹${total}*`; const url=phone?`https://wa.me/${phone}?text=${text}`:`https://wa.me/?text=${text}`; window.open(url,'_blank'); cart=[]; localStorage.setItem('sports_cart_'+shopId, JSON.stringify([])); updateCartUI(); closeCart(); }
+
 loadShop();
 </script>
 </body>
