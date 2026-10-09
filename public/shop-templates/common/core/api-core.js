@@ -1,7 +1,7 @@
 // LOCATION: public/shop-templates/common/core/api-core.js - WORLD CLASS API CORE - PRODUCTION GRADE
 class ApiCore {
   constructor(){
-    //this.baseUrl = '';
+    this.baseUrl = '';
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.timeout = 15000;
     this.retryCount = 2;
