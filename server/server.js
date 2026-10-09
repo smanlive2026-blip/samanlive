@@ -127,15 +127,16 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // DB ENSURE MIDDLEWARE - world-products se pehle check
 app.use('/api/world-products', async (req,res,next)=>{
-  if(mongoose.connection.readyState !== 1){
-    try{
-      await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 30000 });
-      console.log('🔄 Mongo reconnected for world-products');
-    }catch(e){
-      console.error('DB still not ready:', e.message);
+  try{
+    await connectDB();
+    if(mongoose.connection.readyState !== 1){
+      return res.status(503).json({ success:false, message:'DB not ready, try again' });
     }
+    next();
+  }catch(e){
+    console.error('DB ensure failed:', e.message);
+    return res.status(503).json({ success:false, message:'DB connection failed: ' + e.message });
   }
-  next();
 }, worldProductRoutes);
 
 // DB ENSURE - HAR /api REQUEST KE LIYE - DASHBOARD LATE FIX
