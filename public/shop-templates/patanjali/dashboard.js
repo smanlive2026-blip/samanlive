@@ -277,7 +277,7 @@
     goProductForm(){ location.href = `../common/products/product-form.html?shopType=patanjali&shopId=${this.shopId}&type=patanjali`; }
     goQuickAdd(){ location.href = `../common/products/product-form.html?shopType=patanjali&shopId=${this.shopId}&type=patanjali&quick=1`; }
     editProduct(id){ location.href = `../common/products/product-form.html?shopType=patanjali&shopId=${this.shopId}&type=patanjali&editId=${id}`; }
-    viewShop(){ window.open(`./user-view.html?shopId=${this.shopId}&shopType=patanjali`, '_blank'); }
+    viewShop(){ window.open(`./customer-view.html?shopId=${this.shopId}&shopType=patanjali`, '_blank'); }
     async deleteProduct(id){
       if(!confirm('Delete? Ye item dashboard aur customer view dono se hat jayega.')) return;
       try{

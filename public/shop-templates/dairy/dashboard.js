@@ -366,7 +366,7 @@
     goProductForm(){ location.href = `../common/products/product-form.html?shopType=dairy&shopId=${this.shopId}&type=dairy`; }
     goQuickAdd(){ location.href = `../common/products/product-form.html?shopType=dairy&shopId=${this.shopId}&type=dairy&quick=1`; }
     editProduct(id){ location.href = `../common/products/product-form.html?shopType=dairy&shopId=${this.shopId}&type=dairy&editId=${id}`; }
-    viewShop(){ window.open(`./user-view.html?shopId=${this.shopId}&shopType=dairy`, '_blank'); }
+    viewShop(){ window.open(`./customer-view.html?shopId=${this.shopId}&shopType=dairy`, '_blank'); }
 
     async deleteProduct(id){
       if(!confirm('Delete? Ye item dashboard aur customer view dono se hat jayega.')) return;
