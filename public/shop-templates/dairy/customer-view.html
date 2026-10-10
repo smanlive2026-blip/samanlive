@@ -1,323 +1,572 @@
-<!-- LOCATION: public/shop-templates/dairy/customer-view.html - V7 FINAL WORLD CLASS + OLD LOGIC SAVE -->
+<!-- LOCATION: public/shop-templates/dairy/user-view.html - DAIRY CUSTOMER VIEW - V8 POWERFUL - COMMON CONNECTED -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gopal Dairy - Fresh Milk Daily</title>
+<title>Dairy - Fresh Milk Daily | SAMANLIVE</title>
+<link rel="icon" href="../common/samanlive-logo.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--milk:#0ea5e9;--milk2:#0284c7;--dark:#0f172a;--bg:#f8fafc;--green:#22c55e}
+:root{--milk:#0ea5e9;--milk2:#0284c7;--dark:#0f172a;--bg:#f8fafc;--green:#22c55e;--red:#ef4444;--border:#e2e8f0;--muted:#64748b}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
-body{background:var(--bg);color:var(--dark);padding-bottom:90px}
-.header{height:64px;background:rgba(255,255,255,.9);backdrop-filter:blur(20px);border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:50}
-.logo{font-weight:900;font-size:18px;display:flex;gap:8px;align-items:center}
-.logo i{background:var(--milk);color:#fff;width:36px;height:36px;display:grid;place-items:center;border-radius:10px}
-.hdr-icons{display:flex;gap:12px;align-items:center}
-.icon-btn{width:38px;height:38px;background:#f1f5f9;border-radius:12px;display:grid;place-items:center;cursor:pointer;position:relative;border:none}
-.cart-btn{position:relative;background:var(--dark);color:#fff;padding:10px 16px;border-radius:12px;border:none;font-weight:800;display:flex;gap:8px;align-items:center;cursor:pointer}
-.cart-count{position:absolute;top:-6px;right:-6px;background:var(--milk);color:#fff;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900}
-.hero{margin:16px;background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);border-radius:24px;padding:20px;color:#fff;position:relative;overflow:hidden}
-.hero h1{font-size:24px;font-weight:900;line-height:1.1}.hero p{font-size:13px;opacity:.9;margin-top:6px;font-weight:600}
-.hero-badges{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-.badge{background:rgba(255,255,255,.2);backdrop-filter:blur(10px);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800;display:flex;gap:6px;align-items:center}
-.slot-bar{display:flex;gap:8px;padding:0 16px;margin-top:16px}
-.slot{flex:1;padding:12px;border-radius:14px;border:2px solid #e2e8f0;background:#fff;font-weight:800;font-size:13px;display:flex;justify-content:center;gap:8px;align-items:center;cursor:pointer;transition:.2s}
+body{background:var(--bg);color:var(--dark);padding-bottom:96px}
+button,input{font-family:'Outfit',sans-serif}
+.header{min-height:64px;background:rgba(255,255,255,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;position:sticky;top:0;z-index:50;gap:10px}
+.logo{font-weight:900;font-size:18px;display:flex;gap:9px;align-items:center;min-width:0}
+.logo-icon{background:var(--milk);color:#fff;width:38px;height:38px;display:grid;place-items:center;border-radius:11px;flex-shrink:0;box-shadow:0 8px 16px rgba(14,165,233,.3)}
+.logo-text{line-height:1.1;min-width:0}.logo-text b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.logo-text small{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.shop-id-badge{background:#f1f5f9;padding:4px 8px;border-radius:8px;font-size:10px;font-weight:800;color:#475569}
+.hdr-icons{display:flex;gap:9px;align-items:center;flex-shrink:0}
+.icon-btn{width:39px;height:39px;background:#f1f5f9;border-radius:12px;display:grid;place-items:center;cursor:pointer;position:relative;border:none;font-size:15px;color:var(--dark)}
+.icon-btn.active{color:var(--red)}
+.cart-btn{position:relative;background:var(--dark);color:#fff;padding:11px 15px;border-radius:12px;border:none;font-weight:800;display:flex;gap:8px;align-items:center;cursor:pointer;font-size:13px}
+.cart-count{position:absolute;top:-7px;right:-7px;background:var(--milk);color:#fff;min-width:21px;height:21px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;padding:0 5px;border:2px solid #fff}
+.hero{margin:16px;background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);border-radius:24px;padding:22px 20px;color:#fff;position:relative;overflow:hidden}
+.hero::after{content:'🥛';position:absolute;right:-8px;bottom:-22px;font-size:120px;opacity:.14;transform:rotate(-10deg)}
+.hero h1{font-size:25px;font-weight:900;line-height:1.12;position:relative;z-index:1}
+.hero p{font-size:13px;opacity:.92;margin-top:7px;font-weight:600;position:relative;z-index:1}
+.hero-badges{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;position:relative;z-index:1}
+.badge{background:rgba(255,255,255,.22);backdrop-filter:blur(10px);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800;display:flex;gap:6px;align-items:center}
+.search-wrap{margin:0 16px;background:#fff;border:1px solid var(--border);border-radius:14px;display:flex;align-items:center;gap:10px;padding:12px 14px}
+.search-wrap:focus-within{border-color:var(--milk);box-shadow:0 0 0 3px rgba(14,165,233,.12)}
+.search-wrap i{color:#94a3b8}
+.search-wrap input{border:none;outline:none;width:100%;font-weight:600;font-size:13px;background:transparent}
+.slot-bar{display:flex;gap:8px;padding:14px 16px 0}
+.slot{flex:1;padding:13px 10px;border-radius:14px;border:2px solid var(--border);background:#fff;font-weight:800;font-size:13px;display:flex;justify-content:center;gap:8px;align-items:center;cursor:pointer;transition:.2s;text-align:center}
 .slot.active{border-color:var(--milk);background:#e0f2fe;color:#0369a1}
-.filters{display:flex;gap:8px;padding:12px 16px;overflow:auto}
-.filter{padding:8px 16px;border-radius:20px;border:1px solid #e2e8f0;background:#fff;font-weight:700;font-size:12px;white-space:nowrap;cursor:pointer}
+.sub-toggle{margin:14px 16px 0;background:#fff;border:2px solid #e0f2fe;border-radius:16px;padding:15px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sub-toggle b{font-size:14px}.sub-toggle p{font-size:11px;color:var(--muted);font-weight:600;margin-top:3px;line-height:1.4}
+.switch{width:46px;height:26px;background:#e2e8f0;border-radius:20px;position:relative;cursor:pointer;transition:.3s;flex-shrink:0}
+.switch.on{background:var(--milk)}.switch::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:4px;left:4px;transition:.3s}.switch.on::after{left:24px}
+.filters{display:flex;gap:8px;padding:14px 16px 4px;overflow:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filter{padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:#fff;font-weight:700;font-size:12px;white-space:nowrap;cursor:pointer;transition:.2s}
 .filter.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+.section-head{padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.section-head h3{font-weight:900;font-size:16px}
+.section-head small{color:#94a3b8;font-weight:700;font-size:11px}
 .products{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:0 16px}
 @media(min-width:700px){.products{grid-template-columns:repeat(3,1fr)}}
 @media(min-width:1000px){.products{grid-template-columns:repeat(4,1fr)}}
-.p-card{background:#fff;border-radius:20px;border:1px solid #f1f5f9;overflow:hidden;position:relative;transition:.25s}
+.p-card{background:#fff;border-radius:20px;border:1px solid #f1f5f9;overflow:hidden;position:relative;transition:.25s;display:flex;flex-direction:column}
 .p-card:hover{transform:translateY(-4px);box-shadow:0 15px 30px rgba(0,0,0,.08)}
-.p-card img{width:100%;height:160px;object-fit:cover}
-.p-body{padding:12px}
-.p-body b{font-size:14px;line-height:1.2;display:block;min-height:34px}
-.p-meta{font-size:11px;color:#94a3b8;font-weight:600;margin-top:2px}
-.p-price{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
-.price{font-weight:900;font-size:16px}.price small{font-size:11px;color:#64748b;font-weight:600}
-.add-btn{background:var(--dark);color:#fff;border:none;padding:8px 14px;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer;display:flex;gap:6px;align-items:center}
-.qty-bar{display:none;align-items:center;gap:8px;background:#f1f5f9;border-radius:12px;padding:4px}
+.p-card img{width:100%;height:150px;object-fit:cover;background:#f8fafc;display:block}
+.p-body{padding:12px;flex:1;display:flex;flex-direction:column}
+.p-body b{font-size:14px;line-height:1.25;display:block;min-height:35px;font-weight:800}
+.p-meta{font-size:11px;color:#94a3b8;font-weight:600;margin-top:3px;line-height:1.4}
+.p-desc{font-size:11px;color:#475569;margin-top:6px;line-height:1.45}
+.p-price{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px;gap:8px}
+.price{font-weight:900;font-size:16px;line-height:1}.price del{font-size:11px;color:#94a3b8;font-weight:600;margin-left:3px}.price small{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-top:3px}
+.add-btn{background:var(--dark);color:#fff;border:none;padding:9px 14px;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer;display:flex;gap:6px;align-items:center;flex-shrink:0}
+.add-btn:disabled{background:#e2e8f0;color:#94a3b8;cursor:not-allowed}
+.qty-bar{display:none;align-items:center;gap:7px;background:#f1f5f9;border-radius:12px;padding:4px;flex-shrink:0}
 .qty-bar.show{display:flex}
-.qty-btn{width:28px;height:28px;border-radius:8px;border:none;background:var(--dark);color:#fff;font-weight:900;cursor:pointer}
-.exp{position:absolute;top:8px;left:8px;background:#ef4444;color:#fff;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:900}
-.fresh{position:absolute;top:8px;left:8px;background:var(--green);color:#fff;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:900}
-.sub-toggle{margin:16px;background:#fff;border:2px solid #e0f2fe;border-radius:16px;padding:14px;display:flex;justify-content:space-between;align-items:center}
-.switch{width:44px;height:26px;background:#e2e8f0;border-radius:20px;position:relative;cursor:pointer;transition:.3s}
-.switch.on{background:var(--milk)}.switch::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:4px;left:4px;transition:.3s}.switch.on::after{left:22px}
-.cart-drawer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e2e8f0;border-radius:24px 24px 0 0;padding:16px;transform:translateY(100%);transition:.35s cubic-bezier(.16,1,.3,1);z-index:100;max-height:80vh;overflow:auto}
+.qty-btn{width:28px;height:28px;border-radius:8px;border:none;background:var(--dark);color:#fff;font-weight:900;cursor:pointer;font-size:15px}
+.qty-num{min-width:20px;text-align:center;font-size:13px}
+.tag{position:absolute;top:9px;left:9px;color:#fff;padding:4px 9px;border-radius:20px;font-size:10px;font-weight:900;z-index:2}
+.tag.fresh{background:var(--green)}.tag.exp{background:var(--red)}.tag.special{background:#f97316}.tag.out{background:#0f172a}
+.special-wrap{padding:0 16px;display:flex;flex-direction:column;gap:12px}
+.special-card{background:#fff;border:1px solid #bae6fd;border-radius:22px;overflow:hidden;position:relative}
+.special-card img{width:100%;height:200px;object-fit:cover;display:block}
+.special-body{padding:14px}
+.special-body b{font-size:16px;font-weight:900;line-height:1.25;display:block}
+.wishlist-btn{position:absolute;top:9px;right:9px;width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.94);display:grid;place-items:center;cursor:pointer;z-index:3;color:#64748b;font-size:14px;box-shadow:0 6px 14px rgba(0,0,0,.12)}
+.wishlist-btn.active{color:var(--red)}
+.review-box{margin:16px;background:#fff;border-radius:18px;padding:16px;border:1px solid #f1f5f9}
+.review-box h4{font-weight:900;font-size:14px}
+.review-box p{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5;font-weight:600}
+.cart-drawer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);border-radius:24px 24px 0 0;padding:18px 16px 22px;transform:translateY(105%);transition:.35s cubic-bezier(.16,1,.3,1);z-index:100;max-height:82vh;overflow:auto;box-shadow:0 -18px 40px rgba(0,0,0,.14)}
 .cart-drawer.open{transform:translateY(0)}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);display:none;z-index:99}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);display:none;z-index:99}
 .overlay.show{display:block}
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #e2e8f0;z-index:80}
-#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 20px;border-radius:30px;font-weight:700;font-size:13px;display:none;z-index:200}
+.cart-item{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #f1f5f9;align-items:flex-start}
+.cart-item b{font-size:13px;line-height:1.3;display:block}
+.cart-item small{color:#94a3b8;font-size:11px;font-weight:600}
+.cart-summary{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)}
+.summary-row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:5px}
+.summary-row.total{font-size:18px;font-weight:900;margin-top:10px}
+.checkout-btn{width:100%;margin-top:14px;background:var(--milk);color:#fff;border:none;padding:15px;border-radius:14px;font-weight:900;font-size:14px;cursor:pointer}
+.checkout-btn:disabled{background:#cbd5e1;cursor:not-allowed}
+.full-cart-btn{width:100%;margin-top:8px;background:#f1f5f9;color:var(--dark);border:1px solid var(--border);padding:12px;border-radius:14px;font-weight:800;font-size:13px;cursor:pointer}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(16px);display:flex;justify-content:space-around;padding:11px 0 calc(11px + env(safe-area-inset-bottom));border-top:1px solid var(--border);z-index:80}
+.bottom-nav span{width:44px;height:38px;display:grid;place-items:center;border-radius:12px;color:#64748b;cursor:pointer;font-size:16px}
+.bottom-nav span.active{background:#e0f2fe;color:#0369a1}
+.closed-banner{margin:14px 16px 0;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:14px;padding:13px 14px;font-weight:800;font-size:13px;display:none}
+#toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 20px;border-radius:30px;font-weight:700;font-size:13px;display:none;z-index:200;max-width:92vw;text-align:center;box-shadow:0 14px 30px rgba(0,0,0,.22)}
+.empty-box{grid-column:1/-1;text-align:center;padding:44px 16px;background:#fff;border:1px solid #f1f5f9;border-radius:20px}
+@media(max-width:420px){.hero h1{font-size:22px}.p-card img{height:128px}.cart-btn{padding:10px 12px}.logo-text b{font-size:15px}}
 </style>
 </head>
 <body data-page="customer" data-shop="dairy">
 
-<div class="header">
-  <div class="logo"><i class="fa-solid fa-bottle-water"></i> <span id="shopName">Gopal Dairy</span> <small id="shopIdDisplay" style="background:#f1f5f9;padding:4px 8px;border-radius:8px;font-size:10px;margin-left:6px"></small></div>
-  <div class="hdr-icons">
-    <button class="icon-btn" onclick="window.loadChatbot && window.loadChatbot()"><i class="fa-regular fa-message"></i></button>
-    <button class="icon-btn" id="wishlistIcon"><i class="fa-regular fa-heart"></i></button>
-    <button class="cart-btn" onclick="toggleCart()"><i class="fa-solid fa-bag-shopping"></i> <span id="cartText">Cart</span> <span class="cart-count" id="cartCount">0</span></button>
+<header class="header">
+  <div class="logo">
+    <span class="logo-icon"><i class="fa-solid fa-bottle-water"></i></span>
+    <div class="logo-text"><b id="shopName">Gopal Dairy</b><small>Fresh Dairy • SAMANLIVE</small></div>
+    <small class="shop-id-badge" id="shopIdDisplay">ID:...</small>
   </div>
-</div>
+  <div class="hdr-icons">
+    <button class="icon-btn" id="chatBtn" title="Chat"><i class="fa-regular fa-message"></i></button>
+    <button class="icon-btn" id="wishlistIcon" title="Wishlist"><i class="fa-regular fa-heart"></i></button>
+    <button class="cart-btn" id="cartOpenBtn"><i class="fa-solid fa-bag-shopping"></i><span id="cartText">Cart</span><span class="cart-count" id="cartCount">0</span></button>
+  </div>
+</header>
 
-<div class="hero">
-  <h1 id="bannerTitle">Fresh Milk<br>Daily at 6AM 🥛</h1>
-  <p id="bannerSub">Full Cream • No Water • Lab Tested</p>
+<section class="hero">
+  <h1 id="bannerTitle">Fresh Milk<br>Daily at 6 AM 🥛</h1>
+  <p id="bannerSub">Full Cream • No Water • Farm Fresh</p>
   <div class="hero-badges">
     <div class="badge"><i class="fa-solid fa-truck-fast"></i> 30 min delivery</div>
-    <div class="badge"><i class="fa-solid fa-award"></i> <span id="ratingBadge">4.9 Rating</span></div>
+    <div class="badge"><i class="fa-solid fa-award"></i><span id="ratingBadge">4.9 Rating</span></div>
     <div class="badge" id="openStatus"><i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN</div>
   </div>
+</section>
+
+<div class="closed-banner" id="closedBanner">🔴 Dukaan abhi band hai. Subah 6 baje fresh doodh milega, tab order karna.</div>
+
+<div class="search-wrap">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input id="searchInput" type="text" placeholder="Doodh, dahi, paneer, ghee khojo..." autocomplete="off">
 </div>
 
 <div class="slot-bar">
-  <div class="slot active" onclick="setSlot('morning',this)"><i class="fa-solid fa-sun"></i> Subah 6-9 AM</div>
-  <div class="slot" onclick="setSlot('evening',this)"><i class="fa-solid fa-moon"></i> Sham 5-8 PM</div>
+  <div class="slot active" data-slot="morning"><i class="fa-solid fa-sun"></i> Subah 6-9 AM</div>
+  <div class="slot" data-slot="evening"><i class="fa-solid fa-moon"></i> Sham 5-8 PM</div>
 </div>
 
 <div class="sub-toggle" id="subscription">
-  <div><b style="font-size:14px">🔄 Daily Milk Subscription</b><p style="font-size:11px;color:#64748b;font-weight:600">Subah 6AM - Cancel anytime - 10% OFF</p></div>
-  <div class="switch" id="subSwitch" onclick="toggleSub()"></div>
+  <div><b>🔄 Daily Milk Subscription</b><p>Roz subah 6 AM delivery • Cancel anytime • Subscription pe 10% OFF</p></div>
+  <div class="switch" id="subSwitch" role="switch" aria-checked="false" tabindex="0"></div>
 </div>
 
-<div class="filters" id="filters">
-  <div class="filter active" onclick="filterProd('all',this)">All</div>
-  <div class="filter" onclick="filterProd('Milk',this)">🥛 Milk</div>
-  <div class="filter" onclick="filterProd('Dahi',this)">🧈 Dahi</div>
-  <div class="filter" onclick="filterProd('Ghee',this)">🍦 Ghee</div>
-  <div class="filter" onclick="filterProd('Paneer',this)">🧀 Paneer</div>
-  <div class="filter" onclick="filterProd('Lassi',this)">🥤 Lassi</div>
+<div class="filters" id="filters"></div>
+
+<div id="specialSection" style="display:none">
+  <div class="section-head"><h3>⭐ Special Today</h3><small>Dashboard se chune hue</small></div>
+  <div class="special-wrap" id="specialGrid"></div>
 </div>
 
-<div style="padding:0 16px;display:flex;justify-content:space-between;margin-bottom:8px"><h3 style="font-weight:900">Fresh Today</h3><small id="prodCount" style="color:#94a3b8;font-weight:700"></small></div>
-<div class="products" id="productGrid">Loading fresh stock...</div>
+<div class="section-head"><h3>Fresh Today</h3><small id="prodCount"></small></div>
+<div class="products" id="productGrid">
+  <div class="empty-box"><div style="font-size:50px">🥛</div><h3 style="font-weight:900;margin-top:10px">Fresh stock load ho raha hai...</h3></div>
+</div>
 
-<div style="padding:16px"><div style="background:white;border-radius:16px;padding:14px;border:1px solid #f1f5f9"><h4>⭐ <span id="reviewCount">4.8 (230 Reviews)</span></h4><p style="font-size:13px;color:gray" id="reviewText">Customers love our pure milk - common/reviews/reviews.js se load hoga</p></div></div>
-
-<div style="height:80px"></div>
+<div class="review-box">
+  <h4>⭐ <span id="reviewCount">4.8 (230 Reviews)</span></h4>
+  <p id="reviewText">Customers ko hamara shudh doodh pasand hai. Reviews common module se load honge.</p>
+</div>
 
 <nav class="bottom-nav">
-  <span><i class="fa-solid fa-house"></i></span>
-  <span><i class="fa-solid fa-magnifying-glass"></i></span>
-  <span onclick="window.loadQrModule && window.loadQrModule()"><i class="fa-solid fa-qrcode"></i></span>
+  <span class="active"><i class="fa-solid fa-house"></i></span>
+  <span id="navSearch"><i class="fa-solid fa-magnifying-glass"></i></span>
+  <span id="navQr"><i class="fa-solid fa-qrcode"></i></span>
+  <span id="navCart"><i class="fa-solid fa-bag-shopping"></i></span>
   <span><i class="fa-solid fa-user"></i></span>
 </nav>
 
-<!-- CART DRAWER -->
-<div class="overlay" id="overlay" onclick="toggleCart()"></div>
-<div class="cart-drawer" id="cartDrawer">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <h3 style="font-weight:900">Your Milk Basket</h3>
-    <button onclick="toggleCart()" style="background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+<div class="overlay" id="overlay"></div>
+<aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <h3 style="font-weight:900">Your Milk Basket 🧺</h3>
+    <button id="cartCloseBtn" style="background:#f1f5f9;border:none;width:34px;height:34px;border-radius:50%;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
   </div>
-  <div id="cartItems">Cart empty</div>
-  <div style="margin-top:12px;padding-top:12px;border-top:1px dashed #e2e8f0">
-    <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>Slot</span><span id="cartSlot">Morning 6-9 AM</span></div>
-    <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:4px"><span>Type</span><span id="cartType">One-time</span></div>
-    <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:900;margin-top:8px"><span>Total</span><span id="cartTotal">₹0</span></div>
-    <button onclick="goCheckout()" style="width:100%;margin-top:12px;background:var(--milk);color:#fff;border:none;padding:14px;border-radius:14px;font-weight:900;font-size:14px;cursor:pointer"><i class="fa-solid fa-bolt"></i> Checkout - Fresh Delivery</button>
-    <button onclick="goOldCart()" style="width:100%;margin-top:8px;background:#f1f5f9;color:var(--dark);border:1px solid #e2e8f0;padding:12px;border-radius:14px;font-weight:800;font-size:13px;cursor:pointer">View Full Cart (Old)</button>
+  <div id="cartItems"><p style="color:#94a3b8;text-align:center;padding:22px">Cart khali hai</p></div>
+  <div class="cart-summary">
+    <div class="summary-row"><span>Delivery Slot</span><span id="cartSlot">Morning 6-9 AM</span></div>
+    <div class="summary-row"><span>Order Type</span><span id="cartType">One-time</span></div>
+    <div class="summary-row"><span>Subtotal</span><span id="cartSubtotal">₹0</span></div>
+    <div class="summary-row" id="discountRow" style="display:none;color:#15803d"><span>Subscription Discount (10%)</span><span id="cartDiscount">-₹0</span></div>
+    <div class="summary-row total"><span>Total</span><span id="cartTotal">₹0</span></div>
+    <button class="checkout-btn" id="checkoutBtn"><i class="fa-solid fa-bolt"></i> Checkout - Fresh Delivery</button>
+    <button class="full-cart-btn" id="fullCartBtn">View Full Cart</button>
   </div>
-</div>
+</aside>
 
 <div id="toast"></div>
 
-<!-- CORE - OLD LOGIC SAVE -->
-<script src="../shop-templates/shop-core.js"></script>
+<script src="../common/cart/cart-core.js"></script>
+<script src="../common/products/product-manager.js"></script>
 <script>
-const params = new URLSearchParams(location.search);
-const shopId = params.get('shopId') || params.get('id') || 'DAIRY123';
-window.shopId = shopId;
-document.getElementById('shopIdDisplay').innerText = 'ID: ' + shopId.slice(-6);
-if(!shopId) alert('shopId missing! Add ?shopId= in URL');
+// LOCATION: public/shop-templates/dairy/user-view.js - INLINE - DAIRY CUSTOMER - WORLD + OLD MERGE
+(function(){
+  const params = new URLSearchParams(location.search);
+  const shopId = params.get('shopId') || params.get('id') || localStorage.getItem('last_shopId') || '';
+  const shopType = 'dairy';
+  window.shopId = shopId; window.shopType = shopType;
 
-let allProducts = [];
-let cart = {}; // new: {productId: qty}
-let currentSlot = 'morning';
-let isSub = false;
-let currentFilter = 'all';
+  const shopIdEl = document.getElementById('shopIdDisplay');
+  if(shopIdEl) shopIdEl.innerText = shopId? 'ID: ' + shopId.slice(-6) : 'ID: MISSING';
+  if(!shopId){
+    document.getElementById('productGrid').innerHTML = `<div class="empty-box"><div style="font-size:50px">⚠️</div><h3 style="font-weight:900;margin-top:10px">Shop ID Missing</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">URL me?shopId= lagao</p></div>`;
+    return;
+  }
+  localStorage.setItem('last_shopId', shopId);
+  localStorage.setItem('shopType', shopType);
 
-// ===== OLD LOGIC SYNC - TERA PURANA CODE =====
-let CART_OLD = JSON.parse(localStorage.getItem(`cart_${shopId}`)||'[]');
-function syncCartToLocalStorage(){
-  const arr = Object.entries(cart).map(([id,qty])=>({id, productId:id, qty}));
-  localStorage.setItem(`cart_${shopId}`, JSON.stringify(arr));
-  localStorage.setItem(`cart_${shopId}_new`, JSON.stringify(cart));
-  // common/cart-count ke liye
-  if(window.updateCartCount) window.updateCartCount();
-}
+  let shopData = {};
+  let allProducts = [];
+  let worldProducts = [];
+  let oldProducts = [];
+  let cart = {};
+  let wishlist = new Set();
+  let currentSlot = localStorage.getItem(`dairy_slot_${shopId}`) || 'morning';
+  let isSub = localStorage.getItem(`dairy_sub_${shopId}`) === '1';
+  let currentFilter = 'All';
+  let searchQuery = '';
+  let shopOpen = true;
 
-function toast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
+  const $ = (id)=> document.getElementById(id);
 
-async function loadShop(){
-  try{
-    const r = await fetch(`/api/shops/dairy/${shopId}?t=${Date.now()}`, {cache:'no-store'});
-    const d = await r.json();
-    if(d.success){
-      document.getElementById('shopName').innerText = d.shop.shopName || d.shop.name || 'Gopal Dairy';
-      document.getElementById('bannerTitle').innerHTML = d.shop.bannerTitle || 'Taaza Doodh,<br>Har Subah';
-      document.getElementById('openStatus').innerHTML = (d.shop.isOpen? '<i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN' : '<i class="fa-solid fa-circle" style="color:red"></i> CLOSED');
-      allProducts = d.shop.products || [];
-    } else {
+  function toast(msg){
+    const t = $('toast'); if(!t) return;
+    t.innerText = msg; t.style.display = 'block';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(()=> t.style.display = 'none', 2500);
+  }
+
+  function isSpecial(p){
+    const ex = p.extraData || {};
+    return p.isSpecial===true || p.isSpecial==='true' || ex.isSpecial===true || ex.isSpecial==='true';
+  }
+  function getImage(p){
+    return p.thumbnail || p.image || p.imageUrl || p.img || p.extraData?.thumbnail ||
+      `https://placehold.co/500x360/0ea5e9/ffffff?text=${encodeURIComponent((p.name||'Dairy').slice(0,12))}`;
+  }
+  function getBrand(p){ return p.brand || p.extraData?.brand || 'Local Fresh'; }
+  function getSize(p){ return p.extraData?.size || p.size || p.weight || p.unit || ''; }
+  function getDesc(p){ return p.description || p.extraData?.description || ''; }
+  function isExpiredSoon(p){
+    const ex = p.expiry || p.extraData?.expiry;
+    if(!ex) return false;
+    return (new Date(ex).getTime() - Date.now()) < 86400000;
+  }
+
+  // ---------- CART : purana localStorage hisaab bachaya hai ----------
+  function loadCartLocal(){
+    try{
+      const savedNew = JSON.parse(localStorage.getItem(`cart_${shopId}_new`) || 'null');
+      if(savedNew && typeof savedNew==='object'){ cart = savedNew; return; }
+      const savedOld = JSON.parse(localStorage.getItem(`cart_${shopId}`) || '[]');
+      if(Array.isArray(savedOld)){
+        cart = {};
+        savedOld.forEach(it=>{ const id = it.productId || it.id || it._id; if(id) cart[id] = it.qty || 1; });
+      }
+    }catch(e){ cart = {}; }
+  }
+  function syncCartToLocalStorage(){
+    try{
+      const arr = Object.entries(cart).map(([id,qty])=>{
+        const p = allProducts.find(x=>x._id===id);
+        return {id, productId:id, qty, name:p?.name||'', price:p?.price||0, image:getImage(p||{}), thumbnail:getImage(p||{})};
+      });
+      localStorage.setItem(`cart_${shopId}`, JSON.stringify(arr));
+      localStorage.setItem(`cart_${shopId}_new`, JSON.stringify(cart));
+      localStorage.setItem(`cart_items_${shopId}`, JSON.stringify(arr));
+    }catch(e){}
+    if(window.CartCore?.refresh) window.CartCore.refresh(shopId);
+    if(window.CartCount?.refresh) window.CartCount.refresh(shopId);
+    if(window.updateCartCount) window.updateCartCount();
+  }
+  function loadWishlist(){
+    try{ wishlist = new Set(JSON.parse(localStorage.getItem(`wishlist_${shopId}`) || '[]')); }catch(e){ wishlist = new Set(); }
+  }
+  function saveWishlist(){
+    try{ localStorage.setItem(`wishlist_${shopId}`, JSON.stringify([...wishlist])); }catch(e){}
+    $('wishlistIcon')?.classList.toggle('active', wishlist.size>0);
+    $('wishlistIcon').innerHTML = wishlist.size? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
+  }
+
+  // ---------- LOAD : World pehle, purana dairy uske neeche ----------
+  async function loadShop(){
+    loadCartLocal(); loadWishlist();
+    try{
+      const results = await Promise.allSettled([
+        window.WorldProductManager? window.WorldProductManager.getProducts({shopType, shopId}) : fetch(`/api/world-products?shopId=${shopId}&shopType=${shopType}`).then(r=>r.json()).then(d=>d.data||[]),
+        fetch(`/api/shops/dairy/${shopId}?t=${Date.now()}`, {cache:'no-store'}).then(r=>r.json()).catch(()=>({})),
+        fetch(`/api/common/profile/${shopId}`).then(r=>r.json()).catch(()=>null)
+      ]);
+      const worldRes = results[0].status==='fulfilled'? results[0].value : [];
+      const oldRes = results[1].status==='fulfilled'? results[1].value : {};
+      const profileRes = results[2].status==='fulfilled'? results[2].value : null;
+
+      shopData = oldRes?.shop || oldRes || {};
+      const profShop = profileRes?.shop || profileRes?.profile || profileRes?.data || null;
+      if(profShop && typeof profShop==='object'){
+        const oldP = shopData.products || [];
+        shopData = {...shopData,...profShop, products: profShop.products?.length? profShop.products : oldP};
+      }
+      try{
+        const localShop = JSON.parse(localStorage.getItem(`shop_${shopId}`) || '{}');
+        if(localShop.name || localShop.shopName) shopData = {...shopData,...localShop};
+      }catch(e){}
+
+      oldProducts = shopData.products || [];
+      worldProducts = Array.isArray(worldRes)? worldRes : (worldRes?.data || []);
+      const worldIds = new Set(worldProducts.map(p=>p._id));
+      allProducts = [...worldProducts,...oldProducts.filter(p=>!worldIds.has(p._id))];
+    }catch(e){
+      console.warn('Dairy customer load failed, mock use hoga', e);
       allProducts = mockProducts();
     }
-  }catch(e){
-    // API fail toh mock
-    allProducts = mockProducts();
-  }
-  document.getElementById('prodCount').innerText = `(${allProducts.length})`;
-  render(allProducts);
-  restoreCartFromLocalStorage();
-}
+    if(!allProducts.length) allProducts = mockProducts();
 
-function mockProducts(){
-  return [
-    {_id:'m1', name:'Full Cream Milk 1Ltr', price:62, imageUrl:'https://images.unsplash.com/photo-1550583724-b2692b85b150', unit:'1 Ltr', category:'Milk', fat:'Full Cream', stock:10, expiry: new Date(Date.now()+86400000*2)},
-    {_id:'m2', name:'Desi Dahi 500g', price:45, imageUrl:'https://images.unsplash.com/photo-1488477181946-64290103bbd6', unit:'500g', category:'Dahi', stock:5},
-    {_id:'m3', name:'Fresh Paneer 250g', price:90, imageUrl:'https://images.unsplash.com/photo-1634487359989-3e90c9432133', unit:'250g', category:'Paneer', stock:8},
-    {_id:'m4', name:'Desi Ghee 500ml', price:320, imageUrl:'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d', unit:'500ml', category:'Ghee', stock:3},
-  ];
-}
-
-function restoreCartFromLocalStorage(){
-  try{
-    const saved = JSON.parse(localStorage.getItem(`cart_${shopId}_new`)||'{}');
-    if(Object.keys(saved).length){ cart = saved; }
+    renderShopInfo();
+    renderFilters();
+    applySlotUI();
+    applySubUI();
+    renderAll();
     updateCartUI();
-  }catch(e){}
-}
+  }
 
-function render(list){
-  const g = document.getElementById('productGrid');
-  if(!list.length){ g.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px"><div style="font-size:50px">🥛</div><h3>No items in ${currentFilter}</h3></div>`; return; }
-  g.innerHTML = list.map(p=>{
-    const qty = cart[p._id] || 0;
-    const isExp = p.expiry && (new Date(p.expiry) - new Date() < 86400000);
-    const img = p.imageUrl || p.image || p.img || 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400';
-    return `
-    <div class="p-card">
-      ${isExp? `<div class="exp">EXP TODAY</div>` : `<div class="fresh">FRESH</div>`}
-      <img src="${img}" onerror="this.src='https://placehold.co/400/0ea5e9/fff?text=${encodeURIComponent(p.name.slice(0,10))}'">
-      <div class="p-body">
-        <b>${p.name}</b>
-        <div class="p-meta">${p.fat||'Full Cream'} • ${p.unit||'1 Ltr'} • Exp ${p.expiry? new Date(p.expiry).toLocaleDateString() : '2 days'}</div>
-        <div class="p-price">
-          <div class="price">₹${p.price} <small>/${p.unit||'Ltr'}</small></div>
-          <div class="${qty>0? 'qty-bar show':'qty-bar'}" id="qty-${p._id}">
-            <button class="qty-btn" onclick="updateQty('${p._id}',-1)">-</button>
-            <b style="min-width:20px;text-align:center">${qty}</b>
-            <button class="qty-btn" onclick="updateQty('${p._id}',1)">+</button>
-          </div>
-          <button class="add-btn" id="add-${p._id}" onclick="updateQty('${p._id}',1)" style="${qty>0?'display:none':''}"><i class="fa-solid fa-plus"></i> Add</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
+  function mockProducts(){
+    return [
+      {_id:'m1', name:'Amul Taaza Toned Milk 500ml', brand:'Amul', category:'Milk', price:28, mrp:30, stock:50, unit:'packet', thumbnail:'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600&q=80'},
+      {_id:'m2', name:'Amul Fresh Dahi 400g', brand:'Amul', category:'Curd', price:35, mrp:40, stock:40, unit:'cup', thumbnail:'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&q=80'},
+      {_id:'m3', name:'Amul Fresh Paneer 200g', brand:'Amul', category:'Paneer', price:95, mrp:110, stock:25, unit:'packet', thumbnail:'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&q=80'},
+      {_id:'m4', name:'Amul Pure Ghee 1L', brand:'Amul', category:'Ghee', price:650, mrp:720, stock:15, unit:'tin', thumbnail:'https://images.unsplash.com/photo-1633436375153-d7045cb93e38?w=600&q=80', isSpecial:'true', extraData:{badge:'Premium', cardColor:'#fefce8', description:'Shudh danedar ghee'}}
+    ];
+  }
 
-function updateQty(id, delta){
-  const p = allProducts.find(x=>x._id===id);
-  if(!p) return;
-  let q = (cart[id]||0) + delta;
-  if(q<0) q=0;
-  if(q> (p.stock||10)) { toast('Stock limit: '+p.stock+'L'); return; }
-  if(q===0) delete cart[id]; else cart[id]=q;
+  function renderShopInfo(){
+    const name = shopData.shopName || shopData.name || 'Gopal Dairy';
+    const titleEl = $('shopName'); if(titleEl) titleEl.innerText = name;
+    document.title = `${name} - Fresh Dairy | SAMANLIVE`;
+    const banner = shopData.bannerTitle || shopData.tagline || '';
+    if(banner) $('bannerTitle').innerHTML = banner.replace(/\n/g,'<br>');
+    const sub = shopData.bannerSub || shopData.description || '';
+    if(sub) $('bannerSub').innerText = sub;
+    const photo = localStorage.getItem(`shop_avatar_${shopId}`) || shopData.avatar || shopData.shopImage || shopData.logo || '';
+    // hero me photo nahi lagaya, naam hi kaafi hai - purana design bachaya
+    shopOpen =!(shopData.isOpen===false || shopData.settings?.isOpen===false);
+    $('openStatus').innerHTML = shopOpen
+     ? '<i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN'
+      : '<i class="fa-solid fa-circle" style="color:#fca5a5"></i> CLOSED';
+    $('closedBanner').style.display = shopOpen? 'none' : 'block';
+    const rating = shopData.rating || shopData.avgRating;
+    if(rating) $('ratingBadge').innerText = `${rating} Rating`;
+  }
 
-  const qtyEl = document.getElementById(`qty-${id}`);
-  const addEl = document.getElementById(`add-${id}`);
-  if(qtyEl && addEl){
-    if(q>0){
-      qtyEl.classList.add('show');
-      addEl.style.display='none';
-      qtyEl.querySelector('b').innerText = q;
-    }else{
-      qtyEl.classList.remove('show');
-      addEl.style.display='flex';
+  function renderFilters(){
+    const cats = ['All',...new Set(allProducts.map(p=>p.category||'General'))];
+    const box = $('filters'); if(!box) return;
+    const icons = {Milk:'🥛', Curd:'🥣', Dahi:'🥣', Paneer:'🧀', Ghee:'🫙', Butter:'🧈', Cheese:'🧀', 'Ice Cream':'🍦', Sweets:'🍮', Lassi:'🥤', Buttermilk:'🥤'};
+    box.innerHTML = cats.map(c=>`<div class="filter ${c===currentFilter?'active':''}" data-cat="${c}">${c==='All'?'All':(icons[c]||'🥛')+' '+c}</div>`).join('');
+    box.querySelectorAll('.filter').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        currentFilter = el.dataset.cat;
+        box.querySelectorAll('.filter').forEach(f=>f.classList.remove('active'));
+        el.classList.add('active');
+        renderAll();
+      });
+    });
+  }
+
+  function getFiltered(){
+    let list = currentFilter==='All'? [...allProducts] : allProducts.filter(p=>(p.category||'General')===currentFilter);
+    if(searchQuery){
+      const q = searchQuery.toLowerCase();
+      list = list.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.brand||'').toLowerCase().includes(q)||(p.category||'').toLowerCase().includes(q));
     }
+    return list;
   }
-  updateCartUI();
-  syncCartToLocalStorage();
-  if(window.CartCount && window.CartCount.refresh) window.CartCount.refresh(shopId);
-  navigator.vibrate && navigator.vibrate(50);
-  if(delta>0) toast(`${p.name} added 🥛`);
-}
 
-function updateCartUI(){
-  const count = Object.values(cart).reduce((a,b)=>a+b,0);
-  document.getElementById('cartCount').innerText = count;
-  document.getElementById('cartText').innerText = count? `₹${getTotal()}` : 'Cart';
-  const itemsDiv = document.getElementById('cartItems');
-  if(!count){ itemsDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px">Cart khali hai, doodh add karo</p>'; document.getElementById('cartTotal').innerText='₹0'; return; }
-  let total=0; let html='';
-  for(const id in cart){
-    const p = allProducts.find(x=>x._id===id);
-    if(!p) continue;
-    const qty = cart[id];
-    total += p.price * qty;
-    html += `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f8fafc"><div><b style="font-size:13px">${p.name}</b><br><small style="color:#94a3b8">${qty} x ₹${p.price}</small></div><b>₹${p.price*qty}</b></div>`;
+  function renderAll(){
+    const list = getFiltered();
+    const specialList = list.filter(isSpecial);
+    const normalList = list.filter(p=>!isSpecial(p));
+    renderSpecial(specialList);
+    renderProducts(normalList, specialList.length);
+    const pc = $('prodCount'); if(pc) pc.innerText = `(${list.length} items)`;
   }
-  itemsDiv.innerHTML = html;
-  document.getElementById('cartTotal').innerText = '₹'+total;
-}
 
-function getTotal(){
-  let t=0; for(const id in cart){ const p=allProducts.find(x=>x._id===id); if(p) t+=p.price*cart[id]; } return t;
-}
+  function renderSpecial(list){
+    const sec = $('specialSection'); const grid = $('specialGrid');
+    if(!sec ||!grid) return;
+    if(!list.length){ sec.style.display = 'none'; grid.innerHTML=''; return; }
+    sec.style.display = 'block';
+    grid.innerHTML = list.map(p=>{
+      const qty = cart[p._id]||0; const out = (p.stock||0)<=0;
+      const ex = p.extraData||{}; const badge = ex.badge || p.badge || 'SPECIAL';
+      const bg = ex.cardColor || p.cardColor || '#f0f9ff';
+      return `<article class="special-card" style="background:${bg}">
+        <button class="wishlist-btn ${wishlist.has(p._id)?'active':''}" data-wish="${p._id}"><i class="fa-${wishlist.has(p._id)?'solid':'regular'} fa-heart"></i></button>
+        ${out?'<span class="tag out">OUT OF STOCK</span>':'<span class="tag special">⭐ '+badge+'</span>'}
+        <img src="${getImage(p)}" loading="lazy" alt="${p.name||''}" onerror="this.src='https://placehold.co/600x360/0ea5e9/ffffff?text=Dairy'">
+        <div class="special-body">
+          <b>${p.name||''}</b>
+          <div class="p-meta">${getBrand(p)} • ${p.category||''} ${getSize(p)?'• '+getSize(p):''}</div>
+          ${getDesc(p)?`<div class="p-desc">${getDesc(p).slice(0,140)}</div>`:''}
+          <div class="p-price">
+            <div class="price">₹${p.price||0} ${p.mrp && p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}<small>${p.unit||''}</small></div>
+            ${qty>0? qtyBarHtml(p, qty) : `<button class="add-btn" data-add="${p._id}" ${out||!shopOpen?'disabled':''}><i class="fa-solid fa-plus"></i> Add</button>`}
+          </div>
+        </div>
+      </article>`;
+    }).join('');
+    bindCardButtons(grid);
+  }
 
-function setSlot(slot, el){
-  currentSlot=slot;
-  document.querySelectorAll('.slot').forEach(s=>s.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('cartSlot').innerText = slot==='morning'? 'Morning 6-9 AM' : 'Evening 5-8 PM';
-  toast(slot==='morning'? 'Subah delivery set ☀️' : 'Sham delivery set 🌙');
-}
+  function qtyBarHtml(p, qty){
+    return `<div class="qty-bar show"><button class="qty-btn" data-dec="${p._id}">−</button><b class="qty-num">${qty}</b><button class="qty-btn" data-inc="${p._id}">+</button></div>`;
+  }
 
-function toggleSub(){
-  isSub=!isSub;
-  document.getElementById('subSwitch').classList.toggle('on', isSub);
-  document.getElementById('cartType').innerText = isSub? 'Daily Subscription (10% OFF)' : 'One-time';
-  toast(isSub? 'Daily subscription ON 🔁' : 'One-time order');
-}
+  function renderProducts(list, specialCount){
+    const g = $('productGrid'); if(!g) return;
+    if(!list.length){
+      g.innerHTML = `<div class="empty-box"><div style="font-size:50px">🥛</div><h3 style="font-weight:900;margin-top:10px">${specialCount? 'Is category me aur item nahi hai' : 'No items mile'}</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Dusri category try karo ya search badlo</p></div>`;
+      return;
+    }
+    g.innerHTML = list.map(p=>{
+      const qty = cart[p._id]||0; const out = (p.stock||0)<=0;
+      const expSoon = isExpiredSoon(p);
+      return `<article class="p-card">
+        <button class="wishlist-btn ${wishlist.has(p._id)?'active':''}" data-wish="${p._id}"><i class="fa-${wishlist.has(p._id)?'solid':'regular'} fa-heart"></i></button>
+        ${out?'<span class="tag out">OUT</span>': expSoon?'<span class="tag exp">EXP TODAY</span>':'<span class="tag fresh">FRESH</span>'}
+        <img src="${getImage(p)}" loading="lazy" alt="${p.name||''}" onerror="this.src='https://placehold.co/500x360/0ea5e9/ffffff?text=Dairy'">
+        <div class="p-body">
+          <b>${p.name||''}</b>
+          <div class="p-meta">${getBrand(p)} • ${getSize(p)||p.unit||''}</div>
+          <div class="p-price">
+            <div class="price">₹${p.price||0} ${p.mrp && p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}<small>/${p.unit||'packet'}</small></div>
+            ${qty>0? qtyBarHtml(p, qty) : `<button class="add-btn" data-add="${p._id}" ${out||!shopOpen?'disabled':''}><i class="fa-solid fa-plus"></i> Add</button>`}
+          </div>
+        </div>
+      </article>`;
+    }).join('');
+    bindCardButtons(g);
+  }
 
-function filterProd(cat, el){
-  currentFilter=cat;
-  document.querySelectorAll('.filter').forEach(f=>f.classList.remove('active'));
-  el.classList.add('active');
-  if(cat==='all') render(allProducts);
-  else render(allProducts.filter(p=> (p.category||'').toLowerCase().includes(cat.toLowerCase()) || p.name.toLowerCase().includes(cat.toLowerCase())));
-}
+  function bindCardButtons(root){
+    root.querySelectorAll('[data-add]').forEach(b=> b.addEventListener('click', ()=> updateQty(b.dataset.add, 1)));
+    root.querySelectorAll('[data-inc]').forEach(b=> b.addEventListener('click', ()=> updateQty(b.dataset.inc, 1)));
+    root.querySelectorAll('[data-dec]').forEach(b=> b.addEventListener('click', ()=> updateQty(b.dataset.dec, -1)));
+    root.querySelectorAll('[data-wish]').forEach(b=> b.addEventListener('click', ()=>{
+      const id = b.dataset.wish;
+      if(wishlist.has(id)){ wishlist.delete(id); toast('Wishlist se hataya'); } else { wishlist.add(id); toast('Wishlist me add ❤️'); }
+      saveWishlist(); renderAll();
+    }));
+  }
 
-function toggleCart(){
-  const d = document.getElementById('cartDrawer');
-  const o = document.getElementById('overlay');
-  d.classList.toggle('open');
-  o.classList.toggle('show');
-}
+  function updateQty(id, delta){
+    if(!shopOpen){ toast('Dukaan band hai, abhi order nahi hoga'); return; }
+    const p = allProducts.find(x=>x._id===id); if(!p) return;
+    let q = (cart[id]||0) + delta;
+    if(q<0) q = 0;
+    if(q > (p.stock||999)){ toast(`Stock limit: ${p.stock} hi hai`); return; }
+    if(q===0) delete cart[id]; else cart[id] = q;
+    syncCartToLocalStorage();
+    updateCartUI();
+    renderAll();
+    if(navigator.vibrate) navigator.vibrate(40);
+    if(delta>0 && q===1) toast(`${p.name} add ho gaya 🥛`);
+  }
 
-function goCheckout(){
-  if(!Object.keys(cart).length){ toast('Cart khali hai!'); return; }
-  const cartData = btoa(JSON.stringify({cart, shopId, slot: currentSlot, isSub}));
-  // Naya world class checkout
-  location.href = `/shop-templates/dairy/checkout.html?shopId=${shopId}&data=${cartData}`;
-}
+  function getSubtotal(){
+    let t = 0;
+    for(const id in cart){ const p = allProducts.find(x=>x._id===id); if(p) t += (p.price||0) * cart[id]; }
+    return t;
+  }
+  function getDiscount(){ return isSub? Math.round(getSubtotal()*0.10) : 0; }
+  function getTotal(){ return getSubtotal() - getDiscount(); }
+  function getCount(){ return Object.values(cart).reduce((a,b)=>a+b,0); }
 
-function goOldCart(){
-  // Purana common cart - backward compatibility
-  location.href = `/shop-templates/common/cart/cart.html?shopId=${shopId}`;
-}
+  function updateCartUI(){
+    const count = getCount();
+    $('cartCount').innerText = count;
+    $('cartText').innerText = count? `₹${getTotal()}` : 'Cart';
+    const box = $('cartItems');
+    if(!count){
+      box.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:22px">Cart khali hai, doodh add karo 🥛</p>';
+    }else{
+      box.innerHTML = Object.keys(cart).map(id=>{
+        const p = allProducts.find(x=>x._id===id); if(!p) return '';
+        const qty = cart[id];
+        return `<div class="cart-item"><div style="min-width:0"><b>${p.name}</b><small>${qty} × ₹${p.price} • ${getSize(p)||p.unit||''}</small></div><div style="text-align:right"><b>₹${p.price*qty}</b><div class="qty-bar show" style="margin-top:6px"><button class="qty-btn" data-dec="${id}">−</button><b class="qty-num">${qty}</b><button class="qty-btn" data-inc="${id}">+</button></div></div></div>`;
+      }).join('');
+      bindCardButtons(box);
+    }
+    $('cartSubtotal').innerText = '₹' + getSubtotal();
+    $('cartDiscount').innerText = '-₹' + getDiscount();
+    $('discountRow').style.display = isSub && getDiscount()>0? 'flex' : 'none';
+    $('cartTotal').innerText = '₹' + getTotal();
+    $('checkoutBtn').disabled =!count ||!shopOpen;
+    $('checkoutBtn').innerHTML =!shopOpen? '🔴 Dukaan Band Hai' : '<i class="fa-solid fa-bolt"></i> Checkout - Fresh Delivery';
+  }
 
-// Search
-document.addEventListener('DOMContentLoaded', loadShop);
-if(document.readyState!=='loading') loadShop();
+  function toggleCart(force){
+    const d = $('cartDrawer'); const o = $('overlay');
+    const open = force!==undefined? force :!d.classList.contains('open');
+    d.classList.toggle('open', open); o.classList.toggle('show', open);
+    d.setAttribute('aria-hidden', open? 'false':'true');
+    if(open) updateCartUI();
+  }
+
+  function applySlotUI(){
+    document.querySelectorAll('.slot').forEach(s=> s.classList.toggle('active', s.dataset.slot===currentSlot));
+    $('cartSlot').innerText = currentSlot==='morning'? 'Morning 6-9 AM' : 'Evening 5-8 PM';
+  }
+  function applySubUI(){
+    $('subSwitch').classList.toggle('on', isSub);
+    $('subSwitch').setAttribute('aria-checked', isSub? 'true':'false');
+    $('cartType').innerText = isSub? 'Daily Subscription (10% OFF)' : 'One-time';
+  }
+
+  // ---------- EVENTS ----------
+  $('searchInput')?.addEventListener('input', (e)=>{ searchQuery = e.target.value.trim(); renderAll(); });
+  $('navSearch')?.addEventListener('click', ()=>{ $('searchInput')?.focus(); window.scrollTo({top:0, behavior:'smooth'}); });
+  document.querySelectorAll('.slot').forEach(s=> s.addEventListener('click', ()=>{
+    currentSlot = s.dataset.slot;
+    localStorage.setItem(`dairy_slot_${shopId}`, currentSlot);
+    applySlotUI(); updateCartUI();
+    toast(currentSlot==='morning'? 'Subah delivery set ☀️' : 'Sham delivery set 🌙');
+  }));
+  $('subSwitch')?.addEventListener('click', ()=>{
+    isSub =!isSub;
+    localStorage.setItem(`dairy_sub_${shopId}`, isSub? '1':'0');
+    applySubUI(); updateCartUI();
+    toast(isSub? 'Daily subscription ON 🔄 10% OFF milega' : 'One-time order set');
+  });
+  $('cartOpenBtn')?.addEventListener('click', ()=> toggleCart(true));
+  $('navCart')?.addEventListener('click', ()=> toggleCart(true));
+  $('cartCloseBtn')?.addEventListener('click', ()=> toggleCart(false));
+  $('overlay')?.addEventListener('click', ()=> toggleCart(false));
+  $('wishlistIcon')?.addEventListener('click', ()=>{
+    if(!wishlist.size){ toast('Wishlist khali hai'); return; }
+    currentFilter = 'All'; searchQuery = '';
+    if($('searchInput')) $('searchInput').value = '';
+    renderFilters();
+    const list = allProducts.filter(p=>wishlist.has(p._id));
+    renderSpecial(list.filter(isSpecial));
+    renderProducts(list.filter(p=>!isSpecial(p)), 0);
+    toast(`${list.length} wishlist item dikha rahe hain`);
+  });
+  $('chatBtn')?.addEventListener('click', ()=>{ if(window.loadChatbot) window.loadChatbot(); else toast('Chat jald aa raha hai'); });
+  $('navQr')?.addEventListener('click', ()=>{ if(window.loadQrModule) window.loadQrModule(); else toast('QR module load nahi hua'); });
+  $('fullCartBtn')?.addEventListener('click', ()=>{ location.href = `../common/cart/cart.html?shopId=${shopId}&shopType=${shopType}`; });
+  $('checkoutBtn')?.addEventListener('click', ()=>{
+    if(!getCount()){ toast('Cart khali hai!'); return; }
+    syncCartToLocalStorage();
+    const payload = {shopId, shopType, slot:currentSlot, isSub, cart, subtotal:getSubtotal(), discount:getDiscount(), total:getTotal()};
+    try{ localStorage.setItem(`checkout_${shopId}`, JSON.stringify(payload)); }catch(e){}
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    location.href = `./checkout.html?shopId=${shopId}&shopType=${shopType}&data=${encoded}`;
+  });
+
+  // Purane inline naam bhi bachaye - kahin aur se bulao to chalega
+  window.toggleCart = toggleCart;
+  window.filterProd = (cat)=>{ currentFilter = cat; renderFilters(); renderAll(); };
+  window.setSlot = (slot)=>{ currentSlot = slot; applySlotUI(); updateCartUI(); };
+  window.toggleSub = ()=> $('subSwitch')?.click();
+  window.updateQty = updateQty;
+  window.goCheckout = ()=> $('checkoutBtn')?.click();
+  window.goOldCart = ()=> $('fullCartBtn')?.click();
+
+  loadShop();
+})();
 </script>
 
-<!-- COMMON MODULES - OLD LOGIC KE LIYE -->
 <script src="../common/cart/cart-count.js"></script>
 <script src="../common/qr/qr.js"></script>
 <script src="../common/reviews/reviews.js"></script>

@@ -1,110 +1,373 @@
+<!-- LOCATION: public/shop-templates/patanjali/user-view.html - PATANJALI CUSTOMER VIEW - V1 POWERFUL - COMMON CONNECTED -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patanjali Store</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #f0fdf4; }
-       .header { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; padding: 50px 20px; text-align: center; }
-       .header h1 { font-size: 36px; }
-       .container { max-width: 1400px; margin: -30px auto 40px; padding: 0 20px; }
-        
-       .category-tabs { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 30px; padding-bottom: 10px; }
-       .tab { background: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
-       .tab.active { background: #16a34a; color: white; }
-        
-       .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-       .product-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: 0.3s; }
-       .product-card:hover { transform: translateY(-5px); }
-       .product-icon { font-size: 40px; color: #16a34a; margin-bottom: 12px; text-align: center; }
-       .product-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-       .product-price { font-size: 22px; font-weight: 800; color: #16a34a; }
-       .btn-add { background: #16a34a; color: white; padding: 10px; border: none; border-radius: 10px; width: 100%; font-weight: 700; cursor: pointer; margin-top: 12px; }
-        
-       .banner { background: white; padding: 25px; border-radius: 16px; margin-bottom: 30px; text-align: center; }
-    </style>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patanjali Store - Ayurvedic Products | SAMANLIVE</title>
+<link rel="icon" href="../common/samanlive-logo.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--green:#16a34a;--green2:#15803d;--dark:#0f172a;--bg:#f8fafc;--red:#ef4444;--border:#e2e8f0;--muted:#64748b}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:var(--bg);color:var(--dark);padding-bottom:96px}
+button,input{font-family:'Outfit',sans-serif}
+.header{min-height:64px;background:rgba(255,255,255,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;position:sticky;top:0;z-index:50;gap:10px}
+.logo{font-weight:900;font-size:18px;display:flex;gap:9px;align-items:center;min-width:0}
+.logo-icon{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;width:38px;height:38px;display:grid;place-items:center;border-radius:11px;flex-shrink:0;box-shadow:0 8px 16px rgba(22,163,74,.3)}
+.logo-text{line-height:1.1;min-width:0}.logo-text b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.logo-text small{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.shop-id-badge{background:#f0fdf4;border:1px solid #bbf7d0;padding:4px 8px;border-radius:8px;font-size:10px;font-weight:800;color:#166534}
+.hdr-icons{display:flex;gap:9px;align-items:center;flex-shrink:0}
+.icon-btn{width:39px;height:39px;background:#f1f5f9;border-radius:12px;display:grid;place-items:center;cursor:pointer;position:relative;border:none;font-size:15px;color:var(--dark)}
+.icon-btn.active{color:var(--red)}
+.cart-btn{position:relative;background:var(--dark);color:#fff;padding:11px 15px;border-radius:12px;border:none;font-weight:800;display:flex;gap:8px;align-items:center;cursor:pointer;font-size:13px}
+.cart-count{position:absolute;top:-7px;right:-7px;background:var(--green);color:#fff;min-width:21px;height:21px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;padding:0 5px;border:2px solid #fff}
+.hero{margin:16px;background:linear-gradient(135deg,#16a34a 0%,#14532d 100%);border-radius:24px;padding:22px 20px;color:#fff;position:relative;overflow:hidden}
+.hero::after{content:'🌿';position:absolute;right:-6px;bottom:-24px;font-size:118px;opacity:.15;transform:rotate(-10deg)}
+.hero h1{font-size:25px;font-weight:900;line-height:1.12;position:relative;z-index:1}
+.hero p{font-size:13px;opacity:.92;margin-top:7px;font-weight:600;position:relative;z-index:1}
+.hero-badges{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;position:relative;z-index:1}
+.badge{background:rgba(255,255,255,.22);backdrop-filter:blur(10px);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800;display:flex;gap:6px;align-items:center}
+.search-wrap{margin:0 16px;background:#fff;border:1px solid var(--border);border-radius:14px;display:flex;align-items:center;gap:10px;padding:12px 14px}
+.search-wrap:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.12)}
+.search-wrap i{color:#94a3b8}.search-wrap input{border:none;outline:none;width:100%;font-weight:600;font-size:13px;background:transparent}
+.filters{display:flex;gap:8px;padding:14px 16px 4px;overflow:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filter{padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:#fff;font-weight:700;font-size:12px;white-space:nowrap;cursor:pointer}
+.filter.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+.section-head{padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.section-head h3{font-weight:900;font-size:16px}.section-head small{color:#94a3b8;font-weight:700;font-size:11px}
+.products{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:0 16px}
+@media(min-width:700px){.products{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1000px){.products{grid-template-columns:repeat(4,1fr)}}
+.p-card{background:#fff;border-radius:20px;border:1px solid #f1f5f9;overflow:hidden;position:relative;transition:.25s;display:flex;flex-direction:column}
+.p-card:hover{transform:translateY(-4px);box-shadow:0 15px 30px rgba(0,0,0,.08)}
+.p-card img{width:100%;height:150px;object-fit:cover;background:#f0fdf4;display:block}
+.p-body{padding:12px;flex:1;display:flex;flex-direction:column}
+.p-body b{font-size:14px;line-height:1.25;display:block;min-height:35px;font-weight:800}
+.p-meta{font-size:11px;color:#94a3b8;font-weight:600;margin-top:3px;line-height:1.4}
+.p-desc{font-size:11px;color:#475569;margin-top:6px;line-height:1.45}
+.p-price{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px;gap:8px}
+.price{font-weight:900;font-size:16px;line-height:1}.price del{font-size:11px;color:#94a3b8;font-weight:600;margin-left:3px}.price small{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-top:3px}
+.add-btn{background:var(--dark);color:#fff;border:none;padding:9px 14px;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer;display:flex;gap:6px;align-items:center;flex-shrink:0}
+.add-btn:disabled{background:#e2e8f0;color:#94a3b8;cursor:not-allowed}
+.qty-bar{display:none;align-items:center;gap:7px;background:#f1f5f9;border-radius:12px;padding:4px;flex-shrink:0}
+.qty-bar.show{display:flex}
+.qty-btn{width:28px;height:28px;border-radius:8px;border:none;background:var(--dark);color:#fff;font-weight:900;cursor:pointer;font-size:15px}
+.qty-num{min-width:20px;text-align:center;font-size:13px}
+.tag{position:absolute;top:9px;left:9px;color:#fff;padding:4px 9px;border-radius:20px;font-size:10px;font-weight:900;z-index:2}
+.tag.ayurvedic{background:var(--green)}.tag.special{background:#f97316}.tag.out{background:#0f172a}
+.special-wrap{padding:0 16px;display:flex;flex-direction:column;gap:12px}
+.special-card{background:#fff;border:1px solid #bbf7d0;border-radius:22px;overflow:hidden;position:relative}
+.special-card img{width:100%;height:200px;object-fit:cover;display:block}
+.special-body{padding:14px}.special-body b{font-size:16px;font-weight:900;line-height:1.25;display:block}
+.wishlist-btn{position:absolute;top:9px;right:9px;width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.94);display:grid;place-items:center;cursor:pointer;z-index:3;color:#64748b;font-size:14px;box-shadow:0 6px 14px rgba(0,0,0,.12)}
+.wishlist-btn.active{color:var(--red)}
+.review-box{margin:16px;background:#fff;border-radius:18px;padding:16px;border:1px solid #f1f5f9}
+.review-box h4{font-weight:900;font-size:14px}.review-box p{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5;font-weight:600}
+.cart-drawer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);border-radius:24px 24px 0 0;padding:18px 16px 22px;transform:translateY(105%);transition:.35s cubic-bezier(.16,1,.3,1);z-index:100;max-height:82vh;overflow:auto;box-shadow:0 -18px 40px rgba(0,0,0,.14)}
+.cart-drawer.open{transform:translateY(0)}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);display:none;z-index:99}
+.overlay.show{display:block}
+.cart-item{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #f1f5f9;align-items:flex-start}
+.cart-item b{font-size:13px;line-height:1.3;display:block}.cart-item small{color:#94a3b8;font-size:11px;font-weight:600}
+.cart-summary{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)}
+.summary-row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:5px}
+.summary-row.total{font-size:18px;font-weight:900;margin-top:10px}
+.checkout-btn{width:100%;margin-top:14px;background:var(--green);color:#fff;border:none;padding:15px;border-radius:14px;font-weight:900;font-size:14px;cursor:pointer}
+.checkout-btn:disabled{background:#cbd5e1;cursor:not-allowed}
+.full-cart-btn{width:100%;margin-top:8px;background:#f1f5f9;color:var(--dark);border:1px solid var(--border);padding:12px;border-radius:14px;font-weight:800;font-size:13px;cursor:pointer}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(16px);display:flex;justify-content:space-around;padding:11px 0 calc(11px + env(safe-area-inset-bottom));border-top:1px solid var(--border);z-index:80}
+.bottom-nav span{width:44px;height:38px;display:grid;place-items:center;border-radius:12px;color:#64748b;cursor:pointer;font-size:16px}
+.bottom-nav span.active{background:#dcfce7;color:#166534}
+.closed-banner{margin:14px 16px 0;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:14px;padding:13px 14px;font-weight:800;font-size:13px;display:none}
+#toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 20px;border-radius:30px;font-weight:700;font-size:13px;display:none;z-index:200;max-width:92vw;text-align:center}
+.empty-box{grid-column:1/-1;text-align:center;padding:44px 16px;background:#fff;border:1px solid #f1f5f9;border-radius:20px}
+@media(max-width:420px){.hero h1{font-size:22px}.p-card img{height:128px}}
+</style>
 </head>
-<body>
-    <div class="header">
-        <h1><i class="fa fa-leaf"></i> <span id="shopName">Patanjali Arogya Kendra</span></h1>
-        <p>100% Natural | Ayurvedic | Swadeshi Products</p>
-    </div>
+<body data-page="customer" data-shop="patanjali">
 
-    <div class="container">
-        <div class="banner">
-            <h2><i class="fa fa-award"></i> Baba Ramdev Approved Products</h2>
-            <p>For Healthy Life & Natural Living</p>
-        </div>
+<header class="header">
+  <div class="logo">
+    <span class="logo-icon"><i class="fa-solid fa-leaf"></i></span>
+    <div class="logo-text"><b id="shopName">Patanjali Store</b><small>Ayurvedic • SAMANLIVE</small></div>
+    <small class="shop-id-badge" id="shopIdDisplay">ID:...</small>
+  </div>
+  <div class="hdr-icons">
+    <button class="icon-btn" id="chatBtn" title="Chat"><i class="fa-regular fa-message"></i></button>
+    <button class="icon-btn" id="wishlistIcon" title="Wishlist"><i class="fa-regular fa-heart"></i></button>
+    <button class="cart-btn" id="cartOpenBtn"><i class="fa-solid fa-bag-shopping"></i><span id="cartText">Cart</span><span class="cart-count" id="cartCount">0</span></button>
+  </div>
+</header>
 
-        <div class="category-tabs">
-            <div class="tab active" onclick="filterCategory('All')">All</div>
-            <div class="tab" onclick="filterCategory('Ayurvedic')">Medicines</div>
-            <div class="tab" onclick="filterCategory('Food')">Food & Grains</div>
-            <div class="tab" onclick="filterCategory('Cosmetic')">Personal Care</div>
-            <div class="tab" onclick="filterCategory('Beverage')">Juices</div>
-        </div>
+<section class="hero">
+  <h1 id="bannerTitle">Prakriti ka vardaan,<br>har ghar tak 🌿</h1>
+  <p id="bannerSub">Shudh Ayurvedic • Natural • Swadeshi</p>
+  <div class="hero-badges">
+    <div class="badge"><i class="fa-solid fa-leaf"></i> 100% Ayurvedic</div>
+    <div class="badge"><i class="fa-solid fa-award"></i><span id="ratingBadge">4.8 Rating</span></div>
+    <div class="badge" id="openStatus"><i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN</div>
+  </div>
+</section>
 
-        <div class="product-grid" id="productGrid">Loading...</div>
-    </div>
+<div class="closed-banner" id="closedBanner">🔴 Dukaan abhi band hai. Kal subah fresh stock ke saath khulegi.</div>
 
-    <div style="position:fixed; bottom:30px; right:30px; background:#16a34a; color:white; padding:15px 25px; border-radius:50px; font-weight:700; cursor:pointer;" onclick="alert('Cart me add ho gaya!')">
-        <i class="fa fa-shopping-cart"></i> Cart: <span id="cartCount">0</span>
-    </div>
+<div class="search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="text" placeholder="Ghee, atta, chyawanprash, sabun khojo..." autocomplete="off"></div>
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const shopId = urlParams.get('shopId');
-        let allProducts = [];
-        let cartCount = 0;
+<div class="filters" id="filters"></div>
 
-        async function loadShop() {
-            const res = await fetch(`/api/local-market/shops/${shopId}`);
-            const shop = await res.json();
-            document.getElementById('shopName').innerText = shop.shopName;
-            allProducts = shop.products || shop.items || [];
-            displayProducts(allProducts);
-        }
+<div id="specialSection" style="display:none">
+  <div class="section-head"><h3>⭐ Special Products</h3><small>Dashboard se chune hue</small></div>
+  <div class="special-wrap" id="specialGrid"></div>
+</div>
 
-        function displayProducts(products) {
-            const grid = document.getElementById('productGrid');
-            if (products.length === 0) {
-                grid.innerHTML = `<p style="grid-column:1/-1; text-align:center;">No products available</p>`;
-                return;
-            }
-            grid.innerHTML = products.map(p => `
-                <div class="product-card">
-                    <div class="product-icon"><i class="fa ${getIcon(p.category)}"></i></div>
-                    <div class="product-name">${p.name}</div>
-                    <p style="color:#64748b; font-size:12px; margin-bottom:10px;">${p.category}</p>
-                    <div class="product-price">₹${p.price}</div>
-                    <p style="color:#64748b; font-size:12px;">Stock: ${p.stock} ${p.unit || 'pcs'}</p>
-                    <button class="btn-add" onclick="addToCart()"><i class="fa fa-cart-plus"></i> Add to Cart</button>
-                </div>
-            `).join('');
-        }
+<div class="section-head"><h3>Saare Products</h3><small id="prodCount"></small></div>
+<div class="products" id="productGrid"><div class="empty-box"><div style="font-size:50px">🌿</div><h3 style="font-weight:900;margin-top:10px">Products load ho rahe hain...</h3></div></div>
 
-        function getIcon(cat) {
-            if(cat==='Ayurvedic') return 'fa-pills'; if(cat==='Food') return 'fa-bowl-rice';
-            if(cat==='Cosmetic') return 'fa-spa'; if(cat==='Beverage') return 'fa-bottle-droplet';
-            return 'fa-box';
-        }
+<div class="review-box"><h4>⭐ <span id="reviewCount">4.8 (180 Reviews)</span></h4><p id="reviewText">Customers ko Patanjali ke shudh aur natural products pasand hain.</p></div>
 
-        function filterCategory(cat) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            const filtered = cat==='All'? allProducts : allProducts.filter(p => p.category === cat);
-            displayProducts(filtered);
-        }
+<nav class="bottom-nav">
+  <span class="active"><i class="fa-solid fa-house"></i></span>
+  <span id="navSearch"><i class="fa-solid fa-magnifying-glass"></i></span>
+  <span id="navQr"><i class="fa-solid fa-qrcode"></i></span>
+  <span id="navCart"><i class="fa-solid fa-bag-shopping"></i></span>
+  <span><i class="fa-solid fa-user"></i></span>
+</nav>
 
-        function addToCart() {
-            cartCount++;
-            document.getElementById('cartCount').innerText = cartCount;
-        }
+<div class="overlay" id="overlay"></div>
+<aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><h3 style="font-weight:900">Your Basket 🧺</h3><button id="cartCloseBtn" style="background:#f1f5f9;border:none;width:34px;height:34px;border-radius:50%;cursor:pointer"><i class="fa-solid fa-xmark"></i></button></div>
+  <div id="cartItems"><p style="color:#94a3b8;text-align:center;padding:22px">Cart khali hai</p></div>
+  <div class="cart-summary">
+    <div class="summary-row"><span>Subtotal</span><span id="cartSubtotal">₹0</span></div>
+    <div class="summary-row total"><span>Total</span><span id="cartTotal">₹0</span></div>
+    <button class="checkout-btn" id="checkoutBtn"><i class="fa-solid fa-bolt"></i> Checkout</button>
+    <button class="full-cart-btn" id="fullCartBtn">View Full Cart</button>
+  </div>
+</aside>
 
-        loadShop();
-    </script>
+<div id="toast"></div>
+
+<script src="../common/cart/cart-core.js"></script>
+<script src="../common/products/product-manager.js"></script>
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const shopId = params.get('shopId') || params.get('id') || localStorage.getItem('last_shopId') || '';
+  const shopType = 'patanjali';
+  window.shopId = shopId; window.shopType = shopType;
+  const sid = document.getElementById('shopIdDisplay');
+  if(sid) sid.innerText = shopId? 'ID: ' + shopId.slice(-6) : 'ID: MISSING';
+  if(!shopId){ document.getElementById('productGrid').innerHTML = `<div class="empty-box"><div style="font-size:50px">⚠️</div><h3 style="font-weight:900;margin-top:10px">Shop ID Missing</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">URL me?shopId= lagao</p></div>`; return; }
+  localStorage.setItem('last_shopId', shopId); localStorage.setItem('shopType', shopType);
+
+  let shopData = {}, allProducts = [], worldProducts = [], oldProducts = [];
+  let cart = {}, wishlist = new Set();
+  let currentFilter = 'All', searchQuery = '', shopOpen = true;
+  const $ = (id)=> document.getElementById(id);
+
+  function toast(msg){ const t = $('toast'); if(!t) return; t.innerText = msg; t.style.display = 'block'; clearTimeout(t._timer); t._timer = setTimeout(()=> t.style.display='none', 2500); }
+  function isSpecial(p){ const ex = p.extraData || {}; return p.isSpecial===true || p.isSpecial==='true' || ex.isSpecial===true || ex.isSpecial==='true'; }
+  function getImage(p){ return p.thumbnail || p.image || p.imageUrl || p.img || p.extraData?.thumbnail || `https://placehold.co/500x360/16a34a/ffffff?text=${encodeURIComponent((p.name||'Patanjali').slice(0,12))}`; }
+  function getBrand(p){ return p.brand || p.extraData?.brand || 'Patanjali'; }
+  function getSize(p){ return p.extraData?.size || p.size || p.weight || p.unit || ''; }
+  function getDesc(p){ return p.description || p.extraData?.description || ''; }
+
+  function loadCartLocal(){
+    try{
+      const savedNew = JSON.parse(localStorage.getItem(`cart_${shopId}_new`) || 'null');
+      if(savedNew && typeof savedNew==='object'){ cart = savedNew; return; }
+      const savedOld = JSON.parse(localStorage.getItem(`cart_${shopId}`) || '[]');
+      if(Array.isArray(savedOld)){ cart = {}; savedOld.forEach(it=>{ const id = it.productId || it.id || it._id; if(id) cart[id] = it.qty || 1; }); }
+    }catch(e){ cart = {}; }
+  }
+  function syncCartToLocalStorage(){
+    try{
+      const arr = Object.entries(cart).map(([id,qty])=>{ const p = allProducts.find(x=>x._id===id); return {id, productId:id, qty, name:p?.name||'', price:p?.price||0, image:getImage(p||{}), thumbnail:getImage(p||{})}; });
+      localStorage.setItem(`cart_${shopId}`, JSON.stringify(arr));
+      localStorage.setItem(`cart_${shopId}_new`, JSON.stringify(cart));
+      localStorage.setItem(`cart_items_${shopId}`, JSON.stringify(arr));
+    }catch(e){}
+    if(window.CartCore?.refresh) window.CartCore.refresh(shopId);
+    if(window.CartCount?.refresh) window.CartCount.refresh(shopId);
+    if(window.updateCartCount) window.updateCartCount();
+  }
+  function loadWishlist(){ try{ wishlist = new Set(JSON.parse(localStorage.getItem(`wishlist_${shopId}`) || '[]')); }catch(e){ wishlist = new Set(); } }
+  function saveWishlist(){ try{ localStorage.setItem(`wishlist_${shopId}`, JSON.stringify([...wishlist])); }catch(e){} const w = $('wishlistIcon'); if(w){ w.classList.toggle('active', wishlist.size>0); w.innerHTML = wishlist.size? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>'; } }
+
+  async function loadShop(){
+    loadCartLocal(); loadWishlist();
+    try{
+      const results = await Promise.allSettled([
+        window.WorldProductManager? window.WorldProductManager.getProducts({shopType, shopId}) : fetch(`/api/world-products?shopId=${shopId}&shopType=${shopType}`).then(r=>r.json()).then(d=>d.data||[]),
+        fetch(`/api/shops/patanjali/${shopId}?t=${Date.now()}`, {cache:'no-store'}).then(r=>r.json()).catch(()=>({})),
+        fetch(`/api/common/profile/${shopId}`).then(r=>r.json()).catch(()=>null)
+      ]);
+      const worldRes = results[0].status==='fulfilled'? results[0].value : [];
+      const oldRes = results[1].status==='fulfilled'? results[1].value : {};
+      const profileRes = results[2].status==='fulfilled'? results[2].value : null;
+      shopData = oldRes?.shop || oldRes || {};
+      const profShop = profileRes?.shop || profileRes?.profile || profileRes?.data || null;
+      if(profShop && typeof profShop==='object'){ const oldP = shopData.products || []; shopData = {...shopData,...profShop, products: profShop.products?.length? profShop.products : oldP}; }
+      try{ const ls = JSON.parse(localStorage.getItem(`shop_${shopId}`) || '{}'); if(ls.name || ls.shopName) shopData = {...shopData,...ls}; }catch(e){}
+      oldProducts = shopData.products || [];
+      worldProducts = Array.isArray(worldRes)? worldRes : (worldRes?.data || []);
+      const wIds = new Set(worldProducts.map(p=>p._id));
+      allProducts = [...worldProducts,...oldProducts.filter(p=>!wIds.has(p._id))];
+    }catch(e){ console.warn('Patanjali customer load failed', e); allProducts = mockProducts(); }
+    if(!allProducts.length) allProducts = mockProducts();
+    renderShopInfo(); renderFilters(); renderAll(); updateCartUI();
+  }
+
+  function mockProducts(){
+    return [
+      {_id:'p1', name:'Patanjali Cow Ghee 1L', brand:'Patanjali', category:'Ghee & Oil', price:650, mrp:720, stock:30, unit:'jar', thumbnail:'https://images.unsplash.com/photo-1633436375153-d7045cb93e38?w=600&q=80', isSpecial:'true', extraData:{badge:'Bestseller', cardColor:'#f0fdf4', description:'Shudh gay ka danedar ghee'}},
+      {_id:'p2', name:'Patanjali Chyawanprash 1kg', brand:'Patanjali', category:'Chyawanprash', price:340, mrp:395, stock:40, unit:'jar', thumbnail:'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&q=80'},
+      {_id:'p3', name:'Patanjali Dant Kanti 200g', brand:'Patanjali', category:'Oral Care', price:90, mrp:100, stock:80, unit:'tube', thumbnail:'https://images.unsplash.com/photo-1559671210728-a4f2f0c3d1e1?w=600&q=80'},
+      {_id:'p4', name:'Patanjali Aloe Vera Juice 1L', brand:'Patanjali', category:'Juice', price:180, mrp:210, stock:50, unit:'bottle', thumbnail:'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=600&q=80'}
+    ];
+  }
+
+  function renderShopInfo(){
+    const name = shopData.shopName || shopData.name || 'Patanjali Store';
+    $('shopName').innerText = name; document.title = `${name} - Ayurvedic | SAMANLIVE`;
+    if(shopData.bannerTitle) $('bannerTitle').innerHTML = shopData.bannerTitle.replace(/\n/g,'<br>');
+    if(shopData.bannerSub || shopData.description) $('bannerSub').innerText = shopData.bannerSub || shopData.description;
+    shopOpen =!(shopData.isOpen===false || shopData.settings?.isOpen===false);
+    $('openStatus').innerHTML = shopOpen? '<i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN' : '<i class="fa-solid fa-circle" style="color:#fca5a5"></i> CLOSED';
+    $('closedBanner').style.display = shopOpen? 'none' : 'block';
+    if(shopData.rating) $('ratingBadge').innerText = `${shopData.rating} Rating`;
+  }
+
+  function renderFilters(){
+    const cats = ['All',...new Set(allProducts.map(p=>p.category||'General'))];
+    const box = $('filters'); if(!box) return;
+    box.innerHTML = cats.map(c=>`<div class="filter ${c===currentFilter?'active':''}" data-cat="${c}">${c==='All'?'🌿 All':c}</div>`).join('');
+    box.querySelectorAll('.filter').forEach(el=> el.addEventListener('click', ()=>{ currentFilter = el.dataset.cat; box.querySelectorAll('.filter').forEach(f=>f.classList.remove('active')); el.classList.add('active'); renderAll(); }));
+  }
+
+  function getFiltered(){
+    let list = currentFilter==='All'? [...allProducts] : allProducts.filter(p=>(p.category||'General')===currentFilter);
+    if(searchQuery){ const q = searchQuery.toLowerCase(); list = list.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.brand||'').toLowerCase().includes(q)||(p.category||'').toLowerCase().includes(q)); }
+    return list;
+  }
+
+  function renderAll(){
+    const list = getFiltered();
+    renderSpecial(list.filter(isSpecial));
+    renderProducts(list.filter(p=>!isSpecial(p)), list.filter(isSpecial).length);
+    $('prodCount').innerText = `(${list.length} items)`;
+  }
+
+  function qtyBarHtml(p, qty){ return `<div class="qty-bar show"><button class="qty-btn" data-dec="${p._id}">−</button><b class="qty-num">${qty}</b><button class="qty-btn" data-inc="${p._id}">+</button></div>`; }
+
+  function renderSpecial(list){
+    const sec = $('specialSection'), grid = $('specialGrid');
+    if(!sec ||!grid) return;
+    if(!list.length){ sec.style.display = 'none'; grid.innerHTML = ''; return; }
+    sec.style.display = 'block';
+    grid.innerHTML = list.map(p=>{
+      const qty = cart[p._id]||0, out = (p.stock||0)<=0, ex = p.extraData||{};
+      const badge = ex.badge || p.badge || 'SPECIAL', bg = ex.cardColor || p.cardColor || '#f0fdf4';
+      return `<article class="special-card" style="background:${bg}"><button class="wishlist-btn ${wishlist.has(p._id)?'active':''}" data-wish="${p._id}"><i class="fa-${wishlist.has(p._id)?'solid':'regular'} fa-heart"></i></button>${out?'<span class="tag out">OUT OF STOCK</span>':'<span class="tag special">⭐ '+badge+'</span>'}<img src="${getImage(p)}" loading="lazy" onerror="this.src='https://placehold.co/600x360/16a34a/ffffff?text=Patanjali'"><div class="special-body"><b>${p.name||''}</b><div class="p-meta">${getBrand(p)} • ${p.category||''} ${getSize(p)?'• '+getSize(p):''}</div>${getDesc(p)?`<div class="p-desc">${getDesc(p).slice(0,140)}</div>`:''}<div class="p-price"><div class="price">₹${p.price||0} ${p.mrp && p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}<small>${p.unit||''}</small></div>${qty>0? qtyBarHtml(p,qty) : `<button class="add-btn" data-add="${p._id}" ${out||!shopOpen?'disabled':''}><i class="fa-solid fa-plus"></i> Add</button>`}</div></div></article>`;
+    }).join('');
+    bindCardButtons(grid);
+  }
+
+  function renderProducts(list, specialCount){
+    const g = $('productGrid'); if(!g) return;
+    if(!list.length){ g.innerHTML = `<div class="empty-box"><div style="font-size:50px">🌿</div><h3 style="font-weight:900;margin-top:10px">${specialCount? 'Is category me aur item nahi hai' : 'No items mile'}</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Dusri category try karo</p></div>`; return; }
+    g.innerHTML = list.map(p=>{
+      const qty = cart[p._id]||0, out = (p.stock||0)<=0;
+      return `<article class="p-card"><button class="wishlist-btn ${wishlist.has(p._id)?'active':''}" data-wish="${p._id}"><i class="fa-${wishlist.has(p._id)?'solid':'regular'} fa-heart"></i></button>${out?'<span class="tag out">OUT</span>':'<span class="tag ayurvedic">AYURVEDIC</span>'}<img src="${getImage(p)}" loading="lazy" onerror="this.src='https://placehold.co/500x360/16a34a/ffffff?text=Patanjali'"><div class="p-body"><b>${p.name||''}</b><div class="p-meta">${getBrand(p)} • ${getSize(p)||p.unit||''}</div><div class="p-price"><div class="price">₹${p.price||0} ${p.mrp && p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}<small>/${p.unit||'packet'}</small></div>${qty>0? qtyBarHtml(p,qty) : `<button class="add-btn" data-add="${p._id}" ${out||!shopOpen?'disabled':''}><i class="fa-solid fa-plus"></i> Add</button>`}</div></div></article>`;
+    }).join('');
+    bindCardButtons(g);
+  }
+
+  function bindCardButtons(root){
+    root.querySelectorAll('[data-add]').forEach(b=> b.addEventListener('click', ()=> updateQty(b.dataset.add, 1)));
+    root.querySelectorAll('[data-inc]').forEach(b=> b.addEventListener('click', ()=> updateQty(b.dataset.inc, 1)));
+    root.querySelectorAll('[data-dec]').forEach(b=> b.addEventListener('click', ()=> updateQty(b.dataset.dec, -1)));
+    root.querySelectorAll('[data-wish]').forEach(b=> b.addEventListener('click', ()=>{ const id = b.dataset.wish; if(wishlist.has(id)){ wishlist.delete(id); toast('Wishlist se hataya'); } else { wishlist.add(id); toast('Wishlist me add ❤️'); } saveWishlist(); renderAll(); }));
+  }
+
+  function updateQty(id, delta){
+    if(!shopOpen){ toast('Dukaan band hai, abhi order nahi hoga'); return; }
+    const p = allProducts.find(x=>x._id===id); if(!p) return;
+    let q = (cart[id]||0) + delta; if(q<0) q = 0;
+    if(q > (p.stock||999)){ toast(`Stock limit: ${p.stock} hi hai`); return; }
+    if(q===0) delete cart[id]; else cart[id] = q;
+    syncCartToLocalStorage(); updateCartUI(); renderAll();
+    if(navigator.vibrate) navigator.vibrate(40);
+    if(delta>0 && q===1) toast(`${p.name} add ho gaya 🌿`);
+  }
+
+  function getSubtotal(){ let t = 0; for(const id in cart){ const p = allProducts.find(x=>x._id===id); if(p) t += (p.price||0) * cart[id]; } return t; }
+  function getCount(){ return Object.values(cart).reduce((a,b)=>a+b,0); }
+
+  function updateCartUI(){
+    const count = getCount();
+    $('cartCount').innerText = count;
+    $('cartText').innerText = count? `₹${getSubtotal()}` : 'Cart';
+    const box = $('cartItems');
+    if(!count){ box.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:22px">Cart khali hai, kuch ayurvedic add karo 🌿</p>'; }
+    else{
+      box.innerHTML = Object.keys(cart).map(id=>{ const p = allProducts.find(x=>x._id===id); if(!p) return ''; const qty = cart[id]; return `<div class="cart-item"><div style="min-width:0"><b>${p.name}</b><small>${qty} × ₹${p.price} • ${getSize(p)||p.unit||''}</small></div><div style="text-align:right"><b>₹${p.price*qty}</b><div class="qty-bar show" style="margin-top:6px"><button class="qty-btn" data-dec="${id}">−</button><b class="qty-num">${qty}</b><button class="qty-btn" data-inc="${id}">+</button></div></div></div>`; }).join('');
+      bindCardButtons(box);
+    }
+    $('cartSubtotal').innerText = '₹' + getSubtotal();
+    $('cartTotal').innerText = '₹' + getSubtotal();
+    $('checkoutBtn').disabled =!count ||!shopOpen;
+    $('checkoutBtn').innerHTML =!shopOpen? '🔴 Dukaan Band Hai' : '<i class="fa-solid fa-bolt"></i> Checkout';
+  }
+
+  function toggleCart(force){
+    const d = $('cartDrawer'), o = $('overlay');
+    const open = force!==undefined? force :!d.classList.contains('open');
+    d.classList.toggle('open', open); o.classList.toggle('show', open);
+    d.setAttribute('aria-hidden', open? 'false':'true');
+    if(open) updateCartUI();
+  }
+
+  $('searchInput')?.addEventListener('input', (e)=>{ searchQuery = e.target.value.trim(); renderAll(); });
+  $('navSearch')?.addEventListener('click', ()=>{ $('searchInput')?.focus(); window.scrollTo({top:0, behavior:'smooth'}); });
+  $('cartOpenBtn')?.addEventListener('click', ()=> toggleCart(true));
+  $('navCart')?.addEventListener('click', ()=> toggleCart(true));
+  $('cartCloseBtn')?.addEventListener('click', ()=> toggleCart(false));
+  $('overlay')?.addEventListener('click', ()=> toggleCart(false));
+  $('wishlistIcon')?.addEventListener('click', ()=>{
+    if(!wishlist.size){ toast('Wishlist khali hai'); return; }
+    currentFilter = 'All'; searchQuery = ''; if($('searchInput')) $('searchInput').value = '';
+    renderFilters();
+    const list = allProducts.filter(p=>wishlist.has(p._id));
+    renderSpecial(list.filter(isSpecial)); renderProducts(list.filter(p=>!isSpecial(p)), 0);
+    $('prodCount').innerText = `(${list.length} wishlist)`;
+    toast(`${list.length} wishlist item`);
+  });
+  $('chatBtn')?.addEventListener('click', ()=>{ if(window.loadChatbot) window.loadChatbot(); else toast('Chat jald aa raha hai'); });
+  $('navQr')?.addEventListener('click', ()=>{ if(window.loadQrModule) window.loadQrModule(); else toast('QR module load nahi hua'); });
+  $('fullCartBtn')?.addEventListener('click', ()=>{ location.href = `../common/cart/cart.html?shopId=${shopId}&shopType=${shopType}`; });
+  $('checkoutBtn')?.addEventListener('click', ()=>{
+    if(!getCount()){ toast('Cart khali hai!'); return; }
+    syncCartToLocalStorage();
+    const payload = {shopId, shopType, cart, subtotal:getSubtotal(), total:getSubtotal()};
+    try{ localStorage.setItem(`checkout_${shopId}`, JSON.stringify(payload)); }catch(e){}
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    location.href = `./checkout.html?shopId=${shopId}&shopType=${shopType}&data=${encoded}`;
+  });
+
+  window.toggleCart = toggleCart; window.updateQty = updateQty;
+  window.filterProd = (cat)=>{ currentFilter = cat; renderFilters(); renderAll(); };
+  window.goCheckout = ()=> $('checkoutBtn')?.click();
+
+  loadShop();
+})();
+</script>
+
+<script src="../common/cart/cart-count.js"></script>
+<script src="../common/qr/qr.js"></script>
+<script src="../common/reviews/reviews.js"></script>
 </body>
 </html>
