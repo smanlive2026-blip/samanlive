@@ -1,4 +1,4 @@
-// LOCATION: common/cart/cart-core.js - CONNECTED WITH PRODUCT-MANAGER + MAIN APP
+// LOCATION: common/cart/cart-core.js - CONNECTED WITH PRODUCT-MANAGER + MAIN APP - FIXED V2
 class CartCore {
   constructor(){
     const p = new URLSearchParams(location.search);
@@ -14,16 +14,26 @@ class CartCore {
     return id;
   }
 
+  // FIX: Server kabhi khali/undefined de to cart ko sahi shape me rakho, fate ga nahi
+  normalizeCart(c){
+    if(!c || typeof c !== 'object') c = {};
+    const items = Array.isArray(c.items) ? c.items : [];
+    const count = (c.count !== undefined && c.count !== null) ? c.count : items.reduce((s,i)=> s + (i.qty||1), 0);
+    const total = (c.total !== undefined && c.total !== null) ? c.total : items.reduce((s,i)=> s + ((i.price||0)*(i.qty||1)), 0);
+    return { items, total, count };
+  }
+
   async getCart(){
     if(!this.shopId) return this.cart;
     try{
       const res = await fetch(`${this.api}/${this.shopId}?userId=${this.userId}&t=${Date.now()}`, { credentials:'include', cache:'no-store' });
       const data = await res.json();
-      this.cart = data.cart || data || { items:[], total:0, count:0 };
+      this.cart = this.normalizeCart(data.cart || data.data || data);
       this.updateUI();
       return this.cart;
     }catch(e){
       console.error('Cart get failed', e);
+      this.cart = this.normalizeCart(this.cart);
       return this.cart;
     }
   }
@@ -39,7 +49,8 @@ class CartCore {
       });
       const data = await res.json();
       if(data.success){
-        this.cart = data.cart;
+        // FIX: data.cart undefined aaye to purana cart hi rakho, undefined mat banao
+        this.cart = this.normalizeCart(data.cart || data.data || this.cart);
         this.updateUI();
         this.showToast(`${product.name || 'Item'} added 🛒`, 'success');
         if(window.CartCount) window.CartCount.refresh();
@@ -63,7 +74,7 @@ class CartCore {
       });
       const data = await res.json();
       if(data.success){
-        this.cart = data.cart;
+        this.cart = this.normalizeCart(data.cart || data.data || this.cart);
         this.updateUI();
         if(window.CartCount) window.CartCount.refresh();
       }
@@ -81,12 +92,14 @@ class CartCore {
         body: JSON.stringify({ productId, qty, userId: this.userId })
       });
       const data = await res.json();
-      if(data.success){ this.cart = data.cart; this.updateUI(); if(window.CartCount) window.CartCount.refresh(); }
+      if(data.success){ this.cart = this.normalizeCart(data.cart || data.data || this.cart); this.updateUI(); if(window.CartCount) window.CartCount.refresh(); }
       return data;
     }catch(e){ console.error(e); }
   }
 
   updateUI(){
+    // FIX: cart undefined ho to pehle sahi banao, phir count padho
+    this.cart = this.normalizeCart(this.cart);
     document.querySelectorAll('[data-cart-count]').forEach(el=>{
       el.innerText = this.cart.count || 0;
       el.style.display = (this.cart.count||0) >0 ? 'grid' : 'none';
@@ -128,6 +141,7 @@ window.addToCart = async function(productId, productObj){
     price: product.price,
     mrp: product.mrp || product.price,
     thumbnail: product.thumbnail || product.image || '',
+    image: product.thumbnail || product.image || '',
     unit: product.unit || '',
     shopId: window.CartCore.shopId
   };
