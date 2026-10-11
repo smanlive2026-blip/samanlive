@@ -21,6 +21,11 @@
             <button class="search-btn-modern" onclick="performSearch()">→</button>
             <button class="scanner-btn-inline" onclick="openQRScanner()">📷</button>
         </div>
+
+        <!-- CART CONNECTED - Main App Cart Button -->
+        <button onclick="location.href='/shop-templates/common/cart/cart.html?shopId='+(localStorage.getItem('last_shopId')||'')" style="position:relative;background:#0f172a;color:#fff;border:none;padding:10px 13px;border-radius:12px;font-weight:800;cursor:pointer;flex-shrink:0">
+            🛒 <span data-cart-count style="display:none;position:absolute;top:-7px;right:-7px;background:#ef4444;color:#fff;min-width:20px;height:20px;border-radius:50%;place-items:center;font-size:11px;font-weight:900;padding:0 5px">0</span>
+        </button>
     </header>
 
     <!-- 2. HEADER ROW: ADMIN BANNER - KHALI KAR DIYA -->

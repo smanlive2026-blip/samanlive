@@ -110,7 +110,7 @@ button,input{font-family:'Outfit',sans-serif}
   <div class="hdr-icons">
     <button class="icon-btn" id="chatBtn" title="Chat"><i class="fa-regular fa-message"></i></button>
     <button class="icon-btn" id="wishlistIcon" title="Wishlist"><i class="fa-regular fa-heart"></i></button>
-    <button class="cart-btn" id="cartOpenBtn"><i class="fa-solid fa-bag-shopping"></i><span id="cartText">Cart</span><span class="cart-count" id="cartCount">0</span></button>
+    <button class="cart-btn" id="cartOpenBtn"><i class="fa-solid fa-bag-shopping"></i><span id="cartText">Cart</span><span class="cart-count" id="cartCount" data-cart-count>0</span></button>
   </div>
 </header>
 
@@ -176,7 +176,7 @@ button,input{font-family:'Outfit',sans-serif}
   <div class="cart-summary">
     <div class="summary-row"><span>Delivery Slot</span><span id="cartSlot">Morning 6-9 AM</span></div>
     <div class="summary-row"><span>Order Type</span><span id="cartType">One-time</span></div>
-    <div class="summary-row"><span>Subtotal</span><span id="cartSubtotal">₹0</span></div>
+    <div class="summary-row"><span>Subtotal</span><span id="cartSubtotal" data-cart-total>₹0</span></div>
     <div class="summary-row" id="discountRow" style="display:none;color:#15803d"><span>Subscription Discount (10%)</span><span id="cartDiscount">-₹0</span></div>
     <div class="summary-row total"><span>Total</span><span id="cartTotal">₹0</span></div>
     <button class="checkout-btn" id="checkoutBtn"><i class="fa-solid fa-bolt"></i> Checkout - Fresh Delivery</button>
@@ -186,8 +186,8 @@ button,input{font-family:'Outfit',sans-serif}
 
 <div id="toast"></div>
 
-<script src="../common/cart/cart-core.js"></script>
 <script src="../common/products/product-manager.js"></script>
+<script src="../common/cart/cart-core.js"></script>
 <script>
 // LOCATION: public/shop-templates/dairy/user-view.js - INLINE - DAIRY CUSTOMER - WORLD + OLD MERGE
 (function(){
@@ -341,7 +341,7 @@ button,input{font-family:'Outfit',sans-serif}
     // hero me photo nahi lagaya, naam hi kaafi hai - purana design bachaya
     shopOpen =!(shopData.isOpen===false || shopData.settings?.isOpen===false);
     $('openStatus').innerHTML = shopOpen
-     ? '<i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN'
+    ? '<i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN'
       : '<i class="fa-solid fa-circle" style="color:#fca5a5"></i> CLOSED';
     $('closedBanner').style.display = shopOpen? 'none' : 'block';
     const rating = shopData.rating || shopData.avgRating;
@@ -457,6 +457,12 @@ button,input{font-family:'Outfit',sans-serif}
     if(q > (p.stock||999)){ toast(`Stock limit: ${p.stock} hi hai`); return; }
     if(q===0) delete cart[id]; else cart[id] = q;
     syncCartToLocalStorage();
+    // CART CONNECTED - purana logic same, server cart me bhi bhej diya
+    if(window.CartCore){
+      if(delta>0) window.CartCore.addItem({_id:p._id, productId:p._id, name:p.name, price:p.price, mrp:p.mrp||p.price, thumbnail:getImage(p), unit:p.unit||'', shopId}, 1).catch(()=>{});
+      else if(q===0) window.CartCore.removeItem(id).catch(()=>{});
+      else window.CartCore.updateQty(id, q).catch(()=>{});
+    }
     updateCartUI();
     renderAll();
     if(navigator.vibrate) navigator.vibrate(40);
