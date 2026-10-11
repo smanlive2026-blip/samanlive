@@ -468,7 +468,7 @@ button,input{font-family:'Outfit',sans-serif}
     if(q > (p.stock||999)){ toast(`Stock limit: ${p.stock} hi hai`); return; }
     if(q===0) delete cart[id]; else cart[id] = q;
     syncCartToLocalStorage();
-        // CART CONNECTED - purana logic same, server cart me bhi bhej diya - FIXED: cart-core me add/remove hai, addItem/removeItem nahi
+           // CART CONNECTED - purana logic same, server cart me bhi bhej diya - FIXED: cart-core me add/remove hai, addItem/removeItem nahi
     if(window.CartCore){
       if(delta>0 && q===1) window.CartCore.add({_id:p._id, productId:p._id, name:p.name, price:p.price, mrp:p.mrp||p.price, thumbnail:getImage(p), unit:p.unit||'', shopId}, 1).catch(()=>{});
       else if(q===0) window.CartCore.remove(id).catch(()=>{});
