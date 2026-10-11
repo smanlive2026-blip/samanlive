@@ -1,151 +1,88 @@
-// LOCATION: public/shop-template/common/cart/cart-core.js - CONNECTED WITH PRODUCT-MANAGER + MAIN APP - FIXED V2
+// LOCATION: public/shop-templates/common/cart/cart-core.js - CART CORE - WORLD CLASS - NO LOCALSTORAGE - SERVER CART
 class CartCore {
   constructor(){
-    const p = new URLSearchParams(location.search);
-    this.shopId = p.get('shopId') || localStorage.getItem('last_shopId') || '';
-    this.userId = window.currentUser?._id || 'guest_' + (localStorage.getItem('guestId') || this.genGuestId());
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.shopType = new URLSearchParams(location.search).get('shopType') || new URLSearchParams(location.search).get('type') || '';
     this.api = '/api/common/cart';
-    this.cart = { items:[], total:0, count:0 };
+    this.cart = { items: [], total: 0, itemCount: 0 };
+    this.listeners = [];
+    this.ready = this.load();
   }
 
-  genGuestId(){
-    const id = 'g_' + Date.now() + Math.random().toString(36).slice(2,7);
-    localStorage.setItem('guestId', id);
-    return id;
+  onChange(fn){ this.listeners.push(fn); }
+  emit(){ this.listeners.forEach(fn => { try{ fn(this.cart); }catch(e){} }); this.renderCount(); }
+
+  renderCount(){
+    document.querySelectorAll('[data-cart-count]').forEach(el => {
+      el.textContent = this.cart.itemCount || 0;
+      el.style.display = this.cart.itemCount > 0 ? 'grid' : 'none';
+    });
+    document.querySelectorAll('[data-cart-total]').forEach(el => {
+      el.textContent = '₹' + (this.cart.total || 0);
+    });
   }
 
-  // FIX: Server kabhi khali/undefined de to cart ko sahi shape me rakho, fate ga nahi
-  normalizeCart(c){
-    if(!c || typeof c !== 'object') c = {};
-    const items = Array.isArray(c.items) ? c.items : [];
-    const count = (c.count !== undefined && c.count !== null) ? c.count : items.reduce((s,i)=> s + (i.qty||1), 0);
-    const total = (c.total !== undefined && c.total !== null) ? c.total : items.reduce((s,i)=> s + ((i.price||0)*(i.qty||1)), 0);
-    return { items, total, count };
+  async req(path, options = {}){
+    const res = await fetch(`${this.api}/${this.shopId}${path}`, {
+      credentials: 'include', cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      ...options
+    });
+    const data = await res.json();
+    if(data.cart){ this.cart = data.cart; this.emit(); }
+    return data;
   }
 
-  async getCart(){
+  async load(){
     if(!this.shopId) return this.cart;
-    try{
-      const res = await fetch(`${this.api}/${this.shopId}?userId=${this.userId}&t=${Date.now()}`, { credentials:'include', cache:'no-store' });
-      const data = await res.json();
-      this.cart = this.normalizeCart(data.cart || data.data || data);
-      this.updateUI();
-      return this.cart;
-    }catch(e){
-      console.error('Cart get failed', e);
-      this.cart = this.normalizeCart(this.cart);
-      return this.cart;
-    }
+    try{ await this.req('', { method: 'GET', headers: {} }); }catch(e){ console.error('Cart load failed', e); }
+    return this.cart;
   }
 
-  async addItem(product, qty=1){
-    if(!this.shopId) return alert('Shop ID missing');
-    try{
-      const res = await fetch(`${this.api}/${this.shopId}/add`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        credentials:'include',
-        body: JSON.stringify({ product, qty, userId: this.userId })
-      });
-      const data = await res.json();
-      if(data.success){
-        // FIX: data.cart undefined aaye to purana cart hi rakho, undefined mat banao
-        this.cart = this.normalizeCart(data.cart || data.data || this.cart);
-        this.updateUI();
-        this.showToast(`${product.name || 'Item'} added 🛒`, 'success');
-        if(window.CartCount) window.CartCount.refresh();
-      } else {
-        this.showToast(data.message || 'Add failed', 'error');
-      }
-      return data;
-    }catch(e){
-      console.error(e);
-      this.showToast('Cart error', 'error');
-    }
-  }
-
-  async removeItem(productId){
-    try{
-      const res = await fetch(`${this.api}/${this.shopId}/remove`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        credentials:'include',
-        body: JSON.stringify({ productId, userId: this.userId })
-      });
-      const data = await res.json();
-      if(data.success){
-        this.cart = this.normalizeCart(data.cart || data.data || this.cart);
-        this.updateUI();
-        if(window.CartCount) window.CartCount.refresh();
-      }
-      return data;
-    }catch(e){ console.error(e); }
+  async add(product, qty = 1){
+    if(!this.shopId){ alert('shopId missing - URL me ?shopId=xxx lagao'); return { success:false }; }
+    if(!product) return { success:false };
+    const p = {
+      productId: product._id || product.productId || product.id,
+      name: product.name,
+      price: Number(product.price) || 0,
+      mrp: Number(product.mrp) || 0,
+      image: product.thumbnail || product.image || '',
+      unit: product.unit || '',
+      shopType: product.shopType || this.shopType,
+      qty
+    };
+    if(!p.productId ||!p.name){ console.error('Product incomplete', product); return { success:false }; }
+    return this.req('/add', { method: 'POST', body: JSON.stringify(p) });
   }
 
   async updateQty(productId, qty){
-    if(qty <=0) return this.removeItem(productId);
-    try{
-      const res = await fetch(`${this.api}/${this.shopId}/update`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        credentials:'include',
-        body: JSON.stringify({ productId, qty, userId: this.userId })
-      });
-      const data = await res.json();
-      if(data.success){ this.cart = this.normalizeCart(data.cart || data.data || this.cart); this.updateUI(); if(window.CartCount) window.CartCount.refresh(); }
-      return data;
-    }catch(e){ console.error(e); }
+    return this.req('/update', { method: 'POST', body: JSON.stringify({ productId: String(productId), qty: Number(qty) }) });
   }
 
-  updateUI(){
-    // FIX: cart undefined ho to pehle sahi banao, phir count padho
-    this.cart = this.normalizeCart(this.cart);
-    document.querySelectorAll('[data-cart-count]').forEach(el=>{
-      el.innerText = this.cart.count || 0;
-      el.style.display = (this.cart.count||0) >0 ? 'grid' : 'none';
-    });
-    document.querySelectorAll('[data-cart-total]').forEach(el=>{
-      el.innerText = `₹${this.cart.total || 0}`;
-    });
-    window.dispatchEvent(new CustomEvent('cart:updated', { detail:this.cart }));
+  async remove(productId){
+    return this.req('/remove', { method: 'POST', body: JSON.stringify({ productId: String(productId) }) });
   }
 
-  showToast(msg, type='success'){
-    const toast = document.createElement('div');
-    toast.style.cssText = `position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:${type==='success'?'#0f172a':'#ef4444'};color:#fff;padding:12px 18px;border-radius:12px;font-weight:700;font-family:Outfit,sans-serif;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.2)`;
-    toast.innerText = msg;
-    document.body.appendChild(toast);
-    setTimeout(()=> toast.remove(), 2000);
+  async clear(){
+    return this.req('/clear', { method: 'POST', body: JSON.stringify({}) });
   }
 
+  getQty(productId){
+    const it = this.cart.items.find(i => i.productId === String(productId));
+    return it? it.qty : 0;
+  }
+
+  goToCart(){
+    location.href = `/shop-templates/common/cart/cart.html?shopId=${this.shopId}${this.shopType? '&shopType='+this.shopType : ''}`;
+  }
   goToCheckout(){
-    if(!this.cart.items || this.cart.items.length===0) return alert('Cart empty');
-    window.location.href = `/shop-templates/common/checkout/checkout.html?shopId=${this.shopId}`;
+    location.href = `/shop-templates/common/checkout/checkout.html?shopId=${this.shopId}${this.shopType? '&shopType='+this.shopType : ''}`;
   }
 }
 
 window.CartCore = new CartCore();
-
-// ===== YAHI HAI JOD - product-manager se product utha ke cart me dalega =====
-window.addToCart = async function(productId, productObj){
-  let product = productObj;
-  if(!product && window.WorldProductManager){
-    const list = await window.WorldProductManager.getProducts();
-    product = list.find(p => (p._id || p.id) == productId);
-  }
-  if(!product) return alert('Product nahi mila');
-  const clean = {
-    _id: product._id || product.id,
-    productId: product._id || product.id,
-    name: product.name,
-    price: product.price,
-    mrp: product.mrp || product.price,
-    thumbnail: product.thumbnail || product.image || '',
-    image: product.thumbnail || product.image || '',
-    unit: product.unit || '',
-    shopId: window.CartCore.shopId
-  };
-  return window.CartCore.addItem(clean, 1);
-};
-
-document.addEventListener('DOMContentLoaded', ()=> window.CartCore.getCart());
+// Purane code ke liye short naam
+window.addToCart = (product, qty=1) => window.CartCore.add(product, qty);
+window.updateCartQty = (id, qty) => window.CartCore.updateQty(id, qty);
+window.removeFromCart = (id) => window.CartCore.remove(id);

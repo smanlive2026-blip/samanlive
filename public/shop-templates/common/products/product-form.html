@@ -1,4 +1,4 @@
-<!-- LOCATION: public/shop-templates/common/products/product-form.html - UNIVERSAL 1 FILE = 70 SHOPS - WORLD BOSS - V18 FIXED - EXPORTS ERROR FIXED - SMART RETURN FIX -->
+<!-- LOCATION: public/shop-templates/common/products/product-form.html - UNIVERSAL 1 FILE = 70 SHOPS - WORLD BOSS - V21 UPDATED - NO LOCALSTORAGE - BULK LIMIT CONTROL ADDED -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,21 +22,36 @@
       <input id="quickSearch" placeholder="Search..." onkeyup="filterQuick()">
       <button onclick="addAllQuick()" style="background:#16a34a;color:#fff;border:none;padding:10px;border-radius:10px;font-weight:800;cursor:pointer">Add All</button>
     </div>
+    <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+      <input id="bulkLimit" type="number" min="1" placeholder="Kitne add karne hai? 10, 20..." style="flex:1">
+      <select id="bulkLimitSelect" onchange="document.getElementById('bulkLimit').value=this.value" style="padding:10px;border-radius:10px;border:1px solid #e2e8f0;font-weight:700">
+        <option value="">All</option>
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+      <button onclick="addLimitedQuick()" style="background:#0ea5e9;color:#fff;border:none;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer;white-space:nowrap">Add Limited</button>
+    </div>
     <div id="quickGrid" class="quick-grid"></div>
     <div id="quickStatus" style="margin-top:10px;font-weight:800;font-size:12px"></div>
   </div>
   <div id="status" style="margin-top:12px;font-weight:700;font-size:12px"></div>
 </div>
 
-<script src="./product-manager.js?v=18"></script>
+<script src="./product-manager.js?v=20"></script>
 <script type="module">
 const urlParams = new URLSearchParams(location.search);
-let shopId = urlParams.get('shopId') || localStorage.getItem('last_shopId') || '6abfddb160e2fc20250e8635';
-let shopType = urlParams.get('type') || urlParams.get('shopType') || localStorage.getItem('shopType') || 'kirana';
+let shopId = urlParams.get('shopId') || '';
+let shopType = urlParams.get('type') || urlParams.get('shopType') || 'kirana';
 let editId = urlParams.get('editId');
 let isQuick = urlParams.get('quick') === '1';
 
-document.getElementById('shopInfo').innerText = `ShopId: ${shopId} • Type: ${shopType} • World Model - V18 Fixed`;
+if(!shopId){
+  document.getElementById('shopInfo').innerText = 'Error: URL me ?shopId=xxx missing hai';
+} else {
+  document.getElementById('shopInfo').innerText = `ShopId: ${shopId} • Type: ${shopType} • World Model - V21 Updated`;
+}
 
 // ===== SMART RETURN - JAHA SE AAYA, WAHI WAPAS - COMMON / KIRANA / CLOTH SAB KE LIYE =====
 function getBackUrl(){
@@ -66,10 +81,10 @@ document.getElementById('backBtn').onclick = ()=> location.href = BACK_URL;
 
 let CURRENT_CONFIG = null;
 let CURRENT_PRODUCTS = [];
+let FILTERED_PRODUCTS = [];
 
 async function loadSeedFixed(type){
-  // SAME FOLDER: ./kirana.seed.js
-  const url = `./${type}.seed.js?v=18&t=${Date.now()}`;
+  const url = `./${type}.seed.js?v=21&t=${Date.now()}`;
   console.log('Loading seed:', url);
   try{
     const res = await fetch(url, {cache:'no-store'});
@@ -77,7 +92,6 @@ async function loadSeedFixed(type){
     let text = await res.text();
     console.log('Raw seed length:', text.length, 'has exports:', text.includes('exports.'));
 
-    // CONVERT COMMONJS TO ESM IF NEEDED
     if(text.includes('exports.') || text.includes('module.exports') || text.includes('"use strict"') || text.includes('Object.defineProperty')){
       text = text.replace(/"use strict";?/g,'')
                  .replace(/Object\.defineProperty\(exports[\s\S]*?}\);?/g,'')
@@ -89,7 +103,6 @@ async function loadSeedFixed(type){
                  .replace(/exports\.PRODUCTS\s*=\s*/g,'export const PRODUCTS = ')
                  .replace(/exports\./g,'export const ')
                  .replace(/module\.exports\s*=\s*/g,'export default ');
-      // Ensure export keyword exists
       if(!text.includes('export const FORM_CONFIG')) text = text.replace(/const FORM_CONFIG/, 'export const FORM_CONFIG');
       if(!text.includes('export const PRODUCTS')) text = text.replace(/const PRODUCTS/, 'export const PRODUCTS');
       console.log('Converted to ESM');
@@ -101,9 +114,8 @@ async function loadSeedFixed(type){
     return mod;
   }catch(e){
     console.error('Seed load fail', e);
-    // fallback direct import (if browser supports)
     try{
-      const mod2 = await import(`./${type}.seed.js?v=18`);
+      const mod2 = await import(`./${type}.seed.js?v=21`);
       return mod2;
     }catch(e2){
       throw e;
@@ -112,25 +124,31 @@ async function loadSeedFixed(type){
 }
 
 async function init(){
+  if(!shopId){
+    document.getElementById('formTitle').innerText = 'Error: shopId missing';
+    document.getElementById('dynamicForm').innerHTML = `<div style="padding:20px;background:#fef2f2;border:1px solid #fee2e2;border-radius:12px;color:#ef4444"><b>shopId missing</b><br>URL me ?shopId=xxx lagao</div>`;
+    return;
+  }
   try{
     const seedModule = await loadSeedFixed(shopType);
     CURRENT_CONFIG = seedModule.FORM_CONFIG || seedModule.default?.FORM_CONFIG;
     CURRENT_PRODUCTS = seedModule.PRODUCTS || seedModule.default?.PRODUCTS || [];
+    FILTERED_PRODUCTS = CURRENT_PRODUCTS;
     if(!CURRENT_CONFIG) throw new Error(`FORM_CONFIG not found in ${shopType}.seed.js - file me export const FORM_CONFIG hona chahiye`);
     
-    document.getElementById('formTitle').innerHTML = `${CURRENT_CONFIG.icon||'📦'} ${editId?'Edit':'Add'} ${CURRENT_CONFIG.title} - V18 Fixed`;
+    document.getElementById('formTitle').innerHTML = `${CURRENT_CONFIG.icon||'📦'} ${editId?'Edit':'Add'} ${CURRENT_CONFIG.title} - V21 Updated`;
     document.getElementById('quickTitle').innerText = `⚡ ${CURRENT_PRODUCTS.length} Quick ${CURRENT_CONFIG.title}s`;
     renderForm(CURRENT_CONFIG.fields);
     if(editId) await loadEditData();
     if(isQuick){
       document.getElementById('quickBox').style.display='block';
       document.getElementById('saveBtn').style.display='none';
-      renderQuick(CURRENT_PRODUCTS);
+      renderQuick(FILTERED_PRODUCTS);
     }
   }catch(e){
     console.error(e);
     document.getElementById('formTitle').innerText = `Error: Seed file not found for ${shopType}`;
-    document.getElementById('dynamicForm').innerHTML = `<div style="padding:20px;background:#fef2f2;border:1px solid #fee2e2;border-radius:12px;color:#ef4444"><b>Seed file error:</b> ./${shopType}.seed.js<br><small>${e.message}</small><br><br>1. Check public/shop-templates/common/products/${shopType}.seed.js exists<br>2. File must start with <code>export const FORM_CONFIG</code> - NO use strict, NO exports.<br>3. Clear cache: ?v=18</div>`;
+    document.getElementById('dynamicForm').innerHTML = `<div style="padding:20px;background:#fef2f2;border:1px solid #fee2e2;border-radius:12px;color:#ef4444"><b>Seed file error:</b> ./${shopType}.seed.js<br><small>${e.message}</small><br><br>1. Check public/shop-templates/common/products/${shopType}.seed.js exists<br>2. File must start with <code>export const FORM_CONFIG</code> - NO use strict, NO exports.<br>3. Clear cache: ?v=21</div>`;
   }
 }
 
@@ -166,11 +184,52 @@ window.saveProduct = async ()=>{
   }catch(e){ document.getElementById('status').innerText='❌ '+e.message; document.getElementById('saveBtn').disabled=false; }
 };
 
-window.toggleQuick=()=>{ const box=document.getElementById('quickBox'); box.style.display=box.style.display==='none'?'block':'none'; if(box.style.display==='block') renderQuick(CURRENT_PRODUCTS); };
-function renderQuick(list){ const grid=document.getElementById('quickGrid'); grid.innerHTML=list.map((p,i)=>`<div class="quick-item"><div><b>${p.name}</b><br><small>${p.category||''} • ₹${p.price}</small></div><button onclick="quickAdd(${i})">Add</button></div>`).join(''); }
+window.toggleQuick=()=>{ const box=document.getElementById('quickBox'); box.style.display=box.style.display==='none'?'block':'none'; if(box.style.display==='block') renderQuick(FILTERED_PRODUCTS); };
+function renderQuick(list){ FILTERED_PRODUCTS = list; const grid=document.getElementById('quickGrid'); grid.innerHTML=list.map((p,i)=>`<div class="quick-item"><div><b>${p.name}</b><br><small>${p.category||''} • ₹${p.price}</small></div><button onclick="quickAdd(${i})">Add</button></div>`).join(''); }
 window.filterQuick=()=>{ const q=document.getElementById('quickSearch').value.toLowerCase(); const filtered=CURRENT_PRODUCTS.filter(p=>(p.name||'').toLowerCase().includes(q)); renderQuick(filtered); };
-window.quickAdd=async(i)=>{ const p=CURRENT_PRODUCTS[i]; document.getElementById('quickStatus').innerText=`Adding ${p.name}...`; const res=await window.WorldProductManager.addProduct({...p, shopId, shopType}).catch(()=>({success:false})); document.getElementById('quickStatus').innerText=res.success?`✅ ${p.name} Added`:`❌ Failed`; };
-window.addAllQuick=async()=>{ if(!confirm(`Add ${CURRENT_PRODUCTS.length} ${shopType} products?`)) return; let done=0; for(let p of CURRENT_PRODUCTS){ document.getElementById('quickStatus').innerText=`Adding ${done+1}/${CURRENT_PRODUCTS.length} - ${p.name}`; const res=await window.WorldProductManager.addProduct({...p, shopId, shopType}).catch(()=>({success:false})); if(res.success) done++; } document.getElementById('quickStatus').innerText=`✅ ${done}/${CURRENT_PRODUCTS.length} Added to World`; setTimeout(()=> location.href = BACK_URL,1000); };
+window.quickAdd=async(i)=>{ const p=FILTERED_PRODUCTS[i]; if(!p) return; document.getElementById('quickStatus').innerText=`Adding ${p.name}...`; const res=await window.WorldProductManager.addProduct({...p, shopId, shopType}).catch(()=>({success:false})); document.getElementById('quickStatus').innerText=res.success?`✅ ${p.name} Added`:`❌ Failed`; };
+
+// BULK ADD HELPER - 1 REQUEST ME BHEJEGA, LOOP NAHI
+async function bulkAddProducts(list, statusEl){
+  if(!list.length){ statusEl.innerText='Koi product nahi mila'; return 0; }
+  statusEl.innerText=`Adding ${list.length} products - Bulk Mode...`;
+  try{
+    if(window.WorldProductManager && typeof window.WorldProductManager.bulkAdd === 'function'){
+      const res = await window.WorldProductManager.bulkAdd(list.map(p=>({...p, shopId, shopType})));
+      if(res && res.success){
+        const count = res.count || list.length;
+        statusEl.innerText=`✅ ${count}/${list.length} Added to World - Bulk Fast`;
+        return count;
+      }
+    }
+  }catch(e){ console.warn('Bulk failed, single mode try', e); }
+  // Fallback agar bulk API na chale
+  let done=0;
+  for(let p of list){
+    statusEl.innerText=`Adding ${done+1}/${list.length} - ${p.name}`;
+    const res=await window.WorldProductManager.addProduct({...p, shopId, shopType}).catch(()=>({success:false}));
+    if(res.success) done++;
+  }
+  statusEl.innerText=`✅ ${done}/${list.length} Added to World`;
+  return done;
+}
+
+window.addAllQuick=async()=>{ if(!confirm(`Add ${FILTERED_PRODUCTS.length} ${shopType} products?`)) return; const done=await bulkAddProducts(FILTERED_PRODUCTS, document.getElementById('quickStatus')); if(done>0) setTimeout(()=> location.href = BACK_URL,1000); };
+
+// NAYA FUNCTION - JITNI VALUE DALEGA UTNE HI ADD HONGE
+window.addLimitedQuick=async()=>{
+  const val = parseInt(document.getElementById('bulkLimit').value, 10);
+  const total = FILTERED_PRODUCTS.length;
+  if(!total) return alert('Pehle Quick Products load karo');
+  if(!val || val <= 0){
+    if(!confirm(`Value nahi dali, sab ${total} products add kar du?`)) return;
+    return window.addAllQuick();
+  }
+  const list = FILTERED_PRODUCTS.slice(0, Math.min(val, total));
+  if(!confirm(`Pehle ${list.length} products add karne hai? (Total: ${total})`)) return;
+  const done=await bulkAddProducts(list, document.getElementById('quickStatus'));
+  if(done>0) setTimeout(()=> location.href = BACK_URL,1000);
+};
 
 init();
 </script>

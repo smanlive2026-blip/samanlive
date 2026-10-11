@@ -1,3 +1,14 @@
+<!-- ============================================================
+  UNIVERSAL CART CONNECT PATTERN - SAB VIEW ME SAME LAGEGA
+  LOCATION: public/shop-templates/dairy/user-view.html
+  NOTE: Bhai, jo bhi banda jaha bhi ye file lagayega - kirana ho, dairy ho,
+  cloth ho, mobile ho, sab view me cart connect karne ka tareeka SAME rahega.
+    1. Header me cart button pe data-cart-count rakho - count khud update hoga
+    2. </body> se pehle cart-core.js + cart-count.js ki script lagao
+    3. Add / + / - button pe window.CartCore.addItem / updateQty / removeItem bulao
+  Iske alawa kuch alag mat karna, warna cart alag-alag dukaan me alag chalega.
+    - NO LOCALSTORAGE CART - SERVER CART HI CHALEGA
+============================================================ -->
 <!-- LOCATION: public/shop-templates/dairy/user-view.html - DAIRY CUSTOMER VIEW - V8 POWERFUL - COMMON CONNECTED -->
 <!DOCTYPE html>
 <html lang="en">
@@ -341,7 +352,7 @@ button,input{font-family:'Outfit',sans-serif}
     // hero me photo nahi lagaya, naam hi kaafi hai - purana design bachaya
     shopOpen =!(shopData.isOpen===false || shopData.settings?.isOpen===false);
     $('openStatus').innerHTML = shopOpen
-    ? '<i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN'
+   ? '<i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN'
       : '<i class="fa-solid fa-circle" style="color:#fca5a5"></i> CLOSED';
     $('closedBanner').style.display = shopOpen? 'none' : 'block';
     const rating = shopData.rating || shopData.avgRating;

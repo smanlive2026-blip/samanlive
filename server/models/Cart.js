@@ -1,31 +1,39 @@
-// LOCATION: server/models/Cart.js - SERVER CART (MongoDB)
+// LOCATION: server/models/Cart.js - CART MODEL - WORLD CLASS - NO LOCALSTORAGE - SERVER SIDE CART
 const mongoose = require('mongoose');
 
-const CartItemSchema = new mongoose.Schema({
+const cartItemSchema = new mongoose.Schema({
   productId: { type: String, required: true },
-  name: { type: String, default: '' },
-  price: { type: Number, default: 0 },
+  name: { type: String, required: true },
+  price: { type: Number, required: true, min: 0 },
   mrp: { type: Number, default: 0 },
-  thumbnail: { type: String, default: '' },
+  qty: { type: Number, required: true, min: 1, default: 1 },
   image: { type: String, default: '' },
   unit: { type: String, default: '' },
-  qty: { type: Number, default: 1 }
+  shopType: { type: String, default: '' }
 }, { _id: false });
 
-const CartSchema = new mongoose.Schema({
+const cartSchema = new mongoose.Schema({
+  userKey: { type: String, required: true, index: true }, // cookie se milega, localStorage nahi
   shopId: { type: String, required: true, index: true },
-  userId: { type: String, required: true, index: true },
-  items: { type: [CartItemSchema], default: [] },
+  shopType: { type: String, default: '' },
+  items: [cartItemSchema],
   total: { type: Number, default: 0 },
-  count: { type: Number, default: 0 }
+  itemCount: { type: Number, default: 0 },
+  updatedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-CartSchema.index({ shopId: 1, userId: 1 }, { unique: true });
+// Ek user ka ek dukaan pe ek hi cart
+cartSchema.index({ userKey: 1, shopId: 1 }, { unique: true });
 
-CartSchema.methods.recalc = function(){
-  this.count = this.items.reduce((s,i)=> s + (i.qty||1), 0);
-  this.total = this.items.reduce((s,i)=> s + ((i.price||0)*(i.qty||1)), 0);
-  return this;
-};
+// Save se pehle total khud gin lega
+cartSchema.pre('save', function(next){
+  this.total = this.items.reduce((sum, i) => sum + (i.price * i.qty), 0);
+  this.itemCount = this.items.reduce((sum, i) => sum + i.qty, 0);
+  this.updatedAt = new Date();
+  next();
+});
 
-module.exports = mongoose.models.Cart || mongoose.model('Cart', CartSchema);
+// 30 din purana cart khud saaf ho jayega
+cartSchema.index({ updatedAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
+
+module.exports = mongoose.models.Cart || mongoose.model('Cart', cartSchema);

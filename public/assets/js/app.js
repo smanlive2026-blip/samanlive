@@ -285,4 +285,4 @@ function renderFooter() {
             siteSettings[s.key] ? `<a href="${siteSettings[s.key]}" target="_blank">${s.icon}</a>` : ''
         ).join('');
     }
-}
+} 

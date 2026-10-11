@@ -1,33 +1,114 @@
-<!-- LOCATION: common/cart/cart.html -->
-<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cart</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800;900&display=swap" rel="stylesheet"><style>body{font-family:Outfit,sans-serif;background:#f8fafc;margin:0}.header{padding:16px;background:#fff;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}.header a{text-decoration:none;font-size:20px}.header h1{font-size:18px;font-weight:900;margin:0}.container{padding:12px;max-width:600px;margin:auto}#cartItems{display:flex;flex-direction:column;gap:10px}.cart-summary{background:#fff;border-radius:16px;padding:16px;margin-top:16px;border:1px solid #f1f5f9}.row{display:flex;justify-content:space-between;margin:6px 0;font-size:14px}.row.total{font-weight:900;font-size:18px;border-top:1px dashed #e2e8f0;padding-top:10px;margin-top:10px}.checkout{width:100%;margin-top:14px;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:16px}</style></head><body>
-<div class="header"><a href="javascript:history.back()">‹</a><h1>My Cart • <span data-cart-count>0</span></h1></div>
-<div class="container"><div id="cartItems">Loading...</div><div id="cartSummary" class="cart-summary" style="display:none"><div class="row"><span>Subtotal</span><span data-cart-total>₹0</span></div><div class="row"><span>Delivery</span><span style="color:#10b981;font-weight:800">FREE</span></div><div class="row total"><span>Total</span><span data-cart-total>₹0</span></div><button class="checkout" onclick="window.CartCore.goToCheckout()">Proceed to Checkout</button></div></div>
-<script src="./cart-core.js"></script>
-<script src="./cart-count.js"></script>
+<!-- LOCATION: public/shop-templates/common/cart/cart.html - CART PAGE - WORLD CLASS - NO LOCALSTORAGE - SERVER CART -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Cart - Saman Lelo</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:#f8fafc;padding-bottom:110px}
+header{position:sticky;top:0;z-index:50;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+header button{background:#f1f5f9;border:none;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:16px}
+header h1{font-size:18px;font-weight:900}
+.wrap{max-width:720px;margin:0 auto;padding:14px}
+.item{background:#fff;border-radius:16px;padding:12px;display:flex;gap:12px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);align-items:center}
+.item img{width:64px;height:64px;object-fit:cover;border-radius:12px;background:#f1f5f9}
+.item.info{flex:1}
+.item.name{font-weight:800;font-size:14px}
+.item.price{color:#16a34a;font-weight:900;font-size:14px;margin-top:2px}
+.item.unit{color:#64748b;font-size:11px;font-weight:700}
+.qty{display:flex;align-items:center;background:#16a34a;border-radius:10px;overflow:hidden}
+.qty button{background:none;border:none;color:#fff;font-size:18px;padding:8px 12px;cursor:pointer;font-weight:900}
+.qty span{color:#fff;font-weight:900;min-width:22px;text-align:center}
+.remove{background:#fef2f2;border:none;color:#ef4444;width:34px;height:34px;border-radius:10px;cursor:pointer}
+.bill{background:#fff;border-radius:16px;padding:16px;margin-top:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.bill.row{display:flex;justify-content:space-between;font-weight:700;font-size:14px;padding:6px 0;color:#334155}
+.bill.row.total{border-top:1px dashed #e2e8f0;margin-top:8px;padding-top:12px;font-size:16px;font-weight:900;color:#0f172a}
+.empty{background:#fff;border-radius:16px;padding:40px 20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.empty i{font-size:44px;color:#cbd5e1}
+.empty h3{margin-top:12px;font-weight:900}
+.empty p{color:#64748b;font-weight:700;font-size:13px;margin-top:4px}
+.empty button{margin-top:16px;background:#16a34a;color:#fff;border:none;padding:12px 20px;border-radius:12px;font-weight:900;cursor:pointer}
+.footer{position:fixed;left:0;right:0;bottom:0;background:#fff;padding:12px 16px;box-shadow:0 -4px 20px rgba(0,0,0,.08);display:flex;gap:12px;align-items:center;max-width:720px;margin:0 auto}
+.footer.amt{flex:1}
+.footer.amt small{display:block;color:#64748b;font-weight:700;font-size:11px}
+.footer.amt b{font-size:18px}
+.footer button{background:#16a34a;color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:900;cursor:pointer;font-size:15px}
+.clearBtn{width:100%;background:none;border:1px solid #fee2e2;color:#ef4444;padding:10px;border-radius:12px;font-weight:800;cursor:pointer;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <button onclick="history.back()"><i class="fa-solid fa-arrow-left"></i></button>
+  <h1>🛒 My Cart <span data-cart-count style="background:#16a34a;color:#fff;padding:2px 8px;border-radius:99px;font-size:12px;display:none">0</span></h1>
+</header>
+
+<div class="wrap">
+  <div id="cartList"></div>
+  <div id="billBox" style="display:none">
+    <div class="bill">
+      <div class="row"><span>Item Total</span><span id="subTotal">₹0</span></div>
+      <div class="row"><span>Delivery</span><span style="color:#16a34a">FREE</span></div>
+      <div class="row total"><span>To Pay</span><span id="grandTotal">₹0</span></div>
+    </div>
+    <button class="clearBtn" onclick="clearCart()">Clear Cart</button>
+  </div>
+</div>
+
+<div class="footer" id="footerBar" style="display:none">
+  <div class="amt"><small>Total</small><b data-cart-total>₹0</b></div>
+  <button onclick="window.CartCore.goToCheckout()">Place Order <i class="fa-solid fa-arrow-right"></i></button>
+</div>
+
+<script src="./cart-core.js?v=1"></script>
 <script>
-let pageCartLoading = false;
-async function loadPageCart(){
-  if(pageCartLoading) return;
-  pageCartLoading = true;
-  try{
-    const cart = await window.CartCore.getCart();
-    const container = document.getElementById('cartItems');
-    const summary = document.getElementById('cartSummary');
-    if(!cart.items || cart.items.length===0){
-      container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#94a3b8"><div style="font-size:56px">🛒</div><p style="font-weight:800;margin-top:12px">Your cart is empty</p><a href="/" style="display:inline-block;margin-top:12px;background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:800">Shop Now</a></div>`;
-      summary.style.display='none'; return;
-    }
-    summary.style.display='block';
-    container.innerHTML = cart.items.map(it=>`
-      <div style="background:#fff;border-radius:16px;padding:12px;display:flex;gap:12px;border:1px solid #f1f5f9">
-        <img src="${it.thumbnail||it.image||'https://via.placeholder.com/64'}" style="width:64px;height:64px;border-radius:12px;object-fit:cover">
-        <div style="flex:1"><b style="font-size:14px">${it.name}</b><br><span style="font-size:12px;color:#64748b">₹${it.price}</span>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><button onclick="window.CartCore.updateQty('${it.productId||it._id}', ${it.qty-1}).then(loadPageCart)" style="width:28px;height:28px;border-radius:50%;border:1px solid #e2e8f0;background:#fff;font-weight:900">-</button><span style="font-weight:900">${it.qty}</span><button onclick="window.CartCore.updateQty('${it.productId||it._id}', ${it.qty+1}).then(loadPageCart)" style="width:28px;height:28px;border-radius:50%;border:1px solid #e2e8f0;background:#fff;font-weight:900">+</button><button onclick="window.CartCore.removeItem('${it.productId||it._id}').then(loadPageCart)" style="margin-left:auto;background:#fff0f0;border:1px solid #fee2e2;color:#ef4444;border-radius:8px;padding:4px 8px;font-weight:800">Remove</button></div>
-        </div>
+const listEl = document.getElementById('cartList');
+const billBox = document.getElementById('billBox');
+const footerBar = document.getElementById('footerBar');
+
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function render(cart){
+  const items = cart.items || [];
+  if(!items.length){
+    listEl.innerHTML = `<div class="empty"><i class="fa-solid fa-cart-shopping"></i><h3>Cart Khali Hai</h3><p>Kuch saman add karo, fir yaha dikhega</p><button onclick="history.back()">Shop Par Jao</button></div>`;
+    billBox.style.display = 'none';
+    footerBar.style.display = 'none';
+    return;
+  }
+  listEl.innerHTML = items.map(it => `
+    <div class="item">
+      ${it.image? `<img src="${esc(it.image)}" onerror="this.style.display='none'">` : `<div style="width:64px;height:64px;border-radius:12px;background:#f1f5f9;display:grid;place-items:center;font-size:24px">📦</div>`}
+      <div class="info">
+        <div class="name">${esc(it.name)}</div>
+        <div class="unit">${esc(it.unit||'')}</div>
+        <div class="price">₹${it.price} × ${it.qty} = ₹${it.price * it.qty}</div>
       </div>
-    `).join('');
-  } finally { pageCartLoading = false; }
+      <div class="qty">
+        <button onclick="window.CartCore.updateQty('${it.productId}', ${it.qty - 1})">−</button>
+        <span>${it.qty}</span>
+        <button onclick="window.CartCore.updateQty('${it.productId}', ${it.qty + 1})">+</button>
+      </div>
+      <button class="remove" onclick="window.CartCore.remove('${it.productId}')"><i class="fa-solid fa-trash"></i></button>
+    </div>
+  `).join('');
+  document.getElementById('subTotal').textContent = '₹' + cart.total;
+  document.getElementById('grandTotal').textContent = '₹' + cart.total;
+  billBox.style.display = 'block';
+  footerBar.style.display = 'flex';
 }
-document.addEventListener('DOMContentLoaded', loadPageCart);
+
+async function clearCart(){
+  if(!confirm('Pura cart saaf kar du?')) return;
+  await window.CartCore.clear();
+}
+
+window.CartCore.onChange(render);
+window.CartCore.ready.then(()=> render(window.CartCore.cart));
+render(window.CartCore.cart);
 </script>
-</body></html>
+</body>
+</html>
