@@ -1,4 +1,15 @@
-<!-- LOCATION: common/cart/cart-drawer.html - WORLD CLASS SLIDE DRAWER -->
+<!-- ============================================================
+  UNIVERSAL CART DRAWER - SAB VIEW ME SAME LAGEGA
+  LOCATION: public/shop-templates/common/cart/cart-drawer.html
+  NOTE: Bhai, jo bhi banda jaha bhi ye drawer lagayega - kirana ho, dairy ho,
+  cloth ho, mobile ho, sab view me cart jodne ka tareeka SAME rahega.
+    1. Page me cart-core.js pehle load karo, fir ye drawer ka code lagao
+    2. Cart kholne ke liye kisi bhi button pe data-open-cart laga do, ya window.openCartDrawer() bula lo
+    3. + / - / delete pe CartCore.updateQty() aur CartCore.remove() hi chalega, addItem / removeItem / getCart NAHI hai
+  Iske alawa kuch alag mat karna, warna har dukaan ka cart alag chalega.
+    - NO LOCALSTORAGE CART - SERVER CART HI CHALEGA
+============================================================ -->
+<!-- LOCATION: common/cart/cart-drawer.html - WORLD CLASS SLIDE DRAWER - UPDATED - CARTCORE CONNECTED - NO LOCALSTORAGE -->
 <div id="cartDrawerOverlay" class="cart-drawer-overlay" style="display:none"></div>
 <div id="cartDrawer" class="cart-drawer">
   <div class="cart-drawer-header">
@@ -11,12 +22,13 @@
     <div id="cartDrawerEmpty" style="display:none;text-align:center;padding:40px 20px;color:#94a3b8">
       <div style="font-size:48px">🛒</div>
       <p style="font-weight:800;margin-top:10px">Cart is empty</p>
-      <button onclick="document.getElementById('cartDrawer').classList.remove('open')" style="margin-top:12px;background:#0f172a;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:800">Continue Shopping</button>
+      <button onclick="window.closeCartDrawer && window.closeCartDrawer()" style="margin-top:12px;background:#0f172a;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer">Continue Shopping</button>
     </div>
   </div>
   <div id="cartDrawerFooter" class="cart-drawer-footer" style="display:none">
     <div class="cart-total-row"><span>Total</span><b data-cart-total>₹0</b></div>
     <button id="cartDrawerCheckout" class="checkout-btn">Checkout • <span data-cart-total>₹0</span></button>
+    <button id="cartDrawerFullCart" class="full-cart-btn">View Full Cart</button>
   </div>
 </div>
 <style>
@@ -27,9 +39,11 @@
 .cart-drawer-header h3{font-family:Outfit,sans-serif;font-weight:900;margin:0;font-size:18px}
 .close-drawer{border:none;background:#f1f5f9;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer}
 .cart-drawer-body{flex:1;overflow:auto;padding:12px}
+.cart-loader{text-align:center;padding:20px;color:#94a3b8;font-weight:700}
 .cart-drawer-footer{padding:16px;border-top:1px solid #f1f5f9;background:#fff}
 .cart-total-row{display:flex;justify-content:space-between;font-weight:800;margin-bottom:12px;font-family:Outfit,sans-serif}
 .checkout-btn{width:100%;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:15px;cursor:pointer}
+.full-cart-btn{width:100%;margin-top:8px;background:#f1f5f9;color:#0f172a;border:1px solid #e2e8f0;padding:12px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer}
 .cart-item{display:flex;gap:12px;padding:12px;border:1px solid #f1f5f9;border-radius:12px;margin-bottom:10px}
 .cart-item img{width:56px;height:56px;border-radius:10px;object-fit:cover;background:#f8fafc}
 .cart-item-info{flex:1}
@@ -37,62 +51,86 @@
 .cart-item-info span{font-size:12px;color:#64748b}
 .cart-qty{display:flex;align-items:center;gap:8px;margin-top:6px}
 .cart-qty button{width:26px;height:26px;border-radius:50%;border:1px solid #e2e8f0;background:#fff;font-weight:900;cursor:pointer}
+.cart-qty.del{margin-left:auto;color:#ef4444;border-color:#fee2e2;background:#fff0f0;border-radius:8px;width:auto;padding:0 8px}
 </style>
 <script>
 (function(){
   const drawer = document.getElementById('cartDrawer');
   const overlay = document.getElementById('cartDrawerOverlay');
+  if(!drawer) return;
+
+  function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
   function openDrawer(){
-    if(!drawer) return;
     drawer.classList.add('open');
     if(overlay) overlay.style.display='block';
-    renderDrawer();
+    renderDrawer(window.CartCore? window.CartCore.cart : {items:[], total:0});
   }
   function closeDrawer(){
     drawer.classList.remove('open');
     if(overlay) overlay.style.display='none';
   }
+  window.openCartDrawer = openDrawer;
+  window.closeCartDrawer = closeDrawer;
+
   document.addEventListener('click', (e)=>{
     if(e.target.closest('[data-open-cart]')){ e.preventDefault(); openDrawer(); }
   });
   document.getElementById('closeCartDrawer')?.addEventListener('click', closeDrawer);
   overlay?.addEventListener('click', closeDrawer);
+
   document.getElementById('cartDrawerCheckout')?.addEventListener('click', ()=> {
-    if(window.CartCore) window.CartCore.goToCheckout();
+    if(window.CartCore && window.CartCore.goToCheckout) window.CartCore.goToCheckout();
+  });
+  document.getElementById('cartDrawerFullCart')?.addEventListener('click', ()=> {
+    if(window.CartCore && window.CartCore.goToCart) { window.CartCore.goToCart(); return; }
+    if(window.CartCore && window.CartCore.goToCheckout) window.CartCore.goToCheckout();
   });
 
-  async function renderDrawer(){
+  function renderDrawer(cart){
     const body = document.getElementById('cartDrawerItems');
     const empty = document.getElementById('cartDrawerEmpty');
     const footer = document.getElementById('cartDrawerFooter');
     const loader = document.getElementById('cartDrawerLoader');
-    if(!window.CartCore) return;
+    if(!body ||!empty ||!footer) return;
+    if(loader) loader.style.display='none';
 
-    loader.style.display='block';
-    const cart = await window.CartCore.getCart();
-    loader.style.display='none';
-
-    if(!cart.items || cart.items.length===0){
+    const items = (cart && cart.items) || [];
+    if(!items.length){
       body.innerHTML=''; empty.style.display='block'; footer.style.display='none'; return;
     }
     empty.style.display='none'; footer.style.display='block';
-    body.innerHTML = cart.items.map(it=>`
+    body.innerHTML = items.map(it=>{
+      const pid = it.productId || it._id || '';
+      const img = it.image || it.thumbnail || 'https://placehold.co/56x56/f1f5f9/64748b?text=📦';
+      return `
       <div class="cart-item">
-        <img src="${it.image || 'https://via.placeholder.com/56'}" />
+        <img src="${esc(img)}" onerror="this.src='https://placehold.co/56x56/f1f5f9/64748b?text=📦'" />
         <div class="cart-item-info">
-          <b>${it.name}</b>
+          <b>${esc(it.name)}</b>
           <span>₹${it.price} x ${it.qty} = ₹${it.price*it.qty}</span>
           <div class="cart-qty">
-            <button onclick="CartCore.updateQty('${it.productId||it._id}', ${it.qty-1})">-</button>
+            <button onclick="CartCore.updateQty('${pid}', ${it.qty-1})">-</button>
             <span style="font-weight:800">${it.qty}</span>
-            <button onclick="CartCore.updateQty('${it.productId||it._id}', ${it.qty+1})">+</button>
-            <button onclick="CartCore.removeItem('${it.productId||it._id}')" style="margin-left:auto;color:#ef4444;border-color:#fee2e2;background:#fff0f0">🗑️</button>
+            <button onclick="CartCore.updateQty('${pid}', ${it.qty+1})">+</button>
+            <button class="del" onclick="CartCore.remove('${pid}')">🗑️</button>
           </div>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
-  window.addEventListener('cart:updated', renderDrawer);
-  window.openCartDrawer = openDrawer;
+
+  // CartCore ready hone ka wait karo, fir har badlav pe drawer khud update hoga
+  function bindCore(){
+    if(!window.CartCore) return false;
+    if(window.CartCore.onChange) window.CartCore.onChange(renderDrawer);
+    if(window.CartCore.ready && window.CartCore.ready.then) window.CartCore.ready.then(()=> renderDrawer(window.CartCore.cart));
+    renderDrawer(window.CartCore.cart || {items:[], total:0});
+    return true;
+  }
+  if(!bindCore()){
+    let tries = 0;
+    const iv = setInterval(()=>{ tries++; if(bindCore() || tries>40) clearInterval(iv); }, 250);
+  }
 })();
 </script>
