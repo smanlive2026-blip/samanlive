@@ -1,4 +1,4 @@
-// LOCATION: common/cart/cart-core.js - CONNECTED WITH PRODUCT-MANAGER + MAIN APP - FIXED V2
+// LOCATION: public/shop-template/common/cart/cart-core.js - CONNECTED WITH PRODUCT-MANAGER + MAIN APP - FIXED V2
 class CartCore {
   constructor(){
     const p = new URLSearchParams(location.search);

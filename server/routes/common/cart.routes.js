@@ -1,82 +1,64 @@
-// LOCATION: server/routes/common/cart.routes.js - WORLD CLASS CART API
+// LOCATION: server/routes/common/cart.routes.js - SERVER CART API
 const express = require('express');
 const router = express.Router();
+const Cart = require('../../models/Cart');
 
-// In-memory cart (replace with DB Model later - Shop/Cart model)
-const carts = new Map(); // key: shopId_userId -> { items, total, count }
-
-function getCartKey(shopId, userId){ return `${shopId}_${userId||'guest'}`; }
-function calc(cart){
-  cart.count = cart.items.reduce((s,i)=> s + i.qty, 0);
-  cart.total = cart.items.reduce((s,i)=> s + (i.price * i.qty), 0);
+async function getOrCreate(shopId, userId){
+  let cart = await Cart.findOne({ shopId, userId });
+  if(!cart) cart = await Cart.create({ shopId, userId, items: [], total: 0, count: 0 });
   return cart;
 }
+function sendCart(res, cart){
+  return res.json({ success: true, cart: { shopId: cart.shopId, userId: cart.userId, items: cart.items, total: cart.total, count: cart.count } });
+}
 
-router.get('/:shopId', (req,res)=>{
-  const { shopId } = req.params;
-  const userId = req.query.userId || 'guest';
-  const key = getCartKey(shopId, userId);
-  const cart = carts.get(key) || { items:[], total:0, count:0 };
-  res.json({ success:true, cart });
+// GET /api/common/cart/:shopId?userId=xxx
+router.get('/:shopId', async (req, res) => {
+  try {
+    const userId = req.query.userId || req.user?._id || 'guest';
+    const cart = await getOrCreate(req.params.shopId, String(userId));
+    cart.recalc(); await cart.save();
+    sendCart(res, cart);
+  } catch(e){ res.status(500).json({ success:false, message:e.message }); }
 });
 
-router.get('/:shopId/count', (req,res)=>{
-  const { shopId } = req.params;
-  const userId = req.query.userId || 'guest';
-  const key = getCartKey(shopId, userId);
-  const cart = carts.get(key) || { items:[], total:0, count:0 };
-  res.json({ success:true, count: cart.items.reduce((s,i)=> s+i.qty, 0) });
+// POST /api/common/cart/:shopId/add {product, qty, userId}
+router.post('/:shopId/add', async (req, res) => {
+  try {
+    const { product, qty = 1, userId = 'guest' } = req.body || {};
+    if(!product ||!(product.productId || product._id)) return res.status(400).json({ success:false, message:'Product missing' });
+    const cart = await getOrCreate(req.params.shopId, String(userId));
+    const pid = String(product.productId || product._id);
+    const old = cart.items.find(i => i.productId === pid);
+    if(old) old.qty += qty;
+    else cart.items.push({ productId: pid, name: product.name||'', price: product.price||0, mrp: product.mrp||product.price||0, thumbnail: product.thumbnail||product.image||'', image: product.image||product.thumbnail||'', unit: product.unit||'', qty });
+    cart.recalc(); await cart.save();
+    sendCart(res, cart);
+  } catch(e){ res.status(500).json({ success:false, message:e.message }); }
 });
 
-router.post('/:shopId/add', (req,res)=>{
-  const { shopId } = req.params;
-  const { product, qty=1, productId, userId='guest' } = req.body;
-  const key = getCartKey(shopId, userId);
-  let cart = carts.get(key) || { items:[], total:0, count:0 };
-
-  const prod = product || { _id: productId, productId, name:'Product', price:100, image:'' };
-  const id = prod._id || prod.productId || productId;
-
-  const existing = cart.items.find(i=> (i.productId===id || i._id===id));
-  if(existing){
-    existing.qty += qty;
-  }else{
-    cart.items.push({
-      productId:id, _id:id,
-      name: prod.name || 'Product',
-      price: prod.price || 100,
-      image: prod.image || prod.img || '',
-      qty: qty
-    });
-  }
-  calc(cart);
-  carts.set(key, cart);
-  res.json({ success:true, cart, count: cart.count });
+// POST /api/common/cart/:shopId/update {productId, qty, userId}
+router.post('/:shopId/update', async (req, res) => {
+  try {
+    const { productId, qty, userId = 'guest' } = req.body || {};
+    const cart = await getOrCreate(req.params.shopId, String(userId));
+    const it = cart.items.find(i => i.productId === String(productId));
+    if(it) it.qty = qty;
+    cart.items = cart.items.filter(i => i.qty > 0);
+    cart.recalc(); await cart.save();
+    sendCart(res, cart);
+  } catch(e){ res.status(500).json({ success:false, message:e.message }); }
 });
 
-router.post('/:shopId/remove', (req,res)=>{
-  const { shopId } = req.params;
-  const { productId, userId='guest' } = req.body;
-  const key = getCartKey(shopId, userId);
-  let cart = carts.get(key) || { items:[], total:0, count:0 };
-  cart.items = cart.items.filter(i=> i.productId !== productId && i._id !== productId);
-  calc(cart);
-  carts.set(key, cart);
-  res.json({ success:true, cart });
+// POST /api/common/cart/:shopId/remove {productId, userId}
+router.post('/:shopId/remove', async (req, res) => {
+  try {
+    const { productId, userId = 'guest' } = req.body || {};
+    const cart = await getOrCreate(req.params.shopId, String(userId));
+    cart.items = cart.items.filter(i => i.productId!== String(productId));
+    cart.recalc(); await cart.save();
+    sendCart(res, cart);
+  } catch(e){ res.status(500).json({ success:false, message:e.message }); }
 });
-
-router.post('/:shopId/update', (req,res)=>{
-  const { shopId } = req.params;
-  const { productId, qty, userId='guest' } = req.body;
-  const key = getCartKey(shopId, userId);
-  let cart = carts.get(key) || { items:[], total:0, count:0 };
-  const item = cart.items.find(i=> i.productId===productId || i._id===productId);
-  if(item){ item.qty = qty; if(item.qty<=0) cart.items = cart.items.filter(i=> i!==item); }
-  calc(cart);
-  carts.set(key, cart);
-  res.json({ success:true, cart });
-});
-
-router.get('/:shopId/saved', (req,res)=> res.json({ success:true, items:[] }));
 
 module.exports = router;
