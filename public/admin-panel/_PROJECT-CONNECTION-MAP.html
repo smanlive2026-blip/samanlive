@@ -1,13 +1,18 @@
-<!-- LOCATION: public/admin-panel/_PROJECT-CONNECTION-MAP.html - FULL PROJECT CONNECTION MAP - STANDALONE ALSO WORKS -->
-<div class="conn-map-wrap">
-  <div class="top-map"><h2 style="font-weight:900;font-size:16px"><i class="fa-solid fa-diagram-project"></i> Kaun Kisse Juda Hai - Full Map</h2><button class="btn" id="recheckMap">Re-Check</button></div>
-  <div class="legend"><span><i class="dot ok"></i> Connected</span><span><i class="dot bad"></i> Error - Detail niche</span><span><i class="dot warn"></i> Warning</span></div>
+<!-- LOCATION: public/admin-panel/_PROJECT-CONNECTION-MAP.html - FIXED - ID MATCH -->
+<div class="conn-map-wrap" style="padding:12px;background:#020617;min-height:100vh">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+    <h2 style="font-weight:900;font-size:16px;color:#e2e8f0">Kaun Kisse Juda Hai - Full Map</h2>
+    <button class="btn" id="recheckBtn" style="background:#fff;color:#020617;border:none;padding:8px 12px;border-radius:10px;font-weight:900;cursor:pointer">Re-Check</button>
+  </div>
+  <div class="legend" style="display:flex;gap:12px;margin:8px 0;font-size:11px;color:#94a3b8"><span>🟢 Connected</span><span>🔴 Error - Detail niche</span><span>🟡 Warning</span></div>
+  
   <div class="layer"><h2>LAYER 1 - AREA MANAGER FLOW</h2><div class="grid" id="areaLayer"></div></div>
-  <div class="layer"><h2>LAYER 2 - SHOP DASHBOARD CONNECTION - dashboard.js kis file se juda hai</h2><div class="grid" id="dashLayer"></div></div>
+  <div class="layer"><h2>LAYER 2 - SHOP DASHBOARD CONNECTION</h2><div class="grid" id="dashLayer"></div></div>
   <div class="layer"><h2>LAYER 3 - USER VIEW CONNECTION</h2><div class="grid" id="shopLayer"></div></div>
-  <div class="layer"><h2>LAYER 4 - COMMON MODULES - SAB VIEW ME SAME</h2><div class="grid" id="commonLayer"></div></div>
-  <div class="layer"><h2>LAYER 5 - SERVER.JS ROUTES</h2><div class="grid" id="serverLayer"></div></div>
+  <div class="layer"><h2>LAYER 4 - COMMON MODULES</h2><div class="grid" id="commonLayer"></div></div>
+  <div class="layer"><h2>LAYER 5 - SERVER ROUTES</h2><div class="grid" id="serverLayer"></div></div>
   <div class="layer warn-layer"><h2>FALTU FILES</h2><div class="grid" id="wasteLayer"></div></div>
-  <div class="log" id="log"></div>
+  <div class="log" id="log" style="margin-top:12px;background:#020617;border:1px solid #1e293b;border-radius:12px;padding:10px;font-family:monospace;font-size:10px;height:200px;overflow:auto;white-space:pre-wrap;color:#e2e8f0">Starting...</div>
 </div>
-<script src="./assets/connection-map.js?v=2"></script>
+<link rel="stylesheet" href="./assets/css/connection-map.css?v=3">
+<script src="./assets/connection-map.js?v=3"></script>
