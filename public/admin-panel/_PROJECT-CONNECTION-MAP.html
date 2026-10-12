@@ -1,18 +1,17 @@
-<!-- LOCATION: public/admin-panel/_PROJECT-CONNECTION-MAP.html - FIXED - ID MATCH -->
+<!-- LOCATION: public/admin-panel/_PROJECT-CONNECTION-MAP.html - V5 - MAIN LAYER ADDED -->
 <div class="conn-map-wrap" style="padding:12px;background:#020617;min-height:100vh">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
-    <h2 style="font-weight:900;font-size:16px;color:#e2e8f0">Kaun Kisse Juda Hai - Full Map</h2>
-    <button class="btn" id="recheckBtn" style="background:#fff;color:#020617;border:none;padding:8px 12px;border-radius:10px;font-weight:900;cursor:pointer">Re-Check</button>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
+    <h2 style="font-weight:900;font-size:16px;color:#e2e8f0">Kaun Kisse Juda Hai - Full Map + Main App Layer</h2>
+    <button id="recheckBtn" style="background:#fff;color:#020617;border:none;padding:8px 12px;border-radius:10px;font-weight:900;cursor:pointer">Re-Check</button>
   </div>
-  <div class="legend" style="display:flex;gap:12px;margin:8px 0;font-size:11px;color:#94a3b8"><span>🟢 Connected</span><span>🔴 Error - Detail niche</span><span>🟡 Warning</span></div>
-  
-  <div class="layer"><h2>LAYER 1 - AREA MANAGER FLOW</h2><div class="grid" id="areaLayer"></div></div>
-  <div class="layer"><h2>LAYER 2 - SHOP DASHBOARD CONNECTION</h2><div class="grid" id="dashLayer"></div></div>
-  <div class="layer"><h2>LAYER 3 - USER VIEW CONNECTION</h2><div class="grid" id="shopLayer"></div></div>
+  <div class="layer"><h2 style="color:#e2e8f0">LAYER 0 - MAIN APP LAYER - YE PUCH RAHA THA TU</h2><p style="font-size:11px;color:#94a3b8;margin-bottom:8px">app.js blackboard wala sabka baap hai, ye shop-template-map aur nearby-shops ko jodta hai</p><div class="grid" id="mainLayer"></div></div>
+  <div class="layer"><h2>LAYER 1 - AREA MANAGER</h2><div class="grid" id="areaLayer"></div></div>
+  <div class="layer"><h2>LAYER 2 - SHOP DASHBOARD - dashboard.js kis se juda</h2><div class="grid" id="dashLayer"></div></div>
+  <div class="layer"><h2>LAYER 3 - USER VIEW - customer-view / user-view / shop-view</h2><div class="grid" id="shopLayer"></div></div>
   <div class="layer"><h2>LAYER 4 - COMMON MODULES</h2><div class="grid" id="commonLayer"></div></div>
   <div class="layer"><h2>LAYER 5 - SERVER ROUTES</h2><div class="grid" id="serverLayer"></div></div>
   <div class="layer warn-layer"><h2>FALTU FILES</h2><div class="grid" id="wasteLayer"></div></div>
-  <div class="log" id="log" style="margin-top:12px;background:#020617;border:1px solid #1e293b;border-radius:12px;padding:10px;font-family:monospace;font-size:10px;height:200px;overflow:auto;white-space:pre-wrap;color:#e2e8f0">Starting...</div>
+  <div class="log" id="log" style="margin-top:12px;background:#020617;border:1px solid #1e293b;border-radius:12px;padding:10px;font-family:monospace;font-size:10px;height:200px;overflow:auto;color:#e2e8f0">Starting...</div>
 </div>
-<link rel="stylesheet" href="./assets/css/connection-map.css?v=3">
-<script src="./assets/connection-map.js?v=3"></script>
+<link rel="stylesheet" href="./assets/css/connection-map.css?v=5">
+<script src="./assets/connection-map.js?v=5"></script>
