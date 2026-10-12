@@ -6,6 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>SL MASTER DASHBOARD v99 - WORLD CLASS + HISTORY</title>
 <link rel="stylesheet" href="./assets/launcher.css?v=999">
+<link rel="stylesheet" href="./assets/css/connection-map.css?v=1">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
@@ -79,7 +80,6 @@
 window.showToast = function(msg){ const t=document.getElementById('toast'); if(!t) return; t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); };
 window.loadPage = function(p, el){ if(window.Launcher) window.Launcher.loadPage(p, el); };
 window.apiCall = async function(url, method, body){
-  // Agar page ne apna apiCall banaya hai to use mat roko, ye sirf launcher wala hai
   const base = window.API_BASE || '/api';
   const token = localStorage.getItem('adminToken') || localStorage.getItem('token') || '';
   const opts = { method: method || 'GET', headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' }, cache:'no-store' };
@@ -114,6 +114,7 @@ class SLMasterLauncher {
     this.files = [
      {id:"index", name:"index.html", icon:"🏠", tag:"13 BTN MAIN", cat:"CORE"},
      {id:"dashboard", name:"dashboard.html", icon:"📊", tag:"ANALYTICS v99", cat:"CORE"},
+     {id:"_PROJECT-CONNECTION-MAP", name:"_PROJECT-CONNECTION-MAP.html", icon:"🔗", tag:"CONNECTION MAP", cat:"DEV"},
      {id:"orders", name:"orders.html", icon:"📦", tag:"SUPER ORDERS", cat:"ORDERS"},
      {id:"shops", name:"shops.html", icon:"🏪", tag:"SHOPS", cat:"MANAGEMENT"},
      {id:"users", name:"users.html", icon:"👥", tag:"USERS", cat:"MANAGEMENT"},
@@ -135,15 +136,11 @@ class SLMasterLauncher {
     this.init();
   }
   cleanupPage(){
-    // Purane page ke timer band karo
     if (window.__slDashTimer) { clearInterval(window.__slDashTimer); window.__slDashTimer = null; }
-    // Purane page ki script saaf karo - dobara declare wala error band
     this._pageScripts.forEach(s=>{ try{s.remove()}catch(e){} });
     this._pageScripts = [];
-    // Purane chart saaf karo
     ['__slAreaChart','__slStatusChart','__slAreaRadiusChart'].forEach(k=>{ if(window[k]){ try{window[k].destroy()}catch(e){} window[k]=null; } });
     if(window.moduleMap){ try{window.moduleMap.remove()}catch(e){} window.moduleMap=null; }
-    // Area wale map ko bhi saaf karo, file ko haath nahi lagaya
     try{ if(window.map && typeof window.map.remove==='function'){ window.map.remove(); window.map=null; } }catch(e){}
   }
   init(){
@@ -184,12 +181,9 @@ class SLMasterLauncher {
   async loadPage(pageName, btnElement){
     document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
     if(btnElement) btnElement.classList.add('active');
-
-    // YAHAN HISTORY LOG HOGA - IMPORTANT LINE
     localStorage.setItem('sl_last_page', pageName);
     window.SLHistory.log(pageName);
     this.currentPage = pageName;
-
     const container = document.getElementById('mainContainer');
     const loader = document.getElementById('loader');
     loader.classList.add('show');
@@ -210,7 +204,6 @@ class SLMasterLauncher {
         old.remove();
         if(old.src) {
           const cleanSrc = old.src.split('?')[0];
-          // FIX: admin.js / leaflet.js jaisi bahari file ek baar hi chalegi, API_BASE dobara wala error band
           if(window.__slLoadedScripts[cleanSrc]) continue;
           window.__slLoadedScripts[cleanSrc] = true;
           const s = document.createElement('script');
@@ -250,7 +243,7 @@ class SLMasterLauncher {
   clearCache(){ localStorage.clear(); this.toast('Cache Cleared'); setTimeout(()=>location.reload(), 600); }
   toggleFullscreen(){ document.fullscreenElement? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
   startClock(){ setInterval(()=>{ const el=document.getElementById('liveClock'); if(el) el.innerText=new Date().toLocaleString('en-IN'); },1000); }
-  toast(msg){ const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 2500); }
+  toast(msg){ const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 }
 const Launcher = new SLMasterLauncher();
 window.Launcher = Launcher;

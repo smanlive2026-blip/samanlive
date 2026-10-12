@@ -62,4 +62,6 @@ router.get('/health', (req,res)=>{
   res.json({ success:true, version:'V11-CRASH-FIX', total:ALLOWED_ROUTE_FILES.length, timestamp:new Date().toISOString() });
 });
 
+router.use('/connection', require('./connection.routes'));
+
 module.exports = router;
