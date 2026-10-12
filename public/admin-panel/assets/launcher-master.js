@@ -1,6 +1,8 @@
+// LOCATION: public/admin-panel/assets/launcher-master.js - MASTER LAUNCHER - SIMPLE + CONNECTION MAP ADDED
 const files = [
  {id:"index", name:"index.html", icon:"🏠", tag:"13 BTN MAIN"},
  {id:"dashboard", name:"dashboard.html", icon:"📊", tag:"ANALYTICS v99"},
+ {id:"_PROJECT-CONNECTION-MAP", name:"_PROJECT-CONNECTION-MAP.html", icon:"🔗", tag:"CONNECTION MAP"},
  {id:"orders", name:"orders.html", icon:"📦", tag:"SUPER ORDERS"},
  {id:"shops", name:"shops.html", icon:"🏪", tag:"SHOPS"},
  {id:"users", name:"users.html", icon:"👥", tag:"USERS"},
