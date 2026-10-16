@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/patanjali/dashboard.js - PATANJALI POWERFUL - V13 HIERARCHY MASTER
+// LOCATION: public/shop-templates/patanjali/dashboard.js - PATANJALI POWERFUL - V13 HIERARCHY MASTER - FULL 450 LINES - NO DELETE - VIEW SHOP FIXED
 (function(){
   if(window.PatanjaliDashboardLoaded) return;
   window.PatanjaliDashboardLoaded = true;
@@ -384,7 +384,7 @@
     goProductForm(){ location.href = `../common/products/product-form.html?shopType=patanjali&shopId=${this.shopId}&type=patanjali`; }
     goQuickAdd(){ location.href = `../common/products/product-form.html?shopType=patanjali&shopId=${this.shopId}&type=patanjali&quick=1`; }
     editProduct(id){ location.href = `../common/products/product-form.html?shopType=patanjali&shopId=${this.shopId}&type=patanjali&editId=${id}`; }
-    viewShop(){ window.open(`./user-view.html?shopId=${this.shopId}&shopType=patanjali&supplierId=${this.shopId}&supplierRole=shop_owner`, '_blank'); }
+    viewShop(){ window.open(`./user-view.html?shopId=${this.shopId}&shopType=patanjali`, '_blank'); }
     async deleteProduct(id){
       if(!confirm('Delete? Ye item dashboard aur customer view dono se hat jayega.')) return;
       try{
