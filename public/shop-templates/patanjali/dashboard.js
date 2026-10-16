@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/patanjali/dashboard.js - PATANJALI POWERFUL - COMMON CONNECTED - V1
+// LOCATION: public/shop-templates/patanjali/dashboard.js - PATANJALI POWERFUL - V13 HIERARCHY MASTER
 (function(){
   if(window.PatanjaliDashboardLoaded) return;
   window.PatanjaliDashboardLoaded = true;
@@ -22,8 +22,11 @@
         lowStock: `/api/common/inventory/${this.shopId}/low-stock`,
         orders: `/api/common/orders/${this.shopId}?limit=20`,
         toggle: `/api/common/shop-toggle/${this.shopId}`,
-        shopInfo: `/api/common/profile/${this.shopId}`
+        shopInfo: `/api/common/profile/${this.shopId}`,
+        walletBalance: `/api/common/wallet/balance?userId=${this.shopId}&role=shop_owner&shopId=${this.shopId}`,
+        walletTx: `/api/common/wallet/transactions?userId=${this.shopId}&role=shop_owner&limit=20`
       };
+      this.wallet = { balance:0, totalEarning:0 };
       this.init();
     }
 
@@ -36,12 +39,16 @@
       localStorage.setItem('last_shopId', this.shopId);
       localStorage.setItem('shopType', 'patanjali');
       window.shopId = this.shopId; window.shopType = 'patanjali';
+      window.MY_SHOP_ID = this.shopId;
+      window.USER_ROLE = 'shop_owner';
       const sid = document.getElementById('shopIdDisplay');
       if(sid) sid.innerText = 'ID: ' + this.shopId.slice(-6);
       if(window.AuthCore){ try{ await window.AuthCore.protectDashboard(); }catch(e){} }
       this.bindUI(); this.bindSearch(); this.bindToggle(); this.bindSocket(); this.bindProfileSync();
       await this.loadDashboard();
-      setInterval(()=>{ this.isLoading = false; this.loadDashboard(); }, 30000);
+      await this.loadWallet();
+      await this.loadAdminProductsForShop();
+      setInterval(()=>{ this.isLoading = false; this.loadDashboard(); this.loadWallet(); }, 30000);
     }
 
     bindProfileSync(){
@@ -62,6 +69,7 @@
       $('viewShopBtn')?.addEventListener('click', ()=> this.viewShop());
       $('addProductBtn')?.addEventListener('click', ()=> this.goProductForm());
       $('sortSelect')?.addEventListener('change', (e)=>{ this.currentSort = e.target.value; this.applyFilters(); });
+      $('buyFromAdminBtn')?.addEventListener('click', ()=>{ document.getElementById('adminProductsForShopOwner')?.scrollIntoView({behavior:'smooth'}); this.loadAdminProductsForShop(); });
     }
 
     bindSearch(){
@@ -98,6 +106,9 @@
             await fetch(this.API_COMMON.toggle, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({isOpen})}).catch(()=>{});
             await fetch(`/api/shops/patanjali/${this.shopId}/settings`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({isOpen})}).catch(()=>{});
           }
+          // Emit socket
+          if(window.shopSocket) window.shopSocket.emit('shop-status-changed', { shopId:this.shopId, isOpen });
+          if(window.DashboardCore && window.DashboardCore.emitShopStatus) window.DashboardCore.emitShopStatus(isOpen);
           this.markShopUpdated();
           this.toast(isOpen? 'Shop Opened ✅' : 'Shop Closed 🔴');
         }catch(e){ this.updateToggleUI(!isOpen); this.toast('Toggle failed'); }
@@ -109,17 +120,111 @@
     }
 
     bindSocket(){
-      if(!window.SocketCore) return;
-      window.SocketCore.on('new-order', (o)=>{
-        if(o.shopId && o.shopId!==this.shopId) return;
-        this.toast(`🔔 New Order - ₹${o.total||0}`);
-        try{ document.getElementById('newOrderSound')?.play().catch(()=>{}); }catch(e){}
-        if(navigator.vibrate) navigator.vibrate([100,50,100]);
-        this.orders.unshift(o); this.renderOrders(this.orders.slice(0,10));
-        this.isLoading = false; this.loadDashboard();
+      // V13 Hierarchy - use global.io + dashboard-core
+      if(window.DashboardCore && window.DashboardCore.initSocket){
+        window.DashboardCore.initSocket();
+      }
+      // Also legacy SocketCore
+      if(window.SocketCore){
+        window.SocketCore.on('new-order', (o)=>{
+          if(o.shopId && o.shopId!==this.shopId) return;
+          this.handleNewOrder(o);
+        });
+        window.SocketCore.on('shop-status-changed', (d)=>{ if(d.shopId===this.shopId) this.updateToggleUI(d.isOpen); });
+        window.SocketCore.on('shop-profile-updated', (d)=>{ if(d.shopId===this.shopId){ this.markShopUpdated(); this.loadDashboard(); } });
+      }
+      // Direct socket from dashboard-core.js
+      if(window.shopSocket){
+        window.shopSocket.on('new-order', (o)=>{ this.handleNewOrder(o); });
+      }
+    }
+
+    handleNewOrder(o){
+      this.toast(`🔔 New Order - ₹${o.totalAmount||o.total||0} - ${o.buyerRole||'customer'}`);
+      try{ document.getElementById('newOrderSound')?.play().catch(()=>{}); }catch(e){}
+      if(window.DashboardCore && window.DashboardCore.playOrderSound) window.DashboardCore.playOrderSound();
+      if(navigator.vibrate) navigator.vibrate([100,50,100]);
+      // Badge
+      const badge = document.getElementById('newOrderBadge');
+      if(badge){ badge.style.display='inline-block'; }
+      const countBadge = document.getElementById('newOrderCount');
+      if(countBadge){
+        countBadge.style.display='inline-block';
+        const c = parseInt(countBadge.textContent||'0')+1;
+        countBadge.textContent = c>9? '9+' : c;
+      }
+      // Popup via dashboard-core
+      if(window.DashboardCore && window.DashboardCore.showNewOrderPopup) window.DashboardCore.showNewOrderPopup(o);
+      this.orders.unshift(o); this.renderOrders(this.orders.slice(0,10));
+      this.isLoading = false; this.loadDashboard(); this.loadWallet();
+    }
+
+    async loadWallet(){
+      try {
+        const res = await fetch(this.API_COMMON.walletBalance).then(r=>r.json()).catch(()=>({balance:0}));
+        this.wallet = res.wallet || res || { balance:0, totalEarning:0 };
+        const $ = (id)=> document.getElementById(id);
+        if($('walletBalance')) $('walletBalance').textContent = `₹${this.wallet.balance||0}`;
+        if($('totalEarning')) $('totalEarning').textContent = `₹${this.wallet.totalEarning||0}`;
+        if($('walletEarning')) $('walletEarning').textContent = `₹${this.wallet.totalEarning||0}`;
+        if($('headerWallet')) $('headerWallet').textContent = `₹${this.wallet.balance||0}`;
+        if($('revenue')) $('revenue').textContent = this.wallet.totalEarning||0;
+        // Tx
+        const txRes = await fetch(this.API_COMMON.walletTx).then(r=>r.json()).catch(()=>({transactions:[]}));
+        const txEl = document.getElementById('walletTx');
+        if(txEl){
+          const tx = txRes.transactions || [];
+          if(!tx.length) txEl.innerHTML = '<p style="opacity:0.6">No transactions yet</p>';
+          else txEl.innerHTML = tx.map(t=> `
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #334155">
+              <span>${t.type==='credit'? '🟢' : '🔴'} ${t.description||t.type}<br><small style="color:#94a3b8">${new Date(t.createdAt).toLocaleDateString()}</small></span>
+              <span style="font-weight:800;color:${t.type==='credit'? '#22c55e' : '#ef4444'}">${t.type==='credit'? '+' : '-'}₹${t.amount}</span>
+            </div>
+          `).join('');
+        }
+      } catch(e){ console.log('Wallet load fail', e.message); }
+    }
+
+    async loadAdminProductsForShop(){
+      const container = document.getElementById('adminProductsForShopOwner');
+      if(!container) return;
+      container.innerHTML = '<p style="font-size:12px;opacity:0.6">Loading admin/area products...</p>';
+      try {
+        // Hierarchy: shop_owner can buy from area_manager & admin
+        const res = await fetch(`/api/world-products?role=shop_owner&shopId=${this.shopId}`).then(r=>r.json()).catch(()=>({data:[]}));
+        let products = res.data || res.products || [];
+        let allowed = products.filter(p=> ['admin','area_manager'].includes(p.ownerRole || p.supplierRole || p.shopOwnerRole || ''));
+        if(allowed.length===0){
+          // Fallback fetch admin products directly
+          const res2 = await fetch(`/api/world-products?role=admin`).then(r=>r.json()).catch(()=>({data:[]}));
+          allowed = (res2.data||[]).slice(0,12).map(p=> ({...p, ownerRole:p.ownerRole||'admin', ownerId:p.ownerId||'admin_default'}));
+        }
+        const toShow = allowed.slice(0,12);
+        if(!toShow.length){ container.innerHTML = '<p style="font-size:12px;color:#888">No admin/area products. Admin se stock mangao.</p>'; return; }
+        container.innerHTML = toShow.map(p=> `
+          <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:10px">
+            <img src="${p.thumbnail||p.image||'https://placehold.co/100x100/16a34a/fff?text=P'}" style="width:100%;height:80px;object-fit:cover;border-radius:8px">
+            <div style="font-weight:800;font-size:12px;margin-top:6px">${(p.name||'Product').slice(0,30)}</div>
+            <div style="font-size:10px;color:#666">₹${p.price} • ${p.ownerRole||'admin'}</div>
+            <button onclick='window.PatanjaliDashboard.buyBulkFromHierarchy(${JSON.stringify(p).replace(/'/g,"&#39;")})' style="width:100%;margin-top:6px;padding:6px;background:#000;color:#fff;border:0;border-radius:6px;font-size:11px">Buy Bulk x10</button>
+          </div>
+        `).join('');
+      } catch(e){ container.innerHTML = `<p style="color:red;font-size:12px">${e.message}</p>`; }
+    }
+
+    buyBulkFromHierarchy(product){
+      if(!window.CartCore){ alert('CartCore not loaded'); return; }
+      product.ownerRole = product.ownerRole || product.supplierRole || 'admin';
+      product.ownerId = product.ownerId || product.shopId || 'admin_default';
+      product.shopId = product.shopId || product.ownerId;
+      window.CartCore.add(product, 10).then(ok=>{
+        if(ok){
+          this.toast(`Added ${product.name} x10 to cart`);
+          if(confirm(`Added ${product.name} x10. Checkout par jana hai?`)){
+            location.href = `../common/checkout/checkout.html?shopId=${this.shopId}&supplierId=${product.ownerId}&supplierRole=${product.ownerRole}&shopType=patanjali&supplierName=${encodeURIComponent(product.ownerRole)}`;
+          }
+        }
       });
-      window.SocketCore.on('shop-status-changed', (d)=>{ if(d.shopId===this.shopId) this.updateToggleUI(d.isOpen); });
-      window.SocketCore.on('shop-profile-updated', (d)=>{ if(d.shopId===this.shopId){ this.markShopUpdated(); this.loadDashboard(); } });
     }
 
     async loadDashboard(){
@@ -175,7 +280,7 @@
 
     renderStatus(){
       const el = document.getElementById('commonStatus'); if(!el) return;
-      el.innerHTML = `✅ SAMANLIVE Connected<br>Shop: ${this.shopData?.shopName||this.shopData?.name||'Patanjali Store'}<br>Products: ${this.allProducts.length} (World: ${this.worldProducts.length})<br>Type: patanjali`;
+      el.innerHTML = `✅ SAMANLIVE Connected<br>Shop: ${this.shopData?.shopName||this.shopData?.name||'Patanjali Store'}<br>Products: ${this.allProducts.length} (World: ${this.worldProducts.length})<br>Type: patanjali<br>Wallet: ₹${this.wallet.balance||0} • Role: shop_owner`;
     }
     renderProfile(){
       const d = this.shopData || {};
@@ -186,13 +291,15 @@
       const set = (id, txt)=>{ const el=document.getElementById(id); if(el) el.innerText = txt; };
       set('shopName', name); set('headerShopName', name);
       set('shopMeta', `${owner} • ${d.area || d.city || 'Ayurvedic Store'}`);
+      const roleEl = document.getElementById('roleInfo');
+      if(roleEl && window.RoleHierarchy) roleEl.textContent = `Role: ${window.RoleHierarchy.getMyRole()} • Can buy from: area_manager, admin`;
     }
     renderStats(analytics){
       const $ = (id)=> document.getElementById(id);
       const medicineCats = ['Ayurvedic Medicine','Chyawanprash'];
       const medicineCount = this.allProducts.filter(p=> medicineCats.includes(p.category)).length;
       const todayOrders = analytics?.todayOrders || analytics?.todaySale || this.orders.length || 0;
-      const revenue = analytics?.todayRevenue || analytics?.revenue || 0;
+      const revenue = analytics?.todayRevenue || analytics?.revenue || this.wallet.totalEarning || 0;
       if($('totalProducts')) $('totalProducts').innerText = this.allProducts.length;
       if($('prodCount')) $('prodCount').innerText = `(${this.allProducts.length})`;
       if($('medicineCount')) $('medicineCount').innerText = medicineCount;
@@ -201,6 +308,7 @@
       if($('lowStockCount')) $('lowStockCount').innerText = this.lowStock.length;
       if($('worldCountText')) $('worldCountText').innerText = `World: ${this.worldProducts.length} • Old: ${this.oldProducts.length}`;
       if($('items')) $('items').innerText = this.allProducts.length;
+      // Wallet already in loadWallet
     }
     renderCats(){
       const bar = document.getElementById('catTabs'); if(!bar) return;
@@ -232,7 +340,6 @@
       }
       html += normalList.map(p=>this.renderNormalCard(p)).join('');
       c.innerHTML = html;
-      // purana table wala hisaab bhi bhar do agar HTML me hai
       this.renderTable(normalList.concat(specialList));
     }
     renderNormalCard(p){
@@ -269,15 +376,15 @@
     }
     renderOrders(orders){
       const c = document.getElementById('liveOrders'); if(!c) return;
-      if(!orders.length){ c.innerHTML = '<p style="color:#94a3b8;font-size:12px">No live orders</p>'; return; }
-      c.innerHTML = orders.slice(0,8).map(o=>`<div class="order-row"><div><b style="font-size:12px">#${(o.orderId||o._id||'').toString().slice(-6).toUpperCase()}</b><br><small style="color:#64748b;font-size:10px">₹${o.total||0} • ${o.customerName||o.customer||'Customer'}</small></div><span class="pill">${(o.status||'PLACED').toUpperCase()}</span></div>`).join('');
+      if(!orders.length){ c.innerHTML = '<p style="color:#94a3b8;font-size:12px">No live orders - Customer order karega toh yaha 🔔 bajega</p>'; return; }
+      c.innerHTML = orders.slice(0,8).map(o=>`<div class="order-row"><div><b style="font-size:12px">#${(o.orderId||o._id||'').toString().slice(-6).toUpperCase()}</b><br><small style="color:#64748b;font-size:10px">₹${o.totalAmount||o.total||0} • ${o.buyerRole||o.customerName||'Customer'} • Earning: ₹${o.supplierEarning||''}</small></div><span class="pill">${(o.status||'PLACED').toUpperCase()}</span></div>`).join('');
     }
-    showLoader(s){ const el = document.getElementById('loader'); if(el && el.id==='loader' && el.classList.contains('loader-box')===false) el.style.display = s? 'grid':'none'; const mainLoader = document.querySelector('#loader'); if(mainLoader) mainLoader.style.display = s? 'grid':'none'; }
+    showLoader(s){ const el = document.getElementById('loader'); if(el) el.style.display = s? 'grid':'none'; }
     toast(m){ const t = document.getElementById('toast'); if(!t) return; t.innerText = m; t.style.display = 'block'; setTimeout(()=> t.style.display='none', 2800); }
     goProductForm(){ location.href = `../common/products/product-form.html?shopType=patanjali&shopId=${this.shopId}&type=patanjali`; }
     goQuickAdd(){ location.href = `../common/products/product-form.html?shopType=patanjali&shopId=${this.shopId}&type=patanjali&quick=1`; }
     editProduct(id){ location.href = `../common/products/product-form.html?shopType=patanjali&shopId=${this.shopId}&type=patanjali&editId=${id}`; }
-    viewShop(){ window.open(`./customer-view.html?shopId=${this.shopId}&shopType=patanjali`, '_blank'); }
+    viewShop(){ window.open(`./user-view.html?shopId=${this.shopId}&shopType=patanjali&supplierId=${this.shopId}&supplierRole=shop_owner`, '_blank'); }
     async deleteProduct(id){
       if(!confirm('Delete? Ye item dashboard aur customer view dono se hat jayega.')) return;
       try{
@@ -301,5 +408,5 @@
   window.editPatanjali = (id)=> window.PatanjaliDashboard.editProduct(id);
   window.filterCat = (cat, el)=> window.PatanjaliDashboard.filterCat(cat, el);
 
-  setTimeout(()=>{ const l = document.getElementById('loader'); if(l) l.style.display = 'none'; window.PatanjaliDashboard?.toast('✅ Patanjali Dashboard Ready'); }, 1200);
+  setTimeout(()=>{ const l = document.getElementById('loader'); if(l) l.style.display = 'none'; window.PatanjaliDashboard?.toast('✅ Patanjali Dashboard V13 Hierarchy Ready - Wallet + Socket + Bulk Buy'); }, 1200);
 })();

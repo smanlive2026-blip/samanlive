@@ -1,4 +1,4 @@
-<!-- LOCATION: public/shop-templates/common/dashboard.html - COMMON DASHBOARD - SAMANLIVE - FULL CODE - NO CUT - FIXED LOADER -->
+<!-- LOCATION: public/shop-templates/common/dashboard.html - COMMON DASHBOARD - V18 WORLD BOSS + HIERARCHY MASTER - FULL CODE -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,12 +6,12 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SAMANLIVE - Shop Dashboard</title>
+<title>SAMANLIVE - Shop Dashboard - V18 Hierarchy</title>
 <link rel="icon" href="./samanlive-logo.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./dashboard.css?v=3">
-<!-- <script src="/socket.io/socket.io.js"></script> -->
+<script src="/socket.io/socket.io.js"></script>
 <style>
 .brand{display:flex!important;align-items:center!important;gap:10px!important}
 .brand-logo{width:52px;height:52px;object-fit:contain;background:#fff;border-radius:12px;padding:3px;flex-shrink:0}
@@ -20,41 +20,43 @@
 .header-brand{display:flex;align-items:center;gap:10px}
 .header-logo{width:42px;height:42px;object-fit:contain;background:#fff;border-radius:10px;padding:2px}
 .samanlive-text{font-weight:900!important;letter-spacing:.5px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.5}}
 </style>
 </head>
 <body>
-<div id="loader"><div class="loader-box"><i class="fa-solid fa-spinner fa-spin"></i> Loading SAMANLIVE Dashboard...</div></div>
+<div id="loader"><div class="loader-box"><i class="fa-solid fa-spinner fa-spin"></i> Loading SAMANLIVE Dashboard V18 Hierarchy...</div></div>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="sidebar" id="sidebar">
   <div class="brand">
     <img src="./samanlive-logo.png" class="brand-logo" alt="SAMANLIVE" onerror="this.src='https://placehold.co/100x100/ffffff/111827?text=SL'">
     <div>
-      <div class="brand-name">SAMANLIVE</div>
-      <div class="brand-sub" id="brandShopType">Shop Dashboard</div>
+      <div class="brand-name">SAMANLIVE <span id="newOrderBadge" style="display:none;background:#ef4444;color:#fff;font-size:8px;padding:2px 5px;border-radius:5px;animation:blink 1s infinite">NEW ORDER</span></div>
+      <div class="brand-sub" id="brandShopType">Shop Dashboard - V18 Hierarchy</div>
     </div>
     <small class="badge-pro">PRO</small>
   </div>
 
-  <!-- PROFILE SYSTEM -->
   <div class="profile-box" id="profileBox">
     <img id="profilePhoto" src="https://placehold.co/100x100/1e293b/ffffff?text=SL" alt="Shop">
     <div class="profile-info">
       <b id="profileShopName">Loading Shop...</b>
       <small id="profileOwnerName">Owner</small>
       <small id="profileShopIdShort">ID: ...</small>
+      <small id="walletShort" style="color:#10b981;font-weight:900">Wallet: ₹0 | Earn: ₹0</small>
     </div>
     <button class="profile-edit-btn" id="btnOpenProfile" title="Profile"><i class="fa-solid fa-pen"></i></button>
   </div>
 
   <div class="menu">
-    <a class="active" data-tab="overview"><i class="fa-solid fa-table-columns"></i> Overview</a>
+    <a class="active" data-tab="overview"><i class="fa-solid fa-table-columns"></i> Overview <span id="newOrderCount" style="display:none;background:#ef4444;color:#fff;font-size:9px;padding:2px 6px;border-radius:10px">0</span></a>
     <a data-tab="products"><i class="fa-solid fa-box"></i> Products <span id="menuProdCount" class="menu-count">0</span></a>
     <a data-tab="orders"><i class="fa-solid fa-cart-shopping"></i> Orders <span class="menu-live">LIVE</span></a>
+    <a data-tab="bulk_buy"><i class="fa-solid fa-boxes-stacked"></i> Buy From Admin/Area <span style="margin-left:auto;background:#10b981;color:#fff;padding:2px 6px;border-radius:6px;font-size:9px">HIERARCHY</span></a>
     <a data-tab="inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory</a>
     <a data-tab="analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a>
     <div class="section">BUSINESS</div>
-    <a data-tab="finance"><i class="fa-solid fa-indian-rupee-sign"></i> Finance / Wallet</a>
+    <a data-tab="finance"><i class="fa-solid fa-indian-rupee-sign"></i> Finance / Wallet <span id="menuWallet" style="margin-left:auto;background:#0f172a;color:#fff;padding:2px 6px;border-radius:6px;font-size:9px">₹0</span></a>
     <a data-tab="marketing"><i class="fa-solid fa-bullhorn"></i> Marketing</a>
     <a data-tab="staff"><i class="fa-solid fa-users"></i> Staff</a>
     <a data-tab="delivery"><i class="fa-solid fa-truck"></i> Delivery</a>
@@ -69,9 +71,10 @@
   </div>
 
   <div class="sidebar-footer">
-    <div class="footer-label">SHOP ID</div>
+    <div class="footer-label">SHOP ID - HIERARCHY</div>
     <div id="shopIdDisplay">...</div>
-    <div class="footer-meta">Role: <span id="roleDisplay">dashboard</span> | Type: <span id="shopTypeDisplay">-</span></div>
+    <div class="footer-meta">Role: <span id="roleDisplay">shop_owner</span> | Type: <span id="shopTypeDisplay">-</span> | Wallet: <span id="footerWallet">₹0</span></div>
+    <div style="font-size:10px;color:#94a3b8;margin-top:4px" id="hierarchyInfo">customer→shop_owner→area_manager→admin</div>
     <div class="footer-btns">
       <button class="btn btn-dark flex1" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
       <button class="btn btn-ghost flex1" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh</button>
@@ -85,11 +88,13 @@
     <div class="header-brand">
       <img src="./samanlive-logo.png" class="header-logo" alt="SAMANLIVE" onerror="this.src='https://placehold.co/100x100/ffffff/111827?text=SL'">
       <div class="header-title">
-        <h3><span class="samanlive-text">SAMANLIVE</span> <span class="dash-sep">|</span> <span id="headerShopName">Shop Dashboard</span></h3>
-        <small id="shopNameHead">Loading...</small>
+        <h3><span class="samanlive-text">SAMANLIVE</span> <span class="dash-sep">|</span> <span id="headerShopName">Shop Dashboard - Hierarchy</span></h3>
+        <small id="shopNameHead">Loading... Wallet + Socket + Bulk Buy</small>
       </div>
     </div>
-    <div class="header-actions">
+    <div class="header-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:800">Wallet: <b id="headerWallet">₹0</b> | Earn: <b id="headerEarning">₹0</b></div>
+      <a href="./cart/cart.html" style="position:relative;background:#fff;border:1px solid #e2e8f0;padding:10px 14px;border-radius:10px;text-decoration:none;color:#0f172a;font-weight:800"><i class="fa-solid fa-bag-shopping"></i> Buy Stock <span data-cart-count style="position:absolute;top:-6px;right:-6px;background:#10b981;color:#fff;border-radius:50%;min-width:18px;height:18px;display:none;align-items:center;justify-content:center;font-size:10px">0</span></a>
       <button class="btn btn-dark" onclick="location.reload()"><i class="fa-solid fa-rotate"></i></button>
       <button class="btn btn-dark" id="newProductBtn"><i class="fa-solid fa-plus"></i> New Product</button>
       <button class="btn btn-green" id="quickAddBtn"><i class="fa-solid fa-bolt"></i> Quick Add</button>
@@ -99,40 +104,49 @@
   <div class="stats">
     <div class="stat"><i class="fa-solid fa-box" style="color:#6366f1"></i><div><b id="productCount">0</b><p>Total Products</p></div></div>
     <div class="stat"><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i><div><b id="lowStockCount">0</b><p>Low Stock</p></div></div>
-    <div class="stat"><i class="fa-solid fa-indian-rupee-sign" style="color:#10b981"></i><div><b id="revenue">₹0</b><p>Revenue</p></div></div>
-    <div class="stat"><i class="fa-solid fa-cart-shopping" style="color:#0ea5e9"></i><div><b id="orderCount">0</b><p>Orders</p></div></div>
+    <div class="stat"><i class="fa-solid fa-indian-rupee-sign" style="color:#10b981"></i><div><b id="revenue">₹0</b><p>Revenue - 95% after admin</p></div></div>
+    <div class="stat"><i class="fa-solid fa-cart-shopping" style="color:#0ea5e9"></i><div><b id="orderCount">0</b><p>Orders - LIVE Socket</p></div></div>
+    <div class="stat" style="border:2px solid #10b981"><i class="fa-solid fa-wallet" style="color:#10b981"></i><div><b id="walletBalance">₹0</b><p>Wallet Balance - Hierarchy</p></div></div>
+    <div class="stat" style="border:2px solid #0f172a"><i class="fa-solid fa-sack-dollar" style="color:#0f172a"></i><div><b id="totalEarning">₹0</b><p>Total Earning</p></div></div>
   </div>
 
   <div class="content">
     <div class="left">
       <div class="tab active" id="tab-overview">
         <div class="left-head">
-          <h4>Your Products <span id="prodCountText">(0)</span></h4>
-          <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" placeholder="Search products... name, brand, weight"></div>
+          <h4>Your Products <span id="prodCountText">(0)</span> - Hierarchy</h4>
+          <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" placeholder="Search products..."></div>
         </div>
         <div class="p-grid" id="productList"></div>
       </div>
 
-      <div class="tab" id="tab-products"><div class="tab-pad"><h3>Products - Inventory</h3><div id="commonInventory"></div><iframe id="inventoryFrame" class="frame"></iframe></div></div>
-      <div class="tab" id="tab-orders"><div class="tab-pad"><h3>Live Orders</h3><div id="recentOrders"></div><div class="mt12"><a id="openCommonOrders" class="btn btn-dark"><i class="fa-solid fa-external-link"></i> Open Full Orders Page</a></div><iframe id="ordersFrame" class="frame"></iframe></div></div>
+      <div class="tab" id="tab-bulk_buy">
+        <div class="tab-pad">
+          <h3>🛒 Bulk Buy - Hierarchy (Shop Owner → Area Manager / Admin)</h3>
+          <p style="font-size:12px;color:#64748b;margin-top:6px">Shop Owner Area Manager aur Admin se bulk me maal le sakta hai. Cart me add hoga, wallet se pay. 5% commission admin ko.</p>
+          <div id="adminProductsForShopOwner" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:16px">Loading admin/area products...</div>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-products"><div class="tab-pad"><h3>Products - Inventory - Common Connected</h3><div id="commonInventory"></div><iframe id="inventoryFrame" class="frame"></iframe></div></div>
+      <div class="tab" id="tab-orders"><div class="tab-pad"><h3>Live Orders - Socket + Hierarchy</h3><div id="recentOrders"></div><div class="mt12"><a id="openCommonOrders" class="btn btn-dark"><i class="fa-solid fa-external-link"></i> Open Full Orders - common/orders</a></div><iframe id="ordersFrame" class="frame"></iframe></div></div>
       <div class="tab" id="tab-inventory"><div class="tab-pad"><h3>Inventory - Low Stock</h3><div id="lowStock"></div><div id="lowStockList"></div><div class="mt12"><button class="btn btn-dark" id="btnLowStock">Open Low Stock Alert</button></div></div></div>
-      <div class="tab" id="tab-analytics"><div class="tab-pad"><h3>Analytics</h3><div id="analyticsBox"></div><iframe id="analyticsFrame" class="frame"></iframe></div></div>
-      <div class="tab" id="tab-finance"><div class="tab-pad"><h3>Finance / Wallet</h3><div id="financeBox"></div><div class="btn-row"><button class="btn btn-dark" id="btnWallet1">Wallet - Finance</button><button class="btn btn-dark" id="btnWallet2">Wallet</button></div></div></div>
+      <div class="tab" id="tab-analytics"><div class="tab-pad"><h3>Analytics - Wallet + Hierarchy</h3><div id="analyticsBox"></div><iframe id="analyticsFrame" class="frame"></iframe></div></div>
+      <div class="tab" id="tab-finance"><div class="tab-pad"><h3>Finance / Wallet - Hierarchy</h3><div id="financeBox" style="background:#f8fafc;padding:16px;border-radius:12px"><div>Balance: <b id="financeWalletBalance">₹0</b></div><div>Total Earning: <b id="financeTotalEarning">₹0</b></div><div style="margin-top:12px"><div id="walletTx" style="font-size:11px;max-height:300px;overflow:auto">Loading transactions...</div></div></div><div class="btn-row"><button class="btn btn-dark" id="btnWallet1">Wallet - Finance</button><button class="btn btn-dark" id="btnWallet2">Wallet</button></div></div></div>
       <div class="tab" id="tab-marketing"><div class="tab-pad"><h3>Marketing</h3><div class="btn-row"><button class="btn btn-dark" id="btnCoupons">Coupons</button><button class="btn btn-dark" id="btnReferral">Referral</button></div></div></div>
       <div class="tab" id="tab-staff"><div class="tab-pad"><h3>Staff</h3><button class="btn btn-dark" id="btnStaff">Staff List</button></div></div>
       <div class="tab" id="tab-delivery"><div class="tab-pad"><h3>Delivery</h3><button class="btn btn-dark" id="btnDelivery">Delivery Status</button></div></div>
       <div class="tab" id="tab-reviews"><div class="tab-pad"><h3>Reviews</h3><div id="reviewsBox"></div><iframe id="reviewsFrame" class="frame frame-sm"></iframe></div></div>
 
-      <!-- PROFILE TAB - FULL PROFILE SYSTEM -->
       <div class="tab" id="tab-profile">
         <div class="tab-pad">
-          <h3>Shop Profile</h3>
+          <h3>Shop Profile - Hierarchy</h3>
           <div class="profile-form">
             <div class="profile-photo-row">
               <img id="profileBigPhoto" src="https://placehold.co/120x120/f1f5f9/64748b?text=SHOP">
               <div>
                 <b id="profileBigName">Shop Name</b>
-                <p id="profileBigMeta">Shop Type • Area</p>
+                <p id="profileBigMeta">Shop Type • Area • Role: shop_owner → area_manager, admin</p>
                 <div class="btn-row">
                   <button class="btn btn-dark" id="btnEditProfile">Edit Profile</button>
                   <button class="btn btn-ghost" id="btnShopInfo">Shop Info</button>
@@ -148,22 +162,24 @@
               <div class="p-field"><label>Shop Type</label><span id="pfShopType">-</span></div>
               <div class="p-field"><label>Address</label><span id="pfAddress">-</span></div>
               <div class="p-field"><label>Status</label><span id="pfStatus">-</span></div>
+              <div class="p-field"><label>Wallet</label><span id="pfWallet">₹0</span></div>
+              <div class="p-field"><label>Role Can Buy From</label><span id="pfCanBuy">area_manager, admin</span></div>
             </div>
           </div>
         </div>
       </div>
 
       <div class="tab" id="tab-banner"><div class="tab-pad"><h3>Banner</h3><button class="btn btn-dark" id="btnBanner">Banner Setup</button></div></div>
-      <div class="tab" id="tab-orders_full"><div class="tab-pad"><h3>Full Orders</h3><iframe id="ordersFullFrame" class="frame frame-lg"></iframe></div></div>
-      <div class="tab" id="tab-settings"><div class="tab-pad"><h3>Settings</h3><div class="toggle"><span>Shop Status: <b id="toggleText">Open</b></span><div class="switch on" id="toggleSwitch"></div></div><div class="btn-row"><button class="btn btn-dark" id="btnSettings">Settings</button><button class="btn btn-dark" id="btnProfile2">Profile</button></div></div></div>
+      <div class="tab" id="tab-orders_full"><div class="tab-pad"><h3>Full Orders - Hierarchy + Wallet</h3><iframe id="ordersFullFrame" class="frame frame-lg"></iframe></div></div>
+      <div class="tab" id="tab-settings"><div class="tab-pad"><h3>Settings - Hierarchy</h3><div class="toggle"><span>Shop Status: <b id="toggleText">Open</b></span><div class="switch on" id="toggleSwitch"></div></div><div class="btn-row"><button class="btn btn-dark" id="btnSettings">Settings</button><button class="btn btn-dark" id="btnProfile2">Profile</button></div></div></div>
     </div>
 
     <div class="right">
-      <div class="box"><div class="toggle"><span><i class="fa-solid fa-store"></i> Shop: <b id="toggleText2">Open</b></span><div class="switch on" id="toggleSwitch2"></div></div><div class="box-sub">Live Open / Close</div></div>
+      <div class="box"><div class="toggle"><span><i class="fa-solid fa-store"></i> Shop: <b id="toggleText2">Open</b></span><div class="switch on" id="toggleSwitch2"></div></div><div class="box-sub">Live Open / Close - Socket emit</div></div>
       <div class="box"><h4><i class="fa-solid fa-fire" style="color:#ef4444"></i> Low Stock</h4><div id="lowStockRight"></div></div>
-      <div class="box"><h4><i class="fa-solid fa-bell" style="color:#0ea5e9"></i> Live Orders</h4><div id="liveOrdersRight"></div></div>
-      <div class="box dark-box"><h4>SAMANLIVE System Status</h4><div id="commonStatus">Checking...</div><div class="mt10"><button class="btn dark-btn flex1" onclick="window.CommonDashboard?.checkCommonConnection()">Check Connection</button></div></div>
-      <div class="box"><h4>Profile Quick</h4><div class="profile-quick"><img id="quickPhoto" src="https://placehold.co/60x60/f1f5f9/64748b?text=S"><div><b id="quickShopName">Shop</b><br><small id="quickOwner">Owner</small></div></div><button class="btn btn-dark full-btn" id="btnQuickProfile">Open Profile</button></div>
+      <div class="box"><h4><i class="fa-solid fa-bell" style="color:#0ea5e9"></i> Live Orders <span id="liveOrderBadgeRight" style="display:none;background:red;color:#fff;border-radius:50%;padding:2px 6px;font-size:10px">0</span></h4><div id="liveOrdersRight"></div></div>
+      <div class="box dark-box"><h4>SAMANLIVE System - V18 Hierarchy</h4><div id="commonStatus">Checking... Wallet + Socket + Hierarchy Active</div><div class="mt10" style="display:flex;gap:6px"><button class="btn dark-btn flex1" onclick="window.CommonDashboard?.checkCommonConnection()">Check Connection</button><button class="btn" style="background:#10b981;color:#fff;flex:1;font-size:11px" onclick="window.CommonDashboard?.loadWallet()">Wallet Refresh</button></div></div>
+      <div class="box"><h4>Profile Quick - Hierarchy</h4><div class="profile-quick"><img id="quickPhoto" src="https://placehold.co/60x60/f1f5f9/64748b?text=S"><div><b id="quickShopName">Shop</b><br><small id="quickOwner">Owner</small><br><small id="quickRole" style="color:#10b981">shop_owner</small></div></div><button class="btn btn-dark full-btn" id="btnQuickProfile">Open Profile</button></div>
     </div>
   </div>
 </div>
@@ -171,23 +187,23 @@
 <div id="toast"></div>
 <audio id="newOrderSound" src="./orders/new-order-sound.mp3" preload="none"></audio>
 
+<script src="../../assets/js/role-hierarchy.js"></script>
 <script src="./core/storage-core.js"></script>
 <script src="./core/error-handler.js"></script>
 <script src="./core/api-core.js"></script>
 <script src="./core/auth-core.js"></script>
 <script src="./core/user-core.js"></script>
-<!-- SOCKET BAND - FILE PADI HAI, BAAD ME KHOL DENA
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="./core/socket-core.js"></script>
--->
 <script src="./core/dashboard-core.js"></script>
 <script src="./js/shop-toggle.js"></script>
 <script src="./js/share.js"></script>
 <script src="./cart/cart-core.js"></script>
+<script src="./cart/cart-count.js"></script>
+<script src="./js/dashboard-core.js"></script>
 <script src="./products/product-manager.js"></script>
-<script src="./dashboard.js?v=3"></script>
+<script src="./dashboard.js?v=18"></script>
 <script>
-// COMMON FALLBACK - Loader atakne ka fix - Common style hi rakha hai, Kirana wala nahi hai
+// COMMON FALLBACK - V18 HIERARCHY MASTER - Loader fix + Wallet + Socket + Hierarchy
 (function(){
   var params = new URLSearchParams(location.search);
   var shopId = params.get('shopId') || localStorage.getItem('last_shopId') || '';
@@ -195,10 +211,48 @@
   if(shopId) localStorage.setItem('last_shopId', shopId);
   localStorage.setItem('shopType', shopType);
   window.shopId = shopId; window.shopType = shopType;
-  var sid = document.getElementById('shopIdDisplay'); if(sid && shopId) sid.innerText = shopId;
+  window.MY_SHOP_ID = shopId;
+  window.USER_ROLE = window.RoleHierarchy? window.RoleHierarchy.getMyRole() : 'shop_owner';
+  var sid = document.getElementById('shopIdDisplay'); if(sid && shopId) sid.innerText = shopId.slice(0,20)+'...';
   var std = document.getElementById('shopTypeDisplay'); if(std) std.innerText = shopType;
+  var roleEl = document.getElementById('roleDisplay'); if(roleEl) roleEl.textContent = window.USER_ROLE;
+  var hierEl = document.getElementById('hierarchyInfo'); if(hierEl && window.RoleHierarchy) hierEl.textContent = window.USER_ROLE + ' → ' + JSON.stringify(window.RoleHierarchy.CAN_BUY_FROM[window.USER_ROLE]||[]);
+
+  // Loader double safety
   setTimeout(function(){ var l=document.getElementById('loader'); if(l) l.style.display='none'; }, 2500);
   setTimeout(function(){ var l=document.getElementById('loader'); if(l) l.style.display='none'; }, 5000);
+
+  // Wallet loader for common
+  async function loadCommonWallet(){
+    if(!shopId) return;
+    try{
+      const res = await fetch(`/api/common/wallet/balance?userId=${shopId}&role=shop_owner&shopId=${shopId}`).then(r=>r.json()).catch(()=>({balance:0}));
+      const wallet = res.wallet || res || {balance:0,totalEarning:0};
+      const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent = (id.toLowerCase().includes('wallet')? `₹${v}` : v); };
+      const setFull = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent = `₹${v}`; };
+      setFull('walletBalance', wallet.balance||0);
+      setFull('totalEarning', wallet.totalEarning||0);
+      setFull('revenue', wallet.totalEarning||0);
+      setFull('headerWallet', wallet.balance||0);
+      setFull('headerEarning', wallet.totalEarning||0);
+      setFull('footerWallet', wallet.balance||0);
+      setFull('menuWallet', wallet.balance||0);
+      setFull('financeWalletBalance', wallet.balance||0);
+      setFull('financeTotalEarning', wallet.totalEarning||0);
+      const short = document.getElementById('walletShort'); if(short) short.textContent = `Wallet: ₹${wallet.balance||0} | Earn: ₹${wallet.totalEarning||0}`;
+      const pfW = document.getElementById('pfWallet'); if(pfW) pfW.textContent = `₹${wallet.balance||0}`;
+      // Tx
+      const txRes = await fetch(`/api/common/wallet/transactions?userId=${shopId}&role=shop_owner&limit=20`).then(r=>r.json()).catch(()=>({transactions:[]}));
+      const txEl = document.getElementById('walletTx');
+      if(txEl){
+        const tx = txRes.transactions||[];
+        txEl.innerHTML = tx.length? tx.map(t=> `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:11px"><span>${t.type==='credit'? '🟢' : '🔴'} ${t.description||t.type}</span><span style="font-weight:800;color:${t.type==='credit'? '#10b981':'#ef4444'}">${t.type==='credit'? '+' : '-'}₹${t.amount}</span></div>`).join('') : '<p style="opacity:0.6">No transactions</p>';
+      }
+    }catch(e){ console.log('Wallet error', e.message); }
+  }
+  window.loadCommonWallet = loadCommonWallet;
+  setTimeout(loadCommonWallet, 800);
+  setInterval(loadCommonWallet, 30000);
 })();
 </script>
 </body>

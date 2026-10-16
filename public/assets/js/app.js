@@ -1,9 +1,80 @@
+// LOCATION: public/assets/js/app.js - BLACKBOARD LAYOUT V4 + V13 HIERARCHY - FINAL FULL CODE
 // ========================================
-// SAMANLIVE - BLACKBOARD LAYOUT V4 - FINAL
+// SAMANLIVE - BLACKBOARD LAYOUT V4 + ROLE HIERARCHY
 // ========================================
 let allModules = [], allAds = [], allServices = [], nearbyVideos = [], allCampaigns = [];
 let siteSettings = {}, userLocation = null, allProducts = [];
 let originalServices = [], originalProducts = [];
+
+// ===== V13 HIERARCHY HELPER - MINIMAL localStorage =====
+function getMyRoleSafe(){
+  if(window.RoleHierarchy && window.RoleHierarchy.getMyRole) return window.RoleHierarchy.getMyRole();
+  try { return localStorage.getItem('USER_ROLE') || 'customer'; } catch(e){ return 'customer'; }
+}
+function getMyIdSafe(){
+  if(window.RoleHierarchy && window.RoleHierarchy.getMyId) return window.RoleHierarchy.getMyId();
+  try { return localStorage.getItem('USER_ID') || null; } catch(e){ return null; }
+}
+function getMyShopIdSafe(){
+  if(window.RoleHierarchy && window.RoleHierarchy.getMyShopId) return window.RoleHierarchy.getMyShopId();
+  const url = new URLSearchParams(window.location.search);
+  return url.get('shopId') || null;
+}
+
+function canShowAddToCartButton(product){
+  if (!window.RoleHierarchy) return true;
+  // Inject owner info if missing
+  if (!product.ownerRole) product.ownerRole = product.shopOwnerRole || product.ownerRole || 'shop_owner';
+  if (!product.ownerId) product.ownerId = product.shopId || product.shop_id || product.ownerId || product.shopId;
+  return window.RoleHierarchy.shouldShowAddButton(product);
+}
+
+function filterProductsByRole(products){
+  if (!window.RoleHierarchy) return products;
+  const myRole = getMyRoleSafe();
+  const myId = getMyIdSafe();
+  const myShopId = getMyShopIdSafe();
+  return products.filter(p=>{
+    const ownerId = p.ownerId || p.shopId || p.shop_id || p.shopId;
+    const shopId = p.shopId || p.shop_id;
+    // Self-buy block
+    if (myShopId && shopId && myShopId === shopId) return false;
+    if (myId && ownerId && myId === ownerId) return false;
+    const supplierRole = p.ownerRole || p.shopOwnerRole || p.supplierRole || 'shop_owner';
+    return window.RoleHierarchy.canBuy(myRole, supplierRole, myId || myShopId, ownerId);
+  });
+}
+
+function renderProductCard(product){
+  const showCart = canShowAddToCartButton(product);
+  const price = product.price || product.sellingPrice || 0;
+  const name = product.name || product.title || 'Product';
+  const img = product.thumbnail || product.image || product.images?.[0] || '/assets/default-product.png';
+  const shopName = product.shopName || product.shopType || product.ownerRole || 'Shop';
+
+  // Ensure owner fields for CartCore
+  if (!product.ownerRole) product.ownerRole = 'shop_owner';
+  if (!product.ownerId) product.ownerId = product.shopId || product._id;
+  // Safe string for onclick
+  const productStr = JSON.stringify(product).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
+
+  return `
+    <div class="nearby-product-card" data-product-id="${product._id}" data-owner-role="${product.ownerRole}">
+      <img src="${img}" onerror="this.src='/assets/default-product.png'">
+      <p>${name}</p>
+      <span style="font-size:10px;color:#888">${shopName}</span>
+      <span>₹${price}</span>
+      ${showCart?
+        `<button onclick="event.stopPropagation(); window.CartCore?window.CartCore.add(${productStr.replace(/&quot;/g,'"')},1):addToCartFallback('${product._id}')" style="width:100%;margin-top:6px;padding:6px;background:#000;color:#fff;border:0;border-radius:6px;font-size:12px">Add</button>`
+        : `<div style="margin-top:6px;padding:4px;background:#f3f3f3;border-radius:6px;font-size:10px;text-align:center;color:#999">Not allowed (${getMyRoleSafe()}→${product.ownerRole})</div>`
+      }
+    </div>`;
+}
+
+// Fallback if CartCore not loaded
+window.addToCartFallback = function(id){
+  alert('Cart loading... dobara try karo');
+};
 
 document.addEventListener('DOMContentLoaded', initApp);
 
@@ -26,38 +97,31 @@ window.LocationManager = {
 };
 
 async function initApp() {
-    await loadSettings(); // 1. PEHLE BANNER + LOGO LOAD
-    
+    await loadSettings();
     try {
-        await window.LocationManager.getManual(); 
-        await showUserLocationInHeader(); 
+        await window.LocationManager.getManual();
+        await showUserLocationInHeader();
     } catch(e) {
         console.log("Location/City error, skipping", e);
     }
-    
     await loadAllData();
+    // Cart count update after load
+    if(window.CartCount) window.CartCount.update();
 }
 
 // 1. BANNER + LOGO ADMIN SE - FINAL VIDEO SUPPORT
-
 async function loadSettings() {
     const res = await fetch('/api/settings').catch(()=>({ok:false}));
-    if(res.ok){ 
+    if(res.ok){
         siteSettings = await res.json();
-        console.log("Settings Loaded:", siteSettings);
-        
-        // LOGO LOAD
         const logoImg = document.getElementById('headerLogoImg');
         if(logoImg) {
             logoImg.src = (siteSettings.headerLogoUrl || '/assets/images/samanlive-logo.png') + '?v=' + Date.now();
         }
-        
         const bannerHeader = document.getElementById('mainHeaderBanner');
         if(bannerHeader) {
-            // NAYA LOGIC - ACTIVE KE HISAB SE URL NIKALO
             let finalUrl = '';
             let isVideo = false;
-
             if(siteSettings.headerBannerActive === 'video' && siteSettings.headerBannerVideoUrl){
                 finalUrl = siteSettings.headerBannerVideoUrl;
                 isVideo = true;
@@ -65,16 +129,13 @@ async function loadSettings() {
                 finalUrl = siteSettings.headerBannerImageUrl;
                 isVideo = false;
             } else {
-                // PURANA FALLBACK - AGAR NAYA FIELD NA HO TO
                 finalUrl = siteSettings.headerBannerUrl || '';
                 isVideo = siteSettings.headerBannerType === 'video' || finalUrl.toLowerCase().includes('.mp4') || finalUrl.toLowerCase().includes('.webm') || finalUrl.includes('/video/');
             }
-
-            if(finalUrl && finalUrl !== ''){
+            if(finalUrl && finalUrl!== ''){
                 if(isVideo){
                 bannerHeader.innerHTML = `<video src="${finalUrl}" autoplay muted loop playsinline preload="auto" style="width:100%;height:100%;object-fit:cover;display:block;"></video>`;
-            }
-            else {
+            } else {
                 bannerHeader.innerHTML = `<img src="${finalUrl}?v=${Date.now()}" style="width:100%;height:100%;object-fit:cover;display:block;">`;
             }
                 bannerHeader.style.display = 'block';
@@ -85,7 +146,6 @@ async function loadSettings() {
     }
 }
 
-// 2. CITY NAME SET KARO
 async function showUserLocationInHeader() {
     if (!userLocation) {
         const uc = document.getElementById('userCity'); if(uc) uc.textContent = 'Location Off';
@@ -95,12 +155,11 @@ async function showUserLocationInHeader() {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`);
         const d = await res.json();
         const uc = document.getElementById('userCity'); if(uc) uc.textContent = d.address.city || d.address.town || d.address.district || 'Your Area';
-    } catch(e){ 
-        const uc = document.getElementById('userCity'); if(uc) uc.textContent = 'Your Area'; 
+    } catch(e){
+        const uc = document.getElementById('userCity'); if(uc) uc.textContent = 'Your Area';
     }
 }
 
-// 3. LOCATION KE BAAD SAB LOAD
 async function loadAllData() {
     renderCategoryChips();
     renderHistoryProducts();
@@ -108,13 +167,11 @@ async function loadAllData() {
     await reloadNearbyData();
     await renderNearbyProductsRepeat();
     loadUserProfilePic();
-
     if(window.LocationManager.onLocationUpdate){
         window.LocationManager.onLocationUpdate(userLocation);
     }
 }
 
-// 4. CATEGORY CHIPS
 function renderCategoryChips() {
     const container = document.getElementById('categoryChips'); if(!container) return;
     container.innerHTML = '';
@@ -133,11 +190,10 @@ async function filterShopsByType(shopId) {
     const folder = window.getShopTemplateFolder(shopId);
     const res = await fetch(`/api/shop-view/nearby-shops?type=${folder}&lat=${userLocation.lat}&lng=${userLocation.lng}`);
     const data = await res.json();
-    allServices = data.data || []; 
+    allServices = data.data || [];
     alert(folder + ' ki shops load ho gayi');
 }
 
-// 5. HISTORY PRODUCT
 function renderHistoryProducts() {
     const container = document.getElementById('historyProducts'); if(!container) return;
     let history = JSON.parse(localStorage.getItem('productHistory') || '[]');
@@ -150,18 +206,16 @@ function renderHistoryProducts() {
 
 window.addToHistory = function(product){
     let history = JSON.parse(localStorage.getItem('productHistory') || '[]');
-    history = history.filter(p => p.id !== product.id);
+    history = history.filter(p => p.id!== product.id);
     history.unshift(product); history = history.slice(0,20);
     localStorage.setItem('productHistory', JSON.stringify(history));
     renderHistoryProducts();
 }
 
-// 6. ADMIN ADVERTISEMENT
 async function renderAdminAds() {
     const container = document.getElementById('adminAdContainer'); if(!container) return;
     let url = '/api/admin/ads/active';
     if(userLocation) url += `?lat=${userLocation.lat}&lng=${userLocation.lng}`;
-    
     const res = await fetch(url).catch(()=>({ok:false}));
     if(!res.ok){ container.innerHTML='<p>No Ads</p>'; return; }
     const data = await res.json();
@@ -171,46 +225,50 @@ async function renderAdminAds() {
         </div>`).join('') || '<p>No Ads</p>';
 }
 
-// 7. NEARBY PRODUCTS REPEAT - WORLD MODEL SE - COMMON FOLDER
+// 7. NEARBY PRODUCTS REPEAT - WORLD MODEL SE + ROLE FILTER - FINAL
 async function renderNearbyProductsRepeat() {
-    const container = document.getElementById('nearbyProductsRepeat'); 
+    const container = document.getElementById('nearbyProductsRepeat');
     if(!container) return;
     container.innerHTML = '<p style="opacity:0.6">Loading products...</p>';
-
     try{
-        // COMMON FOLDER WALA MANAGER - ROLE CUSTOMER SET KARO
         if(window.WorldProductManager){
-            window.WorldProductManager.role = 'customer';
+            window.WorldProductManager.role = getMyRoleSafe();
             allProducts = await window.WorldProductManager.getAllShopsProducts();
         }else{
-            const res = await fetch(`/api/world-products?role=customer`).then(r=>r.json()).catch(()=>({data:[]}));
+            const role = getMyRoleSafe();
+            const res = await fetch(`/api/world-products?role=${role}`).then(r=>r.json()).catch(()=>({data:[]}));
             allProducts = res.data || res.products || [];
         }
     }catch(e){
         console.log('World products load fail', e);
         allProducts = [];
     }
-    
-    if(!allProducts || allProducts.length === 0) {
-        container.innerHTML = '<p>Aas paas koi product nahi</p>';
+
+    // === ROLE FILTER LAGAO - YAHI MAIN FIX HAI ===
+    let filteredProducts = filterProductsByRole(allProducts);
+    // Inject ownerRole if missing
+    filteredProducts = filteredProducts.map(p=> ({
+       ...p,
+        ownerRole: p.ownerRole || p.shopOwnerRole || 'shop_owner',
+        ownerId: p.ownerId || p.shopId,
+        shopId: p.shopId
+    }));
+
+    if(!filteredProducts || filteredProducts.length === 0) {
+        container.innerHTML = `<p>No products for role ${getMyRoleSafe()} - Aas paas koi product nahi</p>`;
         return;
     }
 
     let html = '';
     for(let i=0; i<10; i++){
-        const doubleData = [...allProducts, ...allProducts];
-        html += `<div class="nearby-row">` + 
-        doubleData.map(p => `
-            <div class="nearby-product-card" onclick="openProduct('${p._id}')">
-                <img src="${p.thumbnail || p.image || '/assets/default-product.png'}" onerror="this.src='/assets/default-product.png'">
-                <p>${p.name}</p>
-                <span>₹${p.price}</span>
-            </div>`).join('') + `</div>`;
+        const doubleData = [...filteredProducts,...filteredProducts];
+        html += `<div class="nearby-row">` +
+        doubleData.map(p => renderProductCard(p)).join('') + `</div>`;
     }
     container.innerHTML = html;
+    console.log(`Products: ${allProducts.length} -> ${filteredProducts.length} after role filter [${getMyRoleSafe()}]`);
 }
 
-// PURANE FUNCTION - BILKUL SAFE
 async function reloadNearbyData() {}
 function renderSixLineShops(){}
 function renderSixLineProducts(){}
@@ -219,14 +277,12 @@ function renderTopAds(){}
 function renderCampaigns(){}
 function renderVideos(){}
 
-// BOTTOM NAV 5 BUTTON
 function goToProfilePage() { window.location.href = '/profile.html'; }
 function goToDelivery() { window.location.href = '/delivery-boy.html'; }
 function scrollToNearbyShops() { document.querySelector('.nearby-product-section')?.scrollIntoView({behavior:'smooth'}); }
 function scrollToServices() { document.querySelector('.category-row')?.scrollIntoView({behavior:'smooth'}); }
 function trackChild() { alert('Track Child - Coming Soon'); }
 
-// SEARCH + SCANNER + PROFILE PIC - shop.html HATA DIYA
 function performSearch() {
     const q = document.getElementById('searchInput').value;
     if(q) window.location.href = `/nearby-shops.html?search=${encodeURIComponent(q)}`;
@@ -238,40 +294,36 @@ async function loadUserProfilePic() {
     if(el) el.src = pic;
 }
 
-// PRODUCT CLICK - shop.html HATA DIYA, SEEDHA SHOP KE CUSTOMER-VIEW PE
 function openProduct(productId) {
     const prod = allProducts.find(p => p._id === productId);
     if(prod) {
-        const shopUrl = `/shop-templates/${prod.shopType}/customer-view.html?shopId=${prod.shopId}`;
+        const shopUrl = `/shop-templates/${prod.shopType}/customer-view.html?shopId=${prod.shopId}&supplierId=${prod.shopId}&supplierRole=${prod.ownerRole || 'shop_owner'}`;
         addToHistory({
-            id: prod._id, 
-            name: prod.name, 
-            image: prod.thumbnail || prod.image, 
-            price: prod.price, 
+            id: prod._id,
+            name: prod.name,
+            image: prod.thumbnail || prod.image,
+            price: prod.price,
             url: shopUrl
         });
         window.location.href = shopUrl;
     }
 }
 
-// ========================================
-// RENDER FOOTER - ADMIN CONTROL
-// ========================================
 function renderFooter() {
-    document.getElementById('footerLogo').textContent = siteSettings.appName || 'SAMAN LIVE';
-    document.getElementById('footerAbout').textContent = siteSettings.footerAbout || '';
-    document.getElementById('footerText').textContent = siteSettings.footerText || `© ${new Date().getFullYear()} SAMAN LIVE`;
-
+    const footerLogo = document.getElementById('footerLogo');
+    if(footerLogo) footerLogo.textContent = siteSettings.appName || 'SAMAN LIVE';
+    const footerAbout = document.getElementById('footerAbout');
+    if(footerAbout) footerAbout.textContent = siteSettings.footerAbout || '';
+    const footerText = document.getElementById('footerText');
+    if(footerText) footerText.textContent = siteSettings.footerText || `© ${new Date().getFullYear()} SAMAN LIVE`;
     const footer = document.getElementById('dynamicFooter');
     if(footer) footer.style.background = siteSettings.footerColor || '#1f2937';
-
     const linksContainer = document.getElementById('footerLinksList');
     if(linksContainer && siteSettings.footerLinks) {
-        linksContainer.innerHTML = siteSettings.footerLinks.map(link => 
+        linksContainer.innerHTML = siteSettings.footerLinks.map(link =>
             `<li><a href="${link.url}" target="_blank">${link.text}</a></li>`
         ).join('');
     }
-
     const socialContainer = document.getElementById('footerSocial');
     if(socialContainer) {
         const socials = [
@@ -281,8 +333,12 @@ function renderFooter() {
             {key: 'youtube', icon: '▶️'},
             {key: 'whatsapp', icon: '💬'}
         ];
-        socialContainer.innerHTML = socials.map(s => 
-            siteSettings[s.key] ? `<a href="${siteSettings[s.key]}" target="_blank">${s.icon}</a>` : ''
+        socialContainer.innerHTML = socials.map(s =>
+            siteSettings[s.key]? `<a href="${siteSettings[s.key]}" target="_blank">${s.icon}</a>` : ''
         ).join('');
     }
-} 
+}
+
+// Expose for other files
+window.AppRoleFilter = { filterProductsByRole, canShowAddToCartButton, renderProductCard };
+console.log('✅ app.js BLACKBOARD V4 + V13 Hierarchy loaded - Role:', getMyRoleSafe());

@@ -1,7 +1,7 @@
 // ========================================
-// AREA MANAGER DASHBOARD - WORLD CLASS CLEAN
+// AREA MANAGER DASHBOARD - WORLD CLASS CLEAN + V13 HIERARCHY
 // File: /public/assets/js/area-manager.js
-// Dashboard + Profile + Shop List + Edit + Delivery
+// Dashboard + Profile + Shop List + Edit + Delivery + WALLET + BULK BUY FROM ADMIN
 // Shop Create logic shop-create.js me hai
 // ========================================
 
@@ -12,6 +12,8 @@ let allManagers = [];
 let allAreas = [];
 let managerAreaMapInstance = null;
 let isMapHidden = false;
+let managerWallet = null;
+let adminProducts = [];
 
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token') || localStorage.getItem('managerToken');
@@ -50,8 +52,6 @@ window.apiCall = apiCall;
 window.getManagerToken = () => token;
 
 // ========== HEADER - ADMIN CONTROLLED ==========
-// Admin Settings se aayega: GET /api/public/header-settings
-// Fields: logo, brandMain, brandAccent, dashboardTitle, themeColor
 async function loadHeaderSettings() {
     try {
         const res = await fetch('/api/public/header-settings').then(r => r.json()).catch(() => null);
@@ -71,7 +71,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindProfileForm();
     bindShopEditForm();
     bindDeliveryForm();
+    initHierarchyForManager();
 });
+
+function initHierarchyForManager(){
+    // RoleHierarchy set for this page
+    if(window.RoleHierarchy){
+        window.USER_ROLE = 'area_manager';
+        window.USER_ID = currentManager? currentManager._id || currentManager.managerCode : 'manager';
+        window.MY_SHOP_ID = null;
+    }
+    // Socket live order - area manager ko bhi notification
+    if(window.io || window.socket){
+        try {
+            const socket = window.socket || window.io();
+            if(currentManager){
+                socket.emit('join-shop', currentManager.managerCode);
+                socket.emit('join-shop', currentManager._id);
+                socket.on('new-order', (order)=>{
+                    console.log('🔔 New order for manager:', order);
+                    if(window.Toast) Toast.success(`New Order: ${order.orderId}`);
+                    // Badge
+                    const badge = document.getElementById('newOrderBadge');
+                    if(badge){ badge.style.display='block'; badge.textContent='NEW'; }
+                    // Refresh stats
+                    loadDashboard();
+                });
+            }
+        } catch(e){ console.log('Socket init skip', e.message); }
+    }
+}
 
 async function loadDashboard() {
     try {
@@ -83,17 +112,24 @@ async function loadDashboard() {
         currentManager.currentShopCount = stats.totalShops;
         currentManager.maxShops = currentManager.maxShops || dashboardRes.manager.maxShops || 10;
 
-        const [shopsData, modulesData, areasRes, managersRes] = await Promise.all([
+        // Set role hierarchy globals after manager loaded
+        window.USER_ROLE = 'area_manager';
+        window.USER_ID = currentManager._id || currentManager.managerCode;
+        window.AreaId = currentManager.areaCode;
+
+        const [shopsData, modulesData, areasRes, managersRes, walletRes] = await Promise.all([
             apiCall('/manager/shops').catch(() => ({ shops: [] })),
             apiCall('/modules').catch(() => ({ modules: [] })),
             fetch('/api/areas').then(r => r.json()).catch(() => []),
-            fetch('/api/managers').then(r => r.json()).catch(() => [])
+            fetch('/api/managers').then(r => r.json()).catch(() => []),
+            fetch(`/api/common/wallet/balance?userId=${currentManager._id || currentManager.managerCode}&role=area_manager`).then(r=>r.json()).catch(()=>({balance:0}))
         ]);
 
         managerShops = shopsData.shops || shopsData || [];
         categories = modulesData.modules || modulesData || [];
         allAreas = Array.isArray(areasRes)? areasRes : (areasRes.areas || []);
         allManagers = Array.isArray(managersRes)? managersRes : (managersRes.managers || []);
+        managerWallet = walletRes.wallet || walletRes || { balance:0, totalEarning:0 };
 
         renderProfile();
         renderStats(stats);
@@ -102,6 +138,8 @@ async function loadDashboard() {
         updateShopLimitUI();
         renderAreaMapBlock();
         loadDeliveryBoys();
+        renderWallet(managerWallet);
+        loadAdminProductsForManager();
 
         if (typeof window.initShopCreateModule === 'function') {
             window.initShopCreateModule(allManagers, allAreas, categories, currentManager);
@@ -109,11 +147,76 @@ async function loadDashboard() {
     } catch (err) {
         console.error('Dashboard Error:', err);
         const msg = (err.message.includes('Manager not found') || err.message.includes('Invalid token'))
-           ? 'Session expired. Please login again.' : err.message;
+          ? 'Session expired. Please login again.' : err.message;
         document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:20px;padding:20px;text-align:center"><i class="fas fa-exclamation-triangle" style="font-size:64px;color:#ef4444"></i><h1 style="color:#ef4444">Error Loading Dashboard</h1><p style="color:#64748b;max-width:600px">${escapeHtml(msg)}</p><button onclick="location.reload()" class="btn btn-primary">Retry</button></div>`;
     }
 }
 window.loadDashboard = loadDashboard;
+
+// ========== WALLET RENDER - NEW HIERARCHY ==========
+function renderWallet(wallet){
+    const el = document.getElementById('managerWalletBalance');
+    if(el) el.textContent = `₹${wallet.balance || 0}`;
+    const el2 = document.getElementById('managerTotalEarning');
+    if(el2) el2.textContent = `₹${wallet.totalEarning || 0}`;
+    const el3 = document.getElementById('walletSection');
+    if(el3 && wallet.balance!== undefined){
+        el3.style.display = 'block';
+    }
+}
+
+// ========== ADMIN PRODUCTS - AREA MANAGER CAN BUY FROM ADMIN - NEW ==========
+async function loadAdminProductsForManager(){
+    const container = document.getElementById('adminProductsForManager');
+    if(!container) return;
+    container.innerHTML = '<p style="opacity:0.6">Loading admin products...</p>';
+    try {
+        const res = await fetch(`/api/world-products?role=area_manager&supplierRole=admin`).then(r=>r.json()).catch(()=>({data:[]}));
+        let products = res.data || res.products || [];
+        // Filter - only admin products
+        products = products.filter(p=> (p.ownerRole||p.supplierRole||'admin')==='admin');
+        // Fallback - agar filter empty toh sab dikhao for buying
+        if(products.length===0){
+            const res2 = await fetch(`/api/world-products?role=admin`).then(r=>r.json()).catch(()=>({data:[]}));
+            products = res2.data || [];
+        }
+        adminProducts = products.slice(0,20);
+        if(adminProducts.length===0){
+            container.innerHTML = '<p style="opacity:0.6">No admin products to buy. Admin se stock lo.</p>';
+            return;
+        }
+        container.innerHTML = adminProducts.map(p=> `
+            <div style="border:1px solid #eee;border-radius:10px;padding:10px;display:flex;gap:10px;align-items:center">
+                <img src="${p.thumbnail||p.image||'/assets/default-product.png'}" style="width:50px;height:50px;object-fit:cover;border-radius:8px">
+                <div style="flex:1">
+                    <div style="font-weight:600;font-size:13px">${escapeHtml(p.name||'Product')}</div>
+                    <div style="font-size:11px;color:#666">₹${p.price} • Admin</div>
+                </div>
+                <button onclick='buyFromAdmin(${JSON.stringify(p).replace(/'/g,"&#39;")})' style="padding:6px 12px;background:#000;color:#fff;border:0;border-radius:6px;font-size:12px">Buy Bulk</button>
+            </div>
+        `).join('');
+    } catch(e){
+        container.innerHTML = `<p style="color:red">Load fail: ${e.message}</p>`;
+    }
+}
+
+window.buyFromAdmin = async function(product){
+    if(!window.RoleHierarchy ||!window.CartCore){
+        alert('CartCore load nahi hua, refresh karo');
+        return;
+    }
+    // Force supplier admin
+    product.ownerRole = 'admin';
+    product.ownerId = 'admin_default';
+    product.shopId = product.shopId || 'admin_shop';
+    product.supplierRole = 'admin';
+    const ok = await window.CartCore.add(product, 10); // bulk 10 qty
+    if(ok){
+        if(confirm(`Added ${product.name} x10 to cart. Checkout par jana hai?`)){
+            window.location.href = `/shop-templates/common/checkout/checkout.html?supplierId=admin_default&supplierRole=admin&shopId=admin_shop&supplierName=Admin`;
+        }
+    }
+};
 
 // ========== PROFILE RENDER ==========
 function renderProfile() {
@@ -135,7 +238,7 @@ function renderProfile() {
     setText('managerCodeText2', currentManager.managerCode || '-');
 
     const avatarHtml = currentManager.photo
-       ? `<img src="${currentManager.photo}" alt=""><div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`
+      ? `<img src="${currentManager.photo}" alt=""><div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`
         : `${(currentManager.name || 'A').charAt(0).toUpperCase()}<div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`;
     const avatarEl = document.getElementById('managerAvatar');
     if (avatarEl) avatarEl.innerHTML = avatarHtml;
@@ -149,6 +252,8 @@ function setText(id, val) { const el = document.getElementById(id); if (el) el.t
 function renderStats(stats) {
     setText('totalShops', stats?.totalShops?? managerShops.length);
     setText('activeShops', stats?.activeShops?? managerShops.filter(s => s.isActive).length);
+    // Hierarchy earning stats
+    if(stats.totalOrders!== undefined) setText('totalOrders', stats.totalOrders);
 }
 function updateShopLimitUI() {
     if (!currentManager) return;
@@ -192,9 +297,6 @@ function toggleAreaMap() {
 
 // ========== SHOPS LIST - TEMPLATE DASHBOARD HIT ==========
 function getShopFolder(shop) {
-    //const id = shop.template || shop.serviceType || shop.categoryId || shop.shopType || 'common';
-    //if (typeof window.getShopTemplateFolder === 'function') return window.getShopTemplateFolder(id);
-    //return 'common';
     if (shop.templateFolder || shop.folder) return shop.templateFolder || shop.folder;
     const id = shop.template || shop.serviceType || shop.categoryId || shop.shopType || 'common';
     if (typeof window.getShopTemplateFolder === 'function') return window.getShopTemplateFolder(id);
@@ -232,7 +334,6 @@ window.copyShopLink = function(shopId) {
     navigator.clipboard.writeText(link).then(() => alert(`✅ Dashboard link copied!\n\n${link}`)).catch(() => prompt('Copy this link:', link));
 };
 
-// ========== SHOP DELETE ==========
 async function deleteShop(shopId) {
     const shop = managerShops.find(s => s._id === shopId);
     const shopName = shop? shop.shopName : 'this shop';
@@ -245,7 +346,6 @@ async function deleteShop(shopId) {
 }
 window.deleteShop = deleteShop;
 
-// ========== SERVICES ==========
 function renderServiceCards(cats) {
     const box = document.getElementById('serviceCards'); if (!box) return;
     if (!cats || cats.length === 0) { box.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No services assigned yet. Contact admin.</p></div>'; return; }
@@ -260,7 +360,6 @@ function getCategoryName(id) {
     return cat? cat.name : (id || '-');
 }
 
-// ========== PROFILE MODAL ==========
 function openProfileModal() {
     document.getElementById('profileModal')?.classList.add('active');
     document.getElementById('profileName').value = currentManager?.name || '';
@@ -298,7 +397,6 @@ function bindProfileForm() {
     });
 }
 
-// ========== SHOP EDIT ==========
 function openShopModal(shop = null) {
     document.getElementById('shopModal')?.classList.add('active');
     document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Shop Details';
@@ -347,7 +445,6 @@ function bindShopEditForm() {
     });
 }
 
-// ========== DELIVERY BOYS ==========
 async function loadDeliveryBoys() {
     const tbody = document.getElementById('deliveryBoysTable'); if (!tbody) return;
     try {
@@ -382,16 +479,17 @@ function openCreateDeliveryModal() { document.getElementById('createDeliveryModa
 function closeCreateDeliveryModal() { document.getElementById('createDeliveryModal')?.classList.remove('active'); }
 function openDeliveryManagerPanel() { document.getElementById('deliverySection')?.scrollIntoView({ behavior: 'smooth' }); }
 
-// ========== OTHER ==========
 function openProductLibrary() { document.getElementById('libraryPopup')?.classList.add('active'); }
 function closeProductLibrary() { document.getElementById('libraryPopup')?.classList.remove('active'); }
-function openOrderView() { alert('Order View - Coming Soon'); }
+function openOrderView() {
+    // Hierarchy: area manager apne shops ke orders dekhega + bulk orders jo usne admin se kiye
+    window.location.href = '/shop-templates/common/orders/orders.html?role=area_manager&managerId=' + (currentManager?._id || '');
+}
 function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text == null? '' : String(text); return d.innerHTML; }
 
 window.onclick = e => { if (e.target.classList?.contains('modal')) e.target.classList.remove('active'); };
 window.addEventListener('message', e => { if (e.data?.type === 'ADD_FROM_LIBRARY') { alert(`Selected: ${e.data.name}`); closeProductLibrary(); } });
 
-// Export for onclick
 window.openProfileModal = openProfileModal; window.closeProfileModal = closeProfileModal;
 window.previewProfilePhoto = previewProfilePhoto; window.editShop = editShop;
 window.openShopModal = openShopModal; window.closeShopModal = closeShopModal;
@@ -400,4 +498,4 @@ window.openOrderView = openOrderView; window.openCreateDeliveryModal = openCreat
 window.closeCreateDeliveryModal = closeCreateDeliveryModal; window.openDeliveryManagerPanel = openDeliveryManagerPanel;
 window.toggleAreaMap = toggleAreaMap; window.loadDeliveryBoys = loadDeliveryBoys;
 
-console.log('✅ area-manager.js loaded - World Class Dashboard + Template Mapping');
+console.log('✅ area-manager.js loaded - World Class + V13 Hierarchy + Wallet + Bulk Buy');

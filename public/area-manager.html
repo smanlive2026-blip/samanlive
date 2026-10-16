@@ -7,7 +7,10 @@ ROUTES:
 - PUT /api/manager/shops/:id
 - DELETE /api/manager/shops/:id
 - PUT /api/manager/update-profile
-- POST /api/manager/create-shop-v2 (routes/managerShopCreate.js)
+- POST /api/manager/create-shop-v2
+- WALLET: GET /api/common/wallet/balance
+- ADMIN PRODUCTS: GET /api/world-products?role=area_manager&supplierRole=admin
+- CHECKOUT: POST /api/common/checkout
 - Template: /public/assets/js/shop-template-map.js -> getShopTemplateFolder(id) || 'common'
 -->
 <!DOCTYPE html>
@@ -37,6 +40,10 @@ ROUTES:
         <div class="chip-avatar" id="headerManagerAvatar">A</div>
         <div class="chip-info"><strong id="managerName">Loading...</strong><span id="managerBadge">-</span></div>
       </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="newOrderBadge" style="display:none;background:#ef4444;color:#fff;padding:4px 8px;border-radius:12px;font-size:11px;animation:blink 1s infinite">NEW ORDER</span>
+        <a href="/shop-templates/common/cart/cart.html" style="position:relative"><i class="fas fa-shopping-cart" style="font-size:20px"></i><span data-cart-count style="position:absolute;top:-8px;right:-8px;background:#000;color:#fff;border-radius:50%;width:18px;height:18px;display:none;align-items:center;justify-content:center;font-size:10px">0</span></a>
+      </div>
       <button class="btn btn-outline" onclick="openProfileModal()"><i class="fas fa-user-edit"></i> Profile</button>
     </div>
   </header>
@@ -54,6 +61,8 @@ ROUTES:
 
       <nav class="side-nav">
         <a href="#overview" class="active"><i class="fas fa-th-large"></i> Overview</a>
+        <a href="#walletSection"><i class="fas fa-wallet"></i> Wallet</a>
+        <a href="#adminBuySection"><i class="fas fa-boxes"></i> Buy From Admin</a>
         <a href="#areaMapCard"><i class="fas fa-map-marked-alt"></i> My Area</a>
         <a href="#shopsSection"><i class="fas fa-store"></i> My Shops</a>
         <a href="#createShopSection"><i class="fas fa-plus-circle"></i> Create Shop</a>
@@ -65,6 +74,7 @@ ROUTES:
         <div><span>Area Code</span><strong id="areaCodeText">-</strong></div>
         <div><span>Manager Code</span><strong id="managerCodeText">-</strong></div>
         <div><span>Shop Limit</span><strong id="shopLimitText">0 / 10</strong></div>
+        <div><span>Wallet</span><strong id="managerWalletBalance">₹0</strong></div>
       </div>
     </aside>
 
@@ -87,6 +97,31 @@ ROUTES:
         <div class="stat-card"><h3>Active Shops</h3><div class="value" id="activeShops">0</div></div>
         <div class="stat-card"><h3>Area Code</h3><div class="value small" id="areaCodeText2">-</div></div>
         <div class="stat-card"><h3>Manager Code</h3><div class="value small" id="managerCodeText2">-</div></div>
+      </section>
+
+      <!-- WALLET - NEW HIERARCHY -->
+      <section class="card" id="walletSection">
+        <div class="card-header"><h2><i class="fas fa-wallet"></i> My Wallet & Earnings (Hierarchy)</h2><span class="badge" id="walletLiveBadge">Live</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px">
+          <div style="background:#f8fafc;border-radius:10px;padding:16px;text-align:center">
+            <div style="font-size:12px;color:#64748b">Current Balance</div>
+            <div style="font-size:28px;font-weight:800;margin-top:6px" id="managerWalletBalance">₹0</div>
+            <div style="font-size:11px;color:#888;margin-top:4px">Shop se kamai - 5% admin commission ke baad</div>
+          </div>
+          <div style="background:#fff7ed;border-radius:10px;padding:16px;text-align:center">
+            <div style="font-size:12px;color:#64748b">Total Lifetime Earning</div>
+            <div style="font-size:28px;font-weight:800;margin-top:6px" id="managerTotalEarning">₹0</div>
+            <div style="font-size:11px;color:#888;margin-top:4px">Admin ko commission auto jayega</div>
+          </div>
+        </div>
+        <div class="info-note"><i class="fas fa-info-circle"></i><span>Customer jab aapki shops se kharidega toh 95% aapko, 5% admin ko. Jab aap admin se bulk me kharidoge toh aapka wallet debit hoga.</span></div>
+      </section>
+
+      <!-- ADMIN SE BULK BUY - NEW HIERARCHY -->
+      <section class="card" id="adminBuySection">
+        <div class="card-header"><h2><i class="fas fa-boxes"></i> Buy Bulk From Admin (Area Manager → Admin)</h2><button class="btn btn-small" onclick="loadAdminProductsForManager()"><i class="fas fa-sync"></i> Refresh</button></div>
+        <div class="info-note"><i class="fas fa-info-circle"></i><span>Area Manager sirf Admin se kharid sakta hai (Hierarchy: area_manager → admin). Yaha se bulk stock lo, phir apni shops me becho. Cart me add hoga, checkout pe wallet se pay hoga.</span></div>
+        <div id="adminProductsForManager" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:16px">Loading admin products...</div>
       </section>
 
       <!-- MAP -->
@@ -210,7 +245,6 @@ ROUTES:
 <!-- SHOP EDIT MODAL -->
 <div class="modal" id="shopModal"><div class="modal-content">
   <div class="modal-header"><h2 id="modalTitle"><i class="fas fa-edit"></i> Edit Shop Details</h2><button class="close-btn" onclick="closeShopModal()">×</button></div>
-  <!--<div class="info-note warning"><i class="fas fa-exclamation-triangle"></i><span>You can edit shop details but cannot delete. Location update from shop dashboard.</span></div>-->
   <div class="info-note warning"><i class="fas fa-exclamation-triangle"></i><span>You can edit shop details. Delete karna ho to Shops list me Delete button hai. Location update from shop dashboard.</span></div>
   <form id="shopForm">
     <input type="hidden" id="shopId">
@@ -241,8 +275,17 @@ ROUTES:
 <div class="modal" id="libraryPopup"><div class="modal-content library"><div class="modal-header"><h2><i class="fas fa-book-open"></i> Product Library</h2><button class="close-btn" onclick="closeProductLibrary()">×</button></div><iframe src="/local-market/library/index.html"></iframe></div></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <script src="/assets/js/shop-template-map.js?v=2"></script>
+<script src="/assets/js/role-hierarchy.js"></script>
+<script src="/shop-templates/common/core/api-core.js"></script>
+<script src="/shop-templates/common/cart/cart-core.js"></script>
+<script src="/shop-templates/common/cart/cart-count.js"></script>
 <script src="/assets/js/shop-create.js?v=7"></script>
-<script src="/assets/js/area-manager.js?v=7"></script>
+<script src="/assets/js/area-manager.js?v=13"></script>
+<style>
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.5}}
+#walletSection .stat-card, #adminBuySection{animation:fadeIn 0.5s}
+</style>
 </body>
 </html>

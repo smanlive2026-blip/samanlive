@@ -1,5 +1,5 @@
-// LOCATION: public/shop-templates/kirana/dashboard.js - V16 FINAL WORLD BOSS - COMMON ONLY - NO FALTU FUNCTION - 1100 LINES - MOBILE SIDEBAR FIX - FULL CODE
-// Uses: common/core/*, common/products/product-manager.js V15 Class, common/js/shop-toggle.js, common/js/share.js, common/cart/cart-core.js
+// LOCATION: public/shop-templates/kirana/dashboard.js - V17 FINAL WORLD BOSS + V13 HIERARCHY MASTER - 1300 LINES
+// Uses: common/core/*, common/products/product-manager.js V15 Class, common/js/shop-toggle.js, common/js/share.js, common/cart/cart-core.js, role-hierarchy.js, dashboard-core.js
 
 class KiranaDashboardCore {
   constructor(){
@@ -17,8 +17,8 @@ class KiranaDashboardCore {
     this.currentTab = 'overview';
     this.searchDebounce = null;
     this.refreshInterval = null;
+    this.wallet = { balance:0, totalEarning:0 };
 
-    // API - WORLD BOSS
     this.API_WORLD = `/api/world-products?shopId=${this.shopId}&shopType=kirana`;
     this.API_WORLD_BASE = `/api/world-products`;
     this.API_OLD = `/api/shops/kirana/${this.shopId}`;
@@ -28,6 +28,8 @@ class KiranaDashboardCore {
       orders: `/api/common/orders/${this.shopId}?limit=20`,
       finance: `/api/common/finance/${this.shopId}/summary`,
       wallet: `/api/common/wallet/${this.shopId}`,
+      walletBalance: `/api/common/wallet/balance?userId=${this.shopId}&role=shop_owner&shopId=${this.shopId}`,
+      walletTx: `/api/common/wallet/transactions?userId=${this.shopId}&role=shop_owner&limit=20`,
       reviews: `/api/common/reviews/${this.shopId}`,
       staff: `/api/common/staff/${this.shopId}`,
       coupons: `/api/common/marketing/${this.shopId}/coupons`,
@@ -39,56 +41,50 @@ class KiranaDashboardCore {
     this.init();
   }
 
-  // ==================== INIT - COMMON CONNECTED ====================
   async init(){
-    console.log(`🛒 KiranaDashboardCore V16 - shopId:${this.shopId} - WorldProductManager Class:`,!!window.WorldProductManager, 'Role:', window.WorldProductManager?.role);
+    console.log(`🛒 KiranaDashboardCore V17 - shopId:${this.shopId} - WorldProductManager:`,!!window.WorldProductManager, 'RoleHierarchy:',!!window.RoleHierarchy);
 
     if(!this.shopId){
-      this.showErrorPage('Shop ID Missing','Dashboard open karo My Shops se - URL me?shopId=YOUR_ID chahiye - World Model ko shopId mandatory hai');
+      this.showErrorPage('Shop ID Missing','Dashboard open karo My Shops se - URL me?shopId=YOUR_ID chahiye');
       return;
     }
 
-    // Save for common modules
     localStorage.setItem('last_shopId', this.shopId);
     localStorage.setItem('shopType','kirana');
     localStorage.setItem('role','dashboard');
     window.shopId = this.shopId;
     window.shopType = 'kirana';
+    window.MY_SHOP_ID = this.shopId;
+    window.USER_ROLE = 'shop_owner';
 
-    // 1. AUTH - common/core/auth-core.js
     if(window.AuthCore){
       try{
         const ok = await window.AuthCore.protectDashboard();
         if(!ok) return;
-      }catch(e){ console.warn('AuthCore protect failed - still continue', e); }
+      }catch(e){ console.warn('AuthCore protect failed', e); }
     }
 
-    // 2. BIND ALL - COMMON TOGGLE USE KAREGA
     this.bindUI();
     this.bindTabs();
     this.bindSearch();
-    this.bindTogglesCommon(); // <-- COMMON WALA TOGGLE
-    this.bindSocketCommon(); // <-- COMMON SOCKET
+    this.bindTogglesCommon();
+    this.bindSocketCommon();
     this.bindShareCommon();
 
-    // 3. LOAD - WORLD VIA PRODUCT-MANAGER.JS CLASS
     await this.loadDashboard();
+    await this.loadWallet();
+    await this.loadAdminProducts();
 
-    // 4. AUTO REFRESH - common
     this.startAutoRefresh();
-
-    // 5. COMMON STATUS
     this.loadCommonStatus();
     this.loadWorldStatus();
   }
 
-  // ==================== UI BIND - COMMON LINKS - MOBILE SIDEBAR FIX HERE ONLY ====================
   bindUI(){
     const $ = (id)=> document.getElementById(id);
     $('newProductBtn')?.addEventListener('click', ()=> this.goProductForm());
     $('quickAddBtn')?.addEventListener('click', ()=> this.goQuickAdd());
     $('btnLogout')?.addEventListener('click', ()=> this.logoutCommon());
-    // ===== MOBILE SIDEBAR FIX - DOUBLE LISTENER HATAYA - CLONE TRICK =====
     const btnMenu = $('btnMenu');
     if(btnMenu){
       const newBtn = btnMenu.cloneNode(true);
@@ -104,7 +100,7 @@ class KiranaDashboardCore {
     $('viewShopBtn')?.addEventListener('click', ()=> this.viewShopCommon());
     $('openCommonOrders')?.addEventListener('click', (e)=>{
       e.preventDefault();
-      window.open(`../common/orders/orders.html?shopId=${this.shopId}&shopType=kirana`,'_blank');
+      window.open(`../common/orders/orders.html?shopId=${this.shopId}&shopType=kirana&role=shop_owner`,'_blank');
     });
     if($('shopIdDisplay')){
       $('shopIdDisplay').innerText = this.shopId.slice(0,18)+'...';
@@ -112,23 +108,15 @@ class KiranaDashboardCore {
     }
   }
 
-  // COMMON LOGOUT - common/core/auth-core.js
   logoutCommon(){
-    if(window.AuthCore?.logout){
-      window.AuthCore.logout();
-    }else{
-      localStorage.clear();
-      location.href='/';
-    }
+    if(window.AuthCore?.logout){ window.AuthCore.logout(); }
+    else{ localStorage.clear(); location.href='/'; }
   }
 
-  // COMMON VIEW SHOP - common/js/customer-shop-status.js
   viewShopCommon(){
-    // kirana/user-view.html bhi common se connected hai - role=customer
-    window.open(`./user-view.html?shopId=${this.shopId}&shopType=kirana`,'_blank');
+    window.open(`./user-view.html?shopId=${this.shopId}&shopType=kirana&supplierId=${this.shopId}&supplierRole=shop_owner`,'_blank');
   }
 
-  // ==================== TABS - COMMON MODULES LOAD ====================
   bindTabs(){
     document.querySelectorAll('.menu a[data-tab]').forEach(a=>{
       a.addEventListener('click', async ()=>{
@@ -140,11 +128,7 @@ class KiranaDashboardCore {
         document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
         const tabEl = document.getElementById('tab-'+tab);
         if(tabEl) tabEl.classList.add('active');
-
-        // Load common iframe/module
         await this.loadCommonTab(tab);
-
-        // Track - common/core/api-core.js
         window.ApiCore?.trackEvent(`kirana_tab_${tab}`, { shopId:this.shopId, shopType:'kirana' });
       });
     });
@@ -163,7 +147,7 @@ class KiranaDashboardCore {
     if(boxId){
       const box = document.getElementById(boxId);
       if(box &&!box.dataset.loaded){
-        box.innerHTML = `<div style="padding:12px;color:#64748b;font-size:12px"><i class="fa-solid fa-spinner fa-spin"></i> Loading common/${tab} via ApiCore...</div>`;
+        box.innerHTML = `<div style="padding:12px;color:#64748b;font-size:12px"><i class="fa-solid fa-spinner fa-spin"></i> Loading common/${tab}...</div>`;
         try{
           let url = null;
           if(tab==='analytics') url = this.API_COMMON.analytics;
@@ -174,7 +158,7 @@ class KiranaDashboardCore {
           if(url){
             const data = await window.ApiCore?.get(url);
             if(data){
-              box.innerHTML = `<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:12px"><pre style="font-size:11px;white-space:pre-wrap;max-height:300px;overflow:auto">${JSON.stringify(data,null,2).slice(0,4000)}</pre><div style="margin-top:8px;font-size:10px;color:#94a3b8">Source: ${url} + World: ${this.worldProducts.length} via common/products/product-manager.js V15 ✅</div></div>`;
+              box.innerHTML = `<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:12px"><pre style="font-size:11px;white-space:pre-wrap;max-height:300px;overflow:auto">${JSON.stringify(data,null,2).slice(0,4000)}</pre></div>`;
               box.dataset.loaded='true';
             }
           }
@@ -183,12 +167,10 @@ class KiranaDashboardCore {
         }
       }
     }
-
-    // Iframe lazy load - common folder
     const iframeMap = {
       products: { id:'inventoryFrame', src:`../common/inventory/inventory.html?shopId=${this.shopId}&shopType=kirana` },
-      orders: { id:'ordersFrame', src:`../common/orders/orders.html?shopId=${this.shopId}&shopType=kirana` },
-      orders_full: { id:'ordersFullFrame', src:`../common/orders/orders.html?shopId=${this.shopId}&shopType=kirana` },
+      orders: { id:'ordersFrame', src:`../common/orders/orders.html?shopId=${this.shopId}&shopType=kirana&role=shop_owner` },
+      orders_full: { id:'ordersFullFrame', src:`../common/orders/orders.html?shopId=${this.shopId}&shopType=kirana&role=shop_owner` },
       analytics: { id:'analyticsFrame', src:`../common/analytics/analytics.html?shopId=${this.shopId}&shopType=kirana` },
       reviews: { id:'reviewsFrame', src:`../common/reviews/reviews.html?shopId=${this.shopId}&shopType=kirana` }
     };
@@ -197,9 +179,10 @@ class KiranaDashboardCore {
       const el = document.getElementById(f.id);
       if(el &&!el.src) el.src = f.src;
     }
+    if(tab==='bulk_buy'){ this.loadAdminProducts(); }
+    if(tab==='finance'){ this.loadWallet(); }
   }
 
-  // ==================== SEARCH - COMMON UTILS FILTER.JS ====================
   bindSearch(){
     const input = document.getElementById('searchInput');
     if(!input) return;
@@ -225,39 +208,32 @@ class KiranaDashboardCore {
     });
   }
 
-  // ==================== TOGGLE - COMMON WALA ONLY - NO FALTU FUNCTION ====================
   bindTogglesCommon(){
-    // Uses common/js/shop-toggle.js - ShopToggleCore
     const toggles = ['toggleSwitch','toggleSwitch2'];
     toggles.forEach(id=>{
       const el = document.getElementById(id);
       if(!el) return;
       el.addEventListener('click', async ()=>{
-        // 1. Use common shop-toggle.js if available
         if(window.ShopToggleCore?.toggle){
           try{
             const newState = await window.ShopToggleCore.toggle(this.shopId);
             this.updateToggleUI(newState);
-            this.toast(newState?'Shop Opened ✅ via common/shop-toggle.js':'Shop Closed 🔴 via common/shop-toggle.js');
+            this.toast(newState?'Shop Opened ✅ via common/shop-toggle.js':'Shop Closed 🔴');
             return;
-          }catch(e){ console.warn('ShopToggleCore failed, fallback to ApiCore', e); }
+          }catch(e){ console.warn('ShopToggleCore failed', e); }
         }
-
-        // 2. Fallback - common/core/api-core.js + socket-core.js
         const isOpen =!el.classList.contains('on');
         this.updateToggleUI(isOpen);
         try{
-          // Old API
           await window.ApiCore?.put(this.API_COMMON.shopToggle, { isOpen }).catch(()=>{});
-          // Common API
           await window.ApiCore?.post(this.API_COMMON.toggle, { isOpen }).catch(()=>{});
-          // Socket - common/core/socket-core.js
           window.SocketCore?.emit('shop-status-changed', { shopId:this.shopId, shopType:'kirana', isOpen });
-          if(window.DashboardCore?.updateShopStatus) window.DashboardCore.updateShopStatus(isOpen);
+          if(window.shopSocket) window.shopSocket.emit('shop-status-changed', { shopId:this.shopId, isOpen });
+          if(window.DashboardCore) window.DashboardCore.emitShopStatus(isOpen);
           this.toast(isOpen?'Shop Opened ✅':'Shop Closed 🔴');
         }catch(e){
           window.ErrorHandler?.handleApiError(e,'toggle_shop_common');
-          this.toast('Toggle failed - common/js/shop-toggle.js check karo');
+          this.toast('Toggle failed');
           this.updateToggleUI(!isOpen);
         }
       });
@@ -269,62 +245,140 @@ class KiranaDashboardCore {
     document.querySelectorAll('[id^=toggleText]').forEach(t=> t.innerText=isOpen?'Open':'Closed');
   }
 
-  // ==================== SOCKET - COMMON SOCKET-CORE.JS ONLY ====================
   bindSocketCommon(){
+    // Hierarchy DashboardCore socket
+    if(window.DashboardCore && window.DashboardCore.initSocket){
+      setTimeout(()=> window.DashboardCore.initSocket(), 500);
+    }
     if(!window.SocketCore){
-      console.warn('SocketCore not loaded - common/core/socket-core.js missing');
+      console.warn('SocketCore not loaded');
       return;
     }
-    // common/core/socket-core.js events
     window.SocketCore.on('new-order', (order)=>{
       if(order.shopId && order.shopId!==this.shopId) return;
-      this.toast(`🔔 New Order #${(order.orderId||'').toString().slice(-6)} - ₹${order.total||0} - common/orders`);
-      this.playSoundCommon();
-      this.vibrateCommon();
-      this.orders.unshift(order);
-      this.renderOrders(this.orders.slice(0,15));
-      this.loadStatsCommon();
+      this.handleNewOrder(order);
     });
-
     window.SocketCore.on('order-updated', (data)=>{
       if(data.shopId===this.shopId) this.loadOrdersCommon();
     });
-
     window.SocketCore.on('product-updated', (data)=>{
-      if(data.shopId===this.shopId){
-        console.log('Product updated via WorldProductManager + SocketCore', data);
-        this.loadDashboard();
-      }
+      if(data.shopId===this.shopId){ this.loadDashboard(); }
     });
-
     window.SocketCore.on('shop-status-changed', (data)=>{
-      if(data.shopId===this.shopId){
-        this.updateToggleUI(data.isOpen);
-      }
+      if(data.shopId===this.shopId){ this.updateToggleUI(data.isOpen); }
     });
-  }
-
-  // ==================== SHARE - COMMON/JS/SHARE.JS ====================
-  bindShareCommon(){
-    if(window.ShareCore){
-      // share.js will handle whatsapp-share, shop-link-share etc
-      console.log('✅ ShareCore connected - common/js/share.js');
+    // Direct socket
+    if(window.shopSocket){
+      window.shopSocket.on('new-order', (o)=> this.handleNewOrder(o));
     }
   }
 
-  // ==================== LOAD DASHBOARD - WORLD MANAGER CLASS V15 ====================
+  handleNewOrder(order){
+    this.toast(`🔔 New Order #${(order.orderId||'').toString().slice(-6)} - ₹${order.totalAmount||order.total||0} - ${order.buyerRole||'customer'}`);
+    this.playSoundCommon();
+    this.vibrateCommon();
+    // Badge
+    const badge = document.getElementById('newOrderBadge');
+    if(badge) badge.style.display='inline-block';
+    const countBadge = document.getElementById('newOrderCount');
+    if(countBadge){
+      countBadge.style.display='inline-block';
+      const c = parseInt(countBadge.textContent||'0')+1;
+      countBadge.textContent = c>9? '9+' : c;
+    }
+    const badgeRight = document.getElementById('liveOrderBadgeRight');
+    if(badgeRight){
+      badgeRight.style.display='inline-block';
+      badgeRight.textContent = countBadge? countBadge.textContent : 'NEW';
+    }
+    if(window.DashboardCore && window.DashboardCore.showNewOrderPopup) window.DashboardCore.showNewOrderPopup(order);
+    this.orders.unshift(order);
+    this.renderOrders(this.orders.slice(0,15));
+    this.loadStatsCommon();
+    this.loadWallet();
+  }
+
+  bindShareCommon(){
+    if(window.ShareCore){ console.log('✅ ShareCore connected'); }
+  }
+
+  // ==================== WALLET - HIERARCHY NEW ====================
+  async loadWallet(){
+    try {
+      const res = await fetch(this.API_COMMON.walletBalance).then(r=>r.json()).catch(()=>({balance:0}));
+      this.wallet = res.wallet || res || { balance:0, totalEarning:0 };
+      const $ = (id)=> document.getElementById(id);
+      if($('walletBalance')) $('walletBalance').textContent = `₹${this.wallet.balance||0}`;
+      if($('totalEarning')) $('totalEarning').textContent = `₹${this.wallet.totalEarning||0}`;
+      if($('revenue')) $('revenue').textContent = `₹${this.wallet.totalEarning||0}`;
+      if($('headerWallet')) $('headerWallet').textContent = `₹${this.wallet.balance||0}`;
+      if($('headerEarning')) $('headerEarning').textContent = `₹${this.wallet.totalEarning||0}`;
+      if($('sidebarWallet')) $('sidebarWallet').textContent = `₹${this.wallet.balance||0}`;
+      if($('financeWalletBalance')) $('financeWalletBalance').textContent = `₹${this.wallet.balance||0}`;
+      if($('financeTotalEarning')) $('financeTotalEarning').textContent = `₹${this.wallet.totalEarning||0}`;
+
+      const txRes = await fetch(this.API_COMMON.walletTx).then(r=>r.json()).catch(()=>({transactions:[]}));
+      const txEl = document.getElementById('walletTx');
+      if(txEl){
+        const tx = txRes.transactions || [];
+        if(!tx.length) txEl.innerHTML = '<p style="opacity:0.6;font-size:11px">No transactions yet - Order aane pe earning dikhegi</p>';
+        else txEl.innerHTML = tx.map(t=> `
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:11px">
+            <span>${t.type==='credit'? '🟢' : '🔴'} ${t.description||t.type}<br><small style="color:#94a3b8">${new Date(t.createdAt).toLocaleDateString()}</small></span>
+            <span style="font-weight:800;color:${t.type==='credit'? '#10b981' : '#ef4444'}">${t.type==='credit'? '+' : '-'}₹${t.amount}<br><small>Bal: ₹${t.balanceAfter||0}</small></span>
+          </div>
+        `).join('');
+      }
+    } catch(e){ console.log('Wallet load fail', e.message); }
+  }
+
+  // ==================== BULK BUY FROM ADMIN/AREA - HIERARCHY NEW ====================
+  async loadAdminProducts(){
+    const container = document.getElementById('adminProductsForShopOwner');
+    if(!container) return;
+    container.innerHTML = '<p style="font-size:12px;opacity:0.6">Loading admin/area_manager products for hierarchy...</p>';
+    try {
+      const res = await fetch(`/api/world-products?role=shop_owner&shopId=${this.shopId}`).then(r=>r.json()).catch(()=>({data:[]}));
+      let products = res.data || res.products || [];
+      let allowed = products.filter(p=> ['admin','area_manager'].includes(p.ownerRole || p.supplierRole || p.shopOwnerRole || ''));
+      if(allowed.length===0){
+        const res2 = await fetch(`/api/world-products?role=admin`).then(r=>r.json()).catch(()=>({data:[]}));
+        allowed = (res2.data||[]).slice(0,12).map(p=> ({...p, ownerRole:p.ownerRole||'admin', ownerId:p.ownerId||'admin_default', shopId:p.shopId||'admin_shop'}));
+      }
+      if(!allowed.length){ container.innerHTML='<p style="font-size:12px;color:#888">No admin/area products. Admin se stock lo.</p>'; return; }
+      container.innerHTML = allowed.map(p=> `
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px">
+          <img src="${p.thumbnail||p.image||'https://placehold.co/200x120/e2e8f0/0f172a?text=Kirana'}" style="width:100%;height:90px;object-fit:cover;border-radius:8px">
+          <div style="font-weight:800;font-size:13px;margin-top:8px">${(p.name||'Product').slice(0,35)}</div>
+          <div style="font-size:11px;color:#64748b">₹${p.price} • ${p.ownerRole||'admin'}</div>
+          <button onclick='window.KiranaDashboardCore.buyFromHierarchy(${JSON.stringify(p).replace(/'/g,"&#39;")})' style="width:100%;margin-top:8px;padding:8px;background:#0f172a;color:#fff;border:0;border-radius:8px;font-size:12px;font-weight:800">Buy Bulk x10</button>
+        </div>
+      `).join('');
+    } catch(e){ container.innerHTML = `<p style="color:red;font-size:12px">${e.message}</p>`; }
+  }
+
+  async buyFromHierarchy(product){
+    if(!window.CartCore){ alert('CartCore not loaded'); return; }
+    product.ownerRole = product.ownerRole || product.supplierRole || 'admin';
+    product.ownerId = product.ownerId || product.shopId || 'admin_default';
+    product.shopId = product.shopId || product.ownerId;
+    const ok = await window.CartCore.add(product, 10);
+    if(ok){
+      this.toast(`Added ${product.name} x10 to cart - Hierarchy`);
+      if(confirm(`Added ${product.name} x10. Checkout par jana hai? Wallet se pay hoga.`)){
+        location.href = `../common/checkout/checkout.html?shopId=${this.shopId}&supplierId=${product.ownerId}&supplierRole=${product.ownerRole}&shopType=kirana&supplierName=${encodeURIComponent(product.ownerRole)}`;
+      }
+    }
+  }
+
   async loadDashboard(){
     if(this.isLoading) return;
     this.isLoading=true;
     this.showLoader(true);
     try{
-      // Parallel - World via Manager + Old + Common
       const results = await Promise.allSettled([
-        // Old kirana API - fallback
         window.ApiCore?.get(`/api/shops/kirana/${this.shopId}`).catch(()=>({shop:{products:[]}})) || fetch(this.API_OLD).then(r=>r.json()).catch(()=>({shop:{products:[]}})),
-        // WORLD - Via WorldProductManager Class - COMMON/PRODUCTS/PRODUCT-MANAGER.JS
         window.WorldProductManager? window.WorldProductManager.getProducts({shopType:'kirana', shopId:this.shopId, role:'dashboard'}) : fetch(this.API_WORLD).then(r=>r.json()).then(d=>d.data||[]),
-        // Common analytics
         window.ApiCore?.get(this.API_COMMON.analytics).catch(()=>null),
         window.ApiCore?.get(this.API_COMMON.lowStock).catch(()=>null),
         window.ApiCore?.get(this.API_COMMON.orders).catch(()=>null),
@@ -345,38 +399,34 @@ class KiranaDashboardCore {
       this.lowStock = lowStockRes?.products || lowStockRes?.data || this.allProducts.filter(p=> (p.stock||0) <= (p.lowStockAlert||10));
       this.orders = ordersRes?.orders || ordersRes?.data || [];
       this.stats = {
-      ...(this.shopData.stats||{}),
-      ...(analyticsRes||{}),
+     ...(this.shopData.stats||{}),
+     ...(analyticsRes||{}),
         totalProducts: this.allProducts.length,
         worldCount: this.worldProducts.length,
         oldCount: this.oldProducts.length,
         lowStockCount: this.lowStock.length,
         todayOrders: analyticsRes?.todayOrders || this.orders.length,
-        todayRevenue: analyticsRes?.todayRevenue || 0
+        todayRevenue: analyticsRes?.todayRevenue || this.wallet.totalEarning || 0
       };
 
-      // Render - all common connected
       this.renderStats();
       this.renderProducts(this.filteredProducts);
       this.renderLowStock(this.lowStock);
       this.renderOrders(this.orders);
 
-      // Update common cores
       if(window.DashboardCore){
         window.DashboardCore.shopId=this.shopId;
         window.DashboardCore.shopData=this.shopData;
         window.DashboardCore.stats=this.stats;
         window.DashboardCore.worldProducts=this.worldProducts;
       }
-      if(window.StorageCore){
-        window.StorageCore.cacheShopData(this.shopData, 5*60*1000);
-      }
+      if(window.StorageCore){ window.StorageCore.cacheShopData(this.shopData, 5*60*1000); }
 
-      console.log(`✅ V16 Loaded - World:${this.worldProducts.length} Old:${this.oldProducts.length} Total:${this.allProducts.length} via product-manager.js V15 Class`);
+      console.log(`✅ V17 Loaded - World:${this.worldProducts.length} Old:${this.oldProducts.length} Total:${this.allProducts.length} Wallet:₹${this.wallet.balance}`);
 
     }catch(e){
-      console.error('loadDashboard V16 failed', e);
-      window.ErrorHandler?.handleApiError(e,'kirana_dashboard_v16');
+      console.error('loadDashboard V17 failed', e);
+      window.ErrorHandler?.handleApiError(e,'kirana_dashboard_v17');
       this.showErrorInGrid(e.message);
     }finally{
       this.isLoading=false;
@@ -389,7 +439,7 @@ class KiranaDashboardCore {
     try{
       const data = await window.ApiCore?.get(this.API_COMMON.health).catch(()=>null);
       if(data){
-        el.innerHTML=`✅ Common Connected - ${Object.keys(data.testEndpoints||{}).length} routes<br><small>common/core/* + common/js/shop-toggle.js + common/js/share.js</small>`;
+        el.innerHTML=`✅ Common + Hierarchy Connected<br>Wallet: ₹${this.wallet.balance||0} • Role: shop_owner → area_manager, admin`;
       }
     }catch(e){}
   }
@@ -399,7 +449,7 @@ class KiranaDashboardCore {
     try{
       const count = this.worldProducts.length;
       const role = window.WorldProductManager?.role||'dashboard';
-      el.innerHTML=`✅ WORLD BOSS + COMMON CONNECTED<br><b style="color:#f59e0b">World: ${count} products via common/products/product-manager.js V15 Class</b> • Old: ${this.oldProducts.length} = Total ${this.allProducts.length}<br><small>/api/world-products?shopType=kirana&shopId=...&role=${role} - Role Based</small><br><div style="margin-top:6px;background:#1e293b;padding:6px;border-radius:8px;font-size:10px">Form: common/products/product-form.html?shopType=kirana • Seed: kirana.seed.js • Toggle: common/js/shop-toggle.js ✅</div>`;
+      el.innerHTML=`✅ WORLD BOSS + HIERARCHY V17<br><b style="color:#10b981">World: ${count} products</b> • Old: ${this.oldProducts.length} = Total ${this.allProducts.length}<br><small>Role: shop_owner → [area_manager, admin] • Wallet: ₹${this.wallet.balance||0}</small><br><div style="margin-top:6px;background:#1e293b;padding:6px;border-radius:8px;font-size:10px">Toggle: common/js/shop-toggle.js + Socket: dashboard-core.js + Cart: cart-core.js ✅</div>`;
     }catch(e){}
   }
 
@@ -408,7 +458,7 @@ class KiranaDashboardCore {
       const s = await window.ApiCore?.get(this.API_COMMON.analytics);
       if(s){
         const $=(id)=>document.getElementById(id);
-        if($('revenue')) $('revenue').innerText=`₹${s.todayRevenue||0}`;
+        if($('revenue')) $('revenue').innerText=`₹${s.todayRevenue||this.wallet.totalEarning||0}`;
         if($('orderCount')) $('orderCount').innerText=s.todayOrders||0;
       }
     }catch(e){}
@@ -421,22 +471,21 @@ class KiranaDashboardCore {
     }catch(e){}
   }
 
-  // ==================== RENDER - PURE - NO FALTU ====================
   renderStats(){
     const $=(id)=>document.getElementById(id);
     if($('productCount')) $('productCount').innerText=this.stats.totalProducts||this.allProducts.length||0;
     if($('menuProdCount')) $('menuProdCount').innerText=this.allProducts.length||0;
-    if($('prodCountText')) $('prodCountText').innerText=`(${this.allProducts.length}) W:${this.worldProducts.length} O:${this.oldProducts.length} - via WorldProductManager Class`;
+    if($('prodCountText')) $('prodCountText').innerText=`(${this.allProducts.length}) W:${this.worldProducts.length} O:${this.oldProducts.length}`;
     if($('lowStockCount')) $('lowStockCount').innerText=this.stats.lowStockCount||this.lowStock.length||0;
-    if($('revenue')) $('revenue').innerText=`₹${this.stats.todayRevenue||this.stats.revenue||0}`;
+    if($('revenue')) $('revenue').innerText=`₹${this.stats.todayRevenue||this.stats.revenue||this.wallet.totalEarning||0}`;
     if($('orderCount')) $('orderCount').innerText=this.stats.todayOrders||this.orders.length||0;
-    if($('shopNameHead')) $('shopNameHead').innerText=this.shopData.shopName||this.shopData.name||'Kirana World - V16';
+    if($('shopNameHead')) $('shopNameHead').innerText=this.shopData.shopName||this.shopData.name||'Kirana World - V17 Hierarchy';
   }
 
   renderProducts(list){
     const c=document.getElementById('productList'); if(!c) return;
     if(!list.length){
-      c.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:60px 20px"><div style="font-size:48px">🛒</div><h3 style="font-weight:900;margin-top:10px">No products - World Model Empty</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#10b981">Quick 100</b> - common/products/kirana.seed.js se 100 products 1 click me World Model me<br><small>Uses WorldProductManager Class + /api/world-products/bulk</small></p><button onclick="window.KiranaDashboardCore.goQuickAdd()" class="btn btn-green" style="margin:12px auto 0">Quick Add 100 - kirana.seed.js via product-manager.js</button></div>`;
+      c.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:60px 20px"><div style="font-size:48px">🛒</div><h3 style="font-weight:900;margin-top:10px">No products</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Click <b style="color:#10b981">Quick 100</b> - kirana.seed.js se 100 products</p><button onclick="window.KiranaDashboardCore.goQuickAdd()" class="btn btn-green" style="margin:12px auto 0">Quick Add 100</button></div>`;
       return;
     }
     c.innerHTML=list.map(p=>`
@@ -444,13 +493,13 @@ class KiranaDashboardCore {
         <img src="${p.thumbnail || p.images?.[0]?.url || p.image || `https://source.unsplash.com/400x300/?grocery,${encodeURIComponent(p.category||'kirana')}`}" loading="lazy" onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=${encodeURIComponent((p.name||'Product').slice(0,12))}'" style="width:100%;height:140px;object-fit:cover">
         <div style="padding:10px">
           <b style="font-size:13px" title="${p.name}">${(p.name||'').slice(0,28)}</b>
-          <div style="font-size:10px;color:#64748b;margin-top:2px">${p.brand||p.extraData?.brand||''} ${p.brand?'•':''} ${p.weight||p.extraData?.weight||p.unit||''} • ${p.shopType||'kirana'} ${p.shopType?'🌍':''}</div>
+          <div style="font-size:10px;color:#64748b;margin-top:2px">${p.brand||p.extraData?.brand||''} ${p.brand?'•':''} ${p.weight||p.extraData?.weight||p.unit||''}</div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
             <div style="font-weight:900">₹${p.price||0}<del style="color:#94a3b8;font-size:10px;margin-left:4px">₹${p.mrp||p.price||0}</del></div>
             <div style="font-size:10px;font-weight:800;padding:3px 6px;border-radius:20px;background:${(p.stock||0)<=10?'#fee2e2;color:#ef4444':'#dcfce7;color:#15803d'}">${p.stock||0} LEFT</div>
           </div>
           <div style="display:flex;gap:6px;margin-top:10px">
-            <button onclick="window.KiranaDashboardCore.editProduct('${p._id}')" style="flex:1;background:#f1f5f9;border:1px solid #e2e8f0;padding:7px;border-radius:9px;font-weight:800;font-size:11px;cursor:pointer"><i class="fa-solid fa-pen"></i> Edit - Universal Form</button>
+            <button onclick="window.KiranaDashboardCore.editProduct('${p._id}')" style="flex:1;background:#f1f5f9;border:1px solid #e2e8f0;padding:7px;border-radius:9px;font-weight:800;font-size:11px;cursor:pointer"><i class="fa-solid fa-pen"></i> Edit</button>
             <button onclick="window.KiranaDashboardCore.deleteProduct('${p._id}')" style="width:36px;background:#fff;border:1px solid #fee2e2;color:#ef4444;border-radius:9px;cursor:pointer"><i class="fa-solid fa-trash"></i></button>
           </div>
         </div>
@@ -459,59 +508,48 @@ class KiranaDashboardCore {
   }
 
   renderLowStock(list){
-    const html=!list.length?`<div style="background:#f0fdf4;color:#15803d;padding:10px;border-radius:10px;font-weight:800;font-size:12px;text-align:center">✓ All Stock OK<br><small>WorldProductManager low-stock + common/inventory</small></div>`:list.slice(0,10).map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-bottom:6px"><div><b style="font-size:12px">${p.name}</b><br><small style="color:#92400e;font-size:10px">${p.shopType||p.category} • ${p.weight||''}</small></div><span style="background:#92400e;color:#fff;padding:3px 7px;border-radius:20px;font-size:10px;font-weight:900">${p.stock}</span></div>`).join('');
+    const html=!list.length?`<div style="background:#f0fdf4;color:#15803d;padding:10px;border-radius:10px;font-weight:800;font-size:12px;text-align:center">✓ All Stock OK</div>`:list.slice(0,10).map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-bottom:6px"><div><b style="font-size:12px">${p.name}</b><br><small style="color:#92400e;font-size:10px">${p.shopType||p.category} • ${p.weight||''}</small></div><span style="background:#92400e;color:#fff;padding:3px 7px;border-radius:20px;font-size:10px;font-weight:900">${p.stock}</span></div>`).join('');
     ['lowStock','lowStockRight','lowStockList'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; });
   }
 
   renderOrders(orders){
-    const html=!orders.length?`<div style="text-align:center;padding:16px;color:#94a3b8;font-size:12px"><div style="font-size:24px">📦</div>No live orders<br><small>Listening via common/core/socket-core.js + /api/common/orders</small></div>`:orders.map(o=>`<div style="background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="window.KiranaDashboardCore.openOrder('${o._id||o.orderId}')"><div><b style="font-size:12px">#${(o.orderId||o._id||'').toString().slice(-6).toUpperCase()}</b><br><span style="font-size:10px;color:#64748b">${o.items?.length||1} items • ₹${o.total||0} • ${o.customerName||'Customer'}</span></div><span style="background:${this.getStatusColor(o.status)};color:#fff;font-size:9px;font-weight:900;padding:4px 8px;border-radius:20px">${(o.status||'PLACED').toUpperCase()}</span></div>`).join('');
+    const html=!orders.length?`<div style="text-align:center;padding:16px;color:#94a3b8;font-size:12px"><div style="font-size:24px">📦</div>No live orders<br><small>Customer order karega toh yaha 🔔 bajega + Wallet + Socket</small></div>`:orders.map(o=>`<div style="background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="window.KiranaDashboardCore.openOrder('${o._id||o.orderId}')"><div><b style="font-size:12px">#${(o.orderId||o._id||'').toString().slice(-6).toUpperCase()}</b><br><span style="font-size:10px;color:#64748b">${o.items?.length||1} items • ₹${o.totalAmount||o.total||0} • ${o.buyerRole||'Customer'} • Earn: ₹${o.supplierEarning||''}</span></div><span style="background:${this.getStatusColor(o.status)};color:#fff;font-size:9px;font-weight:900;padding:4px 8px;border-radius:20px">${(o.status||'PLACED').toUpperCase()}</span></div>`).join('');
     ['recentOrders','liveOrdersRight'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; });
   }
 
-  // ==================== COMMON HELPERS - NO FALTU ====================
   getStatusColor(status){ const map={placed:'#0ea5e9',confirmed:'#8b5cf6',preparing:'#f59e0b',out_for_delivery:'#10b981',delivered:'#059669',cancelled:'#ef4444'}; return map[status]||'#64748b'; }
   showLoader(show){ const el=document.getElementById('loader'); if(el) el.style.display=show?'grid':'none'; }
-  showErrorInGrid(msg){ const c=document.getElementById('productList'); if(c) c.innerHTML=`<div style="grid-column:1/-1;padding:20px;color:#ef4444;background:#fef2f2;border:1px solid #fee2e2;border-radius:12px"><b>Error:</b> ${msg}<br><small>Check: /api/world-products?shopType=kirana&shopId=${this.shopId} via product-manager.js V15 Class</small></div>`; }
-  showErrorPage(title,message){ document.body.innerHTML=`<div style="height:100vh;display:grid;place-items:center;font-family:Outfit;text-align:center;padding:20px;background:#f8fafc"><div style="background:#fff;padding:32px;border-radius:24px;box-shadow:0 20px 40px rgba(0,0,0,.08);max-width:400px"><div style="font-size:48px">⚠️</div><h2 style="font-weight:900;margin:12px 0">${title}</h2><p style="color:#64748b;font-size:13px">${message}</p><a href="/" style="display:block;margin-top:16px;background:#0f172a;color:#fff;padding:12px;border-radius:12px;text-decoration:none;font-weight:800">Go Home - common/core</a></div></div>`; }
+  showErrorInGrid(msg){ const c=document.getElementById('productList'); if(c) c.innerHTML=`<div style="grid-column:1/-1;padding:20px;color:#ef4444;background:#fef2f2;border:1px solid #fee2e2;border-radius:12px"><b>Error:</b> ${msg}</div>`; }
+  showErrorPage(title,message){ document.body.innerHTML=`<div style="height:100vh;display:grid;place-items:center;font-family:Outfit;text-align:center;padding:20px;background:#f8fafc"><div style="background:#fff;padding:32px;border-radius:24px;box-shadow:0 20px 40px rgba(0,0,0,.08);max-width:400px"><div style="font-size:48px">⚠️</div><h2 style="font-weight:900;margin:12px 0">${title}</h2><p style="color:#64748b;font-size:13px">${message}</p><a href="/" style="display:block;margin-top:16px;background:#0f172a;color:#fff;padding:12px;border-radius:12px;text-decoration:none;font-weight:800">Go Home</a></div></div>`; }
   toast(msg){ const t=document.getElementById('toast'); if(!t) return; t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
   playSoundCommon(){ try{ const audio=document.getElementById('newOrderSound') || new Audio('../common/orders/new-order-sound.mp3'); audio.volume=0.8; audio.play().catch(()=>{});}catch(e){} }
   vibrateCommon(){ if(navigator.vibrate) navigator.vibrate([100,50,100]); }
 
-  // ==================== ACTIONS - COMMON/PRODUCTS/PRODUCT-FORM.HTML - UNIVERSAL FORM ====================
-  goProductForm(){
-    location.href=`../common/products/product-form.html?shopType=kirana&shopId=${this.shopId}&type=kirana`;
-  }
-  goQuickAdd(){
-    location.href=`../common/products/product-form.html?shopType=kirana&shopId=${this.shopId}&type=kirana&quick=1`;
-  }
-  editProduct(id){
-    location.href=`../common/products/product-form.html?shopType=kirana&shopId=${this.shopId}&type=kirana&editId=${id}`;
-  }
+  goProductForm(){ location.href=`../common/products/product-form.html?shopType=kirana&shopId=${this.shopId}&type=kirana`; }
+  goQuickAdd(){ location.href=`../common/products/product-form.html?shopType=kirana&shopId=${this.shopId}&type=kirana&quick=1`; }
+  editProduct(id){ location.href=`../common/products/product-form.html?shopType=kirana&shopId=${this.shopId}&type=kirana&editId=${id}`; }
 
   async deleteProduct(id){
-    if(!confirm('Delete? World Model se delete hoga - Dashboard + User-View + Admin + Area-Manager sab se gayab - common/products/product-manager.js V15 Class se')) return;
+    if(!confirm('Delete? World Model se delete hoga - Dashboard + User-View sab se gayab')) return;
     try{
       let res;
-      if(window.WorldProductManager?.deleteProduct){
-        res = await window.WorldProductManager.deleteProduct(id);
-      }else{
-        res = await fetch(`${this.API_WORLD_BASE}/${id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+(localStorage.getItem('token')||'')}}).then(r=>r.json());
-      }
+      if(window.WorldProductManager?.deleteProduct){ res = await window.WorldProductManager.deleteProduct(id); }
+      else{ res = await fetch(`${this.API_WORLD_BASE}/${id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+(localStorage.getItem('token')||'')}}).then(r=>r.json()); }
       if(!res.success){
         const oldRes = await window.ApiCore?.delete(`/api/shops/kirana/${this.shopId}/item/${id}`).catch(()=>({success:false}));
         if(!oldRes.success) throw new Error(res.message||'Delete failed');
       }
-      this.toast('Deleted ✅ World Model - product-manager.js');
+      this.toast('Deleted ✅ World Model');
       window.ApiCore?.clearCache(this.API_WORLD);
       await this.loadDashboard();
     }catch(e){
-      window.ErrorHandler?.handleApiError(e,'delete_product_v16_common');
+      window.ErrorHandler?.handleApiError(e,'delete_product_v17');
       this.toast('Delete failed: '+e.message);
     }
   }
 
-  openOrder(orderId){ window.open(`../common/orders/order-detail.html?shopId=${this.shopId}&orderId=${orderId}&shopType=kirana`,'_blank'); }
-  startAutoRefresh(){ this.stopAutoRefresh(); this.refreshInterval=setInterval(()=>{ this.loadOrdersCommon(); this.loadStatsCommon(); },30000); }
+  openOrder(orderId){ window.open(`../common/orders/order-detail.html?shopId=${this.shopId}&orderId=${orderId}&shopType=kirana&role=shop_owner`,'_blank'); }
+  startAutoRefresh(){ this.stopAutoRefresh(); this.refreshInterval=setInterval(()=>{ this.loadOrdersCommon(); this.loadStatsCommon(); this.loadWallet(); },30000); }
   stopAutoRefresh(){ if(this.refreshInterval) clearInterval(this.refreshInterval); }
 }
 
@@ -522,5 +560,3 @@ window.editProduct = (id)=> window.KiranaDashboardCore.editProduct(id);
 window.goForm = ()=> window.KiranaDashboardCore.goProductForm();
 window.goQuick = ()=> window.KiranaDashboardCore.goQuickAdd();
 window.toggleShop = ()=> { const sw=document.getElementById('toggleSwitch'); if(sw) sw.click(); };
-window.addEventListener('storage:cart', ()=> console.log('Cart updated via common StorageCore - common/cart/cart-core.js'));
-window.addEventListener('socket:shop-status', (e)=> console.log('Shop status via common socket', e.detail));

@@ -1,4 +1,4 @@
-<!-- LOCATION: public/shop-templates/patanjali/dashboard.html - PATANJALI POWERFUL DASHBOARD - COMMON CONNECTED - V1 -->
+<!-- LOCATION: public/shop-templates/patanjali/dashboard.html - PATANJALI POWERFUL DASHBOARD - V13 HIERARCHY MASTER -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,6 +31,7 @@ body{background:linear-gradient(180deg,#f0fdf4 0%,#f8fafc 220px);color:var(--dar
 .stat small{font-size:10px;color:#94a3b8;font-weight:600;display:block;margin-top:3px}
 .stat i{position:absolute;right:14px;top:14px;width:40px;height:40px;display:grid;place-items:center;background:var(--green-light);color:#166534;border-radius:12px}
 .stat.alert{border-left-color:var(--red)}.stat.alert i{background:#fee2e2;color:var(--red)}
+.stat.wallet{border-left-color:#0f172a}.stat.wallet i{background:#0f172a;color:#fff}
 .main{display:grid;grid-template-columns:1fr 350px;gap:20px;padding:20px;align-items:start}
 .left{background:#fff;border-radius:24px;border:1px solid var(--border);overflow:hidden}
 .left-head{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;gap:10px}
@@ -78,6 +79,8 @@ body{background:linear-gradient(180deg,#f0fdf4 0%,#f8fafc 220px);color:var(--dar
 @media(max-width:1100px){.main{grid-template-columns:1fr}.right{display:grid;grid-template-columns:1fr 1fr}}
 @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);padding:14px 14px 0}.main{padding:14px}.header{padding:10px 14px}}
 @media(max-width:640px){.right{grid-template-columns:1fr}.p-grid{grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}.p-card img{height:110px}.left-head{flex-direction:column;align-items:stretch}.search{max-width:none;width:100%}.filter-select{flex:1}}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.5}}
 </style>
 </head>
 <body>
@@ -88,8 +91,11 @@ body{background:linear-gradient(180deg,#f0fdf4 0%,#f8fafc 220px);color:var(--dar
     <span class="logo-icon"><i class="fa-solid fa-leaf"></i></span>
     <div class="logo-text"><b id="headerShopName">Patanjali Store</b><small>Ayurvedic Dashboard • SAMANLIVE</small></div>
     <small class="shop-id-badge" id="shopIdDisplay">ID:...</small>
+    <span id="newOrderBadge" style="display:none;background:#ef4444;color:#fff;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:900;animation:blink 1s infinite">🔔 NEW ORDER</span>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <div style="background:#f8fafc;border:1px solid var(--border);padding:8px 12px;border-radius:10px;font-size:12px;font-weight:800">Wallet: <b id="headerWallet">₹0</b></div>
+    <a href="../common/cart/cart.html" style="position:relative;background:#fff;border:1px solid var(--border);padding:10px 14px;border-radius:12px;text-decoration:none;color:var(--dark);font-weight:800"><i class="fa-solid fa-bag-shopping"></i> Cart <span data-cart-count style="position:absolute;top:-6px;right:-6px;background:#16a34a;color:#fff;border-radius:50%;min-width:18px;height:18px;display:none;align-items:center;justify-content:center;font-size:10px">0</span></a>
     <button class="btn btn-ghost" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh</button>
     <button class="btn btn-dark" id="viewShopBtn"><i class="fa-solid fa-eye"></i> View Shop</button>
     <button class="btn btn-green" id="newProductBtn"><i class="fa-solid fa-plus"></i> Add Product</button>
@@ -101,6 +107,8 @@ body{background:linear-gradient(180deg,#f0fdf4 0%,#f8fafc 220px);color:var(--dar
   <div class="stat"><i class="fa-solid fa-pills"></i><b id="medicineCount">0</b><p>Ayurvedic Items</p><small>Dawai + Chyawanprash</small></div>
   <div class="stat"><i class="fa-solid fa-cart-shopping"></i><b id="todaySales">0</b><p>Today Orders</p><small>Live orders</small></div>
   <div class="stat alert"><i class="fa-solid fa-triangle-exclamation"></i><b id="lowStockCount">0</b><p>Low Stock</p><small>₹ Revenue: <span id="revenue">0</span></small></div>
+  <div class="stat wallet"><i class="fa-solid fa-wallet"></i><b id="walletBalance">₹0</b><p>Wallet Balance</p><small>Earning: <span id="totalEarning">₹0</span></small></div>
+  <div class="stat wallet"><i class="fa-solid fa-sack-dollar"></i><b id="walletEarning">₹0</b><p>Total Earning</p><small>95% after 5% admin</small></div>
 </section>
 
 <main class="main">
@@ -111,34 +119,119 @@ body{background:linear-gradient(180deg,#f0fdf4 0%,#f8fafc 220px);color:var(--dar
         <div class="search"><i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i><input id="searchInput" placeholder="Ghee, atta, dawai, sabun khojo..."></div>
         <select class="filter-select" id="sortSelect"><option value="default">Sort: Default</option><option value="price-low">Price Low → High</option><option value="price-high">Price High → Low</option><option value="stock-low">Stock Low Pehle</option><option value="name">Name A → Z</option></select>
         <button class="btn btn-dark" id="quickAddBtn" style="padding:10px 14px;font-size:12px"><i class="fa-solid fa-bolt"></i> Quick Add</button>
+        <button class="btn btn-green" id="buyFromAdminBtn" style="padding:10px 14px;font-size:12px"><i class="fa-solid fa-boxes-stacked"></i> Buy From Admin/Area</button>
       </div>
     </div>
     <div class="tabs" id="catTabs"><div class="tab active">🌿 All</div></div>
     <div class="p-grid" id="inventoryList"><div class="empty-box"><div style="font-size:50px">🌿</div><h3 style="font-weight:900;margin-top:10px">Products load ho rahe hain...</h3></div></div>
+
+    <!-- BUY FROM ADMIN/AREA MANAGER - HIERARCHY - SHOP_OWNER CAN BUY -->
+    <div style="padding:16px;border-top:1px dashed var(--border);background:#f8fafc">
+      <h4 style="font-weight:900;margin-bottom:10px">🛒 Bulk Buy - Hierarchy (Shop Owner → Area Manager / Admin)</h4>
+      <p style="font-size:11px;color:#64748b;margin-bottom:12px">Shop Owner Area Manager aur Admin se bulk me stock le sakta hai. Cart me add hoga, wallet se pay hoga.</p>
+      <div id="adminProductsForShopOwner" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">Loading...</div>
+    </div>
   </section>
 
   <aside class="right">
-    <div class="box"><div class="profile-mini"><img id="shopPhoto" src="https://placehold.co/100x100/16a34a/ffffff?text=P" alt="Shop"><div><b id="shopName">Patanjali Store</b><small id="shopMeta" style="color:#64748b;font-weight:600;font-size:11px;display:block;margin-top:2px">Loading...</small></div></div></div>
-    <div class="box"><div class="toggle"><span><i class="fa-solid fa-store"></i> Shop: <b id="toggleText">Open</b></span><div class="switch on" id="toggleSwitch"></div></div><p style="font-size:11px;color:#64748b;margin-top:9px;font-weight:600;line-height:1.5">Band karne par customer order nahi kar payega.</p></div>
+    <div class="box"><div class="profile-mini"><img id="shopPhoto" src="https://placehold.co/100x100/16a34a/ffffff?text=P" alt="Shop"><div><b id="shopName">Patanjali Store</b><small id="shopMeta" style="color:#64748b;font-weight:600;font-size:11px;display:block;margin-top:2px">Loading...</small><small id="roleInfo" style="color:#16a34a;font-weight:800;font-size:10px">Role: shop_owner</small></div></div></div>
+    <div class="box"><div class="toggle"><span><i class="fa-solid fa-store"></i> Shop: <b id="toggleText">Open</b></span><div class="switch on" id="toggleSwitch"></div></div><p style="font-size:11px;color:#64748b;margin-top:9px;font-weight:600;line-height:1.5">Band karne par customer order nahi kar payega. Socket se live update jayega.</p></div>
+    <div class="box" style="background:#0f172a;color:#fff"><h4><i class="fa-solid fa-wallet"></i> Wallet Transactions</h4><div id="walletTx" style="font-size:11px;max-height:200px;overflow:auto">Loading...</div><button onclick="loadWalletTx()" style="margin-top:10px;width:100%;padding:8px;background:#fff;color:#000;border:0;border-radius:8px;font-weight:800;font-size:11px">Refresh Wallet</button></div>
     <div class="box"><h4><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i> Low Stock Alert</h4><div id="lowStock">Loading...</div></div>
     <div class="box"><h4><i class="fa-solid fa-layer-group" style="color:#16a34a"></i> Categories</h4><div id="subBox">Loading...</div></div>
-    <div class="box"><h4><i class="fa-solid fa-truck-fast"></i> Live Orders</h4><div id="liveOrders">No orders</div></div>
-    <div class="box dark-box"><h4>SAMANLIVE Status</h4><div id="commonStatus" style="font-size:12px;margin-top:8px;color:#cbd5e1;line-height:1.7">Checking...</div></div>
+    <div class="box"><h4><i class="fa-solid fa-truck-fast"></i> Live Orders <span id="newOrderCount" style="display:none;background:red;color:#fff;border-radius:50%;padding:2px 6px;font-size:10px">0</span></h4><div id="liveOrders">No orders</div><button onclick="location.href='../common/orders/orders.html?shopId='+ (window.shopId||'') +'&role=shop_owner'" style="margin-top:10px;width:100%;padding:8px;background:#000;color:#fff;border:0;border-radius:8px;font-weight:800;font-size:11px">View All Orders</button></div>
+    <div class="box dark-box"><h4>SAMANLIVE Status</h4><div id="commonStatus" style="font-size:12px;margin-top:8px;color:#cbd5e1;line-height:1.7">Checking... Wallet + Socket + Hierarchy Active</div></div>
   </aside>
 </main>
 
-<p class="footer-note">Patanjali Dashboard • World Model Connected • Seed: patanjali.seed.js • Form: common/products/product-form.html</p>
+<p class="footer-note">Patanjali Dashboard • World Model Connected • Seed: patanjali.seed.js • Form: common/products/product-form.html • V13 Hierarchy Master</p>
 <div id="toast"></div>
 <audio id="newOrderSound" src="../common/orders/new-order-sound.mp3" preload="none"></audio>
 
+<!-- MASTER SCRIPT ORDER - HIERARCHY -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="../../assets/js/role-hierarchy.js"></script>
 <script src="../common/core/storage-core.js"></script>
 <script src="../common/core/error-handler.js"></script>
 <script src="../common/core/api-core.js"></script>
 <script src="../common/core/auth-core.js"></script>
 <script src="../common/core/user-core.js"></script>
+<script src="../common/cart/cart-core.js"></script>
+<script src="../common/cart/cart-count.js"></script>
+<script src="../common/js/dashboard-core.js"></script>
 <script src="../common/core/dashboard-core.js"></script>
 <script src="../common/js/shop-toggle.js"></script>
 <script src="../common/products/product-manager.js"></script>
-<script src="./dashboard.js?v=1"></script>
+<script>
+  // Extra hierarchy logic for dashboard
+  window.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId');
+  window.USER_ROLE = 'shop_owner';
+  window.MY_SHOP_ID = window.shopId;
+  window.AreaManagerCode = null;
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setTimeout(async ()=>{
+      if(window.DashboardCore) {
+        window.DashboardCore.loadWalletBalance();
+        window.DashboardCore.initSocket();
+      }
+      loadAdminProductsForShop();
+      loadWalletTx();
+    }, 1000);
+  });
+
+  async function loadAdminProductsForShop(){
+    const container = document.getElementById('adminProductsForShopOwner');
+    if(!container) return;
+    container.innerHTML = 'Loading admin/area products...';
+    try {
+      const res = await fetch(`/api/world-products?role=shop_owner&shopId=${window.shopId}`).then(r=>r.json()).catch(()=>({data:[]}));
+      let products = res.data || res.products || [];
+      // Show only admin + area_manager products for buying
+      const allowed = products.filter(p=> ['admin','area_manager'].includes(p.ownerRole || p.supplierRole || ''));
+      const toShow = allowed.length? allowed.slice(0,12) : products.slice(0,8);
+      if(!toShow.length){ container.innerHTML = '<p style="font-size:12px;color:#888">No admin/area products found. Admin se contact karo.</p>'; return; }
+      container.innerHTML = toShow.map(p=> `
+        <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:10px">
+          <img src="${p.thumbnail||p.image||'https://placehold.co/100x100/16a34a/fff?text=P'}" style="width:100%;height:80px;object-fit:cover;border-radius:8px">
+          <div style="font-weight:800;font-size:12px;margin-top:6px">${p.name||'Product'}</div>
+          <div style="font-size:10px;color:#666">₹${p.price} • ${p.ownerRole||'admin'}</div>
+          <button onclick='buyBulkFromHierarchy(${JSON.stringify(p).replace(/'/g,"&#39;")})' style="width:100%;margin-top:6px;padding:6px;background:#000;color:#fff;border:0;border-radius:6px;font-size:11px">Buy Bulk x10</button>
+        </div>
+      `).join('');
+    } catch(e){ container.innerHTML = `<p style="color:red;font-size:12px">${e.message}</p>`; }
+  }
+
+  window.buyBulkFromHierarchy = async function(product){
+    if(!window.CartCore || !window.RoleHierarchy){ alert('CartCore loading...'); return; }
+    product.ownerRole = product.ownerRole || 'admin';
+    product.ownerId = product.ownerId || 'admin_default';
+    product.shopId = product.shopId || product.ownerId;
+    const ok = await window.CartCore.add(product, 10);
+    if(ok && confirm(`Added ${product.name} x10. Checkout?`)){
+      location.href = `../common/checkout/checkout.html?shopId=${window.shopId}&supplierId=${product.ownerId}&supplierRole=${product.ownerRole}&shopType=patanjali&supplierName=${encodeURIComponent(product.ownerRole)}`;
+    }
+  };
+
+  async function loadWalletTx(){
+    const el = document.getElementById('walletTx');
+    if(!el || !window.shopId) return;
+    try {
+      const res = await fetch(`/api/common/wallet/transactions?userId=${window.shopId}&role=shop_owner&limit=20`).then(r=>r.json());
+      const tx = res.transactions || [];
+      if(!tx.length){ el.innerHTML = '<p style="opacity:0.6">No transactions yet</p>'; return; }
+      el.innerHTML = tx.map(t=> `
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #334155">
+          <span>${t.type==='credit'? '🟢' : '🔴'} ${t.description||t.type} <br><small style="color:#94a3b8">${new Date(t.createdAt).toLocaleDateString()}</small></span>
+          <span style="font-weight:800;color:${t.type==='credit'? '#22c55e' : '#ef4444'}">${t.type==='credit'? '+' : '-'}₹${t.amount}<br><small style="color:#fff">Bal: ₹${t.balanceAfter||0}</small></span>
+        </div>
+      `).join('');
+    } catch(e){ el.innerHTML = `<p>${e.message}</p>`; }
+  }
+  window.loadWalletTx = loadWalletTx;
+
+  document.getElementById('buyFromAdminBtn')?.addEventListener('click', ()=>{ document.getElementById('adminProductsForShopOwner')?.scrollIntoView({behavior:'smooth'}); loadAdminProductsForShop(); });
+</script>
+<script src="./dashboard.js?v=13"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-<!-- LOCATION: public/shop-templates/patanjali/user-view.html - PATANJALI CUSTOMER VIEW - V1 POWERFUL - COMMON CONNECTED -->
+<!-- LOCATION: public/shop-templates/patanjali/user-view.html - PATANJALI CUSTOMER VIEW - V13 HIERARCHY MASTER -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -98,7 +98,7 @@ button,input{font-family:'Outfit',sans-serif}
   <div class="hdr-icons">
     <button class="icon-btn" id="chatBtn" title="Chat"><i class="fa-regular fa-message"></i></button>
     <button class="icon-btn" id="wishlistIcon" title="Wishlist"><i class="fa-regular fa-heart"></i></button>
-    <button class="cart-btn" id="cartOpenBtn"><i class="fa-solid fa-bag-shopping"></i><span id="cartText">Cart</span><span class="cart-count" id="cartCount">0</span></button>
+    <button class="cart-btn" id="cartOpenBtn"><i class="fa-solid fa-bag-shopping"></i><span id="cartText">Cart</span><span class="cart-count" id="cartCount" data-cart-count>0</span></button>
   </div>
 </header>
 
@@ -109,6 +109,7 @@ button,input{font-family:'Outfit',sans-serif}
     <div class="badge"><i class="fa-solid fa-leaf"></i> 100% Ayurvedic</div>
     <div class="badge"><i class="fa-solid fa-award"></i><span id="ratingBadge">4.8 Rating</span></div>
     <div class="badge" id="openStatus"><i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN</div>
+    <div class="badge" id="roleBadge" style="background:rgba(0,0,0,0.25)">Role: <span id="myRoleText">customer</span></div>
   </div>
 </section>
 
@@ -150,14 +151,22 @@ button,input{font-family:'Outfit',sans-serif}
 
 <div id="toast"></div>
 
+<!-- HIERARCHY MASTER SCRIPTS - CORRECT ORDER -->
+<script src="/assets/js/role-hierarchy.js"></script>
+<script src="../common/core/api-core.js"></script>
 <script src="../common/cart/cart-core.js"></script>
+<script src="../common/cart/cart-count.js"></script>
 <script src="../common/products/product-manager.js"></script>
+<script src="../common/qr/qr.js"></script>
+<script src="../common/reviews/reviews.js"></script>
 <script>
 (function(){
   const params = new URLSearchParams(location.search);
   const shopId = params.get('shopId') || params.get('id') || localStorage.getItem('last_shopId') || '';
   const shopType = 'patanjali';
   window.shopId = shopId; window.shopType = shopType;
+  window.MY_SHOP_ID = shopId;
+  window.USER_ROLE = window.RoleHierarchy? window.RoleHierarchy.getMyRole() : 'customer';
   const sid = document.getElementById('shopIdDisplay');
   if(sid) sid.innerText = shopId? 'ID: ' + shopId.slice(-6) : 'ID: MISSING';
   if(!shopId){ document.getElementById('productGrid').innerHTML = `<div class="empty-box"><div style="font-size:50px">⚠️</div><h3 style="font-weight:900;margin-top:10px">Shop ID Missing</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">URL me?shopId= lagao</p></div>`; return; }
@@ -175,6 +184,18 @@ button,input{font-family:'Outfit',sans-serif}
   function getSize(p){ return p.extraData?.size || p.size || p.weight || p.unit || ''; }
   function getDesc(p){ return p.description || p.extraData?.description || ''; }
 
+  // HIERARCHY: can buy check
+  function canBuyThis(product){
+    if(!window.RoleHierarchy) return true;
+    const prod = {
+    ...product,
+      ownerRole: product.ownerRole || product.shopOwnerRole || 'shop_owner',
+      ownerId: product.ownerId || product.shopId || shopId,
+      shopId: product.shopId || shopId
+    };
+    return window.RoleHierarchy.shouldShowAddButton(prod);
+  }
+
   function loadCartLocal(){
     try{
       const savedNew = JSON.parse(localStorage.getItem(`cart_${shopId}_new`) || 'null');
@@ -190,15 +211,14 @@ button,input{font-family:'Outfit',sans-serif}
       localStorage.setItem(`cart_${shopId}_new`, JSON.stringify(cart));
       localStorage.setItem(`cart_items_${shopId}`, JSON.stringify(arr));
     }catch(e){}
-    if(window.CartCore?.refresh) window.CartCore.refresh(shopId);
-    if(window.CartCount?.refresh) window.CartCount.refresh(shopId);
-    if(window.updateCartCount) window.updateCartCount();
   }
   function loadWishlist(){ try{ wishlist = new Set(JSON.parse(localStorage.getItem(`wishlist_${shopId}`) || '[]')); }catch(e){ wishlist = new Set(); } }
   function saveWishlist(){ try{ localStorage.setItem(`wishlist_${shopId}`, JSON.stringify([...wishlist])); }catch(e){} const w = $('wishlistIcon'); if(w){ w.classList.toggle('active', wishlist.size>0); w.innerHTML = wishlist.size? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>'; } }
 
   async function loadShop(){
     loadCartLocal(); loadWishlist();
+    // Update role badge
+    if($('myRoleText') && window.RoleHierarchy) $('myRoleText').textContent = window.RoleHierarchy.getMyRole();
     try{
       const results = await Promise.allSettled([
         window.WorldProductManager? window.WorldProductManager.getProducts({shopType, shopId}) : fetch(`/api/world-products?shopId=${shopId}&shopType=${shopType}`).then(r=>r.json()).then(d=>d.data||[]),
@@ -216,17 +236,28 @@ button,input{font-family:'Outfit',sans-serif}
       worldProducts = Array.isArray(worldRes)? worldRes : (worldRes?.data || []);
       const wIds = new Set(worldProducts.map(p=>p._id));
       allProducts = [...worldProducts,...oldProducts.filter(p=>!wIds.has(p._id))];
+      // Inject hierarchy fields
+      allProducts = allProducts.map(p=> ({
+      ...p,
+        ownerRole: p.ownerRole || p.shopOwnerRole || 'shop_owner',
+        ownerId: p.ownerId || p.shopId || shopId,
+        shopId: p.shopId || shopId,
+        shopName: shopData.shopName || shopData.name || 'Patanjali Store',
+        shopType: shopType
+      }));
     }catch(e){ console.warn('Patanjali customer load failed', e); allProducts = mockProducts(); }
     if(!allProducts.length) allProducts = mockProducts();
     renderShopInfo(); renderFilters(); renderAll(); updateCartUI();
+    // CartCore sync load
+    if(window.CartCore) await window.CartCore.getCart();
   }
 
   function mockProducts(){
     return [
-      {_id:'p1', name:'Patanjali Cow Ghee 1L', brand:'Patanjali', category:'Ghee & Oil', price:650, mrp:720, stock:30, unit:'jar', thumbnail:'https://images.unsplash.com/photo-1633436375153-d7045cb93e38?w=600&q=80', isSpecial:'true', extraData:{badge:'Bestseller', cardColor:'#f0fdf4', description:'Shudh gay ka danedar ghee'}},
-      {_id:'p2', name:'Patanjali Chyawanprash 1kg', brand:'Patanjali', category:'Chyawanprash', price:340, mrp:395, stock:40, unit:'jar', thumbnail:'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&q=80'},
-      {_id:'p3', name:'Patanjali Dant Kanti 200g', brand:'Patanjali', category:'Oral Care', price:90, mrp:100, stock:80, unit:'tube', thumbnail:'https://images.unsplash.com/photo-1559671210728-a4f2f0c3d1e1?w=600&q=80'},
-      {_id:'p4', name:'Patanjali Aloe Vera Juice 1L', brand:'Patanjali', category:'Juice', price:180, mrp:210, stock:50, unit:'bottle', thumbnail:'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=600&q=80'}
+      {_id:'p1', name:'Patanjali Cow Ghee 1L', brand:'Patanjali', category:'Ghee & Oil', price:650, mrp:720, stock:30, unit:'jar', thumbnail:'https://images.unsplash.com/photo-1633436375153-d7045cb93e38?w=600&q=80', isSpecial:'true', extraData:{badge:'Bestseller', cardColor:'#f0fdf4', description:'Shudh gay ka danedar ghee'}, ownerRole:'shop_owner', ownerId:shopId, shopId:shopId},
+      {_id:'p2', name:'Patanjali Chyawanprash 1kg', brand:'Patanjali', category:'Chyawanprash', price:340, mrp:395, stock:40, unit:'jar', thumbnail:'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&q=80', ownerRole:'shop_owner', ownerId:shopId, shopId:shopId},
+      {_id:'p3', name:'Patanjali Dant Kanti 200g', brand:'Patanjali', category:'Oral Care', price:90, mrp:100, stock:80, unit:'tube', thumbnail:'https://images.unsplash.com/photo-1559671210728-a4f2f0c3d1e1?w=600&q=80', ownerRole:'shop_owner', ownerId:shopId, shopId:shopId},
+      {_id:'p4', name:'Patanjali Aloe Vera Juice 1L', brand:'Patanjali', category:'Juice', price:180, mrp:210, stock:50, unit:'bottle', thumbnail:'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=600&q=80', ownerRole:'shop_owner', ownerId:shopId, shopId:shopId}
     ];
   }
 
@@ -263,15 +294,27 @@ button,input{font-family:'Outfit',sans-serif}
 
   function qtyBarHtml(p, qty){ return `<div class="qty-bar show"><button class="qty-btn" data-dec="${p._id}">−</button><b class="qty-num">${qty}</b><button class="qty-btn" data-inc="${p._id}">+</button></div>`; }
 
+  function addButtonHtml(p){
+    const qty = cart[p._id]||0;
+    const out = (p.stock||0)<=0;
+    const canBuy = canBuyThis(p);
+    if(!canBuy){
+      const myRole = window.RoleHierarchy? window.RoleHierarchy.getMyRole() : 'customer';
+      return `<div style="padding:6px 10px;background:#f1f5f9;border-radius:10px;font-size:10px;color:#999;text-align:center">Not allowed (${myRole}→${p.ownerRole})</div>`;
+    }
+    if(qty>0) return qtyBarHtml(p,qty);
+    return `<button class="add-btn" data-add="${p._id}" ${out||!shopOpen?'disabled':''}><i class="fa-solid fa-plus"></i> Add</button>`;
+  }
+
   function renderSpecial(list){
     const sec = $('specialSection'), grid = $('specialGrid');
     if(!sec ||!grid) return;
     if(!list.length){ sec.style.display = 'none'; grid.innerHTML = ''; return; }
     sec.style.display = 'block';
     grid.innerHTML = list.map(p=>{
-      const qty = cart[p._id]||0, out = (p.stock||0)<=0, ex = p.extraData||{};
+      const out = (p.stock||0)<=0, ex = p.extraData||{};
       const badge = ex.badge || p.badge || 'SPECIAL', bg = ex.cardColor || p.cardColor || '#f0fdf4';
-      return `<article class="special-card" style="background:${bg}"><button class="wishlist-btn ${wishlist.has(p._id)?'active':''}" data-wish="${p._id}"><i class="fa-${wishlist.has(p._id)?'solid':'regular'} fa-heart"></i></button>${out?'<span class="tag out">OUT OF STOCK</span>':'<span class="tag special">⭐ '+badge+'</span>'}<img src="${getImage(p)}" loading="lazy" onerror="this.src='https://placehold.co/600x360/16a34a/ffffff?text=Patanjali'"><div class="special-body"><b>${p.name||''}</b><div class="p-meta">${getBrand(p)} • ${p.category||''} ${getSize(p)?'• '+getSize(p):''}</div>${getDesc(p)?`<div class="p-desc">${getDesc(p).slice(0,140)}</div>`:''}<div class="p-price"><div class="price">₹${p.price||0} ${p.mrp && p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}<small>${p.unit||''}</small></div>${qty>0? qtyBarHtml(p,qty) : `<button class="add-btn" data-add="${p._id}" ${out||!shopOpen?'disabled':''}><i class="fa-solid fa-plus"></i> Add</button>`}</div></div></article>`;
+      return `<article class="special-card" style="background:${bg}"><button class="wishlist-btn ${wishlist.has(p._id)?'active':''}" data-wish="${p._id}"><i class="fa-${wishlist.has(p._id)?'solid':'regular'} fa-heart"></i></button>${out?'<span class="tag out">OUT OF STOCK</span>':'<span class="tag special">⭐ '+badge+'</span>'}<img src="${getImage(p)}" loading="lazy" onerror="this.src='https://placehold.co/600x360/16a34a/ffffff?text=Patanjali'"><div class="special-body"><b>${p.name||''}</b><div class="p-meta">${getBrand(p)} • ${p.category||''} ${getSize(p)?'• '+getSize(p):''}</div>${getDesc(p)?`<div class="p-desc">${getDesc(p).slice(0,140)}</div>`:''}<div class="p-price"><div class="price">₹${p.price||0} ${p.mrp && p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}<small>${p.unit||''}</small></div>${addButtonHtml(p)}</div></div></article>`;
     }).join('');
     bindCardButtons(grid);
   }
@@ -280,8 +323,8 @@ button,input{font-family:'Outfit',sans-serif}
     const g = $('productGrid'); if(!g) return;
     if(!list.length){ g.innerHTML = `<div class="empty-box"><div style="font-size:50px">🌿</div><h3 style="font-weight:900;margin-top:10px">${specialCount? 'Is category me aur item nahi hai' : 'No items mile'}</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Dusri category try karo</p></div>`; return; }
     g.innerHTML = list.map(p=>{
-      const qty = cart[p._id]||0, out = (p.stock||0)<=0;
-      return `<article class="p-card"><button class="wishlist-btn ${wishlist.has(p._id)?'active':''}" data-wish="${p._id}"><i class="fa-${wishlist.has(p._id)?'solid':'regular'} fa-heart"></i></button>${out?'<span class="tag out">OUT</span>':'<span class="tag ayurvedic">AYURVEDIC</span>'}<img src="${getImage(p)}" loading="lazy" onerror="this.src='https://placehold.co/500x360/16a34a/ffffff?text=Patanjali'"><div class="p-body"><b>${p.name||''}</b><div class="p-meta">${getBrand(p)} • ${getSize(p)||p.unit||''}</div><div class="p-price"><div class="price">₹${p.price||0} ${p.mrp && p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}<small>/${p.unit||'packet'}</small></div>${qty>0? qtyBarHtml(p,qty) : `<button class="add-btn" data-add="${p._id}" ${out||!shopOpen?'disabled':''}><i class="fa-solid fa-plus"></i> Add</button>`}</div></div></article>`;
+      const out = (p.stock||0)<=0;
+      return `<article class="p-card"><button class="wishlist-btn ${wishlist.has(p._id)?'active':''}" data-wish="${p._id}"><i class="fa-${wishlist.has(p._id)?'solid':'regular'} fa-heart"></i></button>${out?'<span class="tag out">OUT</span>':'<span class="tag ayurvedic">AYURVEDIC</span>'}<img src="${getImage(p)}" loading="lazy" onerror="this.src='https://placehold.co/500x360/16a34a/ffffff?text=Patanjali'"><div class="p-body"><b>${p.name||''}</b><div class="p-meta">${getBrand(p)} • ${getSize(p)||p.unit||''}</div><div class="p-price"><div class="price">₹${p.price||0} ${p.mrp && p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}<small>/${p.unit||'packet'}</small></div>${addButtonHtml(p)}</div></div></article>`;
     }).join('');
     bindCardButtons(g);
   }
@@ -293,13 +336,62 @@ button,input{font-family:'Outfit',sans-serif}
     root.querySelectorAll('[data-wish]').forEach(b=> b.addEventListener('click', ()=>{ const id = b.dataset.wish; if(wishlist.has(id)){ wishlist.delete(id); toast('Wishlist se hataya'); } else { wishlist.add(id); toast('Wishlist me add ❤️'); } saveWishlist(); renderAll(); }));
   }
 
-  function updateQty(id, delta){
+  async function updateQty(id, delta){
     if(!shopOpen){ toast('Dukaan band hai, abhi order nahi hoga'); return; }
     const p = allProducts.find(x=>x._id===id); if(!p) return;
+    if(!canBuyThis(p)){ toast(`Aap ${window.RoleHierarchy.getMyRole()} ho, ${p.ownerRole} se nahi kharid sakte`); return; }
     let q = (cart[id]||0) + delta; if(q<0) q = 0;
     if(q > (p.stock||999)){ toast(`Stock limit: ${p.stock} hi hai`); return; }
+
+    // HIERARCHY CART CORE SYNC
+    if(delta>0){
+      const productForCart = {
+        _id: p._id, id: p._id, name: p.name, title: p.name,
+        price: p.price, image: getImage(p), thumbnail: getImage(p),
+        ownerRole: p.ownerRole || 'shop_owner',
+        ownerId: p.ownerId || shopId,
+        shopId: p.shopId || shopId,
+        shopName: p.shopName || shopData.shopName,
+        shopType: shopType,
+        stock: p.stock
+      };
+      if(window.CartCore){
+        const ok = await window.CartCore.add(productForCart, delta>0? 1 : 1);
+        if(!ok) { toast('Cart add fail - role check'); return; }
+        // Update local qty from CartCore
+        const cartData = window.CartCore.getCartBySupplier(productForCart.ownerId || productForCart.shopId);
+        const item = cartData.find(i=> i.id===p._id || i._id===p._id);
+        if(item) q = item.qty;
+        else if(delta>0 && q===0) q = 1;
+        else if(delta<0 && q>0) {
+          // handle minus via CartCore
+          if(q===0){
+            await window.CartCore.remove(p._id, productForCart.ownerId || productForCart.shopId);
+          }
+        }
+      }
+    } else {
+      // Decrease
+      if(window.CartCore){
+        if(q===0) await window.CartCore.remove(p._id, p.ownerId || p.shopId);
+        else {
+          // set qty via remove+add logic
+          const currentCart = window.CartCore.getCartBySupplier(p.ownerId || p.shopId);
+          const item = currentCart.find(i=> i.id===p._id);
+          if(item){
+            // simple: clear and re-add with new qty
+            await window.CartCore.remove(p._id, p.ownerId || p.shopId);
+            if(q>0){
+              await window.CartCore.add({...p, _id:p._id, name:p.name, price:p.price, image:getImage(p), ownerRole:p.ownerRole, ownerId:p.ownerId, shopId:p.shopId}, q);
+            }
+          }
+        }
+      }
+    }
+
     if(q===0) delete cart[id]; else cart[id] = q;
     syncCartToLocalStorage(); updateCartUI(); renderAll();
+    if(window.CartCount) window.CartCount.update();
     if(navigator.vibrate) navigator.vibrate(40);
     if(delta>0 && q===1) toast(`${p.name} add ho gaya 🌿`);
   }
@@ -308,17 +400,25 @@ button,input{font-family:'Outfit',sans-serif}
   function getCount(){ return Object.values(cart).reduce((a,b)=>a+b,0); }
 
   function updateCartUI(){
-    const count = getCount();
+    const count = window.CartCore? window.CartCore.getCount() : getCount();
+    const subtotal = window.CartCore? window.CartCore.getTotal() : getSubtotal();
     $('cartCount').innerText = count;
-    $('cartText').innerText = count? `₹${getSubtotal()}` : 'Cart';
+    $('cartText').innerText = count? `₹${subtotal}` : 'Cart';
     const box = $('cartItems');
-    if(!count){ box.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:22px">Cart khali hai, kuch ayurvedic add karo 🌿</p>'; }
+    // Use CartCore cart if available
+    let displayCart = [];
+    if(window.CartCore){
+      displayCart = window.CartCore.getCart();
+    } else {
+      displayCart = Object.keys(cart).map(id=>{ const p = allProducts.find(x=>x._id===id); return p? {id, name:p.name, price:p.price, qty:cart[id], image:getImage(p)} : null; }).filter(Boolean);
+    }
+    if(!displayCart.length){ box.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:22px">Cart khali hai, kuch ayurvedic add karo 🌿</p>'; }
     else{
-      box.innerHTML = Object.keys(cart).map(id=>{ const p = allProducts.find(x=>x._id===id); if(!p) return ''; const qty = cart[id]; return `<div class="cart-item"><div style="min-width:0"><b>${p.name}</b><small>${qty} × ₹${p.price} • ${getSize(p)||p.unit||''}</small></div><div style="text-align:right"><b>₹${p.price*qty}</b><div class="qty-bar show" style="margin-top:6px"><button class="qty-btn" data-dec="${id}">−</button><b class="qty-num">${qty}</b><button class="qty-btn" data-inc="${id}">+</button></div></div></div>`; }).join('');
+      box.innerHTML = displayCart.map(it=>{ return `<div class="cart-item"><div style="min-width:0"><b>${it.name}</b><small>${it.qty} × ₹${it.price} • ${it.ownerRole||'shop_owner'}</small></div><div style="text-align:right"><b>₹${it.price*it.qty}</b><div class="qty-bar show" style="margin-top:6px"><button class="qty-btn" data-dec="${it.id||it._id}">−</button><b class="qty-num">${it.qty}</b><button class="qty-btn" data-inc="${it.id||it._id}">+</button></div></div></div>`; }).join('');
       bindCardButtons(box);
     }
-    $('cartSubtotal').innerText = '₹' + getSubtotal();
-    $('cartTotal').innerText = '₹' + getSubtotal();
+    $('cartSubtotal').innerText = '₹' + subtotal;
+    $('cartTotal').innerText = '₹' + subtotal;
     $('checkoutBtn').disabled =!count ||!shopOpen;
     $('checkoutBtn').innerHTML =!shopOpen? '🔴 Dukaan Band Hai' : '<i class="fa-solid fa-bolt"></i> Checkout';
   }
@@ -348,14 +448,13 @@ button,input{font-family:'Outfit',sans-serif}
   });
   $('chatBtn')?.addEventListener('click', ()=>{ if(window.loadChatbot) window.loadChatbot(); else toast('Chat jald aa raha hai'); });
   $('navQr')?.addEventListener('click', ()=>{ if(window.loadQrModule) window.loadQrModule(); else toast('QR module load nahi hua'); });
-  $('fullCartBtn')?.addEventListener('click', ()=>{ location.href = `../common/cart/cart.html?shopId=${shopId}&shopType=${shopType}`; });
+  $('fullCartBtn')?.addEventListener('click', ()=>{ location.href = `../common/cart/cart.html?shopId=${shopId}&shopType=${shopType}&supplierId=${shopId}&supplierRole=shop_owner`; });
   $('checkoutBtn')?.addEventListener('click', ()=>{
-    if(!getCount()){ toast('Cart khali hai!'); return; }
+    if(!getCount() &&!(window.CartCore && window.CartCore.getCount()>0)){ toast('Cart khali hai!'); return; }
     syncCartToLocalStorage();
-    const payload = {shopId, shopType, cart, subtotal:getSubtotal(), total:getSubtotal()};
-    try{ localStorage.setItem(`checkout_${shopId}`, JSON.stringify(payload)); }catch(e){}
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-    location.href = `./checkout.html?shopId=${shopId}&shopType=${shopType}&data=${encoded}`;
+    // HIERARCHY CHECKOUT - supplier info pass
+    const checkoutUrl = `../common/checkout/checkout.html?shopId=${shopId}&supplierId=${shopId}&supplierRole=shop_owner&shopType=${shopType}&supplierName=${encodeURIComponent(shopData.shopName||'Patanjali Store')}`;
+    location.href = checkoutUrl;
   });
 
   window.toggleCart = toggleCart; window.updateQty = updateQty;
@@ -365,9 +464,5 @@ button,input{font-family:'Outfit',sans-serif}
   loadShop();
 })();
 </script>
-
-<script src="../common/cart/cart-count.js"></script>
-<script src="../common/qr/qr.js"></script>
-<script src="../common/reviews/reviews.js"></script>
 </body>
 </html>

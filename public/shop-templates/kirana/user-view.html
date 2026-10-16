@@ -1,10 +1,10 @@
-<!-- LOCATION: public/shop-templates/kirana/user-view.html - V17 FIXED - CART.REDUCE FIX + WORLD 100% - FULL CODE -->
+<!-- LOCATION: public/shop-templates/kirana/user-view.html - V17 FIXED + V13 HIERARCHY MASTER - FULL CODE -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>Kirana Store - SamanLive - V16 World Boss</title>
+<title>Kirana Store - SamanLive - V17 World Boss + Hierarchy</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
@@ -50,6 +50,7 @@ body{background:var(--bg);color:var(--text);overflow-x:hidden;padding-bottom:80p
 .add{width:34px;height:34px;border-radius:11px;background:var(--dark);color:#fff;border:none;display:grid;place-items:center;cursor:pointer;transition:.2s;box-shadow:0 4px 10px rgba(0,0,0,.15)}
 .add:active{transform:scale(.88)}
 .add.added{background:var(--green)}
+.add:disabled{background:#e2e8f0;color:#94a3b8;cursor:not-allowed;box-shadow:none}
 .wish{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border:1px solid var(--border);display:grid;place-items:center;cursor:pointer;transition:.2s}
 .wish.active{color:#ef4444;background:#fff;border-color:#fee2e2}
 .cart-drawer{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);z-index:200;display:none;opacity:0;transition:.3s}
@@ -78,26 +79,26 @@ body{background:var(--bg);color:var(--text);overflow-x:hidden;padding-bottom:80p
 <body>
 
 <div class="header">
-  <div class="logo"><span id="shopLogoLetter">K</span><div><div id="shopName" style="line-height:1">Kirana Store - World</div><small id="shopStatusBadge" style="font-size:9px;font-weight:800;color:#10b981">● OPEN • V16 COMMON</small></div></div>
-  <div class="search"><i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i><input id="searchInput" placeholder="Atta, dal, oil - Search via common/utils/search.js"><i class="fa-solid fa-microphone" style="color:#94a3b8;cursor:pointer" id="voiceSearchBtn" title="Voice Search - common/ai/voice-search.js"></i></div>
+  <div class="logo"><span id="shopLogoLetter">K</span><div><div id="shopName" style="line-height:1">Kirana Store - World</div><small id="shopStatusBadge" style="font-size:9px;font-weight:800;color:#10b981">● OPEN • V17 HIERARCHY</small></div></div>
+  <div class="search"><i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i><input id="searchInput" placeholder="Atta, dal, oil - Search"><i class="fa-solid fa-microphone" style="color:#94a3b8;cursor:pointer" id="voiceSearchBtn" title="Voice Search"></i></div>
   <div class="actions">
-    <button class="icon-btn" id="wishlistBtn" title="Wishlist - common/wishlist/wishlist.js"><i class="fa-regular fa-heart"></i><span class="badge" id="wishlistCount" style="display:none">0</span></button>
-    <button class="icon-btn" id="cartBtn" title="Cart - common/cart/cart-core.js"><i class="fa-solid fa-cart-shopping"></i><span class="badge" id="cartCount">0</span></button>
-    <button class="icon-btn" id="shareBtn" title="Share - common/share/whatsapp-share.js"><i class="fa-solid fa-share-nodes"></i></button>
+    <button class="icon-btn" id="wishlistBtn"><i class="fa-regular fa-heart"></i><span class="badge" id="wishlistCount" style="display:none">0</span></button>
+    <button class="icon-btn" id="cartBtn"><i class="fa-solid fa-cart-shopping"></i><span class="badge" id="cartCount" data-cart-count>0</span></button>
+    <button class="icon-btn" id="shareBtn"><i class="fa-solid fa-share-nodes"></i></button>
   </div>
 </div>
 
 <div class="banner" id="shopBanner">
-  <div><h2 id="bannerTitle">Fresh Kirana Daily - World Model</h2><p id="bannerSub">Free delivery in 30 mins • COD • World Products</p><div style="margin-top:8px;display:flex;gap:6px"><span style="background:rgba(255,255,255,.25);padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800">WORLD MODEL - product-manager.js V15</span><span style="background:#fff;color:#d97706;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:900">V16 COMMON</span></div></div>
+  <div><h2 id="bannerTitle">Fresh Kirana Daily - World Model</h2><p id="bannerSub">Free delivery in 30 mins • COD • World Products</p><div style="margin-top:8px;display:flex;gap:6px"><span style="background:rgba(255,255,255,.25);padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800">WORLD MODEL + HIERARCHY</span><span style="background:#fff;color:#d97706;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:900" id="rolePill">Role: customer → shop_owner</span></div></div>
   <div style="font-size:44px;position:relative">🛒</div>
 </div>
 
 <div class="shop-info" id="shopInfoPills">
-  <div class="pill open" id="openPill"><i class="fa-solid fa-circle" style="font-size:8px"></i> <span id="openText">Open Now - common/js/shop-toggle.js</span></div>
-  <div class="pill"><i class="fa-solid fa-location-dot"></i> <span id="shopArea">Local Market - common/location.js</span></div>
-  <div class="pill"><i class="fa-solid fa-star" style="color:#f59e0b"></i> <span id="shopRating">4.5</span> (120+) - <span style="font-size:9px">common/reviews/reviews.js</span></div>
-  <div class="pill"><i class="fa-solid fa-truck"></i> Free Delivery - common/delivery</div>
-  <div class="pill" style="background:#0f172a;color:#fff"><i class="fa-solid fa-bolt"></i> <span id="worldCount">World Products - V15</span></div>
+  <div class="pill open" id="openPill"><i class="fa-solid fa-circle" style="font-size:8px"></i> <span id="openText">Open Now</span></div>
+  <div class="pill"><i class="fa-solid fa-location-dot"></i> <span id="shopArea">Local Market</span></div>
+  <div class="pill"><i class="fa-solid fa-star" style="color:#f59e0b"></i> <span id="shopRating">4.5</span> (120+)</div>
+  <div class="pill"><i class="fa-solid fa-truck"></i> Free Delivery</div>
+  <div class="pill" style="background:#0f172a;color:#fff"><i class="fa-solid fa-bolt"></i> <span id="worldCount">World Products</span></div>
 </div>
 
 <div class="cats" id="categoryList"></div>
@@ -105,26 +106,28 @@ body{background:var(--bg);color:var(--text);overflow-x:hidden;padding-bottom:80p
 
 <div class="cart-drawer" id="cartDrawer">
   <div class="cart-panel">
-    <div class="cart-head"><span>Your Cart <span id="cartItemCountText" style="color:#94a3b8">(0)</span> - common/cart</span><button class="icon-btn" id="closeCart"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="cart-head"><span>Your Cart <span id="cartItemCountText" style="color:#94a3b8">(0)</span></span><button class="icon-btn" id="closeCart"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="cart-items" id="cartItems"></div>
     <div class="cart-foot">
-      <div style="display:flex;justify-content:space-between;font-weight:800"><span>Subtotal - common/cart/cart-core.js</span><span id="cartSubtotal">₹0</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b"><span>Delivery - common/delivery</span><span style="color:#10b981;font-weight:800">FREE</span></div>
-      <button class="btn btn-dark" id="checkoutBtn"><i class="fa-solid fa-bag-shopping"></i> Checkout • <span id="checkoutTotal">₹0</span> - common/checkout</button>
-      <button class="btn btn-outline" onclick="window.open(`../common/cart/cart.html?shopId=${shopId}&shopType=kirana`,'_blank')"><i class="fa-solid fa-external-link"></i> Open Full Cart - common/cart/cart.html</button>
+      <div style="display:flex;justify-content:space-between;font-weight:800"><span>Subtotal</span><span id="cartSubtotal">₹0</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b"><span>Delivery</span><span style="color:#10b981;font-weight:800">FREE • Hierarchy</span></div>
+      <div style="font-size:11px;color:#64748b">Supplier: <b id="cartSupplier" style="color:#000">-</b> • Earning goes 95% to supplier</div>
+      <button class="btn btn-dark" id="checkoutBtn"><i class="fa-solid fa-bag-shopping"></i> Checkout • <span id="checkoutTotal">₹0</span></button>
+      <button class="btn btn-outline" onclick="window.open(`../common/cart/cart.html?shopId=${shopId}&shopType=kirana&supplierId=${window.shopId}&supplierRole=shop_owner`,'_blank')"><i class="fa-solid fa-external-link"></i> Open Full Cart - Hierarchy</button>
     </div>
   </div>
 </div>
 
 <div class="bottom-nav">
-  <a class="active"><i class="fa-solid fa-house"></i>Home - V16</a>
-  <a id="bottomSearch"><i class="fa-solid fa-magnifying-glass"></i>Search - common/utils/search.js</a>
+  <a class="active"><i class="fa-solid fa-house"></i>Home - V17</a>
+  <a id="bottomSearch"><i class="fa-solid fa-magnifying-glass"></i>Search</a>
   <a id="bottomCart"><i class="fa-solid fa-cart-shopping"></i>Cart <span id="bottomCartCount" style="background:#ef4444;color:#fff;font-size:9px;padding:1px 4px;border-radius:10px;display:none">0</span></a>
-  <a id="bottomProfile"><i class="fa-regular fa-user"></i>Profile - common/profile</a>
+  <a id="bottomProfile"><i class="fa-regular fa-user"></i>Profile</a>
 </div>
 
 <div id="toast"></div>
 
+<script src="../../assets/js/role-hierarchy.js"></script>
 <script src="../common/core/storage-core.js"></script>
 <script src="../common/core/error-handler.js"></script>
 <script src="../common/core/api-core.js"></script>
@@ -147,30 +150,32 @@ body{background:var(--bg);color:var(--text);overflow-x:hidden;padding-bottom:80p
 <script src="../common/products/product-manager.js"></script>
 
 <script>
-// ==================== V17 CART FIX - cart.reduce bug fix ====================
+// ==================== V17 + HIERARCHY MASTER ====================
 window.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || '';
 window.shopType = new URLSearchParams(location.search).get('shopType') || 'kirana';
+window.MY_SHOP_ID = window.shopId;
+window.USER_ROLE = window.RoleHierarchy? window.RoleHierarchy.getMyRole() : 'customer';
 if(window.shopId) localStorage.setItem('last_shopId', window.shopId);
 localStorage.setItem('shopType','kirana');
 
 function toast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
 
-// SAFE CART GETTER - FIX FOR cart.reduce is not a function
+// SAFE CART GETTER - FIX FOR cart.reduce is not a function + Hierarchy
 function safeGetCart(){
   try{
     let raw = null;
     if(window.CartCore && window.CartCore.getCart){
-      raw = window.CartCore.getCart(window.shopId);
-    } else {
-      raw = JSON.parse(localStorage.getItem('cart_'+window.shopId) || localStorage.getItem('cart') || '[]');
+      raw = window.CartCore.getCart();
+      if(Array.isArray(raw)) return raw;
+      if(raw && raw.items && Array.isArray(raw.items)) return raw.items;
     }
-    // CartCore kabhi {items:[], total} deta hai, kabhi [] deta hai
+    raw = JSON.parse(localStorage.getItem('cart_'+window.shopId) || localStorage.getItem('cart') || '[]');
     if(Array.isArray(raw)) return raw;
     if(raw && Array.isArray(raw.items)) return raw.items;
     if(raw && typeof raw === 'object') return Object.values(raw).filter(v=>v && typeof v==='object' && v.name);
     return [];
   }catch(e){
-    console.warn('safeGetCart error, resetting cart', e.message);
+    console.warn('safeGetCart error', e.message);
     localStorage.setItem('cart','[]');
     return [];
   }
@@ -198,31 +203,43 @@ async function loadUserView(){
       worldProducts = worldRes.data || [];
     }
 
-    allProducts = [...worldProducts,...oldProducts].filter(p=> (p.isActive!==false) && (p.stock==null || p.stock>0));
+    // Inject hierarchy fields
+    allProducts = [...worldProducts,...oldProducts].filter(p=> (p.isActive!==false) && (p.stock==null || p.stock>0)).map(p=> ({
+   ...p,
+      ownerRole: p.ownerRole || p.shopOwnerRole || 'shop_owner',
+      ownerId: p.ownerId || p.shopId || window.shopId,
+      shopId: p.shopId || window.shopId,
+      shopName: oldShop.shopName || oldShop.name || 'Kirana Store',
+      shopType: 'kirana'
+    }));
     filtered = [...allProducts];
 
-    document.getElementById('shopName').innerText = oldShop.shopName || oldShop.name || 'Kirana World Store - V16';
+    document.getElementById('shopName').innerText = oldShop.shopName || oldShop.name || 'Kirana World Store - V17 Hierarchy';
     document.getElementById('shopLogoLetter').innerText = (oldShop.shopName||'K')[0].toUpperCase();
     document.getElementById('shopArea').innerText = oldShop.area || oldShop.address || 'Local Market';
     document.getElementById('shopRating').innerText = oldShop.rating || '4.6';
-    document.getElementById('bannerTitle').innerText = oldShop.bannerTitle || `Fresh Kirana Daily - World`;
+    document.getElementById('bannerTitle').innerText = oldShop.bannerTitle || `Fresh Kirana Daily - World + Hierarchy`;
     document.getElementById('bannerSub').innerText = `${allProducts.length} products (World ${worldProducts.length}+Old ${oldProducts.length}) • Free delivery`;
-    document.getElementById('worldCount').innerText = `${worldProducts.length} World + ${oldProducts.length} Old = ${allProducts.length} via Manager`;
+    document.getElementById('worldCount').innerText = `${worldProducts.length} World + ${oldProducts.length} Old = ${allProducts.length}`;
+    if(document.getElementById('rolePill') && window.RoleHierarchy){
+      document.getElementById('rolePill').textContent = `Role: ${window.RoleHierarchy.getMyRole()} → ${JSON.stringify(window.RoleHierarchy.CAN_BUY_FROM[window.RoleHierarchy.getMyRole()]||[])}`;
+    }
 
     const isOpen = oldShop.settings?.isOpen?? oldShop.isOpen?? true;
     shopSettings.isOpen = isOpen;
     document.getElementById('openText').innerText = isOpen? 'Open Now':'Closed';
     document.getElementById('openPill').className = 'pill '+(isOpen?'open':'closed');
-    document.getElementById('shopStatusBadge').innerText = isOpen? '● OPEN • V16 COMMON':'● CLOSED';
+    document.getElementById('shopStatusBadge').innerText = isOpen? '● OPEN • V17 HIERARCHY':'● CLOSED';
     document.getElementById('shopStatusBadge').style.color = isOpen? '#10b981':'#ef4444';
 
     renderCategories(allProducts);
     renderProducts(filtered);
 
     cart = safeGetCart();
+    if(window.CartCore) await window.CartCore.getCart();
     updateCartUI();
 
-    console.log(`✅ User-View V17 Cart Fixed - World:${worldProducts.length} Total:${allProducts.length} Cart:${cart.length}`);
+    console.log(`✅ User-View V17 Hierarchy - World:${worldProducts.length} Total:${allProducts.length} Cart:${cart.length} Role:${window.USER_ROLE}`);
   }catch(e){
     console.error(e);
     document.getElementById('productGrid').innerHTML=`<div class="empty"><div style="font-size:40px">⚠️</div><h3>Failed to load</h3><p style="font-size:12px;color:#94a3b8">${e.message}</p></div>`;
@@ -237,7 +254,7 @@ function showSkeleton(){
 function renderCategories(products){
   const cats = [...new Set(products.map(p=> p.category || p.extraData?.category || p.shopType || 'General'))].filter(Boolean);
   const c=document.getElementById('categoryList');
-  c.innerHTML = `<div class="cat active" data-cat="all">All (${products.length}) - World</div>` + cats.map(cat=>`<div class="cat" data-cat="${cat}">${cat} (${products.filter(p=> (p.category||p.extraData?.category||p.shopType)===cat).length})</div>`).join('');
+  c.innerHTML = `<div class="cat active" data-cat="all">All (${products.length})</div>` + cats.map(cat=>`<div class="cat" data-cat="${cat}">${cat} (${products.filter(p=> (p.category||p.extraData?.category||p.shopType)===cat).length})</div>`).join('');
   c.querySelectorAll('.cat').forEach(el=>{
     el.onclick=()=>{
       c.querySelectorAll('.cat').forEach(x=>x.classList.remove('active'));
@@ -249,79 +266,135 @@ function renderCategories(products){
   });
 }
 
+function canBuyThis(product){
+  if(!window.RoleHierarchy) return true;
+  return window.RoleHierarchy.shouldShowAddButton({
+    ownerRole: product.ownerRole || 'shop_owner',
+    ownerId: product.ownerId || window.shopId,
+    shopId: product.shopId || window.shopId
+  });
+}
+
 function renderProducts(list){
   const g=document.getElementById('productGrid');
-  if(!list.length){ g.innerHTML=`<div class="empty"><div style="font-size:40px">🛒</div><h3>No products</h3><p style="font-size:12px;color:#94a3b8">Shop owner hasn't added products yet</p></div>`; return; }
+  if(!list.length){ g.innerHTML=`<div class="empty"><div style="font-size:40px">🛒</div><h3>No products</h3></div>`; return; }
   g.innerHTML=list.map(p=>{
     const img = p.thumbnail || p.images?.[0]?.url || p.image || `https://source.unsplash.com/300x300/?grocery,${encodeURIComponent(p.name||'kirana')}`;
     const brand = p.brand || p.extraData?.brand || '';
     const weight = p.weight || p.extraData?.weight || p.unit || '';
     const inCart = cart.find(c=> c._id===p._id || c.id===p._id || c.productId===p._id);
     const price = `₹${p.price}`;
-    return `<div class="card"><img src="${img}" loading="lazy" onerror="this.src='https://placehold.co/300'"><div class="info"><b>${p.name}</b><div class="meta">${brand? brand+' • ':''}${weight? weight:''}</div><div class="price-row"><div class="price">${price}${p.mrp&&p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}</div><button class="add ${inCart?'added':''}" onclick="addToCart('${p._id}')"><i class="fa-solid ${inCart?'fa-check':'fa-plus'}"></i></button></div></div></div>`;
+    const canBuy = canBuyThis(p);
+    return `<div class="card"><img src="${img}" loading="lazy" onerror="this.src='https://placehold.co/300'"><div class="info"><b>${p.name}</b><div class="meta">${brand? brand+' • ':''}${weight? weight:''} • ${p.ownerRole||'shop_owner'}</div><div class="price-row"><div class="price">${price}${p.mrp&&p.mrp>p.price?`<del>₹${p.mrp}</del>`:''}</div>${!canBuy? `<span style="font-size:9px;background:#f1f5f9;padding:3px 6px;border-radius:10px">Not allowed</span>` : `<button class="add ${inCart?'added':''}" onclick="addToCart('${p._id}')" ${!shopSettings.isOpen? 'disabled':''}><i class="fa-solid ${inCart?'fa-check':'fa-plus'}"></i></button>`}</div></div></div>`;
   }).join('');
 }
 
-function addToCart(id){
+async function addToCart(id){
   const p=allProducts.find(x=> x._id===id); if(!p) return;
-  cart = safeGetCart();
-  const ex=cart.find(c=> (c._id||c.id||c.productId)===id);
-  if(ex) ex.qty=(ex.qty||1)+1;
-  else cart.push({ _id:id, id, productId:id, name:p.name, price:p.price, qty:1, image:p.thumbnail });
+  if(!canBuyThis(p)){ toast(`Aap ${window.RoleHierarchy.getMyRole()} ho, ${p.ownerRole} se nahi kharid sakte`); return; }
+  if(!shopSettings.isOpen){ toast('Dukaan band hai'); return; }
 
-  try{
-    if(window.CartCore && window.CartCore.addToCart){
-      window.CartCore.addToCart(window.shopId, { _id:p._id, id:p._id, name:p.name, price:p.price, image:p.thumbnail||p.image, qty:1 });
-    }
+  // Hierarchy CartCore sync
+  const productForCart = {
+    _id: p._id, id: p._id, name: p.name, title: p.name,
+    price: p.price, image: p.thumbnail||p.image,
+    thumbnail: p.thumbnail||p.image,
+    ownerRole: p.ownerRole||'shop_owner',
+    ownerId: p.ownerId||window.shopId,
+    shopId: p.shopId||window.shopId,
+    shopName: p.shopName||'Kirana Store',
+    shopType: 'kirana',
+    stock: p.stock
+  };
+
+  if(window.CartCore){
+    const ok = await window.CartCore.add(productForCart, 1);
+    if(!ok){ toast('Cart add fail - role check'); return; }
+  } else {
+    // Fallback local
+    cart = safeGetCart();
+    const ex=cart.find(c=> (c._id||c.id||c.productId)===id);
+    if(ex) ex.qty=(ex.qty||1)+1;
+    else cart.push({ _id:id, id, productId:id, name:p.name, price:p.price, qty:1, image:p.thumbnail, ownerRole:p.ownerRole, ownerId:p.ownerId });
     localStorage.setItem('cart', JSON.stringify(cart));
     localStorage.setItem('cart_'+window.shopId, JSON.stringify(cart));
-  }catch(e){}
+  }
 
+  cart = safeGetCart();
+  if(window.CartCore) cart = window.CartCore.getCart();
   updateCartUI();
-  toast(`${p.name} added ✅`);
+  toast(`${p.name} added ✅ - Supplier: ${p.ownerRole}`);
   renderProducts(filtered);
 }
 
 function updateCartUI(){
-  cart = safeGetCart();
-  // FIX - reduce sirf array pe chalega
-  const count = Array.isArray(cart)? cart.reduce((s,c)=> s + (c.qty||c.quantity||1),0) : 0;
+  // Always use CartCore if available
+  let displayCart = [];
+  if(window.CartCore){
+    displayCart = window.CartCore.getCart();
+  } else {
+    displayCart = safeGetCart();
+  }
+  cart = displayCart;
+  const count = Array.isArray(displayCart)? displayCart.reduce((s,c)=> s + (c.qty||c.quantity||1),0) : 0;
+  const subtotal = window.CartCore? window.CartCore.getTotal() : (Array.isArray(displayCart)? displayCart.reduce((s,c)=> s + ((c.price||0)*(c.qty||c.quantity||1)),0) : 0);
   document.getElementById('cartCount').innerText=count;
   document.getElementById('cartCount').style.display=count?'block':'none';
   document.getElementById('bottomCartCount').innerText=count;
   document.getElementById('bottomCartCount').style.display=count?'inline-block':'none';
   document.getElementById('cartItemCountText').innerText=`(${count})`;
-  const subtotal = Array.isArray(cart)? cart.reduce((s,c)=> s + ((c.price||0)*(c.qty||c.quantity||1)),0) : 0;
   document.getElementById('cartSubtotal').innerText=`₹${subtotal}`;
   document.getElementById('checkoutTotal').innerText=`₹${subtotal}`;
+  const supplierText = displayCart.length? `${displayCart[0].ownerRole||'shop_owner'} (${displayCart[0].shopName||''})` : '-';
+  const supEl = document.getElementById('cartSupplier'); if(supEl) supEl.textContent = supplierText;
   const itemsEl=document.getElementById('cartItems');
-  if(!cart.length) itemsEl.innerHTML=`<div style="text-align:center;padding:40px 20px"><div style="font-size:40px">🛒</div><p style="font-size:13px;color:#94a3b8;margin-top:8px">Cart empty</p></div>`;
-  else itemsEl.innerHTML=cart.map(c=>`<div class="cart-item"><img src="${c.image||'https://placehold.co/100'}"><div style="flex:1"><b style="font-size:12px">${c.name}</b><br><span style="font-size:11px;color:#64748b">₹${c.price} x ${c.qty||1}</span></div><div style="display:flex;gap:6px;align-items:center"><button onclick="changeQty('${c._id||c.id||c.productId}',-1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff">-</button><span style="font-weight:800;font-size:12px">${c.qty||1}</span><button onclick="changeQty('${c._id||c.id||c.productId}',1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff">+</button></div></div>`).join('');
+  if(!displayCart.length) itemsEl.innerHTML=`<div style="text-align:center;padding:40px 20px"><div style="font-size:40px">🛒</div><p style="font-size:13px;color:#94a3b8;margin-top:8px">Cart empty - Add kirana items</p></div>`;
+  else itemsEl.innerHTML=displayCart.map(c=>`<div class="cart-item"><img src="${c.image||c.thumbnail||'https://placehold.co/100'}"><div style="flex:1"><b style="font-size:12px">${c.name}</b><br><span style="font-size:11px;color:#64748b">₹${c.price} x ${c.qty||1} • ${c.ownerRole||''}</span></div><div style="display:flex;gap:6px;align-items:center"><button onclick="changeQty('${c._id||c.id||c.productId}',-1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff">-</button><span style="font-weight:800;font-size:12px">${c.qty||1}</span><button onclick="changeQty('${c._id||c.id||c.productId}',1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff">+</button></div></div>`).join('');
+  if(window.CartCount) window.CartCount.update();
 }
 
-function changeQty(id,delta){
-  cart = safeGetCart();
-  const it=cart.find(c=> (c._id||c.id||c.productId)===id); if(!it) return;
-  it.qty=(it.qty||1)+delta;
-  if(it.qty<=0) cart=cart.filter(c=> (c._id||c.id||c.productId)!==id);
-  localStorage.setItem('cart', JSON.stringify(cart));
-  localStorage.setItem('cart_'+window.shopId, JSON.stringify(cart));
+async function changeQty(id,delta){
+  const p = allProducts.find(x=> x._id===id);
+  if(window.CartCore){
+    if(delta<0){
+      const displayCart = window.CartCore.getCart();
+      const item = displayCart.find(c=> (c._id||c.id)===id);
+      if(!item) return;
+      if(item.qty<=1){ await window.CartCore.remove(id, item.ownerId||window.shopId); }
+      else {
+        await window.CartCore.remove(id, item.ownerId||window.shopId);
+        await window.CartCore.add({...item, _id:id, id:id}, item.qty+delta);
+      }
+    } else {
+      await window.CartCore.add(allProducts.find(x=>x._id===id)||{ _id:id, name:'Product', price:0 }, 1);
+    }
+  } else {
+    cart = safeGetCart();
+    const it=cart.find(c=> (c._id||c.id||c.productId)===id); if(!it) return;
+    it.qty=(it.qty||1)+delta;
+    if(it.qty<=0) cart=cart.filter(c=> (c._id||c.id||c.productId)!==id);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem('cart_'+window.shopId, JSON.stringify(cart));
+  }
   updateCartUI();
   renderProducts(filtered);
 }
 
-document.getElementById('cartBtn').onclick=()=>{ document.getElementById('cartDrawer').classList.add('open'); };
+document.getElementById('cartBtn').onclick=()=>{ document.getElementById('cartDrawer').classList.add('open'); updateCartUI(); };
 document.getElementById('closeCart').onclick=()=>{ document.getElementById('cartDrawer').classList.remove('open'); };
 document.getElementById('cartDrawer').onclick=(e)=>{ if(e.target.id==='cartDrawer') e.currentTarget.classList.remove('open'); };
-document.getElementById('bottomCart').onclick=()=> document.getElementById('cartDrawer').classList.add('open');
+document.getElementById('bottomCart').onclick=()=>{ document.getElementById('cartDrawer').classList.add('open'); updateCartUI(); };
 document.getElementById('searchInput').addEventListener('input', (e)=>{
   const q=e.target.value.toLowerCase();
   filtered = allProducts.filter(p=> (p.name||'').toLowerCase().includes(q));
   renderProducts(filtered);
 });
 document.getElementById('checkoutBtn').onclick=()=>{
-  if(!cart.length){ toast('Cart empty'); return; }
-  location.href=`../common/checkout/checkout.html?shopId=${window.shopId}&shopType=kirana`;
+  const displayCart = window.CartCore? window.CartCore.getCart() : safeGetCart();
+  if(!displayCart.length){ toast('Cart empty'); return; }
+  const supplierId = displayCart[0].ownerId || displayCart[0].shopId || window.shopId;
+  const supplierRole = displayCart[0].ownerRole || 'shop_owner';
+  location.href=`../common/checkout/checkout.html?shopId=${window.shopId}&supplierId=${supplierId}&supplierRole=${supplierRole}&shopType=kirana&supplierName=${encodeURIComponent(displayCart[0].shopName||'Kirana Store')}`;
 };
 window.addEventListener('load', ()=> setTimeout(loadUserView, 300));
 </script>

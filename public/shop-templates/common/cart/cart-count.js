@@ -1,20 +1,31 @@
-// LOCATION: public/shop-templates/common/cart/cart-count.js - CART BADGE - WORLD CLASS - NO LOCALSTORAGE
+// LOCATION: public/shop-templates/common/cart/cart-count.js - V2 - NO localStorage
 (function(){
-  function update(count, total){
-    document.querySelectorAll('[data-cart-count]').forEach(el=>{
-      el.textContent = count || 0;
-      el.style.display = count > 0? 'grid' : 'none';
-    });
-    document.querySelectorAll('[data-cart-total]').forEach(el=> el.textContent = '₹' + (total || 0));
-  }
-  function init(){
-    if(window.CartCore){
-      update(window.CartCore.cart.itemCount, window.CartCore.cart.total);
-      window.CartCore.onChange(c => update(c.itemCount, c.total));
-      window.CartCore.ready.then(()=> update(window.CartCore.cart.itemCount, window.CartCore.cart.total));
-    } else {
-      setTimeout(init, 100);
+  window.CartCount = {
+    update(){
+      const count = window.CartCore? window.CartCore.getTotalCount() : 0;
+      // Sab jagah ke badges update
+      document.querySelectorAll('[data-cart-count], #cart-count,.cart-badge,.cart-count').forEach(el=>{
+        el.textContent = count;
+        el.style.display = count > 0? 'flex' : 'none';
+        if(count > 99) el.textContent = '99+';
+      });
+      // Admin / Manager dashboard pe badge hide
+      const role = window.RoleHierarchy? window.RoleHierarchy.getMyRole() : 'customer';
+      if(role === 'admin'){
+        document.querySelectorAll('[data-cart-count]').forEach(el=> el.style.display='none');
+      }
+    },
+    init(){
+      // CartCore se event suno
+      window.addEventListener('cart:updated', (e)=>{
+        this.update();
+      });
+      // Page load pe
+      document.addEventListener('DOMContentLoaded', ()=> {
+        setTimeout(()=> this.update(), 800);
+      });
     }
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  };
+  window.CartCount.init();
+  console.log('✅ CartCount V2 loaded');
 })();
