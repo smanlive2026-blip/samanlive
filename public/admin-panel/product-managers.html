@@ -1,86 +1,26 @@
-<!-- LOCATION: public/admin-panel/product-managers.html - ADMIN PM CONTROL -->
-<!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Product Managers - Admin | SAMANLIVE</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
-body{background:#f8fafc;display:flex;min-height:100vh}
-.sidebar{width:240px;background:#0f172a;color:#fff;padding:20px;position:fixed;height:100vh;overflow:auto}
-.sidebar a{display:flex;gap:10px;padding:12px;color:#94a3b8;text-decoration:none;border-radius:8px;margin:4px 0}
-.sidebar a.active,.sidebar a:hover{background:#1e293b;color:#fff}
-.main{margin-left:240px;flex:1;padding:20px}
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px}
-.top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px}
-.btn{padding:10px 14px;border-radius:8px;border:0;font-weight:800;cursor:pointer}
-.btn-dark{background:#0f172a;color:#fff}
-.btn-green{background:#16a34a;color:#fff}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
-.pm-card{border-left:4px solid #16a34a}
-.badge{padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800}
-.badge-verified{background:#dcfce7;color:#166534}
-.badge-pending{background:#fef3c7;color:#92400e}
-table{width:100%;border-collapse:collapse}
-th,td{padding:10px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:13px}
-</style>
-</head>
-<body>
-<div class="sidebar">
-  <h2 style="font-weight:900;margin-bottom:20px"><i class="fa-solid fa-leaf"></i> SAMANLIVE</h2>
-  <a href="./dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-  <a href="./managers.html"><i class="fa-solid fa-user-tie"></i> Area Managers</a>
-  <a href="./product-managers.html" class="active"><i class="fa-solid fa-industry"></i> Product Managers</a>
-  <a href="./executives.html"><i class="fa-solid fa-user-secret"></i> Executives</a>
-  <a href="./product-pool.html"><i class="fa-solid fa-boxes-stacked"></i> Product Pool</a>
-  <a href="./area-demands.html"><i class="fa-solid fa-clipboard-list"></i> Area Demands</a>
-  <a href="./shops.html"><i class="fa-solid fa-store"></i> Shops</a>
-</div>
+<!-- LOCATION: public/admin-panel/product-managers.html - ADMIN CREATES PM - V14 FINAL - NO MODIFY NEEDED -->
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Product Managers - Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}body{background:#f8fafc;display:flex}.sidebar{width:240px;background:#0f172a;color:#fff;padding:20px;position:fixed;height:100vh;overflow:auto}.sidebar a{display:flex;gap:10px;padding:12px;color:#94a3b8;text-decoration:none;border-radius:8px;margin:4px 0}.sidebar a.active,.sidebar a:hover{background:#1e293b;color:#fff}.main{margin-left:240px;flex:1;padding:20px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:12px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}.btn{padding:8px 14px;border-radius:8px;border:0;font-weight:800;cursor:pointer}.btn-green{background:#16a34a;color:#fff}.btn-dark{background:#0f172a;color:#fff}.btn-red{background:#ef4444;color:#fff}input,select{padding:10px;border:1px solid #e2e8f0;border-radius:8px;width:100%;margin:4px 0}.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:99}.modal.active{display:flex}.modal-content{background:#fff;border-radius:12px;padding:20px;width:90%;max-width:500px;max-height:90vh;overflow:auto}</style>
+</head><body>
+<div class="sidebar"><h2 style="font-weight:900;margin-bottom:20px">SAMANLIVE</h2><a href="./dashboard.html">Dashboard</a><a href="./product-managers.html" class="active">Product Managers</a><a href="./executives.html">Executives</a><a href="./product-pool.html">Product Pool</a><a href="./area-demands.html">Area Demands</a></div>
 <div class="main">
-  <div class="top">
-    <div><h1 style="font-weight:900">Product Managers</h1><small id="totalCount" style="color:#64748b">Loading...</small></div>
-    <div style="display:flex;gap:8px">
-      <input id="search" placeholder="Search PM by name, type, area..." style="padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;min-width:260px">
-      <button class="btn btn-dark" id="refreshBtn"><i class="fa-solid fa-rotate"></i> Refresh</button>
-    </div>
-  </div>
-  <div class="card">
-    <table><thead><tr><th>Name</th><th>Type</th><th>Area</th><th>Products</th><th>Wallet</th><th>Status</th><th>Action</th></tr></thead>
-    <tbody id="pmTable"><tr><td colspan="7" style="text-align:center;padding:40px">Loading PMs...</td></tr></tbody></table>
-  </div>
+<h1 style="font-weight:900">Product Managers (Admin Creates)</h1><div style="margin:12px 0;display:flex;gap:8px"><button class="btn btn-green" onclick="openCreatePM()"><i class="fa-solid fa-plus"></i> Create PM</button><input id="searchPM" placeholder="Search name, phone, area, type..." style="max-width:300px"><button class="btn btn-dark" onclick="loadPMs()">Refresh</button></div>
+<div id="pmGrid" class="grid">Loading...</div>
 </div>
+
+<div class="modal" id="pmModal"><div class="modal-content"><div style="display:flex;justify-content:space-between"><h3 style="font-weight:900">Create Product Manager</h3><button class="btn btn-dark" onclick="closeCreatePM()">X</button></div>
+<div style="margin-top:10px">
+<input id="pmName" placeholder="Name * e.g., Ramesh Kisan"><input id="pmPhone" placeholder="Phone * e.g., 9876543210"><input id="pmEmail" placeholder="Email (optional)">
+<select id="pmType"><option value="">Type *</option><option value="kisan">Kisan</option><option value="manufacturer">Manufacturer</option><option value="wholesaler">Wholesaler</option><option value="artisan">Artisan</option><option value="shg">SHG</option><option value="distributor">Distributor</option><option value="pansari">Pansari</option><option value="medical">Medical</option><option value="other">Other</option></select>
+<input id="pmCompany" placeholder="Company Name"><input id="pmGst" placeholder="GST (optional)"><input id="pmArea" placeholder="Area * e.g., Naliya"><input id="pmCity" placeholder="City e.g., Bhuj"><input id="pmPincode" placeholder="Pincode">
+<button class="btn btn-green" style="width:100%;margin-top:10px" onclick="createPM()"><i class="fa-solid fa-save"></i> Create PM - Admin</button><div id="pmMsg" style="margin-top:8px;font-weight:700"></div>
+</div></div></div>
+
 <script>
-const API = '/api/product-manager';
-async function loadPMs(){
-  try{
-    const res = await fetch(`${API}/list`).then(r=>r.json());
-    const data = res.data || [];
-    document.getElementById('totalCount').textContent = `${data.length} Product Managers found`;
-    const tbody = document.getElementById('pmTable');
-    if(!data.length){ tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px">No Product Managers yet</td></tr>'; return; }
-    tbody.innerHTML = data.map(pm=>`
-      <tr>
-        <td><b>${pm.name}</b><br><small style="color:#64748b">${pm.phone}</small></td>
-        <td><span class="badge" style="background:#f1f5f9">${pm.type}</span><br><small>${pm.companyName||''}</small></td>
-        <td>${pm.area||'-'}, ${pm.city||''}</td>
-        <td><b>${pm.totalProducts||0}</b></td>
-        <td>₹${pm.walletBalance||0}</td>
-        <td>${pm.isVerified?'<span class="badge badge-verified">VERIFIED</span>':'<span class="badge badge-pending">PENDING</span>'}</td>
-        <td style="display:flex;gap:6px">
-          <button class="btn btn-green" style="padding:6px 10px;font-size:11px" onclick="verifyPM('${pm._id}')"><i class="fa-solid fa-check"></i> Verify</button>
-          <button class="btn btn-dark" style="padding:6px 10px;font-size:11px" onclick="viewProducts('${pm._id}')"><i class="fa-solid fa-eye"></i></button>
-        </td>
-      </tr>`).join('');
-  }catch(e){ document.getElementById('pmTable').innerHTML = `<tr><td colspan="7" style="color:red">Error: ${e.message}</td></tr>`; }
-}
-async function verifyPM(id){ if(!confirm('Verify this PM?')) return; await fetch(`${API}/verify/${id}`,{method:'PUT'}); loadPMs(); }
-function viewProducts(id){ location.href = `./product-pool.html?pmId=${id}`; }
-document.getElementById('refreshBtn').onclick = loadPMs;
-document.getElementById('search').oninput = (e)=>{
-  const q = e.target.value.toLowerCase();
-  [...document.querySelectorAll('#pmTable tr')].forEach(tr=>{ tr.style.display = tr.textContent.toLowerCase().includes(q)?'':'none'; });
-};
-loadPMs();
-</script>
-</body></html>
+async function loadPMs(){ const q=document.getElementById('searchPM').value.toLowerCase(); const res=await fetch('/api/product-manager/list').then(r=>r.json()); let data=res.data||[]; if(q) data=data.filter(p=> (p.name+' '+p.phone+' '+p.area+' '+p.type).toLowerCase().includes(q)); const grid=document.getElementById('pmGrid'); if(!data.length){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;background:#fff;border-radius:12px">No PM found. Create one.</div>'; return; } grid.innerHTML=data.map(p=>`<div class="card"><div style="display:flex;justify-content:space-between"><b>${p.name}</b><span style="font-size:10px;padding:3px 8px;border-radius:12px;background:${p.isVerified?'#dcfce7':'#fef3c7'}">${p.isVerified?'VERIFIED':'PENDING'}</span></div><small style="color:#64748b">${p.type} | ${p.area}, ${p.city||''} | ${p.phone}</small><br><small>Products: ${p.totalProducts||0} | Earning: ₹${p.totalEarning||0} | Wallet: ₹${p.walletBalance||0}</small><br><small>Company: ${p.companyName||'-'} | GST: ${p.gst||'-'}</small><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-green" style="padding:6px 10px;font-size:11px" onclick="window.open('/product-manager/dashboard.html?pmId=${p._id}','_blank')"><i class="fa-solid fa-external-link"></i> Open PM Dashboard</button><button class="btn btn-dark" style="padding:6px 10px;font-size:11px" onclick="verifyPM('${p._id}')"><i class="fa-solid fa-check"></i> Verify</button><button class="btn btn-red" style="padding:6px 10px;font-size:11px" onclick="deletePM('${p._id}')"><i class="fa-solid fa-trash"></i> Delete</button></div></div>`).join(''); }
+function openCreatePM(){ document.getElementById('pmModal').classList.add('active'); } function closeCreatePM(){ document.getElementById('pmModal').classList.remove('active'); }
+async function createPM(){ const body={ name:document.getElementById('pmName').value.trim(), phone:document.getElementById('pmPhone').value.trim(), email:document.getElementById('pmEmail').value.trim(), type:document.getElementById('pmType').value, companyName:document.getElementById('pmCompany').value.trim(), gst:document.getElementById('pmGst').value.trim(), area:document.getElementById('pmArea').value.trim(), city:document.getElementById('pmCity').value.trim(), pincode:document.getElementById('pmPincode').value.trim() }; if(!body.name||!body.phone||!body.type||!body.area){ document.getElementById('pmMsg').textContent='Name, Phone, Type, Area required'; document.getElementById('pmMsg').style.color='red'; return; } document.getElementById('pmMsg').textContent='Creating...'; const res=await fetch('/api/product-manager/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()); if(res.success){ document.getElementById('pmMsg').textContent='PM Created by Admin!'; document.getElementById('pmMsg').style.color='green'; setTimeout(()=>{ closeCreatePM(); loadPMs(); },800); } else { document.getElementById('pmMsg').textContent='Error: '+(res.error||'failed'); document.getElementById('pmMsg').style.color='red'; } }
+async function verifyPM(id){ await fetch(`/api/product-manager/verify/${id}`,{method:'PUT'}); loadPMs(); } async function deletePM(id){ if(!confirm('Delete PM?')) return; await fetch(`/api/product-manager/${id}`,{method:'DELETE'}); loadPMs(); }
+document.getElementById('searchPM').oninput=loadPMs; loadPMs();
+</script></body></html>
