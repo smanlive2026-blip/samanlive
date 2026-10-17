@@ -1,8 +1,9 @@
 // ========================================
-// AREA MANAGER DASHBOARD - WORLD CLASS CLEAN + V13 HIERARCHY
+// AREA MANAGER DASHBOARD - WORLD CLASS CLEAN + V13 HIERARCHY + V14 PRODUCT MANAGER DEMAND
 // File: /public/assets/js/area-manager.js
-// Dashboard + Profile + Shop List + Edit + Delivery + WALLET + BULK BUY FROM ADMIN
+// Dashboard + Profile + Shop List + Edit + Delivery + WALLET + BULK BUY FROM ADMIN + AREA DEMAND TO EXECUTIVE
 // Shop Create logic shop-create.js me hai
+// LOCATION: /public/assets/js/area-manager.js - V14 FINAL - NO EXISTING LOGIC BROKEN - ONLY ADDED DEMAND LOGIC AT END
 // ========================================
 
 let currentManager = null;
@@ -72,6 +73,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindShopEditForm();
     bindDeliveryForm();
     initHierarchyForManager();
+    // LOCATION: NEW V14 - Init demand after everything loaded - does not break old init
+    setTimeout(()=>{ if(typeof initDemandSystem==='function') initDemandSystem(); }, 2000);
 });
 
 function initHierarchyForManager(){
@@ -140,6 +143,8 @@ async function loadDashboard() {
         loadDeliveryBoys();
         renderWallet(managerWallet);
         loadAdminProductsForManager();
+        // LOCATION: V14 - Also refresh demands after dashboard load - isolated
+        if(typeof loadMyDemandsV14==='function') loadMyDemandsV14();
 
         if (typeof window.initShopCreateModule === 'function') {
             window.initShopCreateModule(allManagers, allAreas, categories, currentManager);
@@ -499,3 +504,85 @@ window.closeCreateDeliveryModal = closeCreateDeliveryModal; window.openDeliveryM
 window.toggleAreaMap = toggleAreaMap; window.loadDeliveryBoys = loadDeliveryBoys;
 
 console.log('✅ area-manager.js loaded - World Class + V13 Hierarchy + Wallet + Bulk Buy');
+
+// ========================================
+// V14 PRODUCT MANAGER SYSTEM - AREA DEMAND TO EXECUTIVE - NEW - ISOLATED - DOES NOT BREAK OLD LOGIC
+// LOCATION: /public/assets/js/area-manager.js - DEMAND SYSTEM - ADDED AT END - 100% ISOLATED
+// ========================================
+let myDemandsCacheV14 = [];
+
+async function loadMyDemandsV14(){
+  try{
+    const managerId = currentManager?._id || currentManager?.managerCode || localStorage.getItem('managerId') || new URLSearchParams(location.search).get('id');
+    if(!managerId) return;
+    const res = await fetch(`/api/area-demand/my/${managerId}`).then(r=>r.json()).catch(()=>({data:[]}));
+    const data = res.data || [];
+    myDemandsCacheV14 = data;
+    const badge = document.getElementById('demandCountBadge');
+    if(badge) badge.textContent = `${data.filter(d=>d.status==='open').length} Pending`;
+    const list = document.getElementById('myDemandsList');
+    if(!list) return;
+    if(!data.length){ list.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8"><i class="fas fa-inbox"></i><p>No demands sent yet<br><small>Executive will assign Product Manager product to you</small></p></div>'; return; }
+    list.innerHTML = data.map(d=>`
+      <div style="border:1px solid #e2e8f0;border-radius:8px;padding:8px;margin-bottom:6px;background:#fff">
+        <div style="display:flex;justify-content:space-between;align-items:center"><b>${escapeHtml(d.productName)}</b><span style="font-size:10px;padding:3px 8px;border-radius:12px;background:${d.priority==='high'?'#fee2e2':d.priority==='medium'?'#fef3c7':'#dcfce7'};color:${d.priority==='high'?'#991b1b':d.priority==='medium'?'#92400e':'#166534'};font-weight:800">${(d.priority||'medium').toUpperCase()} | ${(d.status||'open').toUpperCase()}</span></div>
+        <small style="color:#64748b">${escapeHtml(d.productCategory||'General')} | Qty: ${d.quantity} | ${new Date(d.createdAt).toLocaleDateString()}</small><br><small style="color:#475569">${escapeHtml(d.notes||'')}</small>
+        ${d.fulfilledBy?'<br><small style="color:#16a34a"><i class="fas fa-check"></i> Fulfilled by Executive</small>':''}
+      </div>`).join('');
+  }catch(e){ console.error('V14 Demand load error', e); }
+}
+
+async function handleDemandSubmitV14(e){
+  e.preventDefault();
+  const managerId = currentManager?._id || currentManager?.managerCode || localStorage.getItem('managerId');
+  const areaNameEl = document.getElementById('managerAreaName') || document.getElementById('areaMapName');
+  const areaName = areaNameEl?.textContent?.trim() || currentManager?.areaName || currentManager?.areaCode || 'Unknown';
+  const body = {
+    areaManagerId: managerId,
+    areaName: areaName,
+    productName: document.getElementById('demandProductName')?.value?.trim(),
+    productCategory: document.getElementById('demandCategory')?.value,
+    quantity: Number(document.getElementById('demandQty')?.value),
+    priority: document.getElementById('demandPriority')?.value || 'medium',
+    notes: document.getElementById('demandNotes')?.value?.trim(),
+  };
+  const msgEl = document.getElementById('demandMsg');
+  if(!body.productName || !body.quantity || !managerId){
+    if(msgEl){ msgEl.textContent='Product Name, Qty, Manager ID required'; msgEl.style.color='red'; }
+    return;
+  }
+  if(msgEl) msgEl.textContent='Sending demand to Executive...';
+  try{
+    const res = await fetch('/api/area-demand/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
+    if(res.success){
+      if(msgEl){ msgEl.textContent='✅ Demand sent to Executive! Executive will assign Product Manager product'; msgEl.style.color='green'; }
+      e.target.reset();
+      loadMyDemandsV14();
+    } else {
+      if(msgEl){ msgEl.textContent='Error: '+(res.error||'failed'); msgEl.style.color='red'; }
+    }
+  }catch(err){
+    if(msgEl){ msgEl.textContent='Error: '+err.message; msgEl.style.color='red'; }
+  }
+}
+
+function initDemandSystem(){
+  const form = document.getElementById('areaDemandForm');
+  if(form && !form.dataset.v14bound){
+    form.dataset.v14bound='1';
+    form.addEventListener('submit', handleDemandSubmitV14);
+    console.log('✅ V14 Demand system bound - isolated, does not break old forms');
+  }
+  loadMyDemandsV14();
+  // Refresh every 30 sec - isolated interval
+  if(!window._demandIntervalV14){
+    window._demandIntervalV14 = setInterval(loadMyDemandsV14, 30000);
+  }
+}
+
+// Expose for HTML inline script fallback
+window.loadMyDemandsV14 = loadMyDemandsV14;
+window.initDemandSystem = initDemandSystem;
+window.handleDemandSubmitV14 = handleDemandSubmitV14;
+
+console.log('✅ V14 Product Manager Demand system loaded - 100% isolated - old logic intact');

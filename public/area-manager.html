@@ -11,6 +11,7 @@ ROUTES:
 - WALLET: GET /api/common/wallet/balance
 - ADMIN PRODUCTS: GET /api/world-products?role=area_manager&supplierRole=admin
 - CHECKOUT: POST /api/common/checkout
+- NEW DEMAND: POST /api/area-demand/create , GET /api/area-demand/my/:areaManagerId
 - Template: /public/assets/js/shop-template-map.js -> getShopTemplateFolder(id) || 'common'
 -->
 <!DOCTYPE html>
@@ -62,6 +63,8 @@ ROUTES:
       <nav class="side-nav">
         <a href="#overview" class="active"><i class="fas fa-th-large"></i> Overview</a>
         <a href="#walletSection"><i class="fas fa-wallet"></i> Wallet</a>
+        <!-- LOCATION: public/area-manager.html - NEW DEMAND LINK ADDED - V14 FINAL - DOES NOT BREAK OLD LINKS -->
+        <a href="#areaDemandSection"><i class="fas fa-clipboard-list"></i> Request Product</a>
         <a href="#adminBuySection"><i class="fas fa-boxes"></i> Buy From Admin</a>
         <a href="#areaMapCard"><i class="fas fa-map-marked-alt"></i> My Area</a>
         <a href="#shopsSection"><i class="fas fa-store"></i> My Shops</a>
@@ -115,6 +118,32 @@ ROUTES:
           </div>
         </div>
         <div class="info-note"><i class="fas fa-info-circle"></i><span>Customer jab aapki shops se kharidega toh 95% aapko, 5% admin ko. Jab aap admin se bulk me kharidoge toh aapka wallet debit hoga.</span></div>
+      </section>
+
+      <!-- LOCATION: public/area-manager.html - AREA DEMAND SECTION - V14 FINAL - NEW FEATURE - DOES NOT TOUCH WALLET OR ADMIN BUY LOGIC -->
+      <section class="card" id="areaDemandSection">
+        <div class="card-header"><h2><i class="fas fa-clipboard-list"></i> Request Product (Demand to Executive)</h2><span class="badge" style="background:#fef3c7;color:#92400e" id="demandCountBadge">0 Pending</span></div>
+        <div class="info-note"><i class="fas fa-info-circle"></i><span>Area Manager Product Manager ko direct nahi dekh sakta. Demand Executive ko jayegi. Executive Product Manager ka product assign karega. Yeh Product Manager system ka rule hai.</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px">
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px">
+            <h3 style="font-weight:800;margin-bottom:10px"><i class="fas fa-plus"></i> Send New Demand</h3>
+            <form id="areaDemandForm">
+              <div class="form-group"><label>Product Name *</label><input type="text" id="demandProductName" required placeholder="e.g., Bajra, Patanjali Aata"></div>
+              <div class="form-group"><label>Category</label><select id="demandCategory"><option value="">Select</option><option>Grocery</option><option>Vegetables</option><option>Fruits</option><option>Patanjali</option><option>Hardware</option><option>Other</option></select></div>
+              <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div class="form-group"><label>Quantity *</label><input type="number" id="demandQty" required placeholder="50"></div>
+                <div class="form-group"><label>Priority</label><select id="demandPriority"><option value="medium">Medium</option><option value="high">High</option><option value="low">Low</option></select></div>
+              </div>
+              <div class="form-group"><label>Notes</label><textarea id="demandNotes" rows="2" placeholder="Kirana shops need for winter..."></textarea></div>
+              <button type="submit" class="btn btn-primary btn-block" id="demandSubmitBtn"><i class="fas fa-paper-plane"></i> Send Demand to Executive</button>
+            </form>
+            <div id="demandMsg" style="margin-top:8px;font-weight:700"></div>
+          </div>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px">
+            <h3 style="font-weight:800;margin-bottom:10px">My Demands</h3>
+            <div id="myDemandsList" style="max-height:300px;overflow:auto">Loading demands...</div>
+          </div>
+        </div>
       </section>
 
       <!-- ADMIN SE BULK BUY - NEW HIERARCHY -->
@@ -283,6 +312,51 @@ ROUTES:
 <script src="/shop-templates/common/cart/cart-count.js"></script>
 <script src="/assets/js/shop-create.js?v=7"></script>
 <script src="/assets/js/area-manager.js?v=13"></script>
+<!-- LOCATION: public/area-manager.html - NEW DEMAND JS - V14 FINAL - ISOLATED - DOES NOT BREAK EXISTING area-manager.js -->
+<script>
+(async function(){
+  const managerId = localStorage.getItem('managerId') || new URLSearchParams(location.search).get('id');
+  async function loadMyDemands(){
+    try{
+      if(!managerId) return;
+      const res = await fetch(`/api/area-demand/my/${managerId}`).then(r=>r.json());
+      const data = res.data||[];
+      const badge = document.getElementById('demandCountBadge');
+      if(badge) badge.textContent = `${data.filter(d=>d.status==='open').length} Pending`;
+      const list = document.getElementById('myDemandsList');
+      if(!list) return;
+      if(!data.length){ list.innerHTML='<div style="text-align:center;padding:20px;color:#94a3b8">No demands sent yet</div>'; return; }
+      list.innerHTML = data.map(d=>`<div style="border:1px solid #e2e8f0;border-radius:8px;padding:8px;margin-bottom:6px;background:#fff"><div style="display:flex;justify-content:space-between"><b>${d.productName}</b><span style="font-size:10px;padding:2px 6px;border-radius:10px;background:${d.priority==='high'?'#fee2e2':d.priority==='medium'?'#fef3c7':'#dcfce7'}">${d.priority?.toUpperCase()} | ${d.status?.toUpperCase()}</span></div><small style="color:#64748b">${d.productCategory||''} | Qty: ${d.quantity} | ${new Date(d.createdAt).toLocaleDateString()}</small><br><small>${d.notes||''}</small></div>`).join('');
+    }catch(e){ console.error('Demand load', e); }
+  }
+  const form = document.getElementById('areaDemandForm');
+  if(form){
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const areaName = document.getElementById('managerAreaName')?.textContent?.trim() || document.getElementById('areaMapName')?.textContent?.trim() || 'Unknown';
+      const body = {
+        areaManagerId: managerId,
+        areaName: areaName,
+        productName: document.getElementById('demandProductName').value.trim(),
+        productCategory: document.getElementById('demandCategory').value,
+        quantity: Number(document.getElementById('demandQty').value),
+        priority: document.getElementById('demandPriority').value,
+        notes: document.getElementById('demandNotes').value.trim(),
+      };
+      const msg = document.getElementById('demandMsg');
+      if(!body.productName||!body.quantity||!managerId){ if(msg){msg.textContent='Product Name, Qty, Manager ID required'; msg.style.color='red';} return; }
+      if(msg) msg.textContent='Sending...';
+      try{
+        const res = await fetch('/api/area-demand/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
+        if(res.success){ if(msg){msg.textContent='Demand sent to Executive!'; msg.style.color='green';} form.reset(); loadMyDemands(); }
+        else{ if(msg){msg.textContent='Error: '+(res.error||'failed'); msg.style.color='red';} }
+      }catch(err){ if(msg){msg.textContent='Error: '+err.message; msg.style.color='red';} }
+    });
+  }
+  // Load after 2 sec to let area-manager.js load managerData
+  setTimeout(loadMyDemands, 2000);
+})();
+</script>
 <style>
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.5}}
 #walletSection .stat-card, #adminBuySection{animation:fadeIn 0.5s}

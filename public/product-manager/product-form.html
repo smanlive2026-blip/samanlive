@@ -1,0 +1,30 @@
+<!-- LOCATION: public/product-manager/product-form.html - PM ADD PRODUCT FORM - V14 FINAL -->
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Add Product - PM</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}body{background:#f8fafc;padding:16px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;max-width:600px;margin:0 auto}input,textarea,select{width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;margin:6px 0}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn{padding:12px;border-radius:8px;border:0;font-weight:800;cursor:pointer;width:100%}.btn-green{background:#16a34a;color:#fff}.btn-dark{background:#0f172a;color:#fff}</style>
+</head><body>
+<div class="card"><h2 style="font-weight:900">Add New Product to Pool</h2><small style="color:#64748b">Ye product sirf Executive dekhega, direct public nahi</small><div style="margin-top:12px">
+<input id="name" placeholder="Product Name * e.g., Desi Bajra 10kg"><textarea id="desc" placeholder="Description"></textarea><div class="row"><select id="category"><option value="">Category *</option><option>Grocery</option><option>Vegetables</option><option>Fruits</option><option>Dairy</option><option>Patanjali</option><option>Hardware</option><option>Clothes</option><option>Other</option></select><input id="unit" placeholder="Unit e.g., kg, piece, bag"></div><div class="row"><input id="basePrice" type="number" placeholder="Base Price * e.g., 400"><input id="suggestedPrice" type="number" placeholder="Suggested Price e.g., 500"></div><div class="row"><input id="stock" type="number" placeholder="Stock * e.g., 100"><input id="areaTags" placeholder="Area Tags comma e.g., Naliya,Bhuj"></div><input id="images" placeholder="Image URLs comma separated OR upload later"><textarea id="imageUrl" placeholder="Single Image URL (Cloudinary)"></textarea>
+<button class="btn btn-green" id="submitBtn">Submit to Product Pool (Pending)</button><button class="btn btn-dark" style="margin-top:8px" onclick="history.back()">Back to Dashboard</button><div id="msg" style="margin-top:10px;font-weight:700"></div></div></div>
+<script>
+const pmId = new URLSearchParams(location.search).get('pmId') || localStorage.getItem('pmId');
+document.getElementById('submitBtn').onclick = async ()=>{
+  const body = {
+    productManagerId: pmId,
+    name: document.getElementById('name').value.trim(),
+    description: document.getElementById('desc').value.trim(),
+    category: document.getElementById('category').value,
+    unit: document.getElementById('unit').value.trim()||'piece',
+    basePrice: Number(document.getElementById('basePrice').value),
+    suggestedPrice: Number(document.getElementById('suggestedPrice').value)||undefined,
+    stock: Number(document.getElementById('stock').value),
+    areaTags: document.getElementById('areaTags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    images: (document.getElementById('images').value.split(',').map(s=>s.trim()).filter(Boolean).length ? document.getElementById('images').value.split(',').map(s=>s.trim()) : [document.getElementById('imageUrl').value.trim()].filter(Boolean)),
+    thumbnail: document.getElementById('imageUrl').value.trim() || undefined,
+  };
+  if(!body.name||!body.category||!body.basePrice||!body.stock||!pmId){ document.getElementById('msg').textContent='Name, Category, BasePrice, Stock, PM ID required'; document.getElementById('msg').style.color='red'; return; }
+  document.getElementById('msg').textContent='Submitting...'; 
+  const res = await fetch('/api/product-pool/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
+  if(res.success){ document.getElementById('msg').textContent='Added! Status Pending - Executive will review'; document.getElementById('msg').style.color='green'; setTimeout(()=>{ location.href=`./dashboard.html?pmId=${pmId}`; },1200); }
+  else{ document.getElementById('msg').textContent='Error: '+(res.error||'Unknown'); document.getElementById('msg').style.color='red'; }
+};
+</script></body></html>

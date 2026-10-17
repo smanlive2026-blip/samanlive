@@ -119,6 +119,19 @@ const locationRoutes = require('./routes/location');
 const userRoutes = require('./routes/user');
 const worldProductRoutes = require('./routes/world-product.routes');
 
+// LOCATION: server/server.js - ADD THESE LINES - V14 FINAL
+// ... existing imports ke baad add kar:
+const productManagerRoutes = require('./routes/productManagerRoutes');
+const executiveRoutes = require('./routes/executiveRoutes');
+const productPoolRoutes = require('./routes/productPoolRoutes');
+const areaDemandRoutes = require('./routes/areaDemandRoutes');
+
+// ... app.use ke section me add kar:
+app.use('/api/product-manager', productManagerRoutes);
+app.use('/api/executive', executiveRoutes);
+app.use('/api/product-pool', productPoolRoutes);
+app.use('/api/area-demand', areaDemandRoutes);
+
 // ==================== MIDDLEWARE ====================
 app.use(compression());
 app.use(cors());

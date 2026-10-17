@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>SL MASTER DASHBOARD v99 - WORLD CLASS + HISTORY</title>
+<title>SL MASTER DASHBOARD v99 - WORLD CLASS + HISTORY + PM SYSTEM</title>
 <link rel="stylesheet" href="./assets/launcher.css?v=999">
 <link rel="stylesheet" href="./assets/css/connection-map.css?v=1">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
   <div class="sidebar-header">
     <div>
       <h2>🔥 SL MASTER <span>v99</span></h2>
-      <p class="sub-text">WORLD CLASS • HISTORY TRACKED</p>
+      <p class="sub-text">WORLD CLASS • HISTORY TRACKED • PM SYSTEM</p>
     </div>
     <button id="closeBtn" onclick="Launcher.toggleSidebar()">✕</button>
   </div>
@@ -38,7 +38,7 @@
       <button onclick="Launcher.showHistory()">📜 History</button>
       <button onclick="Launcher.toggleFullscreen()">⛶ Full</button>
     </div>
-    <div class="version">samanlive.vercel.app • BUILD 999</div>
+    <div class="version">samanlive.vercel.app • BUILD 999 • PM SYSTEM V14</div>
   </div>
 </div>
 
@@ -111,6 +111,7 @@ window.SLHistory = new SLHistory();
 
 class SLMasterLauncher {
   constructor(){
+    // LOCATION: public/admin-panel/_FULL-LAUNCHER.html - FILES LIST - V14 FINAL - ADDED PM SYSTEM 4 PAGES - NO EXISTING FILE REMOVED
     this.files = [
      {id:"index", name:"index.html", icon:"🏠", tag:"13 BTN MAIN", cat:"CORE"},
      {id:"dashboard", name:"dashboard.html", icon:"📊", tag:"ANALYTICS v99", cat:"CORE"},
@@ -119,6 +120,12 @@ class SLMasterLauncher {
      {id:"shops", name:"shops.html", icon:"🏪", tag:"SHOPS", cat:"MANAGEMENT"},
      {id:"users", name:"users.html", icon:"👥", tag:"USERS", cat:"MANAGEMENT"},
      {id:"managers", name:"managers.html", icon:"👔", tag:"MANAGERS", cat:"MANAGEMENT"},
+     // === NEW PM SYSTEM - V14 FINAL - 4 NEW PAGES ADDED - DOES NOT BREAK OLD ===
+     {id:"product-managers", name:"product-managers.html", icon:"🏭", tag:"PRODUCT MANAGERS", cat:"PM SYSTEM"},
+     {id:"executives", name:"executives.html", icon:"👑", tag:"EXECUTIVES KINGMAKER", cat:"PM SYSTEM"},
+     {id:"product-pool", name:"product-pool.html", icon:"📦", tag:"PRODUCT POOL", cat:"PM SYSTEM"},
+     {id:"area-demands", name:"area-demands.html", icon:"📋", tag:"AREA DEMANDS", cat:"PM SYSTEM"},
+     // === END NEW ===
      {id:"delivery", name:"delivery.html", icon:"🛵", tag:"DELIVERY", cat:"MANAGEMENT"},
      {id:"areas", name:"areas.html", icon:"🗺️", tag:"AREAS", cat:"LOCATIONS"},
      {id:"area-dashboard", name:"area-dashboard.html", icon:"📍", tag:"AREA DASH", cat:"LOCATIONS"},

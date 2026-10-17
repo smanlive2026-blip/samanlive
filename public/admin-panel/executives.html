@@ -1,0 +1,23 @@
+<!-- LOCATION: public/admin-panel/executives.html -->
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Executives - Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}body{background:#f8fafc;display:flex}.sidebar{width:240px;background:#0f172a;color:#fff;padding:20px;position:fixed;height:100vh}.sidebar a{display:flex;gap:10px;padding:12px;color:#94a3b8;text-decoration:none;border-radius:8px;margin:4px 0}.sidebar a.active,.sidebar a:hover{background:#1e293b;color:#fff}.main{margin-left:240px;flex:1;padding:20px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px}.btn{padding:10px 14px;border-radius:8px;border:0;font-weight:800;cursor:pointer}.btn-dark{background:#0f172a;color:#fff}.btn-green{background:#16a34a;color:#fff}input,select{padding:10px;border:1px solid #e2e8f0;border-radius:8px}</style>
+</head><body>
+<div class="sidebar"><h2 style="font-weight:900;margin-bottom:20px">SAMANLIVE</h2>
+<a href="./dashboard.html">Dashboard</a><a href="./managers.html">Area Managers</a><a href="./product-managers.html">Product Managers</a><a href="./executives.html" class="active">Executives</a><a href="./product-pool.html">Product Pool</a></div>
+<div class="main">
+<h1 style="font-weight:900">Executives (Kingmakers)</h1>
+<div style="display:flex;gap:10px;margin:16px 0">
+<input id="name" placeholder="Executive Name"><input id="phone" placeholder="Phone"><input id="areas" placeholder="Assigned Areas (Naliya,Bhuj)"><button class="btn btn-green" id="createBtn">Create Executive</button>
+</div>
+<div class="card"><div id="list">Loading...</div></div>
+</div>
+<script>
+async function load(){ const res = await fetch('/api/executive/list').then(r=>r.json()); const data=res.data||[]; document.getElementById('list').innerHTML = data.map(ex=>`<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #e2e8f0"><div><b>${ex.name}</b> ${ex.phone}<br><small>Areas: ${(ex.assignedAreas||[]).join(', ')||'All'} | Wallet: ₹${ex.walletBalance||0}</small></div><button class="btn btn-dark" onclick="delEx('${ex._id}')">Delete</button></div>`).join('')||'No executives'; }
+async function create(){ const body={name:document.getElementById('name').value,phone:document.getElementById('phone').value,assignedAreas:document.getElementById('areas').value.split(',').map(s=>s.trim()).filter(Boolean)}; await fetch('/api/executive/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); load(); }
+async function delEx(id){ if(!confirm('Delete?')) return; await fetch(`/api/executive/${id}`,{method:'DELETE'}); load(); }
+document.getElementById('createBtn').onclick=create; load();
+</script></body></html>

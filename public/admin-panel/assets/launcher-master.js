@@ -1,4 +1,4 @@
-// LOCATION: public/admin-panel/assets/launcher-master.js - MASTER LAUNCHER - SIMPLE + CONNECTION MAP ADDED
+// LOCATION: public/admin-panel/assets/launcher-master.js - MASTER LAUNCHER - SIMPLE + CONNECTION MAP ADDED + PM SYSTEM V14 - NO OLD LOGIC BROKEN
 const files = [
  {id:"index", name:"index.html", icon:"🏠", tag:"13 BTN MAIN"},
  {id:"dashboard", name:"dashboard.html", icon:"📊", tag:"ANALYTICS v99"},
@@ -7,6 +7,11 @@ const files = [
  {id:"shops", name:"shops.html", icon:"🏪", tag:"SHOPS"},
  {id:"users", name:"users.html", icon:"👥", tag:"USERS"},
  {id:"managers", name:"managers.html", icon:"👔", tag:"MANAGERS"},
+ // LOCATION: NEW PM SYSTEM - V14 FINAL - 4 PAGES ADDED - DOES NOT BREAK OLD FILES
+ {id:"product-managers", name:"product-managers.html", icon:"🏭", tag:"PRODUCT MANAGERS"},
+ {id:"executives", name:"executives.html", icon:"👑", tag:"EXECUTIVES KINGMAKER"},
+ {id:"product-pool", name:"product-pool.html", icon:"📦", tag:"PRODUCT POOL"},
+ {id:"area-demands", name:"area-demands.html", icon:"📋", tag:"AREA DEMANDS"},
  {id:"delivery", name:"delivery.html", icon:"🛵", tag:"DELIVERY"},
  {id:"areas", name:"areas.html", icon:"🗺️", tag:"AREAS"},
  {id:"area-dashboard", name:"area-dashboard.html", icon:"📍", tag:"AREA DASH"},
