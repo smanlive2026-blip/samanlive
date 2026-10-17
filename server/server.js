@@ -1,4 +1,4 @@
-// LOCATION: server/server.js - V12 FINAL - SAME AS V11 + BUFFERING FIX - NO LINE DELETED
+// LOCATION: server/server.js - V12 FINAL - SAME AS V11 + BUFFERING FIX - NO LINE DELETED - V15 ORDER FIX ONLY
 const nodeCrypto = require('crypto');
 try {
   if (!global.crypto) global.crypto = nodeCrypto.webcrypto || nodeCrypto;
@@ -119,24 +119,23 @@ const locationRoutes = require('./routes/location');
 const userRoutes = require('./routes/user');
 const worldProductRoutes = require('./routes/world-product.routes');
 
-// LOCATION: server/server.js - ADD THESE LINES - V14 FINAL
-// ... existing imports ke baad add kar:
+// LOCATION: server/server.js - ADD THESE LINES - V14 FINAL - V15 FIXED ORDER
 const productManagerRoutes = require('./routes/productManagerRoutes');
 const executiveRoutes = require('./routes/executiveRoutes');
 const productPoolRoutes = require('./routes/productPoolRoutes');
 const areaDemandRoutes = require('./routes/areaDemandRoutes');
 
-// ... app.use ke section me add kar:
-app.use('/api/product-manager', productManagerRoutes);
-app.use('/api/executive', executiveRoutes);
-app.use('/api/product-pool', productPoolRoutes);
-app.use('/api/area-demand', areaDemandRoutes);
-
-// ==================== MIDDLEWARE ====================
+// ==================== MIDDLEWARE - V15 FIX - ISKO ROUTES SE PEHLE RAKHA HAI - WARNA req.body UNDEFINED ====================
 app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// ==================== NEW PM SYSTEM ROUTES - V15 FIX - MIDDLEWARE KE BAAD - SAME LINES, ONLY POSITION CHANGED ====================
+app.use('/api/product-manager', productManagerRoutes);
+app.use('/api/executive', executiveRoutes);
+app.use('/api/product-pool', productPoolRoutes);
+app.use('/api/area-demand', areaDemandRoutes);
 
 // DB ENSURE MIDDLEWARE - world-products se pehle check
 app.use('/api/world-products', async (req,res,next)=>{

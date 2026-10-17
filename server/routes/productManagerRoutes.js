@@ -1,51 +1,52 @@
-// LOCATION: server/routes/productManagerRoutes.js - PM ROUTES - V14 FINAL
+// LOCATION: routes/productManagerRoutes.js - V14 FINAL - FIXED req.body + LINK RETURN
 const express = require('express');
 const router = express.Router();
 const ProductManager = require('../models/ProductManager');
-const ProductPool = require('../models/ProductPool');
 
-// CREATE PM - Admin or Executive can create
-router.post('/register', async (req, res) => {
-  try {
-    const { name, phone, type, area, city, pincode, companyName, gst, email } = req.body;
-    if (!name || !phone || !type || !area) return res.status(400).json({ success: false, error: 'Missing required fields' });
-    const exists = await ProductManager.findOne({ phone });
-    if (exists) return res.status(400).json({ success: false, error: 'Phone already exists' });
-    const pm = await ProductManager.create(req.body);
-    res.json({ success: true, data: pm });
-  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
-});
-
+// LIST
 router.get('/list', async (req, res) => {
   try {
-    const { type, area, verified } = req.query;
-    const filter = {};
-    if (type) filter.type = type;
-    if (area) filter.area = new RegExp(area, 'i');
-    if (verified) filter.isVerified = verified === 'true';
-    const list = await ProductManager.find(filter).sort({ createdAt: -1 });
-    // attach totalProducts count
-    const withCounts = await Promise.all(list.map(async (pm) => {
-      const count = await ProductPool.countDocuments({ productManagerId: pm._id });
-      return { ...pm.toObject(), totalProducts: count };
-    }));
-    res.json({ success: true, data: withCounts });
+    const data = await ProductManager.find().sort({ createdAt: -1 });
+    res.json({ success: true, data });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-router.get('/:id', async (req, res) => {
-  try { const pm = await ProductManager.findById(req.params.id); res.json({ success: true, data: pm }); }
-  catch (e) { res.status(500).json({ success: false, error: e.message }); }
+// REGISTER - ADMIN CREATES - FIXED req.body
+router.post('/register', async (req, res) => {
+  try {
+    console.log('PM Register Body:', req.body);
+    if (!req.body) return res.status(400).json({ success: false, error: 'req.body undefined - add express.json() in server.js' });
+    const { name, phone, email, type, companyName, gst, area, city, pincode } = req.body;
+    if (!name || !phone || !type || !area) {
+      return res.status(400).json({ success: false, error: 'Name, Phone, Type, Area required' });
+    }
+    const exists = await ProductManager.findOne({ phone });
+    if (exists) return res.status(400).json({ success: false, error: 'Phone already exists' });
+
+    const pm = await ProductManager.create({
+      name, phone, email, type, companyName, gst, area, city, pincode,
+      isVerified: false, totalProducts: 0, walletBalance: 0, totalEarning: 0
+    });
+    
+    // LINK GENERATE
+    const dashboardLink = `https://samanlive.vercel.app/product-manager/dashboard.html?pmId=${pm._id}`;
+    const loginLink = `https://samanlive.vercel.app/product-manager/login.html?phone=${phone}`;
+
+    res.json({ success: true, data: pm, pm, dashboardLink, loginLink });
+  } catch (e) {
+    console.error('PM Register Error:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 router.put('/verify/:id', async (req, res) => {
-  try { const pm = await ProductManager.findByIdAndUpdate(req.params.id, { isVerified: true }, { new: true }); res.json({ success: true, data: pm }); }
-  catch (e) { res.status(500).json({ success: false, error: e.message }); }
+  await ProductManager.findByIdAndUpdate(req.params.id, { isVerified: true });
+  res.json({ success: true });
 });
 
 router.delete('/:id', async (req, res) => {
-  try { await ProductManager.findByIdAndDelete(req.params.id); res.json({ success: true }); }
-  catch (e) { res.status(500).json({ success: false, error: e.message }); }
+  await ProductManager.findByIdAndDelete(req.params.id);
+  res.json({ success: true });
 });
 
 module.exports = router;
