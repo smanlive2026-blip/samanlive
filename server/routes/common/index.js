@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ALLOWED_ROUTE_FILES = [
-  'common-core.routes.js','auth.js','shop-toggle.js','upload.js',
+  'common-core.routes.js','auth.js','shop-toggle.js','upload.js','code-export.routes.js',
   'cart.routes.js','checkout.routes.js','customer-orders.routes.js',
   'wishlist.routes.js','reviews.routes.js','track.js','share.routes.js','legal.routes.js',
   'orders.routes.js','inventory.routes.js','banner.routes.js','delivery.routes.js',

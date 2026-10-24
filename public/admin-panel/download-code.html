@@ -1,0 +1,184 @@
+<!-- LOCATION: public/admin-panel/download-code.html - FULL PROJECT PDF - ADMIN V1 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Download Full Project Code - Admin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto; margin:0; padding:0; background:#f1f5f9; color:#0f172a}
+  .header{background:#0f172a; color:white; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10}
+  .header h1{margin:0; font-size:18px}
+  .container{max-width:1000px; margin:0 auto; padding:20px}
+  .card{background:white; border-radius:16px; padding:20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.08); border:1px solid #e2e8f0}
+  .card h3{margin:0 0 12px 0; font-size:16px}
+  .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+  button{padding:12px 18px; border-radius:10px; border:none; background:#0f172a; color:white; font-weight:600; cursor:pointer; font-size:14px}
+  button.secondary{background:white; color:#0f172a; border:1px solid #e2e8f0}
+  button.blue{background:#2563eb}
+  button.green{background:#16a34a}
+  button:disabled{opacity:.4; cursor:not-allowed}
+  .badge{background:#f1f5f9; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600}
+  .badge.green{background:#dcfce7; color:#166534}
+  #log{background:#0f172a; color:#4ade80; padding:14px; border-radius:12px; font-family:ui-monospace,monospace; font-size:12px; max-height:280px; overflow:auto; white-space:pre-wrap; line-height:1.5}
+  .file-list{max-height:420px; overflow:auto; border:1px solid #e2e8f0; border-radius:12px; margin-top:12px}
+  .file-item{padding:10px 12px; border-bottom:1px solid #f1f5f9; font-size:13px; display:flex; justify-content:space-between}
+  .progress{height:8px; background:#e2e8f0; border-radius:10px; overflow:hidden; margin-top:12px}
+  .progress-bar{height:100%; background:#0f172a; width:0%; transition:width .3s}
+  .filters{display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; font-size:13px}
+  .filters label{display:flex; align-items:center; gap:6px; cursor:pointer}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-top:12px}
+  .stat{background:#f8fafc; padding:12px; border-radius:10px; border:1px solid #e2e8f0}
+  .stat b{font-size:20px; display:block}
+  .stat span{font-size:11px; opacity:.7; text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📄 Full Project Code Exporter</h1>
+  <span>ADMIN ONLY</span>
+</div>
+<div class="container">
+  <div class="card">
+    <h3>Step 1: Scan Project</h3>
+    <div class="row">
+      <button id="scanBtn">🔍 Scan All Files</button>
+      <span class="badge" id="totalFiles">0 files</span>
+      <span class="badge green" id="apiStatus">API: Not checked</span>
+    </div>
+    <div class="stats" id="stats" style="display:none">
+      <div class="stat"><b id="statTotal">0</b><span>Total Files</span></div>
+      <div class="stat"><b id="statSize">0 KB</b><span>Total Size</span></div>
+      <div class="stat"><b id="statLoaded">0</b><span>Loaded</span></div>
+      <div class="stat"><b id="statJs">0</b><span>JS Files</span></div>
+    </div>
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="filters">
+      <label><input type="checkbox" id="includeHtml" checked> HTML</label>
+      <label><input type="checkbox" id="includeJs" checked> JS</label>
+      <label><input type="checkbox" id="includeJson" checked> JSON</label>
+      <label><input type="checkbox" id="includeCss" checked> CSS</label>
+    </div>
+    <div id="fileList" class="file-list" style="display:none"></div>
+  </div>
+  <div class="card">
+    <h3>Step 2: Download</h3>
+    <div class="row">
+      <button id="pdfBtn" disabled class="blue">📕 Download PDF</button>
+      <button id="txtBtn" disabled class="secondary">📄 Download TXT</button>
+      <button id="jsonBtn" disabled class="green">🧾 Download JSON (Best for AI)</button>
+    </div>
+    <p style="font-size:12px; opacity:.6; margin-top:10px">PDF/TXT me LOCATION: path ke saath pura code hoga. Change ke baad fir se scan karke bhej dena.</p>
+  </div>
+  <div class="card">
+    <h3>Logs</h3>
+    <div id="log">Ready...\n1. Scan All Files click kar\n2. Download PDF\n3. Mujhe bhej de\n</div>
+  </div>
+</div>
+<script>
+const API_BASE = location.origin;
+let allFiles = [];
+let fileContents = {};
+const logEl = document.getElementById('log');
+function log(msg){ logEl.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n`; logEl.scrollTop = logEl.scrollHeight; }
+function updateProgress(p){ document.getElementById('progressBar').style.width = p + '%'; }
+
+fetch(`${API_BASE}/api/common/code-export/files`).then(r=>r.json()).then(d=>{
+  if(d.success){
+    document.getElementById('apiStatus').textContent = `API: OK - ${d.total} files`;
+  }
+}).catch(()=>{
+  document.getElementById('apiStatus').textContent = 'API: code-export.routes.js add kar pehle!';
+  document.getElementById('apiStatus').style.background = '#fee2e2';
+});
+
+document.getElementById('scanBtn').onclick = async ()=>{
+  log('Scanning...');
+  document.getElementById('scanBtn').disabled = true;
+  updateProgress(5);
+  try{
+    const res = await fetch(`${API_BASE}/api/common/code-export/files`);
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    allFiles = data.files;
+    document.getElementById('totalFiles').textContent = `${data.total} files`;
+    document.getElementById('statTotal').textContent = data.total;
+    document.getElementById('statSize').textContent = (data.files.reduce((s,f)=>s+f.size,0)/1024).toFixed(0)+' KB';
+    document.getElementById('statJs').textContent = data.files.filter(f=>f.relativePath.endsWith('.js')).length;
+    document.getElementById('stats').style.display = 'grid';
+    log(`Found ${data.total} files`);
+    updateProgress(20);
+    const list = document.getElementById('fileList');
+    list.style.display = 'block';
+    list.innerHTML = allFiles.map(f=> `<div class="file-item"><b>📄 ${f.relativePath}</b><span>${(f.size/1024).toFixed(1)}KB</span></div>`).join('');
+    fileContents = {};
+    let loaded = 0;
+    for(let i=0;i<allFiles.length;i++){
+      const f = allFiles[i];
+      const ext = f.relativePath.split('.').pop();
+      if(!document.getElementById('includeHtml').checked && ext==='html') continue;
+      if(!document.getElementById('includeJs').checked && ext==='js') continue;
+      if(!document.getElementById('includeJson').checked && ext==='json') continue;
+      if(!document.getElementById('includeCss').checked && ext==='css') continue;
+      try{
+        const r = await fetch(`${API_BASE}/api/common/code-export/file-content?path=${encodeURIComponent(f.relativePath)}`);
+        const d = await r.json();
+        if(d.success) fileContents[f.relativePath] = d.content;
+      }catch(e){}
+      loaded++;
+      if(i%10===0){
+        document.getElementById('statLoaded').textContent = loaded;
+        updateProgress(20 + (i/allFiles.length)*70);
+      }
+    }
+    document.getElementById('statLoaded').textContent = Object.keys(fileContents).length;
+    updateProgress(100);
+    document.getElementById('pdfBtn').disabled = false;
+    document.getElementById('txtBtn').disabled = false;
+    document.getElementById('jsonBtn').disabled = false;
+    log(`Ready! Loaded ${Object.keys(fileContents).length} files`);
+  }catch(e){ log('ERROR: '+e.message); }
+  document.getElementById('scanBtn').disabled = false;
+};
+
+document.getElementById('txtBtn').onclick = ()=>{
+  window.location.href = `${API_BASE}/api/common/code-export/download-all`;
+};
+
+document.getElementById('jsonBtn').onclick = ()=>{
+  const jsonData = { generated: new Date().toISOString(), totalFiles: Object.keys(fileContents).length, files: fileContents };
+  const blob = new Blob([JSON.stringify(jsonData, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `full-project-${Date.now()}.json`; a.click();
+  log('JSON downloaded - Best for AI');
+};
+
+document.getElementById('pdfBtn').onclick = async ()=>{
+  log('Generating PDF...');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+  let y = 40; const margin = 36; const pageHeight = doc.internal.pageSize.getHeight(); const maxW = doc.internal.pageSize.getWidth() - margin*2;
+  function addPage(h=0){ if(y+h > pageHeight - 50){ doc.addPage(); y = 40; } }
+  doc.setFontSize(20); doc.setFont('helvetica','bold'); doc.text('FULL PROJECT CODE EXPORT', margin, y); y+=24;
+  doc.setFontSize(11); doc.setFont('helvetica','normal'); doc.text(`Generated: ${new Date().toLocaleString()} | Files: ${Object.keys(fileContents).length}`, margin, y); y+=20;
+  let idx=0;
+  for(const relPath in fileContents){
+    idx++; const content = fileContents[relPath];
+    addPage(70);
+    doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.text(`FILE ${idx}: ${relPath}`, margin, y); y+=14;
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text(`LOCATION: ${relPath}`, margin, y); y+=12;
+    doc.setFontSize(8); doc.setFont('courier','normal');
+    const clean = content.replace(/[^\x00-\x7F\n\r\t]/g, '?');
+    const lines = doc.splitTextToSize(clean, maxW);
+    for(let line of lines){ addPage(12); doc.text(line, margin, y); y+=9.5; }
+    y+=16; addPage(20); doc.setFontSize(9); doc.text(`END: ${relPath}`, margin, y); y+=20;
+    if(idx%5===0) log(`PDF: ${idx}/${Object.keys(fileContents).length}`);
+  }
+  doc.save(`full-project-code-${Date.now()}.pdf`);
+  log('PDF Downloaded! Send to me');
+};
+</script>
+</body>
+</html>
