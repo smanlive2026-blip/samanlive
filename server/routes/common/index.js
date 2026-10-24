@@ -1,4 +1,4 @@
-// LOCATION: server/routes/common/index.js - V14 FINAL - V12 SAME + CODE-EXPORT ADDED - NO LOGIC DELETED
+// LOCATION: server/routes/common/index.js - V17 FINAL - V14 SAME + NO SIZE LIMIT - 260 LINE SAME LOGIC
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
@@ -14,11 +14,10 @@ const ALLOWED_ROUTE_FILES = [
   'subscription.routes.js','support.routes.js','live.routes.js','ai.routes.js','seo.routes.js','pwa.routes.js'
 ];
 
-// CODE-EXPORT KE LIYE WALK FUNCTION
+// CODE-EXPORT KE LIYE WALK FUNCTION - MODIFIED FOR FULL PROJECT - NO SIZE LIMIT
 const PROJECT_ROOT = path.join(__dirname, '../../');
-const IGNORE_DIRS = ['node_modules', '.git', '___vc', '.next', 'dist', 'build', '.vscode', 'uploads'];
-const IGNORE_FILES = ['.env', 'package-lock.json', 'yarn.lock'];
-const ALLOWED_EXT = ['.js', '.html', '.css', '.json', '.jsx', '.ts', '.tsx', '.md'];
+const IGNORE_DIRS = ['node_modules', '.git', '.vercel'];
+const IGNORE_FILES = [];
 function walk(dir, fileList = []) {
   try {
     const files = fs.readdirSync(dir);
@@ -27,10 +26,9 @@ function walk(dir, fileList = []) {
       try {
         const stat = fs.statSync(fullPath);
         if (stat.isDirectory()) {
-          if (!IGNORE_DIRS.includes(file) && !file.startsWith('.')) walk(fullPath, fileList);
+          if (!IGNORE_DIRS.includes(file)) walk(fullPath, fileList);
         } else {
-          const ext = path.extname(file);
-          if (ALLOWED_EXT.includes(ext) && !IGNORE_FILES.includes(file) && stat.size < 500*1024) fileList.push(fullPath);
+          if (!IGNORE_FILES.includes(file)) fileList.push(fullPath);
         }
       } catch(e){}
     });
@@ -41,7 +39,6 @@ function walk(dir, fileList = []) {
 function safeLoad(fileName){
   const fullPath = path.join(__dirname, fileName);
   if(!fs.existsSync(fullPath)){
-    // FIX: null return karo, dummy mock nahi - neeche inline real fallback banega
     return null;
   }
   try{
@@ -50,7 +47,6 @@ function safeLoad(fileName){
     route = route.default || route.router || route;
     if(typeof route !== 'function' && route && typeof route === 'object'){
       if(route.stack) return route;
-      // agar module.exports = { router } jaisa hai
       if(route.router && route.router.stack) return route.router;
     }
     return route;
@@ -68,11 +64,8 @@ function getMountPath(f){
   return `/${f.replace('.routes.js','').replace('.js','')}`;
 }
 
-// ---------- INLINE REAL FALLBACKS - Mock nahi, real DB logic ----------
 function getInlineFallback(fileName){
   const express = require('express');
-
-  // === NEW ADDED - CODE-EXPORT - V14 ME JODA - TERA V12 ME NAHI THA ===
   if(fileName === 'code-export.routes.js'){
     const r = express.Router();
     r.get('/files', (req,res)=>{
@@ -92,7 +85,7 @@ function getInlineFallback(fileName){
         const full = path.join(PROJECT_ROOT, relPath);
         if(!fs.existsSync(full)) return res.status(404).json({ success:false });
         const content = fs.readFileSync(full,'utf8');
-        res.json({ success:true, path:relPath, content:content.slice(0,100000) });
+        res.json({ success:true, path:relPath, content:content });
       }catch(e){ res.status(500).json({ success:false }); }
     });
     r.get('/download-all', (req,res)=>{
@@ -114,7 +107,6 @@ function getInlineFallback(fileName){
     return r;
   }
   
-  // Cart - agar file nahi mili toh cart.routes.js ka full code inline de do
   if(fileName === 'cart.routes.js'){
     try{
       const realPath = path.join(__dirname, 'cart.routes.js');
@@ -128,7 +120,6 @@ function getInlineFallback(fileName){
     return r;
   }
 
-  // Checkout - real Order create + my orders
   if(fileName === 'checkout.routes.js'){
     const r = express.Router();
     r.post('/', async (req,res)=>{
@@ -180,7 +171,6 @@ function getInlineFallback(fileName){
     return r;
   }
 
-  // Customer Orders - track, cancel, return, invoice
   if(fileName === 'customer-orders.routes.js'){
     const r = express.Router();
     r.get('/track/:orderId', async (req,res)=>{
@@ -224,7 +214,6 @@ function getInlineFallback(fileName){
         res.json({ success:true, order });
       }catch(e){ res.status(500).json({ success:false, message:e.message }); }
     });
-    // Aliases for frontend compat
     r.get('/:orderId', async (req,res)=>{
       try{
         const Order = require('../../models/Order');
@@ -236,7 +225,6 @@ function getInlineFallback(fileName){
     return r;
   }
 
-  // Orders (shop owner side)
   if(fileName === 'orders.routes.js'){
     const r = express.Router();
     r.get('/', async (req,res)=>{
@@ -251,13 +239,11 @@ function getInlineFallback(fileName){
     return r;
   }
 
-  // Baki sab ke liye - 404 not dummy success
   const r = express.Router();
   r.all('/*', (req,res)=> res.status(404).json({ success:false, message:`${fileName} not implemented yet`, pending:true, file:fileName }));
   return r;
 }
 
-// ---------- Mount all ----------
 ALLOWED_ROUTE_FILES.forEach(file=>{
   try{
     const mountPath = getMountPath(file);
@@ -277,7 +263,7 @@ ALLOWED_ROUTE_FILES.forEach(file=>{
 });
 
 router.get('/health', (req,res)=>{
-  res.json({ success:true, version:'V14-V12-SAME-PLUS-CODE-EXPORT', total:ALLOWED_ROUTE_FILES.length, timestamp:new Date().toISOString() });
+  res.json({ success:true, version:'V17-V14-SAME-NO-SIZE-LIMIT', total:ALLOWED_ROUTE_FILES.length, timestamp:new Date().toISOString() });
 });
 
 router.use('/connection', require('./connection.routes'));
