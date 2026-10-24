@@ -1,4 +1,4 @@
-// LOCATION: server/routes/common/index.js - V17 FINAL - V14 SAME + NO SIZE LIMIT - 260 LINE SAME LOGIC
+// LOCATION: server/routes/common/index.js - V18 FINAL - V17 SAME + PROJECT_ROOT FIX
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
@@ -15,7 +15,7 @@ const ALLOWED_ROUTE_FILES = [
 ];
 
 // CODE-EXPORT KE LIYE WALK FUNCTION - MODIFIED FOR FULL PROJECT - NO SIZE LIMIT
-const PROJECT_ROOT = path.join(__dirname, '../../');
+const PROJECT_ROOT = path.join(__dirname, '../../../');
 const IGNORE_DIRS = ['node_modules', '.git', '.vercel'];
 const IGNORE_FILES = [];
 function walk(dir, fileList = []) {
@@ -263,7 +263,7 @@ ALLOWED_ROUTE_FILES.forEach(file=>{
 });
 
 router.get('/health', (req,res)=>{
-  res.json({ success:true, version:'V17-V14-SAME-NO-SIZE-LIMIT', total:ALLOWED_ROUTE_FILES.length, timestamp:new Date().toISOString() });
+  res.json({ success:true, version:'V18-PROJECT-ROOT-FIXED', total:ALLOWED_ROUTE_FILES.length, timestamp:new Date().toISOString() });
 });
 
 router.use('/connection', require('./connection.routes'));
