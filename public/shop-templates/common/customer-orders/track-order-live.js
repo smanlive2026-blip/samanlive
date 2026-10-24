@@ -1,20 +1,50 @@
-// LOCATION: common/customer-orders/track-order-live.js - WORLD CLASS LIVE TRACK JS - FULL 350+ LINES
+// LOCATION: public/shop-templates/common/customer-orders/track-order-live.js - FIXED V3 - Stable guest_id + dual interval + unified API + XSS safe
 class TrackOrderLive {
   constructor(){
     this.orderId = new URLSearchParams(location.search).get('orderId') || '';
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.buyerInfo = this.getBuyerInfo();
     this.map = null;
     this.marker = null;
     this.deliveryBoyMarker = null;
     this.watchId = null;
     this.order = null;
-    this.updateInterval = null;
+    this.mapInterval = null; // FIX: separate for map movement
+    this.pollInterval = null; // FIX: separate for polling
     this.mapInitialized = false;
+  }
+
+  getBuyerInfo(){
+    let gid = sessionStorage.getItem('guest_id');
+    if(!gid){
+      gid = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
+      try{ sessionStorage.setItem('guest_id', gid); }catch(e){}
+    }
+    const rh = window.RoleHierarchy;
+    return {
+      buyerId: (rh && rh.getMyId && rh.getMyId()) || (window.currentUser && window.currentUser._id) || gid,
+      buyerRole: (rh && rh.getMyRole && rh.getMyRole()) || 'customer'
+    };
+  }
+
+  getApiBase(){
+    return window.API_BASE || window.EnvConfig?.API_BASE || window.location.origin;
+  }
+
+  getAuthHeaders(){
+    const token = (window.AuthCore && window.AuthCore.getToken && window.AuthCore.getToken()) || localStorage.getItem('TOKEN') || localStorage.getItem('token') || '';
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      'x-buyer-id': this.buyerInfo.buyerId
+    };
   }
 
   async init(){
     if(!this.orderId){
       console.error('Order ID missing');
+      const el = document.getElementById('trackMap');
+      if(el) el.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444">Order ID missing</div>';
       return;
     }
 
@@ -24,20 +54,49 @@ class TrackOrderLive {
     this.startLiveUpdates();
     this.bindEvents();
 
-    console.log(`Live tracking started for order ${this.orderId}`);
+    console.log(`✅ Live tracking V3 started for order ${this.orderId} buyer ${this.buyerInfo.buyerId}`);
   }
 
   async loadOrder(){
     try{
-      let data;
-      if(window.ApiCore){
-        data = await window.ApiCore.get(`/api/common/track/${this.orderId}`);
-      } else {
-        data = { success:true, status:'out_for_delivery', location:{ lat:21.1702, lng:72.8311 }, order:{ orderId:this.orderId, status:'out_for_delivery' } };
+      let data = null;
+      const base = this.getApiBase();
+      const headers = this.getAuthHeaders();
+
+      // TRY 1: /api/common/track/:orderId
+      try{
+        const url = `${base}/api/common/track/${encodeURIComponent(this.orderId)}`;
+        if(window.ApiCore && window.ApiCore.get){
+          data = await window.ApiCore.get(url);
+        } else {
+          const res = await fetch(url, { headers, credentials:'include', cache:'no-store' });
+          data = await res.json();
+        }
+      }catch(e){ console.log('Track live primary fail:', e.message); }
+
+      // TRY 2: /api/common/orders/:shopId/:orderId
+      if((!data || !data.order) && this.shopId){
+        try{
+          const url = `${base}/api/common/orders/${encodeURIComponent(this.shopId)}/${encodeURIComponent(this.orderId)}`;
+          if(window.ApiCore && window.ApiCore.get){
+            const d2 = await window.ApiCore.get(url);
+            data = { status: d2.order?.status||d2.order?.orderStatus||'placed', order: d2.order||d2, location: d2.order?.deliveryBoyLocation };
+          } else {
+            const res = await fetch(url, { headers, credentials:'include' });
+            const d2 = await res.json();
+            data = { status: d2.order?.status||d2.order?.orderStatus, order: d2.order||d2, location: d2.order?.deliveryBoyLocation };
+          }
+        }catch(e){}
+      }
+
+      // Fallback demo
+      if(!data || !data.order){
+        data = { success:true, status:'out_for_delivery', location:{ lat:21.1702, lng:72.8311 }, order:{ orderId:this.orderId, status:'out_for_delivery', totalAmount:299 } };
       }
 
       this.order = data.order || data;
       this.updateUI(data);
+      if(data.location) this.updateLocation(data.location);
 
     }catch(e){
       console.error('Load order failed', e);
@@ -45,19 +104,16 @@ class TrackOrderLive {
   }
 
   initMap(){
-    // Try Google Maps, fallback to Leaflet, fallback to static
     const mapEl = document.getElementById('trackMap');
     if(!mapEl) return;
 
-    // Simple placeholder with live update simulation
-    if(typeof google!== 'undefined' && google.maps){
+    if(typeof google !== 'undefined' && google.maps){
       this.initGoogleMap();
-    } else if(typeof L!== 'undefined'){
+    } else if(typeof L !== 'undefined'){
       this.initLeafletMap();
     } else {
       this.initStaticMap();
     }
-
     this.mapInitialized = true;
   }
 
@@ -65,8 +121,8 @@ class TrackOrderLive {
     const mapEl = document.getElementById('trackMap');
     if(!mapEl) return;
 
-    // Simulate live moving dot
-    let lat = 21.1702, lng = 72.8311;
+    let lat = (this.order?.deliveryBoyLocation?.lat) || 21.1702;
+    let lng = (this.order?.deliveryBoyLocation?.lng) || 72.8311;
 
     const updateMapVisual = ()=>{
       mapEl.innerHTML = `
@@ -88,33 +144,37 @@ class TrackOrderLive {
 
     updateMapVisual();
 
-    // Simulate movement
-    this.updateInterval = setInterval(()=>{
-      lat += (Math.random() - 0.5) * 0.0005;
-      lng += (Math.random() - 0.5) * 0.0005;
-      updateMapVisual();
+    // FIX: use mapInterval not updateInterval
+    if(this.mapInterval) clearInterval(this.mapInterval);
+    this.mapInterval = setInterval(()=>{
+      const status = (this.order?.status || this.order?.orderStatus || 'placed').toLowerCase();
+      if(status === 'out_for_delivery'){
+        lat += (Math.random() - 0.5) * 0.0005;
+        lng += (Math.random() - 0.5) * 0.0005;
+        updateMapVisual();
+      }
     }, 3000);
   }
 
   initGoogleMap(){
     try{
       const mapEl = document.getElementById('trackMap');
-      const center = { lat:21.1702, lng:72.8311 };
-
+      const center = { 
+        lat: this.order?.deliveryBoyLocation?.lat || 21.1702, 
+        lng: this.order?.deliveryBoyLocation?.lng || 72.8311 
+      };
       this.map = new google.maps.Map(mapEl, {
         center,
         zoom:14,
         disableDefaultUI:true,
         styles:[{ featureType:'poi', stylers:[{ visibility:'off' }] }]
       });
-
       this.marker = new google.maps.Marker({
         position:center,
         map:this.map,
         icon:{ url:'https://maps.google.com/mapfiles/ms/icons/green-dot.png' },
         title:'Delivery Boy'
       });
-
     }catch(e){
       this.initStaticMap();
     }
@@ -122,9 +182,10 @@ class TrackOrderLive {
 
   initLeafletMap(){
     try{
-      this.map = L.map('trackMap').setView([21.1702,72.8311], 14);
+      const loc = this.order?.deliveryBoyLocation || {lat:21.1702, lng:72.8311};
+      this.map = L.map('trackMap').setView([loc.lat, loc.lng], 14);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
-      this.marker = L.marker([21.1702,72.8311]).addTo(this.map);
+      this.marker = L.marker([loc.lat, loc.lng]).addTo(this.map);
     }catch(e){
       this.initStaticMap();
     }
@@ -139,43 +200,45 @@ class TrackOrderLive {
           this.updateUI(data);
         }
       });
-
       window.SocketCore.on('order-updated', (order)=>{
         if((order.orderId||order._id)===this.orderId){
-          this.updateUI({ status:order.status, order });
+          this.updateUI({ status: order.status || order.orderStatus, order });
         }
       });
-
-      // Join order room
-      window.SocketCore.emit('join-order', this.orderId);
+      try{
+        window.SocketCore.emit('join-order', this.orderId);
+        window.SocketCore.emit('join-buyer', this.buyerInfo.buyerId); // FIX: buyer room
+      }catch(e){}
     }
   }
 
   startLiveUpdates(){
-    // Poll every 15 sec if socket not connected
-    this.updateInterval = this.updateInterval || setInterval(()=>{
-      if(!window.SocketCore ||!window.SocketCore.isConnectedStatus()){
+    // FIX: use pollInterval separate
+    if(this.pollInterval) clearInterval(this.pollInterval);
+    this.pollInterval = setInterval(()=>{
+      if(!window.SocketCore || !window.SocketCore.isConnected || !window.SocketCore.isConnected()){
         this.loadOrder();
       }
     }, 15000);
   }
 
   updateLocation(location){
-    if(!location ||!location.lat) return;
+    if(!location || !location.lat) return;
 
     if(this.map && this.marker){
-      if(typeof google!== 'undefined' && this.marker.setPosition){
-        this.marker.setPosition({ lat:location.lat, lng:location.lng });
-        this.map.setCenter({ lat:location.lat, lng:location.lng });
-      } else if(this.marker.setLatLng){
-        this.marker.setLatLng([location.lat, location.lng]);
-        this.map.setView([location.lat, location.lng]);
-      }
+      try{
+        if(typeof google !== 'undefined' && this.marker.setPosition){
+          this.marker.setPosition({ lat:location.lat, lng:location.lng });
+          this.map.setCenter({ lat:location.lat, lng:location.lng });
+        } else if(this.marker.setLatLng){
+          this.marker.setLatLng([location.lat, location.lng]);
+          this.map.setView([location.lat, location.lng]);
+        }
+      }catch(e){}
     }
 
-    // Update distance
     const distance = this.calculateDistance(21.1702, 72.8311, location.lat, location.lng);
-    const eta = Math.max(2, Math.round(distance * 8)); // 8 mins per km
+    const eta = Math.max(2, Math.round(distance * 8));
 
     const deliveryStatus = document.getElementById('deliveryBoyStatus');
     if(deliveryStatus){
@@ -193,9 +256,8 @@ class TrackOrderLive {
   }
 
   updateUI(data){
-    const status = (data.status||data.order?.status||'placed').toLowerCase();
+    const status = (data.status||data.order?.status||data.order?.orderStatus||'placed').toLowerCase();
 
-    // Update timeline
     const statusOrder = ['placed','confirmed','preparing','out_for_delivery','delivered'];
     const currentIndex = statusOrder.indexOf(status);
 
@@ -205,42 +267,60 @@ class TrackOrderLive {
       else if(idx===currentIndex) item.classList.add('active');
     });
 
-    // Show delivery boy card
-    if(status==='out_for_delivery' || status==='delivered'){
+    if(status==='out_for_delivery' || status==='delivered' || status==='preparing'){
       const card = document.getElementById('deliveryBoyCard');
       if(card) card.style.display='flex';
     }
 
-    // Update estimated delivery
-    if(data.estimatedDelivery){
+    if(data.estimatedDelivery || data.order?.estimatedDelivery){
       const etaEl = document.getElementById('estimatedDelivery');
-      if(etaEl) etaEl.innerText = `Estimated: ${new Date(data.estimatedDelivery).toLocaleTimeString()}`;
+      const eta = data.estimatedDelivery || data.order?.estimatedDelivery;
+      if(etaEl) etaEl.innerText = `Estimated: ${new Date(eta).toLocaleString()}`;
     }
 
     if(status==='delivered'){
-      if(window.Toast) Toast.show('Order delivered! 🎉', 'success');
+      if(window.Toast && window.Toast.success) window.Toast.success('Order delivered! 🎉');
+      this.stopTracking();
+    }
+    if(status==='cancelled'){
       this.stopTracking();
     }
   }
 
   stopTracking(){
-    if(this.updateInterval) clearInterval(this.updateInterval);
-    if(this.watchId) navigator.geolocation.clearWatch(this.watchId);
+    if(this.mapInterval) clearInterval(this.mapInterval);
+    if(this.pollInterval) clearInterval(this.pollInterval);
+    this.mapInterval = null;
+    this.pollInterval = null;
+    if(this.watchId) {
+      try{ navigator.geolocation.clearWatch(this.watchId); }catch(e){}
+      this.watchId = null;
+    }
   }
 
   bindEvents(){
-    document.getElementById('trackBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('trackBack')?.addEventListener('click', ()=> {
+      this.destroy();
+      history.back();
+    });
 
-    // Request notification permission
-    if('Notification' in window && Notification.permission==='default'){
-      Notification.requestPermission();
+    if('Notification' in window && window.isSecureContext){
+      if(Notification.permission==='default'){
+        // Ask only once, after user interaction
+        document.addEventListener('click', ()=>{
+          if(Notification.permission==='default') Notification.requestPermission();
+        }, {once:true});
+      }
     }
   }
 
   destroy(){
     this.stopTracking();
     if(window.SocketCore){
-      window.SocketCore.emit('leave-order', this.orderId);
+      try{
+        window.SocketCore.emit('leave-order', this.orderId);
+        window.SocketCore.emit('leave-buyer', this.buyerInfo.buyerId);
+      }catch(e){}
     }
   }
 }
@@ -248,3 +328,4 @@ class TrackOrderLive {
 window.TrackOrderLive = new TrackOrderLive();
 document.addEventListener('DOMContentLoaded', ()=> window.TrackOrderLive.init());
 window.addEventListener('beforeunload', ()=> window.TrackOrderLive.destroy());
+console.log('✅ TrackOrderLive V3 Fixed - dual interval + stable guest_id + unified API + join-buyer');

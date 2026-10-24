@@ -1,8 +1,11 @@
-<!-- LOCATION: common/checkout/payment-select.html -->
+<!-- LOCATION: common/checkout/payment-select.html - FIXED V3 - Uses CartCore V3 -->
 <div style="max-width:600px;margin:auto;background:#f8fafc;min-height:100vh;font-family:Outfit,sans-serif">
-  <div style="padding:14px;background:#fff;display:flex;align-items:center;gap:12px;position:sticky;top:0;border-bottom:1px solid #f1f5f9"><button onclick="history.back()">‹</button><h3 style="margin:0;font-weight:900">Payment 💳</h3></div>
+  <div style="padding:14px;background:#fff;display:flex;align-items:center;gap:12px;position:sticky;top:0;border-bottom:1px solid #f1f5f9">
+    <button onclick="history.back()" style="background:#f1f5f9;border:none;width:36px;height:36px;border-radius:10px;font-weight:900;cursor:pointer">‹</button>
+    <h3 style="margin:0;font-weight:900">Payment 💳</h3>
+  </div>
   <div style="padding:12px">
-    <div id="addrPreview" style="background:#fff;border-radius:12px;padding:12px;border:1px solid #f1f5f9;margin-bottom:12px;font-size:13px;color:#475569"></div>
+    <div id="addrPreview" style="background:#fff;border-radius:12px;padding:12px;border:1px solid #f1f5f9;margin-bottom:12px;font-size:13px;color:#475569;line-height:1.4"></div>
 
     <h4 style="font-weight:900;margin:12px 0 8px">Select Payment Method</h4>
 
@@ -10,93 +13,191 @@
     <div class="pay-card" data-method="upi"><span style="font-size:20px">📱</span><div><b>UPI</b><p>Google Pay, PhonePe, Paytm</p></div><span class="radio"></span></div>
     <div class="pay-card" data-method="online"><span style="font-size:20px">💳</span><div><b>Card / Netbanking</b><p>Secure payment via Razorpay</p></div><span class="radio"></span></div>
 
-    <div id="upiApps" style="display:none;margin-top:12px"><h5 style="font-weight:800;margin:0 0 8px">Pay via UPI App</h5><div style="display:flex;gap:8px"><button class="upi-btn" data-app="gpay">GPay</button><button class="upi-btn" data-app="phonepe">PhonePe</button><button class="upi-btn" data-app="paytm">Paytm</button><button class="upi-btn" data-app="upi">Other UPI</button></div></div>
+    <div id="upiApps" style="display:none;margin-top:12px">
+      <h5 style="font-weight:800;margin:0 0 8px">Pay via UPI App</h5>
+      <div style="display:flex;gap:8px">
+        <button class="upi-btn" data-app="gpay">GPay</button>
+        <button class="upi-btn" data-app="phonepe">PhonePe</button>
+        <button class="upi-btn" data-app="paytm">Paytm</button>
+        <button class="upi-btn" data-app="upi">Other UPI</button>
+      </div>
+    </div>
 
     <div style="background:#fff;border-radius:12px;padding:12px;border:1px solid #f1f5f9;margin-top:16px">
       <div style="display:flex;justify-content:space-between;font-size:14px;margin:4px 0"><span>Subtotal</span><span id="paySubtotal">₹0</span></div>
       <div style="display:flex;justify-content:space-between;font-size:14px;margin:4px 0"><span>Delivery</span><span style="color:#10b981;font-weight:800">FREE</span></div>
       <div style="display:flex;justify-content:space-between;font-weight:900;font-size:18px;border-top:1px dashed #e2e8f0;padding-top:8px;margin-top:8px"><span>Total</span><span id="payTotal">₹0</span></div>
-      <button id="payBtn" style="width:100%;margin-top:12px;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:15px">Place Order • <span id="payTotalBtn">₹0</span></button>
+      <button id="payBtn" style="width:100%;margin-top:12px;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:15px;cursor:pointer">Place Order • <span id="payTotalBtn">₹0</span></button>
     </div>
   </div>
 </div>
+
 <style>
-.pay-card{background:#fff;border:2px solid #f1f5f9;border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px}
+.pay-card{background:#fff;border:2px solid #f1f5f9;border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px;transition:.2s}
 .pay-card.selected{border-color:#0f172a;background:#f8fafc}
 .pay-card div{flex:1}
 .pay-card b{font-size:14px;font-weight:800;display:block}
 .pay-card p{font-size:11px;color:#64748b;margin:2px 0 0}
-.pay-card.radio{width:18px;height:18px;border-radius:50%;border:2px solid #cbd5e1;display:grid;place-items:center}
-.pay-card.selected.radio{border-color:#0f172a}
-.pay-card.selected.radio::after{content:'';width:8px;height:8px;background:#0f172a;border-radius:50%}
+.pay-card .radio{width:18px;height:18px;border-radius:50%;border:2px solid #cbd5e1;display:grid;place-items:center}
+.pay-card.selected .radio{border-color:#0f172a}
+.pay-card.selected .radio::after{content:'';width:8px;height:8px;background:#0f172a;border-radius:50%}
 .upi-btn{flex:1;background:#fff;border:1px solid #e2e8f0;padding:10px;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer}
+.upi-btn:active{transform:scale(.95)}
 </style>
+
+<script src="../../assets/js/role-hierarchy.js"></script>
+<script src="../core/api-core.js"></script>
+<script src="../core/auth-core.js"></script>
+<script src="../cart/cart-core.js?v=3"></script>
+<script src="./checkout.js?v=3"></script>
+
 <script>
-const shopId = new URLSearchParams(location.search).get('shopId')||'';
-document.getElementById('addrPreview').innerText = localStorage.getItem('selectedAddressText') || 'Deliver to selected address';
+(function(){
+  const shopId = new URLSearchParams(location.search).get('shopId') || '';
+  const supplierId = new URLSearchParams(location.search).get('supplierId') || shopId;
+  const addressIdFromUrl = new URLSearchParams(location.search).get('addressId') || '';
 
-let selectedMethod = 'cod';
-document.querySelectorAll('.pay-card').forEach(c=>{
-  c.addEventListener('click', ()=>{
-    document.querySelectorAll('.pay-card').forEach(x=> x.classList.remove('selected'));
-    c.classList.add('selected');
-    selectedMethod = c.dataset.method;
-    document.getElementById('upiApps').style.display = selectedMethod==='upi'? 'block' : 'none';
-    document.getElementById('payBtn').innerText = selectedMethod==='cod'? `Place Order • ${document.getElementById('payTotal').innerText}` : `Pay • ${document.getElementById('payTotal').innerText}`;
+  function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // Address preview
+  const addrText = localStorage.getItem('selectedAddressText') || 'Deliver to selected address';
+  document.getElementById('addrPreview').innerHTML = `📍 ${esc(addrText)}<br><span style="font-size:11px;color:#94a3b8">Shop: ${esc(shopId)} ${addressIdFromUrl? '| Addr: '+esc(addressIdFromUrl):''}</span>`;
+
+  let selectedMethod = 'cod';
+
+  document.querySelectorAll('.pay-card').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      document.querySelectorAll('.pay-card').forEach(x=> x.classList.remove('selected'));
+      c.classList.add('selected');
+      selectedMethod = c.dataset.method;
+      document.getElementById('upiApps').style.display = selectedMethod==='upi'? 'block' : 'none';
+      const totalTxt = document.getElementById('payTotal').innerText;
+      document.getElementById('payBtn').innerHTML = selectedMethod==='cod' ? `Place Order • <span id="payTotalBtn">${esc(totalTxt)}</span>` : `Pay • <span id="payTotalBtn">${esc(totalTxt)}</span>`;
+    });
   });
-});
 
-async function loadCartTotal(){
-  if(!window.CartCore){
-    const mod = await import('../cart/cart-core.js');
-  }
-  try{
-    const res = await fetch(`/api/common/cart/${shopId}?userId=guest_${localStorage.getItem('guestId')||'guest'}&t=${Date.now()}`, {cache:'no-store'});
-    const data = await res.json();
-    const total = data.cart?.total || data.total || 0;
+  // FIXED: CartCore V3 se total lo - purana fetch hatao
+  async function loadCartTotal(){
+    // Wait for CartCore ready
+    if(window.CartCore && window.CartCore.ready){
+      try{ await window.CartCore.ready; }catch(e){}
+    }
+    let items = [];
+    if(window.CartCore){
+      items = window.CartCore.getCartBySupplier(supplierId);
+      if(!items || items.length===0) items = window.CartCore.getCart();
+    }
+    // Fallback localStorage
+    if(items.length===0){
+      try{
+        const totalLS = localStorage.getItem('checkoutTotal') || localStorage.getItem('cartTotal') || '0';
+        const t = parseInt(totalLS) || 0;
+        document.getElementById('paySubtotal').innerText = `₹${t}`;
+        document.getElementById('payTotal').innerText = `₹${t}`;
+        const btnSpan = document.getElementById('payTotalBtn');
+        if(btnSpan) btnSpan.innerText = `₹${t}`;
+        return t;
+      }catch(e){ return 0; }
+    }
+
+    const total = items.reduce((s,i)=> s + (Number(i.price||0)*Number(i.qty||1)), 0);
     document.getElementById('paySubtotal').innerText = `₹${total}`;
     document.getElementById('payTotal').innerText = `₹${total}`;
-    document.getElementById('payTotalBtn').innerText = `₹${total}`;
+    const btnSpan = document.getElementById('payTotalBtn');
+    if(btnSpan) btnSpan.innerText = `₹${total}`;
+    
+    console.log('Payment page total from CartCore:', total, items);
     return total;
-  }catch(e){ return 0; }
-}
-loadCartTotal();
+  }
 
-document.getElementById('payBtn').addEventListener('click', async ()=>{
-  const btn = document.getElementById('payBtn');
-  btn.disabled=true; btn.innerText='Placing...';
+  // Load total on start
+  loadCartTotal();
+  // Also reload when cart updated
+  window.addEventListener('cart:updated', loadCartTotal);
 
-  const total = document.getElementById('payTotal').innerText.replace('₹','');
-  const addressId = new URLSearchParams(location.search).get('addressId') || localStorage.getItem('selectedAddressId');
+  // Pay button handler - FIXED: Uses CheckoutCore
+  document.getElementById('payBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('payBtn');
+    if(btn.disabled) return;
+    btn.disabled=true; 
+    const origText = btn.innerHTML;
+    btn.innerText='Placing...';
 
-  try{
-    if(selectedMethod==='upi'){
-      // UPI Intent
-      if(window.UpiIntent){ window.UpiIntent.pay(total); return; }
-      alert('UPI opening...');
-    } else if(selectedMethod==='cod'){
-      const res = await fetch(`/api/common/checkout/${shopId}/place`, {
-        method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
-        body: JSON.stringify({ paymentMethod:'cod', addressId, amount: total })
-      });
-      const data = await res.json();
-      if(data.success){
-        window.location.href = `./order-success.html?shopId=${shopId}&orderId=${data.orderId || data.order?.orderId || 'ORD'+Date.now()}`;
-      } else { alert(data.message || 'Order failed'); btn.disabled=false; }
-    } else {
-      // Online via PaymentGateway
-      if(window.PaymentGateway){ window.PaymentGateway.pay(total, shopId); }
-      else alert('Online payment integration pending');
+    const totalStr = document.getElementById('payTotal').innerText.replace('₹','').replace(',','').trim();
+    const total = parseInt(totalStr) || 0;
+    const addressId = addressIdFromUrl || localStorage.getItem('selectedAddressId') || null;
+
+    if(!addressId){
+      alert('Pehle address select karo');
+      btn.disabled=false; btn.innerHTML=origText;
+      window.location.href = `./address-select.html?shopId=${encodeURIComponent(shopId)}&supplierId=${encodeURIComponent(supplierId)}`;
+      return;
     }
-  }catch(e){ console.error(e); btn.disabled=false; btn.innerText='Place Order'; }
-});
 
-document.querySelectorAll('.upi-btn').forEach(b=>{
-  b.addEventListener('click', ()=> {
-    const total = document.getElementById('payTotal').innerText.replace('₹','');
-    if(window.UpiIntent) window.UpiIntent.pay(total, b.dataset.app);
+    try{
+      if(selectedMethod==='upi'){
+        if(window.UpiIntent){
+          window.UpiIntent.pay(total);
+          btn.disabled=false; btn.innerHTML=origText;
+          return;
+        } else {
+          alert('UPI module load ho raha hai, dubara try karo');
+          btn.disabled=false; btn.innerHTML=origText;
+          return;
+        }
+      } else if(selectedMethod==='cod'){
+        // Use CheckoutCore V3
+        if(window.CheckoutCore){
+          await window.CheckoutCore.placeOrder({ addressId, paymentMethod:'cod', amount: total });
+        } else {
+          // Fallback direct fetch (if checkout.js not loaded)
+          const buyerId = sessionStorage.getItem('guest_id') || 'guest';
+          const payload = {
+            shopId, supplierId,
+            buyerId,
+            buyerRole: window.RoleHierarchy?.getMyRole() || 'customer',
+            items: window.CartCore ? window.CartCore.getCart() : [],
+            total, totalAmount: total,
+            addressId, paymentMethod:'cod'
+          };
+          const res = await fetch(`/api/common/checkout/${shopId}/place`, {
+            method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if(data.success){
+            if(window.CartCore) await window.CartCore.clear(supplierId);
+            window.location.href = `./order-success.html?shopId=${encodeURIComponent(shopId)}&orderId=${data.orderId || 'ORD'+Date.now()}&amount=${total}`;
+          } else { throw new Error(data.message); }
+        }
+      } else {
+        // Online
+        if(window.PaymentGateway){
+          window.PaymentGateway.pay(total, shopId);
+          btn.disabled=false; btn.innerHTML=origText;
+        } else {
+          alert('Online payment integration pending, COD use karo');
+          btn.disabled=false; btn.innerHTML=origText;
+        }
+      }
+    }catch(e){
+      console.error('Pay error:', e);
+      alert('Order fail: ' + e.message);
+      btn.disabled=false; btn.innerHTML=origText;
+    }
   });
-});
+
+  // UPI app buttons
+  document.querySelectorAll('.upi-btn').forEach(b=>{
+    b.addEventListener('click', ()=> {
+      const totalStr = document.getElementById('payTotal').innerText.replace('₹','').trim();
+      const total = parseInt(totalStr) || 0;
+      if(window.UpiIntent) window.UpiIntent.pay(total, b.dataset.app);
+    });
+  });
+
+})();
 </script>
+
 <script src="./payment-gateway.js"></script>
 <script src="./upi-intent.js"></script>

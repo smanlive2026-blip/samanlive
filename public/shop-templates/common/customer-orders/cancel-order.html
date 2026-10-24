@@ -1,4 +1,4 @@
-<!-- LOCATION: common/customer-orders/cancel-order.html - WORLD CLASS CANCEL ORDER -->
+<!-- LOCATION: public/shop-templates/common/customer-orders/cancel-order.html - FIXED V3 - Uses CartCore V3 stable guest_id + unified API /api/common/orders/:orderId/cancel -->
 <div id="cancelRoot" class="cancel-root">
   <div class="cancel-header">
     <button id="cancelBack" class="back-btn">‹</button>
@@ -124,28 +124,105 @@
 .cancel-success span{ font-size:13px; color:#64748b; margin:8px 0 20px; display:block; line-height:1.5; }
 </style>
 
+<script src="../../assets/js/role-hierarchy.js"></script>
+<script src="../core/api-core.js"></script>
+<script src="../core/auth-core.js"></script>
+
 <script>
 class CancelOrder {
   constructor(){
     this.orderId = new URLSearchParams(location.search).get('orderId') || '';
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.buyerInfo = this.getBuyerInfo();
     this.selectedReason = null;
   }
 
+  getBuyerInfo(){
+    let gid = sessionStorage.getItem('guest_id');
+    if(!gid){
+      gid = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
+      try{ sessionStorage.setItem('guest_id', gid); }catch(e){}
+    }
+    const rh = window.RoleHierarchy;
+    return {
+      buyerId: (rh && rh.getMyId && rh.getMyId()) || (window.currentUser && window.currentUser._id) || gid,
+      buyerRole: (rh && rh.getMyRole && rh.getMyRole()) || 'customer'
+    };
+  }
+
+  getApiBase(){
+    return window.API_BASE || window.EnvConfig?.API_BASE || window.location.origin;
+  }
+
+  getAuthHeaders(){
+    const token = (window.AuthCore && window.AuthCore.getToken && window.AuthCore.getToken()) || localStorage.getItem('TOKEN') || localStorage.getItem('token') || '';
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      'x-buyer-id': this.buyerInfo.buyerId
+    };
+  }
+
+  esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
   async init(){
+    if(!this.orderId){
+      alert('Order ID missing');
+      history.back();
+      return;
+    }
+
     document.getElementById('cancelOrderId').innerText = `#${this.orderId.slice(-6).toUpperCase()}`;
 
+    // Load order details - unified API
     try{
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/orders/${this.shopId}/${this.orderId}`);
-        const order = data.order || data;
-        if(order.total) document.getElementById('cancelOrderTotal').innerText = `₹${order.total}`;
+      let order = null;
+      const base = this.getApiBase();
+      const headers = this.getAuthHeaders();
 
-        if(order.paymentMethod==='COD'){
-          document.getElementById('refundText').innerText = 'This was a COD order - no refund needed. Order will be cancelled.';
+      // TRY 1: GET /api/common/orders/:shopId/:orderId
+      if(this.shopId){
+        try{
+          const url = `${base}/api/common/orders/${encodeURIComponent(this.shopId)}/${encodeURIComponent(this.orderId)}`;
+          if(window.ApiCore && window.ApiCore.get){
+            const data = await window.ApiCore.get(url);
+            order = data.order || data;
+          } else {
+            const res = await fetch(url, { headers, credentials:'include', cache:'no-store' });
+            const data = await res.json();
+            order = data.order || data;
+          }
+        }catch(e){ console.log('Fetch order fallback 1 fail:', e.message); }
+      }
+
+      // TRY 2: GET /api/common/track/:orderId
+      if(!order){
+        try{
+          const url = `${base}/api/common/track/${encodeURIComponent(this.orderId)}`;
+          if(window.ApiCore && window.ApiCore.get){
+            const data = await window.ApiCore.get(url);
+            order = data.order || data;
+          } else {
+            const res = await fetch(url, { headers, credentials:'include' });
+            const data = await res.json();
+            order = data.order || data;
+          }
+        }catch(e){}
+      }
+
+      if(order){
+        const total = order.totalAmount || order.total || 0;
+        document.getElementById('cancelOrderTotal').innerText = `₹${total}`;
+        const pm = (order.paymentMethod || order.paymentMode || 'cod').toLowerCase();
+        if(pm === 'cod' || pm === 'cash on delivery'){
+          document.getElementById('refundText').innerText = 'This was a COD order - no refund needed. Order will be cancelled immediately.';
+        } else {
+          document.getElementById('refundText').innerText = `₹${total} will be refunded to your original payment method (${pm.toUpperCase()}) within 2-3 business days.`;
         }
       }
-    }catch(e){}
+    }catch(e){
+      console.log('Order load skip:', e.message);
+    }
 
     this.bindEvents();
   }
@@ -163,12 +240,15 @@ class CancelOrder {
     document.getElementById('keepOrderBtn')?.addEventListener('click', ()=> history.back());
 
     document.getElementById('confirmCancelBtn')?.addEventListener('click', ()=> this.confirmCancel());
-    document.getElementById('backToOrdersBtn')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/customer-orders/my-orders.html?shopId=${this.shopId}`);
+    document.getElementById('backToOrdersBtn')?.addEventListener('click', ()=> {
+      window.location.href = `/shop-templates/common/customer-orders/my-orders.html?shopId=${encodeURIComponent(this.shopId)}`;
+    });
   }
 
   async confirmCancel(){
     if(!this.selectedReason){
-      if(window.Toast) Toast.show('Select a reason', 'warning');
+      if(window.Toast) Toast.warning('Select a reason');
+      else alert('Select a reason');
       return;
     }
 
@@ -177,26 +257,47 @@ class CancelOrder {
     btn.disabled = true;
 
     try{
-      const extra = document.getElementById('cancelExtraText').value;
+      const extra = document.getElementById('cancelExtraText').value.trim();
+      const base = this.getApiBase();
+      const url = `${base}/api/common/orders/${encodeURIComponent(this.orderId)}/cancel`;
 
-      if(window.ApiCore){
-        await window.ApiCore.post(`/api/common/customer-orders/${this.orderId}/cancel`, {
-          reason: this.selectedReason,
-          extraText: extra,
-          shopId: this.shopId
+      const payload = {
+        reason: this.selectedReason,
+        extraText: extra,
+        shopId: this.shopId,
+        buyerId: this.buyerInfo.buyerId,
+        buyerRole: this.buyerInfo.buyerRole
+      };
+
+      let data;
+      if(window.ApiCore && window.ApiCore.post){
+        data = await window.ApiCore.post(url, payload);
+      } else {
+        const res = await fetch(url, {
+          method:'POST',
+          headers: this.getAuthHeaders(),
+          credentials:'include',
+          body: JSON.stringify(payload)
         });
+        data = await res.json();
+      }
+
+      if(!data.success && data.message){
+        throw new Error(data.message);
       }
 
       document.getElementById('cancelSuccess').style.display='grid';
-      document.getElementById('cancelSuccessText').innerText = `Order #${this.orderId.slice(-6)} cancelled. ${this.shopId? 'Refund will be processed in 2-3 days.' : ''}`;
+      document.getElementById('cancelSuccessText').innerText = `Order #${this.orderId.slice(-6).toUpperCase()} cancelled. ${this.shopId? 'Refund will be processed in 2-3 days if paid online.' : ''}`;
 
-      if(window.Toast) Toast.show('Order cancelled successfully', 'success');
+      if(window.Toast) Toast.success('Order cancelled successfully');
+      else console.log('Order cancelled');
 
       if(navigator.vibrate) navigator.vibrate(50);
 
     }catch(e){
-      console.error(e);
-      if(window.Toast) Toast.show('Failed to cancel order', 'error');
+      console.error('Cancel fail:', e);
+      if(window.Toast) Toast.error('Failed to cancel: ' + e.message);
+      else alert('Failed: ' + e.message);
       btn.innerText = 'Confirm Cancel';
       btn.disabled = false;
     }
@@ -205,4 +306,5 @@ class CancelOrder {
 
 window.CancelOrderInstance = new CancelOrder();
 document.addEventListener('DOMContentLoaded', ()=> window.CancelOrderInstance.init());
+console.log('✅ CancelOrder V3 Fixed - stable guest_id + unified /api/common/orders/:orderId/cancel');
 </script>

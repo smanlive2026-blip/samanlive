@@ -1,4 +1,4 @@
-<!-- LOCATION: common/customer-orders/my-orders.html - WORLD CLASS MY ORDERS -->
+<!-- LOCATION: public/shop-templates/common/customer-orders/my-orders.html - FIXED V3 - Stable guest_id + unified API + XSS safe + search + filter modal working -->
 <div id="myOrdersRoot" class="my-orders-root">
   <div class="orders-header">
     <div class="orders-title-row">
@@ -7,12 +7,17 @@
         <b class="orders-title">My Orders</b>
         <span id="ordersCount" class="orders-count">Loading...</span>
       </div>
-      <button id="ordersFilterBtn" class="filter-btn">⚙️ Filter</button>
+      <button id="ordersFilterBtn" class="filter-btn">⚙️</button>
+    </div>
+
+    <div class="search-wrap" style="padding:0 12px 10px">
+      <input id="ordersSearch" type="text" placeholder="Search by order ID, shop, item..." style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:12px;font-weight:600;font-family:Outfit,sans-serif">
     </div>
 
     <div class="orders-tabs">
       <button class="order-tab active" data-filter="all">All <span id="countAll">0</span></button>
       <button class="order-tab" data-filter="placed">Placed</button>
+      <button class="order-tab" data-filter="confirmed">Confirmed</button>
       <button class="order-tab" data-filter="out_for_delivery">On Way</button>
       <button class="order-tab" data-filter="delivered">Delivered</button>
       <button class="order-tab" data-filter="cancelled">Cancelled</button>
@@ -20,7 +25,10 @@
   </div>
 
   <div id="ordersList" class="orders-list">
-    <!-- Skeleton -->
+    <div class="order-card skeleton">
+      <div class="sk-line" style="width:40%;height:14px"></div>
+      <div class="sk-line" style="width:70%;height:10px;margin-top:8px"></div>
+    </div>
     <div class="order-card skeleton">
       <div class="sk-line" style="width:40%;height:14px"></div>
       <div class="sk-line" style="width:70%;height:10px;margin-top:8px"></div>
@@ -28,7 +36,7 @@
   </div>
 
   <div id="ordersEmpty" class="orders-empty" style="display:none">
-    <div class="empty-icon">📦</div>
+    <div class="empty-icon" style="font-size:48px">📦</div>
     <b>No orders yet</b>
     <span>Your orders will appear here</span>
     <button id="startShoppingBtn" class="primary-btn">Start Shopping 🛍️</button>
@@ -39,17 +47,17 @@
     <div class="filter-box">
       <div class="filter-header">
         <b>Filter Orders</b>
-        <button id="closeFilter">✕</button>
+        <button id="closeFilter" style="background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer">✕</button>
       </div>
       <div class="filter-body">
-        <label>Date Range</label>
+        <label style="font-size:12px;font-weight:800;display:block;margin-bottom:6px">Date Range</label>
         <select id="filterDate" class="filter-select">
           <option value="all">All time</option>
           <option value="today">Today</option>
           <option value="week">This week</option>
           <option value="month">This month</option>
         </select>
-        <label style="margin-top:12px">Shop</label>
+        <label style="font-size:12px;font-weight:800;display:block;margin:12px 0 6px">Shop</label>
         <select id="filterShop" class="filter-select">
           <option value="all">All shops</option>
         </select>
@@ -70,7 +78,7 @@
 .orders-title{ display:block; font-weight:900; font-size:18px; }
 .orders-count{ font-size:11px; color:#64748b; font-weight:600; }
 .filter-btn{ margin-left:auto; background:#f1f5f9; border:none; width:36px; height:36px; border-radius:10px; cursor:pointer; }
-.orders-tabs{ display:flex; gap:6px; padding:0 16px 12px; overflow-x:auto; scrollbar-width:none; }
+.orders-tabs{ display:flex; gap:6px; padding:0 12px 12px; overflow-x:auto; scrollbar-width:none; }
 .orders-tabs::-webkit-scrollbar{ display:none; }
 .order-tab{ background:#f1f5f9; border:none; padding:8px 12px; border-radius:20px; font-weight:800; font-size:12px; white-space:nowrap; cursor:pointer; display:flex; gap:4px; }
 .order-tab.active{ background:#0f172a; color:#fff; }
@@ -81,6 +89,8 @@
 .order-id{ font-weight:900; font-size:13px; }
 .order-status{ font-size:10px; font-weight:900; padding:3px 8px; border-radius:20px; color:#fff; }
 .order-status.placed{ background:#0ea5e9; }
+.order-status.confirmed{ background:#6366f1; }
+.order-status.preparing{ background:#8b5cf6; }
 .order-status.delivered{ background:#10b981; }
 .order-status.out_for_delivery{ background:#f59e0b; }
 .order-status.cancelled{ background:#ef4444; }
@@ -90,101 +100,252 @@
 .order-total{ font-weight:900; font-size:14px; }
 .order-date{ font-size:11px; color:#64748b; }
 .orders-empty{ text-align:center; padding:60px 20px; }
-.orders-empty.empty-icon{ font-size:48px; }
 .orders-empty b{ display:block; font-weight:900; font-size:18px; margin:12px 0 4px; }
 .orders-empty span{ font-size:13px; color:#64748b; display:block; margin-bottom:16px; }
 .primary-btn{ background:#0f172a; color:#fff; border:none; padding:12px 20px; border-radius:12px; font-weight:900; cursor:pointer; }
 .secondary-btn{ background:#f1f5f9; border:none; padding:12px 20px; border-radius:12px; font-weight:800; cursor:pointer; }
 .filter-modal{ position:fixed; inset:0; z-index:9999; display:grid; place-items:end center; }
 .filter-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); }
-.filter-box{ position:relative; background:#fff; width:100%; max-width:400px; border-radius:24px 24px 0 0; padding:20px; animation:slideUp.3s; }
+.filter-box{ position:relative; background:#fff; width:100%; max-width:400px; border-radius:24px 24px 0 0; padding:20px; animation:slideUp .3s; }
 @keyframes slideUp{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
 .filter-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
 .filter-header b{ font-weight:900; font-size:16px; }
-.filter-select{ width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; }
+.filter-select{ width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
 .filter-actions{ display:flex; gap:10px; margin-top:20px; }
 .filter-actions button{ flex:1; }
 .sk-line{ background:#e2e8f0; border-radius:6px; animation:shimmer 1.5s infinite; }
 @keyframes shimmer{ 0%{ opacity:.6; } 50%{ opacity:1; } 100%{ opacity:.6; } }
 </style>
 
+<script src="../../assets/js/role-hierarchy.js"></script>
+<script src="../core/api-core.js"></script>
+<script src="../core/auth-core.js"></script>
+
 <script>
 class MyOrders {
   constructor(){
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
-    this.userId = window.currentUser?._id || localStorage.getItem('userId') || '';
+    this.buyerInfo = this.getBuyerInfo();
     this.orders = [];
+    this.filteredOrders = [];
     this.filter = 'all';
+    this.filters = { status:'all', date:'all', shop:'all', search:'' };
+    this.sortBy = 'newest';
   }
+
+  getBuyerInfo(){
+    let gid = sessionStorage.getItem('guest_id');
+    if(!gid){
+      gid = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
+      try{ sessionStorage.setItem('guest_id', gid); }catch(e){}
+    }
+    const rh = window.RoleHierarchy;
+    return {
+      buyerId: (rh && rh.getMyId && rh.getMyId()) || (window.currentUser && window.currentUser._id) || gid
+    };
+  }
+
+  getApiBase(){
+    return window.API_BASE || window.EnvConfig?.API_BASE || window.location.origin;
+  }
+
+  getAuthHeaders(){
+    const token = (window.AuthCore && window.AuthCore.getToken && window.AuthCore.getToken()) || localStorage.getItem('TOKEN') || localStorage.getItem('token') || '';
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      'x-buyer-id': this.buyerInfo.buyerId
+    };
+  }
+
+  esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   async init(){
     await this.loadOrders();
     this.bindEvents();
+    this.initSocket();
+    console.log('✅ MyOrders V3 init buyer:', this.buyerInfo.buyerId);
   }
 
   async loadOrders(){
     const listEl = document.getElementById('ordersList');
     try{
-      let url = `/api/user/orders`;
-      if(this.shopId) url = `/api/common/customer-orders/${this.shopId}/${this.userId}`;
-      if(this.shopId && window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/customer-orders/${this.shopId}/${this.userId}`);
-        this.orders = data.orders || data || [];
-      } else if(window.ApiCore){
-        const data = await window.ApiCore.get('/api/user/orders');
-        this.orders = data.orders || [];
-      } else {
-        this.orders = JSON.parse(localStorage.getItem('myOrders')||'[]');
+      let orders = [];
+      const base = this.getApiBase();
+      const headers = this.getAuthHeaders();
+
+      // TRY 1: Unified API
+      try{
+        const url = `${base}/api/common/checkout/orders/my?buyerId=${encodeURIComponent(this.buyerInfo.buyerId)}&t=${Date.now()}`;
+        let data;
+        if(window.ApiCore && window.ApiCore.get){
+          data = await window.ApiCore.get(url);
+        } else {
+          const res = await fetch(url, { headers, credentials:'include', cache:'no-store' });
+          data = await res.json();
+        }
+        orders = data.orders || data.data || data || [];
+        if(orders.length>0) {
+          this.orders = orders;
+          this.filteredOrders = [...orders];
+          this.populateShopFilter();
+          this.render();
+          return;
+        }
+      }catch(e){ console.log('Primary orders API fail:', e.message); }
+
+      // TRY 2: /api/user/orders
+      try{
+        const url = `${base}/api/user/orders?t=${Date.now()}`;
+        let data;
+        if(window.ApiCore && window.ApiCore.get){
+          data = await window.ApiCore.get(url);
+        } else {
+          const res = await fetch(url, { headers, credentials:'include' });
+          data = await res.json();
+        }
+        orders = data.orders || data || [];
+      }catch(e){}
+
+      // TRY 3: localStorage fallback
+      if(orders.length===0){
+        try{ orders = JSON.parse(localStorage.getItem('myOrders')||'[]'); }catch(e){}
       }
 
+      this.orders = orders || [];
+      this.filteredOrders = [...this.orders];
+      this.populateShopFilter();
       this.render();
+
     }catch(e){
-      console.error(e);
-      listEl.innerHTML = `<div style="text-align:center;padding:20px;color:#ef4444">Failed to load orders</div>`;
+      console.error('Load orders fail:', e);
+      if(listEl) listEl.innerHTML = `<div style="text-align:center;padding:20px;color:#ef4444;font-weight:700">Failed to load orders: ${this.esc(e.message)}</div>`;
     }
   }
 
+  populateShopFilter(){
+    const select = document.getElementById('filterShop');
+    if(!select) return;
+    const shops = [...new Set(this.orders.map(o=> o.shopId||o.supplierId).filter(Boolean))];
+    // Keep All shops option
+    select.innerHTML = '<option value="all">All shops</option>' + shops.map(s=> `<option value="${this.esc(s)}">${this.esc(s.slice(-6))}</option>`).join('');
+  }
+
+  applyFilters(){
+    let result = [...this.orders];
+
+    // Status
+    const statusFilter = this.filters.status || this.filter;
+    if(statusFilter !== 'all'){
+      result = result.filter(o=> (o.status||o.orderStatus||'placed').toLowerCase() === statusFilter.toLowerCase());
+    }
+
+    // Date
+    if(this.filters.date !== 'all'){
+      const now = new Date();
+      result = result.filter(o=>{
+        const d = new Date(o.createdAt||o.created_at||0);
+        if(this.filters.date==='today') return d.toDateString()===now.toDateString();
+        if(this.filters.date==='week'){
+          const weekAgo = new Date(); weekAgo.setDate(now.getDate()-7);
+          return d >= weekAgo;
+        }
+        if(this.filters.date==='month'){
+          const monthAgo = new Date(); monthAgo.setMonth(now.getMonth()-1);
+          return d >= monthAgo;
+        }
+        return true;
+      });
+    }
+
+    // Shop
+    if(this.filters.shop !== 'all'){
+      result = result.filter(o=> (o.shopId||o.supplierId||'') === this.filters.shop);
+    }
+
+    // Search
+    if(this.filters.search){
+      const q = this.filters.search.toLowerCase();
+      result = result.filter(o=>
+        (o.orderId||'').toLowerCase().includes(q) ||
+        (o.shopName||'').toLowerCase().includes(q) ||
+        (o.items||[]).some(i=> (i.name||'').toLowerCase().includes(q))
+      );
+    }
+
+    // Sort newest
+    if(this.sortBy==='newest') result.sort((a,b)=> new Date(b.createdAt||0) - new Date(a.createdAt||0));
+
+    this.filteredOrders = result;
+    this.renderFiltered();
+  }
+
   render(){
+    this.filteredOrders = [...this.orders];
+    this.renderFiltered();
+  }
+
+  renderFiltered(){
     const listEl = document.getElementById('ordersList');
     const emptyEl = document.getElementById('ordersEmpty');
     const countEl = document.getElementById('ordersCount');
     const countAll = document.getElementById('countAll');
 
-    let filtered = this.orders;
-    if(this.filter!=='all') filtered = this.orders.filter(o=> (o.status||'placed')===this.filter);
+    const filtered = this.filteredOrders;
 
-    countEl.innerText = `${filtered.length} orders`;
+    if(countEl) countEl.innerText = `${filtered.length} orders`;
     if(countAll) countAll.innerText = this.orders.length;
 
     if(filtered.length===0){
-      listEl.style.display='none';
-      emptyEl.style.display='block';
+      if(listEl) listEl.style.display='none';
+      if(emptyEl) emptyEl.style.display='block';
       return;
     }
 
-    listEl.style.display='flex';
-    emptyEl.style.display='none';
+    if(listEl) listEl.style.display='flex';
+    if(emptyEl) emptyEl.style.display='none';
 
-    listEl.innerHTML = filtered.map(order=>`
-      <div class="order-card" onclick="MyOrdersInstance.openOrder('${order.orderId||order._id}')">
-        <div class="order-card-top">
-          <span class="order-id">#${(order.orderId||order._id||'').toString().slice(-6).toUpperCase()}</span>
-          <span class="order-status ${order.status||'placed'}">${(order.status||'PLACED').toUpperCase().replace('_',' ')}</span>
-        </div>
-        <div class="order-shop">${order.shopName||'Local Shop'} • ${new Date(order.createdAt||Date.now()).toLocaleDateString()}</div>
-        <div class="order-items">${order.items?.map(i=>i.name||i.title).join(', ') || 'Items'}</div>
-        <div class="order-bottom">
-          <span class="order-total">₹${order.total||0} • ${order.items?.length||1} items</span>
-          <span class="order-date">${this.getRelativeTime(order.createdAt)}</span>
-        </div>
-      </div>
-    `).join('');
+    if(listEl){
+      listEl.innerHTML = filtered.map(order=>{
+        const orderId = order.orderId||order._id||'';
+        const shortId = orderId.toString().slice(-6).toUpperCase();
+        const status = (order.status||order.orderStatus||'placed').toLowerCase();
+        const shopName = this.esc(order.shopName||order.supplierName||'Local Shop');
+        const dateStr = new Date(order.createdAt||Date.now()).toLocaleDateString();
+        const itemsStr = this.esc((order.items||[]).map(i=>i.name||i.title||'').slice(0,3).join(', ') || 'Items');
+        const total = order.totalAmount||order.total||0;
+        const count = order.items?.length||1;
+
+        return `
+        <div class="order-card" data-order-id="${this.esc(orderId)}">
+          <div class="order-card-top">
+            <span class="order-id">#${this.esc(shortId)}</span>
+            <span class="order-status ${this.esc(status)}">${this.esc(status.toUpperCase().replace('_',' '))}</span>
+          </div>
+          <div class="order-shop">${shopName} • ${this.esc(dateStr)}</div>
+          <div class="order-items">${itemsStr}</div>
+          <div class="order-bottom">
+            <span class="order-total">₹${this.esc(total)} • ${this.esc(count)} items</span>
+            <span class="order-date">${this.esc(this.getRelativeTime(order.createdAt))}</span>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Bind click safely (no inline onclick)
+      listEl.querySelectorAll('.order-card').forEach(card=>{
+        card.addEventListener('click', ()=>{
+          const oid = card.dataset.orderId;
+          this.openOrder(oid);
+        });
+      });
+    }
   }
 
   getRelativeTime(date){
     if(!date) return 'Now';
     const diff = Date.now() - new Date(date).getTime();
     const mins = Math.floor(diff/60000);
+    if(mins<1) return 'Just now';
     if(mins<60) return `${mins}m ago`;
     const hrs = Math.floor(mins/60);
     if(hrs<24) return `${hrs}h ago`;
@@ -192,8 +353,22 @@ class MyOrders {
   }
 
   openOrder(orderId){
-    const url = `/shop-templates/common/customer-orders/track-order.html?orderId=${orderId}${this.shopId?`&shopId=${this.shopId}`:''}`;
+    const url = `/shop-templates/common/customer-orders/track-order.html?orderId=${encodeURIComponent(orderId)}${this.shopId?`&shopId=${encodeURIComponent(this.shopId)}`:''}`;
     window.location.href = url;
+  }
+
+  initSocket(){
+    if(window.SocketCore){
+      window.SocketCore.on('order-updated', (order)=>{
+        const idx = this.orders.findIndex(o=> (o.orderId||o._id)===(order.orderId||order._id));
+        if(idx>=0) this.orders[idx] = {...this.orders[idx], ...order};
+        else this.orders.unshift(order);
+        this.applyFilters();
+      });
+      try{
+        window.SocketCore.emit('join-buyer', this.buyerInfo.buyerId);
+      }catch(e){}
+    }
   }
 
   bindEvents(){
@@ -202,19 +377,58 @@ class MyOrders {
         document.querySelectorAll('.order-tab').forEach(t=>t.classList.remove('active'));
         tab.classList.add('active');
         this.filter = tab.dataset.filter;
-        this.render();
+        this.filters.status = tab.dataset.filter;
+        this.applyFilters();
       });
     });
 
     document.getElementById('backToShop')?.addEventListener('click', ()=> history.back());
     document.getElementById('startShoppingBtn')?.addEventListener('click', ()=> window.location.href='/');
 
-    document.getElementById('ordersFilterBtn')?.addEventListener('click', ()=> document.getElementById('ordersFilterModal').style.display='grid');
-    document.getElementById('closeFilter')?.addEventListener('click', ()=> document.getElementById('ordersFilterModal').style.display='none');
-    document.getElementById('ordersFilterModal')?.querySelector('.filter-backdrop')?.addEventListener('click', ()=> document.getElementById('ordersFilterModal').style.display='none');
+    // Search
+    const searchInput = document.getElementById('ordersSearch');
+    if(searchInput){
+      searchInput.addEventListener('input', (e)=>{
+        this.filters.search = e.target.value;
+        this.applyFilters();
+      });
+    }
+
+    // Filter modal
+    document.getElementById('ordersFilterBtn')?.addEventListener('click', ()=> {
+      const m = document.getElementById('ordersFilterModal');
+      if(m) m.style.display='grid';
+    });
+    document.getElementById('closeFilter')?.addEventListener('click', ()=> {
+      const m = document.getElementById('ordersFilterModal');
+      if(m) m.style.display='none';
+    });
+    document.querySelector('#ordersFilterModal .filter-backdrop')?.addEventListener('click', ()=> {
+      const m = document.getElementById('ordersFilterModal');
+      if(m) m.style.display='none';
+    });
+
+    document.getElementById('applyFilter')?.addEventListener('click', ()=>{
+      this.filters.date = document.getElementById('filterDate')?.value || 'all';
+      this.filters.shop = document.getElementById('filterShop')?.value || 'all';
+      this.applyFilters();
+      const m = document.getElementById('ordersFilterModal');
+      if(m) m.style.display='none';
+    });
+
+    document.getElementById('clearFilter')?.addEventListener('click', ()=>{
+      this.filters = { status:this.filter||'all', date:'all', shop:'all', search:'' };
+      const d = document.getElementById('filterDate'); if(d) d.value='all';
+      const s = document.getElementById('filterShop'); if(s) s.value='all';
+      const se = document.getElementById('ordersSearch'); if(se) se.value='';
+      this.applyFilters();
+      const m = document.getElementById('ordersFilterModal');
+      if(m) m.style.display='none';
+    });
   }
 }
 
 window.MyOrdersInstance = new MyOrders();
 document.addEventListener('DOMContentLoaded', ()=> window.MyOrdersInstance.init());
+console.log('✅ MyOrders HTML V3 Fixed - stable guest_id + unified API + XSS safe + search + filter modal');
 </script>
