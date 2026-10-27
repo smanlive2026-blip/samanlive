@@ -1,4 +1,4 @@
-// LOCATION: server/routes/common/index.js - V18 FINAL - V17 SAME + PROJECT_ROOT FIX
+// LOCATION: server/routes/common/index.js - V20 FINAL - V18 SAME + PUBLIC/SERVER ONLY - NO SKIP
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
@@ -14,10 +14,10 @@ const ALLOWED_ROUTE_FILES = [
   'subscription.routes.js','support.routes.js','live.routes.js','ai.routes.js','seo.routes.js','pwa.routes.js'
 ];
 
-// CODE-EXPORT KE LIYE WALK FUNCTION - MODIFIED FOR FULL PROJECT - NO SIZE LIMIT
+// CODE-EXPORT KE LIYE WALK FUNCTION - V20 - ONLY PUBLIC + SERVER - NO SKIP INSIDE
 const PROJECT_ROOT = path.join(__dirname, '../../../');
-const IGNORE_DIRS = ['node_modules', '.git', '.vercel'];
-const IGNORE_FILES = [];
+const TARGET_FOLDERS = ['public', 'server'];
+const IGNORE_DIRS = ['node_modules', '.git', '.vercel', '.v8-cache', '___vc'];
 function walk(dir, fileList = []) {
   try {
     const files = fs.readdirSync(dir);
@@ -28,12 +28,20 @@ function walk(dir, fileList = []) {
         if (stat.isDirectory()) {
           if (!IGNORE_DIRS.includes(file)) walk(fullPath, fileList);
         } else {
-          if (!IGNORE_FILES.includes(file)) fileList.push(fullPath);
+          fileList.push(fullPath);
         }
       } catch(e){}
     });
   } catch(e){}
   return fileList;
+}
+function getAllFiles(){
+  let all=[];
+  TARGET_FOLDERS.forEach(f=>{
+    const fp = path.join(PROJECT_ROOT,f);
+    if(fs.existsSync(fp)) all = all.concat(walk(fp));
+  });
+  return all;
 }
 
 function safeLoad(fileName){
@@ -70,10 +78,10 @@ function getInlineFallback(fileName){
     const r = express.Router();
     r.get('/files', (req,res)=>{
       try{
-        const files = walk(PROJECT_ROOT);
+        const files = getAllFiles();
         const relative = files.map(f=>{
           const stat = fs.statSync(f);
-          return { fullPath:f, relativePath:path.relative(PROJECT_ROOT,f).replace(/\\/g,'/'), size:stat.size, modified:stat.mtime };
+          return { relativePath:path.relative(PROJECT_ROOT,f).replace(/\\/g,'/'), size:stat.size, modified:stat.mtime };
         }).sort((a,b)=> a.relativePath.localeCompare(b.relativePath));
         res.json({ success:true, total:relative.length, files:relative });
       }catch(e){ res.status(500).json({ success:false, message:e.message }); }
@@ -82,6 +90,7 @@ function getInlineFallback(fileName){
       try{
         const relPath = req.query.path;
         if(!relPath || relPath.includes('..')) return res.status(400).json({ success:false });
+        if(!relPath.startsWith('public/') && !relPath.startsWith('server/')) return res.status(400).json({ success:false, message:'Only public/server allowed' });
         const full = path.join(PROJECT_ROOT, relPath);
         if(!fs.existsSync(full)) return res.status(404).json({ success:false });
         const content = fs.readFileSync(full,'utf8');
@@ -90,8 +99,8 @@ function getInlineFallback(fileName){
     });
     r.get('/download-all', (req,res)=>{
       try{
-        const files = walk(PROJECT_ROOT);
-        let combined = `PROJECT CODE EXPORT - ${new Date().toISOString()}\nTotal: ${files.length}\n========================================\n\n`;
+        const files = getAllFiles();
+        let combined = `PROJECT CODE EXPORT - ${new Date().toISOString()}\nTotal: ${files.length}\nONLY PUBLIC + SERVER\n========================================\n\n`;
         files.forEach(fp=>{
           const rel = path.relative(PROJECT_ROOT,fp).replace(/\\/g,'/');
           try{
@@ -263,7 +272,7 @@ ALLOWED_ROUTE_FILES.forEach(file=>{
 });
 
 router.get('/health', (req,res)=>{
-  res.json({ success:true, version:'V18-PROJECT-ROOT-FIXED', total:ALLOWED_ROUTE_FILES.length, timestamp:new Date().toISOString() });
+  res.json({ success:true, version:'V20-PUBLIC-SERVER-ONLY-NO-SKIP', total:ALLOWED_ROUTE_FILES.length, timestamp:new Date().toISOString() });
 });
 
 router.use('/connection', require('./connection.routes'));
