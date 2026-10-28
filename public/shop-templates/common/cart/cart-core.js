@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/common/cart/cart-core.js - V6 WORLD CLASS - GUEST + USER MERGE + LAST_SHOP_ID + 3 LAYER SYNC
+// LOCATION: public/shop-templates/common/cart/cart-core.js - V6.3 WORLD CLASS FINAL - getTotalCount FIX + GUEST + USER MERGE + LAST_SHOP_ID + 3 LAYER SYNC
 (function(){
   const API_BASE = window.API_BASE || window.EnvConfig?.API_BASE || window.location.origin;
   const CART_API = `${API_BASE}/api/common/cart`;
@@ -173,6 +173,21 @@
     return items.reduce((s,i)=> s + Number(i.price||0)*Number(i.qty||1),0);
   };
 
+  // ========== BACKWARD COMPAT FIX - YEHI TERA ERROR FIX HAI ==========
+  // Purane code me getTotalCount(), getCartCount(), count sab use ho raha hai
+  window.CartCore.getTotalCount = function(){
+    try{ return window.CartCore.getCount(); }catch(e){ return 0; }
+  };
+  window.CartCore.getCartCount = window.CartCore.getTotalCount;
+  window.CartCore.getTotalItems = window.CartCore.getTotalCount;
+  window.CartCore.getCartTotal = window.CartCore.getTotal;
+  window.CartCore.count = window.CartCore.getTotalCount;
+  window.CartCore.totalCount = window.CartCore.getTotalCount;
+  // Extra safe: direct property
+  Object.defineProperty(window.CartCore, 'totalCountValue', {
+    get(){ try{ return window.CartCore.getCount(); }catch(e){ return 0; } }
+  });
+
   window.CartCore.add = async function(product, qty=1){
     if(!product) return false;
     const shopId = product.shopId || product.shop_id || product.ownerId || product._id || 'unknown_shop';
@@ -215,7 +230,8 @@
 
     console.log(`✅ CartCore add: ${product.name||pid} x${qty} to shop ${shopId}, total shops ${Object.keys(_cartCache).length}`);
     await syncToServer(shopId);
-    if(window.CartCount) window.CartCount.update();
+    if(window.CartCount && window.CartCount.update) window.CartCount.update();
+    try{ window.dispatchEvent(new CustomEvent('cart:updated', {detail:{count: window.CartCore.getTotalCount()}})); }catch(e){}
     return true;
   };
 
@@ -233,7 +249,8 @@
     }
     if(_cartCache[shopId].length===0) delete _cartCache[shopId];
     await syncToServer(shopId);
-    if(window.CartCount) window.CartCount.update();
+    if(window.CartCount && window.CartCount.update) window.CartCount.update();
+    try{ window.dispatchEvent(new CustomEvent('cart:updated', {detail:{count: window.CartCore.getTotalCount()}})); }catch(e){}
   };
 
   window.CartCore.remove = async function(shopId, productId){
@@ -241,20 +258,19 @@
     _cartCache[shopId] = _cartCache[shopId].filter(it=> (it.productId||it._id)!==productId);
     if(_cartCache[shopId].length===0) delete _cartCache[shopId];
     await syncToServer(shopId);
-    if(window.CartCount) window.CartCount.update();
+    if(window.CartCount && window.CartCount.update) window.CartCount.update();
+    try{ window.dispatchEvent(new CustomEvent('cart:updated', {detail:{count: window.CartCore.getTotalCount()}})); }catch(e){}
   };
 
   window.CartCore.clear = async function(shopId){
     if(shopId){
       delete _cartCache[shopId];
       try{ sessionStorage.removeItem('cart_bkp_'+shopId); localStorage.removeItem('cart_bkp_'+shopId); }catch(e){}
-      await syncToServer(shopId); // sync empty to server to clear server cart
-      // Clear server
+      await syncToServer(shopId);
       try{
         await fetch(`${CART_API}/clear/${encodeURIComponent(shopId)}?buyerId=${encodeURIComponent(getBuyerId())}`, { method: 'DELETE', headers: getHeaders() }).catch(()=>{});
       }catch(e){}
     } else {
-      // Clear all
       const keys = Object.keys(_cartCache);
       _cartCache = {};
       keys.forEach(k=>{ try{ sessionStorage.removeItem('cart_bkp_'+k); }catch(e){} });
@@ -262,7 +278,8 @@
         await fetch(`${CART_API}/clear-all?buyerId=${encodeURIComponent(getBuyerId())}`, { method: 'DELETE', headers: getHeaders() }).catch(()=>{});
       }catch(e){}
     }
-    if(window.CartCount) window.CartCount.update();
+    if(window.CartCount && window.CartCount.update) window.CartCount.update();
+    try{ window.dispatchEvent(new CustomEvent('cart:updated', {detail:{count: 0}})); }catch(e){}
   };
 
   window.CartCore.goToCart = function(shopId){
@@ -279,8 +296,8 @@
   (async function(){
     await loadFromServer();
     _readyResolve(true);
-    if(window.CartCount) window.CartCount.update();
+    if(window.CartCount && window.CartCount.update) window.CartCount.update();
   })();
 
-  console.log('✅ CartCore V6 WORLD CLASS - Guest + User merge + last_shopId sync loaded, buyerId=', getBuyerId());
+  console.log('✅ CartCore V6.3 WORLD CLASS FINAL - getTotalCount FIXED - buyerId=', getBuyerId());
 })();
