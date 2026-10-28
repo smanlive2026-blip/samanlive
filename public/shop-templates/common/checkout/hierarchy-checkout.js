@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/common/checkout/hierarchy-checkout.js - V6 WORLD CLASS - SUPPLIER ROLE + BUYER + ADDRESS + WALLET FIXED
+// LOCATION: public/shop-templates/common/checkout/hierarchy-checkout.js - V6.5 WORLD CLASS FINAL - RACE CONDITION + CART EMPTY FIXED + SUPPLIER ROLE FIXED
 (function(){
   const API = {
     checkout: '/api/common/checkout',
@@ -30,23 +30,14 @@
       gid = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
       try{ sessionStorage.setItem('guest_id', gid); localStorage.setItem('guest_id', gid); }catch(e){}
     }
-
     const rh = window.RoleHierarchy;
     let buyerId = (rh && rh.getMyId && rh.getMyId()) || window.USER_ID || localStorage.getItem('USER_ID') || gid;
     let buyerRole = (rh && rh.getMyRole && rh.getMyRole()) || window.USER_ROLE || localStorage.getItem('USER_ROLE') || 'customer';
     let buyerShopId = (rh && rh.getMyShopId && rh.getMyShopId()) || window.MY_SHOP_ID || localStorage.getItem('MY_SHOP_ID') || null;
     let buyerAreaId = window.AreaId || localStorage.getItem('AREA_ID') || null;
-
-    // Normalize
     if(!buyerId) buyerId = gid;
     if(buyerId.startsWith('guest_')) buyerRole = 'guest';
     if(!buyerRole) buyerRole = 'customer';
-
-    // Ensure user_ prefix for logged users
-    if(buyerId && buyerId.length===24 && !buyerId.startsWith('user_') && !buyerId.startsWith('guest_')){
-      // Looks like ObjectId, keep as is but role customer
-    }
-
     return { buyerId, buyerRole, buyerShopId, buyerAreaId, guestId: gid };
   }
 
@@ -55,8 +46,6 @@
     const shopIdParam = getQueryParam('shopId') || getQueryParam('shop_id') || localStorage.getItem('last_shopId') || '';
     const supplierIdParam = getQueryParam('supplierId') || getQueryParam('supplier_id') || getQueryParam('shopId') || localStorage.getItem('last_supplierId') || shopIdParam || '';
     let supplierRoleParam = getQueryParam('supplierRole') || getQueryParam('supplier_role') || getQueryParam('role') || localStorage.getItem('last_supplierRole') || '';
-    
-    // FIX: default shop_owner - yahi tera main bug tha
     if(!supplierRoleParam || supplierRoleParam==='null' || supplierRoleParam==='undefined' || supplierRoleParam==='' || supplierRoleParam==='unknown'){
       supplierRoleParam = 'shop_owner';
     }
@@ -65,12 +54,10 @@
     if(!allowedRoles.includes(supplierRoleParam)){
       supplierRoleParam = 'shop_owner';
     }
-
     let finalSupplierId = supplierIdParam || shopIdParam;
     let finalShopId = shopIdParam || supplierIdParam;
     if(!finalSupplierId || finalSupplierId==='unknown' || finalSupplierId==='') finalSupplierId = finalShopId;
     if(!finalShopId || finalShopId==='unknown' || finalShopId==='') finalShopId = finalSupplierId;
-
     return {
       supplierId: finalSupplierId,
       supplierRole: supplierRoleParam,
@@ -88,9 +75,10 @@
     currentAddressText: '',
     paymentMode: 'cod',
     _calc: { subtotal: 0, commission: 0, total: 0 },
+    _retry: 0,
 
     async init(){
-      console.log('🛒 HierarchyCheckout V6 init...');
+      console.log('🛒 HierarchyCheckout V6.5 init...');
       this.currentSupplier = getSupplierFromUrl();
       console.log('Supplier:', this.currentSupplier);
 
@@ -98,13 +86,33 @@
       if(window.CartCore && window.CartCore.ready){
         try{ await window.CartCore.ready; }catch(e){ console.log('CartCore ready fail', e); }
       } else {
-        await new Promise(r=> setTimeout(r, 800));
+        await new Promise(r=> setTimeout(r, 1000));
       }
 
-      // If supplierId still unknown, try from Cart
+      // Extra wait for server load - FIX RACE CONDITION FROM SCREENSHOT
+      await new Promise(r=> setTimeout(r, 800));
+
+      // Listen for cart updates if cart arrives late
+      window.addEventListener('cart:updated', ()=>{
+        console.log('🛒 Cart updated event - reloading checkout');
+        this.loadCartWithRetry();
+      });
+
+      await this.loadCartWithRetry();
+
+      this.bindEvents();
+      await this.loadAddresses();
+      await this.checkWallet();
+    },
+
+    async loadCartWithRetry(){
+      let items = [];
+      const sid = this.currentSupplier.supplierId || this.currentSupplier.shopId || '';
+
+      // If supplierId still unknown, try from Cart first
       if(!this.currentSupplier.supplierId || this.currentSupplier.supplierId==='unknown' || this.currentSupplier.supplierId===''){
-        if(window.CartCore){
-          const allCarts = window.CartCore.getAllCarts ? window.CartCore.getAllCarts() : {};
+        if(window.CartCore && window.CartCore.getAllCarts){
+          const allCarts = window.CartCore.getAllCarts();
           const firstSid = Object.keys(allCarts)[0];
           if(firstSid){
             this.currentSupplier.supplierId = firstSid;
@@ -116,18 +124,77 @@
         }
       }
 
-      // Load items
-      if(window.CartCore && window.CartCore.getCartBySupplier){
-        this.currentItems = window.CartCore.getCartBySupplier(this.currentSupplier.supplierId) || [];
-        if(this.currentItems.length===0){
-          // Try all carts (main app case)
-          this.currentItems = window.CartCore.getCart ? window.CartCore.getCart() : [];
+      // TRY 1: Specific supplier
+      if(window.CartCore && window.CartCore.getCartBySupplier && sid){
+        items = window.CartCore.getCartBySupplier(sid) || [];
+        console.log('Try getCartBySupplier(',sid,') =', items.length);
+      }
+
+      // TRY 2: getAllCarts - main app bug fix - agar specific empty ho to pehla cart lo
+      if(items.length===0 && window.CartCore && window.CartCore.getAllCarts){
+        const all = window.CartCore.getAllCarts();
+        const keys = Object.keys(all||{});
+        console.log('Try getAllCarts keys:', keys);
+        if(keys.length>0){
+          if(sid && all[sid] && all[sid].length>0){
+            items = all[sid];
+          } else {
+            const firstKey = keys[0];
+            items = all[firstKey] || [];
+            if(items.length>0){
+              this.currentSupplier.supplierId = firstKey;
+              this.currentSupplier.shopId = firstKey;
+              this.currentSupplier.supplierRole = items[0]?.ownerRole || items[0]?.shopOwnerRole || 'shop_owner';
+              this.currentSupplier.supplierName = items[0]?.shopName || items[0]?.shopType || 'Shop';
+              try{ localStorage.setItem('last_shopId', firstKey); localStorage.setItem('last_supplierId', firstKey); }catch(e){}
+            }
+          }
         }
-        if(this.currentItems.length===0){
-          const allCarts = window.CartCore.getAllCarts ? window.CartCore.getAllCarts() : {};
-          const flat = Object.values(allCarts).flat();
-          if(flat.length>0) this.currentItems = flat;
+      }
+
+      // TRY 3: Flat getCart
+      if(items.length===0 && window.CartCore && window.CartCore.getCart){
+        items = window.CartCore.getCart() || [];
+        console.log('Try getCart() flat =', items.length);
+        if(items.length>0 && !this.currentSupplier.supplierId){
+          const first = items[0];
+          this.currentSupplier.supplierId = first.shopId || first.ownerId || '';
+          this.currentSupplier.shopId = first.shopId || first.ownerId || '';
         }
+      }
+
+      // TRY 4: sessionStorage backup
+      if(items.length===0){
+        try{
+          const bkpKeys = Object.keys(sessionStorage).filter(k=>k.startsWith('cart_bkp_'));
+          for(const k of bkpKeys){
+            try{
+              const data = JSON.parse(sessionStorage.getItem(k)||'[]');
+              if(Array.isArray(data) && data.length>0){
+                items = data;
+                const bkSid = k.replace('cart_bkp_','');
+                this.currentSupplier.supplierId = bkSid;
+                this.currentSupplier.shopId = bkSid;
+                break;
+              }
+            }catch(e){}
+          }
+        }catch(e){}
+      }
+
+      this.currentItems = items;
+
+      if(this.currentItems.length===0 && this._retry < 3){
+        this._retry++;
+        console.log(`Cart empty, retry ${this._retry}/3...`);
+        const el = document.getElementById('checkout-items');
+        if(el) el.innerHTML = `<div style="padding:24px;text-align:center;color:#64748b;font-weight:700">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:28px;display:block;margin-bottom:10px;color:#94a3b8"></i>
+          Cart sync ho raha hai... (${this._retry}/3)<br>
+          <span style="font-size:11px">Supplier: ${this.currentSupplier.supplierId||'searching'}<br>Buyer: ${getBuyerInfo().buyerId.slice(0,12)}<br>Keys: ${window.CartCore && window.CartCore.getAllCarts ? Object.keys(window.CartCore.getAllCarts()).join(',')||'empty' : 'no CartCore'}</span>
+        </div>`;
+        setTimeout(()=> this.loadCartWithRetry().then(()=> { if(this.currentItems.length>0){ this.renderHeader(); this.renderSummary(); } }), 1500);
+        return;
       }
 
       if(!this.currentItems || this.currentItems.length===0){
@@ -135,8 +202,15 @@
         if(el) el.innerHTML = `<div style="padding:24px;text-align:center;color:#64748b;font-weight:700">
           <i class="fa-solid fa-cart-shopping" style="font-size:32px;display:block;margin-bottom:10px;color:#cbd5e1"></i>
           Cart khali hai<br><span style="font-size:12px">Main app se product add karo</span><br>
-          <button onclick="location.href='../cart/cart.html'" style="margin-top:14px;background:#0f172a;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-weight:800">Go to Cart</button>
-          <div style="font-size:10px;margin-top:10px;color:#94a3b8">Debug: supplierId=${this.currentSupplier.supplierId||'empty'} shopId=${this.currentSupplier.shopId||'empty'}</div>
+          <button onclick="location.href='../cart/cart.html?shopId=${encodeURIComponent(this.currentSupplier.shopId||'')}'" style="margin-top:14px;background:#0f172a;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-weight:800">Go to Cart</button>
+          <div style="font-size:10px;margin-top:10px;color:#94a3b8;text-align:left;background:#f8fafc;padding:8px;border-radius:8px">
+            Debug:<br>
+            supplierId=${this.currentSupplier.supplierId||'empty'}<br>
+            shopId=${this.currentSupplier.shopId||'empty'}<br>
+            buyerId=${getBuyerInfo().buyerId}<br>
+            CartCore keys=${window.CartCore && window.CartCore.getAllCarts ? Object.keys(window.CartCore.getAllCarts()).join(', ')||'empty' : 'no CartCore'}<br>
+            session keys=${Object.keys(sessionStorage).filter(k=>k.startsWith('cart_bkp_')).join(', ')||'empty'}
+          </div>
         </div>`;
         const btn = document.getElementById('place-order-btn');
         if(btn) btn.disabled = true;
@@ -145,10 +219,9 @@
 
       this.renderHeader();
       this.renderSummary();
-      this.bindEvents();
-      await this.loadAddresses();
-      await this.checkWallet();
-      console.log('✅ Checkout ready with', this.currentItems.length, 'items');
+      const btn = document.getElementById('place-order-btn');
+      if(btn) btn.disabled = false;
+      console.log('✅ Checkout ready with', this.currentItems.length, 'items, supplier:', this.currentSupplier);
     },
 
     renderHeader(){
@@ -157,11 +230,20 @@
       const shopName = this.currentSupplier.supplierName || this.currentItems[0]?.shopName || this.currentItems[0]?.shopType || 'Shop';
       if(el) el.textContent = shopName + ' • ' + this.currentItems.length + ' items';
       if(elRole) elRole.textContent = `ID: ${(this.currentSupplier.shopId||'').slice(0,12)} • Role: ${this.currentSupplier.supplierRole} • Type: ${this.currentSupplier.shopType||'general'}`;
+      // Fix Loading shop... text
+      try{
+        document.querySelectorAll('*').forEach(node=>{
+          if(node.childNodes.length===1 && node.textContent.trim()==='Loading shop...'){
+            node.textContent = shopName;
+          }
+        });
+      }catch(e){}
     },
 
     renderSummary(){
       const container = document.getElementById('checkout-items');
       if(!container) return;
+      if(!this.currentItems || this.currentItems.length===0) return;
       let html = '';
       let subtotal = 0;
       this.currentItems.forEach(it=>{
@@ -206,7 +288,6 @@
       }
       const btn = document.getElementById('place-order-btn');
       if(btn){
-        // Remove old listeners by cloning
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
         newBtn.addEventListener('click', ()=> this.placeOrder());
@@ -219,23 +300,17 @@
       const buyer = getBuyerInfo();
       listEl.innerHTML = '<div style="padding:10px;color:#94a3b8;font-size:12px">Loading addresses...</div>';
       try{
-        // Try common profile first
         let url = `${getApiBase()}${API.commonProfile}/me?buyerId=${encodeURIComponent(buyer.buyerId)}`;
         let res = await fetch(url, { headers: { 'x-buyer-id': buyer.buyerId, ...getAuthHeaders() } }).catch(()=>null);
         let data = res ? await res.json().catch(()=>null) : null;
         let addrs = [];
-
         if(data && data.success && data.user && data.user.addresses) addrs = data.user.addresses;
-        
-        // Fallback old address API
         if(addrs.length===0){
           url = `${getApiBase()}${API.address}?buyerId=${encodeURIComponent(buyer.buyerId)}`;
           res = await fetch(url, { headers: { 'x-buyer-id': buyer.buyerId, ...getAuthHeaders() } }).catch(()=>null);
           data = res ? await res.json().catch(()=>null) : null;
           if(data) addrs = data.addresses || data.data || data || [];
         }
-
-        // Fallback localStorage
         if(addrs.length===0){
           const localText = localStorage.getItem('selectedAddressText');
           const localId = localStorage.getItem('selectedAddressId');
@@ -243,12 +318,10 @@
             addrs = [{ _id: localId||'local_1', id: localId||'local_1', full: localText, line1: localText, city: '', label: 'Local Address' }];
           }
         }
-
         if(addrs.length===0){
           listEl.innerHTML = '<div style="padding:12px;background:#fffbeb;border:1px dashed #fde68a;border-radius:10px;font-size:12px;font-weight:700;color:#92400e">No saved address. Add new address below.</div>';
           return;
         }
-
         let html='';
         addrs.forEach((a,i)=>{
           const txt = a.full || a.fullAddress || `${a.line1||''} ${a.line2?','+a.line2:''} ${a.city||''} ${a.state||''} ${a.pincode||''}`.trim();
@@ -259,12 +332,8 @@
           </div>`;
         });
         listEl.innerHTML = html;
-
-        // Select first
         this.currentAddress = addrs[0]._id || addrs[0].id || null;
         this.currentAddressText = addrs[0].full || addrs[0].fullAddress || `${addrs[0].line1||''} ${addrs[0].city||''}`;
-
-        // Click handlers
         listEl.querySelectorAll('.addr').forEach(el=>{
           el.addEventListener('click', ()=>{
             listEl.querySelectorAll('.addr').forEach(x=>{
@@ -283,12 +352,10 @@
             }catch(e){}
           });
         });
-
         try{
           localStorage.setItem('selectedAddressId', this.currentAddress);
           localStorage.setItem('selectedAddressText', this.currentAddressText);
         }catch(e){}
-
       }catch(e){
         console.error('Address load error', e);
         listEl.innerHTML = `<div style="padding:10px;color:#ef4444;font-size:12px">Address load fail: ${e.message}<br>Local address use karo.</div>`;
@@ -296,7 +363,6 @@
     },
 
     async checkWallet(){
-      // Optional wallet check for shop_owner
       const buyer = getBuyerInfo();
       if(buyer.buyerRole==='shop_owner' || buyer.buyerRole==='area_manager'){
         const el = document.getElementById('wallet-balance');
@@ -307,11 +373,8 @@
     async placeOrder(){
       const btn = document.getElementById('place-order-btn');
       if(btn){ btn.disabled = true; btn.textContent = 'Placing Order... ⏳'; }
-
       try{
         const buyer = getBuyerInfo();
-
-        // FINAL FIX: Ensure supplierRole & supplierId never empty
         if(!this.currentSupplier.supplierId || this.currentSupplier.supplierId==='' || this.currentSupplier.supplierId==='unknown'){
           this.currentSupplier.supplierId = this.currentSupplier.shopId || this.currentItems[0]?.shopId || '';
         }
@@ -343,7 +406,7 @@
         const payload = {
           shopId: this.currentSupplier.shopId,
           supplierId: this.currentSupplier.supplierId,
-          supplierRole: this.currentSupplier.supplierRole, // FIXED - hamesha shop_owner default
+          supplierRole: this.currentSupplier.supplierRole,
           supplierShopId: this.currentSupplier.shopId,
           buyerId: buyer.buyerId,
           buyerRole: buyer.buyerRole || 'customer',
@@ -365,22 +428,18 @@
           shopType: this.currentSupplier.shopType || this.currentItems[0]?.shopType || 'general'
         };
 
-        console.log('🛒 Checkout payload WORLD CLASS:', payload);
-
+        console.log('🛒 Checkout payload V6.5 WORLD CLASS:', payload);
         const url = `${getApiBase()}${API.checkout}/${encodeURIComponent(payload.shopId)}/place`;
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'x-buyer-id': buyer.buyerId, ...getAuthHeaders() },
           body: JSON.stringify(payload)
         });
-
         const data = await res.json();
-
         if(!res.ok || !data.success){
           throw new Error(data.message || `Order failed: ${res.status}`);
         }
 
-        // Clear cart
         if(window.CartCore){
           try{ await window.CartCore.clear(this.currentSupplier.supplierId); }catch(e){}
           try{ await window.CartCore.clear(this.currentSupplier.shopId); }catch(e){}
@@ -394,8 +453,6 @@
 
         const orderId = data.orderId || data.order?.orderId || 'ORD'+Date.now();
         console.log('✅ Order placed:', orderId);
-
-        // Success page
         const successUrl = `./order-success.html?shopId=${encodeURIComponent(payload.shopId)}&orderId=${encodeURIComponent(orderId)}&amount=${encodeURIComponent(total)}&supplierId=${encodeURIComponent(payload.supplierId)}&supplierRole=${encodeURIComponent(payload.supplierRole)}`;
         window.location.href = successUrl;
 
@@ -433,9 +490,8 @@
 
   // Auto init
   document.addEventListener('DOMContentLoaded', ()=> {
-    // Small delay for CartCore to load
     setTimeout(()=> HierarchyCheckout.init(), 500);
   });
 
-  console.log('✅ HierarchyCheckout V6 WORLD CLASS loaded - supplierRole fixed');
+  console.log('✅ HierarchyCheckout V6.5 WORLD CLASS FINAL - race + supplierRole fixed');
 })();
