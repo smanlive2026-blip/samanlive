@@ -1,15 +1,4 @@
-<!-- ============================================================
-  UNIVERSAL CART CONNECT PATTERN - SAB VIEW ME SAME LAGEGA
-  LOCATION: public/shop-templates/dairy/user-view.html
-  NOTE: Bhai, jo bhi banda jaha bhi ye file lagayega - kirana ho, dairy ho,
-  cloth ho, mobile ho, sab view me cart connect karne ka tareeka SAME rahega.
-    1. Header me cart button pe data-cart-count rakho - count khud update hoga
-    2. </body> se pehle cart-core.js + cart-count.js ki script lagao
-    3. Add / + / - button pe window.CartCore.addItem / updateQty / removeItem bulao
-  Iske alawa kuch alag mat karna, warna cart alag-alag dukaan me alag chalega.
-    - NO LOCALSTORAGE CART - SERVER CART HI CHALEGA
-============================================================ -->
-<!-- LOCATION: public/shop-templates/dairy/user-view.html - DAIRY CUSTOMER VIEW - V8 POWERFUL - COMMON CONNECTED -->
+<!-- LOCATION: public/shop-templates/dairy/customer-view.html - V9 FIXED - CART V4 COMPATIBLE - NO UNKNOWN SUPPLIER -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -109,6 +98,9 @@ button,input{font-family:'Outfit',sans-serif}
 .empty-box{grid-column:1/-1;text-align:center;padding:44px 16px;background:#fff;border:1px solid #f1f5f9;border-radius:20px}
 @media(max-width:420px){.hero h1{font-size:22px}.p-card img{height:128px}.cart-btn{padding:10px 12px}.logo-text b{font-size:15px}}
 </style>
+<!-- FIXED: Role hierarchy + API core before cart -->
+<script src="../../../assets/js/role-hierarchy.js"></script>
+<script src="../common/core/api-core.js"></script>
 </head>
 <body data-page="customer" data-shop="dairy">
 
@@ -166,7 +158,7 @@ button,input{font-family:'Outfit',sans-serif}
 
 <div class="review-box">
   <h4>⭐ <span id="reviewCount">4.8 (230 Reviews)</span></h4>
-  <p id="reviewText">Customers ko hamara shudh doodh pasand hai. Reviews common module se load honge.</p>
+  <p id="reviewText">Customers ko hamara shudh doodh pasand hai.</p>
 </div>
 
 <nav class="bottom-nav">
@@ -198,9 +190,11 @@ button,input{font-family:'Outfit',sans-serif}
 <div id="toast"></div>
 
 <script src="../common/products/product-manager.js"></script>
-<script src="../common/cart/cart-core.js"></script>
+<!-- FIXED PATH: V4 -->
+<script src="../common/cart/cart-core.js?v=4-dairy"></script>
+<script src="../common/cart/cart-count.js"></script>
 <script>
-// LOCATION: public/shop-templates/dairy/user-view.js - INLINE - DAIRY CUSTOMER - WORLD + OLD MERGE
+// LOCATION: public/shop-templates/dairy/customer-view.js - V9 FIXED - CART V4 + NO UNKNOWN
 (function(){
   const params = new URLSearchParams(location.search);
   const shopId = params.get('shopId') || params.get('id') || localStorage.getItem('last_shopId') || '';
@@ -214,7 +208,6 @@ button,input{font-family:'Outfit',sans-serif}
     return;
   }
   localStorage.setItem('last_shopId', shopId);
-  localStorage.setItem('shopType', shopType);
 
   let shopData = {};
   let allProducts = [];
@@ -229,21 +222,18 @@ button,input{font-family:'Outfit',sans-serif}
   let shopOpen = true;
 
   const $ = (id)=> document.getElementById(id);
-
   function toast(msg){
     const t = $('toast'); if(!t) return;
     t.innerText = msg; t.style.display = 'block';
     clearTimeout(t._timer);
     t._timer = setTimeout(()=> t.style.display = 'none', 2500);
   }
-
   function isSpecial(p){
     const ex = p.extraData || {};
     return p.isSpecial===true || p.isSpecial==='true' || ex.isSpecial===true || ex.isSpecial==='true';
   }
   function getImage(p){
-    return p.thumbnail || p.image || p.imageUrl || p.img || p.extraData?.thumbnail ||
-      `https://placehold.co/500x360/0ea5e9/ffffff?text=${encodeURIComponent((p.name||'Dairy').slice(0,12))}`;
+    return p.thumbnail || p.image || p.imageUrl || p.img || p.extraData?.thumbnail || `https://placehold.co/500x360/0ea5e9/ffffff?text=${encodeURIComponent((p.name||'Dairy').slice(0,12))}`;
   }
   function getBrand(p){ return p.brand || p.extraData?.brand || 'Local Fresh'; }
   function getSize(p){ return p.extraData?.size || p.size || p.weight || p.unit || ''; }
@@ -253,8 +243,8 @@ button,input{font-family:'Outfit',sans-serif}
     if(!ex) return false;
     return (new Date(ex).getTime() - Date.now()) < 86400000;
   }
+  function getShopName(){ return shopData.shopName || shopData.name || $('shopName')?.innerText || 'Dairy Shop'; }
 
-  // ---------- CART : purana localStorage hisaab bachaya hai ----------
   function loadCartLocal(){
     try{
       const savedNew = JSON.parse(localStorage.getItem(`cart_${shopId}_new`) || 'null');
@@ -275,26 +265,38 @@ button,input{font-family:'Outfit',sans-serif}
       localStorage.setItem(`cart_${shopId}`, JSON.stringify(arr));
       localStorage.setItem(`cart_${shopId}_new`, JSON.stringify(cart));
       localStorage.setItem(`cart_items_${shopId}`, JSON.stringify(arr));
+      // backup for CartCore V4
+      try{
+        const v4items = arr.map(a=>({
+          productId: a.productId, name: a.name, price: a.price, image: a.image,
+          qty: a.qty, unit: allProducts.find(x=>x._id===a.productId)?.unit||'',
+          ownerId: shopId, ownerRole: 'shop_owner', shopId: shopId, shopName: getShopName()
+        }));
+        sessionStorage.setItem(`cart_bkp_${shopId}`, JSON.stringify(v4items));
+      }catch(e){}
     }catch(e){}
-    if(window.CartCore?.refresh) window.CartCore.refresh(shopId);
-    if(window.CartCount?.refresh) window.CartCount.refresh(shopId);
-    if(window.updateCartCount) window.updateCartCount();
   }
   function loadWishlist(){
     try{ wishlist = new Set(JSON.parse(localStorage.getItem(`wishlist_${shopId}`) || '[]')); }catch(e){ wishlist = new Set(); }
   }
   function saveWishlist(){
     try{ localStorage.setItem(`wishlist_${shopId}`, JSON.stringify([...wishlist])); }catch(e){}
-    $('wishlistIcon')?.classList.toggle('active', wishlist.size>0);
-    $('wishlistIcon').innerHTML = wishlist.size? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
+    const icon = $('wishlistIcon');
+    if(icon){
+      icon.classList.toggle('active', wishlist.size>0);
+      icon.innerHTML = wishlist.size? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
+    }
   }
 
-  // ---------- LOAD : World pehle, purana dairy uske neeche ----------
   async function loadShop(){
     loadCartLocal(); loadWishlist();
+    // Wait for CartCore V4 ready - then merge its cart
+    if(window.CartCore?.ready){
+      try{ await window.CartCore.ready; const v4cart = window.CartCore.getCartBySupplier(shopId); if(v4cart?.length){ v4cart.forEach(it=>{ cart[it.productId] = it.qty; }); } }catch(e){}
+    }
     try{
       const results = await Promise.allSettled([
-        window.WorldProductManager? window.WorldProductManager.getProducts({shopType, shopId}) : fetch(`/api/world-products?shopId=${shopId}&shopType=${shopType}`).then(r=>r.json()).then(d=>d.data||[]),
+        window.WorldProductManager? window.WorldProductManager.getProducts({shopType, shopId}) : fetch(`/api/world-products?shopId=${shopId}&shopType=${shopType}`).then(r=>r.json()).then(d=>d.data||[]).catch(()=>[]),
         fetch(`/api/shops/dairy/${shopId}?t=${Date.now()}`, {cache:'no-store'}).then(r=>r.json()).catch(()=>({})),
         fetch(`/api/common/profile/${shopId}`).then(r=>r.json()).catch(()=>null)
       ]);
@@ -318,7 +320,7 @@ button,input{font-family:'Outfit',sans-serif}
       const worldIds = new Set(worldProducts.map(p=>p._id));
       allProducts = [...worldProducts,...oldProducts.filter(p=>!worldIds.has(p._id))];
     }catch(e){
-      console.warn('Dairy customer load failed, mock use hoga', e);
+      console.warn('Dairy customer load failed', e);
       allProducts = mockProducts();
     }
     if(!allProducts.length) allProducts = mockProducts();
@@ -344,25 +346,15 @@ button,input{font-family:'Outfit',sans-serif}
     const name = shopData.shopName || shopData.name || 'Gopal Dairy';
     const titleEl = $('shopName'); if(titleEl) titleEl.innerText = name;
     document.title = `${name} - Fresh Dairy | SAMANLIVE`;
-    const banner = shopData.bannerTitle || shopData.tagline || '';
-    if(banner) $('bannerTitle').innerHTML = banner.replace(/\n/g,'<br>');
-    const sub = shopData.bannerSub || shopData.description || '';
-    if(sub) $('bannerSub').innerText = sub;
-    const photo = localStorage.getItem(`shop_avatar_${shopId}`) || shopData.avatar || shopData.shopImage || shopData.logo || '';
-    // hero me photo nahi lagaya, naam hi kaafi hai - purana design bachaya
     shopOpen =!(shopData.isOpen===false || shopData.settings?.isOpen===false);
-    $('openStatus').innerHTML = shopOpen
-   ? '<i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN'
-      : '<i class="fa-solid fa-circle" style="color:#fca5a5"></i> CLOSED';
+    $('openStatus').innerHTML = shopOpen ? '<i class="fa-solid fa-circle" style="color:#22c55e"></i> OPEN' : '<i class="fa-solid fa-circle" style="color:#fca5a5"></i> CLOSED';
     $('closedBanner').style.display = shopOpen? 'none' : 'block';
-    const rating = shopData.rating || shopData.avgRating;
-    if(rating) $('ratingBadge').innerText = `${rating} Rating`;
   }
 
   function renderFilters(){
     const cats = ['All',...new Set(allProducts.map(p=>p.category||'General'))];
     const box = $('filters'); if(!box) return;
-    const icons = {Milk:'🥛', Curd:'🥣', Dahi:'🥣', Paneer:'🧀', Ghee:'🫙', Butter:'🧈', Cheese:'🧀', 'Ice Cream':'🍦', Sweets:'🍮', Lassi:'🥤', Buttermilk:'🥤'};
+    const icons = {Milk:'🥛', Curd:'🥣', Dahi:'🥣', Paneer:'🧀', Ghee:'🫙', Butter:'🧈', Cheese:'🧀'};
     box.innerHTML = cats.map(c=>`<div class="filter ${c===currentFilter?'active':''}" data-cat="${c}">${c==='All'?'All':(icons[c]||'🥛')+' '+c}</div>`).join('');
     box.querySelectorAll('.filter').forEach(el=>{
       el.addEventListener('click', ()=>{
@@ -426,7 +418,7 @@ button,input{font-family:'Outfit',sans-serif}
   function renderProducts(list, specialCount){
     const g = $('productGrid'); if(!g) return;
     if(!list.length){
-      g.innerHTML = `<div class="empty-box"><div style="font-size:50px">🥛</div><h3 style="font-weight:900;margin-top:10px">${specialCount? 'Is category me aur item nahi hai' : 'No items mile'}</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Dusri category try karo ya search badlo</p></div>`;
+      g.innerHTML = `<div class="empty-box"><div style="font-size:50px">🥛</div><h3 style="font-weight:900;margin-top:10px">${specialCount? 'Is category me aur item nahi hai' : 'No items mile'}</h3><p style="color:#94a3b8;font-size:13px;margin-top:6px">Dusri category try karo</p></div>`;
       return;
     }
     g.innerHTML = list.map(p=>{
@@ -460,19 +452,42 @@ button,input{font-family:'Outfit',sans-serif}
     }));
   }
 
+  // V9 FIX: CART V4 - ownerId + shopId + shopName sab bhejo - unknown hat jayega
   function updateQty(id, delta){
-    if(!shopOpen){ toast('Dukaan band hai, abhi order nahi hoga'); return; }
+    if(!shopOpen){ toast('Dukaan band hai'); return; }
     const p = allProducts.find(x=>x._id===id); if(!p) return;
     let q = (cart[id]||0) + delta;
     if(q<0) q = 0;
     if(q > (p.stock||999)){ toast(`Stock limit: ${p.stock} hi hai`); return; }
     if(q===0) delete cart[id]; else cart[id] = q;
     syncCartToLocalStorage();
-           // CART CONNECTED - purana logic same, server cart me bhi bhej diya - FIXED: cart-core me add/remove hai, addItem/removeItem nahi
+
     if(window.CartCore){
-      if(delta>0 && q===1) window.CartCore.add({_id:p._id, productId:p._id, name:p.name, price:p.price, mrp:p.mrp||p.price, thumbnail:getImage(p), unit:p.unit||'', shopId}, 1).catch(()=>{});
-      else if(q===0) window.CartCore.remove(id).catch(()=>{});
-      else window.CartCore.updateQty(id, q).catch(()=>{});
+      const shopName = getShopName();
+      const productForCart = {
+        _id: p._id,
+        id: p._id,
+        productId: p._id,
+        name: p.name,
+        title: p.name,
+        price: p.price,
+        mrp: p.mrp||p.price,
+        image: getImage(p),
+        thumbnail: getImage(p),
+        unit: p.unit||'',
+        // FIXED: ye 3 field se unknown bug khatam
+        ownerId: shopId,
+        shopId: shopId,
+        shop_id: shopId,
+        supplierId: shopId,
+        shopName: shopName,
+        ownerName: shopName,
+        ownerRole: 'shop_owner',
+        shopOwnerRole: 'shop_owner'
+      };
+      if(delta>0 && q===1) window.CartCore.add(productForCart, 1).catch(()=>{});
+      else if(q===0) window.CartCore.remove(id, shopId).catch(()=>{});
+      else window.CartCore.updateQty(id, q, shopId).catch(()=>{});
     }
     updateCartUI();
     renderAll();
@@ -491,7 +506,7 @@ button,input{font-family:'Outfit',sans-serif}
 
   function updateCartUI(){
     const count = getCount();
-    $('cartCount').innerText = count;
+    const cc = $('cartCount'); if(cc) cc.innerText = count>99?'99+':count;
     $('cartText').innerText = count? `₹${getTotal()}` : 'Cart';
     const box = $('cartItems');
     if(!count){
@@ -510,6 +525,7 @@ button,input{font-family:'Outfit',sans-serif}
     $('cartTotal').innerText = '₹' + getTotal();
     $('checkoutBtn').disabled =!count ||!shopOpen;
     $('checkoutBtn').innerHTML =!shopOpen? '🔴 Dukaan Band Hai' : '<i class="fa-solid fa-bolt"></i> Checkout - Fresh Delivery';
+    if(window.CartCount) window.CartCount.update();
   }
 
   function toggleCart(force){
@@ -530,20 +546,19 @@ button,input{font-family:'Outfit',sans-serif}
     $('cartType').innerText = isSub? 'Daily Subscription (10% OFF)' : 'One-time';
   }
 
-  // ---------- EVENTS ----------
   $('searchInput')?.addEventListener('input', (e)=>{ searchQuery = e.target.value.trim(); renderAll(); });
   $('navSearch')?.addEventListener('click', ()=>{ $('searchInput')?.focus(); window.scrollTo({top:0, behavior:'smooth'}); });
   document.querySelectorAll('.slot').forEach(s=> s.addEventListener('click', ()=>{
     currentSlot = s.dataset.slot;
     localStorage.setItem(`dairy_slot_${shopId}`, currentSlot);
     applySlotUI(); updateCartUI();
-    toast(currentSlot==='morning'? 'Subah delivery set ☀️' : 'Sham delivery set 🌙');
+    toast(currentSlot==='morning'? 'Subah delivery ☀️' : 'Sham delivery 🌙');
   }));
   $('subSwitch')?.addEventListener('click', ()=>{
     isSub =!isSub;
     localStorage.setItem(`dairy_sub_${shopId}`, isSub? '1':'0');
     applySubUI(); updateCartUI();
-    toast(isSub? 'Daily subscription ON 🔄 10% OFF milega' : 'One-time order set');
+    toast(isSub? 'Daily subscription ON 🔄 10% OFF' : 'One-time order');
   });
   $('cartOpenBtn')?.addEventListener('click', ()=> toggleCart(true));
   $('navCart')?.addEventListener('click', ()=> toggleCart(true));
@@ -557,34 +572,31 @@ button,input{font-family:'Outfit',sans-serif}
     const list = allProducts.filter(p=>wishlist.has(p._id));
     renderSpecial(list.filter(isSpecial));
     renderProducts(list.filter(p=>!isSpecial(p)), 0);
-    toast(`${list.length} wishlist item dikha rahe hain`);
+    toast(`${list.length} wishlist items`);
   });
-  $('chatBtn')?.addEventListener('click', ()=>{ if(window.loadChatbot) window.loadChatbot(); else toast('Chat jald aa raha hai'); });
-  $('navQr')?.addEventListener('click', ()=>{ if(window.loadQrModule) window.loadQrModule(); else toast('QR module load nahi hua'); });
-  $('fullCartBtn')?.addEventListener('click', ()=>{ location.href = `../common/cart/cart.html?shopId=${shopId}&shopType=${shopType}`; });
+  $('fullCartBtn')?.addEventListener('click', ()=>{ 
+    location.href = `../common/cart/cart.html?shopId=${encodeURIComponent(shopId)}&supplierId=${encodeURIComponent(shopId)}&shopName=${encodeURIComponent(getShopName())}`; 
+  });
+  // V9 FIX: Checkout V4 - btoa data nahi, seedha CartCore.goToCheckout
   $('checkoutBtn')?.addEventListener('click', ()=>{
     if(!getCount()){ toast('Cart khali hai!'); return; }
     syncCartToLocalStorage();
-    const payload = {shopId, shopType, slot:currentSlot, isSub, cart, subtotal:getSubtotal(), discount:getDiscount(), total:getTotal()};
-    try{ localStorage.setItem(`checkout_${shopId}`, JSON.stringify(payload)); }catch(e){}
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-    location.href = `./checkout.html?shopId=${shopId}&shopType=${shopType}&data=${encoded}`;
+    if(window.CartCore){
+      // CartCore V4 ko bhi sync
+      try{ window.CartCore.emitUpdate(); }catch(e){}
+      window.CartCore.goToCheckout(shopId);
+    } else {
+      // fallback
+      location.href = `../common/checkout/checkout.html?shopId=${encodeURIComponent(shopId)}&supplierId=${encodeURIComponent(shopId)}&supplierRole=shop_owner&shopName=${encodeURIComponent(getShopName())}`;
+    }
   });
 
-  // Purane inline naam bhi bachaye - kahin aur se bulao to chalega
   window.toggleCart = toggleCart;
-  window.filterProd = (cat)=>{ currentFilter = cat; renderFilters(); renderAll(); };
-  window.setSlot = (slot)=>{ currentSlot = slot; applySlotUI(); updateCartUI(); };
-  window.toggleSub = ()=> $('subSwitch')?.click();
   window.updateQty = updateQty;
-  window.goCheckout = ()=> $('checkoutBtn')?.click();
-  window.goOldCart = ()=> $('fullCartBtn')?.click();
 
   loadShop();
 })();
 </script>
-
-<script src="../common/cart/cart-count.js"></script>
 <script src="../common/qr/qr.js"></script>
 <script src="../common/reviews/reviews.js"></script>
 </body>

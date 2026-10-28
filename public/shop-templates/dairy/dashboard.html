@@ -1,4 +1,4 @@
-<!-- LOCATION: public/shop-templates/dairy/dashboard.html - DAIRY POWERFUL DASHBOARD - COMMON CONNECTED - V8 BIG - 400+ LINE -->
+<!-- LOCATION: public/shop-templates/dairy/dashboard.html - DAIRY POWERFUL DASHBOARD - COMMON CONNECTED - V9 FIXED - CART V4 COMPATIBLE -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,73 +13,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --milk:#0ea5e9;
-  --milk-dark:#0369a1;
-  --milk-light:#e0f2fe;
-  --dark:#0f172a;
-  --bg:#f8fafc;
-  --green:#22c55e;
-  --green-dark:#15803d;
-  --red:#ef4444;
-  --amber:#f59e0b;
-  --border:#e2e8f0;
-  --muted:#64748b;
-  --muted-light:#94a3b8;
+  --milk:#0ea5e9;--milk-dark:#0369a1;--milk-light:#e0f2fe;--dark:#0f172a;--bg:#f8fafc;--green:#22c55e;--green-dark:#15803d;--red:#ef4444;--amber:#f59e0b;--border:#e2e8f0;--muted:#64748b;--muted-light:#94a3b8;
 }
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--dark);min-height:100vh}
 button{font-family:'Outfit',sans-serif}
 input,select{font-family:'Outfit',sans-serif}
-
-/* LOADER */
-#loader{
-  position:fixed;inset:0;background:#f8fafc;
-  display:grid;place-items:center;z-index:9999;
-}
-.loader-box{
-  background:#fff;padding:22px 26px;border-radius:20px;
-  border:1px solid var(--border);font-weight:800;
-  display:flex;gap:10px;align-items:center;
-  box-shadow:0 20px 40px rgba(0,0,0,.08);font-size:14px;
-}
+#loader{position:fixed;inset:0;background:#f8fafc;display:grid;place-items:center;z-index:9999}
+.loader-box{background:#fff;padding:22px 26px;border-radius:20px;border:1px solid var(--border);font-weight:800;display:flex;gap:10px;align-items:center;box-shadow:0 20px 40px rgba(0,0,0,.08);font-size:14px}
 .loader-box i{color:var(--milk);font-size:18px}
-
-/* HEADER */
-.header{
-  min-height:64px;background:rgba(255,255,255,.94);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 20px;position:sticky;top:0;z-index:100;
-  gap:12px;flex-wrap:wrap;
-}
-.logo{
-  font-weight:900;font-size:19px;
-  display:flex;gap:10px;align-items:center;min-width:0;
-}
-.logo-icon{
-  background:var(--milk);color:#fff;
-  width:40px;height:40px;border-radius:12px;
-  display:grid;place-items:center;font-size:17px;flex-shrink:0;
-  box-shadow:0 8px 18px rgba(14,165,233,.35);
-}
+.header{min-height:64px;background:rgba(255,255,255,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:10px 20px;position:sticky;top:0;z-index:100;gap:12px;flex-wrap:wrap}
+.logo{font-weight:900;font-size:19px;display:flex;gap:10px;align-items:center;min-width:0}
+.logo-icon{background:var(--milk);color:#fff;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:17px;flex-shrink:0;box-shadow:0 8px 18px rgba(14,165,233,.35)}
 .logo-text{line-height:1.1;min-width:0}
 .logo-text b{font-size:17px;font-weight:900;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .logo-text small{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.4px;text-transform:uppercase}
-.shop-id-badge{
-  background:#f1f5f9;padding:5px 9px;border-radius:8px;
-  font-size:10px;font-weight:800;color:#475569;white-space:nowrap;
-}
+.shop-id-badge{background:#f1f5f9;padding:5px 9px;border-radius:8px;font-size:10px;font-weight:800;color:#475569;white-space:nowrap}
 .header-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-
-/* BUTTONS */
-.btn{
-  padding:10px 16px;border-radius:12px;border:none;
-  font-weight:800;cursor:pointer;display:inline-flex;
-  gap:8px;align-items:center;font-size:13px;justify-content:center;
-  transition:.2s;white-space:nowrap;
-}
+.btn{padding:10px 16px;border-radius:12px;border:none;font-weight:800;cursor:pointer;display:inline-flex;gap:8px;align-items:center;font-size:13px;justify-content:center;transition:.2s;white-space:nowrap}
 .btn:active{transform:scale(.97)}
 .btn-dark{background:var(--dark);color:#fff}
 .btn-dark:hover{background:#1e293b}
@@ -91,214 +43,83 @@ input,select{font-family:'Outfit',sans-serif}
 .btn-ghost:hover{background:#f8fafc}
 .btn-sm{padding:8px 12px;font-size:12px;border-radius:10px}
 .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
-
-/* STATS */
-.stats{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:14px;padding:20px 20px 0;
-}
-.stats-row2{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:14px;padding:14px 20px 0;
-}
-.stat{
-  background:#fff;border-radius:20px;padding:18px;
-  border:1px solid #f1f5f9;position:relative;overflow:hidden;
-  transition:.25s;
-}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:20px 20px 0}
+.stats-row2{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px 20px 0}
+.stat{background:#fff;border-radius:20px;padding:18px;border:1px solid #f1f5f9;position:relative;overflow:hidden;transition:.25s}
 .stat:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(0,0,0,.05)}
 .stat b{font-size:26px;font-weight:900;display:block;line-height:1}
-.stat p{
-  font-size:11px;color:var(--muted);font-weight:700;
-  margin-top:5px;text-transform:uppercase;letter-spacing:.5px;
-}
+.stat p{font-size:11px;color:var(--muted);font-weight:700;margin-top:5px;text-transform:uppercase;letter-spacing:.5px}
 .stat small{font-size:10px;color:var(--muted-light);font-weight:600;display:block;margin-top:3px}
-.stat i{
-  position:absolute;right:14px;top:14px;
-  width:40px;height:40px;display:grid;place-items:center;
-  background:var(--milk-light);color:var(--milk);border-radius:12px;font-size:16px;
-}
+.stat i{position:absolute;right:14px;top:14px;width:40px;height:40px;display:grid;place-items:center;background:var(--milk-light);color:var(--milk);border-radius:12px;font-size:16px}
 .stat.alert{border-left:4px solid var(--red)}
 .stat.alert i{background:#fee2e2;color:var(--red)}
 .stat.green i{background:#dcfce7;color:var(--green-dark)}
 .stat.amber i{background:#fef3c7;color:#b45309}
-
-/* MAIN LAYOUT */
-.main{
-  display:grid;grid-template-columns:1fr 350px;
-  gap:20px;padding:20px;align-items:start;
-}
-.left{
-  background:#fff;border-radius:24px;
-  border:1px solid var(--border);overflow:hidden;
-}
+.main{display:grid;grid-template-columns:1fr 350px;gap:20px;padding:20px;align-items:start}
+.left{background:#fff;border-radius:24px;border:1px solid var(--border);overflow:hidden}
 .right{display:flex;flex-direction:column;gap:14px}
-.right .box{
-  background:#fff;border-radius:24px;
-  border:1px solid var(--border);padding:18px;
-}
+.right .box{background:#fff;border-radius:24px;border:1px solid var(--border);padding:18px}
 .right .box h4{font-weight:900;margin-bottom:12px;font-size:14px}
 .right .box.dark-box{background:var(--dark);color:#fff;border-color:var(--dark)}
 .right .box.dark-box h4{color:#fff}
-
-/* LEFT HEAD */
-.left-head{
-  padding:16px 18px;display:flex;justify-content:space-between;
-  align-items:center;border-bottom:1px solid #f1f5f9;
-  flex-wrap:wrap;gap:10px;
-}
+.left-head{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;gap:10px}
 .left-head h3{font-weight:900;font-size:16px}
 .left-head h3 span{color:var(--muted-light);font-weight:700}
 .head-tools{display:flex;gap:8px;flex-wrap:wrap;flex:1;justify-content:flex-end;align-items:center}
-.search{
-  flex:1;min-width:200px;max-width:340px;
-  display:flex;align-items:center;gap:10px;
-  background:#f8fafc;border:1px solid var(--border);
-  padding:10px 14px;border-radius:12px;
-}
+.search{flex:1;min-width:200px;max-width:340px;display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--border);padding:10px 14px;border-radius:12px}
 .search:focus-within{border-color:var(--milk);background:#fff;box-shadow:0 0 0 3px rgba(14,165,233,.12)}
 .search i{color:var(--muted-light);font-size:13px}
 .search input{border:none;background:transparent;outline:none;width:100%;font-weight:600;font-size:13px;color:var(--dark)}
 .search input::placeholder{color:var(--muted-light)}
-.filter-select{
-  padding:10px 12px;border-radius:12px;border:1px solid var(--border);
-  background:#fff;font-weight:700;font-size:12px;color:var(--dark);
-  cursor:pointer;outline:none;
-}
+.filter-select{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:#fff;font-weight:700;font-size:12px;color:var(--dark);cursor:pointer;outline:none}
 .filter-select:focus{border-color:var(--milk)}
-
-/* TABS */
-.tabs{
-  display:flex;gap:6px;padding:12px 16px 0;
-  overflow:auto;scrollbar-width:none;
-}
+.tabs{display:flex;gap:6px;padding:12px 16px 0;overflow:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab{
-  padding:8px 14px;border-radius:20px;
-  border:1px solid var(--border);background:#fff;
-  font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;
-  transition:.2s;
-}
+.tab{padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:#fff;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;transition:.2s}
 .tab:hover{border-color:#cbd5e1;background:#f8fafc}
 .tab.active{background:var(--dark);color:#fff;border-color:var(--dark)}
-
-/* PRODUCT GRID */
-.p-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
-  gap:14px;padding:16px;min-height:200px;
-}
-.p-card{
-  border:1px solid #f1f5f9;border-radius:18px;
-  overflow:hidden;background:#fff;transition:.25s;
-  display:flex;flex-direction:column;
-}
+.p-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;padding:16px;min-height:200px}
+.p-card{border:1px solid #f1f5f9;border-radius:18px;overflow:hidden;background:#fff;transition:.25s;display:flex;flex-direction:column}
 .p-card:hover{transform:translateY(-4px);box-shadow:0 15px 30px rgba(0,0,0,.07);border-color:#e0f2fe}
-.p-card img{
-  width:100%;height:140px;object-fit:cover;
-  background:#f8fafc;display:block;
-}
+.p-card img{width:100%;height:140px;object-fit:cover;background:#f8fafc;display:block}
 .p-info{padding:12px;flex:1;display:flex;flex-direction:column}
-.p-info b{
-  font-size:13px;line-height:1.25;display:block;
-  min-height:32px;font-weight:800;
-}
+.p-info b{font-size:13px;line-height:1.25;display:block;min-height:32px;font-weight:800}
 .meta{font-size:10px;color:var(--muted-light);font-weight:600;margin-top:3px;line-height:1.4}
-.price-row{
-  display:flex;justify-content:space-between;
-  align-items:flex-start;margin-top:9px;gap:8px;
-}
+.price-row{display:flex;justify-content:space-between;align-items:flex-start;margin-top:9px;gap:8px}
 .price{font-weight:900;font-size:15px;line-height:1.1}
 .price del{color:var(--muted-light);font-size:11px;font-weight:600;margin-left:4px}
-.brand-badge{
-  background:var(--milk-light);color:var(--milk-dark);
-  padding:3px 8px;border-radius:20px;font-size:10px;
-  font-weight:800;display:inline-block;margin-top:5px;
-}
-.stock{
-  font-size:10px;font-weight:800;padding:4px 8px;
-  border-radius:20px;white-space:nowrap;flex-shrink:0;
-}
+.brand-badge{background:var(--milk-light);color:var(--milk-dark);padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800;display:inline-block;margin-top:5px}
+.stock{font-size:10px;font-weight:800;padding:4px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
 .stock.ok{background:#dcfce7;color:#166534}
 .stock.low{background:#fee2e2;color:#b91c1c}
 .stock.mid{background:#fef3c7;color:#92400e}
 .card-actions{display:flex;gap:6px;margin-top:11px}
-.btn-edit{
-  flex:1;background:#f1f5f9;border:1px solid var(--border);
-  padding:8px;border-radius:10px;font-weight:800;
-  font-size:11px;cursor:pointer;transition:.2s;
-}
+.btn-edit{flex:1;background:#f1f5f9;border:1px solid var(--border);padding:8px;border-radius:10px;font-weight:800;font-size:11px;cursor:pointer;transition:.2s}
 .btn-edit:hover{background:#e2e8f0}
-.btn-del{
-  width:38px;background:#fff;border:1px solid #fee2e2;
-  color:var(--red);border-radius:10px;cursor:pointer;transition:.2s;
-}
+.btn-del{width:38px;background:#fff;border:1px solid #fee2e2;color:var(--red);border-radius:10px;cursor:pointer;transition:.2s}
 .btn-del:hover{background:#fef2f2}
-
-/* SPECIAL SECTION */
-.special-head{
-  grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
-  background:#f0f9ff;border:1px solid #bae6fd;
-  padding:11px 13px;border-radius:12px;
-}
+.special-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;background:#f0f9ff;border:1px solid #bae6fd;padding:11px 13px;border-radius:12px}
 .special-head b{font-size:13px}
 .special-head span{font-size:11px;font-weight:800;color:var(--milk-dark)}
-.section-head{
-  grid-column:1/-1;font-weight:900;font-size:13px;
-  margin-top:4px;color:var(--dark);
-}
-
-/* RIGHT BOXES */
+.section-head{grid-column:1/-1;font-weight:900;font-size:13px;margin-top:4px;color:var(--dark)}
 .profile-mini{display:flex;gap:11px;align-items:center}
-.profile-mini img{
-  width:54px;height:54px;border-radius:14px;
-  object-fit:cover;background:#f1f5f9;flex-shrink:0;
-}
+.profile-mini img{width:54px;height:54px;border-radius:14px;object-fit:cover;background:#f1f5f9;flex-shrink:0}
 .profile-mini b{font-size:14px;display:block;line-height:1.2}
 .profile-mini small{color:var(--muted);font-weight:600;font-size:11px;display:block;margin-top:2px}
-.toggle{
-  display:flex;align-items:center;justify-content:space-between;
-  background:var(--dark);color:#fff;padding:13px 14px;
-  border-radius:14px;gap:10px;font-size:13px;font-weight:700;
-}
-.switch{
-  width:46px;height:26px;background:#334155;border-radius:20px;
-  position:relative;transition:.3s;cursor:pointer;flex-shrink:0;
-}
+.toggle{display:flex;align-items:center;justify-content:space-between;background:var(--dark);color:#fff;padding:13px 14px;border-radius:14px;gap:10px;font-size:13px;font-weight:700}
+.switch{width:46px;height:26px;background:#334155;border-radius:20px;position:relative;transition:.3s;cursor:pointer;flex-shrink:0}
 .switch.on{background:var(--milk)}
-.switch::after{
-  content:'';position:absolute;width:18px;height:18px;
-  background:#fff;border-radius:50%;top:4px;left:4px;transition:.3s;
-}
+.switch::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:4px;left:4px;transition:.3s}
 .switch.on::after{left:24px}
 .toggle-note{font-size:11px;color:var(--muted);margin-top:9px;font-weight:600;line-height:1.5}
-.low-item{
-  display:flex;justify-content:space-between;align-items:flex-start;
-  padding:10px;background:#fffbeb;border:1px solid #fde68a;
-  border-radius:11px;margin-bottom:7px;gap:8px;
-}
+.low-item{display:flex;justify-content:space-between;align-items:flex-start;padding:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:11px;margin-bottom:7px;gap:8px}
 .low-item b{font-size:12px;display:block;line-height:1.3}
 .low-item small{color:#92400e;font-size:10px;font-weight:600}
-.low-badge{
-  background:#92400e;color:#fff;padding:4px 8px;
-  border-radius:20px;font-size:10px;font-weight:900;
-  height:fit-content;white-space:nowrap;
-}
-.ok-box{
-  background:#f0fdf4;color:#166534;padding:11px;
-  border-radius:11px;font-weight:800;font-size:12px;text-align:center;
-}
-.cat-row,.order-row,.top-row{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:8px 0;border-bottom:1px solid #f8fafc;
-  font-size:13px;font-weight:600;gap:8px;
-}
+.low-badge{background:#92400e;color:#fff;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:900;height:fit-content;white-space:nowrap}
+.ok-box{background:#f0fdf4;color:#166534;padding:11px;border-radius:11px;font-weight:800;font-size:12px;text-align:center}
+.cat-row,.order-row,.top-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f8fafc;font-size:13px;font-weight:600;gap:8px}
 .cat-row:last-child,.order-row:last-child,.top-row:last-child{border-bottom:none}
-.pill{
-  background:var(--milk-light);color:var(--milk-dark);
-  padding:3px 9px;border-radius:20px;font-size:11px;
-  font-weight:800;white-space:nowrap;
-}
+.pill{background:var(--milk-light);color:var(--milk-dark);padding:3px 9px;border-radius:20px;font-size:11px;font-weight:800;white-space:nowrap}
 .pill.green{background:#dcfce7;color:#166534}
 .pill.amber{background:#fef3c7;color:#92400e}
 .pill.red{background:#fee2e2;color:#b91c1c}
@@ -307,77 +128,22 @@ input,select{font-family:'Outfit',sans-serif}
 .empty-text{color:var(--muted-light);font-size:12px;font-weight:600;padding:6px 0}
 .status-text{font-size:12px;margin-top:8px;color:#cbd5e1;line-height:1.7;font-weight:600}
 .status-text b{color:#fff}
-
-/* EMPTY / ERROR */
 .empty-box{grid-column:1/-1;text-align:center;padding:50px 16px}
 .empty-box .big-icon{font-size:52px;line-height:1}
 .empty-box h3{font-weight:900;margin-top:12px;font-size:16px}
 .empty-box p{color:var(--muted-light);font-size:13px;margin-top:6px;line-height:1.5}
-.error-box{
-  grid-column:1/-1;padding:20px;color:var(--red);
-  background:#fef2f2;border:1px solid #fee2e2;border-radius:12px;
-  font-size:13px;line-height:1.6;
-}
-
-/* TOAST */
-#toast{
-  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
-  background:var(--dark);color:#fff;padding:13px 22px;
-  border-radius:30px;font-weight:700;font-size:13px;
-  display:none;z-index:9999;max-width:92vw;text-align:center;
-  box-shadow:0 16px 32px rgba(0,0,0,.25);
-}
-
-/* FOOTER NOTE */
-.footer-note{
-  text-align:center;padding:0 20px 22px;
-  color:var(--muted-light);font-size:11px;font-weight:600;
-}
-
-/* RESPONSIVE */
-@media(max-width:1100px){
-  .main{grid-template-columns:1fr}
-  .right{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .right .box{margin-bottom:0}
-}
-@media(max-width:900px){
-  .stats,.stats-row2{grid-template-columns:repeat(2,1fr);padding-left:14px;padding-right:14px}
-  .stats{padding-top:14px}
-  .main{padding:14px}
-  .header{padding:10px 14px}
-}
-@media(max-width:640px){
-  .right{grid-template-columns:1fr}
-  .header-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}
-  .header-actions .btn{width:100%}
-  .logo{width:100%;justify-content:space-between}
-  .p-grid{grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
-  .p-card img{height:110px}
-  .p-info{padding:9px}
-  .p-info b{font-size:12px;min-height:30px}
-  .price{font-size:13px}
-  .left-head{flex-direction:column;align-items:stretch}
-  .head-tools{justify-content:stretch}
-  .search{min-width:0;width:100%;max-width:none;flex:1 1 100%}
-  .filter-select{flex:1}
-  .stats,.stats-row2{gap:10px}
-  .stat{padding:14px}
-  .stat b{font-size:21px}
-  .stat i{width:34px;height:34px;font-size:14px}
-  .btn-edit{padding:7px 4px;font-size:10px}
-}
+.error-box{grid-column:1/-1;padding:20px;color:var(--red);background:#fef2f2;border:1px solid #fee2e2;border-radius:12px;font-size:13px;line-height:1.6}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:13px 22px;border-radius:30px;font-weight:700;font-size:13px;display:none;z-index:9999;max-width:92vw;text-align:center;box-shadow:0 16px 32px rgba(0,0,0,.25)}
+.footer-note{text-align:center;padding:0 20px 22px;color:var(--muted-light);font-size:11px;font-weight:600}
+@media(max-width:1100px){.main{grid-template-columns:1fr}.right{display:grid;grid-template-columns:1fr 1fr;gap:14px}.right .box{margin-bottom:0}}
+@media(max-width:900px){.stats,.stats-row2{grid-template-columns:repeat(2,1fr);padding-left:14px;padding-right:14px}.stats{padding-top:14px}.main{padding:14px}.header{padding:10px 14px}}
+@media(max-width:640px){.right{grid-template-columns:1fr}.header-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}.header-actions .btn{width:100%}.logo{width:100%;justify-content:space-between}.p-grid{grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}.p-card img{height:110px}.p-info{padding:9px}.p-info b{font-size:12px;min-height:30px}.price{font-size:13px}.left-head{flex-direction:column;align-items:stretch}.head-tools{justify-content:stretch}.search{min-width:0;width:100%;max-width:none;flex:1 1 100%}.filter-select{flex:1}.stats,.stats-row2{gap:10px}.stat{padding:14px}.stat b{font-size:21px}.stat i{width:34px;height:34px;font-size:14px}.btn-edit{padding:7px 4px;font-size:10px}}
 </style>
 </head>
 <body>
 
-<div id="loader">
-  <div class="loader-box">
-    <i class="fa-solid fa-spinner fa-spin"></i>
-    Loading Dairy Dashboard...
-  </div>
-</div>
+<div id="loader"><div class="loader-box"><i class="fa-solid fa-spinner fa-spin"></i> Loading Dairy Dashboard...</div></div>
 
-<!-- ================= HEADER ================= -->
 <header class="header">
   <div class="logo">
     <div style="display:flex;gap:10px;align-items:center;min-width:0">
@@ -390,194 +156,56 @@ input,select{font-family:'Outfit',sans-serif}
     <small class="shop-id-badge" id="shopIdDisplay">ID: ...</small>
   </div>
   <div class="header-actions">
-    <button class="btn btn-ghost" onclick="location.reload()">
-      <i class="fa-solid fa-rotate"></i> Refresh
-    </button>
-    <button class="btn btn-dark" id="viewShopBtn">
-      <i class="fa-solid fa-eye"></i> View Shop
-    </button>
-    <button onclick="addToCart('${p._id}')">Add</button>
-    <button class="btn btn-milk" id="newProductBtn">
-      <i class="fa-solid fa-plus"></i> Add Milk
-    </button>
+    <button class="btn btn-ghost" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    <button class="btn btn-dark" id="viewShopBtn"><i class="fa-solid fa-eye"></i> View Shop</button>
+    <button class="btn btn-milk" id="newProductBtn"><i class="fa-solid fa-plus"></i> Add Milk</button>
   </div>
 </header>
 
-<!-- ================= STATS ROW 1 ================= -->
 <section class="stats">
-  <div class="stat">
-    <i class="fa-solid fa-box"></i>
-    <b id="items">0</b>
-    <p>Total Products</p>
-    <small id="itemsSub">World + Old</small>
-  </div>
-  <div class="stat">
-    <i class="fa-solid fa-cart-shopping"></i>
-    <b id="sale">0</b>
-    <p>Today Orders</p>
-    <small>Live orders aaj ke</small>
-  </div>
-  <div class="stat green">
-    <i class="fa-solid fa-indian-rupee-sign"></i>
-    <b id="revenue">₹0</b>
-    <p>Today Revenue</p>
-    <small>Aaj ki kamai</small>
-  </div>
-  <div class="stat alert">
-    <i class="fa-solid fa-triangle-exclamation"></i>
-    <b id="expiry">0</b>
-    <p>Low Stock Alert</p>
-    <small>Stock khatm hone wala</small>
-  </div>
+  <div class="stat"><i class="fa-solid fa-box"></i><b id="items">0</b><p>Total Products</p><small id="itemsSub">World + Old</small></div>
+  <div class="stat"><i class="fa-solid fa-cart-shopping"></i><b id="sale">0</b><p>Today Orders</p><small>Live orders aaj ke</small></div>
+  <div class="stat green"><i class="fa-solid fa-indian-rupee-sign"></i><b id="revenue">₹0</b><p>Today Revenue</p><small>Aaj ki kamai</small></div>
+  <div class="stat alert"><i class="fa-solid fa-triangle-exclamation"></i><b id="expiry">0</b><p>Low Stock Alert</p><small>Stock khatm hone wala</small></div>
 </section>
 
-<!-- ================= STATS ROW 2 ================= -->
 <section class="stats-row2">
-  <div class="stat">
-    <i class="fa-solid fa-layer-group"></i>
-    <b id="totalCategories">0</b>
-    <p>Categories</p>
-    <small>Milk, Dahi, Ghee...</small>
-  </div>
-  <div class="stat amber">
-    <i class="fa-solid fa-star"></i>
-    <b id="specialCount">0</b>
-    <p>Special Products</p>
-    <small>Bade card wale</small>
-  </div>
-  <div class="stat">
-    <i class="fa-solid fa-globe"></i>
-    <b id="worldCount">0</b>
-    <p>World Products</p>
-    <small>Seed se aaye hue</small>
-  </div>
-  <div class="stat">
-    <i class="fa-solid fa-clock"></i>
-    <b id="shopStatusStat">Open</b>
-    <p>Shop Status</p>
-    <small id="lastUpdated">Abhi update hua</small>
-  </div>
+  <div class="stat"><i class="fa-solid fa-layer-group"></i><b id="totalCategories">0</b><p>Categories</p><small>Milk, Dahi, Ghee...</small></div>
+  <div class="stat amber"><i class="fa-solid fa-star"></i><b id="specialCount">0</b><p>Special Products</p><small>Bade card wale</small></div>
+  <div class="stat"><i class="fa-solid fa-globe"></i><b id="worldCount">0</b><p>World Products</p><small>Seed se aaye hue</small></div>
+  <div class="stat"><i class="fa-solid fa-clock"></i><b id="shopStatusStat">Open</b><p>Shop Status</p><small id="lastUpdated">Abhi update hua</small></div>
 </section>
 
-<!-- ================= MAIN ================= -->
 <main class="main">
-
-  <!-- LEFT : INVENTORY -->
   <section class="left">
     <div class="left-head">
       <h3>Inventory <span id="prodCount">(0)</span></h3>
       <div class="head-tools">
-        <div class="search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input id="searchInput" type="text" placeholder="Search milk, dahi, ghee, paneer..." autocomplete="off">
-        </div>
-        <select class="filter-select" id="sortSelect" title="Sort">
-          <option value="default">Sort: Default</option>
-          <option value="price-low">Price: Low → High</option>
-          <option value="price-high">Price: High → Low</option>
-          <option value="stock-low">Stock: Low Pehle</option>
-          <option value="stock-high">Stock: High Pehle</option>
-          <option value="name">Name: A → Z</option>
-        </select>
-        <select class="filter-select" id="stockFilter" title="Stock Filter">
-          <option value="all">All Stock</option>
-          <option value="in">In Stock</option>
-          <option value="low">Low Stock</option>
-          <option value="out">Out of Stock</option>
-        </select>
-        <button class="btn btn-dark btn-sm" id="quickAddBtn">
-          <i class="fa-solid fa-bolt"></i> Quick Add
-        </button>
+        <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="text" placeholder="Search milk, dahi, ghee, paneer..." autocomplete="off"></div>
+        <select class="filter-select" id="sortSelect"><option value="default">Sort: Default</option><option value="price-low">Price: Low → High</option><option value="price-high">Price: High → Low</option><option value="stock-low">Stock: Low Pehle</option><option value="stock-high">Stock: High Pehle</option><option value="name">Name: A → Z</option></select>
+        <select class="filter-select" id="stockFilter"><option value="all">All Stock</option><option value="in">In Stock</option><option value="low">Low Stock</option><option value="out">Out of Stock</option></select>
+        <button class="btn btn-dark btn-sm" id="quickAddBtn"><i class="fa-solid fa-bolt"></i> Quick Add</button>
       </div>
     </div>
-
-    <div class="tabs" id="catTabs">
-      <div class="tab active">🥛 All</div>
-    </div>
-
-    <div class="p-grid" id="inventoryList">
-      <div class="empty-box">
-        <div class="big-icon">🥛</div>
-        <h3>Loading products...</h3>
-        <p>Dairy ke product aa rahe hain, ek second ruko</p>
-      </div>
-    </div>
+    <div class="tabs" id="catTabs"><div class="tab active">🥛 All</div></div>
+    <div class="p-grid" id="inventoryList"><div class="empty-box"><div class="big-icon">🥛</div><h3>Loading products...</h3><p>Dairy ke product aa rahe hain, ek second ruko</p></div></div>
   </section>
 
-  <!-- RIGHT : SIDE BOXES -->
   <aside class="right">
-
     <div class="box">
-      <div class="profile-mini">
-        <img id="shopPhoto" src="https://placehold.co/100x100/0ea5e9/ffffff?text=D" alt="Shop Photo">
-        <div style="min-width:0">
-          <b id="shopName">Dairy Shop</b>
-          <small id="shopMeta">Loading...</small>
-          <small id="shopPhone" style="color:#0ea5e9"></small>
-        </div>
-      </div>
-      <button class="btn btn-ghost btn-sm" id="editProfileBtn" style="width:100%;margin-top:12px">
-        <i class="fa-solid fa-pen"></i> Edit Shop Profile
-      </button>
+      <div class="profile-mini"><img id="shopPhoto" src="https://placehold.co/100x100/0ea5e9/ffffff?text=D" alt="Shop Photo"><div style="min-width:0"><b id="shopName">Dairy Shop</b><small id="shopMeta">Loading...</small><small id="shopPhone" style="color:#0ea5e9"></small></div></div>
+      <button class="btn btn-ghost btn-sm" id="editProfileBtn" style="width:100%;margin-top:12px"><i class="fa-solid fa-pen"></i> Edit Shop Profile</button>
     </div>
-
-    <div class="box">
-      <div class="toggle">
-        <span><i class="fa-solid fa-store"></i> Shop: <b id="toggleText">Open</b></span>
-        <div class="switch on" id="toggleSwitch" role="switch" aria-checked="true" tabindex="0"></div>
-      </div>
-      <p class="toggle-note">
-        Band karne par customer order nahi kar payega.
-        Subah 6 baje auto open wala hisaab server se aayega.
-      </p>
-    </div>
-
-    <div class="box">
-      <h4><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i> Low Stock / Expiry Alert</h4>
-      <div id="lowStock">
-        <p class="empty-text">Loading...</p>
-      </div>
-    </div>
-
-    <div class="box">
-      <h4><i class="fa-solid fa-repeat" style="color:var(--milk)"></i> Categories</h4>
-      <div id="subBox">
-        <p class="empty-text">Loading...</p>
-      </div>
-    </div>
-
-    <div class="box">
-      <h4><i class="fa-solid fa-fire" style="color:#ef4444"></i> Top Products</h4>
-      <div id="topProducts">
-        <p class="empty-text">Loading...</p>
-      </div>
-    </div>
-
-    <div class="box">
-      <h4><i class="fa-solid fa-truck-fast"></i> Live Orders</h4>
-      <div id="liveOrders">
-        <p class="empty-text">No orders</p>
-      </div>
-      <button class="btn btn-dark btn-sm" id="viewAllOrdersBtn" style="width:100%;margin-top:11px">
-        <i class="fa-solid fa-receipt"></i> Saare Orders Dekho
-      </button>
-    </div>
-
-    <div class="box dark-box">
-      <h4><i class="fa-solid fa-globe"></i> SAMANLIVE Status</h4>
-      <div class="status-text" id="commonStatus">Checking...</div>
-      <button class="btn btn-milk btn-sm" id="checkStatusBtn" style="width:100%;margin-top:12px">
-        <i class="fa-solid fa-plug"></i> Connection Check Karo
-      </button>
-    </div>
-
+    <div class="box"><div class="toggle"><span><i class="fa-solid fa-store"></i> Shop: <b id="toggleText">Open</b></span><div class="switch on" id="toggleSwitch" role="switch" aria-checked="true" tabindex="0"></div></div><p class="toggle-note">Band karne par customer order nahi kar payega.</p></div>
+    <div class="box"><h4><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i> Low Stock / Expiry Alert</h4><div id="lowStock"><p class="empty-text">Loading...</p></div></div>
+    <div class="box"><h4><i class="fa-solid fa-repeat" style="color:var(--milk)"></i> Categories</h4><div id="subBox"><p class="empty-text">Loading...</p></div></div>
+    <div class="box"><h4><i class="fa-solid fa-fire" style="color:#ef4444"></i> Top Products</h4><div id="topProducts"><p class="empty-text">Loading...</p></div></div>
+    <div class="box"><h4><i class="fa-solid fa-truck-fast"></i> Live Orders</h4><div id="liveOrders"><p class="empty-text">No orders</p></div><button class="btn btn-dark btn-sm" id="viewAllOrdersBtn" style="width:100%;margin-top:11px"><i class="fa-solid fa-receipt"></i> Saare Orders Dekho</button></div>
+    <div class="box dark-box"><h4><i class="fa-solid fa-globe"></i> SAMANLIVE Status</h4><div class="status-text" id="commonStatus">Checking...</div><button class="btn btn-milk btn-sm" id="checkStatusBtn" style="width:100%;margin-top:12px"><i class="fa-solid fa-plug"></i> Connection Check Karo</button></div>
   </aside>
 </main>
 
-<p class="footer-note">
-  Dairy Dashboard • World Model Connected • Seed: dairy.seed.js • Form: common/products/product-form.html
-</p>
-
+<p class="footer-note">Dairy Dashboard • World Model Connected • Seed: dairy.seed.js • V9 Fixed</p>
 <div id="toast"></div>
 <audio id="newOrderSound" src="../common/orders/new-order-sound.mp3" preload="none"></audio>
 
@@ -589,7 +217,51 @@ input,select{font-family:'Outfit',sans-serif}
 <script src="../common/core/dashboard-core.js"></script>
 <script src="../common/js/shop-toggle.js"></script>
 <script src="../common/products/product-manager.js"></script>
-<script src="/shop-templates/common/cart/cart-core.js"></script>
-<script src="./dashboard.js?v=8"></script>
+<script src="../../../assets/js/role-hierarchy.js"></script>
+<!-- FIXED PATH: dairy se common tak sahi path -->
+<script src="../common/cart/cart-core.js?v=4-dairy"></script>
+<script src="../common/cart/cart-count.js"></script>
+<script src="./dashboard.js?v=9"></script>
+<script>
+// V9 FIX - Header buttons ko shopId ke saath bind karo - p._id crash hataya
+(function(){
+  function getShopId(){
+    const p = new URLSearchParams(location.search);
+    return p.get('shopId') || localStorage.getItem('currentShopId') || sessionStorage.getItem('currentShopId') || '';
+  }
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.display='block';
+    setTimeout(()=> t.style.display='none', 2500);
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const sid = getShopId();
+    document.getElementById('shopIdDisplay').textContent = sid ? `ID: ${sid.slice(0,12)}` : 'ID: ...';
+    // View Shop
+    document.getElementById('viewShopBtn').addEventListener('click', ()=>{
+      if(!sid){ toast('Shop ID nahi mila'); return; }
+      location.href = `./customer-view.html?shopId=${encodeURIComponent(sid)}`;
+    });
+    // Add Milk
+    document.getElementById('newProductBtn').addEventListener('click', ()=>{
+      if(!sid){ toast('Shop ID missing'); return; }
+      location.href = `../common/products/product-form.html?shopId=${encodeURIComponent(sid)}&template=dairy&returnTo=dairy`;
+    });
+    // Quick Add
+    document.getElementById('quickAddBtn').addEventListener('click', ()=>{
+      if(!sid){ toast('Shop ID missing'); return; }
+      location.href = `../common/products/product-form.html?shopId=${encodeURIComponent(sid)}&template=dairy&quick=1`;
+    });
+    document.getElementById('editProfileBtn').addEventListener('click', ()=>{
+      if(!sid){ toast('Shop ID missing'); return; }
+      location.href = `../common/profile/shop-info.html?shopId=${encodeURIComponent(sid)}`;
+    });
+    document.getElementById('viewAllOrdersBtn').addEventListener('click', ()=>{
+      if(!sid){ toast('Shop ID missing'); return; }
+      location.href = `../common/orders/orders.html?shopId=${encodeURIComponent(sid)}`;
+    });
+  });
+})();
+</script>
 </body>
 </html>

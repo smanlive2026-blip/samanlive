@@ -1,5 +1,5 @@
-// LOCATION: public/shop-templates/common/checkout/hierarchy-checkout.js - V14 FIXED - Matches CartCore V3 + CheckoutCore V3
-// Depends: role-hierarchy.js, cart-core.js V3, api-core.js, auth-core.js
+// LOCATION: public/shop-templates/common/checkout/hierarchy-checkout.js - V4 DAIRY FIXED - FULLY COMPATIBLE WITH CHECKOUT.HTML V4 + CARTCORE V4
+// Depends: role-hierarchy.js, cart-core.js V4, api-core.js
 (function(){
   const API = {
     checkout: '/api/common/checkout',
@@ -7,44 +7,33 @@
     wallet: '/api/common/wallet/balance'
   };
 
-  function getApiBase(){
-    return window.API_BASE || window.EnvConfig?.API_BASE || window.location.origin;
-  }
-
+  function getApiBase(){ return window.API_BASE || window.EnvConfig?.API_BASE || window.location.origin; }
   function getAuthHeaders(){
     const token = (window.AuthCore && window.AuthCore.getToken && window.AuthCore.getToken()) || localStorage.getItem('TOKEN') || localStorage.getItem('token') || '';
-    return {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    };
+    return { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) };
   }
+  function getQueryParam(n){ return new URLSearchParams(window.location.search).get(n); }
 
-  function getQueryParam(name){
-    return new URLSearchParams(window.location.search).get(name);
-  }
-
-  // FIXED: Stable guest_id + null safe RoleHierarchy
   function getBuyerInfo(){
     let gid = sessionStorage.getItem('guest_id');
-    if(!gid){
-      gid = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
-      try{ sessionStorage.setItem('guest_id', gid); }catch(e){}
-    }
+    if(!gid){ gid = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2,5); try{ sessionStorage.setItem('guest_id', gid); }catch(e){} }
     const rh = window.RoleHierarchy;
     return {
       buyerId: (rh && rh.getMyId && rh.getMyId()) || gid,
       buyerRole: (rh && rh.getMyRole && rh.getMyRole()) || 'customer',
       buyerShopId: (rh && rh.getMyShopId && rh.getMyShopId()) || null,
-      buyerAreaId: (window.AreaId || window.AreaManager?.areaId || null)
+      buyerAreaId: window.AreaId || window.AreaManager?.areaId || null
     };
   }
 
   function getSupplierFromUrl(){
+    const shopId = getQueryParam('shopId') || '';
+    const supplierId = getQueryParam('supplierId') || shopId;
     return {
-      supplierId: getQueryParam('supplierId') || getQueryParam('shopId') || null,
+      supplierId: supplierId,
       supplierRole: getQueryParam('supplierRole') || 'shop_owner',
-      shopId: getQueryParam('shopId') || getQueryParam('supplierId') || null,
-      supplierName: getQueryParam('supplierName') || getQueryParam('shopName') || 'Shop'
+      shopId: shopId || supplierId,
+      supplierName: getQueryParam('shopName') || getQueryParam('supplierName') || 'Dairy Shop'
     };
   }
 
@@ -52,236 +41,225 @@
     currentSupplier: null,
     currentItems: [],
     currentAddress: null,
+    currentAddressText: '',
     paymentMode: 'cod',
 
     async init(){
       this.currentSupplier = getSupplierFromUrl();
 
-      // SupplierId nahi hai toh Cart se first supplier lo
-      if(!this.currentSupplier.supplierId){
-        console.warn('No supplierId in URL, trying cart first supplier');
-        // CartCore ready hone ka wait
-        if(window.CartCore && window.CartCore.ready){
-          try{ await window.CartCore.ready; }catch(e){}
-        }
+      // CartCore ready wait + backup sync already loaded in V4
+      if(window.CartCore && window.CartCore.ready){
+        try{ await window.CartCore.ready; }catch(e){}
+      } else {
+        await new Promise(r=> setTimeout(r, 600));
+      }
+
+      // SupplierId fix - unknown ya empty ho to cart se lo
+      if(!this.currentSupplier.supplierId || this.currentSupplier.supplierId === 'unknown'){
         const allCarts = window.CartCore ? window.CartCore.getAllCarts() : {};
         const firstSid = Object.keys(allCarts)[0];
         if(firstSid){
           this.currentSupplier.supplierId = firstSid;
           this.currentSupplier.shopId = firstSid;
-          this.currentSupplier.supplierName = (allCarts[firstSid][0]?.shopName) || 'Shop';
-          this.currentSupplier.supplierRole = (allCarts[firstSid][0]?.ownerRole) || 'shop_owner';
+          this.currentSupplier.supplierName = allCarts[firstSid][0]?.shopName || 'Dairy Shop';
+          this.currentSupplier.supplierRole = allCarts[firstSid][0]?.ownerRole || 'shop_owner';
         } else {
-          alert('Cart empty hai, shop pe jao');
-          window.location.href = '/shop-templates/common/cart/cart.html';
-          return;
+          // last try - session backup
+          try{
+            for(let i=0;i<sessionStorage.length;i++){
+              const k = sessionStorage.key(i);
+              if(k && k.startsWith('cart_bkp_')){
+                const sid = k.replace('cart_bkp_','');
+                this.currentSupplier.supplierId = sid;
+                this.currentSupplier.shopId = sid;
+                break;
+              }
+            }
+          }catch(e){}
         }
       }
 
-      // Items lo - supplier wise
+      // Items nikalo
       if(window.CartCore){
         this.currentItems = window.CartCore.getCartBySupplier(this.currentSupplier.supplierId) || [];
-        if(this.currentItems.length === 0){
-          this.currentItems = window.CartCore.getCart() || [];
-        }
+        if(this.currentItems.length===0) this.currentItems = window.CartCore.getCart() || [];
       }
 
-      console.log('HierarchyCheckout init:', this.currentSupplier, this.currentItems);
-      
-      if(this.currentItems.length === 0){
-        alert('Cart khali hai');
-        window.location.href = '/shop-templates/common/cart/cart.html';
+      if(this.currentItems.length===0){
+        document.getElementById('checkout-items').innerHTML = '<div style="padding:20px;text-align:center">Cart khali hai <br><a href="../cart/cart.html">Cart pe jao</a></div>';
+        document.getElementById('place-order-btn').disabled = true;
         return;
       }
 
+      this.renderHeader();
       this.renderSummary();
+      this.bindEvents();
       await this.loadAddresses();
-      this.bindPayment();
+      await this.checkWallet();
+    },
+
+    renderHeader(){
+      const el = document.getElementById('checkout-supplier-name');
+      const elRole = document.getElementById('checkout-supplier-role');
+      if(el) el.textContent = this.currentSupplier.supplierName || this.currentItems[0]?.shopName || 'Dairy Shop';
+      if(elRole) elRole.textContent = `${this.currentSupplier.shopId} • ${this.currentSupplier.supplierRole}`;
+
+      const buyer = getBuyerInfo();
+      const isBulk = buyer.buyerRole !== 'customer' && buyer.buyerRole !== 'guest';
+      const gstSec = document.getElementById('gst-section');
+      if(gstSec) gstSec.style.display = isBulk ? 'block' : 'none';
     },
 
     renderSummary(){
-      const total = this.currentItems.reduce((s,i)=> s + (Number(i.price||0) * Number(i.qty||1)), 0);
+      const container = document.getElementById('checkout-items');
+      let html = '';
+      let subtotal = 0;
+      this.currentItems.forEach(it=>{
+        const price = Number(it.price||0);
+        const qty = Number(it.qty||1);
+        subtotal += price*qty;
+        html += `<div class="item">
+          <img src="${it.image||'https://via.placeholder.com/54'}" onerror="this.src='https://via.placeholder.com/54'">
+          <div style="flex:1"><div style="font-weight:600">${it.name}</div><div style="font-size:12px;color:#64748b">${qty} ${it.unit||''} × ₹${price}</div></div>
+          <div style="font-weight:700">₹${price*qty}</div>
+        </div>`;
+      });
+      if(container) container.innerHTML = html;
+
       const buyer = getBuyerInfo();
-      const isBulk = buyer.buyerRole !== 'customer' && buyer.buyerRole !== 'guest' && buyer.buyerRole !== null;
-      
-      let commission = 0;
-      if(this.currentSupplier.supplierRole !== 'admin' && isBulk){
-        commission = Math.round(total * 0.05);
-      }
+      const isAdminSupplier = this.currentSupplier.supplierRole === 'admin';
+      const commission = isAdminSupplier ? 0 : Math.round(subtotal * 0.05);
+      const total = subtotal; // customer total = subtotal, commission backend pe cut hoga
 
-      const el = (id)=> document.getElementById(id);
-      
-      // Escaping for XSS
-      const esc = (s)=> String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      document.getElementById('checkout-subtotal').textContent = `₹${subtotal}`;
+      document.getElementById('checkout-commission').textContent = `₹${commission} ${isAdminSupplier?'(No commission for admin)':''}`;
+      document.getElementById('checkout-total').textContent = `₹${total}`;
 
-      if(el('checkout-items')){
-        el('checkout-items').innerHTML = this.currentItems.map(i=> `
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9">
-            <span style="font-size:13px">${esc(i.name)} x ${i.qty}</span>
-            <span style="font-weight:800">₹${Number(i.price)*Number(i.qty)}</span>
-          </div>
-        `).join('');
-      }
-      if(el('checkout-subtotal')) el('checkout-subtotal').textContent = `₹${total}`;
-      if(el('checkout-commission')) el('checkout-commission').textContent = isBulk ? `₹${commission} (Admin commission - backend me katega)` : '₹0';
-      if(el('checkout-total')) el('checkout-total').textContent = `₹${total}`;
-      if(el('checkout-supplier-name')) el('checkout-supplier-name').textContent = `${esc(this.currentSupplier.supplierName)} (${esc(this.currentSupplier.supplierRole)})`;
-      
-      if(el('gst-section')){
-        el('gst-section').style.display = isBulk ? 'block' : 'none';
-      }
+      this._calc = { subtotal, commission, total };
+    },
 
-      // For payment-select page sync
-      try{
-        localStorage.setItem('checkoutTotal', String(total));
-        localStorage.setItem('checkoutSupplierId', this.currentSupplier.supplierId);
-      }catch(e){}
+    bindEvents(){
+      document.querySelectorAll('input[name="paymentMode"]').forEach(r=>{
+        r.addEventListener('change', e=>{ this.paymentMode = e.target.value; });
+      });
+      document.getElementById('gst-needed')?.addEventListener('change', e=>{
+        const inp = document.getElementById('gst-number');
+        if(inp) inp.style.display = e.target.checked ? 'block' : 'none';
+      });
+      document.getElementById('place-order-btn')?.addEventListener('click', ()=> this.placeOrder());
     },
 
     async loadAddresses(){
-      try {
-        const res = await fetch(getApiBase() + API.address, { 
-          headers: getAuthHeaders(),
-          credentials: 'include',
-          cache: 'no-store'
-        });
-        if(!res.ok) throw new Error('Auth failed');
+      const listEl = document.getElementById('address-list');
+      const buyer = getBuyerInfo();
+      try{
+        const res = await fetch(`${getApiBase()}${API.address}?buyerId=${encodeURIComponent(buyer.buyerId)}`, { headers: { 'x-buyer-id': buyer.buyerId, ...getAuthHeaders() } });
         const data = await res.json();
-        const list = data.data || data.addresses || data || [];
-        const container = document.getElementById('address-list');
-        if(container){
-          if(list.length){
-            container.innerHTML = list.map((a,i)=> `
-              <label style="display:block;border:1px solid #e2e8f0;padding:12px;margin:6px 0;border-radius:10px;cursor:pointer;background:#fff">
-                <input type="radio" name="address" value="${a._id || i}" ${i===0?'checked':''} style="margin-right:8px"> 
-                <b style="font-size:13px">${a.name||a.fullName||'HOME'}</b> - ${a.house||a.line1||''}, ${a.area||''}, ${a.city||''} - ${a.phone||''}
-              </label>
-            `).join('');
-            this.currentAddress = list[0];
-          } else {
-            container.innerHTML = `<p style="color:#94a3b8;padding:12px">No saved address. <a href="../profile/profile.html">Add karo</a> ya neeche guest address use karo.</p>`;
-            this.currentAddress = { _id: 'guest_addr', name: 'Guest', line1: 'Default', city: 'Ahmedabad' };
-          }
+        let addrs = data.addresses || data.data || [];
+        if(addrs.length===0){
+          listEl.innerHTML = '<div style="color:#64748b">Koi address nahi, naya add karo</div>';
+          return;
         }
-      } catch(e){
-        console.log('Address load skip, using guest:', e.message);
-        const container = document.getElementById('address-list');
-        if(container){
-          container.innerHTML = `<p style="color:#64748b;padding:10px">Address API not logged in - Guest checkout</p>`;
+        let html='';
+        addrs.forEach((a,i)=>{
+          const txt = a.full || `${a.line1||''} ${a.city||''} ${a.pincode||''}`;
+          html+=`<div class="addr ${i===0?'active':''}" data-id="${a._id||a.id}" data-text="${txt.replace(/"/g,'&quot;')}"><b>${a.name||a.label||'Address '+(i+1)}</b> - ${a.phone||''}<br><span style="font-size:12px">${txt}</span></div>`;
+        });
+        listEl.innerHTML = html;
+        this.currentAddress = addrs[0]._id || addrs[0].id;
+        this.currentAddressText = addrs[0].full || `${addrs[0].line1} ${addrs[0].city}`;
+        listEl.querySelectorAll('.addr').forEach(el=>{
+          el.addEventListener('click', ()=>{
+            listEl.querySelectorAll('.addr').forEach(x=> x.classList.remove('active'));
+            el.classList.add('active');
+            this.currentAddress = el.dataset.id;
+            this.currentAddressText = el.dataset.text;
+          });
+        });
+      }catch(e){
+        listEl.innerHTML = `<div style="color:#e11">Address load fail: ${e.message}</div>`;
+        // fallback - localStorage
+        const localAddr = localStorage.getItem('selectedAddressText');
+        if(localAddr){
+          this.currentAddressText = localAddr;
+          this.currentAddress = localStorage.getItem('selectedAddressId') || null;
         }
-        this.currentAddress = { _id: 'guest_addr', name: 'Guest', phone: '', line1: 'Current Location', city: 'Default' };
       }
     },
 
-    bindPayment(){
-      document.querySelectorAll('[name="paymentMode"], [data-payment-mode]').forEach(el=>{
-        const handler = (e)=>{
-          const val = e.target.value || e.target.dataset.paymentMode || e.target.dataset.method;
-          if(val) this.paymentMode = val;
-        };
-        el.addEventListener('change', handler);
-        el.addEventListener('click', handler);
-      });
-      // default COD
-      this.paymentMode = 'cod';
-      const codRadio = document.querySelector('input[value="cod"]');
-      if(codRadio) codRadio.checked = true;
-    },
-
-    getSelectedAddress(){
-      const selected = document.querySelector('input[name="address"]:checked');
-      if(!selected) return this.currentAddress || { _id: 'guest_addr', name: 'Guest' };
-      // If _id based list, find object
-      if(this.currentAddress && this.currentAddress._id === selected.value){
-        return this.currentAddress;
-      }
-      // Return whatever selected
-      return this.currentAddress || { _id: selected.value };
+    async checkWallet(){
+      if(this.paymentMode !== 'wallet') return;
+      try{
+        const buyer = getBuyerInfo();
+        const res = await fetch(`${getApiBase()}${API.wallet}?buyerId=${encodeURIComponent(buyer.buyerId)}`, { headers: { 'x-buyer-id': buyer.buyerId, ...getAuthHeaders() } });
+        const data = await res.json();
+        document.getElementById('wallet-balance').textContent = `Wallet Balance: ₹${data.balance||0}`;
+      }catch(e){}
     },
 
     async placeOrder(){
-      const buyer = getBuyerInfo();
-      const supplier = this.currentSupplier;
-
-      if(this.currentItems.length === 0){
-        alert('Cart khali hai');
-        return;
-      }
-
       const btn = document.getElementById('place-order-btn');
-      if(btn){ btn.disabled = true; btn.textContent = 'Placing Order...'; }
+      if(btn) { btn.disabled = true; btn.textContent = 'Placing...'; }
+      try{
+        const buyer = getBuyerInfo();
+        const total = this._calc?.total || this.currentItems.reduce((s,i)=> s + Number(i.price||0)*Number(i.qty||1),0);
+        const payload = {
+          shopId: this.currentSupplier.shopId,
+          supplierId: this.currentSupplier.supplierId,
+          supplierRole: this.currentSupplier.supplierRole,
+          buyerId: buyer.buyerId,
+          buyerRole: buyer.buyerRole,
+          buyerShopId: buyer.buyerShopId,
+          buyerAreaId: buyer.buyerAreaId,
+          items: this.currentItems,
+          total: total,
+          totalAmount: total,
+          subtotal: this._calc?.subtotal || total,
+          commissionAmount: this._calc?.commission || 0,
+          addressId: this.currentAddress || localStorage.getItem('selectedAddressId') || null,
+          addressText: this.currentAddressText || localStorage.getItem('selectedAddressText') || '',
+          deliveryAddress: { full: this.currentAddressText || '' },
+          paymentMethod: this.paymentMode,
+          paymentMode: this.paymentMode,
+          isBulkOrder: buyer.buyerRole !== 'customer',
+          gstInvoiceNeeded: document.getElementById('gst-needed')?.checked || false,
+          gstNumber: document.getElementById('gst-number')?.value || null,
+          createdAt: new Date().toISOString()
+        };
 
-      const total = this.currentItems.reduce((s,i)=> s + (Number(i.price||0)*Number(i.qty||1)), 0);
+        console.log('Dairy Checkout payload:', payload);
 
-      const payload = {
-        buyerId: buyer.buyerId,
-        buyerRole: buyer.buyerRole,
-        buyerShopId: buyer.buyerShopId,
-        buyerAreaId: buyer.buyerAreaId,
-        supplierId: supplier.supplierId,
-        supplierRole: supplier.supplierRole,
-        supplierShopId: supplier.shopId,
-        shopId: supplier.shopId || supplier.supplierId,
-        areaId: buyer.buyerAreaId,
-        items: this.currentItems,
-        addressId: this.getSelectedAddress()?._id || localStorage.getItem('selectedAddressId') || null,
-        address: this.getSelectedAddress(),
-        addressText: localStorage.getItem('selectedAddressText') || '',
-        paymentMode: this.paymentMode,
-        paymentMethod: this.paymentMode,
-        isBulkOrder: buyer.buyerRole !== 'customer' && buyer.buyerRole !== 'guest',
-        total: total,
-        totalAmount: total,
-        gstInvoiceNeeded: document.getElementById('gst-needed')?.checked || false,
-        gstNumber: document.getElementById('gst-number')?.value || null
-      };
-
-      console.log('Placing order payload:', payload);
-
-      try {
-        const res = await fetch(getApiBase() + API.checkout, {
-          method: 'POST',
-          headers: getAuthHeaders(),
+        const res = await fetch(`${getApiBase()}${API.checkout}/${encodeURIComponent(payload.shopId)}/place`, {
+          method:'POST',
+          headers: { 'x-buyer-id': buyer.buyerId, ...getAuthHeaders() },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-        if(!data.success) throw new Error(data.message || 'Checkout failed');
+        if(!data.success) throw new Error(data.message || 'Order failed');
 
-        // Clear cart - V3
-        if(window.CartCore){
-          await window.CartCore.clear(supplier.supplierId);
-        }
-        try{ sessionStorage.removeItem('cart_bkp_'+supplier.supplierId); }catch(e){}
+        // clear cart supplier wise
+        if(window.CartCore) await window.CartCore.clear(this.currentSupplier.supplierId);
+        try{ sessionStorage.removeItem('cart_bkp_'+this.currentSupplier.supplierId); }catch(e){}
 
-        const orderId = data.orderId || data._id || data.order?._id || 'ORD'+Date.now();
-        window.location.href = `/shop-templates/common/checkout/order-success.html?orderId=${orderId}&supplierId=${supplier.supplierId}&shopId=${payload.shopId}&amount=${total}`;
+        const orderId = data.orderId || data.order?.orderId || data.data?.orderId || 'ORD'+Date.now();
+        window.location.href = `./order-success.html?shopId=${encodeURIComponent(payload.shopId)}&orderId=${encodeURIComponent(orderId)}&amount=${encodeURIComponent(total)}&supplierId=${encodeURIComponent(payload.supplierId)}`;
 
-      } catch(e){
-        console.error('Order fail:', e);
-        alert('Order fail: ' + e.message);
+      }catch(e){
+        alert('Order fail: '+ e.message);
         if(btn){ btn.disabled = false; btn.textContent = 'Place Order'; }
       }
+    },
+
+    addNewAddress(){
+      const txt = prompt('Full Address likho (House, City, Pincode, Phone):');
+      if(!txt) return;
+      localStorage.setItem('selectedAddressText', txt);
+      this.currentAddressText = txt;
+      this.currentAddress = 'local_'+Date.now();
+      document.getElementById('address-list').innerHTML = `<div class="addr active" data-id="${this.currentAddress}" data-text="${txt}">${txt} (Local)</div>`;
     }
   };
 
-  // Auto init only on checkout.html
-  document.addEventListener('DOMContentLoaded', ()=>{
-    if(window.location.pathname.includes('checkout.html')){
-      setTimeout(()=> {
-        // Wait for CartCore
-        if(window.CartCore && window.CartCore.ready){
-          window.CartCore.ready.then(()=> window.HierarchyCheckout.init());
-        } else {
-          window.HierarchyCheckout.init();
-        }
-      }, 800);
-      
-      document.getElementById('place-order-btn')?.addEventListener('click', (e)=>{
-        e.preventDefault();
-        window.HierarchyCheckout.placeOrder();
-      });
-    }
-  });
-
-  console.log('✅ HierarchyCheckout V14 Fixed - stable guest_id + CartCore ready wait + esc');
+  document.addEventListener('DOMContentLoaded', ()=> HierarchyCheckout.init());
+  console.log('✅ HierarchyCheckout V4 DAIRY FIXED loaded');
 })();

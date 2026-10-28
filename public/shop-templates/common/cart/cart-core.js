@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/common/cart/cart-core.js - V3 SERVER CART - FIXED - NO localStorage
+// LOCATION: public/shop-templates/common/cart/cart-core.js - V4 DAIRY FIXED - SERVER CART + SESSION BACKUP + X-BUYER-ID
 // Depends: role-hierarchy.js, api-core.js, storage-core.js
 (function(){
   const API = {
@@ -7,7 +7,7 @@
     clear: '/api/common/cart/clear'
   };
 
-  // Memory cache - localStorage ki jagah
+  // Memory cache - dairy ke liye bhi same
   let memoryCart = {}; // { supplierId: [items] }
 
   function getApiBase(){
@@ -19,7 +19,21 @@
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   }
 
-  // FIX 1: Stable guest_id - har reload pe naya guest nahi banega
+  // FIX 1: Stable guest_id + load backup immediately for dairy
+  function loadBackupSync(){
+    try{
+      for(let i=0;i<sessionStorage.length;i++){
+        const key = sessionStorage.key(i);
+        if(key && key.startsWith('cart_bkp_')){
+          const sid = key.replace('cart_bkp_','');
+          const val = sessionStorage.getItem(key);
+          if(val) memoryCart[sid] = JSON.parse(val);
+        }
+      }
+    }catch(e){}
+  }
+  loadBackupSync(); // turant load - dairy customer-view se checkout tak
+
   function getBuyerInfo(){
     let gid = sessionStorage.getItem('guest_id');
     if(!gid){
@@ -34,21 +48,29 @@
     };
   }
 
+  // FIX 2: Dairy fix - dairy products me ownerId nahi hota, shopId hota hai
   function getSupplierInfo(product){
+    // Dairy dashboard.js me product = { _id, name, price, shopId, shop_id, ownerId }
+    const urlSid = new URLSearchParams(window.location.search).get('shopId') || new URLSearchParams(window.location.search).get('supplierId') || '';
     return {
-      supplierId: product.ownerId || product.shopId || product.shop_id || product.supplierId || 'unknown',
+      supplierId: product.ownerId || product.shopId || product.shop_id || product.supplierId || product.dairyShopId || urlSid || 'unknown',
       supplierRole: product.ownerRole || product.shopOwnerRole || product.supplierRole || 'shop_owner',
-      supplierName: product.shopName || product.ownerName || 'Shop',
-      shopId: product.shopId || product.shop_id || null
+      supplierName: product.shopName || product.ownerName || product.dairyName || 'Dairy Shop',
+      shopId: product.shopId || product.shop_id || product.supplierId || urlSid || null
     };
   }
 
+  // FIX 3: x-buyer-id header add - server cart V3 ko ye chahiye
   async function syncToServer(supplierId, items){
+    const buyer = getBuyerInfo();
     try {
-      const buyer = getBuyerInfo();
       await fetch(getApiBase() + API.sync, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        headers: { 
+          'Content-Type': 'application/json', 
+          'x-buyer-id': buyer.buyerId, // MAIN FIX
+          ...getAuthHeaders() 
+        },
         body: JSON.stringify({
           buyerId: buyer.buyerId,
           buyerRole: buyer.buyerRole,
@@ -69,7 +91,7 @@
       const supplier = getSupplierInfo(product);
 
       if (window.RoleHierarchy && !window.RoleHierarchy.canBuy(buyer.buyerRole, supplier.supplierRole, buyer.buyerId, supplier.supplierId)) {
-        const msg = buyer.buyerRole === 'shop_owner' ? 'Aap is shop se nahi kharid sakte (same level)' : `Aap ${supplier.supplierRole} se nahi kharid sakte`;
+        const msg = buyer.buyerRole === 'shop_owner' ? 'Aap is shop se nahi kharid sakte' : `Aap ${supplier.supplierRole} se nahi kharid sakte`;
         if (window.Toast) Toast.error(msg); else alert(msg);
         return false;
       }
@@ -94,7 +116,7 @@
           price: product.price || product.sellingPrice || 0,
           image: product.image || product.images?.[0] || '',
           qty: qty,
-          unit: product.unit || '',
+          unit: product.unit || 'ltr',
           ownerRole: supplier.supplierRole,
           ownerId: supplier.supplierId,
           shopId: supplier.shopId,
@@ -110,17 +132,24 @@
     },
 
     getCart(supplierId){
-      if (supplierId) return memoryCart[supplierId] || [];
+      if (supplierId && supplierId !== 'unknown') return memoryCart[supplierId] || [];
+      // unknown case ke liye - dairy ka first cart do
+      if(supplierId === 'unknown'){
+        const first = Object.keys(memoryCart)[0];
+        return first ? memoryCart[first] : [];
+      }
       return Object.values(memoryCart).flat();
     },
 
     getCartBySupplier(supplierId){
+      if(!supplierId || supplierId === 'unknown'){
+        const first = Object.keys(memoryCart)[0];
+        return first ? memoryCart[first] : [];
+      }
       return memoryCart[supplierId] || [];
     },
 
-    getAllCarts(){
-      return memoryCart;
-    },
+    getAllCarts(){ return memoryCart; },
 
     getTotalCount(){
       return Object.values(memoryCart).flat().reduce((s,i)=> s + (i.qty||1), 0);
@@ -128,7 +157,7 @@
 
     getTotalAmount(supplierId){
       const items = supplierId ? this.getCart(supplierId) : this.getCart();
-      return items.reduce((s,i)=> s + (i.price * i.qty), 0);
+      return items.reduce((s,i)=> s + (Number(i.price||0) * Number(i.qty||1)), 0);
     },
 
     async remove(productId, supplierId){
@@ -152,7 +181,6 @@
       };
       if (supplierId) search(memoryCart[supplierId]);
       else Object.values(memoryCart).forEach(search);
-
       if (supplierId) await syncToServer(supplierId, memoryCart[supplierId]);
       else {
         for(let sid in memoryCart) await syncToServer(sid, memoryCart[sid]);
@@ -161,7 +189,7 @@
     },
 
     async clear(supplierId){
-      if (supplierId){
+      if (supplierId && supplierId !== 'unknown'){
         memoryCart[supplierId] = [];
         await syncToServer(supplierId, []);
       } else {
@@ -180,7 +208,7 @@
       try {
         await fetch(getApiBase() + API.clear, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          headers: { 'Content-Type': 'application/json', 'x-buyer-id': getBuyerInfo().buyerId, ...getAuthHeaders() },
           body: JSON.stringify({ buyerId: getBuyerInfo().buyerId, supplierId: supplierId || null })
         });
       } catch(e){}
@@ -190,27 +218,20 @@
       try {
         const buyer = getBuyerInfo();
         const res = await fetch(getApiBase() + `${API.get}?buyerId=${encodeURIComponent(buyer.buyerId)}`, {
-          headers: getAuthHeaders()
+          headers: { 'x-buyer-id': buyer.buyerId, ...getAuthHeaders() }
         });
         const data = await res.json();
         if (data.success && data.carts && Object.keys(data.carts).length > 0) {
-          memoryCart = data.carts;
-        } else {
-          // Server empty -> sessionStorage backup se restore
-          let restored = {};
-          try{
-            for(let i=0;i<sessionStorage.length;i++){
-              const key = sessionStorage.key(i);
-              if(key && key.startsWith('cart_bkp_')){
-                const sid = key.replace('cart_bkp_','');
-                restored[sid] = JSON.parse(sessionStorage.getItem(key) || '[]');
-              }
-            }
-            if(Object.keys(restored).length > 0) memoryCart = restored;
-          }catch(e){}
+          // server ka data + local backup merge
+          const merged = {...memoryCart, ...data.carts};
+          memoryCart = merged;
+          // backup bhi update karo
+          for(let sid in merged){
+            try{ sessionStorage.setItem(`cart_bkp_${sid}`, JSON.stringify(merged[sid])); }catch(e){}
+          }
         }
         this.emitUpdate();
-      } catch(e){ console.log('Cart restore skip:', e.message); }
+      } catch(e){ console.log('Cart restore skip:', e.message); this.emitUpdate(); }
     },
 
     emitUpdate(){
@@ -220,54 +241,46 @@
       if (window.CartCount && window.CartCount.update) window.CartCount.update();
     },
 
-    // FIX 2: cart getter - drawer aur cart.html isi ko dhundh rahe the
     get cart(){
       const all = Object.values(memoryCart).flat();
-      const total = all.reduce((s,i)=> s + (i.price * i.qty), 0);
-      const count = all.reduce((s,i)=> s + (i.qty||0), 0);
+      const total = all.reduce((s,i)=> s + (Number(i.price||0) * Number(i.qty||1)), 0);
+      const count = all.reduce((s,i)=> s + (Number(i.qty||0)), 0);
       return { items: all, total, count, bySupplier: memoryCart, totalAmount: total };
     },
 
-    // FIX 3: Navigation helpers - drawer me missing the
+    // FIX 4: Dairy ke liye proper checkout URL - shopId + supplierId dono
     goToCheckout(supplierId){
       const buyer = getBuyerInfo();
-      const sid = supplierId || Object.keys(memoryCart)[0] || 'unknown';
-      const url = `/shop-templates/common/checkout/checkout.html?supplierId=${encodeURIComponent(sid)}&buyerId=${encodeURIComponent(buyer.buyerId)}&role=${encodeURIComponent(buyer.buyerRole)}`;
+      let sid = supplierId;
+      if(!sid || sid === 'unknown') sid = Object.keys(memoryCart)[0] || new URLSearchParams(location.search).get('shopId') || '';
+      const shopIdParam = new URLSearchParams(location.search).get('shopId') || sid;
+      const url = `/shop-templates/common/checkout/checkout.html?shopId=${encodeURIComponent(shopIdParam)}&supplierId=${encodeURIComponent(sid)}&supplierRole=shop_owner&buyerId=${encodeURIComponent(buyer.buyerId)}`;
       window.location.href = url;
     },
 
     goToCart(){
-      const sid = Object.keys(memoryCart)[0] || '';
-      window.location.href = `/shop-templates/common/cart/cart.html?supplierId=${encodeURIComponent(sid)}`;
+      const sid = Object.keys(memoryCart)[0] || new URLSearchParams(location.search).get('shopId') || '';
+      const shopIdParam = new URLSearchParams(location.search).get('shopId') || sid;
+      window.location.href = `/shop-templates/common/cart/cart.html?shopId=${encodeURIComponent(shopIdParam)}&supplierId=${encodeURIComponent(sid)}`;
     },
 
-    // For compatibility
     onChange(cb){
-      window.addEventListener('cart:updated', (e)=>{
-        const cartData = this.cart;
-        cb(cartData);
+      window.addEventListener('cart:updated', ()=>{
+        cb(this.cart);
       });
     },
 
     ready: null
   };
 
-  // ready promise
   window.CartCore.ready = new Promise((resolve)=>{
-    document.addEventListener('DOMContentLoaded', ()=> {
-      setTimeout(async ()=>{
-        await window.CartCore.restore();
-        resolve(window.CartCore.cart);
-      }, 500);
-    });
-    // Agar DOM already loaded
-    if(document.readyState !== 'loading'){
-      setTimeout(async ()=>{
-        await window.CartCore.restore();
-        resolve(window.CartCore.cart);
-      }, 500);
-    }
+    const run = async ()=>{
+      await window.CartCore.restore();
+      resolve(window.CartCore.cart);
+    };
+    document.addEventListener('DOMContentLoaded', ()=> setTimeout(run, 300));
+    if(document.readyState !== 'loading') setTimeout(run, 300);
   });
 
-  console.log('✅ CartCore V3 Fixed loaded - cart getter + stable guest + nav');
+  console.log('✅ CartCore V4 DAIRY FIXED loaded');
 })();
