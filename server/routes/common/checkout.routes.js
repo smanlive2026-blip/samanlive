@@ -1,192 +1,158 @@
-// LOCATION: server/routes/common/checkout.routes.js - V13 HIERARCHY CHECKOUT + WALLET + SOCKET
+// LOCATION: server/routes/common/checkout.routes.js - FULL WORKING - ORDER CREATE + ADDRESS SHOP OWNER TAK
 const express = require('express');
 const router = express.Router();
 const Order = require('../../models/Order');
-const Wallet = require('../../models/Wallet');
+const User = require('../../models/User');
 
-// Helper: Wallet get or create
-async function getOrCreateWallet(userId, role, shopId = null, areaId = null){
-  let wallet = await Wallet.findOne({ userId, role });
-  if (!wallet) {
-    wallet = new Wallet({ userId, role, shopId, areaId, balance: 0 });
-    await wallet.save();
-  }
-  return wallet;
+// Helper buyerId se user nikalna
+async function getUserByBuyerId(buyerId){
+  if(!buyerId) return null;
+  if(buyerId.startsWith('guest_')) return null;
+  let id = buyerId;
+  if(id.startsWith('user_')) id = id.replace('user_','');
+  try{
+    if(id.length===24){
+      const u = await User.findById(id);
+      if(u) return u;
+    }
+    const phone = id.split('_')[0].replace(/\D/g,'').slice(-10);
+    if(phone.length>=10){
+      return await User.findOne({ phone });
+    }
+  }catch(e){}
+  return null;
 }
 
-// POST /api/common/checkout - hierarchy-checkout.js se call ayega
-router.post('/', async (req, res) => {
-  try {
+// POST /api/common/checkout/:shopId/place - Dairy + All Shops ke liye
+router.post('/:shopId/place', async (req,res)=>{
+  try{
+    const shopId = req.params.shopId;
     const {
-      buyerId, buyerRole, buyerShopId, buyerAreaId,
-      supplierId, supplierRole, supplierShopId, shopId, areaId,
-      items, addressId, address, paymentMode, isBulkOrder, total, totalAmount,
-      gstInvoiceNeeded, gstNumber
+      buyerId, buyerRole, buyerShopId,
+      items, total, totalAmount, subtotal,
+      addressId, addressText, deliveryAddress,
+      paymentMethod, paymentMode,
+      commissionAmount, isBulkOrder
     } = req.body;
 
-    // Validation
-    if (!buyerId ||!supplierId ||!items || items.length === 0) {
-      return res.status(400).json({ success: false, message: 'buyerId, supplierId, items required' });
+    if(!items || items.length===0){
+      return res.status(400).json({ success: false, message: 'Cart khali hai' });
     }
 
-    // RoleHierarchy server side double check
-    const hierarchy = {
-      admin: [],
-      area_manager: ['admin'],
-      shop_owner: ['admin','area_manager'],
-      customer: ['shop_owner','area_manager','admin']
-    };
-    const allowed = hierarchy[buyerRole] || [];
-    if (buyerRole!== 'guest' && buyerRole === supplierRole) {
-      // same role block
-      if (buyerRole!== 'customer') {
-        return res.status(403).json({ success: false, message: 'Same role buying blocked' });
-      }
+    // User ka pura address nikal lo agar sirf ID aaya hai
+    let finalDeliveryAddress = deliveryAddress || {};
+    if(!finalDeliveryAddress.full && addressText){
+      finalDeliveryAddress.full = addressText;
+      finalDeliveryAddress.fullAddress = addressText;
     }
-    if (buyerRole!== 'guest' &&!allowed.includes(supplierRole) && buyerRole!== 'customer') {
-      // customer ko sab allowed, but others check
-      if (!(buyerRole === 'customer' && ['shop_owner','area_manager','admin'].includes(supplierRole))) {
-        if (buyerRole!== 'guest') {
-          return res.status(403).json({ success: false, message: `${buyerRole} cannot buy from ${supplierRole}` });
+    if(buyerId){
+      const user = await getUserByBuyerId(buyerId);
+      if(user && addressId){
+        const addr = user.addresses.id(addressId) || user.addresses.find(a=>a._id.toString()===addressId);
+        if(addr){
+          finalDeliveryAddress = {
+            name: addr.name || user.name,
+            phone: addr.phone || user.phone,
+            line1: addr.line1,
+            line2: addr.line2,
+            city: addr.city,
+            state: addr.state,
+            pincode: addr.pincode,
+            label: addr.label,
+            full: `${addr.line1}${addr.line2?', '+addr.line2:''}, ${addr.city}, ${addr.state} - ${addr.pincode}`,
+            fullAddress: `${addr.line1}${addr.line2?', '+addr.line2:''}, ${addr.city}, ${addr.state} - ${addr.pincode}`
+          };
+        }
+      } else if(user){
+        // default address
+        const def = user.addresses.find(a=>a.isDefault) || user.addresses[0];
+        if(def){
+          finalDeliveryAddress = {
+            name: def.name || user.name,
+            phone: def.phone || user.phone,
+            line1: def.line1,
+            line2: def.line2,
+            city: def.city,
+            state: def.state,
+            pincode: def.pincode,
+            full: `${def.line1}, ${def.city} - ${def.pincode}`,
+            fullAddress: `${def.line1}, ${def.city} - ${def.pincode}`
+          };
         }
       }
     }
 
-    const finalTotal = total || totalAmount || items.reduce((s,i)=> s + (i.price * (i.qty||i.quantity||1)), 0);
+    const orderId = 'ORD' + Date.now() + Math.floor(Math.random()*1000);
 
-    // Commission: 5% if supplier!= admin
-    let commissionAmount = 0;
-    let supplierEarning = finalTotal;
-    if (supplierRole!== 'admin') {
-      commissionAmount = Math.round(finalTotal * 0.05);
-      supplierEarning = finalTotal - commissionAmount;
-    }
-
-    // Create Order
-    const order = new Order({
-      buyerId,
+    const order = await Order.create({
+      orderId,
+      shopId: shopId,
+      supplierId: req.body.supplierId || shopId,
+      buyerId: buyerId || 'guest',
       buyerRole: buyerRole || 'customer',
-      buyerShopId: buyerShopId || null,
-      buyerAreaId: buyerAreaId || null,
-      supplierId,
-      supplierRole,
-      supplierShopId: supplierShopId || null,
-      shopId: shopId || supplierShopId || supplierId,
-      areaId: areaId || buyerAreaId || null,
-      isBulkOrder: isBulkOrder || (buyerRole!== 'customer' && buyerRole!== 'guest'),
-      items: items.map(it=> ({
-        productId: it.productId || it._id || it.id,
-        name: it.name || it.title,
-        price: it.price,
-        quantity: it.qty || it.quantity || 1,
-        qty: it.qty || it.quantity || 1,
-        image: it.image || it.images?.[0] || '',
-        ownerRole: it.ownerRole || supplierRole,
-        ownerId: it.ownerId || supplierId,
-        shopId: it.shopId || shopId
+      buyerShopId: buyerShopId || '',
+      items: items.map(i=>({
+        productId: i.productId,
+        name: i.name || i.title,
+        price: Number(i.price||0),
+        qty: Number(i.qty||i.quantity||1),
+        quantity: Number(i.qty||i.quantity||1),
+        image: i.image || '',
+        unit: i.unit || '',
+        shopId: i.shopId || shopId
       })),
-      totalAmount: finalTotal,
-      total: finalTotal,
-      commissionAmount,
-      supplierEarning,
-      deliveryAddress: address || {},
-      addressId: addressId || null,
-      paymentMethod: paymentMode || 'cod',
-      paymentMode: paymentMode || 'cod',
-      paymentStatus: (paymentMode === 'cod' || paymentMode === 'credit')? 'pending' : 'paid',
+      totalAmount: Number(totalAmount||total||0),
+      total: Number(total||totalAmount||0),
+      subtotal: Number(subtotal||total||0),
+      commissionAmount: Number(commissionAmount||0),
+      addressId: addressId || '',
+      addressText: addressText || finalDeliveryAddress.full || '',
+      deliveryAddress: finalDeliveryAddress,
+      paymentMethod: paymentMethod || paymentMode || 'cod',
+      status: 'placed',
       orderStatus: 'placed',
-      gstInvoiceNeeded: gstInvoiceNeeded || false,
-      gstNumber: gstNumber || null,
-      userId: buyerId, // backward compat
-      shopType: supplierRole
+      isBulkOrder: !!isBulkOrder,
+      gstInvoiceNeeded: req.body.gstInvoiceNeeded || false,
+      gstNumber: req.body.gstNumber || '',
+      createdAt: new Date()
     });
 
-    await order.save();
-
-    // WALLET UPDATE
-    try {
-      // Supplier wallet credit
-      const supplierWallet = await getOrCreateWallet(supplierId, supplierRole, supplierShopId, areaId);
-      await supplierWallet.credit(order._id, finalTotal, commissionAmount, buyerRole, buyerId, paymentMode);
-
-      // Admin wallet commission
-      if (commissionAmount > 0) {
-        // Admin wallet - pehla admin dhoondo ya default admin id
-        let adminWallet = await Wallet.findOne({ role: 'admin' });
-        if (!adminWallet) {
-          adminWallet = new Wallet({ userId: 'admin_default', role: 'admin', balance: 0 });
-          await adminWallet.save();
-        }
-        await adminWallet.addCommission(order._id, commissionAmount, supplierRole, supplierId);
-      }
-
-      // Agar buyer ne wallet se pay kiya
-      if (paymentMode === 'wallet' && buyerRole!== 'customer' && buyerRole!== 'guest') {
-        const buyerWallet = await getOrCreateWallet(buyerId, buyerRole, buyerShopId, buyerAreaId);
-        await buyerWallet.debit(order._id, finalTotal, supplierRole, supplierId, 'wallet');
-        order.walletDeducted = true;
-        await order.save();
-      }
-    } catch (walletErr) {
-      console.error('Wallet error:', walletErr.message);
-      // Order fail nahi karna, wallet baad me adjust ho jayega
+    // Socket se shop owner ko live bhejo
+    if(global.io){
+      global.io.to(`shop:${shopId}`).emit('new-order', order);
+      global.io.to(`shop:${order.supplierId}`).emit('new-order', order);
     }
 
-    // SOCKET EMIT - LIVE ORDER POPUP
-    try {
-      if (global.io) {
-        // Shop dashboard ko
-        global.io.to(`shop:${supplierId}`).emit('new-order', order);
-        global.io.to(`shop:${shopId || supplierId}`).emit('new-order', order);
-        // Area manager ko bhi agar supplier area_manager hai
-        global.io.emit('new-order', order); // global for admin panel
-        console.log(`🔔 Socket emit new-order for shop:${supplierId}`);
-      }
-    } catch (sockErr) {
-      console.error('Socket emit failed:', sockErr.message);
-    }
+    console.log(`✅ Order placed: ${orderId} Shop: ${shopId} Buyer: ${buyerId} Address: ${finalDeliveryAddress.full||addressText}`);
 
-    // Clear cart store
-    // (cart.routes.js ka store clear karna - require cache se)
-    try {
-      const cartModule = require('./cart.routes.js');
-      // direct cartStore access nahi, but client khud clear karega
-    } catch(e){}
+    res.json({ success: true, orderId: order.orderId, order, message: 'Order placed - Address shop owner ko chala gaya' });
 
-    res.json({
-      success: true,
-      message: 'Order placed successfully',
-      orderId: order.orderId,
-      _id: order._id,
-      order: order,
-      total: finalTotal,
-      commission: commissionAmount,
-      earning: supplierEarning
-    });
-
-  } catch (e) {
-    console.error('Checkout error:', e);
-    res.status(500).json({ success: false, error: e.message });
+  }catch(e){
+    console.error('Checkout place error', e);
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
-// GET /api/common/checkout/my-orders?buyerId=xxx
-router.get('/my-orders', async (req, res) => {
-  try {
-    const { buyerId, supplierId, role } = req.query;
-    let query = {};
-    if (buyerId) query.buyerId = buyerId;
-    if (supplierId) query.supplierId = supplierId;
-    if (role) {
-      // agar role=shop_owner toh uske orders jahan woh supplier hai
-      if (['shop_owner','area_manager','admin'].includes(role) && supplierId) {
-        query.supplierId = supplierId;
-      }
-    }
-    const orders = await Order.find(query).sort({ createdAt: -1 }).limit(100);
-    res.json({ success: true, data: orders });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+// GET /api/common/checkout/orders/my?buyerId=xxx
+router.get('/orders/my', async (req,res)=>{
+  try{
+    const buyerId = req.headers['x-buyer-id'] || req.query.buyerId || req.user?._id;
+    if(!buyerId) return res.json({ success: true, orders: [] });
+    const orders = await Order.find({ $or: [{ buyerId }, { buyerId: buyerId.replace('user_','') }, { buyerId: buyerId.replace('guest_','') }] }).sort({ createdAt: -1 }).limit(50);
+    res.json({ success: true, orders });
+  }catch(e){
+    res.json({ success: true, orders: [] });
+  }
+});
+
+// GET /api/common/checkout/orders/shop/:shopId
+router.get('/orders/shop/:shopId', async (req,res)=>{
+  try{
+    const shopId = req.params.shopId;
+    const orders = await Order.find({ $or: [{ shopId }, { supplierId: shopId }] }).sort({ createdAt: -1 }).limit(100);
+    res.json({ success: true, orders });
+  }catch(e){
+    res.json({ success: true, orders: [] });
   }
 });
 

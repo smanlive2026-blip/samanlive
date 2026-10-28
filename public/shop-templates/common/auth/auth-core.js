@@ -1,68 +1,51 @@
-// LOCATION: public/shop-templates/common/auth/auth-core.js - WORLD CLASS AUTH CORE - API ONLY, NO LOCALSTORAGE
+// LOCATION: public/shop-templates/common/auth/auth-core.js - V6 COMMON CONNECTED
 class AuthCore {
   constructor(){
-    this.api = '/api/common/auth';
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
   }
-
-  // Check if shop owner is logged in - via API only
+  getToken(){ return localStorage.getItem('userToken') || localStorage.getItem('TOKEN') || ''; }
+  isLoggedIn(){ return !!this.getToken(); }
   async checkAuth(){
+    const token = this.getToken();
+    if(!token) return { authenticated: false, user: null };
     try{
-      const res = await fetch(`/api/auth/check?t=${Date.now()}`, {
-        method:'GET',
-        credentials:'include',
-        cache:'no-store'
-      });
+      const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer '+token }, cache: 'no-store' });
       const data = await res.json();
-      if(!data.success || !data.user){
-        // Not logged in - redirect to login
-        if(!location.pathname.includes('login') && !location.pathname.includes('index.html')){
-          console.warn('Not authenticated, staying on page for dashboard check');
-        }
-        return { authenticated: false, user: null };
+      if(data.success){
+        window.currentUser = data.user;
+        return { authenticated: true, user: data.user };
       }
-      window.currentUser = data.user;
-      return { authenticated: true, user: data.user };
-    }catch(e){
-      console.error('Auth check failed', e);
+      localStorage.removeItem('userToken');
       return { authenticated: false, user: null };
-    }
+    }catch(e){ return { authenticated: false, user: null }; }
   }
-
-  // Get current user role
   async getRole(){
     const auth = await this.checkAuth();
-    return auth.user?.role || 'guest';
+    return auth.user?.role || localStorage.getItem('USER_ROLE') || 'customer';
   }
-
-  // Protect dashboard - if not owner, block
+  getOwnerId(){ return window.currentUser?._id || localStorage.getItem('USER_ID') || ''; }
   async protectDashboard(){
     const result = await this.checkAuth();
     if(!result.authenticated){
-      document.body.innerHTML = `
-        <div style="height:100vh;display:grid;place-items:center;font-family:Outfit,sans-serif;text-align:center;padding:20px">
-          <div>
-            <h1 style="font-size:48px">🔒</h1>
-            <h2 style="font-weight:900;margin:10px 0">Login Required</h2>
-            <p style="color:#64748b">Dashboard dekhne ke liye login karo</p>
-            <a href="/index.html" style="display:inline-block;margin-top:16px;background:#0f172a;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:800">Go to Login</a>
-          </div>
-        </div>
-      `;
+      document.body.innerHTML = `<div style="height:100vh;display:grid;place-items:center;font-family:Outfit,sans-serif;text-align:center;padding:20px"><div><h1 style="font-size:48px">🔒</h1><h2>Login Required</h2><p>Dashboard dekhne ke liye main app se login karo</p><a href="/" style="display:inline-block;margin-top:16px;background:#0f172a;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:800">Go to Login</a></div></div>`;
       return false;
     }
     return true;
   }
-
-  // Get shop owner ID from auth
-  getOwnerId(){
-    return window.currentUser?._id || window.currentUser?.id || '';
+  showAuthModal(redirectUrl){
+    window._redirectAfterLogin = redirectUrl || location.href;
+    if(window.openLoginModal) window.openLoginModal();
+    else location.href = '/';
+  }
+  async logout(){
+    localStorage.removeItem('userToken'); localStorage.removeItem('TOKEN');
+    localStorage.removeItem('USER_ID'); localStorage.removeItem('lm_user');
+    window.currentUser = null;
+    location.href = '/';
   }
 }
-
 window.AuthCore = new AuthCore();
-
-// Auto check on dashboard pages
 if(location.pathname.includes('dashboard.html')){
   window.AuthCore.protectDashboard();
 }
+console.log('✅ AuthCore V6 COMMON CONNECTED');
