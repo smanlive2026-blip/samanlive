@@ -1,286 +1,286 @@
-// LOCATION: public/shop-templates/common/cart/cart-core.js - V4 DAIRY FIXED - SERVER CART + SESSION BACKUP + X-BUYER-ID
-// Depends: role-hierarchy.js, api-core.js, storage-core.js
+// LOCATION: public/shop-templates/common/cart/cart-core.js - V6 WORLD CLASS - GUEST + USER MERGE + LAST_SHOP_ID + 3 LAYER SYNC
 (function(){
-  const API = {
-    sync: '/api/common/cart/sync',
-    get: '/api/common/cart',
-    clear: '/api/common/cart/clear'
-  };
+  const API_BASE = window.API_BASE || window.EnvConfig?.API_BASE || window.location.origin;
+  const CART_API = `${API_BASE}/api/common/cart`;
+  const LS_GUEST = 'guest_id';
+  const LS_LAST_SHOP = 'last_shopId';
+  const LS_LAST_SUPPLIER = 'last_supplierId';
+  const LS_LAST_ROLE = 'last_supplierRole';
 
-  // Memory cache - dairy ke liye bhi same
-  let memoryCart = {}; // { supplierId: [items] }
+  let _cartCache = {}; // { shopId: [items] }
+  let _readyResolve;
+  window.CartCore = window.CartCore || {};
+  window.CartCore.ready = new Promise(r=> _readyResolve = r);
 
-  function getApiBase(){
-    return window.API_BASE || window.EnvConfig?.API_BASE || window.location.origin;
-  }
-
-  function getAuthHeaders(){
-    const token = (window.AuthCore && window.AuthCore.getToken && window.AuthCore.getToken()) || localStorage.getItem('TOKEN') || localStorage.getItem('token') || '';
-    return token ? { 'Authorization': `Bearer ${token}` } : {};
-  }
-
-  // FIX 1: Stable guest_id + load backup immediately for dairy
-  function loadBackupSync(){
+  // ========== BUYER ID - WORLD CLASS 3 LAYER ==========
+  function getBuyerId(){
+    // Layer 1: Logged user
     try{
-      for(let i=0;i<sessionStorage.length;i++){
-        const key = sessionStorage.key(i);
-        if(key && key.startsWith('cart_bkp_')){
-          const sid = key.replace('cart_bkp_','');
-          const val = sessionStorage.getItem(key);
-          if(val) memoryCart[sid] = JSON.parse(val);
+      const uid = (window.RoleHierarchy && window.RoleHierarchy.getMyId && window.RoleHierarchy.getMyId()) || window.USER_ID || localStorage.getItem('USER_ID') || '';
+      if(uid && String(uid).length>=10){
+        const id = String(uid);
+        // If ObjectId, prefix user_
+        if(id.length===24 && !id.startsWith('user_') && !id.startsWith('guest_')){
+          return 'user_' + id;
+        }
+        if(id.startsWith('user_') || id.startsWith('guest_')) return id;
+        return 'user_' + id;
+      }
+    }catch(e){}
+
+    // Layer 2: Guest from sessionStorage
+    try{
+      let gid = sessionStorage.getItem(LS_GUEST) || localStorage.getItem(LS_GUEST) || '';
+      if(gid) return gid;
+      // Create new
+      gid = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
+      sessionStorage.setItem(LS_GUEST, gid);
+      localStorage.setItem(LS_GUEST, gid);
+      return gid;
+    }catch(e){
+      return 'guest_' + Date.now();
+    }
+  }
+
+  function getBuyerRole(){
+    try{
+      if(window.RoleHierarchy && window.RoleHierarchy.getMyRole) return window.RoleHierarchy.getMyRole();
+      return localStorage.getItem('USER_ROLE') || 'customer';
+    }catch(e){ return 'customer'; }
+  }
+
+  function getHeaders(){
+    const token = (window.AuthCore && window.AuthCore.getToken && window.AuthCore.getToken()) || localStorage.getItem('TOKEN') || localStorage.getItem('token') || localStorage.getItem('userToken') || '';
+    return {
+      'Content-Type': 'application/json',
+      'x-buyer-id': getBuyerId(),
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+  }
+
+  function safeStorageGet(key){
+    try{ return sessionStorage.getItem(key) || localStorage.getItem(key) || ''; }catch(e){ return ''; }
+  }
+  function safeStorageSet(key, val){
+    try{ sessionStorage.setItem(key, val); }catch(e){}
+    try{ localStorage.setItem(key, val); }catch(e){}
+  }
+
+  // ========== LOAD CART FROM SERVER + LOCAL BACKUP ==========
+  async function loadFromServer(){
+    try{
+      const buyerId = getBuyerId();
+      const res = await fetch(`${CART_API}/list?buyerId=${encodeURIComponent(buyerId)}`, { headers: getHeaders() }).catch(()=>null);
+      if(!res || !res.ok){
+        // Try local backup
+        loadFromBackup();
+        return;
+      }
+      const data = await res.json().catch(()=>({}));
+      const carts = data.carts || data.data || data || {};
+      
+      if(Array.isArray(carts)){
+        // Array format -> group by shopId
+        _cartCache = {};
+        carts.forEach(c=>{
+          const sid = c.shopId || c.supplierId || 'unknown';
+          _cartCache[sid] = c.items || c.products || [];
+          // Backup
+          safeStorageSet('cart_bkp_'+sid, JSON.stringify(_cartCache[sid]));
+        });
+      } else if(typeof carts === 'object'){
+        // Object format { shopId: items }
+        if(carts.shopId){
+          // Single cart
+          _cartCache[carts.shopId] = carts.items || [];
+          safeStorageSet('cart_bkp_'+carts.shopId, JSON.stringify(_cartCache[carts.shopId]));
+        } else {
+          _cartCache = carts;
+          Object.keys(_cartCache).forEach(sid=>{
+            safeStorageSet('cart_bkp_'+sid, JSON.stringify(_cartCache[sid]||[]));
+          });
+        }
+      }
+      console.log('✅ CartCore V6 loaded from server:', Object.keys(_cartCache).length, 'shops, buyerId=', buyerId);
+    }catch(e){
+      console.log('Cart load server fail, using backup', e.message);
+      loadFromBackup();
+    }
+  }
+
+  function loadFromBackup(){
+    _cartCache = {};
+    try{
+      Object.keys(sessionStorage).forEach(k=>{
+        if(k.startsWith('cart_bkp_')){
+          try{
+            const sid = k.replace('cart_bkp_','');
+            const items = JSON.parse(sessionStorage.getItem(k)||'[]');
+            if(Array.isArray(items) && items.length>0) _cartCache[sid]=items;
+          }catch(e){}
+        }
+      });
+      // Also localStorage last items
+      const lastShop = safeStorageGet(LS_LAST_SHOP);
+      if(lastShop && !_cartCache[lastShop]){
+        const bkp = safeStorageGet('cart_bkp_'+lastShop);
+        if(bkp){
+          try{ const it = JSON.parse(bkp); if(it.length>0) _cartCache[lastShop]=it; }catch(e){}
         }
       }
     }catch(e){}
-  }
-  loadBackupSync(); // turant load - dairy customer-view se checkout tak
-
-  function getBuyerInfo(){
-    let gid = sessionStorage.getItem('guest_id');
-    if(!gid){
-      gid = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
-      try{ sessionStorage.setItem('guest_id', gid); }catch(e){}
-    }
-    const rh = window.RoleHierarchy;
-    return {
-      buyerId: (rh && rh.getMyId && rh.getMyId()) || gid,
-      buyerRole: (rh && rh.getMyRole && rh.getMyRole()) || 'customer',
-      buyerShopId: (rh && rh.getMyShopId && rh.getMyShopId()) || null
-    };
+    console.log('✅ CartCore loaded from backup:', Object.keys(_cartCache).length, 'shops');
   }
 
-  // FIX 2: Dairy fix - dairy products me ownerId nahi hota, shopId hota hai
-  function getSupplierInfo(product){
-    // Dairy dashboard.js me product = { _id, name, price, shopId, shop_id, ownerId }
-    const urlSid = new URLSearchParams(window.location.search).get('shopId') || new URLSearchParams(window.location.search).get('supplierId') || '';
-    return {
-      supplierId: product.ownerId || product.shopId || product.shop_id || product.supplierId || product.dairyShopId || urlSid || 'unknown',
-      supplierRole: product.ownerRole || product.shopOwnerRole || product.supplierRole || 'shop_owner',
-      supplierName: product.shopName || product.ownerName || product.dairyName || 'Dairy Shop',
-      shopId: product.shopId || product.shop_id || product.supplierId || urlSid || null
-    };
-  }
-
-  // FIX 3: x-buyer-id header add - server cart V3 ko ye chahiye
-  async function syncToServer(supplierId, items){
-    const buyer = getBuyerInfo();
-    try {
-      await fetch(getApiBase() + API.sync, {
+  async function syncToServer(shopId){
+    const items = _cartCache[shopId] || [];
+    const buyerId = getBuyerId();
+    const buyerRole = getBuyerRole();
+    try{
+      await fetch(`${CART_API}/sync`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'x-buyer-id': buyer.buyerId, // MAIN FIX
-          ...getAuthHeaders() 
-        },
+        headers: getHeaders(),
         body: JSON.stringify({
-          buyerId: buyer.buyerId,
-          buyerRole: buyer.buyerRole,
-          supplierId: supplierId,
-          items: items
+          buyerId: buyerId,
+          buyerRole: buyerRole,
+          shopId: shopId,
+          supplierId: shopId,
+          items: items,
+          total: items.reduce((s,i)=> s + Number(i.price||0)*Number(i.qty||1),0)
         })
-      });
-    } catch(e){ console.warn('Cart sync failed, using memory:', e.message); }
-    try {
-      const key = `cart_bkp_${supplierId}`;
-      sessionStorage.setItem(key, JSON.stringify(items));
-    } catch(e){}
+      }).catch(()=>{});
+      safeStorageSet('cart_bkp_'+shopId, JSON.stringify(items));
+      safeStorageSet(LS_LAST_SHOP, shopId);
+    }catch(e){ console.log('Sync fail', e.message); }
   }
 
-  window.CartCore = {
-    async add(product, qty = 1){
-      const buyer = getBuyerInfo();
-      const supplier = getSupplierInfo(product);
-
-      if (window.RoleHierarchy && !window.RoleHierarchy.canBuy(buyer.buyerRole, supplier.supplierRole, buyer.buyerId, supplier.supplierId)) {
-        const msg = buyer.buyerRole === 'shop_owner' ? 'Aap is shop se nahi kharid sakte' : `Aap ${supplier.supplierRole} se nahi kharid sakte`;
-        if (window.Toast) Toast.error(msg); else alert(msg);
-        return false;
-      }
-
-      if (buyer.buyerShopId && supplier.supplierId && buyer.buyerShopId === supplier.supplierId) {
-        if (window.Toast) Toast.error('Aap apni hi dukan ka saman nahi kharid sakte');
-        else alert('Self-buy blocked');
-        return false;
-      }
-
-      const supId = supplier.supplierId;
-      if (!memoryCart[supId]) memoryCart[supId] = [];
-
-      const pid = product._id || product.id;
-      const existing = memoryCart[supId].find(i => i.productId === pid);
-      if (existing) {
-        existing.qty += qty;
-      } else {
-        memoryCart[supId].push({
-          productId: pid,
-          name: product.name || product.title,
-          price: product.price || product.sellingPrice || 0,
-          image: product.image || product.images?.[0] || '',
-          qty: qty,
-          unit: product.unit || 'ltr',
-          ownerRole: supplier.supplierRole,
-          ownerId: supplier.supplierId,
-          shopId: supplier.shopId,
-          shopName: supplier.supplierName,
-          addedAt: Date.now()
-        });
-      }
-
-      await syncToServer(supId, memoryCart[supId]);
-      this.emitUpdate();
-      if (window.Toast) Toast.success(`${product.name || 'Product'} cart me add hua`);
-      return true;
-    },
-
-    getCart(supplierId){
-      if (supplierId && supplierId !== 'unknown') return memoryCart[supplierId] || [];
-      // unknown case ke liye - dairy ka first cart do
-      if(supplierId === 'unknown'){
-        const first = Object.keys(memoryCart)[0];
-        return first ? memoryCart[first] : [];
-      }
-      return Object.values(memoryCart).flat();
-    },
-
-    getCartBySupplier(supplierId){
-      if(!supplierId || supplierId === 'unknown'){
-        const first = Object.keys(memoryCart)[0];
-        return first ? memoryCart[first] : [];
-      }
-      return memoryCart[supplierId] || [];
-    },
-
-    getAllCarts(){ return memoryCart; },
-
-    getTotalCount(){
-      return Object.values(memoryCart).flat().reduce((s,i)=> s + (i.qty||1), 0);
-    },
-
-    getTotalAmount(supplierId){
-      const items = supplierId ? this.getCart(supplierId) : this.getCart();
-      return items.reduce((s,i)=> s + (Number(i.price||0) * Number(i.qty||1)), 0);
-    },
-
-    async remove(productId, supplierId){
-      if (supplierId) {
-        memoryCart[supplierId] = (memoryCart[supplierId]||[]).filter(i=> i.productId !== productId);
-        await syncToServer(supplierId, memoryCart[supplierId]);
-      } else {
-        for (let sid in memoryCart){
-          memoryCart[sid] = memoryCart[sid].filter(i=> i.productId !== productId);
-          await syncToServer(sid, memoryCart[sid]);
-        }
-      }
-      this.emitUpdate();
-    },
-
-    async updateQty(productId, newQty, supplierId){
-      if (newQty < 1) return this.remove(productId, supplierId);
-      const search = (arr)=> {
-        const it = (arr||[]).find(i=> i.productId === productId);
-        if(it) it.qty = newQty;
-      };
-      if (supplierId) search(memoryCart[supplierId]);
-      else Object.values(memoryCart).forEach(search);
-      if (supplierId) await syncToServer(supplierId, memoryCart[supplierId]);
-      else {
-        for(let sid in memoryCart) await syncToServer(sid, memoryCart[sid]);
-      }
-      this.emitUpdate();
-    },
-
-    async clear(supplierId){
-      if (supplierId && supplierId !== 'unknown'){
-        memoryCart[supplierId] = [];
-        await syncToServer(supplierId, []);
-      } else {
-        for(let sid in memoryCart){
-          memoryCart[sid] = [];
-          await syncToServer(sid, []);
-        }
-        memoryCart = {};
-        try{
-          Object.keys(sessionStorage).forEach(k=>{
-            if(k.startsWith('cart_bkp_')) sessionStorage.removeItem(k);
-          });
-        }catch(e){}
-      }
-      this.emitUpdate();
-      try {
-        await fetch(getApiBase() + API.clear, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-buyer-id': getBuyerInfo().buyerId, ...getAuthHeaders() },
-          body: JSON.stringify({ buyerId: getBuyerInfo().buyerId, supplierId: supplierId || null })
-        });
-      } catch(e){}
-    },
-
-    async restore(){
-      try {
-        const buyer = getBuyerInfo();
-        const res = await fetch(getApiBase() + `${API.get}?buyerId=${encodeURIComponent(buyer.buyerId)}`, {
-          headers: { 'x-buyer-id': buyer.buyerId, ...getAuthHeaders() }
-        });
-        const data = await res.json();
-        if (data.success && data.carts && Object.keys(data.carts).length > 0) {
-          // server ka data + local backup merge
-          const merged = {...memoryCart, ...data.carts};
-          memoryCart = merged;
-          // backup bhi update karo
-          for(let sid in merged){
-            try{ sessionStorage.setItem(`cart_bkp_${sid}`, JSON.stringify(merged[sid])); }catch(e){}
-          }
-        }
-        this.emitUpdate();
-      } catch(e){ console.log('Cart restore skip:', e.message); this.emitUpdate(); }
-    },
-
-    emitUpdate(){
-      const count = this.getTotalCount();
-      const total = this.getTotalAmount();
-      window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, total, carts: memoryCart, items: this.getCart() } }));
-      if (window.CartCount && window.CartCount.update) window.CartCount.update();
-    },
-
-    get cart(){
-      const all = Object.values(memoryCart).flat();
-      const total = all.reduce((s,i)=> s + (Number(i.price||0) * Number(i.qty||1)), 0);
-      const count = all.reduce((s,i)=> s + (Number(i.qty||0)), 0);
-      return { items: all, total, count, bySupplier: memoryCart, totalAmount: total };
-    },
-
-    // FIX 4: Dairy ke liye proper checkout URL - shopId + supplierId dono
-    goToCheckout(supplierId){
-      const buyer = getBuyerInfo();
-      let sid = supplierId;
-      if(!sid || sid === 'unknown') sid = Object.keys(memoryCart)[0] || new URLSearchParams(location.search).get('shopId') || '';
-      const shopIdParam = new URLSearchParams(location.search).get('shopId') || sid;
-      const url = `/shop-templates/common/checkout/checkout.html?shopId=${encodeURIComponent(shopIdParam)}&supplierId=${encodeURIComponent(sid)}&supplierRole=shop_owner&buyerId=${encodeURIComponent(buyer.buyerId)}`;
-      window.location.href = url;
-    },
-
-    goToCart(){
-      const sid = Object.keys(memoryCart)[0] || new URLSearchParams(location.search).get('shopId') || '';
-      const shopIdParam = new URLSearchParams(location.search).get('shopId') || sid;
-      window.location.href = `/shop-templates/common/cart/cart.html?shopId=${encodeURIComponent(shopIdParam)}&supplierId=${encodeURIComponent(sid)}`;
-    },
-
-    onChange(cb){
-      window.addEventListener('cart:updated', ()=>{
-        cb(this.cart);
-      });
-    },
-
-    ready: null
+  // ========== PUBLIC API ==========
+  window.CartCore.getBuyerId = getBuyerId;
+  window.CartCore.getAllCarts = function(){ return { ..._cartCache }; };
+  window.CartCore.getCart = function(){
+    // Flat all items
+    return Object.values(_cartCache).flat();
+  };
+  window.CartCore.getCartBySupplier = function(supplierId){
+    if(!supplierId) return window.CartCore.getCart();
+    return _cartCache[supplierId] || _cartCache[String(supplierId)] || [];
+  };
+  window.CartCore.getCount = function(){
+    return Object.values(_cartCache).flat().reduce((s,i)=> s + Number(i.qty||i.quantity||1),0);
+  };
+  window.CartCore.getTotal = function(shopId){
+    const items = shopId ? window.CartCore.getCartBySupplier(shopId) : window.CartCore.getCart();
+    return items.reduce((s,i)=> s + Number(i.price||0)*Number(i.qty||1),0);
   };
 
-  window.CartCore.ready = new Promise((resolve)=>{
-    const run = async ()=>{
-      await window.CartCore.restore();
-      resolve(window.CartCore.cart);
-    };
-    document.addEventListener('DOMContentLoaded', ()=> setTimeout(run, 300));
-    if(document.readyState !== 'loading') setTimeout(run, 300);
-  });
+  window.CartCore.add = async function(product, qty=1){
+    if(!product) return false;
+    const shopId = product.shopId || product.shop_id || product.ownerId || product._id || 'unknown_shop';
+    const pid = product.productId || product._id || product.id || String(Date.now());
+    
+    if(!_cartCache[shopId]) _cartCache[shopId]=[];
+    
+    const idx = _cartCache[shopId].findIndex(it=> (it.productId||it._id||it.id)===pid);
+    if(idx>=0){
+      const cur = Number(_cartCache[shopId][idx].qty||_cartCache[shopId][idx].quantity||1);
+      _cartCache[shopId][idx].qty = cur + Number(qty);
+      _cartCache[shopId][idx].quantity = cur + Number(qty);
+    } else {
+      _cartCache[shopId].push({
+        productId: pid,
+        _id: pid,
+        name: product.name||product.title||'Product',
+        title: product.name||product.title||'Product',
+        price: Number(product.price||0),
+        mrp: Number(product.mrp||0),
+        image: product.thumbnail||product.image|| (Array.isArray(product.images)?product.images[0]?.url: product.images?.[0]) || '/assets/default-product.png',
+        thumbnail: product.thumbnail||product.image||'/assets/default-product.png',
+        unit: product.unit||'pcs',
+        qty: Number(qty),
+        quantity: Number(qty),
+        shopId: shopId,
+        shopName: product.shopName||product.shopType||'Shop',
+        ownerId: product.ownerId||shopId,
+        ownerRole: product.ownerRole||product.shopOwnerRole||'shop_owner',
+        shopType: product.shopType||'general',
+        variant: product.variant||''
+      });
+    }
 
-  console.log('✅ CartCore V4 DAIRY FIXED loaded');
+    // Save last shop info - MAIN APP BUG FIX
+    safeStorageSet(LS_LAST_SHOP, shopId);
+    safeStorageSet(LS_LAST_SUPPLIER, shopId);
+    safeStorageSet(LS_LAST_ROLE, product.ownerRole||'shop_owner');
+    safeStorageSet('last_product', JSON.stringify(product));
+
+    console.log(`✅ CartCore add: ${product.name||pid} x${qty} to shop ${shopId}, total shops ${Object.keys(_cartCache).length}`);
+    await syncToServer(shopId);
+    if(window.CartCount) window.CartCount.update();
+    return true;
+  };
+
+  window.CartCore.updateQty = async function(shopId, productId, delta){
+    if(!_cartCache[shopId]) return;
+    const idx = _cartCache[shopId].findIndex(it=> (it.productId||it._id)===productId);
+    if(idx<0) return;
+    const cur = Number(_cartCache[shopId][idx].qty||1);
+    const next = cur + Number(delta);
+    if(next<=0){
+      _cartCache[shopId].splice(idx,1);
+    } else {
+      _cartCache[shopId][idx].qty = next;
+      _cartCache[shopId][idx].quantity = next;
+    }
+    if(_cartCache[shopId].length===0) delete _cartCache[shopId];
+    await syncToServer(shopId);
+    if(window.CartCount) window.CartCount.update();
+  };
+
+  window.CartCore.remove = async function(shopId, productId){
+    if(!_cartCache[shopId]) return;
+    _cartCache[shopId] = _cartCache[shopId].filter(it=> (it.productId||it._id)!==productId);
+    if(_cartCache[shopId].length===0) delete _cartCache[shopId];
+    await syncToServer(shopId);
+    if(window.CartCount) window.CartCount.update();
+  };
+
+  window.CartCore.clear = async function(shopId){
+    if(shopId){
+      delete _cartCache[shopId];
+      try{ sessionStorage.removeItem('cart_bkp_'+shopId); localStorage.removeItem('cart_bkp_'+shopId); }catch(e){}
+      await syncToServer(shopId); // sync empty to server to clear server cart
+      // Clear server
+      try{
+        await fetch(`${CART_API}/clear/${encodeURIComponent(shopId)}?buyerId=${encodeURIComponent(getBuyerId())}`, { method: 'DELETE', headers: getHeaders() }).catch(()=>{});
+      }catch(e){}
+    } else {
+      // Clear all
+      const keys = Object.keys(_cartCache);
+      _cartCache = {};
+      keys.forEach(k=>{ try{ sessionStorage.removeItem('cart_bkp_'+k); }catch(e){} });
+      try{
+        await fetch(`${CART_API}/clear-all?buyerId=${encodeURIComponent(getBuyerId())}`, { method: 'DELETE', headers: getHeaders() }).catch(()=>{});
+      }catch(e){}
+    }
+    if(window.CartCount) window.CartCount.update();
+  };
+
+  window.CartCore.goToCart = function(shopId){
+    const sid = shopId || safeStorageGet(LS_LAST_SHOP) || Object.keys(_cartCache)[0] || '';
+    location.href = `/shop-templates/common/cart/cart.html?shopId=${encodeURIComponent(sid)}`;
+  };
+  window.CartCore.goToCheckout = function(shopId){
+    const sid = shopId || safeStorageGet(LS_LAST_SHOP) || Object.keys(_cartCache)[0] || '';
+    const role = safeStorageGet(LS_LAST_ROLE) || 'shop_owner';
+    location.href = `/shop-templates/common/checkout/checkout.html?shopId=${encodeURIComponent(sid)}&supplierId=${encodeURIComponent(sid)}&supplierRole=${encodeURIComponent(role)}`;
+  };
+
+  // Init
+  (async function(){
+    await loadFromServer();
+    _readyResolve(true);
+    if(window.CartCount) window.CartCount.update();
+  })();
+
+  console.log('✅ CartCore V6 WORLD CLASS - Guest + User merge + last_shopId sync loaded, buyerId=', getBuyerId());
 })();

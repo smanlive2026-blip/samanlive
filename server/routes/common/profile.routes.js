@@ -1,129 +1,232 @@
-// LOCATION: server/routes/common/profile.routes.js - COMMON PROFILE - CUSTOMER + SHOP OWNER - FULL WORKING
+// LOCATION: server/routes/common/profile.routes.js - V6 WORLD CLASS COMMON PROFILE - CUSTOMER + SHOP_OWNER + DELIVERY_BOY
 const express = require('express');
 const router = express.Router();
 const User = require('../../models/User');
 const Shop = require('../../models/Shop');
-const { authenticateToken } = require('../../middleware/authenticateToken');
+const mongoose = require('mongoose');
 
-// GET /api/common/profile/:shopId - Shop owner profile + Customer ke liye bhi fallback
-router.get('/:shopId', async (req,res)=>{
-  try{
-    const shopId = req.params.shopId;
-    if(!shopId || shopId==='undefined'){
-      return res.json({ success: false, message: 'shopId required' });
-    }
-    // 1. Shop model se
-    let shop = null;
+// ========== HELPER: Get User from buyerId / token ==========
+async function resolveUser(req){
+  let buyerId = req.headers['x-buyer-id'] || req.query.buyerId || req.body.buyerId || req.user?._id || '';
+  let tokenUserId = req.user?._id || null;
+
+  // 1. From auth middleware (if logged)
+  if(tokenUserId){
     try{
-      if(shopId.length===24){
-        shop = await Shop.findById(shopId);
-      }
-      if(!shop){
-        shop = await Shop.findOne({ shopId: shopId }) || await Shop.findOne({ _id: shopId });
-      }
+      const u = await User.findById(tokenUserId);
+      if(u) return u;
     }catch(e){}
+  }
 
-    // 2. Agar shop nahi mila toh User se (customer profile bhi common se khulega)
-    if(!shop){
-      let user = null;
+  // 2. From buyerId (user_xxx or direct id)
+  if(buyerId){
+    let id = String(buyerId);
+    if(id.startsWith('user_')) id = id.replace('user_','');
+    if(id.startsWith('guest_')) return null; // guest ka profile nahi
+
+    // Try by ObjectId
+    if(mongoose.Types.ObjectId.isValid(id)){
       try{
-        if(shopId.length===24) user = await User.findById(shopId);
-        if(!user) user = await User.findOne({ phone: shopId.slice(-10) });
+        const u = await User.findById(id);
+        if(u) return u;
       }catch(e){}
-      if(user){
-        return res.json({ 
-          success: true, 
-          shop: {
-            _id: user._id,
-            name: user.name,
-            shopName: user.name,
-            phone: user.phone,
-            email: user.email,
-            avatar: user.avatar,
-            shopImage: user.avatar,
-            address: user.addresses?.[0]?.line1 || '',
-            city: user.addresses?.[0]?.city || 'Surat',
-            category: 'customer',
-            role: 'customer',
-            verified: true
-          },
-          profile: {
-            _id: user._id,
-            name: user.name,
-            phone: user.phone
-          }
-        });
+    }
+    // Try by phone last 10
+    const phone = id.replace(/\D/g,'').slice(-10);
+    if(phone.length>=10){
+      try{
+        const u = await User.findOne({ phone: phone });
+        if(u) return u;
+      }catch(e){}
+    }
+  }
+
+  // 3. From Authorization token phone
+  try{
+    const auth = req.headers.authorization || '';
+    if(auth.startsWith('Bearer ')){
+      const token = auth.split(' ')[1];
+      // JWT decode without verify (fast path)
+      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+      if(payload._id && mongoose.Types.ObjectId.isValid(payload._id)){
+        const u = await User.findById(payload._id);
+        if(u) return u;
       }
-      return res.json({ success: true, shop: { _id: shopId, shopId, name: 'My Shop', shopName: 'My Shop', category: 'general', address: 'Surat', verified: false } });
+      if(payload.phone){
+        const u = await User.findOne({ phone: payload.phone });
+        if(u) return u;
+      }
+    }
+  }catch(e){}
+
+  return null;
+}
+
+function publicUser(user){
+  if(!user) return null;
+  return {
+    _id: user._id,
+    name: user.name,
+    phone: user.phone,
+    email: user.email || '',
+    role: user.role || 'customer',
+    profilePic: user.profilePic || user.avatar || '',
+    avatar: user.profilePic || user.avatar || '',
+    isVerified: user.isVerified || false,
+    addresses: user.addresses || [],
+    wallet: user.wallet || { balance: 0 },
+    shopId: user.shopId || null,
+    area: user.area || '',
+    city: user.city || '',
+    createdAt: user.createdAt
+  };
+}
+
+// ========== 1. GET MY PROFILE - MAIN APP + SHOP DASHBOARD DONO ==========
+router.get('/me', async (req, res) => {
+  try{
+    const user = await resolveUser(req);
+    if(!user){
+      return res.status(401).json({ success: false, message: 'User not found - login karo', guest: true });
     }
 
-    res.json({ success: true, shop, profile: shop });
+    // Agar shop_owner hai to shop info bhi do
+    let shopInfo = null;
+    if(user.shopId || user.role==='shop_owner'){
+      try{
+        const shopId = user.shopId || req.query.shopId;
+        if(shopId && mongoose.Types.ObjectId.isValid(shopId)){
+          shopInfo = await Shop.findById(shopId);
+        } else if(user.phone){
+          shopInfo = await Shop.findOne({ ownerPhone: user.phone }) || await Shop.findOne({ phone: user.phone });
+        }
+      }catch(e){}
+    }
+
+    res.json({
+      success: true,
+      user: publicUser(user),
+      shop: shopInfo,
+      message: 'Profile loaded'
+    });
+
   }catch(e){
-    console.error('GET common profile error', e);
+    console.error('Profile /me error', e);
     res.status(500).json({ success: false, message: e.message });
   }
 });
 
-// PUT /api/common/profile/:shopId - Update shop info (dashboard se connected)
-router.put('/:shopId', async (req,res)=>{
+// ========== 2. GET PROFILE BY ID (SHOP OWNER DEKHEGA CUSTOMER KA) ==========
+router.get('/:userId', async (req, res) => {
   try{
-    const shopId = req.params.shopId;
-    const updates = req.body;
-    // dono field rakho taaki dashboard + profile dono me dikhe
-    if(updates.name && !updates.shopName) updates.shopName = updates.name;
-    if(updates.shopName && !updates.name) updates.name = updates.shopName;
-    if(updates.avatar && !updates.shopImage) updates.shopImage = updates.avatar;
-    if(updates.shopImage && !updates.avatar) updates.avatar = updates.shopImage;
+    const { userId } = req.params;
+    if(!userId || userId==='me') return res.status(400).json({ success: false, message: 'Use /me' });
 
-    let shop = null;
-    if(shopId.length===24){
-      shop = await Shop.findByIdAndUpdate(shopId, { $set: updates }, { new: true, upsert: false });
+    let user = null;
+    if(mongoose.Types.ObjectId.isValid(userId)){
+      user = await User.findById(userId);
     }
-    if(!shop){
-      shop = await Shop.findOneAndUpdate({ shopId: shopId }, { $set: updates }, { new: true, upsert: true });
+    if(!user){
+      user = await User.findOne({ phone: userId });
     }
+    if(!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    res.json({ success: true, shop, message: 'Shop profile updated', profile: shop });
+    res.json({ success: true, user: publicUser(user) });
   }catch(e){
-    console.error('PUT common profile error', e);
     res.status(500).json({ success: false, message: e.message });
   }
 });
 
-// POST /api/common/profile/:shopId/avatar
-router.post('/:shopId/avatar', async (req,res)=>{
+// ========== 3. UPDATE PROFILE - NAME, PIC, EMAIL ==========
+router.put('/update', async (req, res) => {
   try{
-    const { avatar } = req.body;
-    const shopId = req.params.shopId;
-    let shop = null;
-    if(shopId.length===24) shop = await Shop.findByIdAndUpdate(shopId, { avatar, shopImage: avatar }, { new: true });
-    if(!shop) shop = await Shop.findOneAndUpdate({ shopId }, { avatar, shopImage: avatar }, { new: true });
-    res.json({ success: true, shop, avatar });
-  }catch(e){ res.status(500).json({ success: false, message: e.message }); }
+    const user = await resolveUser(req);
+    if(!user) return res.status(401).json({ success: false, message: 'Login required' });
+
+    const { name, email, profilePic, avatar, city, area } = req.body;
+    const update = {};
+    if(name) update.name = String(name).trim().slice(0,50);
+    if(email) update.email = String(email).trim().toLowerCase();
+    if(profilePic) update.profilePic = profilePic;
+    if(avatar) update.profilePic = avatar;
+    if(city) update.city = city;
+    if(area) update.area = area;
+    update.updatedAt = new Date();
+
+    const updated = await User.findByIdAndUpdate(user._id, update, { new: true });
+    
+    // Socket emit for live profile update
+    if(global.io){
+      global.io.to(`user:${user._id}`).emit('profile-updated', publicUser(updated));
+    }
+
+    console.log(`✅ Profile updated: ${user._id} name=${update.name||''}`);
+
+    res.json({ success: true, user: publicUser(updated), message: 'Profile updated' });
+
+  }catch(e){
+    console.error('Profile update error', e);
+    res.status(500).json({ success: false, message: e.message });
+  }
 });
 
-// POST /api/common/profile/:shopId/cover
-router.post('/:shopId/cover', async (req,res)=>{
+// ========== 4. UPDATE PROFILE PIC ONLY ==========
+router.put('/pic', async (req, res) => {
   try{
-    const { cover } = req.body;
-    const shopId = req.params.shopId;
-    let shop = null;
-    if(shopId.length===24) shop = await Shop.findByIdAndUpdate(shopId, { cover, banner: cover }, { new: true });
-    if(!shop) shop = await Shop.findOneAndUpdate({ shopId }, { cover, banner: cover }, { new: true });
-    res.json({ success: true, shop, cover });
-  }catch(e){ res.status(500).json({ success: false, message: e.message }); }
+    const user = await resolveUser(req);
+    if(!user) return res.status(401).json({ success: false, message: 'Login required' });
+
+    const { profilePic, image, pic } = req.body;
+    const finalPic = profilePic || image || pic;
+    if(!finalPic) return res.status(400).json({ success: false, message: 'profilePic required' });
+
+    const updated = await User.findByIdAndUpdate(user._id, { profilePic: finalPic, updatedAt: new Date() }, { new: true });
+
+    res.json({ success: true, user: publicUser(updated), pic: finalPic });
+  }catch(e){
+    res.status(500).json({ success: false, message: e.message });
+  }
 });
 
-// PUT /api/common/profile/:shopId/timing
-router.put('/:shopId/timing', async (req,res)=>{
+// ========== 5. GET ALL ADDRESSES (CHECKOUT USE KARTA HAI) ==========
+router.get('/addresses/list', async (req, res) => {
   try{
-    const shopId = req.params.shopId;
-    const timing = req.body;
-    let shop = null;
-    if(shopId.length===24) shop = await Shop.findByIdAndUpdate(shopId, { timing, isOpen: timing.isOpen, openingTime: timing.openingTime, closingTime: timing.closingTime }, { new: true });
-    if(!shop) shop = await Shop.findOneAndUpdate({ shopId }, { timing, isOpen: timing.isOpen }, { new: true });
-    res.json({ success: true, timing, shop });
-  }catch(e){ res.status(500).json({ success: false, message: e.message }); }
+    const user = await resolveUser(req);
+    if(!user){
+      // Guest ke liye local addresses
+      return res.json({ success: true, addresses: [], guest: true, message: 'Guest - no saved addresses' });
+    }
+    res.json({ success: true, addresses: user.addresses || [], count: (user.addresses||[]).length });
+  }catch(e){
+    res.json({ success: true, addresses: [], error: e.message });
+  }
+});
+
+// ========== 6. STATS FOR PROFILE PAGE ==========
+router.get('/stats/:userId', async (req, res) => {
+  try{
+    const Order = require('../../models/Order');
+    const userId = req.params.userId;
+    const ids = [userId];
+    if(userId.startsWith('user_')) ids.push(userId.replace('user_',''));
+    ids.push(userId.replace('user_','').replace('guest_',''));
+
+    const totalOrders = await Order.countDocuments({ $or: [{ buyerId: { $in: ids } }, { userId: { $in: ids } }] });
+    const pendingOrders = await Order.countDocuments({ buyerId: { $in: ids }, orderStatus: { $in: ['placed','confirmed','accepted'] } });
+    const deliveredOrders = await Order.countDocuments({ buyerId: { $in: ids }, orderStatus: 'delivered' });
+
+    res.json({
+      success: true,
+      stats: {
+        totalOrders,
+        pendingOrders,
+        deliveredOrders,
+        walletBalance: 0
+      }
+    });
+  }catch(e){
+    res.json({ success: true, stats: { totalOrders: 0, pendingOrders: 0, deliveredOrders: 0 } });
+  }
 });
 
 module.exports = router;

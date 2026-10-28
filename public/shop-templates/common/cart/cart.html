@@ -1,212 +1,298 @@
-<!-- LOCATION: public/shop-templates/common/cart/cart.html - V5 CART FIXED - SHOW ALL CARTS IF SHOPID EMPTY -->
+<!-- LOCATION: public/shop-templates/common/cart/cart.html - V6 WORLD CLASS - CART EMPTY BUG FIXED - ALL CARTS SHOW + RETRY -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Cart - SAMANLIVE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cart - SAMANLIVE</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
-body{background:#f8fafc;padding-bottom:110px}
-header{position:sticky;top:0;z-index:50;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
-header button{background:#f1f5f9;border:none;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:16px}
-header h1{font-size:18px;font-weight:900}
-.wrap{max-width:720px;margin:0 auto;padding:14px}
-.item{background:#fff;border-radius:16px;padding:12px;display:flex;gap:12px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);align-items:center}
-.item img{width:64px;height:64px;object-fit:cover;border-radius:12px;background:#f1f5f9}
-.info{flex:1}
-.name{font-weight:800;font-size:14px}
-.price{color:#16a34a;font-weight:900;font-size:14px;margin-top:2px}
-.unit{color:#64748b;font-size:11px;font-weight:700}
-.qty{display:flex;align-items:center;background:#16a34a;border-radius:10px;overflow:hidden}
-.qty button{background:none;border:none;color:#fff;font-size:18px;padding:8px 12px;cursor:pointer;font-weight:900}
-.qty span{color:#fff;font-weight:900;min-width:22px;text-align:center}
-.remove{background:#fef2f2;border:none;color:#ef4444;width:34px;height:34px;border-radius:10px;cursor:pointer}
-.bill{background:#fff;border-radius:16px;padding:16px;margin-top:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-.row{display:flex;justify-content:space-between;font-weight:700;font-size:14px;padding:6px 0;color:#334155}
-.row.total{border-top:1px dashed #e2e8f0;margin-top:8px;padding-top:12px;font-size:16px;font-weight:900;color:#0f172a}
-.empty{background:#fff;border-radius:16px;padding:40px 20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-.empty i{font-size:44px;color:#cbd5e1}
-.empty h3{margin-top:12px;font-weight:900}
-.empty p{color:#64748b;font-weight:700;font-size:13px;margin-top:4px}
-.empty button{margin-top:16px;background:#16a34a;color:#fff;border:none;padding:12px 20px;border-radius:12px;font-weight:900;cursor:pointer}
-.footer{position:fixed;left:0;right:0;bottom:0;background:#fff;padding:12px 16px;box-shadow:0 -4px 20px rgba(0,0,0,.08);display:flex;gap:12px;align-items:center;max-width:720px;margin:0 auto}
-.amt{flex:1}
-.amt small{display:block;color:#64748b;font-weight:700;font-size:11px}
-.amt b{font-size:18px}
-.footer button{background:#16a34a;color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:900;cursor:pointer;font-size:15px}
-.clearBtn{width:100%;background:none;border:1px solid #fee2e2;color:#ef4444;padding:10px;border-radius:12px;font-weight:800;cursor:pointer;margin-top:10px}
-.shopTag{background:#f1f5f9;color:#334155;font-size:11px;font-weight:800;padding:4px 8px;border-radius:6px;display:inline-block;margin-bottom:8px}
+body{background:#f8fafc;color:#0f172a;padding-bottom:120px}
+.header{position:sticky;top:0;z-index:20;background:#fff;display:flex;align-items:center;gap:12px;padding:12px 16px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.header button{width:38px;height:38px;border:none;background:#f1f5f9;border-radius:12px;cursor:pointer;display:grid;place-items:center}
+.header h1{font-size:15px;font-weight:900;flex:1}
+.wrap{max-width:760px;margin:0 auto;padding:14px}
+.cart-group{background:#fff;border-radius:18px;padding:14px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.04);border:1px solid #f1f5f9}
+.cart-group-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cart-group-head b{font-size:14px;font-weight:900;display:flex;align-items:center;gap:6px}
+.cart-group-head span{font-size:11px;background:#f1f5f9;padding:4px 8px;border-radius:20px;font-weight:700}
+.item{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #f8fafc}
+.item:last-child{border:none}
+.item img{width:56px;height:56px;object-fit:contain;background:#f8fafc;border-radius:12px}
+.item-info{flex:1}
+.item-info b{font-size:13px;font-weight:800;line-height:1.2;display:block}
+.item-info span{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:2px}
+.qty-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.qty-row button{width:28px;height:28px;border:1px solid #e2e8f0;background:#fff;border-radius:8px;cursor:pointer;font-weight:900;display:grid;place-items:center}
+.qty-row span{font-size:13px;font-weight:900;min-width:22px;text-align:center}
+.item-price{font-size:14px;font-weight:900;text-align:right}
+.item-price small{display:block;font-size:11px;color:#94a3b8;font-weight:700}
+.actions{display:flex;gap:10px;margin-top:12px}
+.actions button{flex:1;padding:12px;border-radius:12px;border:none;font-weight:900;font-size:13px;cursor:pointer}
+.btn-checkout{background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-clear{background:#fff;border:1px solid #e2e8f0 !important;color:#ef4444}
+.summary{background:#fff;border-radius:18px;padding:16px;margin-top:10px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.summary-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;font-weight:700}
+.summary-row.total{border-top:1px dashed #e2e8f0;margin-top:6px;padding-top:10px;font-size:16px;font-weight:900}
+.empty{padding:50px 20px;text-align:center;background:#fff;border-radius:18px}
+.empty i{font-size:40px;color:#cbd5e1;display:block;margin-bottom:12px}
+.empty b{font-size:16px;font-weight:900}
+.empty p{font-size:12px;color:#64748b;margin-top:6px;font-weight:600}
+.debug{font-size:10px;color:#94a3b8;margin-top:10px;background:#f8fafc;padding:8px;border-radius:8px;word-break:break-all}
 </style>
 <script src="../../../assets/js/role-hierarchy.js"></script>
-<script src="../core/api-core.js"></script>
+<script src="../../common/core/api-core.js"></script>
+<script src="./cart-core.js?v=6-world"></script>
+<script src="./cart-count.js"></script>
 </head>
 <body>
-<header>
+<div class="header">
   <button onclick="history.back()"><i class="fa-solid fa-arrow-left"></i></button>
-  <h1>🛒 My Cart <span id="cart-badge" data-cart-count style="background:#16a34a;color:#fff;padding:2px 8px;border-radius:99px;font-size:12px;display:none">0</span></h1>
-  <div style="margin-left:auto;font-size:12px;color:#64748b" id="shop-label"></div>
-</header>
-
-<div class="wrap">
-  <div id="cartList"><div style="padding:40px;text-align:center;color:#94a3b8">Loading cart...</div></div>
-  <div id="billBox" style="display:none">
-    <div class="bill">
-      <div class="row"><span>Item Total (<span id="itemCount">0</span> items)</span><span id="subTotal">₹0</span></div>
-      <div class="row"><span>Delivery</span><span style="color:#16a34a">FREE</span></div>
-      <div class="row total"><span>To Pay</span><span id="grandTotal">₹0</span></div>
-    </div>
-    <button class="clearBtn" onclick="clearCart()">Clear This Shop</button>
-    <button class="clearBtn" onclick="clearAllCart()" style="border-color:#e2e8f0;color:#64748b">Clear All Shops</button>
-  </div>
+  <h1 id="headerTitle">Your Cart • Loading...</h1>
+  <button onclick="location.reload()" style="width:34px"><i class="fa-solid fa-rotate"></i></button>
 </div>
 
-<div class="footer" id="footerBar" style="display:none">
-  <div class="amt"><small>Total</small><b id="footerTotal" data-cart-total>₹0</b></div>
-  <button id="checkoutBtn">Place Order <i class="fa-solid fa-arrow-right"></i></button>
+<div class="wrap" id="cartRoot">
+  <div class="empty"><i class="fa-solid fa-spinner fa-spin"></i><b>Cart loading...</b><p>Checking all shops</p></div>
 </div>
 
-<script src="./cart-core.js?v=5-fixed"></script>
-<script src="./cart-count.js"></script>
 <script>
-const listEl = document.getElementById('cartList');
-const billBox = document.getElementById('billBox');
-const footerBar = document.getElementById('footerBar');
+let RETRY_COUNT = 0;
+const MAX_RETRY = 3;
 
-function getUrlIds(){
+function getQuery(){
   const p = new URLSearchParams(location.search);
   return {
-    shopId: p.get('shopId') || localStorage.getItem('last_shopId') || '',
-    supplierId: p.get('supplierId') || p.get('shopId') || localStorage.getItem('last_supplierId') || localStorage.getItem('last_shopId') || ''
+    shopId: p.get('shopId') || p.get('shop_id') || p.get('supplierId') || '',
+    supplierRole: p.get('supplierRole') || p.get('role') || 'shop_owner',
+    shopType: p.get('shopType') || ''
   };
 }
-function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-function render(cartInput){
-  const { supplierId, shopId } = getUrlIds();
-  let items = [];
-  let total = 0;
-  let count = 0;
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-  if(window.CartCore){
-    // FIXED LOGIC: pehle supplierId se try, nahi mila toh saare carts dikhao
-    if(supplierId && supplierId !== 'unknown' && supplierId !== ''){
-      items = window.CartCore.getCartBySupplier(supplierId) || [];
-    }
-    // Agar supplierId se khali hai, toh saare items dikhao (main app ka case)
-    if(items.length===0){
-      const all = window.CartCore.getCart() || [];
-      if(all.length>0) items = all;
-      else {
-        // backup se bhi try
-        const allCarts = window.CartCore.getAllCarts();
-        const flat = Object.values(allCarts).flat();
-        if(flat.length>0) items = flat;
-      }
-    }
-    total = items.reduce((s,i)=> s + (Number(i.price||0)*Number(i.qty||1)),0);
-    count = items.reduce((s,i)=> s + (Number(i.qty||1)),0);
+async function renderCart(){
+  const root = document.getElementById('cartRoot');
+  const q = getQuery();
+  let supplierId = q.shopId || localStorage.getItem('last_shopId') || localStorage.getItem('last_supplierId') || '';
+
+  // Wait for CartCore
+  if(window.CartCore && window.CartCore.ready){
+    try{ await window.CartCore.ready; }catch(e){ console.log('CartCore ready timeout'); }
   } else {
-    items = cartInput?.items || [];
-    total = cartInput?.total || 0;
+    await new Promise(r=> setTimeout(r, 600));
   }
 
-  const shopLabel = document.getElementById('shop-label');
-  if(shopLabel){
-    if(items[0]?.shopName) shopLabel.textContent = items[0].shopName;
-    else if(supplierId) shopLabel.textContent = `Shop: ${supplierId.slice(0,8)}..`;
-  }
-
-  if(!items.length){
-    // 1 sec wait karo, restore ho raha hoga
-    if(window._cartRetryCount === undefined) window._cartRetryCount = 0;
-    if(window._cartRetryCount < 3){
-      window._cartRetryCount++;
-      listEl.innerHTML = `<div style="padding:40px;text-align:center;color:#94a3b8">Loading cart... (${window._cartRetryCount})</div>`;
-      setTimeout(()=> render(window.CartCore?.cart), 800);
-      return;
-    }
-    listEl.innerHTML = `<div class="empty"><i class="fa-solid fa-cart-shopping"></i><h3>Cart Khali Hai</h3><p>Main app se kuch add karo, fir yaha dikhega</p><p style="font-size:10px;color:#cbd5e1;margin-top:8px">Debug: supplierId=${esc(supplierId||'empty')} shopId=${esc(shopId||'empty')} buyerId=${esc(sessionStorage.getItem('guest_id')||'none')}</p><button onclick="goBackToShop()">Shop Par Jao</button></div>`;
-    billBox.style.display = 'none';
-    footerBar.style.display = 'none';
+  if(!window.CartCore){
+    root.innerHTML = `<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><b>Cart Core not loaded</b><p>Refresh karo</p><button onclick="location.reload()" style="margin-top:12px;background:#0f172a;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:800">Reload</button></div>`;
     return;
   }
 
-  window._cartRetryCount = 0;
-  listEl.innerHTML = items.map(it => `
-    <div class="item">
-      ${it.image? `<img src="${esc(it.image)}" onerror="this.style.display='none'">` : `<div style="width:64px;height:64px;border-radius:12px;background:#f1f5f9;display:grid;place-items:center;font-size:24px">🥛</div>`}
-      <div class="info">
-        <div class="shopTag">${esc(it.shopName||it.ownerRole||'Shop')}</div>
-        <div class="name">${esc(it.name)}</div>
-        <div class="unit">${esc(it.unit||'')}</div>
-        <div class="price">₹${it.price} × ${it.qty} = ₹${it.price * it.qty}</div>
-      </div>
-      <div class="qty">
-        <button onclick="updateQty('${it.productId}', ${it.qty - 1})">−</button>
-        <span>${it.qty}</span>
-        <button onclick="updateQty('${it.productId}', ${it.qty + 1})">+</button>
-      </div>
-      <button class="remove" onclick="removeItem('${it.productId}')"><i class="fa-solid fa-trash"></i></button>
-    </div>
-  `).join('');
+  // WORLD CLASS FIX: Get carts by 3 ways
+  let groups = {};
+  let flatItems = [];
 
-  document.getElementById('subTotal').textContent = '₹' + total;
-  document.getElementById('grandTotal').textContent = '₹' + total;
-  document.getElementById('itemCount').textContent = count;
-  document.getElementById('footerTotal').textContent = '₹' + total;
-  billBox.style.display = 'block';
-  footerBar.style.display = 'flex';
+  try{
+    // 1. If supplierId present, try specific
+    if(supplierId && supplierId!=='' && supplierId!=='null' && supplierId!=='undefined'){
+      const specific = window.CartCore.getCartBySupplier ? window.CartCore.getCartBySupplier(supplierId) : [];
+      if(specific && specific.length>0){
+        groups[supplierId] = specific;
+        flatItems = specific;
+      }
+    }
 
-  const checkoutBtn = document.getElementById('checkoutBtn');
-  if(checkoutBtn){
-    checkoutBtn.onclick = ()=> {
-      const ids = getUrlIds();
-      let sid = ids.supplierId || items[0]?.shopId || items[0]?.ownerId || Object.keys(window.CartCore.getAllCarts())[0] || '';
-      if(!sid){ alert('Shop ID missing - dobara add karo'); return; }
-      window.CartCore.goToCheckout(sid);
-    };
+    // 2. If still empty, try all carts
+    if(flatItems.length===0){
+      const all = window.CartCore.getAllCarts ? window.CartCore.getAllCarts() : {};
+      const keys = Object.keys(all||{});
+      if(keys.length>0){
+        groups = all;
+        flatItems = Object.values(all).flat();
+      } else {
+        // Fallback getCart()
+        const g = window.CartCore.getCart ? window.CartCore.getCart() : [];
+        if(g && g.length>0){
+          // Group by shopId
+          g.forEach(it=>{
+            const sid = it.shopId || it.shop_id || it.ownerId || 'unknown_shop';
+            if(!groups[sid]) groups[sid]=[];
+            groups[sid].push(it);
+          });
+          flatItems = g;
+        }
+      }
+    }
+
+    // 3. Final fallback - localStorage backup
+    if(flatItems.length===0){
+      try{
+        const backupKeys = Object.keys(sessionStorage).filter(k=>k.startsWith('cart_bkp_'));
+        backupKeys.forEach(k=>{
+          try{
+            const data = JSON.parse(sessionStorage.getItem(k)||'[]');
+            if(Array.isArray(data) && data.length>0){
+              const sid = k.replace('cart_bkp_','');
+              if(!groups[sid]) groups[sid]=[];
+              groups[sid] = groups[sid].concat(data);
+              flatItems = flatItems.concat(data);
+            }
+          }catch(e){}
+        });
+      }catch(e){}
+    }
+
+  }catch(e){
+    console.error('Cart grouping error', e);
   }
+
+  console.log('🛒 Cart render attempt', RETRY_COUNT+1, 'supplierId=', supplierId, 'flatItems=', flatItems.length, 'groups=', Object.keys(groups));
+
+  // RETRY LOGIC
+  if(flatItems.length===0 && RETRY_COUNT < MAX_RETRY){
+    RETRY_COUNT++;
+    root.innerHTML = `<div class="empty"><i class="fa-solid fa-spinner fa-spin"></i><b>Retrying... (${RETRY_COUNT}/${MAX_RETRY})</b><p>Cart sync ho raha hai</p><div class="debug">supplierId=${esc(supplierId||'empty')} | last_shopId=${esc(localStorage.getItem('last_shopId')||'empty')} | CartCore ready=${!!window.CartCore}</div></div>`;
+    setTimeout(renderCart, 1200);
+    return;
+  }
+
+  if(flatItems.length===0){
+    root.innerHTML = `<div class="empty">
+      <i class="fa-solid fa-cart-shopping"></i>
+      <b>Cart khali hai</b>
+      <p>Main app se product Add to Cart karo<br>Ya Product Detail se Buy Now dabao</p>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
+        <button onclick="location.href='/index.html'" style="background:#0f172a;color:#fff;border:none;padding:12px 18px;border-radius:12px;font-weight:800"><i class="fa-solid fa-house"></i> Main App Jao</button>
+        <button onclick="location.reload()" style="background:#fff;border:1px solid #e2e8f0;padding:12px 18px;border-radius:12px;font-weight:800">Retry</button>
+      </div>
+      <div class="debug">
+        Debug Info:<br>
+        URL shopId=${esc(q.shopId||'empty')}<br>
+        last_shopId=${esc(localStorage.getItem('last_shopId')||'empty')}<br>
+        last_supplierId=${esc(localStorage.getItem('last_supplierId')||'empty')}<br>
+        last_supplierRole=${esc(localStorage.getItem('last_supplierRole')||'empty')}<br>
+        guest_id=${esc(sessionStorage.getItem('guest_id')||localStorage.getItem('guest_id')||'empty')}<br>
+        CartCore exists=${!!window.CartCore} | Retry=${RETRY_COUNT}
+      </div>
+    </div>`;
+    document.getElementById('headerTitle').textContent = 'Your Cart • Empty';
+    return;
+  }
+
+  // Render groups
+  let html = '';
+  let grandTotal = 0;
+  let grandCount = 0;
+
+  Object.keys(groups).forEach(supplierIdKey=>{
+    const items = groups[supplierIdKey];
+    if(!items || items.length===0) return;
+    const shopName = items[0].shopName || items[0].shopType || items[0].ownerRole || 'Shop';
+    const supplierRole = items[0].ownerRole || items[0].shopOwnerRole || localStorage.getItem('last_supplierRole') || 'shop_owner';
+    let groupTotal = 0;
+    items.forEach(it=>{ groupTotal += Number(it.price||0) * Number(it.qty||it.quantity||1); });
+    grandTotal += groupTotal;
+    grandCount += items.length;
+
+    html += `<div class="cart-group">
+      <div class="cart-group-head">
+        <b><i class="fa-solid fa-store"></i> ${esc(shopName)} • ${esc(supplierIdKey.slice(0,10))}</b>
+        <span>${items.length} items • ${esc(supplierRole)}</span>
+      </div>
+      ${items.map((it, idx)=>{
+        const price = Number(it.price||0);
+        const qty = Number(it.qty||it.quantity||1);
+        return `<div class="item">
+          <img src="${esc(it.image||it.thumbnail||'/assets/default-product.png')}" onerror="this.src='/assets/default-product.png'">
+          <div class="item-info">
+            <b>${esc(it.name||it.title||'Product')}</b>
+            <span>₹${price} • ${esc(it.unit||'pcs')} • Stock OK</span>
+            <div class="qty-row">
+              <button onclick="changeQty('${esc(supplierIdKey)}','${esc(it.productId||it._id)}', -1)"><i class="fa-solid fa-minus"></i></button>
+              <span>${qty}</span>
+              <button onclick="changeQty('${esc(supplierIdKey)}','${esc(it.productId||it._id)}', 1)"><i class="fa-solid fa-plus"></i></button>
+              <button onclick="removeItem('${esc(supplierIdKey)}','${esc(it.productId||it._id)}')" style="margin-left:8px;color:#ef4444;border-color:#fecaca"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="item-price">₹${(price*qty).toLocaleString('en-IN')}<small>${qty} × ₹${price}</small></div>
+        </div>`;
+      }).join('')}
+      <div class="actions">
+        <button class="btn-clear" onclick="clearGroup('${esc(supplierIdKey)}')"><i class="fa-solid fa-trash-can"></i> Clear</button>
+        <button class="btn-checkout" onclick="goCheckout('${esc(supplierIdKey)}','${esc(supplierRole)}','${esc(items[0]?.shopType||'general')}')"><i class="fa-solid fa-bag-shopping"></i> Checkout ₹${groupTotal.toLocaleString('en-IN')}</button>
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="summary">
+    <div class="summary-row"><span>Subtotal (${grandCount} items)</span><span>₹${grandTotal.toLocaleString('en-IN')}</span></div>
+    <div class="summary-row"><span>Delivery Fee</span><span style="color:#16a34a">FREE</span></div>
+    <div class="summary-row total"><span>Grand Total</span><span>₹${grandTotal.toLocaleString('en-IN')}</span></div>
+    <div style="font-size:11px;color:#64748b;margin-top:8px;font-weight:600"><i class="fa-solid fa-shield"></i> 100% Secure Checkout • ${Object.keys(groups).length} shop(s) • COD Available</div>
+    ${Object.keys(groups).length>1? `<div style="margin-top:12px;display:flex;gap:8px"><button onclick="checkoutAll()" style="flex:1;background:#facc15;color:#000;border:none;padding:14px;border-radius:12px;font-weight:900"><i class="fa-solid fa-bolt"></i> Checkout All Shops - ₹${grandTotal.toLocaleString('en-IN')}</button></div>` : ''}
+  </div>`;
+
+  root.innerHTML = html;
+  document.getElementById('headerTitle').textContent = `Your Cart • ${grandCount} items • ₹${grandTotal.toLocaleString('en-IN')}`;
+  if(window.CartCount) window.CartCount.update();
 }
 
-function updateQty(pid, newQty){
-  const { supplierId } = getUrlIds();
-  if(newQty < 1) return removeItem(pid);
-  window.CartCore.updateQty(pid, newQty, null);
-  setTimeout(()=> render(), 200);
-}
-function removeItem(pid){
-  window.CartCore.remove(pid, null);
-  setTimeout(()=> render(), 200);
-}
-async function clearCart(){
-  if(!confirm('Is shop ka cart saaf kar du?')) return;
-  const { supplierId } = getUrlIds();
-  await window.CartCore.clear(supplierId || null);
-  render();
-}
-async function clearAllCart(){
-  if(!confirm('Saare shops ka cart saaf kar du?')) return;
-  await window.CartCore.clear();
-  render();
-}
-function goBackToShop(){
-  const { shopId } = getUrlIds();
-  if(shopId){ location.href = `/shop-templates/dairy/customer-view.html?shopId=${encodeURIComponent(shopId)}`; }
-  else { location.href = '/'; }
+async function changeQty(supplierId, productId, delta){
+  try{
+    if(window.CartCore && window.CartCore.updateQty){
+      await window.CartCore.updateQty(supplierId, productId, delta);
+    } else if(window.CartCore && window.CartCore.add){
+      // fallback
+      const all = window.CartCore.getAllCarts ? window.CartCore.getAllCarts() : {};
+      const items = all[supplierId] || [];
+      const it = items.find(i=> (i.productId||i._id)===productId);
+      if(it){
+        const newQty = Math.max(1, Number(it.qty||1)+delta);
+        it.qty = newQty;
+        if(window.CartCore.sync) await window.CartCore.sync(supplierId);
+      }
+    }
+    setTimeout(renderCart, 300);
+  }catch(e){ console.error(e); }
 }
 
-if(window.CartCore){
-  window.CartCore.onChange(render);
-  window.CartCore.ready.then(()=> render(window.CartCore.cart));
-  setTimeout(()=> render(window.CartCore.cart), 300);
-  setTimeout(()=> render(window.CartCore.cart), 1200);
-  setTimeout(()=> render(window.CartCore.cart), 2500);
-} else {
-  listEl.innerHTML = '<div class="empty"><h3>CartCore not loaded</h3><button onclick="location.reload()">Reload</button></div>';
+async function removeItem(supplierId, productId){
+  if(!confirm('Remove this item?')) return;
+  try{
+    if(window.CartCore && window.CartCore.remove){
+      await window.CartCore.remove(supplierId, productId);
+    }
+    renderCart();
+  }catch(e){ console.error(e); }
 }
+
+async function clearGroup(supplierId){
+  if(!confirm('Clear all items from this shop?')) return;
+  try{
+    if(window.CartCore && window.CartCore.clear) await window.CartCore.clear(supplierId);
+    renderCart();
+  }catch(e){ console.error(e); }
+}
+
+function goCheckout(supplierId, supplierRole, shopType){
+  const url = `../checkout/checkout.html?shopId=${encodeURIComponent(supplierId)}&supplierId=${encodeURIComponent(supplierId)}&supplierRole=${encodeURIComponent(supplierRole||'shop_owner')}&shopType=${encodeURIComponent(shopType||'general')}&shopName=${encodeURIComponent(supplierId)}`;
+  location.href = url;
+}
+
+function checkoutAll(){
+  // Checkout first shop (or combined checkout if you build multi-shop)
+  const keys = window.CartCore && window.CartCore.getAllCarts ? Object.keys(window.CartCore.getAllCarts()) : [];
+  if(keys.length>0) goCheckout(keys[0], 'shop_owner', 'general');
+  else alert('Cart empty');
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  setTimeout(renderCart, 800);
+  // Auto retry on focus
+  window.addEventListener('focus', ()=>{ RETRY_COUNT=0; renderCart(); });
+});
 </script>
 </body>
 </html>

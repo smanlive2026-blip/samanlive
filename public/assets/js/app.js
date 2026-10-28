@@ -1,9 +1,10 @@
-// LOCATION: public/assets/js/app.js - V6 PRODUCT DETAIL PAGE + BLACKBOARD V4 + V13 HIERARCHY - CART FIX
+// LOCATION: public/assets/js/app.js - V6 WORLD CLASS - PRODUCT DETAIL + CART FIX + PROFILE + V13 HIERARCHY - FINAL
 let allModules = [], allAds = [], allServices = [], nearbyVideos = [], allCampaigns = [];
 let siteSettings = {}, userLocation = null, allProducts = [];
 let originalServices = [], originalProducts = [];
 let currentUser = null;
 
+// ===== V13 HIERARCHY HELPER - WORLD CLASS =====
 function getMyRoleSafe(){
   if(window.RoleHierarchy && window.RoleHierarchy.getMyRole) return window.RoleHierarchy.getMyRole();
   try { return localStorage.getItem('USER_ROLE') || 'customer'; } catch(e){ return 'customer'; }
@@ -40,55 +41,79 @@ function filterProductsByRole(products){
   });
 }
 
+// ===== PRODUCT CARD - WORLD CLASS - AMAZON STYLE =====
 function renderProductCard(product){
   const showCart = canShowAddToCartButton(product);
   const price = product.price || product.sellingPrice || 0;
+  const mrp = product.mrp || product.originalPrice || 0;
+  const off = mrp>price ? Math.round((1-price/mrp)*100) : 0;
   const name = product.name || product.title || 'Product';
-  const img = product.thumbnail || product.image || product.images?.[0] || '/assets/default-product.png';
+  const img = product.thumbnail || product.image || (Array.isArray(product.images)?(product.images[0]?.url||product.images[0]):null) || '/assets/default-product.png';
   const shopName = product.shopName || product.shopType || product.ownerRole || 'Shop';
   if (!product.ownerRole) product.ownerRole = 'shop_owner';
   if (!product.ownerId) product.ownerId = product.shopId || product._id;
   if(!window._productMap) window._productMap = {};
   window._productMap[product._id] = product;
+  const safeId = String(product._id).replace(/'/g,'');
   return `
-    <div class="nearby-product-card" data-product-id="${product._id}" data-owner-role="${product.ownerRole}" onclick="openProduct('${product._id}')" style="cursor:pointer">
-      <img src="${img}" onerror="this.src='/assets/default-product.png'">
-      <p>${name}</p>
-      <span style="font-size:10px;color:#888">${shopName}</span>
-      <span>₹${price}</span>
+    <div class="nearby-product-card" data-product-id="${product._id}" data-owner-role="${product.ownerRole}" onclick="openProduct('${safeId}')" style="cursor:pointer;position:relative">
+      ${off>0? `<span style="position:absolute;top:6px;left:6px;background:#16a34a;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;z-index:2">${off}% OFF</span>`:''}
+      <img src="${img}" loading="lazy" onerror="this.src='/assets/default-product.png'" style="width:100%;height:110px;object-fit:contain;background:#fff;border-radius:10px">
+      <p style="font-size:12px;font-weight:800;margin-top:6px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
+      <span style="font-size:10px;color:#888;font-weight:700">${shopName}</span>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:13px;font-weight:900">₹${price}</span>${mrp>price? `<span style="font-size:10px;color:#94a3b8;text-decoration:line-through">₹${mrp}</span>`:''}</div>
       ${showCart?
-        `<button onclick="event.stopPropagation(); addToCartById('${product._id}')" style="width:100%;margin-top:6px;padding:6px;background:#000;color:#fff;border:0;border-radius:6px;font-size:12px">Add</button>`
-        : `<div style="margin-top:6px;padding:4px;background:#f3f3f3;border-radius:6px;font-size:10px;text-align:center;color:#999">Not allowed (${getMyRoleSafe()}→${product.ownerRole})</div>`
+        `<button onclick="event.stopPropagation(); addToCartById('${safeId}')" style="width:100%;margin-top:6px;padding:7px;background:#0f172a;color:#fff;border:0;border-radius:8px;font-size:11px;font-weight:800">Add to Cart</button>`
+        : `<div style="margin-top:6px;padding:5px;background:#f1f5f9;border-radius:8px;font-size:9px;text-align:center;color:#64748b;font-weight:700">View Only</div>`
       }
     </div>`;
 }
 
+// ===== CART - WORLD CLASS - last_shopId FIX =====
 window._productMap = window._productMap || {};
 window.addToCartById = async function(productId){
   const product = window._productMap[productId] || allProducts.find(p=>p._id===productId);
-  if(!product){ alert('Product not found'); return; }
+  if(!product){ alert('Product not found - refresh karo'); return; }
   try{
-    if(product.shopId){ localStorage.setItem('last_shopId', product.shopId); localStorage.setItem('last_supplierId', product.shopId); }
+    // FIX 1: last_shopId set karo - cart page ke liye sabse jaruri
+    if(product.shopId){
+      localStorage.setItem('last_shopId', product.shopId);
+      localStorage.setItem('last_supplierId', product.shopId);
+    }
+    if(product.ownerId) localStorage.setItem('last_supplierId', product.ownerId);
+    if(product.ownerRole) localStorage.setItem('last_supplierRole', product.ownerRole);
+    else localStorage.setItem('last_supplierRole', 'shop_owner');
+    try{ localStorage.setItem('last_product', JSON.stringify(product)); }catch(e){}
+
     if(window.CartCore && window.CartCore.ready){ try{ await window.CartCore.ready; }catch(e){} }
     if(window.CartCore){
       const ok = await window.CartCore.add(product, 1);
       if(ok!==false){
-        const t=document.createElement('div'); t.textContent=`${product.name||'Product'} added ✅`;
-        t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;z-index:9999;font-size:13px;font-weight:700';
-        document.body.appendChild(t); setTimeout(()=>t.remove(),1200);
+        const t=document.createElement('div'); 
+        t.textContent=`${product.name||'Product'} added ✅`;
+        t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 18px;border-radius:12px;z-index:9999;font-size:13px;font-weight:800;box-shadow:0 8px 20px rgba(0,0,0,.2)';
+        document.body.appendChild(t); 
+        setTimeout(()=>t.remove(),1500);
+        if(window.CartCount) window.CartCount.update();
       }
-    } else { addToCartFallback(productId); }
+    } else {
+      addToCartFallback(productId);
+    }
   }catch(e){ console.error(e); alert('Cart error: '+e.message); }
 };
 
 window.addToCartFallback = function(id){ 
   const p = window._productMap[id] || allProducts.find(x=>x._id===id);
-  if(p && window.CartCore){ window.CartCore.add(p,1); }
+  if(p && window.CartCore){ 
+    localStorage.setItem('last_shopId', p.shopId||'');
+    window.CartCore.add(p,1); 
+  }
   else { alert('Cart loading... dobara try karo'); }
 };
 
 document.addEventListener('DOMContentLoaded', initApp);
 
+// ========== LOCATION MANAGER ==========
 window.LocationManager = {
     getManual: function() {
         return new Promise((resolve) => {
@@ -107,23 +132,36 @@ window.LocationManager = {
     onLocationUpdate: null
 };
 
+// ========== PROFILE ACTIVATION - COMMON PROFILE SE ==========
 async function loadCurrentUser(){
-  const token = localStorage.getItem('userToken');
+  const token = localStorage.getItem('userToken') || localStorage.getItem('TOKEN') || localStorage.getItem('token');
   if(!token) return null;
   try{
-    const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
-    const data = await res.json();
-    if(data.success){
-      currentUser = data.user;
-      window.currentUser = data.user;
+    // Pehle common profile try
+    let res = await fetch('/api/common/profile/me', { headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': localStorage.getItem('USER_ID')||'' } });
+    let data = await res.json().catch(()=>({}));
+    if(!data.success){
+      // Fallback old auth/me
+      res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+      data = await res.json();
+    }
+    if(data.success && (data.user || data.data)){
+      const u = data.user || data.data || data;
+      currentUser = u;
+      window.currentUser = u;
+      window.USER_ID = u._id;
+      window.USER_ROLE = u.role || 'customer';
       try{
-        localStorage.setItem('USER_ID', data.user._id);
-        localStorage.setItem('USER_NAME', data.user.name);
-        localStorage.setItem('USER_PHONE', data.user.phone);
-        localStorage.setItem('userPic', data.user.profilePic || '');
+        localStorage.setItem('USER_ID', u._id);
+        localStorage.setItem('USER_NAME', u.name||'');
+        localStorage.setItem('USER_PHONE', u.phone||'');
+        localStorage.setItem('USER_ROLE', u.role||'customer');
+        localStorage.setItem('userPic', u.profilePic||u.avatar||'');
       }catch(e){}
-      return data.user;
-    }else{ if(res.status===401){ localStorage.removeItem('userToken'); } }
+      return u;
+    }else{
+      if(res.status===401){ localStorage.removeItem('userToken'); localStorage.removeItem('TOKEN'); }
+    }
   }catch(e){ console.log('loadCurrentUser fail', e); }
   return null;
 }
@@ -131,8 +169,10 @@ async function loadCurrentUser(){
 async function initApp() {
     await loadCurrentUser();
     await loadSettings();
-    try { await window.LocationManager.getManual(); await showUserLocationInHeader(); }
-    catch(e) { console.log("Location/City error, skipping", e); }
+    try {
+        await window.LocationManager.getManual();
+        await showUserLocationInHeader();
+    } catch(e) { console.log("Location/City error, skipping", e); }
     await loadAllData();
     if(window.CartCount) window.CartCount.update();
     loadUserProfilePic();
@@ -228,7 +268,7 @@ async function renderNearbyProductsRepeat() {
             allProducts = await window.WorldProductManager.getAllShopsProducts();
         }else{
             const role = getMyRoleSafe();
-            const res = await fetch(`/api/world-products?role=${role}`).then(r=>r.json()).catch(()=>({data:[]}));
+            const res = await fetch(`/api/world-products?role=${role}&limit=100`).then(r=>r.json()).catch(()=>({data:[]}));
             allProducts = res.data || res.products || [];
         }
     }catch(e){ console.log('World products load fail', e); allProducts = []; }
@@ -255,7 +295,7 @@ function renderCampaigns(){}
 function renderVideos(){}
 
 function goToProfilePage() { 
-  const token = localStorage.getItem('userToken');
+  const token = localStorage.getItem('userToken') || localStorage.getItem('TOKEN');
   if(!token){ if(window.openLoginModal) window.openLoginModal(); else alert('Pehle login karo'); return; }
   window.location.href = '/profile.html'; 
 }
@@ -273,6 +313,7 @@ function openQRScanner() { alert('QR Scanner Open'); }
 async function loadUserProfilePic() {
     let pic = '/assets/images/samanlive-logo.png';
     if(currentUser && currentUser.profilePic) pic = currentUser.profilePic;
+    else if(currentUser && currentUser.avatar) pic = currentUser.avatar;
     else pic = localStorage.getItem('userPic') || localStorage.getItem('USER_PIC') || pic;
     const el = document.getElementById('navProfilePic');
     if(el) el.src = pic;
@@ -280,13 +321,25 @@ async function loadUserProfilePic() {
     if(el2 && currentUser && currentUser.profilePic) el2.src = currentUser.profilePic;
 }
 
+// ===== PRODUCT DETAIL NAVIGATION - WORLD CLASS - AMAZON STYLE =====
 function openProduct(productId) {
     const prod = window._productMap[productId] || allProducts.find(p => p._id === productId);
     if(!prod) return;
-    try{ localStorage.setItem('last_product', JSON.stringify(prod)); }catch(e){}
-    addToHistory({ id: prod._id, name: prod.name, image: prod.thumbnail || prod.image, price: prod.price, url: `/shop-templates/common/product/product-detail.html?productId=${prod._id}&shopId=${prod.shopId}` });
-    // AMAZON STYLE - DIRECT SHOP NAHI, PRODUCT DETAIL PAGE PE BHEJO
-    window.location.href = `/shop-templates/common/product/product-detail.html?productId=${prod._id}&shopId=${prod.shopId}&shopType=${prod.shopType||'general'}`;
+    try{ 
+      localStorage.setItem('last_product', JSON.stringify(prod));
+      localStorage.setItem('last_shopId', prod.shopId||'');
+      localStorage.setItem('last_supplierId', prod.shopId||'');
+      localStorage.setItem('last_supplierRole', prod.ownerRole||'shop_owner');
+    }catch(e){}
+    addToHistory({ 
+      id: prod._id, 
+      name: prod.name, 
+      image: prod.thumbnail || prod.image || (prod.images && prod.images[0]?.url) || '', 
+      price: prod.price, 
+      url: `/shop-templates/common/product/product-detail.html?productId=${prod._id}&shopId=${prod.shopId}&shopType=${prod.shopType||'general'}` 
+    });
+    // AMAZON STYLE - PRODUCT DETAIL PAGE PE BHEJO, DIRECT SHOP NAHI
+    window.location.href = `/shop-templates/common/product/product-detail.html?productId=${encodeURIComponent(prod._id)}&shopId=${encodeURIComponent(prod.shopId||'')}&shopType=${encodeURIComponent(prod.shopType||'general')}&shopName=${encodeURIComponent(prod.shopName||'')}`;
 }
 
 function renderFooter() {
@@ -309,4 +362,4 @@ function renderFooter() {
 
 window.AppRoleFilter = { filterProductsByRole, canShowAddToCartButton, renderProductCard };
 window.currentUser = currentUser;
-console.log('✅ app.js V6 PRODUCT DETAIL NAVIGATION - Role:', getMyRoleSafe());
+console.log('✅ app.js V6 WORLD CLASS - Product Detail + Cart Fix + Common Profile - Role:', getMyRoleSafe());

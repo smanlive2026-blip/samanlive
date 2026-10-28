@@ -1,119 +1,176 @@
-// LOCATION: public/shop-templates/common/core/user-core.js - V6 COMMON CONNECTED - MAIN APP + SHOP OWNER
-class UserCore {
-  constructor(){
-    this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
-    this.user = null;
-    this.location = null;
-    this.init();
+// LOCATION: public/shop-templates/common/core/user-core.js - V7 FINAL WORLD CLASS - COMMON PROFILE + ADDRESS + WALLET + ROLE FIXED
+(function(){
+  window.UserCore = window.UserCore || {};
+
+  // ===== BUYER ID - 3 LAYER - WORLD CLASS =====
+  function getBuyerId(){
+    // 1. CartCore (guest_id + user_xxx)
+    if(window.CartCore && window.CartCore.getBuyerId){
+      const id = window.CartCore.getBuyerId();
+      if(id) return id;
+    }
+    // 2. AuthCore
+    if(window.AuthCore && window.AuthCore.getUserId){
+      const id = window.AuthCore.getUserId();
+      if(id && String(id).length>=10) return id.startsWith('user_') ? id : 'user_'+id;
+    }
+    // 3. localStorage fallback - tere purane logic se
+    try{
+      let id = localStorage.getItem('USER_ID') || window.USER_ID || localStorage.getItem('lm_user') || '';
+      if(id){
+        // Agar JSON hai to parse
+        try{ const parsed = JSON.parse(id); if(parsed._id) id = parsed._id; }catch(e){}
+        if(String(id).length>=10) return String(id).startsWith('user_') ? String(id) : 'user_'+String(id);
+      }
+      let gid = sessionStorage.getItem('guest_id') || localStorage.getItem('guest_id') || localStorage.getItem('guestId') || '';
+      if(gid) return gid;
+    }catch(e){}
+    return 'guest_' + Date.now();
   }
-  async init(){
-    this.user = await this.getUser();
-    this.location = await this.getLocation();
-    window.currentUser = this.user;
+
+  function getRole(){
+    if(window.RoleHierarchy && window.RoleHierarchy.getMyRole) return window.RoleHierarchy.getMyRole();
+    if(window.AuthCore && window.AuthCore.getRole) return window.AuthCore.getRole();
+    return localStorage.getItem('USER_ROLE') || localStorage.getItem('lm_role') || 'customer';
   }
-  async getUser(){
-    if(this.user) return this.user;
-    if(window.currentUser) return window.currentUser;
-    // 1. Main app token se
-    const token = localStorage.getItem('userToken') || localStorage.getItem('TOKEN');
-    if(token){
-      try{
-        const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer '+token } });
-        const data = await res.json();
-        if(data.success){
-          this.user = data.user;
+
+  function getToken(){
+    return (window.AuthCore && window.AuthCore.getToken && window.AuthCore.getToken()) || localStorage.getItem('TOKEN') || localStorage.getItem('token') || localStorage.getItem('userToken') || localStorage.getItem('lm_token') || '';
+  }
+
+  // ===== GET USER - COMMON PROFILE + AUTH/ME =====
+  async function getUser(){
+    const buyerId = getBuyerId();
+    const token = getToken();
+    try{
+      // 1. Common profile - main fix
+      let url = `/api/common/profile/me?buyerId=${encodeURIComponent(buyerId)}`;
+      let res = await fetch(url, {
+        headers: { 'x-buyer-id': buyerId, ...(token?{ 'Authorization': `Bearer ${token}` }: {}) }
+      }).catch(()=>null);
+      let data = res ? await res.json().catch(()=>null) : null;
+      if(data && data.success && data.user && data.user._id){
+        // Sync localStorage
+        try{
+          localStorage.setItem('USER_ID', data.user._id);
+          localStorage.setItem('USER_NAME', data.user.name||'');
+          localStorage.setItem('USER_PHONE', data.user.phone||'');
+          localStorage.setItem('USER_ROLE', data.user.role||'customer');
+          if(data.user.profilePic) localStorage.setItem('userPic', data.user.profilePic);
+          window.USER_ID = data.user._id;
+          window.USER_ROLE = data.user.role;
           window.currentUser = data.user;
-          try{
-            localStorage.setItem('USER_ID', data.user._id);
-            localStorage.setItem('USER_NAME', data.user.name);
-            localStorage.setItem('lm_user', JSON.stringify(data.user));
-          }catch(e){}
-          return data.user;
+        }catch(e){}
+        return data.user;
+      }
+
+      // 2. Fallback /api/auth/me
+      res = await fetch('/api/auth/me', {
+        headers: { ...(token?{ 'Authorization': `Bearer ${token}` }: {}) }
+      }).catch(()=>null);
+      data = res ? await res.json().catch(()=>null) : null;
+      const user = data?.user || data?.data || null;
+      if(user && user._id){
+        try{
+          localStorage.setItem('USER_ID', user._id);
+          localStorage.setItem('USER_ROLE', user.role||'customer');
+          window.USER_ID = user._id;
+          window.currentUser = user;
+        }catch(e){}
+        return user;
+      }
+
+      // 3. LocalStorage cached user
+      try{
+        const cached = localStorage.getItem('lm_user') || localStorage.getItem('currentUser') || '';
+        if(cached){
+          const u = JSON.parse(cached);
+          if(u && u._id) return u;
         }
       }catch(e){}
+
+      return null;
+    }catch(e){
+      console.log('UserCore getUser fail', e.message);
+      return null;
     }
-    // 2. Cache
-    try{
-      const cached = JSON.parse(localStorage.getItem('lm_user')||'null');
-      if(cached){ this.user = cached; window.currentUser = cached; return cached; }
-    }catch(e){}
-    return null;
   }
-  getUserId(){ return this.user?._id || window.currentUser?._id || localStorage.getItem('USER_ID') || null; }
-  isLoggedIn(){ return !!this.user || !!window.currentUser || !!localStorage.getItem('userToken'); }
-  async getLocation(){
-    if(this.location) return this.location;
-    if(window.currentUserLocation) return window.currentUserLocation;
+
+  // ===== GET ADDRESSES - 3 LAYER =====
+  async function getAddresses(){
+    const buyerId = getBuyerId();
+    const token = getToken();
     try{
-      const c = JSON.parse(localStorage.getItem('userLocation')||'null');
-      if(c) return c;
-    }catch(e){}
-    return { lat: 21.1702, lng: 72.8311, city: 'Surat', state: 'Gujarat', address: 'Surat, Gujarat' };
-  }
-  async getAddresses(){
-    try{
-      const token = localStorage.getItem('userToken');
-      const buyerId = this.getUserId() || 'guest_'+Date.now();
-      const headers = { 'x-buyer-id': buyerId };
-      if(token) headers['Authorization'] = 'Bearer '+token;
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/user/addresses?buyerId=${buyerId}`, {}, { headers });
-        return data.addresses || data.data || [];
+      // 1. Common profile se addresses
+      let res = await fetch(`/api/common/profile/me?buyerId=${encodeURIComponent(buyerId)}`, {
+        headers: { 'x-buyer-id': buyerId, ...(token?{ 'Authorization': `Bearer ${token}` }: {}) }
+      }).catch(()=>null);
+      let data = res ? await res.json().catch(()=>null) : null;
+      if(data && data.success && data.user && Array.isArray(data.user.addresses) && data.user.addresses.length>0){
+        console.log('✅ UserCore addresses from common profile:', data.user.addresses.length);
+        return data.user.addresses;
       }
-      const res = await fetch(`/api/user/addresses?buyerId=${buyerId}`, { headers });
-      const data = await res.json();
-      return data.addresses || [];
-    }catch(e){ return []; }
-  }
-  async addAddress(address){
-    const token = localStorage.getItem('userToken');
-    const buyerId = this.getUserId() || '';
-    const headers = { 'Content-Type': 'application/json', 'x-buyer-id': buyerId };
-    if(token) headers['Authorization'] = 'Bearer '+token;
-    const res = await fetch('/api/user/addresses', { method: 'POST', headers, body: JSON.stringify(address) });
-    const data = await res.json();
-    return data;
-  }
-  getCart(){ 
-    if(window.CartCore) return window.CartCore.getCart();
-    try{ return JSON.parse(localStorage.getItem(`cart_${this.shopId}`)||'[]'); }catch(e){ return []; }
-  }
-  getCartCount(){ 
-    if(window.CartCore) return window.CartCore.getTotalCount();
-    return this.getCart().length;
-  }
-  getCartTotal(){ 
-    if(window.CartCore) return window.CartCore.getTotalAmount();
-    return 0;
-  }
-  async getOrders(){
-    try{
-      const buyerId = this.getUserId();
-      if(!buyerId) return [];
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/checkout/orders/my?buyerId=${buyerId}`);
-        return data.orders||[];
+
+      // 2. /api/user/addresses
+      res = await fetch(`/api/user/addresses?buyerId=${encodeURIComponent(buyerId)}`, {
+        headers: { 'x-buyer-id': buyerId, ...(token?{ 'Authorization': `Bearer ${token}` }: {}) }
+      }).catch(()=>null);
+      data = res ? await res.json().catch(()=>null) : null;
+      let addrs = data?.addresses || data?.data || (Array.isArray(data)?data:[]);
+      if(Array.isArray(addrs) && addrs.length>0){
+        console.log('✅ UserCore addresses from /user/addresses:', addrs.length);
+        return addrs;
       }
-      const res = await fetch(`/api/common/checkout/orders/my?buyerId=${buyerId}`, { headers: { 'x-buyer-id': buyerId } });
+
+      // 3. LocalStorage fallback - tere checkout ke liye sabse jaruri
+      const localText = localStorage.getItem('selectedAddressText');
+      const localId = localStorage.getItem('selectedAddressId');
+      if(localText){
+        return [{ _id: localId||'local_1', id: localId||'local_1', full: localText, line1: localText, city: '', label: 'Local Address', phone: localStorage.getItem('USER_PHONE')||'' }];
+      }
+
+      return [];
+    }catch(e){
+      console.log('UserCore getAddresses fail', e.message);
+      return [];
+    }
+  }
+
+  // ===== ADD ADDRESS =====
+  async function addAddress(address){
+    const buyerId = getBuyerId();
+    const token = getToken();
+    try{
+      const res = await fetch('/api/user/addresses', {
+        method: 'POST',
+        headers: { 'x-buyer-id': buyerId, 'Content-Type': 'application/json', ...(token?{ 'Authorization': `Bearer ${token}` }: {}) },
+        body: JSON.stringify({ ...address, buyerId })
+      });
       const data = await res.json();
-      return data.orders||[];
-    }catch(e){ return []; }
+      if(data.success){
+        try{ localStorage.setItem('selectedAddressText', data.address?.full || address.line1); localStorage.setItem('selectedAddressId', data.address?._id || 'local_'+Date.now()); }catch(e){}
+      }
+      return data;
+    }catch(e){ return { success: false, message: e.message }; }
   }
-  getWishlist(){ try{ return JSON.parse(localStorage.getItem('wishlist')||'[]'); }catch(e){ return []; } }
-  async updateProfile(updates){
-    const token = localStorage.getItem('userToken');
-    const res = await fetch('/api/user/update', { method: 'PUT', headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, body: JSON.stringify(updates) });
-    const data = await res.json();
-    if(data.success){ this.user = data.user; window.currentUser = data.user; localStorage.setItem('lm_user', JSON.stringify(data.user)); }
-    return data;
+
+  // ===== CURRENT USER SYNC - TERE PURANE CODE KE LIYE =====
+  function getCurrentUserSync(){
+    try{
+      const u = localStorage.getItem('lm_user') || localStorage.getItem('currentUser');
+      if(u) return JSON.parse(u);
+    }catch(e){}
+    return window.currentUser || null;
   }
-  async logout(){
-    localStorage.removeItem('userToken'); localStorage.removeItem('TOKEN');
-    localStorage.removeItem('USER_ID'); localStorage.removeItem('lm_user');
-    window.currentUser = null; this.user = null;
-    location.href = '/';
-  }
-}
-window.UserCore = new UserCore();
-window.userCore = window.UserCore;
-console.log('✅ UserCore V6 COMMON CONNECTED - User:', window.UserCore.getUserId()||'Guest');
+
+  window.UserCore.getUser = getUser;
+  window.UserCore.getAddresses = getAddresses;
+  window.UserCore.addAddress = addAddress;
+  window.UserCore.getBuyerId = getBuyerId;
+  window.UserCore.getRole = getRole;
+  window.UserCore.getToken = getToken;
+  window.UserCore.getCurrentUserSync = getCurrentUserSync;
+  window.UserCore.getUserId = getBuyerId;
+
+  console.log('✅ UserCore V7 FINAL WORLD CLASS - common profile + address 3 layer + lm_user compat - buyerId=', getBuyerId(), 'role=', getRole());
+})();
