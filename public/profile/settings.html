@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings</title>
+<link rel="stylesheet" href="/assets/css/main.css">
+</head><body style="background:#f1f5f9;margin:0">
+<div style="background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0"><button onclick="location.href='/profile.html'" style="width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%">‹</button><b>Settings</b></div>
+<div style="max-width:600px;margin:12px auto;padding:0 12px;background:#fff;border-radius:16px;padding:16px">
+  <label style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9">Order Notifications <input type="checkbox" id="notifOrders"></label>
+  <label style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9">Promo Notifications <input type="checkbox" id="notifPromos"></label>
+  <label style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9">Push Notifications <input type="checkbox" id="notifPush"></label>
+  <label style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9">Email <input type="checkbox" id="notifEmail"></label>
+  <label style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9">Location <input type="checkbox" id="privacyLocation"></label>
+  <label style="display:flex;justify-content:space-between;padding:12px 0">Dark Mode <input type="checkbox" id="darkMode" onchange="toggleDarkMode(this.checked)"></label>
+  <button onclick="clearCache()" style="width:100%;margin-top:12px;padding:12px;background:#f1f5f9;border:none;border-radius:10px;font-weight:700">Clear Cache</button>
+  <button onclick="logout()" style="width:100%;margin-top:8px;padding:12px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">Logout</button>
+</div>
+<script src="/assets/js/app.js"></script><script src="/profile/js/settings.js"></script>
+</body></html>

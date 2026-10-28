@@ -1,0 +1,27 @@
+<!-- ORDER DETAIL ME ADDRESS BOX - SHOP OWNER KO DIKHEGA -->
+<div id="customerAddressBox" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-top:12px">
+  Loading customer address...
+</div>
+<script>
+// order load ke baad
+function showCustomerAddress(order){
+  const addr = order.deliveryAddress || {};
+  const box = document.getElementById('customerAddressBox');
+  if(!box) return;
+  box.innerHTML = `
+    <h4 style="margin:0 0 8px 0;font-weight:900">📍 Delivery Address - Customer ka</h4>
+    <div style="font-size:14px;line-height:1.5">
+      <b>${addr.name||order.buyerId||'Customer'}</b><br>
+      📞 <a href="tel:${addr.phone||''}" style="color:#0ea5e9;font-weight:800">${addr.phone||'No phone'}</a><br>
+      🏠 ${addr.full||addr.fullAddress||addr.line1||order.addressText||'No address'}<br>
+      <small style="color:#64748b">${addr.city||''} ${addr.state||''} - ${addr.pincode||''}</small>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr.full||addr.line1||'')}', '_blank')" style="flex:1;padding:10px;background:#000;color:#fff;border:0;border-radius:10px;font-weight:800">📍 Open Maps</button>
+      <button onclick="window.open('https://wa.me/${(addr.phone||'').replace(/\\D/g,'')}', '_blank')" style="flex:1;padding:10px;background:#22c55e;color:#fff;border:0;border-radius:10px;font-weight:800">💬 WhatsApp</button>
+    </div>
+    <small style="display:block;margin-top:8px;color:#94a3b8">Order: ${order.orderId} • Buyer: ${order.buyerId}</small>
+  `;
+}
+// existing order fetch ke baad call karo: showCustomerAddress(order)
+</script>

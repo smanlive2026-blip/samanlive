@@ -262,4 +262,5 @@
 
   document.addEventListener('DOMContentLoaded', ()=> HierarchyCheckout.init());
   console.log('✅ HierarchyCheckout V4 DAIRY FIXED loaded');
+
 })();

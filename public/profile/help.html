@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Help - SAMANLIVE</title>
+<link rel="stylesheet" href="/assets/css/main.css">
+</head><body style="background:#f1f5f9;margin:0">
+<div style="background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0"><button onclick="location.href='/profile.html'" style="width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%">‹</button><b>Help & Support</b></div>
+<div style="max-width:600px;margin:12px auto;padding:0 12px">
+  <input id="searchInput" placeholder="Search FAQ..." oninput="searchFAQ()" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px">
+  <div id="faqSection" style="margin-top:12px;background:#fff;border-radius:16px;padding:12px">
+    <div class="faq-item" style="padding:12px 0;border-bottom:1px solid #f1f5f9"><div class="faq-question" onclick="toggleFAQ(this)" style="font-weight:800;cursor:pointer">How to track order? ▼</div><div class="faq-answer" style="display:none;padding-top:8px;color:#475569">Go to My Orders > Track</div></div>
+    <div class="faq-item" style="padding:12px 0;border-bottom:1px solid #f1f5f9"><div class="faq-question" onclick="toggleFAQ(this)" style="font-weight:800;cursor:pointer">How to add address? ▼</div><div class="faq-answer" style="display:none;padding-top:8px;color:#475569">Profile > My Addresses > Add New - Yehi address dairy shop owner ko jayega</div></div>
+  </div>
+  <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button onclick="callSupport()" style="padding:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;font-weight:700">📞 Call</button>
+    <button onclick="openWhatsApp()" style="padding:12px;background:#22c55e;color:#fff;border:none;border-radius:12px;font-weight:700">💬 WhatsApp</button>
+  </div>
+</div>
+<script src="/assets/js/app.js"></script><script src="/profile/js/help.js"></script>
+</body></html>

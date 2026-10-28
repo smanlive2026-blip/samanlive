@@ -1,0 +1,62 @@
+<!-- LOCATION: public/profile/addresses.html - MAIN APP ADDRESSES - CONNECTED TO DAIRY CHECKOUT -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Addresses - SAMANLIVE</title>
+<link rel="stylesheet" href="/assets/css/main.css">
+<style>
+body{background:#f1f5f9;margin:0;font-family:Outfit,sans-serif}
+.header{background:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-bottom:1px solid #e2e8f0}
+.back{width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer}
+.add-btn{background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:10px;font-weight:800;cursor:pointer}
+.container{max-width:600px;margin:0 auto;padding:12px}
+.address-card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid #f1f5f9;position:relative}
+.default-badge{position:absolute;top:10px;right:10px;background:#dcfce7;color:#166534;font-size:10px;font-weight:900;padding:3px 8px;border-radius:20px}
+.address-type{font-size:12px;font-weight:900;color:#0ea5e9}
+.address-name{font-weight:900;margin-top:4px}
+.address-text{font-size:13px;color:#475569;margin-top:6px;line-height:1.5}
+.address-actions{display:flex;gap:8px;margin-top:12px}
+.action-btn{padding:8px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;font-weight:700;font-size:12px;cursor:pointer}
+.btn-default{background:#0f172a;color:#fff}
+.btn-delete{color:#ef4444;border-color:#fecaca}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;place-items:center;z-index:100;padding:16px}
+.modal.active{display:grid}
+.modal-box{background:#fff;border-radius:20px;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow:auto}
+.modal-box input, .modal-box select{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px}
+.modal-box label{display:block;font-size:11px;font-weight:800;color:#64748b;margin-top:10px;text-transform:uppercase}
+.location-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:10px;margin-top:10px;font-size:11px}
+.empty-state{text-align:center;padding:50px 20px;background:#fff;border-radius:16px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div style="display:flex;align-items:center;gap:10px"><button class="back" onclick="location.href='/profile.html'">‹</button><b>My Addresses</b></div>
+  <button class="add-btn" onclick="openAddressModal()">+ Add New</button>
+</div>
+<div class="container" id="addressesContainer">
+  <div style="text-align:center;padding:40px">Loading addresses...</div>
+</div>
+
+<div class="modal" id="addressModal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b id="modalTitle">Add New Address</b><button onclick="closeAddressModal()" style="border:none;background:#f1f5f9;width:30px;height:30px;border-radius:50%;cursor:pointer">✕</button></div>
+    <input type="hidden" id="addressId">
+    <label>Type</label><select id="addressType"><option value="Home">🏠 Home</option><option value="Work">🏢 Work</option><option value="Other">📍 Other</option></select>
+    <label>Name *</label><input id="addressName" placeholder="Shekhar">
+    <label>Phone *</label><input id="addressPhone" placeholder="93162XXXXX">
+    <label>House / Street *</label><input id="addressLine1" placeholder="House No, Street">
+    <label>Area / Landmark</label><input id="addressLine2" placeholder="Adajan, Near Temple">
+    <label>City *</label><input id="addressCity" placeholder="Surat" value="Surat">
+    <label>State *</label><input id="addressState" placeholder="Gujarat" value="Gujarat">
+    <label>Pincode *</label><input id="addressPincode" placeholder="395007">
+    <div class="location-box"><b>📍 GPS Location</b><div id="locationCoords">Loading...</div><input type="hidden" id="addressLat"><input type="hidden" id="addressLng"></div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input type="checkbox" id="setDefault"> Set as default address (Shop owner ko yahi jayega)</label>
+    <button id="saveBtn" onclick="saveAddress()" style="width:100%;margin-top:16px;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;cursor:pointer">💾 Save Address</button>
+  </div>
+</div>
+
+<script src="/assets/js/app.js"></script>
+<script src="/profile/js/addresses.js"></script>
+</body>
+</html>
