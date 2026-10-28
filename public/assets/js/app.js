@@ -1,19 +1,17 @@
-// LOCATION: public/assets/js/app.js - BLACKBOARD LAYOUT V4 + V13 HIERARCHY - FINAL FULL CODE
-// ========================================
-// SAMANLIVE - BLACKBOARD LAYOUT V4 + ROLE HIERARCHY
-// ========================================
+// LOCATION: public/assets/js/app.js - V5 PROFILE ACTIVATED + BLACKBOARD V4 + V13 HIERARCHY - FINAL
 let allModules = [], allAds = [], allServices = [], nearbyVideos = [], allCampaigns = [];
 let siteSettings = {}, userLocation = null, allProducts = [];
 let originalServices = [], originalProducts = [];
+let currentUser = null; // MAIN APP PROFILE KE LIYE
 
-// ===== V13 HIERARCHY HELPER - MINIMAL localStorage =====
+// ===== V13 HIERARCHY HELPER =====
 function getMyRoleSafe(){
   if(window.RoleHierarchy && window.RoleHierarchy.getMyRole) return window.RoleHierarchy.getMyRole();
   try { return localStorage.getItem('USER_ROLE') || 'customer'; } catch(e){ return 'customer'; }
 }
 function getMyIdSafe(){
   if(window.RoleHierarchy && window.RoleHierarchy.getMyId) return window.RoleHierarchy.getMyId();
-  try { return localStorage.getItem('USER_ID') || null; } catch(e){ return null; }
+  try { return localStorage.getItem('USER_ID') || currentUser?._id || null; } catch(e){ return null; }
 }
 function getMyShopIdSafe(){
   if(window.RoleHierarchy && window.RoleHierarchy.getMyShopId) return window.RoleHierarchy.getMyShopId();
@@ -23,7 +21,6 @@ function getMyShopIdSafe(){
 
 function canShowAddToCartButton(product){
   if (!window.RoleHierarchy) return true;
-  // Inject owner info if missing
   if (!product.ownerRole) product.ownerRole = product.shopOwnerRole || product.ownerRole || 'shop_owner';
   if (!product.ownerId) product.ownerId = product.shopId || product.shop_id || product.ownerId || product.shopId;
   return window.RoleHierarchy.shouldShowAddButton(product);
@@ -37,7 +34,6 @@ function filterProductsByRole(products){
   return products.filter(p=>{
     const ownerId = p.ownerId || p.shopId || p.shop_id || p.shopId;
     const shopId = p.shopId || p.shop_id;
-    // Self-buy block
     if (myShopId && shopId && myShopId === shopId) return false;
     if (myId && ownerId && myId === ownerId) return false;
     const supplierRole = p.ownerRole || p.shopOwnerRole || p.supplierRole || 'shop_owner';
@@ -51,13 +47,9 @@ function renderProductCard(product){
   const name = product.name || product.title || 'Product';
   const img = product.thumbnail || product.image || product.images?.[0] || '/assets/default-product.png';
   const shopName = product.shopName || product.shopType || product.ownerRole || 'Shop';
-
-  // Ensure owner fields for CartCore
   if (!product.ownerRole) product.ownerRole = 'shop_owner';
   if (!product.ownerId) product.ownerId = product.shopId || product._id;
-  // Safe string for onclick
   const productStr = JSON.stringify(product).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
-
   return `
     <div class="nearby-product-card" data-product-id="${product._id}" data-owner-role="${product.ownerRole}">
       <img src="${img}" onerror="this.src='/assets/default-product.png'">
@@ -71,14 +63,11 @@ function renderProductCard(product){
     </div>`;
 }
 
-// Fallback if CartCore not loaded
-window.addToCartFallback = function(id){
-  alert('Cart loading... dobara try karo');
-};
+window.addToCartFallback = function(id){ alert('Cart loading... dobara try karo'); };
 
 document.addEventListener('DOMContentLoaded', initApp);
 
-// ========== LOCATION MANAGER - CODE1 WALA SYSTEM ==========
+// ========== LOCATION MANAGER ==========
 window.LocationManager = {
     getManual: function() {
         return new Promise((resolve) => {
@@ -86,6 +75,7 @@ window.LocationManager = {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+                    window.currentUserLocation = userLocation; // PROFILE ADDRESSES KE LIYE
                     resolve(userLocation);
                 },
                 () => { resolve(null); },
@@ -96,7 +86,37 @@ window.LocationManager = {
     onLocationUpdate: null
 };
 
+// ========== PROFILE ACTIVATION - YEHI MISSING THA ==========
+async function loadCurrentUser(){
+  const token = localStorage.getItem('userToken');
+  if(!token) return null;
+  try{
+    const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    if(data.success){
+      currentUser = data.user;
+      window.currentUser = data.user;
+      // RoleHierarchy ko bhi bata do
+      try{
+        localStorage.setItem('USER_ID', data.user._id);
+        localStorage.setItem('USER_NAME', data.user.name);
+        localStorage.setItem('USER_PHONE', data.user.phone);
+        localStorage.setItem('userPic', data.user.profilePic || '');
+      }catch(e){}
+      return data.user;
+    }else{
+      if(res.status===401){
+        localStorage.removeItem('userToken');
+      }
+    }
+  }catch(e){ console.log('loadCurrentUser fail', e); }
+  return null;
+}
+
 async function initApp() {
+    // 1. Pehle user load karo - PROFILE KE LIYE SABSE JARURI
+    await loadCurrentUser();
+    
     await loadSettings();
     try {
         await window.LocationManager.getManual();
@@ -105,11 +125,10 @@ async function initApp() {
         console.log("Location/City error, skipping", e);
     }
     await loadAllData();
-    // Cart count update after load
     if(window.CartCount) window.CartCount.update();
+    loadUserProfilePic();
 }
 
-// 1. BANNER + LOGO ADMIN SE - FINAL VIDEO SUPPORT
 async function loadSettings() {
     const res = await fetch('/api/settings').catch(()=>({ok:false}));
     if(res.ok){
@@ -166,7 +185,6 @@ async function loadAllData() {
     await renderAdminAds();
     await reloadNearbyData();
     await renderNearbyProductsRepeat();
-    loadUserProfilePic();
     if(window.LocationManager.onLocationUpdate){
         window.LocationManager.onLocationUpdate(userLocation);
     }
@@ -225,7 +243,6 @@ async function renderAdminAds() {
         </div>`).join('') || '<p>No Ads</p>';
 }
 
-// 7. NEARBY PRODUCTS REPEAT - WORLD MODEL SE + ROLE FILTER - FINAL
 async function renderNearbyProductsRepeat() {
     const container = document.getElementById('nearbyProductsRepeat');
     if(!container) return;
@@ -243,22 +260,17 @@ async function renderNearbyProductsRepeat() {
         console.log('World products load fail', e);
         allProducts = [];
     }
-
-    // === ROLE FILTER LAGAO - YAHI MAIN FIX HAI ===
     let filteredProducts = filterProductsByRole(allProducts);
-    // Inject ownerRole if missing
     filteredProducts = filteredProducts.map(p=> ({
        ...p,
         ownerRole: p.ownerRole || p.shopOwnerRole || 'shop_owner',
         ownerId: p.ownerId || p.shopId,
         shopId: p.shopId
     }));
-
     if(!filteredProducts || filteredProducts.length === 0) {
         container.innerHTML = `<p>No products for role ${getMyRoleSafe()} - Aas paas koi product nahi</p>`;
         return;
     }
-
     let html = '';
     for(let i=0; i<10; i++){
         const doubleData = [...filteredProducts,...filteredProducts];
@@ -277,7 +289,16 @@ function renderTopAds(){}
 function renderCampaigns(){}
 function renderVideos(){}
 
-function goToProfilePage() { window.location.href = '/profile.html'; }
+function goToProfilePage() { 
+  const token = localStorage.getItem('userToken');
+  if(!token){
+    // Login nahi hai toh login popup
+    if(window.openLoginModal) window.openLoginModal();
+    else alert('Pehle login karo');
+    return;
+  }
+  window.location.href = '/profile.html'; 
+}
 function goToDelivery() { window.location.href = '/delivery-boy.html'; }
 function scrollToNearbyShops() { document.querySelector('.nearby-product-section')?.scrollIntoView({behavior:'smooth'}); }
 function scrollToServices() { document.querySelector('.category-row')?.scrollIntoView({behavior:'smooth'}); }
@@ -288,10 +309,19 @@ function performSearch() {
     if(q) window.location.href = `/nearby-shops.html?search=${encodeURIComponent(q)}`;
 }
 function openQRScanner() { alert('QR Scanner Open'); }
+
+// PROFILE PIC - AB currentUser SE LEGA, localStorage SE NAHI
 async function loadUserProfilePic() {
-    const pic = localStorage.getItem('userPic') || '/assets/images/samanlive-logo.png';
+    let pic = '/assets/images/samanlive-logo.png';
+    if(currentUser && currentUser.profilePic){
+      pic = currentUser.profilePic;
+    }else{
+      pic = localStorage.getItem('userPic') || localStorage.getItem('USER_PIC') || pic;
+    }
     const el = document.getElementById('navProfilePic');
     if(el) el.src = pic;
+    const el2 = document.getElementById('profileUserPic');
+    if(el2 && currentUser && currentUser.profilePic) el2.src = currentUser.profilePic;
 }
 
 function openProduct(productId) {
@@ -339,6 +369,6 @@ function renderFooter() {
     }
 }
 
-// Expose for other files
 window.AppRoleFilter = { filterProductsByRole, canShowAddToCartButton, renderProductCard };
-console.log('✅ app.js BLACKBOARD V4 + V13 Hierarchy loaded - Role:', getMyRoleSafe());
+window.currentUser = currentUser; // PROFILE JS FILES KE LIYE EXPOSE
+console.log('✅ app.js V5 PROFILE ACTIVATED + V13 Hierarchy loaded - Role:', getMyRoleSafe(), 'User:', currentUser?.name||'Guest');
