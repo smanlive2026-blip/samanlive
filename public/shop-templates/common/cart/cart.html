@@ -1,10 +1,10 @@
-<!-- LOCATION: public/shop-templates/common/cart/cart.html - V4 DAIRY FIXED - SUPPLIER AWARE + SESSION BACKUP -->
+<!-- LOCATION: public/shop-templates/common/cart/cart.html - V5 CART FIXED - SHOW ALL CARTS IF SHOPID EMPTY -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Cart - Dairy Shop</title>
+<title>My Cart - SAMANLIVE</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
 <style>
@@ -51,14 +51,14 @@ header h1{font-size:18px;font-weight:900}
 </header>
 
 <div class="wrap">
-  <div id="cartList"></div>
+  <div id="cartList"><div style="padding:40px;text-align:center;color:#94a3b8">Loading cart...</div></div>
   <div id="billBox" style="display:none">
     <div class="bill">
       <div class="row"><span>Item Total (<span id="itemCount">0</span> items)</span><span id="subTotal">₹0</span></div>
       <div class="row"><span>Delivery</span><span style="color:#16a34a">FREE</span></div>
       <div class="row total"><span>To Pay</span><span id="grandTotal">₹0</span></div>
     </div>
-    <button class="clearBtn" onclick="clearCart()">Clear Cart (This Shop)</button>
+    <button class="clearBtn" onclick="clearCart()">Clear This Shop</button>
     <button class="clearBtn" onclick="clearAllCart()" style="border-color:#e2e8f0;color:#64748b">Clear All Shops</button>
   </div>
 </div>
@@ -68,7 +68,7 @@ header h1{font-size:18px;font-weight:900}
   <button id="checkoutBtn">Place Order <i class="fa-solid fa-arrow-right"></i></button>
 </div>
 
-<script src="./cart-core.js?v=4-dairy"></script>
+<script src="./cart-core.js?v=5-fixed"></script>
 <script src="./cart-count.js"></script>
 <script>
 const listEl = document.getElementById('cartList');
@@ -78,11 +78,10 @@ const footerBar = document.getElementById('footerBar');
 function getUrlIds(){
   const p = new URLSearchParams(location.search);
   return {
-    shopId: p.get('shopId') || '',
-    supplierId: p.get('supplierId') || p.get('shopId') || ''
+    shopId: p.get('shopId') || localStorage.getItem('last_shopId') || '',
+    supplierId: p.get('supplierId') || p.get('shopId') || localStorage.getItem('last_supplierId') || localStorage.getItem('last_shopId') || ''
   };
 }
-
 function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function render(cartInput){
@@ -91,48 +90,58 @@ function render(cartInput){
   let total = 0;
   let count = 0;
 
-  // V4 LOGIC: supplierId hai to sirf us shop ka cart dikhao (dairy fix)
   if(window.CartCore){
-    if(supplierId && supplierId !== 'unknown'){
+    // FIXED LOGIC: pehle supplierId se try, nahi mila toh saare carts dikhao
+    if(supplierId && supplierId !== 'unknown' && supplierId !== ''){
       items = window.CartCore.getCartBySupplier(supplierId) || [];
-      // fallback - agar supplierId se empty hai par memory me hai to first wala le lo (old cart)
-      if(items.length===0 && Object.keys(window.CartCore.getAllCarts()).length>0){
-        const firstSid = Object.keys(window.CartCore.getAllCarts())[0];
-        if(!shopId){ // shopId nahi hai tabhi fallback
-          items = window.CartCore.getAllCarts()[firstSid] || [];
-        }
+    }
+    // Agar supplierId se khali hai, toh saare items dikhao (main app ka case)
+    if(items.length===0){
+      const all = window.CartCore.getCart() || [];
+      if(all.length>0) items = all;
+      else {
+        // backup se bhi try
+        const allCarts = window.CartCore.getAllCarts();
+        const flat = Object.values(allCarts).flat();
+        if(flat.length>0) items = flat;
       }
-    } else {
-      items = cartInput?.items || window.CartCore.getCart() || [];
     }
     total = items.reduce((s,i)=> s + (Number(i.price||0)*Number(i.qty||1)),0);
     count = items.reduce((s,i)=> s + (Number(i.qty||1)),0);
   } else {
     items = cartInput?.items || [];
     total = cartInput?.total || 0;
-    count = cartInput?.count || 0;
   }
 
   const shopLabel = document.getElementById('shop-label');
   if(shopLabel){
-    if(supplierId) shopLabel.textContent = `Shop: ${supplierId.slice(0,8)}..`;
-    else if(items[0]?.shopName) shopLabel.textContent = items[0].shopName;
+    if(items[0]?.shopName) shopLabel.textContent = items[0].shopName;
+    else if(supplierId) shopLabel.textContent = `Shop: ${supplierId.slice(0,8)}..`;
   }
 
   if(!items.length){
-    listEl.innerHTML = `<div class="empty"><i class="fa-solid fa-cart-shopping"></i><h3>Cart Khali Hai</h3><p>Dairy ka kuch saman add karo, fir yaha dikhega</p><button onclick="goBackToShop()">Shop Par Jao</button></div>`;
+    // 1 sec wait karo, restore ho raha hoga
+    if(window._cartRetryCount === undefined) window._cartRetryCount = 0;
+    if(window._cartRetryCount < 3){
+      window._cartRetryCount++;
+      listEl.innerHTML = `<div style="padding:40px;text-align:center;color:#94a3b8">Loading cart... (${window._cartRetryCount})</div>`;
+      setTimeout(()=> render(window.CartCore?.cart), 800);
+      return;
+    }
+    listEl.innerHTML = `<div class="empty"><i class="fa-solid fa-cart-shopping"></i><h3>Cart Khali Hai</h3><p>Main app se kuch add karo, fir yaha dikhega</p><p style="font-size:10px;color:#cbd5e1;margin-top:8px">Debug: supplierId=${esc(supplierId||'empty')} shopId=${esc(shopId||'empty')} buyerId=${esc(sessionStorage.getItem('guest_id')||'none')}</p><button onclick="goBackToShop()">Shop Par Jao</button></div>`;
     billBox.style.display = 'none';
     footerBar.style.display = 'none';
     return;
   }
 
+  window._cartRetryCount = 0;
   listEl.innerHTML = items.map(it => `
     <div class="item">
       ${it.image? `<img src="${esc(it.image)}" onerror="this.style.display='none'">` : `<div style="width:64px;height:64px;border-radius:12px;background:#f1f5f9;display:grid;place-items:center;font-size:24px">🥛</div>`}
       <div class="info">
-        <div class="shopTag">${esc(it.shopName||'Dairy Shop')}</div>
+        <div class="shopTag">${esc(it.shopName||it.ownerRole||'Shop')}</div>
         <div class="name">${esc(it.name)}</div>
-        <div class="unit">${esc(it.unit||'ltr')}</div>
+        <div class="unit">${esc(it.unit||'')}</div>
         <div class="price">₹${it.price} × ${it.qty} = ₹${it.price * it.qty}</div>
       </div>
       <div class="qty">
@@ -151,17 +160,12 @@ function render(cartInput){
   billBox.style.display = 'block';
   footerBar.style.display = 'flex';
 
-  // checkout btn update with ids
   const checkoutBtn = document.getElementById('checkoutBtn');
   if(checkoutBtn){
     checkoutBtn.onclick = ()=> {
       const ids = getUrlIds();
-      const sid = ids.supplierId || items[0]?.ownerId || items[0]?.shopId || Object.keys(window.CartCore.getAllCarts())[0] || '';
-      const shid = ids.shopId || sid;
-      if(!sid){
-        alert('Shop ID missing - shop se fir se add karo');
-        return;
-      }
+      let sid = ids.supplierId || items[0]?.shopId || items[0]?.ownerId || Object.keys(window.CartCore.getAllCarts())[0] || '';
+      if(!sid){ alert('Shop ID missing - dobara add karo'); return; }
       window.CartCore.goToCheckout(sid);
     };
   }
@@ -170,38 +174,39 @@ function render(cartInput){
 function updateQty(pid, newQty){
   const { supplierId } = getUrlIds();
   if(newQty < 1) return removeItem(pid);
-  window.CartCore.updateQty(pid, newQty, supplierId || null);
+  window.CartCore.updateQty(pid, newQty, null);
+  setTimeout(()=> render(), 200);
 }
-
 function removeItem(pid){
-  const { supplierId } = getUrlIds();
-  window.CartCore.remove(pid, supplierId || null);
+  window.CartCore.remove(pid, null);
+  setTimeout(()=> render(), 200);
 }
-
 async function clearCart(){
   if(!confirm('Is shop ka cart saaf kar du?')) return;
   const { supplierId } = getUrlIds();
   await window.CartCore.clear(supplierId || null);
+  render();
 }
-
 async function clearAllCart(){
   if(!confirm('Saare shops ka cart saaf kar du?')) return;
   await window.CartCore.clear();
+  render();
 }
-
 function goBackToShop(){
   const { shopId } = getUrlIds();
-  if(shopId){
-    location.href = `/shop-templates/dairy/customer-view.html?shopId=${encodeURIComponent(shopId)}`;
-  } else {
-    history.back();
-  }
+  if(shopId){ location.href = `/shop-templates/dairy/customer-view.html?shopId=${encodeURIComponent(shopId)}`; }
+  else { location.href = '/'; }
 }
 
-window.CartCore.onChange(render);
-window.CartCore.ready.then(()=> render(window.CartCore.cart));
-// immediate render for fast UI (backup se)
-setTimeout(()=> render(window.CartCore.cart), 100);
+if(window.CartCore){
+  window.CartCore.onChange(render);
+  window.CartCore.ready.then(()=> render(window.CartCore.cart));
+  setTimeout(()=> render(window.CartCore.cart), 300);
+  setTimeout(()=> render(window.CartCore.cart), 1200);
+  setTimeout(()=> render(window.CartCore.cart), 2500);
+} else {
+  listEl.innerHTML = '<div class="empty"><h3>CartCore not loaded</h3><button onclick="location.reload()">Reload</button></div>';
+}
 </script>
 </body>
 </html>

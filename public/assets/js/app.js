@@ -1,10 +1,9 @@
-// LOCATION: public/assets/js/app.js - V5.1 PROFILE ACTIVATED + BLACKBOARD V4 + V13 HIERARCHY - CART FIX ONLY
+// LOCATION: public/assets/js/app.js - V6 PRODUCT DETAIL PAGE + BLACKBOARD V4 + V13 HIERARCHY - CART FIX
 let allModules = [], allAds = [], allServices = [], nearbyVideos = [], allCampaigns = [];
 let siteSettings = {}, userLocation = null, allProducts = [];
 let originalServices = [], originalProducts = [];
-let currentUser = null; // MAIN APP PROFILE KE LIYE
+let currentUser = null;
 
-// ===== V13 HIERARCHY HELPER =====
 function getMyRoleSafe(){
   if(window.RoleHierarchy && window.RoleHierarchy.getMyRole) return window.RoleHierarchy.getMyRole();
   try { return localStorage.getItem('USER_ROLE') || 'customer'; } catch(e){ return 'customer'; }
@@ -69,6 +68,7 @@ window.addToCartById = async function(productId){
   const product = window._productMap[productId] || allProducts.find(p=>p._id===productId);
   if(!product){ alert('Product not found'); return; }
   try{
+    if(product.shopId){ localStorage.setItem('last_shopId', product.shopId); localStorage.setItem('last_supplierId', product.shopId); }
     if(window.CartCore && window.CartCore.ready){ try{ await window.CartCore.ready; }catch(e){} }
     if(window.CartCore){
       const ok = await window.CartCore.add(product, 1);
@@ -77,9 +77,7 @@ window.addToCartById = async function(productId){
         t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;z-index:9999;font-size:13px;font-weight:700';
         document.body.appendChild(t); setTimeout(()=>t.remove(),1200);
       }
-    } else {
-      addToCartFallback(productId);
-    }
+    } else { addToCartFallback(productId); }
   }catch(e){ console.error(e); alert('Cart error: '+e.message); }
 };
 
@@ -91,7 +89,6 @@ window.addToCartFallback = function(id){
 
 document.addEventListener('DOMContentLoaded', initApp);
 
-// ========== LOCATION MANAGER ==========
 window.LocationManager = {
     getManual: function() {
         return new Promise((resolve) => {
@@ -110,7 +107,6 @@ window.LocationManager = {
     onLocationUpdate: null
 };
 
-// ========== PROFILE ACTIVATION ==========
 async function loadCurrentUser(){
   const token = localStorage.getItem('userToken');
   if(!token) return null;
@@ -127,9 +123,7 @@ async function loadCurrentUser(){
         localStorage.setItem('userPic', data.user.profilePic || '');
       }catch(e){}
       return data.user;
-    }else{
-      if(res.status===401){ localStorage.removeItem('userToken'); }
-    }
+    }else{ if(res.status===401){ localStorage.removeItem('userToken'); } }
   }catch(e){ console.log('loadCurrentUser fail', e); }
   return null;
 }
@@ -137,10 +131,8 @@ async function loadCurrentUser(){
 async function initApp() {
     await loadCurrentUser();
     await loadSettings();
-    try {
-        await window.LocationManager.getManual();
-        await showUserLocationInHeader();
-    } catch(e) { console.log("Location/City error, skipping", e); }
+    try { await window.LocationManager.getManual(); await showUserLocationInHeader(); }
+    catch(e) { console.log("Location/City error, skipping", e); }
     await loadAllData();
     if(window.CartCount) window.CartCount.update();
     loadUserProfilePic();
@@ -291,9 +283,10 @@ async function loadUserProfilePic() {
 function openProduct(productId) {
     const prod = window._productMap[productId] || allProducts.find(p => p._id === productId);
     if(!prod) return;
-    const shopUrl = `/shop-templates/${prod.shopType}/customer-view.html?shopId=${prod.shopId}&supplierId=${prod.shopId}&supplierRole=${prod.ownerRole || 'shop_owner'}`;
-    addToHistory({ id: prod._id, name: prod.name, image: prod.thumbnail || prod.image, price: prod.price, url: shopUrl });
-    window.location.href = shopUrl;
+    try{ localStorage.setItem('last_product', JSON.stringify(prod)); }catch(e){}
+    addToHistory({ id: prod._id, name: prod.name, image: prod.thumbnail || prod.image, price: prod.price, url: `/shop-templates/common/product/product-detail.html?productId=${prod._id}&shopId=${prod.shopId}` });
+    // AMAZON STYLE - DIRECT SHOP NAHI, PRODUCT DETAIL PAGE PE BHEJO
+    window.location.href = `/shop-templates/common/product/product-detail.html?productId=${prod._id}&shopId=${prod.shopId}&shopType=${prod.shopType||'general'}`;
 }
 
 function renderFooter() {
@@ -316,4 +309,4 @@ function renderFooter() {
 
 window.AppRoleFilter = { filterProductsByRole, canShowAddToCartButton, renderProductCard };
 window.currentUser = currentUser;
-console.log('✅ app.js V5.1 CART FIXED - Role:', getMyRoleSafe(), 'User:', currentUser?.name||'Guest');
+console.log('✅ app.js V6 PRODUCT DETAIL NAVIGATION - Role:', getMyRoleSafe());

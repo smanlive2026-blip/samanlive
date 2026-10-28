@@ -1,0 +1,289 @@
+<!-- LOCATION: public/shop-templates/common/product/product-detail.html - AMAZON STYLE PRODUCT DETAIL - COMMON PRODUCT FOLDER -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Product Detail - SAMANLIVE</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:#f1f5f9;padding-bottom:120px;color:#0f172a}
+.header{position:sticky;top:0;z-index:100;background:#fff;display:flex;align-items:center;gap:12px;padding:12px 16px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.header button{width:38px;height:38px;border:none;background:#f1f5f9;border-radius:10px;font-size:18px;cursor:pointer}
+.header h1{font-size:15px;font-weight:900;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cart-badge{background:#ef4444;color:#fff;min-width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;position:absolute;top:-6px;right:-6px}
+.wrap{max-width:800px;margin:0 auto}
+.gallery{background:#fff;position:relative}
+.main-img{width:100%;height:380px;object-fit:contain;background:#fff;padding:12px}
+.thumbs{display:flex;gap:8px;padding:10px 12px;overflow:auto;background:#fff;border-top:1px solid #f1f5f9}
+.thumbs img{width:56px;height:56px;object-fit:cover;border-radius:10px;border:2px solid transparent;cursor:pointer;background:#f8fafc}
+.thumbs img.active{border-color:#0f172a}
+.info-card{background:#fff;margin-top:8px;padding:16px;border-radius:0}
+.title{font-size:18px;font-weight:900;line-height:1.3}
+.shop-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.shop-tag{background:#f1f5f9;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;color:#334155}
+.verified{color:#16a34a;font-size:11px;font-weight:800}
+.rating{display:flex;align-items:center;gap:4px;margin-top:6px;font-size:13px;font-weight:700}
+.rating i{color:#f59e0b}
+.price-row{display:flex;align-items:baseline;gap:10px;margin-top:12px}
+.price{font-size:28px;font-weight:900;color:#0f172a}
+.mrp{font-size:14px;color:#94a3b8;text-decoration:line-through;font-weight:600}
+.off{background:#dcfce7;color:#166534;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:900}
+.delivery{background:#f0fdf4;border:1px solid #bbf7d0;padding:10px 12px;border-radius:12px;margin-top:12px;display:flex;gap:10px;align-items:center}
+.delivery i{color:#16a34a;font-size:18px}
+.offers{display:flex;gap:8px;overflow:auto;margin-top:12px}
+.offer{min-width:200px;background:#fffbeb;border:1px solid #fde68a;padding:10px 12px;border-radius:12px}
+.offer b{display:block;font-size:12px;font-weight:900}
+.offer span{font-size:11px;color:#92400e;font-weight:600}
+.action-row{position:fixed;left:0;right:0;bottom:0;background:#fff;padding:12px 16px;display:flex;gap:10px;box-shadow:0 -4px 20px rgba(0,0,0,.08);z-index:90;max-width:800px;margin:0 auto}
+.action-row button{flex:1;padding:14px;border-radius:12px;border:none;font-weight:900;font-size:14px;cursor:pointer}
+.btn-cart{background:#fff;border:1px solid #0f172a !important;color:#0f172a}
+.btn-buy{background:#facc15;color:#000}
+.btn-shop{background:#0f172a;color:#fff;margin-top:10px;width:100%;padding:12px;border-radius:12px;border:none;font-weight:800;cursor:pointer}
+.details{background:#fff;margin-top:8px;padding:16px}
+.details h3{font-size:14px;font-weight:900;margin-bottom:10px}
+.spec{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f8fafc;font-size:13px}
+.spec span:first-child{color:#64748b;font-weight:600}
+.spec span:last-child{font-weight:700}
+.desc{font-size:13px;line-height:1.6;color:#334155;font-weight:500;margin-top:8px;white-space:pre-wrap}
+.similar{background:#fff;margin-top:8px;padding:16px}
+.similar h3{font-size:14px;font-weight:900;margin-bottom:12px}
+.sim-row{display:flex;gap:10px;overflow:auto;padding-bottom:8px}
+.sim-card{min-width:140px;background:#f8fafc;border-radius:12px;padding:10px;cursor:pointer;border:1px solid #f1f5f9}
+.sim-card img{width:100%;height:90px;object-fit:contain;background:#fff;border-radius:8px}
+.sim-card b{display:block;font-size:12px;font-weight:800;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sim-card span{font-size:12px;font-weight:900;color:#16a34a}
+.loading{padding:60px 20px;text-align:center;color:#94a3b8;font-weight:700}
+</style>
+<script src="../../../assets/js/role-hierarchy.js"></script>
+<script src="../core/api-core.js"></script>
+<script src="../cart/cart-core.js?v=5"></script>
+<script src="../cart/cart-count.js"></script>
+</head>
+<body>
+<div class="header">
+  <button onclick="history.back()"><i class="fa-solid fa-arrow-left"></i></button>
+  <h1 id="headerTitle">Product Detail</h1>
+  <div style="position:relative;margin-left:auto" onclick="location.href='../cart/cart.html'">
+    <button style="background:#f1f5f9;width:38px;height:38px;border-radius:10px;border:none"><i class="fa-solid fa-cart-shopping"></i></button>
+    <span class="cart-badge" data-cart-count style="display:none">0</span>
+  </div>
+</div>
+
+<div class="wrap" id="productRoot">
+  <div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading product...</div>
+</div>
+
+<div class="action-row" id="actionRow" style="display:none">
+  <button class="btn-cart" id="addCartBtn"><i class="fa-solid fa-cart-plus"></i> Add to Cart</button>
+  <button class="btn-buy" id="buyNowBtn">Buy Now</button>
+</div>
+
+<script>
+let currentProduct = null;
+let currentShopId = '';
+
+function getParams(){
+  const p = new URLSearchParams(location.search);
+  return {
+    productId: p.get('productId') || p.get('id') || '',
+    shopId: p.get('shopId') || '',
+    shopType: p.get('shopType') || 'general'
+  };
+}
+
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function loadProduct(){
+  const { productId, shopId, shopType } = getParams();
+  currentShopId = shopId;
+  const root = document.getElementById('productRoot');
+  
+  try{
+    // 1. Try from localStorage cache (main app ne set kiya)
+    let cached = null;
+    try{ cached = JSON.parse(localStorage.getItem('last_product')||'null'); }catch(e){}
+    if(cached && cached._id === productId) currentProduct = cached;
+    else if(window._productMap && window._productMap[productId]) currentProduct = window._productMap[productId];
+
+    // 2. Try from server - world-products single
+    if(!currentProduct){
+      const res = await fetch(`/api/world-products/${encodeURIComponent(productId)}`).then(r=>r.json()).catch(()=>null);
+      if(res && res.success && res.data) currentProduct = res.data;
+      else if(res && res._id) currentProduct = res;
+    }
+    // 3. Try from /api/products/single
+    if(!currentProduct){
+      const res = await fetch(`/api/products/single/${encodeURIComponent(productId)}`).then(r=>r.json()).catch(()=>null);
+      if(res && res.success && res.product) currentProduct = res.product;
+      else if(res && res.product) currentProduct = res.product;
+    }
+    // 4. Try from world-products search with shopId
+    if(!currentProduct && shopId){
+      const res = await fetch(`/api/world-products?shopId=${encodeURIComponent(shopId)}&limit=100`).then(r=>r.json()).catch(()=>null);
+      if(res && res.data){
+        currentProduct = res.data.find(p=>p._id===productId) || res.data[0];
+      }
+    }
+
+    if(!currentProduct){
+      root.innerHTML = `<div class="loading"><h3>Product not found</h3><p style="font-size:12px;margin-top:6px">ID: ${esc(productId)}</p><button onclick="history.back()" style="margin-top:16px;background:#0f172a;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:800">Go Back</button></div>`;
+      return;
+    }
+
+    // Normalize
+    currentProduct.shopId = currentProduct.shopId || shopId || currentProduct.shop_id || '';
+    currentProduct.shopType = currentProduct.shopType || shopType;
+    currentProduct.ownerRole = currentProduct.ownerRole || currentProduct.shopOwnerRole || 'shop_owner';
+    currentProduct.ownerId = currentProduct.ownerId || currentProduct.shopId;
+
+    renderProduct(currentProduct);
+    loadSimilar(currentProduct);
+    
+  }catch(e){
+    console.error(e);
+    root.innerHTML = `<div class="loading">Error: ${esc(e.message)}<br><button onclick="location.reload()" style="margin-top:12px;padding:8px 14px;border-radius:8px;border:none;background:#0f172a;color:#fff;font-weight:800">Retry</button></div>`;
+  }
+}
+
+function renderProduct(p){
+  const root = document.getElementById('productRoot');
+  const actionRow = document.getElementById('actionRow');
+  const images = [];
+  if(p.thumbnail) images.push(p.thumbnail);
+  if(p.image) images.push(p.image);
+  if(Array.isArray(p.images)){
+    p.images.forEach(im=>{ if(typeof im==='string') images.push(im); else if(im.url) images.push(im.url); });
+  }
+  if(images.length===0) images.push('/assets/default-product.png');
+  const uniqImages = [...new Set(images)].slice(0,6);
+
+  const price = Number(p.price||0);
+  const mrp = Number(p.mrp||p.originalPrice||0);
+  const off = mrp>price ? Math.round((1-price/mrp)*100) : 0;
+
+  document.getElementById('headerTitle').textContent = p.name||'Product';
+
+  root.innerHTML = `
+    <div class="gallery">
+      <img id="mainImg" class="main-img" src="${esc(uniqImages[0])}" onerror="this.src='/assets/default-product.png'">
+      <div class="thumbs" id="thumbs">
+        ${uniqImages.map((img,i)=>`<img src="${esc(img)}" class="${i===0?'active':''}" onclick="changeImg('${esc(img)}', this)" onerror="this.style.display='none'">`).join('')}
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="title">${esc(p.name||'Product')}</div>
+      <div class="shop-row">
+        <span class="shop-tag"><i class="fa-solid fa-store"></i> ${esc(p.shopName||p.shopType||'Shop')} • ${esc(p.shopId?.slice(0,6)||'')}</span>
+        <span class="verified"><i class="fa-solid fa-circle-check"></i> Verified</span>
+      </div>
+      <div class="rating"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i> <span>4.3 • 120 Ratings</span></div>
+      
+      <div class="price-row">
+        <span class="price">₹${price}</span>
+        ${mrp>price? `<span class="mrp">₹${mrp}</span><span class="off">${off}% OFF</span>` : ''}
+      </div>
+      <div style="font-size:11px;color:#16a34a;font-weight:800;margin-top:4px">Inclusive of all taxes • ${p.stock||50} left</div>
+
+      <div class="delivery">
+        <i class="fa-solid fa-truck-fast"></i>
+        <div>
+          <b style="font-size:13px">FREE Delivery</b><br>
+          <span style="font-size:11px;color:#64748b;font-weight:600">Delivery by tomorrow • Cash on Delivery available</span>
+        </div>
+      </div>
+
+      <div class="offers">
+        <div class="offer"><b><i class="fa-solid fa-tag"></i> Bank Offer</b><span>10% off on SBI Cards</span></div>
+        <div class="offer"><b><i class="fa-solid fa-tag"></i> Cashback</b><span>₹20 cashback as wallet</span></div>
+        <div class="offer"><b><i class="fa-solid fa-tag"></i> No Cost EMI</b><span>Starting ₹${Math.ceil(price/6)}/month</span></div>
+      </div>
+
+      <button class="btn-shop" onclick="goToShop('${esc(p.shopId)}')"><i class="fa-solid fa-store"></i> Visit ${esc(p.shopName||'Shop')} - See All Products</button>
+    </div>
+
+    <div class="details">
+      <h3>About this item</h3>
+      <div class="desc">${esc(p.description||p.name+' - Best quality product from '+ (p.shopName||'local shop') + '. Fresh, genuine and fast delivery.')}</div>
+      
+      <h3 style="margin-top:16px">Product Details</h3>
+      <div class="spec"><span>Brand</span><span>${esc(p.brand||p.extraData?.brand||'Local')}</span></div>
+      <div class="spec"><span>Category</span><span>${esc(p.category||p.shopType||'General')}</span></div>
+      <div class="spec"><span>Unit</span><span>${esc(p.unit||p.extraData?.unit||'1 piece')}</span></div>
+      <div class="spec"><span>Weight</span><span>${esc(p.weight||p.extraData?.weight||'500g')}</span></div>
+      <div class="spec"><span>Shop ID</span><span>${esc(p.shopId?.slice(0,12)||'N/A')}</span></div>
+      <div class="spec"><span>Stock</span><span style="color:${(p.stock||50)>10?'#16a34a':'#ef4444'}">${p.stock||50} ${ (p.stock||50)>10?'In Stock':'Low Stock'}</span></div>
+      <div class="spec"><span>Seller</span><span>${esc(p.shopName||'SAMANLIVE Seller')}</span></div>
+    </div>
+
+    <div class="similar" id="similarBox" style="display:none">
+      <h3>Similar Products</h3>
+      <div class="sim-row" id="simRow"></div>
+    </div>
+  `;
+
+  actionRow.style.display = 'flex';
+  document.getElementById('addCartBtn').onclick = ()=> addToCart();
+  document.getElementById('buyNowBtn').onclick = ()=> buyNow();
+}
+
+function changeImg(src, el){
+  document.getElementById('mainImg').src = src;
+  document.querySelectorAll('.thumbs img').forEach(i=>i.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+
+async function addToCart(){
+  if(!currentProduct) return;
+  try{
+    localStorage.setItem('last_shopId', currentProduct.shopId);
+    localStorage.setItem('last_supplierId', currentProduct.shopId);
+    if(window.CartCore && window.CartCore.ready) await window.CartCore.ready;
+    const ok = await window.CartCore.add(currentProduct, 1);
+    if(ok!==false){
+      document.getElementById('addCartBtn').innerHTML = '<i class="fa-solid fa-check"></i> Added';
+      setTimeout(()=>{ document.getElementById('addCartBtn').innerHTML = '<i class="fa-solid fa-cart-plus"></i> Add to Cart'; }, 1200);
+      if(window.CartCount) window.CartCount.update();
+    }
+  }catch(e){ alert('Cart error: '+e.message); }
+}
+
+async function buyNow(){
+  await addToCart();
+  setTimeout(()=>{
+    const sid = currentProduct.shopId;
+    if(window.CartCore) window.CartCore.goToCheckout(sid);
+    else location.href = `../cart/cart.html?shopId=${encodeURIComponent(sid)}`;
+  }, 400);
+}
+
+function goToShop(shopId){
+  if(!shopId) return alert('Shop ID missing');
+  location.href = `/shop-templates/${currentProduct.shopType||'dairy'}/customer-view.html?shopId=${encodeURIComponent(shopId)}&supplierId=${encodeURIComponent(shopId)}`;
+}
+
+async function loadSimilar(p){
+  try{
+    const res = await fetch(`/api/world-products?shopType=${encodeURIComponent(p.shopType||'general')}&limit=10`).then(r=>r.json()).catch(()=>null);
+    let list = (res?.data||[]).filter(x=>x._id!==p._id).slice(0,8);
+    if(list.length===0) return;
+    const box = document.getElementById('similarBox');
+    const row = document.getElementById('simRow');
+    box.style.display = 'block';
+    row.innerHTML = list.map(it=>`
+      <div class="sim-card" onclick="location.href='./product-detail.html?productId=${encodeURIComponent(it._id)}&shopId=${encodeURIComponent(it.shopId)}&shopType=${encodeURIComponent(it.shopType||'general')}'">
+        <img src="${esc(it.thumbnail||it.image||'/assets/default-product.png')}" onerror="this.src='/assets/default-product.png'">
+        <b>${esc(it.name||'Product')}</b>
+        <span>₹${it.price}</span>
+      </div>
+    `).join('');
+  }catch(e){}
+}
+
+document.addEventListener('DOMContentLoaded', loadProduct);
+</script>
+</body>
+</html>
