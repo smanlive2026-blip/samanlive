@@ -6,6 +6,10 @@
     <title>SAMANLIVE</title>
     <link rel="stylesheet" href="/assets/css/main.css?v=6">
     <script src="/assets/js/shop-template-map.js"></script>
+    <style>
+      /* LOGIN MODAL EXTRA CSS */
+      #loginModal input:focus{outline:none;border-color:#0f172a;box-shadow:0 0 0 3px rgba(15,23,42,.1)}
+    </style>
 </head>
 <body>
     <div class="video-bg"></div>
@@ -28,9 +32,8 @@
         </button>
     </header>
 
-    <!-- 2. HEADER ROW: ADMIN BANNER - KHALI KAR DIYA -->
+    <!-- 2. HEADER ROW: ADMIN BANNER -->
     <header class="header-banner" id="mainHeaderBanner">
-        <!-- Yaha JS khud img ya video inject karega -->
         <div class="banner-overlay"></div>
     </header>
 
@@ -112,10 +115,116 @@
         </div>
     </footer>
 
+    <!-- LOGIN MODAL - MAIN APP PROFILE ACTIVATION - YEHI MISSING THA -->
+    <div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:9999;place-items:center;padding:16px">
+      <div style="background:#fff;width:100%;max-width:380px;border-radius:20px;padding:20px;box-shadow:0 20px 40px rgba(0,0,0,.3);font-family:Outfit,sans-serif">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <b style="font-size:18px;font-weight:900">Login to SAMANLIVE</b>
+          <button onclick="closeLoginModal()" style="width:32px;height:32px;border:none;background:#f1f5f9;border-radius:50%;font-weight:900;cursor:pointer">✕</button>
+        </div>
+        <p style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:16px;line-height:1.4">Phone se login karo - My Addresses, Orders, Wishlist sab chalega. Dairy ka delivery address bhi yahi se shop owner ko jayega.</p>
+        
+        <label style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase">Name *</label>
+        <input id="loginName" placeholder="Apna naam likho" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;margin:6px 0 12px 0;font-weight:600;box-sizing:border-box">
+        
+        <label style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase">Phone * (10 digit)</label>
+        <input id="loginPhone" placeholder="93162XXXXX" maxlength="10" inputmode="numeric" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;margin:6px 0 12px 0;font-weight:600;box-sizing:border-box">
+        
+        <button id="loginBtn" onclick="doLogin()" style="width:100%;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;cursor:pointer">🔓 Login - Continue</button>
+        
+        <small style="display:block;text-align:center;margin-top:12px;color:#94a3b8;font-size:11px;font-weight:600;line-height:1.4">No OTP needed - Direct login.<br>Yehi ID se dairy order ka address shop owner ko jayega.</small>
+      </div>
+    </div>
+
     <script src="/shop-templates/common/products/product-manager.js?v=20"></script>
     <script src="/shop-templates/common/cart/cart-core.js"></script>
+    <script src="/shop-templates/common/cart/cart-count.js"></script>
     <script src="/assets/js/product-core.js"></script>  
     <script src="/assets/js/role-hierarchy.js"></script>
-    <script src="/assets/js/app.js?v=7"></script>
+    <script src="/assets/js/app.js?v=8"></script>
+
+    <script>
+    // ===== LOGIN MODAL LOGIC - PROFILE ACTIVATION - V8 =====
+    function openLoginModal(){
+      document.getElementById('loginModal').style.display='grid';
+      setTimeout(()=>{ document.getElementById('loginPhone').focus(); }, 100);
+    }
+    function closeLoginModal(){
+      document.getElementById('loginModal').style.display='none';
+    }
+    async function doLogin(){
+      const name = document.getElementById('loginName').value.trim();
+      let phone = document.getElementById('loginPhone').value.trim().replace(/\D/g,'').slice(-10);
+      if(!name){ alert('Name dalo be'); return; }
+      if(phone.length!==10){ alert('10 digit phone dalo'); return; }
+      
+      const btn = document.getElementById('loginBtn');
+      const old = btn.innerText; btn.innerText='Logging...'; btn.disabled=true;
+      try{
+        const res = await fetch('/api/auth/login-phone', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ phone, name })
+        });
+        const data = await res.json();
+        if(data.success && data.token){
+          localStorage.setItem('userToken', data.token);
+          localStorage.setItem('TOKEN', data.token);
+          localStorage.setItem('USER_ID', data.user._id);
+          localStorage.setItem('USER_NAME', data.user.name);
+          localStorage.setItem('USER_PHONE', data.user.phone);
+          localStorage.setItem('userPic', data.user.profilePic||'');
+          // Cart ke liye buyerId bhi set
+          try{ sessionStorage.setItem('guest_id', 'user_'+data.user._id); }catch(e){}
+          
+          closeLoginModal();
+          alert('✅ Login ho gaya: ' + data.user.name + '\nAb Profile > My Addresses me address add karo');
+          
+          if(window._redirectAfterLogin){
+            location.href = window._redirectAfterLogin;
+            window._redirectAfterLogin = null;
+          } else {
+            location.reload();
+          }
+        }else{
+          alert('Login fail: ' + (data.error||data.message||'Unknown'));
+        }
+      }catch(e){
+        alert('Login error: ' + e.message + '\nServer check kar - /api/auth/login-phone chal raha hai kya?');
+      }finally{
+        btn.innerText=old; btn.disabled=false;
+      }
+    }
+
+    // Profile button ka logic - login nahi hai toh modal khule
+    const _origGoToProfile = window.goToProfilePage;
+    window.goToProfilePage = function(){
+      const token = localStorage.getItem('userToken');
+      if(!token){
+        window._redirectAfterLogin = '/profile.html';
+        openLoginModal();
+        return;
+      }
+      location.href = '/profile.html';
+    }
+
+    // Dairy checkout se login mangega toh
+    window.requireLoginForCheckout = function(redirectUrl){
+      const token = localStorage.getItem('userToken');
+      if(!token){
+        window._redirectAfterLogin = redirectUrl || location.href;
+        openLoginModal();
+        return false;
+      }
+      return true;
+    }
+
+    // Enter se login
+    document.getElementById('loginPhone')?.addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+    document.getElementById('loginName')?.addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginPhone').focus(); });
+    
+    // Modal bahar click se band
+    document.getElementById('loginModal')?.addEventListener('click', e=>{ if(e.target.id==='loginModal') closeLoginModal(); });
+    </script>
 </body>
 </html>
