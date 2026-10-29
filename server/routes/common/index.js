@@ -69,6 +69,7 @@ function safeLoad(fileName){
 function getMountPath(f){
   if(f==='shop-toggle.js') return '/shop-toggle';
   if(f==='common-core.routes.js') return '/core';
+  if(f==='profile.routes.js') return '/profile';
   return `/${f.replace('.routes.js','').replace('.js','')}`;
 }
 

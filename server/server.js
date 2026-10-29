@@ -218,16 +218,18 @@ app.get('/shop-templates/*/*.html', (req,res)=>{
 // 3. AB BAKI KE API ROUTES - DASHBOARD KE BAAD
 //app.use('/api', deliveryManagerRoutes);
 app.use('/api/common', require('./routes/common/index')); // COMMON INDEX CONNECTED ✅
+app.use('/api/common/profile', require('./routes/common/profile.routes')); // ✅ NEW - DIRECT CLOUDINARY PROFILE - ADDED V13
 app.use('/api/shops', fruitItemRoutes);
 app.use('/api/shop-view', shopViewRoutes);
 app.use('/api/shop', shopViewRoutes);
-app.use('/shop', shopViewRoutes); // YE AB DASHBOARD KE BAAD HAI - ISLIYE PURANA NAHI KHULEGA
+app.use('/shop', shopViewRoutes);
 app.use('/api/shops/auto', autoRoutes);
 app.use('/api/shops/achar', acharRoutes);
 app.use('/api/media', require('./routes/media'));
+app.use('/api/upload', require('./routes/media')); // ✅ NEW - LEGACY FIX - /api/upload/upload-pic ke liye - ADDED V13
 app.use('/api/shops/furniture', require('./routes/shops/furniture-route'));
 app.use('/api/shops/sports', require('./routes/shops/sports-route'));
-app.use('/api/shops/kirana', require('./routes/shops/kirana-route')); // KIRANA CONNECTED ✅
+app.use('/api/shops/kirana', require('./routes/shops/kirana-route'));
 app.use('/api/shops', require('./routes/shopRoutes'));
 app.use('/api/products', productRoutes);
 app.use('/api/admin', settingsRoutes);

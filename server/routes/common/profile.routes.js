@@ -1,9 +1,22 @@
-// LOCATION: server/routes/common/profile.routes.js - V6 WORLD CLASS COMMON PROFILE - CUSTOMER + SHOP_OWNER + DELIVERY_BOY
+// LOCATION: server/routes/common/profile.routes.js - V7 WORLD CLASS - V6 SAME + CLOUDINARY MANDATORY - CUSTOMER + SHOP_OWNER + DELIVERY_BOY
 const express = require('express');
 const router = express.Router();
 const User = require('../../models/User');
 const Shop = require('../../models/Shop');
 const mongoose = require('mongoose');
+const multer = require('multer');
+const { cloudinary } = require('../../utils/cloudinary');
+
+// MEMORY STORAGE FOR CLOUDINARY - VERCEL SAFE
+const memoryStorage = multer.memoryStorage();
+const memoryUpload = multer({ 
+  storage: memoryStorage, 
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req,file,cb)=>{
+    if(file.mimetype.startsWith('image/')) cb(null,true);
+    else cb(new Error('Only images allowed'), false);
+  }
+});
 
 // ========== HELPER: Get User from buyerId / token ==========
 async function resolveUser(req){
@@ -70,7 +83,7 @@ function publicUser(user){
     phone: user.phone,
     email: user.email || '',
     role: user.role || 'customer',
-    profilePic: user.profilePic || user.avatar || '',
+    profilePic: user.profilePic || user.avatar || user.profilePic || '',
     avatar: user.profilePic || user.avatar || '',
     isVerified: user.isVerified || false,
     addresses: user.addresses || [],
@@ -149,6 +162,8 @@ router.put('/update', async (req, res) => {
     if(email) update.email = String(email).trim().toLowerCase();
     if(profilePic) update.profilePic = profilePic;
     if(avatar) update.profilePic = avatar;
+    // avatar field bhi sync rakho - User model me avatar bhi hai
+    if(profilePic || avatar) update.avatar = profilePic || avatar;
     if(city) update.city = city;
     if(area) update.area = area;
     update.updatedAt = new Date();
@@ -170,20 +185,71 @@ router.put('/update', async (req, res) => {
   }
 });
 
-// ========== 4. UPDATE PROFILE PIC ONLY ==========
-router.put('/pic', async (req, res) => {
+// ========== 4. UPDATE PROFILE PIC ONLY - JSON URL + FILE BOTH SUPPORTED - CLOUDINARY ==========
+router.put('/pic', memoryUpload.single('profilePic'), async (req, res) => {
   try{
     const user = await resolveUser(req);
     if(!user) return res.status(401).json({ success: false, message: 'Login required' });
 
-    const { profilePic, image, pic } = req.body;
-    const finalPic = profilePic || image || pic;
+    let finalPic = req.body.profilePic || req.body.image || req.body.pic || req.body.avatar || '';
+
+    // Agar file aayi hai to Cloudinary pe upload karo - MANDATORY CLOUDINARY
+    if(req.file){
+      const b64 = Buffer.from(req.file.buffer).toString('base64');
+      const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder: 'samanlive/users',
+        resource_type: 'image',
+        transformation: [
+          { width: 500, height: 500, crop: 'fill', gravity: 'face' },
+          { quality: 'auto:good', fetch_format: 'auto' }
+        ]
+      });
+      finalPic = result.secure_url;
+    }
+
     if(!finalPic) return res.status(400).json({ success: false, message: 'profilePic required' });
 
-    const updated = await User.findByIdAndUpdate(user._id, { profilePic: finalPic, updatedAt: new Date() }, { new: true });
+    const updated = await User.findByIdAndUpdate(user._id, { profilePic: finalPic, avatar: finalPic, updatedAt: new Date() }, { new: true });
 
-    res.json({ success: true, user: publicUser(updated), pic: finalPic });
+    if(global.io){
+      global.io.to(`user:${user._id}`).emit('profile-updated', publicUser(updated));
+    }
+
+    res.json({ success: true, user: publicUser(updated), pic: finalPic, url: finalPic });
   }catch(e){
+    console.error('Profile pic error', e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// ========== 4.1 NEW - POST UPLOAD-AVATAR - FILE UPLOAD - CLOUDINARY MANDATORY ==========
+router.post('/upload-avatar', memoryUpload.single('profilePic'), async (req, res) => {
+  try{
+    const user = await resolveUser(req);
+    if(!user) return res.status(401).json({ success: false, message: 'Login required' });
+    if(!req.file) return res.status(400).json({ success: false, message: 'File missing' });
+
+    const b64 = Buffer.from(req.file.buffer).toString('base64');
+    const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+
+    const result = await cloudinary.uploader.upload(dataURI, {
+      folder: 'samanlive/users',
+      resource_type: 'image',
+      transformation: [
+        { width: 500, height: 500, crop: 'fill', gravity: 'face' },
+        { quality: 'auto:good', fetch_format: 'auto' }
+      ]
+    });
+
+    const url = result.secure_url;
+    const updated = await User.findByIdAndUpdate(user._id, { profilePic: url, avatar: url, updatedAt: new Date() }, { new: true });
+
+    console.log(`✅ Avatar uploaded to Cloudinary: ${user._id} -> ${url}`);
+
+    res.json({ success: true, url, avatar: url, profilePic: url, user: publicUser(updated), public_id: result.public_id });
+  }catch(e){
+    console.error('upload-avatar error', e);
     res.status(500).json({ success: false, message: e.message });
   }
 });
