@@ -181,3 +181,17 @@ body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, 
 .footer-col ul li a:hover { color: #fff; }
 .social-links a { font-size: 24px; margin-right: 15px; text-decoration: none; }
 .footer-bottom { text-align: center; border-top: 1px solid #444; padding-top: 20px; margin-top: 20px; font-size: 14px; }
+/* ADMIN CONTROLLED VARIABLES - V10 */
+:root{
+  --product-gap: 10px;
+  --product-radius: 12px;
+  --product-per-row: 2;
+  --primary-color: #0f172a;
+  --secondary-color: #10b981;
+  --accent-color: #3b82f6;
+}
+.nearby-product-list{ gap: var(--product-gap) !important; }
+.nearby-product-card{ border-radius: var(--product-radius) !important; }
+@keyframes trainMove{ 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+.product-grid-2{ display:grid; grid-template-columns:repeat(2,1fr); gap:var(--product-gap); }
+.product-grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--product-gap); }
