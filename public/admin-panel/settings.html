@@ -1,22 +1,22 @@
-<div class="content" style="max-width:1400px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h2>🎨 SAMANLIVE Main App Control - Full Admin</h2>
+<div class="content" style="max-width:1400px" id="saman-settings-root">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <h2 style="margin:0">🎨 SAMANLIVE Main App Control - Full Admin</h2>
         <div style="display:flex;gap:8px">
-            <button class="btn-secondary" onclick="exportSettings()">📤 Export</button>
-            <button class="btn-danger" onclick="resetSettings()">🔄 Reset</button>
-            <button class="btn-primary btn-lg" id="saveSettingsBtn" onclick="saveSettings()">💾 Save All</button>
+            <button class="btn-secondary" onclick="window.SLSettings.exportSettings()">📤 Export</button>
+            <button class="btn-danger" onclick="window.SLSettings.resetSettings()">🔄 Reset</button>
+            <button class="btn-primary btn-lg" id="saveSettingsBtn" onclick="window.SLSettings.saveSettings()">💾 Save All Settings</button>
         </div>
     </div>
 
-    <!-- TABS -->
-    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:20px;border-bottom:2px solid #e2e8f0">
-        <button class="tab-btn active" data-tab="header" onclick="switchTab('header')">🏠 Header</button>
-        <button class="tab-btn" data-tab="banner" onclick="switchTab('banner')">🖼️ Banner</button>
-        <button class="tab-btn" data-tab="product" onclick="switchTab('product')">🛍️ Products</button>
-        <button class="tab-btn" data-tab="category" onclick="switchTab('category')">📂 Categories</button>
-        <button class="tab-btn" data-tab="nav" onclick="switchTab('nav')">🧭 Navigation</button>
-        <button class="tab-btn" data-tab="footer" onclick="switchTab('footer')">🦶 Footer</button>
-        <button class="tab-btn" data-tab="theme" onclick="switchTab('theme')">🎨 Theme</button>
+    <!-- TABS - FIXED ONCLICK -->
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:20px;border-bottom:2px solid #e2e8f0;scrollbar-width:none">
+        <button class="tab-btn active" data-tab="header">🏠 Header</button>
+        <button class="tab-btn" data-tab="banner">🖼️ Banner</button>
+        <button class="tab-btn" data-tab="product">🛍️ Products</button>
+        <button class="tab-btn" data-tab="category">📂 Categories</button>
+        <button class="tab-btn" data-tab="nav">🧭 Navigation</button>
+        <button class="tab-btn" data-tab="footer">🦶 Footer</button>
+        <button class="tab-btn" data-tab="theme">🎨 Theme</button>
     </div>
 
     <!-- TAB: HEADER -->
@@ -27,21 +27,21 @@
             <div class="form-group"><label>Tagline:</label><input type="text" id="settingTagline" placeholder="Best deals..."></div>
             <div class="form-group full">
                 <label>Header Logo:</label>
-                <div class="logo-upload-wrapper">
-                    <img id="logoPreview" src="" style="width:80px;height:80px;object-fit:cover;border-radius:12px;border:2px solid #10b981">
+                <div class="logo-upload-wrapper" style="display:flex;gap:20px">
+                    <img id="logoPreview" src="" style="width:80px;height:80px;object-fit:cover;border-radius:12px;border:2px solid #10b981;background:#f3f4f6">
                     <div style="flex:1">
-                        <input type="file" id="logoUploadFile" accept="image/*" onchange="previewLogo(event)">
-                        <button class="btn-primary" onclick="uploadLogoFile()" style="margin-top:8px">📤 Upload Logo</button>
-                        <p id="logoUploadStatus"></p>
+                        <input type="file" id="logoUploadFile" accept="image/*">
+                        <button class="btn-primary" onclick="window.SLSettings.uploadLogoFile()" style="margin-top:8px">📤 Upload Logo</button>
+                        <p id="logoUploadStatus" style="font-size:13px;margin-top:6px"></p>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-                            <div><label>Logo Size (px):</label><input type="range" id="logoSize" min="30" max="80" value="42" oninput="updatePreview()"><span id="logoSizeVal">42px</span></div>
-                            <div><label>Header Height:</label><input type="range" id="headerHeight" min="40" max="100" value="56" oninput="updatePreview()"><span id="headerHeightVal">56px</span></div>
+                            <div><label>Logo Size:</label><input type="range" id="logoSize" min="30" max="80" value="42"><span id="logoSizeVal">42px</span></div>
+                            <div><label>Header Height:</label><input type="range" id="headerHeight" min="40" max="100" value="56"><span id="headerHeightVal">56px</span></div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="form-group"><label>Header BG Color:</label><input type="color" id="settingHeaderColor"></div>
-            <div class="form-group"><label>Header Text Color:</label><input type="color" id="settingHeaderTextColor"></div>
+            <div class="form-group"><label>Header BG:</label><input type="color" id="settingHeaderColor" value="#ffffff"></div>
+            <div class="form-group"><label>Text Color:</label><input type="color" id="settingHeaderTextColor" value="#0f172a"></div>
             <div class="form-group"><label>Show Logo:</label><select id="headerShowLogo"><option value="true">Yes</option><option value="false">No</option></select></div>
             <div class="form-group"><label>Show Search:</label><select id="headerShowSearch"><option value="true">Yes</option><option value="false">No</option></select></div>
             <div class="form-group"><label>Show Cart:</label><select id="headerShowCart"><option value="true">Yes</option><option value="false">No</option></select></div>
@@ -56,107 +56,53 @@
         <div class="form-grid">
             <div class="form-group full" style="border:2px solid #10b981;padding:15px;border-radius:12px">
                 <label>Banner Photo:</label>
-                <div class="logo-upload-wrapper">
-                    <div id="bannerImagePreviewBox" style="width:100%;max-width:300px"><img id="bannerPreview" style="width:100%;height:120px;object-fit:cover;border-radius:10px;background:#f3f4f6"></div>
-                    <div style="flex:1">
-                        <input type="file" id="bannerImageUploadFile" accept="image/*" onchange="previewBannerImage(event)">
-                        <button class="btn-primary" onclick="uploadBannerImageFile()" style="margin-top:8px">📤 Upload Photo</button>
-                        <p id="bannerImageUploadStatus"></p>
-                    </div>
-                </div>
+                <div style="display:flex;gap:20px"><div id="bannerImagePreviewBox" style="width:300px"><img id="bannerPreview" style="width:100%;height:120px;object-fit:cover;border-radius:10px;background:#f3f4f6"></div>
+                <div style="flex:1"><input type="file" id="bannerImageUploadFile" accept="image/*"><button class="btn-primary" onclick="window.SLSettings.uploadBannerImageFile()" style="margin-top:8px">📤 Upload Photo</button><p id="bannerImageUploadStatus"></p></div></div>
             </div>
             <div class="form-group full" style="border:2px solid #3b82f6;padding:15px;border-radius:12px">
                 <label>Banner Video:</label>
-                <div class="logo-upload-wrapper">
-                    <div id="bannerVideoPreviewBox" style="width:100%;max-width:300px"><p>No Video</p></div>
-                    <div style="flex:1">
-                        <input type="file" id="bannerVideoUploadFile" accept="video/*" onchange="previewBannerVideo(event)">
-                        <button class="btn-primary" onclick="uploadBannerVideoFile()" style="margin-top:8px">📤 Upload Video</button>
-                        <p id="bannerVideoUploadStatus"></p>
-                    </div>
-                </div>
+                <div style="display:flex;gap:20px"><div id="bannerVideoPreviewBox" style="width:300px"><p>No Video</p></div>
+                <div style="flex:1"><input type="file" id="bannerVideoUploadFile" accept="video/*"><button class="btn-primary" onclick="window.SLSettings.uploadBannerVideoFile()" style="margin-top:8px">📤 Upload Video</button><p id="bannerVideoUploadStatus"></p></div></div>
             </div>
             <div class="form-group full" style="background:#fef3c7;padding:15px;border-radius:10px;border:2px dashed #f59e0b">
                 <label>Main App pe kya dikhega?</label>
                 <div style="display:flex;gap:10px;margin-top:10px">
-                    <button id="activeImageBtn" class="btn-primary" onclick="setActiveBanner('image')" style="flex:1;background:#10b981">🖼️ Photo</button>
-                    <button id="activeVideoBtn" class="btn-primary" onclick="setActiveBanner('video')" style="flex:1;background:#3b82f6">🎬 Video</button>
-                    <button id="activeNoneBtn" class="btn-secondary" onclick="setActiveBanner('none')" style="flex:1">🚫 Hide</button>
+                    <button id="activeImageBtn" class="btn-primary" onclick="window.SLSettings.setActiveBanner('image')" style="flex:1;background:#10b981">🖼️ Photo</button>
+                    <button id="activeVideoBtn" class="btn-primary" onclick="window.SLSettings.setActiveBanner('video')" style="flex:1;background:#3b82f6">🎬 Video</button>
+                    <button id="activeNoneBtn" class="btn-secondary" onclick="window.SLSettings.setActiveBanner('none')" style="flex:1">🚫 Hide</button>
                 </div>
                 <p id="activeBannerStatus" style="margin-top:10px;font-weight:bold"></p>
             </div>
-            <div class="form-group"><label>Banner Height (px):</label><input type="number" id="settingBannerHeight" value="200"><input type="range" id="bannerHeightRange" min="100" max="500" value="200" oninput="document.getElementById('settingBannerHeight').value=this.value"></div>
-            <div class="form-group"><label>Auto Play Video:</label><select id="bannerAutoPlay"><option value="true">Yes</option><option value="false">No</option></select></div>
-            <div class="form-group"><label>Show Overlay:</label><select id="bannerShowOverlay"><option value="true">Yes</option><option value="false">No</option></select></div>
+            <div class="form-group"><label>Banner Height:</label><input type="number" id="settingBannerHeight" value="200"></div>
             <div class="form-group"><label>Show Banner:</label><select id="bannerShow"><option value="true">Yes</option><option value="false">No</option></select></div>
         </div>
     </div>
 
     <!-- TAB: PRODUCT -->
     <div id="tab-product" class="tab-content">
-        <h3 class="section-title">🛍️ Product Display Control - MOST IMPORTANT</h3>
-        <div style="background:#f0f9ff;border:2px solid #3b82f6;border-radius:12px;padding:15px;margin-bottom:15px">
-            <p style="font-weight:800;color:#1e40af">🎯 Ye settings se main app ke saare products ka look badlega - live preview ke saath</p>
-        </div>
+        <h3 class="section-title">🛍️ Product Display - Full Control</h3>
         <div class="form-grid">
-            <div class="form-group"><label>Card Style:</label>
-                <select id="productCardStyle">
-                    <option value="card">Card - Normal</option>
-                    <option value="amazon">Amazon Style</option>
-                    <option value="flipkart">Flipkart Style</option>
-                    <option value="list">List View</option>
-                    <option value="compact">Compact Small</option>
-                    <option value="minimal">Minimal Clean</option>
-                </select>
-            </div>
-            <div class="form-group"><label>Card Size:</label>
-                <select id="productCardSize">
-                    <option value="small">Small - 70px</option>
-                    <option value="medium">Medium - 90px (Default)</option>
-                    <option value="large">Large - 120px</option>
-                    <option value="xl">XL - 160px</option>
-                </select>
-            </div>
-            <div class="form-group"><label>Scroll Type:</label>
-                <select id="productScrollType">
-                    <option value="horizontal">Horizontal Scroll (Default)</option>
-                    <option value="vertical">Vertical List</option>
-                    <option value="grid">Grid - 2/3 per row</option>
-                    <option value="carousel">Carousel - Auto Slide</option>
-                    <option value="infinite">Infinite Scroll</option>
-                    <option value="train">Train - Moving Animation</option>
-                </select>
-            </div>
-            <div class="form-group"><label>Products Per Row (Grid):</label><input type="number" id="productPerRow" min="1" max="6" value="2"><input type="range" min="1" max="6" value="2" oninput="document.getElementById('productPerRow').value=this.value"></div>
-            <div class="form-group"><label>Gap Between Products:</label><input type="number" id="productGap" min="0" max="30" value="10"><input type="range" min="0" max="30" value="10" oninput="document.getElementById('productGap').value=this.value"></div>
-            <div class="form-group"><label>Border Radius:</label><input type="number" id="productBorderRadius" min="0" max="30" value="12"><input type="range" min="0" max="30" value="12" oninput="document.getElementById('productBorderRadius').value=this.value"></div>
-            <div class="form-group"><label>Shadow:</label><select id="productShadow"><option value="none">No Shadow</option><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></div>
-            <div class="form-group"><label>Animation:</label><select id="productAnimation"><option value="none">None</option><option value="fade">Fade In</option><option value="slide">Slide</option><option value="zoom">Zoom</option><option value="bounce">Bounce</option></select></div>
-            <div class="form-group"><label>Image Ratio:</label><select id="productImageRatio"><option value="1:1">Square 1:1</option><option value="4:3">Landscape 4:3</option><option value="3:4">Portrait 3:4</option><option value="16:9">Wide 16:9</option></select></div>
-            <div class="form-group"><label>Show Discount Badge:</label><select id="productShowDiscount"><option value="true">Yes</option><option value="false">No</option></select></div>
+            <div class="form-group"><label>Card Style:</label><select id="productCardStyle"><option value="card">Card</option><option value="amazon">Amazon</option><option value="flipkart">Flipkart</option><option value="list">List</option><option value="compact">Compact</option><option value="minimal">Minimal</option></select></div>
+            <div class="form-group"><label>Card Size:</label><select id="productCardSize"><option value="small">Small 70px</option><option value="medium">Medium 90px</option><option value="large">Large 120px</option><option value="xl">XL 160px</option></select></div>
+            <div class="form-group"><label>Scroll Type:</label><select id="productScrollType"><option value="horizontal">Horizontal</option><option value="vertical">Vertical</option><option value="grid">Grid</option><option value="carousel">Carousel</option><option value="infinite">Infinite</option><option value="train">Train Animation</option></select></div>
+            <div class="form-group"><label>Per Row (Grid):</label><input type="number" id="productPerRow" min="1" max="6" value="2"></div>
+            <div class="form-group"><label>Gap:</label><input type="number" id="productGap" min="0" max="30" value="10"></div>
+            <div class="form-group"><label>Border Radius:</label><input type="number" id="productBorderRadius" min="0" max="30" value="12"></div>
+            <div class="form-group"><label>Shadow:</label><select id="productShadow"><option value="none">None</option><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></div>
+            <div class="form-group"><label>Show Discount:</label><select id="productShowDiscount"><option value="true">Yes</option><option value="false">No</option></select></div>
             <div class="form-group"><label>Show Shop Name:</label><select id="productShowShopName"><option value="true">Yes</option><option value="false">No</option></select></div>
-            <div class="form-group"><label>Show Add to Cart:</label><select id="productShowAddCart"><option value="true">Yes</option><option value="false">No</option></select></div>
-            <div class="form-group"><label>Train Speed (sec):</label><input type="number" id="productScrollSpeed" min="5" max="60" value="20"></div>
-        </div>
-        <div style="background:#fff;border:2px dashed #10b981;border-radius:12px;padding:15px;margin-top:15px">
-            <h4>👁️ Live Preview - Product Card</h4>
-            <div id="productPreview" style="display:flex;gap:10px;overflow-x:auto;padding:10px;background:#f8fafc;border-radius:8px;margin-top:10px">
-                <div class="preview-card" style="min-width:90px;background:#fff;border-radius:12px;padding:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08)"><img src="https://via.placeholder.com/70" style="width:70px;height:70px;border-radius:8px"><p style="font-size:11px;font-weight:600;margin-top:4px">Product Name</p><span style="font-size:12px;color:#10b981;font-weight:700">₹199</span></div>
-                <div class="preview-card" style="min-width:90px;background:#fff;border-radius:12px;padding:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08)"><img src="https://via.placeholder.com/70" style="width:70px;height:70px;border-radius:8px"><p style="font-size:11px;font-weight:600;margin-top:4px">Product 2</p><span style="font-size:12px;color:#10b981;font-weight:700">₹299</span></div>
-            </div>
+            <div class="form-group"><label>Show Add Cart:</label><select id="productShowAddCart"><option value="true">Yes</option><option value="false">No</option></select></div>
         </div>
     </div>
 
     <!-- TAB: CATEGORY -->
     <div id="tab-category" class="tab-content">
-        <h3 class="section-title">📂 Category Section</h3>
+        <h3 class="section-title">📂 Category / History / Ad</h3>
         <div class="form-grid">
-            <div class="form-group"><label>Show Categories:</label><select id="categoryShow"><option value="true">Yes</option><option value="false">No</option></select></div>
-            <div class="form-group"><label>Style:</label><select id="categoryStyle"><option value="chip">Chip - Colorful</option><option value="circle">Circle Icon</option><option value="square">Square Box</option><option value="icon">Icon Only</option></select></div>
-            <div class="form-group"><label>Size (px):</label><input type="range" id="categorySize" min="40" max="120" value="70" oninput="document.getElementById('categorySizeVal').textContent=this.value+'px'"><span id="categorySizeVal">70px</span></div>
+            <div class="form-group"><label>Category Show:</label><select id="categoryShow"><option value="true">Yes</option><option value="false">No</option></select></div>
             <div class="form-group"><label>History Show:</label><select id="historyShow"><option value="true">Yes</option><option value="false">No</option></select></div>
+            <div class="form-group"><label>Ad Show:</label><select id="adShow"><option value="true">Yes</option><option value="false">No</option></select></div>
             <div class="form-group"><label>History Title:</label><input type="text" id="historyTitle" value="History"></div>
-            <div class="form-group"><label>Ad Section Show:</label><select id="adShow"><option value="true">Yes</option><option value="false">No</option></select></div>
             <div class="form-group"><label>Ad Title:</label><input type="text" id="adTitle" value="Advertisement"></div>
             <div class="form-group"><label>Nearby Title:</label><input type="text" id="nearbyTitle" value="Nearby Product"></div>
         </div>
@@ -164,76 +110,64 @@
 
     <!-- TAB: NAV -->
     <div id="tab-nav" class="tab-content">
-        <h3 class="section-title">🧭 Bottom Navigation - 5 Buttons Control</h3>
+        <h3 class="section-title">🧭 Bottom Nav - 5 Buttons</h3>
         <div class="form-grid">
-            <div class="form-group"><label>Show Bottom Nav:</label><select id="bottomNavShow"><option value="true">Yes</option><option value="false">No</option></select></div>
-            <div class="form-group"><label>Nav BG Color:</label><input type="color" id="bottomNavColor"></div>
-            <div class="form-group"><label>Active Color:</label><input type="color" id="bottomNavActiveColor"></div>
-            <div class="form-group"><label>Text Color:</label><input type="color" id="bottomNavTextColor"></div>
-            <div class="form-group"><label>Height (px):</label><input type="number" id="bottomNavHeight" value="70"></div>
-            <div class="form-group"><label>Center Button Style:</label><select id="bottomNavCenterStyle"><option value="hex">Hexagon - Green</option><option value="circle">Circle</option><option value="square">Square</option><option value="elevated">Elevated</option></select></div>
+            <div class="form-group"><label>Show Nav:</label><select id="bottomNavShow"><option value="true">Yes</option><option value="false">No</option></select></div>
+            <div class="form-group"><label>BG Color:</label><input type="color" id="bottomNavColor" value="#ffffff"></div>
+            <div class="form-group"><label>Active Color:</label><input type="color" id="bottomNavActiveColor" value="#10b981"></div>
+            <div class="form-group"><label>Height:</label><input type="number" id="bottomNavHeight" value="70"></div>
         </div>
-        <h4 style="margin:20px 0 10px">Buttons Order & Visibility</h4>
-        <div id="navButtonsContainer" style="background:#f8fafc;padding:15px;border-radius:10px"></div>
+        <div id="navButtonsContainer" style="margin-top:15px;background:#f8fafc;padding:15px;border-radius:10px"></div>
     </div>
 
     <!-- TAB: FOOTER -->
     <div id="tab-footer" class="tab-content">
         <h3 class="section-title">🦶 Footer Full Control</h3>
         <div class="form-grid">
-            <div class="form-group"><label>Show Footer:</label><select id="footerShow"><option value="true">Yes</option><option value="false">No (Hide)</option></select></div>
-            <div class="form-group"><label>Footer Style:</label><select id="footerStyle"><option value="modern">Modern - 3 Columns</option><option value="simple">Simple - Centered</option><option value="compact">Compact - Small</option><option value="detailed">Detailed - 4 Columns</option><option value="minimal">Minimal - Only Text</option></select></div>
-            <div class="form-group"><label>BG Color:</label><input type="color" id="settingFooterColor"></div>
+            <div class="form-group"><label>Show Footer:</label><select id="footerShow"><option value="true">Yes</option><option value="false">No</option></select></div>
+            <div class="form-group"><label>Style:</label><select id="footerStyle"><option value="modern">Modern</option><option value="simple">Simple</option><option value="compact">Compact</option><option value="detailed">Detailed</option><option value="minimal">Minimal</option></select></div>
+            <div class="form-group"><label>BG Color:</label><input type="color" id="settingFooterColor" value="#1f2937"></div>
             <div class="form-group"><label>Text Color:</label><input type="color" id="footerTextColor" value="#ffffff"></div>
-            <div class="form-group"><label>Columns:</label><input type="number" id="footerColumns" min="1" max="4" value="3"></div>
-            <div class="form-group"><label>Height:</label><input type="number" id="footerHeight" value="200"></div>
-            <div class="form-group full"><label>Footer Text (Copyright):</label><input type="text" id="settingFooterText"></div>
+            <div class="form-group full"><label>Copyright Text:</label><input type="text" id="settingFooterText"></div>
             <div class="form-group full"><label>About Text:</label><textarea id="settingFooterAbout" rows="3"></textarea></div>
-            <div class="form-group"><label>Show About:</label><select id="footerAboutShow"><option value="true">Yes</option><option value="false">No</option></select></div>
-            <div class="form-group"><label>Show Links:</label><select id="footerLinksShow"><option value="true">Yes</option><option value="false">No</option></select></div>
-            <div class="form-group"><label>Show Social:</label><select id="footerSocialShow"><option value="true">Yes</option><option value="false">No</option></select></div>
         </div>
-        <h3 class="section-title">🔗 Footer Links</h3>
-        <div id="footerLinksContainer"></div>
-        <button class="btn-success" onclick="addFooterLink()">+ Add Link</button>
-        <h3 class="section-title">📱 Social Media</h3>
+        <h4>Links</h4><div id="footerLinksContainer"></div><button class="btn-success" onclick="window.SLSettings.addFooterLink()">+ Add Link</button>
+        <h4 style="margin-top:15px">Social</h4>
         <div class="form-grid">
-            <div class="form-group"><label>Facebook:</label><input type="text" id="settingFacebook" placeholder="https://facebook.com/..."></div>
+            <div class="form-group"><label>Facebook:</label><input type="text" id="settingFacebook"></div>
             <div class="form-group"><label>Instagram:</label><input type="text" id="settingInstagram"></div>
-            <div class="form-group"><label>Twitter:</label><input type="text" id="settingTwitter"></div>
             <div class="form-group"><label>YouTube:</label><input type="text" id="settingYoutube"></div>
-            <div class="form-group"><label>WhatsApp:</label><input type="text" id="settingWhatsapp"></div>
         </div>
     </div>
 
     <!-- TAB: THEME -->
     <div id="tab-theme" class="tab-content">
-        <h3 class="section-title">🎨 Theme & Colors</h3>
+        <h3 class="section-title">🎨 Theme Colors</h3>
         <div class="form-grid">
-            <div class="form-group"><label>Primary Color:</label><input type="color" id="primaryColor"></div>
-            <div class="form-group"><label>Secondary (Green):</label><input type="color" id="secondaryColor"></div>
-            <div class="form-group"><label>Accent (Blue):</label><input type="color" id="accentColor"></div>
-            <div class="form-group"><label>Background:</label><input type="color" id="backgroundColor"></div>
-            <div class="form-group"><label>Border Radius:</label><input type="range" id="borderRadius" min="0" max="30" value="12" oninput="document.getElementById('radiusVal').textContent=this.value+'px'"><span id="radiusVal">12px</span></div>
-            <div class="form-group"><label>Font Family:</label><select id="fontFamily"><option value="Outfit">Outfit - Modern</option><option value="Inter">Inter - Clean</option><option value="Poppins">Poppins - Friendly</option><option value="Roboto">Roboto - Classic</option><option value="System">System Default</option></select></div>
-            <div class="form-group"><label>Font Size:</label><select id="fontSize"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></div>
-            <div class="form-group"><label>Max Width (px):</label><input type="number" id="containerMaxWidth" value="1200"></div>
-            <div class="form-group"><label>Video BG Show:</label><select id="showVideoBackground"><option value="true">Yes</option><option value="false">No</option></select></div>
+            <div class="form-group"><label>Primary:</label><input type="color" id="primaryColor" value="#0f172a"></div>
+            <div class="form-group"><label>Secondary:</label><input type="color" id="secondaryColor" value="#10b981"></div>
+            <div class="form-group"><label>Accent:</label><input type="color" id="accentColor" value="#3b82f6"></div>
+            <div class="form-group"><label>Background:</label><input type="color" id="backgroundColor" value="#f5f7fa"></div>
         </div>
     </div>
 
-    <button class="btn-primary btn-lg" onclick="saveSettings()" style="width:100%;margin-top:20px;padding:16px;font-size:18px">💾 Save All Settings - Main App Update Hoga</button>
+    <button class="btn-primary btn-lg" onclick="window.SLSettings.saveSettings()" style="width:100%;margin-top:20px;padding:16px;font-size:18px">💾 Save All - Main App Update Hoga</button>
 </div>
 
 <style>
-.tab-btn{padding:10px 18px;border:none;background:#f1f5f9;border-radius:8px;cursor:pointer;font-weight:600;color:#475569}
+.tab-btn{padding:10px 18px;border:none;background:#f1f5f9;border-radius:8px;cursor:pointer;font-weight:600;color:#475569;white-space:nowrap}
 .tab-btn.active{background:#0f172a;color:#fff}
 .tab-content{display:none}
 .tab-content.active{display:block;animation:fadeIn .3s}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.section-title{margin:20px 0 12px;padding-bottom:8px;border-bottom:2px solid #f1f5f9}
 </style>
 
 <script>
+// LAUNCHER COMPATIBLE - WINDOW OBJECT PE
+(function(){
+if(window.SLSettings) return;
+window.SLSettings = {};
 let currentSettings = {};
 
 async function apiCall(url, method='GET', data=null){
@@ -242,73 +176,222 @@ async function apiCall(url, method='GET', data=null){
         if(data instanceof FormData) options.body=data;
         else { options.headers={'Content-Type':'application/json'}; options.body=JSON.stringify(data); }
     }
-    const res=await fetch('/api'+url, options);
-    if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error||'API Error'); }
+    // Try both /api/settings and /api/admin/settings
+    let finalUrl = '/api' + url;
+    let res = await fetch(finalUrl, options);
+    if(!res.ok && finalUrl.includes('/api/settings')){
+        // fallback to /api/admin/settings
+        finalUrl = '/api/admin' + url;
+        res = await fetch(finalUrl, options);
+    }
+    if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error||'API Error '+res.status); }
     return res.json();
 }
 
 function switchTab(tab){
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-    document.getElementById(`tab-${tab}`).classList.add('active');
+    document.querySelectorAll('#saman-settings-root .tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('#saman-settings-root .tab-content').forEach(c=>c.classList.remove('active'));
+    const btn = document.querySelector(`#saman-settings-root .tab-btn[data-tab="${tab}"]`);
+    if(btn) btn.classList.add('active');
+    const content = document.getElementById(`tab-${tab}`);
+    if(content) content.classList.add('active');
 }
 
 function renderBannerImagePreview(url){
     const box=document.getElementById('bannerImagePreviewBox');
+    if(!box) return;
     if(!url){ box.innerHTML='<p style="opacity:.6">No Photo</p>'; return; }
     box.innerHTML=`<img src="${url}?v=${Date.now()}" style="width:100%;height:120px;object-fit:cover;border-radius:10px">`;
 }
 function renderBannerVideoPreview(url){
     const box=document.getElementById('bannerVideoPreviewBox');
+    if(!box) return;
     if(!url){ box.innerHTML='<p style="opacity:.6">No Video</p>'; return; }
     const cacheUrl=url.includes('blob:')?url:url+'?v='+Date.now();
     box.innerHTML=`<video src="${cacheUrl}" autoplay muted loop playsinline controls style="width:100%;height:120px;object-fit:cover;border-radius:10px"></video>`;
 }
 function updateActiveStatus(){
     const status=document.getElementById('activeBannerStatus');
+    if(!status) return;
     const active=currentSettings.headerBannerActive||'image';
-    status.textContent=active==='video'?'✅ VIDEO dikhega':active==='none'?'🚫 Banner hidden':'✅ PHOTO dikhega';
-    document.getElementById('activeImageBtn').style.opacity=active==='image'?'1':'0.5';
-    document.getElementById('activeVideoBtn').style.opacity=active==='video'?'1':'0.5';
-    document.getElementById('activeNoneBtn').style.opacity=active==='none'?'1':'0.5';
+    status.textContent=active==='video'?'✅ VIDEO dikhega':active==='none'?'🚫 Hidden':'✅ PHOTO dikhega';
+    const imgBtn=document.getElementById('activeImageBtn'); const vidBtn=document.getElementById('activeVideoBtn'); const noneBtn=document.getElementById('activeNoneBtn');
+    if(imgBtn) imgBtn.style.opacity=active==='image'?'1':'0.5';
+    if(vidBtn) vidBtn.style.opacity=active==='video'?'1':'0.5';
+    if(noneBtn) noneBtn.style.opacity=active==='none'?'1':'0.5';
 }
-window.setActiveBanner=(type)=>{
+
+window.SLSettings.setActiveBanner=(type)=>{
     currentSettings.headerBannerActive=type;
     if(type==='video'){ currentSettings.headerBannerUrl=currentSettings.headerBannerVideoUrl; currentSettings.headerBannerType='video'; }
     else if(type==='image'){ currentSettings.headerBannerUrl=currentSettings.headerBannerImageUrl; currentSettings.headerBannerType='image'; }
     else { currentSettings.headerBannerUrl=''; currentSettings.headerBannerType='none'; }
     updateActiveStatus();
+};
+
+function renderFooterLinks(){
+    const container=document.getElementById('footerLinksContainer');
+    if(!container) return;
+    const links=currentSettings.footerLinks||[];
+    container.innerHTML=links.map((link,i)=>`
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:10px;align-items:end">
+            <div class="form-group"><label>Text:</label><input type="text" value="${link.text||''}" oninput="window.SLSettings.updateFooterLink(${i},'text',this.value)"></div>
+            <div class="form-group"><label>URL:</label><input type="text" value="${link.url||''}" oninput="window.SLSettings.updateFooterLink(${i},'url',this.value)"></div>
+            <button class="btn-danger btn-sm" onclick="window.SLSettings.removeFooterLink(${i})">🗑️</button>
+        </div>`).join('');
 }
+window.SLSettings.addFooterLink=()=>{ if(!currentSettings.footerLinks) currentSettings.footerLinks=[]; currentSettings.footerLinks.push({text:'',url:'',visible:true}); renderFooterLinks(); };
+window.SLSettings.updateFooterLink=(i,f,v)=>{ currentSettings.footerLinks[i][f]=v; };
+window.SLSettings.removeFooterLink=(i)=>{ currentSettings.footerLinks.splice(i,1); renderFooterLinks(); };
+
+function renderNavButtons(){
+    const container=document.getElementById('navButtonsContainer');
+    if(!container) return;
+    const btns=currentSettings.bottomNavButtons||[];
+    container.innerHTML=btns.sort((a,b)=>a.order-b.order).map((b,i)=>`
+        <div style="display:grid;grid-template-columns:80px 1fr 80px 60px;gap:8px;margin-bottom:8px;align-items:center;background:#fff;padding:8px;border-radius:8px">
+            <input type="text" value="${b.icon||''}" placeholder="Icon" oninput="window.SLSettings.updateNavBtn(${i},'icon',this.value)" style="padding:6px;border:1px solid #e2e8f0;border-radius:6px">
+            <input type="text" value="${b.label||''}" placeholder="Label" oninput="window.SLSettings.updateNavBtn(${i},'label',this.value)" style="padding:6px;border:1px solid #e2e8f0;border-radius:6px">
+            <select onchange="window.SLSettings.updateNavBtn(${i},'visible',this.value==='true')" style="padding:6px;border-radius:6px"><option value="true" ${b.visible?'selected':''}>Show</option><option value="false" ${!b.visible?'selected':''}>Hide</option></select>
+            <input type="number" value="${b.order||i+1}" min="1" max="10" oninput="window.SLSettings.updateNavBtn(${i},'order',parseInt(this.value))" style="padding:6px;border:1px solid #e2e8f0;border-radius:6px">
+        </div>`).join('');
+}
+window.SLSettings.updateNavBtn=(i,f,v)=>{ currentSettings.bottomNavButtons[i][f]=v; };
+
+window.SLSettings.uploadLogoFile=async()=>{
+    const fileInput=document.getElementById('logoUploadFile');
+    const status=document.getElementById('logoUploadStatus');
+    if(!fileInput || !fileInput.files[0]){ alert('Select logo'); return; }
+    const formData=new FormData(); formData.append('logo', fileInput.files[0]);
+    status.textContent='Uploading...';
+    try{
+        // Try 3 endpoints - cloudinary wala
+        let res;
+        try{ res=await apiCall('/upload/logo','POST',formData); }
+        catch(e){ 
+            // fallback direct upload endpoint
+            const fd2=new FormData(); fd2.append('image', fileInput.files[0]);
+            const r2=await fetch('/api/media/upload', {method:'POST', body:fd2});
+            const j2=await r2.json();
+            if(j2.success) res={url:j2.url};
+            else throw e;
+        }
+        currentSettings.headerLogoUrl=res.url;
+        document.getElementById('logoPreview').src=res.url+'?v='+Date.now();
+        status.textContent='✅ Uploaded! Save karo';
+        status.style.color='#10b981';
+    }catch(err){ status.textContent='❌ '+err.message; status.style.color='#ef4444'; }
+};
+
+window.SLSettings.uploadBannerImageFile=async()=>{
+    const fileInput=document.getElementById('bannerImageUploadFile');
+    const status=document.getElementById('bannerImageUploadStatus');
+    if(!fileInput.files[0]){ alert('Select photo'); return; }
+    const formData=new FormData(); formData.append('banner', fileInput.files[0]);
+    status.textContent='Uploading...';
+    try{ const res=await apiCall('/upload/banner','POST',formData); currentSettings.headerBannerImageUrl=res.url; renderBannerImagePreview(res.url); status.textContent='✅ Uploaded!'; if(confirm('Abhi dikhana hai?')) window.SLSettings.setActiveBanner('image'); }
+    catch(err){ status.textContent='❌ '+err.message; }
+};
+window.SLSettings.uploadBannerVideoFile=async()=>{
+    const fileInput=document.getElementById('bannerVideoUploadFile');
+    const status=document.getElementById('bannerVideoUploadStatus');
+    if(!fileInput.files[0]){ alert('Select video'); return; }
+    const formData=new FormData(); formData.append('banner', fileInput.files[0]);
+    status.textContent='Uploading Video...';
+    try{ const res=await apiCall('/upload/banner','POST',formData); currentSettings.headerBannerVideoUrl=res.url; renderBannerVideoPreview(res.url); status.textContent='✅ Uploaded!'; if(confirm('Abhi dikhana hai?')) window.SLSettings.setActiveBanner('video'); }
+    catch(err){ status.textContent='❌ '+err.message; }
+};
+
+window.SLSettings.saveSettings=async()=>{
+    const btn=document.getElementById('saveSettingsBtn'); if(btn){ btn.disabled=true; btn.textContent='Saving...'; }
+    const data={
+        appName: document.getElementById('settingLogoText')?.value||'SAMAN LIVE',
+        appTagline: document.getElementById('settingTagline')?.value||'',
+        headerLogoUrl: currentSettings.headerLogoUrl||'',
+        headerLogoSize: parseInt(document.getElementById('logoSize')?.value||42),
+        headerHeight: parseInt(document.getElementById('headerHeight')?.value||56),
+        headerColor: document.getElementById('settingHeaderColor')?.value||'#ffffff',
+        headerTextColor: document.getElementById('settingHeaderTextColor')?.value||'#0f172a',
+        headerShowLogo: document.getElementById('headerShowLogo')?.value==='true',
+        headerShowSearch: document.getElementById('headerShowSearch')?.value==='true',
+        headerShowCart: document.getElementById('headerShowCart')?.value==='true',
+        headerShowScanner: document.getElementById('headerShowScanner')?.value==='true',
+        headerSticky: document.getElementById('headerSticky')?.value==='true',
+        headerBannerUrl: currentSettings.headerBannerActive==='video'?(currentSettings.headerBannerVideoUrl||''):(currentSettings.headerBannerActive==='none'?'':(currentSettings.headerBannerImageUrl||'')),
+        headerBannerImageUrl: currentSettings.headerBannerImageUrl||'',
+        headerBannerVideoUrl: currentSettings.headerBannerVideoUrl||'',
+        headerBannerActive: currentSettings.headerBannerActive||'image',
+        headerBannerType: currentSettings.headerBannerActive==='none'?'none':(currentSettings.headerBannerActive||'image'),
+        headerBannerHeight: parseInt(document.getElementById('settingBannerHeight')?.value||200),
+        bannerShow: document.getElementById('bannerShow')?.value==='true',
+        productCardStyle: document.getElementById('productCardStyle')?.value||'card',
+        productCardSize: document.getElementById('productCardSize')?.value||'medium',
+        productScrollType: document.getElementById('productScrollType')?.value||'horizontal',
+        productPerRow: parseInt(document.getElementById('productPerRow')?.value||2),
+        productGap: parseInt(document.getElementById('productGap')?.value||10),
+        productBorderRadius: parseInt(document.getElementById('productBorderRadius')?.value||12),
+        productShadow: document.getElementById('productShadow')?.value||'medium',
+        productShowDiscount: document.getElementById('productShowDiscount')?.value==='true',
+        productShowShopName: document.getElementById('productShowShopName')?.value==='true',
+        productShowAddCart: document.getElementById('productShowAddCart')?.value==='true',
+        categoryShow: document.getElementById('categoryShow')?.value==='true',
+        historyShow: document.getElementById('historyShow')?.value==='true',
+        historyTitle: document.getElementById('historyTitle')?.value||'History',
+        adShow: document.getElementById('adShow')?.value==='true',
+        adTitle: document.getElementById('adTitle')?.value||'Advertisement',
+        nearbyTitle: document.getElementById('nearbyTitle')?.value||'Nearby Product',
+        bottomNavShow: document.getElementById('bottomNavShow')?.value==='true',
+        bottomNavColor: document.getElementById('bottomNavColor')?.value||'#ffffff',
+        bottomNavActiveColor: document.getElementById('bottomNavActiveColor')?.value||'#10b981',
+        bottomNavHeight: parseInt(document.getElementById('bottomNavHeight')?.value||70),
+        bottomNavButtons: currentSettings.bottomNavButtons||[],
+        footerShow: document.getElementById('footerShow')?.value==='true',
+        footerStyle: document.getElementById('footerStyle')?.value||'modern',
+        footerColor: document.getElementById('settingFooterColor')?.value||'#1f2937',
+        footerTextColor: document.getElementById('footerTextColor')?.value||'#ffffff',
+        footerText: document.getElementById('settingFooterText')?.value||'',
+        footerAbout: document.getElementById('settingFooterAbout')?.value||'',
+        footerLinks: currentSettings.footerLinks||[],
+        facebook: document.getElementById('settingFacebook')?.value||'',
+        instagram: document.getElementById('settingInstagram')?.value||'',
+        youtube: document.getElementById('settingYoutube')?.value||'',
+        primaryColor: document.getElementById('primaryColor')?.value||'#0f172a',
+        secondaryColor: document.getElementById('secondaryColor')?.value||'#10b981',
+        accentColor: document.getElementById('accentColor')?.value||'#3b82f6',
+        backgroundColor: document.getElementById('backgroundColor')?.value||'#f5f7fa',
+    };
+    try{
+        const res=await apiCall('/settings','PUT',data);
+        currentSettings=res.data||res;
+        alert('✅ Settings saved! Main app pe jake reload karo - sab update ho jayega');
+        localStorage.setItem('settings_updated', Date.now().toString());
+    }catch(err){ alert('Save failed: '+err.message); }
+    finally{ if(btn){ btn.disabled=false; btn.textContent='💾 Save All Settings'; } }
+};
+
+window.SLSettings.exportSettings=async()=>{
+    try{ const s=await apiCall('/settings/export'); const blob=new Blob([JSON.stringify(s,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='samanlive-settings.json'; a.click(); }
+    catch(e){ alert(e.message); }
+};
+window.SLSettings.resetSettings=async()=>{
+    if(!confirm('⚠️ Reset to default?')) return;
+    try{ await apiCall('/settings/reset','POST'); alert('✅ Reset done'); location.reload(); }
+    catch(e){ alert(e.message); }
+};
 
 async function loadSettings(){
     try{
         currentSettings=await apiCall('/settings');
-        // Header
         document.getElementById('settingLogoText').value=currentSettings.appName||'SAMAN LIVE';
         document.getElementById('settingTagline').value=currentSettings.appTagline||'';
         document.getElementById('settingHeaderColor').value=currentSettings.headerColor||'#ffffff';
         document.getElementById('settingHeaderTextColor').value=currentSettings.headerTextColor||'#0f172a';
-        document.getElementById('primaryColor').value=currentSettings.primaryColor||'#0f172a';
-        document.getElementById('secondaryColor').value=currentSettings.secondaryColor||'#10b981';
-        document.getElementById('accentColor').value=currentSettings.accentColor||'#3b82f6';
-        document.getElementById('backgroundColor').value=currentSettings.backgroundColor||'#f5f7fa';
         document.getElementById('logoSize').value=currentSettings.headerLogoSize||42;
         document.getElementById('logoSizeVal').textContent=(currentSettings.headerLogoSize||42)+'px';
         document.getElementById('headerHeight').value=currentSettings.headerHeight||56;
         document.getElementById('headerHeightVal').textContent=(currentSettings.headerHeight||56)+'px';
-        document.getElementById('headerShowLogo').value=String(currentSettings.headerShowLogo!==false);
-        document.getElementById('headerShowSearch').value=String(currentSettings.headerShowSearch!==false);
-        document.getElementById('headerShowCart').value=String(currentSettings.headerShowCart!==false);
-        document.getElementById('headerShowScanner').value=String(currentSettings.headerShowScanner!==false);
-        document.getElementById('headerSticky').value=String(currentSettings.headerSticky!==false);
         if(currentSettings.headerLogoUrl) document.getElementById('logoPreview').src=currentSettings.headerLogoUrl+'?v='+Date.now();
-
-        // Banner
         document.getElementById('settingBannerHeight').value=currentSettings.headerBannerHeight||200;
-        document.getElementById('bannerHeightRange').value=currentSettings.headerBannerHeight||200;
-        document.getElementById('bannerAutoPlay').value=String(currentSettings.bannerAutoPlay!==false);
-        document.getElementById('bannerShowOverlay').value=String(currentSettings.bannerShowOverlay!==false);
         document.getElementById('bannerShow').value=String(currentSettings.bannerShow!==false);
         if(!currentSettings.headerBannerImageUrl && currentSettings.headerBannerType!=='video') currentSettings.headerBannerImageUrl=currentSettings.headerBannerUrl||'';
         if(!currentSettings.headerBannerVideoUrl && currentSettings.headerBannerType==='video') currentSettings.headerBannerVideoUrl=currentSettings.headerBannerUrl||'';
@@ -317,7 +400,6 @@ async function loadSettings(){
         renderBannerVideoPreview(currentSettings.headerBannerVideoUrl);
         updateActiveStatus();
 
-        // Product
         document.getElementById('productCardStyle').value=currentSettings.productCardStyle||'card';
         document.getElementById('productCardSize').value=currentSettings.productCardSize||'medium';
         document.getElementById('productScrollType').value=currentSettings.productScrollType||'horizontal';
@@ -325,228 +407,69 @@ async function loadSettings(){
         document.getElementById('productGap').value=currentSettings.productGap||10;
         document.getElementById('productBorderRadius').value=currentSettings.productBorderRadius||12;
         document.getElementById('productShadow').value=currentSettings.productShadow||'medium';
-        document.getElementById('productAnimation').value=currentSettings.productAnimation||'none';
-        document.getElementById('productImageRatio').value=currentSettings.productImageRatio||'1:1';
         document.getElementById('productShowDiscount').value=String(currentSettings.productShowDiscount!==false);
         document.getElementById('productShowShopName').value=String(currentSettings.productShowShopName!==false);
         document.getElementById('productShowAddCart').value=String(currentSettings.productShowAddCart!==false);
-        document.getElementById('productScrollSpeed').value=currentSettings.productScrollSpeed||20;
 
-        // Category etc
         document.getElementById('categoryShow').value=String(currentSettings.categoryShow!==false);
-        document.getElementById('categoryStyle').value=currentSettings.categoryStyle||'chip';
-        document.getElementById('categorySize').value=currentSettings.categorySize||70;
-        document.getElementById('categorySizeVal').textContent=(currentSettings.categorySize||70)+'px';
         document.getElementById('historyShow').value=String(currentSettings.historyShow!==false);
         document.getElementById('historyTitle').value=currentSettings.historyTitle||'History';
         document.getElementById('adShow').value=String(currentSettings.adShow!==false);
         document.getElementById('adTitle').value=currentSettings.adTitle||'Advertisement';
         document.getElementById('nearbyTitle').value=currentSettings.nearbyTitle||'Nearby Product';
 
-        // Nav
         document.getElementById('bottomNavShow').value=String(currentSettings.bottomNavShow!==false);
         document.getElementById('bottomNavColor').value=currentSettings.bottomNavColor||'#ffffff';
         document.getElementById('bottomNavActiveColor').value=currentSettings.bottomNavActiveColor||'#10b981';
-        document.getElementById('bottomNavTextColor').value=currentSettings.bottomNavTextColor||'#6b7280';
         document.getElementById('bottomNavHeight').value=currentSettings.bottomNavHeight||70;
-        document.getElementById('bottomNavCenterStyle').value=currentSettings.bottomNavCenterStyle||'hex';
-        renderNavButtons();
 
-        // Footer
         document.getElementById('footerShow').value=String(currentSettings.footerShow!==false);
         document.getElementById('footerStyle').value=currentSettings.footerStyle||'modern';
         document.getElementById('settingFooterColor').value=currentSettings.footerColor||'#1f2937';
         document.getElementById('footerTextColor').value=currentSettings.footerTextColor||'#ffffff';
-        document.getElementById('footerColumns').value=currentSettings.footerColumns||3;
-        document.getElementById('footerHeight').value=currentSettings.footerHeight||200;
         document.getElementById('settingFooterText').value=currentSettings.footerText||'';
         document.getElementById('settingFooterAbout').value=currentSettings.footerAbout||'';
-        document.getElementById('footerAboutShow').value=String(currentSettings.footerAboutShow!==false);
-        document.getElementById('footerLinksShow').value=String(currentSettings.footerLinksShow!==false);
-        document.getElementById('footerSocialShow').value=String(currentSettings.footerSocialShow!==false);
         document.getElementById('settingFacebook').value=currentSettings.facebook||'';
         document.getElementById('settingInstagram').value=currentSettings.instagram||'';
-        document.getElementById('settingTwitter').value=currentSettings.twitter||'';
         document.getElementById('settingYoutube').value=currentSettings.youtube||'';
-        document.getElementById('settingWhatsapp').value=currentSettings.whatsapp||'';
+
+        document.getElementById('primaryColor').value=currentSettings.primaryColor||'#0f172a';
+        document.getElementById('secondaryColor').value=currentSettings.secondaryColor||'#10b981';
+        document.getElementById('accentColor').value=currentSettings.accentColor||'#3b82f6';
+        document.getElementById('backgroundColor').value=currentSettings.backgroundColor||'#f5f7fa';
+
         renderFooterLinks();
+        renderNavButtons();
 
-        // Theme
-        document.getElementById('borderRadius').value=currentSettings.borderRadius||12;
-        document.getElementById('radiusVal').textContent=(currentSettings.borderRadius||12)+'px';
-        document.getElementById('fontFamily').value=currentSettings.fontFamily||'Outfit';
-        document.getElementById('fontSize').value=currentSettings.fontSize||'medium';
-        document.getElementById('containerMaxWidth').value=currentSettings.containerMaxWidth||1200;
-        document.getElementById('showVideoBackground').value=String(currentSettings.showVideoBackground!==false);
+        // Tab click handler - FIXED FOR LAUNCHER
+        document.querySelectorAll('#saman-settings-root .tab-btn').forEach(btn=>{
+            btn.addEventListener('click', function(){ switchTab(this.dataset.tab); });
+        });
+        document.getElementById('logoSize')?.addEventListener('input', function(){ document.getElementById('logoSizeVal').textContent=this.value+'px'; });
+        document.getElementById('headerHeight')?.addEventListener('input', function(){ document.getElementById('headerHeightVal').textContent=this.value+'px'; });
+        document.getElementById('logoUploadFile')?.addEventListener('change', function(e){
+            const file=e.target.files[0]; if(!file) return;
+            const reader=new FileReader(); reader.onload=e=>{ document.getElementById('logoPreview').src=e.target.result; }; reader.readAsDataURL(file);
+        });
+        document.getElementById('bannerImageUploadFile')?.addEventListener('change', function(e){
+            const file=e.target.files[0]; if(!file) return; renderBannerImagePreview(URL.createObjectURL(file));
+        });
+        document.getElementById('bannerVideoUploadFile')?.addEventListener('change', function(e){
+            const file=e.target.files[0]; if(!file) return; renderBannerVideoPreview(URL.createObjectURL(file));
+        });
 
-    }catch(err){ console.error(err); alert('Load failed: '+err.message); }
+    }catch(err){ console.error(err); }
 }
 
-function renderFooterLinks(){
-    const container=document.getElementById('footerLinksContainer');
-    const links=currentSettings.footerLinks||[];
-    container.innerHTML=links.map((link,i)=>`
-        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:10px;align-items:end">
-            <div class="form-group"><label>Text:</label><input type="text" value="${link.text||''}" onchange="updateFooterLink(${i},'text',this.value)"></div>
-            <div class="form-group"><label>URL:</label><input type="text" value="${link.url||''}" onchange="updateFooterLink(${i},'url',this.value)"></div>
-            <button class="btn-danger btn-sm" onclick="removeFooterLink(${i})">🗑️</button>
-        </div>`).join('');
-}
-window.addFooterLink=()=>{ if(!currentSettings.footerLinks) currentSettings.footerLinks=[]; currentSettings.footerLinks.push({text:'',url:'',visible:true}); renderFooterLinks(); };
-window.updateFooterLink=(i,f,v)=>{ currentSettings.footerLinks[i][f]=v; };
-window.removeFooterLink=(i)=>{ currentSettings.footerLinks.splice(i,1); renderFooterLinks(); };
-
-function renderNavButtons(){
-    const container=document.getElementById('navButtonsContainer');
-    const btns=currentSettings.bottomNavButtons||[];
-    container.innerHTML=btns.sort((a,b)=>a.order-b.order).map((b,i)=>`
-        <div style="display:grid;grid-template-columns:80px 1fr 80px 60px;gap:8px;margin-bottom:8px;align-items:center;background:#fff;padding:8px;border-radius:8px">
-            <input type="text" value="${b.icon||''}" placeholder="Icon" onchange="updateNavBtn(${i},'icon',this.value)" style="padding:6px;border:1px solid #e2e8f0;border-radius:6px">
-            <input type="text" value="${b.label||''}" placeholder="Label" onchange="updateNavBtn(${i},'label',this.value)" style="padding:6px;border:1px solid #e2e8f0;border-radius:6px">
-            <select onchange="updateNavBtn(${i},'visible',this.value==='true')" style="padding:6px;border-radius:6px"><option value="true" ${b.visible?'selected':''}>Show</option><option value="false" ${!b.visible?'selected':''}>Hide</option></select>
-            <input type="number" value="${b.order||i+1}" min="1" max="10" onchange="updateNavBtn(${i},'order',parseInt(this.value))" style="padding:6px;border:1px solid #e2e8f0;border-radius:6px">
-        </div>`).join('');
-}
-window.updateNavBtn=(i,f,v)=>{ currentSettings.bottomNavButtons[i][f]=v; if(f==='order') currentSettings.bottomNavButtons.sort((a,b)=>a.order-b.order); };
-
-window.previewLogo=(e)=>{
-    const file=e.target.files[0]; if(!file) return;
-    const reader=new FileReader(); reader.onload=e=>{ document.getElementById('logoPreview').src=e.target.result; }; reader.readAsDataURL(file);
-};
-window.uploadLogoFile=async()=>{
-    const fileInput=document.getElementById('logoUploadFile');
-    const status=document.getElementById('logoUploadStatus');
-    if(!fileInput.files[0]) return alert('Select logo');
-    const formData=new FormData(); formData.append('logo', fileInput.files[0]);
-    status.textContent='Uploading...';
-    try{ const res=await apiCall('/upload/logo','POST',formData); currentSettings.headerLogoUrl=res.url; document.getElementById('logoPreview').src=res.url+'?v='+Date.now(); status.textContent='✅ Uploaded! Save karo'; }
-    catch(err){ status.textContent='❌ Failed'; alert(err.message); }
-};
-window.previewBannerImage=(e)=>{ const file=e.target.files[0]; if(!file) return; renderBannerImagePreview(URL.createObjectURL(file)); };
-window.previewBannerVideo=(e)=>{ const file=e.target.files[0]; if(!file) return; renderBannerVideoPreview(URL.createObjectURL(file)); };
-window.uploadBannerImageFile=async()=>{
-    const fileInput=document.getElementById('bannerImageUploadFile');
-    const status=document.getElementById('bannerImageUploadStatus');
-    if(!fileInput.files[0]) return alert('Select photo');
-    const formData=new FormData(); formData.append('banner', fileInput.files[0]);
-    status.textContent='Uploading...';
-    try{ const res=await apiCall('/upload/banner','POST',formData); currentSettings.headerBannerImageUrl=res.url; renderBannerImagePreview(res.url); status.textContent='✅ Uploaded!'; if(confirm('Abhi dikhana hai?')) setActiveBanner('image'); }
-    catch(err){ status.textContent='❌ Failed'; alert(err.message); }
-};
-window.uploadBannerVideoFile=async()=>{
-    const fileInput=document.getElementById('bannerVideoUploadFile');
-    const status=document.getElementById('bannerVideoUploadStatus');
-    if(!fileInput.files[0]) return alert('Select video');
-    const formData=new FormData(); formData.append('banner', fileInput.files[0]);
-    status.textContent='Uploading Video...';
-    try{ const res=await apiCall('/upload/banner','POST',formData); currentSettings.headerBannerVideoUrl=res.url; renderBannerVideoPreview(res.url); status.textContent='✅ Uploaded!'; if(confirm('Abhi dikhana hai?')) setActiveBanner('video'); }
-    catch(err){ status.textContent='❌ Failed'; alert(err.message); }
-};
-
-window.saveSettings=async()=>{
-    const btn=document.getElementById('saveSettingsBtn'); btn.disabled=true; btn.textContent='Saving...';
-    const data={
-        appName: document.getElementById('settingLogoText').value,
-        appTagline: document.getElementById('settingTagline').value,
-        headerLogoUrl: currentSettings.headerLogoUrl||'',
-        headerLogoSize: parseInt(document.getElementById('logoSize').value),
-        headerHeight: parseInt(document.getElementById('headerHeight').value),
-        headerColor: document.getElementById('settingHeaderColor').value,
-        headerTextColor: document.getElementById('settingHeaderTextColor').value,
-        headerShowLogo: document.getElementById('headerShowLogo').value==='true',
-        headerShowSearch: document.getElementById('headerShowSearch').value==='true',
-        headerShowCart: document.getElementById('headerShowCart').value==='true',
-        headerShowScanner: document.getElementById('headerShowScanner').value==='true',
-        headerSticky: document.getElementById('headerSticky').value==='true',
-        headerBannerUrl: currentSettings.headerBannerActive==='video'?(currentSettings.headerBannerVideoUrl||''):(currentSettings.headerBannerActive==='none'?'':(currentSettings.headerBannerImageUrl||'')),
-        headerBannerImageUrl: currentSettings.headerBannerImageUrl||'',
-        headerBannerVideoUrl: currentSettings.headerBannerVideoUrl||'',
-        headerBannerActive: currentSettings.headerBannerActive||'image',
-        headerBannerType: currentSettings.headerBannerActive==='none'?'none':(currentSettings.headerBannerActive||'image'),
-        headerBannerHeight: parseInt(document.getElementById('settingBannerHeight').value),
-        bannerAutoPlay: document.getElementById('bannerAutoPlay').value==='true',
-        bannerShowOverlay: document.getElementById('bannerShowOverlay').value==='true',
-        bannerShow: document.getElementById('bannerShow').value==='true',
-        productCardStyle: document.getElementById('productCardStyle').value,
-        productCardSize: document.getElementById('productCardSize').value,
-        productScrollType: document.getElementById('productScrollType').value,
-        productPerRow: parseInt(document.getElementById('productPerRow').value),
-        productGap: parseInt(document.getElementById('productGap').value),
-        productBorderRadius: parseInt(document.getElementById('productBorderRadius').value),
-        productShadow: document.getElementById('productShadow').value,
-        productAnimation: document.getElementById('productAnimation').value,
-        productImageRatio: document.getElementById('productImageRatio').value,
-        productShowDiscount: document.getElementById('productShowDiscount').value==='true',
-        productShowShopName: document.getElementById('productShowShopName').value==='true',
-        productShowAddCart: document.getElementById('productShowAddCart').value==='true',
-        productScrollSpeed: parseInt(document.getElementById('productScrollSpeed').value),
-        categoryShow: document.getElementById('categoryShow').value==='true',
-        categoryStyle: document.getElementById('categoryStyle').value,
-        categorySize: parseInt(document.getElementById('categorySize').value),
-        historyShow: document.getElementById('historyShow').value==='true',
-        historyTitle: document.getElementById('historyTitle').value,
-        adShow: document.getElementById('adShow').value==='true',
-        adTitle: document.getElementById('adTitle').value,
-        nearbyTitle: document.getElementById('nearbyTitle').value,
-        bottomNavShow: document.getElementById('bottomNavShow').value==='true',
-        bottomNavColor: document.getElementById('bottomNavColor').value,
-        bottomNavActiveColor: document.getElementById('bottomNavActiveColor').value,
-        bottomNavTextColor: document.getElementById('bottomNavTextColor').value,
-        bottomNavHeight: parseInt(document.getElementById('bottomNavHeight').value),
-        bottomNavCenterStyle: document.getElementById('bottomNavCenterStyle').value,
-        bottomNavButtons: currentSettings.bottomNavButtons||[],
-        footerShow: document.getElementById('footerShow').value==='true',
-        footerStyle: document.getElementById('footerStyle').value,
-        footerColor: document.getElementById('settingFooterColor').value,
-        footerTextColor: document.getElementById('footerTextColor').value,
-        footerColumns: parseInt(document.getElementById('footerColumns').value),
-        footerHeight: parseInt(document.getElementById('footerHeight').value),
-        footerText: document.getElementById('settingFooterText').value,
-        footerAbout: document.getElementById('settingFooterAbout').value,
-        footerAboutShow: document.getElementById('footerAboutShow').value==='true',
-        footerLinksShow: document.getElementById('footerLinksShow').value==='true',
-        footerSocialShow: document.getElementById('footerSocialShow').value==='true',
-        footerLinks: currentSettings.footerLinks||[],
-        facebook: document.getElementById('settingFacebook').value,
-        instagram: document.getElementById('settingInstagram').value,
-        twitter: document.getElementById('settingTwitter').value,
-        youtube: document.getElementById('settingYoutube').value,
-        whatsapp: document.getElementById('settingWhatsapp').value,
-        primaryColor: document.getElementById('primaryColor').value,
-        secondaryColor: document.getElementById('secondaryColor').value,
-        accentColor: document.getElementById('accentColor').value,
-        backgroundColor: document.getElementById('backgroundColor').value,
-        borderRadius: parseInt(document.getElementById('borderRadius').value),
-        fontFamily: document.getElementById('fontFamily').value,
-        fontSize: document.getElementById('fontSize').value,
-        containerMaxWidth: parseInt(document.getElementById('containerMaxWidth').value),
-        showVideoBackground: document.getElementById('showVideoBackground').value==='true'
-    };
-    try{
-        const res=await apiCall('/settings','PUT',data);
-        currentSettings=res.data||res;
-        alert('✅ Settings saved! Main app reload karo - sab update ho jayega');
-        // Trigger reload event for main app if open
-        localStorage.setItem('settings_updated', Date.now().toString());
-    }catch(err){ alert('Save failed: '+err.message); }
-    finally{ btn.disabled=false; btn.textContent='💾 Save All Settings'; }
-};
-
-window.exportSettings=async()=>{
-    try{ const s=await apiCall('/settings/export'); const blob=new Blob([JSON.stringify(s,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='samanlive-settings.json'; a.click(); }
-    catch(e){ alert(e.message); }
-};
-window.resetSettings=async()=>{
-    if(!confirm('⚠️ Saari settings default ho jayengi - sure?')) return;
-    try{ await apiCall('/settings/reset','POST'); alert('✅ Reset done'); location.reload(); }
-    catch(e){ alert(e.message); }
-};
-
-function updatePreview(){
-    document.getElementById('logoSizeVal').textContent=document.getElementById('logoSize').value+'px';
-    document.getElementById('headerHeightVal').textContent=document.getElementById('headerHeight').value+'px';
+// INIT - LAUNCHER MEIN BHI CHALEGA
+if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', loadSettings);
+} else {
+    setTimeout(loadSettings, 100);
 }
 
-// Init
-loadSettings();
+// Expose switchTab globally for old onclick
+window.switchTab = switchTab;
+
+})();
 </script>

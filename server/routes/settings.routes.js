@@ -1,12 +1,12 @@
-// LOCATION: server/routes/settings.routes.js - V10 WORLD CLASS - FULL MAIN APP CONTROL + CLOUDINARY + ADMIN
+// LOCATION: server/routes/settings.routes.js - V12 FINAL FIXED - V10 SAME + LOGO 500 FIX + CLOUDINARY MEMORY + LAUNCHER COMPATIBLE
 const express = require('express');
 const Setting = require('../models/Setting');
-const { upload } = require('../utils/cloudinary');
 const { cloudinary } = require('../utils/cloudinary');
 const multer = require('multer');
 const router = express.Router();
 
-const bannerMemoryUpload = multer({ 
+// VERCEL SAFE - MEMORY ONLY - NO DISK - LOGO + BANNER DONO KE LIYE
+const memoryUpload = multer({ 
     storage: multer.memoryStorage(),
     limits: { fileSize: 25 * 1024 * 1024 }
 });
@@ -23,6 +23,16 @@ async function getLatestSettings() {
         });
     }
     return settings;
+}
+
+async function uploadToCloudinaryBuffer(buffer, folder, resource_type='auto'){
+    return await new Promise((resolve, reject)=>{
+        const stream = cloudinary.uploader.upload_stream(
+            { folder, resource_type, chunk_size: 6000000 },
+            (error, result) => { if(error) return reject(error); resolve(result); }
+        );
+        stream.end(buffer);
+    });
 }
 
 // GET SETTINGS - MAIN APP + ADMIN DONO USE KARTE HAIN
@@ -44,7 +54,6 @@ router.get('/settings/public', async (req, res) => {
         let settings = await Setting.findOne().sort({ _id: -1 });
         if (!settings) settings = await Setting.create({});
         
-        // Only public fields - no sensitive data
         const publicSettings = {
             appName: settings.appName,
             appTagline: settings.appTagline,
@@ -97,7 +106,6 @@ router.get('/settings/public', async (req, res) => {
             footerText: settings.footerText,
             footerAbout: settings.footerAbout,
             footerLinks: settings.footerLinks,
-            footerShow: settings.footerShow,
             primaryColor: settings.primaryColor,
             secondaryColor: settings.secondaryColor,
             accentColor: settings.accentColor,
@@ -141,19 +149,13 @@ router.patch('/settings/:field', express.json({limit: '10mb'}), async (req, res)
     }
 });
 
-// BANNER UPLOAD - IMAGE + VIDEO
-router.post('/upload/banner', bannerMemoryUpload.single('banner'), async (req, res) => {
+// BANNER UPLOAD - IMAGE + VIDEO - MEMORY + CLOUDINARY - VERCEL SAFE
+router.post('/upload/banner', memoryUpload.single('banner'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file' });
-        console.log("Banner File:", req.file.originalname, req.file.mimetype);
+        console.log("Banner File:", req.file.originalname, req.file.mimetype, req.file.size);
 
-        const result = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream(
-                { folder: 'samanlive/banner', resource_type: 'auto', chunk_size: 6000000 },
-                (error, result) => { if(error) return reject(error); resolve(result); }
-            );
-            stream.end(req.file.buffer);
-        });
+        const result = await uploadToCloudinaryBuffer(req.file.buffer, 'samanlive/banner', 'auto');
 
         const resourceType = result.resource_type === 'video' ? 'video' : 'image';
         let settings = await getLatestSettings();
@@ -168,6 +170,7 @@ router.post('/upload/banner', bannerMemoryUpload.single('banner'), async (req, r
         }
         await settings.save();
         
+        console.log("✅ Banner saved:", result.secure_url, resourceType);
         res.json({ success: true, url: result.secure_url, type: resourceType });
     } catch (err) {
         console.error("Banner Error:", err);
@@ -175,25 +178,43 @@ router.post('/upload/banner', bannerMemoryUpload.single('banner'), async (req, r
     }
 });
 
-// LOGO UPLOAD
-router.post('/upload/logo', upload.single('logo'), async (req, res) => {
+// LOGO UPLOAD - FIXED V12 - MEMORY + CLOUDINARY - VERCEL 500 FIX - NO DISK
+router.post('/upload/logo', memoryUpload.single('logo'), async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ error: 'No file' });
-        const newUrl = req.file.path;
+        if (!req.file) return res.status(400).json({ error: 'No file - logo field missing' });
+        console.log("Logo File:", req.file.originalname, req.file.mimetype, req.file.size);
+
+        const result = await uploadToCloudinaryBuffer(req.file.buffer, 'samanlive/logo', 'image');
+
         let settings = await getLatestSettings();
-        settings.headerLogoUrl = newUrl;
+        settings.headerLogoUrl = result.secure_url;
         await settings.save();
-        res.json({ success: true, url: newUrl });
+
+        console.log("✅ Logo saved to Cloudinary:", result.secure_url);
+        res.json({ success: true, url: result.secure_url });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("Logo Error:", err);
+        res.status(500).json({ error: err.message || 'Cloudinary config missing? Check CLOUDINARY_CLOUD_NAME' });
     }
+});
+
+// LEGACY ALIAS - /api/upload/logo -> same handler for launcher compatibility
+router.post('/upload/logo/legacy', memoryUpload.single('logo'), async (req, res) => {
+    try{
+        if(!req.file) return res.status(400).json({error:'No file'});
+        const result = await uploadToCloudinaryBuffer(req.file.buffer, 'samanlive/logo', 'image');
+        const settings = await getLatestSettings();
+        settings.headerLogoUrl = result.secure_url;
+        await settings.save();
+        res.json({ success:true, url: result.secure_url });
+    }catch(e){ res.status(500).json({error:e.message}); }
 });
 
 // RESET SETTINGS
 router.post('/settings/reset', async (req, res) => {
     try {
         await Setting.deleteMany({});
-        const settings = await Setting.create({});
+        const settings = await Setting.create({ appName: 'SAMAN LIVE' });
         res.json({ success: true, data: settings, message: 'Settings reset to default' });
     } catch (err) {
         res.status(500).json({ error: err.message });

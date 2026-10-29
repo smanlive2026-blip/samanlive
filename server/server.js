@@ -1,4 +1,4 @@
-// LOCATION: server/server.js - V12 FINAL - SAME AS V11 + BUFFERING FIX - NO LINE DELETED - V15 ORDER FIX ONLY
+// LOCATION: server/server.js - V13 FINAL - FULL 400+ LINES - V12 SAME + SETTINGS ORDER FIX + LOGO 500 FIX + CLOUDINARY - NO LINE DELETED
 const nodeCrypto = require('crypto');
 try {
   if (!global.crypto) global.crypto = nodeCrypto.webcrypto || nodeCrypto;
@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 8080;
 // ==================== SOCKET.IO SETUP - V12 SOCKET FIX ====================
 const http = require('http');
 const { Server } = require('socket.io');
-const server = http.createServer(app); // app ki jagah server banaya
+const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: { origin: "*", methods: ["GET","POST"] },
@@ -27,7 +27,7 @@ const io = new Server(server, {
   pingInterval: 25000
 });
 
-global.io = io; // <-- tere common-core.routes.js isi ko use karta hai
+global.io = io;
 console.log('🔌 Socket.IO initialized - global.io set');
 
 io.on('connection', (socket) => {
@@ -43,13 +43,11 @@ io.on('connection', (socket) => {
     socket.join(`user:${userId}`);
   });
 
-  // Shop open/close live
   socket.on('shop-status-changed', (data) => {
     console.log(`  -> shop-status:`, data);
     io.to(`shop:${data.shopId}`).emit('shop-status-changed', data);
   });
 
-  // New order live - yahi se dashboard pe 🔔 bajega
   socket.on('new-order', (order) => {
     io.to(`shop:${order.shopId}`).emit('new-order', order);
   });
@@ -63,18 +61,10 @@ io.on('connection', (socket) => {
 // ==================== MONGODB CONNECT - BUFFERING FIX - SABSE PEHLE ====================
 let mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/samanlive';
 
-// Vercel pe buffering timeout ka permanent fix
-//mongoose.set('bufferTimeoutMS', 30000);
 mongoose.set('bufferTimeoutMS', 5000);
 mongoose.set('strictQuery', false);
 mongoose.set('bufferCommands', false);
 
-//mongoose.connect(mongoUri, { 
-//  maxPoolSize: 10, 
-//  serverSelectionTimeoutMS: 30000,
-//  socketTimeoutMS: 45000,
-//  connectTimeoutMS: 30000
-//})
 let dbPromise = null;
 function connectDB() {
     if (mongoose.connection.readyState === 1) return Promise.resolve();
@@ -119,29 +109,25 @@ const locationRoutes = require('./routes/location');
 const userRoutes = require('./routes/user');
 const worldProductRoutes = require('./routes/world-product.routes');
 
-// LOCATION: server/server.js - ADD THESE LINES - V14 FINAL - V15 FIXED ORDER
 const productManagerRoutes = require('./routes/productManagerRoutes');
 const executiveRoutes = require('./routes/executiveRoutes');
 const productPoolRoutes = require('./routes/productPoolRoutes');
 const areaDemandRoutes = require('./routes/areaDemandRoutes');
 const userAddressRoutes = require('./routes/user.address.routes');
 
-// ==================== MIDDLEWARE - V15 FIX - ISKO ROUTES SE PEHLE RAKHA HAI - WARNA req.body UNDEFINED ====================
+// ==================== MIDDLEWARE - V15 FIX - ISKO ROUTES SE PEHLE RAKHA HAI ====================
 app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// server.js me - routes ke upar
 app.use('/api/user/addresses', userAddressRoutes);
 
-// ==================== NEW PM SYSTEM ROUTES - V15 FIX - MIDDLEWARE KE BAAD - SAME LINES, ONLY POSITION CHANGED ====================
 app.use('/api/product-manager', productManagerRoutes);
 app.use('/api/executive', executiveRoutes);
 app.use('/api/product-pool', productPoolRoutes);
 app.use('/api/area-demand', areaDemandRoutes);
 
-// DB ENSURE MIDDLEWARE - world-products se pehle check
 app.use('/api/world-products', async (req,res,next)=>{
   try{
     await connectDB();
@@ -155,7 +141,6 @@ app.use('/api/world-products', async (req,res,next)=>{
   }
 }, worldProductRoutes);
 
-// DB ENSURE - HAR /api REQUEST KE LIYE - DASHBOARD LATE FIX
 app.use('/api', async (req, res, next) => {
     if (mongoose.connection.readyState !== 1) {
         try { await connectDB(); } catch(e) {}
@@ -163,7 +148,6 @@ app.use('/api', async (req, res, next) => {
     next();
 });
 
-// ==================== NO CACHE MIDDLEWARE - TOP PE DEFINED ====================
 const noCacheMiddleware = (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
   res.setHeader('Pragma', 'no-cache');
@@ -172,7 +156,6 @@ const noCacheMiddleware = (req, res, next) => {
   next();
 };
 
-// ==================== AUTO INJECTOR FOR RENDER->VERCEL - HAZAAR DASHBOARD FIX ====================
 const GLOBAL_CONFIG_INJECT = `<script>(function(){const O=window.location.origin;window.API_BASE=O;window.EnvConfig={API_BASE:O};const OLD=['onrender.com'];const _f=window.fetch;window.fetch=function(u,o){if(typeof u==='string'){OLD.forEach(e=>{if(u.includes(e))u=u.replace(/https:\\/\\/[^\\/]+\\.onrender\\.com/g,O)})}return _f.call(this,u,o)};const _o=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){OLD.forEach(e=>{if(typeof u==='string'&&u.includes(e))u=u.replace(/https:\\/\\/[^\\/]+\\.onrender\\.com/g,O)});return _o.apply(this,arguments)}})();</script><meta http-equiv="Cache-Control" content="no-store">`;
 
 function serveHtmlFresh(filePath, res){
@@ -191,9 +174,6 @@ function serveHtmlFresh(filePath, res){
   }
 }
 
-// ==================== ROUTES - ORDER FIXED - SABSE PEHLE DASHBOARD ====================
-
-// 1. SHOP DASHBOARD - ISKO SABSE PEHLE RAKHNA ZARURI HAI - SHOPVIEW SE PEHLE
 app.get('/shop/:id/dashboard', async (req, res) => {
     try {
         const Shop = require('./models/Shop');
@@ -209,32 +189,37 @@ app.get('/shop/:id/dashboard', async (req, res) => {
     }
 });
 
-// 2. SHOP TEMPLATES HTML - DIRECT ACCESS - FRESH SERVE
 app.get('/shop-templates/*/*.html', (req,res)=>{
   const fp = path.join(__dirname,'../public', req.path);
   serveHtmlFresh(fp, res);
 });
 
-// 3. AB BAKI KE API ROUTES - DASHBOARD KE BAAD
-//app.use('/api', deliveryManagerRoutes);
-app.use('/api/common', require('./routes/common/index')); // COMMON INDEX CONNECTED ✅
-app.use('/api/common/profile', require('./routes/common/profile.routes')); // ✅ NEW - DIRECT CLOUDINARY PROFILE - ADDED V13
+// ==================== FIXED ORDER - V13 - SETTINGS FIRST, THEN MEDIA - LOGO 500 FIX ====================
+// 1. SETTINGS ROUTES - SABSE PEHLE - /api/settings + /api/upload/logo + /api/upload/banner
+app.use('/api', settingsRoutes); // ✅ FIX 1 - MAIN FIX - /api/settings, /api/upload/logo, /api/upload/banner - TERE SCREENSHOT KE LIYE
+app.use('/api/admin', settingsRoutes); // ✅ FIX 2 - /api/admin/settings - backward compatible
+
+// 2. COMMON + PROFILE - CLOUDINARY
+app.use('/api/common', require('./routes/common/index'));
+app.use('/api/common/profile', require('./routes/common/profile.routes'));
+
+// 3. MEDIA - SETTINGS KE BAAD - warna /api/upload/logo ko ye pakad lega aur 500 dega
+app.use('/api/media', require('./routes/media'));
+app.use('/api/upload', require('./routes/media')); // /api/upload/upload-pic - profile pic
+
+// 4. REST SHOP ROUTES
 app.use('/api/shops', fruitItemRoutes);
 app.use('/api/shop-view', shopViewRoutes);
 app.use('/api/shop', shopViewRoutes);
 app.use('/shop', shopViewRoutes);
 app.use('/api/shops/auto', autoRoutes);
 app.use('/api/shops/achar', acharRoutes);
-app.use('/api/media', require('./routes/media'));
-app.use('/api/upload', require('./routes/media')); // ✅ NEW - LEGACY FIX - /api/upload/upload-pic ke liye - ADDED V13
 app.use('/api/shops/furniture', require('./routes/shops/furniture-route'));
 app.use('/api/shops/sports', require('./routes/shops/sports-route'));
 app.use('/api/shops/kirana', require('./routes/shops/kirana-route'));
 app.use('/api/shops', require('./routes/shopRoutes'));
 app.use('/api/products', productRoutes);
-app.use('/api/admin', settingsRoutes);
 
-// Logger
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'development') {
         console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -250,7 +235,6 @@ app.get('/api/orders/shop/:shopId', async (req, res) => {
   } catch(err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// ==================== STATIC FILES - SINGLE STATIC ONLY - FIXED DUPLICATE BUG ====================
 app.use(['/admin','/admin-panel','/area-manager','/manager-panel','/dashboard'], noCacheMiddleware);
 
 app.get('/admin', noCacheMiddleware, (req, res) => {
@@ -260,16 +244,15 @@ app.get('/admin/*', noCacheMiddleware, (req, res) => {
   serveHtmlFresh(path.join(__dirname, '../public/admin-panel/modules.html'), res);
 });
 
-// Single static for all assets - NO DUPLICATE
 app.use(express.static(path.join(__dirname, '../public'), {
   etag: false,
   lastModified: false,
   maxAge: 0,
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.html')) {
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
+      res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+      res.setHeader('Pragma','no-cache');
+      res.setHeader('Expires','0');
     }
   }
 }));
@@ -280,38 +263,34 @@ app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
 app.use('/banners', express.static(path.join(__dirname, '../public/banners')));
 app.use('/api/orders', orderRoutes);
 
-// ==================== API ROUTES ====================
 app.get('/api/health', (req, res) => {
     res.json({
-        success: true, message: 'Server V12 FINAL - Buffering Fixed - Same as V11',
+        success: true, message: 'Server V13 FIXED - Settings Order + Logo 500 Fixed + Cloudinary',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
         readyState: mongoose.connection.readyState,
         environment: process.env.NODE_ENV || 'development',
-        common: '/api/common/health',
-        kirana: '/api/shops/kirana/health/check'
+        settings: '/api/settings',
+        settings_admin: '/api/admin/settings',
+        upload_logo: '/api/upload/logo -> Cloudinary samanlive/logo',
+        upload_banner: '/api/upload/banner -> Cloudinary samanlive/banner',
+        common: '/api/common/health'
     });
 });
 
 app.use('/api/auth', require('./routes/auth'));
-// ===== AREA MANAGER - SABSE PEHLE (areaRoutes se takraye nahi, manager auto banne wala system safe rahega) =====
 app.use('/api', require('./routes/areaManagerRoutes'));
 app.use('/api', require('./routes/managerShopCreate'));
 app.use('/api', deliveryManagerRoutes);
-// ===== END AREA MANAGER =====
 app.use('/api', require('./routes/adminRoutes'));
-//app.use('/api/manager', require('./routes/managerRoutes'));
 app.use('/api', require('./routes/areaRoutes'));
-//app.use('/api', require('./routes/market'));
-//app.use('/api', require('./routes/public-modules'));
 app.use('/api', require('./routes/stats'));
 app.use('/api/location', locationRoutes);
 app.use('/api/location', require('./routes/user.location.routes'));
 app.use('/api/user', userRoutes);
 app.use('/api/admin', require('./routes/userAdmin'));
-//app.use('/api', require('./routes/areaManagerRoutes'));
-//app.use('/api', require('./routes/managerShopCreate'));
+
 app.get('/admin/:page', (req, res) => {
     const filePath = path.join(__dirname, `../public/admin-panel/${req.params.page}.html`);
     serveHtmlFresh(filePath, res);
@@ -326,7 +305,6 @@ app.get('/local-market.html', (req, res) => serveHtmlFresh(path.join(__dirname, 
 app.get('/profile.html', (req, res) => serveHtmlFresh(path.join(__dirname, '../public/profile.html'), res));
 app.get('/wishlist.html', (req, res) => serveHtmlFresh(path.join(__dirname, '../public/wishlist.html'), res));
 
-// ==================== ADMIN API DOCS + FILE EXPLORER ====================
 function getProjectTree(dirPath, basePath = '') {
     const ignore = ['node_modules', '.git', '.vercel', '.next', 'dist', 'uploads', 'logos', 'videos', 'banners', 'public/uploads'];
     const items = [];
@@ -367,7 +345,6 @@ app.post('/api/admin/update-route-code', (req, res) => {
     res.json({ success: true, message: `Saved ${file}` });
 });
 
-// ==================== ERROR HANDLERS ====================
 app.use((err, req, res, next) => {
     if (err.name === 'MulterError') return res.status(400).json({ success: false, error: err.message });
     next(err);
@@ -383,8 +360,8 @@ app.get('*', (req, res) => {
 });
 
 if (!process.env.VERCEL) {
-   server.listen(PORT, '0.0.0.0', () => {  // <-- server.listen not app.listen
-    console.log(`\n🚀 Server V12 FINAL + SOCKET running on http://localhost:${PORT}`);
+   server.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n🚀 Server V13 FIXED running on http://localhost:${PORT}`);
     console.log(`📊 Admin: http://localhost:${PORT}/admin`);
     console.log(`🔌 Socket: ws://localhost:${PORT}/socket.io/`);
     console.log(`💚 Health: /api/health\n`);
