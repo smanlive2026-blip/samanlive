@@ -1,25 +1,18 @@
-// ========================================
-// SHOP CREATE - AREA MANAGER
-// File: /public/assets/js/shop-create.js
-// Dropdown: shop-template-map.js (70+)
-// Dashboard hit: /shop-templates/{folder}/dashboard.html?shopId=
-// Fallback folder: common
-// API: POST /api/manager/create-shop-v2
-// ========================================
-
+// LOCATION: public/assets/js/shop-create.js - V21 - MODE SELECT + CATEGORY FILTER - 50 MODES - FULL CODE
 let shopCreateManagers = [];
 let shopCreateAreas = [];
 let shopCreateCategories = [];
 let shopCreateCurrentManager = null;
 let selectedCreateShopIcon = '🏪';
 let createShopLogoBase64 = '';
+let selectedMode = '';
 
-// area-manager.js se call hoga
 window.initShopCreateModule = function (allManagers, allAreas, categories, currentManager) {
     shopCreateManagers = allManagers || [];
     shopCreateAreas = allAreas || [];
     shopCreateCategories = categories || [];
     shopCreateCurrentManager = currentManager || null;
+    fillModeDropdown();
     fillCreateShopCategoryDropdown();
     bindCreateShopIconPicker();
     bindCreateShopForm();
@@ -27,25 +20,62 @@ window.initShopCreateModule = function (allManagers, allAreas, categories, curre
     renderCreateShopCityBox();
 };
 
-// ========== CATEGORY DROPDOWN - TEMPLATE MAP SE ==========
-function fillCreateShopCategoryDropdown() {
+// ========== MODE DROPDOWN - NAYA - 50 MODES ==========
+function fillModeDropdown() {
+    const sel = document.getElementById('createShopMode');
+    if (!sel) return;
+    if (!window.SHOP_MODES) {
+        sel.innerHTML = '<option value="retail">Retail</option>';
+        return;
+    }
+    const modes = Object.keys(window.SHOP_MODES).map(key => {
+        const m = window.SHOP_MODES[key];
+        return { id: key, name: m.name, icon: m.icon };
+    });
+    sel.innerHTML = '<option value="">Select Business Mode *</option>' +
+        modes.map(m => `<option value="${m.id}">${m.icon} ${m.name}</option>`).join('');
+    
+    // Change pe category filter karo
+    sel.onchange = function() {
+        selectedMode = this.value;
+        fillCreateShopCategoryDropdown(selectedMode);
+        // Mode info dikhao
+        const infoBox = document.getElementById('modeInfoBox');
+        if (infoBox && window.SHOP_MODES[selectedMode]) {
+            const mode = window.SHOP_MODES[selectedMode];
+            infoBox.style.display = 'block';
+            infoBox.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><span style="font-size:20px">${mode.icon}</span><div><strong>${mode.name}</strong><br><small style="color:#64748b">Fields: ${mode.fields.join(', ')} | Tabs: ${mode.tabs.join(', ')}</small></div></div>`;
+        }
+    };
+}
+
+// ========== CATEGORY DROPDOWN - MODE SE FILTER ==========
+function fillCreateShopCategoryDropdown(filterMode) {
     const sel = document.getElementById('createShopModule');
     if (!sel) return;
     let list = [];
     if (typeof window.getAllShopTemplates === 'function') {
         list = window.getAllShopTemplates();
     } else if (shopCreateCategories && shopCreateCategories.length) {
-        list = shopCreateCategories.map(c => ({ id: c.id || c._id, name: c.name, icon: c.icon || '🏪' }));
+        list = shopCreateCategories.map(c => ({ id: c.id || c._id, name: c.name, icon: c.icon || '🏪', mode: 'retail' }));
     }
-    sel.innerHTML = '<option value="">Select Shop Category</option>' +
+    // Mode se filter
+    if (filterMode) {
+        list = list.filter(c => c.mode === filterMode);
+    }
+    if (list.length === 0) {
+        sel.innerHTML = '<option value="">No shops in this mode - choose another</option>';
+        return;
+    }
+    sel.innerHTML = '<option value="">Select Shop Category *</option>' +
         list.map(c => `<option value="${c.id}">${c.icon || '🏪'} ${c.name}</option>`).join('');
 }
 
-// ========== MODAL OPEN / CLOSE ==========
 function openCreateShopModal() {
     if (!shopCreateCurrentManager && typeof window.currentManager !== 'undefined') {
         shopCreateCurrentManager = window.currentManager;
     }
+    fillModeDropdown();
     fillCreateShopCategoryDropdown();
     renderCreateShopManagerBox();
     renderCreateShopCityBox();
@@ -53,9 +83,11 @@ function openCreateShopModal() {
 }
 function closeCreateShopModal() {
     document.getElementById('createShopModal')?.classList.remove('active');
+    selectedMode = '';
+    const infoBox = document.getElementById('modeInfoBox');
+    if (infoBox) infoBox.style.display = 'none';
 }
 
-// ========== CITY BOX - MANAGER AREA SE ==========
 function renderCreateShopCityBox() {
     const box = document.getElementById('createShopCityBox');
     if (!box || !shopCreateCurrentManager) return;
@@ -73,7 +105,6 @@ function renderCreateShopCityBox() {
     document.getElementById('createShopPincode').value = pincode;
 }
 
-// ========== MANAGER BOX - AUTO CONNECTED ==========
 function renderCreateShopManagerBox() {
     const listEl = document.getElementById('createShopManagerList');
     const countEl = document.getElementById('createShopManagerCountText');
@@ -95,7 +126,6 @@ function renderCreateShopManagerBox() {
         </div>`;
 }
 
-// ========== ICON PICKER ==========
 function bindCreateShopIconPicker() {
     const picker = document.getElementById('createShopIconPicker');
     if (!picker || picker.dataset.bound) return;
@@ -106,12 +136,9 @@ function bindCreateShopIconPicker() {
         picker.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
         opt.classList.add('selected');
         selectedCreateShopIcon = opt.dataset.icon || '🏪';
-        // icon chuna to logo hata do taaki confusion na ho
-        // removeCreateShopLogo(); // chaahe to enable kar lena
     });
 }
 
-// ========== LOGO PREVIEW ==========
 function previewCreateShopLogo(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -132,7 +159,6 @@ function removeCreateShopLogo() {
     document.getElementById('createShopRemoveLogoBtn').style.display = 'none';
 }
 
-// ========== FORM SUBMIT - TEMPLATE KE HISAB SE SAVE ==========
 function bindCreateShopForm() {
     const form = document.getElementById('createShopForm');
     if (!form || form.dataset.bound) return;
@@ -144,14 +170,15 @@ function bindCreateShopForm() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Shop...';
 
+        const modeId = document.getElementById('createShopMode')?.value;
         const templateId = document.getElementById('createShopModule').value;
+        if (!modeId) { alert('Pehle Business Mode select karo'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop'; return; }
         if (!templateId) { alert('Pehle Shop Category select karo'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop'; return; }
 
-        // ✅ Template Map se folder + type nikalo, na mile to common
         const folder = (typeof window.getShopTemplateFolder === 'function')
-            ? window.getShopTemplateFolder(templateId) : 'common';
-        const shopType = (typeof window.mapShopType === 'function')
-            ? window.mapShopType(templateId) : 'common';
+            ? window.getShopTemplateFolder(templateId) : templateId;
+        const shopType = templateId;
+        const businessMode = modeId;
 
         const payload = {
             shopName: document.getElementById('createShopName').value.trim(),
@@ -162,6 +189,7 @@ function bindCreateShopForm() {
             templateFolder: folder,
             folder: folder,
             shopType: shopType,
+            businessMode: businessMode,
             icon: selectedCreateShopIcon || '🏪',
             logo: createShopLogoBase64 || '',
             phone: document.getElementById('createShopPhone').value.trim(),
@@ -194,11 +222,14 @@ function bindCreateShopForm() {
                     ? window.getShopTemplateFolder(shop.template) : finalFolder;
                 const dashboardUrl = `${window.location.origin}/shop-templates/${dashFolder}/dashboard.html?shopId=${shop._id || ''}`;
 
-                alert(`✅ Shop Created Successfully!\n\nShop: ${payload.shopName}\nCategory: ${templateId}\nDashboard: ${dashFolder}\n\nLink owner ko bhej do:\n${dashboardUrl}`);
+                alert(`✅ Shop Created Successfully!\n\nShop: ${payload.shopName}\nMode: ${businessMode}\nCategory: ${templateId}\nDashboard: ${dashFolder}\n\nLink owner ko bhej do:\n${dashboardUrl}`);
                 form.reset();
                 removeCreateShopLogo();
                 selectedCreateShopIcon = '🏪';
+                selectedMode = '';
                 document.querySelectorAll('#createShopIconPicker .icon-option').forEach((el, i) => el.classList.toggle('selected', i === 0));
+                const infoBox = document.getElementById('modeInfoBox');
+                if (infoBox) infoBox.style.display = 'none';
                 closeCreateShopModal();
                 if (typeof window.loadDashboard === 'function') window.loadDashboard();
             } else {
@@ -213,20 +244,17 @@ function bindCreateShopForm() {
     });
 }
 
-// purana function naam bhi rakh diya taaki koi purana onclick na tute
-function toggleSelectAllCreateShopManagers() { /* auto mode me kuch nahi karna */ }
-
+function toggleSelectAllCreateShopManagers() {}
 function escapeHtmlSC(text) {
     const d = document.createElement('div');
     d.textContent = text == null ? '' : String(text);
     return d.innerHTML;
 }
 
-// Export for onclick
 window.openCreateShopModal = openCreateShopModal;
 window.closeCreateShopModal = closeCreateShopModal;
 window.previewCreateShopLogo = previewCreateShopLogo;
 window.removeCreateShopLogo = removeCreateShopLogo;
 window.toggleSelectAllCreateShopManagers = toggleSelectAllCreateShopManagers;
 
-console.log('✅ shop-create.js loaded - Template Dropdown + Folder Dashboard Hit + Common Fallback');
+console.log('✅ shop-create.js V21 loaded - Mode + Category + Folder Dashboard Hit');

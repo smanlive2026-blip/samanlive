@@ -1,12 +1,4 @@
-// ========================================
-// SHOP CREATE - AREA MANAGER ONLY
-// File: server/routes/managerShopCreate.js
-// Mount: app.use('/api', require('./routes/managerShopCreate'))
-// API: POST /api/manager/create-shop-v2
-// Template Map (Frontend): shop-template-map.js
-// Dashboard: /shop-templates/{folder}/dashboard.html?shopId=
-// Fallback: common
-// ========================================
+// LOCATION: server/routes/managerShopCreate.js - V21 - 50 MODES - FULL CODE
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -15,10 +7,8 @@ const Shop = require('../models/Shop');
 const Manager = require('../models/Manager');
 const Area = require('../models/Area');
 
-// ========== AUTH - Manager Token ==========
 const authManager = async (req, res, next) => {
     try {
-        //const token = (req.headers.authorization || '').replace('Bearer ', '').trim() || req.query.token;
         const token = ((req.headers.authorization || '').replace('Bearer ', '').trim()
             || req.headers['x-manager-token']
             || req.headers['manager-token']
@@ -36,66 +26,52 @@ const authManager = async (req, res, next) => {
     }
 };
 
-// ========== TEMPLATE MAP - BACKEND COPY ==========
-// Frontend wale shop-template-map.js se id -> folder/type
-// Naya template bane to yahan ek line jod dena, warna common jayega
+// BACKEND COPY - 69 shops + common - V21 WORLD
 const TEMPLATE_MAP = {
-    'auto':'product','achar-shop':'product','bakery':'product','bartan':'product','battery':'product',
-    'beauty':'service','brick':'product','chakki':'service','charpai-shop':'product','child-clothes':'fashion',
-    'clinic':'service','cloth':'fashion','dairy':'product','decoration-shop':'service','door-shop':'product',
-    'electronics':'product','fabric-shop':'fashion','flower':'product','footwear':'fashion','fruit':'product',
-    'furniture':'product','general':'common','grocery-sweet':'product','halwai':'product','hardware':'product',
-    'jewellery':'product','juice':'product','kambal-shop':'product','kids-wear':'fashion','kirana':'product',
-    'krishi':'product','mat-shop':'product','mattress-shop':'product','meat':'product','medical':'product',
-    'mobile':'product','mochi':'service','murti-shop':'product','nursery':'product','optical':'product',
-    'paint-shop':'product','painting':'product','pansari':'product','patanjali':'product','photo-studio':'service',
-    'pizza':'food','plastic':'product','plumbing':'product','ply-board':'product','puja':'product',
-    'purse':'fashion','rental':'rental','restaurant':'food','sabji':'product','salon':'service',
-    'sanitary':'product','saree-shop':'fashion','service':'service','sports':'product','stationery':'product',
-    'suit-shop':'fashion','tea':'food','thela':'product','tiles':'product','toy-shop':'product',
-    'tripal-shop':'product','vet-clinic':'service','vet-shop':'product','watch-shop':'product','winter-wear':'fashion',
-    'common':'common'
+    'kirana':'retail','thela':'retail','pansari':'retail','general':'retail','achar-shop':'retail','grocery-sweet':'retail','battery':'retail','bartan':'retail','plastic':'retail','dairy':'mandi','chakki':'mandi','krishi':'agriculture','patanjali':'healthcare',
+    'cloth':'fashion','saree-shop':'fashion','child-clothes':'fashion','kids-wear':'fashion','suit-shop':'fashion','winter-wear':'fashion','fabric-shop':'fashion','footwear':'fashion','purse':'fashion','kambal-shop':'fashion','mat-shop':'fashion','mattress-shop':'fashion','watch-shop':'fashion','jewellery':'fashion','beauty':'fashion','murti-shop':'handicraft',
+    'restaurant':'food','dhaba':'food','hotel':'food','pizza':'food','bakery':'food','halwai':'food','juice':'food','tea':'food','fruit':'mandi','meat':'mandi','sabji':'mandi',
+    'auto':'service','mobile':'service','mochi':'service','optical':'healthcare','photo-studio':'service','salon':'service','plumbing':'service','door-shop':'bulk','ply-board':'bulk','puja':'handicraft','painting':'handicraft','service':'service','paint-shop':'bulk',
+    'clinic':'healthcare','hospital':'healthcare','medical':'healthcare','vet-clinic':'healthcare','vet-shop':'healthcare','nursery':'mandi',
+    'rental':'rental','decoration-shop':'rental','charpai-shop':'rental','tripal-shop':'rental','flower':'mandi',
+    'hardware':'bulk','brick':'bulk','tiles':'bulk','sanitary':'bulk','furniture':'bulk','electronics':'bulk','sports':'bulk','stationery':'education','toy-shop':'bulk',
+    'csc':'csc','cyber-cafe':'csc','xerox':'csc','coaching':'education','petrol-pump':'fuel','common':'retail','other':'other'
 };
-//function resolveTemplate(templateId) {
-// const id = String(templateId || 'common').trim();
-// if (TEMPLATE_MAP[id]) return { id, folder: id, type: TEMPLATE_MAP[id] };
-// return { id: 'common', folder: 'common', type: 'common' };
-//}
+
 function resolveTemplate(templateId) {
-    const id = String(templateId || 'common').trim();
-    if (!TEMPLATE_MAP[id]) return { id: 'common', folder: 'common', type: 'common' };
+    const id = String(templateId || 'common').trim().toLowerCase();
+    const mode = TEMPLATE_MAP[id] || 'retail';
+    if (!TEMPLATE_MAP[id]) return { id: 'common', folder: 'common', type: 'common', businessMode: 'retail' };
     const dashPath = path.join(__dirname, '../../public/shop-templates', id, 'dashboard.html');
     if (!fs.existsSync(dashPath)) {
-        console.log(`⚠️ Dashboard missing for ${id}, fallback to common`);
-        return { id, folder: 'common', type: TEMPLATE_MAP[id] };
+        console.log(`⚠️ Dashboard missing for ${id}, fallback to common but mode ${mode} keep`);
+        return { id, folder: 'common', type: mode, businessMode: mode };
     }
-    return { id, folder: id, type: TEMPLATE_MAP[id] };
+    return { id, folder: id, type: mode, businessMode: mode };
 }
 
-// ========== CREATE SHOP ==========
 router.post('/manager/create-shop-v2', authManager, async (req, res) => {
     try {
         const manager = req.manager;
         const {
             shopName, ownerName, phone, contact, email,
             serviceType, categoryId, template, templateFolder,
-            shopType, icon, logo, range, address, description, bucket
+            shopType, businessMode, icon, logo, range, address, description, bucket
         } = req.body;
 
-        if (!shopName ||!String(shopName).trim()) {
+        if (!shopName || !String(shopName).trim()) {
             return res.status(400).json({ success: false, error: 'Shop Name zaruri hai' });
         }
 
-        // 1. Template resolve - dropdown wali id se hi folder banega
-        const requestedTemplate = template || serviceType || categoryId || 'common';
+        const requestedTemplate = template || serviceType || categoryId || shopType || 'common';
         const tpl = resolveTemplate(requestedTemplate);
-        //const finalFolder = templateFolder && TEMPLATE_MAP[templateFolder]? templateFolder : tpl.folder;
-        let finalFolder = templateFolder && TEMPLATE_MAP[templateFolder]? templateFolder : tpl.folder;
+        let finalFolder = templateFolder && TEMPLATE_MAP[templateFolder] ? templateFolder : tpl.folder;
         const reqDashPath = path.join(__dirname, '../../public/shop-templates', finalFolder, 'dashboard.html');
         if (!fs.existsSync(reqDashPath)) finalFolder = 'common';
-        const finalType = shopType || tpl.type;
+        
+        const finalBusinessMode = businessMode || tpl.businessMode || 'retail';
+        const finalType = shopType || tpl.id;
 
-        // 2. Shop limit check
         const currentShopCount = await Shop.countDocuments({
             $or: [
                 { areaCode: manager.areaCode },
@@ -112,7 +88,6 @@ router.post('/manager/create-shop-v2', authManager, async (req, res) => {
             });
         }
 
-        // 3. Duplicate check - same area me same naam nahi
         const existingShop = await Shop.findOne({
             shopName: String(shopName).trim(),
             areaCode: manager.areaCode
@@ -121,17 +96,14 @@ router.post('/manager/create-shop-v2', authManager, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Shop with this name already exists in your area' });
         }
 
-        // 4. Area details
         const area = await Area.findOne({ areaCode: manager.areaCode }).lean();
         const city = area?.city || manager.city || 'Surat';
         const state = area?.state || manager.state || 'Gujarat';
 
-        // Address normalize - frontend string bhejta hai
         const addressObj = (address && typeof address === 'object')
           ? address
             : { line1: address || '', city, state, pincode: area?.pincode || '' };
 
-        // 5. Shop create - teeno pehchan ek saath save hogi
         const newShop = new Shop({
             shopName: String(shopName).trim(),
             ownerName: ownerName || manager.name,
@@ -148,8 +120,6 @@ router.post('/manager/create-shop-v2', authManager, async (req, res) => {
             logo: logo || '',
             range: parseInt(range) || 5000,
             description: description || '',
-
-            // ✅ Template system - yahi dashboard decide karega
             serviceType: tpl.id,
             categoryId: tpl.id,
             template: tpl.id,
@@ -157,34 +127,32 @@ router.post('/manager/create-shop-v2', authManager, async (req, res) => {
             folder: finalFolder,
             module: tpl.id,
             shopType: finalType,
-
+            businessMode: finalBusinessMode,
             bucket: bucket || manager.bucket || 'DEFAULT',
             areaCode: manager.areaCode,
             areaName: area?.areaName || manager.areaName,
             city, state,
             managerCodes: [manager.managerCode],
-
-            // Claim system - manager hi owner/controller
             claimedBy: manager.managerCode,
             controlledBy: manager._id,
             ownerId: manager._id,
             createdBy: manager._id,
-
             location: {
                 type: 'Point',
                 coordinates: [area?.centerLng || 72.8311, area?.centerLat || 21.1702]
             },
-
             status: 'approved',
             isActive: true,
-            isVerified: true
+            isVerified: true,
+            worldEnabled: true,
+            isWorldShop: true
         });
 
         await newShop.save();
         await Manager.findByIdAndUpdate(manager._id, { $inc: { currentShopCount: 1 } });
 
         const dashboardUrl = `/shop-templates/${finalFolder}/dashboard.html?shopId=${newShop._id}`;
-        console.log(`✅ Shop Created: ${newShop.shopName} | Template: ${tpl.id} | Folder: ${finalFolder} | By: ${manager.name}`);
+        console.log(`✅ Shop Created: ${newShop.shopName} | Template: ${tpl.id} | Mode: ${finalBusinessMode} | Folder: ${finalFolder} | By: ${manager.name}`);
 
         res.json({
             success: true,
@@ -197,7 +165,6 @@ router.post('/manager/create-shop-v2', authManager, async (req, res) => {
 
     } catch (err) {
         console.error('❌ Create Shop Error:', err);
-        // Duplicate key wala saaf message
         if (err.code === 11000) {
             return res.status(400).json({ success: false, error: 'Shop already exists with same details' });
         }

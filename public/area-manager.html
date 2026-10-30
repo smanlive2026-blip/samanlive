@@ -13,6 +13,7 @@ ROUTES:
 - CHECKOUT: POST /api/common/checkout
 - NEW DEMAND: POST /api/area-demand/create , GET /api/area-demand/my/:areaManagerId
 - Template: /public/assets/js/shop-template-map.js -> getShopTemplateFolder(id) || 'common'
+- V22: Business Mode Select Added - No other logic touched
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -26,8 +27,6 @@ ROUTES:
 </head>
 <body>
 <div class="app-shell">
-
-  <!-- HEADER : ADMIN CONTROLLED -->
   <header class="topbar">
     <div class="brand">
       <div class="logo-box"><img id="headerLogo" src="/assets/images/samanlive-logo.png" alt="Logo"></div>
@@ -50,7 +49,6 @@ ROUTES:
   </header>
 
   <div class="layout">
-    <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="profile-mini">
         <div class="profile-avatar" id="managerAvatar" onclick="openProfileModal()">A<div class="profile-avatar-edit"><i class="fas fa-camera"></i></div></div>
@@ -59,11 +57,9 @@ ROUTES:
         <div class="area-name" id="managerAreaName">-</div>
         <button class="btn btn-primary btn-block" onclick="openProfileModal()"><i class="fas fa-edit"></i> Edit Profile</button>
       </div>
-
       <nav class="side-nav">
         <a href="#overview" class="active"><i class="fas fa-th-large"></i> Overview</a>
         <a href="#walletSection"><i class="fas fa-wallet"></i> Wallet</a>
-        <!-- LOCATION: public/area-manager.html - NEW DEMAND LINK ADDED - V14 FINAL - DOES NOT BREAK OLD LINKS -->
         <a href="#areaDemandSection"><i class="fas fa-clipboard-list"></i> Request Product</a>
         <a href="#adminBuySection"><i class="fas fa-boxes"></i> Buy From Admin</a>
         <a href="#areaMapCard"><i class="fas fa-map-marked-alt"></i> My Area</a>
@@ -72,7 +68,6 @@ ROUTES:
         <a href="#deliverySection"><i class="fas fa-motorcycle"></i> Delivery Boys</a>
         <a href="#servicesSection"><i class="fas fa-tools"></i> My Services</a>
       </nav>
-
       <div class="side-info">
         <div><span>Area Code</span><strong id="areaCodeText">-</strong></div>
         <div><span>Manager Code</span><strong id="managerCodeText">-</strong></div>
@@ -81,9 +76,7 @@ ROUTES:
       </div>
     </aside>
 
-    <!-- MAIN -->
     <main class="main" id="overview">
-      <!-- PROFILE DETAILS -->
       <section class="card profile-card">
         <div class="card-header"><h2><i class="fas fa-id-card"></i> My Profile</h2><span class="badge badge-success">Active</span></div>
         <div class="profile-details">
@@ -94,7 +87,6 @@ ROUTES:
         </div>
       </section>
 
-      <!-- STATS -->
       <section class="stats-grid">
         <div class="stat-card"><h3>Total Shops In Circle</h3><div class="value" id="totalShops">0</div></div>
         <div class="stat-card"><h3>Active Shops</h3><div class="value" id="activeShops">0</div></div>
@@ -102,7 +94,6 @@ ROUTES:
         <div class="stat-card"><h3>Manager Code</h3><div class="value small" id="managerCodeText2">-</div></div>
       </section>
 
-      <!-- WALLET - NEW HIERARCHY -->
       <section class="card" id="walletSection">
         <div class="card-header"><h2><i class="fas fa-wallet"></i> My Wallet & Earnings (Hierarchy)</h2><span class="badge" id="walletLiveBadge">Live</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px">
@@ -120,7 +111,6 @@ ROUTES:
         <div class="info-note"><i class="fas fa-info-circle"></i><span>Customer jab aapki shops se kharidega toh 95% aapko, 5% admin ko. Jab aap admin se bulk me kharidoge toh aapka wallet debit hoga.</span></div>
       </section>
 
-      <!-- LOCATION: public/area-manager.html - AREA DEMAND SECTION - V14 FINAL - NEW FEATURE - DOES NOT TOUCH WALLET OR ADMIN BUY LOGIC -->
       <section class="card" id="areaDemandSection">
         <div class="card-header"><h2><i class="fas fa-clipboard-list"></i> Request Product (Demand to Executive)</h2><span class="badge" style="background:#fef3c7;color:#92400e" id="demandCountBadge">0 Pending</span></div>
         <div class="info-note"><i class="fas fa-info-circle"></i><span>Area Manager Product Manager ko direct nahi dekh sakta. Demand Executive ko jayegi. Executive Product Manager ka product assign karega. Yeh Product Manager system ka rule hai.</span></div>
@@ -146,14 +136,12 @@ ROUTES:
         </div>
       </section>
 
-      <!-- ADMIN SE BULK BUY - NEW HIERARCHY -->
       <section class="card" id="adminBuySection">
         <div class="card-header"><h2><i class="fas fa-boxes"></i> Buy Bulk From Admin (Area Manager → Admin)</h2><button class="btn btn-small" onclick="loadAdminProductsForManager()"><i class="fas fa-sync"></i> Refresh</button></div>
         <div class="info-note"><i class="fas fa-info-circle"></i><span>Area Manager sirf Admin se kharid sakta hai (Hierarchy: area_manager → admin). Yaha se bulk stock lo, phir apni shops me becho. Cart me add hoga, checkout pe wallet se pay hoga.</span></div>
         <div id="adminProductsForManager" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:16px">Loading admin products...</div>
       </section>
 
-      <!-- MAP -->
       <section class="card" id="areaMapCard">
         <div class="card-header">
           <h2><i class="fas fa-map-marked-alt"></i> My Area Coverage - <span id="areaMapName">-</span></h2>
@@ -170,13 +158,11 @@ ROUTES:
         </div>
       </section>
 
-      <!-- SERVICES -->
       <section class="card" id="servicesSection">
         <div class="card-header"><h2><i class="fas fa-tools"></i> My Services</h2></div>
         <div class="service-cards" id="serviceCards"><div class="empty-state"><i class="fas fa-inbox"></i><p>No services assigned yet</p></div></div>
       </section>
 
-      <!-- CREATE SHOP -->
       <section class="card" id="createShopSection">
         <div class="card-header"><h2><i class="fas fa-plus-circle"></i> Create New Shop</h2><div class="shop-limit-badge" id="shopLimitBadge"><i class="fas fa-store"></i> <span id="shopLimitTextMain">0 / 10</span></div></div>
         <div class="info-note"><i class="fas fa-info-circle"></i><span>Shop aapke area me create hogi. Category select karte hi usi template ka dashboard khulega, nahi mila to Common dashboard khulega.</span></div>
@@ -188,7 +174,6 @@ ROUTES:
         </div>
       </section>
 
-      <!-- SHOPS -->
       <section class="card" id="shopsSection">
         <div class="card-header"><h2><i class="fas fa-store"></i> My Created Shops</h2></div>
         <div class="info-note"><i class="fas fa-info-circle"></i><span>Open dabate hi shop apne template dashboard pe khulegi: /shop-templates/{folder}/dashboard.html?shopId= | Galat shop ho to Delete se hata sakte ho</span></div>
@@ -200,7 +185,6 @@ ROUTES:
         </div>
       </section>
 
-      <!-- DELIVERY -->
       <section class="card" id="deliverySection">
         <div class="card-header"><h2><i class="fas fa-motorcycle"></i> My Delivery Boys</h2><button class="btn btn-primary" onclick="openCreateDeliveryModal()"><i class="fas fa-plus"></i> Add Delivery Boy</button></div>
         <div class="table-wrap">
@@ -214,7 +198,6 @@ ROUTES:
   </div>
 </div>
 
-<!-- PROFILE MODAL -->
 <div class="modal" id="profileModal"><div class="modal-content">
   <div class="modal-header"><h2><i class="fas fa-user-edit"></i> Edit Profile</h2><button class="close-btn" onclick="closeProfileModal()">×</button></div>
   <form id="profileForm">
@@ -234,7 +217,7 @@ ROUTES:
   </form>
 </div></div>
 
-<!-- CREATE SHOP MODAL -->
+<!-- CREATE SHOP MODAL - V22 ONLY 2 FIELDS ADDED - REST SAME -->
 <div class="modal" id="createShopModal"><div class="modal-content large">
   <div class="modal-header"><h2><i class="fas fa-plus-circle"></i> Create New Shop</h2><button class="close-btn" onclick="closeCreateShopModal()">×</button></div>
   <div class="modal-body">
@@ -243,7 +226,13 @@ ROUTES:
       <div class="city-detected-box" id="createShopCityBox" style="display:none"><i class="fa fa-map-marker-alt"></i><div><h3 id="createShopDetectedCityName">Detecting...</h3><p id="createShopDetectedCityMeta">Auto-selected from your area</p></div></div>
       <div class="form-group"><label>Shop Name *</label><input type="text" id="createShopName" required placeholder="Rajesh General Store"></div>
       <div class="form-group"><label>Owner Name *</label><input type="text" id="createShopOwnerName" required placeholder="Shop Owner Full Name"></div>
-      <div class="form-group"><label>Shop Category *</label><select id="createShopModule" required><option value="">Select Shop Category</option></select></div>
+      
+      <!-- V22 NEW - BUSINESS MODE SELECT - YAHI TERA MAIN FIX HAI - BAKI LOGIC SAME -->
+      <div class="form-group"><label><i class="fas fa-layer-group"></i> Business Mode * (50 modes)</label><select id="createShopMode" required><option value="">Select Business Mode *</option></select></div>
+      <div id="modeInfoBox" style="display:none;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px"></div>
+      <!-- V22 NEW END -->
+
+      <div class="form-group"><label>Shop Category *</label><select id="createShopModule" required><option value="">Pehle Mode Select Karo - fir Category ayegi</option></select></div>
       <div class="form-group"><label>Shop Logo/Photo (Optional)</label>
         <div class="logo-upload-box">
           <input type="file" id="createShopLogoInput" accept="image/*" hidden onchange="previewCreateShopLogo(event)">
@@ -271,7 +260,6 @@ ROUTES:
   </div>
 </div></div>
 
-<!-- SHOP EDIT MODAL -->
 <div class="modal" id="shopModal"><div class="modal-content">
   <div class="modal-header"><h2 id="modalTitle"><i class="fas fa-edit"></i> Edit Shop Details</h2><button class="close-btn" onclick="closeShopModal()">×</button></div>
   <div class="info-note warning"><i class="fas fa-exclamation-triangle"></i><span>You can edit shop details. Delete karna ho to Shops list me Delete button hai. Location update from shop dashboard.</span></div>
@@ -288,7 +276,6 @@ ROUTES:
   </form>
 </div></div>
 
-<!-- DELIVERY MODAL -->
 <div class="modal" id="createDeliveryModal"><div class="modal-content">
   <div class="modal-header"><h2><i class="fas fa-user-plus"></i> Add Delivery Boy</h2><button class="close-btn" onclick="closeCreateDeliveryModal()">×</button></div>
   <form id="createDeliveryForm">
@@ -300,19 +287,17 @@ ROUTES:
   </form>
 </div></div>
 
-<!-- PRODUCT LIBRARY -->
 <div class="modal" id="libraryPopup"><div class="modal-content library"><div class="modal-header"><h2><i class="fas fa-book-open"></i> Product Library</h2><button class="close-btn" onclick="closeProductLibrary()">×</button></div><iframe src="/local-market/library/index.html"></iframe></div></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/socket.io/socket.io.js"></script>
-<script src="/assets/js/shop-template-map.js?v=2"></script>
+<script src="/assets/js/shop-template-map.js?v=22"></script>
 <script src="/assets/js/role-hierarchy.js"></script>
 <script src="/shop-templates/common/core/api-core.js"></script>
 <script src="/shop-templates/common/cart/cart-core.js"></script>
 <script src="/shop-templates/common/cart/cart-count.js"></script>
-<script src="/assets/js/shop-create.js?v=7"></script>
-<script src="/assets/js/area-manager.js?v=13"></script>
-<!-- LOCATION: public/area-manager.html - NEW DEMAND JS - V14 FINAL - ISOLATED - DOES NOT BREAK EXISTING area-manager.js -->
+<script src="/assets/js/shop-create.js?v=22"></script>
+<script src="/assets/js/area-manager.js?v=22"></script>
 <script>
 (async function(){
   const managerId = localStorage.getItem('managerId') || new URLSearchParams(location.search).get('id');
@@ -353,7 +338,6 @@ ROUTES:
       }catch(err){ if(msg){msg.textContent='Error: '+err.message; msg.style.color='red';} }
     });
   }
-  // Load after 2 sec to let area-manager.js load managerData
   setTimeout(loadMyDemands, 2000);
 })();
 </script>
