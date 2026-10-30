@@ -96,7 +96,6 @@ window.SHOP_TEMPLATES = [
   {id: 'logistics', name: 'Logistics / Transport', icon: '🚚', folder: 'logistics', mode: 'logistics', type: 'service', dashboard: '/shop-templates/logistics/dashboard.html', customerView: '/shop-templates/logistics/customer-view.html', hasDashboard: true},
   {id: 'handicraft', name: 'Handicraft / Handmade', icon: '🎨', folder: 'handicraft', mode: 'handicraft', type: 'product', dashboard: '/shop-templates/handicraft/dashboard.html', customerView: '/shop-templates/handicraft/customer-view.html', hasDashboard: true},
   {id: 'paint-shop', name: 'Paint Shop', icon: '🎨', folder: 'paint-shop', mode: 'bulk', type: 'product', dashboard: '/shop-templates/paint-shop/dashboard.html', customerView: '/shop-templates/paint-shop/customer-view.html', hasDashboard: false},
-  {id: 'common', name: 'Common Shop - General', icon: '🏪', folder: 'common', mode: 'retail', type: 'common', dashboard: '/shop-templates/common/dashboard.html', customerView: '/shop-templates/common/customer-view.html', hasDashboard: false, isLibrary: true}
 ];
 
 // DIRECT LINK HELPERS - NEW - V21

@@ -16,14 +16,8 @@
             font-size: 12px;
             font-weight: 600;
         }
-   .location-badge.fixed {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-   .location-badge.dynamic {
-            background: #fef3c7;
-            color: #92400e;
-        }
+   .location-badge.fixed { background: #dbeafe; color: #1e40af; }
+   .location-badge.dynamic { background: #fef3c7; color: #92400e; }
    .shop-type-badge {
             padding: 4px 8px;
             border-radius: 4px;
@@ -36,19 +30,13 @@
    .shop-type-badge.service { background: #e9d5ff; color: #7c3aed; }
    .shop-type-badge.rental { background: #d1fae5; color: #059669; }
    .shop-type-badge.fashion { background: #fce7f3; color: #be185d; }
-   .actions {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
+   .actions { display: flex; gap: 6px; flex-wrap: wrap; }
    .btn-success { background: #10b981; color: white; }
    .btn-success:hover { background: #059669; }
    .btn-info { background: #0ea5e9; color: white; }
    .btn-info:hover { background: #0284c7; }
    .btn-warning { background: #f59e0b; color: white; }
    .btn-warning:hover { background: #d97706; }
-
-        /* Shop Cards Grid */
    .shops-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -63,14 +51,8 @@
             transition: all 0.3s;
             position: relative;
         }
-   .shop-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-   .shop-card.pending {
-            border: 2px solid #f59e0b;
-            background: #fffbeb;
-        }
+   .shop-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); }
+   .shop-card.pending { border: 2px solid #f59e0b; background: #fffbeb; }
    .pending-ribbon {
             position: absolute;
             top: 12px;
@@ -83,35 +65,11 @@
             font-weight: 700;
             text-transform: uppercase;
         }
-   .shop-card-header {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-   .shop-logo {
-            width: 60px;
-            height: 60px;
-            border-radius: 10px;
-            object-fit: cover;
-            background: #f1f5f9;
-        }
-   .shop-info {
-            flex: 1;
-        }
-   .shop-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 4px;
-        }
-   .shop-meta {
-            font-size: 13px;
-            color: #64748b;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-        }
+   .shop-card-header { display: flex; gap: 12px; margin-bottom: 12px; }
+   .shop-logo { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; background: #f1f5f9; }
+   .shop-info { flex: 1; }
+   .shop-name { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+   .shop-meta { font-size: 13px; color: #64748b; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
    .shop-stats {
             display: flex;
             justify-content: space-between;
@@ -121,28 +79,15 @@
             margin: 12px 0;
             font-size: 13px;
         }
-   .filter-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
+   .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
    .filter-bar input,.filter-bar select {
             padding: 10px;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
             font-size: 14px;
         }
-   .approval-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #f1f5f9;
-        }
-   .approval-actions button {
-            flex: 1;
-        }
+   .approval-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+   .approval-actions button { flex: 1; }
     </style>
 </head>
 <body>
@@ -150,8 +95,6 @@
         <div class="section-header">
             <h2>🏪 All Shops <span id="shopsCount" class="badge badge-info">0</span></h2>
         </div>
-
-        <!-- Filter Bar -->
         <div class="filter-bar">
             <input type="text" id="cityFilter" placeholder="🔍 Filter by City..." onkeyup="applyFilters()" style="flex: 1; min-width: 200px;">
             <select id="typeFilter" onchange="applyFilters()">
@@ -172,16 +115,15 @@
             </select>
             <input type="text" placeholder="Search shop name..." onkeyup="applyFilters()" id="nameFilter" style="flex: 1; min-width: 200px;">
         </div>
-
-        <!-- Shops Grid -->
         <div class="shops-grid" id="shopsGrid">
             <div class="loading" style="grid-column: 1/-1; text-align: center; padding: 40px;">Loading shops...</div>
         </div>
     </div>
 
+    <!-- ✅ NEW - SHOP MAP - INDIVIDUAL DASHBOARD LINKS -->
+    <script src="/assets/js/shop-template-map.js"></script>
     <script src="assets/admin.js"></script>
     <script>
-        // === FIX: Launcher me admin.js wala apiCall na mile to page atke nahi ===
         if (typeof apiCall === 'undefined') {
             window.apiCall = async function(endpoint, method='GET', body=null){
                 const opts = { method, headers: { 'Content-Type':'application/json' } };
@@ -198,9 +140,6 @@
         }
 
         let allShopsFiltered = [];
-        
-        // Template types that have specific dashboards
-        const SPECIFIC_TEMPLATES = ['cloth', 'kirana', 'medical', 'restaurant', 'service', 'rental'];
 
         async function loadShops() {
             try {
@@ -209,11 +148,9 @@
                     apiCall('/modules'),
                     apiCall('/managers')
                 ]);
-
                 window.allShops = shopsData || [];
                 window.allModules = modulesData.modules || modulesData;
                 window.allManagers = managersData || [];
-
                 renderShops();
             } catch (err) {
                 console.error('Load shops error:', err);
@@ -226,7 +163,6 @@
             const type = document.getElementById('typeFilter').value;
             const status = document.getElementById('statusFilter').value;
             const name = document.getElementById('nameFilter').value.toLowerCase();
-
             allShopsFiltered = window.allShops.filter(s => {
                 const matchCity = !city || (s.area || s.areaCode || '').toLowerCase().includes(city);
                 const matchType = !type || s.shopType === type;
@@ -234,7 +170,6 @@
                 const matchName = !name || (s.shopName || s.name || '').toLowerCase().includes(name);
                 return matchCity && matchType && matchStatus && matchName;
             });
-
             renderShopsFiltered();
         }
 
@@ -247,12 +182,10 @@
             const shops = allShopsFiltered;
             document.getElementById('shopsCount').textContent = shops.length;
             const grid = document.getElementById('shopsGrid');
-
             if (shops.length === 0) {
                 grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">No shops found</div>';
                 return;
             }
-
             grid.innerHTML = shops.map(s => {
                 const module = window.allModules.find(m => (m._id || m.id) === s.moduleId);
                 const manager = window.allManagers.find(m => m._id === s.managerId);
@@ -260,7 +193,6 @@
                 const shopType = s.shopType || 'product';
                 const itemsCount = s.items ? s.items.length : 0;
                 const isPending = s.status === 'pending';
-
                 return `
                     <div class="shop-card ${isPending ? 'pending' : ''}">
                         ${isPending ? '<div class="pending-ribbon">⏳ Pending Approval</div>' : ''}
@@ -271,9 +203,7 @@
                                 <span class="shop-type-badge ${shopType}">${shopType}</span>
                                 <div class="shop-meta">
                                     <span><i class="fa fa-map-marker-alt"></i> ${escapeHtml(s.area || s.areaCode || '-')}</span>
-                                    <span class="location-badge ${locationType}">
-                                        ${locationType === 'fixed' ? '📍 Fixed' : '🚚 Dynamic'}
-                                    </span>
+                                    <span class="location-badge ${locationType}">${locationType === 'fixed' ? '📍 Fixed' : '🚚 Dynamic'}</span>
                                 </div>
                             </div>
                         </div>
@@ -287,33 +217,18 @@
                             <div><i class="fa fa-user"></i> ${manager ? escapeHtml(manager.name) : 'Unassigned'}</div>
                             <div><i class="fa fa-clock"></i> ${timeAgo(new Date(s.createdAt))}</div>
                         </div>
-                        
                         ${isPending ? `
                         <div class="approval-actions">
-                            <button class="btn btn-success btn-sm" onclick="approveShop('${s._id}')">
-                                <i class="fa fa-check"></i> Approve
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick="rejectShop('${s._id}')">
-                                <i class="fa fa-times"></i> Reject
-                            </button>
+                            <button class="btn btn-success btn-sm" onclick="approveShop('${s._id}')"><i class="fa fa-check"></i> Approve</button>
+                            <button class="btn btn-danger btn-sm" onclick="rejectShop('${s._id}')"><i class="fa fa-times"></i> Reject</button>
                         </div>
                         ` : `
                         <div class="actions">
-                            <button class="btn btn-success btn-sm" onclick="openDashboard('${s._id}')" title="Owner Dashboard">
-                                <i class="fa fa-tachometer-alt"></i> Dashboard
-                            </button>
-                            <button class="btn btn-info btn-sm" onclick="openPublicShop('${s._id}')" title="Public View">
-                                <i class="fa fa-eye"></i> View
-                            </button>
-                            <button class="btn btn-primary btn-sm" onclick="copyLink('${s._id}')" title="Copy Link">
-                                <i class="fa fa-link"></i> Copy
-                            </button>
-                            <button class="btn btn-warning btn-sm" onclick="toggleShopStatus('${s._id}', ${s.isActive})" title="${s.isActive ? 'Deactivate' : 'Activate'}">
-                                <i class="fa fa-power-off"></i>
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteShop('${s._id}')">
-                                <i class="fa fa-trash"></i>
-                            </button>
+                            <button class="btn btn-success btn-sm" onclick="openDashboard('${s._id}')" title="Owner Dashboard"><i class="fa fa-tachometer-alt"></i> Dashboard</button>
+                            <button class="btn btn-info btn-sm" onclick="openPublicShop('${s._id}')" title="Public View"><i class="fa fa-eye"></i> View</button>
+                            <button class="btn btn-primary btn-sm" onclick="copyLink('${s._id}')" title="Copy Link"><i class="fa fa-link"></i> Copy</button>
+                            <button class="btn btn-warning btn-sm" onclick="toggleShopStatus('${s._id}', ${s.isActive})"><i class="fa fa-power-off"></i></button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteShop('${s._id}')"><i class="fa fa-trash"></i></button>
                         </div>
                         `}
                     </div>
@@ -322,88 +237,111 @@
         }
 
         window.approveShop = async (id) => {
-            if (!confirm('Approve this shop? It will become active immediately.')) return;
+            if (!confirm('Approve this shop?')) return;
             try {
                 await apiCall('/shops/' + id, 'PUT', { status: 'approved', isActive: true });
-                showToast('✅ Shop approved successfully!', 'success');
+                showToast('✅ Shop approved!', 'success');
                 await loadShops();
-            } catch (err) {
-                showToast('Failed to approve: ' + err.message, 'error');
-            }
+            } catch (err) { showToast('Failed: ' + err.message, 'error'); }
         };
-
         window.rejectShop = async (id) => {
-            const reason = prompt('Reason for rejection? (Optional)');
+            const reason = prompt('Reason for rejection?');
             if (reason === null) return;
-            if (!confirm('Reject & delete this shop? This cannot be undone.')) return;
+            if (!confirm('Reject & delete?')) return;
             try {
                 await apiCall('/shops/' + id, 'DELETE');
-                showToast('❌ Shop rejected and deleted', 'success');
+                showToast('❌ Shop rejected', 'success');
                 await loadShops();
-            } catch (err) {
-                showToast('Failed to reject: ' + err.message, 'error');
-            }
+            } catch (err) { showToast('Failed: ' + err.message, 'error'); }
         };
-
         window.deleteShop = async (id) => {
-            if (!confirm('Delete this shop permanently? All data will be lost.')) return;
+            if (!confirm('Delete permanently?')) return;
             try {
                 await apiCall('/shops/' + id, 'DELETE');
-                showToast('Shop deleted successfully', 'success');
+                showToast('Shop deleted', 'success');
                 await loadShops();
-            } catch (err) {
-                showToast('Failed to delete: ' + err.message, 'error');
-            }
+            } catch (err) { showToast('Failed: ' + err.message, 'error'); }
         };
-
         window.toggleShopStatus = async (id, currentStatus) => {
             const action = currentStatus ? 'deactivate' : 'activate';
-            if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} this shop?`)) return;
+            if (!confirm(`${action} this shop?`)) return;
             try {
                 await apiCall('/shops/' + id, 'PUT', { isActive: !currentStatus });
-                showToast(`Shop ${action}d successfully`, 'success');
+                showToast(`Shop ${action}d`, 'success');
                 await loadShops();
-            } catch (err) {
-                showToast('Failed: ' + err.message, 'error');
-            }
+            } catch (err) { showToast('Failed: ' + err.message, 'error'); }
         };
 
+        // ✅ FIXED - NO COMMON - DIRECT INDIVIDUAL DASHBOARD
         window.openDashboard = (shopId) => {
             const shop = window.allShops.find(s => s._id === shopId);
             if (!shop) return alert('Shop not found');
             
-            // ✅ UPDATED: Check if specific template exists
-            const shopType = shop.serviceType || shop.shopType;
-            if (SPECIFIC_TEMPLATES.includes(shopType)) {
-                const url = `${window.location.origin}/local-market/shop-templates/${shopType}/dashboard.html?shopId=${shopId}`;
-                window.open(url, '_blank');
-            } else {
-                const url = `${window.location.origin}/local-market/shop/dashboard.html?shopId=${shopId}&type=${shop.shopType}`;
-                window.open(url, '_blank');
+            // template / shopType / serviceType - jo bhi ho uska folder nikal
+            const rawType = shop.template || shop.shopType || shop.serviceType || shop.type || 'kirana';
+            
+            // shop-template-map.js se sahi folder
+            let folder = rawType;
+            if (window.getShopTemplateFolder) {
+                folder = window.getShopTemplateFolder(rawType);
             }
+            // fuel special - petrol-pump -> fuel folder pe map hota hai V21 me
+            if (rawType === 'petrol-pump') folder = 'fuel';
+            
+            // FINAL URL - direct apne shop ka dashboard, common kabhi nahi
+            let url = '';
+            if (window.getDashboardUrl) {
+                url = window.getDashboardUrl(rawType, shopId);
+            } else {
+                url = `${window.location.origin}/shop-templates/${folder}/dashboard.html?shopId=${shopId}`;
+            }
+            
+            console.log('Opening Dashboard:', rawType, '->', folder, '->', url);
+            window.open(url, '_blank');
         };
 
-window.openPublicShop = (shopId) => {
-    const shop = window.allShops.find(s => s._id === shopId);
-    if (!shop) return alert('Shop not found');
-    
-    // NAYA ROUTE - Backend khud template check karke sahi view dega
-    const url = `${window.location.origin}/api/shop/view/${shopId}`;
-    window.open(url, '_blank');
-};
+        // ✅ FIXED - CUSTOMER VIEW - DIRECT SHOP VIEW
+        window.openPublicShop = (shopId) => {
+            const shop = window.allShops.find(s => s._id === shopId);
+            if (!shop) return alert('Shop not found');
+            
+            const rawType = shop.template || shop.shopType || 'kirana';
+            let url = '';
+            if (window.getCustomerViewUrl) {
+                url = window.getCustomerViewUrl(rawType, shopId);
+            } else {
+                const folder = window.getShopTemplateFolder ? window.getShopTemplateFolder(rawType) : rawType;
+                // kirana/medical/restaurant/sports ka user-view.html hota hai, baki ka customer-view.html
+                const isUserView = ['kirana','medical','restaurant','sports'].includes(folder);
+                const file = isUserView ? 'user-view.html' : 'customer-view.html';
+                url = `${window.location.origin}/shop-templates/${folder}/${file}?shopId=${shopId}`;
+            }
+            window.open(url, '_blank');
+        };
 
-window.copyLink = (shopId) => {
-    const shop = window.allShops.find(s => s._id === shopId);
-    if (!shop) return alert('Shop not found');
-    
-    // NAYA ROUTE
-    const url = `${window.location.origin}/api/shop/view/${shopId}`;
-    navigator.clipboard.writeText(url).then(() => {
-        showToast('🔗 Link copied!', 'success');
-    }).catch(() => {
-        showToast('Failed to copy', 'error');
-    });
-};
+        // ✅ FIXED - COPY LINK - DIRECT LINK
+        window.copyLink = (shopId) => {
+            const shop = window.allShops.find(s => s._id === shopId);
+            if (!shop) return alert('Shop not found');
+            
+            const rawType = shop.template || shop.shopType || 'kirana';
+            let url = '';
+            if (window.getCustomerViewUrl) {
+                url = window.getCustomerViewUrl(rawType, shopId);
+                // full origin ke sath
+                if (!url.startsWith('http')) url = window.location.origin + url;
+            } else {
+                const folder = window.getShopTemplateFolder ? window.getShopTemplateFolder(rawType) : rawType;
+                url = `${window.location.origin}/shop-templates/${folder}/customer-view.html?shopId=${shopId}`;
+            }
+            
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('🔗 Link copied: ' + url, 'success');
+            }).catch(() => {
+                prompt('Copy this link:', url);
+            });
+        };
+
         function timeAgo(date) {
             const seconds = Math.floor((new Date() - date) / 1000);
             if (seconds < 60) return 'Just now';
@@ -414,13 +352,11 @@ window.copyLink = (shopId) => {
             const days = Math.floor(hours / 24);
             return `${days}d ago`;
         }
-
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text || '';
             return div.innerHTML;
         }
-
         function showToast(msg, type = 'success') {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
@@ -428,8 +364,6 @@ window.copyLink = (shopId) => {
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
-
-        // Initialize
         loadShops();
     </script>
 </body>

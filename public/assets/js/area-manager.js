@@ -335,7 +335,7 @@ function renderShops(shops) {
 }
 window.copyShopLink = function(shopId) {
     const shop = managerShops.find(s => s._id === shopId);
-    const link = shop? shopDashboardUrl(shop) : `${window.location.origin}/shop-templates/common/dashboard.html?shopId=${shopId}`;
+    const link = shop? shopDashboardUrl(shop) : `${window.location.origin}/shop-templates/${shop.shopType || 'kirana'}/dashboard.html?shopId=${shopId}`;
     navigator.clipboard.writeText(link).then(() => alert(`✅ Dashboard link copied!\n\n${link}`)).catch(() => prompt('Copy this link:', link));
 };
 
