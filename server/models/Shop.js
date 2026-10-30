@@ -1,4 +1,4 @@
-// LOCATION: server/models/Shop.js - V20 WORLD - 50 MODES - AREA MANAGER SAFE - FULL CODE - NO ENUM BLOCK
+// LOCATION: server/models/Shop.js - V20 WORLD - 50 MODES - AREA MANAGER SAFE - FULL CODE - NO ENUM BLOCK - FIXED: Mongoose 7+ next() removed
 const mongoose = require('mongoose');
 
 const shopSchema = new mongoose.Schema({
@@ -286,7 +286,8 @@ shopSchema.methods.detectBusinessMode = function() {
     return 'retail';
 };
 
-shopSchema.pre('save', function(next) {
+// FIXED: Mongoose 7+ me next nahi hota - Vercel pe TypeError: next is not a function fix
+shopSchema.pre('save', function() {
     if (!this.businessMode || this.isModified('shopType')) {
         this.businessMode = this.detectBusinessMode();
     }
@@ -296,7 +297,6 @@ shopSchema.pre('save', function(next) {
     if (!this.template && this.shopType) {
         this.template = this.shopType;
     }
-    next();
 });
 
 module.exports = mongoose.models.Shop || mongoose.model('Shop', shopSchema);
