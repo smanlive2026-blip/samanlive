@@ -1,0 +1,91 @@
+<!-- LOCATION: public/shop-templates/csc/customer-view.html - V20 WORLD CLASS - CSC MODE - USER VIEW - PREMIUM -->
+<!-- UAR: public/shop-templates/common/customer-view.html -->
+<!-- UAR: public/shop-templates/common/core/api-core.js, dashboard-core.js -->
+<!-- UAR: public/assets/js/location.core.js, location.shop.js, location.user.js -->
+<!-- UAR: public/shop-templates/common/cart/cart-core.js, js/wishlist.js, share.js -->
+<!-- MODE: csc | SHOP: CSC Jan Seva Kendra | ICON: 🏦 | COLOR: #0f172a | WORLD CLASS USER VIEW -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🏦 CSC Jan Seva Kendra - Aadhar, PAN, Govt Forms - SamanLive</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+:root{--csc:#0f172a;--csc2:#1e3a8a;--bg:#f8fafc;--border:#e2e8f0;--text:#0f172a}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit'}
+body{background:var(--bg);padding-bottom:90px}
+.header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#1e3a8a 100%);color:#fff;padding:20px 16px 28px;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;inset:0;background:radial-gradient(600px 300px at 10% 0%,rgba(59,130,246,.3),transparent)}
+.shop-hero{position:relative;display:flex;gap:14px}
+.shop-logo{width:68px;height:68px;background:#fff;border-radius:18px;display:grid;place-items:center;font-size:32px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.rate-board{margin:-18px 16px 16px;background:#fff;border-radius:22px;box-shadow:0 20px 50px rgba(0,0,0,.1);padding:14px;border:1px solid var(--border)}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.04)}
+.service-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px}
+.service-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px;display:flex;gap:12px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.04)}
+.service-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff;font-size:20px}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 12px;z-index:40}
+.b-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px;border-radius:12px}
+.b-nav-item.active{background:var(--csc);color:#fff}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="shop-hero">
+    <div class="shop-logo">🏦</div>
+    <div style="flex:1"><h1 style="font-weight:900;font-size:20px">CSC Jan Seva Kendra</h1>
+    <div style="font-size:12px;opacity:.8;margin-top:4px">Aadhar • PAN • Passport • Govt Yojana • 0.5 km away</div>
+    <div style="margin-top:8px;display:flex;gap:6px"><span style="background:#fff;color:#0f172a;padding:4px 10px;border-radius:999px;font-weight:900;font-size:11px">⭐ 4.8 (1.2k)</span><span style="background:rgba(255,255,255,.15);padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700">Govt Authorized • CSC ID: 123456</span></div></div>
+  </div>
+</div>
+
+<div class="rate-board">
+  <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-weight:900;font-size:13px"><i class="fas fa-bolt" style="color:#f59e0b"></i> Live Token Status - Today</b><span style="font-size:10px;background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:999px;font-weight:900">OPEN NOW</span></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;text-align:center">
+    <div><div style="font-size:20px;font-weight:900">23</div><div style="font-size:10px;opacity:.5;font-weight:800">IN QUEUE</div></div>
+    <div style="border-left:1px solid #f1f5f9;border-right:1px solid #f1f5f9"><div style="font-size:20px;font-weight:900">08</div><div style="font-size:10px;opacity:.5;font-weight:800">NOW SERVING</div></div>
+    <div><div style="font-size:20px;font-weight:900">~15 min</div><div style="font-size:10px;opacity:.5;font-weight:800">WAIT TIME</div></div>
+  </div>
+  <div style="font-size:10px;color:#94a3b8;font-weight:700;margin-top:8px;text-align:center">LOCATION: csc/customer-view.html | UAR: common/orders + socket-core.js + location.shop.js</div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi"><div style="font-size:20px">🪪</div><b style="font-size:12px">Aadhar</b><div style="font-size:10px;color:#64748b">Update, Print</div></div>
+  <div class="kpi"><div style="font-size:20px">💳</div><b style="font-size:12px">PAN Card</b><div style="font-size:10px;color:#64748b">New, Correction</div></div>
+  <div class="kpi"><div style="font-size:20px">🛂</div><b style="font-size:12px">Passport</b><div style="font-size:10px;color:#64748b">Apply, Renew</div></div>
+</div>
+
+<div style="padding:0 16px;margin-bottom:12px"><b style="font-weight:900;font-size:14px">🏛️ Govt Services - Book Token</b></div>
+<div class="service-grid">
+  <div class="service-card"><div class="service-icon" style="background:linear-gradient(135deg,#3b82f6,#1e40af)">🪪</div><div style="flex:1"><b style="font-size:13px">Aadhar Update</b><div style="font-size:11px;color:#64748b">Address, Mobile, Name - ₹50 - 15 min</div></div><i class="fas fa-chevron-right" style="color:#cbd5e1"></i></div>
+  <div class="service-card"><div class="service-icon" style="background:linear-gradient(135deg,#0f172a,#334155)">💳</div><div style="flex:1"><b style="font-size:13px">PAN Apply</b><div style="font-size:11px;color:#64748b">New PAN - ₹107 - 7 days</div></div><i class="fas fa-chevron-right" style="color:#cbd5e1"></i></div>
+  <div class="service-card"><div class="service-icon" style="background:linear-gradient(135deg,#10b981,#065f46)">🏦</div><div style="flex:1"><b style="font-size:13px">Ayushman Card</b><div style="font-size:11px;color:#64748b">Health card - Free</div></div><i class="fas fa-chevron-right" style="color:#cbd5e1"></i></div>
+  <div class="service-card"><div class="service-icon" style="background:linear-gradient(135deg,#f59e0b,#b45309)">📄</div><div style="flex:1"><b style="font-size:13px">Income Certificate</b><div style="font-size:11px;color:#64748b">Govt proof - ₹30</div></div><i class="fas fa-chevron-right" style="color:#cbd5e1"></i></div>
+</div>
+
+<div style="margin:16px;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border-radius:20px;padding:16px;display:flex;gap:12px;align-items:center">
+  <div style="width:36px;height:36px;background:rgba(255,255,255,.1);border-radius:10px;display:grid;place-items:center"><i class="fas fa-link"></i></div>
+  <div style="flex:1"><b style="font-size:12px">COMMON CONNECTED</b><div style="font-size:10px;opacity:.6">UAR: cart-core.js + orders.js + location.core.js + location.shop.js + location.user.js</div></div>
+  <div style="font-size:9px;opacity:.5">csc/customer-view.html</div>
+</div>
+
+<div class="bottom-nav">
+  <div class="b-nav-item active"><i class="fas fa-house"></i><span style="font-size:10px;font-weight:800">Home</span></div>
+  <div class="b-nav-item"><i class="fas fa-ticket"></i><span style="font-size:10px;font-weight:800">My Tokens</span></div>
+  <div class="b-nav-item" style="background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;padding:10px 18px;border-radius:16px;flex-direction:row;gap:6px"><i class="fas fa-plus"></i><span style="font-size:11px;font-weight:900">Book Token</span></div>
+  <div class="b-nav-item"><i class="fas fa-file"></i><span style="font-size:10px;font-weight:800">Docs</span></div>
+  <div class="b-nav-item"><i class="fas fa-user"></i><span style="font-size:10px;font-weight:800">Profile</span></div>
+</div>
+
+<script src="/shop-templates/common/core/api-core.js?v=20"></script>
+<script src="/assets/js/location.core.js?v=20"></script>
+<script src="/assets/js/location.shop.js?v=20"></script>
+<script src="/assets/js/location.user.js?v=20"></script>
+<script>
+// LOCATION: csc/customer-view.html - WORLD CLASS USER VIEW - COMMON CONNECTED
+console.log('LOCATION: csc/customer-view.html | CSC USER VIEW | UAR common/* + location.*');
+</script>
+</body>
+</html>

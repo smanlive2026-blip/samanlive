@@ -1,0 +1,118 @@
+<!-- LOCATION: public/shop-templates/logistics/customer-view.html - V20 WORLD CLASS - LOGISTICS MODE - USER VIEW - PREMIUM -->
+<!-- UAR: public/shop-templates/common/customer-view.html + core/api-core.js -->
+<!-- UAR: public/assets/js/location.core.js, location.shop.js, location.user.js -->
+<!-- UAR: public/shop-templates/common/cart/cart-core.js, js/wishlist.js, share.js, orders.js -->
+<!-- MODE: logistics | SHOP: Logistics / Transport | ICON: 🚚 | COLOR: #475569 | WORLD CLASS USER VIEW -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🚚 My Transport - Book LR, Live Tracking - SamanLive</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+:root{--log:#475569;--log-dark:#1e293b;--bg:#f8fafc;--border:#e2e8f0;--text:#0f172a}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit'}
+body{background:var(--bg);padding-bottom:90px}
+.header{background:linear-gradient(135deg,#0f172a 0%,#334155 50%,#475569 100%);color:#fff;padding:20px 16px 28px;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;inset:0;background:radial-gradient(600px 300px at 10% 0%,rgba(255,255,255,.12),transparent)}
+.shop-hero{position:relative;display:flex;gap:14px}
+.shop-logo{width:68px;height:68px;background:#fff;border-radius:18px;display:grid;place-items:center;font-size:32px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.track-board{margin:-18px 16px 16px;background:#fff;border-radius:22px;box-shadow:0 20px 50px rgba(0,0,0,.1);padding:14px;border:1px solid var(--border)}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 16px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px}
+.service-grid{display:grid;grid-template-columns:1fr;gap:10px;padding:0 16px}
+.service-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px;display:flex;gap:12px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.04)}
+.service-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff;font-size:20px}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 12px;z-index:40}
+.b-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px;border-radius:12px}
+.b-nav-item.active{background:var(--log);color:#fff}
+.booking-sheet{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);z-index:60;display:none;align-items:flex-end;justify-content:center}
+.booking-sheet.open{display:flex}
+.sheet{background:#fff;width:100%;max-width:480px;border-radius:28px 28px 0 0;max-height:90vh;overflow:auto;animation:slideUp .35s}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.input-group{border:1px solid var(--border);border-radius:14px;padding:12px 14px;background:#f8fafc;display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.input-group input,.input-group select{flex:1;border:0;background:transparent;outline:0;font-weight:700;font-size:14px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="shop-hero">
+    <div class="shop-logo">🚚</div>
+    <div style="flex:1"><h1 style="font-weight:900;font-size:20px" id="shopName">My Transport - Surat</h1>
+    <div style="font-size:12px;opacity:.8;margin-top:4px" id="shopLocation">Surat • 12 Trucks • 24x7 Service • Live GPS</div>
+    <div style="margin-top:8px;display:flex;gap:6px"><span style="background:#fff;color:#0f172a;padding:4px 10px;border-radius:999px;font-weight:900;font-size:11px">⭐ 4.7 (892)</span><span style="background:rgba(255,255,255,.15);padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700">📦 500+ LR Delivered • Verified</span></div></div>
+  </div>
+</div>
+
+<div class="track-board">
+  <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-weight:900;font-size:13px"><i class="fas fa-location-dot" style="color:var(--log)"></i> Track Your LR - Live GPS</b><span style="font-size:10px;background:#dbeafe;color:#1e40af;padding:4px 8px;border-radius:999px;font-weight:900">LIVE TRACKING - UAR location.shop.js</span></div>
+  <div style="margin-top:12px;display:flex;gap:8px"><div style="flex:1;border:1px solid var(--border);border-radius:12px;padding:12px;background:#f8fafc;display:flex;gap:8px;align-items:center"><i class="fas fa-receipt" style="color:var(--log)"></i><input type="text" id="trackInput" placeholder="Enter LR No - LR-1023" style="flex:1;border:0;background:transparent;outline:0;font-weight:800;font-family:'JetBrains Mono'"></div><button style="padding:12px 18px;background:var(--log);color:#fff;border:0;border-radius:12px;font-weight:900" onclick="trackLR()">Track</button></div>
+  <div style="margin-top:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px;display:flex;gap:10px;align-items:center"><div style="width:10px;height:10px;background:#10b981;border-radius:50%;box-shadow:0 0 0 4px rgba(16,185,129,.15);animation:pulse 2s infinite"></div><div style="flex:1"><b style="font-size:12px">LR-1023 - Surat → Mumbai - In Transit</b><div style="font-size:11px;color:#64748b">Truck: GJ05 AB 1234 • Driver: Ramesh • 120 km left • ETA: 2h 15m • 78 km/h</div></div><i class="fas fa-chevron-right" style="color:#cbd5e1"></i></div>
+  <div style="font-size:10px;color:#94a3b8;font-weight:700;margin-top:8px;text-align:center">LOCATION: logistics/customer-view.html | UAR: location.core.js + location.shop.js + socket-core.js - Real-time GPS</div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi"><div style="display:flex;justify-content:space-between"><b style="font-size:12px">Today Rate</b><span style="font-size:10px;background:#f1f5f9;padding:3px 8px;border-radius:999px">Per kg</span></div><div style="font-size:20px;font-weight:900;margin-top:6px">₹ 9.5 / kg</div><div style="font-size:11px;color:#64748b">Surat to Mumbai • 500 kg min</div></div>
+  <div class="kpi"><div style="display:flex;justify-content:space-between"><b style="font-size:12px">Delivery Time</b><span style="font-size:10px;background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:999px">Fast</span></div><div style="font-size:20px;font-weight:900;margin-top:6px">24-48 Hrs</div><div style="font-size:11px;color:#64748b">Surat to Mumbai • Live tracking</div></div>
+</div>
+
+<div style="padding:0 16px;margin-bottom:12px"><b style="font-weight:900;font-size:14px">📦 Book Transport - New LR</b></div>
+<div class="service-grid">
+  <div class="service-card" onclick="openBooking('full-load')"><div class="service-icon" style="background:linear-gradient(135deg,#0f172a,#334155)">🚛</div><div style="flex:1"><b style="font-size:13px">Full Truck Load (FTL)</b><div style="font-size:11px;color:#64748b">Full truck booking - Surat to anywhere - Starting ₹4,500 - 500 kg+ - UAR orders.js</div></div><i class="fas fa-chevron-right" style="color:#cbd5e1"></i></div>
+  <div class="service-card" onclick="openBooking('part-load')"><div class="service-icon" style="background:linear-gradient(135deg,#3b82f6,#1e40af)">📦</div><div style="flex:1"><b style="font-size:13px">Part Load / Parcel</b><div style="font-size:11px;color:#64748b">Small parcel - 20 kg to 500 kg - ₹9.5/kg - Same day pickup</div></div><i class="fas fa-chevron-right" style="color:#cbd5e1"></i></div>
+  <div class="service-card" onclick="openBooking('courier')"><div class="service-icon" style="background:linear-gradient(135deg,#10b981,#065f46)">✈️</div><div style="flex:1"><b style="font-size:13px">Express Courier</b><div style="font-size:11px;color:#64748b">Documents & small items - 24 hrs delivery - Starting ₹150</div></div><i class="fas fa-chevron-right" style="color:#cbd5e1"></i></div>
+</div>
+
+<div style="margin:16px;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border-radius:20px;padding:16px;display:flex;gap:12px;align-items:center">
+  <div style="width:36px;height:36px;background:rgba(255,255,255,.1);border-radius:10px;display:grid;place-items:center"><i class="fas fa-link"></i></div>
+  <div style="flex:1"><b style="font-size:12px">COMMON CONNECTED - LOGISTICS</b><div style="font-size:10px;opacity:.6">UAR: cart-core.js + orders.js + location.core.js + location.shop.js + location.user.js + wallet.js</div></div>
+  <div style="font-size:9px;opacity:.5">logistics/customer-view.html</div>
+</div>
+
+<div class="bottom-nav">
+  <div class="b-nav-item active"><i class="fas fa-house"></i><span style="font-size:10px;font-weight:800">Home</span></div>
+  <div class="b-nav-item"><i class="fas fa-location-dot"></i><span style="font-size:10px;font-weight:800">Track</span></div>
+  <div class="b-nav-item" style="background:linear-gradient(135deg,#0f172a,#334155);color:#fff;padding:10px 18px;border-radius:16px;flex-direction:row;gap:6px" onclick="openBooking()"><i class="fas fa-plus"></i><span style="font-size:11px;font-weight:900">Book LR</span></div>
+  <div class="b-nav-item"><i class="fas fa-receipt"></i><span style="font-size:10px;font-weight:800">My LR</span></div>
+  <div class="b-nav-item"><i class="fas fa-user"></i><span style="font-size:10px;font-weight:800">Profile</span></div>
+</div>
+
+<!-- BOOKING SHEET -->
+<div class="booking-sheet" id="bookingSheet">
+  <div class="sheet">
+    <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><b style="font-weight:900">🚚 Book LR - New Transport Booking</b><div style="width:32px;height:32px;background:#f1f5f9;border-radius:10px;display:grid;place-items:center;cursor:pointer" onclick="closeBooking()"><i class="fas fa-xmark"></i></div></div>
+    <div style="padding:18px 20px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="input-group"><i class="fas fa-location-dot"></i><input type="text" id="fromCity" placeholder="From - Surat" value="Surat"></div>
+        <div class="input-group"><i class="fas fa-location-dot" style="color:#ef4444"></i><input type="text" id="toCity" placeholder="To - Mumbai"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="input-group"><i class="fas fa-weight-hanging"></i><input type="number" id="weight" placeholder="Weight kg - 500" oninput="calcLogisticsAmount()"></div>
+        <div class="input-group"><i class="fas fa-box"></i><select id="loadType"><option>Full Load</option><option>Part Load</option><option>Parcel</option></select></div>
+      </div>
+      <div class="input-group"><i class="fas fa-user"></i><input type="text" id="custName" placeholder="Customer Name - ABC Traders"></div>
+      <div class="input-group"><i class="fas fa-phone"></i><input type="text" id="custPhone" placeholder="Phone - 98765 43210"></div>
+      <div class="input-group" style="background:#f1f5f9;border-color:#cbd5e1"><i class="fas fa-indian-rupee-sign" style="color:var(--log)"></i><input type="text" id="logAmount" placeholder="Amount auto calc" readonly style="font-weight:900;font-size:16px"><span style="font-size:10px;background:var(--log);color:#fff;padding:4px 8px;border-radius:999px">AUTO - UAR finance</span></div>
+      <button style="width:100%;padding:14px;background:linear-gradient(135deg,var(--log),var(--log-dark));color:#fff;border:0;border-radius:14px;font-weight:900;display:flex;justify-content:center;gap:8px" onclick="confirmLogisticsBooking()"><i class="fas fa-check"></i> Confirm LR Booking - UAR orders.js</button>
+      <div style="font-size:10px;color:#94a3b8;text-align:center">LOCATION: logistics/customer-view.html booking | UAR: common/cart/cart-core.js + checkout + location.shop.js</div>
+    </div>
+  </div>
+</div>
+
+<script src="/shop-templates/common/core/api-core.js?v=20"></script>
+<script src="/assets/js/location.core.js?v=20"></script>
+<script src="/assets/js/location.shop.js?v=20"></script>
+<script src="/assets/js/location.user.js?v=20"></script>
+<script>
+let shopId = new URLSearchParams(location.search).get('shopId');
+function openBooking(type){ document.getElementById('bookingSheet').classList.add('open'); console.log('LOCATION: logistics booking open - UAR cart-core.js - Type:', type); }
+function closeBooking(){ document.getElementById('bookingSheet').classList.remove('open'); }
+function calcLogisticsAmount(){ let w=parseFloat(document.getElementById('weight').value)||0; let rate=9.5; let amt=(w*rate).toFixed(0); document.getElementById('logAmount').value='₹ '+amt+' - '+w+' kg @ ₹'+rate+'/kg - Estimated'; }
+function confirmLogisticsBooking(){ let from=document.getElementById('fromCity').value, to=document.getElementById('toCity').value, w=document.getElementById('weight').value, amt=document.getElementById('logAmount').value; alert(`✅ LR Booked!\n\n📦 ${from} → ${to}\nWeight: ${w} kg\n${amt}\n\nLR No: LR-${Math.floor(Math.random()*9000+1000)}\nTruck: GJ05 AB 1234 allocated\nDriver: Ramesh - 98765 43210\nPickup: Today 2 PM\nTracking: Live GPS\n\nUAR: common/orders/orders.js + location.shop.js + finance`); closeBooking(); }
+function trackLR(){ let lr=document.getElementById('trackInput').value||'LR-1023'; alert(`🛰️ Tracking ${lr}\n\n📍 Current: Kamrej Toll, Surat\n🎯 To: Mumbai\n📏 120 km left\n⏱️ ETA: 2h 15m\n🚚 Speed: 78 km/h\nDriver: Ramesh - 98765 43210\n\nLive map - UAR location.shop.js + location.core.js\nSocket: socket-core.js - Real-time`); window.open('https://maps.google.com/?q=21.1702,72.8311','_blank'); }
+console.log('LOCATION: logistics/customer-view.html | WORLD CLASS USER VIEW | UAR common/* + location.*');
+</script>
+</body>
+</html>

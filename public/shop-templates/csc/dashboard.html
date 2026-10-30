@@ -1,0 +1,46 @@
+<!-- LOCATION: public/shop-templates/csc/dashboard.html - V20 WORLD CLASS - CSC MODE - PREMIUM - FULL CODE -->
+<!-- UAR: public/shop-templates/common/dashboard.html - common core reused -->
+<!-- UAR: public/assets/js/location.core.js, location.shop.js, location.user.js - location connected -->
+<!-- MODE: csc | SHOP: CSC Jan Seva Kendra | ICON: 🏦 | COLOR: #0f172a -->
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSC Premium Dashboard - V20</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shop-templates/common/dashboard.css?v=20">
+<script src="/assets/js/shop-template-map.js?v=20"></script>
+<style>:root{--csc:#0f172a;--csc-glow:rgba(15,23,42,.2)}*{font-family:'Outfit'}body{background:#f8fafc;display:flex} .sidebar{width:300px;background:#0f172a;color:#fff;position:fixed;inset:0 auto 0 0} .main{margin-left:300px;flex:1;padding:20px} .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px} .kpi-card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:18px;box-shadow:0 4px 20px rgba(0,0,0,.04)}</style>
+</head><body>
+<div class="sidebar">
+  <div style="padding:20px;font-weight:900;font-size:18px">🏦 CSC / Jan Seva Kendra</div>
+  <div style="padding:12px;display:flex;flex-direction:column;gap:6px" id="shopTabs">
+    <button class="tab-btn active" style="background:#fff;color:#0f172a;padding:12px;border-radius:12px;font-weight:700"><i class="fas fa-id-card"></i> Aadhar / PAN Forms</button>
+    <button class="tab-btn" style="background:rgba(255,255,255,.08);color:#fff;padding:12px;border-radius:12px"><i class="fas fa-file"></i> Govt Forms / Yojana</button>
+    <button class="tab-btn" style="background:rgba(255,255,255,.08);color:#fff;padding:12px;border-radius:12px"><i class="fas fa-print"></i> Print / Xerox / Lamination</button>
+    <button class="tab-btn" style="background:rgba(255,255,255,.08);color:#fff;padding:12px;border-radius:12px"><i class="fas fa-wallet"></i> Commission / Wallet</button>
+  </div>
+  <div style="padding:12px;font-size:10px;opacity:.5">LOCATION: csc/dashboard.html<br>UAR: common/* + location.core.js + location.shop.js + location.user.js</div>
+</div>
+<div class="main">
+  <h1 style="font-weight:900">🏦 CSC Premium Dashboard - WORLD CLASS - COMMON CONNECTED</h1>
+  <p style="font-size:12px;color:#64748b">LOCATION: csc/dashboard.html | UAR: common/core/* + common/orders + finance + location.*</p>
+  <div class="kpi" style="margin-top:16px">
+    <div class="kpi-card"><div style="font-size:10px;font-weight:900;opacity:.5">TODAY FORMS</div><div style="font-size:24px;font-weight:900">47</div><div style="font-size:11px;color:#10b981;font-weight:700">+8 today</div></div>
+    <div class="kpi-card"><div style="font-size:10px;font-weight:900;opacity:.5">PENDING PRINTS</div><div style="font-size:24px;font-weight:900">12</div><div style="font-size:11px;color:#f59e0b;font-weight:700">Print queue</div></div>
+    <div class="kpi-card"><div style="font-size:10px;font-weight:900;opacity:.5">COMMISSION</div><div style="font-size:24px;font-weight:900">₹ 1,240</div><div style="font-size:11px;color:#10b981;font-weight:700">Today earned</div></div>
+    <div class="kpi-card"><div style="font-size:10px;font-weight:900;opacity:.5">CUSTOMERS</div><div style="font-size:24px;font-weight:900">23</div><div style="font-size:11px;color:#3b82f6;font-weight:700">Aadhar updates</div></div>
+  </div>
+  <div style="margin-top:16px;background:#fff;border-radius:20px;padding:18px;border:1px solid #e2e8f0">
+    <b>📄 Live Forms Queue - UAR common/orders/orders.js</b>
+    <table style="width:100%;margin-top:12px;border-collapse:collapse"><tr style="font-size:10px;opacity:.5"><th>Aadhar No</th><th>Name</th><th>Service</th><th>Status</th></tr>
+    <tr><td>XXXX-1234</td><td>Ramesh</td><td>PAN Apply</td><td><span style="background:#dcfce7;padding:2px 8px;border-radius:999px;font-size:11px">Done</span></td></tr>
+    </table>
+  </div>
+</div>
+<script src="/shop-templates/common/core/api-core.js?v=20"></script>
+<script src="/shop-templates/common/core/dashboard-core.js?v=20"></script>
+<script src="/assets/js/location.core.js?v=20"></script>
+<script src="/assets/js/location.shop.js?v=20"></script>
+<script src="/assets/js/location.user.js?v=20"></script>
+<script src="/shop-templates/csc/dashboard.js?v=20"></script>
+</body></html>
