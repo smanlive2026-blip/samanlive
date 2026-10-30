@@ -1,4 +1,4 @@
-// LOCATION: public/assets/js/shop-template-map.js - V21 - 50 MODES - WORLD MASTER - FULL CODE - NO CUT - DIRECT SHOP LINKS ADDED
+// LOCATION: public/assets/js/shop-template-map.js - V22 - NO COMMON FALLBACK - INDIVIDUAL DASHBOARD FIX - FULL CODE
 window.SHOP_MODES = {
   retail: { name: 'Retail Product', icon: '🛒', color: '#10b981', tabs: ['products','inventory','bulk_buy','barcode','low-stock','finance','marketing'], fields: ['weight','unit','expiry','barcode','brand','mrp'], api: 'product', shops: ['kirana','thela','pansari','general','grocery-sweet','achar-shop','battery','bartan','plastic','fuel'] },
   fashion: { name: 'Fashion & Apparel', icon: '👗', color: '#8b5cf6', tabs: ['products','variants','size-chart','try-on','returns','finance'], fields: ['size','color','fabric','gender','brand','material'], api: 'product', shops: ['cloth','saree-shop','child-clothes','kids-wear','suit-shop','winter-wear','fabric-shop','footwear','purse','kambal-shop','mat-shop','mattress-shop','watch-shop','jewellery','beauty'] },
@@ -15,14 +15,14 @@ window.SHOP_MODES = {
   entertainment: { name: 'Entertainment', icon: '🎬', color: '#ec4899', tabs: ['shows','bookings','seats','finance'], fields: ['showTime','seats','price'], api: 'entertainment', shops: ['cinema','event','game-zone'] },
   agriculture: { name: 'Agriculture / Kheti', icon: '🚜', color: '#16a34a', tabs: ['products','mandi-rate','stock','finance'], fields: ['crop','weight','rate','season'], api: 'mandi', shops: ['krishi','khad-beej','tractor'] },
   handicraft: { name: 'Handicraft / Art', icon: '🎨', color: '#a16207', tabs: ['products','orders','custom','finance'], fields: ['material','handmade','custom'], api: 'product', shops: ['handicraft','painting','murti-shop','puja'] },
-  other: { name: 'Other / Common', icon: '🏪', color: '#64748b', tabs: ['products','orders','finance'], fields: ['name','price','stock'], api: 'product', shops: ['common','general','service','thela'] }
+  other: { name: 'Other', icon: '🏪', color: '#64748b', tabs: ['products','orders','finance'], fields: ['name','price','stock'], api: 'product', shops: ['general','service','thela'] }
 };
 
 window.SHOP_TEMPLATES = [
   {id: 'kirana', name: 'Kirana / Grocery Store', icon: '🛒', folder: 'kirana', mode: 'retail', type: 'product', dashboard: '/shop-templates/kirana/dashboard.html', customerView: '/shop-templates/kirana/user-view.html', hasDashboard: true},
   {id: 'thela', name: 'Thela / Rehri Shop', icon: '🛺', folder: 'thela', mode: 'retail', type: 'product', dashboard: '/shop-templates/thela/dashboard.html', customerView: '/shop-templates/thela/customer-view.html', hasDashboard: false},
   {id: 'pansari', name: 'Pansari / Dry Fruit', icon: '🥜', folder: 'pansari', mode: 'retail', type: 'product', dashboard: '/shop-templates/pansari/dashboard.html', customerView: '/shop-templates/pansari/customer-view.html', hasDashboard: true},
-  {id: 'general', name: 'General Store', icon: '🏪', folder: 'general', mode: 'retail', type: 'common', dashboard: '/shop-templates/general/dashboard.html', customerView: '/shop-templates/general/customer-view.html', hasDashboard: false},
+  {id: 'general', name: 'General Store', icon: '🏪', folder: 'general', mode: 'retail', type: 'product', dashboard: '/shop-templates/general/dashboard.html', customerView: '/shop-templates/general/customer-view.html', hasDashboard: false},
   {id: 'achar-shop', name: 'Achar / Murabba Shop', icon: '🥒', folder: 'achar-shop', mode: 'retail', type: 'product', dashboard: '/shop-templates/achar-shop/dashboard.html', customerView: '/shop-templates/achar-shop/customer-view.html', hasDashboard: true},
   {id: 'bakery', name: 'Bakery Shop', icon: '🍞', folder: 'bakery', mode: 'food', type: 'product', dashboard: '/shop-templates/bakery/dashboard.html', customerView: '/shop-templates/bakery/customer-view.html', hasDashboard: true},
   {id: 'bartan', name: 'Bartan / Kitchenware', icon: '🍳', folder: 'bartan', mode: 'retail', type: 'product', dashboard: '/shop-templates/bartan/dashboard.html', customerView: '/shop-templates/bartan/customer-view.html', hasDashboard: true},
@@ -98,53 +98,77 @@ window.SHOP_TEMPLATES = [
   {id: 'paint-shop', name: 'Paint Shop', icon: '🎨', folder: 'paint-shop', mode: 'bulk', type: 'product', dashboard: '/shop-templates/paint-shop/dashboard.html', customerView: '/shop-templates/paint-shop/customer-view.html', hasDashboard: false},
 ];
 
-// DIRECT LINK HELPERS - NEW - V21
+// DIRECT LINK HELPERS - V22 - NO COMMON FALLBACK - INDIVIDUAL SHOP ONLY
 window.getAllShopTemplates = () => window.SHOP_TEMPLATES;
-window.getShopTemplateFolder = (id) => { const s = window.SHOP_TEMPLATES.find(x => x.id === id || x.folder === id); return s ? s.folder : 'common'; };
+
+window.getShopTemplateFolder = (id) => { 
+  const cleanId = String(id || '').toLowerCase().trim();
+  if (cleanId === 'petrol-pump') return 'fuel';
+  if (cleanId === 'common' || cleanId === 'general') return 'kirana';
+  const s = window.SHOP_TEMPLATES.find(x => x.id === cleanId || x.folder === cleanId); 
+  return s ? s.folder : cleanId || 'kirana';
+};
+
 window.getDashboardUrl = (id, shopId) => {
-  const s = window.SHOP_TEMPLATES.find(x => x.id === id || x.folder === id);
-  const folder = s ? s.folder : id;
+  const folder = window.getShopTemplateFolder(id);
+  const s = window.SHOP_TEMPLATES.find(x => x.id === folder || x.folder === folder || x.id === id);
   const base = s ? s.dashboard : `/shop-templates/${folder}/dashboard.html`;
   return shopId ? `${base}?shopId=${shopId}` : base;
 };
+
 window.getCustomerViewUrl = (id, shopId) => {
-  const s = window.SHOP_TEMPLATES.find(x => x.id === id || x.folder === id);
-  const folder = s ? s.folder : id;
-  let file = 'customer-view.html';
-  if(['kirana','medical','restaurant','sports'].includes(folder)) file = folder==='kirana'?'user-view.html':(folder==='medical'?'user-view.html':(folder==='restaurant'?'user-view.html':'user-view.html'));
-  if(s && s.customerView) return shopId ? `${s.customerView}?shopId=${shopId}` : s.customerView;
+  const folder = window.getShopTemplateFolder(id);
+  const s = window.SHOP_TEMPLATES.find(x => x.id === folder || x.folder === folder || x.id === id);
+  if (s && s.customerView) {
+    return shopId ? `${s.customerView}?shopId=${shopId}` : s.customerView;
+  }
+  const userViewFolders = ['kirana','medical','restaurant','sports','furniture'];
+  const file = userViewFolders.includes(folder) ? 'user-view.html' : 'customer-view.html';
   const base = `/shop-templates/${folder}/${file}`;
   return shopId ? `${base}?shopId=${shopId}` : base;
 };
-window.mapShopType = (id) => { const s = window.SHOP_TEMPLATES.find(x => x.id === id || x.folder === id); return s ? s.type : 'common'; };
+
+window.mapShopType = (id) => { 
+  const folder = window.getShopTemplateFolder(id);
+  const s = window.SHOP_TEMPLATES.find(x => x.id === folder || x.folder === folder); 
+  return s ? s.type : 'product'; 
+};
+
 window.getModeForShop = (shopId) => {
-  const shop = window.SHOP_TEMPLATES.find(s => s.id === shopId || s.folder === shopId);
+  const folder = window.getShopTemplateFolder(shopId);
+  const shop = window.SHOP_TEMPLATES.find(s => s.id === folder || s.folder === folder || s.id === shopId);
   const modeKey = shop ? shop.mode : 'retail';
   return window.SHOP_MODES[modeKey] || window.SHOP_MODES['retail'];
 };
+
 window.getShopMeta = (shopId) => {
-  const shop = window.SHOP_TEMPLATES.find(s => s.id === shopId || s.folder === shopId);
+  const folder = window.getShopTemplateFolder(shopId);
+  const shop = window.SHOP_TEMPLATES.find(s => s.id === folder || s.folder === folder || s.id === shopId);
   const mode = window.getModeForShop(shopId);
   return { 
     id: shop ? shop.id : shopId,
     name: shop ? shop.name : shopId, 
     icon: shop ? shop.icon : mode.icon, 
-    folder: shop ? shop.folder : shopId, 
-    mode: shop ? shop.mode : mode.id, 
+    folder: shop ? shop.folder : folder, 
+    mode: shop ? shop.mode : mode, 
     type: shop ? shop.type : 'product',
     color: mode.color, 
     tabs: mode.tabs, 
     fields: mode.fields,
-    dashboard: shop ? shop.dashboard : `/shop-templates/${shopId}/dashboard.html`,
-    customerView: shop ? shop.customerView : `/shop-templates/${shopId}/customer-view.html`,
-    hasDashboard: shop ? shop.hasDashboard : false
+    dashboard: shop ? shop.dashboard : `/shop-templates/${folder}/dashboard.html`,
+    customerView: shop ? shop.customerView : `/shop-templates/${folder}/customer-view.html`,
+    hasDashboard: shop ? shop.hasDashboard : true
   };
 };
 
-// AUTO FIX FOR MISSING DASHBOARD - LINK READY
 window.isDashboardReady = (id) => {
-  const s = window.SHOP_TEMPLATES.find(x => x.id === id || x.folder === id);
-  return s ? s.hasDashboard : false;
+  const folder = window.getShopTemplateFolder(id);
+  const s = window.SHOP_TEMPLATES.find(x => x.id === folder || x.folder === folder);
+  return s ? s.hasDashboard : true;
 };
 
-console.log('✅ shop-template-map.js V21 loaded - Modes:', Object.keys(window.SHOP_MODES).length, 'Shops:', window.SHOP_TEMPLATES.length, '- DIRECT LINKS ADDED - fuel,csc,logistics,handicraft,all linked');
+if(window.SHOP_MODES && window.SHOP_MODES.other){
+  window.SHOP_MODES.other.shops = window.SHOP_MODES.other.shops.filter(s => s !== 'common' && s !== 'general');
+}
+
+console.log('✅ shop-template-map.js V22 - No Common - Individual Only - Modes:', Object.keys(window.SHOP_MODES).length, 'Shops:', window.SHOP_TEMPLATES.length);

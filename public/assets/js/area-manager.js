@@ -1,9 +1,9 @@
 // ========================================
-// AREA MANAGER DASHBOARD - WORLD CLASS CLEAN + V13 HIERARCHY + V14 PRODUCT MANAGER DEMAND
+// AREA MANAGER DASHBOARD - WORLD CLASS CLEAN + V13 HIERARCHY + V14 PRODUCT MANAGER DEMAND + V15 NO COMMON FIX
 // File: /public/assets/js/area-manager.js
 // Dashboard + Profile + Shop List + Edit + Delivery + WALLET + BULK BUY FROM ADMIN + AREA DEMAND TO EXECUTIVE
 // Shop Create logic shop-create.js me hai
-// LOCATION: /public/assets/js/area-manager.js - V14 FINAL - NO EXISTING LOGIC BROKEN - ONLY ADDED DEMAND LOGIC AT END
+// LOCATION: /public/assets/js/area-manager.js - V15 FINAL - NO COMMON FALLBACK - INDIVIDUAL DASHBOARD ONLY
 // ========================================
 
 let currentManager = null;
@@ -73,18 +73,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindShopEditForm();
     bindDeliveryForm();
     initHierarchyForManager();
-    // LOCATION: NEW V14 - Init demand after everything loaded - does not break old init
     setTimeout(()=>{ if(typeof initDemandSystem==='function') initDemandSystem(); }, 2000);
 });
 
 function initHierarchyForManager(){
-    // RoleHierarchy set for this page
     if(window.RoleHierarchy){
         window.USER_ROLE = 'area_manager';
         window.USER_ID = currentManager? currentManager._id || currentManager.managerCode : 'manager';
         window.MY_SHOP_ID = null;
     }
-    // Socket live order - area manager ko bhi notification
     if(window.io || window.socket){
         try {
             const socket = window.socket || window.io();
@@ -94,10 +91,8 @@ function initHierarchyForManager(){
                 socket.on('new-order', (order)=>{
                     console.log('🔔 New order for manager:', order);
                     if(window.Toast) Toast.success(`New Order: ${order.orderId}`);
-                    // Badge
                     const badge = document.getElementById('newOrderBadge');
                     if(badge){ badge.style.display='block'; badge.textContent='NEW'; }
-                    // Refresh stats
                     loadDashboard();
                 });
             }
@@ -115,7 +110,6 @@ async function loadDashboard() {
         currentManager.currentShopCount = stats.totalShops;
         currentManager.maxShops = currentManager.maxShops || dashboardRes.manager.maxShops || 10;
 
-        // Set role hierarchy globals after manager loaded
         window.USER_ROLE = 'area_manager';
         window.USER_ID = currentManager._id || currentManager.managerCode;
         window.AreaId = currentManager.areaCode;
@@ -143,7 +137,6 @@ async function loadDashboard() {
         loadDeliveryBoys();
         renderWallet(managerWallet);
         loadAdminProductsForManager();
-        // LOCATION: V14 - Also refresh demands after dashboard load - isolated
         if(typeof loadMyDemandsV14==='function') loadMyDemandsV14();
 
         if (typeof window.initShopCreateModule === 'function') {
@@ -158,7 +151,7 @@ async function loadDashboard() {
 }
 window.loadDashboard = loadDashboard;
 
-// ========== WALLET RENDER - NEW HIERARCHY ==========
+// ========== WALLET RENDER ==========
 function renderWallet(wallet){
     const el = document.getElementById('managerWalletBalance');
     if(el) el.textContent = `₹${wallet.balance || 0}`;
@@ -170,7 +163,7 @@ function renderWallet(wallet){
     }
 }
 
-// ========== ADMIN PRODUCTS - AREA MANAGER CAN BUY FROM ADMIN - NEW ==========
+// ========== ADMIN PRODUCTS ==========
 async function loadAdminProductsForManager(){
     const container = document.getElementById('adminProductsForManager');
     if(!container) return;
@@ -178,9 +171,7 @@ async function loadAdminProductsForManager(){
     try {
         const res = await fetch(`/api/world-products?role=area_manager&supplierRole=admin`).then(r=>r.json()).catch(()=>({data:[]}));
         let products = res.data || res.products || [];
-        // Filter - only admin products
         products = products.filter(p=> (p.ownerRole||p.supplierRole||'admin')==='admin');
-        // Fallback - agar filter empty toh sab dikhao for buying
         if(products.length===0){
             const res2 = await fetch(`/api/world-products?role=admin`).then(r=>r.json()).catch(()=>({data:[]}));
             products = res2.data || [];
@@ -210,15 +201,15 @@ window.buyFromAdmin = async function(product){
         alert('CartCore load nahi hua, refresh karo');
         return;
     }
-    // Force supplier admin
     product.ownerRole = 'admin';
     product.ownerId = 'admin_default';
     product.shopId = product.shopId || 'admin_shop';
     product.supplierRole = 'admin';
-    const ok = await window.CartCore.add(product, 10); // bulk 10 qty
+    const ok = await window.CartCore.add(product, 10);
     if(ok){
         if(confirm(`Added ${product.name} x10 to cart. Checkout par jana hai?`)){
-            window.location.href = `/shop-templates/common/checkout/checkout.html?supplierId=admin_default&supplierRole=admin&shopId=admin_shop&supplierName=Admin`;
+            const firstShopFolder = managerShops[0] ? getShopFolder(managerShops[0]) : 'kirana';
+            window.location.href = `/shop-templates/${firstShopFolder}/checkout/checkout.html?supplierId=admin_default&supplierRole=admin&shopId=admin_shop&supplierName=Admin`;
         }
     }
 };
@@ -257,7 +248,6 @@ function setText(id, val) { const el = document.getElementById(id); if (el) el.t
 function renderStats(stats) {
     setText('totalShops', stats?.totalShops?? managerShops.length);
     setText('activeShops', stats?.activeShops?? managerShops.filter(s => s.isActive).length);
-    // Hierarchy earning stats
     if(stats.totalOrders!== undefined) setText('totalOrders', stats.totalOrders);
 }
 function updateShopLimitUI() {
@@ -300,16 +290,31 @@ function toggleAreaMap() {
     if (!isMapHidden) setTimeout(() => managerAreaMapInstance && managerAreaMapInstance.invalidateSize(), 200);
 }
 
-// ========== SHOPS LIST - TEMPLATE DASHBOARD HIT ==========
+// ========== SHOPS LIST - V15 NO COMMON FIX ==========
 function getShopFolder(shop) {
-    if (shop.templateFolder || shop.folder) return shop.templateFolder || shop.folder;
-    const id = shop.template || shop.serviceType || shop.categoryId || shop.shopType || 'common';
-    if (typeof window.getShopTemplateFolder === 'function') return window.getShopTemplateFolder(id);
-    return 'common';
+    if (!shop) return 'kirana';
+    if (shop.templateFolder && shop.templateFolder !== 'common' && shop.templateFolder !== 'general') return shop.templateFolder;
+    if (shop.folder && shop.folder !== 'common' && shop.folder !== 'general') return shop.folder;
+    const rawId = shop.template || shop.serviceType || shop.categoryId || shop.shopType || 'kirana';
+    const id = String(rawId).toLowerCase().trim();
+    if (id === 'petrol-pump') return 'fuel';
+    if (id === 'common' || id === 'general') return shop.shopType && shop.shopType !== 'common' ? shop.shopType : 'kirana';
+    if (typeof window.getShopTemplateFolder === 'function') {
+        const f = window.getShopTemplateFolder(id);
+        if (f === 'common' || f === 'general') return id;
+        return f;
+    }
+    return id || 'kirana';
 }
+
 function shopDashboardUrl(shop) {
-    return `${window.location.origin}/shop-templates/${getShopFolder(shop)}/dashboard.html?shopId=${shop._id}`;
+    const folder = getShopFolder(shop);
+    if (typeof window.getDashboardUrl === 'function') {
+        return window.location.origin + window.getDashboardUrl(folder, shop._id);
+    }
+    return `${window.location.origin}/shop-templates/${folder}/dashboard.html?shopId=${shop._id}`;
 }
+
 function renderShops(shops) {
     const tbody = document.getElementById('shopsTable'); if (!tbody) return;
     if (!shops || shops.length === 0) {
@@ -333,9 +338,15 @@ function renderShops(shops) {
             </div></td></tr>`;
     }).join('');
 }
+
 window.copyShopLink = function(shopId) {
     const shop = managerShops.find(s => s._id === shopId);
-    const link = shop? shopDashboardUrl(shop) : `${window.location.origin}/shop-templates/${shop.shopType || 'kirana'}/dashboard.html?shopId=${shopId}`;
+    let link = '';
+    if (shop) {
+        link = shopDashboardUrl(shop);
+    } else {
+        link = `${window.location.origin}/shop-templates/kirana/dashboard.html?shopId=${shopId}`;
+    }
     navigator.clipboard.writeText(link).then(() => alert(`✅ Dashboard link copied!\n\n${link}`)).catch(() => prompt('Copy this link:', link));
 };
 
@@ -413,7 +424,7 @@ function openShopModal(shop = null) {
     document.getElementById('shopId').value = shop._id;
     document.getElementById('shopName').value = shop.shopName || '';
     document.getElementById('shopIcon').value = shop.icon || '🏪';
-    document.getElementById('shopCategory').value = shop.serviceType || shop.categoryId || shop.template || 'common';
+    document.getElementById('shopCategory').value = shop.serviceType || shop.categoryId || shop.template || shop.shopType || 'kirana';
     document.getElementById('shopPhone').value = shop.phone || shop.contact || '';
     document.getElementById('shopAddress').value = shop.address?.line1 || shop.address || '';
     document.getElementById('shopRange').value = shop.range || 5000;
@@ -436,7 +447,7 @@ function bindShopEditForm() {
                 shopName: document.getElementById('shopName').value.trim(),
                 icon: document.getElementById('shopIcon').value || '🏪',
                 serviceType: catId, categoryId: catId, template: catId,
-                shopType: typeof window.mapShopType === 'function'? window.mapShopType(catId) : 'common',
+                shopType: typeof window.mapShopType === 'function'? window.mapShopType(catId) : catId,
                 phone: document.getElementById('shopPhone').value.trim(),
                 address: { line1: document.getElementById('shopAddress').value.trim() },
                 range: parseInt(document.getElementById('shopRange').value),
@@ -486,10 +497,14 @@ function openDeliveryManagerPanel() { document.getElementById('deliverySection')
 
 function openProductLibrary() { document.getElementById('libraryPopup')?.classList.add('active'); }
 function closeProductLibrary() { document.getElementById('libraryPopup')?.classList.remove('active'); }
+
 function openOrderView() {
-    // Hierarchy: area manager apne shops ke orders dekhega + bulk orders jo usne admin se kiye
-    window.location.href = '/shop-templates/common/orders/orders.html?role=area_manager&managerId=' + (currentManager?._id || '');
+    const firstShop = managerShops && managerShops[0];
+    const folder = firstShop ? getShopFolder(firstShop) : 'kirana';
+    const ordersUrl = `/shop-templates/${folder}/orders/orders.html?role=area_manager&managerId=${currentManager?._id || ''}`;
+    window.location.href = ordersUrl;
 }
+
 function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text == null? '' : String(text); return d.innerHTML; }
 
 window.onclick = e => { if (e.target.classList?.contains('modal')) e.target.classList.remove('active'); };
@@ -503,11 +518,10 @@ window.openOrderView = openOrderView; window.openCreateDeliveryModal = openCreat
 window.closeCreateDeliveryModal = closeCreateDeliveryModal; window.openDeliveryManagerPanel = openDeliveryManagerPanel;
 window.toggleAreaMap = toggleAreaMap; window.loadDeliveryBoys = loadDeliveryBoys;
 
-console.log('✅ area-manager.js loaded - World Class + V13 Hierarchy + Wallet + Bulk Buy');
+console.log('✅ area-manager.js V15 loaded - No Common - Individual Dashboard Only');
 
 // ========================================
-// V14 PRODUCT MANAGER SYSTEM - AREA DEMAND TO EXECUTIVE - NEW - ISOLATED - DOES NOT BREAK OLD LOGIC
-// LOCATION: /public/assets/js/area-manager.js - DEMAND SYSTEM - ADDED AT END - 100% ISOLATED
+// V14 PRODUCT MANAGER SYSTEM - AREA DEMAND TO EXECUTIVE
 // ========================================
 let myDemandsCacheV14 = [];
 
@@ -571,18 +585,16 @@ function initDemandSystem(){
   if(form && !form.dataset.v14bound){
     form.dataset.v14bound='1';
     form.addEventListener('submit', handleDemandSubmitV14);
-    console.log('✅ V14 Demand system bound - isolated, does not break old forms');
+    console.log('✅ V14 Demand system bound');
   }
   loadMyDemandsV14();
-  // Refresh every 30 sec - isolated interval
   if(!window._demandIntervalV14){
     window._demandIntervalV14 = setInterval(loadMyDemandsV14, 30000);
   }
 }
 
-// Expose for HTML inline script fallback
 window.loadMyDemandsV14 = loadMyDemandsV14;
 window.initDemandSystem = initDemandSystem;
 window.handleDemandSubmitV14 = handleDemandSubmitV14;
 
-console.log('✅ V14 Product Manager Demand system loaded - 100% isolated - old logic intact');
+console.log('✅ V15 Demand system loaded - No Common - Old logic intact');

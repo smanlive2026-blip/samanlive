@@ -1,4 +1,4 @@
-// LOCATION: public/assets/js/shop-create.js - V21 - MODE SELECT + CATEGORY FILTER - 50 MODES - FULL CODE
+// LOCATION: public/assets/js/shop-create.js - V22 - NO COMMON FALLBACK - INDIVIDUAL DASHBOARD FIX - FULL CODE
 let shopCreateManagers = [];
 let shopCreateAreas = [];
 let shopCreateCategories = [];
@@ -217,10 +217,18 @@ function bindCreateShopForm() {
 
             if (data.success) {
                 const shop = data.shop || {};
-                const finalFolder = shop.templateFolder || shop.template || folder || 'common';
-                const dashFolder = (typeof window.getShopTemplateFolder === 'function' && shop.template)
+                // ✅ FIXED V22 - NO COMMON FALLBACK - DIRECT TEMPLATE
+                let finalFolder = shop.templateFolder || shop.template || shop.folder || templateId || folder;
+                if (finalFolder === 'common' || finalFolder === 'general') finalFolder = templateId;
+                let dashFolder = (typeof window.getShopTemplateFolder === 'function' && shop.template)
                     ? window.getShopTemplateFolder(shop.template) : finalFolder;
-                const dashboardUrl = `${window.location.origin}/shop-templates/${dashFolder}/dashboard.html?shopId=${shop._id || ''}`;
+                if (dashFolder === 'common' || dashFolder === 'general') dashFolder = templateId;
+                let dashboardUrl = '';
+                if (typeof window.getDashboardUrl === 'function') {
+                    dashboardUrl = window.location.origin + window.getDashboardUrl(templateId, shop._id || '');
+                } else {
+                    dashboardUrl = `${window.location.origin}/shop-templates/${dashFolder}/dashboard.html?shopId=${shop._id || ''}`;
+                }
 
                 alert(`✅ Shop Created Successfully!\n\nShop: ${payload.shopName}\nMode: ${businessMode}\nCategory: ${templateId}\nDashboard: ${dashFolder}\n\nLink owner ko bhej do:\n${dashboardUrl}`);
                 form.reset();
@@ -257,4 +265,4 @@ window.previewCreateShopLogo = previewCreateShopLogo;
 window.removeCreateShopLogo = removeCreateShopLogo;
 window.toggleSelectAllCreateShopManagers = toggleSelectAllCreateShopManagers;
 
-console.log('✅ shop-create.js V21 loaded - Mode + Category + Folder Dashboard Hit');
+console.log('✅ shop-create.js V22 loaded - No Common - Individual Dashboard Direct');
