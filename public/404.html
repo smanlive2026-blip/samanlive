@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 - Not Found | SuperLive</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;color:#1e293b}
+.card{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:40px;max-width:480px;width:100%;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.05)}
+.icon{font-size:64px;margin-bottom:16px}
+h1{font-size:28px;font-weight:800;margin-bottom:8px}
+p{color:#64748b;font-size:15px;line-height:1.6;margin-bottom:24px}
+.code{background:#f1f5f9;padding:8px 12px;border-radius:8px;font-family:monospace;font-size:13px;color:#ef4444;margin:12px 0;word-break:break-all}
+.btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.btn{padding:12px 20px;border-radius:10px;font-weight:600;text-decoration:none;font-size:14px;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#0f172a;color:white}
+.btn-primary:hover{background:#1e293b}
+.btn-secondary{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+.btn-secondary:hover{background:#e2e8f0}
+.note{margin-top:20px;padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;text-align:left}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="icon">🏪</div>
+<h1>404 - Page Not Found</h1>
+<p>Ye page exist nahi karta. Common dashboard hata diya gaya hai, ab har shop ka apna alag dashboard hai.</p>
+
+<div class="code" id="pathCode"></div>
+
+<div class="note">
+<b>⚠️ Common ka lafda khatam:</b><br>
+❌ <code>/shop-templates/common/dashboard.html</code> - ye ab nahi hai<br>
+✅ <code>/shop-templates/fuel/dashboard.html</code><br>
+✅ <code>/shop-templates/kirana/dashboard.html</code><br>
+✅ <code>/shop-templates/csc/dashboard.html</code><br>
+✅ <code>/shop-templates/logistics/dashboard.html</code>
+</div>
+
+<div class="btns">
+<a href="/" class="btn btn-primary">🏠 Go Home</a>
+<a href="/admin-panel/shops.html" class="btn btn-secondary">🏪 All Shops</a>
+<a href="javascript:history.back()" class="btn btn-secondary">⬅️ Go Back</a>
+</div>
+
+<p style="margin-top:20px;font-size:12px;color:#94a3b8">SuperLive V21 - Individual Shop System</p>
+</div>
+
+<script>
+document.getElementById('pathCode').textContent = 'Path: ' + window.location.pathname + window.location.search;
+// Agar common ka url hai to auto redirect ka suggestion
+if(window.location.pathname.includes('/common/')){
+  const note = document.createElement('div');
+  note.style.cssText = 'margin-top:12px;padding:10px;background:#fee2e2;border-radius:8px;color:#991b1b;font-size:13px';
+  note.innerHTML = '👉 Tu common dashboard khol raha hai jo delete ho chuka hai. Admin Panel > Shops me jaake sahi dashboard khol.';
+  document.querySelector('.card').appendChild(note);
+}
+</script>
+</body>
+</html>
