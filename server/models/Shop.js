@@ -1,16 +1,13 @@
-// ========================================
-// Shop Model - shop-create.html, area-manager.html, user-view.html sab ke liye
-// ========================================
+// LOCATION: server/models/Shop.js - V20 WORLD - 50 MODES - AREA MANAGER SAFE - FULL CODE - NO ENUM BLOCK
 const mongoose = require('mongoose');
 
 const shopSchema = new mongoose.Schema({
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false, default: () => new mongoose.Types.ObjectId() },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' }, // Old single manager - backward compatibility
+    managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' },
 
-    // ✅ Multiple Area Managers Support
     managerCodes: {
-        type: [String], // ["SL01", "SL02"]
+        type: [String],
         default: []
     },
 
@@ -26,7 +23,7 @@ const shopSchema = new mongoose.Schema({
         pincode: { type: String, default: '' }
     },
 
-    // ========== AREA SYSTEM FIELDS ==========
+    // ========== AREA SYSTEM FIELDS - AREA MANAGER SAFE ==========
     area: { type: String, default: '' },
     areaCode: { type: String, required: true, uppercase: true, trim: true },
     areaName: { type: String, default: '' },
@@ -35,22 +32,19 @@ const shopSchema = new mongoose.Schema({
 
     location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], default: [0, 0] } // [lng, lat] format
+        coordinates: { type: [Number], default: [0, 0] }
     },
     serviceType: { type: String, required: true, trim: true },
     moduleId: { type: String, default: '' },
     categoryId: { type: String, default: '' },
     description: { type: String, default: '' },
     banner: { type: String, default: '' },
-    logo: { type: String, default: '' }, // ✅ Base64 logo
-    uploadedLogo: { type: String, default: '' }, // purane data ke liye backup
+    logo: { type: String, default: '' },
+    uploadedLogo: { type: String, default: '' },
     icon: { type: String, default: '🏪' },
 
-    // ========== TEMPLATE FIELD ADD KIYA ==========
-    template: { type: String, default: 'general' }, // ✅ NEW: kirana, cloth, medical etc
-    // ========== TEMPLATE FIELD END ==========
+    template: { type: String, default: 'general' },
 
-    // ========== LOCATION TYPE FIELDS ==========
     locationType: {
         type: String,
         enum: ['fixed', 'dynamic'],
@@ -60,30 +54,27 @@ const shopSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    // ========== LOCATION TYPE FIELDS END ==========
 
-    // Banner Approval System
     bannerApproved: { type: Boolean, default: false },
     bannerApprovedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     bannerApprovedAt: { type: Date },
 
-    // Status System
     status: {
         type: String,
         enum: ['pending', 'approved', 'rejected', 'active'],
-        default: 'active' // ✅ LIVE ON CREATE
+        default: 'active'
     },
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
     approvedAt: { type: Date },
     rejectionReason: { type: String, default: '' },
 
-    isVerified: { type: Boolean, default: true }, // ✅ LIVE ON CREATE
+    isVerified: { type: Boolean, default: true },
     isActive: { type: Boolean, default: true },
     priority: { type: Number, default: 0 },
 
-    // ========== CLAIM SYSTEM FIELDS - FIXED ✅ ==========
+    // ========== CLAIM SYSTEM FIELDS ==========
     availableForManagers: {
-        type: [String], // ["SL01", "SL02"]
+        type: [String],
         default: []
     },
     assignedManagerCode: {
@@ -99,7 +90,7 @@ const shopSchema = new mongoose.Schema({
         default: null
     },
     claimedBy: {
-        type: String, // ✅ FIXED: ObjectId se String
+        type: String,
         default: null
     },
     claimedAt: {
@@ -107,19 +98,43 @@ const shopSchema = new mongoose.Schema({
         default: null
     },
     controlledBy: {
-        type: String, // ✅ FIXED: ObjectId se String
+        type: String,
         default: null
     },
     // ========== CLAIM SYSTEM FIELDS END ==========
 
-    // ========== SHOP TYPE & ITEMS ==========
+    // ========== V20 WORLD - 50 MODES SUPPORT - NO ENUM BLOCK - AREA MANAGER SAFE ==========
     shopType: {
         type: String,
-        enum: ['product', 'food', 'service', 'rental', 'fashion', 'common', 'kirana', 'cloth', 'medical', 'restaurant'], // ✅ sare template add
-        default: 'product',
-        required: true
+        required: true,
+        trim: true,
+        lowercase: true,
+        index: true,
+        default: 'kirana'
     },
-    items: [{ // <-- YE SIRF PRODUCT KE LIYE HAI
+    businessMode: {
+        type: String,
+        enum: ['retail','fashion','food','service','healthcare','rental','bulk','mandi','education','csc','fuel','logistics','entertainment','agriculture','handicraft','other'],
+        default: 'retail',
+        index: true,
+        required: false
+    },
+    modeConfig: {
+        type: Map,
+        of: mongoose.Schema.Types.Mixed,
+        default: {}
+    },
+    worldEnabled: {
+        type: Boolean,
+        default: true
+    },
+    isWorldShop: {
+        type: Boolean,
+        default: true
+    },
+    // ========== V20 END ==========
+
+    items: [{
         name: { type: String, required: true },
         price: { type: Number, required: true },
         image: { type: String, default: '' },
@@ -144,7 +159,6 @@ const shopSchema = new mongoose.Schema({
         openTime: { type: String, default: '08:00' },
         closeTime: { type: String, default: '22:00' }
     },
-    // ========== ADMIN PRODUCT MANAGER KE LIYE NAYA FIELD ==========
     products: {
         type: [{
             _id: { type: mongoose.Schema.Types.ObjectId },
@@ -156,7 +170,6 @@ const shopSchema = new mongoose.Schema({
         }],
         default: []
     },
-    // ========== SHOP TYPE & ITEMS END ==========
 
     rating: { type: Number, default: 0, min: 0, max: 5 },
     totalOrders: { type: Number, default: 0 },
@@ -168,8 +181,8 @@ const shopSchema = new mongoose.Schema({
     toObject: { virtuals: true }
 });
 
-// ========== INDEXES ==========
-shopSchema.index({ location: '2dsphere' }); // ✅ nearby ke liye jaruri
+// ========== INDEXES - AREA MANAGER SAFE ==========
+shopSchema.index({ location: '2dsphere' });
 shopSchema.index({ status: 1 });
 shopSchema.index({ area: 1 });
 shopSchema.index({ areaCode: 1 });
@@ -187,9 +200,9 @@ shopSchema.index({ createdAt: -1 });
 shopSchema.index({ isActive: 1 });
 shopSchema.index({ locationType: 1 });
 shopSchema.index({ shopType: 1 });
-shopSchema.index({ template: 1 }); // ✅ template search ke liye
-
-// ✅ CLAIM SYSTEM INDEXES
+shopSchema.index({ template: 1 });
+shopSchema.index({ businessMode: 1 });
+shopSchema.index({ worldEnabled: 1 });
 shopSchema.index({ claimedBy: 1 });
 shopSchema.index({ controlledBy: 1 });
 shopSchema.index({ availableForManagers: 1 });
@@ -198,19 +211,19 @@ shopSchema.index({ areaCode: 1, claimedBy: 1, status: 1 });
 // ========== VIRTUALS ==========
 shopSchema.virtual('fullAddress').get(function() {
     const addr = this.address;
-    if (!addr.city &&!addr.state) return '';
+    if (!addr.city && !addr.state) return '';
     return `${addr.line1}, ${addr.city}, ${addr.state} - ${addr.pincode}`.trim().replace(/^,\s*/, '');
 });
 
 shopSchema.virtual('latlng').get(function() {
-    if (!this.location.coordinates || this.location.coordinates.length!== 2) return null;
+    if (!this.location.coordinates || this.location.coordinates.length !== 2) return null;
     return {
         lat: this.location.coordinates[1],
         lng: this.location.coordinates[0]
     };
 });
 
-// ========== METHODS ==========
+// ========== METHODS - AREA MANAGER SAFE ==========
 shopSchema.methods.isInManagerArea = function(managerAreaCode) {
     return this.areaCode === managerAreaCode;
 };
@@ -231,23 +244,59 @@ shopSchema.methods.addManager = function(managerCode) {
 };
 
 shopSchema.methods.removeManager = function(managerCode) {
-    this.managerCodes = this.managerCodes.filter(code => code!== managerCode);
+    this.managerCodes = this.managerCodes.filter(code => code !== managerCode);
     return this.save();
 };
 
-// ✅ Check if shop is available for claim
 shopSchema.methods.isAvailableForClaim = function() {
     return this.claimedBy === null && this.status === 'active';
 };
 
-// ✅ Claim shop - FIXED: managerCode string leta hai
 shopSchema.methods.claimBy = function(managerCode) {
-    this.claimedBy = managerCode; // String save hoga
+    this.claimedBy = managerCode;
     this.claimedAt = new Date();
-    this.controlledBy = managerCode; // String save hoga
-    this.status = 'active'; // Already active
+    this.controlledBy = managerCode;
+    this.status = 'active';
     this.isVerified = true;
     return this.save();
 };
+
+// V20 NEW METHOD - AUTO DETECT BUSINESS MODE FROM SHOP TYPE
+shopSchema.methods.detectBusinessMode = function() {
+    const type = (this.shopType || '').toLowerCase();
+    const fashionTypes = ['cloth','saree-shop','child-clothes','kids-wear','suit-shop','winter-wear','fabric-shop','footwear','purse','kambal-shop','mat-shop','mattress-shop','watch-shop','jewellery','beauty','saree'];
+    const foodTypes = ['restaurant','dhaba','hotel','pizza','bakery','halwai','juice','tea','grocery-sweet','meat','bakery'];
+    const serviceTypes = ['auto','mobile','battery','mochi','optical','photo-studio','salon','beauty','plumbing','door-shop','ply-board','puja','painting','service'];
+    const healthcareTypes = ['clinic','hospital','medical','vet-clinic','vet-shop','optical','patanjali','lab'];
+    const rentalTypes = ['rental','decoration-shop','charpai-shop','tripal-shop'];
+    const bulkTypes = ['hardware','brick','tiles','sanitary','paint-shop','furniture','electronics','sports','stationery','toy-shop','plastic'];
+    const mandiTypes = ['sabji','fruit','meat','dairy','flower','chakki','krishi','nursery','fish','chicken','achar-shop'];
+    const educationTypes = ['stationery','coaching','school','computer','library'];
+    const cscTypes = ['csc','cyber-cafe','xerox','banking','insurance','recharge'];
+
+    if (fashionTypes.includes(type)) return 'fashion';
+    if (foodTypes.includes(type)) return 'food';
+    if (serviceTypes.includes(type)) return 'service';
+    if (healthcareTypes.includes(type)) return 'healthcare';
+    if (rentalTypes.includes(type)) return 'rental';
+    if (bulkTypes.includes(type)) return 'bulk';
+    if (mandiTypes.includes(type)) return 'mandi';
+    if (educationTypes.includes(type)) return 'education';
+    if (cscTypes.includes(type)) return 'csc';
+    return 'retail';
+};
+
+shopSchema.pre('save', function(next) {
+    if (!this.businessMode || this.isModified('shopType')) {
+        this.businessMode = this.detectBusinessMode();
+    }
+    if (!this.serviceType && this.shopType) {
+        this.serviceType = this.shopType;
+    }
+    if (!this.template && this.shopType) {
+        this.template = this.shopType;
+    }
+    next();
+});
 
 module.exports = mongoose.models.Shop || mongoose.model('Shop', shopSchema);

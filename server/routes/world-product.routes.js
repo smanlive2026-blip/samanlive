@@ -1,4 +1,4 @@
-// LOCATION: server/routes/world-product.routes.js - V20 FINAL - NO AUTH - NO LOCALSTORAGE - BULK FAST - BUFFERING FIXED - 100% WORKING
+// LOCATION: server/routes/world-product.routes.js - V21 - 50 MODES - NO ENUM BLOCK - FULL CODE
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -6,7 +6,7 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../utils/cloudinary');
 const WorldProduct = require('../models/WorldProduct');
 
-// ===== CLOUDINARY - shopType ke hisab se folder =====
+// ===== CLOUDINARY - shopType ke hisab se folder - 50 modes =====
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => ({
@@ -17,31 +17,33 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-// ===== FIX 1: ALERTS & BULK KO SABSE UPAR RAKH - WARNA /:id INKO KHA JAYEGA - YEHI TERA MAIN BUG THA =====
+// ===== ALERTS & BULK KO UPAR RAKHNA ZAROORI HAI - WARNA /:id KHA JAYEGA =====
 
-// ===== 6. LOW STOCK - NO AUTH - TOP PE =====
+// ===== LOW STOCK =====
 router.get('/alerts/low-stock', async (req,res)=>{
   try{
-    const { shopId, shopType } = req.query;
+    const { shopId, shopType, businessMode } = req.query;
     let filter = { isActive:true };
     if(shopId) filter.shopId = shopId;
     if(shopType) filter.shopType = shopType.toLowerCase();
+    if(businessMode) filter.businessMode = businessMode;
     const all = await WorldProduct.find(filter);
     const low = all.filter(p => (p.stock||0) <= (p.lowStockAlert||10));
     res.json({ success:true, count: low.length, data: low });
   }catch(err){ res.status(500).json({ success:false, message: err.message }); }
 });
 
-// ===== 7. BULK ADD - NO AUTH - 100 PRODUCTS 1 REQUEST ME - TOP PE =====
+// ===== BULK ADD - 100 PRODUCTS EK BAAR ME =====
 router.post('/bulk', async (req,res)=>{
   try{
-    const { products, shopId, shopType } = req.body;
+    const { products, shopId, shopType, businessMode } = req.body;
     if(!Array.isArray(products)) return res.status(400).json({ success:false, message:'products array required' });
     if(!shopId) return res.status(400).json({ success:false, message:'shopId required' });
 
     const toInsert = products.map(p=>({
       shopId: p.shopId || shopId,
       shopType: (p.shopType || shopType || 'kirana').toLowerCase(),
+      businessMode: p.businessMode || businessMode || 'retail',
       name: p.name,
       category: p.category || 'General',
       brand: p.brand || p.extraData?.brand || 'Local',
@@ -61,7 +63,6 @@ router.post('/bulk', async (req,res)=>{
       createdBy: p.createdBy || shopId
     }));
 
-    // ordered:false se ek fail hua toh baki insert honge - buffering timeout khatam
     const created = await WorldProduct.insertMany(toInsert, { ordered:false });
 
     if(req.app.get('io')){
@@ -75,7 +76,7 @@ router.post('/bulk', async (req,res)=>{
   }
 });
 
-// ===== 1. CREATE - POST /api/world-products - NO AUTH =====
+// ===== CREATE - NO ENUM CHECK - 50 MODES ALLOWED =====
 router.post('/', upload.array('images', 5), async (req, res) => {
   try {
     const body = req.body;
@@ -84,9 +85,10 @@ router.post('/', upload.array('images', 5), async (req, res) => {
     const name = body.name;
     const price = Number(body.price);
 
-    if(!shopId) return res.status(400).json({ success:false, message: 'shopId required - URL se?shopId=xxx bhejo' });
-    if(!shopType ||!name ||!price) return res.status(400).json({ success:false, message: 'shopType, name, price required' });
+    if(!shopId) return res.status(400).json({ success:false, message: 'shopId required - URL se ?shopId=xxx bhejo' });
+    if(!name || !price) return res.status(400).json({ success:false, message: 'name, price required' });
 
+    // NO ENUM CHECK - Koi bhi shopType allowed hai - 50 modes ke liye
     let images = [];
     let thumbnail = body.thumbnail || body.image || '';
     if(req.files && req.files.length>0){
@@ -101,7 +103,7 @@ router.post('/', upload.array('images', 5), async (req, res) => {
       }catch(e){ extraData = body.extraData; }
     }
 
-    const directFields = ['name','description','price','mrp','stock','unit','lowStockAlert','shopId','shopType','brand','category','thumbnail','images','isActive','areaId','cityId','weight'];
+    const directFields = ['name','description','price','mrp','stock','unit','lowStockAlert','shopId','shopType','businessMode','brand','category','thumbnail','images','isActive','areaId','cityId','weight'];
     Object.keys(body).forEach(k=>{
       if(!directFields.includes(k) && k!=='extraData' && k!=='image' && k!=='type'){
         extraData[k] = body[k];
@@ -111,6 +113,7 @@ router.post('/', upload.array('images', 5), async (req, res) => {
     const product = await WorldProduct.create({
       shopId,
       shopType,
+      businessMode: body.businessMode || 'retail',
       name: body.name,
       category: body.category || 'General',
       brand: body.brand || extraData.brand || 'Local',
@@ -134,17 +137,17 @@ router.post('/', upload.array('images', 5), async (req, res) => {
       req.app.get('io').emit('product-updated', { shopId, shopType, productId: product._id, action:'created' });
     }
 
-    res.json({ success:true, message: `${shopType} product created in World Model - NO AUTH`, data: product });
+    res.json({ success:true, message: `${shopType} product created - V21 - 50 modes`, data: product });
   } catch(err){
     console.error('WorldProduct create error', err);
     res.status(500).json({ success:false, message: err.message });
   }
 });
 
-// ===== 2. GET ALL - ROLE BASED FILTER - NO AUTH =====
+// ===== GET ALL - ROLE BASED - 50 MODES =====
 router.get('/', async (req, res) => {
   try{
-    const { shopType, type, shopId, search, brand, category, minPrice, maxPrice, role, areaId, page=1, limit=100 } = req.query;
+    const { shopType, type, shopId, search, brand, category, minPrice, maxPrice, role, areaId, businessMode, page=1, limit=100 } = req.query;
     const finalShopType = (shopType || type || '').toLowerCase();
     let filter = { isActive:true };
     const currentRole = role || 'dashboard';
@@ -167,6 +170,7 @@ router.get('/', async (req, res) => {
       if(shopId) filter.shopId = shopId;
     }
 
+    if(businessMode) filter.businessMode = businessMode;
     if(brand) filter.brand = new RegExp(brand, 'i');
     if(category) filter.category = new RegExp(category, 'i');
     if(search) filter.name = new RegExp(search, 'i');
@@ -190,10 +194,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ===== 3. GET SINGLE - NICHE RAKHA HAI AB =====
+// ===== GET SINGLE =====
 router.get('/:id', async (req,res)=>{
   try{
-    // alerts/bulk ko id samajh ke error na de
     if(req.params.id === 'alerts' || req.params.id === 'bulk' || req.params.id === 'create'){
       return res.status(400).json({ success:false, message:'Invalid ID - use /alerts/low-stock or /bulk' });
     }
@@ -203,7 +206,7 @@ router.get('/:id', async (req,res)=>{
   }catch(err){ res.status(500).json({ success:false, message: err.message }); }
 });
 
-// ===== 4. UPDATE - NO AUTH =====
+// ===== UPDATE =====
 router.put('/:id', upload.array('images',5), async (req,res)=>{
   try{
     const body = req.body;
@@ -215,7 +218,7 @@ router.put('/:id', upload.array('images',5), async (req,res)=>{
       try{ newExtra = typeof body.extraData === 'string'? JSON.parse(body.extraData) : body.extraData; }catch(e){ newExtra = body.extraData; }
     }
     Object.keys(body).forEach(k=>{
-      if(!['name','price','mrp','stock','unit','weight','category','brand','thumbnail','shopId','shopType','lowStockAlert','isActive'].includes(k)){
+      if(!['name','price','mrp','stock','unit','weight','category','brand','thumbnail','shopId','shopType','businessMode','lowStockAlert','isActive'].includes(k)){
         if(k!=='extraData' && k!=='type') newExtra[k]=body[k];
       }
     });
@@ -226,6 +229,7 @@ router.put('/:id', upload.array('images',5), async (req,res)=>{
     if(body.mrp) updateData.mrp = Number(body.mrp);
     if(body.stock) updateData.stock = Number(body.stock);
     if(body.shopType) updateData.shopType = body.shopType.toLowerCase();
+    if(body.businessMode) updateData.businessMode = body.businessMode;
 
     if(req.files && req.files.length>0){
       updateData.images = req.files.map(f=>({ url: f.path, public_id: f.filename }));
@@ -238,11 +242,11 @@ router.put('/:id', upload.array('images',5), async (req,res)=>{
       req.app.get('io').emit('product-updated', { shopId: updated.shopId, shopType: updated.shopType, productId: updated._id, action:'updated' });
     }
 
-    res.json({ success:true, message:'World product updated - NO AUTH', data: updated });
+    res.json({ success:true, message:'World product updated', data: updated });
   }catch(err){ res.status(500).json({ success:false, message: err.message }); }
 });
 
-// ===== 5. DELETE - NO AUTH - soft delete =====
+// ===== DELETE - soft delete =====
 router.delete('/:id', async (req,res)=>{
   try{
     const p = await WorldProduct.findByIdAndUpdate(req.params.id, { isActive:false }, { new:true });
@@ -250,11 +254,10 @@ router.delete('/:id', async (req,res)=>{
     if(req.app.get('io')){
       req.app.get('io').emit('product-updated', { shopId: p.shopId, shopType: p.shopType, productId: p._id, action:'deleted' });
     }
-    res.json({ success:true, message:'World product deleted - NO AUTH', data: p });
+    res.json({ success:true, message:'World product deleted', data: p });
   }catch(err){ res.status(500).json({ success:false, message: err.message }); }
 });
 
-// ===== 8. COMPATIBILITY OLD /create =====
 router.post('/create', upload.array('images',5), async (req,res)=>{
   req.url = '/';
   router.handle(req,res);
