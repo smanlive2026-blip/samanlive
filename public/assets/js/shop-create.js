@@ -1,4 +1,4 @@
-// LOCATION: public/assets/js/shop-create.js - V22 - NO COMMON FALLBACK - INDIVIDUAL DASHBOARD FIX - FULL CODE
+// LOCATION: public/assets/js/shop-create.js - V23 - MODE ONLY FILTER - NO RELATION TO SHOP CREATE - TREE MATCHED
 let shopCreateManagers = [];
 let shopCreateAreas = [];
 let shopCreateCategories = [];
@@ -13,43 +13,50 @@ window.initShopCreateModule = function (allManagers, allAreas, categories, curre
     shopCreateCategories = categories || [];
     shopCreateCurrentManager = currentManager || null;
     fillModeDropdown();
-    fillCreateShopCategoryDropdown();
+    fillCreateShopCategoryDropdown(''); // default all
     bindCreateShopIconPicker();
     bindCreateShopForm();
     renderCreateShopManagerBox();
     renderCreateShopCityBox();
 };
 
-// ========== MODE DROPDOWN - NAYA - 50 MODES ==========
+// ========== MODE DROPDOWN - ONLY FILTER - 16 MODES - TREE MATCHED ==========
 function fillModeDropdown() {
     const sel = document.getElementById('createShopMode');
     if (!sel) return;
     if (!window.SHOP_MODES) {
-        sel.innerHTML = '<option value="retail">Retail</option>';
+        sel.innerHTML = '<option value="">All Shops (No Filter)</option>';
         return;
     }
-    const modes = Object.keys(window.SHOP_MODES).map(key => {
+    // V23 - Mode sirf filter hai, required nahi - default All
+    let html = '<option value="">All Shops (No Filter) - 72 shops</option>';
+    Object.keys(window.SHOP_MODES).forEach(key => {
         const m = window.SHOP_MODES[key];
-        return { id: key, name: m.name, icon: m.icon };
+        const count = (m.shops && m.shops.length) || 0;
+        if (count > 0) {
+            html += `<option value="${key}">${m.icon} ${m.name} - ${count} shops</option>`;
+        }
     });
-    sel.innerHTML = '<option value="">Select Business Mode *</option>' +
-        modes.map(m => `<option value="${m.id}">${m.icon} ${m.name}</option>`).join('');
+    sel.innerHTML = html;
     
-    // Change pe category filter karo
     sel.onchange = function() {
         selectedMode = this.value;
         fillCreateShopCategoryDropdown(selectedMode);
-        // Mode info dikhao
         const infoBox = document.getElementById('modeInfoBox');
-        if (infoBox && window.SHOP_MODES[selectedMode]) {
-            const mode = window.SHOP_MODES[selectedMode];
-            infoBox.style.display = 'block';
-            infoBox.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><span style="font-size:20px">${mode.icon}</span><div><strong>${mode.name}</strong><br><small style="color:#64748b">Fields: ${mode.fields.join(', ')} | Tabs: ${mode.tabs.join(', ')}</small></div></div>`;
+        if (infoBox) {
+            if (selectedMode && window.SHOP_MODES[selectedMode]) {
+                const mode = window.SHOP_MODES[selectedMode];
+                infoBox.style.display = 'block';
+                infoBox.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><span style="font-size:20px">${mode.icon}</span><div><strong>Filter: ${mode.name}</strong><br><small style="color:#64748b">${mode.shops.length} shops filtered | Shop category se banegi, mode sirf filter hai</small></div></div>`;
+            } else {
+                infoBox.style.display = 'block';
+                infoBox.innerHTML = `<div><strong>All Shops</strong><br><small style="color:#64748b">Saari shops dikh rahi hai - mode filter nahi hai</small></div>`;
+            }
         }
     };
 }
 
-// ========== CATEGORY DROPDOWN - MODE SE FILTER ==========
+// ========== CATEGORY DROPDOWN - MODE = ONLY FILTER ==========
 function fillCreateShopCategoryDropdown(filterMode) {
     const sel = document.getElementById('createShopModule');
     if (!sel) return;
@@ -57,18 +64,26 @@ function fillCreateShopCategoryDropdown(filterMode) {
     if (typeof window.getAllShopTemplates === 'function') {
         list = window.getAllShopTemplates();
     } else if (shopCreateCategories && shopCreateCategories.length) {
-        list = shopCreateCategories.map(c => ({ id: c.id || c._id, name: c.name, icon: c.icon || '🏪', mode: 'retail' }));
+        list = shopCreateCategories.map(c => ({ id: c.id || c._id, name: c.name, icon: c.icon || '🏪', folder: c.folder || c.id, mode: c.mode || 'retail' }));
     }
-    // Mode se filter
-    if (filterMode) {
-        list = list.filter(c => c.mode === filterMode);
+
+    // V23 FILTER LOGIC - Mode sirf filter, relation nahi
+    if (filterMode && window.SHOP_MODES[filterMode] && window.SHOP_MODES[filterMode].shops) {
+        const allowedIds = window.SHOP_MODES[filterMode].shops.map(s => String(s).toLowerCase());
+        list = list.filter(c => {
+            const id = String(c.id || '').toLowerCase();
+            const folder = String(c.folder || '').toLowerCase();
+            return allowedIds.includes(id) || allowedIds.includes(folder);
+        });
     }
+    // Agar filterMode empty hai toh saari list dikhao
+
     if (list.length === 0) {
-        sel.innerHTML = '<option value="">No shops in this mode - choose another</option>';
+        sel.innerHTML = '<option value="">No shops in this filter - select All</option>';
         return;
     }
-    sel.innerHTML = '<option value="">Select Shop Category *</option>' +
-        list.map(c => `<option value="${c.id}">${c.icon || '🏪'} ${c.name}</option>`).join('');
+    sel.innerHTML = '<option value="">Select Shop Category * (Category se shop banegi)</option>' +
+        list.map(c => `<option value="${c.id}">${c.icon || '🏪'} ${c.name} - /${c.folder}/</option>`).join('');
 }
 
 function openCreateShopModal() {
@@ -76,7 +91,7 @@ function openCreateShopModal() {
         shopCreateCurrentManager = window.currentManager;
     }
     fillModeDropdown();
-    fillCreateShopCategoryDropdown();
+    fillCreateShopCategoryDropdown('');
     renderCreateShopManagerBox();
     renderCreateShopCityBox();
     document.getElementById('createShopModal')?.classList.add('active');
@@ -84,6 +99,8 @@ function openCreateShopModal() {
 function closeCreateShopModal() {
     document.getElementById('createShopModal')?.classList.remove('active');
     selectedMode = '';
+    const modeSel = document.getElementById('createShopMode');
+    if (modeSel) modeSel.value = '';
     const infoBox = document.getElementById('modeInfoBox');
     if (infoBox) infoBox.style.display = 'none';
 }
@@ -97,12 +114,16 @@ function renderCreateShopCityBox() {
     const pincode = area.pincode || '';
     if (!city) { box.style.display = 'none'; return; }
     box.style.display = 'flex';
-    document.getElementById('createShopDetectedCityName').textContent = city;
-    document.getElementById('createShopDetectedCityMeta').textContent =
-        `${state}${pincode ? ' • ' + pincode : ''} • Area: ${shopCreateCurrentManager.areaCode || ''}`;
-    document.getElementById('createShopCity').value = city;
-    document.getElementById('createShopState').value = state;
-    document.getElementById('createShopPincode').value = pincode;
+    const nameEl = document.getElementById('createShopDetectedCityName');
+    const metaEl = document.getElementById('createShopDetectedCityMeta');
+    if (nameEl) nameEl.textContent = city;
+    if (metaEl) metaEl.textContent = `${state}${pincode ? ' • ' + pincode : ''} • Area: ${shopCreateCurrentManager.areaCode || ''}`;
+    const cityEl = document.getElementById('createShopCity');
+    const stateEl = document.getElementById('createShopState');
+    const pinEl = document.getElementById('createShopPincode');
+    if (cityEl) cityEl.value = city;
+    if (stateEl) stateEl.value = state;
+    if (pinEl) pinEl.value = pincode;
 }
 
 function renderCreateShopManagerBox() {
@@ -146,8 +167,10 @@ function previewCreateShopLogo(event) {
     const reader = new FileReader();
     reader.onload = e => {
         createShopLogoBase64 = e.target.result;
-        document.getElementById('createShopLogoPreview').innerHTML = `<img src="${createShopLogoBase64}" alt="Shop Logo">`;
-        document.getElementById('createShopRemoveLogoBtn').style.display = 'inline-flex';
+        const prev = document.getElementById('createShopLogoPreview');
+        if (prev) prev.innerHTML = `<img src="${createShopLogoBase64}" alt="Shop Logo">`;
+        const rmBtn = document.getElementById('createShopRemoveLogoBtn');
+        if (rmBtn) rmBtn.style.display = 'inline-flex';
     };
     reader.readAsDataURL(file);
 }
@@ -155,8 +178,10 @@ function removeCreateShopLogo() {
     createShopLogoBase64 = '';
     const input = document.getElementById('createShopLogoInput');
     if (input) input.value = '';
-    document.getElementById('createShopLogoPreview').innerHTML = `<i class="fa fa-camera"></i><p>Upload Shop Photo</p><span style="font-size:12px;color:#64748b">JPG, PNG • Max 2MB</span>`;
-    document.getElementById('createShopRemoveLogoBtn').style.display = 'none';
+    const prev = document.getElementById('createShopLogoPreview');
+    if (prev) prev.innerHTML = `<i class="fa fa-camera"></i><p>Upload Shop Photo</p><span style="font-size:12px;color:#64748b">JPG, PNG • Max 2MB</span>`;
+    const rmBtn = document.getElementById('createShopRemoveLogoBtn');
+    if (rmBtn) rmBtn.style.display = 'none';
 }
 
 function bindCreateShopForm() {
@@ -170,15 +195,17 @@ function bindCreateShopForm() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Shop...';
 
-        const modeId = document.getElementById('createShopMode')?.value;
         const templateId = document.getElementById('createShopModule').value;
-        if (!modeId) { alert('Pehle Business Mode select karo'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop'; return; }
-        if (!templateId) { alert('Pehle Shop Category select karo'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop'; return; }
+        const modeId = document.getElementById('createShopMode')?.value || ''; // V23 - sirf filter, required nahi
+
+        if (!templateId) { 
+            alert('Shop Category select karo - Mode sirf filter hai, category se shop banegi'); 
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Create Shop'; 
+            return; 
+        }
 
         const folder = (typeof window.getShopTemplateFolder === 'function')
             ? window.getShopTemplateFolder(templateId) : templateId;
-        const shopType = templateId;
-        const businessMode = modeId;
 
         const payload = {
             shopName: document.getElementById('createShopName').value.trim(),
@@ -188,8 +215,8 @@ function bindCreateShopForm() {
             template: templateId,
             templateFolder: folder,
             folder: folder,
-            shopType: shopType,
-            businessMode: businessMode,
+            shopType: templateId,
+            businessMode: modeId || 'all', // V23 - info ke liye save, logic category se
             icon: selectedCreateShopIcon || '🏪',
             logo: createShopLogoBase64 || '',
             phone: document.getElementById('createShopPhone').value.trim(),
@@ -217,7 +244,6 @@ function bindCreateShopForm() {
 
             if (data.success) {
                 const shop = data.shop || {};
-                // ✅ FIXED V22 - NO COMMON FALLBACK - DIRECT TEMPLATE
                 let finalFolder = shop.templateFolder || shop.template || shop.folder || templateId || folder;
                 if (finalFolder === 'common' || finalFolder === 'general') finalFolder = templateId;
                 let dashFolder = (typeof window.getShopTemplateFolder === 'function' && shop.template)
@@ -230,11 +256,13 @@ function bindCreateShopForm() {
                     dashboardUrl = `${window.location.origin}/shop-templates/${dashFolder}/dashboard.html?shopId=${shop._id || ''}`;
                 }
 
-                alert(`✅ Shop Created Successfully!\n\nShop: ${payload.shopName}\nMode: ${businessMode}\nCategory: ${templateId}\nDashboard: ${dashFolder}\n\nLink owner ko bhej do:\n${dashboardUrl}`);
+                alert(`✅ Shop Created Successfully!\n\nShop: ${payload.shopName}\nCategory: ${templateId}\nFolder: ${dashFolder}\nFilter Mode: ${modeId || 'All'}\n\nDashboard:\n${dashboardUrl}`);
                 form.reset();
                 removeCreateShopLogo();
                 selectedCreateShopIcon = '🏪';
                 selectedMode = '';
+                const modeSel = document.getElementById('createShopMode');
+                if (modeSel) modeSel.value = '';
                 document.querySelectorAll('#createShopIconPicker .icon-option').forEach((el, i) => el.classList.toggle('selected', i === 0));
                 const infoBox = document.getElementById('modeInfoBox');
                 if (infoBox) infoBox.style.display = 'none';
@@ -265,4 +293,4 @@ window.previewCreateShopLogo = previewCreateShopLogo;
 window.removeCreateShopLogo = removeCreateShopLogo;
 window.toggleSelectAllCreateShopManagers = toggleSelectAllCreateShopManagers;
 
-console.log('✅ shop-create.js V22 loaded - No Common - Individual Dashboard Direct');
+console.log('✅ shop-create.js V23 - MODE ONLY FILTER - Shop category se banegi - Tree matched - No common fallback');
