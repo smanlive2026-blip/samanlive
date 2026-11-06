@@ -1,27 +1,243 @@
-<!-- LOCATION: public/executive/dashboard.html - EXECUTIVE DASHBOARD V14 FINAL - 3 COLUMN KINGMAKER -->
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Executive - Kingmaker Dashboard</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
-<style>*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}body{background:#f1f5f9}.header{background:#0f172a;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:20}.cols{display:grid;grid-template-columns:40% 30% 30%;gap:10px;padding:10px;height:calc(100vh - 60px)}@media(max-width:1000px){.cols{grid-template-columns:1fr;height:auto}}.col{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}.col-head{padding:10px 12px;border-bottom:1px solid #e2e8f0;font-weight:900;display:flex;justify-content:space-between;align-items:center;background:#f8fafc}.list{overflow:auto;padding:8px;flex:1}.card{border:1px solid #e2e8f0;border-radius:10px;padding:10px;margin-bottom:8px;cursor:pointer}.card.selected{border-color:#16a34a;background:#f0fdf4}.card img{width:100%;height:120px;object-fit:cover;border-radius:8px}.badge{padding:2px 6px;border-radius:12px;font-size:10px;font-weight:800}.badge-high{background:#fee2e2;color:#991b1b}.badge-medium{background:#fef3c7;color:#92400e}.badge-low{background:#dcfce7;color:#166534}input,select{padding:8px;border:1px solid #e2e8f0;border-radius:8px;width:100%;margin:4px 0}.btn{padding:8px 12px;border-radius:8px;border:0;font-weight:800;cursor:pointer}.btn-green{background:#16a34a;color:#fff}.btn-dark{background:#0f172a;color:#fff}.assign-box{padding:10px;border-top:2px dashed #16a34a;background:#f0fdf4}</style>
-</head><body>
-<div class="header"><div><b style="font-weight:900"><i class="fa-solid fa-crown"></i> Executive: <span id="execName">Loading...</span></b><br><small id="execAreas" style="color:#94a3b8"></small></div><div style="display:flex;gap:8px;align-items:center"><span id="execWallet" style="background:#16a34a;padding:6px 10px;border-radius:20px;font-weight:800">₹0</span><button class="btn btn-green" onclick="loadAll()">Refresh</button></div></div>
-<div class="cols">
-<!-- LEFT: PRODUCT POOL -->
-<div class="col"><div class="col-head"><span><i class="fa-solid fa-boxes-stacked"></i> Product Pool (<span id="poolCount">0</span>)</span><select id="poolStatus" style="width:auto"><option value="pending">Pending</option><option value="approved">Approved</option><option value="">All</option></select></div><div style="padding:8px;display:flex;gap:6px"><input id="poolSearch" placeholder="Search product, PM, area..."></div><div id="poolList" class="list">Loading pool...</div></div>
-<!-- MIDDLE: AREA DEMANDS -->
-<div class="col"><div class="col-head"><span><i class="fa-solid fa-clipboard-list"></i> Area Demands (<span id="demandCount">0</span>)</span><select id="demandStatus" style="width:auto"><option value="open">Open</option><option value="fulfilled">Fulfilled</option><option value="">All</option></select></div><div id="demandList" class="list">Loading demands...</div></div>
-<!-- RIGHT: ASSIGN PANEL -->
-<div class="col"><div class="col-head"><span><i class="fa-solid fa-handshake"></i> Assign Panel</span><small id="selectedInfo" style="color:#16a34a"></small></div><div class="list"><div id="selectedProduct" style="padding:10px;border:1px dashed #cbd5e1;border-radius:8px;text-align:center;color:#64748b">Select a product from left</div><div id="selectedDemand" style="margin-top:8px;padding:10px;border:1px dashed #cbd5e1;border-radius:8px;text-align:center;color:#64748b">Select a demand from middle (optional)</div><div class="assign-box" style="margin-top:10px"><h4 style="font-weight:800">Final Assignment</h4><input id="finalArea" placeholder="Final Area * e.g., Naliya"><input id="finalShopType" placeholder="Shop Type * e.g., kirana"><input id="finalPrice" type="number" placeholder="Final Price * e.g., 500"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><input id="pmPercent" type="number" value="70" placeholder="PM %"><input id="execPercent" type="number" value="5" placeholder="Exec %"><input id="adminPercent" type="number" value="5" placeholder="Admin %"><input id="shopPercent" type="number" value="20" placeholder="Shop %"></div><button class="btn btn-green" style="width:100%;margin-top:8px;padding:12px;font-size:14px" id="assignBtn"><i class="fa-solid fa-rocket"></i> ASSIGN & PUBLISH TO SHOPS</button><div id="assignMsg" style="margin-top:8px;font-weight:700"></div></div></div></div>
+<!-- LOCATION: public/executive/dashboard.html - V23 UNIFIED PROFILE - FULL CODE - NO CUT -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Executive Dashboard - SAMANLIVE</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:#f8fafc;color:#0f172a}
+.topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.topbar b{font-size:18px;font-weight:900}
+.btn{padding:10px 14px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.btn-primary{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.btn-danger{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
+.wrap{max-width:1100px;margin:0 auto;padding:20px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:18px;margin-bottom:16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.kpi{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px}
+.kpi small{font-size:11px;font-weight:800;letter-spacing:.6px;opacity:.5}
+.kpi h2{font-size:26px;font-weight:900;margin-top:6px}
+.profile-box{display:flex;gap:16px;align-items:flex-start}
+.avatar-wrap{position:relative;width:110px;height:110px;flex-shrink:0}
+.avatar-wrap img{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #ede9fe;background:#f5f3ff}
+.avatar-wrap .cam{position:absolute;bottom:4px;right:4px;width:32px;height:32px;border-radius:50%;background:#7c3aed;color:#fff;display:grid;place-items:center;cursor:pointer;border:2px solid #fff;font-size:13px}
+.input{width:100%;padding:11px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;margin-top:6px;outline:none}
+.input:focus{border-color:#7c3aed}
+.label{font-size:11px;font-weight:800;letter-spacing:.4px;opacity:.6}
+.badge{display:inline-flex;gap:6px;align-items:center;background:#dcfce7;color:#15803d;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800}
+.badge.pending{background:#fef9c3;color:#854d0e}
+.table{width:100%;border-collapse:collapse;font-size:13px}
+.table th{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0;font-size:11px;opacity:.6}
+.table td{padding:10px;border-bottom:1px solid #f1f5f9}
+@media(max-width:800px){.grid-2,.grid-3{grid-template-columns:1fr}.profile-box{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div><b>👑 Executive Dashboard</b><div style="font-size:11px;color:#64748b">Kingmaker - Approve Shops & Managers</div></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="execTopName" style="font-size:13px;font-weight:700"></span>
+    <img id="execTopPhoto" src="/assets/default-avatar.png" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #ede9fe">
+    <button class="btn btn-danger" onclick="execLogout()">Logout</button>
+  </div>
 </div>
+
+<div class="wrap">
+  <div class="grid-3">
+    <div class="kpi"><small>TOTAL ASSIGNED</small><h2 id="kpiAssigned">0</h2><span style="font-size:11px;color:#64748b">Shops + Managers</span></div>
+    <div class="kpi"><small>WALLET BALANCE</small><h2>₹<span id="kpiWallet">0</span></h2><span style="font-size:11px;color:#64748b">Total Earning ₹<span id="kpiEarning">0</span></span></div>
+    <div class="kpi"><small>PENDING APPROVAL</small><h2 id="kpiPending">0</h2><span style="font-size:11px;color:#64748b">Approve karna hai</span></div>
+  </div>
+
+  <!-- PROFILE - PHOTO + DETAILS - CLOUDINARY -->
+  <div class="card">
+    <h3 style="font-size:16px;font-weight:900"><i class="fa fa-user-circle"></i> My Profile - Photo Cloudinary se jayegi</h3>
+    <p style="font-size:12px;color:#64748b;margin-top:4px">Yahan se photo badlo toh sab jagah - Admin Panel, Area Manager list, sab me wahi photo dikhegi</p>
+
+    <div class="profile-box" style="margin-top:16px">
+      <div class="avatar-wrap">
+        <img id="execPhoto" src="/assets/default-avatar.png" alt="Executive Photo">
+        <div class="cam" onclick="document.getElementById('execPhotoInput').click()"><i class="fa fa-camera"></i></div>
+        <input type="file" id="execPhotoInput" hidden accept="image/*">
+      </div>
+      <div style="flex:1">
+        <div class="grid-2">
+          <div><span class="label">FULL NAME *</span><input id="execName" class="input" placeholder="Executive Name"></div>
+          <div><span class="label">PHONE *</span><input id="execPhone" class="input" placeholder="9876543210" maxlength="10"></div>
+        </div>
+        <div class="grid-2">
+          <div><span class="label">EMAIL</span><input id="execEmail" class="input" placeholder="exec@samanlive.in"></div>
+          <div><span class="label">ASSIGNED AREAS</span><input id="execAreas" class="input" placeholder="Naliya, Bhuj - comma se alag"></div>
+        </div>
+        <div style="margin-top:10px">
+          <span class="label">ASSIGNED SHOP TYPES</span>
+          <input id="execShopTypes" class="input" placeholder="kirana, patanjali - khaali matlab sab types">
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="saveExecBtn" onclick="saveExecutiveProfile()"><i class="fa fa-save"></i> Save Profile</button>
+          <button class="btn" onclick="document.getElementById('execPhotoInput').click()"><i class="fa fa-camera"></i> Change Photo</button>
+          <span id="execMsg" style="font-size:12px;color:#64748b"></span>
+          <span id="execStatus" class="badge">● ACTIVE</span>
+        </div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:8px">Photo 5MB se chhoti, JPG / PNG / WEBP. Upload hote hi Cloudinary URL save hoga - DB me base64 nahi jayega.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PENDING LIST -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="font-size:15px;font-weight:900">⏳ Pending Approvals</h3>
+      <button class="btn" onclick="loadExecData()"><i class="fa fa-sync"></i> Refresh</button>
+    </div>
+    <div id="pendingList" style="margin-top:12px;font-size:13px;color:#64748b">Loading...</div>
+  </div>
+
+  <!-- MY MANAGERS / SHOPS -->
+  <div class="card">
+    <h3 style="font-size:15px;font-weight:900">📋 My Assigned Shops</h3>
+    <div id="myShopsList" style="margin-top:12px;font-size:13px;color:#64748b">Loading...</div>
+  </div>
+</div>
+
+<script src="/shop-templates/common/profile/profile-core.js"></script>
 <script>
-// LOCATION: JS - Executive Dashboard Kingmaker Logic - V14 FINAL
-const execId = new URLSearchParams(location.search).get('execId') || localStorage.getItem('execId') || '';
-let selectedPool = null, selectedDemand = null;
-async function loadExec(){ if(!execId) return; const res = await fetch(`/api/executive/list`).then(r=>r.json()); const exec = (res.data||[]).find(e=>e._id===execId) || res.data?.[0]; if(exec){ document.getElementById('execName').textContent = exec.name; document.getElementById('execAreas').textContent = `Areas: ${(exec.assignedAreas||[]).join(', ')||'All India'} | Assigned: ${exec.totalAssigned||0}`; document.getElementById('execWallet').textContent = `₹${exec.walletBalance||0}`; } }
-async function loadPool(){ const status=document.getElementById('poolStatus').value; const q=document.getElementById('poolSearch').value.toLowerCase(); const url=status?`/api/executive/product-pool?status=${status}`:'/api/executive/product-pool'; const res=await fetch(url).then(r=>r.json()); let data=res.data||[]; if(q) data=data.filter(p=> (p.name+' '+p.category+' '+(p.productManagerId?.name||'')+' '+(p.areaTags||[]).join(' ')).toLowerCase().includes(q) ); document.getElementById('poolCount').textContent=data.length; const list=document.getElementById('poolList'); if(!data.length){ list.innerHTML='<div style="text-align:center;padding:20px;color:#94a3b8">No products</div>'; return; } list.innerHTML=data.map(p=>`<div class="card ${selectedPool?._id===p._id?'selected':''}" onclick="selectPool('${p._id}')"><img src="${p.thumbnail||p.images?.[0]||'https://via.placeholder.com/300'}" onerror="this.src='https://via.placeholder.com/300'"><div style="margin-top:6px"><b>${p.name}</b><br><small style="color:#64748b">${p.category} | Base ₹${p.basePrice} | Stock ${p.stock} | Areas ${(p.areaTags||[]).join(', ')}</small><br><small>PM: ${p.productManagerId?.name||''} (${p.productManagerId?.type||''}) | ${p.productManagerId?.area||''}</small><br><span class="badge" style="background:#f1f5f9">${p.status.toUpperCase()}</span></div></div>`).join(''); window._poolData=data; }
-async function loadDemands(){ const status=document.getElementById('demandStatus').value; const url=status?`/api/executive/area-demands?status=${status}`:'/api/executive/area-demands'; const res=await fetch(url).then(r=>r.json()); const data=res.data||[]; document.getElementById('demandCount').textContent=data.length; const list=document.getElementById('demandList'); if(!data.length){ list.innerHTML='<div style="text-align:center;padding:20px;color:#94a3b8">No demands</div>'; return; } list.innerHTML=data.map(d=>`<div class="card ${selectedDemand?._id===d._id?'selected':''}" onclick="selectDemand('${d._id}')"><div style="display:flex;justify-content:space-between"><b>${d.productName}</b><span class="badge badge-${d.priority}">${d.priority.toUpperCase()}</span></div><small style="color:#64748b">Area: ${d.areaName} | Qty: ${d.quantity} | Cat: ${d.productCategory||''}</small><br><small>${d.notes||''}</small><br><small style="color:#94a3b8">${new Date(d.createdAt).toLocaleString()}</small><div style="margin-top:6px"><span class="badge" style="background:#f1f5f9">${d.status.toUpperCase()}</span></div></div>`).join(''); window._demandData=data; }
-function selectPool(id){ selectedPool = window._poolData.find(p=>p._id===id); document.getElementById('selectedProduct').innerHTML = `<b>Product:</b> ${selectedPool.name}<br><small>Base ₹${selectedPool.basePrice} | Suggested ₹${selectedPool.suggestedPrice||'auto'}<br>PM: ${selectedPool.productManagerId?.name} (${selectedPool.productManagerId?.phone})</small>`; document.getElementById('finalArea').value = selectedPool.areaTags?.[0]||''; document.getElementById('finalPrice').value = selectedPool.finalPrice || selectedPool.suggestedPrice || Math.round(selectedPool.basePrice*1.25); document.getElementById('selectedInfo').textContent = `${selectedPool.name} selected`; loadPool(); }
-function selectDemand(id){ selectedDemand = window._demandData.find(d=>d._id===id); document.getElementById('selectedDemand').innerHTML = `<b>Demand:</b> ${selectedDemand.productName} (${selectedDemand.areaName})<br><small>Qty ${selectedDemand.quantity} | ${selectedDemand.notes||''}</small>`; document.getElementById('finalArea').value = selectedDemand.areaName; loadDemands(); }
-async function assign(){ if(!selectedPool){ document.getElementById('assignMsg').textContent='Select product first'; document.getElementById('assignMsg').style.color='red'; return; } const areaName=document.getElementById('finalArea').value.trim(); const shopType=document.getElementById('finalShopType').value.trim()||'kirana'; const finalPrice=Number(document.getElementById('finalPrice').value); if(!areaName||!finalPrice){ document.getElementById('assignMsg').textContent='Area and Final Price required'; document.getElementById('assignMsg').style.color='red'; return; } const body={ productPoolId:selectedPool._id, executiveId:execId||undefined, areaManagerId:selectedDemand?.areaManagerId, areaName, shopType, finalPrice, commission:{ pmPercent:Number(document.getElementById('pmPercent').value)||70, executivePercent:Number(document.getElementById('execPercent').value)||5, adminPercent:Number(document.getElementById('adminPercent').value)||5, shopPercent:Number(document.getElementById('shopPercent').value)||20 } }; document.getElementById('assignMsg').textContent='Assigning...'; const res=await fetch('/api/executive/assign',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()); if(res.success){ document.getElementById('assignMsg').textContent='SUCCESS! Product live in shops'; document.getElementById('assignMsg').style.color='green'; if(selectedDemand){ await fetch(`/api/area-demand/fulfill/${selectedDemand._id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({fulfilledBy:selectedPool._id,fulfilledByExecutive:execId})}); } selectedPool=null; selectedDemand=null; document.getElementById('selectedProduct').innerHTML='Select a product from left'; document.getElementById('selectedDemand').innerHTML='Select a demand from middle (optional)'; loadAll(); } else{ document.getElementById('assignMsg').textContent='Error: '+(res.error||'failed'); document.getElementById('assignMsg').style.color='red'; } }
-function loadAll(){ loadPool(); loadDemands(); loadExec(); }
-document.getElementById('poolStatus').onchange=loadPool; document.getElementById('demandStatus').onchange=loadDemands; document.getElementById('poolSearch').oninput=loadPool; document.getElementById('assignBtn').onclick=assign; loadAll();
-</script></body></html>
+let EXEC_ID = localStorage.getItem('executiveId') || new URLSearchParams(location.search).get('executiveId') || '';
+let EXEC_DATA = null;
+
+async function initExec(){
+  if(!EXEC_ID){
+    // Token se try karo
+    const token = localStorage.getItem('executiveToken') || '';
+    if(!token){ document.body.innerHTML = '<div style="padding:40px">Login karo pehle - <a href="/">Home</a></div>'; return; }
+  } else {
+    localStorage.setItem('executiveId', EXEC_ID);
+  }
+
+  // Photo input - UnifiedProfile se Cloudinary pe jayegi
+  const input = document.getElementById('execPhotoInput');
+  if(input){
+    input.addEventListener('change', async () => {
+      const r = await window.UnifiedProfile.handleFileInput(input, {
+        role: 'executive',
+        previewSelector: '#execPhoto, #execTopPhoto',
+        msgId: 'execMsg',
+        btnId: 'saveExecBtn'
+      });
+      if(r && r.success){
+        EXEC_DATA = EXEC_DATA || {};
+        EXEC_DATA.photo = r.url;
+        document.getElementById('execMsg').textContent = '✅ Photo save ho gayi - Cloudinary URL: ' + r.url.slice(0,60) + '...';
+      }
+    });
+  }
+
+  await loadExecData();
+}
+
+async function loadExecData(){
+  try{
+    const token = localStorage.getItem('executiveToken') || '';
+    // 1. Profile load - Unified API
+    try{
+      const prof = await window.UnifiedProfile.loadMyProfile();
+      if(prof && prof.success && prof.user){
+        EXEC_DATA = prof.user;
+        fillExecForm(prof.user);
+      }
+    }catch(e){}
+
+    // 2. Fallback - direct executive API
+    if(!EXEC_DATA && EXEC_ID){
+      const res = await fetch(`/api/executive/${EXEC_ID}`, { headers: { 'Authorization': 'Bearer ' + token } }).then(r=>r.json()).catch(()=>null);
+      if(res && (res.executive || res.data)){
+        const ex = res.executive || res.data;
+        EXEC_DATA = ex;
+        fillExecForm(ex);
+      }
+    }
+
+    // 3. Stats - pending / assigned
+    const stats = await fetch(`/api/executive/dashboard?executiveId=${EXEC_ID}`, { headers: { 'Authorization': 'Bearer ' + token } }).then(r=>r.json()).catch(()=>null);
+    if(stats){
+      document.getElementById('kpiAssigned').textContent = stats.totalAssigned || stats.assigned || 0;
+      document.getElementById('kpiWallet').textContent = stats.walletBalance || 0;
+      document.getElementById('kpiEarning').textContent = stats.totalEarning || 0;
+      document.getElementById('kpiPending').textContent = (stats.pending || []).length || 0;
+      renderPending(stats.pending || []);
+      renderShops(stats.shops || []);
+    }
+  }catch(e){ console.log('exec load warn', e.message); }
+}
+
+function fillExecForm(u){
+  if(!u) return;
+  document.getElementById('execName').value = u.name || '';
+  document.getElementById('execPhone').value = u.phone || '';
+  document.getElementById('execEmail').value = u.email || '';
+  document.getElementById('execAreas').value = Array.isArray(u.assignedAreas) ? u.assignedAreas.join(', ') : (u.assignedAreas || '');
+  document.getElementById('execShopTypes').value = Array.isArray(u.assignedShopTypes) ? u.assignedShopTypes.join(', ') : (u.assignedShopTypes || '');
+  document.getElementById('execTopName').textContent = u.name || '';
+  const pic = u.profilePic || u.avatar || u.photo || '';
+  if(pic){
+    document.getElementById('execPhoto').src = pic;
+    document.getElementById('execTopPhoto').src = pic;
+    localStorage.setItem('executivePhoto', pic);
+  }
+  const st = document.getElementById('execStatus');
+  if(u.isActive === false){ st.textContent = '● INACTIVE'; st.className = 'badge pending'; }
+}
+
+async function saveExecutiveProfile(){
+  const msg = document.getElementById('execMsg');
+  msg.textContent = 'Saving...'; msg.style.color = '#64748b';
+  const payload = {
+    executiveId: EXEC_ID,
+    name: document.getElementById('execName').value.trim(),
+    phone: document.getElementById('execPhone').value.trim(),
+    email: document.getElementById('execEmail').value.trim(),
+    assignedAreas: document.getElementById('execAreas').value.split(',').map(s=>s.trim()).filter(Boolean),
+    assignedShopTypes: document.getElementById('execShopTypes').value.split(',').map(s=>s.trim()).filter(Boolean)
+  };
+  if(!payload.name || !payload.phone){ msg.textContent = 'Name aur Phone chahiye'; msg.style.color = 'red'; return; }
+  try{
+    const token = localStorage.getItem('executiveToken') || '';
+    const res = await fetch(`/api/executive/${EXEC_ID}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(payload)
+    }).then(r=>r.json());
+    if(res.success || res.executive){ msg.textContent = '✅ Profile Saved!'; msg.style.color = 'green'; }
+    else { msg.textContent = 'Error: ' + (res.error || res.message || 'fail'); msg.style.color = 'red'; }
+  }catch(e){ msg.textContent = 'Error: ' + e.message; msg.style.color = 'red'; }
+}
+
+function renderPending(list){
+  const box = document.getElementById('pendingList');
+  if(!list || list.length === 0){ box.innerHTML = 'Koi pending nahi hai 🎉'; return; }
+  box.innerHTML = '<table class="table"><tr><th>Name</th><th>Type</th><th>Action</th></tr>' + list.map((p,i) => `<tr><td>${p.name || p.shopName || 'Shop ' + (i+1)}</td><td>${p.shopType || p.type || ''}</td><td><button class="btn btn-primary" onclick="approveItem('${p._id || p.id}','${p.kind || 'shop'}')">Approve</button></td></tr>`).join('') + '</table>';
+}
+function renderShops(list){
+  const box = document.getElementById('myShopsList');
+  if(!list || list.length === 0){ box.innerHTML = 'Abhi koi shop assign nahi hai'; return; }
+  box.innerHTML = '<table class="table"><tr><th>Shop</th><th>Area</th><th>Status</th></tr>' + list.map(s => `<tr><td>${s.shopName || s.name}</td><td>${s.area || ''}</td><td>${s.isActive ? 'Active' : 'Pending'}</td></tr>`).join('') + '</table>';
+}
+async function approveItem(id, kind){
+  if(!confirm('Approve karna hai?')) return;
+  const token = localStorage.getItem('executiveToken') || '';
+  const res = await fetch(`/api/executive/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ id, kind, executiveId: EXEC_ID }) }).then(r=>r.json()).catch(()=>({}));
+  alert(res.success ? '✅ Approved!' : 'Error: ' + (res.error || 'fail'));
+  loadExecData();
+}
+function execLogout(){ localStorage.removeItem('executiveToken'); localStorage.removeItem('executiveId'); location.href = '/'; }
+
+window.addEventListener('DOMContentLoaded', initExec);
+</script>
+</body>
+</html>

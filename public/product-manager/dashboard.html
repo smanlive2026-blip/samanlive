@@ -1,22 +1,291 @@
-<!-- LOCATION: public/product-manager/dashboard.html - PRODUCT MANAGER DASHBOARD - V14 FINAL -->
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Product Manager - Dashboard</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
-<style>*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}body{background:#f8fafc}.header{background:#0f172a;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:16px}.stat{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;text-align:center}.stat b{font-size:22px;display:block}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:0 16px 80px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}.card img{width:100%;height:150px;object-fit:cover}.info{padding:10px}.badge{padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800}.badge-pending{background:#fef3c7;color:#92400e}.badge-approved{background:#dbeafe;color:#1e40af}.badge-assigned{background:#dcfce7;color:#166534}.badge-rejected{background:#fee2e2;color:#991b1b}.btn{padding:8px 12px;border-radius:8px;border:0;font-weight:800;cursor:pointer}.btn-green{background:#16a34a;color:#fff}.btn-dark{background:#0f172a;color:#fff}.tabs{display:flex;gap:8px;padding:0 16px;overflow:auto}.tab{padding:8px 14px;border-radius:20px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-weight:700;font-size:13px}.tab.active{background:#0f172a;color:#fff}</style>
-</head><body>
-<div class="header"><div><b style="font-weight:900"><i class="fa-solid fa-industry"></i> <span id="pmName">Product Manager</span></b><br><small id="pmArea" style="color:#94a3b8"></small></div><div style="display:flex;gap:8px"><span id="wallet" style="background:#16a34a;padding:6px 10px;border-radius:20px;font-weight:800">₹0</span><button class="btn btn-green" onclick="location.href='./product-form.html?pmId='+pmId"><i class="fa-solid fa-plus"></i> Add Product</button></div></div>
-<div class="stats"><div class="stat"><small>Total</small><b id="sTotal">0</b></div><div class="stat"><small>Pending</small><b id="sPending" style="color:#d97706">0</b></div><div class="stat"><small>Approved</small><b id="sApproved" style="color:#2563eb">0</b></div><div class="stat"><small>Assigned</small><b id="sAssigned" style="color:#16a34a">0</b></div><div class="stat"><small>Earning</small><b id="sEarning">₹0</b></div></div>
-<div class="tabs"><button class="tab active" data-f="">All</button><button class="tab" data-f="pending">Pending</button><button class="tab" data-f="approved">Approved</button><button class="tab" data-f="assigned">Assigned</button><button class="tab" data-f="rejected">Rejected</button></div>
-<div id="grid" class="grid" style="margin-top:12px">Loading...</div>
+<!-- LOCATION: public/product-manager/dashboard.html - V23 UNIFIED PROFILE - FULL CODE - NO CUT -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Manager Dashboard - SAMANLIVE</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:#f8fafc;color:#0f172a}
+.topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.topbar b{font-size:18px;font-weight:900}
+.btn{padding:10px 14px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.btn-primary{background:#ea580c;color:#fff;border-color:#ea580c}
+.btn-danger{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
+.wrap{max-width:1100px;margin:0 auto;padding:20px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:18px;margin-bottom:16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.kpi{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px}
+.kpi small{font-size:11px;font-weight:800;letter-spacing:.6px;opacity:.5}
+.kpi h2{font-size:26px;font-weight:900;margin-top:6px}
+.profile-box{display:flex;gap:16px;align-items:flex-start}
+.avatar-wrap{position:relative;width:110px;height:110px;flex-shrink:0}
+.avatar-wrap img{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #ffedd5;background:#fff7ed}
+.avatar-wrap .cam{position:absolute;bottom:4px;right:4px;width:32px;height:32px;border-radius:50%;background:#ea580c;color:#fff;display:grid;place-items:center;cursor:pointer;border:2px solid #fff;font-size:13px}
+.logo-wrap{position:relative;width:110px;height:110px;flex-shrink:0}
+.logo-wrap img{width:110px;height:110px;border-radius:14px;object-fit:cover;border:2px dashed #e2e8f0;background:#fff}
+.logo-wrap .cam{position:absolute;bottom:4px;right:4px;width:28px;height:28px;border-radius:50%;background:#0f172a;color:#fff;display:grid;place-items:center;cursor:pointer;font-size:11px}
+.input{width:100%;padding:11px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;margin-top:6px;outline:none}
+.input:focus{border-color:#ea580c}
+.label{font-size:11px;font-weight:800;letter-spacing:.4px;opacity:.6}
+.badge{display:inline-flex;gap:6px;align-items:center;background:#dcfce7;color:#15803d;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800}
+.badge.pending{background:#fef9c3;color:#854d0e}
+.table{width:100%;border-collapse:collapse;font-size:13px}
+.table th{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0;font-size:11px;opacity:.6}
+.table td{padding:10px;border-bottom:1px solid #f1f5f9}
+@media(max-width:800px){.grid-2,.grid-3{grid-template-columns:1fr}.profile-box{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div><b>🏭 Product Manager Dashboard</b><div style="font-size:11px;color:#64748b">Kisan / Manufacturer / Wholesaler - Product Pool</div></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="pmTopName" style="font-size:13px;font-weight:700"></span>
+    <img id="pmTopPhoto" src="/assets/default-avatar.png" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #ffedd5">
+    <button class="btn" onclick="goProductForm()"><i class="fa fa-plus"></i> Add Product</button>
+    <button class="btn btn-danger" onclick="pmLogout()">Logout</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="grid-3">
+    <div class="kpi"><small>TOTAL PRODUCTS</small><h2 id="kpiProducts">0</h2><span style="font-size:11px;color:#64748b">Product Pool me</span></div>
+    <div class="kpi"><small>WALLET BALANCE</small><h2>₹<span id="kpiWallet">0</span></h2><span style="font-size:11px;color:#64748b">Earning ₹<span id="kpiEarning">0</span></span></div>
+    <div class="kpi"><small>STATUS</small><h2 id="kpiStatus" style="font-size:18px">Pending</h2><span id="kpiVerify" style="font-size:11px;color:#64748b">Verification pending</span></div>
+  </div>
+
+  <!-- PROFILE - PHOTO + COMPANY LOGO - DONO CLOUDINARY -->
+  <div class="card">
+    <h3 style="font-size:16px;font-weight:900"><i class="fa fa-user-circle"></i> My Profile - Photo + Company Logo</h3>
+    <p style="font-size:12px;color:#64748b;margin-top:4px">Photo = Teri khud ki photo. Company Logo = Teri company / brand ka logo. Dono Cloudinary pe jayenge.</p>
+
+    <div class="profile-box" style="margin-top:16px">
+      <!-- Apni Photo -->
+      <div style="text-align:center">
+        <div class="avatar-wrap">
+          <img id="pmPhoto" src="/assets/default-avatar.png" alt="PM Photo">
+          <div class="cam" onclick="document.getElementById('pmPhotoInput').click()"><i class="fa fa-camera"></i></div>
+          <input type="file" id="pmPhotoInput" hidden accept="image/*">
+        </div>
+        <div style="font-size:11px;font-weight:800;margin-top:6px">MY PHOTO</div>
+      </div>
+      <!-- Company Logo -->
+      <div style="text-align:center">
+        <div class="logo-wrap">
+          <img id="pmCompanyLogo" src="" alt="Company Logo" onerror="this.style.display='none'">
+          <div class="cam" onclick="document.getElementById('pmLogoInput').click()"><i class="fa fa-camera"></i></div>
+          <input type="file" id="pmLogoInput" hidden accept="image/*">
+        </div>
+        <div style="font-size:11px;font-weight:800;margin-top:6px">COMPANY LOGO</div>
+      </div>
+
+      <div style="flex:1">
+        <div class="grid-2">
+          <div><span class="label">FULL NAME *</span><input id="pmName" class="input" placeholder="Product Manager Name"></div>
+          <div><span class="label">PHONE *</span><input id="pmPhone" class="input" placeholder="9876543210" maxlength="10"></div>
+        </div>
+        <div class="grid-2">
+          <div><span class="label">EMAIL</span><input id="pmEmail" class="input" placeholder="pm@example.com"></div>
+          <div><span class="label">COMPANY NAME</span><input id="pmCompany" class="input" placeholder="Shree Agro / Gupta Traders"></div>
+        </div>
+        <div class="grid-2">
+          <div><span class="label">TYPE</span>
+            <select id="pmType" class="input">
+              <option value="other">Other</option><option value="kisan">Kisan</option><option value="manufacturer">Manufacturer</option><option value="wholesaler">Wholesaler</option><option value="distributor">Distributor</option><option value="artisan">Artisan</option><option value="shg">SHG</option><option value="startup">Startup</option><option value="importer">Importer</option><option value="fisherman">Fisherman</option><option value="nursery">Nursery</option><option value="pansari">Pansari</option><option value="medical">Medical</option><option value="service">Service</option>
+            </select>
+          </div>
+          <div><span class="label">GST (Optional)</span><input id="pmGst" class="input" placeholder="27ABCDE1234F1Z5" maxlength="15"></div>
+        </div>
+        <div class="grid-2">
+          <div><span class="label">AREA</span><input id="pmArea" class="input" placeholder="Adajan"></div>
+          <div><span class="label">CITY</span><input id="pmCity" class="input" placeholder="Surat"></div>
+        </div>
+        <div class="grid-2">
+          <div><span class="label">PINCODE</span><input id="pmPincode" class="input" placeholder="395009" maxlength="6"></div>
+          <div><span class="label">VERIFICATION</span><div style="margin-top:8px"><span id="pmStatus" class="badge pending">Pending</span></div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="savePmBtn" onclick="savePMProfile()"><i class="fa fa-save"></i> Save Profile</button>
+          <button class="btn" onclick="document.getElementById('pmPhotoInput').click()"><i class="fa fa-camera"></i> Change My Photo</button>
+          <button class="btn" onclick="document.getElementById('pmLogoInput').click()"><i class="fa fa-image"></i> Change Company Logo</button>
+          <span id="pmMsg" style="font-size:12px;color:#64748b"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MY PRODUCTS -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="font-size:15px;font-weight:900">📦 My Products</h3>
+      <button class="btn" onclick="loadPMData()"><i class="fa fa-sync"></i> Refresh</button>
+    </div>
+    <div id="myProductsList" style="margin-top:12px;font-size:13px;color:#64748b">Loading...</div>
+  </div>
+</div>
+
+<script src="/shop-templates/common/profile/profile-core.js"></script>
 <script>
-// LOCATION: JS - PM Dashboard logic - V14 FINAL
-const pmId = new URLSearchParams(location.search).get('pmId') || localStorage.getItem('pmId');
-if(!pmId){ document.getElementById('grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px">No PM ID. Login via <a href="./login.html">login</a> or add ?pmId=xxx</div>'; throw new Error('No pmId'); }
-let allProducts = [];
-async function loadPM(){ const res = await fetch(`/api/product-manager/${pmId}`).then(r=>r.json()); const pm=res.data; if(pm){ document.getElementById('pmName').textContent = pm.name; document.getElementById('pmArea').textContent = `${pm.type} | ${pm.area}, ${pm.city||''}`; document.getElementById('wallet').textContent = `₹${pm.walletBalance||0}`; document.getElementById('sEarning').textContent = `₹${pm.totalEarning||0}`; } }
-async function loadProducts(filter=''){ const res = await fetch(`/api/product-pool/my-products/${pmId}`).then(r=>r.json()); allProducts=res.data||[]; render(filter); }
-function render(filter){ let list = filter ? allProducts.filter(p=>p.status===filter) : allProducts; document.getElementById('sTotal').textContent = allProducts.length; document.getElementById('sPending').textContent = allProducts.filter(p=>p.status==='pending').length; document.getElementById('sApproved').textContent = allProducts.filter(p=>p.status==='approved').length; document.getElementById('sAssigned').textContent = allProducts.filter(p=>p.status==='assigned').length; const grid=document.getElementById('grid'); if(!list.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;background:#fff;border-radius:12px">No products in this tab</div>';return;} grid.innerHTML=list.map(p=>`<div class="card"><img src="${p.thumbnail||p.images?.[0]||'https://via.placeholder.com/300'}" onerror="this.src='https://via.placeholder.com/300'"><div class="info"><div style="display:flex;justify-content:space-between"><b>${p.name}</b><span class="badge badge-${p.status}">${p.status.toUpperCase()}</span></div><small style="color:#64748b">${p.category} | Base ₹${p.basePrice} ${p.finalPrice?`| Final ₹${p.finalPrice}`:''}</small><br><small>Stock: ${p.stock} ${p.unit||''} | Areas: ${(p.areaTags||[]).join(', ')}</small><div style="margin-top:8px;display:flex;gap:6px">${p.status==='pending'?`<button class="btn btn-dark" style="padding:6px 10px;font-size:11px" onclick="delProduct('${p._id}')"><i class="fa-solid fa-trash"></i> Delete</button>`:''}<button class="btn" style="background:#f1f5f9;padding:6px 10px;font-size:11px" onclick="viewPool('${p._id}')">View</button></div></div></div>`).join(''); }
-async function delProduct(id){ if(!confirm('Delete this product?')) return; await fetch(`/api/product-pool/${id}`,{method:'DELETE'}); loadProducts(document.querySelector('.tab.active').dataset.f); }
-function viewPool(id){ location.href = `../admin-panel/product-pool.html?highlight=${id}`; }
-document.querySelectorAll('.tab').forEach(t=>{ t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); render(t.dataset.f); }; });
-loadPM(); loadProducts();
-</script></body></html>
+let PM_ID = localStorage.getItem('productManagerId') || localStorage.getItem('pmId') || new URLSearchParams(location.search).get('pmId') || new URLSearchParams(location.search).get('id') || '';
+let PM_DATA = null;
+
+async function initPM(){
+  if(PM_ID) localStorage.setItem('productManagerId', PM_ID);
+  else {
+    const token = localStorage.getItem('productManagerToken') || '';
+    if(!token){ document.body.innerHTML = '<div style="padding:40px">Login karo pehle - <a href="/">Home</a></div>'; return; }
+  }
+
+  // 1. My Photo -> Cloudinary - role product_manager, field photo
+  const photoInput = document.getElementById('pmPhotoInput');
+  if(photoInput){
+    photoInput.addEventListener('change', async () => {
+      const r = await window.UnifiedProfile.handleFileInput(photoInput, {
+        role: 'product_manager',
+        field: 'photo',
+        type: 'avatar',
+        previewSelector: '#pmPhoto, #pmTopPhoto',
+        msgId: 'pmMsg',
+        btnId: 'savePmBtn'
+      });
+      if(r && r.success){ PM_DATA = PM_DATA || {}; PM_DATA.photo = r.url; }
+    });
+  }
+
+  // 2. Company Logo -> Cloudinary - same role, field companyLogo
+  const logoInput = document.getElementById('pmLogoInput');
+  if(logoInput){
+    logoInput.addEventListener('change', async () => {
+      const r = await window.UnifiedProfile.handleFileInput(logoInput, {
+        role: 'product_manager',
+        field: 'companyLogo',
+        type: 'logo',
+        previewSelector: '#pmCompanyLogo',
+        msgId: 'pmMsg',
+        btnId: 'savePmBtn'
+      });
+      if(r && r.success){
+        PM_DATA = PM_DATA || {};
+        PM_DATA.companyLogo = r.url;
+        const img = document.getElementById('pmCompanyLogo');
+        if(img) img.style.display = 'block';
+      }
+    });
+  }
+
+  await loadPMData();
+}
+
+async function loadPMData(){
+  try{
+    const token = localStorage.getItem('productManagerToken') || '';
+
+    // Profile - Unified API
+    try{
+      const prof = await window.UnifiedProfile.loadMyProfile();
+      if(prof && prof.success && prof.user){
+        PM_DATA = prof.user;
+        fillPMForm(prof.user);
+      }
+    }catch(e){}
+
+    // Fallback - direct API
+    if(!PM_DATA && PM_ID){
+      const res = await fetch(`/api/product-manager/${PM_ID}`, { headers: { 'Authorization': 'Bearer ' + token } }).then(r=>r.json()).catch(()=>null);
+      if(res && (res.pm || res.data || res.productManager)){
+        const pm = res.pm || res.data || res.productManager;
+        PM_DATA = pm;
+        fillPMForm(pm);
+      }
+    }
+
+    // Products
+    const list = await fetch(`/api/product-manager/${PM_ID}/products`, { headers: { 'Authorization': 'Bearer ' + token } }).then(r=>r.json()).catch(()=>null);
+    if(list){
+      const arr = list.products || list.data || list || [];
+      document.getElementById('kpiProducts').textContent = Array.isArray(arr) ? arr.length : 0;
+      renderProducts(Array.isArray(arr) ? arr : []);
+    }
+    if(PM_DATA){
+      document.getElementById('kpiWallet').textContent = PM_DATA.walletBalance || 0;
+      document.getElementById('kpiEarning').textContent = PM_DATA.totalEarning || 0;
+      document.getElementById('kpiStatus').textContent = PM_DATA.isVerified ? 'Verified' : 'Pending';
+      document.getElementById('kpiVerify').textContent = PM_DATA.isVerified ? 'Verified ✅' : 'Verification pending';
+    }
+  }catch(e){ console.log('pm load warn', e.message); }
+}
+
+function fillPMForm(u){
+  if(!u) return;
+  document.getElementById('pmName').value = u.name || '';
+  document.getElementById('pmPhone').value = u.phone || '';
+  document.getElementById('pmEmail').value = u.email || '';
+  document.getElementById('pmCompany').value = u.companyName || '';
+  document.getElementById('pmType').value = u.type || 'other';
+  document.getElementById('pmGst').value = u.gst || '';
+  document.getElementById('pmArea').value = u.area || '';
+  document.getElementById('pmCity').value = u.city || '';
+  document.getElementById('pmPincode').value = u.pincode || '';
+  document.getElementById('pmTopName').textContent = u.name || '';
+  const pic = u.profilePic || u.avatar || u.photo || '';
+  if(pic){
+    document.getElementById('pmPhoto').src = pic;
+    document.getElementById('pmTopPhoto').src = pic;
+    localStorage.setItem('pmPhoto', pic);
+  }
+  const logo = u.companyLogo || '';
+  if(logo){
+    const img = document.getElementById('pmCompanyLogo');
+    img.src = logo; img.style.display = 'block';
+  }
+  const st = document.getElementById('pmStatus');
+  if(u.isVerified){ st.textContent = '✓ Verified'; st.className = 'badge'; }
+  else { st.textContent = 'Pending'; st.className = 'badge pending'; }
+}
+
+async function savePMProfile(){
+  const msg = document.getElementById('pmMsg');
+  msg.textContent = 'Saving...'; msg.style.color = '#64748b';
+  const payload = {
+    pmId: PM_ID,
+    productManagerId: PM_ID,
+    name: document.getElementById('pmName').value.trim(),
+    phone: document.getElementById('pmPhone').value.trim(),
+    email: document.getElementById('pmEmail').value.trim(),
+    companyName: document.getElementById('pmCompany').value.trim(),
+    type: document.getElementById('pmType').value,
+    gst: document.getElementById('pmGst').value.trim(),
+    area: document.getElementById('pmArea').value.trim(),
+    city: document.getElementById('pmCity').value.trim(),
+    pincode: document.getElementById('pmPincode').value.trim()
+  };
+  if(!payload.name || !payload.phone){ msg.textContent = 'Name aur Phone chahiye'; msg.style.color = 'red'; return; }
+  try{
+    const token = localStorage.getItem('productManagerToken') || '';
+    const res = await fetch(`/api/product-manager/${PM_ID}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(payload)
+    }).then(r=>r.json());
+    if(res.success || res.pm || res.data){ msg.textContent = '✅ Profile Saved!'; msg.style.color = 'green'; }
+    else { msg.textContent = 'Error: ' + (res.error || res.message || 'fail'); msg.style.color = 'red'; }
+  }catch(e){ msg.textContent = 'Error: ' + e.message; msg.style.color = 'red'; }
+}
+
+function renderProducts(list){
+  const box = document.getElementById('myProductsList');
+  if(!list || list.length === 0){ box.innerHTML = 'Abhi koi product nahi hai - Add Product dabao'; return; }
+  box.innerHTML = '<table class="table"><tr><th>Product</th><th>Price</th><th>Status</th></tr>' + list.map(p => `<tr><td>${p.name || p.title}</td><td>₹${p.price || p.mrp || 0}</td><td>${p.isActive ? 'Active' : 'Pending'}</td></tr>`).join('') + '</table>';
+}
+function goProductForm(){ window.open(`/product-manager/product-form.html?pmId=${PM_ID}`, '_blank'); }
+function pmLogout(){ localStorage.removeItem('productManagerToken'); localStorage.removeItem('productManagerId'); location.href = '/'; }
+
+window.addEventListener('DOMContentLoaded', initPM);
+</script>
+</body>
+</html>

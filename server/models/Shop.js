@@ -1,8 +1,12 @@
-// LOCATION: server/models/Shop.js - V20 WORLD - 50 MODES - AREA MANAGER SAFE - FULL CODE - NO ENUM BLOCK - FIXED: Mongoose 7+ next() removed
+// LOCATION: server/models/Shop.js - V23 UNIFIED PROFILE - 50 MODES - AREA MANAGER SAFE - FULL CODE
+// CHANGE: banner + ownerPhotoUrl duplicate hataya, logo/uploadedLogo/image ko sync kiya, gallery + coverPhoto + ownerPhoto add kiya
+// FLOW: Shop Dashboard -> UnifiedProfile (common/profile/profile-core.js) -> /api/common/profile/upload-avatar -> Cloudinary -> Shop.logo / banner / ownerPhotoUrl me URL
+// RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega
+
 const mongoose = require('mongoose');
 
 const shopSchema = new mongoose.Schema({
-    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false, default: () => new mongoose.Types.ObjectId() },
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false, default: null }, // FIX: pehle default new ObjectId() tha - har shop pe fake owner ban jata tha, ab null rahega jab tak real User link na ho
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' },
 
@@ -14,6 +18,7 @@ const shopSchema = new mongoose.Schema({
     shopName: { type: String, required: true, trim: true },
     ownerName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
+    ownerPhone: { type: String, trim: true, default: '' }, // ADD - profile/me me ownerPhone dhoondta tha, field hi nahi tha
     email: { type: String, trim: true, lowercase: true },
     address: {
         line1: { type: String, default: '' },
@@ -38,10 +43,35 @@ const shopSchema = new mongoose.Schema({
     moduleId: { type: String, default: '' },
     categoryId: { type: String, default: '' },
     description: { type: String, default: '' },
-    banner: { type: String, default: '' },
-    logo: { type: String, default: '' },
-    uploadedLogo: { type: String, default: '' },
+
+    // ========== PROFILE PHOTO - V23 UNIFIED - CLOUDINARY URL HI AAYEGA, BASE64 NAHI ==========
+    // RULE: logo = shopLogo = uploadedLogo = image - 4 naam ek hi photo ke, pre('save') me sync karenge
+    logo: { type: String, default: '' }, // Main Shop Logo - UnifiedProfile role: shop_logo isi me save karega
+    shopLogo: { type: String, default: '' }, // ADD - common/profile kabhi shopLogo maangta hai
+    uploadedLogo: { type: String, default: '' }, // OLD - rakha hai taaki purana code na tute, sync me rahega
+    image: { type: String, default: '' }, // OLD - kuch jagah shop.image maangta hai, sync me rahega
+
+    // Banner / Cover - 2 naam ek hi cheez ke
+    banner: { type: String, default: '' }, // Main Cover - UnifiedProfile role: shop_cover isi me save karega
+    coverPhoto: { type: String, default: '' }, // ADD - profile.html me coverPhoto maangta hai
+    cover: { type: String, default: '' }, // ADD - kuch jagah cover maangta hai
+
+    // Owner Photo - 2 naam ek hi cheez ke
+    ownerPhotoUrl: { type: String, default: '' }, // Main Owner Photo - UnifiedProfile role: shop_owner isi me save karega
+    ownerPhoto: { type: String, default: '' }, // ADD - dashboard kabhi ownerPhoto maangta hai
+    ownerAvatar: { type: String, default: '' }, // ADD - topbar me ownerAvatar maangta hai
+
+    // Gallery - pehle field hi nahi tha, isliye shop-gallery.html ki photo kahin save nahi hoti thi
+    gallery: [{ type: String, default: [] }], // ADD - Cloudinary URL ki list - shop-gallery.html isi me save karega
+    shopImages: [{ type: String, default: [] }], // ADD - backup naam
+
     icon: { type: String, default: '🏪' },
+    tagline: { type: String, default: '', trim: true }, // ADD - shop-info.html me tagline tha, model me nahi tha
+    whatsapp: { type: String, trim: true, default: '' }, // ADD - shop-info me whatsapp tha, model me nahi tha
+    altPhone: { type: String, trim: true, default: '' }, // ADD - shop-info me altPhone tha
+    gst: { type: String, trim: true, default: '' }, // ADD - shop-info me gst tha
+    fssai: { type: String, trim: true, default: '' }, // ADD - shop-info me fssai tha
+    estYear: { type: Number, default: null }, // ADD
 
     template: { type: String, default: 'general' },
 
@@ -152,7 +182,6 @@ const shopSchema = new mongoose.Schema({
         stock: { type: Number, default: 0 }
     }],
 
-    ownerPhotoUrl: { type: String, default: '' },
     isOpen: { type: Boolean, default: true },
     announcement: { type: String, default: '' },
     shopSettings: {
@@ -223,6 +252,10 @@ shopSchema.virtual('latlng').get(function() {
     };
 });
 
+// V23 VIRTUAL - kahin se bhi logo maango, same milega
+shopSchema.virtual('shopImage').get(function() { return this.logo || this.shopLogo || this.uploadedLogo || this.image || ''; });
+shopSchema.virtual('shopAvatar').get(function() { return this.logo || this.shopLogo || this.uploadedLogo || this.image || ''; });
+
 // ========== METHODS - AREA MANAGER SAFE ==========
 shopSchema.methods.isInManagerArea = function(managerAreaCode) {
     return this.areaCode === managerAreaCode;
@@ -287,7 +320,42 @@ shopSchema.methods.detectBusinessMode = function() {
 };
 
 // FIXED: Mongoose 7+ me next nahi hota - Vercel pe TypeError: next is not a function fix
+// V23 ADD: logo / banner / ownerPhoto sync - Executive / PM jaisa
 shopSchema.pre('save', function() {
+    // 1. LOGO SYNC - logo / shopLogo / uploadedLogo / image - 4 me same URL
+    const logoPic = this.logo || this.shopLogo || this.uploadedLogo || this.image || '';
+    if(logoPic){
+        this.logo = logoPic;
+        this.shopLogo = logoPic;
+        this.uploadedLogo = logoPic;
+        this.image = logoPic;
+    }
+
+    // 2. BANNER SYNC - banner / coverPhoto / cover - 3 me same URL
+    const bannerPic = this.banner || this.coverPhoto || this.cover || '';
+    if(bannerPic){
+        this.banner = bannerPic;
+        this.coverPhoto = bannerPic;
+        this.cover = bannerPic;
+    }
+
+    // 3. OWNER PHOTO SYNC - ownerPhotoUrl / ownerPhoto / ownerAvatar - 3 me same URL
+    const ownerPic = this.ownerPhotoUrl || this.ownerPhoto || this.ownerAvatar || '';
+    if(ownerPic){
+        this.ownerPhotoUrl = ownerPic;
+        this.ownerPhoto = ownerPic;
+        this.ownerAvatar = ownerPic;
+    }
+
+    // 4. GALLERY SYNC
+    if(this.shopImages && this.shopImages.length > 0 && (!this.gallery || this.gallery.length === 0)){
+        this.gallery = this.shopImages;
+    }
+    if(this.gallery && this.gallery.length > 0 && (!this.shopImages || this.shopImages.length === 0)){
+        this.shopImages = this.gallery;
+    }
+
+    // 5. OLD LOGIC - same rakha hai
     if (!this.businessMode || this.isModified('shopType')) {
         this.businessMode = this.detectBusinessMode();
     }
@@ -297,6 +365,8 @@ shopSchema.pre('save', function() {
     if (!this.template && this.shopType) {
         this.template = this.shopType;
     }
+    // ownerPhone ko phone se bhar do agar khaali hai
+    if(!this.ownerPhone && this.phone) this.ownerPhone = this.phone;
 });
 
 module.exports = mongoose.models.Shop || mongoose.model('Shop', shopSchema);

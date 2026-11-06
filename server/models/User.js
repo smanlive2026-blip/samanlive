@@ -1,3 +1,7 @@
+// LOCATION: server/models/User.js - USER MODEL - V23 UNIFIED PROFILE - CUSTOMER + SHOP_OWNER
+// CHANGE: photo + role + shopId + cover add kiya - pehle role/shopId nahi tha isliye shop owner ko customer samajhta tha
+// FLOW: Customer / Shop Owner dashboard -> UnifiedProfile (common/profile/profile-core.js) -> /api/common/profile/upload-avatar -> Cloudinary -> User.photo / avatar / profilePic me URL
+
 const mongoose = require('mongoose');
 
 const addressSchema = new mongoose.Schema({
@@ -46,7 +50,18 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
     phone: { type: String, required: true, unique: true, trim: true, index: true },
     password: { type: String, required: true, select: false },
+
+    // ===== PROFILE PHOTO - V23 UNIFIED - CLOUDINARY URL HI AAYEGA, BASE64 NAHI =====
     avatar: { type: String, default: '' },
+    profilePic: { type: String, default: '' },
+    photo: { type: String, default: '', trim: true }, // ADD - Executive / PM se match karne ke liye - teeno me same URL rahega
+    coverPhoto: { type: String, default: '', trim: true }, // ADD - Profile cover / banner ke liye
+
+    // ===== ROLE + SHOP LINK - V23 NEW - Iske bina shop owner ko customer samajhta tha =====
+    role: { type: String, enum: ['customer', 'shop_owner', 'delivery_boy', 'admin', 'area-manager'], default: 'customer' },
+    shopId: { type: String, default: null }, // Agar shop_owner hai toh uski shop ka Id - profile/me me shop info dikhane ke liye
+    shopIds: [{ type: String }], // Ek owner ki multiple shop ho sakti hai
+
     status: { type: String, enum: ['active', 'blocked', 'deleted'], default: 'active' },
     isVerified: { type: Boolean, default: false },
     otp: { code: String, expiresAt: Date },
@@ -56,6 +71,10 @@ const userSchema = new mongoose.Schema({
     },
     city: { type: String, trim: true, index: true },
     area: { type: String, trim: true },
+    state: { type: String, trim: true, default: '' }, // ADD - address me tha, main me nahi tha
+    pincode: { type: String, trim: true, default: '' }, // ADD - profile form me chahiye tha
+    gender: { type: String, enum: ['male', 'female', 'other', ''], default: '' }, // ADD - profile form me tha, model me nahi tha
+    dob: { type: Date, default: null }, // ADD
     addresses: [addressSchema],
     payments: [paymentSchema],
     notifications: [notificationSchema],
@@ -74,6 +93,7 @@ const userSchema = new mongoose.Schema({
         },
         language: { type: String, default: 'en' }
     },
+    wallet: { balance: { type: Number, default: 0 }, totalEarning: { type: Number, default: 0 } }, // ADD - profile/me me wallet maangta tha, field hi nahi tha
     lastLogin: { type: Date, default: null },
     loginCount: { type: Number, default: 0 },
     totalOrders: { type: Number, default: 0 },
@@ -88,6 +108,8 @@ userSchema.index({ 'currentLocation': '2dsphere' });
 userSchema.index({ 'addresses.location': '2dsphere' });
 userSchema.index({ status: 1 });
 userSchema.index({ createdAt: -1 });
+userSchema.index({ role: 1 });
+userSchema.index({ shopId: 1 });
 
 userSchema.virtual('fullName').get(function() { return this.name; });
 userSchema.virtual('defaultAddress').get(function() { return this.addresses.find(addr => addr.isDefault) || null; });
@@ -107,9 +129,18 @@ userSchema.methods.removeFromWishlist = function(productId) {
     return this.save();
 };
 
-// ==================== PRE SAVE - FIXED ====================
-// ✅ Async function use kiya, next() hataya
+// ==================== PRE SAVE - FIXED + PHOTO SYNC ====================
+// ✅ Async function use kiya, next() hataya - tera purana wala same rakha hai
+// ✅ ADD: avatar / profilePic / photo teeno ko sync rakho - kahin se bhi photo aaye, teeno me same URL mile
 userSchema.pre('save', async function() {
+    // Photo sync - teeno field me same Cloudinary URL
+    const pic = this.photo || this.profilePic || this.avatar || '';
+    if(pic){
+        this.photo = pic;
+        this.profilePic = pic;
+        this.avatar = pic;
+    }
+
     // Ensure only one default address
     if (this.addresses && this.addresses.length > 0) {
         const defaultAddresses = this.addresses.filter(addr => addr.isDefault);
