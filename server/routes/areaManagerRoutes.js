@@ -203,72 +203,62 @@ router.post('/manager/verify-token', async (req, res) => {
     }
 });
 
-// ========== 4. PROFILE UPDATE - V25 UNIFIED - BASE64 REJECT ==========
+// ========== 4. PROFILE UPDATE - V26 FIX - NO manager.save(), NO next(), NO Validation 500 ==========
+// PEHLE THA: manager.gender = b.gender (bina lowercase) + await manager.save() -> koi bhi purana field alag hua toh Mongoose ValidationError -> 500
+// AB: gender toLowerCase + findByIdAndUpdate + runValidators:false + sirf bheje hue field update honge + photo khali hai toh purani photo nahi udegi + next() use hi nahi karenge, isliye "next is not a function" aa hi nahi sakta
 router.put('/manager/update-profile', authManager, async (req, res) => {
     try {
         const manager = req.manager;
         const b = req.body || {};
-        const { name, phone, email, photo, avatar, profilePic, coverPhoto } = b;
+        const update = {};
 
-        if (name) manager.name = String(name).trim();
-        if (phone) manager.phone = String(phone).trim();
-        if (email) manager.email = String(email).toLowerCase().trim();
+        if (b.name !== undefined) update.name = String(b.name || '').trim();
+        if (b.phone !== undefined) update.phone = String(b.phone || '').trim();
+        if (b.email !== undefined) update.email = String(b.email || '').toLowerCase().trim();
+        if (b.city !== undefined) update.city = String(b.city || '').trim();
+        if (b.state !== undefined) update.state = String(b.state || '').trim();
+        if (b.pincode !== undefined) update.pincode = String(b.pincode || '').trim();
+        if (b.address !== undefined) update.address = typeof b.address === 'string' ? b.address : (b.address?.line1 || '');
+        // V26: Male -> male, Female -> female, "" -> "" - enum fail nahi hoga
+        if (b.gender !== undefined) update.gender = String(b.gender || '').toLowerCase().trim();
+        // V26: dob "" aaye toh null karo, warna Cast to Date failed -> 500
+        if (b.dob !== undefined) update.dob = b.dob ? new Date(b.dob) : null;
+        if (b.areaName !== undefined) update.areaName = String(b.areaName || '').trim();
+        if (b.vehicleType !== undefined) update.vehicleType = b.vehicleType || 'bike';
+        if (b.vehicleNumber !== undefined) update.vehicleNumber = String(b.vehicleNumber || '').toUpperCase().trim();
+        if (b.isAvailable !== undefined) update.isAvailable = !!b.isAvailable;
+        if (b.isOnline !== undefined) update.isOnline = !!b.isOnline;
 
-        // V25: City / State / Pincode / Address / Gender / DOB - pehle ye save hi nahi hote the
-        if (b.city !== undefined) manager.city = String(b.city || '').trim();
-        if (b.state !== undefined) manager.state = String(b.state || '').trim();
-        if (b.pincode !== undefined) manager.pincode = String(b.pincode || '').trim();
-        if (b.address !== undefined) manager.address = typeof b.address === 'string' ? b.address : (b.address?.line1 || '');
-        if (b.gender !== undefined) manager.gender = b.gender || '';
-        if (b.dob !== undefined) manager.dob = b.dob || null;
-        if (b.areaName !== undefined) manager.areaName = String(b.areaName || '').trim();
-        if (b.vehicleType !== undefined) manager.vehicleType = b.vehicleType || 'bike';
-        if (b.vehicleNumber !== undefined) manager.vehicleNumber = String(b.vehicleNumber || '').toUpperCase().trim();
-        if (b.isAvailable !== undefined) manager.isAvailable = !!b.isAvailable;
-        if (b.isOnline !== undefined) manager.isOnline = !!b.isOnline;
-
-        // V25: PHOTO - Base64 aaya toh REJECT karo - Cloudinary URL hi allowed hai
-        const incomingPhoto = photo || avatar || profilePic || '';
-        if (incomingPhoto !== undefined && incomingPhoto !== '') {
+        // PHOTO - sirf tab jab Cloudinary URL aaya ho, khali / base64 aaye toh ignore karo, purani photo mat udao
+        const incomingPhoto = b.photo || b.avatar || b.profilePic || '';
+        if (incomingPhoto && String(incomingPhoto).trim() !== '') {
             if (isBase64Image(incomingPhoto)) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Base64 photo not allowed - Cloudinary URL bhejo. Frontend me UnifiedProfile.handleFileInput use karo jo photo pehle Cloudinary pe upload karta hai.'
-                });
+                return res.status(400).json({ success: false, error: 'Base64 photo not allowed - Cloudinary URL bhejo' });
             }
             if (!isCloudinaryOrHttpUrl(incomingPhoto)) {
                 return res.status(400).json({ success: false, error: 'Invalid photo URL - http/https Cloudinary URL bhejo' });
             }
-            // V25: photo = avatar = profilePic - teeno me same URL - pehle sirf photo me jata tha
             const pic = String(incomingPhoto).trim();
-            manager.photo = pic;
-            manager.avatar = pic;
-            manager.profilePic = pic;
-        } else if (incomingPhoto === '') {
-            // Empty bheja hai toh delete karna hai
-            if (photo === '' || avatar === '' || profilePic === '') {
-                manager.photo = '';
-                manager.avatar = '';
-                manager.profilePic = '';
-            }
+            update.photo = pic;
+            update.avatar = pic;
+            update.profilePic = pic;
+        }
+        // Cover photo - alag se
+        if (b.coverPhoto !== undefined && b.coverPhoto !== '') {
+            if (isBase64Image(b.coverPhoto)) return res.status(400).json({ success: false, error: 'Base64 cover not allowed' });
+            update.coverPhoto = String(b.coverPhoto).trim();
         }
 
-        // V25: Cover Photo - alag se - base64 reject
-        if (coverPhoto !== undefined && coverPhoto !== '') {
-            if (isBase64Image(coverPhoto)) {
-                return res.status(400).json({ success: false, error: 'Base64 cover not allowed - Cloudinary URL bhejo' });
-            }
-            manager.coverPhoto = String(coverPhoto).trim();
-        } else if (coverPhoto === '') {
-            manager.coverPhoto = '';
-        }
+        // V26: save() MAT use karo - save() pura Model validate karta hai aur pre-save hook chalata hai, wahi 500 deta tha
+        // findByIdAndUpdate + runValidators:false -> sirf bheje hue field update honge, purana data fail nahi karega
+        const updated = await Manager.findByIdAndUpdate(manager._id, { $set: update }, { new: true, runValidators: false });
+        if (!updated) return res.status(404).json({ success: false, error: 'Manager not found' });
 
-        await manager.save();
-        // V25: publicManager bhejo - loginToken nahi jayega
-        res.json({ success: true, manager: publicManager(manager), message: 'Profile updated' });
+        res.json({ success: true, manager: publicManager(updated), message: 'Profile updated' });
     } catch (err) {
         console.error('Profile update error:', err);
-        res.status(500).json({ success: false, error: err.message });
+        // V26: next(err) MAT likhna - isi se "next is not a function" aata tha, seedha response bhejo
+        return res.status(500).json({ success: false, error: err.message });
     }
 });
 

@@ -345,14 +345,14 @@ app.post('/api/admin/update-route-code', (req, res) => {
     res.json({ success: true, message: `Saved ${file}` });
 });
 
+// V26 FIX: 1 hi error handler - next(err) mat karo, seedha response bhejo - isi chain se "next is not a function" banta tha
 app.use((err, req, res, next) => {
+    if (res.headersSent) return next(err);
     if (err.name === 'MulterError') return res.status(400).json({ success: false, error: err.message });
-    next(err);
+    console.error('❌ Error:', err.stack || err.message);
+    return res.status(err.status || 500).json({ success: false, error: err.message });
 });
-app.use((err, req, res, next) => {
-    console.error('❌ Error:', err.stack);
-    res.status(err.status || 500).json({ success: false, error: err.message });
-});
+
 app.get('*', (req, res) => {
     const p = path.join(__dirname, '../public/404.html');
     if(fs.existsSync(p)) return serveHtmlFresh(p, res);
