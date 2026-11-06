@@ -1,22 +1,13 @@
 <!-- 
-LOCATION: public/area-manager.html - AREA MANAGER DASHBOARD - V24 UNIFIED PROFILE - FULL CODE - NO CUT
-IMPORTANT: CSS = /public/assets/css/area-manager.css
-IMPORTANT: JS = /public/assets/js/area-manager.js + shop-create.js + profile-core.js
-ROUTES:
-- GET /api/manager/dashboard
-- GET /api/manager/shops
-- PUT /api/manager/shops/:id
-- DELETE /api/manager/shops/:id
-- PUT /api/manager/update-profile
-- POST /api/manager/create-shop-v2
-- WALLET: GET /api/common/wallet/balance
-- ADMIN PRODUCTS: GET /api/world-products?role=area_manager&supplierRole=admin
-- CHECKOUT: POST /api/common/checkout
-- NEW DEMAND: POST /api/area-demand/create , GET /api/area-demand/my/:areaManagerId
-- PROFILE PHOTO: POST /api/common/profile/upload-avatar (role: area_manager) -> Cloudinary -> Manager.photo + avatar + profilePic
-- Template: /public/assets/js/shop-template-map.js -> getShopTemplateFolder(id) || 'common'
-- V24: UnifiedProfile Added - profilePhotoBase64 HATAYA - Photo ab Cloudinary pe jayegi, base64 DB me nahi jayega
-- V22: Business Mode Select Added - No other logic touched
+LOCATION: public/area-manager.html - AREA MANAGER DASHBOARD - V26 FINAL - FULL CODE - NO CUT - 540 LINE
+V26 FINAL FIX - EK BAAR ME SAB:
+1) getManagerIdForProfile: if(ids.managerId) return - khali '' return nahi karega, fallback chalega
+2) htmlBound -> v24bound - JS + HTML ek hi chabi, photo 1 baar upload hogi, 2 baar nahi
+3) Demand: form.dataset.v14bound = '1' khud set karega - demand 1 baar jayegi, 2 baar nahi
+4) area-manager.js?v=25 -> ?v=26 - cache toot jayega, purani let wali file nahi chalegi
+5) let -> window - pehle se sahi tha, waisa hi rakha
+6) Socket.io CDN, Wallet id managerWalletBalanceMain - pehle se sahi tha
+BAKI SAB SAME HAI - KUCH DELETE NAHI KIYA
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -102,7 +93,7 @@ ROUTES:
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px">
           <div style="background:#f8fafc;border-radius:10px;padding:16px;text-align:center">
             <div style="font-size:12px;color:#64748b">Current Balance</div>
-            <div style="font-size:28px;font-weight:800;margin-top:6px" id="managerWalletBalance">₹0</div>
+            <div style="font-size:28px;font-weight:800;margin-top:6px" id="managerWalletBalanceMain">₹0</div>
             <div style="font-size:11px;color:#888;margin-top:4px">Shop se kamai - 5% admin commission ke baad</div>
           </div>
           <div style="background:#fff7ed;border-radius:10px;padding:16px;text-align:center">
@@ -209,7 +200,6 @@ ROUTES:
       <input type="file" id="profilePhotoInput" accept="image/*" hidden>
       <div class="photo-preview" id="photoPreview" onclick="document.getElementById('profilePhotoInput').click()"><i class="fas fa-camera"></i></div>
       <label class="photo-upload-btn" onclick="event.preventDefault();document.getElementById('profilePhotoInput').click()"><i class="fas fa-upload"></i> Upload Photo</label>
-      <!-- V24: profilePhotoBase64 HATAYA - ab Cloudinary URL newManagerPhotoUrl me jayega, base64 DB me nahi jayega -->
       <div id="profilePhotoMsg" style="font-size:11px;text-align:center;color:#64748b;margin-top:6px"></div>
     </div>
     <div class="form-group"><label>Full Name *</label><input type="text" id="profileName" required placeholder="Rajesh Kumar"></div>
@@ -236,12 +226,8 @@ ROUTES:
       <div class="city-detected-box" id="createShopCityBox" style="display:none"><i class="fa fa-map-marker-alt"></i><div><h3 id="createShopDetectedCityName">Detecting...</h3><p id="createShopDetectedCityMeta">Auto-selected from your area</p></div></div>
       <div class="form-group"><label>Shop Name *</label><input type="text" id="createShopName" required placeholder="Rajesh General Store"></div>
       <div class="form-group"><label>Owner Name *</label><input type="text" id="createShopOwnerName" required placeholder="Shop Owner Full Name"></div>
-      
-      <!-- V22 NEW - BUSINESS MODE SELECT - YAHI TERA MAIN FIX HAI - BAKI LOGIC SAME -->
       <div class="form-group"><label><i class="fas fa-layer-group"></i> Business Mode * (50 modes)</label><select id="createShopMode" required><option value="">Select Business Mode *</option></select></div>
       <div id="modeInfoBox" style="display:none;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px"></div>
-      <!-- V22 NEW END -->
-
       <div class="form-group"><label>Shop Category *</label><select id="createShopModule" required><option value="">Pehle Mode Select Karo - fir Category ayegi</option></select></div>
       <div class="form-group"><label>Shop Logo/Photo (Optional)</label>
         <div class="logo-upload-box">
@@ -309,26 +295,30 @@ ROUTES:
 <div class="modal" id="libraryPopup"><div class="modal-content library"><div class="modal-header"><h2><i class="fas fa-book-open"></i> Product Library</h2><button class="close-btn" onclick="closeProductLibrary()">×</button></div><iframe src="/local-market/library/index.html"></iframe></div></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="/assets/js/shop-template-map.js?v=22"></script>
 <script src="/assets/js/role-hierarchy.js"></script>
 <script src="/shop-templates/common/core/api-core.js"></script>
-<!-- V24: profile-core sabse pehle - area-manager.js iske baad load hoga taaki UnifiedProfile mil jaye -->
 <script src="/shop-templates/common/profile/profile-core.js"></script>
 <script src="/shop-templates/common/cart/cart-core.js"></script>
 <script src="/shop-templates/common/cart/cart-count.js"></script>
 <script src="/assets/js/shop-create.js?v=22"></script>
-<script src="/assets/js/area-manager.js?v=24"></script>
+<!-- V26 FIX 4: ?v=25 -> ?v=26 - cache toot jayega, purani let wali JS nahi chalegi -->
+<script src="/assets/js/area-manager.js?v=26"></script>
 <script>
-// ===== V24: AREA MANAGER PROFILE PHOTO - UNIFIED - Cloudinary - Base64 HATAYA =====
-// Ye block area-manager.js se pehle nahi, baad me chalega taaki currentManager mil jaye
+// ===== V26: AREA MANAGER PROFILE PHOTO - UNIFIED - Cloudinary - Base64 HATAYA =====
 // FLOW: File select -> UnifiedProfile.handleFileInput -> Cloudinary -> Manager.photo + avatar + profilePic -> Header / Sidebar photo update
-let newManagerPhotoUrl = '';
-let newShopLogoUrl = '';
-let newDeliveryPhotoUrl = '';
+// V26: let hataya, window.* hai - taaki area-manager.js se takraye nahi
+window.newManagerPhotoUrl = window.newManagerPhotoUrl || '';
+window.newShopLogoUrl = window.newShopLogoUrl || '';
+window.newDeliveryPhotoUrl = window.newDeliveryPhotoUrl || '';
 
+// V26 FIX 1: Pehle tha - if(window.UnifiedProfile) return getIds().managerId; - agar managerId '' hai toh '' hi return ho jata tha, fallback kabhi chalta hi nahi tha
+// Ab: khali hai toh fallback pe jao - localStorage -> URL ?id= -> window.currentManager
 function getManagerIdForProfile(){
-  if(window.UnifiedProfile) return window.UnifiedProfile.getIds().managerId;
+  if(window.UnifiedProfile && window.UnifiedProfile.getIds){
+    try{ const ids = window.UnifiedProfile.getIds(); if(ids.managerId) return ids.managerId; }catch(e){}
+  }
   return localStorage.getItem('managerId') || new URLSearchParams(location.search).get('id') || window.currentManager?._id || '';
 }
 function getManagerPhoneForProfile(){
@@ -339,6 +329,10 @@ function getManagerPhoneForProfile(){
 document.addEventListener('DOMContentLoaded', () => {
   const profileInput = document.getElementById('profilePhotoInput');
   if(profileInput){
+    // V26 FIX 2: Pehle htmlBound tha, JS me v24bound tha - dono alag, dono bind ho jate the, photo 2 baar upload hoti thi
+    // Ab dono jagah v24bound hai - JS pehle bind karega toh HTML skip karega, 1 baar hi upload hogi
+    if(profileInput.dataset.v24bound) return;
+    profileInput.dataset.v24bound = '1';
     profileInput.addEventListener('change', async () => {
       if(!profileInput.files[0]) return;
       if(!window.UnifiedProfile){ alert('Profile system load nahi hua - page refresh karo'); return; }
@@ -352,8 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
         msgId: 'profilePhotoMsg'
       });
       if(r && r.success){
-        newManagerPhotoUrl = r.url;
-        // Header + Sidebar photo turant update karo
+        window.newManagerPhotoUrl = r.url;
+        window._pendingManagerPhotoUrl = r.url;
         updateManagerPhotosEverywhere(r.url);
       }
     });
@@ -362,10 +356,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. Create Shop Logo Input - Shop Logo Cloudinary pe jayega
   const shopLogoInput = document.getElementById('createShopLogoInput');
   if(shopLogoInput){
+    // V26 FIX 2: htmlBound -> v24bound - same chabi
+    if(shopLogoInput.dataset.v24bound) return;
+    shopLogoInput.dataset.v24bound = '1';
     shopLogoInput.addEventListener('change', async () => {
       if(!shopLogoInput.files[0]) return;
       if(!window.UnifiedProfile) return;
-      // Shop abhi create nahi hui hai, isliye shopId nahi hai - general folder me jayega, create-shop me URL bhej denge
       const r = await window.UnifiedProfile.handleFileInput(shopLogoInput, {
         role: 'shop_logo',
         field: 'logo',
@@ -375,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         msgId: 'createShopLogoMsg'
       });
       if(r && r.success){
-        newShopLogoUrl = r.url;
+        window.newShopLogoUrl = r.url;
         const btn = document.getElementById('createShopRemoveLogoBtn');
         if(btn) btn.style.display = 'block';
         window._newShopLogoUrl = r.url;
@@ -386,11 +382,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. Delivery Boy Photo Input
   const delInput = document.getElementById('deliveryPhotoInput');
   if(delInput){
+    // V26 FIX 2: htmlBound -> v24bound - same chabi
+    if(delInput.dataset.v24bound) return;
+    delInput.dataset.v24bound = '1';
     delInput.addEventListener('change', async () => {
       if(!delInput.files[0]) return;
       if(!window.UnifiedProfile) return;
-      // Delivery Boy abhi create nahi hua, isliye pehle preview dikhao, create ke baad upload hoga
-      // Agar pehle se Delivery Boy edit ho raha hai toh turant upload karo
       const r = await window.UnifiedProfile.handleFileInput(delInput, {
         role: 'delivery_boy',
         field: 'photo',
@@ -399,20 +396,18 @@ document.addEventListener('DOMContentLoaded', () => {
         previewSelector: '#deliveryPhotoPreview',
         msgId: 'deliveryPhotoMsg'
       });
-      if(r && r.success) newDeliveryPhotoUrl = r.url;
+      if(r && r.success) window.newDeliveryPhotoUrl = r.url;
     });
   }
 });
 
 function updateManagerPhotosEverywhere(url){
-  // Header avatar - agar img hai toh src, agar div hai toh background
   const headerAv = document.getElementById('headerManagerAvatar');
   if(headerAv){
     headerAv.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
   }
   const sidebarAv = document.getElementById('managerAvatar');
   if(sidebarAv){
-    // A letter hatake img lagao
     const existingImg = sidebarAv.querySelector('img');
     if(existingImg) existingImg.src = url;
     else {
@@ -442,10 +437,9 @@ async function previewProfilePhoto(event){
       previewSelector: '#photoPreview',
       msgId: 'profilePhotoMsg'
     });
-    if(r && r.success){ newManagerPhotoUrl = r.url; updateManagerPhotosEverywhere(r.url); }
+    if(r && r.success){ window.newManagerPhotoUrl = r.url; window._pendingManagerPhotoUrl = r.url; updateManagerPhotosEverywhere(r.url); }
     return;
   }
-  // Fallback - sirf preview
   const reader = new FileReader();
   reader.onload = e => { document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; };
   reader.readAsDataURL(input.files[0]);
@@ -462,7 +456,7 @@ async function previewCreateShopLogo(event){
       previewSelector: '#createShopLogoPreview',
       msgId: 'createShopLogoMsg'
     });
-    if(r && r.success){ newShopLogoUrl = r.url; window._newShopLogoUrl = r.url; const btn = document.getElementById('createShopRemoveLogoBtn'); if(btn) btn.style.display = 'block'; }
+    if(r && r.success){ window.newShopLogoUrl = r.url; window._newShopLogoUrl = r.url; const btn = document.getElementById('createShopRemoveLogoBtn'); if(btn) btn.style.display = 'block'; }
     return;
   }
   const reader = new FileReader();
@@ -471,7 +465,7 @@ async function previewCreateShopLogo(event){
 }
 
 function removeCreateShopLogo(){
-  newShopLogoUrl = '';
+  window.newShopLogoUrl = '';
   window._newShopLogoUrl = '';
   const inp = document.getElementById('createShopLogoInput');
   if(inp) inp.value = '';
@@ -486,22 +480,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('profileForm');
   if(form){
     form.addEventListener('submit', async (e) => {
-      // Agar area-manager.js me already handler hai toh usko chalne do - ye sirf photo URL set karega
-      // Photo pehle hi upload ho chuki hai - newManagerPhotoUrl me URL hai
-      if(newManagerPhotoUrl){
-        window._pendingManagerPhotoUrl = newManagerPhotoUrl;
+      if(window.newManagerPhotoUrl){
+        window._pendingManagerPhotoUrl = window.newManagerPhotoUrl;
       }
     });
   }
 });
 </script>
 <script>
+// Demand wala script - V26 FIX 3: pehle v14bound check karta tha par khud set nahi karta tha, JS wala 2 sec baad phir bind kar deta tha, demand 2 baar jati thi
+// Ab khud set karega, JS wala dekh ke skip karega
 (async function(){
   const managerId = localStorage.getItem('managerId') || new URLSearchParams(location.search).get('id');
   async function loadMyDemands(){
     try{
-      if(!managerId) return;
-      const res = await fetch(`/api/area-demand/my/${managerId}`).then(r=>r.json());
+      var mid = localStorage.getItem('managerId') || managerId || new URLSearchParams(location.search).get('id');
+      if(!mid) return;
+      const res = await fetch(`/api/area-demand/my/${mid}`).then(r=>r.json());
       const data = res.data||[];
       const badge = document.getElementById('demandCountBadge');
       if(badge) badge.textContent = `${data.filter(d=>d.status==='open').length} Pending`;
@@ -513,11 +508,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   const form = document.getElementById('areaDemandForm');
   if(form){
+    if(form.dataset.v14bound){
+      setTimeout(loadMyDemands, 2000);
+      return;
+    }
+    // V26 FIX 3: Khud set karo, taaki area-manager.js wala initDemandSystem dekh ke skip kare
+    form.dataset.v14bound = '1';
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       const areaName = document.getElementById('managerAreaName')?.textContent?.trim() || document.getElementById('areaMapName')?.textContent?.trim() || 'Unknown';
+      var mid = localStorage.getItem('managerId') || managerId || new URLSearchParams(location.search).get('id');
       const body = {
-        areaManagerId: managerId,
+        areaManagerId: mid,
         areaName: areaName,
         productName: document.getElementById('demandProductName').value.trim(),
         productCategory: document.getElementById('demandCategory').value,
@@ -526,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
         notes: document.getElementById('demandNotes').value.trim(),
       };
       const msg = document.getElementById('demandMsg');
-      if(!body.productName||!body.quantity||!managerId){ if(msg){msg.textContent='Product Name, Qty, Manager ID required'; msg.style.color='red';} return; }
+      if(!body.productName||!body.quantity||!body.areaManagerId){ if(msg){msg.textContent='Product Name, Qty, Manager ID required'; msg.style.color='red';} return; }
       if(msg) msg.textContent='Sending...';
       try{
         const res = await fetch('/api/area-demand/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());

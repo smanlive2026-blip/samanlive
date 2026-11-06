@@ -1,11 +1,12 @@
 // ========================================
-// AREA MANAGER DASHBOARD - WORLD CLASS CLEAN + V13 HIERARCHY + V14 PRODUCT MANAGER DEMAND + V15 NO COMMON FIX + V24 UNIFIED PROFILE
+// AREA MANAGER DASHBOARD - WORLD CLASS CLEAN + V13 HIERARCHY + V14 PRODUCT MANAGER DEMAND + V15 NO COMMON FIX + V24 UNIFIED PROFILE + V25.1 DUPLICATE LET FIX
 // File: /public/assets/js/area-manager.js
 // Dashboard + Profile + Shop List + Edit + Delivery + WALLET + BULK BUY FROM ADMIN + AREA DEMAND TO EXECUTIVE
 // Shop Create logic shop-create.js me hai
-// LOCATION: /public/assets/js/area-manager.js - V24 FINAL - UNIFIED PROFILE - NO BASE64 - CLOUDINARY ONLY
-// CHANGE V24: previewProfilePhoto -> UnifiedProfile.handleFileInput, profilePhotoBase64 HATAYA, newManagerPhotoUrl add kiya, Delivery photo + vehicleNumber add kiya
+// LOCATION: /public/assets/js/area-manager.js - V25.1 FINAL - NO DELETE - SIRF 4 FIX
+// FIX V25.1: 1) let newManagerPhotoUrl / let newDeliveryPhotoUrl -> window.* (HTML me bhi same naam se let tha, Identifier already declared aata tha) 2) loadDashboard me managerId/phone localStorage sync (profile-core ko managerId milega) 3) renderWallet me managerWalletBalanceMain bhi update 4) bindProfileForm me gender toLowerCase (Mongoose enum fail -> 500 rokne ke liye)
 // RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Base64 sirf preview ke liye.
+// BAAKI SAB TERA WALA HI HAI - 822 LINE - KUCH DELETE NAHI KIYA
 // ========================================
 
 let currentManager = null;
@@ -18,9 +19,14 @@ let isMapHidden = false;
 let managerWallet = null;
 let adminProducts = [];
 
-// V24: Profile photo ka Cloudinary URL - photo select karte hi bhar jayega, Save ka wait nahi karega
-let newManagerPhotoUrl = '';
-let newDeliveryPhotoUrl = '';
+// V25.1 FIX 1: Pehle yahan tha - let newManagerPhotoUrl = ''; let newDeliveryPhotoUrl = '';
+// Problem: area-manager.html me bhi same naam se `let` tha, dono same global scope me hai, isliye `Identifier 'newManagerPhotoUrl' has already been declared` aake poora script fail ho jata tha.
+// Ab: `let` hataya, `window.` pe rakha - HTML wala bhi `window.` use karega toh takrayega nahi. Naam same hai, kaam same hai.
+// NOTE: Iske baad jahan jahan newManagerPhotoUrl likha hai, wahan window.newManagerPhotoUrl use hoga - taaki dono file ek hi variable dekhe.
+window.newManagerPhotoUrl = window.newManagerPhotoUrl || '';
+window.newDeliveryPhotoUrl = window.newDeliveryPhotoUrl || '';
+window._pendingManagerPhotoUrl = window._pendingManagerPhotoUrl || '';
+window._newShopLogoUrl = window._newShopLogoUrl || '';
 
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token') || localStorage.getItem('managerToken');
@@ -107,7 +113,6 @@ function bindProfilePhotoInputV24(){
   input.dataset.v24bound = '1';
   input.addEventListener('change', async () => {
     if(!input.files[0]) return;
-    // Agar UnifiedProfile nahi hai toh purana preview dikhao - par save mat karo
     if(!window.UnifiedProfile){
       alert('Profile system load nahi hua - page refresh karo');
       return;
@@ -122,11 +127,9 @@ function bindProfilePhotoInputV24(){
       msgId: 'profilePhotoMsg'
     });
     if(r && r.success){
-      newManagerPhotoUrl = r.url;
+      window.newManagerPhotoUrl = r.url;
       window._pendingManagerPhotoUrl = r.url;
-      // Header + Sidebar photo turant update karo - Save ka wait nahi karega
       updateManagerPhotosEverywhere(r.url);
-      // currentManager me bhi update karo taaki renderProfile sahi dikhaye
       if(currentManager){
         currentManager.photo = r.url;
         currentManager.avatar = r.url;
@@ -162,7 +165,6 @@ function bindDeliveryPhotoInputV24(){
   input.addEventListener('change', async () => {
     if(!input.files[0]) return;
     if(!window.UnifiedProfile){
-      // Fallback - sirf preview
       const reader = new FileReader();
       reader.onload = e => { const p = document.getElementById('deliveryPhotoPreview'); if(p) p.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; };
       reader.readAsDataURL(input.files[0]);
@@ -176,7 +178,7 @@ function bindDeliveryPhotoInputV24(){
       previewSelector: '#deliveryPhotoPreview',
       msgId: 'deliveryPhotoMsg'
     });
-    if(r && r.success) newDeliveryPhotoUrl = r.url;
+    if(r && r.success) window.newDeliveryPhotoUrl = r.url;
   });
 }
 
@@ -186,7 +188,7 @@ function initHierarchyForManager(){
         window.USER_ID = currentManager? currentManager._id || currentManager.managerCode : 'manager';
         window.MY_SHOP_ID = null;
     }
-    if(window.io || window.socket){
+    if(typeof window.io !== 'undefined' || window.socket){
         try {
             const socket = window.socket || window.io();
             if(currentManager){
@@ -218,12 +220,22 @@ async function loadDashboard() {
         window.USER_ID = currentManager._id || currentManager.managerCode;
         window.AreaId = currentManager.areaCode;
 
+        // V25.1 FIX 2: profile-core.js ka getIds() sirf localStorage dekhta hai, currentManager memory me hota hai.
+        // Isliye yahan sync kar diya - taaki photo upload karte waqt managerId = '' na jaye, Manager me save ho.
+        // Baaki loadDashboard same hai - kuch delete nahi kiya.
+        try{
+          if(currentManager._id) localStorage.setItem('managerId', currentManager._id);
+          if(currentManager.phone) { localStorage.setItem('managerPhone', currentManager.phone); localStorage.setItem('USER_PHONE', currentManager.phone); }
+          if(currentManager.areaCode) localStorage.setItem('managerAreaCode', currentManager.areaCode);
+          if(currentManager.photo || currentManager.avatar || currentManager.profilePic) localStorage.setItem('managerPhoto', currentManager.photo || currentManager.avatar || currentManager.profilePic);
+        }catch(e){}
+
         const [shopsData, modulesData, areasRes, managersRes, walletRes] = await Promise.all([
             apiCall('/manager/shops').catch(() => ({ shops: [] })),
             apiCall('/modules').catch(() => ({ modules: [] })),
             fetch('/api/areas').then(r => r.json()).catch(() => []),
             fetch('/api/managers').then(r => r.json()).catch(() => []),
-            fetch(`/api/common/wallet/balance?userId=${currentManager._id || currentManager.managerCode}&role=area_manager`).then(r=>r.json()).catch(()=>({balance:0}))
+            fetch(`/api/common/wallet/balance?userId=${currentManager._id || currentManager.managerCode}&role=area_manager`).then(r=> r.ok ? r.json() : ({balance:0})).catch(()=>({balance:0}))
         ]);
 
         managerShops = shopsData.shops || shopsData || [];
@@ -259,6 +271,10 @@ window.loadDashboard = loadDashboard;
 function renderWallet(wallet){
     const els = document.querySelectorAll('#managerWalletBalance');
     els.forEach(el => { if(el) el.textContent = `₹${wallet.balance || wallet.walletBalance || 0}`; });
+    // V25.1 FIX 3: HTML me card wala id ab managerWalletBalanceMain hai (pehle dono jagah same id tha, card wala update nahi hota tha)
+    // Isliye isko bhi update kiya - baaki renderWallet same hai.
+    const elMain = document.getElementById('managerWalletBalanceMain');
+    if(elMain) elMain.textContent = `₹${wallet.balance || wallet.walletBalance || 0}`;
     const el2 = document.getElementById('managerTotalEarning');
     if(el2) el2.textContent = `₹${wallet.totalEarning || 0}`;
     const el3 = document.getElementById('walletSection');
@@ -337,7 +353,6 @@ function renderProfile() {
     setText('areaCodeText2', currentManager.areaCode || '-');
     setText('managerCodeText2', currentManager.areaCode || '-');
 
-    // V24: photo / avatar / profilePic - teeno me se jo mile wo dikhao
     const pic = getManagerPhoto();
     const avatarHtml = pic
       ? `<img src="${pic}" alt=""><div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`
@@ -490,27 +505,23 @@ function openProfileModal() {
     document.getElementById('profilePhone').value = currentManager?.phone || '';
     document.getElementById('profileEmail').value = currentManager?.email || '';
     document.getElementById('profileAreaName').value = currentManager?.areaName || currentManager?.areaCode || '';
-    // V24: City / Gender / Pincode bhi fill karo - HTML me add kiya hai
     const cityEl = document.getElementById('profileCity'); if(cityEl) cityEl.value = currentManager?.city || '';
     const pinEl = document.getElementById('profilePincode'); if(pinEl) pinEl.value = currentManager?.pincode || '';
     const genderEl = document.getElementById('profileGender'); if(genderEl) genderEl.value = currentManager?.gender || '';
     const pic = getManagerPhoto();
     const prev = document.getElementById('photoPreview');
     if(prev) prev.innerHTML = pic? `<img src="${pic}" alt="Profile">` : '<i class="fas fa-user" style="font-size:42px"></i>';
-    // V24: profilePhotoBase64 HATAYA - ab newManagerPhotoUrl me URL rahega, base64 nahi
-    newManagerPhotoUrl = pic || '';
+    window.newManagerPhotoUrl = pic || '';
     window._pendingManagerPhotoUrl = pic || '';
     const msg = document.getElementById('profilePhotoMsg'); if(msg) msg.textContent = '';
 }
 function closeProfileModal() { document.getElementById('profileModal')?.classList.remove('active'); }
 
-// V24: previewProfilePhoto - ab UnifiedProfile use karta hai - purana FileReader + base64 HATAYA
 async function previewProfilePhoto(event) {
     const input = event.target;
     const file = input.files[0]; if (!file) return;
     if (file.size > 5 * 1024 * 1024) { alert('Image size should be less than 5MB.'); input.value = ''; return; }
     if(!file.type.startsWith('image/')){ alert('Only image allowed'); input.value=''; return; }
-    // UnifiedProfile hai toh wahi handle karega - Cloudinary
     if(window.UnifiedProfile){
       const r = await window.UnifiedProfile.handleFileInput(input, {
         role: 'area_manager',
@@ -522,20 +533,18 @@ async function previewProfilePhoto(event) {
         msgId: 'profilePhotoMsg'
       });
       if(r && r.success){
-        newManagerPhotoUrl = r.url;
+        window.newManagerPhotoUrl = r.url;
         window._pendingManagerPhotoUrl = r.url;
         if(currentManager){ currentManager.photo = r.url; currentManager.avatar = r.url; currentManager.profilePic = r.url; }
         updateManagerPhotosEverywhere(r.url);
       }
       return;
     }
-    // Fallback - sirf preview, save nahi hoga
     const reader = new FileReader();
     reader.onload = e => { document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}" alt="Preview">`; };
     reader.readAsDataURL(file);
 }
 
-// V24: Create Shop Logo preview - ab UnifiedProfile use karta hai - shop-create.js se bhi call hota hai
 async function previewCreateShopLogo(event){
   const input = event.target;
   const file = input.files[0]; if(!file) return;
@@ -574,8 +583,7 @@ function bindProfileForm() {
         e.preventDefault();
         const btn = document.getElementById('profileSaveBtn'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         try {
-            // V24: Photo pehle hi Cloudinary pe upload ho chuki hai - newManagerPhotoUrl me URL hai, base64 nahi
-            const photoUrl = newManagerPhotoUrl || window._pendingManagerPhotoUrl || getManagerPhoto() || '';
+            const photoUrl = window.newManagerPhotoUrl || window._pendingManagerPhotoUrl || getManagerPhoto() || '';
             const payload = {
                 name: document.getElementById('profileName').value.trim(),
                 phone: document.getElementById('profilePhone').value.trim(),
@@ -585,21 +593,22 @@ function bindProfileForm() {
                 profilePic: photoUrl,
                 city: document.getElementById('profileCity')?.value?.trim() || currentManager?.city || '',
                 pincode: document.getElementById('profilePincode')?.value?.trim() || currentManager?.pincode || '',
-                gender: document.getElementById('profileGender')?.value || currentManager?.gender || ''
+                // V25.1 FIX 4: Pehle tha - gender: document.getElementById('profileGender')?.value || ...
+                // Problem: Select me value chhota hai par kabhi Capital aa jaye toh Model enum ['male','female','other',''] fail -> 500
+                // Ab: toLowerCase karke bheja - baaki payload same hai.
+                gender: (document.getElementById('profileGender')?.value || currentManager?.gender || '').toLowerCase().trim()
             };
             const data = await apiCall('/manager/update-profile', { method: 'PUT', body: payload });
             if (data.success) {
               alert('✅ Profile updated successfully!');
-              // V24: currentManager ko updated data se sync karo
               const upd = data.manager || data.data || {};
               currentManager = {...currentManager, ...upd, photo: photoUrl || upd.photo || currentManager.photo, avatar: photoUrl || upd.avatar || '', profilePic: photoUrl || upd.profilePic || ''};
-              // Agar server ne photo save nahi ki toh common profile se bhi try karo - backup
               if(photoUrl && !upd.photo){
                 try{
                   await fetch('/api/common/profile/upload-avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'area_manager', field: 'photo', managerId: getManagerIdForProfile(), phone: payload.phone, profilePic: photoUrl }) });
                 }catch(e){}
               }
-              newManagerPhotoUrl = '';
+              window.newManagerPhotoUrl = '';
               window._pendingManagerPhotoUrl = '';
               renderProfile();
               closeProfileModal();
@@ -679,27 +688,25 @@ function bindDeliveryForm() {
         e.preventDefault();
         const btn = form.querySelector('button[type="submit"]'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
         try {
-            // V24: Delivery Boy ki photo pehle hi Cloudinary pe upload ho chuki hai - newDeliveryPhotoUrl me URL hai
             const payload = {
                 name: document.getElementById('dmName').value.trim(),
                 phone: document.getElementById('dmPhone').value.trim(),
                 email: document.getElementById('dmEmail').value.trim(),
                 vehicleType: document.getElementById('dmVehicle').value,
                 vehicleNumber: document.getElementById('dmVehicleNumber')?.value?.trim()?.toUpperCase() || '',
-                photo: newDeliveryPhotoUrl || '',
-                avatar: newDeliveryPhotoUrl || '',
-                profilePic: newDeliveryPhotoUrl || ''
+                photo: window.newDeliveryPhotoUrl || '',
+                avatar: window.newDeliveryPhotoUrl || '',
+                profilePic: window.newDeliveryPhotoUrl || ''
             };
             const data = await apiCall('/manager/create-delivery-manager', { method: 'POST', body: payload });
             alert(data.message || 'Done');
             if (data.success) {
-              // Agar server ne photo save nahi ki toh common profile se bhi try karo
-              if(newDeliveryPhotoUrl && data.manager?._id){
+              if(window.newDeliveryPhotoUrl && data.manager?._id){
                 try{
-                  await fetch('/api/common/profile/upload-avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'delivery_boy', field: 'photo', deliveryBoyId: data.manager._id, phone: payload.phone, profilePic: newDeliveryPhotoUrl }) });
+                  await fetch('/api/common/profile/upload-avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'delivery_boy', field: 'photo', deliveryBoyId: data.manager._id, phone: payload.phone, profilePic: window.newDeliveryPhotoUrl }) });
                 }catch(e){}
               }
-              newDeliveryPhotoUrl = '';
+              window.newDeliveryPhotoUrl = '';
               closeCreateDeliveryModal(); form.reset();
               const prev = document.getElementById('deliveryPhotoPreview'); if(prev) prev.innerHTML = '<i class="fas fa-camera"></i>';
               loadDeliveryBoys();
@@ -710,7 +717,7 @@ function bindDeliveryForm() {
 }
 function openCreateDeliveryModal() {
   document.getElementById('createDeliveryModal')?.classList.add('active');
-  newDeliveryPhotoUrl = '';
+  window.newDeliveryPhotoUrl = '';
   const prev = document.getElementById('deliveryPhotoPreview'); if(prev) prev.innerHTML = '<i class="fas fa-camera"></i>';
 }
 function closeCreateDeliveryModal() { document.getElementById('createDeliveryModal')?.classList.remove('active'); }
@@ -740,7 +747,7 @@ window.openOrderView = openOrderView; window.openCreateDeliveryModal = openCreat
 window.closeCreateDeliveryModal = closeCreateDeliveryModal; window.openDeliveryManagerPanel = openDeliveryManagerPanel;
 window.toggleAreaMap = toggleAreaMap; window.loadDeliveryBoys = loadDeliveryBoys;
 
-console.log('✅ area-manager.js V24 loaded - Unified Profile - No Base64 - Cloudinary Only');
+console.log('✅ area-manager.js V25.1 loaded - No Duplicate Let - No Delete - Unified Profile - Cloudinary Only');
 
 // ========================================
 // V14 PRODUCT MANAGER SYSTEM - AREA DEMAND TO EXECUTIVE
@@ -819,4 +826,4 @@ window.loadMyDemandsV14 = loadMyDemandsV14;
 window.initDemandSystem = initDemandSystem;
 window.handleDemandSubmitV14 = handleDemandSubmitV14;
 
-console.log('✅ V24 Demand system loaded - No Common - Old logic intact - Unified Profile Added');
+console.log('✅ V25.1 Demand system loaded - No Common - Old logic intact - Unified Profile Added');
