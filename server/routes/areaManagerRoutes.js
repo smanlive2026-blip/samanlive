@@ -1,9 +1,11 @@
 // ========================================
-// AREA MANAGER - EK HI FILE
+// AREA MANAGER - EK HI FILE - V25 UNIFIED PROFILE - FULL CODE - NO CUT
 // File: server/routes/areaManagerRoutes.js
 // Mount: app.use('/api', require('./routes/areaManagerRoutes'))
 // Frontend: area-manager.html
 // Shop Create alag file me hai: managerShopCreate.js
+// CHANGE V25: PUT /manager/update-profile me base64 REJECT, photo = avatar = profilePic sync, city/gender/pincode/coverPhoto save, Dashboard full manager bheje, Delivery Boy photo + vehicleNumber + DeliveryBoy model me bhi banega, Shop Edit logo sync
+// RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Base64 aaya toh 400 dega.
 // ========================================
 const express = require('express');
 const crypto = require('crypto');
@@ -15,10 +17,58 @@ const Shop = require('../models/Shop');
 const Area = require('../models/Area');
 const Module = require('../models/Module');
 
+// ========== HELPER: Base64 check - V25 ==========
+// Agar photo data:image se start hoti hai toh wo base64 hai - DB me nahi jani chahiye
+function isBase64Image(val){
+  if(!val || typeof val !== 'string') return false;
+  const s = val.trim();
+  return s.startsWith('data:image') || s.startsWith('data:application') || (s.length > 5000 && !s.startsWith('http') && !s.startsWith('/') && !s.startsWith('blob:'));
+}
+function isCloudinaryOrHttpUrl(val){
+  if(!val || typeof val !== 'string') return false;
+  const s = val.trim();
+  if(s === '') return true; // empty = delete karna hai, allowed hai
+  return s.startsWith('http://') || s.startsWith('https://') || s.startsWith('/') || s.startsWith('blob:');
+}
+
+// ========== HELPER: publicManager - loginToken leak mat karo ==========
+function publicManager(m){
+  if(!m) return null;
+  const o = m.toObject ? m.toObject() : m;
+  const pic = o.photo || o.avatar || o.profilePic || '';
+  // loginToken / password kabhi frontend ko mat bhejo - sirf delivery link ke liye alag se bhejte hai jahan jarurat hai
+  delete o.loginToken;
+  delete o.password;
+  return {
+    ...o,
+    photo: pic,
+    avatar: pic,
+    profilePic: pic,
+    coverPhoto: o.coverPhoto || '',
+    city: o.city || '',
+    state: o.state || '',
+    pincode: o.pincode || '',
+    address: o.address || '',
+    gender: o.gender || '',
+    dob: o.dob || null,
+    areaName: o.areaName || '',
+    areaCode: o.areaCode || '',
+    managerCode: o.managerCode || '',
+    role: o.role || 'area-manager',
+    walletBalance: o.walletBalance || 0,
+    totalEarning: o.totalEarning || 0,
+    totalDeliveries: o.totalDeliveries || 0,
+    isAvailable: o.isAvailable !== undefined ? o.isAvailable : true,
+    isOnline: o.isOnline || false,
+    isVerified: o.isVerified || false,
+    status: o.status,
+    isActive: o.isActive
+  };
+}
+
 // ========== AUTH - Manager Token ==========
 const authManager = async (req, res, next) => {
     try {
-        //const token = (req.headers.authorization || '').replace('Bearer ', '').trim() || req.query.token;
         const token = ((req.headers.authorization || '').replace('Bearer ', '').trim()
             || req.headers['x-manager-token']
             || req.headers['manager-token']
@@ -72,20 +122,35 @@ router.get('/manager/dashboard', authManager, async (req, res) => {
            ? await Module.find({ id: { $in: manager.moduleAccess }, status: true }).lean()
             : await Module.find({ status: true }).sort({ name: 1 }).lean();
 
+        // V25: Full manager bhejo - avatar / profilePic / coverPhoto / city / pincode / gender bhi
+        const pub = publicManager(manager);
+
         res.json({
             success: true,
             manager: {
                 _id: manager._id, name: manager.name, email: manager.email,
-                phone: manager.phone, photo: manager.photo || '',
+                phone: manager.phone,
+                photo: pub.photo, avatar: pub.avatar, profilePic: pub.profilePic, coverPhoto: pub.coverPhoto,
                 areaCode: manager.areaCode, areaName: area?.areaName || manager.areaName,
-                city: area?.city || manager.city, state: area?.state || manager.state,
+                city: area?.city || manager.city || '', state: area?.state || manager.state || '',
+                pincode: manager.pincode || area?.pincode || '',
+                address: manager.address || '',
+                gender: manager.gender || '',
+                dob: manager.dob || null,
                 managerCode: manager.managerCode, bucket: manager.bucket,
                 role: manager.role || 'area-manager',
                 serviceCharge: manager.serviceCharge || 0,
                 maxShops: manager.maxShops || 10,
                 centerLat: area?.centerLat, centerLng: area?.centerLng,
                 radius: area?.radius || manager.radius || 50,
-                modules: manager.moduleAccess || []
+                modules: manager.moduleAccess || [],
+                walletBalance: manager.walletBalance || 0,
+                totalEarning: manager.totalEarning || 0,
+                totalDeliveries: manager.totalDeliveries || 0,
+                isAvailable: manager.isAvailable !== undefined ? manager.isAvailable : true,
+                isVerified: manager.isVerified || false,
+                vehicleType: manager.vehicleType || '',
+                vehicleNumber: manager.vehicleNumber || ''
             },
             shops, categories: modules, area,
             stats: {
@@ -120,7 +185,8 @@ router.get('/manager-by-token/:token', async (req, res) => {
     try {
         const manager = await Manager.findOne({ loginToken: req.params.token, status: true }).lean();
         if (!manager) return res.status(404).json({ success: false, error: 'Invalid token' });
-        res.json({ success: true, manager });
+        // V25: loginToken leak mat karo
+        res.json({ success: true, manager: publicManager(manager) });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -131,31 +197,91 @@ router.post('/manager/verify-token', async (req, res) => {
         if (!token) return res.json({ success: false, error: 'Token required' });
         const manager = await Manager.findOne({ loginToken: token, status: true }).lean();
         if (!manager) return res.json({ success: false, error: 'Invalid token' });
-        res.json({ success: true, manager });
+        res.json({ success: true, manager: publicManager(manager) });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// ========== 4. PROFILE UPDATE ==========
+// ========== 4. PROFILE UPDATE - V25 UNIFIED - BASE64 REJECT ==========
 router.put('/manager/update-profile', authManager, async (req, res) => {
     try {
         const manager = req.manager;
-        const { name, phone, email, photo } = req.body;
+        const b = req.body || {};
+        const { name, phone, email, photo, avatar, profilePic, coverPhoto } = b;
 
         if (name) manager.name = String(name).trim();
         if (phone) manager.phone = String(phone).trim();
         if (email) manager.email = String(email).toLowerCase().trim();
-        if (photo!== undefined) {
-            if (photo && photo.length > 700000) {
-                return res.status(400).json({ success: false, error: 'Photo too large. Use image under 300KB' });
+
+        // V25: City / State / Pincode / Address / Gender / DOB - pehle ye save hi nahi hote the
+        if (b.city !== undefined) manager.city = String(b.city || '').trim();
+        if (b.state !== undefined) manager.state = String(b.state || '').trim();
+        if (b.pincode !== undefined) manager.pincode = String(b.pincode || '').trim();
+        if (b.address !== undefined) manager.address = typeof b.address === 'string' ? b.address : (b.address?.line1 || '');
+        if (b.gender !== undefined) manager.gender = b.gender || '';
+        if (b.dob !== undefined) manager.dob = b.dob || null;
+        if (b.areaName !== undefined) manager.areaName = String(b.areaName || '').trim();
+        if (b.vehicleType !== undefined) manager.vehicleType = b.vehicleType || 'bike';
+        if (b.vehicleNumber !== undefined) manager.vehicleNumber = String(b.vehicleNumber || '').toUpperCase().trim();
+        if (b.isAvailable !== undefined) manager.isAvailable = !!b.isAvailable;
+        if (b.isOnline !== undefined) manager.isOnline = !!b.isOnline;
+
+        // V25: PHOTO - Base64 aaya toh REJECT karo - Cloudinary URL hi allowed hai
+        const incomingPhoto = photo || avatar || profilePic || '';
+        if (incomingPhoto !== undefined && incomingPhoto !== '') {
+            if (isBase64Image(incomingPhoto)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Base64 photo not allowed - Cloudinary URL bhejo. Frontend me UnifiedProfile.handleFileInput use karo jo photo pehle Cloudinary pe upload karta hai.'
+                });
             }
-            manager.photo = photo || '';
+            if (!isCloudinaryOrHttpUrl(incomingPhoto)) {
+                return res.status(400).json({ success: false, error: 'Invalid photo URL - http/https Cloudinary URL bhejo' });
+            }
+            // V25: photo = avatar = profilePic - teeno me same URL - pehle sirf photo me jata tha
+            const pic = String(incomingPhoto).trim();
+            manager.photo = pic;
+            manager.avatar = pic;
+            manager.profilePic = pic;
+        } else if (incomingPhoto === '') {
+            // Empty bheja hai toh delete karna hai
+            if (photo === '' || avatar === '' || profilePic === '') {
+                manager.photo = '';
+                manager.avatar = '';
+                manager.profilePic = '';
+            }
         }
+
+        // V25: Cover Photo - alag se - base64 reject
+        if (coverPhoto !== undefined && coverPhoto !== '') {
+            if (isBase64Image(coverPhoto)) {
+                return res.status(400).json({ success: false, error: 'Base64 cover not allowed - Cloudinary URL bhejo' });
+            }
+            manager.coverPhoto = String(coverPhoto).trim();
+        } else if (coverPhoto === '') {
+            manager.coverPhoto = '';
+        }
+
         await manager.save();
-        res.json({ success: true, manager });
+        // V25: publicManager bhejo - loginToken nahi jayega
+        res.json({ success: true, manager: publicManager(manager), message: 'Profile updated' });
     } catch (err) {
         console.error('Profile update error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ========== 4B. PROFILE PHOTO DELETE - V25 NEW ==========
+router.delete('/manager/profile-photo', authManager, async (req, res) => {
+    try {
+        const manager = req.manager;
+        manager.photo = '';
+        manager.avatar = '';
+        manager.profilePic = '';
+        await manager.save();
+        res.json({ success: true, manager: publicManager(manager), message: 'Photo deleted' });
+    } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -176,9 +302,44 @@ router.put('/manager/shops/:id', authManager, async (req, res) => {
 
         // Sirf allowed field hi update honge
         const allowed = {};
-        ['shopName','icon','logo','serviceType','categoryId','template','templateFolder','shopType','phone','contact','range','isActive','description'].forEach(k => {
+        ['shopName','icon','serviceType','categoryId','template','templateFolder','shopType','phone','contact','range','isActive','description'].forEach(k => {
             if (rest[k]!== undefined) allowed[k] = rest[k];
         });
+
+        // V25: Logo sync - logo bhejoge toh 4 field me jayega - pehle sirf logo me jata tha
+        const logoVal = rest.logo || rest.shopLogo || rest.uploadedLogo || rest.image || '';
+        if (logoVal !== undefined && logoVal !== '') {
+            if (isBase64Image(logoVal)) {
+                return res.status(400).json({ success: false, error: 'Base64 logo not allowed - Cloudinary URL bhejo' });
+            }
+            allowed.logo = logoVal;
+            allowed.shopLogo = logoVal;
+            allowed.uploadedLogo = logoVal;
+            allowed.image = logoVal;
+        }
+
+        // V25: Banner sync
+        const bannerVal = rest.banner || rest.coverPhoto || rest.cover || '';
+        if (bannerVal !== undefined && bannerVal !== '') {
+            if (isBase64Image(bannerVal)) {
+                return res.status(400).json({ success: false, error: 'Base64 banner not allowed - Cloudinary URL bhejo' });
+            }
+            allowed.banner = bannerVal;
+            allowed.coverPhoto = bannerVal;
+            allowed.cover = bannerVal;
+        }
+
+        // V25: Owner Photo sync
+        const ownerVal = rest.ownerPhotoUrl || rest.ownerPhoto || rest.ownerAvatar || '';
+        if (ownerVal !== undefined && ownerVal !== '') {
+            if (isBase64Image(ownerVal)) {
+                return res.status(400).json({ success: false, error: 'Base64 owner photo not allowed' });
+            }
+            allowed.ownerPhotoUrl = ownerVal;
+            allowed.ownerPhoto = ownerVal;
+            allowed.ownerAvatar = ownerVal;
+        }
+
         if (rest.address) {
             allowed.address = (typeof rest.address === 'object')
                ? {...(shop.address?.toObject? shop.address.toObject() : shop.address || {}),...rest.address }
@@ -235,18 +396,32 @@ router.get('/modules', async (req, res) => {
     }
 });
 
-// ========== 8. DELIVERY BOY CREATE ==========
+// ========== 8. DELIVERY BOY CREATE - V25: Photo + VehicleNumber + DeliveryBoy model ==========
 router.post('/manager/create-delivery-manager', authManager, async (req, res) => {
     try {
         const manager = req.manager;
         if (manager.role && manager.role!== 'area-manager') {
             return res.status(403).json({ success: false, message: 'Sirf Area Manager bana sakta hai' });
         }
-        const { name, phone, email, vehicleType } = req.body;
+        const { name, phone, email, vehicleType, vehicleNumber, photo, avatar, profilePic, aadhaarNumber, drivingLicense } = req.body;
         if (!name ||!phone) return res.status(400).json({ success: false, message: 'Name aur Phone zaruri hai' });
+
+        // V25: Photo me base64 aaya toh reject karo
+        const incomingPhoto = photo || avatar || profilePic || '';
+        if (incomingPhoto && isBase64Image(incomingPhoto)) {
+            return res.status(400).json({ success: false, message: 'Base64 photo not allowed - Cloudinary URL bhejo' });
+        }
+        const pic = incomingPhoto ? String(incomingPhoto).trim() : '';
 
         const exists = await Manager.findOne({ phone });
         if (exists) return res.status(400).json({ success: false, message: 'Phone already exist' });
+
+        // DeliveryBoy collection me bhi check karo - dono me same phone nahi hona chahiye
+        try{
+          const DeliveryBoy = require('../models/DeliveryBoy');
+          const exists2 = await DeliveryBoy.findOne({ phone: String(phone).trim() });
+          if(exists2) return res.status(400).json({ success: false, message: 'Phone already exist in DeliveryBoy' });
+        }catch(e){}
 
         const count = await Manager.countDocuments({ role: 'delivery-manager', areaCode: manager.areaCode });
         const managerCode = `DM-${manager.areaCode}-${count + 1}`;
@@ -260,23 +435,68 @@ router.post('/manager/create-delivery-manager', authManager, async (req, res) =>
             areaCode: manager.areaCode, areaName: manager.areaName,
             city: manager.city, state: manager.state,
             managerCode, parentManager: manager._id,
-            vehicleType: vehicleType || 'bike', status: true
+            vehicleType: vehicleType || 'bike',
+            vehicleNumber: vehicleNumber ? String(vehicleNumber).toUpperCase().trim() : '',
+            drivingLicense: drivingLicense || '',
+            aadhaarNumber: aadhaarNumber || '',
+            photo: pic, avatar: pic, profilePic: pic,
+            status: true
         });
         await dm.save();
-        res.json({ success: true, message: 'Delivery Boy ban gaya', manager: dm });
+
+        // V25: DeliveryBoy model me bhi banado - taaki delivery-boy.html se login / profile dono jagah se mile
+        try{
+          const DeliveryBoy = require('../models/DeliveryBoy');
+          await DeliveryBoy.create({
+            name: String(name).trim(),
+            phone: String(phone).trim(),
+            email: email? String(email).toLowerCase().trim() : `${managerCode.toLowerCase()}@samanlive.local`,
+            loginToken,
+            areaCode: manager.areaCode, areaName: manager.areaName,
+            city: manager.city, state: manager.state,
+            managerId: manager._id, managerCode, parentManager: manager._id,
+            vehicleType: vehicleType || 'bike',
+            vehicleNumber: vehicleNumber ? String(vehicleNumber).toUpperCase().trim() : '',
+            drivingLicense: drivingLicense || '',
+            aadhaarNumber: aadhaarNumber || '',
+            photo: pic, avatar: pic, profilePic: pic,
+            status: true, isActive: true, isAvailable: true
+          });
+        }catch(e){ console.log('DeliveryBoy create warn - Manager me ban gaya, DeliveryBoy me nahi:', e.message); }
+
+        // V25: loginToken wapas mat bhejo response me - frontend ko link banane ke liye alag se chahiye toh wo delivery-managers list se lega
+        res.json({ success: true, message: 'Delivery Boy ban gaya', manager: publicManager(dm) });
     } catch (err) {
         console.error('Create DM error:', err);
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// ========== 9. DELIVERY BOY LIST ==========
+// ========== 9. DELIVERY BOY LIST - V25: Photo sync + DeliveryBoy bhi ==========
 router.get('/manager/delivery-managers', authManager, async (req, res) => {
     try {
         const managers = await Manager.find({ role: 'delivery-manager', areaCode: req.manager.areaCode })
            .sort({ createdAt: -1 }).lean();
-        // token frontend ko link banane ke liye chahiye, isiliye bhej rahe hain
-        res.json({ success: true, managers });
+        // V25: photo / avatar / profilePic sync karke bhejo + loginToken sirf link ke liye rakho (frontend ko chahiye)
+        const cleaned = managers.map(m => {
+          const pic = m.photo || m.avatar || m.profilePic || '';
+          return { ...m, photo: pic, avatar: pic, profilePic: pic };
+        });
+        // Agar Manager me koi nahi hai toh DeliveryBoy me dhoondo - fallback
+        if(cleaned.length === 0){
+          try{
+            const DeliveryBoy = require('../models/DeliveryBoy');
+            const dbs = await DeliveryBoy.find({ areaCode: req.manager.areaCode }).sort({ createdAt: -1 }).lean();
+            if(dbs.length){
+              const cleaned2 = dbs.map(m => {
+                const pic = m.photo || m.avatar || m.profilePic || '';
+                return { ...m, photo: pic, avatar: pic, profilePic: pic, role: 'delivery-manager', managerCode: m.managerCode || '' };
+              });
+              return res.json({ success: true, managers: cleaned2 });
+            }
+          }catch(e){}
+        }
+        res.json({ success: true, managers: cleaned });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -288,6 +508,11 @@ router.post('/manager/update-location', async (req, res) => {
         const { token, lat, lng } = req.body;
         if (!token) return res.status(400).json({ success: false, error: 'Token required' });
         await Manager.findOneAndUpdate({ loginToken: token }, { lastLat: lat, lastLng: lng, lastLocationAt: new Date() });
+        // DeliveryBoy me bhi update karo
+        try{
+          const DeliveryBoy = require('../models/DeliveryBoy');
+          await DeliveryBoy.findOneAndUpdate({ loginToken: token }, { currentLocation: { type: 'Point', coordinates: [Number(lng) || 0, Number(lat) || 0] }, lastLocationUpdate: new Date() });
+        }catch(e){}
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
