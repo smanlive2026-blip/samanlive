@@ -1,4 +1,6 @@
-// LOCATION: public/assets/js/shop-create.js - V23 - MODE ONLY FILTER - NO RELATION TO SHOP CREATE - TREE MATCHED
+// LOCATION: public/assets/js/shop-create.js - V24 - MODE ONLY FILTER + SHOP LOGO CLOUDINARY FIX - NO RELATION TO SHOP CREATE - TREE MATCHED
+// V24 FIX: 1) previewCreateShopLogo ab pehle UnifiedProfile (Cloudinary) dekhega, base64 sirf fallback - taaki HTML wale listener se takraye nahi 2) payload me logo + shopLogo + logoUrl teeno bhejenge - server jo bhi naam dekhe usko mile 3) removeCreateShopLogo dono variable saaf karega - createShopLogoBase64 + window._newShopLogoUrl 4) fillModeDropdown me sel.required = false - HTML me required tha, par Mode sirf filter hai, All pe bhi shop banegi
+// BAAKI SAB TERA WALA HI HAI - 300 LINE - KUCH DELETE NAHI KIYA
 let shopCreateManagers = [];
 let shopCreateAreas = [];
 let shopCreateCategories = [];
@@ -6,6 +8,9 @@ let shopCreateCurrentManager = null;
 let selectedCreateShopIcon = '🏪';
 let createShopLogoBase64 = '';
 let selectedMode = '';
+
+// V24: Shop Logo ka Cloudinary URL - HTML / area-manager.js wale se same variable, taaki teeno file ek hi URL dekhe
+window._newShopLogoUrl = window._newShopLogoUrl || '';
 
 window.initShopCreateModule = function (allManagers, allAreas, categories, currentManager) {
     shopCreateManagers = allManagers || [];
@@ -24,6 +29,9 @@ window.initShopCreateModule = function (allManagers, allAreas, categories, curre
 function fillModeDropdown() {
     const sel = document.getElementById('createShopMode');
     if (!sel) return;
+    // V24 FIX 4: HTML me createShopMode pe required hai, par Mode sirf filter hai, required nahi - All pe bhi shop banegi
+    // Isliye JS se required hata diya - warna All (value "") pe browser form rok deta tha, button daba ke bhi shop nahi banti thi
+    sel.required = false;
     if (!window.SHOP_MODES) {
         sel.innerHTML = '<option value="">All Shops (No Filter)</option>';
         return;
@@ -160,13 +168,36 @@ function bindCreateShopIconPicker() {
     });
 }
 
-function previewCreateShopLogo(event) {
+// V24 FIX 1: Pehle ye sirf base64 banata tha - FileReader -> createShopLogoBase64 = data:image/...
+// Problem: area-manager.html wala change listener UnifiedProfile se Cloudinary pe upload karke window._newShopLogoUrl me URL daalta hai, aur is function ko call hi nahi karta. Isliye payload me logo '' jata tha.
+// Ab: Pehle UnifiedProfile dekhega - Cloudinary URL aayega toh dono me dalega - createShopLogoBase64 me bhi, window._newShopLogoUrl me bhi. UnifiedProfile nahi hai toh purana base64 fallback chalega - taaki purana code na tute.
+async function previewCreateShopLogo(event) {
     const file = event.target.files[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { alert('Image size should be less than 2MB.'); event.target.value = ''; return; }
+    // V24: UnifiedProfile hai toh wahi handle karega - Cloudinary
+    if (window.UnifiedProfile) {
+        const r = await window.UnifiedProfile.handleFileInput(event.target, {
+            role: 'shop_logo',
+            field: 'logo',
+            type: 'logo',
+            previewSelector: '#createShopLogoPreview',
+            msgId: 'createShopLogoMsg'
+        });
+        if (r && r.success) {
+            createShopLogoBase64 = r.url;
+            window._newShopLogoUrl = r.url;
+            window.newShopLogoUrl = r.url;
+            const rmBtn = document.getElementById('createShopRemoveLogoBtn');
+            if (rmBtn) rmBtn.style.display = 'inline-flex';
+        }
+        return;
+    }
+    // Fallback - purana base64 preview, sirf UnifiedProfile na hone pe
     const reader = new FileReader();
     reader.onload = e => {
         createShopLogoBase64 = e.target.result;
+        window._newShopLogoUrl = e.target.result;
         const prev = document.getElementById('createShopLogoPreview');
         if (prev) prev.innerHTML = `<img src="${createShopLogoBase64}" alt="Shop Logo">`;
         const rmBtn = document.getElementById('createShopRemoveLogoBtn');
@@ -174,8 +205,12 @@ function previewCreateShopLogo(event) {
     };
     reader.readAsDataURL(file);
 }
+// V24 FIX 3: Pehle sirf createShopLogoBase64 = '' karta tha, window._newShopLogoUrl reh jata tha - dobara logo lagane pe purana chipka rehta tha
+// Ab dono saaf karega
 function removeCreateShopLogo() {
     createShopLogoBase64 = '';
+    window._newShopLogoUrl = '';
+    window.newShopLogoUrl = '';
     const input = document.getElementById('createShopLogoInput');
     if (input) input.value = '';
     const prev = document.getElementById('createShopLogoPreview');
@@ -207,6 +242,10 @@ function bindCreateShopForm() {
         const folder = (typeof window.getShopTemplateFolder === 'function')
             ? window.getShopTemplateFolder(templateId) : templateId;
 
+        // V24 FIX 2: Pehle tha - logo: createShopLogoBase64 || '' - HTML wale listener se aaya Cloudinary URL window._newShopLogoUrl me hota tha, wo kabhi payload me jata hi nahi tha
+        // Ab: window._newShopLogoUrl pehle dekho, phir createShopLogoBase64 - jo bhi bhara ho wo jayega
+        // Aur teeno naam se bhejo - logo + shopLogo + logoUrl - server / shop list jo bhi naam dekhe usko mile
+        const shopLogoUrl = window._newShopLogoUrl || window.newShopLogoUrl || createShopLogoBase64 || '';
         const payload = {
             shopName: document.getElementById('createShopName').value.trim(),
             ownerName: document.getElementById('createShopOwnerName').value.trim(),
@@ -218,7 +257,10 @@ function bindCreateShopForm() {
             shopType: templateId,
             businessMode: modeId || 'all', // V23 - info ke liye save, logic category se
             icon: selectedCreateShopIcon || '🏪',
-            logo: createShopLogoBase64 || '',
+            logo: shopLogoUrl,
+            shopLogo: shopLogoUrl,
+            logoUrl: shopLogoUrl,
+            image: shopLogoUrl,
             phone: document.getElementById('createShopPhone').value.trim(),
             contact: document.getElementById('createShopPhone').value.trim(),
             range: parseInt(document.getElementById('createShopRange').value),
@@ -259,6 +301,10 @@ function bindCreateShopForm() {
                 alert(`✅ Shop Created Successfully!\n\nShop: ${payload.shopName}\nCategory: ${templateId}\nFolder: ${dashFolder}\nFilter Mode: ${modeId || 'All'}\n\nDashboard:\n${dashboardUrl}`);
                 form.reset();
                 removeCreateShopLogo();
+                // V24: Success ke baad dono variable saaf karo - taaki agli shop me purana logo na chipke
+                createShopLogoBase64 = '';
+                window._newShopLogoUrl = '';
+                window.newShopLogoUrl = '';
                 selectedCreateShopIcon = '🏪';
                 selectedMode = '';
                 const modeSel = document.getElementById('createShopMode');
@@ -293,4 +339,4 @@ window.previewCreateShopLogo = previewCreateShopLogo;
 window.removeCreateShopLogo = removeCreateShopLogo;
 window.toggleSelectAllCreateShopManagers = toggleSelectAllCreateShopManagers;
 
-console.log('✅ shop-create.js V23 - MODE ONLY FILTER - Shop category se banegi - Tree matched - No common fallback');
+console.log('✅ shop-create.js V24 - MODE ONLY FILTER + SHOP LOGO CLOUDINARY - Shop category se banegi - Tree matched - No common fallback');
