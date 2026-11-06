@@ -1,6 +1,7 @@
 <!-- 
+LOCATION: public/area-manager.html - AREA MANAGER DASHBOARD - V24 UNIFIED PROFILE - FULL CODE - NO CUT
 IMPORTANT: CSS = /public/assets/css/area-manager.css
-IMPORTANT: JS = /public/assets/js/area-manager.js + shop-create.js
+IMPORTANT: JS = /public/assets/js/area-manager.js + shop-create.js + profile-core.js
 ROUTES:
 - GET /api/manager/dashboard
 - GET /api/manager/shops
@@ -12,7 +13,9 @@ ROUTES:
 - ADMIN PRODUCTS: GET /api/world-products?role=area_manager&supplierRole=admin
 - CHECKOUT: POST /api/common/checkout
 - NEW DEMAND: POST /api/area-demand/create , GET /api/area-demand/my/:areaManagerId
+- PROFILE PHOTO: POST /api/common/profile/upload-avatar (role: area_manager) -> Cloudinary -> Manager.photo + avatar + profilePic
 - Template: /public/assets/js/shop-template-map.js -> getShopTemplateFolder(id) || 'common'
+- V24: UnifiedProfile Added - profilePhotoBase64 HATAYA - Photo ab Cloudinary pe jayegi, base64 DB me nahi jayega
 - V22: Business Mode Select Added - No other logic touched
 -->
 <!DOCTYPE html>
@@ -189,8 +192,8 @@ ROUTES:
         <div class="card-header"><h2><i class="fas fa-motorcycle"></i> My Delivery Boys</h2><button class="btn btn-primary" onclick="openCreateDeliveryModal()"><i class="fas fa-plus"></i> Add Delivery Boy</button></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Name</th><th>Phone</th><th>Vehicle</th><th>Manager Code</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody id="deliveryBoysTable"><tr><td colspan="6" class="loading-cell">Loading...</td></tr></tbody>
+            <thead><tr><th>Photo</th><th>Name</th><th>Phone</th><th>Vehicle</th><th>Manager Code</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="deliveryBoysTable"><tr><td colspan="7" class="loading-cell">Loading...</td></tr></tbody>
           </table>
         </div>
       </section>
@@ -198,26 +201,33 @@ ROUTES:
   </div>
 </div>
 
+<!-- PROFILE MODAL - V24 UNIFIED - profilePhotoBase64 HATAYA -->
 <div class="modal" id="profileModal"><div class="modal-content">
   <div class="modal-header"><h2><i class="fas fa-user-edit"></i> Edit Profile</h2><button class="close-btn" onclick="closeProfileModal()">×</button></div>
   <form id="profileForm">
     <div class="photo-upload-box">
-      <input type="file" id="profilePhotoInput" accept="image/*" hidden onchange="previewProfilePhoto(event)">
+      <input type="file" id="profilePhotoInput" accept="image/*" hidden>
       <div class="photo-preview" id="photoPreview" onclick="document.getElementById('profilePhotoInput').click()"><i class="fas fa-camera"></i></div>
       <label class="photo-upload-btn" onclick="event.preventDefault();document.getElementById('profilePhotoInput').click()"><i class="fas fa-upload"></i> Upload Photo</label>
-      <input type="hidden" id="profilePhotoBase64">
+      <!-- V24: profilePhotoBase64 HATAYA - ab Cloudinary URL newManagerPhotoUrl me jayega, base64 DB me nahi jayega -->
+      <div id="profilePhotoMsg" style="font-size:11px;text-align:center;color:#64748b;margin-top:6px"></div>
     </div>
     <div class="form-group"><label>Full Name *</label><input type="text" id="profileName" required placeholder="Rajesh Kumar"></div>
     <div class="form-row">
       <div class="form-group"><label>Phone Number</label><input type="text" id="profilePhone" placeholder="9876543210"></div>
       <div class="form-group"><label>Email Address</label><input type="email" id="profileEmail" placeholder="rajesh@samanlive.com"></div>
     </div>
+    <div class="form-row">
+      <div class="form-group"><label>City</label><input type="text" id="profileCity" placeholder="Surat"></div>
+      <div class="form-group"><label>Pincode</label><input type="text" id="profilePincode" placeholder="395007" maxlength="6"></div>
+    </div>
+    <div class="form-group"><label>Gender</label><select id="profileGender"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></div>
     <div class="form-group"><label>Area Name (Admin Controlled)</label><input type="text" id="profileAreaName" disabled></div>
     <button type="submit" class="btn btn-primary btn-block" id="profileSaveBtn"><i class="fas fa-save"></i> Save Profile</button>
   </form>
 </div></div>
 
-<!-- CREATE SHOP MODAL - V22 ONLY 2 FIELDS ADDED - REST SAME -->
+<!-- CREATE SHOP MODAL - V22 ONLY 2 FIELDS ADDED - REST SAME - V24: Shop Logo bhi Cloudinary -->
 <div class="modal" id="createShopModal"><div class="modal-content large">
   <div class="modal-header"><h2><i class="fas fa-plus-circle"></i> Create New Shop</h2><button class="close-btn" onclick="closeCreateShopModal()">×</button></div>
   <div class="modal-body">
@@ -235,9 +245,10 @@ ROUTES:
       <div class="form-group"><label>Shop Category *</label><select id="createShopModule" required><option value="">Pehle Mode Select Karo - fir Category ayegi</option></select></div>
       <div class="form-group"><label>Shop Logo/Photo (Optional)</label>
         <div class="logo-upload-box">
-          <input type="file" id="createShopLogoInput" accept="image/*" hidden onchange="previewCreateShopLogo(event)">
+          <input type="file" id="createShopLogoInput" accept="image/*" hidden>
           <div class="logo-preview" id="createShopLogoPreview" onclick="document.getElementById('createShopLogoInput').click()"><i class="fa fa-camera"></i><p>Upload Shop Photo</p><span>JPG, PNG • Max 2MB</span></div>
           <button type="button" class="btn-remove-logo" id="createShopRemoveLogoBtn" style="display:none" onclick="removeCreateShopLogo()"><i class="fa fa-trash"></i> Remove Photo</button>
+          <div id="createShopLogoMsg" style="font-size:11px;text-align:center;color:#64748b;margin-top:6px"></div>
         </div>
       </div>
       <div class="or-divider">— OR SELECT ICON BELOW —</div>
@@ -276,13 +287,21 @@ ROUTES:
   </form>
 </div></div>
 
+<!-- CREATE DELIVERY BOY MODAL - V24: Photo + Vehicle Number add kiya -->
 <div class="modal" id="createDeliveryModal"><div class="modal-content">
   <div class="modal-header"><h2><i class="fas fa-user-plus"></i> Add Delivery Boy</h2><button class="close-btn" onclick="closeCreateDeliveryModal()">×</button></div>
   <form id="createDeliveryForm">
+    <div class="photo-upload-box" style="text-align:center">
+      <input type="file" id="deliveryPhotoInput" accept="image/*" hidden>
+      <div class="photo-preview" id="deliveryPhotoPreview" onclick="document.getElementById('deliveryPhotoInput').click()" style="width:80px;height:80px;margin:0 auto;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;overflow:hidden"><i class="fas fa-camera"></i></div>
+      <label class="photo-upload-btn" onclick="event.preventDefault();document.getElementById('deliveryPhotoInput').click()" style="display:inline-block;margin-top:8px;background:#f1f5f9;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer">📷 Upload Photo</label>
+      <div id="deliveryPhotoMsg" style="font-size:11px;color:#64748b;margin-top:6px"></div>
+    </div>
     <div class="form-group"><label>Full Name *</label><input type="text" id="dmName" required></div>
     <div class="form-group"><label>Phone *</label><input type="text" id="dmPhone" required maxlength="10"></div>
     <div class="form-group"><label>Email</label><input type="email" id="dmEmail"></div>
     <div class="form-group"><label>Vehicle Type</label><select id="dmVehicle"><option value="bike">Bike</option><option value="cycle">Cycle</option><option value="auto">Auto</option><option value="foot">Foot</option></select></div>
+    <div class="form-group"><label>Vehicle Number (Optional)</label><input type="text" id="dmVehicleNumber" placeholder="GJ05AB1234" style="text-transform:uppercase"></div>
     <button type="submit" class="btn btn-primary btn-block">Create</button>
   </form>
 </div></div>
@@ -294,10 +313,188 @@ ROUTES:
 <script src="/assets/js/shop-template-map.js?v=22"></script>
 <script src="/assets/js/role-hierarchy.js"></script>
 <script src="/shop-templates/common/core/api-core.js"></script>
+<!-- V24: profile-core sabse pehle - area-manager.js iske baad load hoga taaki UnifiedProfile mil jaye -->
+<script src="/shop-templates/common/profile/profile-core.js"></script>
 <script src="/shop-templates/common/cart/cart-core.js"></script>
 <script src="/shop-templates/common/cart/cart-count.js"></script>
 <script src="/assets/js/shop-create.js?v=22"></script>
-<script src="/assets/js/area-manager.js?v=22"></script>
+<script src="/assets/js/area-manager.js?v=24"></script>
+<script>
+// ===== V24: AREA MANAGER PROFILE PHOTO - UNIFIED - Cloudinary - Base64 HATAYA =====
+// Ye block area-manager.js se pehle nahi, baad me chalega taaki currentManager mil jaye
+// FLOW: File select -> UnifiedProfile.handleFileInput -> Cloudinary -> Manager.photo + avatar + profilePic -> Header / Sidebar photo update
+let newManagerPhotoUrl = '';
+let newShopLogoUrl = '';
+let newDeliveryPhotoUrl = '';
+
+function getManagerIdForProfile(){
+  if(window.UnifiedProfile) return window.UnifiedProfile.getIds().managerId;
+  return localStorage.getItem('managerId') || new URLSearchParams(location.search).get('id') || window.currentManager?._id || '';
+}
+function getManagerPhoneForProfile(){
+  return document.getElementById('profilePhone')?.value || document.getElementById('managerPhone')?.textContent || localStorage.getItem('managerPhone') || '';
+}
+
+// 1. Profile Photo Input - turant Cloudinary pe jayegi, Save ka wait nahi karega
+document.addEventListener('DOMContentLoaded', () => {
+  const profileInput = document.getElementById('profilePhotoInput');
+  if(profileInput){
+    profileInput.addEventListener('change', async () => {
+      if(!profileInput.files[0]) return;
+      if(!window.UnifiedProfile){ alert('Profile system load nahi hua - page refresh karo'); return; }
+      const r = await window.UnifiedProfile.handleFileInput(profileInput, {
+        role: 'area_manager',
+        field: 'photo',
+        type: 'avatar',
+        managerId: getManagerIdForProfile(),
+        phone: getManagerPhoneForProfile(),
+        previewSelector: '#photoPreview',
+        msgId: 'profilePhotoMsg'
+      });
+      if(r && r.success){
+        newManagerPhotoUrl = r.url;
+        // Header + Sidebar photo turant update karo
+        updateManagerPhotosEverywhere(r.url);
+      }
+    });
+  }
+
+  // 2. Create Shop Logo Input - Shop Logo Cloudinary pe jayega
+  const shopLogoInput = document.getElementById('createShopLogoInput');
+  if(shopLogoInput){
+    shopLogoInput.addEventListener('change', async () => {
+      if(!shopLogoInput.files[0]) return;
+      if(!window.UnifiedProfile) return;
+      // Shop abhi create nahi hui hai, isliye shopId nahi hai - general folder me jayega, create-shop me URL bhej denge
+      const r = await window.UnifiedProfile.handleFileInput(shopLogoInput, {
+        role: 'shop_logo',
+        field: 'logo',
+        type: 'logo',
+        shopId: '',
+        previewSelector: '#createShopLogoPreview',
+        msgId: 'createShopLogoMsg'
+      });
+      if(r && r.success){
+        newShopLogoUrl = r.url;
+        const btn = document.getElementById('createShopRemoveLogoBtn');
+        if(btn) btn.style.display = 'block';
+        window._newShopLogoUrl = r.url;
+      }
+    });
+  }
+
+  // 3. Delivery Boy Photo Input
+  const delInput = document.getElementById('deliveryPhotoInput');
+  if(delInput){
+    delInput.addEventListener('change', async () => {
+      if(!delInput.files[0]) return;
+      if(!window.UnifiedProfile) return;
+      // Delivery Boy abhi create nahi hua, isliye pehle preview dikhao, create ke baad upload hoga
+      // Agar pehle se Delivery Boy edit ho raha hai toh turant upload karo
+      const r = await window.UnifiedProfile.handleFileInput(delInput, {
+        role: 'delivery_boy',
+        field: 'photo',
+        type: 'avatar',
+        phone: document.getElementById('dmPhone')?.value || '',
+        previewSelector: '#deliveryPhotoPreview',
+        msgId: 'deliveryPhotoMsg'
+      });
+      if(r && r.success) newDeliveryPhotoUrl = r.url;
+    });
+  }
+});
+
+function updateManagerPhotosEverywhere(url){
+  // Header avatar - agar img hai toh src, agar div hai toh background
+  const headerAv = document.getElementById('headerManagerAvatar');
+  if(headerAv){
+    headerAv.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  }
+  const sidebarAv = document.getElementById('managerAvatar');
+  if(sidebarAv){
+    // A letter hatake img lagao
+    const existingImg = sidebarAv.querySelector('img');
+    if(existingImg) existingImg.src = url;
+    else {
+      const img = document.createElement('img');
+      img.src = url;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;top:0;left:0';
+      sidebarAv.style.position = 'relative';
+      sidebarAv.appendChild(img);
+    }
+  }
+  try{
+    localStorage.setItem('managerPhoto', url);
+    localStorage.setItem('managerPic', url);
+  }catch(e){}
+}
+
+// PURANA previewProfilePhoto - ab UnifiedProfile use karta hai, purana code na tute isliye rakha hai
+async function previewProfilePhoto(event){
+  const input = event.target;
+  if(!input.files[0]) return;
+  if(window.UnifiedProfile){
+    const r = await window.UnifiedProfile.handleFileInput(input, {
+      role: 'area_manager',
+      field: 'photo',
+      managerId: getManagerIdForProfile(),
+      phone: getManagerPhoneForProfile(),
+      previewSelector: '#photoPreview',
+      msgId: 'profilePhotoMsg'
+    });
+    if(r && r.success){ newManagerPhotoUrl = r.url; updateManagerPhotosEverywhere(r.url); }
+    return;
+  }
+  // Fallback - sirf preview
+  const reader = new FileReader();
+  reader.onload = e => { document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; };
+  reader.readAsDataURL(input.files[0]);
+}
+
+// PURANA previewCreateShopLogo - ab UnifiedProfile use karta hai
+async function previewCreateShopLogo(event){
+  const input = event.target;
+  if(!input.files[0]) return;
+  if(window.UnifiedProfile){
+    const r = await window.UnifiedProfile.handleFileInput(input, {
+      role: 'shop_logo',
+      field: 'logo',
+      previewSelector: '#createShopLogoPreview',
+      msgId: 'createShopLogoMsg'
+    });
+    if(r && r.success){ newShopLogoUrl = r.url; window._newShopLogoUrl = r.url; const btn = document.getElementById('createShopRemoveLogoBtn'); if(btn) btn.style.display = 'block'; }
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => { document.getElementById('createShopLogoPreview').innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`; };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function removeCreateShopLogo(){
+  newShopLogoUrl = '';
+  window._newShopLogoUrl = '';
+  const inp = document.getElementById('createShopLogoInput');
+  if(inp) inp.value = '';
+  const prev = document.getElementById('createShopLogoPreview');
+  if(prev) prev.innerHTML = `<i class="fa fa-camera"></i><p>Upload Shop Photo</p><span>JPG, PNG • Max 2MB</span>`;
+  const btn = document.getElementById('createShopRemoveLogoBtn');
+  if(btn) btn.style.display = 'none';
+}
+
+// Profile Form Submit - V24: photo URL bhi bhejo
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('profileForm');
+  if(form){
+    form.addEventListener('submit', async (e) => {
+      // Agar area-manager.js me already handler hai toh usko chalne do - ye sirf photo URL set karega
+      // Photo pehle hi upload ho chuki hai - newManagerPhotoUrl me URL hai
+      if(newManagerPhotoUrl){
+        window._pendingManagerPhotoUrl = newManagerPhotoUrl;
+      }
+    });
+  }
+});
+</script>
 <script>
 (async function(){
   const managerId = localStorage.getItem('managerId') || new URLSearchParams(location.search).get('id');

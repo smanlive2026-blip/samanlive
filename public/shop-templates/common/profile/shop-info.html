@@ -1,339 +1,72 @@
-<!-- LOCATION: public/shop-templates/common/profile/shop-info.html -->
-<!-- WORLD CLASS SHOP INFO - SHOP OWNER ONLY - FULL 450+ LINES - SAVE BUTTON FIX -->
+<!-- LOCATION: public/shop-templates/common/profile/shop-info.html - V23 UNIFIED - FULL CODE -->
 <div id="shopInfoRoot" class="shop-info-root">
   <div class="shop-info-header">
-    <button id="shopInfoBack" class="back-btn">‹</button>
-    <div>
-      <b>Shop Information</b>
-      <span>Update shop details</span>
-    </div>
+    <button id="shopInfoBack" class="back-btn" onclick="history.back()">‹</button>
+    <div><b>Shop Information</b><span>Update shop details</span></div>
     <button id="saveShopInfoBtn" class="save-btn" type="button">💾 Save</button>
   </div>
+
+  <!-- LOGO + COVER - YAHI SE BADLEGA - Cloudinary -->
+  <div style="display:flex;gap:14px;padding:14px;background:#f8fafc;border-radius:12px;margin:14px">
+    <div style="text-align:center">
+      <img id="shopInfoLogoPreview" src="/assets/default-avatar.png" style="width:80px;height:80px;border-radius:14px;object-fit:cover;border:2px solid #fff">
+      <div style="font-size:11px;font-weight:800;margin-top:6px">SHOP LOGO</div>
+      <button type="button" onclick="document.getElementById('shopInfoLogoInput').click()" style="margin-top:6px;background:#0f172a;color:#fff;border:none;padding:6px 10px;border-radius:8px;font-weight:700;cursor:pointer">📷 Change Logo</button>
+      <input type="file" id="shopInfoLogoInput" accept="image/*" style="display:none">
+    </div>
+    <div style="text-align:center;flex:1">
+      <img id="shopInfoCoverPreview" src="" style="width:100%;height:80px;border-radius:12px;object-fit:cover;background:#e2e8f0;display:block">
+      <div style="font-size:11px;font-weight:800;margin-top:6px">SHOP COVER / BANNER</div>
+      <button type="button" onclick="document.getElementById('shopInfoCoverInput').click()" style="margin-top:6px;background:#fff;border:1px solid #e2e8f0;padding:6px 10px;border-radius:8px;font-weight:700;cursor:pointer">📷 Change Cover</button>
+      <input type="file" id="shopInfoCoverInput" accept="image/*" style="display:none">
+    </div>
+  </div>
+  <div id="shopInfoMsg" style="font-size:12px;text-align:center;color:#64748b"></div>
 
   <div class="shop-info-form">
     <div class="form-section">
       <b>🏪 Basic Information</b>
-      <label>Shop Name *</label>
-      <input type="text" id="shopInfoName" placeholder="My Kirana Store" class="form-input">
-
+      <label>Shop Name *</label><input type="text" id="shopInfoName" placeholder="My Kirana Store" class="form-input">
       <label>Shop Category *</label>
       <select id="shopInfoCategory" class="form-input">
         <option value="">Select category</option>
-        <option value="kirana">🛒 Kirana / Grocery</option>
-        <option value="fruit">🍎 Fruit Shop</option>
-        <option value="sabji">🥦 Sabji / Vegetable</option>
-        <option value="medical">💊 Medical / Pharmacy</option>
-        <option value="dairy">🥛 Dairy / Milk</option>
-        <option value="bakery">🍞 Bakery</option>
-        <option value="restaurant">🍛 Restaurant / Food</option>
-        <option value="cloth">👕 Cloth / Garments</option>
-        <option value="electronics">📱 Electronics / Mobile</option>
-        <option value="hardware">🔧 Hardware</option>
-        <option value="other">📦 Other</option>
+        <option value="kirana">🛒 Kirana / Grocery</option><option value="fruit">🍎 Fruit Shop</option><option value="sabji">🥦 Sabji / Vegetable</option><option value="medical">💊 Medical / Pharmacy</option><option value="dairy">🥛 Dairy / Milk</option><option value="bakery">🍞 Bakery</option><option value="restaurant">🍛 Restaurant / Food</option><option value="cloth">👕 Cloth / Garments</option><option value="electronics">📱 Electronics / Mobile</option><option value="hardware">🔧 Hardware</option><option value="other">📦 Other</option>
       </select>
-
-      <label>Shop Description</label>
-      <textarea id="shopInfoDescription" placeholder="Best kirana store in Surat with fresh products and fast delivery..." class="form-input" rows="4"></textarea>
-
-      <label>Shop Tagline (short)</label>
-      <input type="text" id="shopInfoTagline" placeholder="Fresh products, fast delivery" class="form-input" maxlength="60">
-      <span class="char-count"><span id="taglineCount">0</span>/60</span>
+      <label>Shop Description</label><textarea id="shopInfoDescription" placeholder="Best kirana store..." class="form-input" rows="4"></textarea>
+      <label>Shop Tagline (short)</label><input type="text" id="shopInfoTagline" placeholder="Fresh products, fast delivery" class="form-input" maxlength="60">
     </div>
 
     <div class="form-section">
       <b>📞 Contact Information</b>
-      <label>Owner Name *</label>
-      <input type="text" id="shopOwnerName" placeholder="Ramesh Kumar" class="form-input">
-
-      <label>Phone Number *</label>
-      <div class="phone-row">
-        <span class="phone-prefix">+91</span>
-        <input type="tel" id="shopPhone" placeholder="9876543210" maxlength="10" class="form-input" style="border-left:none;border-radius:0 10px 10px 0">
-      </div>
-
-      <label>Alternate Phone</label>
-      <input type="tel" id="shopAltPhone" placeholder="9876543211" class="form-input">
-
-      <label>Email (optional)</label>
-      <input type="email" id="shopEmail" placeholder="myshop@example.com" class="form-input">
-
-      <label>WhatsApp Number</label>
-      <input type="tel" id="shopWhatsapp" placeholder="9876543210" class="form-input">
-      <div class="checkbox-row">
-        <input type="checkbox" id="sameAsPhone" checked>
-        <label for="sameAsPhone" style="margin:0">Same as phone number</label>
+      <label>Owner Name *</label><input type="text" id="shopOwnerName" placeholder="Ramesh Kumar" class="form-input">
+      <label>Phone Number *</label><div class="phone-row"><span class="phone-prefix">+91</span><input type="tel" id="shopPhone" placeholder="9876543210" maxlength="10" class="form-input"></div>
+      <label>Alternate Phone</label><input type="tel" id="shopAltPhone" placeholder="9876543211" class="form-input">
+      <label>Email (optional)</label><input type="email" id="shopEmail" placeholder="myshop@example.com" class="form-input">
+      <label>WhatsApp Number</label><input type="tel" id="shopWhatsapp" placeholder="9876543210" class="form-input">
+      <label>Owner Photo</label>
+      <div style="display:flex;gap:10px;align-items:center">
+        <img id="shopOwnerPhotoPreview" src="/assets/default-avatar.png" style="width:56px;height:56px;border-radius:50%;object-fit:cover">
+        <button type="button" onclick="document.getElementById('shopOwnerPhotoInput').click()" style="background:#f1f5f9;border:none;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer">📷 Change Owner Photo</button>
+        <input type="file" id="shopOwnerPhotoInput" accept="image/*" style="display:none">
       </div>
     </div>
 
     <div class="form-section">
       <b>📍 Address Information</b>
-      <label>Full Address *</label>
-      <input type="text" id="shopAddress" placeholder="Shop No 12, Adajan Patiya, Surat" class="form-input">
-
-      <div class="two-col">
-        <div>
-          <label>Area / Locality *</label>
-          <input type="text" id="shopArea" placeholder="Adajan" class="form-input">
-        </div>
-        <div>
-          <label>City *</label>
-          <input type="text" id="shopCity" placeholder="Surat" class="form-input" value="Surat">
-        </div>
-      </div>
-
-      <div class="two-col">
-        <div>
-          <label>Pincode *</label>
-          <input type="text" id="shopPincode" placeholder="395009" class="form-input" maxlength="6">
-        </div>
-        <div>
-          <label>Landmark</label>
-          <input type="text" id="shopLandmark" placeholder="Near Adajan Patiya" class="form-input">
-        </div>
-      </div>
-
-      <button id="pickLocationBtn" class="secondary-btn" style="width:100%;margin-top:12px">📍 Pick Location on Map</button>
-      <div id="locationPreview" style="display:none;margin-top:10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:10px;font-size:11px;font-weight:600">
-        <span>📍 Location: <span id="locationText">Not set</span></span>
-      </div>
+      <label>Full Address *</label><input type="text" id="shopAddress" placeholder="Shop No 12, Adajan Patiya, Surat" class="form-input">
+      <div class="two-col"><div><label>Area / Locality *</label><input type="text" id="shopArea" placeholder="Adajan" class="form-input"></div><div><label>City *</label><input type="text" id="shopCity" placeholder="Surat" class="form-input" value="Surat"></div></div>
+      <div class="two-col"><div><label>Pincode *</label><input type="text" id="shopPincode" placeholder="395009" maxlength="6" class="form-input"></div><div><label>Landmark</label><input type="text" id="shopLandmark" placeholder="Near Adajan Patiya" class="form-input"></div></div>
+      <button id="pickLocationBtn" class="secondary-btn" type="button" style="width:100%;margin-top:12px">📍 Pick Location on Map</button>
+      <div id="locationPreview" style="display:none;margin-top:10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:10px;font-size:11px;font-weight:600"><span>📍 Location: <span id="locationText">Not set</span></span></div>
     </div>
 
     <div class="form-section">
       <b>🏷️ Additional Info</b>
-      <label>GST Number (optional)</label>
-      <input type="text" id="shopGst" placeholder="27ABCDE1234F1Z5" class="form-input" style="text-transform:uppercase" maxlength="15">
-
-      <label>FSSAI License (for food shops)</label>
-      <input type="text" id="shopFssai" placeholder="12345678901234" class="form-input" maxlength="14">
-
-      <label>Shop Established Year</label>
-      <input type="number" id="shopEstYear" placeholder="2020" min="1990" max="2026" class="form-input">
-
-      <label>Number of Staff</label>
-      <select id="shopStaffCount" class="form-input">
-        <option value="1">Only me (1)</option>
-        <option value="2-5">2-5 members</option>
-        <option value="6-10">6-10 members</option>
-        <option value="10+">10+ members</option>
-      </select>
+      <label>GST Number (optional)</label><input type="text" id="shopGst" placeholder="27ABCDE1234F1Z5" class="form-input" style="text-transform:uppercase" maxlength="15">
+      <label>FSSAI License (for food shops)</label><input type="text" id="shopFssai" placeholder="12345678901234" class="form-input" maxlength="14">
+      <label>Shop Established Year</label><input type="number" id="shopEstYear" placeholder="2020" min="1990" max="2026" class="form-input">
     </div>
   </div>
 </div>
-
-<style>
-.shop-info-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.shop-info-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.shop-info-header b{ display:block; font-weight:900; }
-.shop-info-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.save-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
-.save-btn:disabled{ opacity:.6; }
-.shop-info-form{ padding:12px; display:flex; flex-direction:column; gap:12px; }
-.form-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; }
-.form-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
-.form-section label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
-.form-section label:first-of-type{ margin-top:0; }
-.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; box-sizing:border-box; }
-.phone-row{ display:flex; }
-.phone-prefix{ background:#f1f5f9; border:1px solid #e2e8f0; border-right:none; padding:12px; border-radius:10px 0 0 10px; font-weight:800; font-size:13px; }
-.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.char-count{ display:block; text-align:right; font-size:10px; color:#94a3b8; font-weight:700; margin-top:4px; }
-.checkbox-row{ display:flex; align-items:center; gap:8px; margin-top:8px; background:#f8fafc; padding:8px 10px; border-radius:8px; }
-.secondary-btn{ background:#f1f5f9; border:1px solid #e2e8f0; padding:12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; }
-</style>
-
-<script src="./shop-info.js"></script>
-<script>
-class ShopInfoPage {
-  constructor(){
-    this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
-    this.shop = null;
-    this.location = null;
-  }
-
-  showMsg(msg, type){
-    console.log('[ShopInfo]', msg);
-    if(window.Toast){ Toast.show(msg, type||'info'); }
-    else { alert(msg); }
-  }
-
-  async init(){
-    this.bindEvents();
-    await this.loadShopInfo();
-  }
-
-  async loadShopInfo(){
-    try{
-      if(window.Loader) Loader.show('Loading shop info...');
-
-      // Pehle shop-info.js wala core use karo, wahi dashboard se juda hai
-      if(window.ShopInfoCoreInstance){
-        window.ShopInfoCoreInstance.shopId = this.shopId;
-        this.shop = await window.ShopInfoCoreInstance.loadShop();
-      }
-      if(!this.shop ||!this.shop.name){
-        if(window.ApiCore){
-          const data = await window.ApiCore.get(`/api/common/profile/${this.shopId}`);
-          this.shop = data.shop||data.profile||data;
-        } else {
-          this.shop = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}');
-        }
-      }
-
-      if(this.shop){
-        const s = this.shop;
-        document.getElementById('shopInfoName').value = s.name||s.shopName||'';
-        document.getElementById('shopInfoCategory').value = s.category||'';
-        document.getElementById('shopInfoDescription').value = s.description||'';
-        document.getElementById('shopInfoTagline').value = s.tagline||'';
-        document.getElementById('shopOwnerName').value = s.ownerName||'';
-        document.getElementById('shopPhone').value = s.phone||'';
-        document.getElementById('shopAltPhone').value = s.altPhone||'';
-        document.getElementById('shopEmail').value = s.email||'';
-        document.getElementById('shopWhatsapp').value = s.whatsapp||s.phone||'';
-        document.getElementById('shopAddress').value = s.address||'';
-        document.getElementById('shopArea').value = s.area||'';
-        document.getElementById('shopCity').value = s.city||'Surat';
-        document.getElementById('shopPincode').value = s.pincode||'';
-        document.getElementById('shopLandmark').value = s.landmark||'';
-        document.getElementById('shopGst').value = s.gst||'';
-        document.getElementById('shopFssai').value = s.fssai||'';
-        document.getElementById('shopEstYear').value = s.estYear||'';
-        document.getElementById('shopStaffCount').value = s.staffCount||'1';
-
-        if(s.location && (s.location.lat || s.location.lng)){
-          this.location = s.location;
-          document.getElementById('locationPreview').style.display='block';
-          document.getElementById('locationText').innerText = `${this.location.lat}, ${this.location.lng}`;
-        }
-        document.getElementById('taglineCount').innerText = (s.tagline||'').length;
-      }
-
-    }catch(e){ console.error('loadShopInfo failed', e); }finally{ if(window.Loader) Loader.hide(); }
-  }
-
-  async saveShopInfo(){
-    const name = document.getElementById('shopInfoName').value.trim();
-    const category = document.getElementById('shopInfoCategory').value;
-    const description = document.getElementById('shopInfoDescription').value.trim();
-    const tagline = document.getElementById('shopInfoTagline').value.trim();
-    const ownerName = document.getElementById('shopOwnerName').value.trim();
-    const phone = document.getElementById('shopPhone').value.trim().replace(/\D/g,'').slice(-10);
-    const altPhone = document.getElementById('shopAltPhone').value.trim();
-    const email = document.getElementById('shopEmail').value.trim();
-    const whatsapp = document.getElementById('shopWhatsapp').value.trim();
-    const address = document.getElementById('shopAddress').value.trim();
-    const area = document.getElementById('shopArea').value.trim();
-    const city = document.getElementById('shopCity').value.trim();
-    const pincode = document.getElementById('shopPincode').value.trim();
-    const landmark = document.getElementById('shopLandmark').value.trim();
-    let gst = document.getElementById('shopGst').value.trim().toUpperCase().replace(/\s/g,'');
-    let fssai = document.getElementById('shopFssai').value.trim().replace(/\D/g,'');
-    const estYear = document.getElementById('shopEstYear').value;
-    const staffCount = document.getElementById('shopStaffCount').value;
-
-    // Screenshot wali galti yahi pakdegi - galat GST/FSSAI ho to saaf batao, chup mat raho
-    if(gst && gst.length!==15){ this.showMsg('GST must be 15 characters - ya to sahi GST dalo ya khali chhod do', 'warning'); document.getElementById('shopGst').focus(); return; }
-    if(fssai && fssai.length!==14){ this.showMsg('FSSAI must be 14 digits - ya to sahi dalo ya khali chhod do', 'warning'); document.getElementById('shopFssai').focus(); return; }
-
-    if(!name ||!category ||!ownerName ||!phone ||!address ||!area ||!city ||!pincode){
-      this.showMsg('Fill required fields (*)', 'warning');
-      return;
-    }
-    if(phone.length!==10){
-      this.showMsg('Phone must be 10 digits', 'warning');
-      return;
-    }
-    if(pincode.length!==6){
-      this.showMsg('Pincode must be 6 digits', 'warning');
-      return;
-    }
-    if(!this.shopId){
-      this.showMsg('Shop ID missing - dashboard se kholo', 'error');
-      return;
-    }
-
-    const btn = document.getElementById('saveShopInfoBtn');
-    const oldText = btn.innerText;
-    btn.innerText='Saving...'; btn.disabled=true;
-
-    try{
-      const shopData = { name, shopName:name, category, description, tagline, ownerName, phone, altPhone, email, whatsapp: whatsapp||phone, address, area, city, pincode, landmark, gst, fssai, estYear, staffCount, location:this.location };
-
-      let result = null;
-      // 1. shop-info.js wala core - yahi dashboard ko shop_updated signal bhejta hai
-      if(window.ShopInfoCoreInstance && typeof window.ShopInfoCoreInstance.updateShopInfo==='function'){
-        window.ShopInfoCoreInstance.shopId = this.shopId;
-        result = await window.ShopInfoCoreInstance.updateShopInfo(shopData);
-        if(result && result.success===false){
-          this.showMsg(result.message || (result.errors && result.errors[0]) || 'Failed to save', 'error');
-          return;
-        }
-      } else if(window.ApiCore){
-        // 2. Direct sahi API
-        result = await window.ApiCore.put(`/api/common/profile/${this.shopId}`, shopData);
-        // Dashboard signal
-        try{
-          const finalShop = {...shopData, _id:this.shopId, shopId:this.shopId, updatedAt:new Date().toISOString()};
-          localStorage.setItem(`shop_${this.shopId}`, JSON.stringify(finalShop));
-          localStorage.setItem('shop_updated', Date.now().toString());
-          localStorage.removeItem('cached_shop');
-          window.ApiCore?.clearCache?.();
-        }catch(e){}
-      } else {
-        const existing = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}');
-        localStorage.setItem(`shop_${this.shopId}`, JSON.stringify({...existing,...shopData, _id:this.shopId }));
-        localStorage.setItem('shop_updated', Date.now().toString());
-      }
-
-      this.showMsg('Shop info saved ✅', 'success');
-
-      setTimeout(()=>{
-        // Dashboard pe wapas bhejo taaki waha turant dikhe, profile pe nahi
-        if(document.referrer && document.referrer.includes('dashboard')){
-          history.back();
-        } else {
-          window.location.href=`../dashboard.html?shopId=${this.shopId}`;
-        }
-      }, 800);
-
-    }catch(e){
-      console.error('saveShopInfo failed', e);
-      this.showMsg('Failed to save: '+(e.message||'server error'), 'error');
-    }finally{ btn.innerText=oldText; btn.disabled=false; }
-  }
-
-  bindEvents(){
-    document.getElementById('shopInfoBack')?.addEventListener('click', ()=> history.back());
-    // FIX - purana listener double na lage, isiliye clone karke naya lagaya
-    const saveBtn = document.getElementById('saveShopInfoBtn');
-    if(saveBtn){
-      const newBtn = saveBtn.cloneNode(true);
-      saveBtn.parentNode.replaceChild(newBtn, saveBtn);
-      newBtn.addEventListener('click', (e)=>{ e.preventDefault(); this.saveShopInfo(); });
-    }
-    document.getElementById('shopInfoTagline')?.addEventListener('input', (e)=>{ document.getElementById('taglineCount').innerText = e.target.value.length; });
-    document.getElementById('sameAsPhone')?.addEventListener('change', (e)=>{
-      if(e.target.checked){
-        document.getElementById('shopWhatsapp').value = document.getElementById('shopPhone').value;
-      }
-    });
-    document.getElementById('shopPhone')?.addEventListener('input', ()=>{
-      if(document.getElementById('sameAsPhone').checked){
-        document.getElementById('shopWhatsapp').value = document.getElementById('shopPhone').value;
-      }
-    });
-    document.getElementById('pickLocationBtn')?.addEventListener('click', ()=>{
-      if(window.Toast) Toast.show('📍 Map picker coming soon - manually enter lat lng for now', 'info');
-    });
-  }
-}
-
-window.ShopInfoPageInstance = new ShopInfoPage();
-// Script file ke end me hai, DOM ready ka wait mat karo - turant chalao warna button dead rahega
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded', ()=> window.ShopInfoPageInstance.init());
-} else {
-  window.ShopInfoPageInstance.init();
-}
-</script>
+<script src="/shop-templates/common/profile/profile-core.js"></script>
+<script src="/shop-templates/common/profile/shop-info.js"></script>

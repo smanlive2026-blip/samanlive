@@ -1,9 +1,11 @@
 // ========================================
-// AREA MANAGER DASHBOARD - WORLD CLASS CLEAN + V13 HIERARCHY + V14 PRODUCT MANAGER DEMAND + V15 NO COMMON FIX
+// AREA MANAGER DASHBOARD - WORLD CLASS CLEAN + V13 HIERARCHY + V14 PRODUCT MANAGER DEMAND + V15 NO COMMON FIX + V24 UNIFIED PROFILE
 // File: /public/assets/js/area-manager.js
 // Dashboard + Profile + Shop List + Edit + Delivery + WALLET + BULK BUY FROM ADMIN + AREA DEMAND TO EXECUTIVE
 // Shop Create logic shop-create.js me hai
-// LOCATION: /public/assets/js/area-manager.js - V15 FINAL - NO COMMON FALLBACK - INDIVIDUAL DASHBOARD ONLY
+// LOCATION: /public/assets/js/area-manager.js - V24 FINAL - UNIFIED PROFILE - NO BASE64 - CLOUDINARY ONLY
+// CHANGE V24: previewProfilePhoto -> UnifiedProfile.handleFileInput, profilePhotoBase64 HATAYA, newManagerPhotoUrl add kiya, Delivery photo + vehicleNumber add kiya
+// RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Base64 sirf preview ke liye.
 // ========================================
 
 let currentManager = null;
@@ -15,6 +17,10 @@ let managerAreaMapInstance = null;
 let isMapHidden = false;
 let managerWallet = null;
 let adminProducts = [];
+
+// V24: Profile photo ka Cloudinary URL - photo select karte hi bhar jayega, Save ka wait nahi karega
+let newManagerPhotoUrl = '';
+let newDeliveryPhotoUrl = '';
 
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token') || localStorage.getItem('managerToken');
@@ -52,6 +58,22 @@ async function apiCall(endpoint, options = {}) {
 window.apiCall = apiCall;
 window.getManagerToken = () => token;
 
+// ========== V24 HELPER: Manager Id / Phone for UnifiedProfile ==========
+function getManagerIdForProfile(){
+  if(window.UnifiedProfile && window.UnifiedProfile.getIds) {
+    try{ const ids = window.UnifiedProfile.getIds(); if(ids.managerId) return ids.managerId; }catch(e){}
+  }
+  return currentManager?._id || currentManager?.managerCode || localStorage.getItem('managerId') || new URLSearchParams(location.search).get('id') || '';
+}
+function getManagerPhoneForProfile(){
+  return currentManager?.phone || document.getElementById('profilePhone')?.value || document.getElementById('managerPhone')?.textContent || localStorage.getItem('managerPhone') || '';
+}
+function getManagerPhoto(){
+  if(!currentManager) return '';
+  return currentManager.photo || currentManager.avatar || currentManager.profilePic || '';
+}
+window.getManagerPhoto = getManagerPhoto;
+
 // ========== HEADER - ADMIN CONTROLLED ==========
 async function loadHeaderSettings() {
     try {
@@ -72,9 +94,91 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindProfileForm();
     bindShopEditForm();
     bindDeliveryForm();
+    bindProfilePhotoInputV24();
+    bindDeliveryPhotoInputV24();
     initHierarchyForManager();
     setTimeout(()=>{ if(typeof initDemandSystem==='function') initDemandSystem(); }, 2000);
 });
+
+// ========== V24: PROFILE PHOTO INPUT - UnifiedProfile - Cloudinary ==========
+function bindProfilePhotoInputV24(){
+  const input = document.getElementById('profilePhotoInput');
+  if(!input || input.dataset.v24bound) return;
+  input.dataset.v24bound = '1';
+  input.addEventListener('change', async () => {
+    if(!input.files[0]) return;
+    // Agar UnifiedProfile nahi hai toh purana preview dikhao - par save mat karo
+    if(!window.UnifiedProfile){
+      alert('Profile system load nahi hua - page refresh karo');
+      return;
+    }
+    const r = await window.UnifiedProfile.handleFileInput(input, {
+      role: 'area_manager',
+      field: 'photo',
+      type: 'avatar',
+      managerId: getManagerIdForProfile(),
+      phone: getManagerPhoneForProfile(),
+      previewSelector: '#photoPreview',
+      msgId: 'profilePhotoMsg'
+    });
+    if(r && r.success){
+      newManagerPhotoUrl = r.url;
+      window._pendingManagerPhotoUrl = r.url;
+      // Header + Sidebar photo turant update karo - Save ka wait nahi karega
+      updateManagerPhotosEverywhere(r.url);
+      // currentManager me bhi update karo taaki renderProfile sahi dikhaye
+      if(currentManager){
+        currentManager.photo = r.url;
+        currentManager.avatar = r.url;
+        currentManager.profilePic = r.url;
+      }
+    }
+  });
+}
+
+function updateManagerPhotosEverywhere(url){
+  const headerAv = document.getElementById('headerManagerAvatar');
+  if(headerAv) headerAv.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="">`;
+  const sidebarAv = document.getElementById('managerAvatar');
+  if(sidebarAv){
+    const existingImg = sidebarAv.querySelector('img');
+    if(existingImg) existingImg.src = url;
+    else {
+      sidebarAv.innerHTML = `<img src="${url}" alt=""><div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`;
+    }
+  }
+  try{
+    localStorage.setItem('managerPhoto', url);
+    localStorage.setItem('managerPic', url);
+  }catch(e){}
+}
+window.updateManagerPhotosEverywhere = updateManagerPhotosEverywhere;
+
+// ========== V24: DELIVERY BOY PHOTO INPUT ==========
+function bindDeliveryPhotoInputV24(){
+  const input = document.getElementById('deliveryPhotoInput');
+  if(!input || input.dataset.v24bound) return;
+  input.dataset.v24bound = '1';
+  input.addEventListener('change', async () => {
+    if(!input.files[0]) return;
+    if(!window.UnifiedProfile){
+      // Fallback - sirf preview
+      const reader = new FileReader();
+      reader.onload = e => { const p = document.getElementById('deliveryPhotoPreview'); if(p) p.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; };
+      reader.readAsDataURL(input.files[0]);
+      return;
+    }
+    const r = await window.UnifiedProfile.handleFileInput(input, {
+      role: 'delivery_boy',
+      field: 'photo',
+      type: 'avatar',
+      phone: document.getElementById('dmPhone')?.value || '',
+      previewSelector: '#deliveryPhotoPreview',
+      msgId: 'deliveryPhotoMsg'
+    });
+    if(r && r.success) newDeliveryPhotoUrl = r.url;
+  });
+}
 
 function initHierarchyForManager(){
     if(window.RoleHierarchy){
@@ -153,8 +257,8 @@ window.loadDashboard = loadDashboard;
 
 // ========== WALLET RENDER ==========
 function renderWallet(wallet){
-    const el = document.getElementById('managerWalletBalance');
-    if(el) el.textContent = `₹${wallet.balance || 0}`;
+    const els = document.querySelectorAll('#managerWalletBalance');
+    els.forEach(el => { if(el) el.textContent = `₹${wallet.balance || wallet.walletBalance || 0}`; });
     const el2 = document.getElementById('managerTotalEarning');
     if(el2) el2.textContent = `₹${wallet.totalEarning || 0}`;
     const el3 = document.getElementById('walletSection');
@@ -214,7 +318,7 @@ window.buyFromAdmin = async function(product){
     }
 };
 
-// ========== PROFILE RENDER ==========
+// ========== PROFILE RENDER - V24: photo / avatar / profilePic teeno check karo ==========
 function renderProfile() {
     if (!currentManager) return;
     const myArea = allAreas.find(a => a.areaCode === currentManager.areaCode) || {};
@@ -231,16 +335,18 @@ function renderProfile() {
     setText('areaCodeText', currentManager.areaCode || '-');
     setText('managerCodeText', currentManager.managerCode || '-');
     setText('areaCodeText2', currentManager.areaCode || '-');
-    setText('managerCodeText2', currentManager.managerCode || '-');
+    setText('managerCodeText2', currentManager.areaCode || '-');
 
-    const avatarHtml = currentManager.photo
-      ? `<img src="${currentManager.photo}" alt=""><div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`
+    // V24: photo / avatar / profilePic - teeno me se jo mile wo dikhao
+    const pic = getManagerPhoto();
+    const avatarHtml = pic
+      ? `<img src="${pic}" alt=""><div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`
         : `${(currentManager.name || 'A').charAt(0).toUpperCase()}<div class="profile-avatar-edit"><i class="fas fa-camera"></i></div>`;
     const avatarEl = document.getElementById('managerAvatar');
     if (avatarEl) avatarEl.innerHTML = avatarHtml;
 
     const chip = document.getElementById('headerManagerAvatar');
-    if (chip) chip.innerHTML = currentManager.photo? `<img src="${currentManager.photo}" alt="">` : (currentManager.name || 'A').charAt(0).toUpperCase();
+    if (chip) chip.innerHTML = pic? `<img src="${pic}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : (currentManager.name || 'A').charAt(0).toUpperCase();
 }
 function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
 
@@ -322,7 +428,8 @@ function renderShops(shops) {
     }
     tbody.innerHTML = shops.map(shop => {
         const url = shopDashboardUrl(shop);
-        const iconHtml = shop.logo? `<img src="${shop.logo}" style="width:40px;height:40px;border-radius:8px;object-fit:cover">` : `<span style="font-size:26px">${shop.icon || '🏪'}</span>`;
+        const logo = shop.logo || shop.shopLogo || shop.uploadedLogo || shop.image || '';
+        const iconHtml = logo? `<img src="${logo}" style="width:40px;height:40px;border-radius:8px;object-fit:cover">` : `<span style="font-size:26px">${shop.icon || '🏪'}</span>`;
         return `<tr>
             <td>${iconHtml}</td>
             <td><strong>${escapeHtml(shop.shopName)}</strong><br><small style="color:#64748b">${escapeHtml(getShopFolder(shop))}</small></td>
@@ -376,37 +483,127 @@ function getCategoryName(id) {
     return cat? cat.name : (id || '-');
 }
 
+// ========== PROFILE MODAL - V24 ==========
 function openProfileModal() {
     document.getElementById('profileModal')?.classList.add('active');
     document.getElementById('profileName').value = currentManager?.name || '';
     document.getElementById('profilePhone').value = currentManager?.phone || '';
     document.getElementById('profileEmail').value = currentManager?.email || '';
     document.getElementById('profileAreaName').value = currentManager?.areaName || currentManager?.areaCode || '';
+    // V24: City / Gender / Pincode bhi fill karo - HTML me add kiya hai
+    const cityEl = document.getElementById('profileCity'); if(cityEl) cityEl.value = currentManager?.city || '';
+    const pinEl = document.getElementById('profilePincode'); if(pinEl) pinEl.value = currentManager?.pincode || '';
+    const genderEl = document.getElementById('profileGender'); if(genderEl) genderEl.value = currentManager?.gender || '';
+    const pic = getManagerPhoto();
     const prev = document.getElementById('photoPreview');
-    prev.innerHTML = currentManager?.photo? `<img src="${currentManager.photo}" alt="Profile">` : '<i class="fas fa-user" style="font-size:42px"></i>';
-    document.getElementById('profilePhotoBase64').value = currentManager?.photo || '';
+    if(prev) prev.innerHTML = pic? `<img src="${pic}" alt="Profile">` : '<i class="fas fa-user" style="font-size:42px"></i>';
+    // V24: profilePhotoBase64 HATAYA - ab newManagerPhotoUrl me URL rahega, base64 nahi
+    newManagerPhotoUrl = pic || '';
+    window._pendingManagerPhotoUrl = pic || '';
+    const msg = document.getElementById('profilePhotoMsg'); if(msg) msg.textContent = '';
 }
 function closeProfileModal() { document.getElementById('profileModal')?.classList.remove('active'); }
-function previewProfilePhoto(event) {
-    const file = event.target.files[0]; if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { alert('Image size should be less than 2MB.'); event.target.value = ''; return; }
+
+// V24: previewProfilePhoto - ab UnifiedProfile use karta hai - purana FileReader + base64 HATAYA
+async function previewProfilePhoto(event) {
+    const input = event.target;
+    const file = input.files[0]; if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Image size should be less than 5MB.'); input.value = ''; return; }
+    if(!file.type.startsWith('image/')){ alert('Only image allowed'); input.value=''; return; }
+    // UnifiedProfile hai toh wahi handle karega - Cloudinary
+    if(window.UnifiedProfile){
+      const r = await window.UnifiedProfile.handleFileInput(input, {
+        role: 'area_manager',
+        field: 'photo',
+        type: 'avatar',
+        managerId: getManagerIdForProfile(),
+        phone: getManagerPhoneForProfile(),
+        previewSelector: '#photoPreview',
+        msgId: 'profilePhotoMsg'
+      });
+      if(r && r.success){
+        newManagerPhotoUrl = r.url;
+        window._pendingManagerPhotoUrl = r.url;
+        if(currentManager){ currentManager.photo = r.url; currentManager.avatar = r.url; currentManager.profilePic = r.url; }
+        updateManagerPhotosEverywhere(r.url);
+      }
+      return;
+    }
+    // Fallback - sirf preview, save nahi hoga
     const reader = new FileReader();
-    reader.onload = e => { document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}" alt="Preview">`; document.getElementById('profilePhotoBase64').value = e.target.result; };
+    reader.onload = e => { document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}" alt="Preview">`; };
     reader.readAsDataURL(file);
 }
+
+// V24: Create Shop Logo preview - ab UnifiedProfile use karta hai - shop-create.js se bhi call hota hai
+async function previewCreateShopLogo(event){
+  const input = event.target;
+  const file = input.files[0]; if(!file) return;
+  if(window.UnifiedProfile){
+    const r = await window.UnifiedProfile.handleFileInput(input, {
+      role: 'shop_logo',
+      field: 'logo',
+      type: 'logo',
+      previewSelector: '#createShopLogoPreview',
+      msgId: 'createShopLogoMsg'
+    });
+    if(r && r.success){
+      window._newShopLogoUrl = r.url;
+      const btn = document.getElementById('createShopRemoveLogoBtn');
+      if(btn) btn.style.display = 'block';
+    }
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => { document.getElementById('createShopLogoPreview').innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`; };
+  reader.readAsDataURL(file);
+}
+function removeCreateShopLogo(){
+  window._newShopLogoUrl = '';
+  const inp = document.getElementById('createShopLogoInput');
+  if(inp) inp.value = '';
+  const prev = document.getElementById('createShopLogoPreview');
+  if(prev) prev.innerHTML = `<i class="fa fa-camera"></i><p>Upload Shop Photo</p><span>JPG, PNG • Max 2MB</span>`;
+  const btn = document.getElementById('createShopRemoveLogoBtn');
+  if(btn) btn.style.display = 'none';
+}
+
 function bindProfileForm() {
     const form = document.getElementById('profileForm'); if (!form || form.dataset.bound) return; form.dataset.bound = '1';
     form.addEventListener('submit', async e => {
         e.preventDefault();
         const btn = document.getElementById('profileSaveBtn'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         try {
-            const data = await apiCall('/manager/update-profile', { method: 'PUT', body: {
+            // V24: Photo pehle hi Cloudinary pe upload ho chuki hai - newManagerPhotoUrl me URL hai, base64 nahi
+            const photoUrl = newManagerPhotoUrl || window._pendingManagerPhotoUrl || getManagerPhoto() || '';
+            const payload = {
                 name: document.getElementById('profileName').value.trim(),
                 phone: document.getElementById('profilePhone').value.trim(),
                 email: document.getElementById('profileEmail').value.trim(),
-                photo: document.getElementById('profilePhotoBase64').value || currentManager.photo || ''
-            }});
-            if (data.success) { alert('✅ Profile updated successfully!'); currentManager = data.manager || {...currentManager,...data }; renderProfile(); closeProfileModal(); }
+                photo: photoUrl,
+                avatar: photoUrl,
+                profilePic: photoUrl,
+                city: document.getElementById('profileCity')?.value?.trim() || currentManager?.city || '',
+                pincode: document.getElementById('profilePincode')?.value?.trim() || currentManager?.pincode || '',
+                gender: document.getElementById('profileGender')?.value || currentManager?.gender || ''
+            };
+            const data = await apiCall('/manager/update-profile', { method: 'PUT', body: payload });
+            if (data.success) {
+              alert('✅ Profile updated successfully!');
+              // V24: currentManager ko updated data se sync karo
+              const upd = data.manager || data.data || {};
+              currentManager = {...currentManager, ...upd, photo: photoUrl || upd.photo || currentManager.photo, avatar: photoUrl || upd.avatar || '', profilePic: photoUrl || upd.profilePic || ''};
+              // Agar server ne photo save nahi ki toh common profile se bhi try karo - backup
+              if(photoUrl && !upd.photo){
+                try{
+                  await fetch('/api/common/profile/upload-avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'area_manager', field: 'photo', managerId: getManagerIdForProfile(), phone: payload.phone, profilePic: photoUrl }) });
+                }catch(e){}
+              }
+              newManagerPhotoUrl = '';
+              window._pendingManagerPhotoUrl = '';
+              renderProfile();
+              closeProfileModal();
+            }
             else alert(data.error || 'Error updating profile');
         } catch (err) { alert('Error: ' + err.message); }
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Profile'; }
@@ -461,17 +658,20 @@ function bindShopEditForm() {
     });
 }
 
+// ========== DELIVERY BOYS - V24: Photo + VehicleNumber ==========
 async function loadDeliveryBoys() {
     const tbody = document.getElementById('deliveryBoysTable'); if (!tbody) return;
     try {
         const data = await apiCall('/manager/delivery-managers');
         const list = data.managers || [];
-        if (!data.success || list.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Abhi koi Delivery Boy nahi hai</td></tr>'; return; }
+        if (!data.success || list.length === 0) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">Abhi koi Delivery Boy nahi hai</td></tr>'; return; }
         tbody.innerHTML = list.map(dm => {
             const link = `${window.location.origin}/delivery-boy.html?token=${dm.loginToken || ''}`;
-            return `<tr><td>${escapeHtml(dm.name)}</td><td>${escapeHtml(dm.phone)}</td><td>${escapeHtml(dm.vehicleType || 'bike')}</td><td>${escapeHtml(dm.managerCode)}</td><td><span class="badge ${dm.status? 'badge-success' : 'badge-danger'}">${dm.status? 'Active' : 'Inactive'}</span></td><td><button class="btn btn-small btn-primary" onclick="window.open('${link}')">Open</button> <button class="btn btn-small btn-link" onclick="navigator.clipboard.writeText('${link}');alert('Link Copied')">Copy</button></td></tr>`;
+            const pic = dm.photo || dm.avatar || dm.profilePic || '';
+            const photoHtml = pic? `<img src="${pic}" style="width:36px;height:36px;border-radius:50%;object-fit:cover">` : `<span style="width:36px;height:36px;border-radius:50%;background:#f1f5f9;display:inline-flex;align-items:center;justify-content:center;font-weight:800">${(dm.name||'D').charAt(0).toUpperCase()}</span>`;
+            return `<tr><td>${photoHtml}</td><td>${escapeHtml(dm.name)}</td><td>${escapeHtml(dm.phone)}</td><td>${escapeHtml(dm.vehicleType || 'bike')} ${dm.vehicleNumber ? `<br><small style="color:#64748b">${escapeHtml(dm.vehicleNumber)}</small>` : ''}</td><td>${escapeHtml(dm.managerCode)}</td><td><span class="badge ${dm.status? 'badge-success' : 'badge-danger'}">${dm.status? 'Active' : 'Inactive'}</span></td><td><button class="btn btn-small btn-primary" onclick="window.open('${link}')">Open</button> <button class="btn btn-small btn-link" onclick="navigator.clipboard.writeText('${link}');alert('Link Copied')">Copy</button></td></tr>`;
         }).join('');
-    } catch (err) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Delivery list load nahi hui</td></tr>'; }
+    } catch (err) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">Delivery list load nahi hui</td></tr>'; }
 }
 function bindDeliveryForm() {
     const form = document.getElementById('createDeliveryForm'); if (!form || form.dataset.bound) return; form.dataset.bound = '1';
@@ -479,19 +679,40 @@ function bindDeliveryForm() {
         e.preventDefault();
         const btn = form.querySelector('button[type="submit"]'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
         try {
-            const data = await apiCall('/manager/create-delivery-manager', { method: 'POST', body: {
+            // V24: Delivery Boy ki photo pehle hi Cloudinary pe upload ho chuki hai - newDeliveryPhotoUrl me URL hai
+            const payload = {
                 name: document.getElementById('dmName').value.trim(),
                 phone: document.getElementById('dmPhone').value.trim(),
                 email: document.getElementById('dmEmail').value.trim(),
-                vehicleType: document.getElementById('dmVehicle').value
-            }});
+                vehicleType: document.getElementById('dmVehicle').value,
+                vehicleNumber: document.getElementById('dmVehicleNumber')?.value?.trim()?.toUpperCase() || '',
+                photo: newDeliveryPhotoUrl || '',
+                avatar: newDeliveryPhotoUrl || '',
+                profilePic: newDeliveryPhotoUrl || ''
+            };
+            const data = await apiCall('/manager/create-delivery-manager', { method: 'POST', body: payload });
             alert(data.message || 'Done');
-            if (data.success) { closeCreateDeliveryModal(); form.reset(); loadDeliveryBoys(); }
+            if (data.success) {
+              // Agar server ne photo save nahi ki toh common profile se bhi try karo
+              if(newDeliveryPhotoUrl && data.manager?._id){
+                try{
+                  await fetch('/api/common/profile/upload-avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'delivery_boy', field: 'photo', deliveryBoyId: data.manager._id, phone: payload.phone, profilePic: newDeliveryPhotoUrl }) });
+                }catch(e){}
+              }
+              newDeliveryPhotoUrl = '';
+              closeCreateDeliveryModal(); form.reset();
+              const prev = document.getElementById('deliveryPhotoPreview'); if(prev) prev.innerHTML = '<i class="fas fa-camera"></i>';
+              loadDeliveryBoys();
+            }
         } catch (err) { alert('Error: ' + err.message); }
         finally { btn.disabled = false; btn.innerHTML = 'Create'; }
     });
 }
-function openCreateDeliveryModal() { document.getElementById('createDeliveryModal')?.classList.add('active'); }
+function openCreateDeliveryModal() {
+  document.getElementById('createDeliveryModal')?.classList.add('active');
+  newDeliveryPhotoUrl = '';
+  const prev = document.getElementById('deliveryPhotoPreview'); if(prev) prev.innerHTML = '<i class="fas fa-camera"></i>';
+}
 function closeCreateDeliveryModal() { document.getElementById('createDeliveryModal')?.classList.remove('active'); }
 function openDeliveryManagerPanel() { document.getElementById('deliverySection')?.scrollIntoView({ behavior: 'smooth' }); }
 
@@ -512,13 +733,14 @@ window.addEventListener('message', e => { if (e.data?.type === 'ADD_FROM_LIBRARY
 
 window.openProfileModal = openProfileModal; window.closeProfileModal = closeProfileModal;
 window.previewProfilePhoto = previewProfilePhoto; window.editShop = editShop;
+window.previewCreateShopLogo = previewCreateShopLogo; window.removeCreateShopLogo = removeCreateShopLogo;
 window.openShopModal = openShopModal; window.closeShopModal = closeShopModal;
 window.openProductLibrary = openProductLibrary; window.closeProductLibrary = closeProductLibrary;
 window.openOrderView = openOrderView; window.openCreateDeliveryModal = openCreateDeliveryModal;
 window.closeCreateDeliveryModal = closeCreateDeliveryModal; window.openDeliveryManagerPanel = openDeliveryManagerPanel;
 window.toggleAreaMap = toggleAreaMap; window.loadDeliveryBoys = loadDeliveryBoys;
 
-console.log('✅ area-manager.js V15 loaded - No Common - Individual Dashboard Only');
+console.log('✅ area-manager.js V24 loaded - Unified Profile - No Base64 - Cloudinary Only');
 
 // ========================================
 // V14 PRODUCT MANAGER SYSTEM - AREA DEMAND TO EXECUTIVE
@@ -597,4 +819,4 @@ window.loadMyDemandsV14 = loadMyDemandsV14;
 window.initDemandSystem = initDemandSystem;
 window.handleDemandSubmitV14 = handleDemandSubmitV14;
 
-console.log('✅ V15 Demand system loaded - No Common - Old logic intact');
+console.log('✅ V24 Demand system loaded - No Common - Old logic intact - Unified Profile Added');
