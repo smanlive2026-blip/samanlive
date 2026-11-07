@@ -1,5 +1,7 @@
 // LOCATION: server/utils/shopId.js
 // WORLD CLASS SHOP ID UTILS - FULL 150+ LINES - PRODUCTION READY
+// V27 FINAL CHANGE: 1) getShopId() ADD kiya - ye function tha hi nahi, par achar-route.js / media.js isko maang rahe the, isliye sab 500 tha 2) checkShopIdExists() ab asli DB check karega, mock nahi 3) getShopId sirf URL param se lega, body/query se kabhi nahi - warna koi dusri shop ka data badal dega
+// RULE: shopId = Shop._id (Mongo ObjectId). URL me ?shopId=xxx aayega toh wahi shopId hai.
 
 // Generate shop ID from name
 function generateShopId(shopName, area, city){
@@ -148,16 +150,21 @@ function generateShopQRData(shopId, shopName){
   }
 }
 
-// Check if shop ID exists (mock - in production check DB)
+// Check if shop ID exists - V27: Ab asli DB check karega, mock nahi
 async function checkShopIdExists(shopId){
   try{
-    // In production, check from DB
-    // const shop = await Shop.findOne({ shopId });
-    // return!!shop;
-
-    // For now, return false (not exists)
-    return false;
-
+    if(!shopId) return false;
+    // Agar Mongo ObjectId hai toh Shop collection me dhoondho
+    const mongoose = require('mongoose');
+    if(mongoose.Types.ObjectId.isValid(String(shopId))){
+      const Shop = require('../models/Shop');
+      const shop = await Shop.findById(shopId).select('_id').lean();
+      return !!shop;
+    }
+    // Agar slug jaisa shopId hai toh shopName/slug se dhoondho - purana code ke liye
+    const Shop = require('../models/Shop');
+    const shop2 = await Shop.findOne({ $or: [{ shopName: shopId }] }).select('_id').lean();
+    return !!shop2;
   }catch(error){
     return false;
   }
@@ -185,6 +192,22 @@ async function generateUniqueShopId(shopName, area, city){
   }
 }
 
+// ============================================================================
+// V27 NEW - getShopId - YE FUNCTION THA HI NAHI, ISILIYE ACHAR SAB 500 THA
+// ============================================================================
+// RULE: shopId hamesha URL param se aayega - /api/shops/achar/:shopId
+// Body / query se kabhi mat lo - warna koi body me dusri shopId bhej ke dusri shop ka data badal dega
+// Return: String (trimmed) ya '' agar nahi hai
+function getShopId(req){
+  try{
+    if(!req || !req.params) return '';
+    const id = req.params.shopId || req.params.id || req.params.shopid || '';
+    return String(id || '').trim();
+  }catch(e){
+    return '';
+  }
+}
+
 module.exports = {
   generateShopId,
   generateShortShopId,
@@ -194,5 +217,6 @@ module.exports = {
   generateShopLink,
   generateShopQRData,
   checkShopIdExists,
-  generateUniqueShopId
+  generateUniqueShopId,
+  getShopId
 };

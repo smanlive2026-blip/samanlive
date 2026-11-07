@@ -91,7 +91,7 @@
 </head>
 <body>
     <div class="banner-wrap">
-        <img id="shopBanner" class="banner" src="https://placehold.co/1400x320/eab308/fff?text=Maa+Ke+Haath+Ka+Achar">
+        <img id="shopBanner" class="banner" src="https://placehold.co/1400x320/eab308/fff?text=Maa+Ke+Haath+Ka+Achar" alt="Shop Banner">
         <div class="banner-overlay"></div>
     </div>
 
@@ -111,7 +111,7 @@
         </div>
 
         <div class="filters" id="categoryFilters">
-            <button class="filter-btn active">All</button>
+            <button class="filter-btn active" data-cat="All">All</button>
         </div>
 
         <div id="productGrid" class="product-grid">
@@ -129,30 +129,49 @@
     </div>
 <script src="/shop-templates/shop-banner-ext.js"></script>
 <script>
-        let shopId = new URLSearchParams(window.location.search).get('shopId');
-        if(!shopId) shopId = window.location.pathname.split('/').pop(); // fallback
+        // V27: shopId sirf ?shopId= se aayega. Pathname wala fallback hataya - wo "customer-view.html" ko shopId bana deta tha.
+        let shopId = new URLSearchParams(window.location.search).get('shopId') || '';
         let shopData = {};
         let allProducts = [];
-        let cart = JSON.parse(localStorage.getItem('cart_'+shopId)) || [];
+        let cart = [];
+        try { cart = JSON.parse(localStorage.getItem('cart_' + shopId)) || []; if(!Array.isArray(cart)) cart = []; } catch(e){ cart = []; }
+
+        function $(id){ return document.getElementById(id); }
+        function esc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
         document.addEventListener('DOMContentLoaded', () => {
+            if(!shopId){
+                const g = $('productGrid');
+                if(g) g.innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px;">Shop ID nahi mila. Dashboard se User View kholo.</p>';
+                return;
+            }
             loadShop();
             updateCartCount();
+            const cf = $('categoryFilters');
+            if(cf) cf.addEventListener('click', (e) => {
+                const btn = e.target.closest('.filter-btn');
+                if(!btn) return;
+                filterCat(btn.dataset.cat || 'All', btn);
+            });
         });
+
        // CLOUDINARY HD IMAGE FUNCTION
-            function getHDImage(url, width = 800) {
+        function getHDImage(url, width) {
+            width = width || 800;
             if(!url || url.includes('placehold')) return url;
-            // /upload/ ke baad q_auto:best,f_auto,w_XXX add kar dega
+            if(!url.includes('/upload/')) return url;
             return url.replace('/upload/', `/upload/q_auto:best,f_auto,w_${width}/`);
         }
         function convertTo12Hr(time24h) {
             if(!time24h) return '09:00 AM';
             if(time24h.includes('AM') || time24h.includes('PM')) return time24h;
-            let [hours, minutes] = time24h.split(':');
-            hours = parseInt(hours, 10);
-            const modifier = hours >= 12? 'PM' : 'AM';
+            let parts = time24h.split(':');
+            let hours = parseInt(parts[0], 10);
+            let minutes = parts[1] || '00';
+            if(isNaN(hours)) return '09:00 AM';
+            const modifier = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
-            hours = hours? hours : 12;
+            hours = hours ? hours : 12;
             return `${hours}:${minutes} ${modifier}`;
         }
 
@@ -160,31 +179,34 @@ async function loadShop() {
     try {
         const res = await fetch(`/api/shops/achar/${shopId}`);
         const data = await res.json();
-        if(!data.success) throw new Error(data.message);
+        if(!data.success) throw new Error(data.message || 'Shop load fail');
 
         shopData = data.shop || {};
+        const displayName = shopData.ownerName ? `${shopData.ownerName} ki Dukaan` : (shopData.shopName || shopData.name || 'Maa Ke Haath Ka Achar');
 
-        // 1. PEHLE BANNER WALA DATA LE AAO
-        const bannerData = await ShopBannerExt.getShopData(shopId, 'achar');
+        // 1. BANNER - guard ke saath, ye fail hua toh bhi baaki page chalega
+        let bannerData = null;
+        try { if(window.ShopBannerExt && typeof ShopBannerExt.getShopData === 'function') bannerData = await ShopBannerExt.getShopData(shopId, 'achar'); } catch(e){}
         if(bannerData) {
-            document.getElementById('shopBanner').src = bannerData.banner;
-            document.getElementById('shopLogo').src = bannerData.logo;
-            document.getElementById('shopName').innerText = bannerData.shopName; // <-- SIRF YAHI 1 BAAR
+            if(bannerData.banner) $('shopBanner').src = bannerData.banner;
+            if(bannerData.logo) $('shopLogo').src = bannerData.logo;
+            if(bannerData.shopName) $('shopName').innerText = bannerData.shopName;
+            else $('shopName').innerText = displayName;
         } else {
-            // agar bannerData na mile to backup
-            document.getElementById('shopName').innerText = shopData.ownerName ? `${shopData.ownerName} ki Dukaan` : shopData.name || 'Maa Ke Haath Ka Achar';
-            document.getElementById('shopLogo').src = getHDImage(shopData.ownerPhotoUrl, 200) || 'https://placehold.co/100/eab308/fff?text=A';
+            $('shopName').innerText = displayName;
+            if(shopData.ownerPhotoUrl) $('shopLogo').src = getHDImage(shopData.ownerPhotoUrl, 200);
+            if(shopData.bannerPhotoUrl) $('shopBanner').src = getHDImage(shopData.bannerPhotoUrl, 1400);
         }
 
         // 2. BAKI SAB
-        document.getElementById('footerShopName').innerText = shopData.name || 'Maa Ke Haath Ka Achar';
-        document.getElementById('pageTitle').innerText = shopData.name || 'Achar Shop';
-        document.getElementById('metaDesc').content = shopData.announcement || 'Ghar ka bana hua shuddh achar';
-        document.getElementById('shopPhone').innerText = shopData.phone || 'N/A';
-        document.getElementById('shopTiming').innerText = `${convertTo12Hr(shopData.settings?.openTime)} - ${convertTo12Hr(shopData.settings?.closeTime)}`;
-        document.getElementById('shopAddress').innerText = shopData.shopAddress || 'Ahmedabad, Gujarat'; // <-- YAHAN ADDRESS BHI DYNAMIC KAR DIYA
+        $('footerShopName').innerText = shopData.shopName || shopData.name || displayName;
+        $('pageTitle').innerText = shopData.shopName || shopData.name || 'Achar Shop';
+        $('metaDesc').content = shopData.announcement || 'Ghar ka bana hua shuddh achar';
+        $('shopPhone').innerText = shopData.phone ? ('+91 ' + shopData.phone) : 'N/A';
+        $('shopTiming').innerText = `${convertTo12Hr(shopData.settings?.openTime)} - ${convertTo12Hr(shopData.settings?.closeTime)}`;
+        $('shopAddress').innerText = shopData.shopAddress || shopData.fullAddress || shopData.address || 'Ahmedabad, Gujarat';
 
-        const statusEl = document.getElementById('shopStatus');
+        const statusEl = $('shopStatus');
         if(shopData.isOpen) {
             statusEl.innerText = 'Open';
             statusEl.classList.remove('closed');
@@ -194,8 +216,10 @@ async function loadShop() {
         }
 
         if(shopData.announcement) {
-            document.getElementById('announcementText').innerText = shopData.announcement;
-            document.getElementById('announcementBox').style.display = 'flex';
+            $('announcementText').innerText = shopData.announcement;
+            $('announcementBox').style.display = 'flex';
+        } else {
+            $('announcementBox').style.display = 'none';
         }
 
         allProducts = shopData.items || [];
@@ -204,84 +228,101 @@ async function loadShop() {
 
     } catch(e) {
         console.log('Shop load error', e);
-        document.getElementById('productGrid').innerHTML = `<p style="text-align:center; grid-column:1/-1; padding:40px;">Error: ${e.message}</p>`;
+        const g = $('productGrid');
+        if(g) g.innerHTML = `<p style="text-align:center; grid-column:1/-1; padding:40px;">Error: ${esc(e.message)}</p>`;
     }
 }
         function renderCategories() {
-            const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))]; // <-- FIX 2
-            const div = document.getElementById('categoryFilters');
-            div.innerHTML = `<button class="filter-btn active" onclick="filterCat('All', this)">All</button>`;
-            cats.forEach(c => {
-                div.innerHTML += `<button class="filter-btn" onclick="filterCat('${c}', this)">${c}</button>`;
-            });
+            const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
+            const div = $('categoryFilters');
+            if(!div) return;
+            let html = `<button class="filter-btn active" data-cat="All">All</button>`;
+            cats.forEach(c => { html += `<button class="filter-btn" data-cat="${esc(c)}">${esc(c)}</button>`; });
+            div.innerHTML = html;
         }
 
         function filterCat(cat, el) {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
+            if(el) el.classList.add('active');
             if(cat === 'All') renderProducts(allProducts);
             else renderProducts(allProducts.filter(p => p.category === cat));
         }
 
         function renderProducts(products) {
-            const grid = document.getElementById('productGrid');
-            if(products.length === 0) {
+            const grid = $('productGrid');
+            if(!grid) return;
+            if(!products || products.length === 0) {
                 grid.innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px;">Is category me koi achar nahi hai 🥲</p>';
                 return;
             }
-            grid.innerHTML = products.map(p => `
+            grid.innerHTML = products.map(p => {
+                const stock = Number(p.stock) || 0;
+                const p1 = Number(p.price1kg) || 0;
+                const p5 = Number(p.price500) || 0;
+                return `
                 <div class="product-card">
-                    <img src="${getHDImage(p.image, 800) || 'https://placehold.co/400/eab308/fff?text=Achar'}" alt="${p.name}" loading="lazy">
-                    <span class="category-tag">${p.category || 'Other'}</span>
-                    <h3>${p.name}</h3>
+                    <img src="${esc(getHDImage(p.image, 800) || 'https://placehold.co/400/eab308/fff?text=Achar')}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='https://placehold.co/400/eab308/fff?text=Achar'">
+                    <span class="category-tag">${esc(p.category || 'Other')}</span>
+                    <h3>${esc(p.name)}</h3>
                     <div class="product-meta">
-                        <span><i class="fa fa-pepper-hot"></i> ${p.spiceLevel}</span>
-                        <span><i class="fa fa-jar"></i> ${p.jarType}</span>
+                        <span><i class="fa fa-pepper-hot"></i> ${esc(p.spiceLevel)}</span>
+                        <span><i class="fa fa-jar"></i> ${esc(p.jarType)}</span>
                         <span><i class="fa fa-hourglass"></i> 12M</span>
                     </div>
                     <div class="price-row">
                         <div>
-                            <div class="price">₹${p.price1kg} <small>/Kg</small></div>
-                            <div style="font-size:10px; color:#64748b;">₹${p.price500}/500g</div>
+                            <div class="price">₹${p1} <small>/Kg</small></div>
+                            <div style="font-size:10px; color:#64748b;">₹${p5}/500g</div>
                         </div>
-                        <div class="stock ${p.stock < 2? 'low' : ''}"><i class="fa fa-box"></i> ${p.stock > 0? p.stock+'Kg' : 'Out'}</div>
+                        <div class="stock ${stock < 2 ? 'low' : ''}"><i class="fa fa-box"></i> ${stock > 0 ? stock + 'Kg' : 'Out'}</div>
                     </div>
-                    <button class="btn-add" ${p.stock <= 0? 'disabled' : ''} onclick="addToCart('${p.id}', event)">
-                        ${p.stock <= 0? '<i class="fa fa-ban"></i> Out' : '<i class="fa fa-plus"></i> Add'}
+                    <button class="btn-add" ${stock <= 0 ? 'disabled' : ''} onclick="addToCart('${esc(p.id)}', event)">
+                        ${stock <= 0 ? '<i class="fa fa-ban"></i> Out' : '<i class="fa fa-plus"></i> Add'}
                     </button>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         function addToCart(id, event) {
-            if(!CustomerShopStatus.canAddToCart()) return;  //  TOGGLE KE LIYE
+            // V27: CustomerShopStatus load nahi hua toh bhi Add chalega - pehle yehi JS rok deta tha
+            if(window.CustomerShopStatus && typeof CustomerShopStatus.canAddToCart === 'function'){
+                if(!CustomerShopStatus.canAddToCart()) return;
+            }
+            if(shopData.isOpen === false) return alert('Shop abhi Closed hai');
             const product = allProducts.find(p => p.id === id);
             if(!product) return;
+            const stock = Number(product.stock) || 0;
             const existing = cart.find(c => c.id === id);
             if(existing) {
-                if(existing.qty >= product.stock) return alert('Stock khatam bhai!');
+                if(existing.qty >= stock) return alert('Stock khatam bhai!');
                 existing.qty += 1;
             } else {
-                cart.push({id, name: product.name, price: product.price1kg, qty: 1, image: product.image});
+                cart.push({ id, name: product.name, price: Number(product.price1kg) || 0, qty: 1, image: product.image });
             }
-            localStorage.setItem('cart_'+shopId, JSON.stringify(cart));
+            try { localStorage.setItem('cart_' + shopId, JSON.stringify(cart)); } catch(e){}
             updateCartCount();
 
-            const btn = event.target.closest('button');
-            const oldText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa fa-check"></i>';
-            setTimeout(() => btn.innerHTML = oldText, 800);
+            if(event){
+                const btn = event.target && event.target.closest ? event.target.closest('button') : null;
+                if(btn){
+                    const oldText = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa fa-check"></i>';
+                    setTimeout(() => btn.innerHTML = oldText, 800);
+                }
+            }
         }
 
         function updateCartCount() {
-            document.getElementById('cartCount').innerText = cart.reduce((sum, c) => sum + c.qty, 0);
+            const el = $('cartCount');
+            if(el) el.innerText = cart.reduce((sum, c) => sum + (Number(c.qty) || 0), 0);
         }
 
         function openCart() {
             if(cart.length === 0) return alert('Cart khali hai');
-            window.location.href = `/shop/cart?shopId=${shopId}`;
+            // V27: /shop/cart route hai hi nahi - asli cart page ye hai
+            window.location.href = `/shop-templates/common/cart/cart.html?shopId=${shopId}`;
         }
     </script>
     </body>
-    
+
 </html>
