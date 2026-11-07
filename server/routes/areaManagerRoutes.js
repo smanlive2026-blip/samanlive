@@ -1,11 +1,11 @@
 // ========================================
-// AREA MANAGER - EK HI FILE - V25 UNIFIED PROFILE - FULL CODE - NO CUT
+// AREA MANAGER - EK HI FILE - V27 FINAL - FULL CODE - NO CUT
 // File: server/routes/areaManagerRoutes.js
 // Mount: app.use('/api', require('./routes/areaManagerRoutes'))
 // Frontend: area-manager.html
 // Shop Create alag file me hai: managerShopCreate.js
-// CHANGE V25: PUT /manager/update-profile me base64 REJECT, photo = avatar = profilePic sync, city/gender/pincode/coverPhoto save, Dashboard full manager bheje, Delivery Boy photo + vehicleNumber + DeliveryBoy model me bhi banega, Shop Edit logo sync
-// RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Base64 aaya toh 400 dega.
+// CHANGE V27: 1) update-profile me phone normalize (10 digit) + email/phone duplicate check -> 409 Hindi me, 500 nahi 2) profile-photo delete me save() hataya, findByIdAndUpdate lagaya 3) create-delivery-manager me phone normalize + dono model me duplicate check + E11000 -> 409 4) delivery-managers list me loginToken leak band 5) update-location me Manager ka currentLocation geo use kiya
+// RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Pehchan = Phone (10 digit). Update hamesha _id se, areaCode se kabhi nahi.
 // ========================================
 const express = require('express');
 const crypto = require('crypto');
@@ -16,6 +16,29 @@ const Manager = require('../models/Manager');
 const Shop = require('../models/Shop');
 const Area = require('../models/Area');
 const Module = require('../models/Module');
+
+// ========== HELPER: Normalize - V27 ==========
+// findByIdAndUpdate pe Model setter nahi chalta, isliye yahan haath se normalize karna padega - warna +91 wala phone aise hi save ho jayega
+function normPhone(v) {
+    if (v === undefined || v === null) return '';
+    const d = String(v).replace(/\D/g, '');
+    if (!d) return '';
+    return d.length > 10 ? d.slice(-10) : d;
+}
+function normEmail(v) {
+    if (v === undefined || v === null) return '';
+    return String(v).toLowerCase().trim();
+}
+function dupError(res, field, val, who) {
+    return res.status(409).json({ success: false, error: `Ye ${field} (${val}) pehle se kisi aur Manager (${who || ''}) ka hai. Dusra ${field} use karo.` });
+}
+function handleDupErr(res, err) {
+    if (err && (err.code === 11000 || String(err.message || '').includes('E11000'))) {
+        const f = Object.keys(err.keyValue || {})[0] || 'phone/email';
+        return res.status(409).json({ success: false, error: `Ye ${f} (${err.keyValue ? err.keyValue[f] : ''}) pehle se kisi aur ka hai. Dusra ${f} use karo.` });
+    }
+    return null;
+}
 
 // ========== HELPER: Base64 check - V25 ==========
 // Agar photo data:image se start hoti hai toh wo base64 hai - DB me nahi jani chahiye
@@ -203,9 +226,7 @@ router.post('/manager/verify-token', async (req, res) => {
     }
 });
 
-// ========== 4. PROFILE UPDATE - V26 FIX - NO manager.save(), NO next(), NO Validation 500 ==========
-// PEHLE THA: manager.gender = b.gender (bina lowercase) + await manager.save() -> koi bhi purana field alag hua toh Mongoose ValidationError -> 500
-// AB: gender toLowerCase + findByIdAndUpdate + runValidators:false + sirf bheje hue field update honge + photo khali hai toh purani photo nahi udegi + next() use hi nahi karenge, isliye "next is not a function" aa hi nahi sakta
+// ========== 4. PROFILE UPDATE - V27 FINAL - Duplicate -> 409 Hindi, 500 nahi ==========
 router.put('/manager/update-profile', authManager, async (req, res) => {
     try {
         const manager = req.manager;
@@ -213,15 +234,27 @@ router.put('/manager/update-profile', authManager, async (req, res) => {
         const update = {};
 
         if (b.name !== undefined) update.name = String(b.name || '').trim();
-        if (b.phone !== undefined) update.phone = String(b.phone || '').trim();
-        if (b.email !== undefined) update.email = String(b.email || '').toLowerCase().trim();
+        // V27: Phone - normalize + duplicate check - apni hi phone dobara dalne pe duplicate mat bolna
+        if (b.phone !== undefined && String(b.phone || '').trim() !== '') {
+            const ph = normPhone(b.phone);
+            const other = await Manager.findOne({ phone: ph, _id: { $ne: manager._id } }).lean();
+            if (other) return dupError(res, 'phone', ph, other.name || other.managerCode);
+            update.phone = ph;
+        }
+        // V27: Email - normalize + duplicate check - apni hi email dobara dalne pe duplicate mat bolna
+        if (b.email !== undefined && String(b.email || '').trim() !== '') {
+            const em = normEmail(b.email);
+            const other = await Manager.findOne({ email: em, _id: { $ne: manager._id } }).lean();
+            if (other) return dupError(res, 'email', em, other.name || other.managerCode);
+            update.email = em;
+        }
         if (b.city !== undefined) update.city = String(b.city || '').trim();
         if (b.state !== undefined) update.state = String(b.state || '').trim();
         if (b.pincode !== undefined) update.pincode = String(b.pincode || '').trim();
         if (b.address !== undefined) update.address = typeof b.address === 'string' ? b.address : (b.address?.line1 || '');
-        // V26: Male -> male, Female -> female, "" -> "" - enum fail nahi hoga
+        // V27: Male -> male, Female -> female, "" -> "" - enum fail nahi hoga
         if (b.gender !== undefined) update.gender = String(b.gender || '').toLowerCase().trim();
-        // V26: dob "" aaye toh null karo, warna Cast to Date failed -> 500
+        // V27: dob "" aaye toh null karo, warna Cast to Date failed -> 500
         if (b.dob !== undefined) update.dob = b.dob ? new Date(b.dob) : null;
         if (b.areaName !== undefined) update.areaName = String(b.areaName || '').trim();
         if (b.vehicleType !== undefined) update.vehicleType = b.vehicleType || 'bike';
@@ -249,28 +282,27 @@ router.put('/manager/update-profile', authManager, async (req, res) => {
             update.coverPhoto = String(b.coverPhoto).trim();
         }
 
-        // V26: save() MAT use karo - save() pura Model validate karta hai aur pre-save hook chalata hai, wahi 500 deta tha
-        // findByIdAndUpdate + runValidators:false -> sirf bheje hue field update honge, purana data fail nahi karega
+        // V27: save() MAT use karo - save() pura Model validate karta hai, wahi 500 deta tha
+        // findByIdAndUpdate + runValidators:false -> sirf bheje hue field update honge
         const updated = await Manager.findByIdAndUpdate(manager._id, { $set: update }, { new: true, runValidators: false });
         if (!updated) return res.status(404).json({ success: false, error: 'Manager not found' });
 
         res.json({ success: true, manager: publicManager(updated), message: 'Profile updated' });
     } catch (err) {
         console.error('Profile update error:', err);
-        // V26: next(err) MAT likhna - isi se "next is not a function" aata tha, seedha response bhejo
+        const dup = handleDupErr(res, err);
+        if (dup) return dup;
         return res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// ========== 4B. PROFILE PHOTO DELETE - V25 NEW ==========
+// ========== 4B. PROFILE PHOTO DELETE - V27: save() hataya ==========
 router.delete('/manager/profile-photo', authManager, async (req, res) => {
     try {
         const manager = req.manager;
-        manager.photo = '';
-        manager.avatar = '';
-        manager.profilePic = '';
-        await manager.save();
-        res.json({ success: true, manager: publicManager(manager), message: 'Photo deleted' });
+        // V27: Pehle tha manager.save() - purana data alag hua toh photo delete karte time bhi 500 aata tha
+        const updated = await Manager.findByIdAndUpdate(manager._id, { $set: { photo: '', avatar: '', profilePic: '' } }, { new: true, runValidators: false });
+        res.json({ success: true, manager: publicManager(updated), message: 'Photo deleted' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -288,13 +320,14 @@ router.put('/manager/shops/:id', authManager, async (req, res) => {
             || String(shop.controlledBy || '') === String(manager._id);
         if (!isMine) return res.status(403).json({ success: false, error: 'Access Denied: This shop is not assigned to you' });
 
-        const { location, areaCode, ownerId, managerCodes, claimedBy, controlledBy, createdBy,...rest } = req.body;
+        const { location, areaCode, ownerId, managerCodes, claimedBy, controlledBy, createdBy, ...rest } = req.body;
 
         // Sirf allowed field hi update honge
         const allowed = {};
         ['shopName','icon','serviceType','categoryId','template','templateFolder','shopType','phone','contact','range','isActive','description'].forEach(k => {
-            if (rest[k]!== undefined) allowed[k] = rest[k];
+            if (rest[k] !== undefined) allowed[k] = rest[k];
         });
+        if (allowed.phone) allowed.phone = normPhone(allowed.phone);
 
         // V25: Logo sync - logo bhejoge toh 4 field me jayega - pehle sirf logo me jata tha
         const logoVal = rest.logo || rest.shopLogo || rest.uploadedLogo || rest.image || '';
@@ -332,13 +365,15 @@ router.put('/manager/shops/:id', authManager, async (req, res) => {
 
         if (rest.address) {
             allowed.address = (typeof rest.address === 'object')
-               ? {...(shop.address?.toObject? shop.address.toObject() : shop.address || {}),...rest.address }
+               ? { ...(shop.address?.toObject ? shop.address.toObject() : shop.address || {}), ...rest.address }
                 : { line1: rest.address };
         }
 
-        const updated = await Shop.findByIdAndUpdate(req.params.id, { $set: allowed }, { new: true, runValidators: true });
+        const updated = await Shop.findByIdAndUpdate(req.params.id, { $set: allowed }, { new: true, runValidators: false });
         res.json({ success: true, shop: updated, message: 'Shop updated successfully' });
     } catch (err) {
+        const dup = handleDupErr(res, err);
+        if (dup) return dup;
         res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -386,41 +421,52 @@ router.get('/modules', async (req, res) => {
     }
 });
 
-// ========== 8. DELIVERY BOY CREATE - V25: Photo + VehicleNumber + DeliveryBoy model ==========
+// ========== 8. DELIVERY BOY CREATE - V27: Phone normalize + dono model check + loginToken leak band ==========
 router.post('/manager/create-delivery-manager', authManager, async (req, res) => {
     try {
         const manager = req.manager;
-        if (manager.role && manager.role!== 'area-manager') {
+        if (manager.role && manager.role !== 'area-manager') {
             return res.status(403).json({ success: false, message: 'Sirf Area Manager bana sakta hai' });
         }
         const { name, phone, email, vehicleType, vehicleNumber, photo, avatar, profilePic, aadhaarNumber, drivingLicense } = req.body;
-        if (!name ||!phone) return res.status(400).json({ success: false, message: 'Name aur Phone zaruri hai' });
+        if (!name || !phone) return res.status(400).json({ success: false, message: 'Name aur Phone zaruri hai' });
 
-        // V25: Photo me base64 aaya toh reject karo
+        // V27: Phone normalize - +91 wala aur bina +91 wala same lagega
+        const normPh = normPhone(phone);
+        const normEm = email ? normEmail(email) : '';
+
+        // V27: Photo me base64 aaya toh reject karo
         const incomingPhoto = photo || avatar || profilePic || '';
         if (incomingPhoto && isBase64Image(incomingPhoto)) {
             return res.status(400).json({ success: false, message: 'Base64 photo not allowed - Cloudinary URL bhejo' });
         }
         const pic = incomingPhoto ? String(incomingPhoto).trim() : '';
 
-        const exists = await Manager.findOne({ phone });
-        if (exists) return res.status(400).json({ success: false, message: 'Phone already exist' });
-
-        // DeliveryBoy collection me bhi check karo - dono me same phone nahi hona chahiye
-        try{
+        // V27: Dono model me normalized phone se check karo - pehle raw phone se check hota tha, isliye +91 wala duplicate ban jata tha
+        const exists = await Manager.findOne({ phone: normPh }).lean();
+        if (exists) return res.status(409).json({ success: false, message: `Phone (${normPh}) pehle se hai - ${exists.name || exists.managerCode}` });
+        try {
           const DeliveryBoy = require('../models/DeliveryBoy');
-          const exists2 = await DeliveryBoy.findOne({ phone: String(phone).trim() });
-          if(exists2) return res.status(400).json({ success: false, message: 'Phone already exist in DeliveryBoy' });
-        }catch(e){}
+          const exists2 = await DeliveryBoy.findOne({ phone: normPh }).lean();
+          if (exists2) return res.status(409).json({ success: false, message: `Phone (${normPh}) pehle se DeliveryBoy me hai - ${exists2.name || ''}` });
+        } catch (e) {}
 
-        const count = await Manager.countDocuments({ role: 'delivery-manager', areaCode: manager.areaCode });
-        const managerCode = `DM-${manager.areaCode}-${count + 1}`;
+        // V27: managerCode unique banao - count + time, taaki delete ke baad dobara banane pe takraye nahi
+        let managerCode = '';
+        for (let attempt = 0; attempt < 5; attempt++) {
+            const count = await Manager.countDocuments({ role: 'delivery-manager', areaCode: manager.areaCode });
+            const cand = `DM-${String(manager.areaCode).toUpperCase()}-${count + 1 + attempt}`;
+            const taken = await Manager.findOne({ managerCode: cand }).lean();
+            if (!taken) { managerCode = cand; break; }
+        }
+        if (!managerCode) managerCode = `DM-${String(manager.areaCode).toUpperCase()}-${Date.now().toString().slice(-6)}`;
         const loginToken = crypto.randomBytes(24).toString('hex');
+        const finalEmail = normEm || `${managerCode.toLowerCase()}@samanlive.local`;
 
         const dm = new Manager({
             name: String(name).trim(),
-            phone: String(phone).trim(),
-            email: email? String(email).toLowerCase().trim() : `${managerCode.toLowerCase()}@samanlive.local`,
+            phone: normPh,
+            email: finalEmail,
             loginToken, role: 'delivery-manager',
             areaCode: manager.areaCode, areaName: manager.areaName,
             city: manager.city, state: manager.state,
@@ -434,13 +480,13 @@ router.post('/manager/create-delivery-manager', authManager, async (req, res) =>
         });
         await dm.save();
 
-        // V25: DeliveryBoy model me bhi banado - taaki delivery-boy.html se login / profile dono jagah se mile
-        try{
+        // V27: DeliveryBoy model me bhi banado - taaki delivery-boy.html se login / profile dono jagah se mile
+        try {
           const DeliveryBoy = require('../models/DeliveryBoy');
           await DeliveryBoy.create({
             name: String(name).trim(),
-            phone: String(phone).trim(),
-            email: email? String(email).toLowerCase().trim() : `${managerCode.toLowerCase()}@samanlive.local`,
+            phone: normPh,
+            email: finalEmail,
             loginToken,
             areaCode: manager.areaCode, areaName: manager.areaName,
             city: manager.city, state: manager.state,
@@ -452,43 +498,43 @@ router.post('/manager/create-delivery-manager', authManager, async (req, res) =>
             photo: pic, avatar: pic, profilePic: pic,
             status: true, isActive: true, isAvailable: true
           });
-        }catch(e){ console.log('DeliveryBoy create warn - Manager me ban gaya, DeliveryBoy me nahi:', e.message); }
+        } catch (e) { console.log('DeliveryBoy create warn - Manager me ban gaya, DeliveryBoy me nahi:', e.message); }
 
-        // V25: loginToken wapas mat bhejo response me - frontend ko link banane ke liye alag se chahiye toh wo delivery-managers list se lega
+        // V27: loginToken wapas mat bhejo response me - frontend ko link banane ke liye alag se chahiye toh wo delivery-managers list se lega
         res.json({ success: true, message: 'Delivery Boy ban gaya', manager: publicManager(dm) });
     } catch (err) {
         console.error('Create DM error:', err);
+        const dup = handleDupErr(res, err);
+        if (dup) return dup;
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// ========== 9. DELIVERY BOY LIST - V25: Photo sync + DeliveryBoy bhi ==========
+// ========== 9. DELIVERY BOY LIST - V27: loginToken leak band ==========
 router.get('/manager/delivery-managers', authManager, async (req, res) => {
     try {
         const managers = await Manager.find({ role: 'delivery-manager', areaCode: req.manager.areaCode })
            .sort({ createdAt: -1 }).lean();
-        // V25: photo / avatar / profilePic sync karke bhejo + loginToken sirf link ke liye rakho (frontend ko chahiye)
-        const cleaned = managers.map(m => {
-          const pic = m.photo || m.avatar || m.profilePic || '';
-          return { ...m, photo: pic, avatar: pic, profilePic: pic };
-        });
+        // V27: Pehle ...m me loginToken bhi aa jata tha - ab publicManager se saaf karke bhejenge
+        const cleaned = managers.map(m => publicManager(m));
         // Agar Manager me koi nahi hai toh DeliveryBoy me dhoondo - fallback
-        if(cleaned.length === 0){
-          try{
+        if (cleaned.length === 0) {
+          try {
             const DeliveryBoy = require('../models/DeliveryBoy');
             const dbs = await DeliveryBoy.find({ areaCode: req.manager.areaCode }).sort({ createdAt: -1 }).lean();
-            if(dbs.length){
+            if (dbs.length) {
               const cleaned2 = dbs.map(m => {
                 const pic = m.photo || m.avatar || m.profilePic || '';
-                return { ...m, photo: pic, avatar: pic, profilePic: pic, role: 'delivery-manager', managerCode: m.managerCode || '' };
+                const { loginToken, password, ...rest } = m;
+                return { ...rest, photo: pic, avatar: pic, profilePic: pic, role: 'delivery-manager', managerCode: m.managerCode || '' };
               });
               return res.json({ success: true, managers: cleaned2 });
             }
-          }catch(e){}
+          } catch (e) {}
         }
         res.json({ success: true, managers: cleaned });
     } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
@@ -497,12 +543,18 @@ router.post('/manager/update-location', async (req, res) => {
     try {
         const { token, lat, lng } = req.body;
         if (!token) return res.status(400).json({ success: false, error: 'Token required' });
-        await Manager.findOneAndUpdate({ loginToken: token }, { lastLat: lat, lastLng: lng, lastLocationAt: new Date() });
+        const la = Number(lat) || 0;
+        const lo = Number(lng) || 0;
+        // V27: Pehle tha lastLat/lastLng - wo field Model me hai hi nahi, isliye update hota hi nahi tha. Ab currentLocation geo pe karenge
+        await Manager.findOneAndUpdate(
+            { loginToken: token },
+            { $set: { currentLocation: { type: 'Point', coordinates: [lo, la] }, lastLocationUpdate: new Date() } }
+        );
         // DeliveryBoy me bhi update karo
-        try{
+        try {
           const DeliveryBoy = require('../models/DeliveryBoy');
-          await DeliveryBoy.findOneAndUpdate({ loginToken: token }, { currentLocation: { type: 'Point', coordinates: [Number(lng) || 0, Number(lat) || 0] }, lastLocationUpdate: new Date() });
-        }catch(e){}
+          await DeliveryBoy.findOneAndUpdate({ loginToken: token }, { currentLocation: { type: 'Point', coordinates: [lo, la] }, lastLocationUpdate: new Date() });
+        } catch (e) {}
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });

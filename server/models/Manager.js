@@ -1,42 +1,66 @@
-// LOCATION: server/models/Manager.js - MANAGER MODEL - V23 UNIFIED PROFILE - AREA MANAGER + DELIVERY MANAGER
-// CHANGE: photo + avatar + profilePic + coverPhoto add kiya, delivery_boy role add kiya, vehicle + wallet + password add kiya
+// LOCATION: server/models/Manager.js - MANAGER MODEL - V27 FINAL - AREA MANAGER + DELIVERY MANAGER
+// CHANGE V27: 1) phone hamesha aakhri 10 digit (setter se) - +91 / 0 kat jayega, same aadmi 3 alag nahi lagega 2) email / gender hamesha chhota (setter se) - Male aaye toh bhi male ban jayega, enum fail nahi hoga 3) INDEX SAFAI - managerCode + loginToken pe hi unique, phone/email pe unique NAHI - ek hi aadmi Area Manager + Delivery Boy dono ho sakta hai, same email/phone se 2 doc banenge 4) pre-save me bhi normalize - setter miss bhi ho jaye toh save pe sahi ho jayega
 // FLOW: Area Manager dashboard -> UnifiedProfile (common/profile/profile-core.js) -> /api/common/profile/upload-avatar -> Cloudinary -> Manager.photo / avatar / profilePic me URL
-// RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega
+// RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Pehchan = Phone (aakhri 10 digit). Email kabhi pehchan nahi hai, kabhi unique nahi hai.
+// NOTE: Purana email_1 unique index Model badalne se nahi mit-ta, wo server.js wale cleanup se mitega (FILE 5 me dunga)
 
 const mongoose = require('mongoose');
 
+// V27: Phone normalize - +91 8384800729 -> 8384800729, 08384800729 -> 8384800729, 91 83848... -> 8384800729
+function normPhoneSetter(v) {
+    if (v === undefined || v === null) return '';
+    const d = String(v).replace(/\D/g, '');
+    if (!d) return '';
+    return d.length > 10 ? d.slice(-10) : d;
+}
+function normEmailSetter(v) {
+    if (v === undefined || v === null) return '';
+    return String(v).toLowerCase().trim();
+}
+function normGenderSetter(v) {
+    if (v === undefined || v === null) return '';
+    return String(v).toLowerCase().trim();
+}
+
 const managerSchema = new mongoose.Schema({
-    areaCode: { 
-        type: String, 
-        required: true, 
-        index: true 
+    areaCode: {
+        type: String,
+        required: true,
+        index: true
     },
-    managerCode: { 
-        type: String, 
-        required: true, 
-        unique: true 
+    managerCode: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+        uppercase: true
     },
-    name: { 
-        type: String, 
+    name: {
+        type: String,
         required: true,
         trim: true
     },
-    email: { 
-        type: String, 
+    email: {
+        type: String,
         required: false,
+        default: '',
         lowercase: true,
-        trim: true
+        trim: true,
+        set: normEmailSetter
+        // V27: unique NAHI hai - ek hi email se Area Manager + Delivery Boy dono ban sakta hai
     },
-    phone: { 
+    phone: {
         type: String,
         trim: true,
-        default: ''
+        default: '',
+        set: normPhoneSetter
+        // V27: unique NAHI hai - ek hi phone se Area Manager + Delivery Boy dono ban sakta hai
     },
     password: { type: String, select: false, default: '' }, // ADD - Delivery Boy / Manager login ke liye - pehle tha hi nahi
 
-    // ===== PROFILE PHOTO - V23 UNIFIED - CLOUDINARY URL HI AAYEGA, BASE64 NAHI =====
-    photo: { 
-        type: String, 
+    // ===== PROFILE PHOTO - V27 UNIFIED - CLOUDINARY URL HI AAYEGA, BASE64 NAHI =====
+    photo: {
+        type: String,
         default: '',
         trim: true
     }, // Main photo - UnifiedProfile isi me save karega
@@ -44,61 +68,62 @@ const managerSchema = new mongoose.Schema({
     profilePic: { type: String, default: '', trim: true }, // ADD - Customer se match karne ke liye
     coverPhoto: { type: String, default: '', trim: true }, // ADD - Profile cover / banner ke liye
 
-    city: { 
+    city: {
         type: String,
         trim: true
     },
-    state: { 
+    state: {
         type: String,
         trim: true
     },
-    areaName: { 
+    areaName: {
         type: String,
         trim: true
     },
     pincode: { type: String, trim: true, default: '' }, // ADD - profile form me tha, model me nahi tha
     address: { type: String, trim: true, default: '' }, // ADD
-    gender: { type: String, enum: ['male', 'female', 'other', ''], default: '' }, // ADD
+    gender: { type: String, enum: ['male', 'female', 'other', ''], default: '', set: normGenderSetter }, // ADD - setter se Male -> male
     dob: { type: Date, default: null }, // ADD
-    bucket: { 
-        type: String, 
+    bucket: {
+        type: String,
         default: 'DEFAULT',
         trim: true
     },
-    loginToken: { 
-        type: String, 
-        required: true, 
-        index: true,
-        unique: true
+    loginToken: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true
+        // V27: Sirf ye 2 unique hai - managerCode + loginToken
     },
-    status: { 
-        type: Boolean, 
-        default: true 
+    status: {
+        type: Boolean,
+        default: true
     },
     isActive: { type: Boolean, default: true }, // ADD - baaki model me isActive hai, isme status tha - dono rakh diya
     isVerified: { type: Boolean, default: false }, // ADD
-    autoGenerated: { 
-        type: Boolean, 
-        default: true 
+    autoGenerated: {
+        type: Boolean,
+        default: true
     },
-    serviceCharge: { 
-        type: Number, 
-        default: 0 
+    serviceCharge: {
+        type: Number,
+        default: 0
     },
-    moduleAccess: [{ 
-        type: String 
+    moduleAccess: [{
+        type: String
     }],
-    centerLat: { 
-        type: Number 
+    centerLat: {
+        type: Number
     },
-    centerLng: { 
-        type: Number 
+    centerLng: {
+        type: Number
     },
-    radius: { 
-        type: Number 
+    radius: {
+        type: Number
     },
-    maxShops: { 
-        type: Number, 
+    maxShops: {
+        type: Number,
         default: 10,
         min: 1
     },
@@ -109,25 +134,25 @@ const managerSchema = new mongoose.Schema({
     totalDeliveries: { type: Number, default: 0 },
 
     // ===== ROLE - V23 FIX - delivery_boy add kiya, pehle nahi tha =====
-    role: { 
-       type: String, 
+    role: {
+       type: String,
         enum: ['admin', 'area-manager', 'delivery-manager', 'delivery_boy', 'manager'], // FIX: delivery_boy + manager add kiya - pehle delivery_boy bhejte hi error aata tha
-        default: 'area-manager' 
+        default: 'area-manager'
     },
-    parentManager: { 
-        type: mongoose.Schema.Types.ObjectId, 
+    parentManager: {
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Manager',
         default: null
     },
 
     // ===== DELIVERY BOY FIELDS - V23 NEW - Ye 3 field pehle the, baaki nahi the =====
-    vehicleType: { 
-        type: String, 
-        enum: ['bike', 'cycle', 'auto', 'foot', ''], 
-        default: 'bike' 
+    vehicleType: {
+        type: String,
+        enum: ['bike', 'cycle', 'auto', 'foot', ''],
+        default: 'bike'
     },
     vehicleNumber: { type: String, trim: true, default: '', uppercase: true }, // ADD - GJ05AB1234 - Delivery dashboard me chahiye tha
-    drivingLicense: { type: String, trim: true, default: '' }, // ADD
+    drivingLicense: { type: String, trim: true, default: '' },
     licensePhoto: { type: String, default: '', trim: true }, // ADD - License ki photo - Cloudinary URL
     aadhaarNumber: { type: String, trim: true, default: '' }, // ADD
     aadhaarPhoto: { type: String, default: '', trim: true }, // ADD - Aadhaar ki photo
@@ -142,25 +167,41 @@ const managerSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// ===== INDEX =====
+// ===== INDEX - V27 FINAL - CRORE PE BHI FAST SEARCH KE LIYE =====
+// managerCode + loginToken pe unique Mongoose upar wale unique:true se hi ban jayega, isliye yahan dobara unique mat likhna - warna duplicate index banega
+// phone / email pe unique NAHI - sirf search ke liye normal index hai
 managerSchema.index({ phone: 1 });
+managerSchema.index({ email: 1 });
 managerSchema.index({ areaCode: 1, role: 1 });
+managerSchema.index({ areaCode: 1, status: 1 });
 managerSchema.index({ role: 1 });
-managerSchema.index({ managerCode: 1 });
+managerSchema.index({ status: 1 });
+managerSchema.index({ createdAt: -1 });
 managerSchema.index({ 'currentLocation': '2dsphere' });
 
-// ===== PRE SAVE - photo / avatar / profilePic teeno ko sync rakho =====
+// ===== PRE SAVE - photo / avatar / profilePic teeno ko sync rakho + normalize =====
 // Taaki kahin bhi photo maango - photo, avatar ya profilePic - teeno me same URL mile
 // Baaki 4 model me bhi yahi kiya tha - Executive / PM / User / Shop
 managerSchema.pre('save', function(next){
-  const pic = this.photo || this.avatar || this.profilePic || '';
-  if(pic){
-    this.photo = pic;
-    this.avatar = pic;
-    this.profilePic = pic;
-  }
-  // isActive ko status se sync rakho - kahin status maango, kahin isActive
-  if(this.status !== undefined) this.isActive = !!this.status;
+  try {
+    // V27: Setter miss bhi ho jaye toh yahan pakka normalize ho jayega
+    if (this.phone) this.phone = normPhoneSetter(this.phone);
+    if (this.email) this.email = normEmailSetter(this.email);
+    if (this.gender) this.gender = normGenderSetter(this.gender);
+    if (this.vehicleNumber) this.vehicleNumber = String(this.vehicleNumber).toUpperCase().trim();
+    if (this.managerCode) this.managerCode = String(this.managerCode).toUpperCase().trim();
+    // dob "" aaye toh null karo, warna Cast to Date failed -> 500
+    if (this.dob === '') this.dob = null;
+
+    const pic = this.photo || this.avatar || this.profilePic || '';
+    if (pic) {
+        this.photo = pic;
+        this.avatar = pic;
+        this.profilePic = pic;
+    }
+    // isActive ko status se sync rakho - kahin status maango, kahin isActive
+    if (this.status !== undefined) this.isActive = !!this.status;
+  } catch (e) { /* normalize fail ho toh save mat roko */ }
   next();
 });
 

@@ -1,4 +1,4 @@
-// LOCATION: server/server.js - V13 FINAL - FULL 400+ LINES - V12 SAME + SETTINGS ORDER FIX + LOGO 500 FIX + CLOUDINARY - NO LINE DELETED
+// LOCATION: server/server.js - V27 FINAL - FULL CODE - NO LINE DELETED + INDEX CLEANUP + WALLET MOUNT + SECURITY FIX
 const nodeCrypto = require('crypto');
 try {
   if (!global.crypto) global.crypto = nodeCrypto.webcrypto || nodeCrypto;
@@ -69,12 +69,13 @@ let dbPromise = null;
 function connectDB() {
     if (mongoose.connection.readyState === 1) return Promise.resolve();
     if (dbPromise) return dbPromise;
-    dbPromise = mongoose.connect(mongoUri, { 
-      maxPoolSize: 10, 
-      minPoolSize: 1,
-      serverSelectionTimeoutMS: 5000,
+    dbPromise = mongoose.connect(mongoUri, {
+      // V27: Crore log ke liye pool badhaya - 10 pe line lag jati thi
+      maxPoolSize: 50,
+      minPoolSize: 5,
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 5000
+      connectTimeoutMS: 10000
     })
 .then(async () => {
     console.log('✅ MongoDB Connected Successfully');
@@ -84,6 +85,35 @@ function connectDB() {
         const result = await Shop.updateMany({ status: 'active' }, { $set: { status: 'approved' } });
         if (result.modifiedCount > 0) console.log(`🔄 Auto-migrated ${result.modifiedCount} shops`);
     } catch (err) { console.log('⚠️ Migration skipped:', err.message); }
+
+    // V27 FINAL - ONE TIME INDEX CLEANUP - Model badalne se purana index nahi mit-ta, yahan mitega
+    // Manager ka purana email_1 unique index mitana hai, warna same email se Manager + DeliveryBoy banega hi nahi, E11000 aata rahega
+    try {
+        const Manager = require('./models/Manager');
+        const mIndexes = await Manager.collection.getIndexes().catch(() => ({}));
+        if (mIndexes['email_1']) {
+            await Manager.collection.dropIndex('email_1');
+            console.log('🧹 Dropped old Manager email_1 unique index - ab same email se Manager + DeliveryBoy ban sakta hai');
+        }
+        // Sahi index bana do - agar nahi hai toh
+        await Manager.collection.createIndex({ managerCode: 1 }, { unique: true, background: true }).catch(() => {});
+        await Manager.collection.createIndex({ loginToken: 1 }, { unique: true, background: true }).catch(() => {});
+        await Manager.collection.createIndex({ phone: 1 }, { background: true }).catch(() => {});
+        await Manager.collection.createIndex({ email: 1 }, { background: true }).catch(() => {});
+    } catch (e) { console.log('Manager index cleanup skip:', e.message); }
+
+    // V27: User ka purana email_1 unique index bhi sparse banana hai - warna khali email wale 100 log E11000 denge
+    try {
+        const User = require('./models/User');
+        const uIndexes = await User.collection.getIndexes().catch(() => ({}));
+        // Agar email_1 hai aur sparse nahi hai toh drop karke sparse bana do
+        if (uIndexes['email_1'] && !uIndexes['email_1'].sparse) {
+            await User.collection.dropIndex('email_1');
+            console.log('🧹 Dropped old User email_1 unique index - ab sparse banega');
+        }
+        await User.collection.createIndex({ email: 1 }, { unique: true, sparse: true, background: true }).catch(() => {});
+        await User.collection.createIndex({ phone: 1 }, { unique: true, background: true }).catch(() => {});
+    } catch (e) { console.log('User index cleanup skip:', e.message); }
 })
 .catch(err => {
     dbPromise = null;
@@ -115,11 +145,12 @@ const productPoolRoutes = require('./routes/productPoolRoutes');
 const areaDemandRoutes = require('./routes/areaDemandRoutes');
 const userAddressRoutes = require('./routes/user.address.routes');
 
-// ==================== MIDDLEWARE - V15 FIX - ISKO ROUTES SE PEHLE RAKHA HAI ====================
+// ==================== MIDDLEWARE - V27 - limit 50mb -> 2mb - base64 bomb band ====================
 app.use(compression());
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// V27: Pehle 50mb tha - koi bhi 50MB base64 bhej ke server ki memory phad deta tha. Upload multer se hota hai, JSON ko 2mb kaafi hai
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 app.use('/api/user/addresses', userAddressRoutes);
 
@@ -168,9 +199,9 @@ function serveHtmlFresh(filePath, res){
     res.setHeader('Expires','0');
     res.setHeader('Content-Type','text/html');
     res.send(html);
-  }catch(e){ 
+  }catch(e){
     console.error(e);
-    res.status(500).send('Error loading file'); 
+    res.status(500).send('Error loading file');
   }
 }
 
@@ -183,9 +214,9 @@ app.get('/shop/:id/dashboard', async (req, res) => {
         const templateFolder = shopTypeMap[shop.shopType] || shop.shopType?.toLowerCase() || 'general';
         const templatePath = path.join(__dirname, `../public/shop-templates/${templateFolder}/dashboard.html`);
         serveHtmlFresh(templatePath, res);
-    } catch (err) { 
+    } catch (err) {
         console.error(err);
-        res.status(500).send('Error loading shop dashboard'); 
+        res.status(500).send('Error loading shop dashboard');
     }
 });
 
@@ -202,6 +233,8 @@ app.use('/api/admin', settingsRoutes); // ✅ FIX 2 - /api/admin/settings - back
 // 2. COMMON + PROFILE - CLOUDINARY
 app.use('/api/common', require('./routes/common/index'));
 app.use('/api/common/profile', require('./routes/common/profile.routes'));
+// V27 NEW: WALLET - Ye mount nahi tha, isliye /api/common/wallet/balance pe 404 aata tha
+app.use('/api/common/wallet', require('./routes/common/wallet.routes'));
 
 // 3. MEDIA - SETTINGS KE BAAD - warna /api/upload/logo ko ye pakad lega aur 500 dega
 app.use('/api/media', require('./routes/media'));
@@ -265,7 +298,7 @@ app.use('/api/orders', orderRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({
-        success: true, message: 'Server V13 FIXED - Settings Order + Logo 500 Fixed + Cloudinary',
+        success: true, message: 'Server V27 FINAL - Settings Order + Logo 500 Fixed + Cloudinary + Wallet + Index Cleanup',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
@@ -332,25 +365,49 @@ app.get('/api/admin/routes', (req, res) => {
     res.json({ success: true, projectTree });
 });
 app.post('/api/admin/get-route-code', (req, res) => {
-    const { file } = req.body;
+    // V27 SECURITY: Pehle koi bhi ../.env likh ke secret padh sakta tha. Ab sirf .js/.html/.json, aur .env / .. / node_modules kabhi nahi
+    const { file } = req.body || {};
+    if (!file || typeof file !== 'string') return res.status(400).json({ success: false, error: 'file required' });
+    if (file.includes('..') || file.includes('.env') || file.includes('node_modules') || file.startsWith('/') || file.includes(':')) {
+        return res.status(403).json({ success: false, error: 'Blocked - .env / .. allowed nahi hai' });
+    }
+    if (!file.endsWith('.js') && !file.endsWith('.html') && !file.endsWith('.json')) {
+        return res.status(403).json({ success: false, error: 'Sirf .js / .html / .json allowed hai' });
+    }
     const fullPath = path.join(path.join(__dirname, '..'), file);
+    if (!fs.existsSync(fullPath)) return res.status(404).json({ success: false, error: 'File not found' });
     const code = fs.readFileSync(fullPath, 'utf8');
     res.json({ success: true, file, code });
 });
 app.post('/api/admin/update-route-code', (req, res) => {
     if (process.env.NODE_ENV === 'production') return res.json({ success: false, error: 'Vercel read-only' });
     const { file, code } = req.body;
+    // V27: Update me bhi wahi rok
+    if (!file || file.includes('..') || file.includes('.env') || file.includes('node_modules')) {
+        return res.status(403).json({ success: false, error: 'Blocked - .env / .. allowed nahi hai' });
+    }
     const fullPath = path.join(path.join(__dirname, '..'), file);
     fs.writeFileSync(fullPath, code, 'utf8');
     res.json({ success: true, message: `Saved ${file}` });
 });
 
-// V26 FIX: 1 hi error handler - next(err) mat karo, seedha response bhejo - isi chain se "next is not a function" banta tha
+// V27 FIX: E11000 -> 409 Hindi, ValidationError -> 400, MulterError -> 400 - 500 mat do
 app.use((err, req, res, next) => {
     if (res.headersSent) return next(err);
     if (err.name === 'MulterError') return res.status(400).json({ success: false, error: err.message });
+    if (err.code === 11000 || String(err.message || '').includes('E11000')) {
+        const f = Object.keys(err.keyValue || {})[0] || 'phone/email';
+        return res.status(409).json({ success: false, error: `Ye ${f} (${err.keyValue ? err.keyValue[f] : ''}) pehle se kisi aur ka hai. Dusra ${f} use karo.` });
+    }
+    if (err.name === 'ValidationError') return res.status(400).json({ success: false, error: 'Validation: ' + err.message });
+    if (err.type === 'entity.too.large') return res.status(413).json({ success: false, error: 'Photo / data bahut bada hai - 2MB se chhota bhejo' });
     console.error('❌ Error:', err.stack || err.message);
     return res.status(err.status || 500).json({ success: false, error: err.message });
+});
+
+// V27: /api/* pe 404 aaye toh HTML mat bhejo, JSON bhejo - warna frontend HTML ko JSON samajh ke toot jata hai
+app.use('/api', (req, res) => {
+    return res.status(404).json({ success: false, error: 'API route not found: ' + req.method + ' ' + req.originalUrl });
 });
 
 app.get('*', (req, res) => {
@@ -361,7 +418,7 @@ app.get('*', (req, res) => {
 
 if (!process.env.VERCEL) {
    server.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 Server V13 FIXED running on http://localhost:${PORT}`);
+    console.log(`\n🚀 Server V27 FINAL running on http://localhost:${PORT}`);
     console.log(`📊 Admin: http://localhost:${PORT}/admin`);
     console.log(`🔌 Socket: ws://localhost:${PORT}/socket.io/`);
     console.log(`💚 Health: /api/health\n`);
