@@ -1,328 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="pageTitle">Maa Ke Haath Ka Achar</title>
-    <meta name="description" id="metaDesc" content="Ghar ka bana hua shuddh achar">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: #fffbeb; color: #1e293b; padding-bottom: 90px; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: #eab308; border-radius: 10px; }
-
-    .banner-wrap { position: relative; width: 100%; height: 200px; }
-    .banner { width: 100%; height: 100%; object-fit: cover; }
-    .banner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7)); }
-
-    .container { max-width: 1300px; margin: -40px auto 0; padding: 15px; position: relative; z-index: 2; }
-
-    .shop-header { background: white; padding: 18px; border-radius: 18px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); margin-bottom: 18px; display: flex; gap: 15px; align-items: center; border: 1px solid #fef9c3; }
-    .shop-header img { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #eab308; object-fit: cover; flex-shrink: 0; }
-    .shop-info { flex: 1; }
-    .shop-info h1 { color: #713f12; font-size: 20px; font-weight: 800; margin-bottom: 4px; line-height: 1.3; }
-    .shop-info p { color: #64748b; font-size: 12px; margin: 3px 0; }
-    .shop-info i { color: #eab308; width: 14px; }
-    .shop-status { background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 50px; font-weight: 700; font-size: 11px; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-    .shop-status::before { content: ''; width: 8px; height: 8px; background: #16a34a; border-radius: 50%; }
-    .shop-status.closed { background: #fee2e2; color: #991b1b; }
-    .shop-status.closed::before { background: #dc2626; }
-
-    .announcement { background: linear-gradient(90deg, #fef9c3 0%, #fef08a 100%); color: #713f12; padding: 12px 16px; border-radius: 14px; margin-bottom: 18px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 10px; border-left: 4px solid #eab308; animation: slideIn 0.5s; }
-       @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .filters { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-    .filters::-webkit-scrollbar { display: none; }
-    .filter-btn { background: white; border: 1.5px solid #eab308; color: #713f12; padding: 9px 18px; border-radius: 50px; font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
-    .filter-btn.active { background: #eab308; color: white; }
-
-    .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .product-card { background: white; border-radius: 16px; padding: 12px; box-shadow: 0 3px 15px rgba(0,0,0,0.06); border: 1px solid #fef9c3; display: flex; flex-direction: column; }
-    .product-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; }
-    .category-tag { background: #fef9c3; color: #713f12; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; display: inline-block; margin-bottom: 6px; text-transform: uppercase; width: fit-content; }
-    .product-card h3 { color: #1e293b; font-size: 14px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; height: 36px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-    .product-meta { display: none; }
-    .price-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 10px; }
-    .price { font-size: 16px; font-weight: 800; color: #eab308; }
-    .price small { font-size: 11px; color: #64748b; font-weight: 400; }
-    .stock { font-size: 10px; color: #16a34a; font-weight: 700; }
-    .stock.low { color: #dc2626; }
-    .btn-add { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; width: 100%; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: auto; transition: 0.2s; }
-    .btn-add:active { transform: scale(0.95); }
-    .btn-add:disabled { background: #cbd5e1; }
-
-    .cart-float { position: fixed; bottom: 15px; right: 15px; left: 15px; background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; padding: 14px; border-radius: 16px; font-weight: 700; box-shadow: 0 8px 25px rgba(234,179,8,0.5); cursor: pointer; z-index: 99; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; }
-    .cart-count { background: white; color: #eab308; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; }
-
-    .footer { text-align: center; padding: 30px 15px; color: #64748b; font-size: 12px; }
-    .footer h3 { color: #713f12; margin-bottom: 8px; font-size: 18px; font-weight: 800; }
-
-        @media(min-width:769px){
-          body {padding-bottom: 0;}
-       .banner-wrap {height: 320px;}
-       .container {margin-top: -80px; padding: 20px;}
-       .shop-header {padding: 30px;}
-       .shop-header img {width: 100px; height: 100px;}
-       .shop-info h1 {font-size: 32px;}
-       .shop-info p {font-size: 14px;}
-       .shop-status {padding: 10px 20px; font-size: 14px;}
-       .shop-status::before {width: 10px; height: 10px;}
-       .announcement {padding: 16px 22px; font-size: 15px;}
-       .filter-btn {padding: 12px 24px; font-size: 15px;}
-       .product-grid {grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;}
-       .product-card {padding: 20px;}
-       .product-card img {height: 230px;}
-       .product-card h3 {font-size: 20px; height: auto; -webkit-line-clamp: unset;}
-       .product-meta {display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #64748b; margin-bottom: 12px;}
-       .product-meta span { background: #f8fafc; padding: 4px 10px; border-radius: 8px; display: flex; align-items: center; gap: 5px; }
-       .product-meta i { color: #eab308; }
-       .price {font-size: 24px;}
-       .price small {font-size: 14px;}
-       .stock {font-size: 13px;}
-       .btn-add {padding: 14px; font-size: 15px;}
-       .btn-add:hover { transform: scale(1.03); }
-       .cart-float {bottom: 30px; right: 30px; left: auto; width: auto; padding: 18px 32px; border-radius: 50px;}
-       .footer {padding: 50px 20px; font-size: 14px;}
-       .footer h3 {font-size: 24px;}
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title id="pageTitle">Maa Ke Haath Ka Achar</title>
+<meta name="description" id="metaDesc" content="Ghar ka bana hua shuddh achar">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f4f5f7;color:#0f172a;padding-bottom:110px}
+button{font-family:inherit;cursor:pointer;border:0}
+a{color:inherit;text-decoration:none}
+.topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:10px;padding:11px 14px}
+.topbar b{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar span{font-size:11px;color:#64748b;font-weight:600;display:block}
+.topbar .sp{flex:1}
+.iconbtn{width:38px;height:38px;border-radius:11px;background:#fff;border:1px solid #e5e7eb;display:grid;place-items:center;font-size:15px;color:#334155;flex-shrink:0;position:relative}
+.iconbtn .n{position:absolute;top:-6px;right:-6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;min-width:19px;height:19px;border-radius:999px;display:grid;place-items:center;padding:0 4px;border:2px solid #fff}
+.banner-wrap{position:relative;width:100%;height:200px;background:#e5e7eb}
+.banner{width:100%;height:100%;object-fit:cover}
+.banner-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.05),rgba(0,0,0,.55))}
+.container{max-width:1100px;margin:-42px auto 0;padding:0 14px;position:relative;z-index:2}
+.shop-card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:15px;box-shadow:0 8px 30px rgba(0,0,0,.07);display:flex;gap:13px;align-items:center}
+.shop-card img{width:68px;height:68px;border-radius:50%;border:3px solid #fff;object-fit:cover;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,.15);background:#f1f5f9}
+.shop-card h1{font-size:19px;font-weight:900;line-height:1.2}
+.shop-card p{font-size:12px;color:#64748b;margin-top:4px;font-weight:600}
+.shop-card p i{color:#d97706;width:14px}
+.status{font-size:11px;font-weight:800;padding:7px 11px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+.status.open{background:#dcfce7;color:#166534}
+.status.closed{background:#fee2e2;color:#991b1b}
+.announcement{background:#fef3c7;color:#92400e;padding:12px 14px;border-radius:13px;margin:13px 0;font-weight:700;font-size:13px;display:flex;gap:9px;align-items:center}
+.actions{display:flex;gap:8px;margin:13px 0}
+.actions button{flex:1;border:1px solid #e5e7eb;background:#fff;padding:11px 6px;border-radius:12px;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px}
+.actions button.green{background:#15803d;color:#fff;border-color:#15803d}
+.search{width:100%;padding:12px 14px;border:1px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;margin-bottom:12px;background:#fff}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{border:1px solid #e5e7eb;background:#fff;padding:9px 15px;border-radius:999px;font-weight:800;font-size:12px;white-space:nowrap}
+.chip.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+.pcard{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:12px;display:flex;flex-direction:column}
+.pcard img{width:100%;height:150px;object-fit:cover;border-radius:13px;margin-bottom:10px;background:#f1f5f9}
+.pcard .tag{font-size:10px;font-weight:800;color:#92400e;background:#fef3c7;padding:3px 8px;border-radius:999px;width:fit-content;margin-bottom:6px;text-transform:uppercase}
+.pcard h3{font-size:14px;font-weight:800;line-height:1.3;min-height:36px}
+.pcard .meta{font-size:11px;color:#64748b;font-weight:600;margin:6px 0}
+.variant{display:flex;gap:6px;margin:8px 0}
+.variant button{flex:1;border:1px solid #e5e7eb;background:#fff;padding:8px 4px;border-radius:10px;font-size:12px;font-weight:800}
+.variant button.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.price{font-size:18px;font-weight:900}
+.price small{font-size:11px;color:#64748b;font-weight:600}
+.stock{font-size:11px;font-weight:800}
+.stock.ok{color:#15803d}
+.stock.low{color:#dc2626}
+.stepper{display:flex;align-items:center;gap:2px;border:1px solid #e5e7eb;border-radius:11px;overflow:hidden;margin-top:10px}
+.stepper button{width:36px;height:38px;background:#f1f5f9;font-weight:900;font-size:16px}
+.stepper span{flex:1;text-align:center;font-weight:900;font-size:14px}
+.addbtn{margin-top:10px;width:100%;background:#d97706;color:#fff;padding:12px;border-radius:11px;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px}
+.addbtn:disabled{background:#e5e7eb;color:#9ca3af}
+.cartbar{position:fixed;left:14px;right:14px;bottom:14px;z-index:50;background:#0f172a;color:#fff;padding:14px 16px;border-radius:16px;font-weight:800;display:flex;align-items:center;justify-content:space-between;box-shadow:0 12px 30px rgba(0,0,0,.3);max-width:1100px;margin:0 auto;cursor:pointer}
+.cartbar small{font-weight:600;color:#d1d5db;display:block}
+.footer{text-align:center;padding:30px 14px;color:#64748b;font-size:12px;font-weight:600}
+.empty{grid-column:1/-1;text-align:center;padding:40px 10px;color:#64748b;font-weight:600;background:#fff;border:1px solid #e5e7eb;border-radius:18px}
+@media(min-width:769px){
+.banner-wrap{height:280px}
+.grid{grid-template-columns:repeat(3,1fr);gap:18px}
+.pcard img{height:210px}
+.pcard{padding:16px}
+.shop-card{padding:20px}
+.shop-card h1{font-size:26px}
+.cartbar{left:50%;transform:translateX(-50%);width:calc(100% - 28px)}
+}
+</style>
+<script src="/assets/js/role-hierarchy.js"></script>
+<script src="/shop-templates/common/core/api-core.js"></script>
+<script src="/shop-templates/common/cart/cart-core.js"></script>
+<script src="/shop-templates/common/cart/cart-count.js"></script>
 </head>
 <body>
-    <div class="banner-wrap">
-        <img id="shopBanner" class="banner" src="https://placehold.co/1400x320/eab308/fff?text=Maa+Ke+Haath+Ka+Achar" alt="Shop Banner">
-        <div class="banner-overlay"></div>
-    </div>
-
-    <div class="container">
-        <div class="shop-header">
-            <img id="shopLogo" src="https://placehold.co/100/eab308/fff?text=A" alt="Logo">
-            <div class="shop-info">
-                <h1 id="shopName">Maa Ke Haath Ka Achar</h1>
-                <p><i class="fa fa-location-dot"></i> <span id="shopAddress">Ahmedabad, Gujarat</span></p>
-                <p><i class="fa fa-phone"></i> <span id="shopPhone">+91 XXXXX XXXXX</span> | <i class="fa fa-clock"></i> <span id="shopTiming">9:00 AM - 9:00 PM</span></p>
-            </div>
-            <div class="shop-status" id="shopStatus">Open</div>
-        </div>
-
-        <div id="announcementBox" class="announcement" style="display:none;">
-            <i class="fa fa-bullhorn"></i> <span id="announcementText"></span>
-        </div>
-
-        <div class="filters" id="categoryFilters">
-            <button class="filter-btn active" data-cat="All">All</button>
-        </div>
-
-        <div id="productGrid" class="product-grid">
-            <p style="text-align:center; grid-column:1/-1; padding:40px; color:#64748b;"><i class="fa fa-spinner fa-spin"></i> Loading Achar...</p>
-        </div>
-    </div>
-
-    <div class="cart-float" id="cartBtn" onclick="openCart()">
-        <i class="fa fa-cart-shopping"></i> View Cart <span class="cart-count" id="cartCount">0</span>
-    </div>
-
-    <div class="footer">
-        <h3 id="footerShopName">Maa Ke Haath Ka Achar</h3>
-        <p>Ghar ka bana hua, Shuddh aur Swadisht Achar 🥒</p>
-    </div>
-<script src="/shop-templates/shop-banner-ext.js"></script>
+<div class="topbar">
+<button class="iconbtn" onclick="history.back()"><i class="fa fa-arrow-left"></i></button>
+<div style="min-width:0"><b id="topShopName">Achar Shop</b><span id="topShopSub">Ghar ka bana shuddh achar</span></div>
+<div class="sp"></div>
+<button class="iconbtn" id="shareTopBtn"><i class="fa fa-share-nodes"></i></button>
+<button class="iconbtn" onclick="goCart()"><i class="fa fa-cart-shopping"></i><span class="n" id="cartBadge" style="display:none">0</span></button>
+</div>
+<div class="banner-wrap"><img id="shopBanner" class="banner" src="https://placehold.co/1400x320/d97706/fff?text=Maa+Ke+Haath+Ka+Achar"><div class="banner-overlay"></div></div>
+<div class="container">
+<div class="shop-card">
+<img id="shopLogo" src="https://placehold.co/100/d97706/fff?text=A" alt="Logo">
+<div style="flex:1;min-width:0"><h1 id="shopName">Maa Ke Haath Ka Achar</h1><p><i class="fa fa-location-dot"></i> <span id="shopAddress">Ahmedabad, Gujarat</span></p><p><i class="fa fa-phone"></i> <span id="shopPhone">N/A</span> • <i class="fa fa-clock"></i> <span id="shopTiming">9:00 AM - 9:00 PM</span></p></div>
+<div class="status open" id="shopStatus">Open</div>
+</div>
+<div id="announcementBox" class="announcement" style="display:none"><i class="fa fa-bullhorn"></i> <span id="announcementText"></span></div>
+<div class="actions">
+<button id="callBtn"><i class="fa fa-phone"></i> Call Karo</button>
+<button id="waBtn" class="green"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+<button id="shareBtn"><i class="fa fa-share-nodes"></i> Share</button>
+<button id="ordersBtn"><i class="fa fa-receipt"></i> My Orders</button>
+</div>
+<input class="search" id="searchBox" type="text" placeholder="Search - Aam, Nimbu, Mix...">
+<div class="chips" id="categoryFilters"><button class="chip active" data-cat="All">All</button></div>
+<div class="grid" id="productGrid"><div class="empty">Loading Achar...</div></div>
+</div>
+<div class="cartbar" id="cartBar" onclick="goCart()" style="display:none"><div><span id="cartText">Cart</span><small id="cartSub">Checkout ke liye dabao</small></div><span>View Cart →</span></div>
+<div class="footer"><h3 id="footerShopName" style="color:#0f172a;font-size:16px">Maa Ke Haath Ka Achar</h3><p style="margin-top:6px">Ghar ka bana hua, Shuddh aur Swadisht Achar 🥒</p><p style="margin-top:10px">Cash on Delivery • UPI • Fast Delivery</p></div>
 <script>
-        // V27: shopId sirf ?shopId= se aayega. Pathname wala fallback hataya - wo "customer-view.html" ko shopId bana deta tha.
-        let shopId = new URLSearchParams(window.location.search).get('shopId') || '';
-        let shopData = {};
-        let allProducts = [];
-        let cart = [];
-        try { cart = JSON.parse(localStorage.getItem('cart_' + shopId)) || []; if(!Array.isArray(cart)) cart = []; } catch(e){ cart = []; }
-
-        function $(id){ return document.getElementById(id); }
-        function esc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if(!shopId){
-                const g = $('productGrid');
-                if(g) g.innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px;">Shop ID nahi mila. Dashboard se User View kholo.</p>';
-                return;
-            }
-            loadShop();
-            updateCartCount();
-            const cf = $('categoryFilters');
-            if(cf) cf.addEventListener('click', (e) => {
-                const btn = e.target.closest('.filter-btn');
-                if(!btn) return;
-                filterCat(btn.dataset.cat || 'All', btn);
-            });
-        });
-
-       // CLOUDINARY HD IMAGE FUNCTION
-        function getHDImage(url, width) {
-            width = width || 800;
-            if(!url || url.includes('placehold')) return url;
-            if(!url.includes('/upload/')) return url;
-            return url.replace('/upload/', `/upload/q_auto:best,f_auto,w_${width}/`);
-        }
-        function convertTo12Hr(time24h) {
-            if(!time24h) return '09:00 AM';
-            if(time24h.includes('AM') || time24h.includes('PM')) return time24h;
-            let parts = time24h.split(':');
-            let hours = parseInt(parts[0], 10);
-            let minutes = parts[1] || '00';
-            if(isNaN(hours)) return '09:00 AM';
-            const modifier = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12;
-            return `${hours}:${minutes} ${modifier}`;
-        }
-
-async function loadShop() {
-    try {
-        const res = await fetch(`/api/shops/achar/${shopId}`);
-        const data = await res.json();
-        if(!data.success) throw new Error(data.message || 'Shop load fail');
-
-        shopData = data.shop || {};
-        const displayName = shopData.ownerName ? `${shopData.ownerName} ki Dukaan` : (shopData.shopName || shopData.name || 'Maa Ke Haath Ka Achar');
-
-        // 1. BANNER - guard ke saath, ye fail hua toh bhi baaki page chalega
-        let bannerData = null;
-        try { if(window.ShopBannerExt && typeof ShopBannerExt.getShopData === 'function') bannerData = await ShopBannerExt.getShopData(shopId, 'achar'); } catch(e){}
-        if(bannerData) {
-            if(bannerData.banner) $('shopBanner').src = bannerData.banner;
-            if(bannerData.logo) $('shopLogo').src = bannerData.logo;
-            if(bannerData.shopName) $('shopName').innerText = bannerData.shopName;
-            else $('shopName').innerText = displayName;
-        } else {
-            $('shopName').innerText = displayName;
-            if(shopData.ownerPhotoUrl) $('shopLogo').src = getHDImage(shopData.ownerPhotoUrl, 200);
-            if(shopData.bannerPhotoUrl) $('shopBanner').src = getHDImage(shopData.bannerPhotoUrl, 1400);
-        }
-
-        // 2. BAKI SAB
-        $('footerShopName').innerText = shopData.shopName || shopData.name || displayName;
-        $('pageTitle').innerText = shopData.shopName || shopData.name || 'Achar Shop';
-        $('metaDesc').content = shopData.announcement || 'Ghar ka bana hua shuddh achar';
-        $('shopPhone').innerText = shopData.phone ? ('+91 ' + shopData.phone) : 'N/A';
-        $('shopTiming').innerText = `${convertTo12Hr(shopData.settings?.openTime)} - ${convertTo12Hr(shopData.settings?.closeTime)}`;
-        $('shopAddress').innerText = shopData.shopAddress || shopData.fullAddress || shopData.address || 'Ahmedabad, Gujarat';
-
-        const statusEl = $('shopStatus');
-        if(shopData.isOpen) {
-            statusEl.innerText = 'Open';
-            statusEl.classList.remove('closed');
-        } else {
-            statusEl.innerText = 'Closed';
-            statusEl.classList.add('closed');
-        }
-
-        if(shopData.announcement) {
-            $('announcementText').innerText = shopData.announcement;
-            $('announcementBox').style.display = 'flex';
-        } else {
-            $('announcementBox').style.display = 'none';
-        }
-
-        allProducts = shopData.items || [];
-        renderProducts(allProducts);
-        renderCategories();
-
-    } catch(e) {
-        console.log('Shop load error', e);
-        const g = $('productGrid');
-        if(g) g.innerHTML = `<p style="text-align:center; grid-column:1/-1; padding:40px;">Error: ${esc(e.message)}</p>`;
-    }
+let shopId = new URLSearchParams(location.search).get('shopId') || '';
+let shopData = {}, allProducts = [], selectedVariant = {}, searchQ = '', activeCat = 'All';
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function num(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
+function getHD(url, w){ if(!url || url.includes('placehold') || !url.includes('/upload/')) return url; return url.replace('/upload/', `/upload/q_auto:best,f_auto,w_${w || 800}/`); }
+function to12(t){ if(!t) return '09:00 AM'; if(t.includes('AM') || t.includes('PM')) return t; let [h, m] = t.split(':'); h = num(h); const mod = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${m || '00'} ${mod}`; }
+document.addEventListener('DOMContentLoaded', () => {
+  if(!shopId){ $('productGrid').innerHTML = '<div class="empty">Shop ID nahi mila.<br>Shop list se shop kholo.</div>'; return; }
+  try{ localStorage.setItem('last_shopId', shopId); localStorage.setItem('last_supplierId', shopId); localStorage.setItem('last_supplierRole', 'shop_owner'); }catch(e){}
+  loadShop();
+  const sb = $('searchBox'); if(sb) sb.addEventListener('input', e => { searchQ = e.target.value.toLowerCase(); renderProducts(); });
+  $('categoryFilters').addEventListener('click', e => { const b = e.target.closest('.chip'); if(!b) return; activeCat = b.dataset.cat; document.querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x === b)); renderProducts(); });
+  $('callBtn').addEventListener('click', () => { if(shopData.phone) location.href = `tel:+91${shopData.phone}`; else alert('Shop ka number abhi set nahi hai'); });
+  $('waBtn').addEventListener('click', () => { if(!shopData.phone) return alert('Shop ka WhatsApp number abhi set nahi hai'); window.open(`https://wa.me/91${shopData.phone}?text=${encodeURIComponent('Namaste! Achar order karna hai.')}`, '_blank'); });
+  const shareFn = () => { const url = location.href; if(navigator.share) navigator.share({ title: shopData.shopName || 'Achar Shop', text: 'Ghar ka bana shuddh achar - order karo', url }).catch(() => {}); else { navigator.clipboard.writeText(url).then(() => alert('Link copy ho gaya')); } };
+  $('shareBtn').addEventListener('click', shareFn);
+  $('shareTopBtn').addEventListener('click', shareFn);
+  $('ordersBtn').addEventListener('click', () => location.href = `/shop-templates/common/customer-orders/my-orders.html?shopId=${shopId}`);
+  document.addEventListener('cart:updated', updateCartBar);
+  if(window.CartCore && window.CartCore.ready) window.CartCore.ready.then(updateCartBar).catch(updateCartBar);
+  setTimeout(updateCartBar, 1200);
+  setInterval(updateCartBar, 5000);
+});
+async function loadShop(){
+  try{
+    const res = await fetch(`/api/shops/achar/${shopId}`); const data = await res.json();
+    if(!data.success) throw new Error(data.message || 'Shop load fail');
+    shopData = data.shop || {};
+    const name = shopData.ownerName ? `${shopData.ownerName} ki Dukaan` : (shopData.shopName || shopData.name || 'Maa Ke Haath Ka Achar');
+    $('shopName').textContent = name; $('footerShopName').textContent = name; $('pageTitle').textContent = name; $('topShopName').textContent = name;
+    $('metaDesc').content = shopData.announcement || 'Ghar ka bana hua shuddh achar';
+    if(shopData.bannerPhotoUrl) $('shopBanner').src = getHD(shopData.bannerPhotoUrl, 1400);
+    if(shopData.ownerPhotoUrl) $('shopLogo').src = getHD(shopData.ownerPhotoUrl, 200);
+    $('shopAddress').textContent = shopData.shopAddress || shopData.fullAddress || shopData.address || 'Ahmedabad, Gujarat';
+    $('shopPhone').textContent = shopData.phone ? '+91 ' + shopData.phone : 'N/A';
+    $('shopTiming').textContent = `${to12(shopData.settings?.openTime || shopData.openTime)} - ${to12(shopData.settings?.closeTime || shopData.closeTime)}`;
+    const st = $('shopStatus'); st.textContent = shopData.isOpen ? '● Open' : '● Closed'; st.className = 'status ' + (shopData.isOpen ? 'open' : 'closed');
+    if(shopData.announcement){ $('announcementText').textContent = shopData.announcement; $('announcementBox').style.display = 'flex'; }
+    allProducts = shopData.items || [];
+    allProducts.forEach(p => { if(!selectedVariant[p.id]) selectedVariant[p.id] = '1kg'; });
+    renderCategories(); renderProducts();
+  }catch(e){ $('productGrid').innerHTML = `<div class="empty">Error: ${esc(e.message)}</div>`; }
 }
-        function renderCategories() {
-            const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
-            const div = $('categoryFilters');
-            if(!div) return;
-            let html = `<button class="filter-btn active" data-cat="All">All</button>`;
-            cats.forEach(c => { html += `<button class="filter-btn" data-cat="${esc(c)}">${esc(c)}</button>`; });
-            div.innerHTML = html;
-        }
-
-        function filterCat(cat, el) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            if(el) el.classList.add('active');
-            if(cat === 'All') renderProducts(allProducts);
-            else renderProducts(allProducts.filter(p => p.category === cat));
-        }
-
-        function renderProducts(products) {
-            const grid = $('productGrid');
-            if(!grid) return;
-            if(!products || products.length === 0) {
-                grid.innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px;">Is category me koi achar nahi hai 🥲</p>';
-                return;
-            }
-            grid.innerHTML = products.map(p => {
-                const stock = Number(p.stock) || 0;
-                const p1 = Number(p.price1kg) || 0;
-                const p5 = Number(p.price500) || 0;
-                return `
-                <div class="product-card">
-                    <img src="${esc(getHDImage(p.image, 800) || 'https://placehold.co/400/eab308/fff?text=Achar')}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='https://placehold.co/400/eab308/fff?text=Achar'">
-                    <span class="category-tag">${esc(p.category || 'Other')}</span>
-                    <h3>${esc(p.name)}</h3>
-                    <div class="product-meta">
-                        <span><i class="fa fa-pepper-hot"></i> ${esc(p.spiceLevel)}</span>
-                        <span><i class="fa fa-jar"></i> ${esc(p.jarType)}</span>
-                        <span><i class="fa fa-hourglass"></i> 12M</span>
-                    </div>
-                    <div class="price-row">
-                        <div>
-                            <div class="price">₹${p1} <small>/Kg</small></div>
-                            <div style="font-size:10px; color:#64748b;">₹${p5}/500g</div>
-                        </div>
-                        <div class="stock ${stock < 2 ? 'low' : ''}"><i class="fa fa-box"></i> ${stock > 0 ? stock + 'Kg' : 'Out'}</div>
-                    </div>
-                    <button class="btn-add" ${stock <= 0 ? 'disabled' : ''} onclick="addToCart('${esc(p.id)}', event)">
-                        ${stock <= 0 ? '<i class="fa fa-ban"></i> Out' : '<i class="fa fa-plus"></i> Add'}
-                    </button>
-                </div>`;
-            }).join('');
-        }
-
-        function addToCart(id, event) {
-            // V27: CustomerShopStatus load nahi hua toh bhi Add chalega - pehle yehi JS rok deta tha
-            if(window.CustomerShopStatus && typeof CustomerShopStatus.canAddToCart === 'function'){
-                if(!CustomerShopStatus.canAddToCart()) return;
-            }
-            if(shopData.isOpen === false) return alert('Shop abhi Closed hai');
-            const product = allProducts.find(p => p.id === id);
-            if(!product) return;
-            const stock = Number(product.stock) || 0;
-            const existing = cart.find(c => c.id === id);
-            if(existing) {
-                if(existing.qty >= stock) return alert('Stock khatam bhai!');
-                existing.qty += 1;
-            } else {
-                cart.push({ id, name: product.name, price: Number(product.price1kg) || 0, qty: 1, image: product.image });
-            }
-            try { localStorage.setItem('cart_' + shopId, JSON.stringify(cart)); } catch(e){}
-            updateCartCount();
-
-            if(event){
-                const btn = event.target && event.target.closest ? event.target.closest('button') : null;
-                if(btn){
-                    const oldText = btn.innerHTML;
-                    btn.innerHTML = '<i class="fa fa-check"></i>';
-                    setTimeout(() => btn.innerHTML = oldText, 800);
-                }
-            }
-        }
-
-        function updateCartCount() {
-            const el = $('cartCount');
-            if(el) el.innerText = cart.reduce((sum, c) => sum + (Number(c.qty) || 0), 0);
-        }
-
-        function openCart() {
-            if(cart.length === 0) return alert('Cart khali hai');
-            // V27: /shop/cart route hai hi nahi - asli cart page ye hai
-            window.location.href = `/shop-templates/common/cart/cart.html?shopId=${shopId}`;
-        }
-    </script>
-    </body>
-
+function renderCategories(){
+  const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
+  $('categoryFilters').innerHTML = `<button class="chip ${activeCat === 'All' ? 'active' : ''}" data-cat="All">All</button>` + cats.map(c => `<button class="chip ${activeCat === c ? 'active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+}
+function renderProducts(){
+  let list = allProducts.filter(p => (p.name || '').toLowerCase().includes(searchQ));
+  if(activeCat !== 'All') list = list.filter(p => p.category === activeCat);
+  const g = $('productGrid');
+  if(!list.length){ g.innerHTML = '<div class="empty">Is category me koi achar nahi hai 🥲<br>Dusri category try karo.</div>'; return; }
+  g.innerHTML = list.map(p => {
+    const stock = num(p.stock), variant = selectedVariant[p.id] || '1kg';
+    const price = variant === '500g' ? num(p.price500) : num(p.price1kg);
+    return `<div class="pcard">
+      <img src="${esc(getHD(p.image, 800))}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='https://placehold.co/400/d97706/fff?text=Achar'">
+      <span class="tag">${esc(p.category || 'Other')}</span>
+      <h3>${esc(p.name)}</h3>
+      <div class="meta">${esc(p.spiceLevel)} • ${esc(p.jarType)} • Shelf life 12 mahine</div>
+      <div class="variant">
+        <button class="${variant === '500g' ? 'active' : ''}" onclick="setVariant('${esc(p.id)}','500g')">500g • ₹${num(p.price500)}</button>
+        <button class="${variant === '1kg' ? 'active' : ''}" onclick="setVariant('${esc(p.id)}','1kg')">1Kg • ₹${num(p.price1kg)}</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><span class="price">₹${price}</span><span class="stock ${stock < 5 ? 'low' : 'ok'}">${stock <= 0 ? 'Out of Stock' : stock + ' Kg bacha hai'}</span></div>
+      <div class="stepper"><button onclick="changeQty('${esc(p.id)}',-1)">−</button><span id="qty-${esc(p.id)}">1</span><button onclick="changeQty('${esc(p.id)}',1)">+</button></div>
+      <button class="addbtn" ${stock <= 0 || !shopData.isOpen ? 'disabled' : ''} onclick="addToCart('${esc(p.id)}', this)">${!shopData.isOpen ? '🔴 Shop Closed' : stock <= 0 ? 'Out of Stock' : '<i class=\'fa fa-plus\'></i> Add to Cart'}</button>
+    </div>`;
+  }).join('');
+}
+function setVariant(id, v){ selectedVariant[id] = v; renderProducts(); }
+function changeQty(id, d){
+  const el = $('qty-' + id); if(!el) return;
+  const p = allProducts.find(x => x.id === id); if(!p) return;
+  let q = num(el.textContent) + d; if(q < 1) q = 1; if(q > num(p.stock)) q = num(p.stock) || 1;
+  el.textContent = q;
+}
+async function addToCart(id, btn){
+  if(!shopData.isOpen) return alert('Shop abhi Closed hai');
+  const p = allProducts.find(x => x.id === id); if(!p) return;
+  const variant = selectedVariant[id] || '1kg';
+  const qty = num($('qty-' + id)?.textContent || 1) || 1;
+  const price = variant === '500g' ? num(p.price500) : num(p.price1kg);
+  if(!price) return alert('Is product ka price set nahi hai');
+  if(!window.CartCore || !window.CartCore.add) return alert('Cart load ho raha hai, 2 second baad phir dabao');
+  // COMMON CART - CartCore.add() -> /api/common/cart/sync -> cart.html me dikhega
+  const ok = await window.CartCore.add({
+    shopId: shopId, productId: `${p.id}__${variant}`, _id: `${p.id}__${variant}`, id: `${p.id}__${variant}`,
+    name: `${p.name} (${variant === '500g' ? '500g' : '1Kg'})`, title: p.name,
+    price: price, image: p.image, variant: variant, qty: qty, quantity: qty,
+    shopName: shopData.shopName || shopData.name || 'Achar Shop', ownerRole: 'shop_owner', shopType: 'achar-shop'
+  });
+  if(ok){ if(btn){ const old = btn.innerHTML; btn.innerHTML = '✅ Add ho gaya'; setTimeout(() => btn.innerHTML = old, 900); } updateCartBar(); }
+  else alert('Cart me add nahi hua - phir try karo');
+}
+function updateCartBar(){
+  try{
+    if(!window.CartCore || !window.CartCore.getTotalCount) return;
+    const count = window.CartCore.getTotalCount ? window.CartCore.getTotalCount() : 0;
+    const bar = $('cartBar'), badge = $('cartBadge');
+    if(badge){ badge.textContent = count; badge.style.display = count > 0 ? 'grid' : 'none'; }
+    if(count > 0){ bar.style.display = 'flex'; $('cartText').textContent = `${count} item${count > 1 ? 's' : ''} • Cart me hai`; }
+    else bar.style.display = 'none';
+  }catch(e){}
+}
+function goCart(){
+  if(window.CartCore && window.CartCore.goToCart) window.CartCore.goToCart(shopId);
+  else location.href = `/shop-templates/common/cart/cart.html?shopId=${shopId}`;
+}
+</script>
+</body>
 </html>

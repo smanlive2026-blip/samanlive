@@ -1,229 +1,321 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Achar Shop Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: linear-gradient(135deg, #eab308 0%, #a16207 100%); min-height: 100vh; }
-        .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
-
-        .header { background: white; color: #713f12; padding: 25px 30px; border-radius: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        #ownerImg { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 3px solid #eab308; flex-shrink: 0; }
-        .header h1 { font-size: 26px; color: #713f12; }
-        .header-buttons { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-
-        .toggle-switch { background: #dcfce7; color: #166534; padding: 8px 16px; border-radius: 50px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-        .toggle-switch.off { background: #fee2e2; color: #991b1b; }
-
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-left: 5px solid #eab308; transition: 0.3s; }
-        .stat-card:hover { transform: translateY(-5px); }
-        .stat-card .icon { font-size: 32px; color: #eab308; margin-bottom: 12px; }
-        .stat-card h3 { color: #64748b; font-size: 14px; margin-bottom: 8px; }
-        .stat-card .value { font-size: 32px; font-weight: 700; color: #1e293b; }
-
-        .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
-        .content-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .content-card h2 { font-size: 20px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; cursor: pointer; }
-
-        .btn { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; white-space: nowrap; }
-        .btn-green { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); }
-        .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; border: none; color: white; cursor: pointer; }
-
-        .achar-row { display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #fef9c3; gap:10px; }
-        .achar-row:last-child { border-bottom: none; }
-        .weight-badge { background: #fef9c3; color: #713f12; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; margin-right: 5px; }
-        .badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
-        .badge-red { background: #fee2e2; color: #991b1b; }
-        .badge-green { background: #dcfce7; color: #166534; }
-
-        input[type="text"], input[type="number"], input[type="time"], input[type="tel"], select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; font-size: 14px; }
-        textarea { resize: vertical; min-height: 70px; }
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center; padding: 20px; overflow-y: auto; }
-        .modal-content { background:white; padding:30px; border-radius:20px; width:100%; max-width:550px; margin: 20px 0; }
-        .hint-text { font-size:12px; color:#64748b; margin-top:-5px; margin-bottom:10px; }
-        #productImgPreview { width: 100px; height: 100px; border-radius: 12px; object-fit: cover; margin-bottom: 10px; border: 2px dashed #eab308; cursor: pointer; }
-
-        .accordion-body { display: block; }
-        .accordion-arrow { margin-left: auto; transition: 0.3s; }
-
-        @media (max-width: 1024px) { .content-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 768px) {
-            .container { padding: 12px; }
-            .header { padding: 18px 20px; flex-direction: column; align-items: stretch; }
-            .header-left { justify-content: center; text-align: center; }
-            .header h1 { font-size: 20px; }
-            #ownerImg { width: 50px; height: 50px; }
-            .header-buttons { width: 100%; justify-content: center; }
-            .btn { padding: 10px 8px; font-size: 12px; flex: 1 1 calc(33.33% - 7px); justify-content: center; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-            .stat-card { padding: 18px; }
-            .stat-card .value { font-size: 24px; }
-            .content-card { padding: 15px; }
-            .achar-row { flex-direction: column; align-items: flex-start; }
-            .achar-row img { width: 100% !important; height: 120px !important; }
-            .accordion-body { display: none; padding-top: 15px; }
-            .content-card.active .accordion-body { display: block; }
-            .content-card.active .accordion-arrow { transform: rotate(180deg); }
-            .modal-content { padding: 20px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Achar Shop - Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--line:#e5e7eb;--txt:#0f172a;--mut:#64748b;--brand:#111827;--amber:#d97706;--green:#15803d;--red:#dc2626;--blue:#1d4ed8}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:var(--bg);color:var(--txt)}
+button{font-family:inherit;cursor:pointer;border:0}
+input,select,textarea{font-family:inherit;outline:none}
+a{color:inherit;text-decoration:none}
+/* LAYOUT */
+.app{display:flex;min-height:100vh}
+.sidebar{width:260px;background:#fff;border-right:1px solid var(--line);position:fixed;left:0;top:0;bottom:0;z-index:40;display:flex;flex-direction:column;padding:18px 14px}
+.brand{display:flex;gap:11px;align-items:center;padding:4px 8px 16px;border-bottom:1px solid var(--line)}
+.brand img{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#f1f5f9}
+.brand b{font-size:15px;line-height:1.2;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.brand span{font-size:11px;color:var(--mut);font-weight:600}
+.nav{margin-top:16px;display:flex;flex-direction:column;gap:4px}
+.nav button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;padding:11px 12px;border-radius:11px;font-size:14px;font-weight:600;color:#334155}
+.nav button i{width:18px;text-align:center;color:var(--mut)}
+.nav button.active{background:#0f172a;color:#fff}
+.nav button.active i{color:#fff}
+.nav small{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:800;padding:14px 12px 6px}
+.nav .count{margin-left:auto;background:#f1f5f9;color:#0f172a;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px}
+.nav button.active .count{background:rgba(255,255,255,.2);color:#fff}
+.sidefoot{margin-top:auto;border-top:1px solid var(--line);padding-top:14px}
+.sidefoot button{width:100%;display:flex;gap:10px;align-items:center;padding:11px 12px;border-radius:11px;background:none;font-size:14px;font-weight:600;color:#334155}
+.main{flex:1;margin-left:260px;min-width:0}
+.topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:12px 20px}
+.topbar h1{font-size:18px;font-weight:800}
+.topbar p{font-size:12px;color:var(--mut);font-weight:600}
+.topbar .sp{flex:1}
+.iconbtn{width:38px;height:38px;border-radius:11px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;font-size:15px;color:#334155;position:relative}
+.iconbtn .dot{position:absolute;top:7px;right:8px;width:8px;height:8px;background:#dc2626;border-radius:50%;border:2px solid #fff}
+.pill{padding:9px 14px;border-radius:999px;font-size:12px;font-weight:800;display:inline-flex;gap:7px;align-items:center;white-space:nowrap}
+.pill.open{background:#dcfce7;color:#166534}
+.pill.closed{background:#fee2e2;color:#991b1b}
+.pill.dark{background:#0f172a;color:#fff}
+.pill.light{background:#fff;border:1px solid var(--line);color:#0f172a}
+.content{max-width:1180px;margin:0 auto;padding:20px}
+.page{display:none}
+.page.active{display:block}
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.stat .top{display:flex;justify-content:space-between;align-items:center}
+.stat small{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:800}
+.stat .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:16px}
+.stat b{font-size:26px;font-weight:900;display:block;margin:10px 0 2px}
+.stat span{font-size:12px;color:var(--mut);font-weight:600}
+.stat .up{color:#15803d;font-weight:800;font-size:12px}
+/* PANELS */
+.grid2{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;align-items:start;margin-top:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.panel h2{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.panel h2 .go{margin-left:auto;font-size:12px;color:var(--blue);font-weight:700;cursor:pointer}
+.panel .sub{font-size:12px;color:var(--mut);font-weight:600;margin-bottom:12px}
+.row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #f1f5f9}
+.row:last-child{border-bottom:0}
+.row img{width:52px;height:52px;border-radius:12px;object-fit:cover;background:#f1f5f9;flex-shrink:0}
+.row .mid{flex:1;min-width:0}
+.row .mid b{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .mid span{font-size:12px;color:var(--mut);font-weight:600;display:block;margin-top:2px}
+.badge{font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.badge.green{background:#dcfce7;color:#166534}
+.badge.red{background:#fee2e2;color:#991b1b}
+.badge.amber{background:#fef3c7;color:#92400e}
+.badge.grey{background:#f1f5f9;color:#334155}
+.btn{border-radius:11px;padding:11px 14px;font-weight:800;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn.dark{background:#0f172a;color:#fff}
+.btn.amber{background:#d97706;color:#fff}
+.btn.green{background:#15803d;color:#fff}
+.btn.light{background:#fff;border:1px solid var(--line);color:#0f172a}
+.btn.red{background:#fee2e2;color:#991b1b}
+.btn.sm{padding:7px 10px;font-size:12px;border-radius:9px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+label{font-size:12px;font-weight:800;color:#334155;display:block;margin:12px 0 6px}
+label:first-child{margin-top:0}
+input[type=text],input[type=tel],input[type=number],input[type=time],select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:11px;font-size:14px;background:#fff}
+input:focus,select:focus,textarea:focus{border-color:#0f172a}
+.hint{font-size:12px;color:var(--mut);font-weight:600;margin-top:6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:#fff;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:800}
+.chip.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.empty{padding:26px 10px;text-align:center;color:var(--mut);font-size:13px;font-weight:600}
+.empty i{font-size:26px;display:block;margin-bottom:8px;color:#cbd5e1}
+.kv{display:flex;justify-content:space-between;font-size:13px;font-weight:600;padding:8px 0;color:#334155}
+.kv b{color:#0f172a}
+.kv.total{border-top:1px dashed var(--line);margin-top:6px;padding-top:12px;font-size:15px}
+.kv.total b{font-size:17px}
+.qbox{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.qbox button{width:30px;height:30px;background:#fff;font-weight:900}
+.qbox span{min-width:34px;text-align:center;font-weight:800;font-size:13px}
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;justify-content:center;align-items:center;padding:16px}
+.modal.open{display:flex}
+.sheet{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:20px;padding:20px}
+.sheet h2{font-size:18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.sheet .x{width:32px;height:32px;border-radius:10px;background:#f1f5f9;font-weight:900}
+#productImgPreview{width:100%;height:180px;object-fit:cover;border-radius:14px;background:#f1f5f9;cursor:pointer;margin-bottom:10px;border:1px dashed #cbd5e1}
+#ownerImgBig{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#f1f5f9;cursor:pointer;border:2px solid #e5e7eb}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 18px;border-radius:999px;font-size:13px;font-weight:700;z-index:200;display:none;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:92vw;text-align:center}
+.mobtop{display:none}
+@media(max-width:900px){
+.sidebar{transform:translateX(-105%);transition:.25s;box-shadow:20px 0 40px rgba(0,0,0,.15)}
+.sidebar.open{transform:none}
+.main{margin-left:0}
+.mobtop{display:grid}
+.stats{grid-template-columns:repeat(2,1fr)}
+.grid2{grid-template-columns:1fr}
+.topbar{padding:12px 14px}
+.content{padding:14px}
+}
+@media(min-width:901px){ .overlay{display:none} }
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:35;display:none}
+.overlay.show{display:block}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-left">
-                <img id="ownerImg" src="https://placehold.co/60/eab308/fff?text=A" alt="Owner Photo - Click karke badlo">
-                <input type="file" id="ownerInput" style="display:none;" accept="image/*">
-                <div>
-                    <h1><i class="fa fa-jar"></i> <span id="shopName">Maa Ke Haath Ka Achar</span></h1>
-                    <div style="font-size:14px; opacity:0.8; color:#64748b;">Shop ID: <span id="shopIdDisplay"></span></div>
-                </div>
-            </div>
-            <div class="header-buttons">
-                <a href="#" id="userViewBtn" class="btn" style="background: #2563eb;"><i class="fa fa-eye"></i> User View</a>
-                <button id="addAcharBtn" class="btn"><i class="fa fa-plus"></i> Add Achar</button>
-                <button id="profileSetupBtn" class="btn" style="background: #6366f1;"><i class="fa fa-user-gear"></i> Profile Setup</button>
-                <button id="quickAddBtn" class="btn btn-green"><i class="fa fa-bolt"></i> 50+ Add</button>
-                <button id="newOrderBtn" class="btn" style="background: #16a34a;"><i class="fa fa-receipt"></i> New Order</button>
-                <button id="locationBtn" class="btn" style="background: #059669;"><i class="fa fa-location-dot"></i> Location</button>
-                <div class="toggle-switch" id="shopToggle"><i class="fa fa-store"></i> <span id="toggleText">Open</span></div>
-            </div>
-        </div>
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+<div class="brand">
+<img id="ownerImg" src="https://placehold.co/100/d97706/fff?text=A" alt="Owner">
+<div><b id="shopName">Achar Shop</b><span id="shopIdDisplay">Shop ID: -</span></div>
+</div>
+<nav class="nav">
+<small>Menu</small>
+<button data-page="home" class="active"><i class="fa fa-house"></i> Overview <span class="count" id="navPendingCount">0</span></button>
+<button data-page="products"><i class="fa fa-jar"></i> Products <span class="count" id="navProductCount">0</span></button>
+<button data-page="orders"><i class="fa fa-receipt"></i> Orders <span class="count" id="navOrderCount">0</span></button>
+<button data-page="wallet"><i class="fa fa-wallet"></i> Earnings & Wallet</button>
+<small>Shop</small>
+<button data-page="settings"><i class="fa fa-gear"></i> Settings</button>
+<button data-page="profile"><i class="fa fa-user"></i> Profile</button>
+<button data-page="location"><i class="fa fa-location-dot"></i> Location</button>
+</nav>
+<div class="sidefoot">
+<button id="viewShopBtn"><i class="fa fa-eye"></i> Customer View Dekho</button>
+<button id="shareBtn2"><i class="fa fa-share-nodes"></i> Shop Share Karo</button>
+<button id="copyLinkBtn2"><i class="fa fa-link"></i> Link Copy Karo</button>
+</div>
+</aside>
+<div class="overlay" id="overlay"></div>
 
-        <div class="stats-grid">
-            <div class="stat-card"><div class="icon"><i class="fa fa-jar"></i></div><h3>Total Types</h3><div class="value" id="products">0</div></div>
-            <div class="stat-card"><div class="icon"><i class="fa fa-shopping-cart"></i></div><h3>Today Orders</h3><div class="value" id="orders">0</div></div>
-            <div class="stat-card"><div class="icon"><i class="fa fa-rupee-sign"></i></div><h3>Today Sale</h3><div class="value">₹<span id="revenue">0</span></div></div>
-            <div class="stat-card"><div class="icon"><i class="fa fa-weight-scale"></i></div><h3>Kg Sold</h3><div class="value" id="kg">0</div></div>
-        </div>
+<!-- MAIN -->
+<main class="main">
+<header class="topbar">
+<button class="iconbtn mobtop" id="menuBtn"><i class="fa fa-bars"></i></button>
+<div><h1 id="pageTitle">Overview</h1><p id="pageSub">Aaj ka hisaab, ek nazar me</p></div>
+<div class="sp"></div>
+<button class="iconbtn" id="notifBtn"><i class="fa fa-bell"></i><span class="dot" id="notifDot" style="display:none"></span></button>
+<button class="pill light" id="userViewBtn"><i class="fa fa-eye"></i> Customer View</button>
+<button class="pill open" id="shopToggle"><i class="fa fa-store"></i> <span id="toggleText">Open</span></button>
+</header>
 
-        <!-- V27 NEW: Profile Card - Pehle tha hi nahi, isliye owner naam/address kahin save nahi hota tha -->
-        <div class="content-card" id="profileCard" style="display:none;">
-            <h2><i class="fa fa-user-gear"></i> Profile Setup</h2>
-            <p style="color:#64748b;font-size:14px;margin-bottom:15px;">Owner photo upar wali gol photo pe click karke badlo. Naam / Address yahan se save hoga.</p>
-            <div style="margin:15px 0;">
-                <label style="font-weight:600;">Owner Name:</label>
-                <input type="text" id="ownerNameInput" placeholder="Jaise: Ramesh Kumar">
-            </div>
-            <div style="margin:15px 0;">
-                <label style="font-weight:600;">Shop Address:</label>
-                <input type="text" id="profileAddressInput" placeholder="Pura address likho">
-            </div>
-            <button class="btn" id="saveProfileBtn" style="width:100%; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
-                <i class="fa fa-check"></i> Profile Save Karein
-            </button>
-            <div id="profileStatus" style="margin-top:10px;font-size:13px;"></div>
-        </div>
+<div class="content">
+<!-- HOME -->
+<section class="page active" data-page="home">
+<div class="stats">
+<div class="stat"><div class="top"><small>Today Sale</small><span class="ic" style="background:#fef3c7">₹</span></div><b>₹<span id="todaySale">0</span></b><span id="todayOrdersLine">0 orders today</span></div>
+<div class="stat"><div class="top"><small>Total Orders</small><span class="ic" style="background:#eff6ff">🧾</span></div><b id="totalOrders">0</b><span>Common checkout se</span></div>
+<div class="stat"><div class="top"><small>Products</small><span class="ic" style="background:#f0fdf4">🥒</span></div><b id="totalProducts">0</b><span id="lowStockLine">0 low stock</span></div>
+<div class="stat"><div class="top"><small>My Earning (95%)</small><span class="ic" style="background:#f0fdf4">💰</span></div><b>₹<span id="myEarning">0</span></b><span>5% fee kat ke • <span class="up" id="earningSub">Wallet me jama</span></span></div>
+</div>
+<div class="grid2">
+<div>
+<div class="panel"><h2>🧾 Pending Orders - Turant Action Lo <span class="go" data-goto="orders">Sab dekho →</span></h2><p class="sub">Customer ne Common checkout se order kiya hai. Yahan se Confirm karo, customer ko wahi dikhega.</p><div id="homeOrders">Loading...</div></div>
+<div class="panel"><h2>🥒 Top Products <span class="go" data-goto="products">Sab dekho →</span></h2><div id="homeProducts">Loading...</div></div>
+</div>
+<div>
+<div class="panel"><h2>⚡ Quick Actions</h2>
+<button class="btn amber block" id="addAcharBtn"><i class="fa fa-plus"></i> Naya Achar Add Karo</button>
+<button class="btn dark block" id="quickAddBtn" style="margin-top:10px"><i class="fa fa-bolt"></i> 50+ Achar - Quick Add</button>
+<button class="btn light block" id="newOrderBtn" style="margin-top:10px"><i class="fa fa-receipt"></i> Manual Order Banao</button>
+<button class="btn light block" id="whatsappShareBtn" style="margin-top:10px"><i class="fa-brands fa-whatsapp"></i> WhatsApp Pe Share Karo</button>
+</div>
+<div class="panel"><h2>📣 Announcement</h2><p class="sub">Customer ko shop ke upar dikhega.</p><textarea id="announcementInput" rows="2" placeholder="Jaise: Naya Aam ka Achar aa gaya..."></textarea><button class="btn dark block" id="saveAnnouncement" style="margin-top:10px">Announcement Save Karo</button></div>
+<div class="panel"><h2>⚠️ Low Stock</h2><div id="stockAlert">Loading...</div></div>
+</div>
+</div>
+</section>
 
-        <div class="content-grid">
-            <div>
-                <div class="content-card">
-                    <h2><i class="fa fa-list"></i> Inventory</h2>
-                    <input type="text" id="searchProduct" placeholder="Search Achar Name...">
-                    <div id="inventoryList">Loading...</div>
-                </div>
-                <div class="content-card">
-                    <h2><i class="fa fa-receipt"></i> Recent Orders</h2>
-                    <div id="orderList">Loading...</div>
-                </div>
-            </div>
-            <div>
-                <div class="content-card accordion">
-                    <h2 onclick="this.parentElement.classList.toggle('active')"><i class="fa fa-bullhorn"></i> Announcement <i class="fa fa-chevron-down accordion-arrow"></i></h2>
-                    <div class="accordion-body">
-                        <input type="text" id="announcementInput" placeholder="e.g. Naya Aam ka Achar aa gaya">
-                        <button class="btn" id="saveAnnouncement">Save</button>
-                    </div>
-                </div>
-                <div class="content-card accordion">
-                    <h2 onclick="this.parentElement.classList.toggle('active')"><i class="fa fa-clock"></i> Shop Timing <i class="fa fa-chevron-down accordion-arrow"></i></h2>
-                    <div class="accordion-body">
-                        Open: <input type="time" id="openTime">
-                        Close: <input type="time" id="closeTime">
-                        <button class="btn" id="saveTiming">Save</button>
-                    </div>
-                </div>
-                <div class="content-card accordion">
-                    <h2 onclick="this.parentElement.classList.toggle('active')"><i class="fa fa-phone"></i> Contact <i class="fa fa-chevron-down accordion-arrow"></i></h2>
-                    <div class="accordion-body">
-                        <input type="tel" id="shopPhoneInput" placeholder="10 digit number" maxlength="10">
-                        <div class="hint-text">Customer ko Call/WhatsApp ke liye</div>
-                        <button class="btn" id="savePhone">Save Number</button>
-                    </div>
-                </div>
-                <div class="content-card accordion">
-                    <h2 onclick="this.parentElement.classList.toggle('active')"><i class="fa fa-triangle-exclamation"></i> Low Stock <i class="fa fa-chevron-down accordion-arrow"></i></h2>
-                    <div class="accordion-body">
-                        <div id="stockAlert">Loading...</div>
-                    </div>
-                </div>
-                <div class="content-card accordion">
-                    <h2 onclick="this.parentElement.classList.toggle('active')"><i class="fa fa-star"></i> Categories <i class="fa fa-chevron-down accordion-arrow"></i></h2>
-                    <div class="accordion-body">
-                        <div id="categories">Loading...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- PRODUCTS -->
+<section class="page" data-page="products">
+<div class="panel"><h2>🥒 Products <span class="go" id="addAcharBtn2">+ Add Achar</span></h2><p class="sub">Search, filter, stock badhao, edit / delete - sab yahin se.</p>
+<input type="text" id="searchProduct" placeholder="Search - Aam, Nimbu, Mix...">
+<div class="chips" id="categoryChips"></div>
+<div id="inventoryList">Loading...</div>
+</div>
+</section>
 
-        <div class="content-card" id="locationCard" style="display:none;">
-            <h2><i class="fa fa-location-dot"></i> Shop Location Setting</h2>
-            <p style="color:#64748b;font-size:14px;margin-bottom:15px;">Is location ke andar ke customer ko aapki shop dikhegi</p>
-            <div style="margin:15px 0;">
-                <label style="font-weight:600;">Location Type:</label>
-                <select id="locationType">
-                    <option value="fixed">Fixed Shop - Delivery Range</option>
-                    <option value="dynamic">Thela/Moving Shop</option>
-                </select>
-            </div>
-            <div id="rangeDiv" style="margin:15px 0;">
-                <label style="font-weight:600;">Delivery Range KM:</label>
-                <input type="number" id="deliveryRange" value="5" min="1" max="50">
-            </div>
-            <div style="margin:15px 0;">
-                <label style="font-weight:600;">Shop Address:</label>
-                <input type="text" id="shopAddress" placeholder="Pura address likho">
-            </div>
-            <button class="btn" id="saveLocationBtn" style="width:100%; background: linear-gradient(135deg, #059669 0%, #047857 100%);">
-                <i class="fa fa-location-crosshairs"></i> Current Location Se Save Karein
-            </button>
-            <div id="locationStatus" style="margin-top:10px;font-size:13px;"></div>
-        </div>
-    </div>
+<!-- ORDERS -->
+<section class="page" data-page="orders">
+<div class="panel"><h2>🧾 Orders - Common Checkout Se</h2><p class="sub">Customer jab Common Cart → Checkout se order karega, yahin aayega. Status badlo - customer ke My Orders me wahi dikhega.</p>
+<div class="chips" id="orderChips">
+<button class="chip active" data-order-filter="all">All</button>
+<button class="chip" data-order-filter="placed">Placed</button>
+<button class="chip" data-order-filter="confirmed">Confirmed</button>
+<button class="chip" data-order-filter="packed">Packed</button>
+<button class="chip" data-order-filter="out_for_delivery">On Way</button>
+<button class="chip" data-order-filter="delivered">Delivered</button>
+<button class="chip" data-order-filter="cancelled">Cancelled</button>
+</div>
+<div id="orderList">Loading...</div>
+</div>
+</section>
 
-    <div class="modal" id="addModal">
-        <div class="modal-content">
-            <h2 id="modalTitle">Add New Achar</h2>
-            <img id="productImgPreview" src="https://placehold.co/100/eab308/fff?text=Achar" alt="Product Photo - Click karke badlo">
-            <input type="file" id="productImageInput" style="display:none;" accept="image/*">
-            <button class="btn btn-sm" onclick="document.getElementById('productImageInput').click()" style="width:100%; margin-bottom:10px;">📷 Change Photo</button>
+<!-- WALLET -->
+<section class="page" data-page="wallet">
+<div class="grid2">
+<div class="panel"><h2>💰 Earnings</h2><p class="sub">Har order pe 5% platform fee kat ke baki tumhara hai. Ye hisaab Common Order se banta hai.</p>
+<div class="kv"><span>Total Sale (sab orders)</span><b>₹<span id="walletTotal">0</span></b></div>
+<div class="kv"><span>Platform Fee (5%)</span><b>₹<span id="walletFee">0</span></b></div>
+<div class="kv total"><span>My Earning</span><b>₹<span id="walletEarn">0</span></b></div>
+<div class="kv"><span>Pending Orders ka Paisa</span><b>₹<span id="walletPending">0</span></b></div>
+<div class="kv"><span>Delivered Orders ka Paisa</span><b>₹<span id="walletDelivered">0</span></b></div>
+<button class="btn light block" id="walletCommonBtn" style="margin-top:14px">Common Wallet Page Kholo →</button>
+<p class="hint">Common Wallet page se hi withdraw / payout hota hai. Yahan sirf hisaab dikh raha hai taaki galat number na dikhe.</p>
+</div>
+<div class="panel"><h2>📅 Last 7 Din</h2><div id="weekList">Loading...</div></div>
+</div>
+</section>
 
-            <input type="text" id="acharName" placeholder="Achar Name: Aam ka Achar">
-            <select id="acharType">
-                <option value="Aam">Aam</option><option value="Nimbu">Nimbu</option><option value="Mix">Mix</option>
-                <option value="Murabba">Murabba</option><option value="Gajar">Gajar</option><option value="Lahsun">Lahsun</option>
-                <option value="Mirchi">Mirchi</option><option value="Other">Other</option>
-            </select>
-            <textarea id="acharDesc" placeholder="Description: Maa ke haath ka bana hua"></textarea>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <select id="acharJar"><option value="Glass">Glass Jar</option><option value="Plastic">Plastic Jar</option><option value="Ceramic">Ceramic Jar</option></select>
-                <select id="acharSpice"><option value="Mild">Mild</option><option value="Medium">Medium</option><option value="Teekha">Teekha</option></select>
-            </div>
-            <input type="number" id="acharPrice1kg" placeholder="1Kg Price ₹">
-            <input type="number" id="acharPrice500g" placeholder="500g Price ₹">
-            <input type="number" id="acharStock" placeholder="Stock in Kg">
-            <button class="btn" onclick="saveNewAchar()">Save Achar</button>
-            <button class="btn" style="background:#64748b;" onclick="closeAddModal()">Cancel</button>
-        </div>
-    </div>
+<!-- SETTINGS -->
+<section class="page" data-page="settings">
+<div class="grid2">
+<div class="panel"><h2>🕒 Shop Timing</h2><p class="sub">Customer ko shop pe yehi timing dikhegi.</p>
+<label>Open Time</label><input type="time" id="openTime">
+<label>Close Time</label><input type="time" id="closeTime">
+<button class="btn dark block" id="saveTiming" style="margin-top:12px">Timing Save Karo</button>
+<div class="hint" id="timingStatus"></div>
+</div>
+<div class="panel"><h2>📞 Contact</h2><p class="sub">Customer isi number pe Call / WhatsApp karega.</p>
+<label>Phone (10 digit)</label><input type="tel" id="shopPhoneInput" placeholder="9876543210" maxlength="10">
+<button class="btn dark block" id="savePhone" style="margin-top:12px">Number Save Karo</button>
+<div class="hint" id="phoneStatus"></div>
+</div>
+</div>
+</section>
 
-    <!-- V27: Sirf 1 script - Pehle 8 the, quick-add 2 baar tha, shop-core / shop-location / shop-toggle galat route pe le jate the -->
-    <script src="dashboard.js"></script>
+<!-- PROFILE -->
+<section class="page" data-page="profile">
+<div class="panel" style="max-width:620px"><h2>👤 Shop Profile</h2><p class="sub">Yehi naam, photo aur address customer ko dikhega.</p>
+<div style="display:flex;gap:14px;align-items:center;margin:10px 0">
+<img id="ownerImgBig" src="https://placehold.co/100/d97706/fff?text=A" alt="Owner photo">
+<input type="file" id="ownerInput" hidden accept="image/*">
+<div><b style="font-size:14px">Owner Photo</b><p class="hint" style="margin:2px 0 8px">Photo pe dabake badlo - Cloudinary pe jayegi.</p><button class="btn light sm" onclick="document.getElementById('ownerInput').click()">📷 Photo Badlo</button></div>
+</div>
+<label>Owner Name</label><input type="text" id="ownerNameInput" placeholder="Jaise: Ramesh Kumar">
+<label>Shop Address</label><input type="text" id="profileAddressInput" placeholder="Pura address">
+<label>Banner Photo URL</label><input type="text" id="bannerUrlInput" placeholder="Banner ki Cloudinary URL - khali hai toh purana rahega">
+<button class="btn dark block" id="saveProfileBtn" style="margin-top:12px">Profile Save Karo</button>
+<div class="hint" id="profileStatus"></div>
+</div>
+</section>
+
+<!-- LOCATION -->
+<section class="page" data-page="location">
+<div class="panel" style="max-width:620px"><h2>📍 Location</h2><p class="sub">Is location ke aas-paas ke customer ko shop dikhegi. Nearby Shops me bhi yehi location jayegi.</p>
+<label>Location Type</label><select id="locationType"><option value="fixed">Fixed Shop - Delivery Range</option><option value="dynamic">Thela / Moving Shop</option></select>
+<label>Delivery Range (KM)</label><input type="number" id="deliveryRange" value="5" min="1" max="50">
+<label>Shop Address</label><input type="text" id="shopAddress" placeholder="Pura address likho">
+<button class="btn green block" id="saveLocationBtn" style="margin-top:12px"><i class="fa fa-location-crosshairs"></i> Current Location Se Save Karo</button>
+<div class="hint" id="locationStatus"></div>
+<button class="btn light block" id="loadLocationBtn" style="margin-top:10px">Pehle Wali Location Dekho</button>
+</div>
+</section>
+</div>
+</main>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal" id="addModal"><div class="sheet">
+<h2><span id="modalTitle">Naya Achar Add Karo</span><button class="x" onclick="closeAddModal()">✕</button></h2>
+<img id="productImgPreview" src="https://placehold.co/600/d97706/fff?text=Achar+Photo" alt="Product photo">
+<input type="file" id="productImageInput" hidden accept="image/*">
+<button class="btn light block" onclick="document.getElementById('productImageInput').click()">📷 Photo Badlo</button>
+<label>Achar Name *</label><input type="text" id="acharName" placeholder="Aam ka Achar">
+<label>Category</label><select id="acharType"><option value="Aam">Aam</option><option value="Nimbu">Nimbu</option><option value="Mix">Mix</option><option value="Murabba">Murabba</option><option value="Gajar">Gajar</option><option value="Lahsun">Lahsun</option><option value="Mirchi">Mirchi</option><option value="Other">Other</option></select>
+<label>Description</label><textarea id="acharDesc" rows="2" placeholder="Maa ke haath ka bana hua..."></textarea>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label>Jar Type</label><select id="acharJar"><option value="Glass">Glass Jar</option><option value="Plastic">Plastic Jar</option><option value="Ceramic">Ceramic Jar</option></select></div><div><label>Spice Level</label><select id="acharSpice"><option value="Mild">Mild</option><option value="Medium">Medium</option><option value="Teekha">Teekha</option></select></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label>500g Price ₹ *</label><input type="number" id="acharPrice500g" placeholder="150"></div><div><label>1Kg Price ₹ *</label><input type="number" id="acharPrice1kg" placeholder="280"></div></div>
+<label>Stock (Kg)</label><input type="number" id="acharStock" placeholder="10">
+<button class="btn amber block" onclick="saveNewAchar()">✅ Save Achar</button>
+<button class="btn light block" onclick="closeAddModal()" style="margin-top:10px">Cancel</button>
+</div></div>
+
+<!-- QUICK ADD MODAL -->
+<div class="modal" id="quickAddModal"><div class="sheet">
+<h2><span>50+ Achar - Quick Add</span><button class="x" onclick="closeQuickAdd()">✕</button></h2>
+<p class="hint" style="margin-bottom:12px">Ek-ek karke tick karo, jo chahiye wo ek saath add ho jayega. Price baad me Products se edit kar sakte ho.</p>
+<div id="quickAddList">Loading...</div>
+<button class="btn amber block" id="quickAddSaveBtn" style="margin-top:14px">✅ Selected Add Karo (<span id="quickAddCount">0</span>)</button>
+<button class="btn light block" onclick="closeQuickAdd()" style="margin-top:10px">Cancel</button>
+</div></div>
+
+<!-- MANUAL ORDER MODAL -->
+<div class="modal" id="manualOrderModal"><div class="sheet">
+<h2><span>Manual Order Banao</span><button class="x" onclick="closeManualOrder()">✕</button></h2>
+<p class="hint" style="margin-bottom:12px">Shop pe aaye hue customer ka order yahan se banao - ye bhi Common Order me jayega.</p>
+<label>Customer Name *</label><input type="text" id="moName" placeholder="Customer ka naam">
+<label>Customer Phone *</label><input type="tel" id="moPhone" placeholder="10 digit" maxlength="10">
+<label>Address</label><input type="text" id="moAddress" placeholder="Delivery address">
+<label>Items</label><div id="moItems">Loading...</div>
+<label>Payment</label><select id="moPayment"><option value="cod">Cash on Delivery</option><option value="upi">UPI</option><option value="online">Online</option></select>
+<div class="kv total"><span>Total</span><b>₹<span id="moTotal">0</span></b></div>
+<button class="btn green block" id="moSaveBtn" style="margin-top:12px">✅ Order Banao</button>
+<button class="btn light block" onclick="closeManualOrder()" style="margin-top:10px">Cancel</button>
+</div></div>
+
+<div class="toast" id="toast"></div>
+<script src="dashboard.js"></script>
 </body>
 </html>
