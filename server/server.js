@@ -15,6 +15,20 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+// === SAFETY: Ek kharab router poora server na giraye ===
+const _origAppUse = app.use.bind(app);
+app.use = function(...args){
+  try{
+    return _origAppUse(...args);
+  }catch(e){
+    console.error('=== BAD MOUNT PAKDA GAYA ===');
+    console.error('Mount path:', args[0]);
+    console.error('Error:', e.message);
+    console.error(e.stack);
+    return this;
+  }
+};
+// === SAFETY END ===
 
 // ==================== SOCKET.IO SETUP - V12 SOCKET FIX ====================
 const http = require('http');
