@@ -1,4 +1,5 @@
 // LOCATION: server/server.js - V27 FINAL - FULL CODE - NO LINE DELETED + INDEX CLEANUP + WALLET MOUNT + SECURITY FIX
+// FIX: io ko app pe bhi set kiya taaki req.app.get('io') kaam kare. module.exports = app hi rakha hai (Vercel ko app chahiye, server nahi) - koi line delete nahi ki
 const nodeCrypto = require('crypto');
 try {
   if (!global.crypto) global.crypto = nodeCrypto.webcrypto || nodeCrypto;
@@ -28,6 +29,10 @@ const io = new Server(server, {
 });
 
 global.io = io;
+// FIX 1 - YAHI MISSING THA: Route files me req.app.get('io') likha hai, par app pe io set hi nahi tha, isliye undefined milta tha aur emit kabhi hota hi nahi tha.
+// Ab app pe bhi set kar diya, global.io jaisa tha waisa hi rahega.
+app.set('io', io);
+app.io = io;
 console.log('🔌 Socket.IO initialized - global.io set');
 
 io.on('connection', (socket) => {
@@ -424,4 +429,9 @@ if (!process.env.VERCEL) {
     console.log(`💚 Health: /api/health\n`);
   });
 }
+// FIX 2 - module.exports = app HI RAHEGA, isko server mat karna.
+// Vercel ke api/index.js ko app (function) chahiye. Server de diya toh Vercel hi toot jayega.
+// Bas io aur server ko bhi saath me attach kar diya, taaki dono taraf se kaam kare.
 module.exports = app;
+module.exports.io = io;
+module.exports.server = server;

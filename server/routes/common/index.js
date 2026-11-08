@@ -1,4 +1,5 @@
 // LOCATION: server/routes/common/index.js - V20 FINAL - V18 SAME + PUBLIC/SERVER ONLY - NO SKIP
+// FIX: Router.use() Object wala crash fix - sirf function router hi mount hoga, Object kabhi nahi - koi line delete nahi ki
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
@@ -52,12 +53,15 @@ function safeLoad(fileName){
   try{
     delete require.cache[require.resolve(fullPath)];
     let route = require(fullPath);
-    route = route.default || route.router || route;
-    if(typeof route !== 'function' && route && typeof route === 'object'){
-      if(route.stack) return route;
-      if(route.router && route.router.stack) return route.router;
-    }
-    return route;
+    // FIX 1 - YAHIN THA CHOR: Pehle route.stack dekh ke Object ko bhi router maan liya jata tha.
+    // Express ka Router hamesha FUNCTION hota hai. Object kabhi router nahi hota.
+    // Isliye: function hai toh wahi de do, .router ke andar function hai toh wo de do, warna null de do taaki inline fallback chale.
+    if(typeof route === 'function') return route;
+    if(route && typeof route.router === 'function') return route.router;
+    if(route && typeof route.default === 'function') return route.default;
+    // Object / kuch aur mila toh null - crash karane ki jagah fallback chalega
+    console.log(`⚠️ ${fileName} ne function router nahi diya (Object mila), fallback use hoga`);
+    return null;
   }catch(e){
     console.error(`❌ ${fileName}: ${e.message}`);
     const r = express.Router();
@@ -264,10 +268,15 @@ ALLOWED_ROUTE_FILES.forEach(file=>{
     } else {
       console.log(`✅ ${mountPath} -> ${file} (real file)`);
     }
-    if(loaded && (typeof loaded === 'function' || loaded.stack)){
+    // FIX 2 - YAHIN SE CRASH AATA THA: Pehle (typeof loaded === 'function' || loaded.stack) tha.
+    // .stack kisi bhi Object ke paas ho sakta hai, isliye Object andar ghus jata tha aur Express bolta tha - "Router.use() requires a middleware function but got a Object"
+    // Ab sirf function hi mount hoga. Function nahi hai toh skip nahi karenge, fallback laga denge - NO SKIP rule bana rahega.
+    if(loaded && typeof loaded === 'function'){
       router.use(mountPath, loaded);
     } else {
-      console.log(`⚠️ Skipped ${file}`);
+      const fb = getInlineFallback(file);
+      if(fb) router.use(mountPath, fb);
+      console.log(`⚠️ ${file} - function router nahi mila, inline fallback lagaya (skip nahi kiya)`);
     }
   }catch(e){ console.log(`⚠️ Skip ${file}: ${e.message}`); }
 });
