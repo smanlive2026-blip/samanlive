@@ -1,0 +1,187 @@
+<!-- LOCATION: public/shop-templates/common/orders/new-order-popup.html - COMMON - Naya Order Aane Pe Popup + Sound -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Order Popup - Common</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:#f8fafc;padding:16px;color:#0f172a}
+/* Popup - Screen ke upar aayega */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);display:none;place-items:center;z-index:9999;padding:16px}
+.overlay.show{display:grid}
+.popup{background:#fff;width:100%;max-width:380px;border-radius:20px;padding:20px;text-align:center;animation:pop .25s ease}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.popup .icon{font-size:44px}
+.popup h2{font-size:18px;font-weight:900;margin:8px 0 4px}
+.popup p{font-size:13px;color:#64748b}
+.popup .order-box{background:#f8fafc;border:1px dashed #e2e8f0;border-radius:12px;padding:12px;margin:14px 0;text-align:left;font-size:13px}
+.popup .order-box div{display:flex;justify-content:space-between;padding:2px 0}
+.btns{display:flex;gap:8px}
+.btns button{flex:1;padding:12px;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer}
+.btn-view{background:#0f172a;color:#fff}
+.btn-accept{background:#10b981;color:#fff}
+.btn-close{background:#f1f5f9;color:#0f172a}
+.test{background:#fff;border:1px solid #eef2f7;border-radius:16px;padding:14px;margin-bottom:12px}
+.test h3{font-size:14px}
+.test p{font-size:12px;color:#64748b;margin:4px 0 10px}
+.test button{padding:10px 14px;border:none;border-radius:10px;background:#0f172a;color:#fff;font-weight:800;cursor:pointer}
+.row{display:flex;gap:8px;align-items:center}
+.row label{font-size:12px;font-weight:700}
+.row input{width:60px;padding:6px;border:1px solid #e2e8f0;border-radius:8px;text-align:center}
+.status{font-size:12px;color:#10b981;font-weight:700;margin-top:8px}
+</style>
+</head>
+<body>
+
+<!-- ===== TEST BOX - Isko Dashboard Me Mat Dikhana, Sirf Test Ke Liye Hai ===== -->
+<div class="test">
+  <h3>🔔 New Order Popup - Test</h3>
+  <p>Ye file dashboard ke andar iframe / include ki tarah lagegi. Naya order aate hi popup + sound aayega.</p>
+  <div class="row">
+    <label>Har kitne sec me check kare?</label>
+    <input id="intervalSec" type="number" value="15" min="5">
+    <span style="font-size:12px">sec</span>
+    <button onclick="toggleSound()" id="soundBtn">🔊 Sound ON</button>
+  </div>
+  <p class="status" id="statusText">● Listening... Last check: abhi nahi hua</p>
+  <button onclick="showTestPopup()">Test Popup Dikhao</button>
+</div>
+
+<!-- ===== POPUP ===== -->
+<div class="overlay" id="overlay">
+  <div class="popup">
+    <div class="icon">🛒</div>
+    <h2>Naya Order Aaya Hai!</h2>
+    <p id="popupTime">Abhi-abhi</p>
+    <div class="order-box" id="orderBox"></div>
+    <div class="btns">
+      <button class="btn-view" onclick="viewOrder()">👀 Dekho</button>
+      <button class="btn-accept" onclick="acceptFromPopup()">✓ Accept</button>
+    </div>
+    <button class="btn-close" onclick="closePopup()" style="width:100%;margin-top:8px;padding:10px;border:none;border-radius:10px;font-weight:700;cursor:pointer">Baad Me Dekhunga</button>
+  </div>
+</div>
+
+<!-- Sound - Agar mp3 nahi hai toh browser beep bajayega -->
+<audio id="orderSound" preload="auto">
+  <source src="../orders/new-order-sound.mp3" type="audio/mpeg">
+</audio>
+
+<script src="../orders/orders.js"></script>
+<script>
+// ===== CONFIG - Dashboard Se Aayega =====
+// Dukaan: ?role=shop_owner&id=SHOP_ID
+// Area Manager: ?role=area-manager&id=AREA_ID
+const params = new URLSearchParams(location.search);
+const ROLE = params.get('role') || window.POPUP_ROLE || 'shop_owner';
+const MY_ID = params.get('id') || params.get('shopId') || window.POPUP_SHOP_ID || localStorage.getItem('last_shopId') || '';
+
+let SOUND_ON = true;
+let LAST_ORDER_IDS = new Set();
+let CURRENT_ORDER = null;
+let TIMER = null;
+let FIRST_LOAD = true;
+
+function toggleSound(){
+  SOUND_ON = !SOUND_ON;
+  document.getElementById('soundBtn').innerText = SOUND_ON ? '🔊 Sound ON' : '🔇 Sound OFF';
+}
+
+function playSound(){
+  if(!SOUND_ON) return;
+  try{
+    const audio = document.getElementById('orderSound');
+    audio.currentTime = 0;
+    const p = audio.play();
+    // Agar mp3 nahi hai / fail hua toh beep bajao
+    if(p) p.catch(()=> beep());
+  }catch(e){ beep(); }
+}
+
+function beep(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 880; o.type = 'sine';
+    g.gain.setValueAtTime(0.3, ctx.currentTime);
+    o.start(); o.stop(ctx.currentTime + 0.4);
+  }catch(e){}
+}
+
+function showPopup(order){
+  CURRENT_ORDER = order;
+  document.getElementById('popupTime').innerText = new Date(order.createdAt).toLocaleString('en-IN');
+  document.getElementById('orderBox').innerHTML = `
+    <div><span>Order ID</span><b>#${order.orderId}</b></div>
+    <div><span>Items</span><b>${(order.items||[]).length} items</b></div>
+    <div><span>Total</span><b>₹${order.totalAmount||order.total||0}</b></div>
+    <div><span>Payment</span><b>${order.paymentMode||order.paymentMethod||'cod'}</b></div>
+    <div><span>Address</span><b style="text-align:right;max-width:180px">${(order.deliveryAddress?.full || order.deliveryAddress?.line1 || '')} ${order.deliveryAddress?.city||''}</b></div>
+  `;
+  document.getElementById('overlay').classList.add('show');
+  playSound();
+}
+
+function closePopup(){
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function viewOrder(){
+  closePopup();
+  // Dashboard ke hisaab se orders page kholo
+  location.href = `orders.html?role=${ROLE}&id=${MY_ID}`;
+}
+
+async function acceptFromPopup(){
+  if(!CURRENT_ORDER) return;
+  const res = await window.CommonOrders.changeStatus(CURRENT_ORDER.orderId, ROLE, MY_ID, 'confirmed');
+  if(!res.success) return alert(res.message||'Fail');
+  closePopup();
+  alert('Order Accept ho gaya ✅');
+}
+
+function showTestPopup(){
+  showPopup({
+    orderId: 'ORD-TEST-123',
+    createdAt: new Date().toISOString(),
+    items: [{name:'Test Product', qty:2}],
+    totalAmount: 250,
+    paymentMode: 'cod',
+    deliveryAddress: { full: 'Test Address', city: 'Bhuj' }
+  });
+}
+
+// ===== POLLING - Har 15 sec me naya order check karega =====
+async function checkNewOrders(){
+  if(!MY_ID) return;
+  const orders = await window.CommonOrders.list(ROLE, MY_ID, 'placed');
+  document.getElementById('statusText').innerText = `● Listening... Last check: ${new Date().toLocaleTimeString('en-IN')} • ${orders.length} placed order`;
+  const newOnes = orders.filter(o => !LAST_ORDER_IDS.has(o.orderId));
+  // Pehli baar me popup mat dikhao, sirf ID yaad rakho - warna purane order pe bhi popup aayega
+  if(FIRST_LOAD){
+    orders.forEach(o=> LAST_ORDER_IDS.add(o.orderId));
+    FIRST_LOAD = false;
+    return;
+  }
+  if(newOnes.length){
+    newOnes.forEach(o=> LAST_ORDER_IDS.add(o.orderId));
+    showPopup(newOnes[0]);
+  }
+}
+
+function startPolling(){
+  if(TIMER) clearInterval(TIMER);
+  const sec = Math.max(5, Number(document.getElementById('intervalSec').value||15));
+  checkNewOrders();
+  TIMER = setInterval(checkNewOrders, sec*1000);
+}
+
+// Dashboard me is file ko include karoge toh ye auto chal jayega
+startPolling();
+window.NewOrderPopup = { checkNewOrders, showPopup, closePopup, playSound };
+</script>
+</body>
+</html>

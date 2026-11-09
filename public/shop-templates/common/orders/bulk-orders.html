@@ -1,0 +1,158 @@
+<!-- LOCATION: public/shop-templates/common/orders/bulk-orders.html - COMMON - Bulk Order - Dukaan / Area Manager Ke Liye -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulk Orders - Common</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:#f8fafc;padding:16px;color:#0f172a}
+.top h2{font-size:20px;font-weight:900}
+.top p{font-size:12px;color:#64748b;margin-top:2px}
+.tabs{display:flex;gap:8px;margin:14px 0;overflow-x:auto}
+.tabs button{white-space:nowrap;padding:8px 14px;border:1px solid #e2e8f0;background:#fff;border-radius:20px;font-weight:700;font-size:12px;cursor:pointer}
+.tabs button.active{background:#0f172a;color:#fff}
+.card{background:#fff;border:1px solid #eef2f7;border-radius:16px;padding:14px;margin-bottom:12px}
+.card b{font-size:14px}
+.card span{font-size:11px;color:#64748b}
+.badge{font-size:10px;font-weight:900;padding:4px 10px;border-radius:20px;color:#fff;float:right}
+.b-placed{background:#f59e0b}.b-confirmed{background:#3b82f6}.b-packed{background:#8b5cf6}.b-assigned{background:#06b6d4}.b-picked{background:#f97316}.b-delivered{background:#10b981}.b-cancelled{background:#ef4444}
+.items{margin:10px 0;font-size:13px}
+.items div{display:flex;justify-content:space-between;padding:3px 0}
+.total{display:flex;justify-content:space-between;font-weight:900;border-top:1px dashed #e2e8f0;padding-top:8px}
+.btns{display:flex;gap:8px;margin-top:12px}
+.btns button{flex:1;padding:10px;border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer}
+.btn-bulk{background:#0f172a;color:#fff}
+.btn-accept{background:#10b981;color:#fff}
+.btn-reject{background:#fee2e2;color:#991b1b}
+.btn-pack{background:#8b5cf6;color:#fff}
+.form{background:#fff;border:1px solid #eef2f7;border-radius:16px;padding:14px;margin-bottom:14px}
+.form h3{font-size:14px;margin-bottom:10px}
+.form input,.form select{width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;font-size:13px}
+.empty{text-align:center;padding:30px;color:#94a3b8;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h2>📦 Bulk Orders</h2>
+  <p id="sub">Dukaan / Area Manager - Bulk me maal mangane ke liye</p>
+</div>
+
+<!-- NAYA BULK ORDER BANANA -->
+<div class="form" id="createForm">
+  <h3>+ Naya Bulk Order Banao</h3>
+  <select id="supplierRole">
+    <option value="product_manager">Product Manager se lunga</option>
+    <option value="area_manager">Area Manager se lunga</option>
+    <option value="admin">Admin se lunga</option>
+  </select>
+  <input id="supplierId" placeholder="Supplier ID daalo - jisse maal lena hai">
+  <input id="itemName" placeholder="Product ka naam - jaise Aata 50kg">
+  <input id="itemPrice" type="number" placeholder="Ek ka price - ₹">
+  <input id="itemQty" type="number" placeholder="Kitni quantity chahiye? - jaise 20">
+  <input id="totalAmount" type="number" placeholder="Total Amount - auto bhi bhar jayega" readonly>
+  <button class="btn-bulk" onclick="createBulk()" style="width:100%;padding:12px;border:none;border-radius:10px;font-weight:800;cursor:pointer;background:#0f172a;color:#fff">Bulk Order Bhejo →</button>
+  <p style="font-size:11px;color:#64748b;margin-top:6px">Note: Ye order Product Manager / Area Manager ko jayega, Customer ko nahi dikhega.</p>
+</div>
+
+<div class="tabs" id="filterBar">
+  <button class="active" onclick="setFilter('',this)">All</button>
+  <button onclick="setFilter('placed',this)">Placed</button>
+  <button onclick="setFilter('confirmed',this)">Confirmed</button>
+  <button onclick="setFilter('packed',this)">Packed</button>
+  <button onclick="setFilter('delivered',this)">Delivered</button>
+  <button onclick="setFilter('cancelled',this)">Cancelled</button>
+</div>
+
+<div id="list"></div>
+
+<script src="../orders/orders.js"></script>
+<script>
+// ===== ROLE + ID URL SE =====
+// Dukaan: ?role=shop_owner&id=SHOP_ID
+// Area Manager: ?role=area-manager&id=AREA_ID
+const params = new URLSearchParams(location.search);
+const ROLE = params.get('role') || 'shop_owner';
+const MY_ID = params.get('id') || params.get('shopId') || localStorage.getItem('last_shopId') || '';
+let CURRENT = '';
+
+// Auto total
+document.getElementById('itemPrice').addEventListener('input', calc);
+document.getElementById('itemQty').addEventListener('input', calc);
+function calc(){
+  const p = Number(document.getElementById('itemPrice').value||0);
+  const q = Number(document.getElementById('itemQty').value||0);
+  document.getElementById('totalAmount').value = p*q || '';
+}
+
+function setFilter(s, btn){
+  CURRENT = s;
+  document.querySelectorAll('#filterBar button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadBulk();
+}
+
+async function loadBulk(){
+  const el = document.getElementById('list');
+  el.innerHTML = '<div class="empty">Loading...</div>';
+  // Bulk order wahi Order model me hai, bas isBulkOrder = true wala
+  const all = await window.CommonOrders.list(ROLE, MY_ID, CURRENT);
+  const bulk = all.filter(o => o.isBulkOrder === true || o.buyerRole === 'shop_owner' || o.buyerRole === 'area_manager');
+  // Agar koi bulk nahi hai toh saare dikha do taaki khaali na lage - pehli baar ke liye
+  const show = bulk.length ? bulk : all;
+  document.getElementById('sub').innerText = `${show.length} bulk orders • Role: ${ROLE}`;
+  if(!show.length){ el.innerHTML = '<div class="empty">Abhi koi bulk order nahi hai<br><span style="font-size:12px">Upar se naya banao</span></div>'; return; }
+  el.innerHTML = show.map(o=>`
+    <div class="card">
+      <b>#${o.orderId}</b>
+      <span class="badge b-${o.orderStatus}">${(o.orderStatus||'placed').toUpperCase()}</span><br>
+      <span>${new Date(o.createdAt).toLocaleString('en-IN')} • ${o.buyerRole} → ${o.supplierRole} • ${o.isBulkOrder ? 'BULK' : ''}</span>
+      <div class="items">${(o.items||[]).map(i=>`<div><span>${i.name} x ${i.qty||i.quantity||1}</span><span>₹${(i.price||0)*(i.qty||i.quantity||1)}</span></div>`).join('')}</div>
+      <div class="total"><span>Total</span><span>₹${o.totalAmount||o.total||0}</span></div>
+      <div class="btns">
+        ${o.orderStatus==='placed' && (ROLE==='product_manager'||ROLE==='area-manager'||ROLE==='admin') ? `<button class="btn-accept" onclick="doStatus('${o.orderId}','confirmed')">✓ Accept</button><button class="btn-reject" onclick="doStatus('${o.orderId}','cancelled')">✕ Reject</button>` : ''}
+        ${o.orderStatus==='confirmed' ? `<button class="btn-pack" onclick="doStatus('${o.orderId}','packed')">📦 Pack Kar Diya</button>` : ''}
+        ${o.orderStatus==='placed' && ROLE==='shop_owner' ? `<button class="btn-reject" onclick="doStatus('${o.orderId}','cancelled')">Cancel</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function createBulk(){
+  const supplierId = document.getElementById('supplierId').value.trim();
+  const supplierRole = document.getElementById('supplierRole').value;
+  const name = document.getElementById('itemName').value.trim();
+  const price = Number(document.getElementById('itemPrice').value||0);
+  const qty = Number(document.getElementById('itemQty').value||0);
+  const total = Number(document.getElementById('totalAmount').value||0);
+  if(!supplierId || !name || !price || !qty) return alert('Saare field bharo');
+  const res = await window.CommonOrders.create({
+    buyerId: MY_ID,
+    buyerRole: ROLE,
+    supplierId,
+    supplierRole,
+    items: [{ productId: '', name, price, qty, quantity: qty }],
+    totalAmount: total,
+    deliveryAddress: {},
+    paymentMode: 'cod'
+  });
+  if(!res.success) return alert(res.message||'Fail');
+  alert('Bulk order bhej diya ✅ Order ID: ' + res.orderId);
+  document.getElementById('itemName').value=''; document.getElementById('itemPrice').value=''; document.getElementById('itemQty').value=''; document.getElementById('totalAmount').value='';
+  loadBulk();
+}
+
+async function doStatus(orderId, s){
+  if(!confirm('Pakka '+s+'?')) return;
+  // Bulk me supplier wala role chahiye - isliye ROLE ko supplier bana ke bhejte hain
+  const res = await window.CommonOrders.changeStatus(orderId, ROLE, MY_ID, s);
+  if(!res.success) return alert(res.message||'Fail - Shayad ye order tumhara nahi hai, supplier ka hai');
+  loadBulk();
+}
+
+loadBulk();
+</script>
+</body>
+</html>

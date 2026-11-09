@@ -1,0 +1,116 @@
+<!-- LOCATION: public/shop-templates/common/pages/about.html - COMMON - Har Dukaan Ka About Page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About Us - Common</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:#f8fafc;color:#0f172a;padding:0}
+.header{background:#0f172a;color:#fff;padding:22px 16px 30px;text-align:center}
+.header img{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid #fff;background:#fff}
+.header h1{font-size:20px;font-weight:900;margin-top:10px}
+.header p{font-size:12px;opacity:.8}
+.card{background:#fff;margin:-14px 16px 12px;border-radius:16px;padding:16px;border:1px solid #eef2f7}
+.card h3{font-size:14px;margin-bottom:8px}
+.card p{font-size:13px;color:#475569;line-height:1.6}
+.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
+.row:last-child{border:none}
+.row span{color:#64748b}
+.row b{text-align:right}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;background:#dcfce7;color:#166534}
+.btns{display:flex;gap:8px;padding:0 16px 20px}
+.btns a{flex:1;text-align:center;text-decoration:none;padding:12px;border-radius:12px;font-weight:800;font-size:13px}
+.btn-call{background:#10b981;color:#fff}
+.btn-wa{background:#25D366;color:#fff}
+.btn-back{background:#f1f5f9;color:#0f172a}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img id="shopLogo" src="/assets/img/no-image.png" alt="Shop">
+  <h1 id="shopName">Loading...</h1>
+  <p id="shopTagline">Apni dukaan ka bharosa</p>
+  <div style="margin-top:8px"><span class="badge" id="shopStatus">● Open</span></div>
+</div>
+
+<div class="card">
+  <h3>🏪 Hamari Dukaan Ke Baare Me</h3>
+  <p id="shopDesc">Loading...</p>
+</div>
+
+<div class="card">
+  <h3>📋 Dukaan Ki Jaankari</h3>
+  <div class="row"><span>Dukaan Ka Naam</span><b id="dName">-</b></div>
+  <div class="row"><span>Owner</span><b id="ownerName">-</b></div>
+  <div class="row"><span>Phone</span><b id="shopPhone">-</b></div>
+  <div class="row"><span>WhatsApp</span><b id="shopWa">-</b></div>
+  <div class="row"><span>Area</span><b id="shopArea">-</b></div>
+  <div class="row"><span>City</span><b id="shopCity">-</b></div>
+  <div class="row"><span>Shop Type</span><b id="shopType">-</b></div>
+  <div class="row"><span>GST</span><b id="shopGst">-</b></div>
+  <div class="row"><span>Khula Kab Se</span><b id="shopSince">-</b></div>
+</div>
+
+<div class="card">
+  <h3>📍 Address</h3>
+  <p id="shopAddress">Loading...</p>
+</div>
+
+<div class="btns">
+  <a href="#" class="btn-call" id="callBtn">📞 Call Karo</a>
+  <a href="#" class="btn-wa" id="waBtn">💬 WhatsApp</a>
+  <a href="#" class="btn-back" onclick="history.back();return false">← Wapas</a>
+</div>
+
+<script>
+// ===== SHOP ID URL SE AAYEGA =====
+// ?shopId=SHOP_ID ya ?id=SHOP_ID
+const params = new URLSearchParams(location.search);
+const SHOP_ID = params.get('shopId') || params.get('id') || localStorage.getItem('last_shopId') || '';
+
+async function loadShop(){
+  if(!SHOP_ID){ document.getElementById('shopName').innerText='Shop nahi mili'; return; }
+  try{
+    const API_BASE = window.API_BASE || window.location.origin;
+    // Common API se shop laao - agar nahi mili toh localStorage se
+    let shop = null;
+    try{
+      const res = await fetch(`${API_BASE}/api/shops/${SHOP_ID}`);
+      const data = await res.json();
+      shop = data.shop || data.data || data;
+    }catch(e){}
+    if(!shop || !shop.shopName){
+      // Fallback - localStorage me jo shop save hai
+      try{ shop = JSON.parse(localStorage.getItem('last_shop')||'{}'); }catch(e){ shop={}; }
+    }
+    if(!shop.shopName) shop = { shopName: 'Meri Dukaan', ownerName: '-', phone: '-', area: '-', city: '-' };
+
+    document.getElementById('shopName').innerText = shop.shopName || 'Meri Dukaan';
+    document.getElementById('shopTagline').innerText = shop.tagline || shop.description?.slice(0,60) || 'Apni dukaan ka bharosa';
+    document.getElementById('shopDesc').innerText = shop.description || `${shop.shopName} - ${shop.city||''} ki bharosemand dukaan. Yahan se aap aasani se order kar sakte hain, fast delivery aur sahi daam milega.`;
+    document.getElementById('dName').innerText = shop.shopName || '-';
+    document.getElementById('ownerName').innerText = shop.ownerName || '-';
+    document.getElementById('shopPhone').innerText = shop.phone || shop.ownerPhone || '-';
+    document.getElementById('shopWa').innerText = shop.whatsapp || shop.phone || '-';
+    document.getElementById('shopArea').innerText = shop.areaName || shop.area || shop.areaCode || '-';
+    document.getElementById('shopCity').innerText = shop.address?.city || shop.city || '-';
+    document.getElementById('shopType').innerText = shop.shopType || shop.serviceType || '-';
+    document.getElementById('shopGst').innerText = shop.gst || 'N/A';
+    document.getElementById('shopSince').innerText = shop.estYear || (shop.createdAt ? new Date(shop.createdAt).getFullYear() : '-');
+    document.getElementById('shopAddress').innerText = `${shop.address?.line1||''} ${shop.address?.line2||''} ${shop.address?.city||shop.city||''} ${shop.address?.state||''} - ${shop.address?.pincode||''}`.trim() || 'Address jald update hoga';
+    document.getElementById('shopStatus').innerText = shop.isActive === false ? '● Closed' : '● Open';
+    if(shop.logo || shop.shopLogo || shop.image) document.getElementById('shopLogo').src = shop.logo || shop.shopLogo || shop.image;
+    const phone = shop.phone || shop.ownerPhone || '';
+    if(phone){
+      document.getElementById('callBtn').href = `tel:${phone}`;
+      document.getElementById('waBtn').href = `https://wa.me/91${String(phone).replace(/\D/g,'').slice(-10)}?text=Hi ${encodeURIComponent(shop.shopName||'')}, mujhe order karna hai`;
+    }
+  }catch(e){ document.getElementById('shopName').innerText='Error: '+e.message; }
+}
+loadShop();
+</script>
+</body>
+</html>

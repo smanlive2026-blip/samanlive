@@ -1,0 +1,160 @@
+<!-- LOCATION: public/shop-templates/common/orders/orders.html - COMMON - Sab Dashboard Isi Ko Bulayenge -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders - Common</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:#f8fafc;padding:16px;color:#0f172a}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.top h2{font-size:20px;font-weight:900}
+.top p{font-size:12px;color:#64748b}
+.filter{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px}
+.filter button{white-space:nowrap;padding:8px 14px;border:1px solid #e2e8f0;background:#fff;border-radius:20px;font-weight:700;font-size:12px;cursor:pointer}
+.filter button.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.card{background:#fff;border:1px solid #eef2f7;border-radius:16px;padding:14px;margin-bottom:12px}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start}
+.card-top b{font-size:14px}
+.card-top span{font-size:11px;color:#64748b}
+.badge{font-size:10px;font-weight:900;padding:4px 10px;border-radius:20px;color:#fff}
+.b-placed{background:#f59e0b}.b-confirmed{background:#3b82f6}.b-packed{background:#8b5cf6}
+.b-assigned{background:#06b6d4}.b-picked{background:#f97316}.b-delivered{background:#10b981}.b-cancelled{background:#ef4444}
+.items{margin:10px 0;font-size:13px;color:#334155}
+.items div{display:flex;justify-content:space-between;padding:3px 0}
+.total{display:flex;justify-content:space-between;font-weight:900;border-top:1px dashed #e2e8f0;padding-top:8px;margin-top:6px}
+.btns{display:flex;gap:8px;margin-top:12px}
+.btns button{flex:1;padding:10px;border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer}
+.btn-accept{background:#10b981;color:#fff}
+.btn-reject{background:#fee2e2;color:#991b1b}
+.btn-pack{background:#8b5cf6;color:#fff}
+.btn-assign{background:#06b6d4;color:#fff}
+.btn-pick{background:#f97316;color:#fff}
+.btn-deliver{background:#0f172a;color:#fff}
+.btn-track{background:#f1f5f9;color:#0f172a}
+.empty{text-align:center;padding:40px 10px;color:#94a3b8;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <h2 id="title">Orders</h2>
+    <p id="sub">Loading...</p>
+  </div>
+  <button onclick="loadOrders()" style="padding:8px 12px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;font-weight:800;cursor:pointer">↻ Refresh</button>
+</div>
+
+<div class="filter" id="filterBar">
+  <button class="active" onclick="setFilter('',this)">All</button>
+  <button onclick="setFilter('placed',this)">Placed</button>
+  <button onclick="setFilter('confirmed',this)">Confirmed</button>
+  <button onclick="setFilter('packed',this)">Packed</button>
+  <button onclick="setFilter('assigned',this)">Assigned</button>
+  <button onclick="setFilter('picked',this)">Picked</button>
+  <button onclick="setFilter('delivered',this)">Delivered</button>
+  <button onclick="setFilter('cancelled',this)">Cancelled</button>
+</div>
+
+<div id="list"></div>
+
+<script src="../orders/orders.js"></script>
+<script>
+// ===== ROLE + ID URL SE AAYEGA - Har Dashboard Alag Bhejega =====
+// Kirana dashboard bhejega: ?role=shop_owner&id=SHOP_ID
+// Customer bhejega: ?role=customer&id=BUYER_ID
+// Area Manager bhejega: ?role=area-manager&id=AREA_ID
+// Delivery Boy bhejega: ?role=delivery_boy&id=BOY_ID
+const params = new URLSearchParams(location.search);
+const ROLE = params.get('role') || 'shop_owner';
+const MY_ID = params.get('id') || params.get('shopId') || localStorage.getItem('last_shopId') || '';
+let CURRENT_FILTER = '';
+
+const TITLES = {
+  shop_owner: 'Dukaan Ke Orders',
+  customer: 'Mere Orders',
+  'area-manager': 'Area Ke Orders',
+  delivery_boy: 'Mere Deliveries',
+  executive: 'Sab Orders - Executive View',
+  admin: 'Sab Orders - Admin View',
+  product_manager: 'Bulk Orders'
+};
+document.getElementById('title').innerText = TITLES[ROLE] || 'Orders';
+
+function setFilter(status, btn){
+  CURRENT_FILTER = status;
+  document.querySelectorAll('#filterBar button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadOrders();
+}
+
+function statusColor(s){
+  return 'badge b-' + (s||'placed');
+}
+
+function buttonsFor(o){
+  // ===== JO JISKA KAAM HAI USI KO BUTTON DIKHEGA =====
+  if(ROLE==='shop_owner'){
+    if(o.orderStatus==='placed') return `<div class="btns">
+      <button class="btn-accept" onclick="doStatus('${o.orderId}','confirmed')">✓ Accept</button>
+      <button class="btn-reject" onclick="doStatus('${o.orderId}','cancelled')">✕ Reject</button></div>`;
+    if(o.orderStatus==='confirmed') return `<div class="btns"><button class="btn-pack" onclick="doStatus('${o.orderId}','packed')">📦 Pack Kar Diya</button></div>`;
+  }
+  if(ROLE==='area-manager'){
+    if(o.orderStatus==='packed') return `<div class="btns"><button class="btn-assign" onclick="assignOrder('${o.orderId}')">🛵 Delivery Boy Assign</button></div>`;
+  }
+  if(ROLE==='delivery_boy'){
+    if(o.orderStatus==='assigned') return `<div class="btns"><button class="btn-pick" onclick="doStatus('${o.orderId}','picked')">Pick Kar Liya</button></div>`;
+    if(o.orderStatus==='picked') return `<div class="btns"><button class="btn-deliver" onclick="doStatus('${o.orderId}','delivered')">✅ Deliver Ho Gaya</button></div>`;
+  }
+  if(ROLE==='customer'){
+    return `<div class="btns"><button class="btn-track" onclick="location.href='track-order.html?orderId=${o.orderId}'">📍 Track Order</button></div>`;
+  }
+  return '';
+}
+
+async function loadOrders(){
+  const listEl = document.getElementById('list');
+  listEl.innerHTML = '<div class="empty">Loading...</div>';
+  try{
+    const orders = await window.CommonOrders.list(ROLE, MY_ID, CURRENT_FILTER);
+    document.getElementById('sub').innerText = `${orders.length} orders • Role: ${ROLE}`;
+    if(!orders.length){ listEl.innerHTML = '<div class="empty">Koi order nahi hai<br><span style="font-size:12px">Naya order aate hi yahan dikhega</span></div>'; return; }
+    listEl.innerHTML = orders.map(o=>`
+      <div class="card">
+        <div class="card-top">
+          <div><b>#${o.orderId}</b><br><span>${new Date(o.createdAt).toLocaleString('en-IN')} • ${o.paymentMode||o.paymentMethod||'cod'}</span></div>
+          <span class="${statusColor(o.orderStatus)}">${(o.orderStatus||'placed').toUpperCase()}</span>
+        </div>
+        <div class="items">
+          ${(o.items||[]).map(i=>`<div><span>${i.name} x ${i.qty||i.quantity||1}</span><span>₹${i.price*(i.qty||i.quantity||1)}</span></div>`).join('')}
+        </div>
+        <div class="total"><span>Total</span><span>₹${o.totalAmount||o.total||0}</span></div>
+        <div style="font-size:12px;color:#64748b;margin-top:6px">📍 ${o.deliveryAddress?.full || o.deliveryAddress?.line1 || ''} ${o.deliveryAddress?.city||''}</div>
+        ${buttonsFor(o)}
+      </div>
+    `).join('');
+  }catch(e){ listEl.innerHTML = '<div class="empty">Error: '+e.message+'</div>'; }
+}
+
+async function doStatus(orderId, newStatus){
+  if(!confirm('Pakka '+newStatus+' karna hai?')) return;
+  const res = await window.CommonOrders.changeStatus(orderId, ROLE, MY_ID, newStatus);
+  if(!res.success) return alert(res.message||'Fail ho gaya');
+  loadOrders();
+}
+
+async function assignOrder(orderId){
+  const boyId = prompt('Delivery Boy ID daalo:');
+  if(!boyId) return;
+  const res = await window.CommonOrders.assign(orderId, boyId);
+  if(!res.success) return alert(res.message||'Fail');
+  loadOrders();
+}
+
+loadOrders();
+</script>
+</body>
+</html>

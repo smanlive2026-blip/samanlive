@@ -1,0 +1,143 @@
+<!-- LOCATION: public/shop-templates/common/pages/contact.html - COMMON - Har Dukaan Ka Contact Page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Us - Common</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:#f8fafc;color:#0f172a;padding:16px}
+.top h2{font-size:20px;font-weight:900}
+.top p{font-size:12px;color:#64748b;margin-top:2px}
+.card{background:#fff;border:1px solid #eef2f7;border-radius:16px;padding:16px;margin:14px 0}
+.card h3{font-size:14px;margin-bottom:8px}
+.card p{font-size:13px;color:#475569;line-height:1.6}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.quick a{text-decoration:none;padding:14px;border-radius:14px;text-align:center;font-weight:800;font-size:13px}
+.a-call{background:#dcfce7;color:#166534}
+.a-wa{background:#25D366;color:#fff}
+.a-mail{background:#dbeafe;color:#1e40af}
+.a-map{background:#fef3c7;color:#92400e}
+.form input,.form textarea,.form select{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;font-size:13px;font-family:inherit}
+.form textarea{min-height:90px;resize:vertical}
+.form button{width:100%;padding:13px;border:none;border-radius:12px;background:#0f172a;color:#fff;font-weight:800;font-size:14px;cursor:pointer}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
+.info-row:last-child{border:none}
+.info-row span{color:#64748b}
+.info-row b{text-align:right}
+.success{background:#dcfce7;color:#166534;padding:12px;border-radius:10px;font-size:13px;font-weight:700;display:none;text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h2>📞 Contact Us</h2>
+  <p id="shopNameTop">Loading...</p>
+</div>
+
+<div class="quick">
+  <a href="#" class="a-call" id="callBtn">📞 Call Karo</a>
+  <a href="#" class="a-wa" id="waBtn">💬 WhatsApp</a>
+  <a href="#" class="a-mail" id="mailBtn">✉️ Email</a>
+  <a href="#" class="a-map" id="mapBtn">📍 Location</a>
+</div>
+
+<div class="card">
+  <h3>🏪 Dukaan Ki Jaankari</h3>
+  <div class="info-row"><span>Dukaan</span><b id="dName">-</b></div>
+  <div class="info-row"><span>Owner</span><b id="ownerName">-</b></div>
+  <div class="info-row"><span>Phone</span><b id="shopPhone">-</b></div>
+  <div class="info-row"><span>WhatsApp</span><b id="shopWa">-</b></div>
+  <div class="info-row"><span>Email</span><b id="shopEmail">-</b></div>
+  <div class="info-row"><span>Address</span><b id="shopAddress" style="max-width:60%">-</b></div>
+  <div class="info-row"><span>Time</span><b id="shopTime">9 AM - 9 PM</b></div>
+</div>
+
+<div class="card form">
+  <h3>✍️ Message Bhejo</h3>
+  <p style="font-size:12px;color:#64748b;margin-bottom:10px">Koi shikayat, sujhaav ya order se related baat hai toh yahan likho, dukaan wala dekh lega.</p>
+  <input id="custName" placeholder="Tumhara Naam">
+  <input id="custPhone" placeholder="Tumhara Phone - 10 digit">
+  <select id="msgType">
+    <option value="order">Order se related</option>
+    <option value="complaint">Shikayat</option>
+    <option value="suggestion">Sujhaav</option>
+    <option value="other">Aur kuch</option>
+  </select>
+  <textarea id="msgText" placeholder="Apna message yahan likho..."></textarea>
+  <button onclick="sendMsg()">Message Bhejo →</button>
+  <div class="success" id="successBox">✅ Message bhej diya gaya! Dukaan wala jald jawab dega.</div>
+</div>
+
+<div style="text-align:center;padding:0 0 20px">
+  <a href="#" onclick="history.back();return false" style="font-size:13px;color:#64748b;text-decoration:none">← Wapas Jao</a>
+</div>
+
+<script>
+// ===== SHOP ID URL SE =====
+const params = new URLSearchParams(location.search);
+const SHOP_ID = params.get('shopId') || params.get('id') || localStorage.getItem('last_shopId') || '';
+let SHOP = {};
+
+async function loadShop(){
+  if(!SHOP_ID) return;
+  try{
+    const API_BASE = window.API_BASE || window.location.origin;
+    let shop = null;
+    try{
+      const res = await fetch(`${API_BASE}/api/shops/${SHOP_ID}`);
+      const data = await res.json();
+      shop = data.shop || data.data || data;
+    }catch(e){}
+    if(!shop || !shop.shopName){ try{ shop = JSON.parse(localStorage.getItem('last_shop')||'{}'); }catch(e){ shop={}; } }
+    if(!shop.shopName) shop = { shopName:'Meri Dukaan', phone:'', email:'', address:{}, ownerName:'-' };
+    SHOP = shop;
+    document.getElementById('shopNameTop').innerText = shop.shopName;
+    document.getElementById('dName').innerText = shop.shopName || '-';
+    document.getElementById('ownerName').innerText = shop.ownerName || '-';
+    document.getElementById('shopPhone').innerText = shop.phone || shop.ownerPhone || '-';
+    document.getElementById('shopWa').innerText = shop.whatsapp || shop.phone || '-';
+    document.getElementById('shopEmail').innerText = shop.email || '-';
+    document.getElementById('shopAddress').innerText = `${shop.address?.line1||''} ${shop.address?.city||shop.city||''}`.trim() || '-';
+    document.getElementById('shopTime').innerText = shop.openTime ? `${shop.openTime} - ${shop.closeTime||'9 PM'}` : '9 AM - 9 PM';
+    const phone = shop.phone || shop.ownerPhone || '';
+    if(phone){
+      const clean = String(phone).replace(/\D/g,'').slice(-10);
+      document.getElementById('callBtn').href = `tel:${phone}`;
+      document.getElementById('waBtn').href = `https://wa.me/91${clean}?text=Hi ${encodeURIComponent(shop.shopName||'')}, mujhe baat karni hai`;
+    }
+    if(shop.email) document.getElementById('mailBtn').href = `mailto:${shop.email}?subject=${encodeURIComponent('Contact - '+shop.shopName)}`;
+    if(shop.address?.line1 || shop.city) document.getElementById('mapBtn').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((shop.address?.line1||'')+' '+ (shop.city||''))}`;
+  }catch(e){}
+}
+
+async function sendMsg(){
+  const name = document.getElementById('custName').value.trim();
+  const phone = document.getElementById('custPhone').value.trim();
+  const type = document.getElementById('msgType').value;
+  const text = document.getElementById('msgText').value.trim();
+  if(!name || !phone || !text) return alert('Naam, Phone aur Message - teeno bharo');
+  if(phone.length < 10) return alert('Sahi phone number daalo');
+  // 1. Pehle local me save karo - kabhi fail nahi hoga
+  const all = JSON.parse(localStorage.getItem('contact_messages')||'[]');
+  all.push({ shopId: SHOP_ID, shopName: SHOP.shopName, name, phone, type, text, createdAt: new Date().toISOString() });
+  localStorage.setItem('contact_messages', JSON.stringify(all));
+  // 2. Backend ko bhejo - agar hai toh
+  try{
+    const API_BASE = window.API_BASE || window.location.origin;
+    await fetch(`${API_BASE}/api/common/contact`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ shopId: SHOP_ID, name, phone, type, message: text }) });
+  }catch(e){}
+  // 3. WhatsApp bhi khol do taaki dukaan wale ko turant mile
+  const waPhone = (SHOP.whatsapp || SHOP.phone || '').toString().replace(/\D/g,'').slice(-10);
+  document.getElementById('successBox').style.display = 'block';
+  document.getElementById('msgText').value = '';
+  if(waPhone && confirm('Message save ho gaya ✅\nAb WhatsApp pe bhi bhej du dukaan wale ko?')){
+    window.open(`https://wa.me/91${waPhone}?text=${encodeURIComponent(`[${type}] ${name} (${phone}): ${text}`)}`, '_blank');
+  }
+}
+
+loadShop();
+</script>
+</body>
+</html>
