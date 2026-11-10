@@ -1,27 +1,234 @@
-<!-- ORDER DETAIL ME ADDRESS BOX - SHOP OWNER KO DIKHEGA -->
-<div id="customerAddressBox" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-top:12px">
-  Loading customer address...
+<!-- LOCATION: public/shop-templates/common/orders/order-detail.html - COMMON - FINAL - Step 1.2 -->
+<!-- CONTRACT: SHOP-DASHBOARD-COMMON-CONTRACT.md - Step 1.2 -->
+<!-- RULE: Ye page sirf dikhayega + us role ka button dikhayega jo uska kaam hai. Dusre ka button kabhi nahi dikhega. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Order Detail - SamanLive</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+body{background:#f8fafc;color:#0f172a;padding:12px;padding-bottom:100px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.back{width:38px;height:38px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;display:grid;place-items:center;cursor:pointer;font-size:16px}
+.card{background:#fff;border:1px solid #f1f5f9;border-radius:18px;padding:16px;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;font-size:13px}
+.row b{font-size:13px}
+.muted{color:#64748b;font-size:12px}
+.badge{display:inline-block;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:900;text-transform:uppercase}
+.b-placed{background:#fef9c3;color:#854d0e}
+.b-confirmed{background:#dbeafe;color:#1e40af}
+.b-packed{background:#e0e2fe;color:#4338ca}
+.b-picked{background:#ffedd5;color:#9a3412}
+.b-out_for_delivery{background:#cffafe;color:#155e75}
+.b-delivered{background:#dcfce7;color:#166534}
+.b-cancelled,.b-rejected{background:#fee2e2;color:#991b1b}
+.item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13px;align-items:center}
+.item img{width:36px;height:36px;border-radius:8px;object-fit:cover}
+.item:last-child{border-bottom:0}
+.btns{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #e2e8f0;padding:12px;display:flex;gap:10px;z-index:10}
+.btn{flex:1;padding:14px;border-radius:12px;border:none;font-weight:900;font-size:13px;cursor:pointer}
+.btn-dark{background:#0f172a;color:#fff}
+.btn-green{background:#16a34a;color:#fff}
+.btn-red{background:#fff;color:#dc2626;border:1.5px solid #fecaca}
+.btn-grey{background:#f1f5f9;color:#0f172a}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.timeline{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.t-step{font-size:11px;font-weight:800;padding:6px 10px;border-radius:20px;background:#f1f5f9;color:#94a3b8}
+.t-step.done{background:#dcfce7;color:#166534}
+.t-step.current{background:#0f172a;color:#fff}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px;font-size:12px;color:#92400e;margin-bottom:12px}
+.loading{text-align:center;padding:40px;color:#64748b}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="back" onclick="history.back()">←</div>
+  <div><b style="font-size:16px" id="orderIdText">Order...</b><div class="muted" id="orderDateText"></div></div>
+  <div style="margin-left:auto" id="orderStatusBadge"></div>
 </div>
+
+<div id="loadingBox" class="loading">Order load ho raha hai...</div>
+
+<div id="mainBox" style="display:none">
+
+  <div class="card">
+    <b style="font-size:14px">Items</b>
+    <div id="itemsList" style="margin-top:8px"></div>
+    <div class="row"><span>Total</span><b id="totalText">₹0</b></div>
+    <div class="row"><span>Payment</span><b id="paymentText">-</b></div>
+    <div class="row" id="commissionRow"><span>Commission (Admin)</span><b id="commissionText">₹0</b></div>
+    <div class="row" id="earningRow"><span>Shop ko milega</span><b id="earningText">₹0</b></div>
+  </div>
+
+  <div class="card">
+    <b style="font-size:14px">Delivery Address</b>
+    <div class="muted" style="margin-top:8px;line-height:1.6" id="addressText">-</div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <a id="callBtn" href="#" style="flex:1;text-align:center;background:#f1f5f9;padding:10px;border-radius:10px;text-decoration:none;color:#0f172a;font-weight:800;font-size:12px">📞 Call</a>
+      <a id="waBtn" href="#" target="_blank" style="flex:1;text-align:center;background:#dcfce7;padding:10px;border-radius:10px;text-decoration:none;color:#166534;font-weight:800;font-size:12px">💬 WhatsApp</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <b style="font-size:14px">Delivery</b>
+    <div class="muted" style="margin-top:8px" id="deliveryBoyText">Abhi assign nahi hua</div>
+    <div class="timeline" id="timelineBox"></div>
+  </div>
+
+  <div class="note" id="roleNote" style="display:none"></div>
+
+</div>
+
+<div class="btns" id="actionBtns"></div>
+
+<script src="../core/auth-core.js"></script>
+<script src="./order-detail.js"></script>
 <script>
-// order load ke baad
-function showCustomerAddress(order){
-  const addr = order.deliveryAddress || {};
-  const box = document.getElementById('customerAddressBox');
-  if(!box) return;
-  box.innerHTML = `
-    <h4 style="margin:0 0 8px 0;font-weight:900">📍 Delivery Address - Customer ka</h4>
-    <div style="font-size:14px;line-height:1.5">
-      <b>${addr.name||order.buyerId||'Customer'}</b><br>
-      📞 <a href="tel:${addr.phone||''}" style="color:#0ea5e9;font-weight:800">${addr.phone||'No phone'}</a><br>
-      🏠 ${addr.full||addr.fullAddress||addr.line1||order.addressText||'No address'}<br>
-      <small style="color:#64748b">${addr.city||''} ${addr.state||''} - ${addr.pincode||''}</small>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr.full||addr.line1||'')}', '_blank')" style="flex:1;padding:10px;background:#000;color:#fff;border:0;border-radius:10px;font-weight:800">📍 Open Maps</button>
-      <button onclick="window.open('https://wa.me/${(addr.phone||'').replace(/\\D/g,'')}', '_blank')" style="flex:1;padding:10px;background:#22c55e;color:#fff;border:0;border-radius:10px;font-weight:800">💬 WhatsApp</button>
-    </div>
-    <small style="display:block;margin-top:8px;color:#94a3b8">Order: ${order.orderId} • Buyer: ${order.buyerId}</small>
-  `;
-}
-// existing order fetch ke baad call karo: showCustomerAddress(order)
+// LOCATION: order-detail.html - inline - Step 1.2
+// KAAM: URL se orderId + role + id nikalna, detail laana, us role ka button dikhana
+(function(){
+  const API_BASE = window.API_BASE || window.location.origin;
+  const params = new URLSearchParams(location.search);
+  const orderId = params.get('orderId') || params.get('id') || '';
+  // Role URL se aayega - orders.html se aate waqt role=shop_owner bhejega
+  // Nahi aaya toh localStorage se uthayenge, phir bhi nahi toh shop_owner maanenge nahi - customer maanenge
+  const role = params.get('role') || localStorage.getItem('USER_ROLE') || 'customer';
+  const myId = params.get('id') || params.get('shopId') || localStorage.getItem('USER_ID') || localStorage.getItem('last_shopId') || '';
+
+  if(!orderId){
+    document.getElementById('loadingBox').innerText = 'Order ID nahi mili. Orders wale page se kholo.';
+    return;
+  }
+
+  function getHeaders(){
+    const token = (window.AuthCore && window.AuthCore.getToken && window.AuthCore.getToken()) || localStorage.getItem('TOKEN') || localStorage.getItem('token') || '';
+    return { 'Content-Type':'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) };
+  }
+
+  async function load(){
+    try{
+      const q = new URLSearchParams({ role, id: myId });
+      const res = await fetch(`${API_BASE}/api/common/orders/detail/${orderId}?${q}`, { headers: getHeaders() });
+      const data = await res.json();
+      if(!data.success) throw new Error(data.message || 'Order nahi mila');
+      render(data.order);
+    }catch(e){
+      document.getElementById('loadingBox').innerText = '❌ ' + e.message;
+    }
+  }
+
+  function render(order){
+    document.getElementById('loadingBox').style.display = 'none';
+    document.getElementById('mainBox').style.display = 'block';
+
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
+    set('orderIdText', '#' + order.orderId);
+    set('orderDateText', new Date(order.createdAt).toLocaleString('en-IN'));
+    set('orderStatusBadge', `<span class="badge b-${order.orderStatus}">${(order.orderStatus || 'placed').toUpperCase()}</span>`);
+    set('paymentText', `${order.paymentMode || order.paymentMethod || 'cod'} • ${order.paymentStatus || 'pending'}`);
+    set('totalText', '₹' + (order.totalAmount || order.total || 0));
+    set('commissionText', '₹' + (order.commissionAmount || 0));
+    set('earningText', '₹' + (order.supplierEarning || 0));
+
+    // Commission / Earning sirf Shop / Admin ko dikhega, Customer / Delivery Boy ko nahi
+    if(role === 'customer' || role === 'delivery_boy'){
+      document.getElementById('commissionRow').style.display = 'none';
+      document.getElementById('earningRow').style.display = 'none';
+    }
+
+    const a = order.deliveryAddress || {};
+    set('addressText', `${a.name || ''} • ${a.phone || ''}<br>${a.full || a.line1 || ''} ${a.line2 || ''}<br>${a.city || ''} ${a.state || ''} - ${a.pincode || ''}`);
+
+    set('itemsList', (order.items || []).map(i => `
+      <div class="item">
+        <span style="display:flex;gap:8px;align-items:center">${i.image ? `<img src="${i.image}">` : ''}${i.name} x ${i.qty || i.quantity || 1}</span>
+        <b>₹${(i.price || 0) * (i.qty || i.quantity || 1)}</b>
+      </div>
+    `).join('') || '<div class="muted">Koi item nahi</div>');
+
+    set('deliveryBoyText', order.deliveryBoyId ? `Assigned: ${order.deliveryBoyId}` : 'Abhi delivery boy assign nahi hua - Step 4 me automatic hoga');
+
+    // Timeline
+    const steps = ['placed','confirmed','packed','picked','out_for_delivery','delivered'];
+    const idx = steps.indexOf(order.orderStatus);
+    set('timelineBox', steps.map((s,i) => `<span class="t-step ${idx>=0 && i<=idx ? 'done' : ''} ${s===order.orderStatus ? 'current' : ''}">${s}</span>`).join(''));
+
+    // Call / WhatsApp - sirf Shop / Delivery Boy ko dikhega, Customer ko apna hi number dikhane ka matlab nahi
+    const phone = (a.phone || '').toString().replace(/\D/g,'').slice(-10);
+    if(phone && (role === 'shop_owner' || role === 'delivery_boy')){
+      document.getElementById('callBtn').href = `tel:${phone}`;
+      document.getElementById('waBtn').href = `https://wa.me/91${phone}?text=${encodeURIComponent(`Hi, aapka order ${order.orderId} ke baare me baat karni hai`)}`;
+    } else {
+      document.getElementById('callBtn').style.display = 'none';
+      document.getElementById('waBtn').style.display = 'none';
+    }
+
+    // ===== BUTTONS - JO JISKA KAAM HAI, SIRF USI KO DIKHEGA =====
+    const box = document.getElementById('actionBtns');
+    const note = document.getElementById('roleNote');
+    let btns = '';
+
+    if(role === 'shop_owner'){
+      if(order.orderStatus === 'placed'){
+        btns = `<button class="btn btn-green" onclick="changeStatus('confirmed')">✅ Accept</button><button class="btn btn-red" onclick="changeStatus('rejected')">❌ Reject</button>`;
+      } else if(order.orderStatus === 'confirmed'){
+        btns = `<button class="btn btn-dark" onclick="changeStatus('packed')">📦 Packed Kar Diya</button>`;
+      } else {
+        btns = `<button class="btn btn-grey" disabled>Shop ka kaam khatam - Ab Delivery Boy ka kaam hai</button>`;
+      }
+    } else if(role === 'delivery_boy'){
+      if(order.orderStatus === 'packed'){
+        btns = `<button class="btn btn-dark" onclick="changeStatus('picked')">🛵 Picked - Utha Liya</button>`;
+      } else if(order.orderStatus === 'picked'){
+        btns = `<button class="btn btn-dark" onclick="changeStatus('out_for_delivery')">🚀 Nikal Gaya</button>`;
+      } else if(order.orderStatus === 'out_for_delivery'){
+        btns = `<button class="btn btn-green" onclick="changeStatus('delivered')">✅ Delivered - De Diya</button>`;
+      } else {
+        btns = `<button class="btn btn-grey" disabled>Ye order abhi tumhara nahi hai</button>`;
+      }
+    } else if(role === 'customer'){
+      if(order.orderStatus === 'placed'){
+        btns = `<button class="btn btn-red" onclick="changeStatus('cancelled')">❌ Cancel Order</button>`;
+      } else {
+        btns = `<button class="btn btn-grey" disabled>Order ${order.orderStatus} - Cancel nahi hoga</button>`;
+      }
+    } else if(role === 'area_manager' || role === 'area-manager'){
+      note.style.display = 'block';
+      note.innerText = 'Area Manager - Sirf record dekh rahe ho. Order ka status tum nahi badloge.';
+      btns = `<button class="btn btn-grey" disabled>Sirf Dekh Rahe Ho - Koi Button Nahi</button>`;
+    } else if(role === 'admin'){
+      note.style.display = 'block';
+      note.innerText = 'Admin - Sirf details dekh rahe ho. Order ka status tum nahi badloge.';
+      btns = `<button class="btn btn-grey" disabled>Sirf Details - Koi Button Nahi</button>`;
+    }
+    box.innerHTML = btns;
+    window._currentOrder = order;
+  }
+
+  window.changeStatus = async function(newStatus){
+    const order = window._currentOrder;
+    if(!order) return;
+    if(!confirm(`Status badalna hai - ${order.orderStatus} -> ${newStatus} ?`)) return;
+    try{
+      const res = await fetch(`${API_BASE}/api/common/orders/${order.orderId}/status`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ role, userId: myId, newStatus })
+      });
+      const data = await res.json();
+      if(!data.success) throw new Error(data.message || 'Status fail');
+      alert('✅ Ho gaya - ' + newStatus);
+      load();
+    }catch(e){ alert('❌ ' + e.message); }
+  };
+
+  load();
+})();
 </script>
+</body>
+</html>
