@@ -1,8 +1,9 @@
-<!-- LOCATION: public/shop-templates/achar-shop/dashboard.html - FULL - PRODUCT-FORM + COMMON PROFILE - V4 -->
-<!-- RULE: Design same hai. Product ka apna modal Dashboard me NAHI hoga. Profile = COMMON UNIFIED PROFILE (V23). Koi button / rang / layout nahi badla. -->
+<!-- LOCATION: public/shop-templates/achar-shop/dashboard.html - FULL - PRODUCT-FORM + COMMON PROFILE - V5 -->
+<!-- RULE: Design same hai. Product ka apna modal Dashboard me NAHI hoga. Profile = COMMON UNIFIED PROFILE (V24). Koi button / rang / layout nahi badla. -->
 <!-- COMMON: api-core + auth-core + socket-core + storage-core + error-handler + dashboard-core + shop-toggle + share + whatsapp + qr + notifications + orders + WORLD PRODUCT-MANAGER + inventory + wallet + UNIFIED PROFILE + settings + location + reviews -->
 <!-- PRODUCT-FORM: Add / Edit / Quick Add = ../common/products/product-form.html?type=achar-shop - Dashboard me addModal / quickAddModal DELETE kar diye hain -->
 <!-- PROFILE: 3 ALAG PHOTO - shop_logo -> logo, shop_cover -> banner, shop_owner -> ownerPhotoUrl - teeno alag input, alag ID -->
+<!-- RULE V5: shopId SIRF URL se aayega. Is file me koi bhi browser storage use NAHI hoga. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -352,21 +353,19 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <script src="../common/settings/settings.js"></script>
 <script src="../common/reviews/reviews.js"></script>
 
-<!-- COMMON BRIDGE - Achar Dashboard ko Common se jodta hai - dashboard.js se pehle chalega -->
+<!-- COMMON BRIDGE - V5 - Achar Dashboard ko Common se jodta hai - dashboard.js se pehle chalega -->
+<!-- RULE V5: shopId SIRF URL se aayega. Browser storage me shopId kabhi save / load NAHI hoga. -->
 <script>
 (function(){
   var p = new URLSearchParams(location.search);
-  var shopId = p.get('shopId') || p.get('id') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
+  // shopId SIRF URL se - kahi aur se NAHI. V4 me yahan browser storage se uthata tha, wahi dhokha tha.
+  var shopId = p.get('shopId') || p.get('id') || '';
   window.SHOP_ID = shopId;
   window.shopId = shopId;
   window.SHOP_TYPE = 'achar-shop';
   window.USER_ROLE = 'shop_owner';
   window.API_BASE = window.API_BASE || location.origin;
-  if (shopId) {
-    localStorage.setItem('last_shopId', shopId);
-    localStorage.setItem('shopId', shopId);
-    localStorage.setItem('USER_ROLE', 'shop_owner');
-  }
+  // NO SAVE - shopId / USER_ROLE ko browser storage me kabhi save NAHI karenge. Sirf RAM me rakhenge.
   // WORLD PRODUCT MANAGER ko shopId + shopType de do
   // Product Manager apne constructor me URL se shopId leta hai, par Dashboard ke URL me type nahi hota
   // Isliye yahan set karna zaroori hai, warna wo kirana (default) ka maal mangega

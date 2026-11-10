@@ -1,9 +1,10 @@
-<!-- LOCATION: public/shop-templates/achar-shop/customer-view.html - FULL - PRODUCT-FORM + COMMON PROFILE - V4 -->
+<!-- LOCATION: public/shop-templates/achar-shop/customer-view.html - FULL - PRODUCT-FORM + COMMON PROFILE - V5 -->
 <!-- RULE: Customer = Dekhega + Cart me dalega + Common Checkout pe jayega. Yahan Accept / Packed ka button kabhi nahi hoga. -->
 <!-- COMMON: api-core + auth-core + storage-core + socket-core + WORLD PRODUCT-MANAGER + UNIFIED PROFILE + cart-core + cart-count + shop-toggle/status + wishlist + reviews + share + location + common/checkout + common/customer-orders/my-orders + product-detail -->
 <!-- PRODUCT-FORM: Product = WORLD MODEL se aayega - /api/world-products?shopType=achar-shop - Achar API se nahi -->
 <!-- PROFILE: Shop ka Logo / Banner / Owner Photo / Naam / Address / Phone / Timing / Gallery = COMMON PROFILE se aayega - /api/common/profile/me?role=shop_owner&shopId=XXX - Achar API se nahi -->
-<!-- FIX: Pehle wali me customer-view.js + inline JS dono the - double Add hota tha. Ab sirf customer-view.js chalega. -->
+<!-- FIX V5: Pehle wali me customer-view.js + inline JS dono the - double Add hota tha. Ab sirf customer-view.js chalega. -->
+<!-- FIX V5 NO BROWSER STORAGE: shopId SIRF URL se aayega. Browser storage me shopId kabhi save / load NAHI hoga. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -156,20 +157,19 @@ COD available • Free Delivery • SamanLive
 <script src="../common/share/qr-share.js"></script>
 <script src="../common/components/product-card.js"></script>
 
-<!-- COMMON BRIDGE - sirf shopId / role / WorldProductManager set karega - Product / Cart / Profile ka kaam customer-view.js karega -->
+<!-- COMMON BRIDGE - V5 - sirf shopId / role / WorldProductManager set karega - Product / Cart / Profile ka kaam customer-view.js karega -->
+<!-- RULE V5: shopId SIRF URL se aayega. Browser storage me shopId kabhi save / load NAHI hoga. -->
 <script>
 (function(){
   var p = new URLSearchParams(location.search);
-  var shopId = p.get('shopId') || p.get('id') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
+  // shopId SIRF URL se - kahi aur se NAHI. V4 me yahan browser storage se uthata tha, wahi dhokha tha.
+  var shopId = p.get('shopId') || p.get('id') || '';
   window.SHOP_ID = shopId;
   window.shopId = shopId;
   window.SHOP_TYPE = 'achar-shop';
   window.USER_ROLE = 'customer';
   window.API_BASE = window.API_BASE || location.origin;
-  if (shopId) {
-    localStorage.setItem('last_shopId', shopId);
-    localStorage.setItem('shopId', shopId);
-  }
+  // NO SAVE - shopId ko browser storage me kabhi save NAHI karenge. Sirf RAM me rakhenge.
   // WORLD PRODUCT MANAGER ko shopId + shopType de do
   // Product Manager apne constructor me URL se shopId leta hai, par Customer ke URL me type nahi hota
   // Isliye yahan set karna zaroori hai, warna wo kirana (default) ka maal mangega
@@ -180,6 +180,9 @@ COD available • Free Delivery • SamanLive
   // Cart ko shopId de do - warna Cart dusri dukaan ka maal dikhayega
   try{ if (window.CartCore) window.CartCore.shopId = shopId; }catch(e){}
   try{ if (window.CartCount) window.CartCount.shopId = shopId; }catch(e){}
+  if(!shopId){
+    console.warn('[CUSTOMER-VIEW V5] shopId missing - URL me ?shopId=XXX hona chahiye. Shop List / Share Link se dobara kholo.');
+  }
 })();
 </script>
 

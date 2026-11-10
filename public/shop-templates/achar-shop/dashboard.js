@@ -1,5 +1,5 @@
-// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - PRODUCT-FORM + COMMON PROFILE - V4
-// RULE: Product = WORLD MODEL. Order = Common Order. Profile = COMMON UNIFIED PROFILE (V23).
+// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - PRODUCT-FORM + COMMON PROFILE - V5
+// RULE: Product = WORLD MODEL. Order = Common Order. Profile = COMMON UNIFIED PROFILE (V24).
 // PRODUCT-FORM: Add / Edit / Quick Add = ../common/products/product-form.html - Dashboard me apna modal NAHI hoga
 // PROFILE: Photo = UnifiedProfile.handleFileInput() -> /api/common/profile/upload-avatar -> Cloudinary -> Shop model
 //          Details = PUT /api/common/profile/shop/{shopId} -> Shop model - Achar /settings pe KABHI NAHI
@@ -7,16 +7,30 @@
 // COMMON: WorldProductManager = /api/world-products + /api/common/orders/list + /api/common/orders/:id/status + /api/common/checkout/:shopId/place + /api/common/shop-toggle + /api/common/profile/me + /api/common/profile/shop/:shopId
 // READ RULE: price500 = p.price500 || p.extraData?.price500 || p.price | image = p.thumbnail || p.image || p.extraData?.thumbnail
 //            logo = shop.logo || shop.shopLogo | banner = shop.banner || shop.coverPhoto | ownerPhoto = shop.ownerPhotoUrl
+// RULE V5: shopId SIRF URL se aayega. Is file me koi bhi browser storage use NAHI hoga.
 
 (function () {
   var params = new URLSearchParams(location.search);
-  var shopId = params.get('shopId') || params.get('id') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
+  // shopId SIRF URL se - kahi aur se NAHI. V4 me yahan browser storage se uthata tha, wahi dhokha tha.
+  var shopId = params.get('shopId') || params.get('id') || '';
   window.SHOP_ID = shopId;
   window.shopId = shopId;
   window.SHOP_TYPE = 'achar-shop';
   var ROLE = 'shop_owner';
   var API = window.API_BASE || location.origin;
   var SHOP_TYPE = 'achar-shop';
+
+  // Token / userId SIRF AuthCore se - browser storage se NAHI
+  function getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  function getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  function getBuyerId(){ return getUserId(); }
 
   var shopData = {};
   var allProducts = [];
@@ -35,8 +49,11 @@
     clearTimeout(t._h); t._h = setTimeout(function () { t.style.display = 'none'; }, 2800);
   }
   function getHeaders() {
-    var token = (window.AuthCore && window.AuthCore.getToken && window.AuthCore.getToken()) || localStorage.getItem('TOKEN') || localStorage.getItem('token') || '';
-    return { 'Content-Type': 'application/json', 'x-shop-id': shopId, 'x-role': ROLE, ...(token ? { 'Authorization': 'Bearer ' + token } : {}) };
+    var token = getToken();
+    return { 'Content-Type': 'application/json', 'x-shop-id': shopId, 'x-role': ROLE, 'x-buyer-id': getUserId(), ...(token ? { 'Authorization': 'Bearer ' + token } : {}) };
+  }
+  function getProfileHeaders() {
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken(), 'x-buyer-id': getUserId() };
   }
   function shopUrl() { return location.origin + '/shop-templates/achar-shop/customer-view.html?shopId=' + encodeURIComponent(shopId); }
   function returnUrl() { return location.href.split('?')[0] + '?shopId=' + encodeURIComponent(shopId); }
@@ -214,12 +231,12 @@
     } catch (e) {}
   }
 
-  // ================= SHOP PROFILE - COMMON UNIFIED PROFILE - V23 =================
+  // ================= SHOP PROFILE - COMMON UNIFIED PROFILE - V24 =================
   async function loadShopProfile() {
-    // 1. UnifiedProfile - sabse pehle, yahi asli Shop hai
+    // 1. UnifiedProfile - sabse pehle, yahi asli Shop hai - shopId deke bulayenge
     try {
       if (window.UnifiedProfile && window.UnifiedProfile.loadMyProfile) {
-        var prof = await window.UnifiedProfile.loadMyProfile();
+        var prof = await window.UnifiedProfile.loadMyProfile({ shopId: shopId, role: 'shop_owner', userId: getUserId() });
         if (prof && prof.success && (prof.shop || prof.user)) {
           shopData = Object.assign({}, shopData, prof.shop || prof.user);
           fillShopProfileUI();
@@ -227,10 +244,10 @@
         }
       }
     } catch (e) { console.warn('[achar] UnifiedProfile fail', e.message); }
-    // 2. Direct Common API
+    // 2. Direct Common API - HAMESHA Server se
     try {
-      var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
-      var buyerId = localStorage.getItem('USER_ID') || '';
+      var token = getToken();
+      var buyerId = getBuyerId();
       var res = await fetch(API + '/api/common/profile/me?buyerId=' + encodeURIComponent(buyerId) + '&role=shop_owner&shopId=' + encodeURIComponent(shopId), {
         headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId }
       });
@@ -241,15 +258,7 @@
         return shopData;
       }
     } catch (e) {}
-    // 3. Local cache - API fail ho toh bhi khaali na dikhe
-    try {
-      var local = JSON.parse(localStorage.getItem('shop_' + shopId) || '{}');
-      if (local && (local.shopName || local.name)) {
-        shopData = Object.assign({}, shopData, local);
-        fillShopProfileUI();
-        return shopData;
-      }
-    } catch (e) {}
+    // 3. NO Local cache - API fail ho toh bhi galat / purani dukaan nahi dikhayenge. Server se nahi mili toh khaali rahegi.
     return shopData;
   }
 
@@ -283,7 +292,7 @@
       if ($('openTime')) $('openTime').value = to24(shopData.timing.open || shopData.timing.openingTime || shopData.openTime || '09:00');
       if ($('closeTime')) $('closeTime').value = to24(shopData.timing.close || shopData.timing.closingTime || shopData.closeTime || '21:00');
     }
-    try { localStorage.setItem('shop_' + shopId, JSON.stringify(shopData)); } catch (e) {}
+    // NO CACHE - dobara kholne pe bhi Server se hi mangega
     window.SHOP_PROFILE = shopData;
   }
 
@@ -292,7 +301,7 @@
     if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
     if (!window.UnifiedProfile) return toast('Profile system load nahi hua - page refresh karo');
     var r = await window.UnifiedProfile.handleFileInput(inputEl, {
-      role: 'shop_logo', field: 'logo', type: 'logo', shopId: shopId,
+      role: 'shop_logo', field: 'logo', type: 'logo', shopId: shopId, userId: getUserId(),
       previewSelector: '#shopLogoPreview, #shopLogoImg',
       msgId: 'profileStatus'
     });
@@ -306,7 +315,7 @@
     if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
     if (!window.UnifiedProfile) return toast('Profile system load nahi hua - page refresh karo');
     var r = await window.UnifiedProfile.handleFileInput(inputEl, {
-      role: 'shop_cover', field: 'banner', type: 'banner', shopId: shopId,
+      role: 'shop_cover', field: 'banner', type: 'banner', shopId: shopId, userId: getUserId(),
       previewSelector: '#shopBannerPreview',
       msgId: 'profileStatus'
     });
@@ -320,7 +329,7 @@
     if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
     if (!window.UnifiedProfile) return toast('Profile system load nahi hua - page refresh karo');
     var r = await window.UnifiedProfile.handleFileInput(inputEl, {
-      role: 'shop_owner', field: 'ownerPhotoUrl', type: 'avatar', shopId: shopId,
+      role: 'shop_owner', field: 'ownerPhotoUrl', type: 'avatar', shopId: shopId, userId: getUserId(),
       previewSelector: '#ownerImg, #ownerImgBig',
       msgId: 'profileStatus'
     });
@@ -339,7 +348,7 @@
     return toast('Owner Photo badalne ke liye file chuno');
   };
   window.handleProfilePicChange = function (inputEl, role, previewSelector) {
-    if (window.UnifiedProfile) return window.UnifiedProfile.handleFileInput(inputEl, { role: role || 'shop_logo', shopId: shopId, previewSelector: previewSelector, msgId: 'profileStatus' });
+    if (window.UnifiedProfile) return window.UnifiedProfile.handleFileInput(inputEl, { role: role || 'shop_logo', shopId: shopId, userId: getUserId(), previewSelector: previewSelector, msgId: 'profileStatus' });
   };
 
   // --- COMMON PROFILE PAGES ---
@@ -699,11 +708,9 @@
     var val = $('announcementInput') ? $('announcementInput').value || '' : '';
     try {
       // Announcement bhi Common Profile me jayega - taaki Customer ko wahi dikhe
-      var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
-      var buyerId = localStorage.getItem('USER_ID') || '';
       var res = await fetch(API + '/api/common/profile/shop/' + encodeURIComponent(shopId), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId },
+        headers: getProfileHeaders(),
         body: JSON.stringify({ shopId: shopId, announcement: val, tagline: val })
       });
       var d = await res.json().catch(function () { return {}; });
@@ -711,7 +718,7 @@
         await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ announcement: val }) });
       }
       shopData.announcement = val; shopData.tagline = val;
-      try { localStorage.setItem('shop_' + shopId, JSON.stringify(shopData)); } catch (e) {}
+      // NO CACHE - dobara kholne pe bhi Server se hi mangega
       toast('Announcement save ho gaya');
     } catch (e) { toast('Save fail: ' + e.message); }
   }
@@ -735,11 +742,9 @@
     var phone = ($('shopPhoneInput') ? $('shopPhoneInput').value || '' : '').trim();
     if (!/^[6-9]\d{9}$/.test(phone)) return toast('Sahi 10 digit phone likho');
     try {
-      var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
-      var buyerId = localStorage.getItem('USER_ID') || '';
       var res = await fetch(API + '/api/common/profile/shop/' + encodeURIComponent(shopId), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId },
+        headers: getProfileHeaders(),
         body: JSON.stringify({ shopId: shopId, phone: phone, ownerPhone: phone, whatsapp: phone })
       });
       var d = await res.json().catch(function () { return {}; });
@@ -747,7 +752,7 @@
         await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ phone: phone }) });
       }
       shopData.phone = phone; shopData.ownerPhone = phone;
-      try { localStorage.setItem('shop_' + shopId, JSON.stringify(shopData)); } catch (e) {}
+      // NO CACHE - dobara kholne pe bhi Server se hi mangega
       if ($('phoneStatus')) $('phoneStatus').textContent = 'Number save ho gaya: ' + phone;
       toast('Number save ho gaya');
     } catch (e) { toast('Save fail: ' + e.message); }
@@ -778,12 +783,10 @@
       tagline: $('announcementInput') ? $('announcementInput').value || '' : (shopData.tagline || '')
     };
     try {
-      var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
-      var buyerId = localStorage.getItem('USER_ID') || '';
       // 1. Common Profile - asli save yahin hoga
       var res = await fetch(API + '/api/common/profile/shop/' + encodeURIComponent(shopId), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId },
+        headers: getProfileHeaders(),
         body: JSON.stringify(payload)
       });
       var d = await res.json().catch(function () { return {}; });
@@ -794,7 +797,7 @@
         if (!res2.ok || (d2.success === false)) throw new Error((d && d.message) || (d2 && d2.message) || 'Save fail');
       }
       Object.assign(shopData, payload);
-      try { localStorage.setItem('shop_' + shopId, JSON.stringify(shopData)); } catch (e) {}
+      // NO CACHE - dobara kholne pe bhi Server se hi mangega
       fillShopProfileUI();
       if ($('profileStatus')) $('profileStatus').textContent = '✅ Profile save ho gaya - Customer ko dikhega';
       toast('Profile save ho gaya');
@@ -829,10 +832,9 @@
         await window.LocationCore.save(shopId, payload);
       } else {
         // Location bhi Common Profile me jayegi - taaki Nearby Shops me sahi location jaye
-        var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
         var res = await fetch(API + '/api/common/profile/shop/' + encodeURIComponent(shopId), {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          headers: getProfileHeaders(),
           body: JSON.stringify(Object.assign({ shopId: shopId }, payload))
         });
         var d = await res.json().catch(function () { return {}; });
@@ -841,7 +843,7 @@
         }
       }
       Object.assign(shopData, payload);
-      try { localStorage.setItem('shop_' + shopId, JSON.stringify(shopData)); } catch (e) {}
+      // NO CACHE - dobara kholne pe bhi Server se hi mangega
       if ($('locationStatus')) $('locationStatus').textContent = 'Location save ho gayi';
       toast('Location save ho gayi');
     } catch (e) { toast('Location fail: ' + e.message); }

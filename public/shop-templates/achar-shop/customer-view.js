@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/achar-shop/customer-view.js - FULL - PRODUCT-FORM + COMMON PROFILE - V4
+// LOCATION: public/shop-templates/achar-shop/customer-view.js - FULL - PRODUCT-FORM + COMMON PROFILE - V5
 // RULE: Customer = Dekhega + Cart me dalega + Common Checkout pe jayega. Yahan Accept / Packed ka button kabhi nahi hoga.
 // COMMON: WorldProductManager.getProducts = /api/world-products + cart-core + cart-count + api-core + shop-toggle/status + UNIFIED PROFILE + wishlist + reviews + share + common/checkout + common/customer-orders/my-orders + common/products/product-detail.html
 // PRODUCT-FORM: Product = WORLD MODEL se hi aayega. Seed / Achar API se nahi. Seed sirf Product Form ke Quick Add ke liye hai.
@@ -6,6 +6,7 @@
 // READ RULE: price500 = p.price500 || p.extraData?.price500 || p.price | image = p.thumbnail || p.image || p.extraData?.thumbnail
 //            logo = shop.logo || shop.shopLogo | banner = shop.banner || shop.coverPhoto | ownerPhoto = shop.ownerPhotoUrl
 // HTML: customer-view.html me isko <script src="customer-view.js"></script> se load karna hai - INLINE ME DOBARA MAT LIKHNA
+// RULE V5: shopId SIRF URL se aayega. Is file me koi bhi browser storage use NAHI hoga. Cart sirf CartCore se, nahi toh RAM wali cart se.
 
 (function(){
   // Double load guard - agar ye file 2 baar load ho gayi toh Add 2 baar na chale
@@ -14,12 +15,24 @@
 
   var API = window.API_BASE || location.origin;
   var params = new URLSearchParams(location.search);
-  var shopId = params.get('shopId') || params.get('id') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
+  // shopId SIRF URL se - kahi aur se NAHI. V4 me yahan browser storage se uthata tha, wahi dhokha tha.
+  var shopId = params.get('shopId') || params.get('id') || '';
   window.SHOP_ID = shopId;
   window.shopId = shopId;
   window.SHOP_TYPE = 'achar-shop';
   var SHOP_TYPE = 'achar-shop';
-  if (shopId) { localStorage.setItem('last_shopId', shopId); localStorage.setItem('shopId', shopId); }
+  // NO SAVE - shopId ko browser storage me kabhi save NAHI karenge. Sirf RAM me rakhenge.
+
+  // Token / userId SIRF AuthCore se - browser storage se NAHI
+  function getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  function getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
 
   var shopData = {};
   var allProducts = [];
@@ -27,6 +40,7 @@
   var activeCat = 'All';
   var shopOpen = true;
   var selectedSize = {}; // productId -> '500g' ya '1kg' - Card pe jo select karega wahi Cart me jayega
+  var ramCart = []; // CartCore nahi hai toh RAM wali cart - refresh pe udd jayegi, par dusri dukaan ka maal kabhi mix nahi hoga
 
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -120,19 +134,18 @@
   //       Kyunki Dukaandaar ne Photo Common Profile pe save ki hai, Achar API pe nahi
   async function loadShopProfileForCustomer(){
     var shop = null;
-    // 1. Common Profile - asli Shop - UnifiedProfile se bhi try karo, direct API se bhi
+    // 1. Common Profile - asli Shop - UnifiedProfile V24 ko shopId deke bulayenge
     try{
       if (window.UnifiedProfile && window.UnifiedProfile.loadMyProfile) {
-        // UnifiedProfile apne getIds() se shopId uthata hai - localStorage me pehle se set hai
-        var prof = await window.UnifiedProfile.loadMyProfile();
+        var prof = await window.UnifiedProfile.loadMyProfile({ shopId: shopId, role: 'shop_owner', userId: getUserId() });
         if (prof && prof.success && (prof.shop || prof.user)) shop = prof.shop || prof.user;
       }
     }catch(e){}
-    // 2. Direct Common API - UnifiedProfile na chale toh
+    // 2. Direct Common API - UnifiedProfile na chale toh - HAMESHA Server se
     if (!shop) {
       try{
-        var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
-        var buyerId = localStorage.getItem('USER_ID') || '';
+        var token = getToken();
+        var buyerId = getUserId();
         var res = await fetch(API + '/api/common/profile/me?buyerId=' + encodeURIComponent(buyerId) + '&role=shop_owner&shopId=' + encodeURIComponent(shopId), {
           headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId }
         });
@@ -140,13 +153,7 @@
         if (data && data.success && (data.shop || data.user)) shop = data.shop || data.user;
       }catch(e){}
     }
-    // 3. Local cache - API fail ho toh bhi khaali na dikhe - Dashboard ne save kiya hoga
-    if (!shop) {
-      try{
-        var local = JSON.parse(localStorage.getItem('shop_' + shopId) || '{}');
-        if (local && (local.shopName || local.name)) shop = local;
-      }catch(e){}
-    }
+    // 3. NO Local cache - API fail ho toh bhi galat / purani dukaan nahi dikhayenge. Server se nahi mili toh khaali rahegi.
     // 4. Last fallback - Purana Achar route - sirf naam ke liye, Photo ke liye nahi
     if (!shop) {
       try{
@@ -158,8 +165,7 @@
     if (!shop) return;
     shopData = shop;
     renderShopProfileForCustomer(shop);
-    // Customer ke liye bhi cache kar do - dobara khole toh turant dikhe
-    try{ localStorage.setItem('shop_' + shopId, JSON.stringify(shop)); }catch(e){}
+    // NO CACHE - Customer ke liye bhi browser storage me shop cache NAHI karenge. Dobara khole toh Server se hi mangega.
   }
 
   function renderShopProfileForCustomer(shop){
@@ -262,19 +268,19 @@
     renderProducts();
   }
 
-  // ---------- CART - COMMON ----------
-  function cartKey(){ return 'cart_' + shopId; }
+  // ---------- CART - COMMON - V5 - CartCore ya RAM wali cart - browser storage NAHI ----------
   function getCart(){
     try{
       if(window.CartCore && window.CartCore.getCart) {
         var c1 = window.CartCore.getCart() || [];
-        if (c1.length && c1[0] && c1[0].shopId && String(c1[0].shopId) !== String(shopId)) { /* dusri dukaan ka hai - local wala lo */ }
-        else return c1;
+        // Dusri dukaan ka hai toh usko mat lo - RAM wali cart lo
+        if (c1.length && c1[0] && c1[0].shopId && String(c1[0].shopId) !== String(shopId)) { return ramCart; }
+        return c1;
       }
     }catch(e){}
-    try{ return JSON.parse(localStorage.getItem(cartKey()) || '[]'); }catch(e){ return []; }
+    return ramCart;
   }
-  function saveLocalCart(c){ try{ localStorage.setItem(cartKey(), JSON.stringify(c)); }catch(e){} }
+  function saveLocalCart(c){ ramCart = c || []; }
   function cartQtyFor(id, size){
     var c = getCart();
     var f = c.find(function(x){ return String(x._id || x.id || x.productId) === String(id) && (size ? String(x.size || '500g') === String(size) : true); });
