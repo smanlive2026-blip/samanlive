@@ -1,4 +1,6 @@
-<!-- LOCATION: public/shop-templates/common/profile/shop-gallery.html - V23 UNIFIED - FULL CODE -->
+<!-- LOCATION: public/shop-templates/common/profile/shop-gallery.html - V24 - UNIFIED - FULL CODE -->
+<!-- RULE: Gallery = Server + Cloudinary se hi aayegi. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- FLOW: Load -> /api/common/profile/me?role=shop_owner&shopId=URL se -> Gallery render -> Add Photo -> UnifiedProfile V24 -> Cloudinary -> Server -> dobara Server se Load -->
 <div id="shopGalleryRoot" style="padding:16px">
   <div style="display:flex;align-items:center;gap:12px">
     <button onclick="history.back()" style="width:36px;height:36px;border:none;border-radius:50%;background:#f1f5f9;font-size:20px;font-weight:900;cursor:pointer">‹</button>
@@ -19,38 +21,81 @@
 <script src="/shop-templates/common/profile/profile-core.js"></script>
 <script>
 (function(){
-  let shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || '';
-  async function loadGallery(){
+  // shopId SIRF URL se - kahi aur se NAHI
+  let shopId = new URLSearchParams(location.search).get('shopId') || '';
+
+  function getToken(){
     try{
-      const token = localStorage.getItem('TOKEN') || '';
-      const res = await fetch(`/api/common/profile/me?role=shop_owner&shopId=${shopId}`, { headers: { 'Authorization': 'Bearer ' + token } }).then(r=>r.json()).catch(()=>null);
+      if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || '';
+    }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  function getUserId(){
+    try{
+      if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || '';
+    }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+
+  async function loadGallery(){
+    if(!shopId){
+      const msg = document.getElementById('galleryMsg');
+      if(msg){ msg.textContent = 'Shop not found - shopId missing hai. URL me ?shopId=XXX hona chahiye. Dashboard / Shop List se dobara kholo.'; msg.style.color = 'red'; }
+      renderGallery([]);
+      return;
+    }
+    try{
+      const token = getToken();
+      const buyerId = getUserId();
+      // Try 1: UnifiedProfile - opts me shopId deke - HAMESHA Server se
+      if(window.UnifiedProfile){
+        try{
+          const prof = await window.UnifiedProfile.loadMyProfile({ shopId: shopId, role: 'shop_owner', userId: buyerId });
+          if(prof && prof.success && (prof.shop || prof.user)){
+            const shop = prof.shop || prof.user;
+            const gallery = shop.gallery || shop.shopImages || [];
+            renderGallery(gallery);
+            return;
+          }
+        }catch(e){}
+      }
+      // Try 2: Direct API - HAMESHA Server se
+      const res = await fetch(`/api/common/profile/me?buyerId=${encodeURIComponent(buyerId)}&role=shop_owner&shopId=${encodeURIComponent(shopId)}`, { headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId } }).then(r=>r.json()).catch(()=>null);
       const shop = res?.shop || res?.user || {};
       const gallery = shop.gallery || shop.shopImages || [];
       renderGallery(gallery);
-    }catch(e){}
-    // Local fallback
-    try{
-      const local = JSON.parse(localStorage.getItem(`shop_${shopId}`) || '{}');
-      if(local.gallery) renderGallery(local.gallery);
-    }catch(e){}
+    }catch(e){
+      renderGallery([]);
+    }
+    // NO Local fallback - Server se nahi mili toh khaali dikhega, galat / purani photo nahi dikhegi.
+    // Mobile me dikh rahi hai, Laptop me nahi - wala dhokha ab khatam.
   }
+
   function renderGallery(list){
     const grid = document.getElementById('galleryGrid');
     if(!grid) return;
     if(!list || list.length === 0){ grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#94a3b8;font-size:13px">Abhi koi photo nahi hai</div>'; return; }
     grid.innerHTML = list.map(u => `<img src="${u}" style="width:100%;height:110px;object-fit:cover;border-radius:10px">`).join('');
   }
+
   document.addEventListener('DOMContentLoaded', () => {
     loadGallery();
     const input = document.getElementById('galleryInput');
     if(input){
       input.addEventListener('change', async () => {
         if(!input.files[0]) return;
-        const r = await window.UnifiedProfile.handleFileInput(input, { role: 'shop_gallery', field: 'gallery', type: 'gallery', shopId: shopId, previewSelector: '#galleryPreview', msgId: 'galleryMsg' });
+        if(!shopId){
+          const msg = document.getElementById('galleryMsg');
+          if(msg) msg.textContent = 'shopId nahi mila - URL me ?shopId=XXX hona chahiye.';
+          return;
+        }
+        const r = await window.UnifiedProfile.handleFileInput(input, { role: 'shop_gallery', field: 'gallery', type: 'gallery', shopId: shopId, userId: getUserId(), previewSelector: '#galleryPreview', msgId: 'galleryMsg' });
         if(r && r.success){
           const img = document.getElementById('galleryPreview');
           if(img){ img.src = r.url; img.style.display = 'block'; }
-          loadGallery();
+          // Server me save hui ya nahi, dobara Server se mang ke verify karo
+          await loadGallery();
         }
       });
     }

@@ -1,17 +1,43 @@
-// LOCATION: public/shop-templates/common/profile/shop-info.js - V23 UNIFIED - FULL CODE - NO CUT
+// LOCATION: public/shop-templates/common/profile/shop-info.js - V24 - UNIFIED - FULL CODE - NO CUT
 // FLOW: Load -> /api/common/profile/me?role=shop_owner -> Fill -> Logo/Cover/Owner Photo -> UnifiedProfile -> Cloudinary -> Save Info
+// RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Base64 sirf preview ke liye.
+// RULE 2: Is file me koi bhi browser storage use NAHI hoga. Sab kuch Server + Cloudinary se aayega.
+//         shopId = sirf URL se. token = sirf AuthCore se. userId = sirf AuthCore / currentUser se.
+//         Load hamesha Server se hoga. Save hamesha Server pe hoga. Save ke baad dobara Server se verify hoga.
 
 class ShopInfoCore {
   constructor(){
-    this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
-    if(this.shopId){ localStorage.setItem('last_shopId', this.shopId); localStorage.setItem('shopId', this.shopId); }
+    // shopId SIRF URL se - kahi aur se NAHI
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.shop = null;
     this.newLogoUrl = '';
     this.newCoverUrl = '';
     this.newOwnerPhotoUrl = '';
   }
 
+  getToken(){
+    try{
+      if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || '';
+    }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+
+  getUserId(){
+    try{
+      if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || '';
+    }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+
   async init(){
+    // shopId nahi hai toh form khulega hi nahi - galat dukaan ka form kabhi nahi bharega
+    if(!this.shopId){
+      const msg = document.getElementById('shopInfoMsg');
+      if(msg){ msg.textContent = 'Shop not found - shopId missing hai. URL me ?shopId=XXX hona chahiye. Dashboard / Shop List se dobara kholo.'; msg.style.color = 'red'; }
+      return;
+    }
+
     // Save button
     const saveBtn = document.getElementById('saveShopInfoBtn');
     if(saveBtn) saveBtn.onclick = () => this.handleSave();
@@ -21,8 +47,13 @@ class ShopInfoCore {
     if(logoInput){
       logoInput.addEventListener('change', async () => {
         if(!logoInput.files[0]) return;
-        const r = await window.UnifiedProfile.handleFileInput(logoInput, { role: 'shop_logo', field: 'logo', type: 'logo', shopId: this.shopId, previewSelector: '#shopInfoLogoPreview', msgId: 'shopInfoMsg' });
-        if(r && r.success) this.newLogoUrl = r.url;
+        const r = await window.UnifiedProfile.handleFileInput(logoInput, { role: 'shop_logo', field: 'logo', type: 'logo', shopId: this.shopId, userId: this.getUserId(), previewSelector: '#shopInfoLogoPreview', msgId: 'shopInfoMsg' });
+        if(r && r.success){
+          this.newLogoUrl = r.url;
+          // Verify - Server me save hui ya nahi, dobara Server se mang ke dekho
+          await this.loadShop();
+          this.fillForm();
+        }
       });
     }
     // Cover input
@@ -30,8 +61,12 @@ class ShopInfoCore {
     if(coverInput){
       coverInput.addEventListener('change', async () => {
         if(!coverInput.files[0]) return;
-        const r = await window.UnifiedProfile.handleFileInput(coverInput, { role: 'shop_cover', field: 'banner', type: 'banner', shopId: this.shopId, previewSelector: '#shopInfoCoverPreview', msgId: 'shopInfoMsg' });
-        if(r && r.success) this.newCoverUrl = r.url;
+        const r = await window.UnifiedProfile.handleFileInput(coverInput, { role: 'shop_cover', field: 'banner', type: 'banner', shopId: this.shopId, userId: this.getUserId(), previewSelector: '#shopInfoCoverPreview', msgId: 'shopInfoMsg' });
+        if(r && r.success){
+          this.newCoverUrl = r.url;
+          await this.loadShop();
+          this.fillForm();
+        }
       });
     }
     // Owner Photo input
@@ -39,8 +74,12 @@ class ShopInfoCore {
     if(ownerInput){
       ownerInput.addEventListener('change', async () => {
         if(!ownerInput.files[0]) return;
-        const r = await window.UnifiedProfile.handleFileInput(ownerInput, { role: 'shop_owner', field: 'ownerPhotoUrl', type: 'avatar', shopId: this.shopId, previewSelector: '#shopOwnerPhotoPreview', msgId: 'shopInfoMsg' });
-        if(r && r.success) this.newOwnerPhotoUrl = r.url;
+        const r = await window.UnifiedProfile.handleFileInput(ownerInput, { role: 'shop_owner', field: 'ownerPhotoUrl', type: 'avatar', shopId: this.shopId, userId: this.getUserId(), previewSelector: '#shopOwnerPhotoPreview', msgId: 'shopInfoMsg' });
+        if(r && r.success){
+          this.newOwnerPhotoUrl = r.url;
+          await this.loadShop();
+          this.fillForm();
+        }
       });
     }
 
@@ -50,30 +89,25 @@ class ShopInfoCore {
 
   async loadShop(){
     try{
-      // Try 1: UnifiedProfile
+      // Try 1: UnifiedProfile - opts me shopId deke
       if(window.UnifiedProfile){
         try{
-          const prof = await window.UnifiedProfile.loadMyProfile();
+          const prof = await window.UnifiedProfile.loadMyProfile({ shopId: this.shopId, role: 'shop_owner', userId: this.getUserId() });
           if(prof && prof.success && (prof.shop || prof.user)) this.shop = prof.shop || prof.user;
         }catch(e){}
       }
-      // Try 2: Direct API
+      // Try 2: Direct API - token AuthCore se
       if(!this.shop || !this.shop.shopName){
         try{
-          const token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
-          const buyerId = localStorage.getItem('USER_ID') || '';
+          const token = this.getToken();
+          const buyerId = this.getUserId();
           const res = await fetch(`/api/common/profile/me?buyerId=${encodeURIComponent(buyerId)}&role=shop_owner&shopId=${encodeURIComponent(this.shopId)}`, { headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId } });
           const data = await res.json();
           if(data.success && (data.shop || data.user)) this.shop = data.shop || data.user;
         }catch(e){}
       }
-      // Try 3: Local cache
-      if(!this.shop || !this.shop.shopName){
-        try{
-          const local = JSON.parse(localStorage.getItem(`shop_${this.shopId}`) || '{}');
-          if(local && (local.shopName || local.name)) this.shop = { ...local, shopName: local.shopName || local.name };
-        }catch(e){}
-      }
+      // NO Try 3 - Browser storage wala cache DELETE kar diya hai.
+      // Server se nahi mila toh form khaali rahega, galat / purana data nahi dikhega.
       return this.shop;
     }catch(e){ return null; }
   }
@@ -91,10 +125,10 @@ class ShopInfoCore {
     set('shopEmail', s.email);
     set('shopWhatsapp', s.whatsapp || s.phone);
     set('shopAddress', typeof s.address === 'string' ? s.address : (s.address?.line1 || ''));
-    set('shopArea', s.area);
+    set('shopArea', s.area || s.address?.area || '');
     set('shopCity', s.city || s.address?.city);
     set('shopPincode', s.address?.pincode || s.pincode);
-    set('shopLandmark', s.address?.line2);
+    set('shopLandmark', s.address?.line2 || s.landmark);
     set('shopGst', s.gst);
     set('shopFssai', s.fssai);
     set('shopEstYear', s.estYear);
@@ -163,34 +197,35 @@ class ShopInfoCore {
     }
 
     try{
-      const token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
-      const buyerId = localStorage.getItem('USER_ID') || '';
-      // Shop info update - /api/common/profile/me ke through nahi, direct shop update
+      const token = this.getToken();
+      const buyerId = this.getUserId();
+      // Shop info update - /api/common/profile/me ke through nahi, direct shop update - HAMESHA Server pe
       const res = await fetch(`/api/common/profile/shop/${this.shopId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId },
         body: JSON.stringify(data)
       }).then(r=>r.json()).catch(()=>null);
 
-      // Fallback - local save
+      // Fallback - sirf dusra Server route, browser storage wala save DELETE kar diya hai
       if(!res || !res.success){
-        // Agar route nahi hai toh /api/shops pe try karo
         const res2 = await fetch(`/api/shops/${this.shopId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId },
           body: JSON.stringify(data)
         }).then(r=>r.json()).catch(()=>null);
         if(!res2 || (!res2.success && !res2.shop)){
-          // Last fallback - local hi save kar do taaki dashboard update ho jaye
-          localStorage.setItem(`shop_${this.shopId}`, JSON.stringify({ ...(this.shop||{}), ...data }));
-          if(msg){ msg.textContent = '✅ Saved locally - Server route check karo'; msg.style.color = 'orange'; }
+          // Server me save nahi hua - chup-chap browser storage me save karke dhokha nahi denge
+          if(msg){ msg.textContent = '❌ Server me save nahi hua - dobara try karo. Server route check karo.'; msg.style.color = 'red'; }
           if(btn){ btn.textContent = '💾 Save'; btn.disabled = false; }
           return;
         }
       }
 
-      if(msg){ msg.textContent = '✅ Shop info saved!'; msg.style.color = 'green'; }
-      try{ localStorage.setItem(`shop_${this.shopId}`, JSON.stringify({ ...(this.shop||{}), ...data })); }catch(e){}
+      // Save ke baad turant Server se dobara mang ke verify karo - wahi asli data hai
+      await this.loadShop();
+      this.fillForm();
+
+      if(msg){ msg.textContent = '✅ Shop info saved! Server se verify ho gaya.'; msg.style.color = 'green'; }
       if(btn){ btn.textContent = '💾 Save'; btn.disabled = false; }
       setTimeout(()=>{ if(msg) msg.textContent = ''; }, 3000);
     }catch(e){

@@ -1,4 +1,6 @@
-<!-- LOCATION: public/shop-templates/common/profile/shop-info.html - V23 UNIFIED - FULL CODE -->
+<!-- LOCATION: public/shop-templates/common/profile/shop-info.html - V24 - UNIFIED - FULL CODE -->
+<!-- RULE: Shop Info = Server + Cloudinary se hi aayega. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- FLOW: Load -> /api/common/profile/me?role=shop_owner&shopId=URL se -> Fill -> Logo/Cover/Owner Photo -> UnifiedProfile V24 -> Cloudinary -> Save -> PUT /api/common/profile/shop/:shopId -->
 <div id="shopInfoRoot" class="shop-info-root">
   <div class="shop-info-header">
     <button id="shopInfoBack" class="back-btn" onclick="history.back()">‹</button>
@@ -6,7 +8,7 @@
     <button id="saveShopInfoBtn" class="save-btn" type="button">💾 Save</button>
   </div>
 
-  <!-- LOGO + COVER - YAHI SE BADLEGA - Cloudinary -->
+  <!-- LOGO + COVER - YAHI SE BADLEGA - Cloudinary - V24 me shopId URL se jayega -->
   <div style="display:flex;gap:14px;padding:14px;background:#f8fafc;border-radius:12px;margin:14px">
     <div style="text-align:center">
       <img id="shopInfoLogoPreview" src="/assets/default-avatar.png" style="width:80px;height:80px;border-radius:14px;object-fit:cover;border:2px solid #fff">
@@ -68,5 +70,6 @@
     </div>
   </div>
 </div>
+<!-- V24 - profile-core sabse pehle, phir shop-info.js - dono me browser storage NAHI hai -->
 <script src="/shop-templates/common/profile/profile-core.js"></script>
 <script src="/shop-templates/common/profile/shop-info.js"></script>

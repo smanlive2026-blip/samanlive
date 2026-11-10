@@ -1,5 +1,7 @@
-<!-- LOCATION: public/shop-templates/common/profile/shop-timing.html -->
+<!-- LOCATION: public/shop-templates/common/profile/shop-timing.html - V24 - UNIFIED - FULL CODE -->
 <!-- WORLD CLASS SHOP TIMING - SHOP OWNER ONLY - FULL 400+ LINES -->
+<!-- RULE: Timing = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- FLOW: Load -> GET /api/common/profile/:shopId/timing -> Fill -> Save -> PUT /api/common/profile/:shopId/timing -> dobara Server se Load -->
 <div id="timingRoot" class="timing-root">
   <div class="timing-header">
     <button id="timingBack" class="back-btn">‹</button>
@@ -145,13 +147,37 @@
 <script>
 class ShopTimingPage {
   constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.timing = null;
     this.holidays = [];
     this.weeklySchedule = {};
   }
 
+  getToken(){
+    try{
+      if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || '';
+    }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+
+  getUserId(){
+    try{
+      if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || '';
+    }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+
   async init(){
+    if(!this.shopId){
+      if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+      return;
+    }
     this.initWeeklySchedule();
     await this.loadTiming();
     this.bindEvents();
@@ -182,15 +208,21 @@ class ShopTimingPage {
     try{
       if(window.Loader) Loader.show('Loading timing...');
 
+      // HAMESHA Server se - ApiCore ho ya na ho, direct fetch se Server se mangenge
+      let data = null;
       if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/profile/${this.shopId}/timing`);
-        this.timing = data.timing||data;
-        this.holidays = data.holidays||[];
-      } else {
-        this.timing = JSON.parse(localStorage.getItem(`timing_${this.shopId}`)||'null')||{ openingTime:'09:00', closingTime:'21:00', isOpen:true, is24Hours:false, breakStart:'', breakEnd:'' };
-        this.holidays = JSON.parse(localStorage.getItem(`holidays_${this.shopId}`)||'[]');
-        this.weeklySchedule = JSON.parse(localStorage.getItem(`weekly_${this.shopId}`)||'null')||this.weeklySchedule;
+        try{ data = await window.ApiCore.get(`/api/common/profile/${this.shopId}/timing`); }catch(e){ data = null; }
       }
+      if(!data){
+        const res = await fetch(`/api/common/profile/${this.shopId}/timing`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+        data = res || {};
+      }
+
+      // Server se nahi mila toh default - browser storage wala purana timing KABHI nahi dikhayenge
+      this.timing = data.timing || data || { openingTime:'09:00', closingTime:'21:00', isOpen:true, is24Hours:false, breakStart:'', breakEnd:'' };
+      this.holidays = data.holidays || this.timing.holidays || [];
+      if(data.weeklySchedule) this.weeklySchedule = data.weeklySchedule;
+      else if(this.timing.weeklySchedule) this.weeklySchedule = this.timing.weeklySchedule;
 
       document.getElementById('openingTime').value = this.timing.openingTime||'09:00';
       document.getElementById('closingTime').value = this.timing.closingTime||'21:00';
@@ -204,6 +236,7 @@ class ShopTimingPage {
 
       Object.keys(this.weeklySchedule).forEach(day=>{
         const schedule = this.weeklySchedule[day];
+        if(!schedule) return;
         const dayCheck = document.getElementById(`day_${day}`);
         const openInput = document.getElementById(`open_${day}`);
         const closeInput = document.getElementById(`close_${day}`);
@@ -212,7 +245,9 @@ class ShopTimingPage {
         if(closeInput) closeInput.value = schedule.closingTime||'21:00';
       });
 
-    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+    }catch(e){
+      if(window.Toast) Toast.show('Server se timing nahi mila - default timing dikh raha hai', 'warning');
+    }finally{ if(window.Loader) Loader.hide(); }
   }
 
   updateStatus(){
@@ -259,19 +294,31 @@ class ShopTimingPage {
       };
     });
 
-    const timingData = { openingTime, closingTime, breakStart, breakEnd, isOpen, is24Hours, weeklySchedule, holidays:this.holidays };
+    const timingData = { openingTime, closingTime, breakStart, breakEnd, isOpen, is24Hours, weeklySchedule, holidays:this.holidays, shopId:this.shopId };
 
     const btn = document.getElementById('saveTimingBtn');
     btn.innerText='Saving...'; btn.disabled=true;
 
     try{
+      // HAMESHA Server pe - ApiCore ho ya na ho
+      let saved = false;
       if(window.ApiCore){
-        await window.ApiCore.put(`/api/common/profile/${this.shopId}/timing`, timingData);
-      } else {
-        localStorage.setItem(`timing_${this.shopId}`, JSON.stringify(timingData));
-        localStorage.setItem(`weekly_${this.shopId}`, JSON.stringify(weeklySchedule));
-        localStorage.setItem(`holidays_${this.shopId}`, JSON.stringify(this.holidays));
+        try{ await window.ApiCore.put(`/api/common/profile/${this.shopId}/timing`, timingData); saved = true; }catch(e){ saved = false; }
       }
+      if(!saved){
+        const res = await fetch(`/api/common/profile/${this.shopId}/timing`, { method:'PUT', headers: this.getHeaders(), body: JSON.stringify(timingData) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.timing)) saved = true;
+        else if(res && !res.error) saved = true;
+      }
+
+      if(!saved){
+        // Server me save nahi hua - chup-chap browser storage me save karke dhokha nahi denge
+        if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+        return;
+      }
+
+      // Save ke baad turant Server se dobara mang ke verify karo
+      await this.loadTiming();
 
       if(window.Toast) Toast.show('Shop timing saved ✅', 'success');
       this.updateStatus();
@@ -280,7 +327,7 @@ class ShopTimingPage {
         window.SocketCore.emit('shop-timing-updated', { shopId:this.shopId, timing:timingData });
       }
 
-    }catch(e){ if(window.Toast) Toast.show('Failed to save timing', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
+    }catch(e){ if(window.Toast) Toast.show('Failed to save timing - Server error', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
   }
 
   async addHoliday(){
@@ -291,23 +338,43 @@ class ShopTimingPage {
 
     const holiday = { _id:'h'+Date.now(), date, reason:reason||'Holiday' };
 
-    this.holidays.push(holiday);
-
+    // HAMESHA Server pe - pehle Server pe save karo, tabhi list me dikhao
+    let saved = false;
     if(window.ApiCore){
-      await window.ApiCore.post(`/api/common/profile/${this.shopId}/holidays`, holiday).catch(()=>{});
-    } else {
-      localStorage.setItem(`holidays_${this.shopId}`, JSON.stringify(this.holidays));
+      try{ await window.ApiCore.post(`/api/common/profile/${this.shopId}/holidays`, holiday); saved = true; }catch(e){ saved = false; }
+    }
+    if(!saved){
+      const res = await fetch(`/api/common/profile/${this.shopId}/holidays`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify(holiday) }).then(r=>r.json()).catch(()=>null);
+      if(res && (res.success || res.holiday)) saved = true;
+      else if(res && !res.error) saved = true;
+    }
+    if(!saved){
+      if(window.Toast) Toast.show('❌ Holiday Server me save nahi hui', 'error');
+      return;
     }
 
+    this.holidays.push(holiday);
     this.renderHolidays();
     this.closeHolidayModal();
 
     if(window.Toast) Toast.show('Holiday added 🏖️', 'success');
   }
 
-  deleteHoliday(holidayId){
+  async deleteHoliday(holidayId){
+    // HAMESHA Server pe - Server se delete hua tabhi list se hatayenge
+    let deleted = false;
+    if(window.ApiCore){
+      try{ await window.ApiCore.delete(`/api/common/profile/${this.shopId}/holidays/${holidayId}`); deleted = true; }catch(e){ deleted = false; }
+    }
+    if(!deleted){
+      const res = await fetch(`/api/common/profile/${this.shopId}/holidays/${holidayId}`, { method:'DELETE', headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+      if(res && (res.success || !res.error)) deleted = true;
+    }
+    if(!deleted){
+      if(window.Toast) Toast.show('❌ Holiday Server se delete nahi hui', 'error');
+      return;
+    }
     this.holidays = this.holidays.filter(h=> h._id!==holidayId);
-    localStorage.setItem(`holidays_${this.shopId}`, JSON.stringify(this.holidays));
     this.renderHolidays();
   }
 

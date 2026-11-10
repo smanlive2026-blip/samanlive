@@ -1,5 +1,8 @@
-<!-- LOCATION: public/shop-templates/common/profile/shop-verification.html -->
+<!-- LOCATION: public/shop-templates/common/profile/shop-verification.html - V24 - UNIFIED - FULL CODE -->
 <!-- WORLD CLASS SHOP VERIFICATION - SHOP OWNER ONLY - FULL 400+ LINES -->
+<!-- RULE: Verification = Server + Cloudinary se hi aayegi. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- RULE 2: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Base64 sirf preview ke liye. -->
+<!-- FLOW: Load -> GET /api/common/profile/:shopId/verification -> Fill -> Doc Upload -> Cloudinary URL -> Submit -> POST /api/common/profile/:shopId/verification -->
 <div id="verificationRoot" class="verification-root">
   <div class="verification-header">
     <button id="verificationBack" class="back-btn">‹</button>
@@ -152,15 +155,41 @@
 .verification-note{ background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:12px; font-size:11px; font-weight:600; color:#0369a1; text-align:center; }
 </style>
 
+<script src="/shop-templates/common/profile/profile-core.js"></script>
 <script>
 class ShopVerificationPage {
   constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.documents = {};
-    this.verificationStatus = 'pending';
+    this.verificationStatus = 'not_submitted';
+  }
+
+  getToken(){
+    try{
+      if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || '';
+    }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+
+  getUserId(){
+    try{
+      if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || '';
+    }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
   }
 
   async init(){
+    if(!this.shopId){
+      if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+      this.updateStatusUI();
+      return;
+    }
     await this.loadVerification();
     this.bindEvents();
   }
@@ -169,24 +198,26 @@ class ShopVerificationPage {
     try{
       if(window.Loader) Loader.show('Loading verification...');
 
+      // HAMESHA Server se - ApiCore ho ya na ho, direct fetch se Server se mangenge
+      let data = null;
       if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/profile/${this.shopId}/verification`);
-        this.documents = data.documents||{};
-        this.verificationStatus = data.status||'pending';
-      } else {
-        const verification = JSON.parse(localStorage.getItem(`verification_${this.shopId}`)||'null');
-        if(verification){
-          this.documents = verification.documents||{};
-          this.verificationStatus = verification.status||'pending';
-        }
+        try{ data = await window.ApiCore.get(`/api/common/profile/${this.shopId}/verification`); }catch(e){ data = null; }
       }
+      if(!data){
+        const res = await fetch(`/api/common/profile/${this.shopId}/verification`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+        data = res || {};
+      }
+
+      // Server se nahi mila toh Not Submitted - browser storage wala purana status KABHI nahi dikhayenge
+      this.documents = data.documents || data.verification?.documents || {};
+      this.verificationStatus = data.status || data.verification?.status || 'not_submitted';
 
       this.updateStatusUI();
 
-      // Load existing documents previews
+      // Load existing documents previews - sirf Cloudinary URL se
       Object.keys(this.documents).forEach(docType=>{
         const url = this.documents[docType];
-        if(url){
+        if(url && typeof url === 'string' && url.startsWith('http')){
           const area = document.querySelector(`[data-doc="${docType}"]`);
           if(area){
             area.classList.add('has-file');
@@ -198,7 +229,10 @@ class ShopVerificationPage {
         }
       });
 
-    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+    }catch(e){
+      this.verificationStatus = 'not_submitted';
+      this.updateStatusUI();
+    }finally{ if(window.Loader) Loader.hide(); }
   }
 
   updateStatusUI(){
@@ -241,7 +275,7 @@ class ShopVerificationPage {
     }
   }
 
-  handleFileUpload(input, docType){
+  async handleFileUpload(input, docType){
     const file = input.files[0];
     if(!file) return;
 
@@ -250,26 +284,64 @@ class ShopVerificationPage {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e)=>{
-      this.documents[docType] = e.target.result;
+    const area = document.querySelector(`[data-doc="${docType}"]`);
+    if(!area) return;
 
-      const area = document.querySelector(`[data-doc="${docType}"]`);
+    // 1. Preview turant - base64 sirf screen ke liye, documents me KABHI base64 nahi jayega
+    try{
+      const previewUrl = URL.createObjectURL(file);
       area.classList.add('has-file');
       area.querySelector('.upload-placeholder').style.display='none';
       const preview = area.querySelector('.upload-preview');
       preview.style.display='block';
-      preview.querySelector('img').src = e.target.result;
+      preview.querySelector('img').src = previewUrl;
+    }catch(e){}
+
+    // 2. Upload Cloudinary pe - UnifiedProfile V24 se - sirf Cloudinary URL milega
+    try{
+      if(window.Toast) Toast.show('Uploading to Cloudinary...', 'info');
+      let uploadUrl = '';
+      if(window.UnifiedProfile){
+        // Verification doc ke liye generic upload - role shop_owner, field = docType
+        const r = await window.UnifiedProfile.handleFileInput(input, { role: 'shop_owner', field: docType, type: 'verification_doc', shopId: this.shopId, userId: this.getUserId(), msgId: '' });
+        if(r && r.success) uploadUrl = r.url;
+      }
+      // Fallback - direct Cloudinary route - base64 nahi bhej rahe, file hi bhej rahe hain
+      if(!uploadUrl){
+        const fd = new FormData();
+        fd.append('profilePic', file, file.name);
+        fd.append('role', 'shop_owner');
+        fd.append('field', docType);
+        fd.append('type', 'verification_doc');
+        fd.append('shopId', this.shopId);
+        fd.append('buyerId', this.getUserId());
+        fd.append('userId', this.getUserId());
+        const res = await fetch('/api/common/profile/upload-avatar', { method:'POST', headers: { 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() }, body: fd }).then(r=>r.json()).catch(()=>null);
+        if(res && res.success) uploadUrl = res.url;
+      }
+
+      if(!uploadUrl){
+        if(window.Toast) Toast.show('Upload fail - Cloudinary pe nahi gaya', 'error');
+        return;
+      }
+
+      // 3. documents me SIRF Cloudinary URL rakho - base64 KABHI nahi
+      this.documents[docType] = uploadUrl;
+      const preview = area.querySelector('.upload-preview');
+      preview.querySelector('img').src = uploadUrl;
 
       if(window.Toast) Toast.show(`${docType.replace('_',' ')} uploaded ✅`, 'success');
-    };
-    reader.readAsDataURL(file);
+    }catch(e){
+      if(window.Toast) Toast.show('Upload error: ' + e.message, 'error');
+    }
   }
 
   removeUpload(docType){
+    // Sirf RAM wale documents se hatayenge - Server se tab hatega jab Submit dabayenge
     delete this.documents[docType];
 
     const area = document.querySelector(`[data-doc="${docType}"]`);
+    if(!area) return;
     area.classList.remove('has-file');
     area.querySelector('.upload-placeholder').style.display='block';
     area.querySelector('.upload-preview').style.display='none';
@@ -281,7 +353,7 @@ class ShopVerificationPage {
   async submitVerification(){
     const required = ['shop_license','aadhaar','pan_card','owner_photo','shop_front'];
 
-    const missing = required.filter(doc=>!this.documents[doc]);
+    const missing = required.filter(doc=>!this.documents[doc] || typeof this.documents[doc] !== 'string' || !this.documents[doc].startsWith('http'));
 
     if(missing.length>0){
       if(window.Toast) Toast.show(`Upload required: ${missing.join(', ')}`, 'warning');
@@ -292,22 +364,36 @@ class ShopVerificationPage {
     btn.innerText='Submitting...'; btn.disabled=true;
 
     try{
-      const verificationData = { documents:this.documents, status:'pending', submittedAt:new Date().toISOString() };
+      const verificationData = { documents:this.documents, status:'pending', submittedAt:new Date().toISOString(), shopId:this.shopId };
 
+      // HAMESHA Server pe - ApiCore ho ya na ho
+      let saved = false;
       if(window.ApiCore){
-        await window.ApiCore.post(`/api/common/profile/${this.shopId}/verification`, verificationData);
-      } else {
-        localStorage.setItem(`verification_${this.shopId}`, JSON.stringify(verificationData));
+        try{ await window.ApiCore.post(`/api/common/profile/${this.shopId}/verification`, verificationData); saved = true; }catch(e){ saved = false; }
+      }
+      if(!saved){
+        const res = await fetch(`/api/common/profile/${this.shopId}/verification`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify(verificationData) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.verification)) saved = true;
+        else if(res && !res.error) saved = true;
+      }
+
+      if(!saved){
+        // Server me save nahi hua - chup-chap browser storage me save karke dhokha nahi denge
+        if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+        return;
       }
 
       this.verificationStatus='pending';
       this.updateStatusUI();
 
+      // Save ke baad turant Server se dobara mang ke verify karo
+      await this.loadVerification();
+
       if(window.Toast) Toast.show('Verification submitted ✅ • Will be reviewed in 24-48 hours', 'success');
 
       setTimeout(()=>{ window.location.href=`/shop-templates/common/profile/profile.html?shopId=${this.shopId}`; }, 2000);
 
-    }catch(e){ if(window.Toast) Toast.show('Failed to submit', 'error'); }finally{ btn.innerText='Submit for Verification ✅'; btn.disabled=false; }
+    }catch(e){ if(window.Toast) Toast.show('Failed to submit - Server error', 'error'); }finally{ btn.innerText='Submit for Verification ✅'; btn.disabled=false; }
   }
 
   bindEvents(){

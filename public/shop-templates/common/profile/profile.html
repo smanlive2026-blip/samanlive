@@ -1,4 +1,6 @@
-<!-- LOCATION: public/shop-templates/common/profile/profile.html - V23 UNIFIED PROFILE - FULL CODE - NO CUT -->
+<!-- LOCATION: public/shop-templates/common/profile/profile.html - V24 - UNIFIED PROFILE - FULL CODE - NO CUT -->
+<!-- RULE: Shop Profile = Server + Cloudinary se hi aayega. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- FLOW: Load -> profile-core.js V24 -> profile.js V24 -> /api/common/profile/me?role=shop_owner&shopId=URL se -> Fill -->
 <div id="shopProfileRoot" class="shop-profile-root">
   <div class="profile-header">
     <button id="profileBack" class="back-btn" onclick="history.back()">‹</button>
@@ -90,9 +92,15 @@
 
 <script>
 function getShopIdFromUrl(){
-  return new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
+  // SIRF URL se - kahi aur se NAHI. URL me nahi hai toh khaali dega.
+  // V23 me yahan browser storage se shopId uthata tha, wahi dhokha tha -
+  // Mobile wali dukaan ka shopId Laptop me dusri dukaan pe lag jata tha.
+  try{ return new URLSearchParams(location.search).get('shopId') || ''; }catch(e){ return ''; }
 }
+// window pe bhi rakh do taaki profile.js / dusri file use kar sake - ye RAM me hai, browser storage me nahi
+window.getShopIdFromUrl = getShopIdFromUrl;
+window.SHOP_ID = getShopIdFromUrl();
 </script>
-<!-- V23 - profile-core sabse pehle, phir profile.js -->
+<!-- V24 - profile-core sabse pehle, phir profile.js - dono me browser storage NAHI hai -->
 <script src="/shop-templates/common/profile/profile-core.js"></script>
 <script src="/shop-templates/common/profile/profile.js"></script>

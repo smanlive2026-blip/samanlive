@@ -1,14 +1,39 @@
-// LOCATION: public/shop-templates/common/profile/profile.js - V23 UNIFIED - FULL CODE - NO CUT
+// LOCATION: public/shop-templates/common/profile/profile.js - V24 - UNIFIED - FULL CODE - NO CUT
 // FLOW: Load -> /api/common/profile/me?role=shop_owner -> Fill -> Photo change -> UnifiedProfile -> Cloudinary
-// RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL
+// RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Base64 sirf preview ke liye.
+// RULE 2: Is file me koi bhi browser storage use NAHI hoga. Sab kuch Server + Cloudinary se aayega.
+//         shopId = sirf URL se. token = sirf AuthCore se. userId = sirf AuthCore / currentUser se.
+//         Load hamesha Server se hoga. Render sirf screen pe hoga, kahin save NAHI hoga.
 
 let currentShopData = null;
 let currentShopId = '';
 
+function getShopIdFromUrl(){
+  try{ return new URLSearchParams(location.search).get('shopId') || ''; }catch(e){ return ''; }
+}
+function getToken(){
+  try{
+    if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || '';
+  }catch(e){}
+  return window.USER_TOKEN || '';
+}
+function getUserId(){
+  try{
+    if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || '';
+  }catch(e){}
+  if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+  return '';
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🔵 Shop Profile V23 init');
-  currentShopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
-  if(currentShopId) localStorage.setItem('last_shopId', currentShopId);
+  console.log('🔵 Shop Profile V24 init - NO BROWSER STORAGE');
+  // shopId SIRF URL se - kahi aur se NAHI
+  currentShopId = getShopIdFromUrl();
+  if(!currentShopId){
+    const msg = document.getElementById('profileMsg');
+    if(msg) msg.textContent = 'Shop not found - shopId missing hai. URL me ?shopId=XXX hona chahiye. Dashboard / Shop List se dobara kholo.';
+    return;
+  }
 
   // 1. Shop Logo input - UnifiedProfile
   const avatarInput = document.getElementById('avatarInput');
@@ -20,6 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         field: 'logo',
         type: 'logo',
         shopId: currentShopId,
+        userId: getUserId(),
         previewSelector: '#shopAvatar',
         msgId: 'profileMsg'
       });
@@ -27,6 +53,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentShopData = currentShopData || {};
         currentShopData.logo = r.url;
         currentShopData.shopLogo = r.url;
+        // Verify - Server me save hui ya nahi, dobara Server se mang ke dekho
+        await initShopProfile();
       }
     });
   }
@@ -41,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         field: 'banner',
         type: 'banner',
         shopId: currentShopId,
+        userId: getUserId(),
         previewSelector: '#profileCoverImg',
         msgId: 'coverMsg'
       });
@@ -48,6 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentShopData = currentShopData || {};
         currentShopData.banner = r.url;
         currentShopData.coverPhoto = r.url;
+        await initShopProfile();
       }
     });
   }
@@ -62,12 +92,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         field: 'ownerPhotoUrl',
         type: 'avatar',
         shopId: currentShopId,
+        userId: getUserId(),
         previewSelector: '#ownerPhotoDisplay',
         msgId: 'profileMsg'
       });
       if(r && r.success){
         currentShopData = currentShopData || {};
         currentShopData.ownerPhotoUrl = r.url;
+        await initShopProfile();
       }
     });
   }
@@ -88,23 +120,25 @@ async function initShopProfile(){
 
     let shop = null;
 
-    // Try 1: UnifiedProfile.loadMyProfile - role shop_owner
+    // Try 1: UnifiedProfile.loadMyProfile - role shop_owner - opts me shopId deke
     if(window.UnifiedProfile){
       try{
-        // shopId ko localStorage me set kar do taaki UnifiedProfile utha le
-        if(currentShopId) localStorage.setItem('last_shopId', currentShopId);
-        const prof = await window.UnifiedProfile.loadMyProfile();
+        const prof = await window.UnifiedProfile.loadMyProfile({
+          shopId: currentShopId,
+          role: 'shop_owner',
+          userId: getUserId()
+        });
         if(prof && prof.success && (prof.shop || prof.user)){
           shop = prof.shop || prof.user;
         }
       }catch(e){ console.log('unified profile fail', e.message); }
     }
 
-    // Try 2: Direct /api/common/profile/me
+    // Try 2: Direct /api/common/profile/me - token AuthCore se
     if(!shop){
       try{
-        const token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
-        const buyerId = localStorage.getItem('USER_ID') || '';
+        const token = getToken();
+        const buyerId = getUserId();
         const res = await fetch(`/api/common/profile/me?buyerId=${encodeURIComponent(buyerId)}&role=shop_owner&shopId=${encodeURIComponent(currentShopId)}`, {
           headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId }
         });
@@ -113,23 +147,19 @@ async function initShopProfile(){
       }catch(e){}
     }
 
-    // Try 3: Local cache - taaki form khaali na dikhe
-    if(!shop){
-      try{
-        const local = JSON.parse(localStorage.getItem(`shop_${currentShopId}`) || '{}');
-        if(local && (local.shopName || local.name)) shop = local;
-      }catch(e){}
-    }
+    // NO Try 3 - Browser storage wala fallback DELETE kar diya hai.
+    // Server se nahi mila toh khaali dikhega, galat / purani photo nahi dikhegi.
+    // Mobile me dikh rahi hai, Laptop me nahi - wala dhokha ab khatam.
 
     if(!shop){
-      if(msg) msg.textContent = 'Shop not found - shopId missing hai. Dashboard se kholo.';
+      if(msg) msg.textContent = 'Shop not found - Server me Shop nahi mila. Shop List se dobara kholo. shopId: ' + currentShopId;
       return;
     }
 
     currentShopData = shop;
     renderShopProfile(shop);
 
-    // Stats load - orders / products count
+    // Stats load - orders / products count - Server se
     loadShopProfileStats(currentShopId);
 
     if(msg) msg.textContent = '';
@@ -171,18 +201,18 @@ function renderShopProfile(shop){
   const verStatus = document.getElementById('verificationStatus');
   if(verStatus) verStatus.textContent = shop.isVerified ? 'Verified' : 'Pending';
 
-  // Local cache sync - dashboard ko signal
-  try{
-    const final = { ...shop, shopName: name, name: name, logo: logo, shopLogo: logo, banner: cover, coverPhoto: cover, ownerPhotoUrl: ownerPhoto };
-    localStorage.setItem(`shop_${currentShopId}`, JSON.stringify(final));
-    localStorage.setItem('shopLogo', logo);
-  }catch(e){}
+  // NO SAVE HERE - Render sirf screen pe hoga, kahin save NAHI hoga.
+  // Pehle yahan browser storage me shop_{id} + shopLogo save hota tha, wahi dhokha tha.
 }
 
 async function loadShopProfileStats(shopId){
   if(!shopId) return;
   try{
-    const res = await fetch(`/api/common/profile/${shopId}/stats`).then(r=>r.json()).catch(()=>null);
+    const token = getToken();
+    const buyerId = getUserId();
+    const res = await fetch(`/api/common/profile/${shopId}/stats`, {
+      headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId }
+    }).then(r=>r.json()).catch(()=>null);
     if(res && res.success){
       if(document.getElementById('profileOrders')) document.getElementById('profileOrders').textContent = res.totalOrders || 0;
       if(document.getElementById('profileProducts')) document.getElementById('profileProducts').textContent = res.totalProducts || 0;
@@ -195,7 +225,7 @@ async function loadShopProfileStats(shopId){
 function handleShopProfilePicChange(event){
   const input = event.target;
   if(window.UnifiedProfile && input.files[0]){
-    window.UnifiedProfile.handleFileInput(input, { role: 'shop_logo', shopId: currentShopId, previewSelector: '#shopAvatar', msgId: 'profileMsg' });
+    window.UnifiedProfile.handleFileInput(input, { role: 'shop_logo', shopId: currentShopId, userId: getUserId(), previewSelector: '#shopAvatar', msgId: 'profileMsg' });
   }
 }
 async function saveShopProfile(){ alert('Photo ab turant save hoti hai - Change pe click karte hi Cloudinary pe save ho jati hai. Save dabane ki jarurat nahi hai.'); }
