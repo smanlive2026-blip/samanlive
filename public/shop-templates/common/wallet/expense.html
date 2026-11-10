@@ -1,9 +1,91 @@
-<!-- LOCATION: public/shop-templates/common/wallet/expense.html -->
-<!-- WORLD CLASS EXPENSE - FULL 400+ LINES -->
+<!-- LOCATION: public/shop-templates/common/wallet/expense.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS EXPENSE - FULL -->
+<!-- RULE: Expense = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- RULE 2: Fake / Mock expense KABHI nahi banega. Khaali hai toh "No expenses yet" dikhega. -->
+<!-- RULE 3: Wallet balance hum browser me KABHI nahi ghatayenge. Balance Server hi ghatayega. -->
+<!-- FLOW: Load -> GET /api/common/wallet/:shopId/expenses -> Add -> POST /api/common/wallet/:shopId/expenses -> dobara Server se Load -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur expense browser storage me save hota tha, aur khaali hone pe 3 fake expense bana deta tha, aur header me hardcode 2450 / 1200 / 150 likha tha. Ab FULL HTML + RESPONSIVE + Server only + No Fake Data hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Expenses</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+input,select{font-family:inherit;outline:none}
+.expense-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.expense-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.expense-header b{display:block;font-weight:900;font-size:16px}
+.expense-header span{font-size:11px;color:#64748b;font-weight:600}
+.add-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.expense-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px}
+.e-stat{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:12px;text-align:center;min-width:0}
+.e-stat b{display:block;font-weight:900;font-size:14px;color:#ef4444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.e-stat span{font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase}
+.expense-categories{display:flex;gap:8px;padding:0 12px 12px;overflow-x:auto;scrollbar-width:none}
+.expense-categories::-webkit-scrollbar{display:none}
+.exp-cat{background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:8px 12px;display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer;flex-shrink:0}
+.exp-cat.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.exp-cat span{font-size:14px}
+.exp-cat b{font-size:11px;font-weight:800}
+.expense-list{padding:0 12px;display:flex;flex-direction:column;gap:8px}
+.expense-item{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px}
+.exp-icon{width:40px;height:40px;border-radius:10px;background:#fef2f2;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.exp-info{flex:1;min-width:0}
+.exp-info b{display:block;font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp-info span{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp-amount{text-align:right;flex-shrink:0}
+.exp-amount b{display:block;font-weight:900;font-size:14px;color:#ef4444;white-space:nowrap}
+.exp-amount span{display:inline-block;font-size:10px;background:#f1f5f9;padding:2px 6px;border-radius:20px;font-weight:700;margin-top:4px}
+.expense-empty{text-align:center;padding:60px 20px}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.expense-empty b{display:block;font-weight:900}
+.expense-empty span{font-size:12px;color:#64748b;font-weight:600;margin:4px 0 16px;display:block}
+.primary-btn{background:#0f172a;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:900;cursor:pointer}
+.expense-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:end center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
+.modal-box{position:relative;background:#fff;width:100%;max-width:500px;border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;animation:slideUp .3s}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 0;position:sticky;top:0;background:#fff;z-index:1}
+.modal-header button{background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer;flex-shrink:0}
+.modal-body{padding:20px}
+.modal-body label{display:block;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;margin:12px 0 6px}
+.modal-input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px;background:#fff}
+.modal-input:focus{border-color:#0f172a}
+.modal-actions{display:flex;gap:10px;padding:16px 20px 20px;border-top:1px solid #f1f5f9;position:sticky;bottom:0;background:#fff}
+.secondary-btn{flex:1;background:#f1f5f9;border:none;padding:12px;border-radius:10px;font-weight:800;cursor:pointer}
+.modal-actions .primary-btn{flex:1}
+.modal-actions .primary-btn:disabled{opacity:.5;cursor:not-allowed}
+/* LAPTOP */
+@media(min-width:721px){
+  .modal-box{border-radius:24px;margin-bottom:20px}
+}
+/* MOBILE FIX */
+@media(max-width:600px){
+  .expense-root{max-width:100%}
+  .expense-header{padding:12px}
+  .expense-header b{font-size:15px}
+  .expense-stats{padding:10px;gap:6px}
+  .e-stat{padding:10px 6px}
+  .e-stat b{font-size:13px}
+  .expense-categories{padding:0 10px 10px}
+  .expense-list{padding:0 10px}
+  .expense-item{padding:12px 10px;gap:10px}
+  .exp-icon{width:36px;height:36px;font-size:16px}
+  .exp-amount b{font-size:13px}
+}
+</style>
+</head>
+<body>
 <div id="expenseRoot" class="expense-root">
   <div class="expense-header">
     <button id="expenseBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>Expenses</b>
       <span id="expenseSubHeader">Track shop expenses</span>
     </div>
@@ -11,17 +93,18 @@
   </div>
 
   <div class="expense-stats">
-    <div class="e-stat"><b id="totalExpense">₹ 2,450</b><span>Total Expense</span></div>
-    <div class="e-stat"><b id="monthExpense">₹ 1,200</b><span>This Month</span></div>
-    <div class="e-stat"><b id="todayExpense">₹ 150</b><span>Today</span></div>
+    <div class="e-stat"><b id="totalExpense">₹ 0</b><span>Total Expense</span></div>
+    <div class="e-stat"><b id="monthExpense">₹ 0</b><span>This Month</span></div>
+    <div class="e-stat"><b id="todayExpense">₹ 0</b><span>Today</span></div>
   </div>
 
   <div class="expense-categories">
-    <div class="exp-cat" data-category="all"><span>📊</span><b>All</b></div>
+    <div class="exp-cat active" data-category="all"><span>📊</span><b>All</b></div>
     <div class="exp-cat" data-category="delivery"><span>🛵</span><b>Delivery</b></div>
     <div class="exp-cat" data-category="inventory"><span>📦</span><b>Inventory</b></div>
     <div class="exp-cat" data-category="staff"><span>👥</span><b>Staff</b></div>
     <div class="exp-cat" data-category="rent"><span>🏪</span><b>Rent</b></div>
+    <div class="exp-cat" data-category="marketing"><span>📢</span><b>Marketing</b></div>
     <div class="exp-cat" data-category="other"><span>📝</span><b>Other</b></div>
   </div>
 
@@ -58,52 +141,30 @@
   </div>
 </div>
 
-<style>
-.expense-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.expense-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.expense-header b{ display:block; font-weight:900; }
-.expense-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.add-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
-.expense-stats{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:12px; }
-.e-stat{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:12px; text-align:center; }
-.e-stat b{ display:block; font-weight:900; font-size:14px; color:#ef4444; }
-.e-stat span{ font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; }
-.expense-categories{ display:flex; gap:8px; padding:0 12px 12px; overflow-x:auto; }
-.exp-cat{ background:#fff; border:1px solid #e2e8f0; border-radius:20px; padding:8px 12px; display:flex; align-items:center; gap:6px; white-space:nowrap; cursor:pointer; }
-.exp-cat.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
-.exp-cat span{ font-size:14px; }
-.exp-cat b{ font-size:11px; font-weight:800; }
-.expense-list{ padding:0 12px; display:flex; flex-direction:column; gap:8px; }
-.expense-item{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:14px; display:flex; align-items:center; gap:12px; }
-.exp-icon{ width:40px; height:40px; border-radius:10px; background:#fef2f2; display:grid; place-items:center; font-size:18px; }
-.exp-info{ flex:1; }
-.exp-info b{ display:block; font-weight:800; font-size:13px; }
-.exp-info span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
-.exp-amount{ text-align:right; }
-.exp-amount b{ display:block; font-weight:900; font-size:14px; color:#ef4444; }
-.exp-amount span{ display:block; font-size:10px; background:#f1f5f9; padding:2px 6px; border-radius:20px; font-weight:700; margin-top:4px; }
-.expense-empty{ text-align:center; padding:60px 20px; }
-.empty-icon{ font-size:48px; margin-bottom:12px; }
-.primary-btn{ background:#0f172a; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-weight:900; cursor:pointer; }
-.expense-modal{ position:fixed; inset:0; z-index:9999; display:grid; place-items:end center; }
-.modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); }
-.modal-box{ position:relative; background:#fff; width:100%; max-width:500px; border-radius:24px 24px 0 0; max-height:90vh; overflow-y:auto; animation:slideUp.3s; }
-@keyframes slideUp{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
-.modal-header{ display:flex; justify-content:space-between; align-items:center; padding:20px 20px 0; }
-.modal-body{ padding:20px; }
-.modal-body label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
-.modal-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
-.modal-actions{ display:flex; gap:10px; padding:16px 20px 20px; border-top:1px solid #f1f5f9; }
-.secondary-btn{ flex:1; background:#f1f5f9; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
-</style>
-
 <script>
 class ExpensePage {
   constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.expenses = [];
     this.filter = 'all';
+  }
+
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+  getTodayStr(){
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
 
   async init(){
@@ -115,32 +176,61 @@ class ExpensePage {
     try{
       if(window.Loader) Loader.show('Loading expenses...');
 
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/wallet/${this.shopId}/expenses`);
-        this.expenses = data.expenses||data||[];
-      } else {
-        this.expenses = JSON.parse(localStorage.getItem(`expenses_${this.shopId}`)||'[]');
-        if(this.expenses.length===0){
-          this.expenses = [
-            { _id:'e1', shopId:this.shopId, amount:150, category:'delivery', title:'Fuel expense', desc:'Bike fuel', date:new Date().toISOString(), createdAt:new Date().toISOString() },
-            { _id:'e2', shopId:this.shopId, amount:5000, category:'inventory', title:'Stock purchase', desc:'Kirana stock', date:new Date(Date.now()-1*86400000).toISOString(), createdAt:new Date(Date.now()-1*86400000).toISOString() },
-            { _id:'e3', shopId:this.shopId, amount:8000, category:'rent', title:'Shop rent', desc:'Monthly rent', date:new Date(Date.now()-5*86400000).toISOString(), createdAt:new Date(Date.now()-5*86400000).toISOString() }
-          ];
-        }
+      if(!this.shopId){
+        if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+        this.expenses = [];
+        this.updateStats();
+        this.render();
+        return;
       }
 
-      const total = this.expenses.reduce((s,e)=> s+e.amount,0);
-      const month = this.expenses.filter(e=> new Date(e.date).getMonth()===new Date().getMonth()).reduce((s,e)=> s+e.amount,0);
-      const today = this.expenses.filter(e=> new Date(e.date).toDateString()===new Date().toDateString()).reduce((s,e)=> s+e.amount,0);
+      let expenses = null;
+      // 1. ApiCore se - HAMESHA Server se
+      if(window.ApiCore){
+        try{
+          const data = await window.ApiCore.get(`/api/common/wallet/${this.shopId}/expenses`);
+          expenses = data.expenses || data || null;
+        }catch(e){ expenses = null; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!expenses){
+        try{
+          const res = await fetch(`/api/common/wallet/${this.shopId}/expenses`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) expenses = res.expenses || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage fallback + NO Fake expense - Server se nahi mila toh khaali hi rahega, Fuel / Stock / Rent jaisa fake kharcha KABHI nahi banega
+      this.expenses = Array.isArray(expenses) ? expenses : [];
 
-      document.getElementById('totalExpense').innerText = `₹ ${total}`;
-      document.getElementById('monthExpense').innerText = `₹ ${month}`;
-      document.getElementById('todayExpense').innerText = `₹ ${today}`;
-      document.getElementById('expenseSubHeader').innerText = `${this.expenses.length} expenses • Total ₹${total}`;
-
+      this.updateStats();
       this.render();
 
-    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+    }catch(e){
+      this.expenses = [];
+      this.updateStats();
+      this.render();
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  updateStats(){
+    const now = new Date();
+    const todayStr = this.getTodayStr();
+    const total = this.expenses.reduce((s,e)=> s+(parseFloat(e.amount)||0),0);
+    const month = this.expenses.filter(e=>{
+      try{ const d = new Date(e.date || e.createdAt); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); }catch(err){ return false; }
+    }).reduce((s,e)=> s+(parseFloat(e.amount)||0),0);
+    const today = this.expenses.filter(e=>{
+      try{
+        const d = new Date(e.date || e.createdAt);
+        const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        return ds===todayStr;
+      }catch(err){ return false; }
+    }).reduce((s,e)=> s+(parseFloat(e.amount)||0),0);
+
+    document.getElementById('totalExpense').innerText = `₹ ${total.toLocaleString()}`;
+    document.getElementById('monthExpense').innerText = `₹ ${month.toLocaleString()}`;
+    document.getElementById('todayExpense').innerText = `₹ ${today.toLocaleString()}`;
+    document.getElementById('expenseSubHeader').innerText = `${this.expenses.length} expenses • Total ₹${total.toLocaleString()}`;
   }
 
   render(){
@@ -149,40 +239,57 @@ class ExpensePage {
 
     let filtered = [...this.expenses];
     if(this.filter!=='all') filtered = filtered.filter(e=> e.category===this.filter);
-    filtered.sort((a,b)=> new Date(b.date)-new Date(a.date));
+    filtered.sort((a,b)=> new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
 
     if(filtered.length===0){
       container.style.display='none';
       empty.style.display='block';
+      if(this.expenses.length>0){
+        empty.querySelector('b').innerText = 'No expenses in this category';
+        empty.querySelector('span').innerText = 'Category badal ke dekho';
+        empty.querySelector('button').style.display='none';
+      } else {
+        empty.querySelector('b').innerText = 'No expenses yet';
+        empty.querySelector('span').innerText = 'Add your shop expenses to track profit/loss';
+        empty.querySelector('button').style.display='inline-block';
+      }
       return;
     }
 
     container.style.display='flex';
     empty.style.display='none';
 
-    container.innerHTML = filtered.map(exp=>`
+    container.innerHTML = filtered.map(exp=>{
+      const icon = exp.category==='delivery' ? '🛵' : exp.category==='inventory' ? '📦' : exp.category==='staff' ? '👥' : exp.category==='rent' ? '🏪' : exp.category==='marketing' ? '📢' : '📝';
+      const dateStr = (()=>{ try{ return new Date(exp.date || exp.createdAt).toLocaleDateString('en-IN'); }catch(e){ return '-'; } })();
+      return `
       <div class="expense-item">
-        <div class="exp-icon">${exp.category==='delivery'?'🛵': exp.category==='inventory'?'📦': exp.category==='staff'?'👥': exp.category==='rent'?'🏪':'📝'}</div>
+        <div class="exp-icon">${icon}</div>
         <div class="exp-info">
-          <b>${exp.title}</b>
-          <span>${exp.desc} • ${new Date(exp.date).toLocaleDateString()}</span>
+          <b>${exp.title || 'Expense'}</b>
+          <span>${exp.desc || ''}${exp.desc ? ' • ' : ''}${dateStr}</span>
         </div>
         <div class="exp-amount">
-          <b>-₹ ${exp.amount}</b>
-          <span>${exp.category}</span>
+          <b>-₹ ${(parseFloat(exp.amount)||0).toLocaleString()}</b>
+          <span>${exp.category || 'other'}</span>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
   }
 
   async saveExpense(){
+    if(!this.shopId){
+      if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+      return;
+    }
     const amount = parseInt(document.getElementById('expenseAmount').value);
     const category = document.getElementById('expenseCategory').value;
     const title = document.getElementById('expenseTitle').value.trim();
     const desc = document.getElementById('expenseDesc').value.trim();
-    const date = document.getElementById('expenseDate').value||new Date().toISOString().split('T')[0];
+    const date = document.getElementById('expenseDate').value || this.getTodayStr();
 
-    if(!amount ||!title){
+    if(!amount || amount <= 0 || !title){
       if(window.Toast) Toast.show('Amount & title required', 'warning');
       return;
     }
@@ -191,22 +298,23 @@ class ExpensePage {
     btn.innerText='Saving...'; btn.disabled=true;
 
     try{
-      const expense = { _id:'e'+Date.now(), shopId:this.shopId, amount, category, title, desc, date:new Date(date).toISOString(), createdAt:new Date().toISOString() };
+      // _id Server banayega, hum browser me fake ID nahi banayenge
+      const expense = { shopId: this.shopId, amount, category, title, desc, date: new Date(date).toISOString(), createdAt: new Date().toISOString() };
 
+      let saved = false;
+      // 1. ApiCore se - HAMESHA Server pe
       if(window.ApiCore){
-        await window.ApiCore.post(`/api/common/wallet/${this.shopId}/expenses`, expense);
-      } else {
-        this.expenses.unshift(expense);
-        localStorage.setItem(`expenses_${this.shopId}`, JSON.stringify(this.expenses));
-
-        // Also add to wallet transactions
-        const transactions = JSON.parse(localStorage.getItem(`wallet_transactions_${this.shopId}`)||'[]');
-        transactions.unshift({ _id:'t'+Date.now(), shopId:this.shopId, type:'debit', category:'expense', amount, title, desc, status:'success', date:new Date(date).toISOString() });
-        localStorage.setItem(`wallet_transactions_${this.shopId}`, JSON.stringify(transactions));
-
-        let balance = parseFloat(localStorage.getItem(`wallet_balance_${this.shopId}`)||'12450.50');
-        balance -= amount;
-        localStorage.setItem(`wallet_balance_${this.shopId}`, balance.toString());
+        try{ await window.ApiCore.post(`/api/common/wallet/${this.shopId}/expenses`, expense); saved = true; }catch(e){ saved = false; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga
+      if(!saved){
+        const res = await fetch(`/api/common/wallet/${this.shopId}/expenses`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify(expense) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.expense || !res.error)) saved = true;
+      }
+      // 3. Server pe save nahi hua toh dhokha nahi denge - browser storage me save karke "saved" nahi bolenge, aur Wallet balance browser me KABHI nahi ghatayenge
+      if(!saved){
+        if(window.Toast) Toast.show('❌ Server me save nahi hua - Expense add nahi hua', 'error');
+        return;
       }
 
       this.closeModal();
@@ -214,11 +322,11 @@ class ExpensePage {
 
       if(window.Toast) Toast.show('Expense added 📉', 'success');
 
-    }catch(e){ if(window.Toast) Toast.show('Failed to save', 'error'); }finally{ btn.innerText='Save Expense 💾'; btn.disabled=false; }
+    }catch(e){ if(window.Toast) Toast.show('Failed to save - Server error', 'error'); }finally{ btn.innerText='Save Expense 💾'; btn.disabled=false; }
   }
 
   openModal(){
-    document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('expenseDate').value = this.getTodayStr();
     document.getElementById('expenseModal').style.display='grid';
   }
 
@@ -246,11 +354,11 @@ class ExpensePage {
         this.render();
       });
     });
-
-    document.querySelector('.exp-cat[data-category="all"]')?.classList.add('active');
   }
 }
 
 window.ExpensePageInstance = new ExpensePage();
 document.addEventListener('DOMContentLoaded', ()=> window.ExpensePageInstance.init());
 </script>
+</body>
+</html>

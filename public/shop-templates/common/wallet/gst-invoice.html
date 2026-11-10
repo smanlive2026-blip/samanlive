@@ -1,24 +1,96 @@
-<!-- LOCATION: public/shop-templates/common/wallet/gst-invoice.html -->
-<!-- WORLD CLASS GST INVOICE - FULL 350+ LINES -->
+<!-- LOCATION: public/shop-templates/common/wallet/gst-invoice.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS GST INVOICE - FULL -->
+<!-- RULE: GST Invoice = Server se hi aayega. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- RULE 2: Fake / Mock invoice KABHI nahi banega. Khaali hai toh "No invoices yet" dikhega. -->
+<!-- RULE 3: GST number KABHI hardcode nahi hoga. GST number Server se Shop Profile se aayega. Server pe nahi hai toh "GST number not added" dikhega, kisi aur ka GST number KABHI nahi dikhega. -->
+<!-- FLOW: Load Shop Profile -> GET /api/common/shop/:shopId -> Load Invoices -> GET /api/common/wallet/:shopId/gst-invoices -> Filter -> Render -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur invoice browser storage se aata tha, aur khaali hone pe 2 fake invoice bana deta tha, aur upar hardcode 27ABCDE1234F1Z5 GST number likha tha. Ab FULL HTML + RESPONSIVE + Server only + No Fake Data + No Fake GSTIN hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GST Invoices</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.gst-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.gst-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.gst-header b{display:block;font-weight:900;font-size:16px}
+.gst-header span{font-size:11px;color:#64748b;font-weight:600}
+.create-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.gst-info-card{background:#f0f9ff;border:1px solid #bae6fd;margin:12px;border-radius:12px;padding:14px;display:flex;gap:12px;align-items:center}
+.gst-info-card.warn{background:#fef3c7;border-color:#fde68a}
+.info-icon{width:40px;height:40px;background:#fff;border-radius:10px;display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.gst-info-card div{flex:1;min-width:0}
+.gst-info-card b{display:block;font-weight:900;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gst-info-card span{display:block;font-size:11px;color:#0369a1;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gst-info-card.warn span{color:#92400e}
+.gst-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 12px 12px}
+.g-stat{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:12px;text-align:center;min-width:0}
+.g-stat b{display:block;font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-stat span{font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase}
+.gst-tabs{display:flex;gap:6px;padding:0 12px 12px;overflow-x:auto;scrollbar-width:none}
+.gst-tabs::-webkit-scrollbar{display:none}
+.gst-tab{background:#fff;border:1px solid #e2e8f0;padding:8px 12px;border-radius:20px;font-weight:800;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.gst-tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.gst-list{padding:0 12px;display:flex;flex-direction:column;gap:8px}
+.gst-item{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.gst-icon{width:40px;height:40px;border-radius:10px;background:#f0f9ff;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.gst-info{flex:1;min-width:0}
+.gst-info b{display:block;font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gst-info span{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gst-amount{text-align:right;flex-shrink:0}
+.gst-amount b{display:block;font-weight:900;font-size:14px;white-space:nowrap}
+.gst-amount span{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;margin-top:4px;white-space:nowrap}
+.gst-amount span.paid{background:#dcfce7;color:#166534}
+.gst-amount span.pending{background:#fef3c7;color:#92400e}
+.gst-empty{text-align:center;padding:60px 20px}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.gst-empty b{display:block;font-weight:900}
+.gst-empty span{font-size:12px;color:#64748b;font-weight:600;margin:4px 0 16px;display:block}
+/* LAPTOP */
+@media(min-width:721px){
+  .gst-info-card{padding:16px}
+}
+/* MOBILE FIX */
+@media(max-width:600px){
+  .gst-root{max-width:100%}
+  .gst-header{padding:12px}
+  .gst-header b{font-size:15px}
+  .gst-info-card{margin:10px;padding:12px}
+  .gst-stats{padding:0 10px 10px;gap:6px}
+  .g-stat{padding:10px 6px}
+  .g-stat b{font-size:13px}
+  .gst-tabs{padding:0 10px 10px}
+  .gst-list{padding:0 10px}
+  .gst-item{padding:12px 10px;gap:10px}
+}
+</style>
+</head>
+<body>
 <div id="gstRoot" class="gst-root">
   <div class="gst-header">
     <button id="gstBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>GST Invoices</b>
       <span>Download GST invoices</span>
     </div>
     <button id="createGstBtn" class="create-btn">+ Create</button>
   </div>
 
-  <div class="gst-info-card">
+  <div id="gstInfoCard" class="gst-info-card warn">
     <span class="info-icon">🧾</span>
-    <div><b>GST: 27ABCDE1234F1Z5</b><span>My Kirana Store • Adajan, Surat</span></div>
+    <div><b id="gstNumberText">GST number not added</b><span id="gstShopText">Shop Settings se GST number add karo</span></div>
   </div>
 
   <div class="gst-stats">
-    <div class="g-stat"><b id="totalGstCollected">₹ 1,850</b><span>GST Collected</span></div>
-    <div class="g-stat"><b id="totalInvoices">12</b><span>Invoices</span></div>
-    <div class="g-stat"><b id="pendingGst">₹ 320</b><span>Pending GST</span></div>
+    <div class="g-stat"><b id="totalGstCollected">₹ 0</b><span>GST Collected</span></div>
+    <div class="g-stat"><b id="totalInvoices">0</b><span>Invoices</span></div>
+    <div class="g-stat"><b id="pendingGst">₹ 0</b><span>Pending GST</span></div>
   </div>
 
   <div class="gst-tabs">
@@ -36,79 +108,129 @@
   </div>
 </div>
 
-<style>
-.gst-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.gst-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.gst-header b{ display:block; font-weight:900; }
-.gst-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.create-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
-.gst-info-card{ background:#f0f9ff; border:1px solid #bae6fd; margin:12px; border-radius:12px; padding:14px; display:flex; gap:12px; align-items:center; }
-.info-icon{ width:40px; height:40px; background:#fff; border-radius:10px; display:grid; place-items:center; font-size:20px; }
-.gst-info-card b{ display:block; font-weight:900; font-size:13px; }
-.gst-info-card span{ display:block; font-size:11px; color:#0369a1; font-weight:600; margin-top:2px; }
-.gst-stats{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:0 12px 12px; }
-.g-stat{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:12px; text-align:center; }
-.g-stat b{ display:block; font-weight:900; font-size:14px; }
-.g-stat span{ font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; }
-.gst-tabs{ display:flex; gap:6px; padding:0 12px 12px; }
-.gst-tab{ background:#fff; border:1px solid #e2e8f0; padding:8px 12px; border-radius:20px; font-weight:800; font-size:11px; cursor:pointer; }
-.gst-tab.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
-.gst-list{ padding:0 12px; display:flex; flex-direction:column; gap:8px; }
-.gst-item{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:14px; display:flex; align-items:center; gap:12px; }
-.gst-icon{ width:40px; height:40px; border-radius:10px; background:#f0f9ff; display:grid; place-items:center; font-size:18px; }
-.gst-info{ flex:1; }
-.gst-info b{ display:block; font-weight:800; font-size:13px; }
-.gst-info span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
-.gst-amount{ text-align:right; }
-.gst-amount b{ display:block; font-weight:900; font-size:14px; }
-.gst-amount span{ display:block; font-size:10px; font-weight:700; padding:2px 6px; border-radius:20px; margin-top:4px; }
-.gst-amount span.paid{ background:#dcfce7; color:#166534; }
-.gst-amount span.pending{ background:#fef3c7; color:#92400e; }
-.gst-empty{ text-align:center; padding:60px 20px; }
-.empty-icon{ font-size:48px; margin-bottom:12px; }
-</style>
-
 <script>
 class GstInvoicePage {
   constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.invoices = [];
     this.filter = 'all';
+    this.shop = null;
+  }
+
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+  safeDate(d){
+    try{ const dt = new Date(d); if(isNaN(dt)) return '-'; return dt.toLocaleDateString('en-IN'); }catch(e){ return '-'; }
   }
 
   async init(){
+    await this.loadShopProfile();
     await this.loadGstInvoices();
     this.bindEvents();
+  }
+
+  async loadShopProfile(){
+    try{
+      if(!this.shopId) return;
+      let shop = null;
+      // Shop Profile Server se - GST number yahi se aayega, hardcode se KABHI nahi
+      if(window.ApiCore){
+        try{ const data = await window.ApiCore.get(`/api/common/shop/${this.shopId}`); shop = data.shop || data || null; }catch(e){ shop = null; }
+      }
+      if(!shop){
+        try{
+          const res = await fetch(`/api/common/shop/${this.shopId}`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) shop = res.shop || res;
+        }catch(e){}
+      }
+      if(!shop && window.ApiCore){
+        try{ const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}`); shop = data.settings || data || null; }catch(e){}
+      }
+      this.shop = shop || null;
+      this.renderShopInfo();
+    }catch(e){ this.renderShopInfo(); }
+  }
+
+  renderShopInfo(){
+    const card = document.getElementById('gstInfoCard');
+    const numEl = document.getElementById('gstNumberText');
+    const shopEl = document.getElementById('gstShopText');
+    if(!card || !numEl || !shopEl) return;
+
+    const gst = this.shop?.gstNumber || this.shop?.gst || this.shop?.gstNo || this.shop?.gstin || '';
+    const shopName = this.shop?.shopName || this.shop?.name || 'My Shop';
+    const city = this.shop?.city || this.shop?.address || '';
+
+    if(gst && typeof gst === 'string' && gst.trim().length >= 10){
+      card.classList.remove('warn');
+      numEl.innerText = `GST: ${gst.trim()}`;
+      shopEl.innerText = `${shopName}${city ? ' • ' + city : ''}`;
+    } else {
+      // GST number nahi hai toh kisi aur ka GST number KABHI nahi dikhayenge
+      card.classList.add('warn');
+      numEl.innerText = 'GST number not added';
+      shopEl.innerText = `${shopName} • Shop Settings se GST number add karo`;
+    }
   }
 
   async loadGstInvoices(){
     try{
       if(window.Loader) Loader.show('Loading GST...');
 
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/wallet/${this.shopId}/gst-invoices`);
-        this.invoices = data.invoices||data||[];
-      } else {
-        this.invoices = JSON.parse(localStorage.getItem(`gst_invoices_${this.shopId}`)||'[]');
-        if(this.invoices.length===0){
-          this.invoices = [
-            { _id:'gst1', shopId:this.shopId, invoiceNo:'INV-001', amount:1250, gst:225, total:1475, customer:'Ramesh Kumar', status:'paid', date:new Date().toISOString() },
-            { _id:'gst2', shopId:this.shopId, invoiceNo:'INV-002', amount:800, gst:144, total:944, customer:'Priya Singh', status:'pending', date:new Date(Date.now()-1*86400000).toISOString() }
-          ];
-        }
+      if(!this.shopId){
+        if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+        this.invoices = [];
+        this.updateStats();
+        this.render();
+        return;
       }
 
-      const totalGst = this.invoices.reduce((s,i)=> s+i.gst,0);
-      const pendingGst = this.invoices.filter(i=> i.status==='pending').reduce((s,i)=> s+i.gst,0);
+      let invoices = null;
+      // 1. ApiCore se - HAMESHA Server se
+      if(window.ApiCore){
+        try{
+          const data = await window.ApiCore.get(`/api/common/wallet/${this.shopId}/gst-invoices`);
+          invoices = data.invoices || data || null;
+        }catch(e){ invoices = null; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!invoices){
+        try{
+          const res = await fetch(`/api/common/wallet/${this.shopId}/gst-invoices`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) invoices = res.invoices || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage fallback + NO Fake invoice - Server se nahi mila toh khaali hi rahega, INV-001 / INV-002 jaisa fake invoice KABHI nahi banega
+      this.invoices = Array.isArray(invoices) ? invoices : [];
 
-      document.getElementById('totalGstCollected').innerText = `₹ ${totalGst}`;
-      document.getElementById('totalInvoices').innerText = this.invoices.length;
-      document.getElementById('pendingGst').innerText = `₹ ${pendingGst}`;
-
+      this.updateStats();
       this.render();
 
-    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+    }catch(e){
+      this.invoices = [];
+      this.updateStats();
+      this.render();
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  updateStats(){
+    const totalGst = this.invoices.reduce((s,i)=> s + (parseFloat(i.gst) || 0), 0);
+    const pendingGst = this.invoices.filter(i=> i.status==='pending').reduce((s,i)=> s + (parseFloat(i.gst) || 0), 0);
+
+    document.getElementById('totalGstCollected').innerText = `₹ ${totalGst.toLocaleString()}`;
+    document.getElementById('totalInvoices').innerText = this.invoices.length;
+    document.getElementById('pendingGst').innerText = `₹ ${pendingGst.toLocaleString()}`;
   }
 
   render(){
@@ -117,35 +239,55 @@ class GstInvoicePage {
 
     let filtered = [...this.invoices];
     if(this.filter!=='all') filtered = filtered.filter(i=> i.status===this.filter);
-    filtered.sort((a,b)=> new Date(b.date)-new Date(a.date));
+    filtered.sort((a,b)=>{
+      try{ return new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt); }catch(e){ return 0; }
+    });
 
     if(filtered.length===0){
       container.style.display='none';
       empty.style.display='block';
+      if(this.invoices.length>0){
+        empty.querySelector('b').innerText = 'No invoices in this filter';
+        empty.querySelector('span').innerText = 'Filter badal ke dekho';
+      } else {
+        empty.querySelector('b').innerText = 'No invoices yet';
+        empty.querySelector('span').innerText = 'GST invoices will show here';
+      }
       return;
     }
 
     container.style.display='flex';
     empty.style.display='none';
 
-    container.innerHTML = filtered.map(inv=>`
-      <div class="gst-item">
+    container.innerHTML = filtered.map(inv=>{
+      const total = parseFloat(inv.total) || 0;
+      const gst = parseFloat(inv.gst) || 0;
+      return `
+      <div class="gst-item" data-inv="${inv._id || inv.invoiceNo || ''}">
         <div class="gst-icon">🧾</div>
         <div class="gst-info">
-          <b>${inv.invoiceNo} • ${inv.customer}</b>
-          <span>GST ₹${inv.gst} • Total ₹${inv.total} • ${new Date(inv.date).toLocaleDateString()}</span>
+          <b>${inv.invoiceNo || 'INV-'} • ${inv.customer || inv.customerName || 'Customer'}</b>
+          <span>GST ₹${gst.toLocaleString()} • Total ₹${total.toLocaleString()} • ${this.safeDate(inv.date || inv.createdAt)}</span>
         </div>
         <div class="gst-amount">
-          <b>₹${inv.total}</b>
-          <span class="${inv.status}">${inv.status==='paid'?'✓ Paid':'⏳ Pending'}</span>
+          <b>₹${total.toLocaleString()}</b>
+          <span class="${inv.status}">${inv.status==='paid' ? '✓ Paid' : '⏳ Pending'}</span>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
   }
 
   bindEvents(){
     document.getElementById('gstBack')?.addEventListener('click', ()=> history.back());
-    document.getElementById('createGstBtn')?.addEventListener('click', ()=>{ if(window.Toast) Toast.show('GST invoice creation coming soon 🧾', 'info'); });
+    document.getElementById('createGstBtn')?.addEventListener('click', ()=>{
+      const gst = this.shop?.gstNumber || this.shop?.gst || '';
+      if(!gst){
+        if(window.Toast) Toast.show('Pehle Shop Settings se GST number add karo', 'warning');
+        return;
+      }
+      if(window.Toast) Toast.show('GST invoice creation coming soon 🧾', 'info');
+    });
 
     document.querySelectorAll('.gst-tab').forEach(tab=>{
       tab.addEventListener('click', ()=>{
@@ -161,3 +303,5 @@ class GstInvoicePage {
 window.GstInvoicePageInstance = new GstInvoicePage();
 document.addEventListener('DOMContentLoaded', ()=> window.GstInvoicePageInstance.init());
 </script>
+</body>
+</html>

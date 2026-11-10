@@ -1,47 +1,142 @@
-<!-- LOCATION: public/shop-templates/common/wallet/profit-loss.html -->
-<!-- WORLD CLASS PROFIT LOSS - FULL 400+ LINES -->
+<!-- LOCATION: public/shop-templates/common/wallet/profit-loss.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS PROFIT LOSS - FULL -->
+<!-- RULE: Profit & Loss = Server se hi aayega. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- RULE 2: Fake / Mock profit KABHI nahi banega. Khaali hai toh ₹0 + "No transactions yet" dikhega. -->
+<!-- RULE 3: Insights KABHI hardcode nahi honge. Insights real data se banenge, data nahi hai toh "Add sales & expenses to see insights" dikhega. -->
+<!-- FLOW: Load -> GET /api/common/wallet/:shopId/profit-loss?month=&year= -> Breakdown + Monthly + Chart + Insights (sab Server data se) -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur P&L browser storage se aata tha, aur khaali hone pe fake 12000 / 3549.50 / Jan-Feb-Mar bana deta tha, aur header me hardcode 8450.50 / +12.5% likha tha, aur Insights hardcode the, aur Filter button dead tha. Ab FULL HTML + RESPONSIVE + Server only + No Fake Data + Working Month Filter hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Profit & Loss</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+select{font-family:inherit;outline:none}
+.profit-loss-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.pl-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.pl-header b{display:block;font-weight:900;font-size:16px}
+.pl-header span{font-size:11px;color:#64748b;font-weight:600}
+.filter-btn{margin-left:auto;background:#f1f5f9;border:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.pl-summary-card{background:#fff;margin:12px;border-radius:20px;padding:20px;border:1px solid #f1f5f9}
+.pl-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pl-top span:first-child{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase}
+.pl-badge{font-size:10px;font-weight:800;padding:4px 8px;border-radius:20px;white-space:nowrap}
+.pl-badge.profit{background:#dcfce7;color:#166534}
+.pl-badge.loss{background:#fee2e2;color:#991b1b}
+.pl-badge.neutral{background:#f1f5f9;color:#64748b}
+.pl-amount{display:block;font-weight:900;font-size:32px;margin:8px 0 4px}
+.pl-amount.profit{color:#10b981}
+.pl-amount.loss{color:#ef4444}
+.pl-amount.neutral{color:#0f172a}
+.pl-sub{display:block;font-size:11px;color:#64748b;font-weight:600}
+.pl-chart-preview{display:flex;align-items:end;gap:8px;margin-top:16px;height:80px}
+.chart-bar{flex:1;background:#e2e8f0;border-radius:6px 6px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:end;padding-bottom:6px;min-height:8px;min-width:0}
+.chart-bar.active{background:#0f172a}
+.chart-bar span{font-size:9px;font-weight:700;color:#64748b;text-align:center;line-height:1.2}
+.chart-bar.active span{color:#fff}
+.chart-bar b{font-size:9px;font-weight:900;color:#0f172a}
+.chart-bar.active b{color:#fff}
+.chart-empty{width:100%;text-align:center;font-size:11px;color:#64748b;font-weight:600;padding:20px 0}
+.pl-breakdown{padding:0 12px 12px;display:flex;flex-direction:column;gap:12px}
+.breakdown-card{background:#fff;border-radius:16px;padding:16px;border:1px solid #f1f5f9}
+.breakdown-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.bd-icon{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.breakdown-header div{flex:1;min-width:0}
+.breakdown-header div b{display:block;font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.breakdown-header div span{display:block;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase}
+.bd-trend{font-size:10px;font-weight:800;padding:4px 8px;border-radius:20px;white-space:nowrap}
+.bd-trend.profit{background:#dcfce7;color:#166534}
+.bd-trend.loss{background:#fee2e2;color:#991b1b}
+.bd-trend.neutral{background:#f1f5f9;color:#64748b}
+.breakdown-items{display:flex;flex-direction:column;gap:8px;background:#f8fafc;border-radius:10px;padding:12px}
+.breakdown-items div{display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:600}
+.breakdown-items div span{flex:1;min-width:0}
+.breakdown-items div b{white-space:nowrap}
+.pl-details{background:#fff;margin:0 12px 12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9}
+.pl-details>b{display:block;font-weight:900;font-size:14px;margin-bottom:12px}
+.monthly-comparison{display:flex;flex-direction:column;gap:8px}
+.comparison-item{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#f8fafc;padding:10px;border-radius:8px;font-size:12px;font-weight:600;flex-wrap:wrap}
+.comparison-item span{white-space:nowrap}
+.pl-insights{background:#fff;margin:0 12px 12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9}
+.pl-insights>b{display:block;font-weight:900;font-size:14px;margin-bottom:12px}
+.insight-item{display:flex;gap:10px;padding:10px;border-radius:8px;font-size:11px;font-weight:600;line-height:1.4;margin-bottom:8px}
+.insight-item.profit{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+.insight-item.warning{background:#fef3c7;border:1px solid #fde68a;color:#92400e}
+.insight-item.info{background:#f0f9ff;border:1px solid #bae6fd;color:#0369a1}
+.insight-item.neutral{background:#f8fafc;border:1px solid #e2e8f0;color:#64748b}
+.filter-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:end center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
+.modal-box{position:relative;background:#fff;width:100%;max-width:500px;border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;animation:slideUp .3s}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 0}
+.modal-header button{background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer;flex-shrink:0}
+.modal-body{padding:20px}
+.modal-body label{display:block;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;margin:12px 0 6px}
+.modal-input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px;background:#fff}
+.modal-actions{display:flex;gap:10px;padding:16px 20px 20px;border-top:1px solid #f1f5f9}
+.secondary-btn{flex:1;background:#f1f5f9;border:none;padding:12px;border-radius:10px;font-weight:800;cursor:pointer}
+.primary-btn{flex:1;background:#0f172a;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:900;cursor:pointer}
+/* LAPTOP */
+@media(min-width:721px){
+  .modal-box{border-radius:24px;margin-bottom:20px}
+}
+/* MOBILE FIX */
+@media(max-width:600px){
+  .profit-loss-root{max-width:100%}
+  .pl-header{padding:12px}
+  .pl-header b{font-size:15px}
+  .pl-summary-card{margin:10px;padding:16px}
+  .pl-amount{font-size:28px}
+  .pl-breakdown{padding:0 10px 10px}
+  .pl-details,.pl-insights{margin:0 10px 10px}
+  .comparison-item{font-size:11px}
+}
+</style>
+</head>
+<body>
 <div id="profitLossRoot" class="profit-loss-root">
   <div class="pl-header">
     <button id="plBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>Profit & Loss</b>
-      <span>Business performance</span>
+      <span id="plSubHeader">Business performance</span>
     </div>
     <button id="plFilterBtn" class="filter-btn">📅 Month</button>
   </div>
 
   <div class="pl-summary-card">
     <div class="pl-top">
-      <span>Net Profit</span>
-      <span class="pl-badge profit">+12.5% vs last month</span>
+      <span id="plMonthLabel">Net Profit • This Month</span>
+      <span id="plChangeBadge" class="pl-badge neutral">No data yet</span>
     </div>
-    <b id="netProfit" class="pl-amount profit">₹ 8,450.50</b>
-    <span class="pl-sub">Revenue ₹12,000 - Expenses ₹3,549.50</span>
-    <div class="pl-chart-preview">
-      <div class="chart-bar" style="height:40%"><span>Week 1</span></div>
-      <div class="chart-bar" style="height:70%"><span>Week 2</span></div>
-      <div class="chart-bar" style="height:55%"><span>Week 3</span></div>
-      <div class="chart-bar active" style="height:90%"><span>Week 4</span></div>
-    </div>
+    <b id="netProfit" class="pl-amount neutral">₹ 0</b>
+    <span id="plSub" class="pl-sub">Revenue ₹0 - Expenses ₹0</span>
+    <div id="plChart" class="pl-chart-preview"></div>
   </div>
 
   <div class="pl-breakdown">
     <div class="breakdown-card revenue">
-      <div class="breakdown-header"><span class="bd-icon" style="background:#f0fdf4">💰</span><div><b id="totalRevenuePL">₹ 12,000</b><span>Total Revenue</span></div><span class="bd-trend profit">↑ 8%</span></div>
+      <div class="breakdown-header"><span class="bd-icon" style="background:#f0fdf4">💰</span><div><b id="totalRevenuePL">₹ 0</b><span>Total Revenue</span></div><span id="revenueTrend" class="bd-trend neutral">-</span></div>
       <div class="breakdown-items">
-        <div><span>Product Sales</span><b id="productSales">₹ 10,500</b></div>
-        <div><span>Delivery Charges</span><b id="deliveryCharges">₹ 800</b></div>
-        <div><span>Other Income</span><b id="otherIncome">₹ 700</b></div>
+        <div><span>Product Sales</span><b id="productSales">₹ 0</b></div>
+        <div><span>Delivery Charges</span><b id="deliveryCharges">₹ 0</b></div>
+        <div><span>Other Income</span><b id="otherIncome">₹ 0</b></div>
       </div>
     </div>
 
     <div class="breakdown-card expense">
-      <div class="breakdown-header"><span class="bd-icon" style="background:#fef2f2">📉</span><div><b id="totalExpensePL">₹ 3,549.50</b><span>Total Expenses</span></div><span class="bd-trend loss">↑ 3%</span></div>
+      <div class="breakdown-header"><span class="bd-icon" style="background:#fef2f2">📉</span><div><b id="totalExpensePL">₹ 0</b><span>Total Expenses</span></div><span id="expenseTrend" class="bd-trend neutral">-</span></div>
       <div class="breakdown-items">
-        <div><span>Inventory</span><b id="inventoryExpense">₹ 1,500</b></div>
-        <div><span>Delivery</span><b id="deliveryExpense">₹ 450</b></div>
-        <div><span>Staff</span><b id="staffExpense">₹ 800</b></div>
-        <div><span>Rent & Others</span><b id="rentExpense">₹ 799.50</b></div>
+        <div><span>Inventory</span><b id="inventoryExpense">₹ 0</b></div>
+        <div><span>Delivery</span><b id="deliveryExpense">₹ 0</b></div>
+        <div><span>Staff</span><b id="staffExpense">₹ 0</b></div>
+        <div><span>Rent & Others</span><b id="rentExpense">₹ 0</b></div>
       </div>
     </div>
   </div>
@@ -53,133 +148,302 @@
 
   <div class="pl-insights">
     <b>💡 Insights</b>
-    <div class="insight-item profit"><span>📈</span><span>Your profit increased by 12.5% this month. Keep it up!</span></div>
-    <div class="insight-item warning"><span>⚠️</span><span>Delivery expenses are 15% higher than last month. Check fuel costs.</span></div>
-    <div class="insight-item info"><span>ℹ️</span><span>Best selling category: Kirana - 45% of revenue</span></div>
+    <div id="insightsList"></div>
+  </div>
+
+  <div id="filterModal" class="filter-modal" style="display:none">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header"><b>📅 Select Month</b><button id="closeFilterModal">✕</button></div>
+      <div class="modal-body">
+        <label>Month</label>
+        <select id="filterMonth" class="modal-input"></select>
+        <label>Year</label>
+        <select id="filterYear" class="modal-input"></select>
+      </div>
+      <div class="modal-actions"><button id="cancelFilter" class="secondary-btn">Cancel</button><button id="applyFilter" class="primary-btn">Show P&L</button></div>
+    </div>
   </div>
 </div>
-
-<style>
-.profit-loss-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.pl-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.pl-header b{ display:block; font-weight:900; }
-.pl-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.filter-btn{ margin-left:auto; background:#f1f5f9; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
-.pl-summary-card{ background:#fff; margin:12px; border-radius:20px; padding:20px; border:1px solid #f1f5f9; }
-.pl-top{ display:flex; justify-content:space-between; align-items:center; }
-.pl-top span:first-child{ font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; }
-.pl-badge{ font-size:10px; font-weight:800; padding:4px 8px; border-radius:20px; }
-.pl-badge.profit{ background:#dcfce7; color:#166534; }
-.pl-badge.loss{ background:#fee2e2; color:#991b1b; }
-.pl-amount{ display:block; font-weight:900; font-size:32px; margin:8px 0 4px; }
-.pl-amount.profit{ color:#10b981; }
-.pl-amount.loss{ color:#ef4444; }
-.pl-sub{ display:block; font-size:11px; color:#64748b; font-weight:600; }
-.pl-chart-preview{ display:flex; align-items:end; gap:8px; margin-top:16px; height:60px; }
-.chart-bar{ flex:1; background:#e2e8f0; border-radius:6px 6px 0 0; display:flex; align-items:end; justify-content:center; padding-bottom:4px; }
-.chart-bar.active{ background:#0f172a; }
-.chart-bar span{ font-size:9px; font-weight:700; color:#64748b; writing-mode:vertical-lr; }
-.chart-bar.active span{ color:#fff; }
-.pl-breakdown{ padding:0 12px 12px; display:flex; flex-direction:column; gap:12px; }
-.breakdown-card{ background:#fff; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
-.breakdown-header{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-.bd-icon{ width:36px; height:36px; border-radius:8px; display:grid; place-items:center; font-size:16px; }
-.breakdown-header div{ flex:1; }
-.breakdown-header div b{ display:block; font-weight:900; font-size:14px; }
-.breakdown-header div span{ display:block; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; }
-.bd-trend{ font-size:10px; font-weight:800; padding:4px 8px; border-radius:20px; }
-.bd-trend.profit{ background:#dcfce7; color:#166534; }
-.bd-trend.loss{ background:#fee2e2; color:#991b1b; }
-.breakdown-items{ display:flex; flex-direction:column; gap:8px; background:#f8fafc; border-radius:10px; padding:12px; }
-.breakdown-items div{ display:flex; justify-content:space-between; font-size:12px; font-weight:600; }
-.pl-details{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
-.pl-details b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
-.monthly-comparison{ display:flex; flex-direction:column; gap:8px; }
-.comparison-item{ display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:10px; border-radius:8px; font-size:12px; font-weight:600; }
-.pl-insights{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
-.pl-insights b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
-.insight-item{ display:flex; gap:10px; padding:10px; border-radius:8px; font-size:11px; font-weight:600; line-height:1.4; margin-bottom:8px; }
-.insight-item.profit{ background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; }
-.insight-item.warning{ background:#fef3c7; border:1px solid #fde68a; color:#92400e; }
-.insight-item.info{ background:#f0f9ff; border:1px solid #bae6fd; color:#0369a1; }
-</style>
 
 <script>
 class ProfitLossPage {
   constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.currentDate = new Date();
+    this.plData = null;
   }
 
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+  num(v){ const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  fmt(v){ return `₹ ${this.num(v).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`; }
+
   async init(){
+    this.buildFilterSelects();
     await this.loadProfitLoss();
+    this.bindEvents();
+  }
+
+  buildFilterSelects(){
+    const monthSel = document.getElementById('filterMonth');
+    const yearSel = document.getElementById('filterYear');
+    if(monthSel){
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      monthSel.innerHTML = months.map((m,i)=> `<option value="${i+1}" ${i===this.currentDate.getMonth() ? 'selected' : ''}>${m}</option>`).join('');
+    }
+    if(yearSel){
+      const y = new Date().getFullYear();
+      let html = '';
+      for(let i=y; i>=y-2; i--) html += `<option value="${i}" ${i===this.currentDate.getFullYear() ? 'selected' : ''}>${i}</option>`;
+      yearSel.innerHTML = html;
+    }
   }
 
   async loadProfitLoss(){
     try{
       if(window.Loader) Loader.show('Loading P&L...');
 
+      if(!this.shopId){
+        if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+        this.plData = null;
+        this.renderEmpty();
+        return;
+      }
+
+      const month = this.currentDate.getMonth()+1;
+      const year = this.currentDate.getFullYear();
+      document.getElementById('plSubHeader').innerText = `${this.currentDate.toLocaleDateString('en-IN',{month:'long',year:'numeric'})} • Business performance`;
+      document.getElementById('plMonthLabel').innerText = `Net Profit • ${this.currentDate.toLocaleDateString('en-IN',{month:'long',year:'numeric'})}`;
+
       let data = null;
-
+      // 1. ApiCore se - HAMESHA Server se
       if(window.ApiCore){
-        data = await window.ApiCore.get(`/api/common/wallet/${this.shopId}/profit-loss`);
-      } else {
-        const transactions = JSON.parse(localStorage.getItem(`wallet_transactions_${this.shopId}`)||'[]');
-        const expenses = JSON.parse(localStorage.getItem(`expenses_${this.shopId}`)||'[]');
-
-        const revenue = transactions.filter(t=> t.type==='credit').reduce((s,t)=> s+t.amount,0) || 12000;
-        const expenseTotal = expenses.reduce((s,e)=> s+e.amount,0) || 3549.50;
-        const profit = revenue - expenseTotal;
-
-        data = {
-          revenue,
-          expenses:expenseTotal,
-          profit,
-          breakdown:{
-            productSales:revenue*0.875,
-            deliveryCharges:revenue*0.066,
-            otherIncome:revenue*0.059,
-            inventory:expenseTotal*0.42,
-            delivery:expenseTotal*0.127,
-            staff:expenseTotal*0.225,
-            rent:expenseTotal*0.228
-          },
-          monthly:[
-            { month:'Jan', revenue:9500, expenses:3200, profit:6300 },
-            { month:'Feb', revenue:10200, expenses:3400, profit:6800 },
-            { month:'Mar', revenue:12000, expenses:3549, profit:8450 }
-          ]
-        };
+        try{
+          data = await window.ApiCore.get(`/api/common/wallet/${this.shopId}/profit-loss?month=${month}&year=${year}`);
+        }catch(e){ data = null; }
       }
-
-      document.getElementById('netProfit').innerText = `₹ ${data.profit.toFixed(2)}`;
-      document.getElementById('netProfit').className = `pl-amount ${data.profit>=0?'profit':'loss'}`;
-      document.getElementById('totalRevenuePL').innerText = `₹ ${data.revenue}`;
-      document.getElementById('totalExpensePL').innerText = `₹ ${data.expenses.toFixed(2)}`;
-      document.getElementById('productSales').innerText = `₹ ${data.breakdown.productSales.toFixed(0)}`;
-      document.getElementById('deliveryCharges').innerText = `₹ ${data.breakdown.deliveryCharges.toFixed(0)}`;
-      document.getElementById('otherIncome').innerText = `₹ ${data.breakdown.otherIncome.toFixed(0)}`;
-      document.getElementById('inventoryExpense').innerText = `₹ ${data.breakdown.inventory.toFixed(0)}`;
-      document.getElementById('deliveryExpense').innerText = `₹ ${data.breakdown.delivery.toFixed(0)}`;
-      document.getElementById('staffExpense').innerText = `₹ ${data.breakdown.staff.toFixed(0)}`;
-      document.getElementById('rentExpense').innerText = `₹ ${data.breakdown.rent.toFixed(2)}`;
-
-      const monthlyContainer = document.getElementById('monthlyComparison');
-      if(monthlyContainer && data.monthly){
-        monthlyContainer.innerHTML = data.monthly.map(m=>`
-          <div class="comparison-item">
-            <span>${m.month}</span>
-            <span>Rev: ₹${m.revenue}</span>
-            <span>Exp: ₹${m.expenses}</span>
-            <b style="color:${m.profit>=0?'#10b981':'#ef4444'}">₹${m.profit}</b>
-          </div>
-        `).join('');
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!data){
+        try{
+          const res = await fetch(`/api/common/wallet/${this.shopId}/profit-loss?month=${month}&year=${year}`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) data = res;
+        }catch(e){}
       }
+      // 3. NO Browser storage fallback + NO Fake data - Server se nahi mila toh khaali hi rahega, 12000 / 3549.50 / Jan-Feb-Mar jaisa fake P&L KABHI nahi banega
+      // Server se aaya hua data hi use hoga - chahe wo 0 hi kyu na ho
+      if(!data || typeof data !== 'object'){
+        this.plData = null;
+        this.renderEmpty();
+        return;
+      }
+      this.plData = data;
+      this.render();
 
-    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+    }catch(e){
+      this.plData = null;
+      this.renderEmpty();
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  renderEmpty(){
+    document.getElementById('netProfit').innerText = '₹ 0';
+    document.getElementById('netProfit').className = 'pl-amount neutral';
+    document.getElementById('plChangeBadge').innerText = 'No data yet';
+    document.getElementById('plChangeBadge').className = 'pl-badge neutral';
+    document.getElementById('plSub').innerText = 'Revenue ₹0 - Expenses ₹0';
+    document.getElementById('totalRevenuePL').innerText = '₹ 0';
+    document.getElementById('totalExpensePL').innerText = '₹ 0';
+    document.getElementById('productSales').innerText = '₹ 0';
+    document.getElementById('deliveryCharges').innerText = '₹ 0';
+    document.getElementById('otherIncome').innerText = '₹ 0';
+    document.getElementById('inventoryExpense').innerText = '₹ 0';
+    document.getElementById('deliveryExpense').innerText = '₹ 0';
+    document.getElementById('staffExpense').innerText = '₹ 0';
+    document.getElementById('rentExpense').innerText = '₹ 0';
+    document.getElementById('revenueTrend').innerText = '-';
+    document.getElementById('revenueTrend').className = 'bd-trend neutral';
+    document.getElementById('expenseTrend').innerText = '-';
+    document.getElementById('expenseTrend').className = 'bd-trend neutral';
+    document.getElementById('plChart').innerHTML = '<div class="chart-empty">No data yet - Add sales & expenses to see chart</div>';
+    document.getElementById('monthlyComparison').innerHTML = '<div class="comparison-item"><span>No monthly data yet</span></div>';
+    document.getElementById('insightsList').innerHTML = '<div class="insight-item neutral"><span>ℹ️</span><span>Add sales & expenses to see insights</span></div>';
+  }
+
+  render(){
+    const d = this.plData || {};
+    const revenue = this.num(d.revenue ?? d.totalRevenue ?? 0);
+    const expenses = this.num(d.expenses ?? d.totalExpenses ?? d.expenseTotal ?? 0);
+    const profit = this.num(d.profit ?? (revenue - expenses));
+    const breakdown = d.breakdown || d.expenseBreakdown || {};
+    const revenueBreakdown = d.revenueBreakdown || breakdown;
+    const monthly = Array.isArray(d.monthly) ? d.monthly : Array.isArray(d.monthlyComparison) ? d.monthlyComparison : [];
+
+    const hasData = revenue > 0 || expenses > 0 || monthly.length > 0;
+
+    // Net Profit
+    document.getElementById('netProfit').innerText = this.fmt(profit);
+    document.getElementById('netProfit').className = `pl-amount ${profit > 0 ? 'profit' : profit < 0 ? 'loss' : 'neutral'}`;
+    document.getElementById('plSub').innerText = `Revenue ${this.fmt(revenue)} - Expenses ${this.fmt(expenses)}`;
+
+    // Change badge - sirf Server se aaya hua change dikhayenge, guess se KABHI nahi banayenge
+    const change = d.changePercent ?? d.profitChange ?? d.monthChange ?? null;
+    const badge = document.getElementById('plChangeBadge');
+    if(!hasData){
+      badge.innerText = 'No data yet';
+      badge.className = 'pl-badge neutral';
+    } else if(change !== null && change !== undefined && !isNaN(parseFloat(change))){
+      const c = parseFloat(change);
+      badge.innerText = `${c >= 0 ? '+' : ''}${c.toFixed(1)}% vs last month`;
+      badge.className = `pl-badge ${c >= 0 ? 'profit' : 'loss'}`;
+    } else {
+      badge.innerText = hasData ? 'This month' : 'No data yet';
+      badge.className = 'pl-badge neutral';
+    }
+
+    // Revenue breakdown - Server se aaya hua hi dikhayenge, revenue * 0.875 jaisa guess KABHI nahi banayenge
+    document.getElementById('totalRevenuePL').innerText = this.fmt(revenue);
+    document.getElementById('totalExpensePL').innerText = this.fmt(expenses);
+    document.getElementById('productSales').innerText = this.fmt(revenueBreakdown.productSales ?? revenueBreakdown.product ?? revenueBreakdown.sales ?? 0);
+    document.getElementById('deliveryCharges').innerText = this.fmt(revenueBreakdown.deliveryCharges ?? revenueBreakdown.delivery ?? 0);
+    document.getElementById('otherIncome').innerText = this.fmt(revenueBreakdown.otherIncome ?? revenueBreakdown.other ?? 0);
+    document.getElementById('inventoryExpense').innerText = this.fmt(breakdown.inventory ?? breakdown.inventoryExpense ?? 0);
+    document.getElementById('deliveryExpense').innerText = this.fmt(breakdown.delivery ?? breakdown.deliveryExpense ?? 0);
+    document.getElementById('staffExpense').innerText = this.fmt(breakdown.staff ?? breakdown.staffExpense ?? 0);
+    document.getElementById('rentExpense').innerText = this.fmt(breakdown.rent ?? breakdown.rentExpense ?? breakdown.rentAndOthers ?? breakdown.others ?? 0);
+
+    // Trends - sirf Server se aaye hue, guess se nahi
+    const revTrend = d.revenueChange ?? d.revenueTrend ?? null;
+    const expTrend = d.expenseChange ?? d.expenseTrend ?? null;
+    const revEl = document.getElementById('revenueTrend');
+    const expEl = document.getElementById('expenseTrend');
+    if(revTrend !== null && revTrend !== undefined && !isNaN(parseFloat(revTrend))){
+      const r = parseFloat(revTrend);
+      revEl.innerText = `${r >= 0 ? '↑' : '↓'} ${Math.abs(r).toFixed(0)}%`;
+      revEl.className = `bd-trend ${r >= 0 ? 'profit' : 'loss'}`;
+    } else { revEl.innerText = '-'; revEl.className = 'bd-trend neutral'; }
+    if(expTrend !== null && expTrend !== undefined && !isNaN(parseFloat(expTrend))){
+      const e = parseFloat(expTrend);
+      expEl.innerText = `${e >= 0 ? '↑' : '↓'} ${Math.abs(e).toFixed(0)}%`;
+      expEl.className = `bd-trend ${e >= 0 ? 'loss' : 'profit'}`;
+    } else { expEl.innerText = '-'; expEl.className = 'bd-trend neutral'; }
+
+    // Chart - Server se aaye hue real monthly data se banega, hardcode bar KABHI nahi banegi
+    this.renderChart(monthly);
+    this.renderMonthly(monthly);
+    this.renderInsights({ revenue, expenses, profit, breakdown, monthly, hasData });
+  }
+
+  renderChart(monthly){
+    const chart = document.getElementById('plChart');
+    if(!chart) return;
+    if(!monthly || monthly.length === 0){
+      chart.innerHTML = '<div class="chart-empty">No data yet - Add sales & expenses to see chart</div>';
+      return;
+    }
+    // Last 4 months hi dikhayenge
+    const last4 = monthly.slice(-4);
+    const maxProfit = Math.max(...last4.map(m=> Math.abs(this.num(m.profit ?? 0))), 1);
+    chart.innerHTML = last4.map((m,i)=>{
+      const p = this.num(m.profit ?? 0);
+      const height = Math.max(12, Math.min(100, Math.abs(p) / maxProfit * 100));
+      return `<div class="chart-bar ${i===last4.length-1 ? 'active' : ''}" style="height:${height}%"><b>${this.fmt(p)}</b><span>${m.month || m.label || ''}</span></div>`;
+    }).join('');
+  }
+
+  renderMonthly(monthly){
+    const container = document.getElementById('monthlyComparison');
+    if(!container) return;
+    if(!monthly || monthly.length === 0){
+      container.innerHTML = '<div class="comparison-item"><span>No monthly data yet</span></div>';
+      return;
+    }
+    container.innerHTML = monthly.map(m=>{
+      const rev = this.num(m.revenue ?? 0);
+      const exp = this.num(m.expenses ?? m.expense ?? 0);
+      const prof = this.num(m.profit ?? (rev - exp));
+      return `
+        <div class="comparison-item">
+          <span>${m.month || m.label || ''}</span>
+          <span>Rev: ${this.fmt(rev)}</span>
+          <span>Exp: ${this.fmt(exp)}</span>
+          <b style="color:${prof >= 0 ? '#10b981' : '#ef4444'}">${this.fmt(prof)}</b>
+        </div>
+      `;
+    }).join('');
+  }
+
+  renderInsights({ revenue, expenses, profit, breakdown, monthly, hasData }){
+    const box = document.getElementById('insightsList');
+    if(!box) return;
+    if(!hasData){
+      box.innerHTML = '<div class="insight-item neutral"><span>ℹ️</span><span>Add sales & expenses to see insights</span></div>';
+      return;
+    }
+    let html = '';
+    // Insight 1 - Profit / Loss - real data se
+    if(profit > 0){
+      html += `<div class="insight-item profit"><span>📈</span><span>You made a profit of ${this.fmt(profit)} this month. Keep it up!</span></div>`;
+    } else if(profit < 0){
+      html += `<div class="insight-item warning"><span>⚠️</span><span>You had a loss of ${this.fmt(Math.abs(profit))} this month. Check your expenses.</span></div>`;
+    } else {
+      html += `<div class="insight-item info"><span>ℹ️</span><span>Revenue and expenses are equal this month - break even.</span></div>`;
+    }
+    // Insight 2 - Sabse bada kharcha - real breakdown se, guess se nahi
+    const expMap = [
+      { label: 'Inventory', val: this.num(breakdown.inventory ?? breakdown.inventoryExpense ?? 0) },
+      { label: 'Delivery', val: this.num(breakdown.delivery ?? breakdown.deliveryExpense ?? 0) },
+      { label: 'Staff', val: this.num(breakdown.staff ?? breakdown.staffExpense ?? 0) },
+      { label: 'Rent & Others', val: this.num(breakdown.rent ?? breakdown.rentExpense ?? breakdown.rentAndOthers ?? breakdown.others ?? 0) }
+    ];
+    const topExp = expMap.sort((a,b)=> b.val - a.val)[0];
+    if(topExp && topExp.val > 0 && expenses > 0){
+      const pct = Math.round((topExp.val / expenses) * 100);
+      html += `<div class="insight-item info"><span>ℹ️</span><span>Biggest expense: ${topExp.label} - ${this.fmt(topExp.val)} (${pct}% of total expenses)</span></div>`;
+    }
+    // Insight 3 - Last month se compare - sirf real monthly data ho toh
+    if(monthly.length >= 2){
+      const last = monthly[monthly.length-1];
+      const prev = monthly[monthly.length-2];
+      const lastProfit = this.num(last.profit ?? 0);
+      const prevProfit = this.num(prev.profit ?? 0);
+      if(prevProfit !== 0){
+        const pct = Math.round(((lastProfit - prevProfit) / Math.abs(prevProfit)) * 100);
+        html += `<div class="insight-item ${pct >= 0 ? 'profit' : 'warning'}"><span>${pct >= 0 ? '📈' : '📉'}</span><span>Profit ${pct >= 0 ? 'increased' : 'decreased'} by ${Math.abs(pct)}% vs ${prev.month || 'last month'}.</span></div>`;
+      }
+    }
+    box.innerHTML = html || '<div class="insight-item neutral"><span>ℹ️</span><span>Add sales & expenses to see insights</span></div>';
+  }
+
+  bindEvents(){
+    document.getElementById('plBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('plFilterBtn')?.addEventListener('click', ()=>{ this.buildFilterSelects(); document.getElementById('filterModal').style.display='grid'; });
+    document.getElementById('closeFilterModal')?.addEventListener('click', ()=> document.getElementById('filterModal').style.display='none');
+    document.getElementById('cancelFilter')?.addEventListener('click', ()=> document.getElementById('filterModal').style.display='none');
+    document.getElementById('filterModal')?.querySelector('.modal-backdrop')?.addEventListener('click', ()=> document.getElementById('filterModal').style.display='none');
+    document.getElementById('applyFilter')?.addEventListener('click', async ()=>{
+      const m = parseInt(document.getElementById('filterMonth').value) || 1;
+      const y = parseInt(document.getElementById('filterYear').value) || new Date().getFullYear();
+      this.currentDate = new Date(y, m-1, 1);
+      document.getElementById('filterModal').style.display='none';
+      await this.loadProfitLoss();
+    });
   }
 }
 
 window.ProfitLossPageInstance = new ProfitLossPage();
 document.addEventListener('DOMContentLoaded', ()=> window.ProfitLossPageInstance.init());
 </script>
+</body>
+</html>

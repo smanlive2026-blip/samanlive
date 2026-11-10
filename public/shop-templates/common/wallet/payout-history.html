@@ -1,9 +1,85 @@
-<!-- LOCATION: public/shop-templates/common/wallet/payout-history.html -->
-<!-- WORLD CLASS PAYOUT HISTORY - FULL 400+ LINES -->
+<!-- LOCATION: public/shop-templates/common/wallet/payout-history.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS PAYOUT HISTORY - FULL -->
+<!-- RULE: Payout = Server se hi aayega. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- RULE 2: Fake / Mock payout KABHI nahi banega. Khaali hai toh "No payouts yet" dikhega. -->
+<!-- RULE 3: Bank / UPI kabhi hardcode nahi hoga. Bank / UPI Server se aayega, nahi hai toh "-" dikhega, kisi aur ka Bank / UPI KABHI nahi dikhega. -->
+<!-- FLOW: Load -> GET /api/common/wallet/:shopId/payouts -> Filter (status + date) -> Render -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur payout browser storage se aata tha, aur khaali hone pe 3 fake payout bana deta tha - Bank ****1234 + UPI 9876543210@upi ke saath, aur header me hardcode 32750 / 2100 / 30650 likha tha, aur Filter button dead tha. Ab FULL HTML + RESPONSIVE + Server only + No Fake Data + Working Filter hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Payout History</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+input{font-family:inherit;outline:none}
+.payout-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.payout-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.payout-header b{display:block;font-weight:900;font-size:16px}
+.payout-header span{font-size:11px;color:#64748b;font-weight:600}
+.filter-btn{margin-left:auto;background:#f1f5f9;border:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.payout-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px}
+.p-stat{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:12px;text-align:center;min-width:0}
+.p-stat b{display:block;font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-stat span{font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase}
+.payout-tabs{display:flex;gap:6px;padding:0 12px 12px;overflow-x:auto;scrollbar-width:none}
+.payout-tabs::-webkit-scrollbar{display:none}
+.payout-tab{background:#fff;border:1px solid #e2e8f0;padding:8px 12px;border-radius:20px;font-weight:800;font-size:11px;white-space:nowrap;cursor:pointer;flex-shrink:0}
+.payout-tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.payout-list{padding:0 12px;display:flex;flex-direction:column;gap:8px}
+.payout-item{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px}
+.payout-icon{width:40px;height:40px;border-radius:10px;background:#f0f9ff;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.payout-info{flex:1;min-width:0}
+.payout-info b{display:block;font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.payout-info span{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.payout-amount{text-align:right;flex-shrink:0}
+.payout-amount b{display:block;font-weight:900;font-size:14px;white-space:nowrap}
+.payout-amount span{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;margin-top:4px;white-space:nowrap}
+.payout-amount span.success{background:#dcfce7;color:#166534}
+.payout-amount span.pending{background:#fef3c7;color:#92400e}
+.payout-amount span.failed{background:#fee2e2;color:#991b1b}
+.payout-empty{text-align:center;padding:60px 20px}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.payout-empty b{display:block;font-weight:900}
+.payout-empty span{font-size:12px;color:#64748b;font-weight:600;margin:4px 0 16px;display:block}
+.filter-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:end center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
+.modal-box{position:relative;background:#fff;width:100%;max-width:500px;border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;animation:slideUp .3s}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 0}
+.modal-header button{background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer;flex-shrink:0}
+.modal-body{padding:20px}
+.filter-opt{display:flex;justify-content:space-between;align-items:center;background:#f8fafc;border:2px solid #f1f5f9;border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;font-weight:800;font-size:13px}
+.filter-opt.active{border-color:#0f172a;background:#fff}
+.filter-opt span{font-size:11px;color:#64748b;font-weight:600}
+/* LAPTOP */
+@media(min-width:721px){
+  .modal-box{border-radius:24px;margin-bottom:20px}
+}
+/* MOBILE FIX */
+@media(max-width:600px){
+  .payout-root{max-width:100%}
+  .payout-header{padding:12px}
+  .payout-header b{font-size:15px}
+  .payout-stats{padding:10px;gap:6px}
+  .p-stat{padding:10px 6px}
+  .p-stat b{font-size:13px}
+  .payout-tabs{padding:0 10px 10px}
+  .payout-list{padding:0 10px}
+  .payout-item{padding:12px 10px;gap:10px}
+}
+</style>
+</head>
+<body>
 <div id="payoutRoot" class="payout-root">
   <div class="payout-header">
     <button id="payoutBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>Payout History</b>
       <span id="payoutSubHeader">All payouts</span>
     </div>
@@ -11,9 +87,9 @@
   </div>
 
   <div class="payout-stats">
-    <div class="p-stat"><b id="totalPayoutsHistory">₹ 32,750</b><span>Total Payouts</span></div>
-    <div class="p-stat"><b id="pendingPayoutsHistory">₹ 2,100</b><span>Pending</span></div>
-    <div class="p-stat"><b id="successPayoutsHistory">₹ 30,650</b><span>Success</span></div>
+    <div class="p-stat"><b id="totalPayoutsHistory">₹ 0</b><span>Total Payouts</span></div>
+    <div class="p-stat"><b id="pendingPayoutsHistory">₹ 0</b><span>Pending</span></div>
+    <div class="p-stat"><b id="successPayoutsHistory">₹ 0</b><span>Success</span></div>
   </div>
 
   <div class="payout-tabs">
@@ -30,44 +106,55 @@
     <b>No payouts yet</b>
     <span>Your payout history will show here</span>
   </div>
-</div>
 
-<style>
-.payout-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.payout-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.payout-header b{ display:block; font-weight:900; }
-.payout-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.filter-btn{ margin-left:auto; background:#f1f5f9; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
-.payout-stats{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:12px; }
-.p-stat{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:12px; text-align:center; }
-.p-stat b{ display:block; font-weight:900; font-size:14px; }
-.p-stat span{ font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; }
-.payout-tabs{ display:flex; gap:6px; padding:0 12px 12px; overflow-x:auto; }
-.payout-tab{ background:#fff; border:1px solid #e2e8f0; padding:8px 12px; border-radius:20px; font-weight:800; font-size:11px; white-space:nowrap; cursor:pointer; }
-.payout-tab.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
-.payout-list{ padding:0 12px; display:flex; flex-direction:column; gap:8px; }
-.payout-item{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:14px; display:flex; align-items:center; gap:12px; }
-.payout-icon{ width:40px; height:40px; border-radius:10px; background:#f0f9ff; display:grid; place-items:center; font-size:18px; }
-.payout-info{ flex:1; }
-.payout-info b{ display:block; font-weight:800; font-size:13px; }
-.payout-info span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
-.payout-amount{ text-align:right; }
-.payout-amount b{ display:block; font-weight:900; font-size:14px; }
-.payout-amount span{ display:block; font-size:10px; font-weight:700; padding:2px 6px; border-radius:20px; margin-top:4px; }
-.payout-amount span.success{ background:#dcfce7; color:#166534; }
-.payout-amount span.pending{ background:#fef3c7; color:#92400e; }
-.payout-amount span.failed{ background:#fee2e2; color:#991b1b; }
-.payout-empty{ text-align:center; padding:60px 20px; }
-.empty-icon{ font-size:48px; margin-bottom:12px; }
-</style>
+  <div id="filterModal" class="filter-modal" style="display:none">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header"><b>📅 Filter Payouts</b><button id="closeFilterModal">✕</button></div>
+      <div class="modal-body">
+        <div class="filter-opt active" data-date-filter="all"><span>All Time</span><span id="countAll">0</span></div>
+        <div class="filter-opt" data-date-filter="today"><span>Today</span><span id="countToday">0</span></div>
+        <div class="filter-opt" data-date-filter="week"><span>This Week</span><span id="countWeek">0</span></div>
+        <div class="filter-opt" data-date-filter="month"><span>This Month</span><span id="countMonth">0</span></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 class PayoutHistoryPage {
   constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.payouts = [];
     this.filter = 'all';
+    this.dateFilter = 'all';
+  }
+
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+  safeDate(d){
+    try{ const dt = new Date(d); if(isNaN(dt)) return null; return dt; }catch(e){ return null; }
+  }
+  maskAccount(p){
+    // Bank / UPI Server se aaya toh hi dikhayenge, nahi aaya toh "-" dikhega - hardcode kabhi nahi
+    const bank = p.bankAccount || p.accountNumber || p.bank || '';
+    const upi = p.upiId || p.upi || '';
+    const method = p.method || p.payoutMethod || '';
+    if(bank && typeof bank === 'string') return `Bank ••••${bank.slice(-4)}`;
+    if(upi && typeof upi === 'string') return `UPI ${upi}`;
+    if(method) return method;
+    return p.desc || p.destination || '-';
   }
 
   async init(){
@@ -79,70 +166,171 @@ class PayoutHistoryPage {
     try{
       if(window.Loader) Loader.show('Loading payouts...');
 
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/wallet/${this.shopId}/payouts`);
-        this.payouts = data.payouts||data||[];
-      } else {
-        const transactions = JSON.parse(localStorage.getItem(`wallet_transactions_${this.shopId}`)||'[]');
-        this.payouts = transactions.filter(t=> t.category==='payout');
-
-        if(this.payouts.length===0){
-          this.payouts = [
-            { _id:'p1', shopId:this.shopId, amount:1000, title:'Payout to Bank', desc:'Bank ****1234', status:'success', date:new Date().toISOString() },
-            { _id:'p2', shopId:this.shopId, amount:500, title:'Payout to UPI', desc:'UPI 9876543210@upi', status:'pending', date:new Date(Date.now()-1*86400000).toISOString() },
-            { _id:'p3', shopId:this.shopId, amount:2000, title:'Payout to Bank', desc:'Bank ****1234', status:'success', date:new Date(Date.now()-3*86400000).toISOString() }
-          ];
-        }
+      if(!this.shopId){
+        if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+        this.payouts = [];
+        this.updateStats();
+        this.render();
+        return;
       }
 
-      const total = this.payouts.reduce((s,p)=> s+p.amount,0);
-      const pending = this.payouts.filter(p=> p.status==='pending').reduce((s,p)=> s+p.amount,0);
-      const success = this.payouts.filter(p=> p.status==='success').reduce((s,p)=> s+p.amount,0);
+      let payouts = null;
+      // 1. ApiCore se - HAMESHA Server se
+      if(window.ApiCore){
+        try{
+          const data = await window.ApiCore.get(`/api/common/wallet/${this.shopId}/payouts`);
+          payouts = data.payouts || data || null;
+        }catch(e){ payouts = null; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!payouts){
+        try{
+          const res = await fetch(`/api/common/wallet/${this.shopId}/payouts`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) payouts = res.payouts || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage fallback + NO Fake payout - Server se nahi mila toh khaali hi rahega, Bank ****1234 / UPI 9876543210@upi jaisa fake payout KABHI nahi banega
+      this.payouts = Array.isArray(payouts) ? payouts : [];
 
-      document.getElementById('totalPayoutsHistory').innerText = `₹ ${total}`;
-      document.getElementById('pendingPayoutsHistory').innerText = `₹ ${pending}`;
-      document.getElementById('successPayoutsHistory').innerText = `₹ ${success}`;
-      document.getElementById('payoutSubHeader').innerText = `${this.payouts.length} payouts • Total ₹${total}`;
-
+      this.updateStats();
       this.render();
 
-    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+    }catch(e){
+      this.payouts = [];
+      this.updateStats();
+      this.render();
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  updateStats(){
+    const total = this.payouts.reduce((s,p)=> s + (parseFloat(p.amount) || 0), 0);
+    const pending = this.payouts.filter(p=> p.status==='pending').reduce((s,p)=> s + (parseFloat(p.amount) || 0), 0);
+    const success = this.payouts.filter(p=> p.status==='success').reduce((s,p)=> s + (parseFloat(p.amount) || 0), 0);
+
+    document.getElementById('totalPayoutsHistory').innerText = `₹ ${total.toLocaleString()}`;
+    document.getElementById('pendingPayoutsHistory').innerText = `₹ ${pending.toLocaleString()}`;
+    document.getElementById('successPayoutsHistory').innerText = `₹ ${success.toLocaleString()}`;
+    document.getElementById('payoutSubHeader').innerText = `${this.payouts.length} payouts • Total ₹${total.toLocaleString()}`;
+  }
+
+  getFiltered(){
+    let filtered = [...this.payouts];
+    if(this.filter!=='all') filtered = filtered.filter(p=> p.status===this.filter);
+    if(this.dateFilter!=='all'){
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      filtered = filtered.filter(p=>{
+        const d = this.safeDate(p.date || p.createdAt);
+        if(!d) return false;
+        if(this.dateFilter==='today'){
+          const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+          return ds===todayStr;
+        }
+        if(this.dateFilter==='week'){
+          const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
+          return d >= weekAgo && d <= now;
+        }
+        if(this.dateFilter==='month'){
+          return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+        }
+        return true;
+      });
+    }
+    filtered.sort((a,b)=>{
+      const da = this.safeDate(b.date || b.createdAt);
+      const db = this.safeDate(a.date || a.createdAt);
+      if(!da && !db) return 0;
+      if(!da) return 1;
+      if(!db) return -1;
+      return da - db;
+    });
+    return filtered;
   }
 
   render(){
     const container = document.getElementById('payoutList');
     const empty = document.getElementById('payoutEmpty');
 
-    let filtered = [...this.payouts];
-    if(this.filter!=='all') filtered = filtered.filter(p=> p.status===this.filter);
-    filtered.sort((a,b)=> new Date(b.date)-new Date(a.date));
+    const filtered = this.getFiltered();
 
     if(filtered.length===0){
       container.style.display='none';
       empty.style.display='block';
+      if(this.payouts.length>0){
+        empty.querySelector('b').innerText = 'No payouts in this filter';
+        empty.querySelector('span').innerText = 'Filter badal ke dekho';
+      } else {
+        empty.querySelector('b').innerText = 'No payouts yet';
+        empty.querySelector('span').innerText = 'Your payout history will show here';
+      }
       return;
     }
 
     container.style.display='flex';
     empty.style.display='none';
 
-    container.innerHTML = filtered.map(payout=>`
+    container.innerHTML = filtered.map(payout=>{
+      const amount = parseFloat(payout.amount) || 0;
+      const d = this.safeDate(payout.date || payout.createdAt);
+      const dateStr = d ? `${d.toLocaleDateString('en-IN')} ${d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}` : '-';
+      const title = payout.title || (payout.method ? `Payout via ${payout.method}` : 'Payout');
+      return `
       <div class="payout-item">
         <div class="payout-icon">🏦</div>
         <div class="payout-info">
-          <b>${payout.title}</b>
-          <span>${payout.desc} • ${new Date(payout.date).toLocaleDateString()} ${new Date(payout.date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
+          <b>${title}</b>
+          <span>${this.maskAccount(payout)} • ${dateStr}</span>
         </div>
         <div class="payout-amount">
-          <b>-₹ ${payout.amount}</b>
-          <span class="${payout.status}">${payout.status==='success'?'✓ Success': payout.status==='pending'?'⏳ Pending':'❌ Failed'}</span>
+          <b>-₹ ${amount.toLocaleString()}</b>
+          <span class="${payout.status}">${payout.status==='success' ? '✓ Success' : payout.status==='pending' ? '⏳ Pending' : '❌ Failed'}</span>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
+  }
+
+  openFilter(){
+    // Filter modal me count bharo - Server se aaye hue real data se
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
+    const countAll = this.payouts.length;
+    const countToday = this.payouts.filter(p=>{
+      const d = this.safeDate(p.date || p.createdAt); if(!d) return false;
+      const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      return ds===todayStr;
+    }).length;
+    const countWeek = this.payouts.filter(p=>{ const d=this.safeDate(p.date||p.createdAt); return d && d>=weekAgo && d<=now; }).length;
+    const countMonth = this.payouts.filter(p=>{ const d=this.safeDate(p.date||p.createdAt); return d && d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); }).length;
+    document.getElementById('countAll').innerText = countAll;
+    document.getElementById('countToday').innerText = countToday;
+    document.getElementById('countWeek').innerText = countWeek;
+    document.getElementById('countMonth').innerText = countMonth;
+    document.querySelectorAll('.filter-opt').forEach(o=> o.classList.toggle('active', o.dataset.dateFilter===this.dateFilter));
+    document.getElementById('filterModal').style.display='grid';
+  }
+
+  closeFilter(){
+    document.getElementById('filterModal').style.display='none';
   }
 
   bindEvents(){
     document.getElementById('payoutBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('payoutFilterBtn')?.addEventListener('click', ()=> this.openFilter());
+    document.getElementById('closeFilterModal')?.addEventListener('click', ()=> this.closeFilter());
+    document.getElementById('filterModal')?.querySelector('.modal-backdrop')?.addEventListener('click', ()=> this.closeFilter());
+
+    document.querySelectorAll('.filter-opt').forEach(opt=>{
+      opt.addEventListener('click', ()=>{
+        document.querySelectorAll('.filter-opt').forEach(o=> o.classList.remove('active'));
+        opt.classList.add('active');
+        this.dateFilter = opt.dataset.dateFilter;
+        this.render();
+        this.closeFilter();
+        if(window.Toast) Toast.show(`Filter: ${opt.querySelector('span').innerText}`, 'info');
+      });
+    });
 
     document.querySelectorAll('.payout-tab').forEach(tab=>{
       tab.addEventListener('click', ()=>{
@@ -158,3 +346,5 @@ class PayoutHistoryPage {
 window.PayoutHistoryPageInstance = new PayoutHistoryPage();
 document.addEventListener('DOMContentLoaded', ()=> window.PayoutHistoryPageInstance.init());
 </script>
+</body>
+</html>
