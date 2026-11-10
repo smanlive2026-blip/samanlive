@@ -1,10 +1,12 @@
-// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - PRODUCT-FORM KE HISAB SE - V3
-// RULE: Product = WORLD MODEL. Order = Common Order. Profile / Timing = Achar + Common Toggle.
+// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - PRODUCT-FORM + COMMON PROFILE - V4
+// RULE: Product = WORLD MODEL. Order = Common Order. Profile = COMMON UNIFIED PROFILE (V23).
 // PRODUCT-FORM: Add / Edit / Quick Add = ../common/products/product-form.html - Dashboard me apna modal NAHI hoga
-// COMMON: WorldProductManager.getProducts / addProduct / updateProduct / deleteProduct / bulkAdd = /api/world-products
-//         /api/common/orders/list + /api/common/orders/:id/status + /api/common/checkout/:shopId/place + /api/common/shop-toggle
+// PROFILE: Photo = UnifiedProfile.handleFileInput() -> /api/common/profile/upload-avatar -> Cloudinary -> Shop model
+//          Details = PUT /api/common/profile/shop/{shopId} -> Shop model - Achar /settings pe KABHI NAHI
+//          3 ALAG PHOTO: shop_logo -> logo, shop_cover -> banner, shop_owner -> ownerPhotoUrl
+// COMMON: WorldProductManager = /api/world-products + /api/common/orders/list + /api/common/orders/:id/status + /api/common/checkout/:shopId/place + /api/common/shop-toggle + /api/common/profile/me + /api/common/profile/shop/:shopId
 // READ RULE: price500 = p.price500 || p.extraData?.price500 || p.price | image = p.thumbnail || p.image || p.extraData?.thumbnail
-//            spiceLevel = p.spiceLevel || p.extraData?.spiceLevel | jarType = p.jarType || p.extraData?.jarType
+//            logo = shop.logo || shop.shopLogo | banner = shop.banner || shop.coverPhoto | ownerPhoto = shop.ownerPhotoUrl
 
 (function () {
   var params = new URLSearchParams(location.search);
@@ -37,10 +39,8 @@
     return { 'Content-Type': 'application/json', 'x-shop-id': shopId, 'x-role': ROLE, ...(token ? { 'Authorization': 'Bearer ' + token } : {}) };
   }
   function shopUrl() { return location.origin + '/shop-templates/achar-shop/customer-view.html?shopId=' + encodeURIComponent(shopId); }
-  // Product Form ko wapas aane ke liye ye URL dena hai - warna wo ../dashboard.html pe chala jayega
   function returnUrl() { return location.href.split('?')[0] + '?shopId=' + encodeURIComponent(shopId); }
   function productFormUrl(extra) {
-    // type=achar-shop hi hona chahiye - product-form.html isi se achar-shop.seed.js uthata hai
     return '../common/products/product-form.html?shopId=' + encodeURIComponent(shopId) + '&type=' + SHOP_TYPE + '&shopType=' + SHOP_TYPE + '&returnUrl=' + encodeURIComponent(returnUrl()) + (extra || '');
   }
   function to24(t) {
@@ -60,7 +60,6 @@
     var mod = h >= 12 ? 'PM' : 'AM'; var hh = h % 12; if (hh === 0) hh = 12;
     return hh + ':' + m + ' ' + mod;
   }
-  // PRODUCT-FORM WALA NORMALISE - extraData se bhi padho, warna price500 / spiceLevel khaali dikhega
   function normProduct(p, i) {
     var ex = p.extraData || {};
     var price500 = num(p.price500 || ex.price500 || p.price || 0);
@@ -78,7 +77,6 @@
       spiceLevel: p.spiceLevel || ex.spiceLevel || 'Medium',
       weight: p.weight || ex.weight || '500g',
       unit: p.unit || ex.unit || 'jar',
-      // Product Form me image ka naam thumbnail hai
       image: p.thumbnail || p.image || ex.thumbnail || ex.image || '',
       thumbnail: p.thumbnail || p.image || ex.thumbnail || ex.image || '',
       description: p.description || ex.description || p.desc || ex.desc || '',
@@ -87,13 +85,23 @@
       shopId: p.shopId || shopId, shopType: p.shopType || SHOP_TYPE
     };
   }
+  // Profile ke liye - address kabhi object kabhi string aata hai, isliye 1 jagah se nikaalo
+  function shopAddressStr(s) {
+    if (!s) return '';
+    if (typeof s.address === 'string') return s.address;
+    if (s.address && s.address.line1) return s.address.line1 + (s.address.city ? ', ' + s.address.city : '');
+    return s.shopAddress || s.fullAddress || '';
+  }
+  function shopLogoUrl(s) { return (s && (s.logo || s.shopLogo || s.uploadedLogo || s.image)) || ''; }
+  function shopBannerUrl(s) { return (s && (s.banner || s.coverPhoto || s.cover || s.bannerPhotoUrl)) || ''; }
+  function shopOwnerPhotoUrl(s) { return (s && (s.ownerPhotoUrl || s.ownerPhoto || s.ownerAvatar)) || ''; }
 
   // ================= NAV / PAGE =================
   function showPage(page) {
     document.querySelectorAll('.page').forEach(function (el) { el.classList.toggle('active', el.dataset.page === page); });
     document.querySelectorAll('.nav button[data-page]').forEach(function (b) { b.classList.toggle('active', b.dataset.page === page); });
     var titles = { home: 'Overview', products: 'Products', orders: 'Orders', wallet: 'Earnings & Wallet', settings: 'Settings', profile: 'Profile', location: 'Location' };
-    var subs = { home: 'Aaj ka hisaab, ek nazar me', products: 'Achar - Search, stock, edit', orders: 'Common Checkout se aaye orders', wallet: 'Common Order se bana hisaab', settings: 'Timing aur contact', profile: 'Shop profile', location: 'Location aur delivery range' };
+    var subs = { home: 'Aaj ka hisaab, ek nazar me', products: 'Achar - Search, stock, edit', orders: 'Common Checkout se aaye orders', wallet: 'Common Order se bana hisaab', settings: 'Timing aur contact', profile: 'Shop profile - Common Profile', location: 'Location aur delivery range' };
     if ($('pageTitle')) $('pageTitle').textContent = titles[page] || 'Overview';
     if ($('pageSub')) $('pageSub').textContent = subs[page] || '';
     if (window.innerWidth <= 900) { var sb = $('sidebar'); if (sb) sb.classList.remove('open'); var ov = $('overlay'); if (ov) ov.classList.remove('show'); }
@@ -110,7 +118,6 @@
     var menuBtn = $('menuBtn'); if (menuBtn) menuBtn.addEventListener('click', function () { $('sidebar').classList.add('open'); $('overlay').classList.add('show'); });
     var ov = $('overlay'); if (ov) ov.addEventListener('click', function () { $('sidebar').classList.remove('open'); ov.classList.remove('show'); });
     var notifBtn = $('notifBtn'); if (notifBtn) notifBtn.addEventListener('click', function () { showPage('orders'); });
-    // PRODUCT-FORM: Add / Quick Add ab Product Form pe jayenge, apna modal nahi kholega
     var add1 = $('addAcharBtn'); if (add1) add1.addEventListener('click', openProductForm);
     var add2 = $('addAcharBtn2'); if (add2) add2.addEventListener('click', openProductForm);
     var qa = $('quickAddBtn'); if (qa) qa.addEventListener('click', openQuickAdd);
@@ -132,11 +139,14 @@
         renderOrders();
       });
     });
-    // Owner photo wala hissa same hai - Product Form se iska lena-dena nahi hai
-    var oi = $('ownerInput'); if (oi) oi.addEventListener('change', function (e) { handleOwnerImage(e.target.files[0]); });
-    var oib = $('ownerImgBig'); if (oib) oib.addEventListener('click', function () { $('ownerInput').click(); });
-    // Agar purani HTML me addModal / quickAddModal bache hain toh unko band kar do - Product Form hi chalega
-    // Dashboard.html V3 me ye modal honge hi nahi, ye sirf safety ke liye hai
+    // PROFILE - 3 ALAG PHOTO - 3 ALAG INPUT - HTML me onchange bhi hai, yahan backup hai
+    // Purana wala handleOwnerImage(file) wala tareeka DELETE - wo Achar /upload pe jata tha
+    var logoIn = $('shopLogoInput'); if (logoIn) logoIn.addEventListener('change', function () { changeShopLogo(logoIn); });
+    var bannerIn = $('shopBannerInput'); if (bannerIn) bannerIn.addEventListener('change', function () { changeShopBanner(bannerIn); });
+    var ownerIn = $('ownerInput'); if (ownerIn) ownerIn.addEventListener('change', function () { changeOwnerPhoto(ownerIn); });
+    var oib = $('ownerImgBig'); if (oib) oib.addEventListener('click', function () { if ($('ownerInput')) $('ownerInput').click(); });
+    var logoPrev = $('shopLogoPreview'); if (logoPrev) logoPrev.addEventListener('click', function () { if ($('shopLogoInput')) $('shopLogoInput').click(); });
+    var bannerPrev = $('shopBannerPreview'); if (bannerPrev) bannerPrev.addEventListener('click', function () { if ($('shopBannerInput')) $('shopBannerInput').click(); });
   }
 
   function shareWhatsApp() {
@@ -157,14 +167,17 @@
     if ($('shopIdDisplay')) $('shopIdDisplay').textContent = 'Shop ID: ' + shopId;
     bindNav();
     bindShopToggleUI();
+    // PROFILE PEHLE - Common Profile se, phir Achar ka bacha hua data - ulta karoge toh Logo udd jayega
+    await loadShopProfile();
     await loadShopData();
     await loadCommonOrders();
-    await loadProducts(); // WORLD MODEL se
+    await loadProducts();
     renderAll();
     initSocket();
     setInterval(function () { loadCommonOrders().then(renderAll).catch(function () {}); }, 30000);
-    // Product Form se wapas aaye toh list dobara load karo - warna naya product dikhega hi nahi
     window.addEventListener('focus', function () { loadProducts().then(renderAll).catch(function () {}); });
+    // Common Profile se wapas aaye toh Profile dobara load karo
+    window.addEventListener('focus', function () { loadShopProfile().catch(function () {}); });
   }
 
   function bindShopToggleUI() {
@@ -201,27 +214,159 @@
     } catch (e) {}
   }
 
-  // ================= SHOP DATA =================
+  // ================= SHOP PROFILE - COMMON UNIFIED PROFILE - V23 =================
+  async function loadShopProfile() {
+    // 1. UnifiedProfile - sabse pehle, yahi asli Shop hai
+    try {
+      if (window.UnifiedProfile && window.UnifiedProfile.loadMyProfile) {
+        var prof = await window.UnifiedProfile.loadMyProfile();
+        if (prof && prof.success && (prof.shop || prof.user)) {
+          shopData = Object.assign({}, shopData, prof.shop || prof.user);
+          fillShopProfileUI();
+          return shopData;
+        }
+      }
+    } catch (e) { console.warn('[achar] UnifiedProfile fail', e.message); }
+    // 2. Direct Common API
+    try {
+      var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
+      var buyerId = localStorage.getItem('USER_ID') || '';
+      var res = await fetch(API + '/api/common/profile/me?buyerId=' + encodeURIComponent(buyerId) + '&role=shop_owner&shopId=' + encodeURIComponent(shopId), {
+        headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId }
+      });
+      var data = await res.json().catch(function () { return {}; });
+      if (data && data.success && (data.shop || data.user)) {
+        shopData = Object.assign({}, shopData, data.shop || data.user);
+        fillShopProfileUI();
+        return shopData;
+      }
+    } catch (e) {}
+    // 3. Local cache - API fail ho toh bhi khaali na dikhe
+    try {
+      var local = JSON.parse(localStorage.getItem('shop_' + shopId) || '{}');
+      if (local && (local.shopName || local.name)) {
+        shopData = Object.assign({}, shopData, local);
+        fillShopProfileUI();
+        return shopData;
+      }
+    } catch (e) {}
+    return shopData;
+  }
+
+  function fillShopProfileUI() {
+    if (!shopData) return;
+    var logo = shopLogoUrl(shopData);
+    var banner = shopBannerUrl(shopData);
+    var ownerPhoto = shopOwnerPhotoUrl(shopData);
+    var name = shopData.shopName || shopData.name || 'Maa Ke Haath Ka Achar';
+    var ownerName = shopData.ownerName || '';
+
+    if ($('shopName')) $('shopName').textContent = ownerName ? ownerName + ' ki Dukaan' : name;
+    // Sidebar me Owner Photo dikhega - Logo nahi
+    if ($('ownerImg') && ownerPhoto) $('ownerImg').src = ownerPhoto;
+    // Profile page - 3 alag photo
+    if ($('shopLogoPreview') && logo) $('shopLogoPreview').src = logo;
+    if ($('shopLogoImg') && logo) $('shopLogoImg').src = logo;
+    if ($('shopBannerPreview') && banner) $('shopBannerPreview').src = banner;
+    if ($('bannerUrlInput') && banner) $('bannerUrlInput').value = banner;
+    if ($('ownerImgBig') && ownerPhoto) $('ownerImgBig').src = ownerPhoto;
+
+    if ($('announcementInput')) $('announcementInput').value = shopData.announcement || shopData.tagline || '';
+    if ($('shopPhoneInput')) $('shopPhoneInput').value = shopData.phone || shopData.ownerPhone || '';
+    if ($('ownerNameInput')) $('ownerNameInput').value = ownerName;
+    if ($('profileAddressInput')) $('profileAddressInput').value = shopAddressStr(shopData);
+    if ($('shopAddress')) $('shopAddress').value = shopAddressStr(shopData);
+    if ($('deliveryRange')) $('deliveryRange').value = shopData.deliveryRange || 5;
+    if ($('locationType')) $('locationType').value = shopData.locationType || 'fixed';
+    // Timing bhi Common Profile se aati hai toh wahi bhardo
+    if (shopData.timing) {
+      if ($('openTime')) $('openTime').value = to24(shopData.timing.open || shopData.timing.openingTime || shopData.openTime || '09:00');
+      if ($('closeTime')) $('closeTime').value = to24(shopData.timing.close || shopData.timing.closingTime || shopData.closeTime || '21:00');
+    }
+    try { localStorage.setItem('shop_' + shopId, JSON.stringify(shopData)); } catch (e) {}
+    window.SHOP_PROFILE = shopData;
+  }
+
+  // --- 3 PHOTO - 3 ALAG FUNCTION ---
+  async function changeShopLogo(inputEl) {
+    if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
+    if (!window.UnifiedProfile) return toast('Profile system load nahi hua - page refresh karo');
+    var r = await window.UnifiedProfile.handleFileInput(inputEl, {
+      role: 'shop_logo', field: 'logo', type: 'logo', shopId: shopId,
+      previewSelector: '#shopLogoPreview, #shopLogoImg',
+      msgId: 'profileStatus'
+    });
+    if (r && r.success) {
+      shopData.logo = r.url; shopData.shopLogo = r.url; shopData.uploadedLogo = r.url; shopData.image = r.url;
+      fillShopProfileUI();
+      toast('✅ Shop Logo save ho gaya - Customer ko dikhega');
+    }
+  }
+  async function changeShopBanner(inputEl) {
+    if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
+    if (!window.UnifiedProfile) return toast('Profile system load nahi hua - page refresh karo');
+    var r = await window.UnifiedProfile.handleFileInput(inputEl, {
+      role: 'shop_cover', field: 'banner', type: 'banner', shopId: shopId,
+      previewSelector: '#shopBannerPreview',
+      msgId: 'profileStatus'
+    });
+    if (r && r.success) {
+      shopData.banner = r.url; shopData.coverPhoto = r.url; shopData.cover = r.url;
+      fillShopProfileUI();
+      toast('✅ Banner save ho gaya - Customer ko dikhega');
+    }
+  }
+  async function changeOwnerPhoto(inputEl) {
+    if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
+    if (!window.UnifiedProfile) return toast('Profile system load nahi hua - page refresh karo');
+    var r = await window.UnifiedProfile.handleFileInput(inputEl, {
+      role: 'shop_owner', field: 'ownerPhotoUrl', type: 'avatar', shopId: shopId,
+      previewSelector: '#ownerImg, #ownerImgBig',
+      msgId: 'profileStatus'
+    });
+    if (r && r.success) {
+      shopData.ownerPhotoUrl = r.url; shopData.ownerPhoto = r.url; shopData.ownerAvatar = r.url;
+      fillShopProfileUI();
+      toast('✅ Owner Photo save ho gaya');
+    }
+  }
+  window.changeShopLogo = changeShopLogo;
+  window.changeShopBanner = changeShopBanner;
+  window.changeOwnerPhoto = changeOwnerPhoto;
+  // Purana naam - agar kahin se call ho raha hai toh bhi UnifiedProfile hi chalega
+  window.handleOwnerImage = function (inputOrFile) {
+    if (inputOrFile && inputOrFile.files) return changeOwnerPhoto(inputOrFile);
+    return toast('Owner Photo badalne ke liye file chuno');
+  };
+  window.handleProfilePicChange = function (inputEl, role, previewSelector) {
+    if (window.UnifiedProfile) return window.UnifiedProfile.handleFileInput(inputEl, { role: role || 'shop_logo', shopId: shopId, previewSelector: previewSelector, msgId: 'profileStatus' });
+  };
+
+  // --- COMMON PROFILE PAGES ---
+  window.openShopProfile = function () { location.href = '../common/profile/profile.html?shopId=' + encodeURIComponent(shopId); };
+  window.openShopInfo = function () { location.href = '../common/profile/shop-info.html?shopId=' + encodeURIComponent(shopId); };
+  window.openShopGallery = function () { location.href = '../common/profile/shop-gallery.html?shopId=' + encodeURIComponent(shopId); };
+  window.openShopTimingPage = function () { location.href = '../common/profile/shop-timing.html?shopId=' + encodeURIComponent(shopId); };
+  window.openShopVerification = function () { location.href = '../common/profile/shop-verification.html?shopId=' + encodeURIComponent(shopId); };
+
+  // ================= SHOP DATA - ACHAR ROUTE - SIRF FALLBACK =================
+  // RULE: Ye Common Profile ko overwrite NAHI karega. Sirf jo field khaali hai, wahi bharega.
   async function loadShopData() {
     try {
       var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId), { headers: getHeaders() });
       var data = await res.json().catch(function () { return {}; });
       if (!data.success) throw new Error(data.message || 'Shop load fail');
-      shopData = data.shop || {};
-      var name = shopData.ownerName ? shopData.ownerName + ' ki Dukaan' : (shopData.shopName || shopData.name || 'Maa Ke Haath Ka Achar');
-      if ($('shopName')) $('shopName').textContent = name;
+      var acharShop = data.shop || {};
+      // Merge - Common Profile wali value ko khaali Achar wali se mat udao
+      Object.keys(acharShop).forEach(function (k) {
+        if (shopData[k] === undefined || shopData[k] === '' || shopData[k] === null) shopData[k] = acharShop[k];
+      });
+      // Logo / Banner / Owner Photo - Common wali hi rahegi, Achar wali se kabhi overwrite nahi hogi
+      if ($('shopName')) $('shopName').textContent = shopData.ownerName ? shopData.ownerName + ' ki Dukaan' : (shopData.shopName || shopData.name || 'Maa Ke Haath Ka Achar');
       if ($('pageTitle')) $('pageTitle').textContent = 'Overview';
-      if ($('ownerImg') && shopData.ownerPhotoUrl) $('ownerImg').src = shopData.ownerPhotoUrl;
-      if ($('ownerImgBig') && shopData.ownerPhotoUrl) $('ownerImgBig').src = shopData.ownerPhotoUrl;
-      if ($('announcementInput')) $('announcementInput').value = shopData.announcement || '';
-      if ($('openTime')) $('openTime').value = to24(shopData.openTime || shopData.timing && shopData.timing.open || '09:00');
-      if ($('closeTime')) $('closeTime').value = to24(shopData.closeTime || shopData.timing && shopData.timing.close || '21:00');
-      if ($('shopPhoneInput')) $('shopPhoneInput').value = shopData.phone || '';
-      if ($('ownerNameInput')) $('ownerNameInput').value = shopData.ownerName || '';
-      if ($('profileAddressInput')) $('profileAddressInput').value = shopData.shopAddress || shopData.fullAddress || '';
-      if ($('shopAddress')) $('shopAddress').value = shopData.shopAddress || shopData.fullAddress || '';
-      if ($('deliveryRange')) $('deliveryRange').value = shopData.deliveryRange || 5;
-      if ($('locationType')) $('locationType').value = shopData.locationType || 'fixed';
+      fillShopProfileUI();
+      if ($('openTime') && !$('openTime').value) $('openTime').value = to24(shopData.openTime || (shopData.timing && shopData.timing.open) || '09:00');
+      if ($('closeTime') && !$('closeTime').value) $('closeTime').value = to24(shopData.closeTime || (shopData.timing && shopData.timing.close) || '21:00');
     } catch (e) {
       console.warn('[achar] shop load fail', e.message);
     }
@@ -313,7 +458,6 @@
     var earn = totalSale - fee;
     var deliveredSale = allOrders.filter(function (o) { return o.orderStatus === 'delivered'; }).reduce(function (s, o) { return s + orderTotal(o); }, 0);
     var pendingSale = allOrders.filter(function (o) { return ['placed', 'confirmed', 'packed'].includes(o.orderStatus); }).reduce(function (s, o) { return s + orderTotal(o); }, 0);
-
     if ($('todaySale')) $('todaySale').textContent = String(todaySale);
     if ($('todayOrdersLine')) $('todayOrdersLine').textContent = todayOrders.length + ' orders today';
     if ($('totalOrders')) $('totalOrders').textContent = String(allOrders.length);
@@ -323,7 +467,6 @@
     if ($('walletEarn')) $('walletEarn').textContent = String(earn);
     if ($('walletPending')) $('walletPending').textContent = String(pendingSale);
     if ($('walletDelivered')) $('walletDelivered').textContent = String(deliveredSale);
-
     var weekEl = $('weekList'); if (weekEl) {
       var days = [];
       for (var i = 6; i >= 0; i--) {
@@ -373,11 +516,9 @@
   window.acharPack = function (id) { return changeOrderStatus(id, 'packed'); };
   window.changeOrderStatus = changeOrderStatus;
 
-  // ================= PRODUCTS - WORLD MODEL - PRODUCT-FORM SE HI AAYENGE =================
+  // ================= PRODUCTS - WORLD MODEL =================
   async function loadProducts() {
     try {
-      // WORLD MODEL - 1 hi tareeka: WorldProductManager.getProducts()
-      // Ye /api/world-products?shopType=achar-shop&shopId=XXX&role=dashboard pe jata hai
       if (window.WorldProductManager && window.WorldProductManager.getProducts) {
         var list = await window.WorldProductManager.getProducts({ shopId: shopId, shopType: SHOP_TYPE });
         allProducts = (list || []).map(normProduct);
@@ -385,7 +526,6 @@
         var list2 = await window.ProductManager.getProducts({ shopId: shopId, shopType: SHOP_TYPE });
         allProducts = (list2 || []).map(normProduct);
       } else {
-        // Product Manager load nahi hua toh direct World API - Achar API kabhi nahi
         var res = await fetch(API + '/api/world-products?shopType=' + SHOP_TYPE + '&shopId=' + encodeURIComponent(shopId) + '&role=dashboard');
         var data = await res.json().catch(function () { return {}; });
         allProducts = (data.data || data.products || []).map(normProduct);
@@ -443,33 +583,21 @@
     el.innerHTML = allProducts.slice(0, 3).map(productRow).join('');
   }
 
-  // ================= ADD / EDIT / QUICK ADD - SAB PRODUCT-FORM PE JAYEGA =================
-  // Dashboard me apna modal / saveNewAchar / saveQuickAdd NAHI hoga - ye hi Product Form ka matlab hai
-  function openProductForm() {
-    // Product Form me returnUrl diya hai, taaki Save ke baad wapas isi Dashboard pe aaye
-    location.href = productFormUrl('');
-  }
-  function openQuickAdd() {
-    // quick=1 se Product Form ka Quick Box khud khul jayega - Add All / Add Limited wahi hai
-    location.href = productFormUrl('&quick=1');
-  }
+  // ================= ADD / EDIT / QUICK ADD - PRODUCT-FORM =================
+  function openProductForm() { location.href = productFormUrl(''); }
+  function openQuickAdd() { location.href = productFormUrl('&quick=1'); }
   window.openProductForm = openProductForm;
-  window.openAddModal = openProductForm; // Purani HTML me agar openAddModal bacha hai toh bhi Product Form hi khulega
+  window.openAddModal = openProductForm;
   window.openQuickAdd = openQuickAdd;
-  // Purane naam - agar kahin se call ho raha hai toh bhi Product Form hi khulega, modal nahi
   window.closeAddModal = function () {};
   window.closeQuickAdd = function () {};
   window.saveNewAchar = function () { openProductForm(); };
 
-  window.acharEditProduct = function (id) {
-    // Product Form khud /api/world-products/{editId} se data bharega - Dashboard ko fill nahi karna hai
-    location.href = productFormUrl('&editId=' + encodeURIComponent(id));
-  };
+  window.acharEditProduct = function (id) { location.href = productFormUrl('&editId=' + encodeURIComponent(id)); };
 
   window.acharDeleteProduct = async function (id) {
     if (!confirm('Ye product delete karein?')) return;
     try {
-      // WORLD MODEL - Soft delete - WorldProductManager.deleteProduct()
       if (window.WorldProductManager && window.WorldProductManager.deleteProduct) {
         var r = await window.WorldProductManager.deleteProduct(id);
         if (!r || r.success === false) throw new Error((r && r.message) || 'Delete fail');
@@ -487,23 +615,6 @@
     } catch (e) { toast('Delete fail: ' + e.message); }
   };
 
-  async function handleOwnerImage(file) {
-    if (!file) return;
-    try {
-      var fd = new FormData();
-      fd.append('image', file);
-      var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/upload', { method: 'POST', body: fd });
-      var d = await res.json().catch(function () { return {}; });
-      var url = d.url || d.imageUrl || d.secure_url || '';
-      if (!url) throw new Error('Upload fail');
-      if ($('ownerImg')) $('ownerImg').src = url;
-      if ($('ownerImgBig')) $('ownerImgBig').src = url;
-      shopData.ownerPhotoUrl = url;
-      toast('Owner photo upload ho gayi - Profile Save karo');
-    } catch (e) { toast('Photo fail: ' + e.message); }
-  }
-  // Product wali photo ab Product Form me jayegi - isliye handleProductImage ki zaroorat nahi hai
-  // Agar purani HTML se call ho toh Product Form pe bhej do
   window.handleProductImage = function () { openProductForm(); };
 
   // ================= MANUAL ORDER - COMMON CHECKOUT =================
@@ -583,40 +694,60 @@
     } catch (e) { toast('Order fail: ' + e.message); }
   }
 
-  // ================= SETTINGS / PROFILE / LOCATION =================
+  // ================= SETTINGS / PROFILE SAVE / LOCATION =================
   async function saveAnnouncement() {
-    var val = $('announcementInput').value || '';
+    var val = $('announcementInput') ? $('announcementInput').value || '' : '';
     try {
-      var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ announcement: val }) });
+      // Announcement bhi Common Profile me jayega - taaki Customer ko wahi dikhe
+      var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
+      var buyerId = localStorage.getItem('USER_ID') || '';
+      var res = await fetch(API + '/api/common/profile/shop/' + encodeURIComponent(shopId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId },
+        body: JSON.stringify({ shopId: shopId, announcement: val, tagline: val })
+      });
       var d = await res.json().catch(function () { return {}; });
-      if (!res.ok || (d.success === false)) throw new Error(d.message || 'Save fail');
-      shopData.announcement = val;
+      if (!res.ok || (d.success === false)) {
+        await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ announcement: val }) });
+      }
+      shopData.announcement = val; shopData.tagline = val;
+      try { localStorage.setItem('shop_' + shopId, JSON.stringify(shopData)); } catch (e) {}
       toast('Announcement save ho gaya');
     } catch (e) { toast('Save fail: ' + e.message); }
   }
 
   async function saveTiming() {
-    var open = $('openTime').value || '09:00';
-    var close = $('closeTime').value || '21:00';
+    var open = $('openTime') ? $('openTime').value || '09:00' : '09:00';
+    var close = $('closeTime') ? $('closeTime').value || '21:00' : '21:00';
     try {
       var res = await fetch(API + '/api/common/shop-toggle/' + encodeURIComponent(shopId) + '/timing', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ open: open, close: close, role: ROLE, userId: shopId, shopId: shopId }) });
       var d = await res.json().catch(function () { return {}; });
       if (!res.ok || (d.success === false)) {
         await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ openTime: open, closeTime: close, timing: { open: open, close: close } }) });
       }
+      shopData.openTime = open; shopData.closeTime = close; shopData.timing = { open: open, close: close };
       if ($('timingStatus')) $('timingStatus').textContent = 'Timing save ho gayi: ' + to12(open) + ' - ' + to12(close);
       toast('Timing save ho gayi');
     } catch (e) { toast('Timing fail: ' + e.message); }
   }
 
   async function savePhone() {
-    var phone = ($('shopPhoneInput').value || '').trim();
+    var phone = ($('shopPhoneInput') ? $('shopPhoneInput').value || '' : '').trim();
     if (!/^[6-9]\d{9}$/.test(phone)) return toast('Sahi 10 digit phone likho');
     try {
-      var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ phone: phone }) });
+      var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
+      var buyerId = localStorage.getItem('USER_ID') || '';
+      var res = await fetch(API + '/api/common/profile/shop/' + encodeURIComponent(shopId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId },
+        body: JSON.stringify({ shopId: shopId, phone: phone, ownerPhone: phone, whatsapp: phone })
+      });
       var d = await res.json().catch(function () { return {}; });
-      if (!res.ok || (d.success === false)) throw new Error(d.message || 'Save fail');
-      shopData.phone = phone;
+      if (!res.ok || (d.success === false)) {
+        await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ phone: phone }) });
+      }
+      shopData.phone = phone; shopData.ownerPhone = phone;
+      try { localStorage.setItem('shop_' + shopId, JSON.stringify(shopData)); } catch (e) {}
       if ($('phoneStatus')) $('phoneStatus').textContent = 'Number save ho gaya: ' + phone;
       toast('Number save ho gaya');
     } catch (e) { toast('Save fail: ' + e.message); }
@@ -624,32 +755,59 @@
 
   async function saveProfile() {
     var payload = {
-      ownerName: $('ownerNameInput').value || '',
-      shopAddress: $('profileAddressInput').value || '',
-      fullAddress: $('profileAddressInput').value || '',
-      ownerPhotoUrl: shopData.ownerPhotoUrl || '',
-      bannerPhotoUrl: $('bannerUrlInput').value || shopData.bannerPhotoUrl || ''
+      shopId: shopId,
+      shopName: shopData.shopName || shopData.name || '',
+      name: shopData.shopName || shopData.name || '',
+      ownerName: $('ownerNameInput') ? $('ownerNameInput').value || '' : (shopData.ownerName || ''),
+      phone: $('shopPhoneInput') ? $('shopPhoneInput').value || '' : (shopData.phone || ''),
+      ownerPhone: $('shopPhoneInput') ? $('shopPhoneInput').value || '' : (shopData.phone || ''),
+      address: $('profileAddressInput') ? $('profileAddressInput').value || '' : shopAddressStr(shopData),
+      shopAddress: $('profileAddressInput') ? $('profileAddressInput').value || '' : shopAddressStr(shopData),
+      fullAddress: $('profileAddressInput') ? $('profileAddressInput').value || '' : shopAddressStr(shopData),
+      logo: shopLogoUrl(shopData),
+      shopLogo: shopLogoUrl(shopData),
+      uploadedLogo: shopLogoUrl(shopData),
+      image: shopLogoUrl(shopData),
+      banner: shopBannerUrl(shopData) || ($('bannerUrlInput') ? $('bannerUrlInput').value || '' : ''),
+      coverPhoto: shopBannerUrl(shopData) || ($('bannerUrlInput') ? $('bannerUrlInput').value || '' : ''),
+      cover: shopBannerUrl(shopData) || ($('bannerUrlInput') ? $('bannerUrlInput').value || '' : ''),
+      ownerPhotoUrl: shopOwnerPhotoUrl(shopData),
+      ownerPhoto: shopOwnerPhotoUrl(shopData),
+      ownerAvatar: shopOwnerPhotoUrl(shopData),
+      announcement: $('announcementInput') ? $('announcementInput').value || '' : (shopData.announcement || ''),
+      tagline: $('announcementInput') ? $('announcementInput').value || '' : (shopData.tagline || '')
     };
     try {
-      if (window.ProfileCore && window.ProfileCore.save) {
-        await window.ProfileCore.save(shopId, payload);
-      } else {
-        var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload) });
-        var d = await res.json().catch(function () { return {}; });
-        if (!res.ok || (d.success === false)) throw new Error(d.message || 'Save fail');
+      var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
+      var buyerId = localStorage.getItem('USER_ID') || '';
+      // 1. Common Profile - asli save yahin hoga
+      var res = await fetch(API + '/api/common/profile/shop/' + encodeURIComponent(shopId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId },
+        body: JSON.stringify(payload)
+      });
+      var d = await res.json().catch(function () { return {}; });
+      if (!res.ok || (d.success === false)) {
+        // 2. Fallback - Purana Achar route - sirf naam / phone ke liye, Photo ke liye nahi
+        var res2 = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload) });
+        var d2 = await res2.json().catch(function () { return {}; });
+        if (!res2.ok || (d2.success === false)) throw new Error((d && d.message) || (d2 && d2.message) || 'Save fail');
       }
       Object.assign(shopData, payload);
-      if ($('profileStatus')) $('profileStatus').textContent = 'Profile save ho gaya';
+      try { localStorage.setItem('shop_' + shopId, JSON.stringify(shopData)); } catch (e) {}
+      fillShopProfileUI();
+      if ($('profileStatus')) $('profileStatus').textContent = '✅ Profile save ho gaya - Customer ko dikhega';
       toast('Profile save ho gaya');
     } catch (e) { toast('Profile fail: ' + e.message); }
   }
 
   async function saveLocation() {
     var payload = {
-      locationType: $('locationType').value || 'fixed',
-      deliveryRange: num($('deliveryRange').value) || 5,
-      shopAddress: $('shopAddress').value || '',
-      fullAddress: $('shopAddress').value || ''
+      locationType: $('locationType') ? $('locationType').value || 'fixed' : 'fixed',
+      deliveryRange: num($('deliveryRange') ? $('deliveryRange').value : 5) || 5,
+      shopAddress: $('shopAddress') ? $('shopAddress').value || '' : '',
+      fullAddress: $('shopAddress') ? $('shopAddress').value || '' : '',
+      address: $('shopAddress') ? $('shopAddress').value || '' : ''
     };
     try {
       if (navigator.geolocation) {
@@ -670,21 +828,31 @@
       if (window.LocationCore && window.LocationCore.save) {
         await window.LocationCore.save(shopId, payload);
       } else {
-        var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload) });
+        // Location bhi Common Profile me jayegi - taaki Nearby Shops me sahi location jaye
+        var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
+        var res = await fetch(API + '/api/common/profile/shop/' + encodeURIComponent(shopId), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify(Object.assign({ shopId: shopId }, payload))
+        });
         var d = await res.json().catch(function () { return {}; });
-        if (!res.ok || (d.success === false)) throw new Error(d.message || 'Save fail');
+        if (!res.ok || (d.success === false)) {
+          await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload) });
+        }
       }
+      Object.assign(shopData, payload);
+      try { localStorage.setItem('shop_' + shopId, JSON.stringify(shopData)); } catch (e) {}
       if ($('locationStatus')) $('locationStatus').textContent = 'Location save ho gayi';
       toast('Location save ho gayi');
     } catch (e) { toast('Location fail: ' + e.message); }
   }
   async function loadLocation() {
-    if ($('locationStatus')) $('locationStatus').textContent = 'Pehle wali: ' + (shopData.shopAddress || '-') + ' | Range: ' + (shopData.deliveryRange || 5) + ' KM | Lat: ' + (shopData.lat || shopData.latitude || '-') + ', Lng: ' + (shopData.lng || shopData.longitude || '-');
+    if ($('locationStatus')) $('locationStatus').textContent = 'Pehle wali: ' + (shopAddressStr(shopData) || '-') + ' | Range: ' + (shopData.deliveryRange || 5) + ' KM | Lat: ' + (shopData.lat || shopData.latitude || '-') + ', Lng: ' + (shopData.lng || shopData.longitude || '-');
   }
 
   // ================= START =================
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  console.log('✅ Achar Dashboard JS loaded - PRODUCT-FORM (World Model) + Common Orders - shopId:', shopId);
+  console.log('✅ Achar Dashboard JS loaded - PRODUCT-FORM (World Model) + Common Orders + COMMON PROFILE (UnifiedProfile) - shopId:', shopId);
 })();

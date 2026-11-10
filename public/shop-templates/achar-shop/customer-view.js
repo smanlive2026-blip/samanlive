@@ -1,8 +1,10 @@
-// LOCATION: public/shop-templates/achar-shop/customer-view.js - FULL - PRODUCT-FORM KE HISAB SE - V3
+// LOCATION: public/shop-templates/achar-shop/customer-view.js - FULL - PRODUCT-FORM + COMMON PROFILE - V4
 // RULE: Customer = Dekhega + Cart me dalega + Common Checkout pe jayega. Yahan Accept / Packed ka button kabhi nahi hoga.
-// COMMON: WorldProductManager.getProducts = /api/world-products + cart-core + cart-count + api-core + shop-toggle/status + wishlist + reviews + share + common/checkout + common/customer-orders/my-orders + common/products/product-detail.html
+// COMMON: WorldProductManager.getProducts = /api/world-products + cart-core + cart-count + api-core + shop-toggle/status + UNIFIED PROFILE + wishlist + reviews + share + common/checkout + common/customer-orders/my-orders + common/products/product-detail.html
 // PRODUCT-FORM: Product = WORLD MODEL se hi aayega. Seed / Achar API se nahi. Seed sirf Product Form ke Quick Add ke liye hai.
+// PROFILE: Shop ka Logo / Banner / Owner Photo / Naam / Address / Phone / Timing / Gallery = COMMON PROFILE se aayega - /api/common/profile/me?role=shop_owner&shopId=XXX
 // READ RULE: price500 = p.price500 || p.extraData?.price500 || p.price | image = p.thumbnail || p.image || p.extraData?.thumbnail
+//            logo = shop.logo || shop.shopLogo | banner = shop.banner || shop.coverPhoto | ownerPhoto = shop.ownerPhotoUrl
 // HTML: customer-view.html me isko <script src="customer-view.js"></script> se load karna hai - INLINE ME DOBARA MAT LIKHNA
 
 (function(){
@@ -34,6 +36,31 @@
     t.textContent = m; t.style.display = 'block';
     clearTimeout(t._h); t._h = setTimeout(function(){ t.style.display = 'none'; }, 2200);
   }
+  function to12(t){
+    if (!t) return '';
+    if (t.includes('AM') || t.includes('PM')) return t;
+    var hm = String(t).split(':'); var h = num(hm[0]); var m = hm[1] || '00';
+    var mod = h >= 12 ? 'PM' : 'AM'; var hh = h % 12; if (hh === 0) hh = 12;
+    return hh + ':' + m + ' ' + mod;
+  }
+  // PROFILE ke liye - Common Profile me field ke 3-4 naam hain, isliye 1 jagah se nikaalo
+  function shopLogoUrl(s){ return (s && (s.logo || s.shopLogo || s.uploadedLogo || s.image)) || ''; }
+  function shopBannerUrl(s){ return (s && (s.banner || s.coverPhoto || s.cover || s.bannerPhotoUrl)) || ''; }
+  function shopOwnerPhotoUrl(s){ return (s && (s.ownerPhotoUrl || s.ownerPhoto || s.ownerAvatar)) || ''; }
+  function shopAddressStr(s){
+    if (!s) return '';
+    if (typeof s.address === 'string') return s.address;
+    if (s.address && s.address.line1) return s.address.line1 + (s.address.city ? ', ' + s.address.city : '') + (s.address.pincode ? ' - ' + s.address.pincode : '');
+    return s.shopAddress || s.fullAddress || '';
+  }
+  function shopPhoneStr(s){ return (s && (s.phone || s.ownerPhone || s.whatsapp)) || ''; }
+  function shopTimingStr(s){
+    if (!s) return '🕒 09:00 AM - 09:00 PM';
+    var t = s.timing || {};
+    var open = t.open || t.openingTime || s.openTime || '09:00';
+    var close = t.close || t.closingTime || s.closeTime || '21:00';
+    return '🕒 ' + to12(open) + ' - ' + to12(close);
+  }
   // PRODUCT-FORM WALA NORMALISE - extraData se bhi padho, warna price500 / spiceLevel khaali dikhega
   function normProduct(p, i){
     var ex = p.extraData || {};
@@ -51,7 +78,6 @@
       spiceLevel: p.spiceLevel || ex.spiceLevel || 'Medium',
       weight: p.weight || ex.weight || '500g',
       unit: p.unit || ex.unit || 'jar',
-      // Product Form me image ka naam thumbnail hai
       image: p.thumbnail || p.image || ex.thumbnail || ex.image || '',
       thumbnail: p.thumbnail || p.image || ex.thumbnail || ex.image || '',
       description: p.description || ex.description || p.desc || ex.desc || '',
@@ -83,35 +109,117 @@
     }catch(e){}
     // 1b. Common Customer Shop Status wala helper hai toh usi se bhi sync karo
     try{ if (window.CustomerShopStatus && window.CustomerShopStatus.check) { var s2 = await window.CustomerShopStatus.check(shopId); if (typeof s2 === 'boolean') { shopOpen = s2; } } }catch(e){}
-    // 2. Shop ka naam / photo / address - Achar route se (Shop ka data World Model me nahi hai, isliye yahi rahega)
-    try{
-      var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId));
-      var data = await res.json();
-      if(data && data.success) shopData = data.shop || {};
-      var name = shopData.ownerName ? shopData.ownerName + ' ki Dukaan' : (shopData.shopName || shopData.name || 'Maa Ke Haath Ka Achar');
-      if($('shopName')) $('shopName').textContent = name;
-      if($('footerShopName')) $('footerShopName').textContent = name;
-      if($('pageTitle')) $('pageTitle').textContent = name;
-      if($('topShopName')) $('topShopName').textContent = shopData.announcement || 'Ghar ka bana shuddh achar';
-      if($('bannerTitle')) $('bannerTitle').textContent = shopData.announcement || 'Ghar Ka Bana Shuddh Achar';
-      if(shopData.bannerPhotoUrl && $('shopBanner')) $('shopBanner').src = shopData.bannerPhotoUrl;
-      if(shopData.ownerPhotoUrl && $('shopLogo')) $('shopLogo').src = shopData.ownerPhotoUrl;
-      if($('shopAddress')) $('shopAddress').textContent = shopData.shopAddress || shopData.fullAddress || 'Fresh • Hygienic • Maa ke haath ka swad';
-      if(shopData.phone) { window.SHOP_PHONE = shopData.phone; }
-    }catch(e){}
+    // 2. SHOP PROFILE - COMMON PROFILE se hi aayega - Achar API se nahi
+    await loadShopProfileForCustomer();
     // 3. Product - WORLD MODEL se hi aayega - Seed / Achar API se nahi
     await loadProducts();
   }
 
+  // ============ SHOP PROFILE FOR CUSTOMER - COMMON UNIFIED PROFILE ============
+  // RULE: Customer kabhi Achar API se Shop ka photo nahi lega - sirf Common Profile se lega
+  //       Kyunki Dukaandaar ne Photo Common Profile pe save ki hai, Achar API pe nahi
+  async function loadShopProfileForCustomer(){
+    var shop = null;
+    // 1. Common Profile - asli Shop - UnifiedProfile se bhi try karo, direct API se bhi
+    try{
+      if (window.UnifiedProfile && window.UnifiedProfile.loadMyProfile) {
+        // UnifiedProfile apne getIds() se shopId uthata hai - localStorage me pehle se set hai
+        var prof = await window.UnifiedProfile.loadMyProfile();
+        if (prof && prof.success && (prof.shop || prof.user)) shop = prof.shop || prof.user;
+      }
+    }catch(e){}
+    // 2. Direct Common API - UnifiedProfile na chale toh
+    if (!shop) {
+      try{
+        var token = localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || '';
+        var buyerId = localStorage.getItem('USER_ID') || '';
+        var res = await fetch(API + '/api/common/profile/me?buyerId=' + encodeURIComponent(buyerId) + '&role=shop_owner&shopId=' + encodeURIComponent(shopId), {
+          headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId }
+        });
+        var data = await res.json().catch(function(){ return {}; });
+        if (data && data.success && (data.shop || data.user)) shop = data.shop || data.user;
+      }catch(e){}
+    }
+    // 3. Local cache - API fail ho toh bhi khaali na dikhe - Dashboard ne save kiya hoga
+    if (!shop) {
+      try{
+        var local = JSON.parse(localStorage.getItem('shop_' + shopId) || '{}');
+        if (local && (local.shopName || local.name)) shop = local;
+      }catch(e){}
+    }
+    // 4. Last fallback - Purana Achar route - sirf naam ke liye, Photo ke liye nahi
+    if (!shop) {
+      try{
+        var r2 = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId));
+        var d2 = await r2.json();
+        if (d2 && d2.success) shop = d2.shop || {};
+      }catch(e){}
+    }
+    if (!shop) return;
+    shopData = shop;
+    renderShopProfileForCustomer(shop);
+    // Customer ke liye bhi cache kar do - dobara khole toh turant dikhe
+    try{ localStorage.setItem('shop_' + shopId, JSON.stringify(shop)); }catch(e){}
+  }
+
+  function renderShopProfileForCustomer(shop){
+    if (!shop) return;
+    var name = shop.shopName || shop.name || 'Maa Ke Haath Ka Achar';
+    var ownerName = shop.ownerName || '';
+    var logo = shopLogoUrl(shop);
+    var banner = shopBannerUrl(shop);
+    var ownerPhoto = shopOwnerPhotoUrl(shop) || logo;
+    var address = shopAddressStr(shop);
+    var phone = shopPhoneStr(shop);
+    var rating = shop.rating || shop.avgRating || 4.5;
+    var isVerified = !!shop.isVerified;
+
+    // Topbar - LOGO alag hai, Owner Photo nahi
+    if ($('shopName')) $('shopName').textContent = ownerName ? ownerName + ' ki Dukaan' : name;
+    if ($('footerShopName')) $('footerShopName').textContent = name;
+    if ($('pageTitle')) $('pageTitle').textContent = name;
+    if ($('topShopName')) $('topShopName').textContent = shop.announcement || shop.tagline || shop.description || 'Ghar ka bana shuddh achar';
+    if ($('bannerTitle')) $('bannerTitle').textContent = shop.announcement || shop.tagline || 'Ghar Ka Bana Shuddh Achar';
+    // LOGO alag, BANNER alag - dono Common Profile se aayenge
+    if (logo && $('shopLogo')) $('shopLogo').src = logo;
+    if (banner && $('shopBanner')) $('shopBanner').src = banner;
+    if ($('shopAddress')) $('shopAddress').textContent = address || 'Fresh • Hygienic • Maa ke haath ka swad';
+
+    // SHOP INFO CARD - Banner ke neeche - Customer ko yahin se sab pata chalega
+    if ($('shopOwnerPhoto') && ownerPhoto) $('shopOwnerPhoto').src = ownerPhoto;
+    if ($('shopOwnerName')) $('shopOwnerName').textContent = ownerName ? ownerName + ' ki Dukaan' : name;
+    if ($('shopPhoneText')) $('shopPhoneText').textContent = phone ? '📞 ' + phone : '📞 -';
+    if ($('shopFullAddress')) $('shopFullAddress').textContent = address ? '📍 ' + address : '📍 -';
+    if ($('shopTimingText')) $('shopTimingText').textContent = shopTimingStr(shop);
+    if ($('shopRating')) $('shopRating').textContent = '⭐ ' + rating;
+    if ($('shopVerified')) $('shopVerified').style.display = isVerified ? 'inline-block' : 'none';
+    if ($('footerShopAddress')) $('footerShopAddress').textContent = address || 'Ghar ka bana hua shuddh achar. Order Common Checkout se jayega, dukaan wale ko turant dikhega.';
+
+    // GALLERY - Dukaandaar ne Gallery me jo photo daali, wahi dikhegi
+    var gallery = shop.gallery || shop.shopImages || [];
+    var strip = $('shopGalleryStrip');
+    if (strip) {
+      if (gallery && gallery.length) {
+        strip.style.display = 'flex';
+        strip.innerHTML = gallery.map(function(u){
+          return '<img src="' + esc(u) + '" alt="Shop Photo" loading="lazy" onerror="this.style.display=\'none\'">';
+        }).join('');
+      } else {
+        strip.style.display = 'none';
+        strip.innerHTML = '';
+      }
+    }
+
+    // Call / WhatsApp ke liye Phone - Common Profile se aayega
+    if (phone) window.SHOP_PHONE = phone;
+    window.SHOP_PROFILE = shop;
+  }
+
   // DELETED V3: loadSeed() / normalizeSeed() DELETE kar diya
   // Seed ka kaam sirf Product Form ke Quick Add me hai. Customer ko Seed ka maal nahi dikhega.
-  // Customer ko sirf wo maal dikhega jo Dukaandaar ne Product Form se Save kiya hai.
 
   async function loadProducts(){
     try{
-      // WORLD MODEL - 1 hi tareeka: WorldProductManager.getProducts()
-      // Ye /api/world-products?shopType=achar-shop&shopId=XXX&role=customer pe jata hai
-      // Customer role me Product Manager khud stock>0 + isActive wale hi dega
       if (window.WorldProductManager && window.WorldProductManager.getProducts) {
         var list = await window.WorldProductManager.getProducts({ shopId: shopId, shopType: SHOP_TYPE });
         allProducts = (list || []).map(normProduct);
@@ -119,7 +227,6 @@
         var list2 = await window.ProductManager.getProducts({ shopId: shopId, shopType: SHOP_TYPE });
         allProducts = (list2 || []).map(normProduct);
       } else {
-        // Product Manager load nahi hua toh direct World API - Achar API / Seed kabhi nahi
         var res = await fetch(API + '/api/world-products?shopType=' + SHOP_TYPE + '&shopId=' + encodeURIComponent(shopId) + '&role=customer');
         var data = await res.json();
         allProducts = (data.data || data.products || []).map(normProduct);
@@ -170,7 +277,6 @@
   function saveLocalCart(c){ try{ localStorage.setItem(cartKey(), JSON.stringify(c)); }catch(e){} }
   function cartQtyFor(id, size){
     var c = getCart();
-    // Size alag hai toh Qty alag hai - 500g wala + 1Kg wala ek me mix nahi hoga
     var f = c.find(function(x){ return String(x._id || x.id || x.productId) === String(id) && (size ? String(x.size || '500g') === String(size) : true); });
     return f ? num(f.qty || f.quantity || 0) : 0;
   }
@@ -201,16 +307,13 @@
     }).join('');
   }
 
-  // Size badlo - 500g / 1Kg
   window.acharSize = function(id, size){
     selectedSize[id] = size;
     renderProducts();
   };
-  // Product Detail - Common Product Detail page pe jayega - type bhi dena hai, warna wo general samjhega
   window.acharDetail = function(id){
     location.href = '../common/products/product-detail.html?shopId=' + encodeURIComponent(shopId) + '&productId=' + encodeURIComponent(id) + '&shopType=' + SHOP_TYPE + '&type=' + SHOP_TYPE;
   };
-  // Wishlist - Common
   window.acharWish = async function(id){
     try{
       if (window.Wishlist && window.Wishlist.toggle) { await window.Wishlist.toggle(id, shopId); toast('Wishlist update ho gayi'); renderProducts(); return; }
@@ -228,7 +331,6 @@
       _id: p._id || p.id, id: p._id || p.id, productId: p._id || p.id,
       name: p.name + (sz === '1kg' ? ' (1Kg)' : ' (500g)'),
       productName: p.name, price: price,
-      // Product Form me image ka naam thumbnail hai - dono bhej do taaki Checkout / Detail me photo na toote
       image: p.image || p.thumbnail || '', thumbnail: p.thumbnail || p.image || '',
       size: sz, weight: sz === '1kg' ? '1Kg' : '500g',
       ownerId: shopId, ownerRole: 'shop_owner', supplierId: shopId, supplierRole: 'shop_owner',
@@ -241,7 +343,6 @@
         var ok = await window.CartCore.add(forCart, 1);
         if(!ok){ toast('Cart add fail'); return; }
       } else {
-        // CartCore nahi hai toh sirf is dukaan ke Cart me dalo - dusri dukaan se mix mat karo
         var c = getCart();
         var f = c.find(function(x){ return String(x._id || x.id || x.productId) === String(id) && String(x.size || '500g') === String(sz); });
         if (f) f.qty = num(f.qty || f.quantity || 0) + 1;
@@ -325,5 +426,5 @@
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ bindButtons(); loadShop(); });
   else { bindButtons(); loadShop(); }
 
-  console.log('✅ Achar Customer-View JS loaded - PRODUCT-FORM (World Model) + Common Cart - shopId:', shopId);
+  console.log('✅ Achar Customer-View JS loaded - PRODUCT-FORM (World Model) + COMMON PROFILE (UnifiedProfile) + Common Cart - shopId:', shopId);
 })();

@@ -1,7 +1,8 @@
-<!-- LOCATION: public/shop-templates/achar-shop/customer-view.html - FULL - PRODUCT-FORM KE HISAB SE - V3 -->
+<!-- LOCATION: public/shop-templates/achar-shop/customer-view.html - FULL - PRODUCT-FORM + COMMON PROFILE - V4 -->
 <!-- RULE: Customer = Dekhega + Cart me dalega + Common Checkout pe jayega. Yahan Accept / Packed ka button kabhi nahi hoga. -->
-<!-- COMMON: api-core + auth-core + storage-core + socket-core + WORLD PRODUCT-MANAGER + cart-core + cart-count + shop-toggle/status + wishlist + reviews + share + location + common/checkout + common/customer-orders/my-orders + product-detail -->
+<!-- COMMON: api-core + auth-core + storage-core + socket-core + WORLD PRODUCT-MANAGER + UNIFIED PROFILE + cart-core + cart-count + shop-toggle/status + wishlist + reviews + share + location + common/checkout + common/customer-orders/my-orders + product-detail -->
 <!-- PRODUCT-FORM: Product = WORLD MODEL se aayega - /api/world-products?shopType=achar-shop - Achar API se nahi -->
+<!-- PROFILE: Shop ka Logo / Banner / Owner Photo / Naam / Address / Phone / Timing / Gallery = COMMON PROFILE se aayega - /api/common/profile/me?role=shop_owner&shopId=XXX - Achar API se nahi -->
 <!-- FIX: Pehle wali me customer-view.js + inline JS dono the - double Add hota tha. Ab sirf customer-view.js chalega. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -33,6 +34,14 @@ a{color:inherit;text-decoration:none}
 .status{margin:0 12px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px;font-size:12px;font-weight:800;display:flex;gap:8px;align-items:center}
 .status.open{color:#166534}
 .status.closed{color:#991b1b;background:#fef2f2;border-color:#fecaca}
+.shopinfo{margin:12px;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:12px;display:flex;gap:12px;align-items:center}
+.shopinfo img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:#fef3c7;flex-shrink:0;border:2px solid #fff;box-shadow:0 0 0 1px #e5e7eb}
+.shopinfo b{font-size:14px;display:block}
+.shopinfo span{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:2px;line-height:1.5}
+.shopinfo .verified{background:#dcfce7;color:#166534;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;margin-left:6px;white-space:nowrap}
+.gallery{display:flex;gap:8px;overflow:auto;padding:0 12px 4px;scrollbar-width:none}
+.gallery::-webkit-scrollbar{display:none}
+.gallery img{width:90px;height:70px;border-radius:12px;object-fit:cover;flex-shrink:0;background:#fef3c7}
 .search{margin:12px;display:flex;gap:8px}
 .search .box{flex:1;background:#fff;border:1px solid #e5e7eb;border-radius:12px;display:flex;align-items:center;gap:8px;padding:10px 12px}
 .search .box input{border:none;outline:none;width:100%;font-size:13px;font-weight:600}
@@ -84,6 +93,20 @@ a{color:inherit;text-decoration:none}
 
 <div class="status open" id="shopStatusBox">🟢 <span id="shopStatusText">Shop Open - Order kar sakte ho</span></div>
 
+<!-- SHOP PROFILE CARD - COMMON PROFILE se aayega - customer-view.js -> loadShopProfileForCustomer() -->
+<div class="shopinfo" id="shopInfoCard">
+<img id="shopOwnerPhoto" src="https://placehold.co/100/d97706/fff?text=A" alt="Owner">
+<div style="min-width:0;flex:1">
+<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><b id="shopOwnerName" style="display:inline">Owner</b><span class="verified" id="shopVerified" style="display:none">✓ Verified</span><span id="shopRating" style="display:inline;font-size:11px;color:#92400e;font-weight:800;margin-left:4px">⭐ 4.5</span></div>
+<span id="shopPhoneText">📞 -</span>
+<span id="shopFullAddress">📍 -</span>
+<span id="shopTimingText">🕒 09:00 AM - 09:00 PM</span>
+</div>
+</div>
+
+<!-- SHOP GALLERY - Dukaandaar ne Gallery me jo photo daali, wahi dikhegi - customer-view.js se bharegi -->
+<div class="gallery" id="shopGalleryStrip" style="display:none"></div>
+
 <div class="search">
 <div class="box">🔍 <input id="searchInput" placeholder="Aam, Nimbu, Mix... dhundho"></div>
 <button class="iconbtn" id="shareTopBtn"><i class="fa fa-share-nodes"></i></button>
@@ -94,7 +117,7 @@ a{color:inherit;text-decoration:none}
 
 <div class="foot">
 <b id="footerShopName">Maa Ke Haath Ka Achar</b><br>
-Ghar ka bana hua shuddh achar. Order Common Checkout se jayega, dukaan wale ko turant dikhega.<br>
+<span id="footerShopAddress">Ghar ka bana hua shuddh achar. Order Common Checkout se jayega, dukaan wale ko turant dikhega.</span><br>
 COD available • Free Delivery • SamanLive
 </div>
 
@@ -120,10 +143,12 @@ COD available • Free Delivery • SamanLive
 <script src="../common/js/location.js"></script>
 <!-- 3. Product - WORLD MODEL - Product Form ka Manager - iske bina Customer ko maal nahi dikhega -->
 <script src="../common/products/product-manager.js"></script>
-<!-- 4. Cart - Common - iske bina Cart nahi chalega -->
+<!-- 4. UNIFIED PROFILE - Common Profile - iske bina Shop ka Logo / Banner / Owner Photo / Gallery nahi dikhega -->
+<script src="../common/profile/profile-core.js"></script>
+<!-- 5. Cart - Common - iske bina Cart nahi chalega -->
 <script src="../common/cart/cart-core.js"></script>
 <script src="../common/cart/cart-count.js"></script>
-<!-- 5. Wishlist + Reviews + Share - Common - Customer ke liye -->
+<!-- 6. Wishlist + Reviews + Share - Common - Customer ke liye -->
 <script src="../common/wishlist/wishlist.js"></script>
 <script src="../common/reviews/reviews.js"></script>
 <script src="../common/js/share.js"></script>
@@ -131,7 +156,7 @@ COD available • Free Delivery • SamanLive
 <script src="../common/share/qr-share.js"></script>
 <script src="../common/components/product-card.js"></script>
 
-<!-- COMMON BRIDGE - sirf shopId / role / WorldProductManager set karega - Product / Cart ka kaam customer-view.js karega -->
+<!-- COMMON BRIDGE - sirf shopId / role / WorldProductManager set karega - Product / Cart / Profile ka kaam customer-view.js karega -->
 <script>
 (function(){
   var p = new URLSearchParams(location.search);
@@ -158,7 +183,7 @@ COD available • Free Delivery • SamanLive
 })();
 </script>
 
-<!-- 6. Achar ka apna JS - isme hi Product (World Model) + Cart + Checkout ka kaam hai - DOOBARA INLINE MAT LIKHNA -->
+<!-- 7. Achar ka apna JS - isme hi Product (World Model) + Shop Profile (Common Profile) + Cart + Checkout ka kaam hai - DOOBARA INLINE MAT LIKHNA -->
 <script src="customer-view.js"></script>
 </body>
 </html>
