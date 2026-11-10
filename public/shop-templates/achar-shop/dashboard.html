@@ -1,6 +1,6 @@
-<!-- LOCATION: public/shop-templates/achar-shop/dashboard.html - FULL - COMMON CONNECTED -->
+<!-- LOCATION: public/shop-templates/achar-shop/dashboard.html - FULL - COMMON CONNECTED - V2 -->
 <!-- RULE: Design same hai. Sirf Common se joda hai. Koi button / rang / layout nahi badla. -->
-<!-- COMMON: api-core + auth-core + socket-core + shop-toggle + finance/wallet + common/orders -->
+<!-- COMMON: api-core + auth-core + socket-core + storage-core + error-handler + dashboard-core + shop-toggle + share + whatsapp + qr + notifications + orders + product-manager + inventory + wallet + profile-core + settings + location + reviews + seed -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -154,7 +154,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <div class="sp"></div>
 <button class="iconbtn" id="notifBtn"><i class="fa fa-bell"></i><span class="dot" id="notifDot" style="display:none"></span></button>
 <button class="pill light" id="userViewBtn"><i class="fa fa-eye"></i> Customer View</button>
-<!-- CHANGED: shopToggle ab Common shop-toggle.js se chalega, sirf rang nahi badlega -->
 <button class="pill open" id="shopToggle" data-shop-toggle><i class="fa fa-store"></i> <span id="toggleText">Open</span></button>
 </header>
 
@@ -215,7 +214,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <div class="kv total"><span>My Earning</span><b>₹<span id="walletEarn">0</span></b></div>
 <div class="kv"><span>Pending Orders ka Paisa</span><b>₹<span id="walletPending">0</span></b></div>
 <div class="kv"><span>Delivered Orders ka Paisa</span><b>₹<span id="walletDelivered">0</span></b></div>
-<!-- CHANGED: Wallet ab Common Finance wala hai, nakli wallet wala nahi -->
 <button class="btn light block" id="walletCommonBtn" data-common-wallet style="margin-top:14px">Common Wallet Page Kholo →</button>
 <p class="hint">Common Wallet page se hi withdraw / payout hota hai. Yahan sirf hisaab dikh raha hai taaki galat number na dikhe.</p>
 </div>
@@ -274,9 +272,9 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <input type="file" id="productImageInput" hidden accept="image/*">
 <button class="btn light block" onclick="document.getElementById('productImageInput').click()">📷 Photo Badlo</button>
 <label>Achar Name *</label><input type="text" id="acharName" placeholder="Aam ka Achar">
-<label>Category</label><select id="acharType"><option value="Aam">Aam</option><option value="Nimbu">Nimbu</option><option value="Mix">Mix</option><option value="Murabba">Murabba</option><option value="Gajar">Gajar</option><option value="Lahsun">Lahsun</option><option value="Mirchi">Mirchi</option><option value="Other">Other</option></select>
+<label>Category</label><select id="acharType"><option value="Aam">Aam</option><option value="Nimbu">Nimbu</option><option value="Mix">Mix</option><option value="Murabba">Murabba</option><option value="Gajar">Gajar</option><option value="Lahsun">Lahsun</option><option value="Mirchi">Mirchi</option><option value="Amla">Amla</option><option value="Karela">Karela</option><option value="Other">Other</option></select>
 <label>Description</label><textarea id="acharDesc" rows="2" placeholder="Maa ke haath ka bana hua..."></textarea>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label>Jar Type</label><select id="acharJar"><option value="Glass">Glass Jar</option><option value="Plastic">Plastic Jar</option><option value="Ceramic">Ceramic Jar</option></select></div><div><label>Spice Level</label><select id="acharSpice"><option value="Mild">Mild</option><option value="Medium">Medium</option><option value="Teekha">Teekha</option></select></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label>Jar Type</label><select id="acharJar"><option value="Glass">Glass Jar</option><option value="Plastic">Plastic Jar</option><option value="Ceramic">Ceramic Jar</option></select></div><div><label>Spice Level</label><select id="acharSpice"><option value="Mild">Mild</option><option value="Medium">Medium</option><option value="Teekha">Teekha</option><option value="Extra Teekha">Extra Teekha</option></select></div></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label>500g Price ₹ *</label><input type="number" id="acharPrice500g" placeholder="150"></div><div><label>1Kg Price ₹ *</label><input type="number" id="acharPrice1kg" placeholder="280"></div></div>
 <label>Stock (Kg)</label><input type="number" id="acharStock" placeholder="10">
 <button class="btn amber block" onclick="saveNewAchar()">✅ Save Achar</button>
@@ -306,12 +304,33 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 
 <div class="toast" id="toast"></div>
 
-<!-- ================= COMMON - ISKE BINA JUDA NAHI HOGA ================= -->
-<!-- ORDER MAT BADALNA: pehle api-core, phir auth-core, phir socket-core, phir shop-toggle, phir dashboard.js -->
+<!-- ================= COMMON - ORDER MAT BADALNA ================= -->
+<!-- 1. Core pehle - api / auth / storage / error / socket -->
 <script src="../common/core/api-core.js"></script>
 <script src="../common/core/auth-core.js"></script>
+<script src="../common/core/storage-core.js"></script>
+<script src="../common/core/error-handler.js"></script>
 <script src="../common/core/socket-core.js"></script>
+<script src="../common/core/dashboard-core.js"></script>
+<script src="../common/core/user-core.js"></script>
+<!-- 2. Shop ka Common - toggle / location / banner -->
 <script src="../common/js/shop-toggle.js"></script>
+<script src="../common/js/location.js"></script>
+<script src="../common/js/shop-banner-ext.js"></script>
+<!-- 3. Product + Inventory - Common -->
+<script src="../common/products/product-manager.js"></script>
+<script src="../common/inventory/inventory.js"></script>
+<!-- 4. Order + Finance + Notification - Common -->
+<script src="../common/orders/orders.js"></script>
+<script src="../common/finance/wallet.js"></script>
+<script src="../common/notifications/notifications.js"></script>
+<!-- 5. Share + Profile + Settings + Reviews - Common -->
+<script src="../common/js/share.js"></script>
+<script src="../common/share/whatsapp-share.js"></script>
+<script src="../common/share/qr-share.js"></script>
+<script src="../common/profile/profile-core.js"></script>
+<script src="../common/settings/settings.js"></script>
+<script src="../common/reviews/reviews.js"></script>
 
 <!-- COMMON BRIDGE - Achar Dashboard ko Common se jodta hai - dashboard.js se pehle chalega -->
 <script>
@@ -322,18 +341,23 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
   window.shopId = shopId;
   window.SHOP_TYPE = 'achar-shop';
   window.USER_ROLE = 'shop_owner';
+  window.API_BASE = window.API_BASE || location.origin;
   if (shopId) {
     localStorage.setItem('last_shopId', shopId);
     localStorage.setItem('shopId', shopId);
     localStorage.setItem('USER_ROLE', 'shop_owner');
   }
   // ShopToggle ko shopId de do - warna wo khali shopId pe toggle karega
-  if (window.shopToggle) window.shopToggle.shopId = shopId;
-  // Wallet - asli Common Finance wala, nakli wallet wala nahi
+  try{ if (window.shopToggle) window.shopToggle.shopId = shopId; }catch(e){}
+  try{ if (window.ShopToggle) window.ShopToggle.shopId = shopId; }catch(e){}
+  // Common wale function agar load nahi hue toh dashboard.js na toote - safe fallback
+  window.safeCall = function(fn){ try{ if(typeof fn === 'function') fn(); }catch(e){ console.warn('Common safeCall:', e.message); } };
+
   document.addEventListener('DOMContentLoaded', function(){
+    // Wallet - asli Common Finance wala, nakli wallet wala nahi
     var w = document.getElementById('walletCommonBtn');
     if (w) w.addEventListener('click', function(){
-      location.href = '../common/finance/wallet.html?shopId=' + encodeURIComponent(shopId) + '&role=shop_owner';
+      location.href = '../common/finance/wallet.html?shopId=' + encodeURIComponent(shopId) + '&role=shop_owner&shopType=achar-shop';
     });
     // Customer View - shopId ke saath, warna khali dukaan khulegi
     var goCustomer = function(){
@@ -341,15 +365,27 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
     };
     var v1 = document.getElementById('viewShopBtn'); if (v1) v1.addEventListener('click', goCustomer);
     var v2 = document.getElementById('userViewBtn'); if (v2) v2.addEventListener('click', goCustomer);
-    // Share / Copy - shopId wala link hi jayega
+    // Bell - Common Notifications page pe jayega, wahan se naya order dikhega
+    var nb = document.getElementById('notifBtn');
+    if (nb) nb.addEventListener('click', function(){
+      location.href = '../common/notifications/notifications.html?shopId=' + encodeURIComponent(shopId) + '&role=shop_owner';
+    });
+    // Share / Copy / WhatsApp - shopId wala link hi jayega, Common share.js se
     var shareUrl = location.origin + '/shop-templates/achar-shop/customer-view.html?shopId=' + encodeURIComponent(shopId);
-    var s2 = document.getElementById('shareBtn2');
-    if (s2) s2.addEventListener('click', function(){
+    window.SHOP_SHARE_URL = shareUrl;
+    var doShare = function(){
+      try{
+        if (window.ShareCore && window.ShareCore.share) return window.ShareCore.share({ title: 'Achar Shop', text: 'Ghar ka bana shuddh achar - order karo', url: shareUrl });
+        if (window.WhatsAppShare && window.WhatsAppShare.share) return window.WhatsAppShare.share(shareUrl, 'Ghar ka bana shuddh achar - order karo');
+      }catch(e){}
       if (navigator.share) navigator.share({ title: 'Achar Shop', text: 'Ghar ka bana shuddh achar - order karo', url: shareUrl }).catch(function(){});
       else { navigator.clipboard.writeText(shareUrl).then(function(){ alert('Link copy ho gaya'); }); }
+    };
+    var s2 = document.getElementById('shareBtn2'); if (s2) s2.addEventListener('click', doShare);
+    var ws = document.getElementById('whatsappShareBtn'); if (ws) ws.addEventListener('click', function(){
+      window.open('https://wa.me/?text=' + encodeURIComponent('Ghar ka bana shuddh achar - order karo: ' + shareUrl), '_blank');
     });
-    var c2 = document.getElementById('copyLinkBtn2');
-    if (c2) c2.addEventListener('click', function(){
+    var c2 = document.getElementById('copyLinkBtn2'); if (c2) c2.addEventListener('click', function(){
       navigator.clipboard.writeText(shareUrl).then(function(){ alert('Link copy ho gaya'); });
     });
   });

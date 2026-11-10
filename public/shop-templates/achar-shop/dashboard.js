@@ -1,6 +1,6 @@
-// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - COMMON CONNECTED
-// RULE: Order = Common Order. Product / Profile = Achar route (abhi ke liye).
-// COMMON: /api/common/orders/list + /api/common/orders/:id/status + /api/common/checkout/:shopId/place + /api/common/shop-toggle
+// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - COMMON CONNECTED - V2
+// RULE: Order = Common Order. Product = Achar route + Common Seed fallback. Profile / Timing = Achar + Common Toggle.
+// COMMON: /api/common/orders/list + /api/common/orders/:id/status + /api/common/checkout/:shopId/place + /api/common/shop-toggle + ../common/products/achar-shop.seed.js + ../common/products/product-manager.js + ../common/inventory/inventory.js
 // DESIGN: HTML wahi hai, is JS me koi naya button nahi banaya hai.
 
 (function () {
@@ -14,6 +14,7 @@
   var shopData = {};
   var allProducts = [];
   var allOrders = [];
+  var seedProducts = []; // COMMON SEED - 100 product yahan rahenge
   var currentEditId = null;
   var productImageUrl = '';
   var productFilter = 'All';
@@ -88,9 +89,7 @@
     var ll = $('loadLocationBtn'); if (ll) ll.addEventListener('click', loadLocation);
     var qas = $('quickAddSaveBtn'); if (qas) qas.addEventListener('click', saveQuickAdd);
     var mos = $('moSaveBtn'); if (mos) mos.addEventListener('click', saveManualOrder);
-    // Search + chips - Products
     var spInput = $('searchProduct'); if (spInput) spInput.addEventListener('input', function () { renderProducts(); });
-    // Order chips
     document.querySelectorAll('#orderChips .chip').forEach(function (c) {
       c.addEventListener('click', function () {
         document.querySelectorAll('#orderChips .chip').forEach(function (x) { x.classList.remove('active'); });
@@ -99,7 +98,6 @@
         renderOrders();
       });
     });
-    // Product image + owner image
     var pi = $('productImageInput'); if (pi) pi.addEventListener('change', function (e) { handleProductImage(e.target.files[0]); });
     var oi = $('ownerInput'); if (oi) oi.addEventListener('change', function (e) { handleOwnerImage(e.target.files[0]); });
     var oib = $('ownerImgBig'); if (oib) oib.addEventListener('click', function () { $('ownerInput').click(); });
@@ -107,6 +105,10 @@
 
   function shareWhatsApp() {
     var msg = 'Namaste! ' + (shopData.shopName || 'Achar Shop') + ' se ghar ka bana shuddh achar order karo: ' + shopUrl();
+    try {
+      if (window.WhatsAppShare && window.WhatsAppShare.share) return window.WhatsAppShare.share(shopUrl(), msg);
+      if (window.ShareCore && window.ShareCore.whatsapp) return window.ShareCore.whatsapp(shopUrl(), msg);
+    } catch (e) {}
     window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
   }
 
@@ -120,21 +122,17 @@
     bindNav();
     bindShopToggleUI();
     await loadShopData();
+    await loadSeed(); // COMMON SEED pehle load karo, taaki Quick Add + fallback ready rahe
     await loadCommonOrders();
     await loadProducts();
     renderAll();
     initSocket();
-    // Har 30 sec me Common Order refresh - naya order aaye toh pata chale
     setInterval(function () { loadCommonOrders().then(renderAll).catch(function () {}); }, 30000);
   }
 
-  // ShopToggle - Common wali JS hi sambhalegi, yahan sirf UI sync rakhenge
   function bindShopToggleUI() {
     var btn = $('shopToggle');
     if (!btn) return;
-    // Common shop-toggle.js is button pe apna listener lagayega (data-shop-toggle se)
-    // Yahan dobara fetch nahi karenge, warna 2 baar toggle hoga
-    // Sirf status dikhane ke liye Common API se ek baar lao
     fetch(API + '/api/common/shop-toggle/' + encodeURIComponent(shopId) + '/status', { headers: getHeaders() })
       .then(function (r) { return r.json(); })
       .then(function (d) {
@@ -148,7 +146,6 @@
     btn.classList.toggle('closed', !isOpen);
   }
 
-  // Socket - Common Order aaye toh turant dikhe
   function initSocket() {
     try {
       if (window.SocketCore && window.SocketCore.on) {
@@ -193,11 +190,45 @@
     }
   }
 
-  // ================= COMMON ORDERS - YAHI ASLI JOD HAI =================
+  // ================= COMMON SEED - 100 PRODUCT =================
+  async function loadSeed() {
+    // 1. Pehle Common index.js wala loader try karo - wahi asli loader hai
+    try {
+      if (window.SeedLoader && window.SeedLoader.loadSeed) {
+        var s1 = await window.SeedLoader.loadSeed('achar-shop');
+        if (s1 && s1.products && s1.products.length) { seedProducts = normalizeSeed(s1.products); return seedProducts; }
+      }
+    } catch (e) {}
+    // 2. Direct import - dashboard.html se relative path
+    try {
+      var m = await import('../common/products/achar-shop.seed.js');
+      var list = m.PRODUCTS || (m.default && m.default.PRODUCTS) || [];
+      if (list.length) { seedProducts = normalizeSeed(list); return seedProducts; }
+    } catch (e) { console.warn('[achar] seed import fail - seed file ka naam check karo: achar-shop.seed.js', e.message); }
+    seedProducts = [];
+    return seedProducts;
+  }
+  function normalizeSeed(list) {
+    return (list || []).map(function (p, i) {
+      return {
+        _id: p._id || p.id || ('seed-achar-' + (i + 1)),
+        id: p._id || p.id || ('seed-achar-' + (i + 1)),
+        name: p.name, brand: p.brand || 'Maa Ke Haath Ka',
+        category: p.category || p.acharType || 'Other', acharType: p.category || p.acharType || 'Other',
+        price: num(p.price500 || p.price), price500: num(p.price500 || p.price), price1kg: num(p.price1kg || p.price),
+        mrp: num(p.mrp || 0), stock: num(p.stock ?? 20),
+        jarType: p.jarType || 'Glass', spiceLevel: p.spiceLevel || 'Medium',
+        image: p.image || p.thumbnail || '', thumbnail: p.thumbnail || p.image || '',
+        description: p.description || p.desc || '', desc: p.description || p.desc || '',
+        shopId: shopId, isSeed: true
+      };
+    });
+  }
+  window.getAcharSeed = function () { return seedProducts; };
+
+  // ================= COMMON ORDERS =================
   function normalizeOrder(o) {
-    // Common Order ka shape alag ho sakta hai - sabko ek shape me lao
     var status = o.orderStatus || o.status || 'placed';
-    // Purane 'cancelled' ko 'cancelled' hi rakhenge, naya 'rejected' alag hai
     return {
       _id: o._id || o.id || '',
       orderId: o.orderId || o.orderCode || o._id || '',
@@ -216,7 +247,12 @@
 
   async function loadCommonOrders() {
     try {
-      // COMMON - 1 hi API, sab dukaan ke liye same
+      // COMMON - pehle Common Orders.js wala helper, nahi hai toh direct API
+      if (window.CommonOrders && window.CommonOrders.list) {
+        var l1 = await window.CommonOrders.list({ role: ROLE, id: shopId, shopId: shopId, limit: 100 });
+        allOrders = (l1 || []).map(normalizeOrder);
+        return allOrders;
+      }
       var url = API + '/api/common/orders/list?role=shop_owner&id=' + encodeURIComponent(shopId) + '&shopId=' + encodeURIComponent(shopId) + '&limit=100';
       var res = await fetch(url, { headers: getHeaders() });
       var data = await res.json().catch(function () { return {}; });
@@ -240,7 +276,6 @@
   function orderCard(o) {
     var itemsText = (o.items || []).map(function (it) { return esc(it.name || it.productName || 'Item') + ' x ' + (it.qty || it.quantity || 1); }).join(', ') || 'Items';
     var btns = '';
-    // SHOP SIRF YE 3 KAR SAKTA HAI - Assign / Delivered yahan nahi hoga
     if (o.orderStatus === 'placed') {
       btns = '<button class="btn green sm" onclick="acharAccept(\'' + o.orderId + '\')">✅ Accept</button> <button class="btn red sm" onclick="acharReject(\'' + o.orderId + '\')">❌ Reject</button>';
     } else if (o.orderStatus === 'confirmed') {
@@ -289,7 +324,6 @@
     if ($('walletPending')) $('walletPending').textContent = String(pendingSale);
     if ($('walletDelivered')) $('walletDelivered').textContent = String(deliveredSale);
 
-    // Last 7 din
     var weekEl = $('weekList'); if (weekEl) {
       var days = [];
       for (var i = 6; i >= 0; i--) {
@@ -315,14 +349,18 @@
   async function changeOrderStatus(orderId, status) {
     if ((status === 'cancelled' || status === 'rejected') && !confirm('Ye order ' + status + ' karein?')) return;
     try {
-      // COMMON - 1 hi API
-      var res = await fetch(API + '/api/common/orders/' + encodeURIComponent(orderId) + '/status', {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify({ status: status, role: ROLE, userId: shopId, shopId: shopId })
-      });
-      var d = await res.json().catch(function () { return {}; });
-      if (!res.ok || !d.success) throw new Error((d && d.message) || 'Status fail - Common orders.routes.js check karo');
+      if (window.CommonOrders && window.CommonOrders.updateStatus) {
+        var r1 = await window.CommonOrders.updateStatus(orderId, status, { role: ROLE, userId: shopId, shopId: shopId });
+        if (!r1 || r1.success === false) throw new Error('Status fail');
+      } else {
+        var res = await fetch(API + '/api/common/orders/' + encodeURIComponent(orderId) + '/status', {
+          method: 'PUT',
+          headers: getHeaders(),
+          body: JSON.stringify({ status: status, role: ROLE, userId: shopId, shopId: shopId })
+        });
+        var d = await res.json().catch(function () { return {}; });
+        if (!res.ok || !d.success) throw new Error((d && d.message) || 'Status fail - Common orders.routes.js check karo');
+      }
       toast('Order ' + status + ' ho gaya');
       await loadCommonOrders();
       renderAll();
@@ -335,24 +373,41 @@
   window.acharPack = function (id) { return changeOrderStatus(id, 'packed'); };
   window.changeOrderStatus = changeOrderStatus;
 
-  // ================= PRODUCTS - Achar route (abhi ke liye) =================
+  // ================= PRODUCTS - Achar route + Common Seed fallback =================
   async function loadProducts() {
     try {
       var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products', { headers: getHeaders() });
       var data = await res.json().catch(function () { return {}; });
       allProducts = data.products || data.items || data.data || [];
-      if (!allProducts.length) {
-        // Fallback - shop data ke andar products ho toh wahi lo
-        allProducts = shopData.products || [];
-      }
+      if (!allProducts.length) allProducts = shopData.products || [];
     } catch (e) { allProducts = shopData.products || []; }
+
+    // COMMON SEED FALLBACK - API khaali hai toh Seed se 100 product le lo
+    // API me maal hai toh Seed load hi nahi hoga - double nahi hoga
+    if (!allProducts.length && seedProducts.length) {
+      allProducts = seedProducts.slice();
+      if ($('inventoryList')) { /* Seed se aaya hai - Dashboard pe dikhega, API me save nahi hoga jab tak Edit / Quick Add na karo */ }
+    }
+    // Normalise - _id / price500 sab me ho, warna Edit / Cart toot jayega
+    allProducts = allProducts.map(function (p, i) {
+      return {
+        _id: p._id || p.id || ('achar-' + (i + 1)), id: p._id || p.id || ('achar-' + (i + 1)),
+        name: p.name, category: p.category || p.acharType || 'Other', acharType: p.category || p.acharType || 'Other',
+        price: num(p.price500 || p.price), price500: num(p.price500 || p.price), price1kg: num(p.price1kg || p.price),
+        stock: num(p.stock ?? 0), jarType: p.jarType || 'Glass', spiceLevel: p.spiceLevel || 'Medium',
+        image: p.image || p.thumbnail || '', thumbnail: p.thumbnail || p.image || '',
+        description: p.description || p.desc || '', desc: p.description || p.desc || '',
+        isSeed: p.isSeed || false, shopId: shopId
+      };
+    });
     return allProducts;
   }
 
   function productRow(p) {
     var stock = num(p.stock);
     var low = stock <= 2;
-    return '<div class="row"><img src="' + esc(p.image || 'https://placehold.co/100/d97706/fff?text=A') + '" onerror="this.src=\'https://placehold.co/100/d97706/fff?text=A\'"><div class="mid"><b>' + esc(p.name) + '</b><span>' + esc(p.category || p.acharType || 'Achar') + ' • ' + esc(p.spiceLevel || '') + ' • ' + esc(p.jarType || '') + ' • 500g ₹' + num(p.price500 || p.price) + ' • 1Kg ₹' + num(p.price1kg || p.price) + '</span></div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><span class="badge ' + (low ? 'red' : 'green') + '">' + (low ? 'Low Stock' : 'Stock: ' + stock + ' Kg') + '</span><div><button class="btn light sm" onclick="acharEditProduct(\'' + (p._id || p.id) + '\')">Edit</button> <button class="btn red sm" onclick="acharDeleteProduct(\'' + (p._id || p.id) + '\')">Delete</button></div></div></div>';
+    var seedTag = p.isSeed ? ' <span class="badge amber">Seed</span>' : '';
+    return '<div class="row"><img src="' + esc(p.image || 'https://placehold.co/100/d97706/fff?text=A') + '" onerror="this.src=\'https://placehold.co/100/d97706/fff?text=A\'"><div class="mid"><b>' + esc(p.name) + '</b><span>' + esc(p.category || p.acharType || 'Achar') + ' • ' + esc(p.spiceLevel || '') + ' • ' + esc(p.jarType || '') + ' • 500g ₹' + num(p.price500 || p.price) + ' • 1Kg ₹' + num(p.price1kg || p.price) + '</span></div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><span class="badge ' + (low ? 'red' : 'green') + '">' + (low ? 'Low Stock' : 'Stock: ' + stock + ' Kg') + '</span>' + seedTag + '<div><button class="btn light sm" onclick="acharEditProduct(\'' + (p._id || p.id) + '\')">Edit</button> <button class="btn red sm" onclick="acharDeleteProduct(\'' + (p._id || p.id) + '\')">Delete</button></div></div></div>';
   }
 
   function renderProducts() {
@@ -363,12 +418,10 @@
       var okQ = !q || (p.name || '').toLowerCase().includes(q);
       return okCat && okQ;
     });
-    // Category chips
     var chipsEl = $('categoryChips');
-    if (chipsEl && !chipsEl.dataset.built) {
+    if (chipsEl) {
       var cats = ['All'].concat(Array.from(new Set(allProducts.map(function (p) { return p.category || p.acharType || 'Other'; }))));
       chipsEl.innerHTML = cats.map(function (c) { return '<button class="chip ' + (c === productFilter ? 'active' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>'; }).join('');
-      chipsEl.dataset.built = '1';
       chipsEl.querySelectorAll('.chip').forEach(function (ch) {
         ch.addEventListener('click', function () {
           productFilter = ch.dataset.cat;
@@ -432,11 +485,25 @@
 
   window.acharDeleteProduct = async function (id) {
     if (!confirm('Ye product delete karein?')) return;
+    var p = allProducts.find(function (x) { return String(x._id || x.id) === String(id); });
+    // Seed wala product - API me hai hi nahi, sirf list se hatao
+    if (p && p.isSeed) {
+      allProducts = allProducts.filter(function (x) { return String(x._id || x.id) !== String(id); });
+      seedProducts = seedProducts.filter(function (x) { return String(x._id || x.id) !== String(id); });
+      renderAll();
+      toast('Seed product list se hat gaya');
+      return;
+    }
     try {
-      var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products/' + encodeURIComponent(id), { method: 'DELETE', headers: getHeaders() });
-      var d = await res.json().catch(function () { return {}; });
-      if (!res.ok || (d.success === false)) throw new Error(d.message || 'Delete fail');
-      allProducts = allProducts.filter(function (p) { return String(p._id || p.id) !== String(id); });
+      // COMMON Product Manager hai toh usi se delete karo
+      if (window.ProductManager && window.ProductManager.delete) {
+        await window.ProductManager.delete(shopId, id);
+      } else {
+        var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products/' + encodeURIComponent(id), { method: 'DELETE', headers: getHeaders() });
+        var d = await res.json().catch(function () { return {}; });
+        if (!res.ok || (d.success === false)) throw new Error(d.message || 'Delete fail');
+      }
+      allProducts = allProducts.filter(function (x) { return String(x._id || x.id) !== String(id); });
       renderAll();
       toast('Product delete ho gaya');
     } catch (e) { toast('Delete fail: ' + e.message); }
@@ -445,6 +512,8 @@
   async function handleProductImage(file) {
     if (!file) return;
     try {
+      // COMMON Image Compress hai toh pehle compress karo
+      if (window.ImageCompress && window.ImageCompress.compress) { try { file = await window.ImageCompress.compress(file); } catch (e) {} }
       var fd = new FormData();
       fd.append('image', file);
       var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/upload', { method: 'POST', body: fd });
@@ -487,30 +556,43 @@
       price1kg: num($('acharPrice1kg').value),
       price: num($('acharPrice500g').value) || num($('acharPrice1kg').value),
       stock: num($('acharStock').value),
-      image: productImageUrl || 'https://placehold.co/600/d97706/fff?text=Achar'
+      image: productImageUrl || 'https://placehold.co/600/d97706/fff?text=Achar',
+      shopId: shopId
     };
     try {
-      var url = API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products';
-      var method = 'POST';
-      if (currentEditId) { url += '/' + encodeURIComponent(currentEditId); method = 'PUT'; }
-      var res = await fetch(url, { method: method, headers: getHeaders(), body: JSON.stringify(payload) });
-      var d = await res.json().catch(function () { return {}; });
-      if (!res.ok || (d.success === false)) throw new Error(d.message || 'Save fail');
+      // Seed wala Edit hai toh pehle usko Seed se hatao, phir API me save karo
+      var isSeedEdit = currentEditId && String(currentEditId).indexOf('seed-achar-') === 0;
+      if (isSeedEdit) currentEditId = null;
+
+      if (window.ProductManager && window.ProductManager.save) {
+        await window.ProductManager.save(shopId, payload, currentEditId);
+      } else {
+        var url = API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products';
+        var method = 'POST';
+        if (currentEditId) { url += '/' + encodeURIComponent(currentEditId); method = 'PUT'; }
+        var res = await fetch(url, { method: method, headers: getHeaders(), body: JSON.stringify(payload) });
+        var d = await res.json().catch(function () { return {}; });
+        if (!res.ok || (d.success === false)) throw new Error(d.message || 'Save fail');
+      }
       toast(currentEditId ? 'Achar update ho gaya' : 'Achar add ho gaya');
       $('addModal').classList.remove('open');
+      // Seed fallback wala product Edit hua toh usko Seed list se hata do, warna double dikhega
+      if (isSeedEdit) { seedProducts = seedProducts.filter(function (x) { return x.name !== name; }); }
       await loadProducts();
       renderAll();
     } catch (e) { toast('Save fail: ' + e.message); }
   };
 
-  // ================= QUICK ADD =================
-  var QUICK_LIST = ['Aam ka Achar', 'Nimbu ka Achar', 'Mix Achar', 'Gajar ka Achar', 'Mirchi ka Achar', 'Lahsun ka Achar', 'Aam ka Murabba', 'Gajar ka Murabba', 'Amla ka Achar', 'Karela ka Achar', 'Baingan ka Achar', 'Gobhi ka Achar', 'Hari Mirchi ka Achar', 'Adrak ka Achar', 'Imli ka Achar'];
+  // ================= QUICK ADD - AB SEED SE 100 PRODUCT =================
   function openQuickAdd() {
     quickAddSelected = new Set();
     var el = $('quickAddList'); if (!el) return;
-    el.innerHTML = QUICK_LIST.map(function (n) {
-      var exists = allProducts.some(function (p) { return (p.name || '').toLowerCase() === n.toLowerCase(); });
-      return '<label style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;font-size:13px"><input type="checkbox" data-quick="' + esc(n) + '" ' + (exists ? 'disabled' : '') + '> ' + esc(n) + (exists ? ' <span class="badge green">Added</span>' : '') + '</label>';
+    // COMMON SEED se lo - pehle wale 15 naam nahi, ab 100 naam aayenge
+    var list = seedProducts.length ? seedProducts : allProducts;
+    if (!list.length) { el.innerHTML = '<div class="empty">Seed load nahi hui - pehle Naya Achar se add karo</div>'; $('quickAddModal').classList.add('open'); return; }
+    el.innerHTML = list.map(function (p) {
+      var exists = allProducts.some(function (x) { return (x.name || '').toLowerCase() === (p.name || '').toLowerCase() && !x.isSeed; });
+      return '<label style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;font-size:13px"><input type="checkbox" data-quick="' + esc(p.name) + '" data-quick-cat="' + esc(p.category) + '" data-quick-price500="' + num(p.price500) + '" data-quick-price1kg="' + num(p.price1kg) + '" ' + (exists ? 'disabled' : '') + '> ' + esc(p.name) + ' - ₹' + num(p.price500) + (exists ? ' <span class="badge green">Added</span>' : '') + '</label>';
     }).join('');
     el.querySelectorAll('input[data-quick]').forEach(function (cb) {
       cb.addEventListener('change', function () {
@@ -527,17 +609,21 @@
   async function saveQuickAdd() {
     if (!quickAddSelected.size) return toast('Koi achar tick karo');
     try {
-      var items = Array.from(quickAddSelected).map(function (n) { return { name: n, category: 'Mix', price500: 150, price1kg: 280, price: 150, stock: 10, image: 'https://placehold.co/600/d97706/fff?text=Achar' }; });
+      var items = [];
+      document.querySelectorAll('#quickAddList input[data-quick]:checked').forEach(function (cb) {
+        items.push({ name: cb.dataset.quick, category: cb.dataset.quickCat || 'Mix', acharType: cb.dataset.quickCat || 'Mix', price500: num(cb.dataset.quickPrice500) || 150, price1kg: num(cb.dataset.quickPrice1kg) || 280, price: num(cb.dataset.quickPrice500) || 150, stock: 10, image: 'https://placehold.co/600/d97706/fff?text=Achar', shopId: shopId });
+      });
       var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products/bulk', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ products: items, items: items }) });
       var d = await res.json().catch(function () { return {}; });
       if (!res.ok || (d.success === false)) {
-        // Bulk fail hua toh ek-ek karke add karo
         for (var i = 0; i < items.length; i++) {
           await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products', { method: 'POST', headers: getHeaders(), body: JSON.stringify(items[i]) }).catch(function () {});
         }
       }
       toast(quickAddSelected.size + ' achar add ho gaye');
       $('quickAddModal').classList.remove('open');
+      // Quick Add wale Seed se hat jayenge, warna double dikhenge
+      seedProducts = seedProducts.filter(function (p) { return !quickAddSelected.has(p.name); });
       await loadProducts();
       renderAll();
     } catch (e) { toast('Quick Add fail: ' + e.message); }
@@ -598,7 +684,6 @@
     if (!items.length) return toast('Koi item tick karo');
     var total = updateMoTotal();
     try {
-      // COMMON CHECKOUT - Manual order bhi wahi Order Collection me jayega
       var res = await fetch(API + '/api/common/checkout/' + encodeURIComponent(shopId) + '/place', {
         method: 'POST',
         headers: getHeaders(),
@@ -637,11 +722,9 @@
     var open = $('openTime').value || '09:00';
     var close = $('closeTime').value || '21:00';
     try {
-      // COMMON shop-toggle timing - Customer ko wahi timing dikhegi
       var res = await fetch(API + '/api/common/shop-toggle/' + encodeURIComponent(shopId) + '/timing', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ open: open, close: close, role: ROLE, userId: shopId, shopId: shopId }) });
       var d = await res.json().catch(function () { return {}; });
       if (!res.ok || (d.success === false)) {
-        // Fallback - Achar settings pe save karo
         await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ openTime: open, closeTime: close, timing: { open: open, close: close } }) });
       }
       if ($('timingStatus')) $('timingStatus').textContent = 'Timing save ho gayi: ' + to12(open) + ' - ' + to12(close);
@@ -671,9 +754,13 @@
       bannerPhotoUrl: $('bannerUrlInput').value || shopData.bannerPhotoUrl || ''
     };
     try {
-      var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload) });
-      var d = await res.json().catch(function () { return {}; });
-      if (!res.ok || (d.success === false)) throw new Error(d.message || 'Save fail');
+      if (window.ProfileCore && window.ProfileCore.save) {
+        await window.ProfileCore.save(shopId, payload);
+      } else {
+        var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload) });
+        var d = await res.json().catch(function () { return {}; });
+        if (!res.ok || (d.success === false)) throw new Error(d.message || 'Save fail');
+      }
       Object.assign(shopData, payload);
       if ($('profileStatus')) $('profileStatus').textContent = 'Profile save ho gaya';
       toast('Profile save ho gaya');
@@ -703,9 +790,13 @@
   }
   async function doSaveLocation(payload) {
     try {
-      var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload) });
-      var d = await res.json().catch(function () { return {}; });
-      if (!res.ok || (d.success === false)) throw new Error(d.message || 'Save fail');
+      if (window.LocationCore && window.LocationCore.save) {
+        await window.LocationCore.save(shopId, payload);
+      } else {
+        var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload) });
+        var d = await res.json().catch(function () { return {}; });
+        if (!res.ok || (d.success === false)) throw new Error(d.message || 'Save fail');
+      }
       if ($('locationStatus')) $('locationStatus').textContent = 'Location save ho gayi';
       toast('Location save ho gayi');
     } catch (e) { toast('Location fail: ' + e.message); }
@@ -718,5 +809,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  console.log('✅ Achar Dashboard JS loaded - Common Orders connected - shopId:', shopId);
+  console.log('✅ Achar Dashboard JS loaded - Common Orders + Seed + ProductManager connected - shopId:', shopId);
 })();
