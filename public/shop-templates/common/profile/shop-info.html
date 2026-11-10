@@ -1,29 +1,103 @@
-<!-- LOCATION: public/shop-templates/common/profile/shop-info.html - V24 - UNIFIED - FULL CODE -->
+<!-- LOCATION: public/shop-templates/common/profile/shop-info.html - V25 - UNIFIED - FULL CODE -->
 <!-- RULE: Shop Info = Server + Cloudinary se hi aayega. Is file me koi bhi browser storage use NAHI hoga. -->
 <!-- FLOW: Load -> /api/common/profile/me?role=shop_owner&shopId=URL se -> Fill -> Logo/Cover/Owner Photo -> UnifiedProfile V24 -> Cloudinary -> Save -> PUT /api/common/profile/shop/:shopId -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur two-col / phone-row / form-input ka CSS hi nahi tha, isliye Laptop/Mobile me toota hua dikhta tha. Ab FULL HTML + RESPONSIVE CSS hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Shop Information</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+input,select,textarea{font-family:inherit;outline:none}
+.shop-info-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.shop-info-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.shop-info-header b{display:block;font-weight:900;font-size:16px}
+.shop-info-header span{font-size:11px;color:#64748b;font-weight:600}
+.save-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.shop-info-form{padding:0 12px;display:flex;flex-direction:column;gap:12px}
+.form-section{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px}
+.form-section b{display:block;font-weight:900;font-size:14px;margin-bottom:12px}
+.form-section label{display:block;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;margin:12px 0 6px}
+.form-section label:first-of-type{margin-top:0}
+.form-input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;font-weight:600;background:#fff}
+.form-input:focus{border-color:#0f172a}
+textarea.form-input{resize:vertical;min-height:80px;line-height:1.5}
+/* LOGO + COVER */
+.logo-cover-box{display:flex;gap:14px;padding:14px;background:#fff;border:1px solid #f1f5f9;border-radius:16px;margin:12px}
+.logo-box{text-align:center;flex-shrink:0}
+.logo-box img{width:80px;height:80px;border-radius:14px;object-fit:cover;border:2px solid #fff;background:#f1f5f9;box-shadow:0 0 0 1px #e5e7eb;display:block}
+.cover-box{text-align:center;flex:1;min-width:0}
+.cover-box img{width:100%;height:80px;border-radius:12px;object-fit:cover;background:#e2e8f0;display:block}
+.logo-cover-box .lbl{font-size:11px;font-weight:800;margin-top:6px}
+.btn-dark{background:#0f172a;color:#fff;border:none;padding:7px 10px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;margin-top:6px}
+.btn-light{background:#fff;border:1px solid #e2e8f0;padding:7px 10px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;margin-top:6px}
+/* PHONE ROW - +91 + Input ek line me */
+.phone-row{display:flex;gap:8px;align-items:stretch}
+.phone-prefix{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:12px 12px;font-weight:800;font-size:14px;display:grid;place-items:center;flex-shrink:0}
+.phone-row .form-input{flex:1;min-width:0}
+/* TWO COL - Area/City, Pincode/Landmark */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two-col label{margin-top:0}
+.secondary-btn{background:#f1f5f9;border:1px solid #e2e8f0;padding:12px;border-radius:10px;font-weight:800;cursor:pointer;font-size:13px}
+.owner-photo-row{display:flex;gap:10px;align-items:center}
+.owner-photo-row img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:#f1f5f9;flex-shrink:0}
+/* LAPTOP */
+@media(min-width:721px){
+  .form-section{padding:20px}
+  .logo-cover-box{margin:16px 12px}
+}
+/* MOBILE FIX - Sabse bada fix yahi hai */
+@media(max-width:600px){
+  .shop-info-root{max-width:100%}
+  .shop-info-header{padding:12px}
+  .shop-info-header b{font-size:15px}
+  .shop-info-form{padding:0 10px;gap:10px}
+  .form-section{padding:14px}
+  .logo-cover-box{flex-direction:column;margin:10px;padding:12px}
+  .logo-box{display:flex;align-items:center;gap:12px;text-align:left}
+  .logo-box img{width:64px;height:64px}
+  .logo-box .lbl{margin-top:0}
+  .cover-box{text-align:left}
+  .cover-box img{height:110px}
+  .two-col{grid-template-columns:1fr;gap:0}
+  .two-col > div label{margin-top:12px}
+  .phone-row{gap:6px}
+  .phone-prefix{padding:12px 10px}
+}
+</style>
+</head>
+<body>
 <div id="shopInfoRoot" class="shop-info-root">
   <div class="shop-info-header">
     <button id="shopInfoBack" class="back-btn" onclick="history.back()">‹</button>
-    <div><b>Shop Information</b><span>Update shop details</span></div>
+    <div style="min-width:0;flex:1"><b>Shop Information</b><span>Update shop details</span></div>
     <button id="saveShopInfoBtn" class="save-btn" type="button">💾 Save</button>
   </div>
 
-  <!-- LOGO + COVER - YAHI SE BADLEGA - Cloudinary - V24 me shopId URL se jayega -->
-  <div style="display:flex;gap:14px;padding:14px;background:#f8fafc;border-radius:12px;margin:14px">
-    <div style="text-align:center">
-      <img id="shopInfoLogoPreview" src="/assets/default-avatar.png" style="width:80px;height:80px;border-radius:14px;object-fit:cover;border:2px solid #fff">
-      <div style="font-size:11px;font-weight:800;margin-top:6px">SHOP LOGO</div>
-      <button type="button" onclick="document.getElementById('shopInfoLogoInput').click()" style="margin-top:6px;background:#0f172a;color:#fff;border:none;padding:6px 10px;border-radius:8px;font-weight:700;cursor:pointer">📷 Change Logo</button>
-      <input type="file" id="shopInfoLogoInput" accept="image/*" style="display:none">
+  <!-- LOGO + COVER - YAHI SE BADLEGA - Cloudinary - V25 me shopId URL se jayega -->
+  <div class="logo-cover-box">
+    <div class="logo-box">
+      <img id="shopInfoLogoPreview" src="/assets/default-avatar.png" alt="Shop Logo">
+      <div>
+        <div class="lbl">SHOP LOGO</div>
+        <button type="button" onclick="document.getElementById('shopInfoLogoInput').click()" class="btn-dark">📷 Change Logo</button>
+        <input type="file" id="shopInfoLogoInput" accept="image/*" style="display:none">
+      </div>
     </div>
-    <div style="text-align:center;flex:1">
-      <img id="shopInfoCoverPreview" src="" style="width:100%;height:80px;border-radius:12px;object-fit:cover;background:#e2e8f0;display:block">
-      <div style="font-size:11px;font-weight:800;margin-top:6px">SHOP COVER / BANNER</div>
-      <button type="button" onclick="document.getElementById('shopInfoCoverInput').click()" style="margin-top:6px;background:#fff;border:1px solid #e2e8f0;padding:6px 10px;border-radius:8px;font-weight:700;cursor:pointer">📷 Change Cover</button>
+    <div class="cover-box">
+      <img id="shopInfoCoverPreview" src="" alt="Shop Cover">
+      <div class="lbl">SHOP COVER / BANNER</div>
+      <button type="button" onclick="document.getElementById('shopInfoCoverInput').click()" class="btn-light">📷 Change Cover</button>
       <input type="file" id="shopInfoCoverInput" accept="image/*" style="display:none">
     </div>
   </div>
-  <div id="shopInfoMsg" style="font-size:12px;text-align:center;color:#64748b"></div>
+  <div id="shopInfoMsg" style="font-size:12px;text-align:center;color:#64748b;padding:0 12px"></div>
 
   <div class="shop-info-form">
     <div class="form-section">
@@ -46,8 +120,8 @@
       <label>Email (optional)</label><input type="email" id="shopEmail" placeholder="myshop@example.com" class="form-input">
       <label>WhatsApp Number</label><input type="tel" id="shopWhatsapp" placeholder="9876543210" class="form-input">
       <label>Owner Photo</label>
-      <div style="display:flex;gap:10px;align-items:center">
-        <img id="shopOwnerPhotoPreview" src="/assets/default-avatar.png" style="width:56px;height:56px;border-radius:50%;object-fit:cover">
+      <div class="owner-photo-row">
+        <img id="shopOwnerPhotoPreview" src="/assets/default-avatar.png" alt="Owner Photo">
         <button type="button" onclick="document.getElementById('shopOwnerPhotoInput').click()" style="background:#f1f5f9;border:none;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer">📷 Change Owner Photo</button>
         <input type="file" id="shopOwnerPhotoInput" accept="image/*" style="display:none">
       </div>
@@ -70,6 +144,8 @@
     </div>
   </div>
 </div>
-<!-- V24 - profile-core sabse pehle, phir shop-info.js - dono me browser storage NAHI hai -->
+<!-- V25 - profile-core sabse pehle, phir shop-info.js - dono me browser storage NAHI hai -->
 <script src="/shop-templates/common/profile/profile-core.js"></script>
 <script src="/shop-templates/common/profile/shop-info.js"></script>
+</body>
+</html>

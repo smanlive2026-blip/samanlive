@@ -1,21 +1,63 @@
-<!-- LOCATION: public/shop-templates/common/profile/shop-gallery.html - V24 - UNIFIED - FULL CODE -->
+<!-- LOCATION: public/shop-templates/common/profile/shop-gallery.html - V25 - UNIFIED - FULL CODE -->
 <!-- RULE: Gallery = Server + Cloudinary se hi aayegi. Is file me koi bhi browser storage use NAHI hoga. -->
 <!-- FLOW: Load -> /api/common/profile/me?role=shop_owner&shopId=URL se -> Gallery render -> Add Photo -> UnifiedProfile V24 -> Cloudinary -> Server -> dobara Server se Load -->
-<div id="shopGalleryRoot" style="padding:16px">
-  <div style="display:flex;align-items:center;gap:12px">
-    <button onclick="history.back()" style="width:36px;height:36px;border:none;border-radius:50%;background:#f1f5f9;font-size:20px;font-weight:900;cursor:pointer">‹</button>
-    <div><b style="font-size:16px">Shop Gallery</b><div style="font-size:12px;color:#64748b">Photos - Cloudinary pe jayengi</div></div>
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur grid fix 3 column tha, isliye Laptop/Mobile me toota hua dikhta tha. Ab FULL HTML + RESPONSIVE CSS + Delete button hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Shop Gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.shop-gallery-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.gallery-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{width:36px;height:36px;border:none;border-radius:50%;background:#f1f5f9;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.gallery-header b{display:block;font-size:16px;font-weight:900}
+.gallery-header span{font-size:12px;color:#64748b;font-weight:600}
+.gallery-count{margin-left:auto;background:#f1f5f9;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap}
+.upload-box{margin:12px;background:#fff;border:1px dashed #e2e8f0;border-radius:14px;padding:20px;text-align:center}
+.upload-box img{max-width:100%;border-radius:10px;display:none;margin:0 auto 10px}
+.upload-box p{font-size:13px;color:#64748b;font-weight:600;line-height:1.5}
+.btn-dark{background:#0f172a;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer;margin-top:8px}
+.gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 12px}
+.gallery-item{position:relative;border-radius:12px;overflow:hidden;background:#e2e8f0;aspect-ratio:1/1}
+.gallery-item img{width:100%;height:100%;object-fit:cover;display:block}
+.delete-btn{position:absolute;top:6px;right:6px;background:rgba(220,38,38,.95);color:#fff;border:none;width:28px;height:28px;border-radius:50%;font-weight:900;cursor:pointer;font-size:14px;line-height:1;display:grid;place-items:center}
+.gallery-empty{grid-column:1/-1;text-align:center;color:#94a3b8;font-size:13px;font-weight:600;padding:30px 10px;background:#fff;border:1px dashed #e2e8f0;border-radius:12px}
+/* LAPTOP */
+@media(min-width:721px){
+  .gallery-grid{gap:12px}
+}
+/* MOBILE FIX - Sabse bada fix yahi hai */
+@media(max-width:600px){
+  .shop-gallery-root{max-width:100%}
+  .gallery-header{padding:12px}
+  .upload-box{margin:10px;padding:16px}
+  .gallery-grid{grid-template-columns:repeat(2,1fr);gap:8px;margin:0 10px}
+}
+</style>
+</head>
+<body>
+<div id="shopGalleryRoot" class="shop-gallery-root">
+  <div class="gallery-header">
+    <button onclick="history.back()" class="back-btn">‹</button>
+    <div style="min-width:0;flex:1"><b>Shop Gallery</b><span>Photos - Cloudinary pe jayengi</span></div>
+    <span class="gallery-count" id="galleryCount">0 Photos</span>
   </div>
 
-  <div style="margin-top:16px;background:#fff;border:1px dashed #e2e8f0;border-radius:14px;padding:20px;text-align:center">
-    <img id="galleryPreview" src="" style="max-width:100%;border-radius:10px;display:none">
-    <p style="font-size:13px;color:#64748b">Shop ki nayi photo add karo - Customer ko dikhegi</p>
-    <button onclick="document.getElementById('galleryInput').click()" style="background:#0f172a;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer;margin-top:8px">📷 Add Photo</button>
+  <div class="upload-box">
+    <img id="galleryPreview" src="" alt="Preview">
+    <p>Shop ki nayi photo add karo - Customer ko dikhegi</p>
+    <button onclick="document.getElementById('galleryInput').click()" class="btn-dark">📷 Add Photo</button>
     <input type="file" id="galleryInput" accept="image/*" style="display:none">
-    <div id="galleryMsg" style="font-size:12px;color:#64748b;margin-top:8px"></div>
+    <div id="galleryMsg" style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.5"></div>
   </div>
 
-  <div id="galleryGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px"></div>
+  <div id="galleryGrid" class="gallery-grid"></div>
 </div>
 
 <script src="/shop-templates/common/profile/profile-core.js"></script>
@@ -23,6 +65,7 @@
 (function(){
   // shopId SIRF URL se - kahi aur se NAHI
   let shopId = new URLSearchParams(location.search).get('shopId') || '';
+  let currentGallery = [];
 
   function getToken(){
     try{
@@ -74,10 +117,50 @@
 
   function renderGallery(list){
     const grid = document.getElementById('galleryGrid');
+    const countEl = document.getElementById('galleryCount');
     if(!grid) return;
-    if(!list || list.length === 0){ grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#94a3b8;font-size:13px">Abhi koi photo nahi hai</div>'; return; }
-    grid.innerHTML = list.map(u => `<img src="${u}" style="width:100%;height:110px;object-fit:cover;border-radius:10px">`).join('');
+    currentGallery = list || [];
+    if(countEl) countEl.textContent = currentGallery.length + ' Photos';
+    if(!list || list.length === 0){ grid.innerHTML = '<div class="gallery-empty">Abhi koi photo nahi hai<br><span style="font-size:11px">Upar se Add Photo dabake pehli photo add karo</span></div>'; return; }
+    grid.innerHTML = list.map((u, i) => `<div class="gallery-item"><img src="${u}" alt="Shop Photo" loading="lazy" onerror="this.parentElement.style.display='none'"><button class="delete-btn" onclick="deleteGalleryPhoto(${i})" title="Delete">✕</button></div>`).join('');
   }
+
+  window.deleteGalleryPhoto = async function(index){
+    const url = currentGallery[index];
+    if(!url) return;
+    if(!confirm('Ye photo delete karein? Customer ko ab nahi dikhegi.')) return;
+    try{
+      // Server se delete - pehle Server pe, tabhi list se hatayenge
+      const token = getToken();
+      const buyerId = getUserId();
+      let deleted = false;
+      // Try 1: Common Profile gallery delete route
+      try{
+        const res = await fetch(`/api/common/profile/${encodeURIComponent(shopId)}/gallery`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId }, body: JSON.stringify({ imageUrl: url, shopId: shopId }) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || !res.error)) deleted = true;
+      }catch(e){}
+      // Try 2: Full gallery PUT - bachi hui photo Server pe bhej do
+      if(!deleted){
+        try{
+          const remaining = currentGallery.filter((_, i) => i !== index);
+          const res2 = await fetch(`/api/common/profile/shop/${encodeURIComponent(shopId)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-buyer-id': buyerId }, body: JSON.stringify({ shopId: shopId, gallery: remaining, shopImages: remaining }) }).then(r=>r.json()).catch(()=>null);
+          if(res2 && (res2.success || !res2.error)) deleted = true;
+        }catch(e){}
+      }
+      if(!deleted){
+        const msg = document.getElementById('galleryMsg');
+        if(msg){ msg.textContent = '❌ Server se delete nahi hui - dobara try karo'; msg.style.color = 'red'; }
+        return;
+      }
+      // Server se delete hui, ab dobara Server se mang ke verify karo
+      await loadGallery();
+      const msg2 = document.getElementById('galleryMsg');
+      if(msg2){ msg2.textContent = 'Photo delete ho gayi ✅'; msg2.style.color = '#166534'; }
+    }catch(e){
+      const msg = document.getElementById('galleryMsg');
+      if(msg){ msg.textContent = 'Delete fail: ' + e.message; msg.style.color = 'red'; }
+    }
+  };
 
   document.addEventListener('DOMContentLoaded', () => {
     loadGallery();
@@ -96,9 +179,13 @@
           if(img){ img.src = r.url; img.style.display = 'block'; }
           // Server me save hui ya nahi, dobara Server se mang ke verify karo
           await loadGallery();
+          // Preview hide kar do - ab wo grid me aa gayi hai
+          setTimeout(() => { if(img){ img.style.display = 'none'; img.src = ''; } input.value = ''; }, 1500);
         }
       });
     }
   });
 })();
 </script>
+</body>
+</html>

@@ -1,6 +1,86 @@
-<!-- LOCATION: public/shop-templates/common/profile/profile.html - V24 - UNIFIED PROFILE - FULL CODE - NO CUT -->
+<!-- LOCATION: public/shop-templates/common/profile/profile.html - V25 - UNIFIED PROFILE - FULL CODE - NO CUT -->
+<!-- FIX V25: Pehle is file me CSS hi nahi tha, isliye Laptop/Mobile me toota hua dikhta tha. Ab FULL CSS andar hi hai. -->
 <!-- RULE: Shop Profile = Server + Cloudinary se hi aayega. Is file me koi bhi browser storage use NAHI hoga. -->
-<!-- FLOW: Load -> profile-core.js V24 -> profile.js V24 -> /api/common/profile/me?role=shop_owner&shopId=URL se -> Fill -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Shop Profile</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a;padding-bottom:20px}
+button{font-family:inherit;cursor:pointer;border:0}
+.shop-profile-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh}
+/* HEADER */
+.profile-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:22px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.profile-header b{display:block;font-weight:900;font-size:16px}
+.profile-header span{font-size:11px;color:#64748b;font-weight:600}
+.edit-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;white-space:nowrap}
+/* COVER */
+.profile-cover{position:relative;background:#fff;padding:0 0 12px}
+.cover-img{width:100%;height:180px;object-fit:cover;background:#e2e8f0;display:block}
+.change-cover-btn{position:absolute;right:12px;bottom:22px;background:rgba(15,23,42,.9);color:#fff;border:none;padding:7px 12px;border-radius:999px;font-size:11px;font-weight:800;cursor:pointer}
+/* MAIN CARD */
+.profile-main-card{background:#fff;margin:12px;border-radius:18px;padding:16px;border:1px solid #f1f5f9}
+.profile-avatar-section{display:flex;gap:14px;align-items:flex-start}
+.avatar-wrapper{position:relative;flex-shrink:0}
+.shop-avatar{width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #fff;background:#f1f5f9;box-shadow:0 0 0 1px #e5e7eb;display:block}
+.change-avatar-btn{position:absolute;right:-2px;bottom:2px;width:28px;height:28px;border-radius:50%;background:#0f172a;color:#fff;border:none;font-size:12px;cursor:pointer}
+.profile-basic{flex:1;min-width:0;padding-top:4px}
+.profile-basic b{font-size:17px;font-weight:900;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-basic > span{font-size:12px;color:#64748b;font-weight:600;display:block;margin-top:2px}
+.shop-rating{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;font-size:12px;font-weight:700}
+.verified-badge{background:#dcfce7;color:#166534;font-size:10px;font-weight:900;padding:3px 8px;border-radius:999px}
+/* OWNER PHOTO ROW - Screenshot me ye faila hua tha, ab flex fix hai */
+.owner-row{display:flex;gap:12px;align-items:center;margin-top:14px;background:#f8fafc;padding:12px;border-radius:12px}
+.owner-row img{width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid #fff;flex-shrink:0}
+.owner-row .ot{flex:1;min-width:0}
+.owner-row .ot b{font-size:13px}
+.owner-row .ot div{font-size:11px;color:#64748b;line-height:1.4}
+.owner-row button{background:#0f172a;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+/* STATS - Screenshot me ye ek ke neeche ek tha, ab 4 box me hoga */
+.profile-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.p-stat{background:#f8fafc;border:1px solid #f1f5f9;border-radius:12px;padding:12px 8px;text-align:center}
+.p-stat b{display:block;font-size:18px;font-weight:900}
+.p-stat span{font-size:11px;color:#64748b;font-weight:700}
+/* MENU - Screenshot me ye chipka hua tha, ab card jaisa hoga */
+.profile-menu{padding:0 12px 20px;display:flex;flex-direction:column;gap:12px}
+.menu-section{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:8px 8px 4px}
+.menu-section > b{display:block;font-weight:900;font-size:13px;padding:10px 10px 6px}
+.menu-item{display:flex;align-items:center;gap:12px;padding:12px 10px;border-radius:12px;cursor:pointer;border-bottom:1px solid #f8fafc}
+.menu-item:last-child{border-bottom:none}
+.menu-item:active{background:#f8fafc}
+.menu-icon{width:38px;height:38px;border-radius:10px;background:#f1f5f9;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.menu-item > div{flex:1;min-width:0}
+.menu-item > div b{display:block;font-size:13px;font-weight:800}
+.menu-item > div span{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:1px}
+.menu-arrow{font-size:20px;color:#cbd5e1;font-weight:900}
+.status-badge{font-size:10px;font-weight:900;padding:4px 8px;border-radius:999px;white-space:nowrap}
+.status-badge.pending{background:#fef3c7;color:#92400e}
+.status-badge.verified{background:#dcfce7;color:#166534}
+/* MOBILE FIX */
+@media(max-width:600px){
+  .shop-profile-root{max-width:100%}
+  .cover-img{height:150px}
+  .profile-main-card{margin:10px;padding:14px}
+  .shop-avatar{width:76px;height:76px}
+  .profile-basic b{font-size:15px}
+  .profile-stats{grid-template-columns:repeat(4,1fr);gap:6px}
+  .p-stat{padding:10px 4px}
+  .p-stat b{font-size:15px}
+  .p-stat span{font-size:10px}
+  .profile-menu{padding:0 10px 16px}
+  .owner-row{padding:10px}
+}
+@media(max-width:380px){
+  .profile-stats{grid-template-columns:repeat(2,1fr)}
+  .profile-avatar-section{flex-direction:row}
+}
+</style>
+</head>
+<body>
 <div id="shopProfileRoot" class="shop-profile-root">
   <div class="profile-header">
     <button id="profileBack" class="back-btn" onclick="history.back()">‹</button>
@@ -13,7 +93,7 @@
 
   <!-- COVER - Shop Banner -->
   <div class="profile-cover">
-    <img id="profileCoverImg" class="cover-img" src="" alt="Shop Cover" style="width:100%;height:180px;object-fit:cover;background:#f1f5f9;display:block">
+    <img id="profileCoverImg" class="cover-img" src="" alt="Shop Cover">
     <button id="changeCoverBtn" class="change-cover-btn" onclick="document.getElementById('coverInput').click()">📷 Change Cover</button>
     <input type="file" id="coverInput" accept="image/*" style="display:none">
     <div id="coverMsg" style="font-size:11px;text-align:center;color:#64748b"></div>
@@ -21,8 +101,8 @@
 
   <div class="profile-main-card">
     <div class="profile-avatar-section">
-      <div class="avatar-wrapper" style="position:relative">
-        <img id="shopAvatar" class="shop-avatar" src="/assets/default-avatar.png" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #fff;background:#f1f5f9">
+      <div class="avatar-wrapper">
+        <img id="shopAvatar" class="shop-avatar" src="/assets/default-avatar.png">
         <button id="changeAvatarBtn" class="change-avatar-btn" onclick="document.getElementById('avatarInput').click()">📷</button>
         <input type="file" id="avatarInput" accept="image/*" style="display:none">
       </div>
@@ -38,14 +118,14 @@
       </div>
     </div>
 
-    <!-- Owner Photo - Alag se - pehle ye tha hi nahi -->
-    <div style="display:flex;gap:12px;align-items:center;margin-top:14px;background:#f8fafc;padding:12px;border-radius:12px">
-      <img id="ownerPhotoDisplay" src="/assets/default-avatar.png" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid #fff">
-      <div style="flex:1">
-        <b style="font-size:13px">Owner Photo</b>
-        <div style="font-size:11px;color:#64748b">Ye Shop Logo se alag hai - Owner ki khud ki photo</div>
+    <!-- Owner Photo - Alag se -->
+    <div class="owner-row">
+      <img id="ownerPhotoDisplay" src="/assets/default-avatar.png">
+      <div class="ot">
+        <b>Owner Photo</b>
+        <div>Ye Shop Logo se alag hai - Owner ki khud ki photo</div>
       </div>
-      <button onclick="document.getElementById('ownerPhotoInput').click()" style="background:#0f172a;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer">📷 Change</button>
+      <button onclick="document.getElementById('ownerPhotoInput').click()">📷 Change</button>
       <input type="file" id="ownerPhotoInput" accept="image/*" style="display:none">
     </div>
     <div id="profileMsg" style="font-size:12px;color:#64748b;text-align:center;margin-top:8px"></div>
@@ -92,15 +172,13 @@
 
 <script>
 function getShopIdFromUrl(){
-  // SIRF URL se - kahi aur se NAHI. URL me nahi hai toh khaali dega.
-  // V23 me yahan browser storage se shopId uthata tha, wahi dhokha tha -
-  // Mobile wali dukaan ka shopId Laptop me dusri dukaan pe lag jata tha.
   try{ return new URLSearchParams(location.search).get('shopId') || ''; }catch(e){ return ''; }
 }
-// window pe bhi rakh do taaki profile.js / dusri file use kar sake - ye RAM me hai, browser storage me nahi
 window.getShopIdFromUrl = getShopIdFromUrl;
 window.SHOP_ID = getShopIdFromUrl();
 </script>
-<!-- V24 - profile-core sabse pehle, phir profile.js - dono me browser storage NAHI hai -->
+<!-- V25 - profile-core sabse pehle, phir profile.js - dono me browser storage NAHI hai -->
 <script src="/shop-templates/common/profile/profile-core.js"></script>
 <script src="/shop-templates/common/profile/profile.js"></script>
+</body>
+</html>

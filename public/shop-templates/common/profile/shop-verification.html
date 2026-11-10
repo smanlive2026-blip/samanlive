@@ -1,12 +1,80 @@
-<!-- LOCATION: public/shop-templates/common/profile/shop-verification.html - V24 - UNIFIED - FULL CODE -->
-<!-- WORLD CLASS SHOP VERIFICATION - SHOP OWNER ONLY - FULL 400+ LINES -->
+<!-- LOCATION: public/shop-templates/common/profile/shop-verification.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS SHOP VERIFICATION - SHOP OWNER ONLY - FULL -->
 <!-- RULE: Verification = Server + Cloudinary se hi aayegi. Is file me koi bhi browser storage use NAHI hoga. -->
 <!-- RULE 2: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Base64 sirf preview ke liye. -->
 <!-- FLOW: Load -> GET /api/common/profile/:shopId/verification -> Fill -> Doc Upload -> Cloudinary URL -> Submit -> POST /api/common/profile/:shopId/verification -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, isliye Laptop/Mobile me toota hua dikhta tha. Ab FULL HTML + RESPONSIVE CSS hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Shop Verification</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.verification-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.verification-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.verification-header b{display:block;font-weight:900;font-size:16px}
+.verification-header span{font-size:11px;color:#64748b;font-weight:600}
+.verification-badge{margin-left:auto;font-size:10px;font-weight:900;padding:6px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.verification-badge.pending{background:#fef3c7;color:#92400e}
+.verification-badge.verified{background:#dcfce7;color:#166534}
+.verification-badge.rejected{background:#fee2e2;color:#991b1b}
+.verification-status-card{background:#fff;margin:12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9;display:flex;gap:12px;align-items:center}
+.status-icon{width:48px;height:48px;background:#fef3c7;border-radius:12px;display:grid;place-items:center;font-size:24px;flex-shrink:0}
+.status-info{flex:1;min-width:0}
+.status-info b{display:block;font-weight:900;font-size:14px}
+.status-info span{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:2px;line-height:1.4}
+.verification-benefits{background:#f0fdf4;border:1px solid #bbf7d0;margin:0 12px 12px;border-radius:16px;padding:16px}
+.verification-benefits b{display:block;font-weight:900;font-size:13px;margin-bottom:10px;color:#166534}
+.benefit-list{display:flex;flex-direction:column;gap:6px}
+.benefit-item{display:flex;gap:8px;align-items:center;font-size:12px;font-weight:600}
+.verification-form{padding:0 12px;display:flex;flex-direction:column;gap:12px}
+.form-section{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px}
+.form-section b{display:block;font-weight:900;font-size:14px;margin-bottom:12px}
+.form-section label{display:block;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;margin:14px 0 6px}
+.form-section label:first-of-type{margin-top:0}
+.upload-area{border:2px dashed #e2e8f0;border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.2s;position:relative;background:#fff}
+.upload-area:hover{border-color:#0f172a;background:#f8fafc}
+.upload-area.has-file{border-color:#10b981;background:#f0fdf4;border-style:solid}
+.upload-placeholder span:first-child{font-size:32px;display:block}
+.upload-placeholder b{display:block;font-weight:800;font-size:13px;margin:6px 0}
+.upload-placeholder span:last-child{font-size:11px;color:#64748b;font-weight:600;display:block}
+.upload-preview{position:relative}
+.upload-preview img{width:100%;max-height:200px;object-fit:cover;border-radius:8px;display:block}
+.remove-upload{position:absolute;top:8px;right:8px;background:#ef4444;color:#fff;border:none;width:28px;height:28px;border-radius:50%;font-weight:900;cursor:pointer}
+.primary-btn{background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:14px;cursor:pointer;width:100%}
+.primary-btn:disabled{opacity:.6;cursor:not-allowed}
+.verification-note{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px;font-size:11px;font-weight:600;color:#0369a1;text-align:center;line-height:1.5}
+/* LAPTOP - 720px center me, thoda bada padding */
+@media(min-width:721px){
+  .verification-status-card{margin:16px 12px}
+  .form-section{padding:20px}
+}
+/* MOBILE FIX */
+@media(max-width:600px){
+  .verification-root{max-width:100%}
+  .verification-header{padding:12px}
+  .verification-header b{font-size:15px}
+  .verification-status-card{margin:10px;padding:14px}
+  .verification-benefits{margin:0 10px 10px;padding:14px}
+  .verification-form{padding:0 10px;gap:10px}
+  .form-section{padding:14px}
+  .upload-area{padding:16px 10px}
+  .upload-placeholder b{font-size:12px}
+  .primary-btn{padding:15px}
+}
+</style>
+</head>
+<body>
 <div id="verificationRoot" class="verification-root">
   <div class="verification-header">
     <button id="verificationBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>Shop Verification</b>
       <span id="verificationSubHeader">Verify your shop</span>
     </div>
@@ -119,41 +187,6 @@
     </div>
   </div>
 </div>
-
-<style>
-.verification-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.verification-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.verification-header b{ display:block; font-weight:900; }
-.verification-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.verification-badge{ margin-left:auto; font-size:10px; font-weight:900; padding:6px 10px; border-radius:20px; }
-.verification-badge.pending{ background:#fef3c7; color:#92400e; }
-.verification-badge.verified{ background:#dcfce7; color:#166534; }
-.verification-badge.rejected{ background:#fee2e2; color:#991b1b; }
-.verification-status-card{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; display:flex; gap:12px; align-items:center; }
-.status-icon{ width:48px; height:48px; background:#fef3c7; border-radius:12px; display:grid; place-items:center; font-size:24px; }
-.status-info b{ display:block; font-weight:900; font-size:14px; }
-.status-info span{ font-size:11px; color:#64748b; font-weight:600; display:block; margin-top:2px; line-height:1.4; }
-.verification-benefits{ background:#f0fdf4; border:1px solid #bbf7d0; margin:0 12px 12px; border-radius:16px; padding:16px; }
-.verification-benefits b{ display:block; font-weight:900; font-size:13px; margin-bottom:10px; color:#166534; }
-.benefit-list{ display:flex; flex-direction:column; gap:6px; }
-.benefit-item{ display:flex; gap:8px; align-items:center; font-size:12px; font-weight:600; }
-.verification-form{ padding:0 12px; display:flex; flex-direction:column; gap:12px; }
-.form-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; }
-.form-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
-.form-section label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
-.upload-area{ border:2px dashed #e2e8f0; border-radius:12px; padding:20px; text-align:center; cursor:pointer; transition:.2s; position:relative; }
-.upload-area:hover{ border-color:#0f172a; background:#f8fafc; }
-.upload-area.has-file{ border-color:#10b981; background:#f0fdf4; border-style:solid; }
-.upload-placeholder span:first-child{ font-size:32px; display:block; }
-.upload-placeholder b{ display:block; font-weight:800; font-size:13px; margin:6px 0; }
-.upload-placeholder span:last-child{ font-size:11px; color:#64748b; font-weight:600; display:block; }
-.upload-preview{ position:relative; }
-.upload-preview img{ width:100%; max-height:200px; object-fit:cover; border-radius:8px; }
-.remove-upload{ position:absolute; top:8px; right:8px; background:#ef4444; color:#fff; border:none; width:28px; height:28px; border-radius:50%; font-weight:900; cursor:pointer; }
-.primary-btn{ background:#0f172a; color:#fff; border:none; padding:14px; border-radius:12px; font-weight:900; font-size:14px; cursor:pointer; width:100%; }
-.verification-note{ background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:12px; font-size:11px; font-weight:600; color:#0369a1; text-align:center; }
-</style>
 
 <script src="/shop-templates/common/profile/profile-core.js"></script>
 <script>
@@ -425,3 +458,5 @@ class ShopVerificationPage {
 window.ShopVerificationPageInstance = new ShopVerificationPage();
 document.addEventListener('DOMContentLoaded', ()=> window.ShopVerificationPageInstance.init());
 </script>
+</body>
+</html>
