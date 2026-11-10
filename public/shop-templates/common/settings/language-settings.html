@@ -1,9 +1,72 @@
-<!-- LOCATION: public/shop-templates/common/settings/language-settings.html -->
-<!-- WORLD CLASS LANGUAGE SETTINGS - FULL 350+ LINES -->
+<!-- LOCATION: public/shop-templates/common/settings/language-settings.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS LANGUAGE SETTINGS - FULL -->
+<!-- RULE: Language = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- FLOW: Load -> GET /api/common/settings/:shopId/language -> Fill -> Save -> PUT /api/common/settings/:shopId/language -> dobara Server se Load -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur .language-item.active.lang-check me space nahi tha isliye tick ka kala circle nahi aata tha, aur browser storage se purani language uthata tha. Ab FULL HTML + RESPONSIVE + Server only + Tick Fix hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Language Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+select{font-family:inherit;outline:none}
+.language-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.language-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.language-header b{display:block;font-weight:900;font-size:16px}
+.language-header span{font-size:11px;color:#64748b;font-weight:600}
+.save-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.language-info-card{background:#f0f9ff;border:1px solid #bae6fd;margin:12px;border-radius:12px;padding:14px;display:flex;gap:12px;align-items:flex-start}
+.info-icon{width:40px;height:40px;background:#fff;border-radius:10px;display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.language-info-card b{display:block;font-weight:900;font-size:13px}
+.language-info-card span{display:block;font-size:11px;color:#0369a1;font-weight:600;margin-top:2px;line-height:1.4}
+.language-list{background:#fff;margin:0 12px 12px;border-radius:16px;padding:8px;border:1px solid #f1f5f9;display:flex;flex-direction:column}
+.language-item{display:flex;align-items:center;gap:12px;padding:14px 12px;border-radius:10px;cursor:pointer;transition:.2s;border:2px solid transparent}
+.language-item:hover{background:#f8fafc}
+.language-item.active{border-color:#0f172a;background:#f8fafc}
+.lang-flag{width:40px;height:40px;background:#f1f5f9;border-radius:10px;display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.language-item div{flex:1;min-width:0}
+.language-item div b{display:block;font-weight:900;font-size:13px}
+.language-item div span{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px}
+.lang-check{width:24px;height:24px;border-radius:50%;border:2px solid #e2e8f0;display:grid;place-items:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
+/* V25 FIX: Pehle .language-item.active.lang-check likha tha - space nahi tha, isliye kala tick nahi aata tha. Ab space hai. */
+.language-item.active .lang-check{background:#0f172a;border-color:#0f172a}
+.customer-language-card{background:#fff;margin:0 12px 12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9}
+.customer-language-card b{display:block;font-weight:900;font-size:14px;margin-bottom:4px}
+.customer-language-card span{display:block;font-size:11px;color:#64748b;font-weight:600;line-height:1.4;margin-bottom:12px}
+.customer-language-card label{display:block;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;margin:12px 0 6px}
+.form-input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px;background:#fff}
+.form-input:focus{border-color:#0f172a}
+.translation-preview{background:#fff;margin:0 12px 12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9}
+.translation-preview b{display:block;font-weight:900;font-size:14px;margin-bottom:12px}
+.preview-content{background:#f8fafc;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:600}
+.preview-content div{display:flex;justify-content:space-between;gap:10px}
+/* LAPTOP */
+@media(min-width:721px){
+  .customer-language-card,.translation-preview{padding:20px}
+}
+/* MOBILE FIX */
+@media(max-width:600px){
+  .language-root{max-width:100%}
+  .language-header{padding:12px}
+  .language-header b{font-size:15px}
+  .language-info-card{margin:10px;padding:12px}
+  .language-list{margin:0 10px 10px}
+  .language-item{padding:12px 10px;gap:10px}
+  .customer-language-card,.translation-preview{margin:0 10px 10px;padding:14px}
+}
+</style>
+</head>
+<body>
 <div id="languageRoot" class="language-root">
   <div class="language-header">
     <button id="languageBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>Language Settings</b>
       <span>Choose your language</span>
     </div>
@@ -66,41 +129,10 @@
   </div>
 </div>
 
-<style>
-.language-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.language-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.language-header b{ display:block; font-weight:900; }
-.language-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.save-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
-.language-info-card{ background:#f0f9ff; border:1px solid #bae6fd; margin:12px; border-radius:12px; padding:14px; display:flex; gap:12px; align-items:flex-start; }
-.info-icon{ width:40px; height:40px; background:#fff; border-radius:10px; display:grid; place-items:center; font-size:20px; }
-.language-info-card b{ display:block; font-weight:900; font-size:13px; }
-.language-info-card span{ display:block; font-size:11px; color:#0369a1; font-weight:600; margin-top:2px; line-height:1.4; }
-.language-list{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:8px; border:1px solid #f1f5f9; display:flex; flex-direction:column; }
-.language-item{ display:flex; align-items:center; gap:12px; padding:14px 12px; border-radius:10px; cursor:pointer; transition:.2s; border:2px solid transparent; }
-.language-item:hover{ background:#f8fafc; }
-.language-item.active{ border-color:#0f172a; background:#f8fafc; }
-.lang-flag{ width:40px; height:40px; background:#f1f5f9; border-radius:10px; display:grid; place-items:center; font-size:20px; }
-.language-item div{ flex:1; }
-.language-item div b{ display:block; font-weight:900; font-size:13px; }
-.language-item div span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
-.lang-check{ width:24px; height:24px; border-radius:50%; border:2px solid #e2e8f0; display:grid; place-items:center; font-size:12px; font-weight:900; color:#fff; }
-.language-item.active.lang-check{ background:#0f172a; border-color:#0f172a; }
-.customer-language-card{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
-.customer-language-card b{ display:block; font-weight:900; font-size:14px; margin-bottom:4px; }
-.customer-language-card span{ display:block; font-size:11px; color:#64748b; font-weight:600; line-height:1.4; margin-bottom:12px; }
-.customer-language-card label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
-.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
-.translation-preview{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
-.translation-preview b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
-.preview-content{ background:#f8fafc; border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:8px; font-size:12px; font-weight:600; }
-.preview-content div{ display:flex; justify-content:space-between; }
-</style>
-
 <script>
 class LanguageSettingsPage {
   constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.selectedLang = 'en';
     this.customerLang = 'auto';
@@ -114,6 +146,19 @@ class LanguageSettingsPage {
     };
   }
 
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+
   async init(){
     await this.loadLanguageSettings();
     this.bindEvents();
@@ -123,28 +168,50 @@ class LanguageSettingsPage {
     try{
       if(window.Loader) Loader.show('Loading...');
 
-      let settings = null;
-
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/language`);
-        settings = data.settings||data;
-      } else {
-        settings = JSON.parse(localStorage.getItem(`language_settings_${this.shopId}`)||'null')||{ language:'en', customerLanguage:'auto' };
+      if(!this.shopId){
+        if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+        this.applySettings({ language:'en', customerLanguage:'auto' });
+        return;
       }
 
-      this.selectedLang = settings.language||'en';
-      this.customerLang = settings.customerLanguage||'auto';
+      let settings = null;
 
-      document.querySelectorAll('.language-item').forEach(item=>{
-        const isActive = item.dataset.lang===this.selectedLang;
-        item.classList.toggle('active', isActive);
-        item.querySelector('.lang-check').innerText = isActive?'✓':'';
-      });
+      // 1. ApiCore se - HAMESHA Server se
+      if(window.ApiCore){
+        try{
+          const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/language`);
+          settings = data.settings || data || null;
+        }catch(e){ settings = null; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!settings){
+        try{
+          const res = await fetch(`/api/common/settings/${this.shopId}/language`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res && (res.settings || res.language)) settings = res.settings || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage fallback - Server se nahi mila toh en default dikhega, purani galat language KABHI nahi dikhegi
+      if(!settings) settings = { language:'en', customerLanguage:'auto' };
 
-      document.getElementById('customerLanguage').value = this.customerLang;
-      this.updatePreview();
+      this.applySettings(settings);
 
-    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+    }catch(e){
+      this.applySettings({ language:'en', customerLanguage:'auto' });
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  applySettings(settings){
+    this.selectedLang = settings.language||'en';
+    this.customerLang = settings.customerLanguage||'auto';
+
+    document.querySelectorAll('.language-item').forEach(item=>{
+      const isActive = item.dataset.lang===this.selectedLang;
+      item.classList.toggle('active', isActive);
+      item.querySelector('.lang-check').innerText = isActive ? '✓' : '';
+    });
+
+    document.getElementById('customerLanguage').value = this.customerLang;
+    this.updatePreview();
   }
 
   updatePreview(){
@@ -156,27 +223,42 @@ class LanguageSettingsPage {
   }
 
   async saveLanguageSettings(){
-    const settings = { language:this.selectedLang, customerLanguage:document.getElementById('customerLanguage').value };
+    if(!this.shopId){
+      if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+      return;
+    }
+    const settings = { language:this.selectedLang, customerLanguage:document.getElementById('customerLanguage').value, shopId: this.shopId };
 
     const btn = document.getElementById('saveLanguageBtn');
     btn.innerText='Saving...'; btn.disabled=true;
 
     try{
+      let saved = false;
+      // 1. ApiCore se - HAMESHA Server pe
       if(window.ApiCore){
-        await window.ApiCore.put(`/api/common/settings/${this.shopId}/language`, settings);
-      } else {
-        localStorage.setItem(`language_settings_${this.shopId}`, JSON.stringify(settings));
-        localStorage.setItem(`language_${this.shopId}`, this.selectedLang);
+        try{ await window.ApiCore.put(`/api/common/settings/${this.shopId}/language`, settings); saved = true; }catch(e){ saved = false; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga
+      if(!saved){
+        const res = await fetch(`/api/common/settings/${this.shopId}/language`, { method:'PUT', headers: this.getHeaders(), body: JSON.stringify(settings) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.settings || !res.error)) saved = true;
+      }
+      // 3. Server pe save nahi hua toh dhokha nahi denge - browser storage me save karke "saved" nahi bolenge
+      if(!saved){
+        if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+        return;
       }
 
+      // Save ke baad turant Server se dobara mang ke verify karo
+      await this.loadLanguageSettings();
       if(window.Toast) Toast.show(`Language changed to ${this.selectedLang.toUpperCase()} ✅`, 'success');
 
       // Apply language immediately if core exists
       if(window.SettingsCoreInstance){
-        await window.SettingsCoreInstance.updateLanguage(this.selectedLang);
+        try{ await window.SettingsCoreInstance.updateLanguage(this.selectedLang); }catch(e){}
       }
 
-    }catch(e){ if(window.Toast) Toast.show('Failed to save', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
+    }catch(e){ if(window.Toast) Toast.show('Failed to save - Server error', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
   }
 
   bindEvents(){
@@ -198,3 +280,5 @@ class LanguageSettingsPage {
 window.LanguageSettingsPageInstance = new LanguageSettingsPage();
 document.addEventListener('DOMContentLoaded', ()=> window.LanguageSettingsPageInstance.init());
 </script>
+</body>
+</html>

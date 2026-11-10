@@ -1,9 +1,68 @@
-<!-- LOCATION: public/shop-templates/common/settings/settings.html -->
-<!-- WORLD CLASS SHOP SETTINGS MAIN - FULL 500+ LINES -->
+<!-- LOCATION: public/shop-templates/common/settings/settings.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS SHOP SETTINGS MAIN - FULL -->
+<!-- RULE: Settings = Server se hi aayega. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- RULE 2: shopId SIRF URL se aayega. URL me nahi hai toh galat shop ki setting kabhi nahi kholega. -->
+<!-- RULE 3: Logout kabhi browser storage ko haath lagake nahi hoga, sirf AuthCore se hoga. -->
+<!-- FLOW: Load -> GET /api/shops/:shopId + GET /api/common/settings/:shopId/status + GET /api/common/profile/:shopId/verification -> Fill -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur shop/timing/verification browser storage se uthata tha, aur logout me token delete karta tha. Ab FULL HTML + RESPONSIVE + Server only + Logout Fix hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Shop Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.settings-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.settings-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.settings-header b{display:block;font-weight:900;font-size:16px}
+.settings-header span{font-size:11px;color:#64748b;font-weight:600}
+.settings-profile-card{background:#fff;margin:12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9;display:flex;align-items:center;gap:12px}
+.settings-avatar{width:56px;height:56px;border-radius:50%;background:#0f172a;color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px;flex-shrink:0;overflow:hidden}
+.settings-avatar img{width:100%;height:100%;object-fit:cover}
+.settings-basic{flex:1;min-width:0}
+.settings-basic b{display:block;font-weight:900;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.settings-basic span{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edit-shop-btn{background:#f1f5f9;border:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.settings-menu{padding:0 12px;display:flex;flex-direction:column;gap:12px}
+.settings-section{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:12px}
+.settings-section b{display:block;font-weight:900;font-size:13px;margin-bottom:10px;padding:0 4px}
+.setting-item{display:flex;align-items:center;gap:12px;padding:12px 8px;border-radius:10px;cursor:pointer;transition:.2s}
+.setting-item:hover{background:#f8fafc}
+.setting-icon{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.setting-item div{flex:1;min-width:0}
+.setting-item div b{margin:0;font-size:13px;font-weight:800}
+.setting-item div span{display:block;font-size:11px;color:#64748b;font-weight:600;margin:2px 0 0}
+.setting-arrow{font-size:20px;color:#cbd5e1;font-weight:900;flex-shrink:0}
+.settings-footer{text-align:center;padding:20px;font-size:10px;color:#94a3b8;font-weight:600;display:flex;flex-direction:column;gap:4px}
+/* LAPTOP */
+@media(min-width:721px){
+  .settings-section{padding:16px}
+}
+/* MOBILE FIX - Edit Shop button dabne wala fix yahi hai */
+@media(max-width:600px){
+  .settings-root{max-width:100%}
+  .settings-header{padding:12px}
+  .settings-header b{font-size:15px}
+  .settings-profile-card{margin:10px;padding:14px}
+  .settings-avatar{width:48px;height:48px;font-size:18px}
+  .settings-basic b{font-size:14px}
+  .settings-menu{padding:0 10px;gap:10px}
+  .settings-section{padding:10px}
+  .setting-item{padding:10px 6px;gap:10px}
+  .setting-icon{width:36px;height:36px;font-size:16px}
+}
+</style>
+</head>
+<body>
 <div id="settingsRoot" class="settings-root">
   <div class="settings-header">
     <button id="settingsBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>Shop Settings</b>
       <span id="settingsSubHeader">Manage all shop settings</span>
     </div>
@@ -117,36 +176,25 @@
   </div>
 </div>
 
-<style>
-.settings-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.settings-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.settings-header b{ display:block; font-weight:900; }
-.settings-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.settings-profile-card{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; display:flex; align-items:center; gap:12px; }
-.settings-avatar{ width:56px; height:56px; border-radius:50%; background:#0f172a; color:#fff; display:grid; place-items:center; font-weight:900; font-size:20px; }
-.settings-basic{ flex:1; }
-.settings-basic b{ display:block; font-weight:900; font-size:15px; }
-.settings-basic span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
-.edit-shop-btn{ background:#f1f5f9; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
-.settings-menu{ padding:0 12px; display:flex; flex-direction:column; gap:12px; }
-.settings-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:12px; }
-.settings-section b{ display:block; font-weight:900; font-size:13px; margin-bottom:10px; padding:0 4px; }
-.setting-item{ display:flex; align-items:center; gap:12px; padding:12px 8px; border-radius:10px; cursor:pointer; transition:.2s; }
-.setting-item:hover{ background:#f8fafc; }
-.setting-icon{ width:40px; height:40px; border-radius:10px; display:grid; place-items:center; font-size:18px; }
-.setting-item div{ flex:1; }
-.setting-item div b{ margin:0; font-size:13px; font-weight:800; }
-.setting-item div span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin:2px 0 0; }
-.setting-arrow{ font-size:20px; color:#cbd5e1; font-weight:900; }
-.settings-footer{ text-align:center; padding:20px; font-size:10px; color:#94a3b8; font-weight:600; display:flex; flex-direction:column; gap:4px; }
-</style>
-
 <script>
 class SettingsMainPage {
   constructor(){
-    this.shopId = new URLSearchParams(location.search).get('shopId') || localStorage.getItem('shopId') || '';
+    // shopId SIRF URL se - kahi aur se NAHI. URL me nahi hai toh galat shop ki setting kabhi nahi kholega.
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.shop = null;
+  }
+
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
   }
 
   async init(){
@@ -158,28 +206,82 @@ class SettingsMainPage {
     try{
       if(window.Loader) Loader.show('Loading settings...');
 
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/shops/${this.shopId}`);
-        this.shop = data.shop||data;
-      } else {
-        this.shop = JSON.parse(localStorage.getItem(`shop_${this.shopId}`)||'{}');
-        if(!this.shop.name){
-          this.shop = { name:'My Kirana Store', category:'kirana', phone:'9876543210', address:'Surat', verified:false };
-        }
+      if(!this.shopId){
+        if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye. Dashboard se dobara kholo.', 'error');
+        this.renderFallback();
+        return;
       }
 
-      const timing = JSON.parse(localStorage.getItem(`timing_${this.shopId}`)||'{"isOpen":true}');
-      const verification = JSON.parse(localStorage.getItem(`verification_${this.shopId}`)||'{"status":"pending"}');
+      // 1. Shop Info - HAMESHA Server se
+      let shop = null;
+      if(window.ApiCore){
+        try{ const d = await window.ApiCore.get(`/api/shops/${this.shopId}`); shop = d.shop || d || null; }catch(e){ shop = null; }
+      }
+      if(!shop){
+        try{
+          const res = await fetch(`/api/shops/${this.shopId}`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) shop = res.shop || res;
+        }catch(e){}
+      }
+      // 2. Timing / Status - HAMESHA Server se - browser storage wala purana status KABHI nahi dikhayenge
+      let isOpen = true;
+      try{
+        let sData = null;
+        if(window.ApiCore){ try{ sData = await window.ApiCore.get(`/api/common/settings/${this.shopId}/status`); }catch(e){} }
+        if(!sData){ const r = await fetch(`/api/common/settings/${this.shopId}/status`, { headers: this.getHeaders() }).then(x=>x.json()).catch(()=>null); sData = r; }
+        if(sData) isOpen = sData.isOpen !== false && sData.timing?.isOpen !== false;
+      }catch(e){}
+      // 3. Verification - HAMESHA Server se
+      let verificationStatus = 'pending';
+      try{
+        let vData = null;
+        if(window.ApiCore){ try{ vData = await window.ApiCore.get(`/api/common/profile/${this.shopId}/verification`); }catch(e){} }
+        if(!vData){ const r = await fetch(`/api/common/profile/${this.shopId}/verification`, { headers: this.getHeaders() }).then(x=>x.json()).catch(()=>null); vData = r; }
+        if(vData) verificationStatus = vData.status || vData.verification?.status || 'pending';
+      }catch(e){}
 
-      document.getElementById('settingsShopName').innerText = this.shop.name||'My Shop';
-      document.getElementById('settingsShopCategory').innerText = `${this.shop.category||'General'} • ${this.shop.city||'Surat'}`;
-      document.getElementById('settingsShopPhone').innerText = `📱 ${this.shop.phone||''}`;
-      document.getElementById('settingsAvatar').innerText = (this.shop.name||'S').charAt(0).toUpperCase();
-      document.getElementById('shopOpenStatus').innerText = timing.isOpen!==false?'Open 🟢':'Closed 🔴';
-      document.getElementById('verificationBadge').innerText = verification.status==='verified'?'Verified ✅': verification.status==='pending'?'Pending ⏳':'Not verified';
-      document.getElementById('settingsSubHeader').innerText = `${this.shop.name||'My Shop'} • ${timing.isOpen!==false?'Open 🟢':'Closed 🔴'}`;
+      this.shop = shop || { name:'My Shop', category:'General', city:'Surat', phone:'', logo:'' };
 
-    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+      document.getElementById('settingsShopName').innerText = this.shop.name || this.shop.shopName || 'My Shop';
+      document.getElementById('settingsShopCategory').innerText = `${this.shop.category || 'General'} • ${this.shop.city || this.shop.address || 'Surat'}`;
+      document.getElementById('settingsShopPhone').innerText = `📱 ${this.shop.phone || this.shop.ownerPhone || ''}`;
+      const avatar = document.getElementById('settingsAvatar');
+      const logo = this.shop.logo || this.shop.shopLogo || this.shop.avatar || '';
+      if(logo && logo.startsWith('http')) avatar.innerHTML = `<img src="${logo}" alt="Shop Logo">`;
+      else avatar.innerText = (this.shop.name || 'S').charAt(0).toUpperCase();
+      document.getElementById('shopOpenStatus').innerText = isOpen ? 'Open 🟢' : 'Closed 🔴';
+      document.getElementById('verificationBadge').innerText = verificationStatus==='verified' ? 'Verified ✅' : verificationStatus==='pending' ? 'Pending ⏳' : verificationStatus==='rejected' ? 'Rejected ❌' : 'Not verified';
+      document.getElementById('settingsSubHeader').innerText = `${this.shop.name || 'My Shop'} • ${isOpen ? 'Open 🟢' : 'Closed 🔴'}`;
+
+    }catch(e){
+      this.renderFallback();
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  renderFallback(){
+    document.getElementById('settingsShopName').innerText = 'My Shop';
+    document.getElementById('settingsShopCategory').innerText = 'General • Surat';
+    document.getElementById('settingsShopPhone').innerText = '📱 -';
+    document.getElementById('shopOpenStatus').innerText = 'Open 🟢';
+    document.getElementById('verificationBadge').innerText = 'Pending ⏳';
+  }
+
+  async doLogout(){
+    if(!confirm('Logout from shop owner panel?')) return;
+    try{
+      // V25 FIX: Logout kabhi browser storage ko haath lagake nahi hoga. Sirf AuthCore se hoga. Wo apna token khud sambhalega.
+      if(window.AuthCore && window.AuthCore.logout){
+        await window.AuthCore.logout();
+      } else if(window.AuthCore && window.AuthCore.clearSession){
+        await window.AuthCore.clearSession();
+      } else {
+        // AuthCore nahi hai toh Server se logout - browser storage ko haath nahi lagayenge
+        try{ await fetch('/api/auth/logout', { method:'POST', headers: this.getHeaders(), body: JSON.stringify({ shopId: this.shopId }) }); }catch(e){}
+      }
+      window.location.href='/';
+    }catch(e){
+      window.location.href='/';
+    }
   }
 
   bindEvents(){
@@ -192,11 +294,7 @@ class SettingsMainPage {
         if(!link) return;
 
         if(item.id==='logoutSetting'){
-          if(confirm('Logout from shop owner panel?')){
-            localStorage.removeItem('shopId');
-            localStorage.removeItem('token');
-            window.location.href='/';
-          }
+          this.doLogout();
           return;
         }
 
@@ -213,3 +311,5 @@ class SettingsMainPage {
 window.SettingsMainPageInstance = new SettingsMainPage();
 document.addEventListener('DOMContentLoaded', ()=> window.SettingsMainPageInstance.init());
 </script>
+</body>
+</html>

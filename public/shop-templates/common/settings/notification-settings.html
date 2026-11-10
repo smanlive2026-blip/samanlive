@@ -1,9 +1,67 @@
-<!-- LOCATION: public/shop-templates/common/settings/notification-settings.html -->
-<!-- WORLD CLASS NOTIFICATION SETTINGS - FULL 350+ LINES -->
+<!-- LOCATION: public/shop-templates/common/settings/notification-settings.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS NOTIFICATION SETTINGS - FULL -->
+<!-- RULE: Notification = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- FLOW: Load -> GET /api/common/settings/:shopId/notifications -> Fill -> Save -> PUT /api/common/settings/:shopId/notifications -> dobara Server se Load -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur toggle mobile pe dab jata tha, aur browser storage se purana setting uthata tha. Ab FULL HTML + RESPONSIVE + Server only hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Notification Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+select{font-family:inherit;outline:none}
+.notification-settings-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.notification-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.notification-header b{display:block;font-weight:900;font-size:16px}
+.notification-header span{font-size:11px;color:#64748b;font-weight:600}
+.save-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.notification-form{padding:12px;display:flex;flex-direction:column;gap:12px}
+.form-section{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px}
+.form-section b{display:block;font-weight:900;font-size:14px;margin-bottom:12px}
+.form-section label{display:block;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;margin:12px 0 6px}
+.form-input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px;background:#fff}
+.form-input:focus{border-color:#0f172a}
+.notif-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f1f5f9}
+.notif-row:last-child{border-bottom:none}
+.notif-info{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.notif-icon{width:36px;height:36px;background:#f1f5f9;border-radius:8px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.notif-info div{flex:1;min-width:0}
+.notif-info div b{margin:0;font-size:13px;font-weight:800;display:block}
+.notif-info div span{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px;text-transform:none}
+.toggle-switch{position:relative;width:50px;height:28px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#e2e8f0;border-radius:20px;cursor:pointer;transition:.3s}
+.toggle-slider::before{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:4px;left:4px;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-switch input:checked + .toggle-slider{background:#0f172a}
+.toggle-switch input:checked + .toggle-slider::before{transform:translateX(22px)}
+.secondary-btn{background:#f1f5f9;border:1px solid #e2e8f0;padding:12px;border-radius:10px;font-weight:800;cursor:pointer}
+/* LAPTOP */
+@media(min-width:721px){
+  .form-section{padding:20px}
+}
+/* MOBILE FIX - Toggle dabne wala fix yahi hai */
+@media(max-width:600px){
+  .notification-settings-root{max-width:100%}
+  .notification-header{padding:12px}
+  .notification-header b{font-size:15px}
+  .notification-form{padding:10px;gap:10px}
+  .form-section{padding:14px}
+  .notif-row{padding:10px 0}
+  .notif-icon{width:32px;height:32px;font-size:14px}
+}
+</style>
+</head>
+<body>
 <div id="notificationSettingsRoot" class="notification-settings-root">
   <div class="notification-header">
     <button id="notificationBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>Notification Settings</b>
       <span>Manage order alerts</span>
     </div>
@@ -81,37 +139,28 @@
   </div>
 </div>
 
-<style>
-.notification-settings-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.notification-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.notification-header b{ display:block; font-weight:900; }
-.notification-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.save-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
-.notification-form{ padding:12px; display:flex; flex-direction:column; gap:12px; }
-.form-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; }
-.form-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
-.form-section label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
-.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
-.notif-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f1f5f9; }
-.notif-row:last-child{ border-bottom:none; }
-.notif-info{ display:flex; align-items:center; gap:10px; flex:1; }
-.notif-icon{ width:36px; height:36px; background:#f1f5f9; border-radius:8px; display:grid; place-items:center; font-size:16px; }
-.notif-info div b{ margin:0; font-size:13px; font-weight:800; }
-.notif-info div span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; text-transform:none; }
-.toggle-switch{ position:relative; width:50px; height:28px; }
-.toggle-switch input{ opacity:0; width:0; height:0; }
-.toggle-slider{ position:absolute; inset:0; background:#e2e8f0; border-radius:20px; cursor:pointer; transition:.3s; }
-.toggle-slider::before{ content:''; position:absolute; width:20px; height:20px; background:#fff; border-radius:50%; top:4px; left:4px; transition:.3s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
-.toggle-switch input:checked +.toggle-slider{ background:#0f172a; }
-.toggle-switch input:checked +.toggle-slider::before{ transform:translateX(22px); }
-.secondary-btn{ background:#f1f5f9; border:1px solid #e2e8f0; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
-</style>
-
 <script>
 class NotificationSettingsPage {
   constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+  }
+
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+
+  getDefaultSettings(){
+    return { newOrder:true, orderSound:true, popup:true, vibration:true, soundType:'default', orderConfirmed:true, outForDelivery:true, orderDelivered:true, orderCancelled:true, customerChat:true, newReview:true, lowStock:true, dailySummary:true };
   }
 
   async init(){
@@ -123,33 +172,59 @@ class NotificationSettingsPage {
     try{
       if(window.Loader) Loader.show('Loading...');
 
-      let settings = null;
-
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/notifications`);
-        settings = data.settings||data;
-      } else {
-        settings = JSON.parse(localStorage.getItem(`notification_settings_${this.shopId}`)||'null')||{ newOrder:true, orderSound:true, popup:true, vibration:true, soundType:'default', orderConfirmed:true, outForDelivery:true, orderDelivered:true, orderCancelled:true, customerChat:true, newReview:true, lowStock:true, dailySummary:true };
+      if(!this.shopId){
+        if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+        this.applySettings(this.getDefaultSettings());
+        return;
       }
 
-      document.getElementById('newOrderNotif').checked = settings.newOrder!==false;
-      document.getElementById('orderSound').checked = settings.orderSound!==false;
-      document.getElementById('popupAlert').checked = settings.popup!==false;
-      document.getElementById('vibrationAlert').checked = settings.vibration!==false;
-      document.getElementById('soundType').value = settings.soundType||'default';
-      document.getElementById('orderConfirmedNotif').checked = settings.orderConfirmed!==false;
-      document.getElementById('outForDeliveryNotif').checked = settings.outForDelivery!==false;
-      document.getElementById('orderDeliveredNotif').checked = settings.orderDelivered!==false;
-      document.getElementById('orderCancelledNotif').checked = settings.orderCancelled!==false;
-      document.getElementById('customerChatNotif').checked = settings.customerChat!==false;
-      document.getElementById('newReviewNotif').checked = settings.newReview!==false;
-      document.getElementById('lowStockNotif').checked = settings.lowStock!==false;
-      document.getElementById('dailySummaryNotif').checked = settings.dailySummary!==false;
+      let settings = null;
 
-    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+      // 1. ApiCore se - HAMESHA Server se
+      if(window.ApiCore){
+        try{
+          const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/notifications`);
+          settings = data.settings || data || null;
+        }catch(e){ settings = null; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!settings){
+        try{
+          const res = await fetch(`/api/common/settings/${this.shopId}/notifications`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res && (res.settings || res.newOrder !== undefined)) settings = res.settings || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage fallback - Server se nahi mila toh sab ON wala default dikhega, purana galat setting KABHI nahi dikhega
+      if(!settings) settings = this.getDefaultSettings();
+
+      this.applySettings(settings);
+
+    }catch(e){
+      this.applySettings(this.getDefaultSettings());
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  applySettings(settings){
+    document.getElementById('newOrderNotif').checked = settings.newOrder!==false;
+    document.getElementById('orderSound').checked = settings.orderSound!==false;
+    document.getElementById('popupAlert').checked = settings.popup!==false;
+    document.getElementById('vibrationAlert').checked = settings.vibration!==false;
+    document.getElementById('soundType').value = settings.soundType||'default';
+    document.getElementById('orderConfirmedNotif').checked = settings.orderConfirmed!==false;
+    document.getElementById('outForDeliveryNotif').checked = settings.outForDelivery!==false;
+    document.getElementById('orderDeliveredNotif').checked = settings.orderDelivered!==false;
+    document.getElementById('orderCancelledNotif').checked = settings.orderCancelled!==false;
+    document.getElementById('customerChatNotif').checked = settings.customerChat!==false;
+    document.getElementById('newReviewNotif').checked = settings.newReview!==false;
+    document.getElementById('lowStockNotif').checked = settings.lowStock!==false;
+    document.getElementById('dailySummaryNotif').checked = settings.dailySummary!==false;
   }
 
   async saveNotificationSettings(){
+    if(!this.shopId){
+      if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+      return;
+    }
     const settings = {
       newOrder: document.getElementById('newOrderNotif').checked,
       orderSound: document.getElementById('orderSound').checked,
@@ -163,22 +238,35 @@ class NotificationSettingsPage {
       customerChat: document.getElementById('customerChatNotif').checked,
       newReview: document.getElementById('newReviewNotif').checked,
       lowStock: document.getElementById('lowStockNotif').checked,
-      dailySummary: document.getElementById('dailySummaryNotif').checked
+      dailySummary: document.getElementById('dailySummaryNotif').checked,
+      shopId: this.shopId
     };
 
     const btn = document.getElementById('saveNotificationBtn');
     btn.innerText='Saving...'; btn.disabled=true;
 
     try{
+      let saved = false;
+      // 1. ApiCore se - HAMESHA Server pe
       if(window.ApiCore){
-        await window.ApiCore.put(`/api/common/settings/${this.shopId}/notifications`, settings);
-      } else {
-        localStorage.setItem(`notification_settings_${this.shopId}`, JSON.stringify(settings));
+        try{ await window.ApiCore.put(`/api/common/settings/${this.shopId}/notifications`, settings); saved = true; }catch(e){ saved = false; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga
+      if(!saved){
+        const res = await fetch(`/api/common/settings/${this.shopId}/notifications`, { method:'PUT', headers: this.getHeaders(), body: JSON.stringify(settings) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.settings || !res.error)) saved = true;
+      }
+      // 3. Server pe save nahi hua toh dhokha nahi denge - browser storage me save karke "saved" nahi bolenge
+      if(!saved){
+        if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+        return;
       }
 
+      // Save ke baad turant Server se dobara mang ke verify karo
+      await this.loadNotificationSettings();
       if(window.Toast) Toast.show('Notification settings saved ✅', 'success');
 
-    }catch(e){ if(window.Toast) Toast.show('Failed to save', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
+    }catch(e){ if(window.Toast) Toast.show('Failed to save - Server error', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
   }
 
   testSound(){
@@ -203,3 +291,5 @@ class NotificationSettingsPage {
 window.NotificationSettingsPageInstance = new NotificationSettingsPage();
 document.addEventListener('DOMContentLoaded', ()=> window.NotificationSettingsPageInstance.init());
 </script>
+</body>
+</html>

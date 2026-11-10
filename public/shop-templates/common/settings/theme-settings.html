@@ -1,9 +1,100 @@
-<!-- LOCATION: public/shop-templates/common/settings/theme-settings.html -->
-<!-- WORLD CLASS THEME SETTINGS - FULL 400+ LINES -->
+<!-- LOCATION: public/shop-templates/common/settings/theme-settings.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS THEME SETTINGS - FULL -->
+<!-- RULE: Theme = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- RULE 2: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Base64 sirf preview ke liye bhi nahi, URL.createObjectURL se preview hoga. -->
+<!-- FLOW: Load -> GET /api/common/settings/:shopId/theme -> Fill -> Banner -> Cloudinary URL -> Save -> PUT /api/common/settings/:shopId/theme -> dobara Server se Load -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur banner base64 me save hota tha, aur browser storage se purana theme uthata tha. Ab FULL HTML + RESPONSIVE + Server only + Banner Cloudinary hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Theme Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+input{font-family:inherit;outline:none}
+.theme-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.theme-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.theme-header b{display:block;font-weight:900;font-size:16px}
+.theme-header span{font-size:11px;color:#64748b;font-weight:600}
+.save-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.theme-preview-card{background:#fff;margin:12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9}
+.preview-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.preview-header b{font-weight:900;font-size:14px;white-space:nowrap}
+.preview-header span{font-size:11px;color:#64748b;font-weight:600;text-align:right}
+.theme-preview{border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff}
+.preview-shop-header{display:flex;justify-content:space-between;padding:12px;background:#0f172a;color:#fff;font-weight:800;font-size:13px}
+.preview-banner{background:#f1f5f9;padding:20px;text-align:center;font-weight:800;font-size:12px;color:#64748b;min-height:60px;display:grid;place-items:center;background-size:cover;background-position:center}
+.preview-products{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px}
+.preview-products div{aspect-ratio:1;background:#f1f5f9;border-radius:8px}
+.theme-form{padding:0 12px;display:flex;flex-direction:column;gap:12px}
+.form-section{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px}
+.form-section b{display:block;font-weight:900;font-size:14px;margin-bottom:12px}
+.form-section label{display:block;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;margin:12px 0 6px}
+.form-input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px;background:#fff}
+.form-input:focus{border-color:#0f172a}
+.color-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.color-item{aspect-ratio:1;border-radius:12px;cursor:pointer;display:grid;place-items:center;border:3px solid transparent;transition:.2s;position:relative}
+.color-item.active{border-color:#0f172a;transform:scale(1.05)}
+.color-item span{color:#fff;font-weight:900;font-size:16px;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.custom-color-row{display:flex;gap:8px;align-items:center}
+.color-picker{width:50px;height:44px;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;padding:2px;flex-shrink:0}
+.custom-color-row .form-input{flex:1;min-width:0}
+.theme-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f1f5f9}
+.theme-row:last-child{border-bottom:none}
+.theme-row div{flex:1;min-width:0}
+.theme-row div b{margin:0;font-size:13px;font-weight:800}
+.theme-row div span{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px;text-transform:none}
+.toggle-switch{position:relative;width:50px;height:28px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#e2e8f0;border-radius:20px;cursor:pointer;transition:.3s}
+.toggle-slider::before{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:4px;left:4px;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-switch input:checked + .toggle-slider{background:#0f172a}
+.toggle-switch input:checked + .toggle-slider::before{transform:translateX(22px)}
+.banner-upload-area{border:2px dashed #e2e8f0;border-radius:12px;padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden}
+.banner-upload-area:hover{border-color:#0f172a;background:#f8fafc}
+.banner-upload-area.has-file{border-color:#10b981;border-style:solid;background:#f0fdf4}
+.banner-placeholder span:first-child{font-size:32px;display:block}
+.banner-placeholder b{display:block;font-weight:800;font-size:13px;margin:6px 0}
+.banner-placeholder span:last-child{font-size:11px;color:#64748b;font-weight:600;display:block}
+.banner-preview{position:relative}
+.banner-preview img{width:100%;border-radius:8px;max-height:200px;object-fit:cover;display:block}
+.remove-banner{position:absolute;top:8px;right:8px;background:#ef4444;color:#fff;border:none;padding:6px 10px;border-radius:6px;font-weight:800;font-size:11px;cursor:pointer}
+.font-grid{display:flex;flex-direction:column;gap:8px}
+.font-item{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#f8fafc;border:2px solid #f1f5f9;border-radius:10px;padding:12px;cursor:pointer}
+.font-item.active{border-color:#0f172a;background:#fff}
+.font-item b{margin:0;font-size:14px;font-weight:800}
+.font-item span{font-size:11px;color:#64748b;font-weight:600;white-space:nowrap}
+/* LAPTOP */
+@media(min-width:721px){
+  .form-section{padding:20px}
+  .color-grid{grid-template-columns:repeat(8,1fr)}
+}
+/* MOBILE FIX */
+@media(max-width:600px){
+  .theme-root{max-width:100%}
+  .theme-header{padding:12px}
+  .theme-header b{font-size:15px}
+  .theme-preview-card{margin:10px;padding:14px}
+  .preview-header{flex-direction:column;align-items:flex-start}
+  .preview-header span{text-align:left}
+  .theme-form{padding:0 10px;gap:10px}
+  .form-section{padding:14px}
+  .color-grid{grid-template-columns:repeat(4,1fr);gap:8px}
+  .banner-upload-area{padding:16px 10px}
+}
+</style>
+</head>
+<body>
 <div id="themeRoot" class="theme-root">
   <div class="theme-header">
     <button id="themeBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>Theme Settings</b>
       <span>Customize appearance</span>
     </div>
@@ -14,7 +105,7 @@
     <div class="preview-header"><b>👀 Preview</b><span>How your shop looks to customers</span></div>
     <div id="themePreview" class="theme-preview">
       <div class="preview-shop-header"><span>🏪 My Shop</span><span>🛒</span></div>
-      <div class="preview-banner">Banner Preview</div>
+      <div class="preview-banner" id="previewBanner">Banner Preview</div>
       <div class="preview-products"><div></div><div></div><div></div></div>
     </div>
   </div>
@@ -37,7 +128,7 @@
       <label>Custom Color</label>
       <div class="custom-color-row">
         <input type="color" id="customColor" value="#0f172a" class="color-picker">
-        <input type="text" id="customColorText" value="#0f172a" placeholder="#0f172a" class="form-input" style="flex:1">
+        <input type="text" id="customColorText" value="#0f172a" placeholder="#0f172a" class="form-input">
       </div>
     </div>
 
@@ -62,6 +153,7 @@
         </div>
         <div id="bannerPreview" class="banner-preview" style="display:none"><img src="" alt="Banner"><button id="removeBanner" class="remove-banner">✕ Remove</button></div>
       </div>
+      <div id="bannerMsg" style="font-size:11px;color:#64748b;margin-top:8px;text-align:center"></div>
 
       <label>Banner Text (optional)</label>
       <input type="text" id="bannerText" placeholder="🎉 Diwali Sale - 50% OFF" class="form-input">
@@ -89,60 +181,11 @@
   </div>
 </div>
 
-<style>
-.theme-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.theme-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.theme-header b{ display:block; font-weight:900; }
-.theme-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.save-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
-.theme-preview-card{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
-.preview-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-.preview-header b{ font-weight:900; font-size:14px; }
-.preview-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.theme-preview{ border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; background:#fff; }
-.preview-shop-header{ display:flex; justify-content:space-between; padding:12px; background:var(--primary-color,#0f172a); color:#fff; font-weight:800; font-size:13px; }
-.preview-banner{ background:#f1f5f9; padding:20px; text-align:center; font-weight:800; font-size:12px; color:#64748b; }
-.preview-products{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:12px; }
-.preview-products div{ aspect-ratio:1; background:#f1f5f9; border-radius:8px; }
-.theme-form{ padding:0 12px; display:flex; flex-direction:column; gap:12px; }
-.form-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; }
-.form-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
-.form-section label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
-.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
-.color-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
-.color-item{ aspect-ratio:1; border-radius:12px; cursor:pointer; display:grid; place-items:center; border:3px solid transparent; transition:.2s; position:relative; }
-.color-item.active{ border-color:#0f172a; transform:scale(1.05); }
-.color-item span{ color:#fff; font-weight:900; font-size:16px; text-shadow:0 1px 2px rgba(0,0,0,.3); }
-.custom-color-row{ display:flex; gap:8px; align-items:center; }
-.color-picker{ width:50px; height:44px; border:1px solid #e2e8f0; border-radius:10px; cursor:pointer; padding:2px; }
-.theme-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f1f5f9; }
-.theme-row:last-child{ border-bottom:none; }
-.theme-row div b{ margin:0; font-size:13px; font-weight:800; }
-.theme-row div span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; text-transform:none; }
-.toggle-switch{ position:relative; width:50px; height:28px; }
-.toggle-switch input{ opacity:0; width:0; height:0; }
-.toggle-slider{ position:absolute; inset:0; background:#e2e8f0; border-radius:20px; cursor:pointer; transition:.3s; }
-.toggle-slider::before{ content:''; position:absolute; width:20px; height:20px; background:#fff; border-radius:50%; top:4px; left:4px; transition:.3s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
-.toggle-switch input:checked +.toggle-slider{ background:#0f172a; }
-.toggle-switch input:checked +.toggle-slider::before{ transform:translateX(22px); }
-.banner-upload-area{ border:2px dashed #e2e8f0; border-radius:12px; padding:20px; text-align:center; cursor:pointer; position:relative; }
-.banner-upload-area:hover{ border-color:#0f172a; background:#f8fafc; }
-.banner-placeholder span:first-child{ font-size:32px; display:block; }
-.banner-placeholder b{ display:block; font-weight:800; font-size:13px; margin:6px 0; }
-.banner-placeholder span:last-child{ font-size:11px; color:#64748b; font-weight:600; display:block; }
-.banner-preview img{ width:100%; border-radius:8px; max-height:200px; object-fit:cover; }
-.remove-banner{ position:absolute; top:8px; right:8px; background:#ef4444; color:#fff; border:none; padding:6px 10px; border-radius:6px; font-weight:800; font-size:11px; cursor:pointer; }
-.font-grid{ display:flex; flex-direction:column; gap:8px; }
-.font-item{ display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:2px solid #f1f5f9; border-radius:10px; padding:12px; cursor:pointer; }
-.font-item.active{ border-color:#0f172a; background:#fff; }
-.font-item b{ margin:0; font-size:14px; font-weight:800; }
-.font-item span{ font-size:11px; color:#64748b; font-weight:600; }
-</style>
-
+<script src="/shop-templates/common/profile/profile-core.js"></script>
 <script>
 class ThemeSettingsPage {
   constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.primaryColor = '#0f172a';
     this.customColor = '#0f172a';
@@ -155,6 +198,22 @@ class ThemeSettingsPage {
     this.bannerLink = '';
   }
 
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+  getDefaultSettings(){
+    return { primaryColor:'#0f172a', font:'Outfit', darkMode:false, customerDarkMode:true, productAnimations:true, banner:'', bannerText:'', bannerLink:'' };
+  }
+
   async init(){
     await this.loadThemeSettings();
     this.bindEvents();
@@ -164,51 +223,76 @@ class ThemeSettingsPage {
     try{
       if(window.Loader) Loader.show('Loading theme...');
 
+      if(!this.shopId){
+        if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+        this.applySettings(this.getDefaultSettings());
+        return;
+      }
+
       let settings = null;
-
+      // 1. ApiCore se - HAMESHA Server se
       if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/theme`);
-        settings = data.settings||data;
-      } else {
-        settings = JSON.parse(localStorage.getItem(`theme_settings_${this.shopId}`)||'null')||{ primaryColor:'#0f172a', font:'Outfit', darkMode:false, customerDarkMode:true, productAnimations:true, banner:'', bannerText:'', bannerLink:'' };
+        try{ const data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/theme`); settings = data.settings || data || null; }catch(e){ settings = null; }
       }
-
-      this.primaryColor = settings.primaryColor||'#0f172a';
-      this.font = settings.font||'Outfit';
-      this.darkMode = settings.darkMode||false;
-      this.customerDarkMode = settings.customerDarkMode!==false;
-      this.productAnimations = settings.productAnimations!==false;
-      this.banner = settings.banner||'';
-      this.bannerText = settings.bannerText||'';
-      this.bannerLink = settings.bannerLink||'';
-
-      document.querySelectorAll('.color-item').forEach(item=>{
-        const isActive = item.dataset.color===this.primaryColor;
-        item.classList.toggle('active', isActive);
-        item.querySelector('span').innerText = isActive?'✓':'';
-      });
-
-      document.getElementById('customColor').value = this.primaryColor;
-      document.getElementById('customColorText').value = this.primaryColor;
-      document.getElementById('darkModeToggle').checked = this.darkMode;
-      document.getElementById('customerDarkMode').checked = this.customerDarkMode;
-      document.getElementById('productAnimations').checked = this.productAnimations;
-      document.getElementById('bannerText').value = this.bannerText;
-      document.getElementById('bannerLink').value = this.bannerLink;
-
-      document.querySelectorAll('.font-item').forEach(item=>{
-        item.classList.toggle('active', item.dataset.font===this.font);
-      });
-
-      if(this.banner){
-        document.getElementById('bannerPlaceholder').style.display='none';
-        document.getElementById('bannerPreview').style.display='block';
-        document.getElementById('bannerPreview').querySelector('img').src = this.banner;
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!settings){
+        try{
+          const res = await fetch(`/api/common/settings/${this.shopId}/theme`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res && (res.settings || res.primaryColor)) settings = res.settings || res;
+        }catch(e){}
       }
+      // 3. NO Browser storage fallback - Server se nahi mila toh default theme dikhega, purana galat theme KABHI nahi dikhega
+      if(!settings) settings = this.getDefaultSettings();
 
-      this.updatePreview();
+      this.applySettings(settings);
 
-    }catch(e){}finally{ if(window.Loader) Loader.hide(); }
+    }catch(e){
+      this.applySettings(this.getDefaultSettings());
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  applySettings(settings){
+    this.primaryColor = settings.primaryColor||'#0f172a';
+    this.font = settings.font||'Outfit';
+    this.darkMode = settings.darkMode||false;
+    this.customerDarkMode = settings.customerDarkMode!==false;
+    this.productAnimations = settings.productAnimations!==false;
+    // Banner me sirf Cloudinary URL aayega - base64 kabhi nahi. Agar base64 aaya toh usko ignore kar denge.
+    const b = settings.banner || '';
+    this.banner = (typeof b === 'string' && b.startsWith('http')) ? b : '';
+    this.bannerText = settings.bannerText||'';
+    this.bannerLink = settings.bannerLink||'';
+
+    document.querySelectorAll('.color-item').forEach(item=>{
+      const isActive = item.dataset.color===this.primaryColor;
+      item.classList.toggle('active', isActive);
+      item.querySelector('span').innerText = isActive ? '✓' : '';
+    });
+
+    document.getElementById('customColor').value = this.primaryColor;
+    document.getElementById('customColorText').value = this.primaryColor;
+    document.getElementById('darkModeToggle').checked = this.darkMode;
+    document.getElementById('customerDarkMode').checked = this.customerDarkMode;
+    document.getElementById('productAnimations').checked = this.productAnimations;
+    document.getElementById('bannerText').value = this.bannerText;
+    document.getElementById('bannerLink').value = this.bannerLink;
+
+    document.querySelectorAll('.font-item').forEach(item=>{
+      item.classList.toggle('active', item.dataset.font===this.font);
+    });
+
+    if(this.banner){
+      document.getElementById('bannerPlaceholder').style.display='none';
+      document.getElementById('bannerPreview').style.display='block';
+      document.getElementById('bannerPreview').querySelector('img').src = this.banner;
+      document.getElementById('bannerUploadArea').classList.add('has-file');
+    } else {
+      document.getElementById('bannerPlaceholder').style.display='block';
+      document.getElementById('bannerPreview').style.display='none';
+      document.getElementById('bannerUploadArea').classList.remove('has-file');
+    }
+
+    this.updatePreview();
   }
 
   updatePreview(){
@@ -218,45 +302,123 @@ class ThemeSettingsPage {
       const header = preview.querySelector('.preview-shop-header');
       if(header) header.style.background = this.primaryColor;
 
-      const banner = preview.querySelector('.preview-banner');
+      const banner = document.getElementById('previewBanner');
       if(banner){
         banner.innerText = this.bannerText||'Banner Preview';
-        if(this.banner) banner.style.backgroundImage = `url(${this.banner})`;
-        banner.style.backgroundSize='cover';
-        banner.style.color = '#fff';
+        if(this.banner){
+          banner.style.backgroundImage = `url(${this.banner})`;
+          banner.style.backgroundSize='cover';
+          banner.style.color = '#fff';
+          banner.style.textShadow = '0 1px 3px rgba(0,0,0,.5)';
+        } else {
+          banner.style.backgroundImage = 'none';
+          banner.style.color = '#64748b';
+          banner.style.textShadow = 'none';
+        }
       }
     }
   }
 
+  async handleBannerUpload(input){
+    const file = input.files[0];
+    if(!file) return;
+    if(file.size > 5*1024*1024){
+      if(window.Toast) Toast.show('Banner must be less than 5MB', 'warning');
+      input.value='';
+      return;
+    }
+    // 1. Preview turant - URL.createObjectURL se, base64 se NAHI
+    try{
+      const previewUrl = URL.createObjectURL(file);
+      document.getElementById('bannerPlaceholder').style.display='none';
+      document.getElementById('bannerPreview').style.display='block';
+      document.getElementById('bannerPreview').querySelector('img').src = previewUrl;
+      document.getElementById('bannerUploadArea').classList.add('has-file');
+    }catch(e){}
+
+    // 2. Upload Cloudinary pe - UnifiedProfile se - sirf Cloudinary URL milega
+    try{
+      if(window.Toast) Toast.show('Uploading banner to Cloudinary...', 'info');
+      let uploadUrl = '';
+      if(window.UnifiedProfile){
+        const r = await window.UnifiedProfile.handleFileInput(input, { role: 'shop_owner', field: 'banner', type: 'theme_banner', shopId: this.shopId, userId: this.getUserId(), msgId: '' });
+        if(r && r.success) uploadUrl = r.url;
+      }
+      // Fallback - direct Cloudinary route - file hi bhej rahe hain, base64 nahi
+      if(!uploadUrl){
+        const fd = new FormData();
+        fd.append('profilePic', file, file.name);
+        fd.append('role', 'shop_owner');
+        fd.append('field', 'banner');
+        fd.append('type', 'theme_banner');
+        fd.append('shopId', this.shopId);
+        fd.append('buyerId', this.getUserId());
+        fd.append('userId', this.getUserId());
+        const res = await fetch('/api/common/profile/upload-avatar', { method:'POST', headers: { 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() }, body: fd }).then(r=>r.json()).catch(()=>null);
+        if(res && res.success) uploadUrl = res.url;
+      }
+      if(!uploadUrl){
+        if(window.Toast) Toast.show('Banner upload fail - Cloudinary pe nahi gaya', 'error');
+        return;
+      }
+      // 3. Banner me SIRF Cloudinary URL rakho - base64 KABHI nahi
+      this.banner = uploadUrl;
+      document.getElementById('bannerPreview').querySelector('img').src = uploadUrl;
+      this.updatePreview();
+      if(window.Toast) Toast.show('Banner uploaded ✅', 'success');
+    }catch(e){
+      if(window.Toast) Toast.show('Banner upload error: ' + e.message, 'error');
+    }
+  }
+
   async saveThemeSettings(){
+    if(!this.shopId){
+      if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+      return;
+    }
+    // Banner me agar base64 hai toh usko hata do - DB me base64 kabhi nahi jayega
+    const safeBanner = (typeof this.banner === 'string' && this.banner.startsWith('http')) ? this.banner : '';
     const settings = {
       primaryColor:this.primaryColor,
       font:this.font,
       darkMode:document.getElementById('darkModeToggle').checked,
       customerDarkMode:document.getElementById('customerDarkMode').checked,
       productAnimations:document.getElementById('productAnimations').checked,
-      banner:this.banner,
+      banner: safeBanner,
       bannerText:document.getElementById('bannerText').value,
-      bannerLink:document.getElementById('bannerLink').value
+      bannerLink:document.getElementById('bannerLink').value,
+      shopId: this.shopId
     };
 
     const btn = document.getElementById('saveThemeBtn');
     btn.innerText='Saving...'; btn.disabled=true;
 
     try{
+      let saved = false;
+      // 1. ApiCore se - HAMESHA Server pe
       if(window.ApiCore){
-        await window.ApiCore.put(`/api/common/settings/${this.shopId}/theme`, settings);
-      } else {
-        localStorage.setItem(`theme_settings_${this.shopId}`, JSON.stringify(settings));
+        try{ await window.ApiCore.put(`/api/common/settings/${this.shopId}/theme`, settings); saved = true; }catch(e){ saved = false; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga
+      if(!saved){
+        const res = await fetch(`/api/common/settings/${this.shopId}/theme`, { method:'PUT', headers: this.getHeaders(), body: JSON.stringify(settings) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.settings || !res.error)) saved = true;
+      }
+      // 3. Server pe save nahi hua toh dhokha nahi denge - browser storage me save karke "saved" nahi bolenge
+      if(!saved){
+        if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+        return;
       }
 
+      // Save ke baad turant Server se dobara mang ke verify karo
+      await this.loadThemeSettings();
       if(window.Toast) Toast.show('Theme saved 🎨', 'success');
 
       if(window.SettingsCoreInstance){
-        await window.SettingsCoreInstance.updateTheme(settings);
+        try{ await window.SettingsCoreInstance.updateTheme(settings); }catch(e){}
       }
 
-    }catch(e){ if(window.Toast) Toast.show('Failed to save', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
+    }catch(e){ if(window.Toast) Toast.show('Failed to save - Server error', 'error'); }finally{ btn.innerText='💾 Save'; btn.disabled=false; }
   }
 
   bindEvents(){
@@ -282,9 +444,12 @@ class ThemeSettingsPage {
     });
 
     document.getElementById('customColorText')?.addEventListener('input', (e)=>{
-      this.primaryColor = e.target.value;
-      document.getElementById('customColor').value = this.primaryColor;
-      this.updatePreview();
+      const v = e.target.value;
+      if(/^#[0-9a-fA-F]{6}$/.test(v)){
+        this.primaryColor = v;
+        document.getElementById('customColor').value = this.primaryColor;
+        this.updatePreview();
+      }
     });
 
     document.querySelectorAll('.font-item').forEach(item=>{
@@ -296,28 +461,19 @@ class ThemeSettingsPage {
       });
     });
 
-    document.getElementById('bannerUploadArea')?.addEventListener('click', ()=> document.getElementById('bannerInput').click());
-
-    document.getElementById('bannerInput')?.addEventListener('change', (e)=>{
-      const file = e.target.files[0];
-      if(!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (ev)=>{
-        this.banner = ev.target.result;
-        document.getElementById('bannerPlaceholder').style.display='none';
-        document.getElementById('bannerPreview').style.display='block';
-        document.getElementById('bannerPreview').querySelector('img').src = this.banner;
-        this.updatePreview();
-      };
-      reader.readAsDataURL(file);
+    document.getElementById('bannerUploadArea')?.addEventListener('click', (e)=>{
+      if(e.target.id === 'removeBanner') return;
+      document.getElementById('bannerInput').click();
     });
+
+    document.getElementById('bannerInput')?.addEventListener('change', (e)=> this.handleBannerUpload(e.target));
 
     document.getElementById('removeBanner')?.addEventListener('click', (e)=>{
       e.stopPropagation();
       this.banner='';
       document.getElementById('bannerPlaceholder').style.display='block';
       document.getElementById('bannerPreview').style.display='none';
+      document.getElementById('bannerUploadArea').classList.remove('has-file');
       document.getElementById('bannerInput').value='';
       this.updatePreview();
     });
@@ -332,3 +488,5 @@ class ThemeSettingsPage {
 window.ThemeSettingsPageInstance = new ThemeSettingsPage();
 document.addEventListener('DOMContentLoaded', ()=> window.ThemeSettingsPageInstance.init());
 </script>
+</body>
+</html>
