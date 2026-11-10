@@ -1,3 +1,6 @@
+<!-- LOCATION: public/shop-templates/achar-shop/dashboard.html - FULL - COMMON CONNECTED -->
+<!-- RULE: Design same hai. Sirf Common se joda hai. Koi button / rang / layout nahi badla. -->
+<!-- COMMON: api-core + auth-core + socket-core + shop-toggle + finance/wallet + common/orders -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,7 +16,6 @@ body{background:var(--bg);color:var(--txt)}
 button{font-family:inherit;cursor:pointer;border:0}
 input,select,textarea{font-family:inherit;outline:none}
 a{color:inherit;text-decoration:none}
-/* LAYOUT */
 .app{display:flex;min-height:100vh}
 .sidebar{width:260px;background:#fff;border-right:1px solid var(--line);position:fixed;left:0;top:0;bottom:0;z-index:40;display:flex;flex-direction:column;padding:18px 14px}
 .brand{display:flex;gap:11px;align-items:center;padding:4px 8px 16px;border-bottom:1px solid var(--line)}
@@ -45,7 +47,6 @@ a{color:inherit;text-decoration:none}
 .content{max-width:1180px;margin:0 auto;padding:20px}
 .page{display:none}
 .page.active{display:block}
-/* STATS */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
 .stat .top{display:flex;justify-content:space-between;align-items:center}
@@ -54,7 +55,6 @@ a{color:inherit;text-decoration:none}
 .stat b{font-size:26px;font-weight:900;display:block;margin:10px 0 2px}
 .stat span{font-size:12px;color:var(--mut);font-weight:600}
 .stat .up{color:#15803d;font-weight:800;font-size:12px}
-/* PANELS */
 .grid2{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;align-items:start;margin-top:14px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
 .panel h2{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:4px}
@@ -97,7 +97,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 .qbox{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .qbox button{width:30px;height:30px;background:#fff;font-weight:900}
 .qbox span{min-width:34px;text-align:center;font-weight:800;font-size:13px}
-/* MODAL */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;justify-content:center;align-items:center;padding:16px}
 .modal.open{display:flex}
 .sheet{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:20px;padding:20px}
@@ -124,7 +123,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </head>
 <body>
 <div class="app">
-<!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
 <div class="brand">
 <img id="ownerImg" src="https://placehold.co/100/d97706/fff?text=A" alt="Owner">
@@ -149,7 +147,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </aside>
 <div class="overlay" id="overlay"></div>
 
-<!-- MAIN -->
 <main class="main">
 <header class="topbar">
 <button class="iconbtn mobtop" id="menuBtn"><i class="fa fa-bars"></i></button>
@@ -157,11 +154,11 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <div class="sp"></div>
 <button class="iconbtn" id="notifBtn"><i class="fa fa-bell"></i><span class="dot" id="notifDot" style="display:none"></span></button>
 <button class="pill light" id="userViewBtn"><i class="fa fa-eye"></i> Customer View</button>
-<button class="pill open" id="shopToggle"><i class="fa fa-store"></i> <span id="toggleText">Open</span></button>
+<!-- CHANGED: shopToggle ab Common shop-toggle.js se chalega, sirf rang nahi badlega -->
+<button class="pill open" id="shopToggle" data-shop-toggle><i class="fa fa-store"></i> <span id="toggleText">Open</span></button>
 </header>
 
 <div class="content">
-<!-- HOME -->
 <section class="page active" data-page="home">
 <div class="stats">
 <div class="stat"><div class="top"><small>Today Sale</small><span class="ic" style="background:#fef3c7">₹</span></div><b>₹<span id="todaySale">0</span></b><span id="todayOrdersLine">0 orders today</span></div>
@@ -187,7 +184,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </div>
 </section>
 
-<!-- PRODUCTS -->
 <section class="page" data-page="products">
 <div class="panel"><h2>🥒 Products <span class="go" id="addAcharBtn2">+ Add Achar</span></h2><p class="sub">Search, filter, stock badhao, edit / delete - sab yahin se.</p>
 <input type="text" id="searchProduct" placeholder="Search - Aam, Nimbu, Mix...">
@@ -196,7 +192,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </div>
 </section>
 
-<!-- ORDERS -->
 <section class="page" data-page="orders">
 <div class="panel"><h2>🧾 Orders - Common Checkout Se</h2><p class="sub">Customer jab Common Cart → Checkout se order karega, yahin aayega. Status badlo - customer ke My Orders me wahi dikhega.</p>
 <div class="chips" id="orderChips">
@@ -212,7 +207,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </div>
 </section>
 
-<!-- WALLET -->
 <section class="page" data-page="wallet">
 <div class="grid2">
 <div class="panel"><h2>💰 Earnings</h2><p class="sub">Har order pe 5% platform fee kat ke baki tumhara hai. Ye hisaab Common Order se banta hai.</p>
@@ -221,14 +215,14 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <div class="kv total"><span>My Earning</span><b>₹<span id="walletEarn">0</span></b></div>
 <div class="kv"><span>Pending Orders ka Paisa</span><b>₹<span id="walletPending">0</span></b></div>
 <div class="kv"><span>Delivered Orders ka Paisa</span><b>₹<span id="walletDelivered">0</span></b></div>
-<button class="btn light block" id="walletCommonBtn" style="margin-top:14px">Common Wallet Page Kholo →</button>
+<!-- CHANGED: Wallet ab Common Finance wala hai, nakli wallet wala nahi -->
+<button class="btn light block" id="walletCommonBtn" data-common-wallet style="margin-top:14px">Common Wallet Page Kholo →</button>
 <p class="hint">Common Wallet page se hi withdraw / payout hota hai. Yahan sirf hisaab dikh raha hai taaki galat number na dikhe.</p>
 </div>
 <div class="panel"><h2>📅 Last 7 Din</h2><div id="weekList">Loading...</div></div>
 </div>
 </section>
 
-<!-- SETTINGS -->
 <section class="page" data-page="settings">
 <div class="grid2">
 <div class="panel"><h2>🕒 Shop Timing</h2><p class="sub">Customer ko shop pe yehi timing dikhegi.</p>
@@ -245,7 +239,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </div>
 </section>
 
-<!-- PROFILE -->
 <section class="page" data-page="profile">
 <div class="panel" style="max-width:620px"><h2>👤 Shop Profile</h2><p class="sub">Yehi naam, photo aur address customer ko dikhega.</p>
 <div style="display:flex;gap:14px;align-items:center;margin:10px 0">
@@ -261,7 +254,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </div>
 </section>
 
-<!-- LOCATION -->
 <section class="page" data-page="location">
 <div class="panel" style="max-width:620px"><h2>📍 Location</h2><p class="sub">Is location ke aas-paas ke customer ko shop dikhegi. Nearby Shops me bhi yehi location jayegi.</p>
 <label>Location Type</label><select id="locationType"><option value="fixed">Fixed Shop - Delivery Range</option><option value="dynamic">Thela / Moving Shop</option></select>
@@ -276,7 +268,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </main>
 </div>
 
-<!-- ADD / EDIT MODAL -->
 <div class="modal" id="addModal"><div class="sheet">
 <h2><span id="modalTitle">Naya Achar Add Karo</span><button class="x" onclick="closeAddModal()">✕</button></h2>
 <img id="productImgPreview" src="https://placehold.co/600/d97706/fff?text=Achar+Photo" alt="Product photo">
@@ -292,7 +283,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <button class="btn light block" onclick="closeAddModal()" style="margin-top:10px">Cancel</button>
 </div></div>
 
-<!-- QUICK ADD MODAL -->
 <div class="modal" id="quickAddModal"><div class="sheet">
 <h2><span>50+ Achar - Quick Add</span><button class="x" onclick="closeQuickAdd()">✕</button></h2>
 <p class="hint" style="margin-bottom:12px">Ek-ek karke tick karo, jo chahiye wo ek saath add ho jayega. Price baad me Products se edit kar sakte ho.</p>
@@ -301,7 +291,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <button class="btn light block" onclick="closeQuickAdd()" style="margin-top:10px">Cancel</button>
 </div></div>
 
-<!-- MANUAL ORDER MODAL -->
 <div class="modal" id="manualOrderModal"><div class="sheet">
 <h2><span>Manual Order Banao</span><button class="x" onclick="closeManualOrder()">✕</button></h2>
 <p class="hint" style="margin-bottom:12px">Shop pe aaye hue customer ka order yahan se banao - ye bhi Common Order me jayega.</p>
@@ -316,6 +305,57 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </div></div>
 
 <div class="toast" id="toast"></div>
+
+<!-- ================= COMMON - ISKE BINA JUDA NAHI HOGA ================= -->
+<!-- ORDER MAT BADALNA: pehle api-core, phir auth-core, phir socket-core, phir shop-toggle, phir dashboard.js -->
+<script src="../common/core/api-core.js"></script>
+<script src="../common/core/auth-core.js"></script>
+<script src="../common/core/socket-core.js"></script>
+<script src="../common/js/shop-toggle.js"></script>
+
+<!-- COMMON BRIDGE - Achar Dashboard ko Common se jodta hai - dashboard.js se pehle chalega -->
+<script>
+(function(){
+  var p = new URLSearchParams(location.search);
+  var shopId = p.get('shopId') || p.get('id') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
+  window.SHOP_ID = shopId;
+  window.shopId = shopId;
+  window.SHOP_TYPE = 'achar-shop';
+  window.USER_ROLE = 'shop_owner';
+  if (shopId) {
+    localStorage.setItem('last_shopId', shopId);
+    localStorage.setItem('shopId', shopId);
+    localStorage.setItem('USER_ROLE', 'shop_owner');
+  }
+  // ShopToggle ko shopId de do - warna wo khali shopId pe toggle karega
+  if (window.shopToggle) window.shopToggle.shopId = shopId;
+  // Wallet - asli Common Finance wala, nakli wallet wala nahi
+  document.addEventListener('DOMContentLoaded', function(){
+    var w = document.getElementById('walletCommonBtn');
+    if (w) w.addEventListener('click', function(){
+      location.href = '../common/finance/wallet.html?shopId=' + encodeURIComponent(shopId) + '&role=shop_owner';
+    });
+    // Customer View - shopId ke saath, warna khali dukaan khulegi
+    var goCustomer = function(){
+      location.href = './customer-view.html?shopId=' + encodeURIComponent(shopId);
+    };
+    var v1 = document.getElementById('viewShopBtn'); if (v1) v1.addEventListener('click', goCustomer);
+    var v2 = document.getElementById('userViewBtn'); if (v2) v2.addEventListener('click', goCustomer);
+    // Share / Copy - shopId wala link hi jayega
+    var shareUrl = location.origin + '/shop-templates/achar-shop/customer-view.html?shopId=' + encodeURIComponent(shopId);
+    var s2 = document.getElementById('shareBtn2');
+    if (s2) s2.addEventListener('click', function(){
+      if (navigator.share) navigator.share({ title: 'Achar Shop', text: 'Ghar ka bana shuddh achar - order karo', url: shareUrl }).catch(function(){});
+      else { navigator.clipboard.writeText(shareUrl).then(function(){ alert('Link copy ho gaya'); }); }
+    });
+    var c2 = document.getElementById('copyLinkBtn2');
+    if (c2) c2.addEventListener('click', function(){
+      navigator.clipboard.writeText(shareUrl).then(function(){ alert('Link copy ho gaya'); });
+    });
+  });
+})();
+</script>
+
 <script src="dashboard.js"></script>
 </body>
 </html>
