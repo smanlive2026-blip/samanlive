@@ -1,6 +1,7 @@
-<!-- LOCATION: public/shop-templates/achar-shop/customer-view.html - FULL - COMMON CONNECTED - V2 -->
+<!-- LOCATION: public/shop-templates/achar-shop/customer-view.html - FULL - PRODUCT-FORM KE HISAB SE - V3 -->
 <!-- RULE: Customer = Dekhega + Cart me dalega + Common Checkout pe jayega. Yahan Accept / Packed ka button kabhi nahi hoga. -->
-<!-- COMMON: api-core + auth-core + storage-core + socket-core + cart-core + cart-count + shop-toggle/status + wishlist + reviews + share + location + common/checkout + common/customer-orders/my-orders + seed -->
+<!-- COMMON: api-core + auth-core + storage-core + socket-core + WORLD PRODUCT-MANAGER + cart-core + cart-count + shop-toggle/status + wishlist + reviews + share + location + common/checkout + common/customer-orders/my-orders + product-detail -->
+<!-- PRODUCT-FORM: Product = WORLD MODEL se aayega - /api/world-products?shopType=achar-shop - Achar API se nahi -->
 <!-- FIX: Pehle wali me customer-view.js + inline JS dono the - double Add hota tha. Ab sirf customer-view.js chalega. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -117,10 +118,12 @@ COD available • Free Delivery • SamanLive
 <script src="../common/js/customer-shop-status.js"></script>
 <script src="../common/js/shop-banner-ext.js"></script>
 <script src="../common/js/location.js"></script>
-<!-- 3. Cart - Common - iske bina Cart nahi chalega -->
+<!-- 3. Product - WORLD MODEL - Product Form ka Manager - iske bina Customer ko maal nahi dikhega -->
+<script src="../common/products/product-manager.js"></script>
+<!-- 4. Cart - Common - iske bina Cart nahi chalega -->
 <script src="../common/cart/cart-core.js"></script>
 <script src="../common/cart/cart-count.js"></script>
-<!-- 4. Wishlist + Reviews + Share - Common - Customer ke liye -->
+<!-- 5. Wishlist + Reviews + Share - Common - Customer ke liye -->
 <script src="../common/wishlist/wishlist.js"></script>
 <script src="../common/reviews/reviews.js"></script>
 <script src="../common/js/share.js"></script>
@@ -128,7 +131,7 @@ COD available • Free Delivery • SamanLive
 <script src="../common/share/qr-share.js"></script>
 <script src="../common/components/product-card.js"></script>
 
-<!-- COMMON BRIDGE - sirf shopId / role set karega - Product / Cart ka kaam customer-view.js karega -->
+<!-- COMMON BRIDGE - sirf shopId / role / WorldProductManager set karega - Product / Cart ka kaam customer-view.js karega -->
 <script>
 (function(){
   var p = new URLSearchParams(location.search);
@@ -142,13 +145,20 @@ COD available • Free Delivery • SamanLive
     localStorage.setItem('last_shopId', shopId);
     localStorage.setItem('shopId', shopId);
   }
+  // WORLD PRODUCT MANAGER ko shopId + shopType de do
+  // Product Manager apne constructor me URL se shopId leta hai, par Customer ke URL me type nahi hota
+  // Isliye yahan set karna zaroori hai, warna wo kirana (default) ka maal mangega
+  try{
+    if (window.WorldProductManager) { window.WorldProductManager.shopId = shopId; window.WorldProductManager.shopType = 'achar-shop'; }
+    if (window.ProductManager) { window.ProductManager.shopId = shopId; window.ProductManager.shopType = 'achar-shop'; }
+  }catch(e){}
   // Cart ko shopId de do - warna Cart dusri dukaan ka maal dikhayega
   try{ if (window.CartCore) window.CartCore.shopId = shopId; }catch(e){}
   try{ if (window.CartCount) window.CartCount.shopId = shopId; }catch(e){}
 })();
 </script>
 
-<!-- 5. Achar ka apna JS - isme hi Product + Cart + Checkout ka kaam hai - DOOBARA INLINE MAT LIKHNA -->
+<!-- 6. Achar ka apna JS - isme hi Product (World Model) + Cart + Checkout ka kaam hai - DOOBARA INLINE MAT LIKHNA -->
 <script src="customer-view.js"></script>
 </body>
 </html>

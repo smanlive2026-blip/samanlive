@@ -1,6 +1,8 @@
-// LOCATION: public/shop-templates/achar-shop/customer-view.js - FULL - COMMON CONNECTED - V2
+// LOCATION: public/shop-templates/achar-shop/customer-view.js - FULL - PRODUCT-FORM KE HISAB SE - V3
 // RULE: Customer = Dekhega + Cart me dalega + Common Checkout pe jayega. Yahan Accept / Packed ka button kabhi nahi hoga.
-// COMMON: cart-core + cart-count + api-core + shop-toggle/status + wishlist + reviews + share + common/checkout + common/customer-orders/my-orders + common/products/achar-shop.seed.js
+// COMMON: WorldProductManager.getProducts = /api/world-products + cart-core + cart-count + api-core + shop-toggle/status + wishlist + reviews + share + common/checkout + common/customer-orders/my-orders + common/products/product-detail.html
+// PRODUCT-FORM: Product = WORLD MODEL se hi aayega. Seed / Achar API se nahi. Seed sirf Product Form ke Quick Add ke liye hai.
+// READ RULE: price500 = p.price500 || p.extraData?.price500 || p.price | image = p.thumbnail || p.image || p.extraData?.thumbnail
 // HTML: customer-view.html me isko <script src="customer-view.js"></script> se load karna hai - INLINE ME DOBARA MAT LIKHNA
 
 (function(){
@@ -14,11 +16,11 @@
   window.SHOP_ID = shopId;
   window.shopId = shopId;
   window.SHOP_TYPE = 'achar-shop';
+  var SHOP_TYPE = 'achar-shop';
   if (shopId) { localStorage.setItem('last_shopId', shopId); localStorage.setItem('shopId', shopId); }
 
   var shopData = {};
   var allProducts = [];
-  var seedProducts = [];
   var filtered = [];
   var activeCat = 'All';
   var shopOpen = true;
@@ -31,6 +33,32 @@
     var t = $('toast'); if(!t) return alert(m);
     t.textContent = m; t.style.display = 'block';
     clearTimeout(t._h); t._h = setTimeout(function(){ t.style.display = 'none'; }, 2200);
+  }
+  // PRODUCT-FORM WALA NORMALISE - extraData se bhi padho, warna price500 / spiceLevel khaali dikhega
+  function normProduct(p, i){
+    var ex = p.extraData || {};
+    var price500 = num(p.price500 || ex.price500 || p.price || 0);
+    var price1kg = num(p.price1kg || ex.price1kg || 0);
+    return {
+      _id: p._id || p.id || ('achar-' + (i + 1)), id: p._id || p.id || ('achar-' + (i + 1)),
+      name: p.name || '',
+      brand: p.brand || ex.brand || 'Maa Ke Haath Ka',
+      category: p.category || ex.category || 'Other',
+      price: price500, price500: price500, price1kg: price1kg,
+      mrp: num(p.mrp || ex.mrp || 0),
+      stock: num(p.stock ?? ex.stock ?? 0),
+      jarType: p.jarType || ex.jarType || 'Glass',
+      spiceLevel: p.spiceLevel || ex.spiceLevel || 'Medium',
+      weight: p.weight || ex.weight || '500g',
+      unit: p.unit || ex.unit || 'jar',
+      // Product Form me image ka naam thumbnail hai
+      image: p.thumbnail || p.image || ex.thumbnail || ex.image || '',
+      thumbnail: p.thumbnail || p.image || ex.thumbnail || ex.image || '',
+      description: p.description || ex.description || p.desc || ex.desc || '',
+      extraData: ex,
+      isActive: p.isActive !== false,
+      shopId: p.shopId || shopId, shopType: p.shopType || SHOP_TYPE
+    };
   }
 
   // ---------- SHOP + STATUS - COMMON ----------
@@ -55,7 +83,7 @@
     }catch(e){}
     // 1b. Common Customer Shop Status wala helper hai toh usi se bhi sync karo
     try{ if (window.CustomerShopStatus && window.CustomerShopStatus.check) { var s2 = await window.CustomerShopStatus.check(shopId); if (typeof s2 === 'boolean') { shopOpen = s2; } } }catch(e){}
-    // 2. Shop ka naam / photo / address - Achar route se
+    // 2. Shop ka naam / photo / address - Achar route se (Shop ka data World Model me nahi hai, isliye yahi rahega)
     try{
       var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId));
       var data = await res.json();
@@ -71,60 +99,35 @@
       if($('shopAddress')) $('shopAddress').textContent = shopData.shopAddress || shopData.fullAddress || 'Fresh • Hygienic • Maa ke haath ka swad';
       if(shopData.phone) { window.SHOP_PHONE = shopData.phone; }
     }catch(e){}
-    // 3. Seed pehle, Product baad me - taaki fallback ready rahe
-    await loadSeed();
+    // 3. Product - WORLD MODEL se hi aayega - Seed / Achar API se nahi
     await loadProducts();
   }
 
-  // ---------- COMMON SEED - 100 PRODUCT ----------
-  async function loadSeed(){
-    try{
-      if (window.SeedLoader && window.SeedLoader.loadSeed) {
-        var s1 = await window.SeedLoader.loadSeed('achar-shop');
-        if (s1 && s1.products && s1.products.length) { seedProducts = normalizeSeed(s1.products); return seedProducts; }
-      }
-    }catch(e){}
-    try{
-      var m = await import('../common/products/achar-shop.seed.js');
-      var list = m.PRODUCTS || (m.default && m.default.PRODUCTS) || [];
-      if (list.length) { seedProducts = normalizeSeed(list); return seedProducts; }
-    }catch(e){ console.warn('[achar-cv] seed load fail', e.message); }
-    seedProducts = [];
-    return seedProducts;
-  }
-  function normalizeSeed(list){
-    return (list || []).map(function(p, i){
-      return {
-        _id: p._id || p.id || ('seed-achar-' + (i + 1)), id: p._id || p.id || ('seed-achar-' + (i + 1)),
-        name: p.name, category: p.category || p.acharType || 'Other', acharType: p.category || p.acharType || 'Other',
-        price: num(p.price500 || p.price), price500: num(p.price500 || p.price), price1kg: num(p.price1kg || p.price),
-        stock: num(p.stock ?? 20), jarType: p.jarType || 'Glass', spiceLevel: p.spiceLevel || 'Medium',
-        image: p.image || p.thumbnail || '', thumbnail: p.thumbnail || p.image || '',
-        description: p.description || p.desc || '', shopId: shopId, isSeed: true
-      };
-    });
-  }
+  // DELETED V3: loadSeed() / normalizeSeed() DELETE kar diya
+  // Seed ka kaam sirf Product Form ke Quick Add me hai. Customer ko Seed ka maal nahi dikhega.
+  // Customer ko sirf wo maal dikhega jo Dukaandaar ne Product Form se Save kiya hai.
 
   async function loadProducts(){
     try{
-      var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products');
-      var data = await res.json();
-      allProducts = data.products || data.items || data.data || [];
-      if(!allProducts.length && shopData.products) allProducts = shopData.products;
-    }catch(e){ allProducts = shopData.products || []; }
-    // COMMON SEED FALLBACK - API khaali hai toh Seed se 100 product le lo, API me maal hai toh Seed nahi aayega
-    if(!allProducts.length && seedProducts.length) allProducts = seedProducts.slice();
-    // Normalise - _id / price500 sab me ho, warna Cart me undefined jayega
-    allProducts = allProducts.map(function(p, i){
-      return {
-        _id: p._id || p.id || ('achar-' + (i + 1)), id: p._id || p.id || ('achar-' + (i + 1)),
-        name: p.name, category: p.category || p.acharType || 'Other', acharType: p.category || p.acharType || 'Other',
-        price: num(p.price500 || p.price), price500: num(p.price500 || p.price), price1kg: num(p.price1kg || p.price),
-        stock: num(p.stock ?? 0), jarType: p.jarType || 'Glass', spiceLevel: p.spiceLevel || 'Medium',
-        image: p.image || p.thumbnail || '', description: p.description || p.desc || '',
-        shopId: shopId, isSeed: p.isSeed || false
-      };
-    });
+      // WORLD MODEL - 1 hi tareeka: WorldProductManager.getProducts()
+      // Ye /api/world-products?shopType=achar-shop&shopId=XXX&role=customer pe jata hai
+      // Customer role me Product Manager khud stock>0 + isActive wale hi dega
+      if (window.WorldProductManager && window.WorldProductManager.getProducts) {
+        var list = await window.WorldProductManager.getProducts({ shopId: shopId, shopType: SHOP_TYPE });
+        allProducts = (list || []).map(normProduct);
+      } else if (window.ProductManager && window.ProductManager.getProducts) {
+        var list2 = await window.ProductManager.getProducts({ shopId: shopId, shopType: SHOP_TYPE });
+        allProducts = (list2 || []).map(normProduct);
+      } else {
+        // Product Manager load nahi hua toh direct World API - Achar API / Seed kabhi nahi
+        var res = await fetch(API + '/api/world-products?shopType=' + SHOP_TYPE + '&shopId=' + encodeURIComponent(shopId) + '&role=customer');
+        var data = await res.json();
+        allProducts = (data.data || data.products || []).map(normProduct);
+      }
+    }catch(e){
+      console.warn('[achar-cv] world products fail', e.message);
+      allProducts = [];
+    }
     filtered = allProducts;
     renderCats();
     renderProducts();
@@ -132,7 +135,7 @@
 
   // ---------- CATEGORY + SEARCH ----------
   function renderCats(){
-    var cats = ['All'].concat(Array.from(new Set(allProducts.map(function(p){ return p.category || p.acharType || 'Other'; }))));
+    var cats = ['All'].concat(Array.from(new Set(allProducts.map(function(p){ return p.category || 'Other'; }))));
     var el = $('catChips'); if(!el) return;
     el.innerHTML = cats.map(function(c){
       return '<button class="chip ' + (c === activeCat ? 'active' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
@@ -144,7 +147,7 @@
   function applyFilter(){
     var q = ($('searchInput') && $('searchInput').value || '').toLowerCase();
     filtered = allProducts.filter(function(p){
-      var okCat = activeCat === 'All' || (p.category || p.acharType || 'Other') === activeCat;
+      var okCat = activeCat === 'All' || (p.category || 'Other') === activeCat;
       var okQ = !q || (p.name || '').toLowerCase().includes(q);
       return okCat && okQ;
     });
@@ -158,7 +161,6 @@
     try{
       if(window.CartCore && window.CartCore.getCart) {
         var c1 = window.CartCore.getCart() || [];
-        // CartCore agar dusri dukaan ka Cart de raha hai toh usko filter karo
         if (c1.length && c1[0] && c1[0].shopId && String(c1[0].shopId) !== String(shopId)) { /* dusri dukaan ka hai - local wala lo */ }
         else return c1;
       }
@@ -176,10 +178,10 @@
 
   function renderProducts(){
     var box = $('productGrid'); if(!box) return;
-    if(!filtered.length){ box.innerHTML = '<div class="empty">Abhi is dukaan me maal nahi hai</div>'; return; }
+    if(!filtered.length){ box.innerHTML = '<div class="empty">Abhi is dukaan me maal nahi hai<br><small style="font-size:11px">Dukaandaar ne abhi Product Form se maal add nahi kiya hai</small></div>'; return; }
     box.innerHTML = filtered.map(function(p){
       var id = p._id || p.id;
-      var img = p.image || 'https://placehold.co/300/d97706/fff?text=Achar';
+      var img = p.image || p.thumbnail || 'https://placehold.co/300/d97706/fff?text=Achar';
       var price500 = num(p.price500 || p.price || 0);
       var price1kg = num(p.price1kg || 0);
       var size = selectedSize[id] || '500g';
@@ -195,7 +197,7 @@
         btn = '<button class="add" onclick="acharAdd(\'' + id + '\',\'' + size + '\')">+ Add to Cart - ₹' + priceFor(p, size) + '</button>';
       }
       var sizeBtn = price1kg ? '<div style="display:flex;gap:6px;margin-top:6px"><button onclick="acharSize(\'' + id + '\',\'500g\')" style="flex:1;padding:6px;border-radius:8px;font-size:11px;font-weight:800;background:' + (size === '500g' ? '#0f172a;color:#fff' : '#f1f5f9;color:#0f172a') + '">500g ₹' + price500 + '</button><button onclick="acharSize(\'' + id + '\',\'1kg\')" style="flex:1;padding:6px;border-radius:8px;font-size:11px;font-weight:800;background:' + (size === '1kg' ? '#0f172a;color:#fff' : '#f1f5f9;color:#0f172a') + '">1Kg ₹' + price1kg + '</button></div>' : '';
-      return '<div class="card"><img src="' + esc(img) + '" loading="lazy" onclick="acharDetail(\'' + id + '\')" style="cursor:pointer" onerror="this.src=\'https://placehold.co/300/d97706/fff?text=Achar\'"><div class="info"><div style="display:flex;justify-content:space-between;align-items:start"><b>' + esc(p.name) + '</b><button onclick="acharWish(\'' + id + '\')" style="background:none;font-size:16px;line-height:1">' + (wishActive ? '❤️' : '🤍') + '</button></div><small>' + esc(p.category || p.acharType || 'Achar') + ' • ' + esc(p.spiceLevel || '') + ' • ' + esc(p.jarType || '') + '</small><div class="price">₹' + price500 + ' <small>500g</small>' + (price1kg ? ' • ₹' + price1kg + ' <small>1Kg</small>' : '') + '</div>' + sizeBtn + btn + '</div></div>';
+      return '<div class="card"><img src="' + esc(img) + '" loading="lazy" onclick="acharDetail(\'' + id + '\')" style="cursor:pointer" onerror="this.src=\'https://placehold.co/300/d97706/fff?text=Achar\'"><div class="info"><div style="display:flex;justify-content:space-between;align-items:start"><b>' + esc(p.name) + '</b><button onclick="acharWish(\'' + id + '\')" style="background:none;font-size:16px;line-height:1">' + (wishActive ? '❤️' : '🤍') + '</button></div><small>' + esc(p.category || 'Achar') + ' • ' + esc(p.spiceLevel || '') + ' • ' + esc(p.jarType || '') + '</small><div class="price">₹' + price500 + ' <small>500g</small>' + (price1kg ? ' • ₹' + price1kg + ' <small>1Kg</small>' : '') + '</div>' + sizeBtn + btn + '</div></div>';
     }).join('');
   }
 
@@ -204,9 +206,9 @@
     selectedSize[id] = size;
     renderProducts();
   };
-  // Product Detail - Common Product Detail page pe jayega
+  // Product Detail - Common Product Detail page pe jayega - type bhi dena hai, warna wo general samjhega
   window.acharDetail = function(id){
-    location.href = '../common/products/product-detail.html?shopId=' + encodeURIComponent(shopId) + '&productId=' + encodeURIComponent(id) + '&shopType=achar-shop';
+    location.href = '../common/products/product-detail.html?shopId=' + encodeURIComponent(shopId) + '&productId=' + encodeURIComponent(id) + '&shopType=' + SHOP_TYPE + '&type=' + SHOP_TYPE;
   };
   // Wishlist - Common
   window.acharWish = async function(id){
@@ -225,11 +227,14 @@
     var forCart = {
       _id: p._id || p.id, id: p._id || p.id, productId: p._id || p.id,
       name: p.name + (sz === '1kg' ? ' (1Kg)' : ' (500g)'),
-      productName: p.name, price: price, image: p.image || '', thumbnail: p.image || '',
+      productName: p.name, price: price,
+      // Product Form me image ka naam thumbnail hai - dono bhej do taaki Checkout / Detail me photo na toote
+      image: p.image || p.thumbnail || '', thumbnail: p.thumbnail || p.image || '',
       size: sz, weight: sz === '1kg' ? '1Kg' : '500g',
       ownerId: shopId, ownerRole: 'shop_owner', supplierId: shopId, supplierRole: 'shop_owner',
       shopId: shopId, shopName: $('shopName') ? $('shopName').textContent : 'Achar Shop',
-      shopType: 'achar-shop', category: p.category || p.acharType || 'Other'
+      shopType: SHOP_TYPE, category: p.category || 'Other',
+      extraData: p.extraData || {}
     };
     try{
       if(window.CartCore && window.CartCore.add){
@@ -298,7 +303,7 @@
     var cart = getCart();
     if(!cart.length){ toast('Cart khali hai'); return; }
     if(!shopOpen){ toast('Dukaan band hai'); return; }
-    location.href = '../common/checkout/checkout.html?shopId=' + encodeURIComponent(shopId) + '&supplierId=' + encodeURIComponent(shopId) + '&supplierRole=shop_owner&shopType=achar-shop';
+    location.href = '../common/checkout/checkout.html?shopId=' + encodeURIComponent(shopId) + '&supplierId=' + encodeURIComponent(shopId) + '&supplierRole=shop_owner&shopType=' + SHOP_TYPE;
   }
   function shareFn(){
     var url = location.href;
@@ -320,5 +325,5 @@
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ bindButtons(); loadShop(); });
   else { bindButtons(); loadShop(); }
 
-  console.log('✅ Achar Customer-View JS loaded - Common Cart + Seed + Wishlist connected - shopId:', shopId);
+  console.log('✅ Achar Customer-View JS loaded - PRODUCT-FORM (World Model) + Common Cart - shopId:', shopId);
 })();

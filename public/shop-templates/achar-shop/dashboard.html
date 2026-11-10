@@ -1,6 +1,7 @@
-<!-- LOCATION: public/shop-templates/achar-shop/dashboard.html - FULL - COMMON CONNECTED - V2 -->
-<!-- RULE: Design same hai. Sirf Common se joda hai. Koi button / rang / layout nahi badla. -->
-<!-- COMMON: api-core + auth-core + socket-core + storage-core + error-handler + dashboard-core + shop-toggle + share + whatsapp + qr + notifications + orders + product-manager + inventory + wallet + profile-core + settings + location + reviews + seed -->
+<!-- LOCATION: public/shop-templates/achar-shop/dashboard.html - FULL - PRODUCT-FORM KE HISAB SE - V3 -->
+<!-- RULE: Design same hai. Product ka apna modal Dashboard me NAHI hoga. Koi button / rang / layout nahi badla. -->
+<!-- COMMON: api-core + auth-core + socket-core + storage-core + error-handler + dashboard-core + shop-toggle + share + whatsapp + qr + notifications + orders + WORLD PRODUCT-MANAGER + inventory + wallet + profile-core + settings + location + reviews -->
+<!-- PRODUCT-FORM: Add / Edit / Quick Add = ../common/products/product-form.html?type=achar-shop - Dashboard me addModal / quickAddModal DELETE kar diye hain -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,7 +103,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 .sheet{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:20px;padding:20px}
 .sheet h2{font-size:18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
 .sheet .x{width:32px;height:32px;border-radius:10px;background:#f1f5f9;font-weight:900}
-#productImgPreview{width:100%;height:180px;object-fit:cover;border-radius:14px;background:#f1f5f9;cursor:pointer;margin-bottom:10px;border:1px dashed #cbd5e1}
 #ownerImgBig{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#f1f5f9;cursor:pointer;border:2px solid #e5e7eb}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 18px;border-radius:999px;font-size:13px;font-weight:700;z-index:200;display:none;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:92vw;text-align:center}
 .mobtop{display:none}
@@ -266,29 +266,10 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </main>
 </div>
 
-<div class="modal" id="addModal"><div class="sheet">
-<h2><span id="modalTitle">Naya Achar Add Karo</span><button class="x" onclick="closeAddModal()">✕</button></h2>
-<img id="productImgPreview" src="https://placehold.co/600/d97706/fff?text=Achar+Photo" alt="Product photo">
-<input type="file" id="productImageInput" hidden accept="image/*">
-<button class="btn light block" onclick="document.getElementById('productImageInput').click()">📷 Photo Badlo</button>
-<label>Achar Name *</label><input type="text" id="acharName" placeholder="Aam ka Achar">
-<label>Category</label><select id="acharType"><option value="Aam">Aam</option><option value="Nimbu">Nimbu</option><option value="Mix">Mix</option><option value="Murabba">Murabba</option><option value="Gajar">Gajar</option><option value="Lahsun">Lahsun</option><option value="Mirchi">Mirchi</option><option value="Amla">Amla</option><option value="Karela">Karela</option><option value="Other">Other</option></select>
-<label>Description</label><textarea id="acharDesc" rows="2" placeholder="Maa ke haath ka bana hua..."></textarea>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label>Jar Type</label><select id="acharJar"><option value="Glass">Glass Jar</option><option value="Plastic">Plastic Jar</option><option value="Ceramic">Ceramic Jar</option></select></div><div><label>Spice Level</label><select id="acharSpice"><option value="Mild">Mild</option><option value="Medium">Medium</option><option value="Teekha">Teekha</option><option value="Extra Teekha">Extra Teekha</option></select></div></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label>500g Price ₹ *</label><input type="number" id="acharPrice500g" placeholder="150"></div><div><label>1Kg Price ₹ *</label><input type="number" id="acharPrice1kg" placeholder="280"></div></div>
-<label>Stock (Kg)</label><input type="number" id="acharStock" placeholder="10">
-<button class="btn amber block" onclick="saveNewAchar()">✅ Save Achar</button>
-<button class="btn light block" onclick="closeAddModal()" style="margin-top:10px">Cancel</button>
-</div></div>
-
-<div class="modal" id="quickAddModal"><div class="sheet">
-<h2><span>50+ Achar - Quick Add</span><button class="x" onclick="closeQuickAdd()">✕</button></h2>
-<p class="hint" style="margin-bottom:12px">Ek-ek karke tick karo, jo chahiye wo ek saath add ho jayega. Price baad me Products se edit kar sakte ho.</p>
-<div id="quickAddList">Loading...</div>
-<button class="btn amber block" id="quickAddSaveBtn" style="margin-top:14px">✅ Selected Add Karo (<span id="quickAddCount">0</span>)</button>
-<button class="btn light block" onclick="closeQuickAdd()" style="margin-top:10px">Cancel</button>
-</div></div>
-
+<!-- ================= MODALS ================= -->
+<!-- DELETED V3: #addModal DELETE kar diya - Naya Achar ab Product Form se add hoga -->
+<!-- DELETED V3: #quickAddModal DELETE kar diya - Quick Add ab Product Form ke quick=1 se hoga -->
+<!-- Bacha hua sirf Manual Order wala modal hai - ye Product Form ka kaam nahi hai, Common Order ka hai -->
 <div class="modal" id="manualOrderModal"><div class="sheet">
 <h2><span>Manual Order Banao</span><button class="x" onclick="closeManualOrder()">✕</button></h2>
 <p class="hint" style="margin-bottom:12px">Shop pe aaye hue customer ka order yahan se banao - ye bhi Common Order me jayega.</p>
@@ -317,7 +298,7 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <script src="../common/js/shop-toggle.js"></script>
 <script src="../common/js/location.js"></script>
 <script src="../common/js/shop-banner-ext.js"></script>
-<!-- 3. Product + Inventory - Common -->
+<!-- 3. Product - WORLD MODEL - Product Form ka Manager - iske bina World Product nahi aayega -->
 <script src="../common/products/product-manager.js"></script>
 <script src="../common/inventory/inventory.js"></script>
 <!-- 4. Order + Finance + Notification - Common -->
@@ -347,6 +328,13 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
     localStorage.setItem('shopId', shopId);
     localStorage.setItem('USER_ROLE', 'shop_owner');
   }
+  // WORLD PRODUCT MANAGER ko shopId + shopType de do
+  // Product Manager apne constructor me URL se shopId leta hai, par Dashboard ke URL me type nahi hota
+  // Isliye yahan set karna zaroori hai, warna wo kirana (default) ka maal mangega
+  try{
+    if (window.WorldProductManager) { window.WorldProductManager.shopId = shopId; window.WorldProductManager.shopType = 'achar-shop'; }
+    if (window.ProductManager) { window.ProductManager.shopId = shopId; window.ProductManager.shopType = 'achar-shop'; }
+  }catch(e){}
   // ShopToggle ko shopId de do - warna wo khali shopId pe toggle karega
   try{ if (window.shopToggle) window.shopToggle.shopId = shopId; }catch(e){}
   try{ if (window.ShopToggle) window.ShopToggle.shopId = shopId; }catch(e){}

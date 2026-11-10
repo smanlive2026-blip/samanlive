@@ -1,26 +1,27 @@
-// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - COMMON CONNECTED - V2
-// RULE: Order = Common Order. Product = Achar route + Common Seed fallback. Profile / Timing = Achar + Common Toggle.
-// COMMON: /api/common/orders/list + /api/common/orders/:id/status + /api/common/checkout/:shopId/place + /api/common/shop-toggle + ../common/products/achar-shop.seed.js + ../common/products/product-manager.js + ../common/inventory/inventory.js
-// DESIGN: HTML wahi hai, is JS me koi naya button nahi banaya hai.
+// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - PRODUCT-FORM KE HISAB SE - V3
+// RULE: Product = WORLD MODEL. Order = Common Order. Profile / Timing = Achar + Common Toggle.
+// PRODUCT-FORM: Add / Edit / Quick Add = ../common/products/product-form.html - Dashboard me apna modal NAHI hoga
+// COMMON: WorldProductManager.getProducts / addProduct / updateProduct / deleteProduct / bulkAdd = /api/world-products
+//         /api/common/orders/list + /api/common/orders/:id/status + /api/common/checkout/:shopId/place + /api/common/shop-toggle
+// READ RULE: price500 = p.price500 || p.extraData?.price500 || p.price | image = p.thumbnail || p.image || p.extraData?.thumbnail
+//            spiceLevel = p.spiceLevel || p.extraData?.spiceLevel | jarType = p.jarType || p.extraData?.jarType
 
 (function () {
   var params = new URLSearchParams(location.search);
   var shopId = params.get('shopId') || params.get('id') || localStorage.getItem('last_shopId') || localStorage.getItem('shopId') || '';
   window.SHOP_ID = shopId;
   window.shopId = shopId;
+  window.SHOP_TYPE = 'achar-shop';
   var ROLE = 'shop_owner';
   var API = window.API_BASE || location.origin;
+  var SHOP_TYPE = 'achar-shop';
 
   var shopData = {};
   var allProducts = [];
   var allOrders = [];
-  var seedProducts = []; // COMMON SEED - 100 product yahan rahenge
-  var currentEditId = null;
-  var productImageUrl = '';
   var productFilter = 'All';
   var orderFilter = 'all';
   var manualQty = {};
-  var quickAddSelected = new Set();
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -36,6 +37,12 @@
     return { 'Content-Type': 'application/json', 'x-shop-id': shopId, 'x-role': ROLE, ...(token ? { 'Authorization': 'Bearer ' + token } : {}) };
   }
   function shopUrl() { return location.origin + '/shop-templates/achar-shop/customer-view.html?shopId=' + encodeURIComponent(shopId); }
+  // Product Form ko wapas aane ke liye ye URL dena hai - warna wo ../dashboard.html pe chala jayega
+  function returnUrl() { return location.href.split('?')[0] + '?shopId=' + encodeURIComponent(shopId); }
+  function productFormUrl(extra) {
+    // type=achar-shop hi hona chahiye - product-form.html isi se achar-shop.seed.js uthata hai
+    return '../common/products/product-form.html?shopId=' + encodeURIComponent(shopId) + '&type=' + SHOP_TYPE + '&shopType=' + SHOP_TYPE + '&returnUrl=' + encodeURIComponent(returnUrl()) + (extra || '');
+  }
   function to24(t) {
     if (!t) return '09:00';
     if (t.includes('AM') || t.includes('PM')) {
@@ -52,6 +59,33 @@
     var hm = t.split(':'); var h = num(hm[0]); var m = hm[1] || '00';
     var mod = h >= 12 ? 'PM' : 'AM'; var hh = h % 12; if (hh === 0) hh = 12;
     return hh + ':' + m + ' ' + mod;
+  }
+  // PRODUCT-FORM WALA NORMALISE - extraData se bhi padho, warna price500 / spiceLevel khaali dikhega
+  function normProduct(p, i) {
+    var ex = p.extraData || {};
+    var price500 = num(p.price500 || ex.price500 || p.price || 0);
+    var price1kg = num(p.price1kg || ex.price1kg || 0);
+    return {
+      _id: p._id || p.id || ('achar-' + (i + 1)), id: p._id || p.id || ('achar-' + (i + 1)),
+      name: p.name || '',
+      brand: p.brand || ex.brand || 'Maa Ke Haath Ka',
+      category: p.category || ex.category || 'Other',
+      price: price500, price500: price500, price1kg: price1kg,
+      mrp: num(p.mrp || ex.mrp || 0),
+      stock: num(p.stock ?? ex.stock ?? 0),
+      lowStockAlert: num(p.lowStockAlert || ex.lowStockAlert || 2),
+      jarType: p.jarType || ex.jarType || 'Glass',
+      spiceLevel: p.spiceLevel || ex.spiceLevel || 'Medium',
+      weight: p.weight || ex.weight || '500g',
+      unit: p.unit || ex.unit || 'jar',
+      // Product Form me image ka naam thumbnail hai
+      image: p.thumbnail || p.image || ex.thumbnail || ex.image || '',
+      thumbnail: p.thumbnail || p.image || ex.thumbnail || ex.image || '',
+      description: p.description || ex.description || p.desc || ex.desc || '',
+      extraData: ex,
+      isActive: p.isActive !== false,
+      shopId: p.shopId || shopId, shopType: p.shopType || SHOP_TYPE
+    };
   }
 
   // ================= NAV / PAGE =================
@@ -76,8 +110,9 @@
     var menuBtn = $('menuBtn'); if (menuBtn) menuBtn.addEventListener('click', function () { $('sidebar').classList.add('open'); $('overlay').classList.add('show'); });
     var ov = $('overlay'); if (ov) ov.addEventListener('click', function () { $('sidebar').classList.remove('open'); ov.classList.remove('show'); });
     var notifBtn = $('notifBtn'); if (notifBtn) notifBtn.addEventListener('click', function () { showPage('orders'); });
-    var add1 = $('addAcharBtn'); if (add1) add1.addEventListener('click', openAddModal);
-    var add2 = $('addAcharBtn2'); if (add2) add2.addEventListener('click', openAddModal);
+    // PRODUCT-FORM: Add / Quick Add ab Product Form pe jayenge, apna modal nahi kholega
+    var add1 = $('addAcharBtn'); if (add1) add1.addEventListener('click', openProductForm);
+    var add2 = $('addAcharBtn2'); if (add2) add2.addEventListener('click', openProductForm);
     var qa = $('quickAddBtn'); if (qa) qa.addEventListener('click', openQuickAdd);
     var mo = $('newOrderBtn'); if (mo) mo.addEventListener('click', openManualOrder);
     var wa = $('whatsappShareBtn'); if (wa) wa.addEventListener('click', shareWhatsApp);
@@ -87,7 +122,6 @@
     var spf = $('saveProfileBtn'); if (spf) spf.addEventListener('click', saveProfile);
     var sl = $('saveLocationBtn'); if (sl) sl.addEventListener('click', saveLocation);
     var ll = $('loadLocationBtn'); if (ll) ll.addEventListener('click', loadLocation);
-    var qas = $('quickAddSaveBtn'); if (qas) qas.addEventListener('click', saveQuickAdd);
     var mos = $('moSaveBtn'); if (mos) mos.addEventListener('click', saveManualOrder);
     var spInput = $('searchProduct'); if (spInput) spInput.addEventListener('input', function () { renderProducts(); });
     document.querySelectorAll('#orderChips .chip').forEach(function (c) {
@@ -98,9 +132,11 @@
         renderOrders();
       });
     });
-    var pi = $('productImageInput'); if (pi) pi.addEventListener('change', function (e) { handleProductImage(e.target.files[0]); });
+    // Owner photo wala hissa same hai - Product Form se iska lena-dena nahi hai
     var oi = $('ownerInput'); if (oi) oi.addEventListener('change', function (e) { handleOwnerImage(e.target.files[0]); });
     var oib = $('ownerImgBig'); if (oib) oib.addEventListener('click', function () { $('ownerInput').click(); });
+    // Agar purani HTML me addModal / quickAddModal bache hain toh unko band kar do - Product Form hi chalega
+    // Dashboard.html V3 me ye modal honge hi nahi, ye sirf safety ke liye hai
   }
 
   function shareWhatsApp() {
@@ -122,12 +158,13 @@
     bindNav();
     bindShopToggleUI();
     await loadShopData();
-    await loadSeed(); // COMMON SEED pehle load karo, taaki Quick Add + fallback ready rahe
     await loadCommonOrders();
-    await loadProducts();
+    await loadProducts(); // WORLD MODEL se
     renderAll();
     initSocket();
     setInterval(function () { loadCommonOrders().then(renderAll).catch(function () {}); }, 30000);
+    // Product Form se wapas aaye toh list dobara load karo - warna naya product dikhega hi nahi
+    window.addEventListener('focus', function () { loadProducts().then(renderAll).catch(function () {}); });
   }
 
   function bindShopToggleUI() {
@@ -190,42 +227,6 @@
     }
   }
 
-  // ================= COMMON SEED - 100 PRODUCT =================
-  async function loadSeed() {
-    // 1. Pehle Common index.js wala loader try karo - wahi asli loader hai
-    try {
-      if (window.SeedLoader && window.SeedLoader.loadSeed) {
-        var s1 = await window.SeedLoader.loadSeed('achar-shop');
-        if (s1 && s1.products && s1.products.length) { seedProducts = normalizeSeed(s1.products); return seedProducts; }
-      }
-    } catch (e) {}
-    // 2. Direct import - dashboard.html se relative path
-    try {
-      var m = await import('../common/products/achar-shop.seed.js');
-      var list = m.PRODUCTS || (m.default && m.default.PRODUCTS) || [];
-      if (list.length) { seedProducts = normalizeSeed(list); return seedProducts; }
-    } catch (e) { console.warn('[achar] seed import fail - seed file ka naam check karo: achar-shop.seed.js', e.message); }
-    seedProducts = [];
-    return seedProducts;
-  }
-  function normalizeSeed(list) {
-    return (list || []).map(function (p, i) {
-      return {
-        _id: p._id || p.id || ('seed-achar-' + (i + 1)),
-        id: p._id || p.id || ('seed-achar-' + (i + 1)),
-        name: p.name, brand: p.brand || 'Maa Ke Haath Ka',
-        category: p.category || p.acharType || 'Other', acharType: p.category || p.acharType || 'Other',
-        price: num(p.price500 || p.price), price500: num(p.price500 || p.price), price1kg: num(p.price1kg || p.price),
-        mrp: num(p.mrp || 0), stock: num(p.stock ?? 20),
-        jarType: p.jarType || 'Glass', spiceLevel: p.spiceLevel || 'Medium',
-        image: p.image || p.thumbnail || '', thumbnail: p.thumbnail || p.image || '',
-        description: p.description || p.desc || '', desc: p.description || p.desc || '',
-        shopId: shopId, isSeed: true
-      };
-    });
-  }
-  window.getAcharSeed = function () { return seedProducts; };
-
   // ================= COMMON ORDERS =================
   function normalizeOrder(o) {
     var status = o.orderStatus || o.status || 'placed';
@@ -247,7 +248,6 @@
 
   async function loadCommonOrders() {
     try {
-      // COMMON - pehle Common Orders.js wala helper, nahi hai toh direct API
       if (window.CommonOrders && window.CommonOrders.list) {
         var l1 = await window.CommonOrders.list({ role: ROLE, id: shopId, shopId: shopId, limit: 100 });
         allOrders = (l1 || []).map(normalizeOrder);
@@ -373,54 +373,47 @@
   window.acharPack = function (id) { return changeOrderStatus(id, 'packed'); };
   window.changeOrderStatus = changeOrderStatus;
 
-  // ================= PRODUCTS - Achar route + Common Seed fallback =================
+  // ================= PRODUCTS - WORLD MODEL - PRODUCT-FORM SE HI AAYENGE =================
   async function loadProducts() {
     try {
-      var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products', { headers: getHeaders() });
-      var data = await res.json().catch(function () { return {}; });
-      allProducts = data.products || data.items || data.data || [];
-      if (!allProducts.length) allProducts = shopData.products || [];
-    } catch (e) { allProducts = shopData.products || []; }
-
-    // COMMON SEED FALLBACK - API khaali hai toh Seed se 100 product le lo
-    // API me maal hai toh Seed load hi nahi hoga - double nahi hoga
-    if (!allProducts.length && seedProducts.length) {
-      allProducts = seedProducts.slice();
-      if ($('inventoryList')) { /* Seed se aaya hai - Dashboard pe dikhega, API me save nahi hoga jab tak Edit / Quick Add na karo */ }
+      // WORLD MODEL - 1 hi tareeka: WorldProductManager.getProducts()
+      // Ye /api/world-products?shopType=achar-shop&shopId=XXX&role=dashboard pe jata hai
+      if (window.WorldProductManager && window.WorldProductManager.getProducts) {
+        var list = await window.WorldProductManager.getProducts({ shopId: shopId, shopType: SHOP_TYPE });
+        allProducts = (list || []).map(normProduct);
+      } else if (window.ProductManager && window.ProductManager.getProducts) {
+        var list2 = await window.ProductManager.getProducts({ shopId: shopId, shopType: SHOP_TYPE });
+        allProducts = (list2 || []).map(normProduct);
+      } else {
+        // Product Manager load nahi hua toh direct World API - Achar API kabhi nahi
+        var res = await fetch(API + '/api/world-products?shopType=' + SHOP_TYPE + '&shopId=' + encodeURIComponent(shopId) + '&role=dashboard');
+        var data = await res.json().catch(function () { return {}; });
+        allProducts = (data.data || data.products || []).map(normProduct);
+      }
+    } catch (e) {
+      console.warn('[achar] world products fail', e.message);
+      allProducts = [];
     }
-    // Normalise - _id / price500 sab me ho, warna Edit / Cart toot jayega
-    allProducts = allProducts.map(function (p, i) {
-      return {
-        _id: p._id || p.id || ('achar-' + (i + 1)), id: p._id || p.id || ('achar-' + (i + 1)),
-        name: p.name, category: p.category || p.acharType || 'Other', acharType: p.category || p.acharType || 'Other',
-        price: num(p.price500 || p.price), price500: num(p.price500 || p.price), price1kg: num(p.price1kg || p.price),
-        stock: num(p.stock ?? 0), jarType: p.jarType || 'Glass', spiceLevel: p.spiceLevel || 'Medium',
-        image: p.image || p.thumbnail || '', thumbnail: p.thumbnail || p.image || '',
-        description: p.description || p.desc || '', desc: p.description || p.desc || '',
-        isSeed: p.isSeed || false, shopId: shopId
-      };
-    });
     return allProducts;
   }
 
   function productRow(p) {
     var stock = num(p.stock);
-    var low = stock <= 2;
-    var seedTag = p.isSeed ? ' <span class="badge amber">Seed</span>' : '';
-    return '<div class="row"><img src="' + esc(p.image || 'https://placehold.co/100/d97706/fff?text=A') + '" onerror="this.src=\'https://placehold.co/100/d97706/fff?text=A\'"><div class="mid"><b>' + esc(p.name) + '</b><span>' + esc(p.category || p.acharType || 'Achar') + ' • ' + esc(p.spiceLevel || '') + ' • ' + esc(p.jarType || '') + ' • 500g ₹' + num(p.price500 || p.price) + ' • 1Kg ₹' + num(p.price1kg || p.price) + '</span></div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><span class="badge ' + (low ? 'red' : 'green') + '">' + (low ? 'Low Stock' : 'Stock: ' + stock + ' Kg') + '</span>' + seedTag + '<div><button class="btn light sm" onclick="acharEditProduct(\'' + (p._id || p.id) + '\')">Edit</button> <button class="btn red sm" onclick="acharDeleteProduct(\'' + (p._id || p.id) + '\')">Delete</button></div></div></div>';
+    var low = stock <= num(p.lowStockAlert || 2);
+    return '<div class="row"><img src="' + esc(p.image || p.thumbnail || 'https://placehold.co/100/d97706/fff?text=A') + '" onerror="this.src=\'https://placehold.co/100/d97706/fff?text=A\'"><div class="mid"><b>' + esc(p.name) + '</b><span>' + esc(p.category || 'Achar') + ' • ' + esc(p.spiceLevel || '') + ' • ' + esc(p.jarType || '') + ' • 500g ₹' + num(p.price500 || p.price) + ' • 1Kg ₹' + num(p.price1kg || p.price) + '</span></div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><span class="badge ' + (low ? 'red' : 'green') + '">' + (low ? 'Low Stock' : 'Stock: ' + stock + ' Kg') + '</span><div><button class="btn light sm" onclick="acharEditProduct(\'' + (p._id || p.id) + '\')">Edit</button> <button class="btn red sm" onclick="acharDeleteProduct(\'' + (p._id || p.id) + '\')">Delete</button></div></div></div>';
   }
 
   function renderProducts() {
     var el = $('inventoryList'); if (!el) return;
     var q = ($('searchProduct') && $('searchProduct').value || '').toLowerCase();
     var list = allProducts.filter(function (p) {
-      var okCat = productFilter === 'All' || (p.category || p.acharType || 'Other') === productFilter;
+      var okCat = productFilter === 'All' || (p.category || 'Other') === productFilter;
       var okQ = !q || (p.name || '').toLowerCase().includes(q);
       return okCat && okQ;
     });
     var chipsEl = $('categoryChips');
     if (chipsEl) {
-      var cats = ['All'].concat(Array.from(new Set(allProducts.map(function (p) { return p.category || p.acharType || 'Other'; }))));
+      var cats = ['All'].concat(Array.from(new Set(allProducts.map(function (p) { return p.category || 'Other'; }))));
       chipsEl.innerHTML = cats.map(function (c) { return '<button class="chip ' + (c === productFilter ? 'active' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>'; }).join('');
       chipsEl.querySelectorAll('.chip').forEach(function (ch) {
         ch.addEventListener('click', function () {
@@ -431,15 +424,15 @@
         });
       });
     }
-    if (!list.length) { el.innerHTML = '<div class="empty"><i>🥒</i>Abhi koi product nahi hai. Naya Achar add karo.</div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty"><i>🥒</i>Abhi koi product nahi hai. Naya Achar add karo - Product Form khulega.</div>'; return; }
     el.innerHTML = list.map(productRow).join('');
     if ($('navProductCount')) $('navProductCount').textContent = String(allProducts.length);
     if ($('totalProducts')) $('totalProducts').textContent = String(allProducts.length);
-    var lowCount = allProducts.filter(function (p) { return num(p.stock) <= 2; }).length;
+    var lowCount = allProducts.filter(function (p) { return num(p.stock) <= num(p.lowStockAlert || 2); }).length;
     if ($('lowStockLine')) $('lowStockLine').textContent = lowCount + ' low stock';
     var stockEl = $('stockAlert');
     if (stockEl) {
-      var lows = allProducts.filter(function (p) { return num(p.stock) <= 2; });
+      var lows = allProducts.filter(function (p) { return num(p.stock) <= num(p.lowStockAlert || 2); });
       stockEl.innerHTML = lows.length ? lows.slice(0, 5).map(function (p) { return '<div class="kv"><span>' + esc(p.name) + '</span><b style="color:#dc2626">' + num(p.stock) + ' Kg</b></div>'; }).join('') : '<div class="empty">Sab stock thik hai ✅</div>';
     }
   }
@@ -450,80 +443,49 @@
     el.innerHTML = allProducts.slice(0, 3).map(productRow).join('');
   }
 
-  // ================= ADD / EDIT PRODUCT =================
-  function openAddModal() {
-    currentEditId = null;
-    if ($('modalTitle')) $('modalTitle').textContent = 'Naya Achar Add Karo';
-    ['acharName', 'acharDesc', 'acharPrice500g', 'acharPrice1kg', 'acharStock'].forEach(function (id) { if ($(id)) $(id).value = ''; });
-    if ($('acharType')) $('acharType').value = 'Aam';
-    if ($('acharJar')) $('acharJar').value = 'Glass';
-    if ($('acharSpice')) $('acharSpice').value = 'Medium';
-    productImageUrl = '';
-    if ($('productImgPreview')) $('productImgPreview').src = 'https://placehold.co/600/d97706/fff?text=Achar+Photo';
-    $('addModal').classList.add('open');
+  // ================= ADD / EDIT / QUICK ADD - SAB PRODUCT-FORM PE JAYEGA =================
+  // Dashboard me apna modal / saveNewAchar / saveQuickAdd NAHI hoga - ye hi Product Form ka matlab hai
+  function openProductForm() {
+    // Product Form me returnUrl diya hai, taaki Save ke baad wapas isi Dashboard pe aaye
+    location.href = productFormUrl('');
   }
-  window.openAddModal = openAddModal;
-  window.closeAddModal = function () { $('addModal').classList.remove('open'); };
+  function openQuickAdd() {
+    // quick=1 se Product Form ka Quick Box khud khul jayega - Add All / Add Limited wahi hai
+    location.href = productFormUrl('&quick=1');
+  }
+  window.openProductForm = openProductForm;
+  window.openAddModal = openProductForm; // Purani HTML me agar openAddModal bacha hai toh bhi Product Form hi khulega
+  window.openQuickAdd = openQuickAdd;
+  // Purane naam - agar kahin se call ho raha hai toh bhi Product Form hi khulega, modal nahi
+  window.closeAddModal = function () {};
+  window.closeQuickAdd = function () {};
+  window.saveNewAchar = function () { openProductForm(); };
 
   window.acharEditProduct = function (id) {
-    var p = allProducts.find(function (x) { return String(x._id || x.id) === String(id); });
-    if (!p) return;
-    currentEditId = id;
-    if ($('modalTitle')) $('modalTitle').textContent = 'Achar Edit Karo';
-    if ($('acharName')) $('acharName').value = p.name || '';
-    if ($('acharDesc')) $('acharDesc').value = p.description || p.desc || '';
-    if ($('acharType')) $('acharType').value = p.category || p.acharType || 'Aam';
-    if ($('acharJar')) $('acharJar').value = p.jarType || 'Glass';
-    if ($('acharSpice')) $('acharSpice').value = p.spiceLevel || 'Medium';
-    if ($('acharPrice500g')) $('acharPrice500g').value = p.price500 || p.price || '';
-    if ($('acharPrice1kg')) $('acharPrice1kg').value = p.price1kg || p.price || '';
-    if ($('acharStock')) $('acharStock').value = p.stock || '';
-    productImageUrl = p.image || '';
-    if ($('productImgPreview') && productImageUrl) $('productImgPreview').src = productImageUrl;
-    $('addModal').classList.add('open');
+    // Product Form khud /api/world-products/{editId} se data bharega - Dashboard ko fill nahi karna hai
+    location.href = productFormUrl('&editId=' + encodeURIComponent(id));
   };
 
   window.acharDeleteProduct = async function (id) {
     if (!confirm('Ye product delete karein?')) return;
-    var p = allProducts.find(function (x) { return String(x._id || x.id) === String(id); });
-    // Seed wala product - API me hai hi nahi, sirf list se hatao
-    if (p && p.isSeed) {
-      allProducts = allProducts.filter(function (x) { return String(x._id || x.id) !== String(id); });
-      seedProducts = seedProducts.filter(function (x) { return String(x._id || x.id) !== String(id); });
-      renderAll();
-      toast('Seed product list se hat gaya');
-      return;
-    }
     try {
-      // COMMON Product Manager hai toh usi se delete karo
-      if (window.ProductManager && window.ProductManager.delete) {
-        await window.ProductManager.delete(shopId, id);
+      // WORLD MODEL - Soft delete - WorldProductManager.deleteProduct()
+      if (window.WorldProductManager && window.WorldProductManager.deleteProduct) {
+        var r = await window.WorldProductManager.deleteProduct(id);
+        if (!r || r.success === false) throw new Error((r && r.message) || 'Delete fail');
+      } else if (window.ProductManager && window.ProductManager.deleteProduct) {
+        var r2 = await window.ProductManager.deleteProduct(id);
+        if (!r2 || r2.success === false) throw new Error('Delete fail');
       } else {
-        var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products/' + encodeURIComponent(id), { method: 'DELETE', headers: getHeaders() });
+        var res = await fetch(API + '/api/world-products/' + encodeURIComponent(id), { method: 'DELETE', headers: getHeaders() });
         var d = await res.json().catch(function () { return {}; });
         if (!res.ok || (d.success === false)) throw new Error(d.message || 'Delete fail');
       }
-      allProducts = allProducts.filter(function (x) { return String(x._id || x.id) !== String(id); });
+      allProducts = allProducts.filter(function (p) { return String(p._id || p.id) !== String(id); });
       renderAll();
       toast('Product delete ho gaya');
     } catch (e) { toast('Delete fail: ' + e.message); }
   };
-
-  async function handleProductImage(file) {
-    if (!file) return;
-    try {
-      // COMMON Image Compress hai toh pehle compress karo
-      if (window.ImageCompress && window.ImageCompress.compress) { try { file = await window.ImageCompress.compress(file); } catch (e) {} }
-      var fd = new FormData();
-      fd.append('image', file);
-      var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/upload', { method: 'POST', body: fd });
-      var d = await res.json().catch(function () { return {}; });
-      productImageUrl = d.url || d.imageUrl || d.secure_url || '';
-      if (!productImageUrl) throw new Error('Upload fail');
-      if ($('productImgPreview')) $('productImgPreview').src = productImageUrl;
-      toast('Photo upload ho gayi');
-    } catch (e) { toast('Photo fail: ' + e.message); }
-  }
 
   async function handleOwnerImage(file) {
     if (!file) return;
@@ -540,100 +502,15 @@
       toast('Owner photo upload ho gayi - Profile Save karo');
     } catch (e) { toast('Photo fail: ' + e.message); }
   }
-
-  window.saveNewAchar = async function () {
-    var name = ($('acharName').value || '').trim();
-    if (!name) return toast('Achar ka naam likho');
-    var payload = {
-      name: name,
-      category: $('acharType').value,
-      acharType: $('acharType').value,
-      description: $('acharDesc').value,
-      desc: $('acharDesc').value,
-      jarType: $('acharJar').value,
-      spiceLevel: $('acharSpice').value,
-      price500: num($('acharPrice500g').value),
-      price1kg: num($('acharPrice1kg').value),
-      price: num($('acharPrice500g').value) || num($('acharPrice1kg').value),
-      stock: num($('acharStock').value),
-      image: productImageUrl || 'https://placehold.co/600/d97706/fff?text=Achar',
-      shopId: shopId
-    };
-    try {
-      // Seed wala Edit hai toh pehle usko Seed se hatao, phir API me save karo
-      var isSeedEdit = currentEditId && String(currentEditId).indexOf('seed-achar-') === 0;
-      if (isSeedEdit) currentEditId = null;
-
-      if (window.ProductManager && window.ProductManager.save) {
-        await window.ProductManager.save(shopId, payload, currentEditId);
-      } else {
-        var url = API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products';
-        var method = 'POST';
-        if (currentEditId) { url += '/' + encodeURIComponent(currentEditId); method = 'PUT'; }
-        var res = await fetch(url, { method: method, headers: getHeaders(), body: JSON.stringify(payload) });
-        var d = await res.json().catch(function () { return {}; });
-        if (!res.ok || (d.success === false)) throw new Error(d.message || 'Save fail');
-      }
-      toast(currentEditId ? 'Achar update ho gaya' : 'Achar add ho gaya');
-      $('addModal').classList.remove('open');
-      // Seed fallback wala product Edit hua toh usko Seed list se hata do, warna double dikhega
-      if (isSeedEdit) { seedProducts = seedProducts.filter(function (x) { return x.name !== name; }); }
-      await loadProducts();
-      renderAll();
-    } catch (e) { toast('Save fail: ' + e.message); }
-  };
-
-  // ================= QUICK ADD - AB SEED SE 100 PRODUCT =================
-  function openQuickAdd() {
-    quickAddSelected = new Set();
-    var el = $('quickAddList'); if (!el) return;
-    // COMMON SEED se lo - pehle wale 15 naam nahi, ab 100 naam aayenge
-    var list = seedProducts.length ? seedProducts : allProducts;
-    if (!list.length) { el.innerHTML = '<div class="empty">Seed load nahi hui - pehle Naya Achar se add karo</div>'; $('quickAddModal').classList.add('open'); return; }
-    el.innerHTML = list.map(function (p) {
-      var exists = allProducts.some(function (x) { return (x.name || '').toLowerCase() === (p.name || '').toLowerCase() && !x.isSeed; });
-      return '<label style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;font-size:13px"><input type="checkbox" data-quick="' + esc(p.name) + '" data-quick-cat="' + esc(p.category) + '" data-quick-price500="' + num(p.price500) + '" data-quick-price1kg="' + num(p.price1kg) + '" ' + (exists ? 'disabled' : '') + '> ' + esc(p.name) + ' - ₹' + num(p.price500) + (exists ? ' <span class="badge green">Added</span>' : '') + '</label>';
-    }).join('');
-    el.querySelectorAll('input[data-quick]').forEach(function (cb) {
-      cb.addEventListener('change', function () {
-        if (cb.checked) quickAddSelected.add(cb.dataset.quick); else quickAddSelected.delete(cb.dataset.quick);
-        if ($('quickAddCount')) $('quickAddCount').textContent = String(quickAddSelected.size);
-      });
-    });
-    if ($('quickAddCount')) $('quickAddCount').textContent = '0';
-    $('quickAddModal').classList.add('open');
-  }
-  window.openQuickAdd = openQuickAdd;
-  window.closeQuickAdd = function () { $('quickAddModal').classList.remove('open'); };
-
-  async function saveQuickAdd() {
-    if (!quickAddSelected.size) return toast('Koi achar tick karo');
-    try {
-      var items = [];
-      document.querySelectorAll('#quickAddList input[data-quick]:checked').forEach(function (cb) {
-        items.push({ name: cb.dataset.quick, category: cb.dataset.quickCat || 'Mix', acharType: cb.dataset.quickCat || 'Mix', price500: num(cb.dataset.quickPrice500) || 150, price1kg: num(cb.dataset.quickPrice1kg) || 280, price: num(cb.dataset.quickPrice500) || 150, stock: 10, image: 'https://placehold.co/600/d97706/fff?text=Achar', shopId: shopId });
-      });
-      var res = await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products/bulk', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ products: items, items: items }) });
-      var d = await res.json().catch(function () { return {}; });
-      if (!res.ok || (d.success === false)) {
-        for (var i = 0; i < items.length; i++) {
-          await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/products', { method: 'POST', headers: getHeaders(), body: JSON.stringify(items[i]) }).catch(function () {});
-        }
-      }
-      toast(quickAddSelected.size + ' achar add ho gaye');
-      $('quickAddModal').classList.remove('open');
-      // Quick Add wale Seed se hat jayenge, warna double dikhenge
-      seedProducts = seedProducts.filter(function (p) { return !quickAddSelected.has(p.name); });
-      await loadProducts();
-      renderAll();
-    } catch (e) { toast('Quick Add fail: ' + e.message); }
-  }
+  // Product wali photo ab Product Form me jayegi - isliye handleProductImage ki zaroorat nahi hai
+  // Agar purani HTML se call ho toh Product Form pe bhej do
+  window.handleProductImage = function () { openProductForm(); };
 
   // ================= MANUAL ORDER - COMMON CHECKOUT =================
   function openManualOrder() {
     var el = $('moItems'); if (!el) return;
     manualQty = {};
-    if (!allProducts.length) { el.innerHTML = '<div class="empty">Pehle product add karo</div>'; }
+    if (!allProducts.length) { el.innerHTML = '<div class="empty">Pehle Product Form se product add karo</div>'; }
     else {
       el.innerHTML = allProducts.map(function (p) {
         var id = p._id || p.id;
@@ -679,7 +556,7 @@
       if (!num(manualQty[id])) return;
       var p = allProducts.find(function (x) { return String(x._id || x.id) === String(id); });
       if (!p) return;
-      items.push({ productId: id, name: p.name, price: num(p.price500 || p.price), qty: num(manualQty[id]), quantity: num(manualQty[id]), image: p.image || '' });
+      items.push({ productId: id, name: p.name, price: num(p.price500 || p.price), qty: num(manualQty[id]), quantity: num(manualQty[id]), image: p.image || p.thumbnail || '' });
     });
     if (!items.length) return toast('Koi item tick karo');
     var total = updateMoTotal();
@@ -809,5 +686,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  console.log('✅ Achar Dashboard JS loaded - Common Orders + Seed + ProductManager connected - shopId:', shopId);
+  console.log('✅ Achar Dashboard JS loaded - PRODUCT-FORM (World Model) + Common Orders - shopId:', shopId);
 })();
