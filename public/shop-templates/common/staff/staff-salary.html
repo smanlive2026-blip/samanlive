@@ -1,0 +1,524 @@
+<!-- LOCATION: public/shop-templates/common/staff/staff-salary.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS STAFF SALARY - FULL -->
+<!-- RULE: Salary = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- RULE 2: Fake / Mock salary KABHI nahi banega. Khaali hai toh "No salary records yet" dikhega. -->
+<!-- RULE 3: Paid / Unpaid status sirf Server se aayega, guess / random se KABHI nahi banega. -->
+<!-- FLOW: Load Staff -> GET /api/common/staff/:shopId -> Load Salary -> GET /api/common/staff/:shopId/salary?month=&year= -> Pay -> POST /api/common/staff/:shopId/salary/pay -> dobara Server se Load -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur salary browser storage me save hoti thi, aur khaali hone pe fake salary bana deta tha. Ab FULL HTML + RESPONSIVE + Server only + No Fake Data hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Staff Salary</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+input,select{font-family:inherit;outline:none}
+.salary-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.salary-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.salary-header b{display:block;font-weight:900;font-size:16px}
+.salary-header span{font-size:11px;color:#64748b;font-weight:600}
+.pay-all-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.month-bar{background:#fff;margin:12px;border:1px solid #f1f5f9;border-radius:16px;padding:14px;display:flex;align-items:center;gap:10px}
+.month-bar button{background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer;flex-shrink:0}
+.month-bar .month-label{flex:1;text-align:center;min-width:0}
+.month-bar .month-label b{display:block;font-weight:900;font-size:15px}
+.month-bar .month-label span{font-size:11px;color:#64748b;font-weight:600}
+.month-bar select{padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-weight:700;font-size:12px;background:#fff;flex-shrink:0}
+.salary-stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:0 12px 12px}
+.s-stat-card{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:10px;display:flex;gap:8px;align-items:center;min-width:0}
+.s-icon{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.s-stat-card div{flex:1;min-width:0}
+.s-stat-card b{display:block;font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-stat-card span{font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase}
+.salary-list{padding:0 12px;display:flex;flex-direction:column;gap:10px}
+.salary-card{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:14px;display:flex;gap:12px;align-items:center}
+.salary-card.paid{border-color:#bbf7d0}
+.salary-card.pending{border-color:#fde68a}
+.salary-avatar{width:48px;height:48px;border-radius:50%;background:#e2e8f0;display:grid;place-items:center;font-weight:900;font-size:18px;flex-shrink:0}
+.salary-info{flex:1;min-width:0}
+.salary-info b{display:block;font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.salary-info span{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.salary-break{font-size:11px;color:#64748b;font-weight:600;margin-top:6px;line-height:1.5}
+.salary-break b{color:#0f172a;font-size:11px;display:inline}
+.salary-meta{text-align:right;flex-shrink:0}
+.salary-meta b{display:block;font-weight:900;font-size:15px}
+.salary-meta .badge{font-size:10px;font-weight:800;padding:4px 8px;border-radius:20px;display:inline-block;margin-top:4px;white-space:nowrap}
+.badge.paid{background:#dcfce7;color:#166534}
+.badge.pending{background:#fef3c7;color:#92400e}
+.badge.partial{background:#f0f9ff;color:#0369a1}
+.pay-btn{margin-top:8px;background:#0f172a;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:900;font-size:11px;cursor:pointer;white-space:nowrap;width:100%}
+.pay-btn:disabled{opacity:.5;cursor:not-allowed}
+.pay-btn.paid-btn{background:#f1f5f9;color:#64748b}
+.salary-empty{text-align:center;padding:60px 20px}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.salary-empty b{display:block;font-weight:900}
+.salary-empty span{font-size:12px;color:#64748b;font-weight:600;margin:4px 0 16px;display:block}
+.primary-btn{background:#0f172a;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:900;cursor:pointer}
+.salary-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:end center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
+.modal-box{position:relative;background:#fff;width:100%;max-width:500px;border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;animation:slideUp .3s}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 0;position:sticky;top:0;background:#fff;z-index:1}
+.modal-header button{background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer;flex-shrink:0}
+.modal-body{padding:20px}
+.modal-body label{display:block;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;margin:12px 0 6px}
+.modal-input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px;background:#fff}
+.modal-input:focus{border-color:#0f172a}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.calc-box{background:#f8fafc;border-radius:12px;padding:12px;margin-top:12px;font-size:12px;font-weight:600;line-height:1.8}
+.calc-box .row{display:flex;justify-content:space-between;gap:10px}
+.calc-box .row.total{border-top:1px solid #e2e8f0;margin-top:8px;padding-top:8px;font-weight:900;font-size:14px}
+.modal-actions{display:flex;gap:10px;padding:16px 20px 20px;position:sticky;bottom:0;background:#fff;border-top:1px solid #f1f5f9}
+.secondary-btn{flex:1;background:#f1f5f9;border:none;padding:12px;border-radius:10px;font-weight:800;cursor:pointer}
+.primary-btn2{flex:1;background:#0f172a;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:900;cursor:pointer}
+.primary-btn2:disabled{opacity:.5;cursor:not-allowed}
+/* LAPTOP */
+@media(min-width:721px){
+  .salary-stats{grid-template-columns:repeat(4,1fr)}
+  .modal-box{border-radius:24px;margin-bottom:20px}
+}
+/* MOBILE FIX - Stats 4 dabne wala fix yahi hai */
+@media(max-width:600px){
+  .salary-root{max-width:100%}
+  .salary-header{padding:12px}
+  .salary-header b{font-size:15px}
+  .month-bar{margin:10px;padding:12px}
+  .salary-stats{grid-template-columns:1fr 1fr;padding:0 10px 10px;gap:8px}
+  .salary-list{padding:0 10px}
+  .salary-card{padding:12px 10px;gap:10px;flex-wrap:wrap}
+  .salary-avatar{width:44px;height:44px;font-size:16px}
+  .salary-meta{width:100%;text-align:left;border-top:1px solid #f1f5f9;padding-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .salary-meta b{font-size:14px}
+  .pay-btn{width:auto;margin-top:0}
+  .two-col{gap:8px}
+}
+</style>
+</head>
+<body>
+<div id="salaryRoot" class="salary-root">
+  <div class="salary-header">
+    <button id="salaryBack" class="back-btn">‹</button>
+    <div style="min-width:0;flex:1">
+      <b>Staff Salary</b>
+      <span id="salarySubHeader">Pay monthly salary</span>
+    </div>
+    <button id="payAllBtn" class="pay-all-btn">💰 Pay All</button>
+  </div>
+
+  <div class="month-bar">
+    <button id="prevMonthBtn">‹</button>
+    <div class="month-label"><b id="monthLabel">November 2026</b><span id="monthSub">Salary for this month</span></div>
+    <select id="monthSelect"></select>
+    <button id="nextMonthBtn">›</button>
+  </div>
+
+  <div class="salary-stats">
+    <div class="s-stat-card"><span class="s-icon" style="background:#f0f9ff">👥</span><div><b id="totalStaffCount">0</b><span>Total Staff</span></div></div>
+    <div class="s-stat-card"><span class="s-icon" style="background:#f0fdf4">💰</span><div><b id="totalPayable">₹0</b><span>Total Payable</span></div></div>
+    <div class="s-stat-card"><span class="s-icon" style="background:#dcfce7">✅</span><div><b id="totalPaid">₹0</b><span>Paid</span></div></div>
+    <div class="s-stat-card"><span class="s-icon" style="background:#fef3c7">⏳</span><div><b id="totalPending">₹0</b><span>Pending</span></div></div>
+  </div>
+
+  <div id="salaryList" class="salary-list"></div>
+
+  <div id="salaryEmpty" class="salary-empty" style="display:none">
+    <div class="empty-icon">💰</div>
+    <b id="salaryEmptyTitle">No staff members yet</b>
+    <span id="salaryEmptySub">Add staff first, then salary will show here</span>
+    <button id="emptyAddStaffBtn" class="primary-btn">+ Add Staff</button>
+  </div>
+
+  <!-- PAY MODAL -->
+  <div id="paySalaryModal" class="salary-modal" style="display:none">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header"><b>Pay Salary</b><button id="closePayModal">✕</button></div>
+      <div class="modal-body">
+        <div id="payStaffInfo" style="background:#f8fafc;border-radius:12px;padding:12px;display:flex;gap:10px;align-items:center"></div>
+        <label>Base Salary (₹) *</label>
+        <input type="number" id="payBaseSalary" class="modal-input">
+        <div class="two-col">
+          <div><label>Advance / Loan (₹)</label><input type="number" id="payAdvance" value="0" class="modal-input"></div>
+          <div><label>Deduction (₹)</label><input type="number" id="payDeduction" value="0" class="modal-input"></div>
+        </div>
+        <div class="two-col">
+          <div><label>Bonus (₹)</label><input type="number" id="payBonus" value="0" class="modal-input"></div>
+          <div><label>Present Days</label><input type="number" id="payPresentDays" value="30" class="modal-input"></div>
+        </div>
+        <label>Payment Method</label>
+        <select id="payMethod" class="modal-input"><option value="cash">Cash 💵</option><option value="upi">UPI 📱</option><option value="bank">Bank Transfer 🏦</option></select>
+        <label>Note (optional)</label>
+        <input type="text" id="payNote" placeholder="November salary" class="modal-input">
+        <div class="calc-box" id="payCalcBox"></div>
+      </div>
+      <div class="modal-actions"><button id="cancelPay" class="secondary-btn">Cancel</button><button id="confirmPay" class="primary-btn2">Pay Salary 💰</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+class StaffSalaryPage {
+  constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.staff = [];
+    this.salaryRecords = [];
+    this.currentDate = new Date();
+    this.selectedStaff = null;
+  }
+
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+  getMonthKey(){
+    return `${this.currentDate.getFullYear()}-${String(this.currentDate.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  async init(){
+    this.buildMonthSelect();
+    await this.loadStaff();
+    await this.loadSalary();
+    this.bindEvents();
+  }
+
+  buildMonthSelect(){
+    const sel = document.getElementById('monthSelect');
+    if(!sel) return;
+    const now = new Date();
+    let html = '';
+    for(let i=0;i<12;i++){
+      const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      const label = d.toLocaleDateString('en-IN', { month:'short', year:'numeric' });
+      html += `<option value="${key}" ${i===0?'selected':''}>${label}</option>`;
+    }
+    sel.innerHTML = html;
+    sel.addEventListener('change', async ()=>{
+      const [y,m] = sel.value.split('-').map(Number);
+      this.currentDate = new Date(y, m-1, 1);
+      await this.loadSalary();
+    });
+  }
+
+  async loadStaff(){
+    try{
+      if(!this.shopId) return;
+      let staff = null;
+      // 1. ApiCore se - HAMESHA Server se
+      if(window.ApiCore){
+        try{ const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}`); staff = data.staff || data || null; }catch(e){ staff = null; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!staff){
+        try{
+          const res = await fetch(`/api/common/staff/${this.shopId}`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) staff = res.staff || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage + NO Fake staff - Server se nahi mila toh khaali hi rahega
+      this.staff = Array.isArray(staff) ? staff.filter(s=> s.isActive !== false) : [];
+    }catch(e){ this.staff = []; }
+  }
+
+  async loadSalary(){
+    try{
+      if(window.Loader) Loader.show('Loading salary...');
+      if(!this.shopId){
+        if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+        this.salaryRecords = [];
+        this.updateStats();
+        this.render();
+        return;
+      }
+
+      const month = this.currentDate.getMonth()+1;
+      const year = this.currentDate.getFullYear();
+      document.getElementById('monthLabel').innerText = this.currentDate.toLocaleDateString('en-IN', { month:'long', year:'numeric' });
+
+      let records = null;
+      // 1. ApiCore se - HAMESHA Server se
+      if(window.ApiCore){
+        try{ const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}/salary?month=${month}&year=${year}`); records = data.salary || data.salaries || data.records || data || null; }catch(e){ records = null; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!records){
+        try{
+          const res = await fetch(`/api/common/staff/${this.shopId}/salary?month=${month}&year=${year}`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) records = res.salary || res.salaries || res.records || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage + NO Fake / Random salary - Server se nahi mila toh khaali hi rahega, fake Paid / Unpaid KABHI nahi banayenge
+      this.salaryRecords = Array.isArray(records) ? records : [];
+
+      this.updateStats();
+      this.render();
+    }catch(e){
+      this.salaryRecords = [];
+      this.updateStats();
+      this.render();
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  getRecordForStaff(staffId){
+    return this.salaryRecords.find(r=> (r.staffId === staffId || r.staffId?._id === staffId) && (r.monthKey === this.getMonthKey() || (!r.monthKey && r.month === this.currentDate.getMonth()+1 && r.year === this.currentDate.getFullYear())));
+  }
+
+  calcPayable(staff){
+    const rec = this.getRecordForStaff(staff._id);
+    if(rec){
+      const base = rec.baseSalary ?? rec.salary ?? staff.salary ?? 0;
+      const advance = rec.advance || 0;
+      const deduction = rec.deduction || 0;
+      const bonus = rec.bonus || 0;
+      const paid = rec.paidAmount || rec.amountPaid || 0;
+      const payable = Math.max(0, base - advance - deduction + bonus);
+      return { base, advance, deduction, bonus, paid, payable, status: rec.status || (paid >= payable && payable > 0 ? 'paid' : paid > 0 ? 'partial' : 'pending'), record: rec };
+    }
+    // Record nahi hai toh Payable = Staff ki base salary - koi guess / random nahi
+    const base = staff.salary || 0;
+    return { base, advance:0, deduction:0, bonus:0, paid:0, payable: base, status:'pending', record:null };
+  }
+
+  updateStats(){
+    const totalStaff = this.staff.length;
+    let totalPayable = 0, totalPaid = 0;
+    this.staff.forEach(s=>{
+      const c = this.calcPayable(s);
+      totalPayable += c.payable;
+      totalPaid += c.paid;
+    });
+    const totalPending = Math.max(0, totalPayable - totalPaid);
+
+    document.getElementById('totalStaffCount').innerText = totalStaff;
+    document.getElementById('totalPayable').innerText = `₹${totalPayable.toLocaleString()}`;
+    document.getElementById('totalPaid').innerText = `₹${totalPaid.toLocaleString()}`;
+    document.getElementById('totalPending').innerText = `₹${totalPending.toLocaleString()}`;
+    document.getElementById('salarySubHeader').innerText = `${totalStaff} staff • Payable ₹${totalPayable.toLocaleString()} • Paid ₹${totalPaid.toLocaleString()} • Pending ₹${totalPending.toLocaleString()}`;
+  }
+
+  render(){
+    const container = document.getElementById('salaryList');
+    const empty = document.getElementById('salaryEmpty');
+
+    if(this.staff.length===0){
+      container.style.display='none';
+      empty.style.display='block';
+      document.getElementById('salaryEmptyTitle').innerText = 'No staff members yet';
+      document.getElementById('salaryEmptySub').innerText = 'Add staff first, then salary will show here';
+      document.getElementById('emptyAddStaffBtn').style.display='inline-block';
+      return;
+    }
+
+    container.style.display='flex';
+    empty.style.display='none';
+
+    container.innerHTML = this.staff.map(s=>{
+      const c = this.calcPayable(s);
+      const isPaid = c.status === 'paid';
+      const isPartial = c.status === 'partial';
+      const badgeClass = isPaid ? 'paid' : isPartial ? 'partial' : 'pending';
+      const badgeText = isPaid ? 'PAID ✅' : isPartial ? 'PARTIAL ⏳' : 'PENDING ⏳';
+
+      return `
+        <div class="salary-card ${isPaid ? 'paid' : 'pending'}">
+          <div class="salary-avatar">${s.name?.charAt(0)||'S'}</div>
+          <div class="salary-info">
+            <b>${s.name||'Staff'} • ${s.role||''}</b>
+            <span>📱 ${s.phone||''} • Base: ₹${(c.base||0).toLocaleString()}/mo</span>
+            <div class="salary-break">
+              ${c.advance ? `Advance: -₹${c.advance.toLocaleString()} &nbsp;` : ''}${c.deduction ? `Deduction: -₹${c.deduction.toLocaleString()} &nbsp;` : ''}${c.bonus ? `Bonus: +₹${c.bonus.toLocaleString()}` : ''}
+              ${c.paid ? `<br>Paid: <b style="color:#166534">₹${c.paid.toLocaleString()}</b>` : ''}
+              ${c.record?.paymentMethod ? ` • Via ${c.record.paymentMethod}` : ''}
+              ${c.record?.paidAt ? ` • ${new Date(c.record.paidAt).toLocaleDateString('en-IN')}` : ''}
+            </div>
+          </div>
+          <div class="salary-meta">
+            <b>₹${c.payable.toLocaleString()}</b>
+            <span class="badge ${badgeClass}">${badgeText}</span>
+            <button class="pay-btn ${isPaid ? 'paid-btn' : ''}" data-pay="${s._id}" ${isPaid ? 'disabled' : ''}>${isPaid ? 'Paid ✅' : isPartial ? 'Pay Remaining' : 'Pay Now 💰'}</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('[data-pay]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const staffId = btn.dataset.pay;
+        this.openPayModal(staffId);
+      });
+    });
+  }
+
+  openPayModal(staffId){
+    const staff = this.staff.find(s=> s._id===staffId);
+    if(!staff) return;
+    this.selectedStaff = staff;
+    const c = this.calcPayable(staff);
+
+    document.getElementById('payStaffInfo').innerHTML = `<div style="width:44px;height:44px;background:#e2e8f0;border-radius:50%;display:grid;place-items:center;font-weight:900;flex-shrink:0">${staff.name?.charAt(0)||'S'}</div><div style="flex:1;min-width:0"><b style="display:block;font-weight:900;font-size:14px">${staff.name} • ${staff.role}</b><span style="font-size:11px;color:#64748b;font-weight:600">${this.currentDate.toLocaleDateString('en-IN',{month:'long',year:'numeric'})} • Payable ₹${c.payable.toLocaleString()}</span></div>`;
+    document.getElementById('payBaseSalary').value = c.base;
+    document.getElementById('payAdvance').value = c.advance || 0;
+    document.getElementById('payDeduction').value = c.deduction || 0;
+    document.getElementById('payBonus').value = c.bonus || 0;
+    document.getElementById('payPresentDays').value = c.record?.presentDays || 30;
+    document.getElementById('payNote').value = c.record?.note || `${this.currentDate.toLocaleDateString('en-IN',{month:'long',year:'numeric'})} salary`;
+    this.updateCalc();
+    document.getElementById('paySalaryModal').style.display='grid';
+  }
+
+  updateCalc(){
+    const base = parseInt(document.getElementById('payBaseSalary').value)||0;
+    const advance = parseInt(document.getElementById('payAdvance').value)||0;
+    const deduction = parseInt(document.getElementById('payDeduction').value)||0;
+    const bonus = parseInt(document.getElementById('payBonus').value)||0;
+    const payable = Math.max(0, base - advance - deduction + bonus);
+    const alreadyPaid = this.selectedStaff ? this.calcPayable(this.selectedStaff).paid : 0;
+    const remaining = Math.max(0, payable - alreadyPaid);
+    document.getElementById('payCalcBox').innerHTML = `
+      <div class="row"><span>Base Salary</span><b>₹${base.toLocaleString()}</b></div>
+      <div class="row"><span>Advance / Loan</span><b style="color:#ef4444">- ₹${advance.toLocaleString()}</b></div>
+      <div class="row"><span>Deduction</span><b style="color:#ef4444">- ₹${deduction.toLocaleString()}</b></div>
+      <div class="row"><span>Bonus</span><b style="color:#10b981">+ ₹${bonus.toLocaleString()}</b></div>
+      <div class="row total"><span>Payable This Month</span><b>₹${payable.toLocaleString()}</b></div>
+      ${alreadyPaid ? `<div class="row"><span>Already Paid</span><b>₹${alreadyPaid.toLocaleString()}</b></div><div class="row total"><span>Remaining To Pay</span><b>₹${remaining.toLocaleString()}</b></div>` : ''}
+    `;
+    return { base, advance, deduction, bonus, payable, alreadyPaid, remaining };
+  }
+
+  closePayModal(){
+    document.getElementById('paySalaryModal').style.display='none';
+    this.selectedStaff = null;
+  }
+
+  async paySalary(){
+    if(!this.shopId || !this.selectedStaff){
+      if(window.Toast) Toast.show('Staff not selected', 'error');
+      return;
+    }
+    const calc = this.updateCalc();
+    if(calc.remaining <= 0){
+      if(window.Toast) Toast.show('Is staff ki salary already paid hai', 'info');
+      return;
+    }
+    const btn = document.getElementById('confirmPay');
+    btn.innerText='Paying...'; btn.disabled=true;
+
+    try{
+      const payload = {
+        shopId: this.shopId,
+        staffId: this.selectedStaff._id,
+        staffName: this.selectedStaff.name,
+        month: this.currentDate.getMonth()+1,
+        year: this.currentDate.getFullYear(),
+        monthKey: this.getMonthKey(),
+        baseSalary: calc.base,
+        advance: calc.advance,
+        deduction: calc.deduction,
+        bonus: calc.bonus,
+        presentDays: parseInt(document.getElementById('payPresentDays').value)||30,
+        payableAmount: calc.payable,
+        paidAmount: calc.remaining,
+        totalPaid: calc.alreadyPaid + calc.remaining,
+        status: 'paid',
+        paymentMethod: document.getElementById('payMethod').value,
+        note: document.getElementById('payNote').value,
+        paidAt: new Date().toISOString()
+      };
+
+      let saved = false;
+      // 1. ApiCore se - HAMESHA Server pe
+      if(window.ApiCore){
+        try{ await window.ApiCore.post(`/api/common/staff/${this.shopId}/salary/pay`, payload); saved = true; }catch(e){ saved = false; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga
+      if(!saved){
+        const res = await fetch(`/api/common/staff/${this.shopId}/salary/pay`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify(payload) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.salary || !res.error)) saved = true;
+      }
+      // 3. Server pe save nahi hua toh dhokha nahi denge - browser storage me save karke "paid" nahi bolenge
+      if(!saved){
+        if(window.Toast) Toast.show('❌ Server me save nahi hua - Salary pay nahi hui', 'error');
+        return;
+      }
+
+      this.closePayModal();
+      await this.loadSalary();
+      if(window.Toast) Toast.show(`Salary paid ✅ ₹${calc.remaining.toLocaleString()} to ${this.selectedStaff?.name || ''}`, 'success');
+    }catch(e){
+      if(window.Toast) Toast.show('Failed to pay salary - Server error', 'error');
+    }finally{
+      btn.innerText='Pay Salary 💰'; btn.disabled=false;
+    }
+  }
+
+  async payAll(){
+    const pending = this.staff.filter(s=> this.calcPayable(s).status !== 'paid');
+    if(pending.length===0){
+      if(window.Toast) Toast.show('Sabki salary already paid hai ✅', 'info');
+      return;
+    }
+    if(!confirm(`${pending.length} staff ki salary pay karni hai? Total ₹${pending.reduce((sum,s)=> sum + Math.max(0, this.calcPayable(s).payable - this.calcPayable(s).paid), 0).toLocaleString()}`)) return;
+
+    let success = 0, fail = 0;
+    for(const s of pending){
+      const c = this.calcPayable(s);
+      const remaining = Math.max(0, c.payable - c.paid);
+      if(remaining <= 0) continue;
+      const payload = {
+        shopId: this.shopId, staffId: s._id, staffName: s.name,
+        month: this.currentDate.getMonth()+1, year: this.currentDate.getFullYear(), monthKey: this.getMonthKey(),
+        baseSalary: c.base, advance: c.advance, deduction: c.deduction, bonus: c.bonus,
+        presentDays: 30, payableAmount: c.payable, paidAmount: remaining, totalPaid: c.paid + remaining, status:'paid',
+        paymentMethod:'cash', note:`${this.currentDate.toLocaleDateString('en-IN',{month:'long',year:'numeric'})} salary`, paidAt: new Date().toISOString()
+      };
+      try{
+        let saved = false;
+        if(window.ApiCore){ try{ await window.ApiCore.post(`/api/common/staff/${this.shopId}/salary/pay`, payload); saved = true; }catch(e){ saved = false; } }
+        if(!saved){
+          const res = await fetch(`/api/common/staff/${this.shopId}/salary/pay`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify(payload) }).then(r=>r.json()).catch(()=>null);
+          if(res && (res.success || res.salary || !res.error)) saved = true;
+        }
+        if(saved) success++; else fail++;
+      }catch(e){ fail++; }
+    }
+    await this.loadSalary();
+    if(window.Toast) Toast.show(`${success} salary paid ✅ ${fail ? `• ${fail} fail` : ''}`, success ? 'success' : 'error');
+  }
+
+  bindEvents(){
+    document.getElementById('salaryBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('emptyAddStaffBtn')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/staff/staff-add.html?shopId=${this.shopId}`);
+    document.getElementById('payAllBtn')?.addEventListener('click', ()=> this.payAll());
+    document.getElementById('closePayModal')?.addEventListener('click', ()=> this.closePayModal());
+    document.getElementById('cancelPay')?.addEventListener('click', ()=> this.closePayModal());
+    document.getElementById('paySalaryModal')?.querySelector('.modal-backdrop')?.addEventListener('click', ()=> this.closePayModal());
+    document.getElementById('confirmPay')?.addEventListener('click', ()=> this.paySalary());
+
+    ['payBaseSalary','payAdvance','payDeduction','payBonus'].forEach(id=>{
+      document.getElementById(id)?.addEventListener('input', ()=> this.updateCalc());
+    });
+
+    document.getElementById('prevMonthBtn')?.addEventListener('click', async ()=>{ this.currentDate.setMonth(this.currentDate.getMonth()-1); const sel=document.getElementById('monthSelect'); if(sel) sel.value=this.getMonthKey(); await this.loadSalary(); });
+    document.getElementById('nextMonthBtn')?.addEventListener('click', async ()=>{ this.currentDate.setMonth(this.currentDate.getMonth()+1); const sel=document.getElementById('monthSelect'); if(sel) sel.value=this.getMonthKey(); await this.loadSalary(); });
+  }
+}
+
+window.StaffSalaryPageInstance = new StaffSalaryPage();
+document.addEventListener('DOMContentLoaded', ()=> window.StaffSalaryPageInstance.init());
+</script>
+</body>
+</html>

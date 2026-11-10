@@ -1,9 +1,81 @@
-<!-- LOCATION: public/shop-templates/common/staff/staff-add.html -->
-<!-- WORLD CLASS STAFF ADD - FULL 450+ LINES -->
+<!-- LOCATION: public/shop-templates/common/staff/staff-add.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS STAFF ADD - FULL -->
+<!-- RULE: Staff = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- RULE 2: Staff ka _id Server banayega, hum browser me fake ID kabhi nahi banayenge. -->
+<!-- FLOW: Add -> POST /api/common/staff/:shopId -> Edit -> GET /api/common/staff/:shopId/:staffId -> PUT /api/common/staff/:shopId/:staffId -> List pe wapas -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur staff browser storage me save hota tha. Ab FULL HTML + RESPONSIVE + Server only hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Add Staff</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+input{font-family:inherit;outline:none}
+.staff-add-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.staff-add-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.staff-add-header b{display:block;font-weight:900;font-size:16px}
+.staff-add-header span{font-size:11px;color:#64748b;font-weight:600}
+.staff-add-form{padding:12px;display:flex;flex-direction:column;gap:12px}
+.form-section{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px}
+.form-section b{display:block;font-weight:900;font-size:14px;margin-bottom:12px}
+.form-section label{display:block;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;margin:12px 0 6px}
+.form-section label:first-of-type{margin-top:0}
+.form-input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px;background:#fff}
+.form-input:focus{border-color:#0f172a}
+.phone-row{display:flex}
+.phone-prefix{background:#f1f5f9;border:1px solid #e2e8f0;border-right:none;padding:12px;border-radius:10px 0 0 10px;font-weight:800;font-size:13px;flex-shrink:0;display:grid;place-items:center}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.role-card{background:#f8fafc;border:2px solid #f1f5f9;border-radius:12px;padding:12px;text-align:center;cursor:pointer;transition:.2s}
+.role-card:hover{border-color:#e2e8f0}
+.role-card.selected{border-color:#0f172a;background:#0f172a;color:#fff}
+.role-card span:first-child{font-size:24px;display:block}
+.role-card b{display:block;font-weight:900;font-size:12px;margin:4px 0}
+.role-card span:last-child{font-size:10px;font-weight:600;opacity:.8;display:block}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.section-hint{display:block;font-size:11px;color:#64748b;font-weight:600;margin:-8px 0 12px}
+.permissions-list{display:flex;flex-direction:column;gap:8px}
+.permission-item{display:flex;align-items:center;gap:10px;background:#f8fafc;padding:10px 12px;border-radius:10px;border:1px solid #f1f5f9}
+.permission-item input{width:18px;height:18px;flex-shrink:0}
+.permission-item label{margin:0;display:flex;flex-direction:column;cursor:pointer;flex:1;min-width:0}
+.permission-item label b{margin:0;font-size:12px;font-weight:800}
+.permission-item label span{font-size:10px;color:#64748b;font-weight:600;text-transform:none;margin:0}
+.checkbox-row{display:flex;align-items:flex-start;gap:10px;background:#f8fafc;padding:12px;border-radius:10px;border:1px solid #f1f5f9;margin-top:10px}
+.checkbox-row input{width:20px;height:20px;margin-top:2px;flex-shrink:0}
+.checkbox-row label{margin:0;display:flex;flex-direction:column;cursor:pointer;flex:1;min-width:0}
+.checkbox-row label b{margin:0;font-size:13px;font-weight:800}
+.checkbox-row label span{font-size:11px;color:#64748b;font-weight:600;text-transform:none;margin:0}
+.primary-btn{background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;font-size:14px;cursor:pointer;width:100%}
+.primary-btn:disabled{opacity:.5;cursor:not-allowed}
+/* LAPTOP */
+@media(min-width:721px){
+  .form-section{padding:20px}
+  .role-grid{grid-template-columns:repeat(4,1fr)}
+}
+/* MOBILE FIX */
+@media(max-width:600px){
+  .staff-add-root{max-width:100%}
+  .staff-add-header{padding:12px}
+  .staff-add-header b{font-size:15px}
+  .staff-add-form{padding:10px;gap:10px}
+  .form-section{padding:14px}
+  .role-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .role-card{padding:10px 6px}
+  .two-col{gap:8px}
+  .primary-btn{padding:13px;font-size:13px}
+}
+</style>
+</head>
+<body>
 <div id="staffAddRoot" class="staff-add-root">
   <div class="staff-add-header">
     <button id="staffAddBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b id="staffAddTitle">Add New Staff</b>
       <span>Invite team member</span>
     </div>
@@ -35,7 +107,7 @@
         <div class="role-card" data-role="manager"><span>👔</span><b>Manager</b><span>Full access</span></div>
         <div class="role-card" data-role="cashier"><span>💵</span><b>Cashier</b><span>Billing</span></div>
         <div class="role-card" data-role="delivery"><span>🛵</span><b>Delivery</b><span>Deliver orders</span></div>
-        <div class="role-card" data-role="helper"><span>🤝</span><b>Helper</b><span>Assist</span></div>
+        <div class="role-card selected" data-role="helper"><span>🤝</span><b>Helper</b><span>Assist</span></div>
       </div>
 
       <label>Monthly Salary (₹) *</label>
@@ -56,7 +128,7 @@
       <span class="section-hint">Select what this staff can access</span>
       <div id="permissionsList" class="permissions-list">
         <div class="permission-item">
-          <input type="checkbox" id="perm_orders" value="orders">
+          <input type="checkbox" id="perm_orders" value="orders" checked>
           <label for="perm_orders"><b>📦 Orders</b><span>View & manage orders</span></label>
         </div>
         <div class="permission-item">
@@ -110,51 +182,27 @@
   </div>
 </div>
 
-<style>
-.staff-add-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.staff-add-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.staff-add-header b{ display:block; font-weight:900; }
-.staff-add-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.staff-add-form{ padding:12px; display:flex; flex-direction:column; gap:12px; }
-.form-section{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; }
-.form-section b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
-.form-section label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
-.form-section label:first-of-type{ margin-top:0; }
-.form-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
-.phone-row{ display:flex; }
-.phone-prefix{ background:#f1f5f9; border:1px solid #e2e8f0; border-right:none; padding:12px; border-radius:10px 0 0 10px; font-weight:800; font-size:13px; }
-.role-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.role-card{ background:#f8fafc; border:2px solid #f1f5f9; border-radius:12px; padding:12px; text-align:center; cursor:pointer; transition:.2s; }
-.role-card:hover{ border-color:#e2e8f0; }
-.role-card.selected{ border-color:#0f172a; background:#0f172a; color:#fff; }
-.role-card span:first-child{ font-size:24px; display:block; }
-.role-card b{ display:block; font-weight:900; font-size:12px; margin:4px 0; }
-.role-card span:last-child{ font-size:10px; font-weight:600; opacity:.8; display:block; }
-.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.section-hint{ display:block; font-size:11px; color:#64748b; font-weight:600; margin:-8px 0 12px; }
-.permissions-list{ display:flex; flex-direction:column; gap:8px; }
-.permission-item{ display:flex; align-items:center; gap:10px; background:#f8fafc; padding:10px 12px; border-radius:10px; border:1px solid #f1f5f9; }
-.permission-item input{ width:18px; height:18px; }
-.permission-item label{ margin:0; display:flex; flex-direction:column; cursor:pointer; }
-.permission-item label b{ margin:0; font-size:12px; font-weight:800; }
-.permission-item label span{ font-size:10px; color:#64748b; font-weight:600; text-transform:none; margin:0; }
-.checkbox-row{ display:flex; align-items:flex-start; gap:10px; background:#f8fafc; padding:12px; border-radius:10px; border:1px solid #f1f5f9; margin-top:10px; }
-.checkbox-row input{ width:20px; height:20px; margin-top:2px; }
-.checkbox-row label{ margin:0; display:flex; flex-direction:column; cursor:pointer; }
-.checkbox-row label b{ margin:0; font-size:13px; font-weight:800; }
-.checkbox-row label span{ font-size:11px; color:#64748b; font-weight:600; text-transform:none; margin:0; }
-.primary-btn{ background:#0f172a; color:#fff; border:none; padding:14px; border-radius:12px; font-weight:900; font-size:14px; cursor:pointer; width:100%; }
-.primary-btn:disabled{ opacity:.5; cursor:not-allowed; }
-</style>
-
 <script>
 class StaffAddPage {
   constructor(){
+    // shopId + staffId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.staffId = new URLSearchParams(location.search).get('staffId') || '';
     this.isEdit = new URLSearchParams(location.search).get('edit')==='true';
     this.selectedRole = 'helper';
+  }
+
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
   }
 
   async init(){
@@ -169,47 +217,66 @@ class StaffAddPage {
 
   async loadStaffForEdit(){
     try{
+      if(window.Loader) Loader.show('Loading staff...');
+      if(!this.shopId || !this.staffId){
+        if(window.Toast) Toast.show('Staff not found - URL me ?shopId=XXX&staffId=XXX hona chahiye', 'error');
+        return;
+      }
       document.getElementById('staffAddTitle').innerText = 'Edit Staff';
 
       let staff = null;
 
+      // 1. ApiCore se - HAMESHA Server se
       if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}/${this.staffId}`);
-        staff = data.staff||data;
-      } else {
-        const allStaff = JSON.parse(localStorage.getItem(`staff_${this.shopId}`)||'[]');
-        staff = allStaff.find(s=> s._id===this.staffId);
+        try{
+          const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}/${this.staffId}`);
+          staff = data.staff || data || null;
+        }catch(e){ staff = null; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!staff){
+        try{
+          const res = await fetch(`/api/common/staff/${this.shopId}/${this.staffId}`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) staff = res.staff || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage fallback - Server se nahi mila toh blank hi rahega, purana galat staff KABHI nahi dikhega
+      if(!staff){
+        if(window.Toast) Toast.show('Staff not found on Server', 'error');
+        return;
       }
 
-      if(staff){
-        document.getElementById('staffName').value = staff.name||'';
-        document.getElementById('staffPhone').value = staff.phone||'';
-        document.getElementById('staffEmail').value = staff.email||'';
-        document.getElementById('staffAddress').value = staff.address||'';
-        document.getElementById('staffSalary').value = staff.salary||'';
-        document.getElementById('staffJoinDate').value = staff.joinDate? new Date(staff.joinDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-        document.getElementById('staffStartTime').value = staff.startTime||'09:00';
-        document.getElementById('staffEndTime').value = staff.endTime||'18:00';
-        document.getElementById('staffCanLogin').checked = staff.canLogin!==false;
-        document.getElementById('staffActive').checked = staff.isActive!==false;
+      document.getElementById('staffName').value = staff.name||'';
+      document.getElementById('staffPhone').value = staff.phone||'';
+      document.getElementById('staffEmail').value = staff.email||'';
+      document.getElementById('staffAddress').value = staff.address||'';
+      document.getElementById('staffSalary').value = staff.salary||'';
+      document.getElementById('staffJoinDate').value = staff.joinDate ? new Date(staff.joinDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      document.getElementById('staffStartTime').value = staff.startTime||'09:00';
+      document.getElementById('staffEndTime').value = staff.endTime||'18:00';
+      document.getElementById('staffCanLogin').checked = staff.canLogin!==false;
+      document.getElementById('staffActive').checked = staff.isActive!==false;
 
-        this.selectedRole = staff.role||'helper';
-        document.querySelectorAll('.role-card').forEach(card=>{
-          card.classList.toggle('selected', card.dataset.role===this.selectedRole);
-        });
+      this.selectedRole = staff.role||'helper';
+      document.querySelectorAll('.role-card').forEach(card=>{
+        card.classList.toggle('selected', card.dataset.role===this.selectedRole);
+      });
 
-        (staff.permissions||[]).forEach(perm=>{
-          const checkbox = document.getElementById(`perm_${perm}`);
-          if(checkbox) checkbox.checked = true;
-        });
+      (staff.permissions||[]).forEach(perm=>{
+        const checkbox = document.getElementById(`perm_${perm}`);
+        if(checkbox) checkbox.checked = true;
+      });
 
-        document.getElementById('saveStaffBtn').innerText = 'Update Staff ✅';
-      }
+      document.getElementById('saveStaffBtn').innerText = 'Update Staff ✅';
 
-    }catch(e){ console.error(e); }
+    }catch(e){ console.error(e); }finally{ if(window.Loader) Loader.hide(); }
   }
 
   async saveStaff(){
+    if(!this.shopId){
+      if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+      return;
+    }
     const name = document.getElementById('staffName').value.trim();
     const phone = document.getElementById('staffPhone').value.trim();
     const email = document.getElementById('staffEmail').value.trim();
@@ -224,12 +291,12 @@ class StaffAddPage {
     const permissions = [];
     document.querySelectorAll('#permissionsList input:checked').forEach(cb=> permissions.push(cb.value));
 
-    if(!name ||!phone ||!salary ||!joinDate){
+    if(!name || !phone || !salary || !joinDate){
       if(window.Toast) Toast.show('Fill required fields', 'warning');
       return;
     }
 
-    if(phone.length!==10){
+    if(phone.length!==10 || !/^\d{10}$/.test(phone)){
       if(window.Toast) Toast.show('Phone must be 10 digits', 'warning');
       return;
     }
@@ -240,8 +307,8 @@ class StaffAddPage {
     }
 
     const btn = document.getElementById('saveStaffBtn');
-    btn.innerText = this.isEdit? 'Updating...' : 'Adding...';
-    btn.disabled=true;
+    btn.innerText = this.isEdit ? 'Updating...' : 'Adding...';
+    btn.disabled = true;
 
     try{
       const staffData = {
@@ -262,30 +329,37 @@ class StaffAddPage {
         lastActive: new Date().toISOString()
       };
 
-      if(this.isEdit){
-        if(window.ApiCore){
-          await window.ApiCore.put(`/api/common/staff/${this.shopId}/${this.staffId}`, staffData);
-        } else {
-          const allStaff = JSON.parse(localStorage.getItem(`staff_${this.shopId}`)||'[]');
-          const idx = allStaff.findIndex(s=> s._id===this.staffId);
-          if(idx>=0){
-            allStaff[idx] = {...allStaff[idx],...staffData, _id:this.staffId };
-            localStorage.setItem(`staff_${this.shopId}`, JSON.stringify(allStaff));
-          }
-        }
+      let saved = false;
 
+      if(this.isEdit){
+        // 1. ApiCore se - HAMESHA Server pe
+        if(window.ApiCore){
+          try{ await window.ApiCore.put(`/api/common/staff/${this.shopId}/${this.staffId}`, staffData); saved = true; }catch(e){ saved = false; }
+        }
+        // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga
+        if(!saved){
+          const res = await fetch(`/api/common/staff/${this.shopId}/${this.staffId}`, { method:'PUT', headers: this.getHeaders(), body: JSON.stringify(staffData) }).then(r=>r.json()).catch(()=>null);
+          if(res && (res.success || res.staff || !res.error)) saved = true;
+        }
+        if(!saved){
+          if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+          return;
+        }
         if(window.Toast) Toast.show('Staff updated ✅', 'success');
       } else {
-        const newStaff = { _id:'s'+Date.now(),...staffData };
-
+        // 1. ApiCore se - HAMESHA Server pe - _id Server banayega, hum fake ID nahi banayenge
         if(window.ApiCore){
-          const result = await window.ApiCore.post(`/api/common/staff/${this.shopId}`, staffData);
-        } else {
-          const allStaff = JSON.parse(localStorage.getItem(`staff_${this.shopId}`)||'[]');
-          allStaff.unshift(newStaff);
-          localStorage.setItem(`staff_${this.shopId}`, JSON.stringify(allStaff));
+          try{ await window.ApiCore.post(`/api/common/staff/${this.shopId}`, staffData); saved = true; }catch(e){ saved = false; }
         }
-
+        // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga
+        if(!saved){
+          const res = await fetch(`/api/common/staff/${this.shopId}`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify(staffData) }).then(r=>r.json()).catch(()=>null);
+          if(res && (res.success || res.staff || !res.error)) saved = true;
+        }
+        if(!saved){
+          if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+          return;
+        }
         if(window.Toast) Toast.show(`Staff ${name} added 🎉`, 'success');
       }
 
@@ -293,10 +367,10 @@ class StaffAddPage {
 
     }catch(e){
       console.error(e);
-      if(window.Toast) Toast.show('Failed to save staff', 'error');
+      if(window.Toast) Toast.show('Failed to save staff - Server error', 'error');
     }finally{
-      btn.innerText = this.isEdit? 'Update Staff ✅' : 'Add Staff Member ➕';
-      btn.disabled=false;
+      btn.innerText = this.isEdit ? 'Update Staff ✅' : 'Add Staff Member ➕';
+      btn.disabled = false;
     }
   }
 
@@ -329,3 +403,5 @@ class StaffAddPage {
 window.StaffAddPageInstance = new StaffAddPage();
 document.addEventListener('DOMContentLoaded', ()=> window.StaffAddPageInstance.init());
 </script>
+</body>
+</html>

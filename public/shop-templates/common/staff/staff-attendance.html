@@ -1,9 +1,103 @@
-<!-- LOCATION: public/shop-templates/common/staff/staff-attendance.html -->
-<!-- WORLD CLASS STAFF ATTENDANCE - FULL 400+ LINES -->
+<!-- LOCATION: public/shop-templates/common/staff/staff-attendance.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS STAFF ATTENDANCE - FULL -->
+<!-- RULE: Attendance = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- RULE 2: Fake / Mock / Random attendance KABHI nahi banega. Khaali hai toh khaali hi dikhega. -->
+<!-- FLOW: Load Staff -> GET /api/common/staff/:shopId -> Load Attendance -> GET /api/common/staff/:shopId/attendance?month=&year= -> Save -> POST /api/common/staff/:shopId/attendance -> dobara Server se Load -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur attendance browser storage me save hota tha, aur khaali hone pe Math.random() se 10 din ka fake attendance bana deta tha. Ab FULL HTML + RESPONSIVE + Server only + No Fake Data hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Staff Attendance</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+input,select{font-family:inherit;outline:none}
+.attendance-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.attendance-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.attendance-header b{display:block;font-weight:900;font-size:16px}
+.attendance-header span{font-size:11px;color:#64748b;font-weight:600}
+.mark-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.attendance-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px}
+.a-stat{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:12px;text-align:center}
+.a-stat b{display:block;font-weight:900;font-size:18px}
+.a-stat span{font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase}
+.attendance-calendar-card{background:#fff;margin:0 12px 12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9}
+.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.calendar-header b{font-weight:900}
+.cal-nav{background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer;flex-shrink:0}
+.calendar-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px}
+.calendar-weekdays span{text-align:center;font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;padding:6px 0}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calendar-day{aspect-ratio:1;display:grid;place-items:center;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;position:relative;border:1px solid transparent}
+.calendar-day:hover{border-color:#e2e8f0}
+.calendar-day.other-month{color:#cbd5e1}
+.calendar-day.today{background:#0f172a;color:#fff}
+.calendar-day.present{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.calendar-day.absent{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+.calendar-day.leave{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.calendar-legend{display:flex;gap:12px;justify-content:center;margin-top:12px;font-size:10px;font-weight:700;flex-wrap:wrap}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px}
+.legend-dot.present{background:#10b981}
+.legend-dot.absent{background:#ef4444}
+.legend-dot.leave{background:#f59e0b}
+.staff-attendance-list{background:#fff;margin:0 12px 12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9}
+.section-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.section-header b{font-weight:900}
+.attendance-list{display:flex;flex-direction:column;gap:8px}
+.attendance-item{display:flex;align-items:center;gap:10px;background:#f8fafc;padding:10px;border-radius:10px}
+.attendance-item .att-avatar{width:40px;height:40px;background:#e2e8f0;border-radius:50%;display:grid;place-items:center;font-weight:900;flex-shrink:0;font-size:14px}
+.attendance-item .att-info{flex:1;min-width:0}
+.attendance-item .att-info b{display:block;font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attendance-item .att-info span{font-size:11px;color:#64748b;font-weight:600}
+.attendance-item .att-badge{font-size:10px;font-weight:800;padding:4px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.attendance-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:end center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
+.modal-box{position:relative;background:#fff;width:100%;max-width:500px;border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;animation:slideUp .3s}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 0;position:sticky;top:0;background:#fff;z-index:2}
+.modal-header button{background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer;flex-shrink:0}
+.modal-body{padding:20px}
+.modal-body label{display:block;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;margin:12px 0 6px}
+.modal-input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600;font-size:13px;background:#fff}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.status-tabs{display:flex;gap:6px}
+.status-tab{flex:1;border:1px solid #e2e8f0;padding:10px;border-radius:8px;font-weight:800;font-size:11px;cursor:pointer;background:#fff;white-space:nowrap}
+.status-tab.active.present{background:#dcfce7;border-color:#10b981;color:#166534}
+.status-tab.active.absent{background:#fee2e2;border-color:#ef4444;color:#991b1b}
+.status-tab.active.leave{background:#fef3c7;border-color:#f59e0b;color:#92400e}
+.modal-actions{display:flex;gap:10px;padding:16px 20px 20px;position:sticky;bottom:0;background:#fff;border-top:1px solid #f1f5f9}
+.secondary-btn{flex:1;background:#f1f5f9;border:none;padding:12px;border-radius:10px;font-weight:800;cursor:pointer}
+.primary-btn{flex:1;background:#0f172a;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:900;cursor:pointer}
+.primary-btn:disabled{opacity:.5;cursor:not-allowed}
+/* LAPTOP */
+@media(min-width:721px){
+  .attendance-calendar-card,.staff-attendance-list{padding:20px}
+  .modal-box{border-radius:24px;margin-bottom:20px}
+}
+/* MOBILE FIX */
+@media(max-width:600px){
+  .attendance-root{max-width:100%}
+  .attendance-header{padding:12px}
+  .attendance-stats{padding:10px;gap:6px}
+  .a-stat{padding:10px 6px}
+  .a-stat b{font-size:16px}
+  .attendance-calendar-card,.staff-attendance-list{margin:0 10px 10px;padding:14px}
+  .calendar-day{font-size:11px}
+  .status-tabs{flex-direction:column}
+  .two-col{gap:8px}
+}
+</style>
+</head>
+<body>
 <div id="attendanceRoot" class="attendance-root">
   <div class="attendance-header">
     <button id="attendanceBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>Staff Attendance</b>
       <span id="attendanceSubHeader">Track attendance</span>
     </div>
@@ -68,69 +162,33 @@
   </div>
 </div>
 
-<style>
-.attendance-root{ font-family:Outfit,sans-serif; max-width:700px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.attendance-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.attendance-header b{ display:block; font-weight:900; }
-.attendance-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.mark-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
-.attendance-stats{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:12px; }
-.a-stat{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:12px; text-align:center; }
-.a-stat b{ display:block; font-weight:900; font-size:18px; }
-.a-stat span{ font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; }
-.attendance-calendar-card{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
-.calendar-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-.calendar-header b{ font-weight:900; }
-.cal-nav{ background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-weight:900; cursor:pointer; }
-.calendar-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:8px; }
-.calendar-weekdays span{ text-align:center; font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; padding:6px 0; }
-.calendar-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-.calendar-day{ aspect-ratio:1; display:grid; place-items:center; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; position:relative; border:1px solid transparent; }
-.calendar-day:hover{ border-color:#e2e8f0; }
-.calendar-day.other-month{ color:#cbd5e1; }
-.calendar-day.today{ background:#0f172a; color:#fff; }
-.calendar-day.present{ background:#dcfce7; color:#166534; border-color:#bbf7d0; }
-.calendar-day.absent{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
-.calendar-day.leave{ background:#fef3c7; color:#92400e; border-color:#fde68a; }
-.calendar-legend{ display:flex; gap:12px; justify-content:center; margin-top:12px; font-size:10px; font-weight:700; }
-.legend-dot{ width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; }
-.legend-dot.present{ background:#10b981; }
-.legend-dot.absent{ background:#ef4444; }
-.legend-dot.leave{ background:#f59e0b; }
-.staff-attendance-list{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
-.section-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-.section-header b{ font-weight:900; }
-.attendance-list{ display:flex; flex-direction:column; gap:8px; }
-.attendance-item{ display:flex; align-items:center; gap:10px; background:#f8fafc; padding:10px; border-radius:10px; }
-.attendance-modal{ position:fixed; inset:0; z-index:9999; display:grid; place-items:end center; }
-.modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); }
-.modal-box{ position:relative; background:#fff; width:100%; max-width:500px; border-radius:24px 24px 0 0; max-height:90vh; overflow-y:auto; animation:slideUp.3s; }
-@keyframes slideUp{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
-.modal-header{ display:flex; justify-content:space-between; align-items:center; padding:20px 20px 0; position:sticky; top:0; background:#fff; }
-.modal-body{ padding:20px; }
-.modal-body label{ display:block; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin:12px 0 6px; }
-.modal-input{ width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; font-weight:600; font-size:13px; }
-.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.status-tabs{ display:flex; gap:6px; }
-.status-tab{ flex:1; border:1px solid #e2e8f0; padding:10px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; background:#fff; }
-.status-tab.active.present{ background:#dcfce7; border-color:#10b981; color:#166534; }
-.status-tab.active.absent{ background:#fee2e2; border-color:#ef4444; color:#991b1b; }
-.status-tab.active.leave{ background:#fef3c7; border-color:#f59e0b; color:#92400e; }
-.modal-actions{ display:flex; gap:10px; padding:16px 20px 20px; position:sticky; bottom:0; background:#fff; border-top:1px solid #f1f5f9; }
-.secondary-btn{ flex:1; background:#f1f5f9; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
-.primary-btn{ flex:1; background:#0f172a; color:#fff; border:none; padding:12px; border-radius:10px; font-weight:900; cursor:pointer; }
-</style>
-
 <script>
 class StaffAttendancePage {
   constructor(){
+    // shopId + staffId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.staffId = new URLSearchParams(location.search).get('staffId') || '';
     this.staff = [];
     this.attendance = [];
     this.currentMonth = new Date();
     this.selectedStatus = 'present';
+  }
+
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+  getTodayStr(){
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
 
   async init(){
@@ -143,12 +201,21 @@ class StaffAttendancePage {
 
   async loadStaff(){
     try{
+      if(!this.shopId) return;
+      let staff = null;
+      // 1. ApiCore se - HAMESHA Server se
       if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}`);
-        this.staff = data.staff||data||[];
-      } else {
-        this.staff = JSON.parse(localStorage.getItem(`staff_${this.shopId}`)||'[]');
+        try{ const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}`); staff = data.staff || data || null; }catch(e){ staff = null; }
       }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!staff){
+        try{
+          const res = await fetch(`/api/common/staff/${this.shopId}`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) staff = res.staff || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage fallback - Server se nahi mila toh khaali hi rahega
+      this.staff = Array.isArray(staff) ? staff : [];
 
       const select = document.getElementById('attendanceStaffSelect');
       if(select){
@@ -156,54 +223,58 @@ class StaffAttendancePage {
         if(this.staffId) select.value = this.staffId;
       }
 
-    }catch(e){}
+    }catch(e){ this.staff = []; }
   }
 
   async loadAttendance(){
     try{
+      if(!this.shopId){ this.attendance = []; this.updateStats(); return; }
+      let att = null;
+      const month = this.currentMonth.getMonth()+1;
+      const year = this.currentMonth.getFullYear();
+      // 1. ApiCore se - HAMESHA Server se
       if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}/attendance?month=${this.currentMonth.getMonth()+1}&year=${this.currentMonth.getFullYear()}`);
-        this.attendance = data.attendance||data||[];
-      } else {
-        this.attendance = JSON.parse(localStorage.getItem(`attendance_${this.shopId}`)||'[]');
-        if(this.attendance.length===0){
-          // Mock last 10 days
-          const today = new Date();
-          for(let i=0; i<10; i++){
-            const date = new Date(today);
-            date.setDate(date.getDate()-i);
-            this.staff.forEach(s=>{
-              this.attendance.push({ _id:'a'+Date.now()+Math.random(), shopId:this.shopId, staffId:s._id, staffName:s.name, date:date.toISOString().split('T')[0], status: Math.random()>0.2?'present':'absent', checkIn:'09:00', checkOut:'18:00', note:'' });
-            });
-          }
-        }
+        try{ const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}/attendance?month=${month}&year=${year}`); att = data.attendance || data || null; }catch(e){ att = null; }
       }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!att){
+        try{
+          const res = await fetch(`/api/common/staff/${this.shopId}/attendance?month=${month}&year=${year}`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) att = res.attendance || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage fallback + NO Fake / Mock / Random data - Khaali hai toh khaali hi rahega, fake Present / Absent KABHI nahi banayenge
+      this.attendance = Array.isArray(att) ? att : [];
 
       this.updateStats();
 
-    }catch(e){}
+    }catch(e){ this.attendance = []; this.updateStats(); }
   }
 
   updateStats(){
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.getTodayStr();
     const todayAttendance = this.attendance.filter(a=> a.date===today);
 
-    const present = todayAttendance.filter(a=> a.status==='present').length || this.staff.filter(s=> s.isActive).length;
-    const absent = this.staff.length - present;
-    const avg = this.attendance.length? Math.round((this.attendance.filter(a=> a.status==='present').length / this.attendance.length)*100) : 0;
+    // V25 FIX: Present sirf Server se aaye hue attendance se gina jayega, staff.isActive se guess KABHI nahi hoga
+    const present = todayAttendance.filter(a=> a.status==='present').length;
+    const absent = todayAttendance.filter(a=> a.status==='absent').length;
+    const leave = todayAttendance.filter(a=> a.status==='leave').length;
+    // Avg - sirf jin din attendance mark hui hai unse, fake din se nahi
+    const totalMarked = this.attendance.length;
+    const avg = totalMarked ? Math.round((this.attendance.filter(a=> a.status==='present').length / totalMarked)*100) : 0;
 
     document.getElementById('presentToday').innerText = present;
     document.getElementById('absentToday').innerText = absent;
     document.getElementById('avgAttendance').innerText = `${avg}%`;
     document.getElementById('attendanceDate').innerText = `Today • ${new Date().toLocaleDateString('en-IN', { day:'numeric', month:'short' })}`;
-    document.getElementById('attendanceSubHeader').innerText = `${present} present today • ${absent} absent • ${avg}% avg`;
+    document.getElementById('attendanceSubHeader').innerText = `${present} present today • ${absent} absent • ${leave} leave • ${avg}% avg`;
   }
 
   renderCalendar(){
     const monthEl = document.getElementById('calendarMonth');
     const grid = document.getElementById('calendarGrid');
 
-    if(!monthEl ||!grid) return;
+    if(!monthEl || !grid) return;
 
     monthEl.innerText = this.currentMonth.toLocaleDateString('en-IN', { month:'long', year:'numeric' });
 
@@ -213,7 +284,7 @@ class StaffAttendancePage {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month+1, 0);
 
-    const startDay = firstDay.getDay() ===0? 6 : firstDay.getDay()-1;
+    const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay()-1;
     const daysInMonth = lastDay.getDate();
 
     let html = '';
@@ -223,7 +294,7 @@ class StaffAttendancePage {
       html += `<div class="calendar-day other-month">${prevDate.getDate()}</div>`;
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.getTodayStr();
 
     for(let day=1; day<=daysInMonth; day++){
       const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
@@ -267,33 +338,39 @@ class StaffAttendancePage {
     const container = document.getElementById('todayAttendanceList');
     if(!container) return;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.getTodayStr();
     const todayAttendance = this.attendance.filter(a=> a.date===today);
 
     if(this.staff.length===0){
-      container.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:600">No staff members</div>`;
+      container.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:600">No staff members<br><span style="font-weight:500">Pehle staff add karo</span></div>`;
       return;
     }
 
     container.innerHTML = this.staff.map(s=>{
       const attendance = todayAttendance.find(a=> a.staffId===s._id);
-      const status = attendance?.status||'present';
+      // V25 FIX: Attendance nahi mark hui toh "Not Marked" dikhega, fake "Present" KABHI nahi dikhega
+      const status = attendance?.status || 'not-marked';
+
+      const statusLabel = status==='present' ? `✅ Present • ${attendance?.checkIn||'09:00'} - ${attendance?.checkOut||'18:00'}` : status==='absent' ? '❌ Absent' : status==='leave' ? '🏖️ On Leave' : '⏳ Not marked yet';
+      const bg = status==='present' ? '#dcfce7' : status==='absent' ? '#fee2e2' : status==='leave' ? '#fef3c7' : '#f1f5f9';
+      const color = status==='present' ? '#166534' : status==='absent' ? '#991b1b' : status==='leave' ? '#92400e' : '#64748b';
+      const badgeText = status==='not-marked' ? 'NOT MARKED' : status.toUpperCase();
 
       return `
         <div class="attendance-item">
-          <div style="width:40px;height:40px;background:#e2e8f0;border-radius:50%;display:grid;place-items:center;font-weight:900">${s.name?.charAt(0)||'S'}</div>
-          <div style="flex:1">
-            <b style="display:block;font-weight:800;font-size:13px">${s.name||'Staff'} • ${s.role||''}</b>
-            <span style="font-size:11px;color:#64748b;font-weight:600">${status==='present'?`✅ Present • ${attendance?.checkIn||'09:00'} - ${attendance?.checkOut||'18:00'}`: status==='absent'?'❌ Absent':'🏖️ On Leave'} ${attendance?.note? `• ${attendance.note}`:''}</span>
+          <div class="att-avatar">${s.name?.charAt(0)||'S'}</div>
+          <div class="att-info">
+            <b>${s.name||'Staff'} • ${s.role||''}</b>
+            <span>${statusLabel} ${attendance?.note ? `• ${attendance.note}` : ''}</span>
           </div>
-          <span style="font-size:10px;font-weight:800;padding:4px 8px;border-radius:20px;background:${status==='present'?'#dcfce7': status==='absent'?'#fee2e2':'#fef3c7'};color:${status==='present'?'#166534': status==='absent'?'#991b1b':'#92400e'}">${status.toUpperCase()}</span>
+          <span class="att-badge" style="background:${bg};color:${color}">${badgeText}</span>
         </div>
       `;
     }).join('');
   }
 
   openModal(){
-    document.getElementById('attendanceDateInput').value = document.getElementById('attendanceDateInput').value || new Date().toISOString().split('T')[0];
+    document.getElementById('attendanceDateInput').value = document.getElementById('attendanceDateInput').value || this.getTodayStr();
     document.getElementById('markAttendanceModal').style.display='grid';
   }
 
@@ -302,13 +379,17 @@ class StaffAttendancePage {
   }
 
   async saveAttendance(){
+    if(!this.shopId){
+      if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+      return;
+    }
     const staffId = document.getElementById('attendanceStaffSelect').value;
     const date = document.getElementById('attendanceDateInput').value;
     const checkIn = document.getElementById('attendanceCheckIn').value;
     const checkOut = document.getElementById('attendanceCheckOut').value;
     const note = document.getElementById('attendanceNote').value;
 
-    if(!staffId ||!date){
+    if(!staffId || !date){
       if(window.Toast) Toast.show('Select staff and date', 'warning');
       return;
     }
@@ -324,23 +405,30 @@ class StaffAttendancePage {
 
     try{
       const attendanceData = {
-        shopId:this.shopId,
+        shopId: this.shopId,
         staffId,
         staffName: staff.name,
         date,
-        status:this.selectedStatus,
+        status: this.selectedStatus,
         checkIn,
         checkOut,
         note
       };
 
+      let saved = false;
+      // 1. ApiCore se - HAMESHA Server pe
       if(window.ApiCore){
-        await window.ApiCore.post(`/api/common/staff/${this.shopId}/attendance`, attendanceData);
-      } else {
-        // Remove existing for same staff+date
-        this.attendance = this.attendance.filter(a=>!(a.staffId===staffId && a.date===date));
-        this.attendance.push({ _id:'a'+Date.now(),...attendanceData });
-        localStorage.setItem(`attendance_${this.shopId}`, JSON.stringify(this.attendance));
+        try{ await window.ApiCore.post(`/api/common/staff/${this.shopId}/attendance`, attendanceData); saved = true; }catch(e){ saved = false; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga
+      if(!saved){
+        const res = await fetch(`/api/common/staff/${this.shopId}/attendance`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify(attendanceData) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.attendance || !res.error)) saved = true;
+      }
+      // 3. Server pe save nahi hua toh dhokha nahi denge - browser storage me save karke "saved" nahi bolenge
+      if(!saved){
+        if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+        return;
       }
 
       this.closeModal();
@@ -350,7 +438,7 @@ class StaffAttendancePage {
 
       if(window.Toast) Toast.show('Attendance marked ✅', 'success');
 
-    }catch(e){ if(window.Toast) Toast.show('Failed to mark attendance', 'error'); }finally{ btn.innerText='Save Attendance'; btn.disabled=false; }
+    }catch(e){ if(window.Toast) Toast.show('Failed to mark attendance - Server error', 'error'); }finally{ btn.innerText='Save Attendance'; btn.disabled=false; }
   }
 
   bindEvents(){
@@ -361,8 +449,9 @@ class StaffAttendancePage {
     document.getElementById('markAttendanceModal')?.querySelector('.modal-backdrop')?.addEventListener('click', ()=> this.closeModal());
     document.getElementById('saveAttendance')?.addEventListener('click', ()=> this.saveAttendance());
 
-    document.getElementById('prevMonth')?.addEventListener('click', ()=>{ this.currentMonth.setMonth(this.currentMonth.getMonth()-1); this.renderCalendar(); });
-    document.getElementById('nextMonth')?.addEventListener('click', ()=>{ this.currentMonth.setMonth(this.currentMonth.getMonth()+1); this.renderCalendar(); });
+    // V25 FIX: Month badalte hi Server se us month ki attendance dobara mangenge
+    document.getElementById('prevMonth')?.addEventListener('click', async ()=>{ this.currentMonth.setMonth(this.currentMonth.getMonth()-1); await this.loadAttendance(); this.renderCalendar(); });
+    document.getElementById('nextMonth')?.addEventListener('click', async ()=>{ this.currentMonth.setMonth(this.currentMonth.getMonth()+1); await this.loadAttendance(); this.renderCalendar(); });
 
     document.querySelectorAll('.status-tab').forEach(tab=>{
       tab.addEventListener('click', ()=>{
@@ -377,3 +466,5 @@ class StaffAttendancePage {
 window.StaffAttendancePageInstance = new StaffAttendancePage();
 document.addEventListener('DOMContentLoaded', ()=> window.StaffAttendancePageInstance.init());
 </script>
+</body>
+</html>

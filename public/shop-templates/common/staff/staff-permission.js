@@ -1,7 +1,13 @@
-// LOCATION: public/shop-templates/common/staff/staff-permission.js
-// WORLD CLASS STAFF PERMISSION JS - FULL 350+ LINES
+// LOCATION: public/shop-templates/common/staff/staff-permission.js - V25 - UNIFIED - FULL CODE
+// WORLD CLASS STAFF PERMISSION JS - FULL
+// RULE: Permission = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga.
+// RULE 2: shopId SIRF URL se aayega. URL me nahi hai toh galat shop ki permission kabhi nahi kholega.
+// RULE 3: Permission pehle Server pe save hogi, phir UI me dikhegi. Server pe fail hui toh purani permission hi rahegi.
+// FLOW: Load Staff -> GET /api/common/staff/:shopId -> Select Staff -> Show Permissions -> Save -> PUT /api/common/staff/:shopId/:staffId/permissions -> Socket emit -> dobara Server se Load
+// FIX V25: Pehle is file me staff + permission browser storage se aate the, aur save bhi browser storage me hota tha. Ab FULL Server only hai.
 class StaffPermission {
   constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.staff = [];
     this.permissions = [
@@ -26,6 +32,19 @@ class StaffPermission {
     };
   }
 
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+
   async init(){
     await this.loadStaff();
     this.renderPermissions();
@@ -34,12 +53,29 @@ class StaffPermission {
 
   async loadStaff(){
     try{
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}`);
-        this.staff = data.staff||data||[];
-      } else {
-        this.staff = JSON.parse(localStorage.getItem(`staff_${this.shopId}`)||'[]');
+      if(!this.shopId){
+        if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+        this.staff = [];
+        return;
       }
+
+      let staff = null;
+      // 1. ApiCore se - HAMESHA Server se
+      if(window.ApiCore){
+        try{
+          const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}`);
+          staff = data.staff || data || null;
+        }catch(e){ staff = null; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!staff){
+        try{
+          const res = await fetch(`/api/common/staff/${this.shopId}`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) staff = res.staff || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage fallback - Server se nahi mila toh khaali hi rahega, purana galat staff KABHI nahi dikhega
+      this.staff = Array.isArray(staff) ? staff : [];
 
       const staffSelect = document.getElementById('permissionStaffSelect');
       if(staffSelect){
@@ -53,7 +89,7 @@ class StaffPermission {
         this.loadStaffPermissions(staffSelect.value);
       }
 
-    }catch(e){}
+    }catch(e){ this.staff = []; }
   }
 
   renderPermissions(){
@@ -89,12 +125,15 @@ class StaffPermission {
 
   loadStaffPermissions(staffId){
     const staff = this.staff.find(s=> s._id===staffId);
-    if(!staff) return;
+    if(!staff){
+      if(window.Toast) Toast.show('Staff not found on Server', 'error');
+      return;
+    }
 
     // Uncheck all
     document.querySelectorAll('.perm-item input').forEach(cb=> cb.checked=false);
 
-    // Check staff permissions
+    // Check staff permissions - sirf Server se aayi hui permission
     (staff.permissions||[]).forEach(perm=>{
       const checkbox = document.getElementById(`perm_${perm}`);
       if(checkbox) checkbox.checked = true;
@@ -136,6 +175,10 @@ class StaffPermission {
   }
 
   async savePermissions(){
+    if(!this.shopId){
+      if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+      return;
+    }
     const staffSelect = document.getElementById('permissionStaffSelect');
     const staffId = staffSelect?.value;
 
@@ -145,38 +188,56 @@ class StaffPermission {
     }
 
     const permissions = this.getSelectedPermissions();
+    const prevStaff = this.staff.find(s=> s._id===staffId);
+    const prevPermissions = prevStaff ? [...(prevStaff.permissions || [])] : [];
 
     if(permissions.length===0){
       if(!confirm('No permissions selected. Staff will have no access. Continue?')) return;
     }
 
     const btn = document.getElementById('savePermissionsBtn');
-    btn.innerText='Saving...'; btn.disabled=true;
+    if(btn){ btn.innerText='Saving...'; btn.disabled=true; }
 
     try{
+      let saved = false;
+      // 1. ApiCore se - HAMESHA Server pe
       if(window.ApiCore){
-        await window.ApiCore.put(`/api/common/staff/${this.shopId}/${staffId}/permissions`, { permissions });
-      } else {
-        const allStaff = JSON.parse(localStorage.getItem(`staff_${this.shopId}`)||'[]');
-        const idx = allStaff.findIndex(s=> s._id===staffId);
-        if(idx>=0){
-          allStaff[idx].permissions = permissions;
-          localStorage.setItem(`staff_${this.shopId}`, JSON.stringify(allStaff));
-          this.staff = allStaff;
-        }
+        try{ await window.ApiCore.put(`/api/common/staff/${this.shopId}/${staffId}/permissions`, { permissions, shopId: this.shopId }); saved = true; }catch(e){ saved = false; }
       }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga
+      if(!saved){
+        const res = await fetch(`/api/common/staff/${this.shopId}/${staffId}/permissions`, { method:'PUT', headers: this.getHeaders(), body: JSON.stringify({ permissions, shopId: this.shopId }) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.staff || res.permissions || !res.error)) saved = true;
+      }
+      // 3. Server pe save nahi hua toh dhokha nahi denge - purani permission hi rahegi, browser storage me save karke "saved" nahi bolenge
+      if(!saved){
+        if(window.Toast) Toast.show('❌ Server me save nahi hua - Permission change nahi hui', 'error');
+        // UI ko purani permission pe wapas le jao
+        if(prevStaff) this.loadStaffPermissions(staffId);
+        return;
+      }
+
+      // Save ke baad turant Server se dobara mang ke verify karo - tabhi this.staff update hoga
+      await this.loadStaff();
+      if(staffSelect) staffSelect.value = staffId;
+      this.loadStaffPermissions(staffId);
 
       if(window.Toast) Toast.show(`Permissions saved for ${this.staff.find(s=> s._id===staffId)?.name||'staff'} ✅`, 'success');
 
       if(window.SocketCore){
-        window.SocketCore.emit('staff-permissions-updated', { shopId:this.shopId, staffId, permissions });
+        try{ window.SocketCore.emit('staff-permissions-updated', { shopId: this.shopId, staffId, permissions }); }catch(e){}
       }
 
     }catch(e){
-      if(window.Toast) Toast.show('Failed to save permissions', 'error');
+      if(window.Toast) Toast.show('Failed to save permissions - Server error', 'error');
+      // Fail hua toh UI ko purani permission pe wapas le jao
+      if(prevStaff){
+        const idx = this.staff.findIndex(s=> s._id===staffId);
+        if(idx >= 0) this.staff[idx].permissions = prevPermissions;
+        this.loadStaffPermissions(staffId);
+      }
     }finally{
-      btn.innerText='Save Permissions 🔐';
-      btn.disabled=false;
+      if(btn){ btn.innerText='Save Permissions 🔐'; btn.disabled=false; }
     }
   }
 

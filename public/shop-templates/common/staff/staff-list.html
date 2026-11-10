@@ -1,9 +1,100 @@
-<!-- LOCATION: public/shop-templates/common/staff/staff-list.html -->
-<!-- WORLD CLASS STAFF LIST - FULL 450+ LINES -->
+<!-- LOCATION: public/shop-templates/common/staff/staff-list.html - V25 - UNIFIED - FULL CODE -->
+<!-- WORLD CLASS STAFF LIST - FULL -->
+<!-- RULE: Staff = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- RULE 2: Fake / Mock staff KABHI nahi banega. Khaali hai toh "No staff members yet" dikhega. -->
+<!-- RULE 3: Fake Activity - "45 orders" / "28/30 days" - KABHI nahi dikhayenge. Jab tak Server se real data nahi aayega, tab tak wo line hi nahi dikhegi. -->
+<!-- FLOW: Load -> GET /api/common/staff/:shopId -> Filter / Search -> Detail -> Toggle -> PUT /api/common/staff/:shopId/:staffId -> dobara Server se Load -->
+<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur staff browser storage me save hota tha, aur khaali hone pe 3 fake staff bana deta tha. Ab FULL HTML + RESPONSIVE + Server only + No Fake Data hai. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Staff Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+input{font-family:inherit;outline:none}
+.staff-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.staff-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.staff-header b{display:block;font-weight:900;font-size:16px}
+.staff-header span{font-size:11px;color:#64748b;font-weight:600}
+.add-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.staff-stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:12px}
+.s-stat-card{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:10px;display:flex;gap:8px;align-items:center;min-width:0}
+.s-icon{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.s-stat-card div{flex:1;min-width:0}
+.s-stat-card b{display:block;font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-stat-card span{font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase}
+.staff-tabs{display:flex;gap:6px;padding:0 12px 12px;overflow-x:auto;scrollbar-width:none}
+.staff-tabs::-webkit-scrollbar{display:none}
+.staff-tab{background:#fff;border:1px solid #e2e8f0;padding:8px 12px;border-radius:20px;font-weight:800;font-size:11px;white-space:nowrap;cursor:pointer;flex-shrink:0}
+.staff-tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.staff-search{margin:0 12px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;display:flex;align-items:center;gap:8px;padding:0 12px}
+.search-icon{font-size:14px;flex-shrink:0}
+.staff-search input{flex:1;border:none;padding:12px 0;font-weight:600;font-size:13px;outline:none;min-width:0}
+.staff-list{padding:0 12px;display:flex;flex-direction:column;gap:10px}
+.staff-card{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:14px;display:flex;gap:12px;align-items:center;cursor:pointer;transition:.2s}
+.staff-card:hover{border-color:#0f172a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.05)}
+.staff-card.inactive{opacity:.6;background:#f8fafc}
+.staff-avatar{width:48px;height:48px;border-radius:50%;background:#e2e8f0;display:grid;place-items:center;font-weight:900;font-size:18px;position:relative;flex-shrink:0}
+.staff-status-dot{position:absolute;bottom:0;right:0;width:12px;height:12px;border-radius:50%;border:2px solid #fff}
+.staff-status-dot.active{background:#10b981}
+.staff-status-dot.inactive{background:#94a3b8}
+.staff-status-dot.duty{background:#f59e0b}
+.staff-info{flex:1;min-width:0}
+.staff-info b{display:block;font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.staff-info span{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.staff-role{background:#f1f5f9;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;display:inline-block;margin-top:4px}
+.staff-role.manager{background:#f0f9ff;color:#0369a1}
+.staff-role.delivery{background:#f0fdf4;color:#166534}
+.staff-role.cashier{background:#fef3c7;color:#92400e}
+.staff-role.helper{background:#f1f5f9;color:#475569}
+.staff-meta{text-align:right;flex-shrink:0}
+.staff-meta b{display:block;font-weight:900;font-size:13px}
+.staff-meta span{font-size:10px;color:#64748b;font-weight:700}
+.staff-empty{text-align:center;padding:60px 20px}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.staff-empty b{display:block;font-weight:900}
+.staff-empty span{font-size:12px;color:#64748b;font-weight:600;margin:4px 0 16px;display:block}
+.primary-btn{background:#0f172a;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:900;cursor:pointer}
+.staff-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:end center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
+.modal-box{position:relative;background:#fff;width:100%;max-width:500px;border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;animation:slideUp .3s}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 0;position:sticky;top:0;background:#fff;z-index:1}
+.modal-header button{background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;font-weight:900;cursor:pointer;flex-shrink:0}
+.modal-body{padding:20px}
+.modal-actions{display:flex;gap:10px;padding:16px 20px 20px;position:sticky;bottom:0;background:#fff;border-top:1px solid #f1f5f9}
+.secondary-btn{flex:1;background:#f1f5f9;border:none;padding:12px;border-radius:10px;font-weight:800;cursor:pointer}
+/* LAPTOP */
+@media(min-width:721px){
+  .staff-stats{grid-template-columns:repeat(4,1fr)}
+  .modal-box{border-radius:24px;margin-bottom:20px}
+}
+/* MOBILE FIX - Stats 4 dabne wala fix yahi hai */
+@media(max-width:600px){
+  .staff-root{max-width:100%}
+  .staff-header{padding:12px}
+  .staff-header b{font-size:15px}
+  .staff-stats{grid-template-columns:1fr 1fr;padding:10px;gap:8px}
+  .staff-tabs{padding:0 10px 10px}
+  .staff-search{margin:0 10px 10px}
+  .staff-list{padding:0 10px}
+  .staff-card{padding:12px 10px;gap:10px}
+  .staff-avatar{width:44px;height:44px;font-size:16px}
+  .staff-meta b{font-size:12px}
+}
+</style>
+</head>
+<body>
 <div id="staffListRoot" class="staff-root">
   <div class="staff-header">
     <button id="staffBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>Staff Management</b>
       <span id="staffSubHeader">0 staff members • Manage roles</span>
     </div>
@@ -68,68 +159,31 @@
   </div>
 </div>
 
-<style>
-.staff-root{ font-family:Outfit,sans-serif; max-width:700px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.staff-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.staff-header b{ display:block; font-weight:900; }
-.staff-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.add-btn{ margin-left:auto; background:#0f172a; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer; }
-.staff-stats{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; padding:12px; }
-.s-stat-card{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:10px; display:flex; gap:8px; align-items:center; }
-.s-icon{ width:32px; height:32px; border-radius:8px; display:grid; place-items:center; font-size:16px; }
-.s-stat-card b{ display:block; font-weight:900; font-size:14px; }
-.s-stat-card span{ font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; }
-.staff-tabs{ display:flex; gap:6px; padding:0 12px 12px; overflow-x:auto; scrollbar-width:none; }
-.staff-tabs::-webkit-scrollbar{ display:none; }
-.staff-tab{ background:#fff; border:1px solid #e2e8f0; padding:8px 12px; border-radius:20px; font-weight:800; font-size:11px; white-space:nowrap; cursor:pointer; }
-.staff-tab.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
-.staff-search{ margin:0 12px 12px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; display:flex; align-items:center; gap:8px; padding:0 12px; }
-.search-icon{ font-size:14px; }
-.staff-search input{ flex:1; border:none; padding:12px 0; font-weight:600; font-size:13px; outline:none; }
-.staff-list{ padding:0 12px; display:flex; flex-direction:column; gap:10px; }
-.staff-card{ background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:14px; display:flex; gap:12px; align-items:center; cursor:pointer; transition:.2s; }
-.staff-card:hover{ border-color:#0f172a; transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.05); }
-.staff-card.inactive{ opacity:.6; background:#f8fafc; }
-.staff-avatar{ width:48px; height:48px; border-radius:50%; background:#e2e8f0; display:grid; place-items:center; font-weight:900; font-size:18px; position:relative; }
-.staff-status-dot{ position:absolute; bottom:0; right:0; width:12px; height:12px; border-radius:50%; border:2px solid #fff; }
-.staff-status-dot.active{ background:#10b981; }
-.staff-status-dot.inactive{ background:#94a3b8; }
-.staff-status-dot.duty{ background:#f59e0b; }
-.staff-info{ flex:1; }
-.staff-info b{ display:block; font-weight:900; font-size:14px; }
-.staff-info span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
-.staff-role{ background:#f1f5f9; padding:2px 8px; border-radius:20px; font-size:10px; font-weight:800; text-transform:uppercase; display:inline-block; margin-top:4px; }
-.staff-role.manager{ background:#f0f9ff; color:#0369a1; }
-.staff-role.delivery{ background:#f0fdf4; color:#166534; }
-.staff-role.cashier{ background:#fef3c7; color:#92400e; }
-.staff-role.helper{ background:#f1f5f9; color:#475569; }
-.staff-meta{ text-align:right; }
-.staff-meta b{ display:block; font-weight:900; font-size:13px; }
-.staff-meta span{ font-size:10px; color:#64748b; font-weight:700; }
-.staff-empty{ text-align:center; padding:60px 20px; }
-.empty-icon{ font-size:48px; margin-bottom:12px; }
-.staff-empty b{ display:block; font-weight:900; }
-.staff-empty span{ font-size:12px; color:#64748b; font-weight:600; margin:4px 0 16px; display:block; }
-.primary-btn{ background:#0f172a; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-weight:900; cursor:pointer; }
-.staff-modal{ position:fixed; inset:0; z-index:9999; display:grid; place-items:end center; }
-.modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); }
-.modal-box{ position:relative; background:#fff; width:100%; max-width:500px; border-radius:24px 24px 0 0; max-height:90vh; overflow-y:auto; animation:slideUp.3s; }
-@keyframes slideUp{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
-.modal-header{ display:flex; justify-content:space-between; align-items:center; padding:20px 20px 0; position:sticky; top:0; background:#fff; z-index:1; }
-.modal-body{ padding:20px; }
-.modal-actions{ display:flex; gap:10px; padding:16px 20px 20px; position:sticky; bottom:0; background:#fff; border-top:1px solid #f1f5f9; }
-.secondary-btn{ flex:1; background:#f1f5f9; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
-</style>
-
 <script>
 class StaffListPage {
   constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.staff = [];
     this.filter = 'all';
     this.search = '';
     this.selectedStaff = null;
+  }
+
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+  safeDate(d){
+    try{ if(!d) return '-'; const dt = new Date(d); if(isNaN(dt)) return '-'; return dt.toLocaleDateString('en-IN'); }catch(e){ return '-'; }
   }
 
   async init(){
@@ -141,24 +195,33 @@ class StaffListPage {
     try{
       if(window.Loader) Loader.show('Loading staff...');
 
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}`);
-        this.staff = data.staff||data||[];
-      } else {
-        this.staff = JSON.parse(localStorage.getItem(`staff_${this.shopId}`)||'[]');
-        if(this.staff.length===0){
-          this.staff = [
-            { _id:'s1', shopId:this.shopId, name:'Ramesh Kumar', phone:'9876543210', role:'manager', salary:15000, isActive:true, onDuty:true, joinDate:new Date(Date.now()-60*86400000).toISOString(), lastActive:new Date().toISOString(), permissions:['orders','inventory','staff'] },
-            { _id:'s2', shopId:this.shopId, name:'Suresh Patel', phone:'9876543211', role:'delivery', salary:10000, isActive:true, onDuty:false, joinDate:new Date(Date.now()-30*86400000).toISOString(), lastActive:new Date(Date.now()-2*3600000).toISOString(), permissions:['delivery'] },
-            { _id:'s3', shopId:this.shopId, name:'Priya Singh', phone:'9876543212', role:'cashier', salary:12000, isActive:false, onDuty:false, joinDate:new Date(Date.now()-90*86400000).toISOString(), lastActive:new Date(Date.now()-24*3600000).toISOString(), permissions:['billing'] }
-          ];
-        }
+      if(!this.shopId){
+        if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye', 'error');
+        this.staff = [];
+        this.updateStats();
+        this.render();
+        return;
       }
+
+      let staff = null;
+      // 1. ApiCore se - HAMESHA Server se
+      if(window.ApiCore){
+        try{ const data = await window.ApiCore.get(`/api/common/staff/${this.shopId}`); staff = data.staff || data || null; }catch(e){ staff = null; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      if(!staff){
+        try{
+          const res = await fetch(`/api/common/staff/${this.shopId}`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          if(res) staff = res.staff || res;
+        }catch(e){}
+      }
+      // 3. NO Browser storage fallback + NO Fake staff - Server se nahi mila toh khaali hi rahega, Ramesh / Suresh / Priya jaisa fake staff KABHI nahi banega
+      this.staff = Array.isArray(staff) ? staff : [];
 
       this.updateStats();
       this.render();
 
-    }catch(e){ console.error(e); }finally{ if(window.Loader) Loader.hide(); }
+    }catch(e){ console.error(e); this.staff = []; this.updateStats(); this.render(); }finally{ if(window.Loader) Loader.hide(); }
   }
 
   updateStats(){
@@ -198,6 +261,16 @@ class StaffListPage {
     if(filtered.length===0){
       container.style.display='none';
       empty.style.display='block';
+      // Filter / Search se khaali hua toh alag message
+      if(this.staff.length>0){
+        empty.querySelector('b').innerText = 'No staff found';
+        empty.querySelector('span').innerText = 'Filter / Search badal ke dekho';
+        empty.querySelector('button').style.display='none';
+      } else {
+        empty.querySelector('b').innerText = 'No staff members yet';
+        empty.querySelector('span').innerText = 'Add your first staff member to manage shop';
+        empty.querySelector('button').style.display='inline-block';
+      }
       return;
     }
 
@@ -205,8 +278,8 @@ class StaffListPage {
     empty.style.display='none';
 
     container.innerHTML = filtered.map(staff=>{
-      const status = staff.onDuty? 'duty' : staff.isActive? 'active' : 'inactive';
-      const statusText = staff.onDuty? 'On Duty' : staff.isActive? 'Active' : 'Inactive';
+      const status = staff.onDuty ? 'duty' : staff.isActive ? 'active' : 'inactive';
+      const statusText = staff.onDuty ? 'On Duty' : staff.isActive ? 'Active' : 'Inactive';
 
       return `
         <div class="staff-card ${staff.isActive?'':'inactive'}" data-staff-id="${staff._id}">
@@ -216,7 +289,7 @@ class StaffListPage {
           </div>
           <div class="staff-info">
             <b>${staff.name||'Staff'} ${staff.onDuty?'🟢':''}</b>
-            <span>📱 ${staff.phone||''} • Joined: ${new Date(staff.joinDate).toLocaleDateString()} • Last: ${new Date(staff.lastActive).toLocaleDateString()}</span>
+            <span>📱 ${staff.phone||''} • Joined: ${this.safeDate(staff.joinDate)} • Last: ${this.safeDate(staff.lastActive)}</span>
             <span class="staff-role ${staff.role}">${staff.role||'staff'}</span>
           </div>
           <div class="staff-meta">
@@ -243,6 +316,7 @@ class StaffListPage {
     this.selectedStaff = staff;
 
     const content = document.getElementById('staffDetailContent');
+    // V25 FIX: "Orders handled - 45 orders" / "Attendance - 28/30 days" jaisa fake data hata diya. Jab tak Server se real data nahi aayega, tab tak wo line hi nahi dikhayenge.
     content.innerHTML = `
       <div style="text-align:center;margin-bottom:20px">
         <div style="width:80px;height:80px;background:#e2e8f0;border-radius:50%;display:grid;place-items:center;font-size:32px;font-weight:900;margin:0 auto 12px">${staff.name?.charAt(0)||'S'}</div>
@@ -254,7 +328,7 @@ class StaffListPage {
         <div style="text-align:center"><span style="display:block;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Salary</span><b style="display:block;font-weight:900;font-size:16px;margin-top:2px">₹${(staff.salary||0).toLocaleString()}/mo</b></div>
         <div style="text-align:center"><span style="display:block;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Status</span><b style="display:block;font-weight:900;font-size:14px;margin-top:2px;color:${staff.isActive?'#10b981':'#ef4444'}">${staff.isActive?'✅ Active':'❌ Inactive'}</b></div>
         <div style="text-align:center"><span style="display:block;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">On Duty</span><b style="display:block;font-weight:900;font-size:14px;margin-top:2px">${staff.onDuty?'🟢 Yes':'⚪ No'}</b></div>
-        <div style="text-align:center"><span style="display:block;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Joined</span><b style="display:block;font-weight:800;font-size:12px;margin-top:2px">${new Date(staff.joinDate).toLocaleDateString()}</b></div>
+        <div style="text-align:center"><span style="display:block;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Joined</span><b style="display:block;font-weight:800;font-size:12px;margin-top:2px">${this.safeDate(staff.joinDate)}</b></div>
       </div>
       <div style="margin-top:16px">
         <b style="display:block;font-weight:900;margin-bottom:8px">Permissions 🔐</b>
@@ -265,16 +339,16 @@ class StaffListPage {
       <div style="margin-top:16px;background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:12px">
         <b style="display:block;font-weight:900;margin-bottom:8px;font-size:13px">Recent Activity 📋</b>
         <div style="font-size:11px;font-weight:600;color:#64748b;display:flex;flex-direction:column;gap:6px">
-          <div style="display:flex;justify-content:space-between;background:#f8fafc;padding:8px;border-radius:8px"><span>Last login</span><span>${new Date(staff.lastActive).toLocaleString()}</span></div>
-          <div style="display:flex;justify-content:space-between;background:#f8fafc;padding:8px;border-radius:8px"><span>Orders handled</span><span>45 orders</span></div>
-          <div style="display:flex;justify-content:space-between;background:#f8fafc;padding:8px;border-radius:8px"><span>Attendance this month</span><span>28/30 days</span></div>
+          <div style="display:flex;justify-content:space-between;gap:8px;background:#f8fafc;padding:8px;border-radius:8px"><span>Last active</span><span>${staff.lastActive ? new Date(staff.lastActive).toLocaleString('en-IN') : '-'}</span></div>
+          ${staff.email ? `<div style="display:flex;justify-content:space-between;gap:8px;background:#f8fafc;padding:8px;border-radius:8px"><span>Email</span><span>${staff.email}</span></div>` : ''}
+          ${staff.address ? `<div style="display:flex;justify-content:space-between;gap:8px;background:#f8fafc;padding:8px;border-radius:8px"><span>Address</span><span>${staff.address}</span></div>` : ''}
         </div>
       </div>
     `;
 
     document.getElementById('staffDetailModal').style.display='grid';
-    document.getElementById('deactivateStaffBtn').innerText = staff.isActive?'Deactivate':'Activate';
-    document.getElementById('deactivateStaffBtn').style.background = staff.isActive?'#ef4444':'#10b981';
+    document.getElementById('deactivateStaffBtn').innerText = staff.isActive ? 'Deactivate' : 'Activate';
+    document.getElementById('deactivateStaffBtn').style.background = staff.isActive ? '#ef4444' : '#10b981';
   }
 
   closeModal(){
@@ -284,26 +358,48 @@ class StaffListPage {
 
   async toggleStaff(){
     if(!this.selectedStaff) return;
-
-    const newStatus =!this.selectedStaff.isActive;
-    this.selectedStaff.isActive = newStatus;
-    this.selectedStaff.onDuty = newStatus? this.selectedStaff.onDuty : false;
-
-    if(window.ApiCore){
-      await window.ApiCore.put(`/api/common/staff/${this.shopId}/${this.selectedStaff._id}`, { isActive:newStatus, onDuty:this.selectedStaff.onDuty });
-    } else {
-      const idx = this.staff.findIndex(s=> s._id===this.selectedStaff._id);
-      if(idx>=0){
-        this.staff[idx] = this.selectedStaff;
-        localStorage.setItem(`staff_${this.shopId}`, JSON.stringify(this.staff));
-      }
+    if(!this.shopId){
+      if(window.Toast) Toast.show('Shop not found', 'error');
+      return;
     }
 
-    this.updateStats();
-    this.render();
-    this.closeModal();
+    const staffId = this.selectedStaff._id;
+    const prevIsActive = this.selectedStaff.isActive;
+    const prevOnDuty = this.selectedStaff.onDuty;
+    const newStatus = !prevIsActive;
+    const newOnDuty = newStatus ? prevOnDuty : false;
 
-    if(window.Toast) Toast.show(`Staff ${newStatus?'activated ✅':'deactivated ⏸️'}`, 'success');
+    const btn = document.getElementById('deactivateStaffBtn');
+    btn.innerText = 'Saving...'; btn.disabled = true;
+
+    try{
+      let saved = false;
+      // 1. ApiCore se - HAMESHA Server pe
+      if(window.ApiCore){
+        try{ await window.ApiCore.put(`/api/common/staff/${this.shopId}/${staffId}`, { isActive: newStatus, onDuty: newOnDuty }); saved = true; }catch(e){ saved = false; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga
+      if(!saved){
+        const res = await fetch(`/api/common/staff/${this.shopId}/${staffId}`, { method:'PUT', headers: this.getHeaders(), body: JSON.stringify({ isActive: newStatus, onDuty: newOnDuty, shopId: this.shopId }) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.staff || !res.error)) saved = true;
+      }
+      // 3. Server pe save nahi hua toh dhokha nahi denge - status wapas palat jayega
+      if(!saved){
+        if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+        return;
+      }
+
+      // Save ke baad turant Server se dobara mang ke verify karo
+      await this.loadStaff();
+      this.closeModal();
+
+      if(window.Toast) Toast.show(`Staff ${newStatus ? 'activated ✅' : 'deactivated ⏸️'}`, 'success');
+    }catch(e){
+      if(window.Toast) Toast.show('Failed - Server error', 'error');
+    }finally{
+      btn.disabled = false;
+      btn.innerText = prevIsActive ? 'Deactivate' : 'Activate';
+    }
   }
 
   bindEvents(){
@@ -335,3 +431,5 @@ class StaffListPage {
 window.StaffListPageInstance = new StaffListPage();
 document.addEventListener('DOMContentLoaded', ()=> window.StaffListPageInstance.init());
 </script>
+</body>
+</html>
