@@ -1,0 +1,252 @@
+<!-- LOCATION: public/admin-panel/comman-control-shop/common-finance.html -->
+<!-- SAMANLIVE - COMMON FINANCE - ADMIN PANEL - V1 FINAL -->
+<!-- Kaam: Sab shops ka Finance ek jagah - Earning, Expense, Profit, Payout, GST -->
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Common Finance - SAMANLIVE Admin</title>
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<style>
+*{box-sizing:border-box}
+body{font-family:Outfit,system-ui,sans-serif;background:#f8fafc;margin:0;color:#0f172a}
+.topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10}
+.topbar h2{font-size:22px;margin:0;background:linear-gradient(135deg,#10b981,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topbar small{color:#64748b;display:block;font-weight:400}
+.btn{border:1px solid #e2e8f0;background:#fff;padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+.btn.primary{background:#0f172a;color:#fff;border-color:#0f172a}
+.btn.green{background:#10b981;color:#fff;border-color:#10b981}
+.wrap{max-width:1100px;margin:0 auto;padding:20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.card{background:#fff;padding:18px;border-radius:16px;border:1px solid #e2e8f0;position:relative;overflow:hidden}
+.card:before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--c,#10b981)}
+.card small{color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.6px;font-size:11px}
+.card b{font-size:28px;display:block;margin-top:6px}
+.card span{color:#64748b;font-size:12px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab{border:1px solid #e2e8f0;background:#fff;padding:9px 16px;border-radius:20px;cursor:pointer;font-weight:700}
+.tab.active{background:#0f172a;color:#fff}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.toolbar input,.toolbar select{padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;flex:1;min-width:180px;background:#fff}
+.shop{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;margin-bottom:12px}
+.shop-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.shop-top b{font-size:17px}
+.badge{background:#dcfce7;color:#166534;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.badge.red{background:#fee2e2;color:#991b1b}
+.mini{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.mini div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px;text-align:center}
+.mini small{display:block;color:#64748b;font-size:11px}
+.mini b{font-size:16px}
+.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.links a{text-decoration:none;background:#f1f5f9;border:1px solid #e2e8f0;padding:7px 12px;border-radius:20px;font-size:13px;font-weight:700;color:#0f172a}
+.links a:hover{background:#0f172a;color:#fff}
+.empty{background:#fff;border:1px dashed #cbd5e1;border-radius:16px;padding:30px;text-align:center;color:#64748b}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:16px;overflow:hidden}
+th,td{padding:12px;text-align:left;border-bottom:1px solid #f1f5f9;font-size:14px}
+th{background:#f8fafc;color:#64748b;font-size:12px;text-transform:uppercase}
+@media(max-width:640px){.mini{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h2>💰 Common Finance</h2>
+    <small>Sab shops ka hisaab - Ek jagah • Auto refresh</small>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <select id="period" class="btn" onchange="loadAll()">
+      <option value="today">Aaj</option>
+      <option value="week">Is Hafta</option>
+      <option value="month" selected>Is Mahina</option>
+      <option value="year">Is Saal</option>
+      <option value="all">Sab Kuch</option>
+    </select>
+    <button class="btn" onclick="loadAll()">🔄 Refresh</button>
+    <button class="btn primary" onclick="location.href='/admin-panel/'">⬅ Admin Panel</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="stats">
+    <div class="card" style="--c:#10b981"><small>💵 Total Earning</small><b id="tEarn">₹0</b><span id="tEarnSub">Sab shops milake</span></div>
+    <div class="card" style="--c:#ef4444"><small>💸 Total Expense</small><b id="tExp">₹0</b><span id="tExpSub">Sab shops milake</span></div>
+    <div class="card" style="--c:#3b82f6"><small>📈 Net Profit</small><b id="tProfit">₹0</b><span id="tProfitSub">Earning - Expense</span></div>
+    <div class="card" style="--c:#f59e0b"><small>🏦 Pending Payout</small><b id="tPayout">₹0</b><span>Wallet se nikalna baaki</span></div>
+    <div class="card" style="--c:#8b5cf6"><small>🧾 GST Collected</small><b id="tGst">₹0</b><span>GST Invoice se</span></div>
+    <div class="card" style="--c:#06b6d4"><small>🏪 Active Shops</small><b id="tShops">0</b><span>Finance me gine gaye</span></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="shops" onclick="setTab('shops',this)">🏪 Shop-wise Finance</button>
+    <button class="tab" data-tab="expense" onclick="setTab('expense',this)">💸 All Expenses</button>
+    <button class="tab" data-tab="payout" onclick="setTab('payout',this)">🏦 Payout History</button>
+  </div>
+
+  <div class="toolbar">
+    <input id="search" placeholder="🔍 Shop ka naam ya ID se dhoondho..." oninput="renderShops()">
+    <select id="sortBy" onchange="renderShops()">
+      <option value="profit">Sort: Zyada Profit wale pehle</option>
+      <option value="earning">Sort: Zyada Earning wale pehle</option>
+      <option value="expense">Sort: Zyada Expense wale pehle</option>
+      <option value="name">Sort: Naam se A-Z</option>
+    </select>
+  </div>
+
+  <div id="shopsBox"></div>
+
+  <div id="expenseBox" style="display:none">
+    <table>
+      <thead><tr><th>Shop</th><th>Title</th><th>Category</th><th>Amount</th><th>Date</th></tr></thead>
+      <tbody id="expenseRows"><tr><td colspan="5" style="text-align:center;color:#64748b">Loading...</td></tr></tbody>
+    </table>
+  </div>
+
+  <div id="payoutBox" style="display:none">
+    <table>
+      <thead><tr><th>Shop</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody id="payoutRows"><tr><td colspan="5" style="text-align:center;color:#64748b">Loading...</td></tr></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+let ALL_SHOPS = [];
+let CURRENT_TAB = 'shops';
+const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
+const fmtDate = d => { try { return new Date(d).toLocaleDateString('en-IN'); } catch(e){ return '-'; } };
+
+function setTab(tab, btn){
+  CURRENT_TAB = tab;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('shopsBox').style.display = tab === 'shops' ? 'block' : 'none';
+  document.getElementById('expenseBox').style.display = tab === 'expense' ? 'block' : 'none';
+  document.getElementById('payoutBox').style.display = tab === 'payout' ? 'block' : 'none';
+  document.querySelector('.toolbar').style.display = tab === 'shops' ? 'flex' : 'none';
+  renderShops();
+}
+
+async function getJSON(url){
+  try { const r = await fetch(url); const j = await r.json(); return j; } catch(e){ return null; }
+}
+
+async function loadAll(){
+  const period = document.getElementById('period').value;
+  const box = document.getElementById('shopsBox');
+  box.innerHTML = '<div class="empty">⏳ Loading shops ka finance...</div>';
+
+  // 1. Shops ki list - Admin API se, na mile to /api/shops se
+  let shops = [];
+  let s1 = await getJSON('/api/admin/shops');
+  if(s1 && Array.isArray(s1.shops)) shops = s1.shops;
+  else if(s1 && Array.isArray(s1.data)) shops = s1.data;
+  else {
+    let s2 = await getJSON('/api/shops');
+    if(s2 && Array.isArray(s2.shops)) shops = s2.shops;
+    else if(Array.isArray(s2)) shops = s2;
+  }
+
+  if(!shops.length){
+    box.innerHTML = '<div class="empty">🏪 Koi shop nahi mili.<br><small>Check karo - Server chal raha hai? MongoDB connected hai?</small></div>';
+    return;
+  }
+
+  // 2. Har shop ka Finance - Tere bane hue API se
+  // /api/common/finance/:shopId/profit-loss, /expense, /payout-history
+  let totalEarn = 0, totalExp = 0, totalGst = 0, totalPayout = 0;
+  let allExpenses = [], allPayouts = [];
+
+  for(const s of shops){
+    const id = s._id || s.id || s.shopId;
+    const name = s.shopName || s.name || s.title || ('Shop ' + id);
+    const pl = await getJSON('/api/common/finance/' + id + '/profit-loss?period=' + period);
+    const ex = await getJSON('/api/common/finance/' + id + '/expense');
+    const pay = await getJSON('/api/common/finance/' + id + '/payout-history');
+    const gst = await getJSON('/api/common/finance/' + id + '/gst-invoice');
+
+    const earning = Number(pl?.data?.totalEarning || pl?.totalEarning || pl?.data?.revenue || 0);
+    const expense = Number(pl?.data?.totalExpense || pl?.totalExpense || 0);
+    const profit = Number(pl?.data?.netProfit || pl?.netProfit || (earning - expense));
+
+    let expList = ex?.data || ex?.expenses || (Array.isArray(ex) ? ex : []);
+    let payList = pay?.data || pay?.payouts || (Array.isArray(pay) ? pay : []);
+    let gstList = gst?.data || gst?.invoices || (Array.isArray(gst) ? gst : []);
+
+    let gstTotal = 0;
+    gstList.forEach(g => { gstTotal += Number(g.gstAmount || g.gst || g.totalGst || 0); });
+    let payoutTotal = 0;
+    payList.forEach(p => { payoutTotal += Number(p.amount || 0); });
+
+    totalEarn += earning; totalExp += expense; totalGst += gstTotal; totalPayout += payoutTotal;
+
+    expList.forEach(e => allExpenses.push({ shop: name, ...e }));
+    payList.forEach(p => allPayouts.push({ shop: name, ...p }));
+
+    ALL_SHOPS.push({ id, name, earning, expense, profit, gst: gstTotal, payout: payoutTotal, status: s.status || s.isActive ? 'Active' : (s.status || 'Active') });
+  }
+
+  document.getElementById('tEarn').textContent = inr(totalEarn);
+  document.getElementById('tExp').textContent = inr(totalExp);
+  document.getElementById('tProfit').textContent = inr(totalEarn - totalExp);
+  document.getElementById('tPayout').textContent = inr(totalPayout);
+  document.getElementById('tGst').textContent = inr(totalGst);
+  document.getElementById('tShops').textContent = ALL_SHOPS.length;
+
+  // Expense table
+  document.getElementById('expenseRows').innerHTML = allExpenses.length ? allExpenses.slice(0,100).map(e =>
+    '<tr><td>' + e.shop + '</td><td>' + (e.title || e.description || '-') + '</td><td>' + (e.category || '-') + '</td><td>' + inr(e.amount) + '</td><td>' + fmtDate(e.date || e.createdAt) + '</td></tr>'
+  ).join('') : '<tr><td colspan="5" style="text-align:center">Koi expense nahi hai</td></tr>';
+
+  // Payout table
+  document.getElementById('payoutRows').innerHTML = allPayouts.length ? allPayouts.slice(0,100).map(p =>
+    '<tr><td>' + p.shop + '</td><td>' + inr(p.amount) + '</td><td>' + (p.method || p.paymentMethod || '-') + '</td><td>' + (p.status || '-') + '</td><td>' + fmtDate(p.date || p.createdAt) + '</td></tr>'
+  ).join('') : '<tr><td colspan="5" style="text-align:center">Koi payout nahi hai</td></tr>';
+
+  renderShops();
+}
+
+function renderShops(){
+  const box = document.getElementById('shopsBox');
+  if(CURRENT_TAB !== 'shops') return;
+  const q = (document.getElementById('search').value || '').toLowerCase();
+  const sort = document.getElementById('sortBy').value;
+  let list = ALL_SHOPS.filter(s => s.name.toLowerCase().includes(q) || String(s.id).toLowerCase().includes(q));
+  if(sort === 'profit') list.sort((a,b) => b.profit - a.profit);
+  if(sort === 'earning') list.sort((a,b) => b.earning - a.earning);
+  if(sort === 'expense') list.sort((a,b) => b.expense - a.expense);
+  if(sort === 'name') list.sort((a,b) => a.name.localeCompare(b.name));
+
+  if(!list.length){ box.innerHTML = '<div class="empty">Koi shop nahi mili is search me.</div>'; return; }
+
+  box.innerHTML = list.map(s => `
+    <div class="shop">
+      <div class="shop-top">
+        <div><b>🏪 ${s.name}</b><br><small style="color:#64748b">ID: ${s.id}</small></div>
+        <span class="badge ${s.profit < 0 ? 'red' : ''}">${s.profit < 0 ? '📉 Loss' : '📈 Profit'}</span>
+      </div>
+      <div class="mini">
+        <div><small>Earning</small><b style="color:#16a34a">${inr(s.earning)}</b></div>
+        <div><small>Expense</small><b style="color:#dc2626">${inr(s.expense)}</b></div>
+        <div><small>Profit</small><b style="color:#2563eb">${inr(s.profit)}</b></div>
+        <div><small>GST / Payout</small><b>${inr(s.gst)} / ${inr(s.payout)}</b></div>
+      </div>
+      <div class="links">
+        <a href="/shop-templates/common/finance/expense.html?shopId=${s.id}">💸 Expense</a>
+        <a href="/shop-templates/common/finance/profit-loss.html?shopId=${s.id}">📈 Profit-Loss</a>
+        <a href="/shop-templates/common/finance/gst-invoice.html?shopId=${s.id}">🧾 GST Invoice</a>
+        <a href="/shop-templates/common/finance/payout-history.html?shopId=${s.id}">🏦 Payout</a>
+        <a href="/shop-templates/common/wallet/wallet.html?ownerType=shop&ownerId=${s.id}">👛 Wallet</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Page khulte hi load
+loadAll();
+</script>
+</body>
+</html>
