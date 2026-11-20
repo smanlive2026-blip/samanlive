@@ -220,6 +220,15 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <div class="kv"><span>Delivered Orders ka Paisa</span><b>₹<span id="walletDelivered">0</span></b></div>
 <button class="btn light block" id="walletCommonBtn" data-common-wallet style="margin-top:14px">Common Wallet Page Kholo →</button>
 <p class="hint">Common Wallet page se hi withdraw / payout hota hai. Yahan sirf hisaab dikh raha hai taaki galat number na dikhe.</p>
+<!-- FINANCE - V6 FIX: Expense / Profit / GST / Payout - Common Finance se juda -->
+<div style="margin-top:14px;border-top:1px dashed #e5e7eb;padding-top:12px">
+<b style="font-size:14px">💰 Finance - Pura Hisaab</b>
+<p class="hint" style="margin:4px 0 10px">Expense, Profit-Loss, GST aur Payout - Sab Common Finance se.</p>
+<button class="btn light block" id="financeExpenseBtn">💸 Expense Dekho →</button>
+<button class="btn light block" id="financeProfitBtn" style="margin-top:10px">📈 Profit-Loss Dekho →</button>
+<button class="btn light block" id="financeGstBtn" style="margin-top:10px">🧾 GST Invoice Dekho →</button>
+<button class="btn light block" id="financePayoutBtn" style="margin-top:10px">🏦 Payout History Dekho →</button>
+</div>
 </div>
 <div class="panel"><h2>📅 Last 7 Din</h2><div id="weekList">Loading...</div></div>
 </div>
@@ -245,16 +254,12 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <div class="panel" style="max-width:620px">
 <h2>👤 Shop Profile - Common Profile</h2>
 <p class="sub">Yehi naam, logo, banner, owner photo Customer ko dikhega. Photo dabate hi Cloudinary pe save hogi.</p>
-
-<!-- 1. SHOP LOGO - Customer ke topbar me dikhega - dashboard.js -> changeShopLogo() -->
 <div style="display:flex;gap:14px;align-items:center;margin:12px 0;background:#f8fafc;padding:12px;border-radius:12px">
 <img id="shopLogoPreview" src="https://placehold.co/100/d97706/fff?text=A" alt="Shop Logo">
 <input type="file" id="shopLogoInput" hidden accept="image/*" onchange="changeShopLogo(this)">
 <div style="flex:1"><b style="font-size:14px">Shop Logo</b><p class="hint" style="margin:2px 0">Customer-view ke topbar me dikhega</p></div>
 <button class="btn dark sm" onclick="document.getElementById('shopLogoInput').click()">📷 Logo Badlo</button>
 </div>
-
-<!-- 2. SHOP BANNER / COVER - Customer ke banner me dikhega - dashboard.js -> changeShopBanner() -->
 <div style="margin:12px 0;background:#f8fafc;padding:12px;border-radius:12px">
 <img id="shopBannerPreview" src="https://placehold.co/600/d97706/fff?text=Banner" alt="Shop Banner">
 <input type="file" id="shopBannerInput" hidden accept="image/*" onchange="changeShopBanner(this)">
@@ -265,21 +270,16 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <label>Banner Photo URL (agar file nahi, URL se)</label>
 <input type="text" id="bannerUrlInput" placeholder="Banner ki Cloudinary URL - khali hai toh purana rahega">
 </div>
-
-<!-- 3. OWNER PHOTO - Sidebar me dikhega, Logo se alag hai - dashboard.js -> changeOwnerPhoto() -->
 <div style="display:flex;gap:14px;align-items:center;margin:12px 0;background:#f8fafc;padding:12px;border-radius:12px">
 <img id="ownerImgBig" src="https://placehold.co/100/d97706/fff?text=A" alt="Owner photo">
 <input type="file" id="ownerInput" hidden accept="image/*" onchange="changeOwnerPhoto(this)">
 <div style="flex:1"><b style="font-size:14px">Owner Photo</b><p class="hint" style="margin:2px 0">Ye Logo se alag hai - Owner ki khud ki photo</p></div>
 <button class="btn dark sm" onclick="document.getElementById('ownerInput').click()">📷 Photo Badlo</button>
 </div>
-
 <label>Owner Name</label><input type="text" id="ownerNameInput" placeholder="Jaise: Ramesh Kumar">
 <label>Shop Address</label><input type="text" id="profileAddressInput" placeholder="Pura address">
 <button class="btn dark block" id="saveProfileBtn" style="margin-top:12px">Profile Save Karo</button>
 <div class="hint" id="profileStatus"></div>
-
-<!-- COMMON PROFILE PAGES - Product Form jaisa hi, alag page pe khulenge - dashboard.js -> openShop*() -->
 <div style="margin-top:18px;border-top:1px solid #e5e7eb;padding-top:14px">
 <b style="font-size:14px">🏪 Pura Shop Profile - Common Pages</b>
 <p class="hint" style="margin:4px 0 10px">Ye 5 page sab dukaan ke liye same hain - Product Manager jaisa Common System hai.</p>
@@ -306,10 +306,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </main>
 </div>
 
-<!-- ================= MODALS ================= -->
-<!-- DELETED V3: #addModal DELETE kar diya - Naya Achar ab Product Form se add hoga -->
-<!-- DELETED V3: #quickAddModal DELETE kar diya - Quick Add ab Product Form ke quick=1 se hoga -->
-<!-- Bacha hua sirf Manual Order wala modal hai - ye Product Form ka kaam nahi hai, Common Order ka hai -->
 <div class="modal" id="manualOrderModal"><div class="sheet">
 <h2><span>Manual Order Banao</span><button class="x" onclick="closeManualOrder()">✕</button></h2>
 <p class="hint" style="margin-bottom:12px">Shop pe aaye hue customer ka order yahan se banao - ye bhi Common Order me jayega.</p>
@@ -326,7 +322,6 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <div class="toast" id="toast"></div>
 
 <!-- ================= COMMON - ORDER MAT BADALNA ================= -->
-<!-- 1. Core pehle - api / auth / storage / error / socket -->
 <script src="../common/core/api-core.js"></script>
 <script src="../common/core/auth-core.js"></script>
 <script src="../common/core/storage-core.js"></script>
@@ -334,18 +329,15 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <script src="../common/core/socket-core.js"></script>
 <script src="../common/core/dashboard-core.js"></script>
 <script src="../common/core/user-core.js"></script>
-<!-- 2. Shop ka Common - toggle / location / banner -->
 <script src="../common/js/shop-toggle.js"></script>
 <script src="../common/js/location.js"></script>
 <script src="../common/js/shop-banner-ext.js"></script>
-<!-- 3. Product - WORLD MODEL - Product Form ka Manager - iske bina World Product nahi aayega -->
 <script src="../common/products/product-manager.js"></script>
 <script src="../common/inventory/inventory.js"></script>
-<!-- 4. Order + Finance + Notification - Common -->
 <script src="../common/orders/orders.js"></script>
-<script src="../common/finance/wallet.js"></script>
+<!-- FIX V6: Pehle ../common/finance/wallet.js tha - wo file hai hi nahi, isliye 404 aata tha. Ab sahi wali ../common/wallet/wallet.js hai -->
+<script src="../common/wallet/wallet.js"></script>
 <script src="../common/notifications/notifications.js"></script>
-<!-- 5. Share + UNIFIED PROFILE + Settings + Reviews - Common - dashboard.js se PEHLE hona chahiye -->
 <script src="../common/js/share.js"></script>
 <script src="../common/share/whatsapp-share.js"></script>
 <script src="../common/share/qr-share.js"></script>
@@ -353,50 +345,47 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <script src="../common/settings/settings.js"></script>
 <script src="../common/reviews/reviews.js"></script>
 
-<!-- COMMON BRIDGE - V5 - Achar Dashboard ko Common se jodta hai - dashboard.js se pehle chalega -->
-<!-- RULE V5: shopId SIRF URL se aayega. Browser storage me shopId kabhi save / load NAHI hoga. -->
 <script>
 (function(){
   var p = new URLSearchParams(location.search);
-  // shopId SIRF URL se - kahi aur se NAHI. V4 me yahan browser storage se uthata tha, wahi dhokha tha.
   var shopId = p.get('shopId') || p.get('id') || '';
   window.SHOP_ID = shopId;
   window.shopId = shopId;
   window.SHOP_TYPE = 'achar-shop';
   window.USER_ROLE = 'shop_owner';
   window.API_BASE = window.API_BASE || location.origin;
-  // NO SAVE - shopId / USER_ROLE ko browser storage me kabhi save NAHI karenge. Sirf RAM me rakhenge.
-  // WORLD PRODUCT MANAGER ko shopId + shopType de do
-  // Product Manager apne constructor me URL se shopId leta hai, par Dashboard ke URL me type nahi hota
-  // Isliye yahan set karna zaroori hai, warna wo kirana (default) ka maal mangega
   try{
     if (window.WorldProductManager) { window.WorldProductManager.shopId = shopId; window.WorldProductManager.shopType = 'achar-shop'; }
     if (window.ProductManager) { window.ProductManager.shopId = shopId; window.ProductManager.shopType = 'achar-shop'; }
   }catch(e){}
-  // ShopToggle ko shopId de do - warna wo khali shopId pe toggle karega
   try{ if (window.shopToggle) window.shopToggle.shopId = shopId; }catch(e){}
   try{ if (window.ShopToggle) window.ShopToggle.shopId = shopId; }catch(e){}
-  // Common wale function agar load nahi hue toh dashboard.js na toote - safe fallback
   window.safeCall = function(fn){ try{ if(typeof fn === 'function') fn(); }catch(e){ console.warn('Common safeCall:', e.message); } };
 
   document.addEventListener('DOMContentLoaded', function(){
-    // Wallet - asli Common Finance wala, nakli wallet wala nahi
+    // FIX V6 - Wallet: Pehle ../common/finance/wallet.html tha - wo page hai hi nahi.
+    // Ab sahi wala: ../common/wallet/wallet.html?ownerType=shop&ownerId=shopId
     var w = document.getElementById('walletCommonBtn');
     if (w) w.addEventListener('click', function(){
-      location.href = '../common/finance/wallet.html?shopId=' + encodeURIComponent(shopId) + '&role=shop_owner&shopType=achar-shop';
+      location.href = '../common/wallet/wallet.html?ownerType=shop&ownerId=' + encodeURIComponent(shopId) + '&shopId=' + encodeURIComponent(shopId) + '&role=shop_owner&shopType=achar-shop';
     });
-    // Customer View - shopId ke saath, warna khali dukaan khulegi
+    // FINANCE V6 - 4 naye buttons - Common Finance ke asli pages pe jayenge
+    var goFin = function(page){
+      location.href = '../common/finance/' + page + '.html?shopId=' + encodeURIComponent(shopId) + '&role=shop_owner&shopType=achar-shop';
+    };
+    var fe = document.getElementById('financeExpenseBtn'); if (fe) fe.addEventListener('click', function(){ goFin('expense'); });
+    var fp = document.getElementById('financeProfitBtn'); if (fp) fp.addEventListener('click', function(){ goFin('profit-loss'); });
+    var fg = document.getElementById('financeGstBtn'); if (fg) fg.addEventListener('click', function(){ goFin('gst-invoice'); });
+    var fpay = document.getElementById('financePayoutBtn'); if (fpay) fpay.addEventListener('click', function(){ goFin('payout-history'); });
     var goCustomer = function(){
       location.href = './customer-view.html?shopId=' + encodeURIComponent(shopId);
     };
     var v1 = document.getElementById('viewShopBtn'); if (v1) v1.addEventListener('click', goCustomer);
     var v2 = document.getElementById('userViewBtn'); if (v2) v2.addEventListener('click', goCustomer);
-    // Bell - Common Notifications page pe jayega, wahan se naya order dikhega
     var nb = document.getElementById('notifBtn');
     if (nb) nb.addEventListener('click', function(){
       location.href = '../common/notifications/notifications.html?shopId=' + encodeURIComponent(shopId) + '&role=shop_owner';
     });
-    // Share / Copy / WhatsApp - shopId wala link hi jayega, Common share.js se
     var shareUrl = location.origin + '/shop-templates/achar-shop/customer-view.html?shopId=' + encodeURIComponent(shopId);
     window.SHOP_SHARE_URL = shareUrl;
     var doShare = function(){

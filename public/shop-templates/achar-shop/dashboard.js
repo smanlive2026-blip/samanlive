@@ -458,15 +458,19 @@
     var navP = $('navPendingCount'); if (navP) navP.textContent = String(pending.length);
   }
 
+  // ================= WALLET - V6 FIX: Cancelled / Rejected ko nikaal ke gino =================
   function renderStatsAndWallet() {
+    // FIX V6: Pehle cancelled / rejected bhi Total Sale me judte the, isliye Earning galat dikhti thi.
+    // Ab sirf valid orders se hisaab banega.
+    var validOrders = allOrders.filter(function (o) { return o.orderStatus !== 'cancelled' && o.orderStatus !== 'rejected'; });
     var today = new Date().toDateString();
-    var todayOrders = allOrders.filter(function (o) { return new Date(o.createdAt).toDateString() === today; });
+    var todayOrders = validOrders.filter(function (o) { return new Date(o.createdAt).toDateString() === today; });
     var todaySale = todayOrders.reduce(function (s, o) { return s + orderTotal(o); }, 0);
-    var totalSale = allOrders.reduce(function (s, o) { return s + orderTotal(o); }, 0);
+    var totalSale = validOrders.reduce(function (s, o) { return s + orderTotal(o); }, 0);
     var fee = Math.round(totalSale * 0.05);
     var earn = totalSale - fee;
-    var deliveredSale = allOrders.filter(function (o) { return o.orderStatus === 'delivered'; }).reduce(function (s, o) { return s + orderTotal(o); }, 0);
-    var pendingSale = allOrders.filter(function (o) { return ['placed', 'confirmed', 'packed'].includes(o.orderStatus); }).reduce(function (s, o) { return s + orderTotal(o); }, 0);
+    var deliveredSale = validOrders.filter(function (o) { return o.orderStatus === 'delivered'; }).reduce(function (s, o) { return s + orderTotal(o); }, 0);
+    var pendingSale = validOrders.filter(function (o) { return ['placed', 'confirmed', 'packed'].includes(o.orderStatus); }).reduce(function (s, o) { return s + orderTotal(o); }, 0);
     if ($('todaySale')) $('todaySale').textContent = String(todaySale);
     if ($('todayOrdersLine')) $('todayOrdersLine').textContent = todayOrders.length + ' orders today';
     if ($('totalOrders')) $('totalOrders').textContent = String(allOrders.length);
@@ -481,7 +485,7 @@
       for (var i = 6; i >= 0; i--) {
         var d = new Date(); d.setDate(d.getDate() - i);
         var ds = d.toDateString();
-        var sum = allOrders.filter(function (o) { return new Date(o.createdAt).toDateString() === ds; }).reduce(function (s, o) { return s + orderTotal(o); }, 0);
+        var sum = validOrders.filter(function (o) { return new Date(o.createdAt).toDateString() === ds; }).reduce(function (s, o) { return s + orderTotal(o); }, 0);
         days.push('<div class="kv"><span>' + d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }) + '</span><b>₹' + sum + '</b></div>');
       }
       weekEl.innerHTML = days.join('');
