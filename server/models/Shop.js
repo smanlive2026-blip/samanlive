@@ -137,8 +137,14 @@ const shopSchema = new mongoose.Schema({
         batch: { type: String, default: '' },
         expiry: { type: String, default: '' },
         mrp: { type: Number, default: 0 },
+        // ✅ SAHI - items ke baad comma laga ke
         stock: { type: Number, default: 0 }
-    }],
+        }],
+
+       // ===== WALLET - V1 NEW - Shop ka Earning Wallet - SHOP LEVEL PE, items ke BAHAR =====
+        walletBalance: { type: Number, default: 0 },
+        totalEarning: { type: Number, default: 0 },
+        totalPayout: { type: Number, default: 0 },
 
     isOpen: { type: Boolean, default: true },
     announcement: { type: String, default: '' },

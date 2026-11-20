@@ -253,7 +253,7 @@ app.use('/api/admin', settingsRoutes); // ✅ FIX 2 - /api/admin/settings - back
 app.use('/api/common', require('./routes/common/index'));
 app.use('/api/common/profile', require('./routes/common/profile.routes'));
 // V27 NEW: WALLET - Ye mount nahi tha, isliye /api/common/wallet/balance pe 404 aata tha
-app.use('/api/common/wallet', require('./routes/common/wallet.routes'));
+//app.use('/api/common/wallet', require('./routes/common/wallet.routes'));
 
 // 3. MEDIA - SETTINGS KE BAAD - warna /api/upload/logo ko ye pakad lega aur 500 dega
 app.use('/api/media', require('./routes/media'));
