@@ -1,11 +1,35 @@
-// LOCATION: server/routes/common/analytics.routes.js - V3 - REAL + DOUBLE-ANALYTICS FIX - FULL CODE
+// LOCATION: server/routes/common/analytics.routes.js - V4 - REAL + DOUBLE-ANALYTICS FIX + TRACKING ON/OFF - FULL CODE
 // FIX V3: Is file ke andar /analytics/:shopId NAHI likhna hai - Sirf /:shopId likhna hai.
 // Kyunki server/routes/common/index.js pehle se hi isko /analytics pe mount karta hai + server.js usko /api/common pe mount karta hai.
 // Pehle: /api/common + /analytics + /analytics/:shopId = /api/common/analytics/analytics/:shopId - Frontend wahan kabhi jaata hi nahi tha, isliye sab 0 dikhta tha.
 // Ab: /api/common + /analytics + /:shopId = /api/common/analytics/:shopId - Frontend wahi maangta hai, ab milega.
+// FIX V4 TRACKING ON/OFF: Analytics wale page pe jo Tracking ON/OFF button hai, wo isi file se chalega.
+//   GET /api/common/analytics/:shopId/tracking-setting -> { success: true, enabled: true/false }
+//   POST /api/common/analytics/:shopId/tracking-setting { enabled: true/false } -> DB me save hoga
+//   OFF hai toh POST /:shopId/track aayega bhi toh Visit save NAHI hoga - Isliye Visitor badhega hi nahi. ON karte hi fir se save hone lagega.
+//   Setting ke liye alag file nahi chahiye - ShopTrackingSetting isi file ke andar bana hai, taaki 1 hi file paste karni pade.
 // RULE: Koi nakli number NAHI - Sab Order + ShopVisit se aayega.
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
+
+// TRACKING SETTING - V4 - Har dukaan ki alag setting - Default ON hai, kyunki Tracking pehle se chal rahi hai
+// shopId unique hai - Ek dukaan ki 1 hi setting hogi, dobara ON/OFF karne pe wahi update hogi, nayi row nahi banegi
+const trackingSettingSchema = new mongoose.Schema({
+  shopId: { type: String, required: true, unique: true, index: true },
+  enabled: { type: Boolean, default: true },
+  updatedAt: { type: Date, default: Date.now }
+});
+const ShopTrackingSetting = mongoose.models.ShopTrackingSetting || mongoose.model('ShopTrackingSetting', trackingSettingSchema);
+
+// Tracking ON hai ya OFF - Koi setting nahi mili toh ON maanenge, kyunki pehle se Tracking chal rahi hai
+async function isTrackingOn(shopId){
+  try{
+    var s = await ShopTrackingSetting.findOne({ shopId: shopId }).lean();
+    if(!s) return true;
+    return s.enabled !== false;
+  }catch(e){ return true; }
+}
 
 function orderAmount(o){
   var v = Number(o.totalAmount !== undefined && o.totalAmount !== null ? o.totalAmount : o.total);
@@ -31,6 +55,30 @@ function growthPct(nowVal, prevVal){
   if(!prevVal || prevVal === 0) return 0;
   return Math.round(((nowVal - prevVal) / prevVal) * 100);
 }
+
+// 0. TRACKING SETTING - GET /api/common/analytics/:shopId/tracking-setting - Button ko pehle ye puchna hai ki ON hai ya OFF
+router.get('/:shopId/tracking-setting', async (req, res) => {
+  try{
+    var shopId = req.params.shopId;
+    var enabled = await isTrackingOn(shopId);
+    return res.json({ success: true, enabled: enabled });
+  }catch(e){ return res.json({ success: true, enabled: true }); }
+});
+
+// 0B. TRACKING SETTING SAVE - POST /api/common/analytics/:shopId/tracking-setting { enabled: true/false } - Button dabate hi ye chalega
+router.post('/:shopId/tracking-setting', async (req, res) => {
+  try{
+    var shopId = req.params.shopId;
+    if(!shopId) return res.json({ success: false, message: 'shopId chahiye' });
+    var enabled = req.body && typeof req.body.enabled !== 'undefined' ? !!req.body.enabled : true;
+    await ShopTrackingSetting.findOneAndUpdate(
+      { shopId: shopId },
+      { $set: { enabled: enabled, updatedAt: new Date() } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    return res.json({ success: true, enabled: enabled });
+  }catch(e){ return res.status(500).json({ success: false, message: e.message }); }
+});
 
 // 1. MAIN - GET /api/common/analytics/:shopId?period=today/week/month/year
 router.get('/:shopId', async (req, res) => {
@@ -89,11 +137,13 @@ router.get('/:shopId', async (req, res) => {
     var visitCount = 0;
     try{ var ShopVisit = require('../../models/ShopVisit'); visitCount = await ShopVisit.countDocuments({ shopId: shopId, createdAt: { $gte: start } }); }catch(e){ visitCount = 0; }
     var conversion = visitCount > 0 ? Math.round((totalOrders / visitCount) * 1000) / 10 : 0;
+    var trackingOn = await isTrackingOn(shopId);
     return res.json({ success: true, analytics: {
       visitors: visitCount, visitorsGrowth: 0,
       orders: totalOrders, ordersGrowth: growthPct(totalOrders, prevOrders.length),
       revenue: revenue, revenueGrowth: growthPct(revenue, prevRevenue),
       conversion: conversion, aov: aov, delivered: delivered, pending: pending, period: period,
+      trackingEnabled: trackingOn,
       dailySales: dailySales, revenueByDay: dailySales, salesByDay: dailySales,
       topProducts: topProducts.slice(0, 10), paymentMethods: paymentMethods, hourly: hourly, salesByHour: hourly, trafficSources: [], heatmap: []
     }});
@@ -156,7 +206,8 @@ router.get('/:shopId/visitors', async (req, res) => {
     var total = visits.length;
     var traffic = Object.keys(bySource).map(function(k){ return { source: k, count: bySource[k], percent: total > 0 ? Math.round((bySource[k] / total) * 100) : 0 }; });
     var devices = Object.keys(byDevice).map(function(k){ return { device: k, count: byDevice[k], percent: total > 0 ? Math.round((byDevice[k] / total) * 100) : 0 }; });
-    return res.json({ success: true, visitors: visits, total: total, liveVisitors: visits.slice(0, 10), trafficSources: traffic, devices: devices });
+    var trackingOn = await isTrackingOn(shopId);
+    return res.json({ success: true, visitors: visits, total: total, liveVisitors: visits.slice(0, 10), trafficSources: traffic, devices: devices, trackingEnabled: trackingOn });
   }catch(e){ return res.json({ success: true, visitors: [], total: 0 }); }
 });
 
@@ -186,15 +237,18 @@ router.get('/:shopId/sales-chart', async (req, res) => {
   }catch(e){ return res.status(500).json({ success: false, message: e.message }); }
 });
 
-// 6. TRACK - POST /api/common/analytics/:shopId/track - AB ASLI ME SAVE HOGA
+// 6. TRACK - POST /api/common/analytics/:shopId/track - AB ASLI ME SAVE HOGA - PAR OFF HAI TOH SAVE NAHI HOGA
 router.post('/:shopId/track', async (req, res) => {
   try{
     var shopId = req.params.shopId;
     if(!shopId) return res.json({ success: false });
     if(req.body && req.body.event && req.body.event !== 'visit' && req.body.event !== 'page_view') return res.json({ success: true });
+    // V4 - Tracking OFF hai toh Visit save hi nahi karenge - Customer-View se aayega bhi toh yahin ruk jayega
+    var trackingOn = await isTrackingOn(shopId);
+    if(!trackingOn) return res.json({ success: true, tracked: false, reason: 'tracking-off' });
     var ShopVisit = require('../../models/ShopVisit');
     await ShopVisit.create({ shopId: shopId, shopType: req.body.shopType || '', device: req.body.device || 'Unknown', page: req.body.page || req.body.url || '/shop', source: req.body.source || 'Direct' });
-    return res.json({ success: true });
+    return res.json({ success: true, tracked: true });
   }catch(e){ return res.json({ success: true }); }
 });
 router.post('/:shopId/track-click', async (req, res) => {

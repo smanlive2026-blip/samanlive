@@ -1,9 +1,12 @@
-<!-- LOCATION: public/shop-templates/common/analytics/analytics.html - V2 - REAL ANALYTICS - FULL CODE -->
-<!-- RULE: Koi nakli number NAHI hoga - Math.random() wala chart hata diya. Sab kuch Backend se aayega - POST /api/common/analytics/:shopId -->
+<!-- LOCATION: public/shop-templates/common/analytics/analytics.html - V3 - REAL ANALYTICS + TRACKING ON/OFF BUTTON - FULL CODE -->
+<!-- RULE: Koi nakli number NAHI hoga - Math.random() wala chart hata diya. Sab kuch Backend se aayega - GET /api/common/analytics/:shopId -->
 <!-- FLOW: Load -> GET /api/common/analytics/:shopId?period=month -> Stats + Chart + Top Products + Payment -> Period badlo -> Dobara Load -->
 <!-- FIX V2: 1) Chart.js CDN load kiya - Pehle load hi nahi hota tha, isliye chart khaali rehta tha. 2) ApiCore / AuthCore ka script upar lagaya - Pehle window.ApiCore milta hi nahi tha. -->
 <!--   3) Traffic Source wala nakli card hata ke Payment Method wala kar diya - Traffic ka data hai hi nahi, nakli Direct 45% nahi dikhayenge. -->
-<!--   4) Visitors ka Model hai hi nahi, isliye 0 dikhayenge + 'Tracking nahi hai' likhenge - Nakli 1250 nahi. -->
+<!-- FIX V3 TRACKING TOGGLE: Upar Tracking ON / OFF wala button hai. Ye sirf dikhane ka button nahi hai - Ye Backend ko bolega: -->
+<!--   GET /api/common/analytics/:shopId/tracking-setting -> Is dukaan ki tracking ON hai ya OFF, wahi aayega -->
+<!--   POST /api/common/analytics/:shopId/tracking-setting { enabled: true/false } -> Backend me save hoga -->
+<!--   OFF karne ke baad Customer-View se Visit aayega bhi toh Backend usko save NAHI karega - Isliye Visitor badhega hi nahi. ON karte hi fir se save hone lagega. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,6 +30,12 @@ select{font-family:inherit;outline:none}
 .analytics-header b{display:block;font-weight:900;font-size:16px}
 .analytics-header span{font-size:11px;color:#64748b;font-weight:600}
 .period-select{margin-left:auto;background:#f1f5f9;border:1px solid #e2e8f0;padding:6px 10px;border-radius:8px;font-weight:700;font-size:11px}
+/* TRACKING TOGGLE - V3 - ON = Hara, OFF = Laal - Dabaane pe poora button badlega */
+.tracking-toggle{display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;font-weight:900;font-size:11px;white-space:nowrap;flex-shrink:0;border:1px solid #e2e8f0;transition:all .2s}
+.tracking-toggle.on{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.tracking-toggle.off{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+.tracking-toggle:disabled{opacity:.6;cursor:not-allowed}
+.tracking-toggle .dot{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block}
 .analytics-stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:12px}
 .a-stat-card{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:12px}
 .a-stat-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
@@ -76,6 +85,12 @@ select{font-family:inherit;outline:none}
       <option value="month" selected>This Month</option>
       <option value="year">This Year</option>
     </select>
+  </div>
+
+  <!-- TRACKING ON/OFF - V3 - Ye button upar Header ke neeche hai, taaki dikhe - Dabaane pe Backend me save hoga -->
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 12px 0">
+    <button id="trackingToggle" class="tracking-toggle on"><span class="dot"></span><span id="trackingToggleText">Tracking ON</span></button>
+    <span id="trackingToggleHint" style="font-size:11px;color:#64748b;font-weight:600">ON hai - Customer aayega toh Visitor gina jayega</span>
   </div>
 
   <div class="analytics-stats">
@@ -138,6 +153,9 @@ class AnalyticsPage {
     this.chart = null;
     this.data = null;
     this.chartType = 'revenue';
+    // TRACKING - V3 - Default ON hai, kyunki pehle se Tracking chalu hai. Backend se asli setting aayegi toh wahi dikhegi.
+    this.trackingOn = true;
+    this.trackingSaving = false;
   }
 
   async init(){
@@ -147,7 +165,57 @@ class AnalyticsPage {
       return;
     }
     this.bindEvents();
+    await this.loadTrackingSetting();
     await this.loadAnalytics();
+  }
+
+  // TRACKING SETTING - V3 - Backend se puchenge - Is dukaan ki tracking ON hai ya OFF
+  // GET /api/common/analytics/:shopId/tracking-setting -> { success: true, enabled: true/false }
+  async loadTrackingSetting(){
+    try{
+      var r = await fetch('/api/common/analytics/' + this.shopId + '/tracking-setting').then(function(x){ return x.json(); }).catch(function(){ return null; });
+      if(r && typeof r.enabled !== 'undefined') this.trackingOn = !!r.enabled;
+      // Agar Backend me abhi wo endpoint nahi laga hai (404), toh ON hi maanenge - Kyunki Tracking pehle se chal rahi hai, usko galat OFF nahi dikhayenge.
+    }catch(e){}
+    this.renderTrackingToggle();
+  }
+
+  // TRACKING TOGGLE UI - V3 - Button ka rang + text + neeche wala hint - Teenon ek saath badlenge
+  renderTrackingToggle(){
+    var btn = document.getElementById('trackingToggle');
+    var txt = document.getElementById('trackingToggleText');
+    var hint = document.getElementById('trackingToggleHint');
+    if(!btn) return;
+    btn.className = 'tracking-toggle ' + (this.trackingOn ? 'on' : 'off');
+    if(txt) txt.innerText = this.trackingOn ? 'Tracking ON' : 'Tracking OFF';
+    if(hint) hint.innerText = this.trackingOn ? 'ON hai - Customer aayega toh Visitor gina jayega' : 'OFF hai - Customer aayega bhi toh Visitor NAHI gina jayega';
+  }
+
+  // TRACKING TOGGLE CLICK - V3 - Button dabaate hi Backend ko bhejenge, Backend se OK aaya tabhi button badlega - Local me hi badal ke dhokha nahi denge
+  async toggleTracking(){
+    if(this.trackingSaving) return;
+    var btn = document.getElementById('trackingToggle');
+    var newVal = !this.trackingOn;
+    this.trackingSaving = true;
+    if(btn) btn.disabled = true;
+    try{
+      var r = await fetch('/api/common/analytics/' + this.shopId + '/tracking-setting', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: newVal })
+      }).then(function(x){ return x.json(); }).catch(function(){ return null; });
+      // Backend ne mana kar diya / endpoint nahi mila toh button wapas purana hi rahega - Galat ON/OFF nahi dikhayenge
+      if(!r || !r.success){
+        var h = document.getElementById('analyticsHint');
+        if(h) h.innerText = 'Tracking badal nahi paya - Backend wala endpoint abhi nahi laga hai. Pehle Backend wali file lagao, fir button dabao.';
+        return;
+      }
+      this.trackingOn = !!r.enabled;
+      this.renderTrackingToggle();
+    }catch(e){} finally{
+      this.trackingSaving = false;
+      if(btn) btn.disabled = false;
+    }
   }
 
   // V2: Koi fallback nakli data NAHI hai - ApiCore nahi mila toh seedha fetch karenge, fetch bhi fail hua toh 0 dikhayenge, Tomato / Potato wala nakli Top Product nahi dikhayenge
@@ -183,8 +251,8 @@ class AnalyticsPage {
       if(periodEl) periodEl.innerText = periodText + ' • Asli Sale se';
 
       if(hint){
-        if(!this.data.orders) hint.innerText = 'Is period me koi Order nahi hai - Order aayega toh yahan asli hisab dikhega. Visitors ka tracking abhi nahi hai, isliye Visitors 0 dikhega.';
-        else hint.innerText = '✅ Asli data hai - ' + this.data.orders + ' Orders • ₹' + Number(this.data.revenue || 0).toLocaleString('en-IN') + ' Revenue • Avg Order ₹' + Number(this.data.aov || 0).toLocaleString('en-IN');
+        if(!this.data.orders) hint.innerText = 'Is period me koi Order nahi hai - Order aayega toh yahan asli hisab dikhega. Tracking ' + (this.trackingOn ? 'ON' : 'OFF') + ' hai, isliye Visitors ' + (this.data.visitors || 0) + ' dikhega.';
+        else hint.innerText = '✅ Asli data hai - ' + this.data.orders + ' Orders • ₹' + Number(this.data.revenue || 0).toLocaleString('en-IN') + ' Revenue • Avg Order ₹' + Number(this.data.aov || 0).toLocaleString('en-IN') + ' • Tracking ' + (this.trackingOn ? 'ON' : 'OFF');
       }
 
       this.renderTopProducts();
@@ -281,6 +349,8 @@ class AnalyticsPage {
 
   bindEvents(){
     document.getElementById('analyticsBack')?.addEventListener('click', function(){ history.back(); });
+    // TRACKING TOGGLE - V3 - Button dabao toh Backend ko bhejo
+    document.getElementById('trackingToggle')?.addEventListener('click', function(){ window.AnalyticsPageInstance.toggleTracking(); });
     document.getElementById('analyticsPeriodSelect')?.addEventListener('change', function(e){
       window.AnalyticsPageInstance.period = e.target.value;
       window.AnalyticsPageInstance.loadAnalytics();
