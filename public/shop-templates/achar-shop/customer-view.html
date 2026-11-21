@@ -1,10 +1,11 @@
-<!-- LOCATION: public/shop-templates/achar-shop/customer-view.html - FULL - PRODUCT-FORM + COMMON PROFILE - V5 -->
+<!-- LOCATION: public/shop-templates/achar-shop/customer-view.html - FULL - PRODUCT-FORM + COMMON PROFILE - V6 -->
 <!-- RULE: Customer = Dekhega + Cart me dalega + Common Checkout pe jayega. Yahan Accept / Packed ka button kabhi nahi hoga. -->
 <!-- COMMON: api-core + auth-core + storage-core + socket-core + WORLD PRODUCT-MANAGER + UNIFIED PROFILE + cart-core + cart-count + shop-toggle/status + wishlist + reviews + share + location + common/checkout + common/customer-orders/my-orders + product-detail -->
 <!-- PRODUCT-FORM: Product = WORLD MODEL se aayega - /api/world-products?shopType=achar-shop - Achar API se nahi -->
 <!-- PROFILE: Shop ka Logo / Banner / Owner Photo / Naam / Address / Phone / Timing / Gallery = COMMON PROFILE se aayega - /api/common/profile/me?role=shop_owner&shopId=XXX - Achar API se nahi -->
 <!-- FIX V5: Pehle wali me customer-view.js + inline JS dono the - double Add hota tha. Ab sirf customer-view.js chalega. -->
 <!-- FIX V5 NO BROWSER STORAGE: shopId SIRF URL se aayega. Browser storage me shopId kabhi save / load NAHI hoga. -->
+<!-- FIX V6 VISITOR TRACKING ON: Customer ne shop kholi toh 1 Visit jayega - POST /api/common/analytics/:shopId/track - Ek tab me 1 hi baar, refresh pe dobara nahi. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -183,6 +184,25 @@ COD available • Free Delivery • SamanLive
   if(!shopId){
     console.warn('[CUSTOMER-VIEW V5] shopId missing - URL me ?shopId=XXX hona chahiye. Shop List / Share Link se dobara kholo.');
   }
+})();
+</script>
+
+<!-- VISITOR TRACKING ON - V6 - Customer ne shop kholi toh 1 Visit jayega - Ek tab me 1 hi baar, refresh pe dobara nahi -->
+<script>
+(function(){
+  try{
+    var sid = new URLSearchParams(location.search).get('shopId') || window.SHOP_ID || '';
+    if(!sid) return;
+    var key = 'visited_' + sid;
+    if(sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    var isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent || '');
+    fetch('/api/common/analytics/' + encodeURIComponent(sid) + '/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event: 'visit', device: isMobile ? 'Mobile' : 'Desktop', page: location.pathname, shopType: 'achar-shop', source: document.referrer ? 'Referral' : 'Direct' })
+    }).catch(function(){});
+  }catch(e){}
 })();
 </script>
 
