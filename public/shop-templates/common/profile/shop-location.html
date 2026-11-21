@@ -1,4 +1,4 @@
-<!-- LOCATION: public/shop-templates/common/profile/shop-location.html - V1 - COMMON - FULL CODE -->
+<!-- LOCATION: public/shop-templates/common/profile/shop-location.html - V2 - COMMON - FULL CODE -->
 <!-- WORLD CLASS SHOP LOCATION + CIRCLE - SHOP OWNER ONLY - FULL -->
 <!-- RULE 1: Shop Create se iska KOI lena-dena NAHI hai. Shop pehle ban jayegi, Location baad me kabhi bhi yahan se set hogi. -->
 <!-- RULE 2: Location = Profile se hi set hogi. Jab chahe, jitni baar chahe badal sakte ho. Nayi jagah shift hue toh yahan se nayi Location save kar do. -->
@@ -8,6 +8,9 @@
 <!-- RULE 6: Location sirf 1 jagah save hogi = POST /api/location/shop - Profile / Settings pe Location NAHI bhejenge, wo Lat/Lng gira dete the. -->
 <!-- RULE 7: Fixed = Dukaan ek jagah. Dynamic / Thela = Circle uske saath chalega - Live Tracking se. -->
 <!-- FLOW: Load -> GET /api/location/shop/:shopId -> Map + Circle + Form bharo -> Save -> POST /api/location/shop -> Dobara Server se Load -->
+<!-- FIX V2 - SAVE + GPS: 1) Is page me ApiCore / Toast / Loader ka script hai hi nahi, isliye pehle Save / GPS fail hota tha toh chup-chap kuch nahi dikhta tha. Ab showMsg() Status box me hi likhega. -->
+<!--   2) Address khaali ho toh Save rok diya tha, aur Address Nominatim se aata hai jo aksar fail hota hai. Ab Address khaali ho toh 'Shop Location' likh ke save hoga, Save nahi rukega. -->
+<!--   3) GPS pehle 1 baar getCurrentPosition se liya jata tha, pehli baar Browser mota-mota galat point deta hai. Ab 3 baar try + 8 sec watchPosition se sabse sahi (sabse kam accuracy wala) point chunega, Accuracy bhi dikhegi. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -123,12 +126,17 @@ input[type=range]{width:100%;accent-color:#0f172a}
         <span>Longitude</span>
         <input type="text" id="lngInput" class="text-input" placeholder="72.8311" readonly>
       </div>
+      <!-- V2: GPS Accuracy bhi dikhegi - Kitna sahi hai, pata chalega -->
+      <div class="form-row">
+        <span>GPS Accuracy</span>
+        <span id="gpsAccuracyText" style="color:#15803d">- Map pe point dabao ya GPS lo -</span>
+      </div>
       <button id="gpsBtn" class="full-btn green" style="margin-top:4px">🎯 Current Location Se Lo</button>
       <div class="form-row" style="margin-top:8px">
         <span>Address</span>
       </div>
       <input type="text" id="addressInput" class="text-input" placeholder="Pura address likho - Adajan, Surat">
-      <div class="info-box" style="margin-top:10px">Map pe point dabane pe Address apne aap bhar jayega. Galat lage toh khud bhi likh sakte ho.</div>
+      <div class="info-box" style="margin-top:10px">Map pe point dabane pe Address apne aap bhar jayega. Galat lage toh khud bhi likh sakte ho. Address khaali hai toh bhi Save hoga.</div>
     </div>
 
     <div class="form-section">
@@ -173,6 +181,8 @@ class ShopLocationCirclePage {
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.lat = null;
     this.lng = null;
+    this.accuracy = null;
+    this.hasPicked = false;
     this.radius = 5;
     this.type = 'fixed';
     this.address = '';
@@ -182,6 +192,7 @@ class ShopLocationCirclePage {
     this.watchId = null;
     this.tracking = false;
     this.hasSaved = false;
+    this.saving = false;
   }
 
   getToken(){
@@ -197,19 +208,34 @@ class ShopLocationCirclePage {
     return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
   }
 
+  // V2 FIX: Is page me Toast / Loader ka script hai hi nahi, isliye pehle har error chup-chap gayab ho jata tha. Ab Status wale box me hi likhega - kabhi chup nahi rahega.
+  showMsg(msg, isError){
+    var txt = document.getElementById('locStatusText');
+    var sub = document.getElementById('locStatusSub');
+    var icon = document.getElementById('locStatusIcon');
+    if(txt) txt.innerText = msg;
+    if(sub) sub.innerText = isError ? 'Dobara try karo - Upar wala tarika kaam nahi kiya' : 'Ab Save dabao';
+    if(icon) icon.innerText = isError ? '❌' : '🟢';
+    try{ if(window.Toast && window.Toast.show) window.Toast.show(msg, isError ? 'error' : 'success'); }catch(e){}
+  }
+
   async init(){
     if(!this.shopId){
-      if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye. Dashboard se dobara kholo.', 'error');
+      this.showMsg('Shop not found - URL me ?shopId=XXX hona chahiye. Dashboard se dobara kholo.', true);
       return;
     }
     this.initMap();
-    await this.loadLocation();
     this.bindEvents();
+    await this.loadLocation();
   }
 
   // MAP - 1 hi baar banega, dobara nahi
   initMap(){
     try{
+      if(typeof L === 'undefined'){
+        this.showMsg('Map load nahi hua - Net check karo aur page dobara kholo', true);
+        return;
+      }
       // Default - Surat, Adajan - Sirf Map kholne ke liye, Save ke liye nahi. Save tabhi hoga jab tu point dabayega ya GPS lega.
       var defLat = 21.1702, defLng = 72.8311;
       this.map = L.map('shopMap').setView([defLat, defLng], 13);
@@ -219,24 +245,36 @@ class ShopLocationCirclePage {
       var self = this;
       // Map pe dabao toh Marker + Circle wahan chale jayenge
       this.map.on('click', function(e){
+        self.accuracy = null;
+        self.hasPicked = true;
         self.setPoint(e.latlng.lat, e.latlng.lng, true);
       });
       // Marker drag karo toh bhi
       this.marker.on('dragend', function(){
         var p = self.marker.getLatLng();
+        self.accuracy = null;
+        self.hasPicked = true;
         self.setPoint(p.lat, p.lng, true);
       });
       setTimeout(function(){ if(self.map) self.map.invalidateSize(); }, 300);
-    }catch(e){}
+    }catch(e){
+      this.showMsg('Map khulne me dikkat - Page dobara kholo', true);
+    }
   }
 
   setPoint(lat, lng, fetchAddress){
     this.lat = Number(lat);
     this.lng = Number(lng);
+    this.hasPicked = true;
     var latEl = document.getElementById('latInput');
     var lngEl = document.getElementById('lngInput');
     if(latEl) latEl.value = this.lat.toFixed(6);
     if(lngEl) lngEl.value = this.lng.toFixed(6);
+    var accEl = document.getElementById('gpsAccuracyText');
+    if(accEl){
+      if(this.accuracy !== null && this.accuracy !== undefined) accEl.innerText = '± ' + Math.round(this.accuracy) + 'm - ' + (this.accuracy <= 50 ? 'Bilkul sahi ✅' : this.accuracy <= 200 ? 'Theek hai, chalega' : 'Bahut galat hai ⚠️ - Map pe point dabao');
+      else accEl.innerText = 'Map se chuna hua - Bilkul sahi ✅';
+    }
     if(this.marker) this.marker.setLatLng([this.lat, this.lng]);
     if(this.circle) this.circle.setLatLng([this.lat, this.lng]);
     if(this.map) this.map.setView([this.lat, this.lng], this.map.getZoom());
@@ -272,6 +310,7 @@ class ShopLocationCirclePage {
   async fetchAddress(lat, lng){
     try{
       // Nominatim - Free, bina key ke - Google ki zarurat nahi, nakli address bhi nahi
+      // V2: Ye fail bhi ho jaye toh koi baat nahi - Address ke bina bhi Save hoga, isko Save nahi rokne denge
       var res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lng, { headers: { 'Accept': 'application/json' } }).then(r=>r.json()).catch(()=>null);
       if(res && res.display_name){
         this.address = res.display_name;
@@ -284,7 +323,6 @@ class ShopLocationCirclePage {
 
   async loadLocation(){
     try{
-      if(window.Loader) Loader.show('Loading location...');
       var data = null;
       // 1 hi jagah se aayega - GET /api/location/shop/:shopId - Profile / Settings se NAHI
       if(window.ApiCore){
@@ -302,59 +340,63 @@ class ShopLocationCirclePage {
         return;
       }
       this.hasSaved = true;
+      this.hasPicked = true;
       this.lat = Number(d.latitude);
       this.lng = Number(d.longitude);
       this.radius = Number(d.deliveryRange || d.range || d.radius || 5) || 5;
       this.type = (d.locationType || d.type || 'fixed') === 'dynamic' ? 'dynamic' : 'fixed';
       this.address = d.address || '';
-      document.getElementById('radiusInput').value = this.radius;
-      document.getElementById('addressInput').value = this.address;
+      var rEl = document.getElementById('radiusInput'); if(rEl) rEl.value = this.radius;
+      var aEl = document.getElementById('addressInput'); if(aEl) aEl.value = this.address;
       this.setPoint(this.lat, this.lng, false);
       this.setRadius(this.radius);
       this.setType(this.type);
       this.updateStatus();
     }catch(e){
       this.updateStatus();
-    }finally{ if(window.Loader) Loader.hide(); }
+    }
   }
 
   async saveLocation(){
+    if(this.saving) return;
     // RULE: GPS / Point ke bina Save HI NAHI hoga - Bina Lat/Lng ke save karke dhokha nahi denge
-    if(this.lat === null || this.lng === null || !this.lat || !this.lng){
-      if(window.Toast) Toast.show('Pehle Map pe apni dukaan ka point dabao ya Current Location dabao', 'error');
+    if(this.lat === null || this.lng === null || !this.lat || !this.lng || !this.hasPicked){
+      this.showMsg('Pehle Map pe apni dukaan ka point dabao ya Current Location dabao', true);
       return;
     }
-    var address = document.getElementById('addressInput').value || this.address || '';
-    if(!address){
-      if(window.Toast) Toast.show('Address bhi likh do - Customer ko dikhega', 'error');
-      return;
-    }
+    // V2 FIX: Address khaali ho toh Save MAT roko - Nominatim fail hone pe pehle yahin atak jata tha. Khali ho toh 'Shop Location' likh ke save hoga.
+    var address = (document.getElementById('addressInput').value || this.address || '').trim();
+    if(!address) address = 'Shop Location';
     this.address = address;
     var body = { shopId: this.shopId, lat: this.lat, lng: this.lng, latitude: this.lat, longitude: this.lng, type: this.type, locationType: this.type, range: this.radius, deliveryRange: this.radius, radius: this.radius, address: this.address };
     var btn = document.getElementById('saveLocBtn');
     var btn2 = document.getElementById('saveLocBtn2');
+    this.saving = true;
     if(btn){ btn.innerText = 'Saving...'; btn.disabled = true; }
     if(btn2){ btn2.innerText = 'Saving...'; btn2.disabled = true; }
     try{
       var saved = false;
+      var serverMsg = '';
       // 1 hi jagah save hoga - POST /api/location/shop - Profile / Settings pe NAHI
       if(window.ApiCore){
-        try{ var r = await window.ApiCore.post('/api/location/shop', body); if(r && r.success !== false) saved = true; }catch(e){ saved = false; }
+        try{ var r = await window.ApiCore.post('/api/location/shop', body); if(r && r.success !== false){ saved = true; } else if(r) serverMsg = r.message || r.error || ''; }catch(e){ serverMsg = e.message || ''; saved = false; }
       }
       if(!saved){
         var res = await fetch('/api/location/shop', { method: 'POST', headers: this.getHeaders(), body: JSON.stringify(body) }).then(x=>x.json()).catch(()=>null);
-        if(res && (res.success || !res.error)) saved = true;
+        if(res && res.success) saved = true;
+        else if(res) serverMsg = res.message || res.error || serverMsg;
       }
       if(!saved){
-        if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+        this.showMsg('❌ Server me save nahi hua - ' + (serverMsg || 'dobara try karo'), true);
         return;
       }
       this.hasSaved = true;
       await this.loadLocation();
-      if(window.Toast) Toast.show('Location + ' + this.radius + ' KM Circle save ho gaya ✅', 'success');
+      this.showMsg('Location + ' + this.radius + ' KM Circle save ho gaya ✅', false);
     }catch(e){
-      if(window.Toast) Toast.show('Failed - Server error', 'error');
+      this.showMsg('Failed - Server error - ' + (e.message || ''), true);
     }finally{
+      this.saving = false;
       if(btn){ btn.innerText = '💾 Save'; btn.disabled = false; }
       if(btn2){ btn2.innerText = '💾 Location + Circle Save Karo'; btn2.disabled = false; }
     }
@@ -363,19 +405,56 @@ class ShopLocationCirclePage {
   async useGPS(){
     var btn = document.getElementById('gpsBtn');
     if(!navigator.geolocation){
-      if(window.Toast) Toast.show('Is phone me GPS nahi hai - Map pe point dabao', 'error');
+      this.showMsg('Is phone me GPS nahi hai - Map pe point dabao', true);
       return;
     }
-    if(btn){ btn.innerText = '📍 Location le rahe hain...'; btn.disabled = true; }
+    if(btn){ btn.innerText = '📍 Location le rahe hain... thoda ruko'; btn.disabled = true; }
     try{
-      var pos = await new Promise(function(resolve, reject){
-        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      // V2 GPS FIX: Pehle 1 baar getCurrentPosition liya jata tha, pehli baar Browser mota-mota galat point deta hai (IP / Tower wala).
+      // Ab: 1) Pehle 1 shot lo 2) Phir 8 sec tak watchPosition chalao, sabse kam accuracy (sabse sahi) wala point rakho 3) Agar koi bhi nahi aaya toh pehle wala hi rakho.
+      var self = this;
+      var best = null;
+      var pick = function(pos){
+        var acc = pos.coords.accuracy || 9999;
+        if(!best || acc < best.accuracy) best = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: acc };
+      };
+      // 1) Pehla shot - 15 sec tak wait karo, pehle 10 sec me hi timeout mat karo
+      try{
+        var first = await new Promise(function(resolve, reject){
+          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        });
+        pick(first);
+      }catch(e){
+        // Pehla shot fail hua toh watch se hi try karenge, abhi haar nahi manenge
+      }
+      // 2) 8 sec tak behtar point dhoondho
+      await new Promise(function(resolve){
+        var wid = null;
+        var done = false;
+        var finish = function(){ if(done) return; done = true; try{ if(wid !== null) navigator.geolocation.clearWatch(wid); }catch(e){} resolve(); };
+        try{
+          wid = navigator.geolocation.watchPosition(function(pos){
+            pick(pos);
+            // 30m se sahi mil gaya toh aur wait mat karo
+            if(best && best.accuracy <= 30) finish();
+          }, function(){}, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        }catch(e){ finish(); return; }
+        setTimeout(finish, 8000);
       });
-      this.setPoint(pos.coords.latitude, pos.coords.longitude, true);
-      if(window.Toast) Toast.show('Current Location mil gayi ✅ - Ab Radius chuno aur Save dabao', 'success');
+      if(!best){
+        this.showMsg('Location ON karo - Phone ki Settings me Location + Browser ko Allow karo, phir dobara dabao. Ya Map pe point dabao.', true);
+        return;
+      }
+      this.accuracy = best.accuracy;
+      this.hasPicked = true;
+      this.setPoint(best.lat, best.lng, true);
+      if(best.accuracy > 200){
+        this.showMsg('GPS mila par bahut galat hai (± ' + Math.round(best.accuracy) + 'm) - Map pe apni dukaan ka point dabao, wo sabse sahi hai', true);
+      } else {
+        this.showMsg('Current Location mil gayi ✅ - Accuracy ± ' + Math.round(best.accuracy) + 'm - Ab Radius chuno aur Save dabao', false);
+      }
     }catch(e){
-      // GPS deny hua toh Save nahi hoga, yahan bhi dhokha nahi denge
-      if(window.Toast) Toast.show('Location ON karo ya Map pe point dabao - Bina Location ke Save nahi hoga', 'error');
+      this.showMsg('Location ON karo ya Map pe point dabao - Bina Location ke Save nahi hoga', true);
     }finally{
       if(btn){ btn.innerText = '🎯 Current Location Se Lo'; btn.disabled = false; }
     }
@@ -404,14 +483,14 @@ class ShopLocationCirclePage {
       return;
     }
     if(!navigator.geolocation){
-      if(window.Toast) Toast.show('Is phone me GPS nahi hai', 'error');
+      this.showMsg('Is phone me GPS nahi hai', true);
       return;
     }
     var self = this;
     var btn = document.getElementById('liveTrackBtn');
     this.tracking = true;
     if(btn) btn.innerText = '⏹️ Live Tracking Band Karo';
-    if(window.Toast) Toast.show('Live Tracking ON 🛺 - Tu jahan jayega, Circle wahan chalega', 'info');
+    this.showMsg('Live Tracking ON 🛺 - Tu jahan jayega, Circle wahan chalega', false);
     this.watchId = navigator.geolocation.watchPosition(function(pos){
       // Thela 100 meter se zyada chala toh hi Server pe bhejo - Har second bhej ke Server nahi bharenge
       var newLat = pos.coords.latitude;
@@ -420,6 +499,7 @@ class ShopLocationCirclePage {
         var d = self.distanceKm(self.lat, self.lng, newLat, newLng);
         if(d < 0.1) return;
       }
+      self.accuracy = pos.coords.accuracy || null;
       self.setPoint(newLat, newLng, false);
       // Thela wala hai toh Location bhi apne aap save hogi - Baar-baar Save dabane ki zarurat nahi
       self.saveLocationSilent();
@@ -439,7 +519,7 @@ class ShopLocationCirclePage {
   async saveLocationSilent(){
     if(this.lat === null || this.lng === null) return;
     try{
-      var body = { shopId: this.shopId, lat: this.lat, lng: this.lng, latitude: this.lat, longitude: this.lng, type: this.type, locationType: this.type, range: this.radius, deliveryRange: this.radius, radius: this.radius, address: this.address || document.getElementById('addressInput').value || '' };
+      var body = { shopId: this.shopId, lat: this.lat, lng: this.lng, latitude: this.lat, longitude: this.lng, type: this.type, locationType: this.type, range: this.radius, deliveryRange: this.radius, radius: this.radius, address: this.address || document.getElementById('addressInput').value || 'Shop Location' };
       await fetch('/api/location/shop', { method: 'POST', headers: this.getHeaders(), body: JSON.stringify(body) }).catch(()=>null);
     }catch(e){}
   }
@@ -459,18 +539,21 @@ class ShopLocationCirclePage {
     try{
       var res = await fetch('/api/location/shop/' + this.shopId, { method: 'DELETE', headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
       if(res && res.success === false){
-        if(window.Toast) Toast.show('Server pe delete nahi hua - Baad me dobara try karo', 'error');
+        this.showMsg('Server pe delete nahi hua - Baad me dobara try karo', true);
         return;
       }
     }catch(e){}
     this.lat = null;
     this.lng = null;
+    this.hasPicked = false;
+    this.accuracy = null;
     this.address = '';
     document.getElementById('latInput').value = '';
     document.getElementById('lngInput').value = '';
     document.getElementById('addressInput').value = '';
+    var accEl = document.getElementById('gpsAccuracyText'); if(accEl) accEl.innerText = '- Map pe point dabao ya GPS lo -';
     this.updateStatus();
-    if(window.Toast) Toast.show('Location hata di - Baad me wapas set kar sakte ho', 'info');
+    this.showMsg('Location hata di - Baad me wapas set kar sakte ho', false);
   }
 
   bindEvents(){
