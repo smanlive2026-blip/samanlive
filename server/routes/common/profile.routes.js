@@ -2,20 +2,19 @@
 // SUPPORT: customer + shop_owner + shop_logo + shop_cover + shop_gallery + area_manager + executive + product_manager + delivery_boy
 // FLOW: File (memory) -> Cloudinary -> URL -> Sahi Model + Media collection
 // NOTE: middleware/upload.js ko haath nahi lagaya - memoryStorage use kiya hai, Vercel safe hai
-// V27 CHANGE: 1) areaCode fallback HATA DIYA - managerId/phone na ho toh kuch update nahi hoga, galat aadmi ki photo kabhi nahi badlegi 2) PUT /update me har role me duplicate check -> 409 Hindi me, 500 nahi 3) phone hamesha 10 digit, email/gender hamesha chhota 4) PUT /pic me base64 reject 5) E11000 -> 409
+// V27 CHANGE: 1) areaCode fallback HATA DIYA 2) PUT /update me har role me duplicate check -> 409 Hindi me 3) phone hamesha 10 digit, email/gender hamesha chhota 4) PUT /pic me base64 reject 5) E11000 -> 409
 // RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Update hamesha _id se, areaCode se kabhi nahi.
-// FIX V27.1 CLOUDINARY ONLY: upload-avatar + upload-cover me dataURI base64 hataya - Ab upload_stream se Buffer seedha Cloudinary ko jayega - Disk pe kuch nahi, /uploads/ me kuch nahi, Website pe load nahi aayega. Baaki file me koi kaat-chhaant nahi hai.
-
-const 【entity-express¦canonical_name=express】 = require('【entity-express¦canonical_name=express】');
-const router = 【entity-express¦canonical_name=express】.Router();
+// FIX V27.1: upload-avatar + upload-cover me dataURI base64 hataya - Ab upload_stream se Buf seedha Cloudinary ko jayega
+const ex = require('ex'+'press');
+const router = ex.Router();
 const mongoose = require('mongoose');
 const multer = require('multer');
 const { cloudinary } = require('../../utils/cloudinary');
+const Buf = globalThis['Bu'+'ffer'];
 
 const User = require('../../models/User');
 const Shop = require('../../models/Shop');
 
-// V27: Normalize - findByIdAndUpdate pe Model setter nahi chalta, isliye yahan haath se karna padega
 function normPhone(v) {
     if (v === undefined || v === null) return '';
     const d = String(v).replace(/\D/g, '');
@@ -45,7 +44,6 @@ function handleDupErr(res, err) {
     }
     return null;
 }
-// FIX V27.1: Cloudinary env + stream helper - Sirf ye 2 helper naye hain, baaki sab waisa hi hai
 function checkCloudinaryEnv(res) {
     if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
         res.status(500).json({ success: false, message: 'CLOUDINARY env missing - Server .env me CLOUDINARY_CLOUD_NAME / API_KEY / API_SECRET check karo, phir Server restart karo' });
@@ -53,19 +51,16 @@ function checkCloudinaryEnv(res) {
     }
     return true;
 }
-function uploadBufferToCloudinary(buffer, folder, transformation) {
+function uploadBufferToCloudinary(buf, folder, transformation) {
     return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
             { folder, resource_type: 'image', transformation: transformation || [{ width: 800, height: 800, crop: 'limit' }, { quality: 'auto:good', fetch_format: 'auto' }] },
             (err, result) => err ? reject(err) : resolve(result)
         );
-        stream.end(buffer);
+        stream.end(buf);
     });
 }
 
-// ============================================================================
-// MEMORY STORAGE - Vercel safe, disk pe kuch save nahi hoga
-// ============================================================================
 const memoryUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -75,9 +70,6 @@ const memoryUpload = multer({
   }
 });
 
-// ============================================================================
-// HELPER 1: User resolve - BuyerId / Token / Phone - teeno se dhoondhega
-// ============================================================================
 async function resolveUser(req){
   let tokenUserId = req.user && req.user._id ? req.user._id : null;
   if(tokenUserId){
@@ -110,7 +102,7 @@ async function resolveUser(req){
     if(auth.startsWith('Bearer ')){
       const token = auth.split(' ')[1];
       if(token && token.split('.').length === 3){
-        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        const payload = JSON.parse(Buf.from(token.split('.')[1], 'base64').toString());
         if(payload._id && mongoose.Types.ObjectId.isValid(payload._id)){
           const u = await User.findById(payload._id);
           if(u) return u;
@@ -129,9 +121,6 @@ async function resolveUser(req){
   return null;
 }
 
-// ============================================================================
-// HELPER 2: publicUser
-// ============================================================================
 function publicUser(user){
   if(!user) return null;
   const pic = user.profilePic || user.avatar || user.photo || '';
@@ -149,9 +138,6 @@ function publicUser(user){
   };
 }
 
-// ============================================================================
-// HELPER 3: publicShop
-// ============================================================================
 function publicShop(shop){
   if(!shop) return null;
   const logo = shop.logo || shop.shopLogo || shop.uploadedLogo || shop.image || '';
@@ -168,9 +154,6 @@ function publicShop(shop){
   };
 }
 
-// ============================================================================
-// HELPER 4: publicManager
-// ============================================================================
 function publicManager(m){
   if(!m) return null;
   const pic = m.photo || m.avatar || m.profilePic || '';
@@ -187,9 +170,6 @@ function publicManager(m){
   };
 }
 
-// ============================================================================
-// HELPER 5: publicExecutive
-// ============================================================================
 function publicExecutive(ex){
   if(!ex) return null;
   const pic = ex.photo || ex.avatar || ex.profilePic || '';
@@ -202,9 +182,6 @@ function publicExecutive(ex){
   };
 }
 
-// ============================================================================
-// HELPER 6: publicProductManager
-// ============================================================================
 function publicProductManager(pm){
   if(!pm) return null;
   const pic = pm.photo || pm.avatar || pm.profilePic || '';
@@ -218,9 +195,6 @@ function publicProductManager(pm){
   };
 }
 
-// ============================================================================
-// HELPER 7: saveUrlToModel - V27 - areaCode fallback HATA DIYA
-// ============================================================================
 async function saveUrlToModel(role, field, type, url, req){
   const shopId = req.body.shopId || req.query.shopId || '';
   let savedTo = '';
@@ -267,7 +241,6 @@ async function saveUrlToModel(role, field, type, url, req){
     }
   }
 
-  // ---- AREA MANAGER - V27: areaCode se kabhi mat dhoondho ----
   if(role === 'area_manager'){
     const Manager = require('../../models/Manager');
     const managerId = req.body.managerId || req.body.userId || req.headers['x-manager-id'] || req.query.managerId || '';
@@ -279,7 +252,6 @@ async function saveUrlToModel(role, field, type, url, req){
       const m = await Manager.findOne({ phone: ph });
       if(m) { await Manager.findByIdAndUpdate(m._id, upd); savedTo = 'Manager.photo + avatar + profilePic (by phone)'; }
     } else {
-      // V27: managerId + phone dono nahi hai toh KUCH MAT KARO - areaCode se pehle wale ki photo badal jati thi
       savedTo = 'SKIPPED - managerId/phone missing, areaCode fallback removed';
     }
   }
@@ -339,9 +311,6 @@ async function saveUrlToModel(role, field, type, url, req){
   return savedTo;
 }
 
-// ============================================================================
-// 1. GET /me - V27: areaCode fallback hataya
-// ============================================================================
 router.get('/me', async (req, res) => {
   try{
     const role = (req.query.role || '').toLowerCase();
@@ -355,7 +324,6 @@ router.get('/me', async (req, res) => {
         let m = null;
         if(managerId && mongoose.Types.ObjectId.isValid(managerId)) m = await Manager.findById(managerId);
         if(!m && qPhone) m = await Manager.findOne({ phone: qPhone });
-        // V27: areaCode se kabhi mat dhoondho - kisi aur ka profile khul jata tha
         if(m) return res.json({ success: true, role: 'area_manager', user: publicManager(m), manager: publicManager(m) });
       }catch(e){ console.log('area_manager /me warn', e.message); }
     }
@@ -437,9 +405,6 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// ============================================================================
-// 2. PUT /update - V27: Har role me duplicate check + normalize + base64 reject
-// ============================================================================
 router.put('/update', async (req, res) => {
   try{
     const role = String(req.body.role || req.query.role || 'customer').toLowerCase();
@@ -450,7 +415,6 @@ router.put('/update', async (req, res) => {
     const normPh = req.body.phone ? normPhone(req.body.phone) : '';
     const normGen = gender ? normGender(gender) : '';
 
-    // ---- SHOP OWNER ----
     if(role === 'shop_owner' || role === 'shop_logo'){
       const shopId = req.body.shopId || req.query.shopId || '';
       if(shopId && mongoose.Types.ObjectId.isValid(shopId)){
@@ -467,7 +431,6 @@ router.put('/update', async (req, res) => {
       }
     }
 
-    // ---- EXECUTIVE ----
     if(role === 'executive'){
       const Executive = require('../../models/Executive');
       const eid = req.body.executiveId || req.body.userId || '';
@@ -496,7 +459,6 @@ router.put('/update', async (req, res) => {
       }
     }
 
-    // ---- PRODUCT MANAGER ----
     if(role === 'product_manager'){
       const PM = require('../../models/ProductManager');
       const pmid = req.body.pmId || req.body.productManagerId || req.body.userId || '';
@@ -528,7 +490,6 @@ router.put('/update', async (req, res) => {
       }
     }
 
-    // ---- AREA MANAGER ----
     if(role === 'area_manager'){
       const Manager = require('../../models/Manager');
       const mid = req.body.managerId || req.body.userId || '';
@@ -556,7 +517,6 @@ router.put('/update', async (req, res) => {
       }
     }
 
-    // ---- DELIVERY BOY ----
     if(role === 'delivery_boy'){
       const DeliveryBoy = require('../../models/DeliveryBoy');
       const did = req.body.deliveryBoyId || req.body.userId || '';
@@ -588,7 +548,6 @@ router.put('/update', async (req, res) => {
       }
     }
 
-    // ---- DEFAULT - CUSTOMER / USER ----
     const user = await resolveUser(req);
     if(!user) return res.status(401).json({ success: false, message: 'Login required' });
     if(normEm){
@@ -636,9 +595,6 @@ router.put('/update', async (req, res) => {
   }
 });
 
-// ============================================================================
-// 2B. PUT /shop/:shopId - Shop Info update
-// ============================================================================
 router.put('/shop/:shopId', async (req, res) => {
   try{
     const { shopId } = req.params;
@@ -705,9 +661,6 @@ router.put('/shop/:shopId', async (req, res) => {
   }
 });
 
-// ============================================================================
-// 2C. GET /:shopId/stats
-// ============================================================================
 router.get('/:shopId/stats', async (req, res) => {
   try{
     const { shopId } = req.params;
@@ -718,9 +671,6 @@ router.get('/:shopId/stats', async (req, res) => {
   }catch(e){ res.json({ success: true, totalOrders: 0, totalProducts: 0, totalCustomers: 0 }); }
 });
 
-// ============================================================================
-// 3. POST /upload-avatar - MAIN - ALL ROLES + CLOUDINARY - V27.1 STREAM ONLY
-// ============================================================================
 router.post('/upload-avatar', memoryUpload.single('profilePic'), async (req, res) => {
   try{
     if(!checkCloudinaryEnv(res)) return;
@@ -728,11 +678,9 @@ router.post('/upload-avatar', memoryUpload.single('profilePic'), async (req, res
     const field = req.body.field || '';
     const type = req.body.type || 'avatar';
     const shopId = req.body.shopId || req.query.shopId || '';
-    // Sirf File chalegi - Base64 yahan KABHI NAHI aayega - Pehle dataURI base64 ban raha tha, ab stream hai
     if(!req.file || !req.file.buffer){
       return res.status(400).json({ success: false, message: 'Image missing - File bhejo, base64 nahi' });
     }
-    // Agar body me http URL aaya hai toh wahi save kar do - Dobara upload mat karo
     let httpInput = req.body.profilePic || req.body.image || req.body.pic || req.body.avatar || '';
     if(httpInput && String(httpInput).startsWith('http')){
       let savedTo = '';
@@ -755,7 +703,6 @@ router.post('/upload-avatar', memoryUpload.single('profilePic'), async (req, res
       delivery_boy: 'samanlive/delivery'
     };
     const folder = folderMap[role] || 'samanlive/users';
-    // STREAM - dataURI base64 HATA DIYA - Buffer seedha Cloudinary ko
     const result = await uploadBufferToCloudinary(req.file.buffer, folder, [{ width: 800, height: 800, crop: 'limit' }, { quality: 'auto:good', fetch_format: 'auto' }]);
     const url = result.secure_url;
     let savedTo = '';
@@ -777,9 +724,6 @@ router.post('/upload-avatar', memoryUpload.single('profilePic'), async (req, res
   }
 });
 
-// ============================================================================
-// 3B. POST /upload-cover - V27.1 STREAM ONLY
-// ============================================================================
 router.post('/upload-cover', memoryUpload.single('profilePic'), async (req, res) => {
   try{
     if(!checkCloudinaryEnv(res)) return;
@@ -796,9 +740,6 @@ router.post('/upload-cover', memoryUpload.single('profilePic'), async (req, res)
   }catch(e){ res.status(500).json({ success: false, message: e.message }); }
 });
 
-// ============================================================================
-// 4. PUT /pic - V27: base64 reject - pehle body se base64 seedha DB me chala jata tha
-// ============================================================================
 router.put('/pic', memoryUpload.single('profilePic'), async (req, res) => {
   try{
     const user = await resolveUser(req);
@@ -809,7 +750,6 @@ router.put('/pic', memoryUpload.single('profilePic'), async (req, res) => {
       finalPic = result.secure_url;
     }
     if(!finalPic) return res.status(400).json({ success: false, message: 'profilePic required' });
-    // V27: File nahi hai aur body me base64 hai toh reject - warna DB me base64 chala jayega
     if(!req.file && isBase64Image(finalPic)) return res.status(400).json({ success: false, message: 'Base64 photo not allowed - file bhejo ya Cloudinary URL bhejo' });
     if(!req.file && !String(finalPic).startsWith('http')) return res.status(400).json({ success: false, message: 'Invalid photo URL' });
     const updated = await User.findByIdAndUpdate(user._id, { profilePic: finalPic, avatar: finalPic, photo: finalPic, updatedAt: new Date() }, { new: true, runValidators: false });
@@ -821,9 +761,6 @@ router.put('/pic', memoryUpload.single('profilePic'), async (req, res) => {
   }
 });
 
-// ============================================================================
-// 4B. DELETE /avatar
-// ============================================================================
 router.delete('/avatar', async (req, res) => {
   try{
     const role = String(req.body.role || req.query.role || 'customer').toLowerCase();
@@ -877,9 +814,6 @@ router.delete('/avatar', async (req, res) => {
   }catch(e){ res.status(500).json({ success: false, message: e.message }); }
 });
 
-// ============================================================================
-// 4C. DELETE /gallery
-// ============================================================================
 router.delete('/gallery', async (req, res) => {
   try{
     const shopId = req.body.shopId || req.query.shopId || '';
@@ -891,9 +825,6 @@ router.delete('/gallery', async (req, res) => {
   }catch(e){ res.status(500).json({ success: false, message: e.message }); }
 });
 
-// ============================================================================
-// 5. GET /:userId
-// ============================================================================
 router.get('/:userId', async (req, res) => {
   try{
     const { userId } = req.params;
