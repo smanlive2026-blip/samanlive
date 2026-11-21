@@ -1,17 +1,17 @@
-<!-- LOCATION: public/shop-templates/common/settings/settings.html - V26 - UNIFIED - FULL CODE -->
+<!-- LOCATION: public/shop-templates/common/settings/settings.html - V27 - UNIFIED - FULL CODE -->
 <!-- WORLD CLASS SHOP SETTINGS MAIN - FULL -->
 <!-- RULE: Settings = Server se hi aayega. Is file me koi bhi browser storage use NAHI hoga. -->
 <!-- RULE 2: shopId SIRF URL se aayega. URL me nahi hai toh galat shop ki setting kabhi nahi kholega. -->
 <!-- RULE 3: Logout kabhi browser storage ko haath lagake nahi hoga, sirf AuthCore se hoga. -->
 <!-- FLOW: Load -> GET /api/shops/:shopId + GET /api/common/shop-toggle/:shopId/status + GET /api/common/profile/:shopId/verification -> Fill -->
-<!-- FIX V26 - OPEN/CLOSE SINGLE SOURCE OF TRUTH: -->
-<!--   Pehle status GET /api/common/settings/:shopId/status se aata tha - Wo RAM wale Map me tha, Shop.isOpen se iska koi lena-dena nahi tha. -->
-<!--   Isliye Dashboard se band karne pe yahan abhi bhi Open dikhta tha. Ab status GET /api/common/shop-toggle/:shopId/status se aayega - Shop Model ka isOpen hi sach hai. -->
-<!--   Open / Close Shop dabane pe open-close.html khulega - Us file me bhi wahi shop-toggle wala route use karna hai, settings wala nahi. -->
-<!-- FIX V26 - [object Object] BUG: Screenshot me "General • [object Object]" aa raha tha, kyunki shop.address ek Object hai, string nahi. -->
-<!--   Ab address ko seedha print nahi karenge - address.city / address.line1 nikal ke dikhayenge. Category bhi Object hui toh uska name nikalenge. -->
-<!-- FIX V26 - FINANCE LINK: Pehle ../finance/wallet.html tha - aisi file hai hi nahi, 404 aata tha. Ab ../wallet/wallet.html pe jayega. -->
-<!-- FIX V26 - SOCKET: Dashboard se band/kholo toh ye page khula hai toh yahan bhi turant update aayega, Refresh ki zarurat nahi. -->
+<!-- FIX V26 - OPEN/CLOSE SINGLE SOURCE OF TRUTH: Status GET /api/common/shop-toggle/:shopId/status se aayega - Shop Model ka isOpen hi sach hai. -->
+<!-- FIX V26 - [object Object] BUG: shop.address Object hai, isliye address.city nikal ke dikhayenge, seedha Object print nahi karenge. -->
+<!-- FIX V26 - FINANCE LINK: ../finance/wallet.html nahi tha, ab ../wallet/wallet.html pe jayega. -->
+<!-- FIX V27 - LOCATION CIRCLE - STEP 3: -->
+<!--   Har Dashboard me alag-alag Location ka button lagane ki zarurat nahi hai. Settings Common hai, sab dukaan ka Settings ek hi file se khulta hai. -->
+<!--   Isliye Settings me hi Location ka button laga diya - Dabate hi ../profile/shop-location.html?shopId=XXX khulega. -->
+<!--   Shop Create se Location ka koi lena-dena nahi hai. Location baad me kabhi bhi, Profile / Settings se hi set hogi. -->
+<!--   1 Shop = 1 Circle. Circle ke andar wala Customer dukaan ko dekh lega, bahar wala nahi dekhega. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,11 +46,9 @@ button{font-family:inherit;cursor:pointer;border:0}
 .setting-item div span{display:block;font-size:11px;color:#64748b;font-weight:600;margin:2px 0 0}
 .setting-arrow{font-size:20px;color:#cbd5e1;font-weight:900;flex-shrink:0}
 .settings-footer{text-align:center;padding:20px;font-size:10px;color:#94a3b8;font-weight:600;display:flex;flex-direction:column;gap:4px}
-/* LAPTOP */
 @media(min-width:721px){
   .settings-section{padding:16px}
 }
-/* MOBILE FIX - Edit Shop button dabne wala fix yahi hai */
 @media(max-width:600px){
   .settings-root{max-width:100%}
   .settings-header{padding:12px}
@@ -101,6 +99,12 @@ button{font-family:inherit;cursor:pointer;border:0}
       <div class="setting-item" data-link="../profile/shop-info.html">
         <span class="setting-icon" style="background:#fef3c7">🏪</span>
         <div><b>Shop Information</b><span>Name, address, contact</span></div>
+        <span class="setting-arrow">›</span>
+      </div>
+      <!-- V27 - LOCATION CIRCLE - STEP 3: Har Dashboard me Location yahan se jodegi - Settings Common hai, isliye 1 jagah lagane se sab me aa jayegi -->
+      <div class="setting-item" data-link="../profile/shop-location.html">
+        <span class="setting-icon" style="background:#f0fdf4">📍</span>
+        <div><b>Shop Location</b><span>Map + Circle set karo • <span id="shopLocationStatus">Location set nahi hai</span></span></div>
         <span class="setting-arrow">›</span>
       </div>
       <div class="setting-item" data-link="delivery-settings.html">
@@ -186,7 +190,6 @@ button{font-family:inherit;cursor:pointer;border:0}
 <script>
 class SettingsMainPage {
   constructor(){
-    // shopId SIRF URL se - kahi aur se NAHI. URL me nahi hai toh galat shop ki setting kabhi nahi kholega.
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.shop = null;
     this.isOpen = true;
@@ -205,8 +208,6 @@ class SettingsMainPage {
     return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
   }
 
-  // FIX V26 - [object Object] BUG: Koi bhi field Object ho sakti hai - address, category, city.
-  // Seedha string me daalne se "[object Object]" aata hai. Isliye pehle Object hai toh uska andar ka text nikaalo.
   safeStr(v, fallback){
     if (v === null || v === undefined || v === '') return fallback || '';
     if (typeof v === 'string') return v;
@@ -264,7 +265,6 @@ class SettingsMainPage {
         return;
       }
 
-      // 1. Shop Info - HAMESHA Server se
       let shop = null;
       if(window.ApiCore){
         try{ const d = await window.ApiCore.get(`/api/shops/${this.shopId}`); shop = d.shop || d || null; }catch(e){ shop = null; }
@@ -275,8 +275,6 @@ class SettingsMainPage {
           if(res) shop = res.shop || res;
         }catch(e){}
       }
-      // 2. OPEN/CLOSE STATUS - V26 FIX: Ab RAM wale /api/common/settings/:id/status se NAHI, asli wale /api/common/shop-toggle/:id/status se aayega.
-      // Yahi Dashboard wala sach hai - Shop Model ka isOpen.
       let isOpen = true;
       try{
         let sData = null;
@@ -285,7 +283,25 @@ class SettingsMainPage {
         if(sData) isOpen = sData.isOpen !== false;
       }catch(e){}
       this.isOpen = isOpen;
-      // 3. Verification - HAMESHA Server se
+
+      // V27 - LOCATION STATUS: Settings kholte hi Location bhi dikhegi - Set hai ya nahi, kitne KM ka Circle hai
+      // Location nahi hai toh koi error nahi - Shop bina Location ke bhi bani hui hai, yahan se baad me set hogi
+      try{
+        let locData = null;
+        if(window.ApiCore){ try{ locData = await window.ApiCore.get('/api/location/shop/' + this.shopId); }catch(e){} }
+        if(!locData){ const r = await fetch('/api/location/shop/' + this.shopId, { headers: this.getHeaders() }).then(x=>x.json()).catch(()=>null); locData = r; }
+        var loc = (locData && (locData.data || locData.location || locData)) || null;
+        var locEl = document.getElementById('shopLocationStatus');
+        if(locEl){
+          if(loc && loc.latitude !== undefined && loc.latitude !== null){
+            var rad = Number(loc.deliveryRange || loc.radius || loc.range || 5) || 5;
+            locEl.innerText = 'Set hai ✅ - ' + rad + ' KM Circle';
+          } else {
+            locEl.innerText = 'Location set nahi hai';
+          }
+        }
+      }catch(e){}
+
       let verificationStatus = 'pending';
       try{
         let vData = null;
@@ -302,7 +318,6 @@ class SettingsMainPage {
       var shopPhone = this.safeStr(this.shop.phone || this.shop.ownerPhone, '');
 
       document.getElementById('settingsShopName').innerText = shopName;
-      // FIX V26: Pehle `${category} • ${address}` likha tha, address Object tha isliye "[object Object]" aata tha. Ab city string nikal ke dikhayenge.
       document.getElementById('settingsShopCategory').innerText = shopCategory + ' • ' + shopCity;
       document.getElementById('settingsShopPhone').innerText = '📱 ' + (shopPhone || '-');
       const avatar = document.getElementById('settingsAvatar');
@@ -323,18 +338,18 @@ class SettingsMainPage {
     document.getElementById('settingsShopPhone').innerText = '📱 -';
     document.getElementById('shopOpenStatus').innerText = 'Open 🟢';
     document.getElementById('verificationBadge').innerText = 'Pending ⏳';
+    var locEl = document.getElementById('shopLocationStatus');
+    if(locEl) locEl.innerText = 'Location set nahi hai';
   }
 
   async doLogout(){
     if(!confirm('Logout from shop owner panel?')) return;
     try{
-      // V25 FIX: Logout kabhi browser storage ko haath lagake nahi hoga. Sirf AuthCore se hoga. Wo apna token khud sambhalega.
       if(window.AuthCore && window.AuthCore.logout){
         await window.AuthCore.logout();
       } else if(window.AuthCore && window.AuthCore.clearSession){
         await window.AuthCore.clearSession();
       } else {
-        // AuthCore nahi hai toh Server se logout - browser storage ko haath nahi lagayenge
         try{ await fetch('/api/auth/logout', { method:'POST', headers: this.getHeaders(), body: JSON.stringify({ shopId: this.shopId }) }); }catch(e){}
       }
       window.location.href='/';

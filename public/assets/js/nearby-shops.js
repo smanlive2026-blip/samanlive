@@ -1,368 +1,232 @@
-// LOCATION: public/assets/js/nearby-shops.js - FINAL WITH REAL-TIME AREA ADS + LAST SHOP CACHE + FACILITIES + KM FILTER
-let allServices = [];
-let filteredServices = [];
-let userLocation = null;
-let currentAreaCode = null;
-let areaAdsCache = [];
-let currentFilter = 'all';
-let currentKm = 'all'; // NAYA - KM FILTER
+// LOCATION: public/assets/js/nearby-shops.js - V3 - COMMON CIRCLE - HOME + NEARBY - FULL CODE
+// WORLD CLASS NEARBY SHOPS - HOME PAGE + NEARBY PAGE - FULL
+// RULE 1: Customer ka GPS aayega tabhi Circle wali dukaan dikhegi. GPS nahi diya toh saari dukaan dikha ke dhokha NAHI denge.
+// RULE 2: 1 Shop = 1 Circle. Backend har Shop ka apna-apna Radius check karega - distance <= us Shop ka Radius hai toh hi dikhegi.
+// RULE 3: Shop Create se Location ka koi lena-dena nahi hai. Jiski Location set nahi hai, wo yahan kabhi nahi dikhegi.
+// RULE 4: Closed wali dukaan gayab NAHI hogi - Closed likh ke dikhegi, Order phir bhi aayega.
+// RULE 5: Thela / Moving wali dukaan pe LIVE badge aayega - Fixed wali pe nahi aayega.
+// RULE 6: Location sirf 1 jagah se aayegi = GET /api/location/shops/nearby?lat=&lng= - Kahi aur se nahi.
+// FLOW: Page kholo -> GPS lo -> GET /api/location/shops/nearby?lat=&lng= -> #nearbyShopsGrid me Card banao -> Card dabao -> Uski customer-view kholo
+// USE: Home Page (public/index.html) me bas ye 2 line daal do:
+//      <div id="nearbyShopsGrid"></div>
+//      <script src="/assets/js/nearby-shops.js"></script>
+//      Baaki kaam ye file khud kar legi. Nearby Page (public/nearby-shops.html) me bhi yehi logic hai, 2 jagah alag code nahi hai.
+(function(){
+  // 2 baar load ho gaya toh dobara nahi chalega - Ek hi baar chalega
+  if(window.__NearbyShopsLoaded) return;
+  window.__NearbyShopsLoaded = true;
 
-const LAST_SHOP_CACHE_KEY = 'last_nearby_shops_cache';
-const FAV_KEY = 'fav_shops';
+  var NearbyShopsHome = {
+    lat: null,
+    lng: null,
+    shops: [],
+    loading: false,
+    gridId: 'nearbyShopsGrid',
 
-// LOCATION
-window.LocationManager = {
-    getManual: function() {
-        return new Promise((resolve) => {
-            if(!navigator.geolocation) { resolve(null); return; }
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
-                    resolve(userLocation);
-                },
-                () => { resolve(null); },
-                { enableHighAccuracy: false, timeout: 3000, maximumAge: 60000 } // FAST FIX - pehle 10000 tha
-            );
-        });
+    getToken: function(){
+      try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+      return window.USER_TOKEN || '';
     },
-    watch: function(callback){
-        if(!navigator.geolocation) return;
-        navigator.geolocation.watchPosition(
-            (pos) => {
-                const newLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                if(!userLocation || getDistance(userLocation.lat, userLocation.lng, newLoc.lat, newLoc.lng) > 0.1){
-                    userLocation = newLoc;
-                    callback(newLoc);
-                }
-            },
-            ()=>{},
-            { enableHighAccuracy: true, maximumAge: 10000 }
-        );
-    }
-};
+    getUserId: function(){
+      try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+      if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+      return '';
+    },
+    getHeaders: function(){
+      return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+    },
 
-function getDistance(lat1, lon1, lat2, lon2){
-    const R = 6371;
-    const dLat = (lat2-lat1) * Math.PI/180;
-    const dLon = (lon2-lon1) * Math.PI/180;
-    const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
+    // Customer ka GPS - 1 hi baar mangenge
+    getGPS: function(){
+      return new Promise(function(resolve, reject){
+        if(!navigator.geolocation){ reject(new Error('GPS nahi hai')); return; }
+        navigator.geolocation.getCurrentPosition(function(pos){
+          resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        }, function(err){
+          reject(err);
+        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      });
+    },
 
-function getWalkingTime(distKm){
-    if(!distKm) return '';
-    const mins = Math.round(distKm * 12);
-    if(mins < 1) return '1 min walk';
-    return `${mins} min walk`;
-}
+    escape: function(v){
+      return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    },
 
-document.addEventListener('DOMContentLoaded', initNearby);
+    // Home pe CSS bhi yahin se laga denge - Alag CSS file banane ki zarurat nahi - Mobile + Laptop dono me sahi dikhega
+    injectCSS: function(){
+      if(document.getElementById('nearby-home-css')) return;
+      var s = document.createElement('style');
+      s.id = 'nearby-home-css';
+      s.innerHTML = '.nearby-home-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}'
+        + '.nearby-home-card{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:.2s}'
+        + '.nearby-home-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.08);transform:translateY(-1px)}'
+        + '.nearby-home-top{display:flex;gap:10px;align-items:center}'
+        + '.nearby-home-logo{width:48px;height:48px;border-radius:12px;background:#0f172a;color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px;flex-shrink:0;overflow:hidden}'
+        + '.nearby-home-logo img{width:100%;height:100%;object-fit:cover}'
+        + '.nearby-home-name{flex:1;min-width:0}'
+        + '.nearby-home-name b{display:block;font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+        + '.nearby-home-name span{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+        + '.nearby-home-badge{font-size:10px;font-weight:900;padding:4px 8px;border-radius:999px;white-space:nowrap;flex-shrink:0}'
+        + '.nearby-home-badge.open{background:#dcfce7;color:#166534}'
+        + '.nearby-home-badge.closed{background:#fee2e2;color:#991b1b}'
+        + '.nearby-home-live{font-size:10px;font-weight:900;padding:4px 8px;border-radius:999px;background:#fee2e2;color:#991b1b;white-space:nowrap;flex-shrink:0;animation:nearbyBlink 1s infinite}'
+        + '@keyframes nearbyBlink{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}'
+        + '.nearby-home-addr{font-size:11px;color:#64748b;font-weight:600;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:30px}'
+        + '.nearby-home-meta{display:flex;gap:6px;flex-wrap:wrap}'
+        + '.nearby-home-pill{background:#f1f5f9;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap}'
+        + '.nearby-home-pill.blue{background:#f0f9ff;color:#0369a1}'
+        + '.nearby-home-pill.green{background:#f0fdf4;color:#166534}'
+        + '.nearby-home-empty{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:20px;text-align:center}'
+        + '.nearby-home-empty b{display:block;font-weight:900;font-size:14px;margin-bottom:6px}'
+        + '.nearby-home-empty span{font-size:12px;color:#64748b;font-weight:600;line-height:1.5;display:block}'
+        + '.nearby-home-empty button{margin-top:12px;background:#0f172a;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer}'
+        + '.nearby-home-skel{height:120px;background:#e2e8f0;border-radius:16px;animation:nearbyPulse 1s infinite}'
+        + '@keyframes nearbyPulse{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}'
+        + '@media(max-width:900px){.nearby-home-wrap{grid-template-columns:repeat(2,1fr)}}'
+        + '@media(max-width:600px){.nearby-home-wrap{grid-template-columns:1fr;gap:10px}.nearby-home-card{padding:12px}}';
+      document.head.appendChild(s);
+    },
 
-async function initNearby(){
-    // 1. LAST TIME KI SHOP TURANT DIKHA DO
-    try {
-        const cached = JSON.parse(localStorage.getItem(LAST_SHOP_CACHE_KEY) || 'null');
-        if(cached && cached.shops && cached.shops.length > 0){
-            allServices = cached.shops;
-            filteredServices = [...allServices];
-            currentAreaCode = cached.areaCode || null;
-            areaAdsCache = cached.ads || [];
-            console.log('⚡ Last shops cache se');
-            renderNearbyShopsWithAds(areaAdsCache);
-            if(currentAreaCode){
-                const cityEl = document.getElementById('userCity');
-                if(cityEl) cityEl.textContent = cached.cityText || currentAreaCode;
-            }
-        }
-    } catch(e){}
+    render: function(grid){
+      if(!grid) return;
+      var self = this;
 
-    // FAST FIX - DONO EK SATH, WAIT NAHI
-    await Promise.allSettled([loadAllShopsInstant(), window.LocationManager.getManual()]);
-
-    if(userLocation){
-        await loadNearbyShops(true);
-    } else {
-        // location nahi mila to bhi all shops to dikh hi rahe hain
-        console.log('Location nahi mila, All Shops dikh rahe hain');
-    }
-    showUserLocationInHeader();
-
-    window.LocationManager.watch(async (loc) => {
-        console.log('📍 100m hila, update:', loc);
-        await checkAreaAndUpdateAds(loc);
-        await loadNearbyShops(true);
-    });
-}
-
-// NAYA FUNCTION - TURANT ALL SHOPS
-async function loadAllShopsInstant(){
-    try {
-        const allRes = await fetch(`/api/shop-view/nearby-shops`, {cache: 'no-store'}).catch(()=>({ok:false}));
-        if(!allRes.ok) return;
-        const shopsData = (await allRes.json()).data || [];
-        if(shopsData.length === 0) return;
-
-        if(allServices.length > 0 &&!userLocation) return;
-
-        allServices = shopsData.map(shop => ({
-            _id: String(shop.shopId || shop._id || shop.id),
-            shopName: shop.shopName || shop.name || 'Shop',
-            distance: shop.distance || 0,
-            shopType: shop.shopType || 'general',
-            template: shop.template || null,
-            logo: shop.logo || '/assets/default-shop.png',
-            banner: shop.banner || null,
-            isOpen: shop.isOpen?? true,
-            phone: shop.phone || shop.mobile || '',
-            lat: shop.lat || shop.latitude || null,
-            lng: shop.lng || shop.longitude || null,
-            hasOffer: shop.hasOffer || shop.offer || false,
-            offerText: shop.offerText || '🔥 Offer',
-            productCount: shop.productCount || 0
-        }));
-
-        filteredServices = [...allServices];
-        if(typeof ShopBannerExt!== 'undefined'){
-            await ShopBannerExt.loadBannersForMainApp(allServices);
-        }
-        console.log(`✅ TURANT ${allServices.length} shops dikha diye`);
-        applyFilter();
-    } catch(e){ console.log('instant load fail', e); }
-}
-
-async function loadNearbyShops(isBackground = false) {
-    let shopsData = [];
-    if(userLocation) {
-        const res = await fetch(`/api/shop-view/nearby-shops?lat=${userLocation.lat}&lng=${userLocation.lng}`, {cache: 'no-store'}).catch(()=>({ok:false}));
-        if(res.ok) shopsData = (await res.json()).data || [];
-    }
-    if(shopsData.length === 0 &&!isBackground) {
-        const allRes = await fetch(`/api/shop-view/nearby-shops`, {cache: 'no-store'}).catch(()=>({ok:false}));
-        if(allRes.ok) shopsData = (await allRes.json()).data || [];
-    }
-    if(shopsData.length === 0 && isBackground) return;
-
-    allServices = shopsData.map(shop => ({
-        _id: String(shop.shopId || shop._id || shop.id),
-        shopName: shop.shopName || shop.name || 'Shop',
-        distance: shop.distance || 0,
-        shopType: shop.shopType || 'general',
-        template: shop.template || null,
-        logo: shop.logo || '/assets/default-shop.png',
-        banner: shop.banner || null,
-        isOpen: shop.isOpen?? true,
-        phone: shop.phone || shop.mobile || '',
-        lat: shop.lat || shop.latitude || null,
-        lng: shop.lng || shop.longitude || null,
-        hasOffer: shop.hasOffer || shop.offer || false,
-        offerText: shop.offerText || '🔥 Offer',
-        productCount: shop.productCount || 0
-    }));
-
-    if(typeof ShopBannerExt!== 'undefined'){
-        await ShopBannerExt.loadBannersForMainApp(allServices);
-    }
-    await checkAreaAndUpdateAds(userLocation);
-
-    try {
-        localStorage.setItem(LAST_SHOP_CACHE_KEY, JSON.stringify({
-            shops: allServices,
-            ads: areaAdsCache,
-            areaCode: currentAreaCode,
-            cityText: document.getElementById('userCity')?.textContent || '',
-            time: Date.now()
-        }));
-    } catch(e){}
-
-    applyFilter();
-}
-
-async function checkAreaAndUpdateAds(loc){
-    if(!loc) {
-        if(allServices.length === 0) renderNearbyShopsWithAds([]);
+      // Koi dukaan nahi mili
+      if(!this.shops || this.shops.length === 0){
+        grid.className = '';
+        grid.innerHTML = '<div class="nearby-home-empty"><b>😔 Aas-paas koi dukaan nahi mili</b><span>Tere Circle me abhi koi dukaan nahi hai.<br>Ho sakta hai aas-paas ki dukaan ne apni Location set hi nahi ki ho.</span><button id="nearbyHomeRetry">🔄 Dobara Dekho</button></div>';
+        var rb = document.getElementById('nearbyHomeRetry');
+        if(rb) rb.addEventListener('click', function(){ self.lat = null; self.lng = null; self.load(); });
         return;
-    }
-    try {
-        const areasRes = await fetch(`/api/areas`, {cache: 'no-store'}).then(r=>r.json()).catch(()=>[]);
-        let foundArea = null;
-        let minDist = Infinity;
-        areasRes.forEach(area => {
-            if(!area.centerLat ||!area.centerLng) return;
-            const dist = getDistance(loc.lat, loc.lng, area.centerLat, area.centerLng);
-            if(dist <= (area.radius || 50) && dist < minDist){
-                minDist = dist;
-                foundArea = area;
-            }
+      }
+
+      var html = '<div class="nearby-home-wrap">';
+      for(var i = 0; i < this.shops.length; i++){
+        var s = this.shops[i];
+        var name = s.shopName || s.name || 'Shop';
+        var type = s.shopType || s.template || 'general';
+        var addr = s.address || '';
+        var dist = s.distanceText || (s.distanceKm !== undefined ? s.distanceKm + ' KM' : '');
+        var radius = s.deliveryRange || s.radius || s.range || 5;
+        var isOpen = s.isOpen !== false;
+        var isLive = (s.locationType === 'dynamic' || s.type === 'dynamic');
+        var logo = s.logo || (s.shop && (s.shop.logo || s.shop.shopLogo)) || '';
+        var first = (name || 'S').charAt(0).toUpperCase();
+        var logoHtml = logo && typeof logo === 'string' && logo.startsWith('http') ? '<img src="' + logo + '" alt="">' : first;
+        var folder = String(type).toLowerCase().replace(/[^a-z0-9-]/g, '') || 'general';
+        var link = '/shop-templates/' + folder + '/customer-view.html?shopId=' + encodeURIComponent(s.shopId);
+        html += '<div class="nearby-home-card" data-link="' + link + '">'
+          + '<div class="nearby-home-top">'
+          + '<div class="nearby-home-logo">' + logoHtml + '</div>'
+          + '<div class="nearby-home-name"><b>' + self.escape(name) + '</b><span>' + self.escape(type) + '</span></div>'
+          + (isLive ? '<span class="nearby-home-live">🛺 LIVE</span>' : '')
+          + '<span class="nearby-home-badge ' + (isOpen ? 'open' : 'closed') + '">' + (isOpen ? 'Open 🟢' : 'Closed 🔴') + '</span>'
+          + '</div>'
+          + '<div class="nearby-home-addr">' + self.escape(addr || 'Address nahi diya') + '</div>'
+          + '<div class="nearby-home-meta">'
+          + '<span class="nearby-home-pill blue">📍 ' + self.escape(dist || '-') + ' door</span>'
+          + '<span class="nearby-home-pill green">⭕ ' + radius + ' KM Circle</span>'
+          + '<span class="nearby-home-pill">🏪 ' + self.escape(type) + '</span>'
+          + '</div>'
+          + '</div>';
+      }
+      html += '</div>';
+      grid.className = '';
+      grid.innerHTML = html;
+      grid.querySelectorAll('.nearby-home-card').forEach(function(card){
+        card.addEventListener('click', function(){
+          window.location.href = card.dataset.link;
         });
+      });
+    },
 
-        if(foundArea){
-            if(currentAreaCode!== foundArea.areaCode){
-                console.log(`📍 Area Changed: ${currentAreaCode} -> ${foundArea.areaCode}`);
-                currentAreaCode = foundArea.areaCode;
-                const contentRes = await fetch(`/api/content?areaCode=${foundArea.areaCode}`, {cache: 'no-store'}).then(r=>r.json()).catch(()=>[]);
-                areaAdsCache = contentRes.filter(c => c.type === 'ad' && c.status === 'active');
-                const cityEl = document.getElementById('userCity');
-                if(cityEl) cityEl.textContent = `${foundArea.city} (${foundArea.areaCode})`;
-            }
+    showNoGPS: function(grid){
+      if(!grid) return;
+      var self = this;
+      grid.className = '';
+      grid.innerHTML = '<div class="nearby-home-empty"><b>📍 Location ON Karo</b><span>Teri Location ke bina hum nahi bata sakte kaunsi dukaan tere Circle me hai.<br>Location ON karo, phir Refresh dabao.</span><button id="nearbyHomeGps">🎯 Location ON Karo</button></div>';
+      var b = document.getElementById('nearbyHomeGps');
+      if(b) b.addEventListener('click', function(){ self.lat = null; self.lng = null; self.load(); });
+    },
+
+    showError: function(grid){
+      if(!grid) return;
+      var self = this;
+      grid.className = '';
+      grid.innerHTML = '<div class="nearby-home-empty"><b>❌ Load nahi hua</b><span>Server se dukaan nahi aayi. Dobara try karo.</span><button id="nearbyHomeErr">🔄 Dobara Try Karo</button></div>';
+      var b = document.getElementById('nearbyHomeErr');
+      if(b) b.addEventListener('click', function(){ self.load(); });
+    },
+
+    load: async function(){
+      var grid = document.getElementById(this.gridId);
+      if(!grid) return;
+      if(this.loading) return;
+      this.loading = true;
+      this.injectCSS();
+      grid.innerHTML = '<div class="nearby-home-wrap"><div class="nearby-home-skel"></div><div class="nearby-home-skel"></div><div class="nearby-home-skel"></div></div>';
+
+      try{
+        // GPS pehle - GPS nahi toh Nearby hi nahi dikhayenge
+        if(this.lat === null || this.lng === null){
+          try{
+            var loc = await this.getGPS();
+            this.lat = loc.lat;
+            this.lng = loc.lng;
+          }catch(e){
+            this.showNoGPS(grid);
+            return;
+          }
         }
-        renderNearbyShopsWithAds(areaAdsCache);
-    } catch(err){
-        console.error(err);
-        if(allServices.length > 0) renderNearbyShopsWithAds(areaAdsCache);
-        else renderNearbyShopsWithAds([]);
-    }
-}
 
-// ========== FILTERS ==========
-function setFilter(type){
-    currentFilter = type;
-    applyFilter();
-}
-
-// NAYA KM FILTER BUTTON
-function setKmFilter(km){
-    currentKm = km;
-    applyFilter();
-}
-
-function applyFilter(){
-    const favs = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
-    let list = [...allServices];
-
-    // 1. KM FILTER - NAYA LOGIC
-    if(currentKm!== 'all'){
-        if(!userLocation){
-            alert('📍 Pehle location on karo KM filter ke liye');
-            currentKm = 'all';
-        } else {
-            const kmNum = parseFloat(currentKm);
-            list = list.filter(s => (s.distance/1000) <= kmNum);
+        // 1 hi jagah se aayega - GET /api/location/shops/nearby?lat=&lng= - Backend Circle check karega
+        var data = null;
+        if(window.ApiCore){
+          try{ data = await window.ApiCore.get('/api/location/shops/nearby?lat=' + this.lat + '&lng=' + this.lng); }catch(e){ data = null; }
         }
-    }
-
-    // 2. OLD FILTERS
-    if(currentFilter === 'open'){
-        list = list.filter(s=>s.isOpen);
-    } else if(currentFilter === 'near'){
-        list = list.filter(s=> (s.distance/1000) <= 1);
-    } else if(currentFilter === 'offer'){
-        list = list.filter(s=>s.hasOffer);
-    } else if(currentFilter === 'fav'){
-        list = list.filter(s=>favs.includes(s._id));
-    }
-
-    // Sort by distance if location available
-    if(userLocation){
-        list.sort((a,b)=>a.distance - b.distance);
-    }
-
-    filteredServices = list;
-    renderNearbyShopsWithAds(areaAdsCache);
-}
-
-// ========== FAV, CALL, DIRECTION ==========
-function toggleWishlist(shopId){
-    let favs = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
-    if(favs.includes(shopId)){
-        favs = favs.filter(id=>id!==shopId);
-    } else {
-        favs.push(shopId);
-    }
-    localStorage.setItem(FAV_KEY, JSON.stringify(favs));
-    renderNearbyShopsWithAds(areaAdsCache);
-}
-
-function callShop(phone){
-    if(!phone) return alert('Number nahi hai');
-    window.open(`tel:${phone}`, '_self');
-}
-
-function openMap(lat,lng){
-    if(!lat ||!lng) return alert('Location nahi hai');
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
-}
-
-function renderNearbyShopsWithAds(areaAds = areaAdsCache){
-    const container = document.getElementById('nearbyShopsGrid');
-    if (!container) return;
-
-    const list = filteredServices.length || currentKm!== 'all' || currentFilter!== 'all'? filteredServices : allServices;
-
-    if(list.length === 0){
-        container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;text-align:center;padding:30px;background:white;border-radius:16px"><div class="empty-state-icon" style="font-size:40px">🏪</div><h3>Koi shop nahi mili</h3><p>${currentKm!=='all'? currentKm+'km me koi shop nahi' : 'Filter: '+currentFilter}</p><button onclick="setKmFilter('all');setFilter('all')" style="margin-top:12px;padding:10px 18px;border-radius:20px;border:none;background:#111;color:white;font-weight:700">🌍 All Shops Dikhao</button></div>`;
-        return;
-    }
-
-    container.innerHTML = '';
-    const userViewTemplates = ['kirana', 'medical', 'restaurant'];
-    const favs = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
-
-    list.forEach((shop, index) => {
-        const template = (shop.template || shop.shopType || 'common').toLowerCase().trim();
-        const fileName = userViewTemplates.includes(template)? 'user-view.html' : 'customer-view.html';
-        const customerUrl = `/shop-templates/${template}/${fileName}?shopId=${shop._id}`;
-        const distanceKm = shop.distance? (shop.distance/1000).toFixed(1) : null;
-        const isOpen = shop.isOpen;
-        const statusClass = isOpen? '' : 'closed';
-        const shopCardClass = isOpen? '' : 'closed-shop';
-        const statusText = isOpen? '🟢 Open' : '🔴 Closed';
-        const clickAction = isOpen? `window.location.href='${customerUrl}'` : `alert('${shop.shopName} abhi band hai 🔴')`;
-        const isFav = favs.includes(shop._id);
-
-        container.innerHTML += `
-        <div class="shop-circle ${shopCardClass}" onclick="${clickAction}">
-            <div class="status-dot ${statusClass}"></div>
-            ${shop.hasOffer? `<div class="offer-badge">${shop.offerText}</div>` : ''}
-            ${shop.banner? `<img src="${shop.banner}" class="shop-banner-top" onerror="this.style.display='none'">` : ''}
-            <img src="${shop.logo}" class="shop-logo-circle" onerror="this.src='/assets/default-shop.png'">
-            <p>${shop.shopName}</p>
-            <small style="font-weight:700; color:${isOpen? '#16a34a' : '#dc2626'}">${statusText}</small>
-            ${distanceKm? `<small>${distanceKm}Km • ${getWalkingTime(parseFloat(distanceKm))}</small>` : `<small style="opacity:0.6">📍 All Shops</small>`}
-            ${shop.productCount? `<small style="opacity:0.7">${shop.productCount} items</small>` : ''}
-
-            <div class="quick-actions" style="display:flex;gap:6px;margin-top:6px;justify-content:center" onclick="event.stopPropagation()">
-                <button style="padding:4px 8px;border-radius:12px;border:1px solid #ddd;background:white" onclick="callShop('${shop.phone}')">📞</button>
-                <button style="padding:4px 8px;border-radius:12px;border:1px solid #ddd;background:white" onclick="openMap(${shop.lat},${shop.lng})">📍</button>
-                <button style="padding:4px 8px;border-radius:12px;border:1px solid #ddd;background:${isFav?'#fee2e2':'white'}" onclick="toggleWishlist('${shop._id}')">${isFav?'❤️':'🤍'}</button>
-            </div>
-        </div>`;
-
-        if((index + 1) % 6 === 0){
-            const adIndex = Math.floor(index/6) % (areaAds.length || 1);
-            const ad = areaAds[adIndex];
-            if(ad){
-                container.innerHTML += `
-                <div class="ad-full-width" style="background:${ad.color || '#3b82f6'}; color:white; padding:16px; border-radius:12px; text-align:center; grid-column:1/-1;">
-                    <h3 style="margin:0;">${ad.title}</h3>
-                    <p style="margin:8px 0; opacity:0.9;">${ad.description || ''}</p>
-                    ${ad.buttonText? `<button class="ad-btn" onclick="window.open('${ad.buttonLink || '#'}','_blank')" style="background:white;color:${ad.color};border:none;padding:8px 16px;border-radius:20px;font-weight:700;">${ad.buttonText}</button>` : ''}
-                    <small style="display:block;margin-top:6px;opacity:0.7;">📍 ${currentAreaCode}</small>
-                </div>`;
-            } else {
-                container.innerHTML += `
-                <div class="ad-full-width">
-                    <h3>📢 ${currentAreaCode? currentAreaCode+' me Ad nahi hai' : 'Advertisement'}</h3>
-                    <p>Apna ad yaha lagwaye</p>
-                    <button class="ad-btn" onclick="alert('Contact Admin')">Contact Now</button>
-                </div>`;
-            }
+        if(!data){
+          var res = await fetch('/api/location/shops/nearby?lat=' + this.lat + '&lng=' + this.lng, { headers: this.getHeaders() }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+          data = res;
         }
-    });
-}
 
-function showUserLocationInHeader() {
-    if (!userLocation) {
-        const el = document.getElementById('userCity');
-        if(el &&!currentAreaCode) el.textContent = 'All Shops (Location Off)';
-        return;
+        var list = (data && (data.data || data.shops || data)) || [];
+        if(!Array.isArray(list)) list = [];
+        this.shops = list;
+        this.render(grid);
+
+      }catch(e){
+        this.showError(grid);
+      }finally{
+        this.loading = false;
+      }
+    },
+
+    init: function(){
+      // Home Page pe #nearbyShopsGrid hai tabhi chalega - Nahi hai toh chupchaap band ho jayega, error nahi dega
+      if(!document.getElementById(this.gridId)) return;
+      this.load();
+      // Refresh button ho toh usko bhi jod denge
+      var self = this;
+      var refreshBtn = document.getElementById('refreshNearbyBtn') || document.getElementById('refreshBtn');
+      if(refreshBtn){
+        refreshBtn.addEventListener('click', function(){ self.lat = null; self.lng = null; self.load(); });
+      }
     }
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
- .then(r => r.json())
- .then(data => {
-        const el = document.getElementById('userCity');
-        if(el &&!currentAreaCode) el.textContent = data.address.city || 'Your Area';
-    }).catch(()=>{
-        const el = document.getElementById('userCity');
-        if(el &&!currentAreaCode) el.textContent = 'Your Area';
-    });
-}
+  };
+
+  // loadNearbyShops naam se bhi chalega - Purane location.user.js wale ko bhi yehi milega - 2 jagah alag code nahi hai
+  window.loadNearbyShops = function(lat, lng){
+    if(lat && lng){
+      NearbyShopsHome.lat = Number(lat);
+      NearbyShopsHome.lng = Number(lng);
+    }
+    NearbyShopsHome.load();
+  };
+  window.NearbyShopsHome = NearbyShopsHome;
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ NearbyShopsHome.init(); });
+  } else {
+    NearbyShopsHome.init();
+  }
+})();

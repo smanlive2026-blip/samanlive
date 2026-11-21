@@ -1,0 +1,495 @@
+<!-- LOCATION: public/shop-templates/common/profile/shop-location.html - V1 - COMMON - FULL CODE -->
+<!-- WORLD CLASS SHOP LOCATION + CIRCLE - SHOP OWNER ONLY - FULL -->
+<!-- RULE 1: Shop Create se iska KOI lena-dena NAHI hai. Shop pehle ban jayegi, Location baad me kabhi bhi yahan se set hogi. -->
+<!-- RULE 2: Location = Profile se hi set hogi. Jab chahe, jitni baar chahe badal sakte ho. Nayi jagah shift hue toh yahan se nayi Location save kar do. -->
+<!-- RULE 3: 1 Shop = 1 Circle. Center = Shop ki Lat/Lng. Radius = Shop wala khud chune ga - 1 KM se 30 KM tak. -->
+<!-- RULE 4: Circle ke andar aane wala har Customer us Shop ko dekh lega. Circle ke bahar wala nahi dekhega. -->
+<!-- RULE 5: GPS deny hua toh Save HI NAHI hoga. Bina Lat/Lng ke Save karke dhokha NAHI denge - Pehle wala bug yahi tha. -->
+<!-- RULE 6: Location sirf 1 jagah save hogi = POST /api/location/shop - Profile / Settings pe Location NAHI bhejenge, wo Lat/Lng gira dete the. -->
+<!-- RULE 7: Fixed = Dukaan ek jagah. Dynamic / Thela = Circle uske saath chalega - Live Tracking se. -->
+<!-- FLOW: Load -> GET /api/location/shop/:shopId -> Map + Circle + Form bharo -> Save -> POST /api/location/shop -> Dobara Server se Load -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Shop Location</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+input,select{font-family:inherit;outline:none}
+.loc-root{max-width:720px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.loc-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:1000;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.loc-header b{display:block;font-weight:900;font-size:16px}
+.loc-header span{font-size:11px;color:#64748b;font-weight:600}
+.save-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.save-btn:disabled{opacity:.5;cursor:not-allowed}
+.loc-status-card{background:#fff;margin:12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9;display:flex;gap:12px;align-items:center}
+.status-icon{width:40px;height:40px;background:#f0fdf4;border-radius:10px;display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.status-left{flex:1;min-width:0}
+.status-left b{display:block;font-weight:900;font-size:14px}
+.status-left span{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:2px;word-break:break-word}
+.loc-map-wrap{background:#fff;margin:0 12px 12px;border-radius:16px;padding:12px;border:1px solid #f1f5f9}
+.loc-map-wrap b{display:block;font-weight:900;font-size:14px;margin-bottom:4px}
+.loc-map-wrap span{font-size:11px;color:#64748b;font-weight:600;display:block;margin-bottom:10px}
+#shopMap{width:100%;height:280px;border-radius:12px;z-index:1}
+.map-hint{font-size:11px;color:#0369a1;font-weight:600;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:8px;margin-top:10px;line-height:1.4}
+.loc-form{padding:0 12px;display:flex;flex-direction:column;gap:12px}
+.form-section{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px}
+.form-section b{display:block;font-weight:900;font-size:14px;margin-bottom:12px}
+.form-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f1f5f9}
+.form-row:last-child{border-bottom:none}
+.form-row span{font-size:13px;font-weight:600;flex-shrink:0}
+.text-input{background:#f1f5f9;border:1px solid #e2e8f0;padding:10px 12px;border-radius:8px;font-weight:700;font-size:13px;width:100%}
+.text-input:read-only{background:#f8fafc;color:#475569}
+.select-input{background:#f1f5f9;border:1px solid #e2e8f0;padding:10px 12px;border-radius:8px;font-weight:700;font-size:13px;min-width:140px}
+.range-box{width:100%}
+.range-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.range-top b{margin:0;font-size:14px}
+.range-badge{background:#0f172a;color:#fff;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:900;white-space:nowrap}
+input[type=range]{width:100%;accent-color:#0f172a}
+.range-labels{display:flex;justify-content:space-between;font-size:10px;color:#64748b;font-weight:700;margin-top:4px}
+.type-box{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.type-btn{background:#f1f5f9;border:2px solid #f1f5f9;padding:12px 6px;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer;text-align:center;line-height:1.3}
+.type-btn.active{border-color:#0f172a;background:#f8fafc}
+.type-btn small{display:block;font-size:10px;color:#64748b;font-weight:600;margin-top:4px}
+.info-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px;font-size:11px;font-weight:600;color:#0369a1;line-height:1.5}
+.info-box b{margin:0;font-size:12px;color:#0f172a}
+.full-btn{width:100%;background:#f1f5f9;border:1px solid #e2e8f0;padding:12px;border-radius:10px;font-weight:800;cursor:pointer;font-size:13px}
+.full-btn.green{background:#0f172a;color:#fff;border-color:#0f172a}
+.full-btn:disabled{opacity:.5;cursor:not-allowed}
+/* LAPTOP - Map bada, Form saaf */
+@media(min-width:721px){
+  .form-section{padding:20px}
+  #shopMap{height:340px}
+}
+/* MOBILE - Sab ek ke neeche ek, kuch katna nahi chahiye */
+@media(max-width:600px){
+  .loc-root{max-width:100%}
+  .loc-header{padding:12px}
+  .loc-header b{font-size:15px}
+  .loc-status-card{margin:10px;padding:14px}
+  .loc-map-wrap{margin:0 10px 10px;padding:10px}
+  #shopMap{height:240px}
+  .loc-form{padding:0 10px;gap:10px}
+  .form-section{padding:14px}
+  .form-row{flex-wrap:wrap}
+  .form-row span{flex:1;min-width:110px}
+  .select-input{min-width:0;width:100%}
+  .type-box{grid-template-columns:1fr 1fr}
+  .save-btn{padding:8px 10px;font-size:11px}
+}
+</style>
+</head>
+<body>
+<div id="locRoot" class="loc-root">
+  <div class="loc-header">
+    <button id="locBack" class="back-btn">‹</button>
+    <div style="min-width:0;flex:1">
+      <b>Shop Location</b>
+      <span>Apni dukaan ka Circle set karo</span>
+    </div>
+    <button id="saveLocBtn" class="save-btn">💾 Save</button>
+  </div>
+
+  <div class="loc-status-card">
+    <span class="status-icon" id="locStatusIcon">📍</span>
+    <div class="status-left">
+      <b id="locStatusText">Location set nahi hai</b>
+      <span id="locStatusSub">Map pe apni dukaan ka point dabao ya Current Location dabao</span>
+    </div>
+  </div>
+
+  <div class="loc-map-wrap">
+    <b>🗺️ Map Pe Dukaan Ka Point</b>
+    <span>Map pe kahin bhi dabao - Marker wahan chala jayega - Circle bhi wahi ban jayega</span>
+    <div id="shopMap"></div>
+    <div class="map-hint">ℹ️ Neela Circle hi teri dukaan ka Area hai. Is Circle ke andar aane wale har Customer ko teri dukaan dikhegi. Circle ke bahar wale ko nahi dikhegi.</div>
+  </div>
+
+  <div class="loc-form">
+    <div class="form-section">
+      <b>📍 Location</b>
+      <div class="form-row">
+        <span>Latitude</span>
+        <input type="text" id="latInput" class="text-input" placeholder="21.1702" readonly>
+      </div>
+      <div class="form-row">
+        <span>Longitude</span>
+        <input type="text" id="lngInput" class="text-input" placeholder="72.8311" readonly>
+      </div>
+      <button id="gpsBtn" class="full-btn green" style="margin-top:4px">🎯 Current Location Se Lo</button>
+      <div class="form-row" style="margin-top:8px">
+        <span>Address</span>
+      </div>
+      <input type="text" id="addressInput" class="text-input" placeholder="Pura address likho - Adajan, Surat">
+      <div class="info-box" style="margin-top:10px">Map pe point dabane pe Address apne aap bhar jayega. Galat lage toh khud bhi likh sakte ho.</div>
+    </div>
+
+    <div class="form-section">
+      <b>⭕ Circle - Kitni Door Tak Dikhna Hai?</b>
+      <div class="range-top">
+        <b>Delivery / Dikhne ka Radius</b>
+        <span class="range-badge" id="radiusBadge">5 KM</span>
+      </div>
+      <div class="range-box">
+        <input type="range" id="radiusInput" min="1" max="30" step="1" value="5">
+        <div class="range-labels"><span>1 KM - Paas wale</span><span>30 KM - Poora Sheher</span></div>
+      </div>
+      <div class="info-box" style="margin-top:12px"><b id="circleInfo">5 KM Circle - Is Circle ke andar aane wale har Customer ko teri dukaan dikhegi.</b></div>
+    </div>
+
+    <div class="form-section">
+      <b>🏪 Dukaan Ka Type</b>
+      <div class="type-box">
+        <button type="button" class="type-btn active" data-type="fixed">🏪 Fixed Shop<small>Ek jagah - Circle wahin rahega</small></button>
+        <button type="button" class="type-btn" data-type="dynamic">🛺 Thela / Moving<small>Ghumta hai - Circle saath chalega</small></button>
+      </div>
+      <div class="info-box" style="margin-top:12px" id="typeInfo">Fixed Shop - Circle ek jagah rahega, tu jab chahe Location badal sakta hai.</div>
+      <div id="liveTrackBox" style="display:none;margin-top:12px">
+        <button id="liveTrackBtn" class="full-btn">▶️ Live Tracking ON Karo</button>
+        <div class="info-box" style="margin-top:8px">Thela ghumega toh Circle bhi saath chalega. Tracking band karne pe Circle wahi ruk jayega jahan aakhri baar tha.</div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <b>✅ Save Karne Se Pehle</b>
+      <div class="info-box">Shop Create se iska koi lena-dena nahi hai. Tu jab chahe yahan se Location badal sakta hai. Save dabate hi naya Circle chalu ho jayega, purana khatam.</div>
+      <button id="saveLocBtn2" class="full-btn green" style="margin-top:12px">💾 Location + Circle Save Karo</button>
+      <button id="clearLocBtn" class="full-btn" style="margin-top:8px">🗑️ Location Hatayo - Dukaan Nearby Me Nahi Dikhegi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+class ShopLocationCirclePage {
+  constructor(){
+    // shopId SIRF URL se - kahi aur se NAHI. URL me nahi hai toh galat dukaan ki location kabhi nahi kholega.
+    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+    this.lat = null;
+    this.lng = null;
+    this.radius = 5;
+    this.type = 'fixed';
+    this.address = '';
+    this.map = null;
+    this.marker = null;
+    this.circle = null;
+    this.watchId = null;
+    this.tracking = false;
+    this.hasSaved = false;
+  }
+
+  getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  getHeaders(){
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
+  }
+
+  async init(){
+    if(!this.shopId){
+      if(window.Toast) Toast.show('Shop not found - URL me ?shopId=XXX hona chahiye. Dashboard se dobara kholo.', 'error');
+      return;
+    }
+    this.initMap();
+    await this.loadLocation();
+    this.bindEvents();
+  }
+
+  // MAP - 1 hi baar banega, dobara nahi
+  initMap(){
+    try{
+      // Default - Surat, Adajan - Sirf Map kholne ke liye, Save ke liye nahi. Save tabhi hoga jab tu point dabayega ya GPS lega.
+      var defLat = 21.1702, defLng = 72.8311;
+      this.map = L.map('shopMap').setView([defLat, defLng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(this.map);
+      this.marker = L.marker([defLat, defLng], { draggable: true }).addTo(this.map);
+      this.circle = L.circle([defLat, defLng], { radius: this.radius * 1000, color: '#0f172a', fillColor: '#3b82f6', fillOpacity: 0.15 }).addTo(this.map);
+      var self = this;
+      // Map pe dabao toh Marker + Circle wahan chale jayenge
+      this.map.on('click', function(e){
+        self.setPoint(e.latlng.lat, e.latlng.lng, true);
+      });
+      // Marker drag karo toh bhi
+      this.marker.on('dragend', function(){
+        var p = self.marker.getLatLng();
+        self.setPoint(p.lat, p.lng, true);
+      });
+      setTimeout(function(){ if(self.map) self.map.invalidateSize(); }, 300);
+    }catch(e){}
+  }
+
+  setPoint(lat, lng, fetchAddress){
+    this.lat = Number(lat);
+    this.lng = Number(lng);
+    var latEl = document.getElementById('latInput');
+    var lngEl = document.getElementById('lngInput');
+    if(latEl) latEl.value = this.lat.toFixed(6);
+    if(lngEl) lngEl.value = this.lng.toFixed(6);
+    if(this.marker) this.marker.setLatLng([this.lat, this.lng]);
+    if(this.circle) this.circle.setLatLng([this.lat, this.lng]);
+    if(this.map) this.map.setView([this.lat, this.lng], this.map.getZoom());
+    this.updateStatus();
+    if(fetchAddress) this.fetchAddress(this.lat, this.lng);
+  }
+
+  setRadius(radius){
+    this.radius = Number(radius) || 5;
+    var badge = document.getElementById('radiusBadge');
+    if(badge) badge.innerText = this.radius + ' KM';
+    var info = document.getElementById('circleInfo');
+    if(info) info.innerText = this.radius + ' KM Circle - Is Circle ke andar aane wale har Customer ko teri dukaan dikhegi.';
+    if(this.circle) this.circle.setRadius(this.radius * 1000);
+    this.updateStatus();
+  }
+
+  updateStatus(){
+    var txt = document.getElementById('locStatusText');
+    var sub = document.getElementById('locStatusSub');
+    var icon = document.getElementById('locStatusIcon');
+    if(this.lat === null || this.lng === null){
+      if(txt) txt.innerText = 'Location set nahi hai';
+      if(sub) sub.innerText = 'Map pe apni dukaan ka point dabao ya Current Location dabao';
+      if(icon) icon.innerText = '📍';
+      return;
+    }
+    if(txt) txt.innerText = 'Location set hai ✅ - ' + this.radius + ' KM Circle';
+    if(sub) sub.innerText = 'Lat: ' + this.lat.toFixed(6) + ', Lng: ' + this.lng.toFixed(6) + (this.address ? ' • ' + this.address : '');
+    if(icon) icon.innerText = '🟢';
+  }
+
+  async fetchAddress(lat, lng){
+    try{
+      // Nominatim - Free, bina key ke - Google ki zarurat nahi, nakli address bhi nahi
+      var res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lng, { headers: { 'Accept': 'application/json' } }).then(r=>r.json()).catch(()=>null);
+      if(res && res.display_name){
+        this.address = res.display_name;
+        var aEl = document.getElementById('addressInput');
+        if(aEl) aEl.value = this.address;
+        this.updateStatus();
+      }
+    }catch(e){}
+  }
+
+  async loadLocation(){
+    try{
+      if(window.Loader) Loader.show('Loading location...');
+      var data = null;
+      // 1 hi jagah se aayega - GET /api/location/shop/:shopId - Profile / Settings se NAHI
+      if(window.ApiCore){
+        try{ data = await window.ApiCore.get('/api/location/shop/' + this.shopId); }catch(e){ data = null; }
+      }
+      if(!data){
+        var res = await fetch('/api/location/shop/' + this.shopId, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+        if(res) data = res;
+      }
+      var d = (data && (data.data || data.location || data)) || null;
+      // Location hai hi nahi toh koi baat nahi - Shop bina Location ke bhi bani hui hai, yahan se ab set hogi
+      if(!d || d.latitude === undefined || d.latitude === null){
+        this.hasSaved = false;
+        this.updateStatus();
+        return;
+      }
+      this.hasSaved = true;
+      this.lat = Number(d.latitude);
+      this.lng = Number(d.longitude);
+      this.radius = Number(d.deliveryRange || d.range || d.radius || 5) || 5;
+      this.type = (d.locationType || d.type || 'fixed') === 'dynamic' ? 'dynamic' : 'fixed';
+      this.address = d.address || '';
+      document.getElementById('radiusInput').value = this.radius;
+      document.getElementById('addressInput').value = this.address;
+      this.setPoint(this.lat, this.lng, false);
+      this.setRadius(this.radius);
+      this.setType(this.type);
+      this.updateStatus();
+    }catch(e){
+      this.updateStatus();
+    }finally{ if(window.Loader) Loader.hide(); }
+  }
+
+  async saveLocation(){
+    // RULE: GPS / Point ke bina Save HI NAHI hoga - Bina Lat/Lng ke save karke dhokha nahi denge
+    if(this.lat === null || this.lng === null || !this.lat || !this.lng){
+      if(window.Toast) Toast.show('Pehle Map pe apni dukaan ka point dabao ya Current Location dabao', 'error');
+      return;
+    }
+    var address = document.getElementById('addressInput').value || this.address || '';
+    if(!address){
+      if(window.Toast) Toast.show('Address bhi likh do - Customer ko dikhega', 'error');
+      return;
+    }
+    this.address = address;
+    var body = { shopId: this.shopId, lat: this.lat, lng: this.lng, latitude: this.lat, longitude: this.lng, type: this.type, locationType: this.type, range: this.radius, deliveryRange: this.radius, radius: this.radius, address: this.address };
+    var btn = document.getElementById('saveLocBtn');
+    var btn2 = document.getElementById('saveLocBtn2');
+    if(btn){ btn.innerText = 'Saving...'; btn.disabled = true; }
+    if(btn2){ btn2.innerText = 'Saving...'; btn2.disabled = true; }
+    try{
+      var saved = false;
+      // 1 hi jagah save hoga - POST /api/location/shop - Profile / Settings pe NAHI
+      if(window.ApiCore){
+        try{ var r = await window.ApiCore.post('/api/location/shop', body); if(r && r.success !== false) saved = true; }catch(e){ saved = false; }
+      }
+      if(!saved){
+        var res = await fetch('/api/location/shop', { method: 'POST', headers: this.getHeaders(), body: JSON.stringify(body) }).then(x=>x.json()).catch(()=>null);
+        if(res && (res.success || !res.error)) saved = true;
+      }
+      if(!saved){
+        if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+        return;
+      }
+      this.hasSaved = true;
+      await this.loadLocation();
+      if(window.Toast) Toast.show('Location + ' + this.radius + ' KM Circle save ho gaya ✅', 'success');
+    }catch(e){
+      if(window.Toast) Toast.show('Failed - Server error', 'error');
+    }finally{
+      if(btn){ btn.innerText = '💾 Save'; btn.disabled = false; }
+      if(btn2){ btn2.innerText = '💾 Location + Circle Save Karo'; btn2.disabled = false; }
+    }
+  }
+
+  async useGPS(){
+    var btn = document.getElementById('gpsBtn');
+    if(!navigator.geolocation){
+      if(window.Toast) Toast.show('Is phone me GPS nahi hai - Map pe point dabao', 'error');
+      return;
+    }
+    if(btn){ btn.innerText = '📍 Location le rahe hain...'; btn.disabled = true; }
+    try{
+      var pos = await new Promise(function(resolve, reject){
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      });
+      this.setPoint(pos.coords.latitude, pos.coords.longitude, true);
+      if(window.Toast) Toast.show('Current Location mil gayi ✅ - Ab Radius chuno aur Save dabao', 'success');
+    }catch(e){
+      // GPS deny hua toh Save nahi hoga, yahan bhi dhokha nahi denge
+      if(window.Toast) Toast.show('Location ON karo ya Map pe point dabao - Bina Location ke Save nahi hoga', 'error');
+    }finally{
+      if(btn){ btn.innerText = '🎯 Current Location Se Lo'; btn.disabled = false; }
+    }
+  }
+
+  setType(type){
+    this.type = type === 'dynamic' ? 'dynamic' : 'fixed';
+    document.querySelectorAll('.type-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.type === type);
+    });
+    var info = document.getElementById('typeInfo');
+    var liveBox = document.getElementById('liveTrackBox');
+    if(type === 'dynamic'){
+      if(info) info.innerText = 'Thela / Moving - Circle tere saath chalega. Live Tracking ON karo toh Circle apne aap update hoga.';
+      if(liveBox) liveBox.style.display = 'block';
+    } else {
+      if(info) info.innerText = 'Fixed Shop - Circle ek jagah rahega, tu jab chahe Location badal sakta hai.';
+      if(liveBox) liveBox.style.display = 'none';
+      this.stopTracking();
+    }
+  }
+
+  toggleTracking(){
+    if(this.tracking){
+      this.stopTracking();
+      return;
+    }
+    if(!navigator.geolocation){
+      if(window.Toast) Toast.show('Is phone me GPS nahi hai', 'error');
+      return;
+    }
+    var self = this;
+    var btn = document.getElementById('liveTrackBtn');
+    this.tracking = true;
+    if(btn) btn.innerText = '⏹️ Live Tracking Band Karo';
+    if(window.Toast) Toast.show('Live Tracking ON 🛺 - Tu jahan jayega, Circle wahan chalega', 'info');
+    this.watchId = navigator.geolocation.watchPosition(function(pos){
+      // Thela 100 meter se zyada chala toh hi Server pe bhejo - Har second bhej ke Server nahi bharenge
+      var newLat = pos.coords.latitude;
+      var newLng = pos.coords.longitude;
+      if(self.lat !== null && self.lng !== null){
+        var d = self.distanceKm(self.lat, self.lng, newLat, newLng);
+        if(d < 0.1) return;
+      }
+      self.setPoint(newLat, newLng, false);
+      // Thela wala hai toh Location bhi apne aap save hogi - Baar-baar Save dabane ki zarurat nahi
+      self.saveLocationSilent();
+    }, function(){}, { enableHighAccuracy: true, maximumAge: 0 });
+  }
+
+  stopTracking(){
+    if(this.watchId !== null && navigator.geolocation){
+      try{ navigator.geolocation.clearWatch(this.watchId); }catch(e){}
+    }
+    this.watchId = null;
+    this.tracking = false;
+    var btn = document.getElementById('liveTrackBtn');
+    if(btn) btn.innerText = '▶️ Live Tracking ON Karo';
+  }
+
+  async saveLocationSilent(){
+    if(this.lat === null || this.lng === null) return;
+    try{
+      var body = { shopId: this.shopId, lat: this.lat, lng: this.lng, latitude: this.lat, longitude: this.lng, type: this.type, locationType: this.type, range: this.radius, deliveryRange: this.radius, radius: this.radius, address: this.address || document.getElementById('addressInput').value || '' };
+      await fetch('/api/location/shop', { method: 'POST', headers: this.getHeaders(), body: JSON.stringify(body) }).catch(()=>null);
+    }catch(e){}
+  }
+
+  distanceKm(lat1, lng1, lat2, lng2){
+    var R = 6371;
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLng = (lng2 - lng1) * Math.PI / 180;
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  async clearLocation(){
+    if(!confirm('Location hatani hai? Iske baad dukaan Nearby me nahi dikhegi. Baad me wapas set kar sakte ho.')) return;
+    // Clear matlab - Radius 0 karke save nahi karenge, Server ko batayenge Location hatani hai
+    // Backend me DELETE na ho toh bhi, yahan se Lat/Lng hata ke UI saaf kar denge aur Save nahi karenge
+    try{
+      var res = await fetch('/api/location/shop/' + this.shopId, { method: 'DELETE', headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+      if(res && res.success === false){
+        if(window.Toast) Toast.show('Server pe delete nahi hua - Baad me dobara try karo', 'error');
+        return;
+      }
+    }catch(e){}
+    this.lat = null;
+    this.lng = null;
+    this.address = '';
+    document.getElementById('latInput').value = '';
+    document.getElementById('lngInput').value = '';
+    document.getElementById('addressInput').value = '';
+    this.updateStatus();
+    if(window.Toast) Toast.show('Location hata di - Baad me wapas set kar sakte ho', 'info');
+  }
+
+  bindEvents(){
+    document.getElementById('locBack')?.addEventListener('click', ()=> history.back());
+    document.getElementById('saveLocBtn')?.addEventListener('click', ()=> this.saveLocation());
+    document.getElementById('saveLocBtn2')?.addEventListener('click', ()=> this.saveLocation());
+    document.getElementById('gpsBtn')?.addEventListener('click', ()=> this.useGPS());
+    document.getElementById('clearLocBtn')?.addEventListener('click', ()=> this.clearLocation());
+    document.getElementById('liveTrackBtn')?.addEventListener('click', ()=> this.toggleTracking());
+    document.getElementById('radiusInput')?.addEventListener('input', (e)=> this.setRadius(e.target.value));
+    document.getElementById('addressInput')?.addEventListener('input', (e)=>{ this.address = e.target.value; });
+    document.querySelectorAll('.type-btn').forEach((b)=>{
+      b.addEventListener('click', ()=> this.setType(b.dataset.type));
+    });
+  }
+}
+
+window.ShopLocationCirclePageInstance = new ShopLocationCirclePage();
+document.addEventListener('DOMContentLoaded', ()=> window.ShopLocationCirclePageInstance.init());
+</script>
+</body>
+</html>
