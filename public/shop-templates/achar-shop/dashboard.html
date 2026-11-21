@@ -4,6 +4,9 @@
 <!-- PRODUCT-FORM: Add / Edit / Quick Add = ../common/products/product-form.html?type=achar-shop - Dashboard me addModal / quickAddModal DELETE kar diye hain -->
 <!-- PROFILE: 3 ALAG PHOTO - shop_logo -> logo, shop_cover -> banner, shop_owner -> ownerPhotoUrl - teeno alag input, alag ID -->
 <!-- RULE V5: shopId SIRF URL se aayega. Is file me koi bhi browser storage use NAHI hoga. -->
+<!-- LOCATION V6 - ACHAR LOCATION FIX: Purana Current Location wala form hata diya - Wo Shop me save hota tha, ShopLocation me nahi, isliye Nearby me Achar wali dukaan kabhi dikhti hi nahi thi. -->
+<!--   Ab Location Status + Map + Circle wala button hai - Dabate hi ../common/profile/shop-location.html?shopId=XXX khulega - Map pe point + Radius -> POST /api/location/shop -> Nearby me dikhegi. -->
+<!--   dashboard.js ke purane saveLocation / loadLocation ko haath nahi lagaya - Wo if ($('saveLocationBtn')) check karke chalte hain, button hi nahi hai toh listener lagega hi nahi, crash nahi hoga. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -292,16 +295,47 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 </div>
 </section>
 
+<!-- LOCATION V6 - NAYA - Purana Current Location wala form hata diya, wo ShopLocation me save hi nahi hota tha -->
 <section class="page" data-page="location">
-<div class="panel" style="max-width:620px"><h2>📍 Location</h2><p class="sub">Is location ke aas-paas ke customer ko shop dikhegi. Nearby Shops me bhi yehi location jayegi.</p>
-<label>Location Type</label><select id="locationType"><option value="fixed">Fixed Shop - Delivery Range</option><option value="dynamic">Thela / Moving Shop</option></select>
-<label>Delivery Range (KM)</label><input type="number" id="deliveryRange" value="5" min="1" max="50">
-<label>Shop Address</label><input type="text" id="shopAddress" placeholder="Pura address likho">
-<button class="btn green block" id="saveLocationBtn" style="margin-top:12px"><i class="fa fa-location-crosshairs"></i> Current Location Se Save Karo</button>
-<div class="hint" id="locationStatus"></div>
-<button class="btn light block" id="loadLocationBtn" style="margin-top:10px">Pehle Wali Location Dekho</button>
+<div class="panel" style="max-width:620px">
+<h2>📍 Location</h2>
+<p class="sub">Is location ke aas-paas ke customer ko shop dikhegi. Nearby Shops me bhi yehi location jayegi.</p>
+<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px;margin:12px 0">
+<b style="font-size:13px">🟢 Location Status</b>
+<p id="acharLocationStatus" class="hint" style="margin:4px 0 0">Loading...</p>
+</div>
+<!-- FLOW: Button dabao -> ../common/profile/shop-location.html?shopId=XXX khulega -> Map pe point dabao -> Radius chuno -> Save -> POST /api/location/shop -> Nearby me dukaan dikhegi -->
+<button class="btn green block" onclick="openAcharLocationPage()">📍 Map + Circle Se Location Set Karo →</button>
+<button class="btn light block" onclick="refreshAcharLocation()" style="margin-top:10px">🔄 Location Dobara Dekho</button>
+<p class="hint" style="margin-top:10px">Map pe apni dukaan ka point dabao, Radius chuno - 1 KM se 30 KM tak. Circle ke andar wala Customer hi dukaan dekhega.</p>
 </div>
 </section>
+<script>
+// ACHAR LOCATION - COMMON PAGE SE JODA HUA - dashboard.js ke purane saveLocation ko haath nahi lagaya, wo ab chalega hi nahi kyunki uske button hi hata diye hain
+function openAcharLocationPage(){
+  var sid = new URLSearchParams(location.search).get('shopId') || window.SHOP_ID || '';
+  location.href = '../common/profile/shop-location.html?shopId=' + encodeURIComponent(sid);
+}
+async function refreshAcharLocation(){
+  var sid = new URLSearchParams(location.search).get('shopId') || window.SHOP_ID || '';
+  var el = document.getElementById('acharLocationStatus');
+  if(!el) return;
+  if(!sid){ el.textContent = 'ShopId nahi mila - Dashboard ko URL se kholo'; return; }
+  el.textContent = 'Loading...';
+  try{
+    var r = await fetch('/api/location/shop/' + encodeURIComponent(sid)).then(function(x){ return x.json(); }).catch(function(){ return null; });
+    var d = r && (r.data || r);
+    if(d && d.latitude !== undefined && d.latitude !== null){
+      var rad = Number(d.deliveryRange || d.radius || d.range || 5) || 5;
+      var typ = d.locationType || d.type || 'fixed';
+      el.textContent = 'Set hai ✅ - ' + rad + ' KM Circle - Type: ' + typ + ' - Lat: ' + Number(d.latitude).toFixed(4) + ', Lng: ' + Number(d.longitude).toFixed(4);
+    } else {
+      el.textContent = 'Location set nahi hai - Upar wale button se set karo';
+    }
+  }catch(e){ el.textContent = 'Load nahi hua - Dobara try karo'; }
+}
+document.addEventListener('DOMContentLoaded', function(){ refreshAcharLocation(); });
+</script>
 </div>
 </main>
 </div>
