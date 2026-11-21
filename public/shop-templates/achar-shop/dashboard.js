@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - PRODUCT-FORM + COMMON PROFILE - V5
+// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - PRODUCT-FORM + COMMON PROFILE - V6
 // RULE: Product = WORLD MODEL. Order = Common Order. Profile = COMMON UNIFIED PROFILE (V24).
 // PRODUCT-FORM: Add / Edit / Quick Add = ../common/products/product-form.html - Dashboard me apna modal NAHI hoga
 // PROFILE: Photo = UnifiedProfile.handleFileInput() -> /api/common/profile/upload-avatar -> Cloudinary -> Shop model
@@ -8,6 +8,17 @@
 // READ RULE: price500 = p.price500 || p.extraData?.price500 || p.price | image = p.thumbnail || p.image || p.extraData?.thumbnail
 //            logo = shop.logo || shop.shopLogo | banner = shop.banner || shop.coverPhoto | ownerPhoto = shop.ownerPhotoUrl
 // RULE V5: shopId SIRF URL se aayega. Is file me koi bhi browser storage use NAHI hoga.
+// OPEN/CLOSE - V6 - SINGLE OWNER FIX:
+//   1. Topbar button ka 1 hi maalik hai = YE FILE. dashboard.html me load hone wala common/js/shop-toggle.js
+//      apna click listener lagata hai, isliye bindShopToggleUI() me button ko clone karke uska listener uda dete hain,
+//      phir khud click lagate hain. Dobara toggle nahi hoga, double POST nahi jayega.
+//   2. Button ka text kabhi btn.innerText se MAT badlo - usse andar wala <span id="toggleText"> udd jata hai.
+//      Sirf toggleText ka textContent badlo + button pe open/closed class lagao.
+//   3. Timing ka 1 hi sach hai = GET/POST /api/common/shop-toggle/:shopId/status + /timing.
+//      Load bhi wahin se, Save bhi wahin se. fillShopProfileUI() / loadShopData() timing ko haath NAHI lagayenge.
+//      Warna Profile wali timing aur Shop-Toggle wali timing alag-alag dikhegi.
+//   4. Order KABHI NAHI RUKEGA. Shop Closed sirf dikhane ke liye hai. Checkout me koi guard MAT lagana.
+//      Band dukaan ka bhi order banega aur Dashboard pe Pending me dikhega.
 
 (function () {
   var params = new URLSearchParams(location.search);
@@ -38,6 +49,11 @@
   var productFilter = 'All';
   var orderFilter = 'all';
   var manualQty = {};
+
+  // OPEN/CLOSE - V6 - Ye 3 variable hi sach hain, kahi aur se mat padhna
+  var shopIsOpen = true;
+  var shopTiming = { openingTime: '09:00', closingTime: '21:00', open: '09:00', close: '21:00' };
+  var toggleBusy = false;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -187,31 +203,121 @@
     // PROFILE PEHLE - Common Profile se, phir Achar ka bacha hua data - ulta karoge toh Logo udd jayega
     await loadShopProfile();
     await loadShopData();
+    // OPEN/CLOSE + TIMING - V6 - Profile ke BAAD dobara Shop-Toggle se lo, taaki Profile wali timing overwrite na kare
+    await loadShopToggleStatus();
     await loadCommonOrders();
     await loadProducts();
     renderAll();
     initSocket();
     setInterval(function () { loadCommonOrders().then(renderAll).catch(function () {}); }, 30000);
     window.addEventListener('focus', function () { loadProducts().then(renderAll).catch(function () {}); });
-    // Common Profile se wapas aaye toh Profile dobara load karo
+    // Common Profile se wapas aaye toh Profile dobara load karo - Timing dobara mat chhedo, wo Shop-Toggle se hi aayegi
     window.addEventListener('focus', function () { loadShopProfile().catch(function () {}); });
+    window.addEventListener('focus', function () { loadShopToggleStatus().catch(function () {}); });
   }
 
+  // ================= OPEN / CLOSE - V6 - SINGLE OWNER - FULL =================
   function bindShopToggleUI() {
     var btn = $('shopToggle');
     if (!btn) return;
-    fetch(API + '/api/common/shop-toggle/' + encodeURIComponent(shopId) + '/status', { headers: getHeaders() })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (d && d.success) updateToggleUI(d.isOpen);
-      }).catch(function () {});
+    // FIX V6-1: Button ka 2 maalik wala lafda khatam - clone karke purane listeners uda do
+    // dashboard.html me common/js/shop-toggle.js bhi load hai, usne apna click laga rakha hai.
+    // Clone karne se uske saare listener udd jate hain, sirf HTML + class + andar ka span bachta hai.
+    try {
+      var fresh = btn.cloneNode(true);
+      if (btn.parentNode) btn.parentNode.replaceChild(fresh, btn);
+      btn = fresh;
+    } catch (e) {}
+    // Common wale instance ko bhi chup kara do - taaki wo dobara bind na kare ya toggle na mare
+    try {
+      if (window.shopToggle) { window.shopToggle.toggle = function () {}; window.shopToggle.isOpen = shopIsOpen; }
+      window.__ACHAR_TOGGLE_OWNED = true;
+    } catch (e) {}
+    // Ab 1 hi click - sirf ye file chalegi
+    btn.addEventListener('click', toggleShopStatus);
+    // Pehli baar Server se status lo
+    loadShopToggleStatus();
   }
+
+  async function loadShopToggleStatus() {
+    try {
+      var res = await fetch(API + '/api/common/shop-toggle/' + encodeURIComponent(shopId) + '/status', { headers: getHeaders() });
+      var d = await res.json().catch(function () { return {}; });
+      if (d && d.success) {
+        shopIsOpen = d.isOpen !== false;
+        if (d.timing) {
+          shopTiming = {
+            openingTime: d.timing.openingTime || d.timing.open || '09:00',
+            closingTime: d.timing.closingTime || d.timing.close || '21:00',
+            open: d.timing.openingTime || d.timing.open || '09:00',
+            close: d.timing.closingTime || d.timing.close || '21:00'
+          };
+        }
+        if (d.openingTime) shopTiming.openingTime = d.openingTime;
+        if (d.closingTime) shopTiming.closingTime = d.closingTime;
+        // shopData me bhi sync rakho, taaki koi aur function purana timing na dikhaye - par Input sirf yahan se bharega
+        shopData.isOpen = shopIsOpen;
+        shopData.timing = { open: shopTiming.open, close: shopTiming.close, openingTime: shopTiming.openingTime, closingTime: shopTiming.closingTime };
+        shopData.openTime = shopTiming.open;
+        shopData.closeTime = shopTiming.close;
+        updateToggleUI(shopIsOpen);
+        fillTimingInputs();
+      }
+    } catch (e) {}
+  }
+
+  function fillTimingInputs() {
+    if ($('openTime')) $('openTime').value = to24(shopTiming.open || shopTiming.openingTime || '09:00');
+    if ($('closeTime')) $('closeTime').value = to24(shopTiming.close || shopTiming.closingTime || '21:00');
+  }
+
   function updateToggleUI(isOpen) {
+    shopIsOpen = !!isOpen;
     var btn = $('shopToggle'); if (!btn) return;
-    var txt = $('toggleText'); if (txt) txt.textContent = isOpen ? 'Open' : 'Closed';
-    btn.classList.toggle('open', !!isOpen);
-    btn.classList.toggle('closed', !isOpen);
+    // FIX V6-2: btn.innerText KABHI MAT KARNA - usse <span id="toggleText"> udd jata hai, phir dobara update hi nahi hota
+    // Sirf span ka text badlo + button pe class lagao
+    var txt = $('toggleText');
+    if (txt) txt.textContent = shopIsOpen ? 'Open' : 'Closed';
+    btn.classList.toggle('open', shopIsOpen);
+    btn.classList.toggle('closed', !shopIsOpen);
+    btn.dataset.open = String(shopIsOpen);
+    btn.disabled = toggleBusy;
+    // Common wale instance ko bhi sync me rakho, taaki koi aur file purana status na padhe
+    try { if (window.shopToggle) window.shopToggle.isOpen = shopIsOpen; } catch (e) {}
   }
+
+  async function toggleShopStatus() {
+    if (toggleBusy) return;
+    var next = !shopIsOpen;
+    var prev = shopIsOpen;
+    toggleBusy = true;
+    // Optimistic - pehle button badlo, fail hua toh wapas palat denge - dhokha nahi denge
+    updateToggleUI(next);
+    try {
+      var res = await fetch(API + '/api/common/shop-toggle/' + encodeURIComponent(shopId) + '/toggle', {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ isOpen: next, shopId: shopId, role: ROLE, userId: getUserId() })
+      });
+      var d = await res.json().catch(function () { return {}; });
+      if (!res.ok || (d.success === false)) throw new Error((d && d.message) || 'Toggle fail');
+      shopIsOpen = d.isOpen !== undefined ? !!d.isOpen : next;
+      if (d.timing) shopTiming = d.timing;
+      shopData.isOpen = shopIsOpen;
+      updateToggleUI(shopIsOpen);
+      toast(shopIsOpen ? '🟢 Shop Open ho gayi' : '🔴 Shop Closed ho gayi - Order phir bhi aayega, rokega nahi');
+    } catch (e) {
+      // Server pe save nahi hua toh button wapas purana
+      updateToggleUI(prev);
+      toast('❌ ' + e.message);
+    } finally {
+      toggleBusy = false;
+      updateToggleUI(shopIsOpen);
+    }
+  }
+  window.toggleShopStatus = toggleShopStatus;
+  window.updateToggleUI = updateToggleUI;
+  window.loadShopToggleStatus = loadShopToggleStatus;
 
   function initSocket() {
     try {
@@ -222,7 +328,14 @@
           loadCommonOrders().then(renderAll);
         });
         window.SocketCore.on('shop-status-changed', function (d) {
-          if (d && String(d.shopId) === String(shopId)) updateToggleUI(d.isOpen);
+          if (d && String(d.shopId) === String(shopId)) {
+            if (d.timing) {
+              shopTiming = d.timing;
+              shopData.timing = d.timing;
+              fillTimingInputs();
+            }
+            updateToggleUI(d.isOpen);
+          }
         });
       }
       if (window.shopSocket) {
@@ -287,11 +400,9 @@
     if ($('shopAddress')) $('shopAddress').value = shopAddressStr(shopData);
     if ($('deliveryRange')) $('deliveryRange').value = shopData.deliveryRange || 5;
     if ($('locationType')) $('locationType').value = shopData.locationType || 'fixed';
-    // Timing bhi Common Profile se aati hai toh wahi bhardo
-    if (shopData.timing) {
-      if ($('openTime')) $('openTime').value = to24(shopData.timing.open || shopData.timing.openingTime || shopData.openTime || '09:00');
-      if ($('closeTime')) $('closeTime').value = to24(shopData.timing.close || shopData.timing.closingTime || shopData.closeTime || '21:00');
-    }
+    // TIMING - V6 FIX: Yahan timing MAT bharo. Timing ka 1 hi sach hai = Shop-Toggle.
+    // Pehle yahan shopData.timing se openTime/closeTime bharte the, isliye Profile wali timing aur Shop-Toggle wali timing alag dikhti thi.
+    // Ab timing sirf loadShopToggleStatus() -> fillTimingInputs() se bharegi. Yahan kuch nahi karna.
     // NO CACHE - dobara kholne pe bhi Server se hi mangega
     window.SHOP_PROFILE = shopData;
   }
@@ -374,8 +485,8 @@
       if ($('shopName')) $('shopName').textContent = shopData.ownerName ? shopData.ownerName + ' ki Dukaan' : (shopData.shopName || shopData.name || 'Maa Ke Haath Ka Achar');
       if ($('pageTitle')) $('pageTitle').textContent = 'Overview';
       fillShopProfileUI();
-      if ($('openTime') && !$('openTime').value) $('openTime').value = to24(shopData.openTime || (shopData.timing && shopData.timing.open) || '09:00');
-      if ($('closeTime') && !$('closeTime').value) $('closeTime').value = to24(shopData.closeTime || (shopData.timing && shopData.timing.close) || '21:00');
+      // TIMING - V6 FIX: Yahan bhi timing MAT bharo. Sirf loadShopToggleStatus() bharega.
+      // Pehle yahan Achar wali timing se openTime bharte the, isliye 2 timing dikhti thi.
     } catch (e) {
       console.warn('[achar] shop load fail', e.message);
     }
@@ -731,12 +842,21 @@
     var open = $('openTime') ? $('openTime').value || '09:00' : '09:00';
     var close = $('closeTime') ? $('closeTime').value || '21:00' : '21:00';
     try {
+      // TIMING - V6 FIX: Sirf 1 jagah save hoga = Shop-Toggle. Achar /settings pe fallback MAT bhejo.
+      // Pehle fail hone pe Achar pe chala jata tha, isliye 2 timing ban jati thi.
       var res = await fetch(API + '/api/common/shop-toggle/' + encodeURIComponent(shopId) + '/timing', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ open: open, close: close, role: ROLE, userId: shopId, shopId: shopId }) });
       var d = await res.json().catch(function () { return {}; });
-      if (!res.ok || (d.success === false)) {
-        await fetch(API + '/api/shops/achar/' + encodeURIComponent(shopId) + '/settings', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ openTime: open, closeTime: close, timing: { open: open, close: close } }) });
+      if (!res.ok || (d.success === false)) throw new Error((d && d.message) || 'Timing save fail - shop-toggle V2 check karo');
+      // Server se aayi timing hi sach hai - usi ko rakho
+      if (d.timing) {
+        shopTiming = d.timing;
+        shopData.timing = d.timing;
+      } else {
+        shopTiming = { open: open, close: close, openingTime: open, closingTime: close };
+        shopData.timing = { open: open, close: close, openingTime: open, closingTime: close };
       }
-      shopData.openTime = open; shopData.closeTime = close; shopData.timing = { open: open, close: close };
+      shopData.openTime = open; shopData.closeTime = close;
+      fillTimingInputs();
       if ($('timingStatus')) $('timingStatus').textContent = 'Timing save ho gayi: ' + to12(open) + ' - ' + to12(close);
       toast('Timing save ho gayi');
     } catch (e) { toast('Timing fail: ' + e.message); }
