@@ -1,10 +1,223 @@
+<!-- LOCATION: public/profile/notifications.html - V2 HONEST + RESPONSIVE - FULL CODE -->
+<!-- FIX V2: 1) Pehle ye page profile/js/notifications.js pe tha jo /api/notifications mangta tha - Common wale se alag API, isliye khaali / galat dikhta tha. Ab seedha Common API se mangega -->
+<!-- 2) Layout fix - Pehle sirf 2 line HTML thi, CSS JS se inject hota tha. Ab FULL HTML + Mobile + Laptop dono ke liye @media hai -->
+<!-- 3) Fake hataya - Koi Notification nahi hai toh "No notifications yet" dikhega, nakli ORD / WELCOME50 nahi dikhega -->
+<!-- FLOW: Load -> Token se /api/auth/me se userId lo -> GET /api/common/notifications/user/:userId -> Khali hai toh Empty -> Click -> POST /:notifId/read -->
 <!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Notifications</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Notifications - SAMANLIVE</title>
 <link rel="stylesheet" href="/assets/css/main.css">
-</head><body style="background:#f1f5f9;margin:0">
-<div style="background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;border-bottom:1px solid #e2e8f0"><button onclick="location.href='/profile.html'" style="width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%">‹</button><b>Notifications</b> <span id="unreadBadge" style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;display:none">0</span></div>
-<div id="notificationsContainer" style="max-width:600px;margin:12px auto;padding:0 12px">Loading...</div>
-<script src="/assets/js/app.js"></script><script src="/profile/js/notifications.js"></script>
-</body></html>
+<style>
+*{box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f1f5f9;margin:0;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.profile-notif-root{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:20px}
+.profile-notif-header{background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;border-bottom:1px solid #e2e8f0;z-index:10;flex-wrap:wrap}
+.back-btn{width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-weight:900;font-size:20px;flex-shrink:0;line-height:1}
+.profile-notif-header b{font-size:16px}
+.profile-notif-header span{font-size:11px;color:#64748b;font-weight:600;display:block}
+#unreadBadge{background:#ef4444;color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800;display:none;white-space:nowrap}
+.mark-read-btn{margin-left:auto;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:8px 12px;border-radius:8px;font-weight:800;font-size:11px;white-space:nowrap}
+.profile-notif-filters{display:flex;gap:6px;padding:12px;overflow-x:auto;background:#fff;border-bottom:1px solid #e2e8f0;scrollbar-width:none}
+.profile-notif-filters::-webkit-scrollbar{display:none}
+.profile-notif-filter{background:#fff;border:1px solid #e2e8f0;padding:8px 12px;border-radius:20px;font-weight:800;font-size:11px;white-space:nowrap}
+.profile-notif-filter.active{background:#0f172a;color:#fff;border-color:#0f172a}
+#notificationsContainer{display:flex;flex-direction:column;gap:8px;padding:12px}
+.notification-item{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px;display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.notification-item.unread{border-color:#bae6fd;background:#fff}
+.notification-icon{width:40px;height:40px;background:#f1f5f9;border-radius:10px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.notification-content{flex:1;min-width:0}
+.notification-header{display:flex;gap:8px;align-items:flex-start}
+.notification-title{font-weight:900;font-size:13px;line-height:1.3;word-break:break-word;flex:1}
+.notification-text{font-size:11px;color:#64748b;font-weight:600;margin-top:3px;line-height:1.4;word-break:break-word}
+.notification-meta{margin-top:6px;font-size:10px;color:#94a3b8;font-weight:700}
+.notification-dot{width:8px;height:8px;background:#ef4444;border-radius:50%;flex-shrink:0;margin-top:6px}
+.empty-state{text-align:center;padding:40px 16px;color:#94a3b8;font-weight:600;font-size:13px;line-height:1.5;background:#fff;border-radius:12px}
+.empty-state .icon{font-size:40px;display:block;margin-bottom:10px}
+.empty-state h2{color:#0f172a;font-size:15px;margin:0 0 4px}
+.primary-btn{background:#0f172a;color:#fff;padding:11px 18px;border-radius:10px;font-weight:800;font-size:12px;margin-top:14px}
+/* MOBILE - Header stack hoga, button katega nahi */
+@media(max-width:600px){
+  .profile-notif-root{max-width:100%}
+  .profile-notif-header{padding:12px}
+  .mark-read-btn{margin-left:0;width:100%;text-align:center}
+}
+/* LAPTOP - 600px wali patli patti nahi, 760px chauda, beech me */
+@media(min-width:900px){
+  .profile-notif-root{max-width:760px}
+  .profile-notif-header{border-radius:0 0 16px 16px}
+  #notificationsContainer{gap:10px}
+  .notification-item{padding:14px}
+}
+</style>
+</head>
+<body>
+<div class="profile-notif-root">
+  <div class="profile-notif-header">
+    <button class="back-btn" onclick="location.href='/profile.html'">‹</button>
+    <div style="flex:1;min-width:0"><b>🔔 Notifications</b><span id="notifSubHeader">Loading...</span></div>
+    <span id="unreadBadge">0</span>
+    <button id="markAllReadBtn" class="mark-read-btn">✅ Mark all read</button>
+  </div>
+
+  <div class="profile-notif-filters">
+    <button class="profile-notif-filter active" data-filter="all">All</button>
+    <button class="profile-notif-filter" data-filter="order">📦 Orders</button>
+    <button class="profile-notif-filter" data-filter="delivery">🛵 Delivery</button>
+    <button class="profile-notif-filter" data-filter="offer">🎉 Offers</button>
+    <button class="profile-notif-filter" data-filter="system">🔔 System</button>
+    <button class="profile-notif-filter" data-filter="unread">🔴 Unread</button>
+  </div>
+
+  <div id="notificationsContainer">Loading...</div>
+</div>
+
+<script>
+(function(){
+  var userId = new URLSearchParams(location.search).get('userId') || '';
+  var currentFilter = 'all';
+  var allNotifications = [];
+
+  function esc(s){ var d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; }
+  function getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    try{ return localStorage.getItem('userToken') || localStorage.getItem('token') || ''; }catch(e){ return ''; }
+  }
+  function getIcon(type){ return { order:'📦', delivery:'🛵', offer:'🎉', system:'🔔', alert:'⚠️', payment:'💰', review:'⭐', promo:'🎉', area:'📍', admin:'🔔' }[type] || '🔔'; }
+  function formatTime(t){
+    try{
+      var d=new Date(t); var now=new Date(); var m=Math.floor((now-d)/60000);
+      if(m<1) return 'Just now';
+      if(m<60) return m+' min ago';
+      var h=Math.floor(m/60); if(h<24) return h+' hour'+(h>1?'s':'')+' ago';
+      return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    }catch(e){ return ''; }
+  }
+
+  async function loadNotifications(){
+    var container = document.getElementById('notificationsContainer');
+    try{
+      // 1) userId nikalo - URL se, nahi toh /api/auth/me se
+      if(!userId){
+        try{
+          var me = await fetch('/api/auth/me', { headers:{ 'Authorization':'Bearer '+getToken() } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+          if(me && me.user) userId = me.user._id || me.user.id || '';
+          if(!userId && window.currentUser) userId = window.currentUser._id || window.currentUser.id || '';
+        }catch(e){}
+      }
+      if(!userId){
+        container.innerHTML = '<div class="empty-state"><div class="icon">🔔</div><h2>Login karo</h2><p>Notification dekhne ke liye pehle login karo</p></div>';
+        document.getElementById('notifSubHeader').innerText = 'Login required';
+        return;
+      }
+      // 2) Common API se mango - Pehle /user/:userId, nahi chala toh /api/notifications (purana) - Dono me se jo asli dega wahi dikhayenge
+      var data = null;
+      try{
+        data = await fetch('/api/common/notifications/user/'+encodeURIComponent(userId), { headers:{ 'Authorization':'Bearer '+getToken() } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      }catch(e){}
+      if(!data || !data.success){
+        try{
+          data = await fetch('/api/notifications', { headers:{ 'Authorization':'Bearer '+getToken() } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+        }catch(e){}
+      }
+      var list = (data && (data.notifications || [])) || [];
+      // Fake ko yahan bhi rok do - Purana Fake ID / ORD12345 / WELCOME50 kabhi nahi dikhega
+      list = list.filter(function(n){
+        if(!n) return false;
+        if(n._id==='n1'||n._id==='n2'||n._id==='n3'||n._id==='n4') return false;
+        var m=String(n.message||'')+' '+String(n.title||'');
+        if(m.indexOf('ORD12345')!==-1) return false;
+        if(m.indexOf('WELCOME50')!==-1) return false;
+        if(m.indexOf('9876543210')!==-1) return false;
+        return true;
+      });
+      allNotifications = list;
+      filterNotifications(currentFilter);
+      updateCounts();
+    }catch(e){
+      container.innerHTML = '<div class="empty-state"><div class="icon">🔔</div><h2>No notifications yet</h2><p>Abhi koi asli Notification nahi aaya hai - Nakli nahi dikhayenge</p></div>';
+      document.getElementById('notifSubHeader').innerText = '0 unread • 0 total';
+    }
+  }
+
+  function updateCounts(){
+    var unread = allNotifications.filter(function(n){ return !n.read; }).length;
+    document.getElementById('notifSubHeader').innerText = unread+' unread • '+allNotifications.length+' total';
+    var badge = document.getElementById('unreadBadge');
+    if(badge){ if(unread>0){ badge.style.display='inline-block'; badge.textContent=unread; } else badge.style.display='none'; }
+  }
+
+  function filterNotifications(filter){
+    currentFilter = filter || 'all';
+    var list = allNotifications;
+    if(currentFilter==='unread') list = list.filter(function(n){ return !n.read; });
+    else if(currentFilter!=='all') list = list.filter(function(n){ return n.type===currentFilter || (currentFilter==='offer' && n.type==='promo') || (currentFilter==='promo' && n.type==='offer'); });
+    renderNotifications(list);
+  }
+
+  function renderNotifications(list){
+    var container = document.getElementById('notificationsContainer');
+    if(!list.length){
+      container.innerHTML = '<div class="empty-state"><div class="icon">🔔</div><h2>No notifications yet</h2><p>Abhi koi asli Notification nahi aaya hai<br>Order aayega toh yahan asli Notification dikhega - Nakli ORD12345 nahi dikhayenge</p><button class="primary-btn" onclick="location.href=\'/profile.html\'">‹ Back to Profile</button></div>';
+      return;
+    }
+    var sorted = list.slice().sort(function(a,b){
+      if(a.read!==b.read) return a.read?1:-1;
+      return new Date(b.createdAt)-new Date(a.createdAt);
+    });
+    container.innerHTML = sorted.map(function(notif){
+      return '<div class="notification-item '+(!notif.read?'unread':'')+'" data-id="'+esc(notif._id)+'" data-url="'+esc(notif.actionUrl||'')+'">'
+        + '<div class="notification-icon">'+getIcon(notif.type)+'</div>'
+        + '<div class="notification-content"><div class="notification-header"><div class="notification-title">'+esc(notif.title||'Notification')+'</div></div>'
+        + '<div class="notification-text">'+esc(notif.message||'')+'</div>'
+        + '<div class="notification-meta">🕐 '+esc(formatTime(notif.createdAt))+'</div></div>'
+        + (!notif.read?'<span class="notification-dot"></span>':'')
+        + '</div>';
+    }).join('');
+    container.querySelectorAll('.notification-item').forEach(function(item){
+      item.addEventListener('click', function(){
+        var id=item.dataset.id; var url=item.dataset.url;
+        markAsRead(id);
+        if(url) window.location.href=url;
+      });
+    });
+  }
+
+  async function markAsRead(id){
+    try{
+      var n=allNotifications.find(function(x){ return x._id===id; });
+      if(n) n.read=true;
+      updateCounts(); filterNotifications(currentFilter);
+      await fetch('/api/common/notifications/'+encodeURIComponent(id)+'/read', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() }, body: JSON.stringify({ userId:userId }) }).catch(function(){});
+    }catch(e){}
+  }
+
+  async function markAllRead(){
+    try{
+      allNotifications.forEach(function(n){ n.read=true; });
+      updateCounts(); filterNotifications(currentFilter);
+      // ShopId nahi hai Customer ke paas, isliye ek-ek karke read karna safe hai - Bulk ke liye shopId chahiye hota hai
+      for(var i=0;i<allNotifications.length;i++){
+        await fetch('/api/common/notifications/'+encodeURIComponent(allNotifications[i]._id)+'/read', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() }, body: JSON.stringify({ userId:userId }) }).catch(function(){});
+      }
+    }catch(e){}
+  }
+
+  document.querySelectorAll('.profile-notif-filter').forEach(function(f){
+    f.addEventListener('click', function(){
+      document.querySelectorAll('.profile-notif-filter').forEach(function(x){ x.classList.remove('active'); });
+      f.classList.add('active');
+      filterNotifications(f.dataset.filter);
+    });
+  });
+  document.getElementById('markAllReadBtn')?.addEventListener('click', markAllRead);
+  document.addEventListener('DOMContentLoaded', loadNotifications);
+  // Agar DOM pehle se load hai toh turant bhi chala do
+  if(document.readyState!=='loading') loadNotifications();
+})();
+</script>
+</body>
+</html>

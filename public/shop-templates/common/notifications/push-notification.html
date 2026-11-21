@@ -1,4 +1,64 @@
-<!-- LOCATION: public/shop-templates/common/notifications/push-notification.html -->
+<!-- LOCATION: public/shop-templates/common/notifications/push-notification.html - V2 HONEST + RESPONSIVE - FULL CODE -->
+<!-- FIX V2: 1) Pehle isme <html><head><meta viewport> hi nahi tha, sirf <div> tha - Isliye alag se kholo toh tuta hua dikhta tha. Ab FULL HTML hai -->
+<!-- 2) Test Push wala jhooth hataya - Pehle new Notification() se khud hi nakli Test dikha deta tha. Ab saaf likhega ki Browser Push ON hai, Server Push abhi Backend me band hai -->
+<!-- 3) Toggle ab Server pe save hoga - Pehle dabane pe kahin save nahi hota tha, Refresh karte hi wapas ho jaata tha -->
+<!-- FLOW: Load -> shopId URL se, userId AuthCore se -> GET /api/common/notifications/settings/:userId -> Toggle bharo -> Toggle dabao -> POST /settings/:userId -> Enable Push -> requestPermission -> POST /subscribe -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Push Notifications</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="../core/api-core.js"></script>
+<script src="../core/auth-core.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.push-root{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:20px}
+.push-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9;flex-wrap:wrap}
+.back-btn{background:#f1f5f9;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;flex-shrink:0;line-height:1}
+.push-header b{display:block;font-weight:900;font-size:16px}
+.push-header span{font-size:11px;color:#64748b;font-weight:600}
+.push-card{background:#fff;border:1px solid #e2e8f0;margin:12px;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.push-icon{width:48px;height:48px;background:#f0f9ff;border-radius:12px;display:grid;place-items:center;font-size:24px}
+.push-card b{font-weight:900;font-size:15px}
+.push-card span{font-size:12px;color:#64748b;font-weight:600;line-height:1.5}
+.primary-btn{background:#0f172a;color:#fff;padding:12px 18px;border-radius:10px;font-weight:800;font-size:13px;width:100%;text-align:center}
+.primary-btn:disabled{opacity:.5;cursor:not-allowed}
+.push-status{font-size:11px;font-weight:700;color:#0369a1;background:#f0f9ff;border:1px solid #bae6fd;padding:8px 10px;border-radius:8px;width:100%;line-height:1.5}
+.push-status.ok{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.push-status.bad{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+.push-settings{background:#fff;border:1px solid #e2e8f0;margin:12px;border-radius:12px;padding:16px}
+.push-settings > b{display:block;font-weight:900;font-size:14px;margin-bottom:12px}
+.push-setting{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f1f5f9}
+.push-setting:last-child{border-bottom:none}
+.push-setting span{font-size:13px;font-weight:700}
+.push-setting small{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px}
+.switch{position:relative;width:50px;height:28px;flex-shrink:0;display:inline-block}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#e2e8f0;border-radius:20px;transition:.3s;cursor:pointer}
+.slider:before{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:4px;left:4px;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+input:checked + .slider{background:#10b981}
+input:checked + .slider:before{transform:translateX(22px)}
+.hint-box{background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px;margin:12px;font-size:11px;font-weight:600;color:#92400e;line-height:1.5}
+.secondary-btn{width:calc(100% - 24px);margin:0 12px 12px;background:#fff;border:1px solid #e2e8f0;padding:12px;border-radius:10px;font-weight:800;cursor:pointer;font-size:13px}
+/* MOBILE */
+@media(max-width:600px){
+  .push-root{max-width:100%}
+  .push-header{padding:12px}
+  .push-card,.push-settings{margin:10px}
+}
+/* LAPTOP - Patli patti nahi, 760px chauda, beech me */
+@media(min-width:900px){
+  .push-root{max-width:760px}
+  .push-header{border-radius:0 0 16px 16px}
+  .push-card,.push-settings{padding:20px}
+}
+</style>
+</head>
+<body>
 <div id="pushRoot" class="push-root">
   <div class="push-header">
     <button onclick="history.back()" class="back-btn">‹</button>
@@ -8,90 +68,150 @@
   <div class="push-card">
     <div class="push-icon">🔔</div>
     <b>Enable Push Notifications</b>
-    <span>Get real-time order updates, offers, and alerts even when app is closed</span>
+    <span>Order updates aur alerts isi Browser me dikhenge - Jab ye page khula nahi hoga tab bhi, agar Browser ne allow kiya toh</span>
     <button id="pushEnableBtn" class="primary-btn">🔔 Enable Push</button>
     <span id="pushStatus" class="push-status">Checking permission...</span>
   </div>
 
+  <div id="pushHint" class="hint-box" style="display:none"></div>
+
   <div class="push-settings">
     <b>⚙️ Notification Settings</b>
-    <div class="push-setting"><span>📦 Order Updates</span><label class="switch"><input type="checkbox" id="pushOrder" checked><span class="slider"></span></label></div>
-    <div class="push-setting"><span>🎉 Offers & Promotions</span><label class="switch"><input type="checkbox" id="pushOffer" checked><span class="slider"></span></label></div>
-    <div class="push-setting"><span>🔔 System Alerts</span><label class="switch"><input type="checkbox" id="pushSystem" checked><span class="slider"></span></label></div>
-    <div class="push-setting"><span>🔊 Sound</span><label class="switch"><input type="checkbox" id="pushSound" checked><span class="slider"></span></label></div>
-    <div class="push-setting"><span>📳 Vibrate</span><label class="switch"><input type="checkbox" id="pushVibrate" checked><span class="slider"></span></label></div>
+    <div class="push-setting"><span>📦 Order Updates<small>Order confirm / prepare / delivery ka Notification</small></span><label class="switch"><input type="checkbox" id="pushOrder" checked><span class="slider"></span></label></div>
+    <div class="push-setting"><span>🎉 Offers & Promotions<small>Offer wala Notification - Fake Offer kabhi nahi bhejenge</small></span><label class="switch"><input type="checkbox" id="pushOffer" checked><span class="slider"></span></label></div>
+    <div class="push-setting"><span>🔔 System Alerts<small>System wala Notification</small></span><label class="switch"><input type="checkbox" id="pushSystem" checked><span class="slider"></span></label></div>
+    <div class="push-setting"><span>🔊 Sound<small>Notification aane pe awaaz</small></span><label class="switch"><input type="checkbox" id="pushSound" checked><span class="slider"></span></label></div>
   </div>
 
-  <button id="pushTestBtn" class="secondary-btn">🧪 Send Test Push</button>
+  <button id="pushTestBtn" class="secondary-btn">🧪 Test Browser Notification</button>
+  <button id="pushBackBtn" class="secondary-btn">‹ Back to Notifications</button>
 </div>
 
-<style>
-.push-root{ font-family:Outfit,sans-serif; max-width:600px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.push-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.push-card{ background:#fff; margin:12px; border-radius:16px; padding:20px; text-align:center; border:1px solid #f1f5f9; }
-.push-icon{ font-size:48px; margin-bottom:12px; }
-.push-card b{ display:block; font-weight:900; font-size:16px; }
-.push-card span{ display:block; font-size:11px; color:#64748b; font-weight:600; margin-top:6px; line-height:1.4; }
-.primary-btn{ width:100%; background:#0f172a; color:#fff; border:none; padding:12px; border-radius:10px; font-weight:900; cursor:pointer; margin-top:16px; }
-.push-status{ font-size:10px; color:#94a3b8; margin-top:8px; }
-.push-settings{ background:#fff; margin:12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
-.push-settings b{ display:block; font-weight:900; font-size:14px; margin-bottom:12px; }
-.push-setting{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f8fafc; font-size:13px; font-weight:600; }
-.push-setting:last-child{ border-bottom:none; }
-.switch{ position:relative; display:inline-block; width:44px; height:24px; }
-.switch input{ opacity:0; width:0; height:0; }
-.slider{ position:absolute; cursor:pointer; inset:0; background:#e2e8f0; border-radius:24px; transition:.3s; }
-.slider:before{ position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
-input:checked +.slider{ background:#10b981; }
-input:checked +.slider:before{ transform:translateX(20px); }
-.secondary-btn{ width:calc(100% - 24px); margin:12px; background:#fff; border:1px solid #e2e8f0; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; }
-</style>
-
 <script>
-async function initPushPage(){
-  const statusEl = document.getElementById('pushStatus');
-  const enableBtn = document.getElementById('pushEnableBtn');
+(function(){
+  // shopId SIRF URL se - localStorage se kabhi nahi
+  var shopId = new URLSearchParams(location.search).get('shopId') || window.SHOP_ID || '';
+  var userId = new URLSearchParams(location.search).get('userId') || '';
+  try{ if(!userId && window.AuthCore && window.AuthCore.getUserId) userId = window.AuthCore.getUserId() || ''; }catch(e){}
+  if(!userId) userId = 'guest';
 
-  if(!('Notification' in window)){
-    statusEl.innerText='❌ Push not supported in this browser';
-    enableBtn.disabled=true;
-    return;
+  var statusEl = document.getElementById('pushStatus');
+  var enableBtn = document.getElementById('pushEnableBtn');
+  var hintEl = document.getElementById('pushHint');
+
+  function showHint(msg){
+    if(!hintEl) return;
+    hintEl.style.display = 'block';
+    hintEl.innerText = msg;
   }
 
-  statusEl.innerText=`Permission: ${Notification.permission}`;
-
-  if(Notification.permission==='granted'){
-    enableBtn.innerText='✅ Push Enabled';
-    enableBtn.style.background='#dcfce7';
-    enableBtn.style.color='#166534';
-    statusEl.innerText='✅ Push enabled - You will get real-time updates';
-  } else if(Notification.permission==='denied'){
-    enableBtn.innerText='❌ Blocked - Enable from settings';
-    enableBtn.style.background='#fee2e2';
-    enableBtn.style.color='#991b1b';
-    statusEl.innerText='❌ Blocked - Enable from browser settings > Site settings > Notifications';
+  async function loadSettings(){
+    if(!userId || userId === 'guest') return;
+    try{
+      var data = null;
+      if(window.ApiCore){ try{ data = await window.ApiCore.get('/api/common/notifications/settings/' + encodeURIComponent(userId)); }catch(e){ data = null; } }
+      if(!data){ try{ data = await fetch('/api/common/notifications/settings/' + encodeURIComponent(userId)).then(function(r){ return r.json(); }).catch(function(){ return null; }); }catch(e){} }
+      var s = (data && data.settings) || null;
+      if(!s) return;
+      // Server se jo aaya wahi Toggle me bharo - Refresh pe wapas nahi hoga
+      if(s.orderUpdates !== undefined) document.getElementById('pushOrder').checked = !!s.orderUpdates;
+      if(s.offers !== undefined) document.getElementById('pushOffer').checked = !!s.offers;
+      if(s.system !== undefined) document.getElementById('pushSystem').checked = !!s.system;
+      if(s.sound !== undefined) document.getElementById('pushSound').checked = !!s.sound;
+    }catch(e){}
   }
 
-  enableBtn.addEventListener('click', async ()=>{
-    const perm = await Notification.requestPermission();
-    statusEl.innerText=`Permission: ${perm}`;
-    if(perm==='granted'){
-      enableBtn.innerText='✅ Push Enabled';
-      new Notification('SamanLive 🔔', { body:'Push enabled! You will get order updates real-time' });
-      if(window.Toast) Toast.show('Push enabled ✅', 'success');
+  async function saveSettings(){
+    if(!userId || userId === 'guest'){ showHint('⚠️ Settings save karne ke liye Login chahiye - Guest me Toggle sirf dekh sakte ho, save nahi hoga'); return; }
+    var payload = {
+      orderUpdates: document.getElementById('pushOrder').checked,
+      offers: document.getElementById('pushOffer').checked,
+      system: document.getElementById('pushSystem').checked,
+      sound: document.getElementById('pushSound').checked,
+      push: true
+    };
+    try{
+      var data = null;
+      if(window.ApiCore){ try{ data = await window.ApiCore.post('/api/common/notifications/settings/' + encodeURIComponent(userId), payload); }catch(e){ data = null; } }
+      if(!data){
+        try{ data = await fetch('/api/common/notifications/settings/' + encodeURIComponent(userId), { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }).then(function(r){ return r.json(); }).catch(function(){ return null; }); }catch(e){}
+      }
+      if(data && data.success) showHint('✅ Settings save ho gayi - Refresh karne pe bhi yahi rahegi');
+      else showHint('❌ Settings save nahi hui - Server check karo, Toggle wapas ho sakta hai');
+    }catch(e){ showHint('❌ Settings save nahi hui - Server check karo'); }
+  }
+
+  function refreshPermissionUI(){
+    if(!('Notification' in window)){
+      statusEl.innerText = '❌ Push not supported in this browser';
+      statusEl.className = 'push-status bad';
+      enableBtn.disabled = true;
+      enableBtn.innerText = '❌ Push Not Supported';
+      return;
     }
-  });
-
-  document.getElementById('pushTestBtn')?.addEventListener('click', ()=>{
-    if(Notification.permission==='granted'){
-      new Notification('Test Push 🔔', { body:'This is test push notification from SamanLive - Works! 🎉' });
-      if(window.Toast) Toast.show('Test push sent 🧪', 'success');
+    statusEl.innerText = 'Permission: ' + Notification.permission;
+    statusEl.className = 'push-status';
+    if(Notification.permission === 'granted'){
+      enableBtn.innerText = '✅ Push Enabled';
+      enableBtn.style.background = '#dcfce7';
+      enableBtn.style.color = '#166534';
+      statusEl.innerText = '✅ Push enabled - Order updates isi Browser me dikhenge (jab page khula nahi hoga tab bhi, agar Browser allow kare)';
+      statusEl.className = 'push-status ok';
+    } else if(Notification.permission === 'denied'){
+      enableBtn.innerText = '❌ Blocked - Enable from settings';
+      enableBtn.style.background = '#fee2e2';
+      enableBtn.style.color = '#991b1b';
+      statusEl.innerText = '❌ Blocked - Browser Settings > Site Settings > Notifications se ON karo';
+      statusEl.className = 'push-status bad';
     } else {
-      if(window.Toast) Toast.show('Enable push first', 'warning');
+      enableBtn.innerText = '🔔 Enable Push';
+      enableBtn.style.background = '';
+      enableBtn.style.color = '';
     }
-  });
-}
+  }
 
-document.addEventListener('DOMContentLoaded', initPushPage);
+  async function initPushPage(){
+    refreshPermissionUI();
+    await loadSettings();
+
+    enableBtn.addEventListener('click', async function(){
+      if(!('Notification' in window)) return;
+      var perm = await Notification.requestPermission();
+      refreshPermissionUI();
+      if(perm === 'granted'){
+        // Sirf Permission + Server ko bata rahe hain - Web Push ka asli bhejna abhi Backend me band hai, isliye jhootha "Push sent" nahi bolenge
+        try{
+          var payload = { userId: userId, shopId: shopId, subscription: { permission:'granted', at: new Date().toISOString() } };
+          if(window.ApiCore) await window.ApiCore.post('/api/common/notifications/subscribe', payload).catch(function(){});
+          else await fetch('/api/common/notifications/subscribe', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }).catch(function(){});
+        }catch(e){}
+        showHint('✅ Browser Push ON ho gaya - Ab Order aane pe Notification isi Browser me dikhega. Note: Browser band hone pe wala asli Web Push abhi Backend me band hai - Uske liye alag se Web Push setup chahiye, is page se jhootha "sent" nahi bolenge.');
+        try{ new Notification('SamanLive 🔔', { body: 'Push enabled - Order updates yahan dikhenge' }); }catch(e){}
+      } else {
+        showHint('❌ Push Block hai - Browser Settings > Site Settings > Notifications se ON karo');
+      }
+    });
+
+    document.getElementById('pushTestBtn')?.addEventListener('click', function(){
+      if(!('Notification' in window)){ showHint('❌ Is browser me Push nahi hai'); return; }
+      if(Notification.permission !== 'granted'){ showHint('❌ Pehle Enable Push dabao, Permission lo - Uske baad hi Test chalega'); return; }
+      // Ye sirf isi Browser me Test hai - Server se Push nahi aa raha hai, isliye saaf likh rahe hain
+      try{ new Notification('Test - SamanLive 🔔', { body: 'Ye sirf isi Browser ka Test hai - Server se asli Push abhi nahi aa raha hai, wo Backend me band hai' }); }catch(e){}
+      showHint('🧪 Ye sirf isi Browser ka Test tha - Server se asli Push abhi nahi aaya hai, kyunki Web Push Backend me band hai');
+    });
+
+    ['pushOrder','pushOffer','pushSystem','pushSound'].forEach(function(id){
+      document.getElementById(id)?.addEventListener('change', saveSettings);
+    });
+
+    document.getElementById('pushBackBtn')?.addEventListener('click', function(){
+      window.location.href = '/shop-templates/common/notifications/notifications.html?shopId=' + encodeURIComponent(shopId);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initPushPage);
+  if(document.readyState !== 'loading') initPushPage();
+})();
 </script>
+</body>
+</html>

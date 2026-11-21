@@ -1,5 +1,8 @@
 // LOCATION: server/routes/common/notifications.routes.js
 // WORLD CLASS NOTIFICATIONS ROUTE - FULL 600+ LINES - PUSH + IN-APP + ORDER + OFFER
+// FIX V2 HONEST: 1) GET /:shopId me Fake hata diya - ORD12345 / WELCOME50 / Ramesh 9876543210 / Welcome wala nakli block
+// 2) GET /user/:userId me Fake hata diya - ORD123 / WELCOME50 wala nakli block
+// RULE: Khaali hai toh khaali hi rahega - Frontend me "No notifications yet" dikhega. Asli Notification ko kuch nahi hoga.
 const express = require('express');
 const router = express.Router();
 
@@ -50,17 +53,9 @@ router.get('/:shopId', async (req,res)=>{
       notifications = getAllNotificationsForShop(shopId);
     }
 
-    if(notifications.length===0){
-      notifications = [
-        { _id:'n1', shopId, userId:userId||'guest', type:'order', title:'Order Confirmed ✅', message:'Your order #ORD12345 confirmed by My Kirana Store. Preparing your order...', createdAt:new Date(Date.now()-5*60000).toISOString(), read:false, icon:'order', actionUrl:`/shop-templates/common/customer-orders/track-order.html?orderId=ORD12345&shopId=${shopId}`, actions:[{ label:'Track Order', primary:true }] },
-        { _id:'n2', shopId, userId:userId||'guest', type:'offer', title:'🎉 50% OFF - Special Offer!', message:'Get 50% OFF on your first order. Use code WELCOME50. Valid till tonight!', createdAt:new Date(Date.now()-30*60000).toISOString(), read:false, icon:'offer', actionUrl:`/shop.html?shopId=${shopId}&offer=WELCOME50`, actions:[{ label:'Shop Now', primary:true }] },
-        { _id:'n3', shopId, userId:userId||'guest', type:'order', title:'Out for Delivery 🛵', message:'Your order #ORD12344 is out for delivery. Delivery boy: Ramesh - 9876543210', createdAt:new Date(Date.now()-60*60000).toISOString(), read:true, icon:'order', actionUrl:`/shop-templates/common/track/track-order.html?orderId=ORD12344&shopId=${shopId}` },
-        { _id:'n4', shopId, userId:userId||'guest', type:'system', title:'Welcome to SamanLive! 🎉', message:'Thanks for joining! Order from local shops and get fast delivery in 30 mins.', createdAt:new Date(Date.now()-120*60000).toISOString(), read:true, icon:'system' }
-      ];
-
-      if(userId){
-        notificationsMemory.set(`${userId}_${shopId}`, notifications);
-      }
+    // V2 HONEST: Pehle yahan khaali hone pe 4 nakli ban jaate the - Ab khaali hai toh khaali hi rahega
+    if(notifications.length === 0){
+      notifications = [];
     }
 
     if(type && type!=='all'){
@@ -102,11 +97,9 @@ router.get('/user/:userId', async (req,res)=>{
 
     let notifications = getAllNotificationsForUser(userId);
 
-    if(notifications.length===0){
-      notifications = [
-        { _id:'n1', shopId:'shop1', userId, type:'order', title:'Order Confirmed ✅', message:'Order #ORD123 confirmed', createdAt:new Date().toISOString(), read:false },
-        { _id:'n2', shopId:'shop1', userId, type:'offer', title:'🎉 Offer', message:'50% OFF - Code WELCOME50', createdAt:new Date(Date.now()-3600000).toISOString(), read:false }
-      ];
+    // V2 HONEST: Pehle yahan bhi 2 nakli ban jaate the - ORD123 / WELCOME50 - Ab khaali hai toh khaali hi rahega
+    if(notifications.length === 0){
+      notifications = [];
     }
 
     if(type) notifications = notifications.filter(n=> n.type===type);
@@ -158,7 +151,7 @@ router.post('/:shopId/send', async (req,res)=>{
       global.io.emit('new-notification', notification);
     }
 
-    // If has push subscription, send push
+    // Push abhi asli me nahi ja raha - Sirf in-app + socket ja raha hai - FILE 3 me Push saaf karenge
     const subscription = subscriptionsMemory.get(targetUserId);
     if(subscription){
       console.log(`Push would be sent to ${targetUserId}: ${title}`);

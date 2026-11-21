@@ -1,13 +1,26 @@
-// LOCATION: public/shop-templates/common/notifications/notifications.js
-// WORLD CLASS NOTIFICATIONS CORE - FULL 400+ LINES
+// LOCATION: public/shop-templates/common/notifications/notifications.js - V2 HONEST - FULL CODE - NO FAKE
+// FIX V2: 1) Fake hata diya - ORD12345 / WELCOME50 wala nakli Notification kabhi nahi banega
+// 2) shopId SIRF URL se - localStorage se kabhi nahi, warna galat shop ka Notification dikhta tha
+// 3) userId AuthCore se - localStorage se kabhi nahi
+// 4) addNotification ab sirf Server pe bhejega - localStorage me Fake save nahi karega, browser me global.io nahi chalayega
+// FLOW: init -> Load (Server se) -> Socket pe naya aaye toh upar jodo -> Mark Read -> Server pe bhi mark karo
+// RULE: Koi Notification nahi hai toh [] hi rahega - "No notifications yet" dikhega, nakli nahi dikhega
 class NotificationsCore {
   constructor(){
-    this.shopId = localStorage.getItem('shopId')||'';
-    this.userId = localStorage.getItem('userId')||'guest';
+    // shopId SIRF URL se - localStorage se kabhi nahi
+    this.shopId = new URLSearchParams(location.search).get('shopId') || window.SHOP_ID || '';
+    this.userId = '';
+    try{
+      if(window.AuthCore && window.AuthCore.getUserId) this.userId = window.AuthCore.getUserId() || '';
+    }catch(e){}
+    if(!this.userId){
+      try{ this.userId = new URLSearchParams(location.search).get('userId') || 'guest'; }catch(e){ this.userId = 'guest'; }
+    }
     this.notifications = [];
     this.unreadCount = 0;
     this.permission = 'default';
     this.subscription = null;
+    try{ this.permission = ('Notification' in window) ? Notification.permission : 'default'; }catch(e){}
   }
 
   async init(){
@@ -19,300 +32,236 @@ class NotificationsCore {
 
   async loadNotifications(){
     try{
+      if(!this.shopId){ this.notifications = []; this.unreadCount = 0; this.updateBadge(); return []; }
+      var data = null;
       if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/notifications/${this.shopId}?userId=${this.userId}`);
-        this.notifications = data.notifications||data||[];
-      } else {
-        this.notifications = JSON.parse(localStorage.getItem(`notifications_${this.userId}_${this.shopId}`)||'[]');
-        if(this.notifications.length===0){
-          this.notifications = [
-            { _id:'n1', type:'order', title:'Order Confirmed ✅', message:'Order #ORD12345 confirmed', createdAt:new Date().toISOString(), read:false },
-            { _id:'n2', type:'offer', title:'🎉 50% OFF', message:'Use code WELCOME50', createdAt:new Date(Date.now()-3600000).toISOString(), read:false }
-          ];
-        }
+        try{ data = await window.ApiCore.get(`/api/common/notifications/${encodeURIComponent(this.shopId)}?userId=${encodeURIComponent(this.userId)}`); }catch(e){ data = null; }
       }
-
-      this.unreadCount = this.notifications.filter(n=>!n.read).length;
+      if(!data){
+        try{ data = await fetch(`/api/common/notifications/${encodeURIComponent(this.shopId)}?userId=${encodeURIComponent(this.userId)}`).then(function(r){ return r.json(); }).catch(function(){ return null; }); }catch(e){}
+      }
+      // Backend se jo aaya wahi - Khali hai toh khali hi rahega, Fake kabhi nahi banayenge
+      // Backend ka Fake FILE 2 me hat chuka hai, phir bhi purana Fake ID aa jaye toh usko yahan bhi rok dete hain
+      var list = (data && (data.notifications || [])) || [];
+      list = list.filter(function(n){
+        if(!n) return false;
+        if(n._id === 'n1' || n._id === 'n2' || n._id === 'n3' || n._id === 'n4') return false;
+        var m = String(n.message || '') + ' ' + String(n.title || '');
+        if(m.indexOf('ORD12345') !== -1) return false;
+        if(m.indexOf('WELCOME50') !== -1) return false;
+        if(m.indexOf('9876543210') !== -1) return false;
+        return true;
+      });
+      this.notifications = list;
+      this.unreadCount = list.filter(function(n){ return !n.read; }).length;
       this.updateBadge();
-
       return this.notifications;
-
-    }catch(e){ return []; }
+    }catch(e){
+      // Fail hua toh khali dikhayenge, Fake nahi banayenge
+      this.notifications = [];
+      this.unreadCount = 0;
+      this.updateBadge();
+      return [];
+    }
   }
 
   async addNotification(notification){
     try{
-      const notif = {
-        _id:'n'+Date.now()+Math.random().toString(36).substr(2,5),
-        shopId:notification.shopId||this.shopId,
-        userId:notification.userId||this.userId,
-        type:notification.type||'system',
-        title:notification.title||'Notification',
-        message:notification.message||'',
-        icon:notification.icon||notification.type||'system',
-        createdAt:new Date().toISOString(),
-        read:false,
-        actionUrl:notification.actionUrl||'',
-        actions:notification.actions||[],
-        data:notification.data||{}
+      if(!notification || !notification.title) return { success:false, error:'title chahiye' };
+      if(!this.shopId) return { success:false, error:'shopId missing - URL me ?shopId=XXX chahiye' };
+      var payload = {
+        userId: notification.userId || this.userId,
+        type: notification.type || 'system',
+        title: notification.title,
+        message: notification.message || notification.title,
+        icon: notification.icon || notification.type || 'system',
+        actionUrl: notification.actionUrl || '',
+        actions: notification.actions || [],
+        data: notification.data || {}
       };
-
-      this.notifications.unshift(notif);
-      this.unreadCount = this.notifications.filter(n=>!n.read).length;
-
-      // Save locally
-      localStorage.setItem(`notifications_${this.userId}_${this.shopId}`, JSON.stringify(this.notifications.slice(0,100)));
-
+      var data = null;
       if(window.ApiCore){
-        await window.ApiCore.post(`/api/common/notifications/${this.shopId}/send`, notif).catch(()=>{});
+        try{ data = await window.ApiCore.post(`/api/common/notifications/${encodeURIComponent(this.shopId)}/send`, payload); }catch(e){ data = null; }
       }
-
-      if(global.io){
-        global.io.to(`user:${notif.userId}`).emit('new-notification', notif);
-        global.io.to(`shop:${notif.shopId}`).emit('new-notification', notif);
-        global.io.emit('new-notification', notif);
+      if(!data){
+        try{
+          data = await fetch(`/api/common/notifications/${encodeURIComponent(this.shopId)}/send`, {
+            method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload)
+          }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+        }catch(e){}
       }
-
+      if(!data || !data.notification) return { success:false, error:'Server pe save nahi hua' };
+      var notif = data.notification;
+      if(!this.notifications.find(function(n){ return n._id === notif._id; })){
+        this.notifications.unshift(notif);
+      }
+      this.unreadCount = this.notifications.filter(function(n){ return !n.read; }).length;
       this.updateBadge();
       this.showToast(notif);
       this.showBrowserPush(notif);
-
       return { success:true, notification:notif };
+    }catch(e){ return { success:false, error:e.message }; }
+  }
 
+  // Order ka Notification - Sirf Order Status wali API se jayega, yahan Fake nahi banega
+  async sendOrderNotification(orderId, status, customerId, shopId){
+    try{
+      if(!orderId || !status) return { success:false, error:'orderId + status chahiye' };
+      var sid = shopId || this.shopId;
+      if(!sid) return { success:false, error:'shopId missing' };
+      var payload = { orderId: orderId, shopId: sid, userId: customerId || this.userId, status: status };
+      var data = null;
+      if(window.ApiCore){ try{ data = await window.ApiCore.post('/api/common/notifications/order-status', payload); }catch(e){ data = null; } }
+      if(!data){
+        try{ data = await fetch('/api/common/notifications/order-status', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }).then(function(r){ return r.json(); }).catch(function(){ return null; }); }catch(e){}
+      }
+      if(data && data.notification){
+        if(!this.notifications.find(function(n){ return n._id === data.notification._id; })) this.notifications.unshift(data.notification);
+        this.unreadCount = this.notifications.filter(function(n){ return !n.read; }).length;
+        this.updateBadge();
+        this.showToast(data.notification);
+      }
+      return data || { success:false };
+    }catch(e){ return { success:false, error:e.message }; }
+  }
+
+  // Offer ka Notification - Sirf tab jayega jab koi asli Offer bheje, Fake WELCOME50 kabhi nahi banega
+  async sendOfferNotification(offerTitle, offerCode, shopId){
+    try{
+      if(!offerTitle) return { success:false, error:'offerTitle chahiye' };
+      return await this.addNotification({
+        type:'offer',
+        title: offerTitle,
+        message: offerCode ? ('Code: ' + offerCode) : offerTitle,
+        icon:'offer',
+        actionUrl: '/shop-templates/common/notifications/notifications.html?shopId=' + encodeURIComponent(shopId || this.shopId),
+        data:{ offerTitle: offerTitle, offerCode: offerCode || '', shopId: shopId || this.shopId }
+      });
     }catch(e){ return { success:false, error:e.message }; }
   }
 
   async markAsRead(notifId){
     try{
-      const notif = this.notifications.find(n=> n._id===notifId);
-      if(notif){
-        notif.read = true;
-        this.unreadCount = this.notifications.filter(n=>!n.read).length;
-        localStorage.setItem(`notifications_${this.userId}_${this.shopId}`, JSON.stringify(this.notifications));
-        this.updateBadge();
-      }
-
+      var notif = this.notifications.find(function(n){ return n._id === notifId; });
+      if(notif) notif.read = true;
+      this.unreadCount = this.notifications.filter(function(n){ return !n.read; }).length;
+      this.updateBadge();
       if(window.ApiCore){
-        await window.ApiCore.post(`/api/common/notifications/${notifId}/read`, { userId:this.userId }).catch(()=>{});
+        await window.ApiCore.post(`/api/common/notifications/${encodeURIComponent(notifId)}/read`, { userId:this.userId, shopId:this.shopId }).catch(function(){});
+      } else {
+        try{ await fetch(`/api/common/notifications/${encodeURIComponent(notifId)}/read`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ userId:this.userId, shopId:this.shopId }) }).catch(function(){}); }catch(e){}
       }
-
       return { success:true };
-
     }catch(e){ return { success:false }; }
   }
 
   async markAllAsRead(){
     try{
-      this.notifications.forEach(n=> n.read=true);
+      this.notifications.forEach(function(n){ n.read = true; });
       this.unreadCount = 0;
-      localStorage.setItem(`notifications_${this.userId}_${this.shopId}`, JSON.stringify(this.notifications));
       this.updateBadge();
-
       if(window.ApiCore){
-        await window.ApiCore.post(`/api/common/notifications/${this.shopId}/read-all`, { userId:this.userId }).catch(()=>{});
+        await window.ApiCore.post(`/api/common/notifications/${encodeURIComponent(this.shopId)}/read-all`, { userId:this.userId }).catch(function(){});
+      } else {
+        try{ await fetch(`/api/common/notifications/${encodeURIComponent(this.shopId)}/read-all`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ userId:this.userId }) }).catch(function(){}); }catch(e){}
       }
-
       return { success:true };
-
     }catch(e){ return { success:false }; }
   }
 
   async deleteNotification(notifId){
     try{
-      this.notifications = this.notifications.filter(n=> n._id!==notifId);
-      this.unreadCount = this.notifications.filter(n=>!n.read).length;
-      localStorage.setItem(`notifications_${this.userId}_${this.shopId}`, JSON.stringify(this.notifications));
+      this.notifications = this.notifications.filter(function(n){ return n._id !== notifId; });
+      this.unreadCount = this.notifications.filter(function(n){ return !n.read; }).length;
       this.updateBadge();
-
       if(window.ApiCore){
-        await window.ApiCore.delete(`/api/common/notifications/${notifId}?userId=${this.userId}`).catch(()=>{});
+        await window.ApiCore.delete(`/api/common/notifications/${encodeURIComponent(notifId)}?userId=${encodeURIComponent(this.userId)}&shopId=${encodeURIComponent(this.shopId)}`).catch(function(){});
       }
-
       return { success:true };
-
     }catch(e){ return { success:false }; }
   }
 
+  getUnread(){
+    return this.notifications.filter(function(n){ return !n.read; });
+  }
+
+  getAll(){
+    return this.notifications;
+  }
+
   checkPermission(){
+    try{ if('Notification' in window) this.permission = Notification.permission; }catch(e){}
+    return this.permission;
+  }
+
+  async enablePush(){
     try{
-      if('Notification' in window){
-        this.permission = Notification.permission;
+      if(!('Notification' in window)) return { success:false, error:'Is browser me Push nahi hai' };
+      var perm = await Notification.requestPermission();
+      this.permission = perm;
+      if(perm === 'granted'){
+        // Sirf Permission le rahe hain + Server ko bata rahe hain - Web Push ka asli bhejna abhi Backend me band hai, isliye jhootha "Push sent" nahi bolenge
+        try{
+          if(window.ApiCore) await window.ApiCore.post('/api/common/notifications/subscribe', { userId:this.userId, shopId:this.shopId, subscription:{ permission:'granted', at:new Date().toISOString() } }).catch(function(){});
+        }catch(e){}
+        return { success:true, permission:perm };
       }
+      return { success:false, permission:perm };
+    }catch(e){ return { success:false, error:e.message }; }
+  }
+
+  updateBadge(){
+    try{
+      document.querySelectorAll('[data-notif-badge], .notif-badge, #notifBadge, #notificationBadge').forEach(function(el){
+        if(!el) return;
+        if(this.unreadCount > 0){ el.style.display = 'grid'; el.textContent = this.unreadCount > 99 ? '99+' : String(this.unreadCount); }
+        else { el.style.display = 'none'; }
+      }.bind(this));
+      document.querySelectorAll('[data-unread-count]').forEach(function(el){ el.textContent = String(this.unreadCount); }.bind(this));
     }catch(e){}
-  }
-
-  async requestPermission(){
-    try{
-      if(!('Notification' in window)){
-        return { success:false, message:'Notifications not supported' };
-      }
-
-      const permission = await Notification.requestPermission();
-      this.permission = permission;
-
-      if(permission==='granted'){
-        await this.subscribePush();
-        return { success:true, permission:'granted', message:'Push enabled ✅' };
-      } else {
-        return { success:false, permission, message:'Permission denied' };
-      }
-
-    }catch(e){ return { success:false, error:e.message }; }
-  }
-
-  async subscribePush(){
-    try{
-      if('serviceWorker' in navigator){
-        const registration = await navigator.serviceWorker.ready;
-
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly:true,
-          applicationServerKey:this.urlBase64ToUint8Array('BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U')
-        });
-
-        this.subscription = subscription;
-
-        if(window.ApiCore){
-          await window.ApiCore.post('/api/common/notifications/subscribe', {
-            userId:this.userId,
-            shopId:this.shopId,
-            subscription:JSON.stringify(subscription)
-          }).catch(()=>{});
-        }
-
-        return { success:true, subscription };
-      }
-
-      return { success:false, message:'Service worker not supported' };
-
-    }catch(e){ return { success:false, error:e.message }; }
-  }
-
-  urlBase64ToUint8Array(base64String){
-    const padding = '='.repeat((4 - base64String.length%4)%4);
-    const base64 = (base64String+padding).replace(/\-/g,'+').replace(/_/g,'/');
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for(let i=0;i<rawData.length;++i){
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
   }
 
   showToast(notif){
     try{
-      if(window.Toast){
-        Toast.show(`🔔 ${notif.title}: ${notif.message.substring(0,50)}`, 'info');
-      }
+      if(!notif) return;
+      var old = document.querySelector('.toast-notification');
+      if(old) old.remove();
+      var toast = document.createElement('div');
+      toast.className = 'toast-notification';
+      toast.style.cssText = 'position:fixed;top:20px;right:20px;left:20px;margin:0 auto;max-width:360px;padding:14px 16px;background:#0f172a;color:#fff;border-radius:12px;font-weight:700;font-size:13px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer;line-height:1.4';
+      toast.textContent = (notif.title || 'Notification') + ' - ' + (notif.message || '');
+      toast.addEventListener('click', function(){
+        toast.remove();
+        if(notif.actionUrl) window.location.href = notif.actionUrl;
+      });
+      document.body.appendChild(toast);
+      setTimeout(function(){ toast.remove(); }, 4000);
     }catch(e){}
   }
 
   showBrowserPush(notif){
     try{
-      if('Notification' in window && Notification.permission==='granted'){
-        const browserNotif = new Notification(notif.title, {
-          body:notif.message,
-          icon:'/shop-templates/common/pwa/icon-192.png',
-          badge:'/shop-templates/common/pwa/icon-192.png',
-          tag:notif._id
-        });
-
-        browserNotif.onclick = ()=>{
-          window.focus();
-          if(notif.actionUrl) window.location.href = notif.actionUrl;
-          browserNotif.close();
-        };
-      }
+      if(!notif) return;
+      if(!('Notification' in window)) return;
+      if(Notification.permission !== 'granted') return;
+      if(!document.hidden) return; // Page khula hai toh Toast hi kaafi hai, dobara Browser Push mat dikhao
+      new Notification(notif.title || 'Notification', { body: notif.message || '', tag: notif._id || 'notif' });
     }catch(e){}
-  }
-
-  updateBadge(){
-    try{
-      const badges = document.querySelectorAll('#notifBadge,.notif-badge, [data-notif-badge]');
-      badges.forEach(badge=>{
-        if(this.unreadCount>0){
-          badge.innerText = this.unreadCount>99?'99+':this.unreadCount;
-          badge.style.display='grid';
-        } else {
-          badge.style.display='none';
-        }
-      });
-
-      // Update title
-      if(this.unreadCount>0){
-        document.title = `(${this.unreadCount}) ${document.title.replace(/^\(\d+\)\s/,'')}`;
-      }
-
-      // Update localStorage for other tabs
-      localStorage.setItem(`notif_unread_${this.userId}`, this.unreadCount.toString());
-
-    }catch(e){}
-  }
-
-  getUnreadCount(){ return this.unreadCount; }
-  getNotifications(){ return this.notifications; }
-  getUnread(){ return this.notifications.filter(n=>!n.read); }
-
-  // Helper to send order notification
-  async sendOrderNotification(orderId, status, customerId, shopId){
-    const titles = {
-      pending:'Order Placed 📦',
-      confirmed:'Order Confirmed ✅',
-      preparing:'Order Preparing 👨‍🍳',
-      out_for_delivery:'Out for Delivery 🛵',
-      delivered:'Order Delivered ✅',
-      cancelled:'Order Cancelled ❌'
-    };
-
-    const messages = {
-      pending:`Your order #${orderId} placed successfully. Shop will confirm soon.`,
-      confirmed:`Your order #${orderId} confirmed by shop. Preparing your order...`,
-      preparing:`Your order #${orderId} is being prepared 👨‍🍳 Will be ready soon!`,
-      out_for_delivery:`Your order #${orderId} is out for delivery 🛵 Delivery boy on the way!`,
-      delivered:`Your order #${orderId} delivered successfully ✅ Thanks for ordering! Please rate us ⭐`,
-      cancelled:`Your order #${orderId} was cancelled. ${status==='cancelled'?'Contact support for refund.':''}`
-    };
-
-    return await this.addNotification({
-      type:'order',
-      title:titles[status]||`Order ${status} - #${orderId}`,
-      message:messages[status]||`Your order #${orderId} is now ${status}`,
-      shopId:shopId||this.shopId,
-      userId:customerId||this.userId,
-      actionUrl:`/shop-templates/common/track/track-order.html?orderId=${orderId}&shopId=${shopId||this.shopId}`,
-      actions:[{ label:'Track Order', primary:true }],
-      data:{ orderId, status, shopId }
-    });
-  }
-
-  // Offer notification
-  async sendOfferNotification(shopId, offerTitle, offerCode){
-    return await this.addNotification({
-      type:'offer',
-      title:`🎉 ${offerTitle}`,
-      message:`Special offer from shop! ${offerCode?`Use code: ${offerCode}`:''} Shop now and save!`,
-      shopId,
-      userId:this.userId,
-      actionUrl:`/shop.html?shopId=${shopId}&offer=${offerCode||''}`,
-      actions:[{ label:'Shop Now', primary:true }],
-      data:{ offerTitle, offerCode, shopId }
-    });
   }
 
   initSocket(){
     try{
       if(window.SocketCore){
-        window.SocketCore.on('new-notification', (notif)=>{
-          if(notif.userId===this.userId || notif.shopId===this.shopId){
-            if(!this.notifications.find(n=> n._id===notif._id)){
-              this.notifications.unshift(notif);
-              this.unreadCount = this.notifications.filter(n=>!n.read).length;
-              localStorage.setItem(`notifications_${this.userId}_${this.shopId}`, JSON.stringify(this.notifications.slice(0,100)));
-              this.updateBadge();
-              this.showToast(notif);
-              this.showBrowserPush(notif);
-            }
-          }
+        var self = this;
+        window.SocketCore.on('new-notification', function(notif){
+          if(!notif) return;
+          if(notif.shopId !== self.shopId && notif.userId !== self.userId) return;
+          if(self.notifications.find(function(n){ return n._id === notif._id; })) return;
+          self.notifications.unshift(notif);
+          self.unreadCount = self.notifications.filter(function(n){ return !n.read; }).length;
+          self.updateBadge();
+          self.showToast(notif);
+          self.showBrowserPush(notif);
         });
       }
     }catch(e){}
@@ -322,11 +271,11 @@ class NotificationsCore {
 window.NotificationsCore = new NotificationsCore();
 window.NotificationsCoreInstance = window.NotificationsCore;
 
-document.addEventListener('DOMContentLoaded', ()=> window.NotificationsCore.init());
+document.addEventListener('DOMContentLoaded', function(){ window.NotificationsCore.init(); });
 
-// Global helpers
-window.sendNotification = (data)=> window.NotificationsCore.addNotification(data);
-window.markNotificationRead = (id)=> window.NotificationsCore.markAsRead(id);
-window.markAllNotificationsRead = ()=> window.NotificationsCore.markAllAsRead();
-window.getUnreadNotifications = ()=> window.NotificationsCore.getUnread();
-window.sendOrderNotification = (orderId, status, customerId, shopId)=> window.NotificationsCore.sendOrderNotification(orderId, status, customerId, shopId);
+// Global helpers - Purane callers ke liye same naam rakhe hain, taaki koi file toote na
+window.sendNotification = function(data){ return window.NotificationsCore.addNotification(data); };
+window.markNotificationRead = function(id){ return window.NotificationsCore.markAsRead(id); };
+window.markAllNotificationsRead = function(){ return window.NotificationsCore.markAllAsRead(); };
+window.getUnreadNotifications = function(){ return window.NotificationsCore.getUnread(); };
+window.sendOrderNotification = function(orderId, status, customerId, shopId){ return window.NotificationsCore.sendOrderNotification(orderId, status, customerId, shopId); };
