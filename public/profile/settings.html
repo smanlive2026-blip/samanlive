@@ -1,19 +1,215 @@
+<!-- LOCATION: public/profile/settings.html - V2 COMMON - FULL CODE -->
+<!-- FIX V2 COMMON: 1) Pehle Toggle sirf localStorage me save hota tha, Server pe kabhi nahi jata tha - Dusre phone pe sab wapas off ho jata tha -->
+<!-- 2) Pehle Profile Settings /api/user/settings mangta tha, Push Page /api/common/notifications/settings/:userId mangta tha - Dono alag, ek jagah ON toh dusri jagah OFF -->
+<!-- 3) Ab Notification wale Toggle dono jagah ek hi API pe hain = /api/common/notifications/settings/:userId - Push Page wala hi sach hai -->
+<!-- COMMON RULE: Notification Settings ka 1 hi maalik hai = /api/common/notifications/settings/:userId - Profile + Push Page dono isi ko bulayenge -->
+<!-- FLOW: Load -> /api/auth/me se userId lo -> GET /api/common/notifications/settings/:userId -> Toggle bharo -> Toggle dabao -> POST /settings/:userId -> Server se dobara verify -->
 <!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Settings</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Settings - SAMANLIVE</title>
 <link rel="stylesheet" href="/assets/css/main.css">
-</head><body style="background:#f1f5f9;margin:0">
-<div style="background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0"><button onclick="location.href='/profile.html'" style="width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%">‹</button><b>Settings</b></div>
-<div style="max-width:600px;margin:12px auto;padding:0 12px;background:#fff;border-radius:16px;padding:16px">
-  <label style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9">Order Notifications <input type="checkbox" id="notifOrders"></label>
-  <label style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9">Promo Notifications <input type="checkbox" id="notifPromos"></label>
-  <label style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9">Push Notifications <input type="checkbox" id="notifPush"></label>
-  <label style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9">Email <input type="checkbox" id="notifEmail"></label>
-  <label style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9">Location <input type="checkbox" id="privacyLocation"></label>
-  <label style="display:flex;justify-content:space-between;padding:12px 0">Dark Mode <input type="checkbox" id="darkMode" onchange="toggleDarkMode(this.checked)"></label>
-  <button onclick="clearCache()" style="width:100%;margin-top:12px;padding:12px;background:#f1f5f9;border:none;border-radius:10px;font-weight:700">Clear Cache</button>
-  <button onclick="logout()" style="width:100%;margin-top:8px;padding:12px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">Logout</button>
+<style>
+*{box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f1f5f9;margin:0;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.set-root{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:20px}
+.header{background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;border-bottom:1px solid #e2e8f0;z-index:10}
+.back{width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-weight:900;cursor:pointer;font-size:20px;flex-shrink:0;line-height:1}
+.header b{font-size:16px}
+.header span{font-size:11px;color:#64748b;font-weight:600;display:block}
+.set-card{background:#fff;border:1px solid #e2e8f0;margin:12px;border-radius:12px;padding:16px}
+.set-card > b{display:block;font-weight:900;font-size:14px;margin-bottom:4px}
+.set-card > small{font-size:11px;color:#64748b;font-weight:600;line-height:1.4;display:block;margin-bottom:8px}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f1f5f9}
+.set-row:last-child{border-bottom:none}
+.set-row span{font-size:13px;font-weight:700}
+.set-row small{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px}
+.switch{position:relative;width:50px;height:28px;flex-shrink:0;display:inline-block}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#e2e8f0;border-radius:20px;transition:.3s;cursor:pointer}
+.slider:before{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:4px;left:4px;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+input:checked + .slider{background:#10b981}
+input:checked + .slider:before{transform:translateX(22px)}
+select{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:700;font-size:13px;background:#fff}
+.hint{margin:12px;padding:10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;font-size:11px;font-weight:700;color:#0369a1;line-height:1.5;display:none}
+.hint.ok{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.hint.bad{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+.btn-light{width:100%;padding:12px;background:#f1f5f9;border:none;border-radius:10px;font-weight:700;font-size:13px;margin-top:8px}
+.btn-danger{width:100%;padding:12px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800;font-size:13px;margin-top:8px}
+@media(max-width:600px){ .set-root{max-width:100%} .set-card{margin:10px} }
+@media(min-width:900px){ .set-root{max-width:760px} .header{border-radius:0 0 16px 16px} .set-card{padding:20px} }
+</style>
+</head>
+<body>
+<div class="set-root">
+  <div class="header"><button class="back" onclick="location.href='/profile.html'">‹</button><div><b>⚙️ Settings</b><span id="setSub">Loading...</span></div></div>
+
+  <div id="setHint" class="hint"></div>
+
+  <!-- 1. NOTIFICATION - COMMON - Push Page wala hi sach -->
+  <div class="set-card">
+    <b>🔔 Notification Settings</b>
+    <small>Ye Push Page wali Settings hi hain - Yahan badloge toh Push Page pe bhi badal jayega, kyunki dono ka API ek hi hai</small>
+    <div class="set-row"><span>📦 Order Notifications<small>Order confirm / prepare / delivery</small></span><label class="switch"><input type="checkbox" id="notifOrders"><span class="slider"></span></label></div>
+    <div class="set-row"><span>🎉 Promo / Offers<small>Offer wala Notification - Fake Offer kabhi nahi bhejenge</small></span><label class="switch"><input type="checkbox" id="notifPromos"><span class="slider"></span></label></div>
+    <div class="set-row"><span>🔔 System Alerts<small>System wala Notification</small></span><label class="switch"><input type="checkbox" id="notifSystem"><span class="slider"></span></label></div>
+    <div class="set-row"><span>🔊 Push Notifications<small>Browser me Push dikhega ya nahi</small></span><label class="switch"><input type="checkbox" id="notifPush"><span class="slider"></span></label></div>
+    <div class="set-row"><span>📧 Email<small>Email pe Notification - Abhi Backend me band hai</small></span><label class="switch"><input type="checkbox" id="notifEmail"><span class="slider"></span></label></div>
+    <div class="set-row"><span>🔊 Sound<small>Notification aane pe awaaz</small></span><label class="switch"><input type="checkbox" id="notifSound"><span class="slider"></span></label></div>
+  </div>
+
+  <!-- 2. LANGUAGE - SERVER PE JAYEGA -->
+  <div class="set-card">
+    <b>🌐 Language</b>
+    <small>Server pe save hoga - Dusre phone pe kholo toh wahi Language rahegi</small>
+    <select id="langSelect">
+      <option value="hi">🇮🇳 Hindi - हिन्दी</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="gu">🇮🇳 Gujarati - ગુજરાતી</option>
+    </select>
+    <button id="saveLangBtn" class="btn-light" style="background:#0f172a;color:#fff">💾 Save Language</button>
+  </div>
+
+  <!-- 3. DEVICE ONLY - SERVER PE NAHI JAYEGA - SAAF LIKHA HAI -->
+  <div class="set-card">
+    <b>📱 Is Phone Ki Settings</b>
+    <small>Ye sirf isi phone me rahengi - Server pe nahi jayengi, dusre phone pe alag ho sakti hain</small>
+    <div class="set-row"><span>🌙 Dark Mode<small>Sirf isi phone me</small></span><label class="switch"><input type="checkbox" id="darkMode"><span class="slider"></span></label></div>
+    <div class="set-row"><span>📍 Location<small>Sirf isi phone me - Nearby ke liye</small></span><label class="switch"><input type="checkbox" id="privacyLocation"><span class="slider"></span></label></div>
+  </div>
+
+  <div class="set-card">
+    <button class="btn-light" onclick="clearCache()">🧹 Clear Cache (Login nahi jayega)</button>
+    <button class="btn-danger" onclick="logout()">🚪 Logout</button>
+  </div>
 </div>
-<script src="/assets/js/app.js"></script><script src="/profile/js/settings.js"></script>
-</body></html>
+
+<script src="/shop-templates/common/core/api-core.js"></script>
+<script src="/shop-templates/common/core/auth-core.js"></script>
+<script>
+(function(){
+  var userId = '';
+  function showHint(msg, ok){
+    var h = document.getElementById('setHint');
+    h.style.display = 'block';
+    h.textContent = msg;
+    h.className = 'hint ' + (ok ? 'ok' : (ok === false ? 'bad' : ''));
+  }
+  function getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    try{ return localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || localStorage.getItem('token') || ''; }catch(e){ return ''; }
+  }
+  async function loadUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) userId = window.AuthCore.getUserId() || ''; }catch(e){}
+    if(!userId && window.currentUser) userId = window.currentUser._id || window.currentUser.id || '';
+    if(!userId){
+      try{
+        var me = await fetch('/api/auth/me', { headers:{ 'Authorization':'Bearer '+getToken() } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+        if(me && me.user) userId = me.user._id || me.user.id || '';
+      }catch(e){}
+    }
+    return userId;
+  }
+
+  // COMMON - Push Page wala hi API - /api/common/notifications/settings/:userId
+  async function loadSettings(){
+    await loadUserId();
+    document.getElementById('setSub').innerText = userId ? ('User: ' + userId.slice(-6)) : 'Login required';
+    if(!userId || userId === 'guest'){ showHint('⚠️ Settings save karne ke liye Login chahiye', false); return; }
+    try{
+      var data = null;
+      if(window.ApiCore){ try{ data = await window.ApiCore.get('/api/common/notifications/settings/' + encodeURIComponent(userId)); }catch(e){ data = null; } }
+      if(!data) data = await fetch('/api/common/notifications/settings/' + encodeURIComponent(userId), { headers:{ 'Authorization':'Bearer '+getToken() } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      var s = (data && data.settings) || null;
+      if(!s) return;
+      // Server se jo aaya wahi Toggle me bharo - localStorage se purana nahi layenge
+      if(s.orderUpdates !== undefined) document.getElementById('notifOrders').checked = !!s.orderUpdates;
+      if(s.offers !== undefined) document.getElementById('notifPromos').checked = !!s.offers;
+      if(s.system !== undefined) document.getElementById('notifSystem').checked = !!s.system;
+      if(s.push !== undefined) document.getElementById('notifPush').checked = !!s.push;
+      if(s.email !== undefined) document.getElementById('notifEmail').checked = !!s.email;
+      if(s.sound !== undefined) document.getElementById('notifSound').checked = !!s.sound;
+    }catch(e){}
+
+    // Language - /api/auth/me se - Server wala
+    try{
+      var me2 = await fetch('/api/auth/me', { headers:{ 'Authorization':'Bearer '+getToken() } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      var lang = (me2 && me2.user && (me2.user.language || me2.user.preferences?.language)) || 'hi';
+      document.getElementById('langSelect').value = lang;
+    }catch(e){}
+    // Device wale - Sirf isi phone me - localStorage me hi rahenge, Server pe nahi jayenge
+    try{
+      document.getElementById('darkMode').checked = localStorage.getItem('darkMode') === '1';
+      document.getElementById('privacyLocation').checked = localStorage.getItem('privacyLocation') !== '0';
+    }catch(e){}
+  }
+
+  async function saveNotifSettings(){
+    if(!userId || userId === 'guest'){ showHint('⚠️ Pehle Login karo', false); return; }
+    var payload = {
+      orderUpdates: document.getElementById('notifOrders').checked,
+      offers: document.getElementById('notifPromos').checked,
+      system: document.getElementById('notifSystem').checked,
+      push: document.getElementById('notifPush').checked,
+      email: document.getElementById('notifEmail').checked,
+      sound: document.getElementById('notifSound').checked
+    };
+    try{
+      var data = null;
+      if(window.ApiCore){ try{ data = await window.ApiCore.post('/api/common/notifications/settings/' + encodeURIComponent(userId), payload); }catch(e){ data = null; } }
+      if(!data) data = await fetch('/api/common/notifications/settings/' + encodeURIComponent(userId), { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() }, body: JSON.stringify(payload) }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      if(data && data.success) showHint('✅ Notification Settings Server pe save ho gayi - Push Page pe bhi wahi dikhega', true);
+      else showHint('❌ Save nahi hui - Server check karo, Toggle wapas ho sakta hai', false);
+    }catch(e){ showHint('❌ Save nahi hui - Server check karo', false); }
+  }
+
+  async function saveLanguage(){
+    var lang = document.getElementById('langSelect').value || 'hi';
+    try{
+      var res = await fetch('/api/user/update', { method:'PUT', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() }, body: JSON.stringify({ language: lang }) }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      if(res && res.success) showHint('✅ Language Server pe save ho gayi - Dusre phone pe bhi wahi rahegi', true);
+      else showHint('⚠️ Language is phone me hi rahegi - Server pe save nahi hui', false);
+    }catch(e){ showHint('⚠️ Language is phone me hi rahegi', false); }
+  }
+
+  function bind(){
+    ['notifOrders','notifPromos','notifSystem','notifPush','notifEmail','notifSound'].forEach(function(id){
+      document.getElementById(id)?.addEventListener('change', saveNotifSettings);
+    });
+    document.getElementById('saveLangBtn')?.addEventListener('click', saveLanguage);
+    document.getElementById('darkMode')?.addEventListener('change', function(e){
+      try{ localStorage.setItem('darkMode', e.target.checked ? '1' : '0'); }catch(err){}
+      showHint(e.target.checked ? '🌙 Dark Mode ON - Sirf isi phone me' : '☀️ Dark Mode OFF - Sirf isi phone me', true);
+    });
+    document.getElementById('privacyLocation')?.addEventListener('change', function(e){
+      try{ localStorage.setItem('privacyLocation', e.target.checked ? '1' : '0'); }catch(err){}
+    });
+  }
+
+  window.clearCache = function(){
+    // Login wala Token kabhi delete nahi karenge - Sirf Cache wali cheezein hatayenge
+    try{
+      var keep = {};
+      ['TOKEN','token','userToken','USER_ID','USER_NAME'].forEach(function(k){ var v = localStorage.getItem(k); if(v) keep[k] = v; });
+      localStorage.clear();
+      Object.keys(keep).forEach(function(k){ localStorage.setItem(k, keep[k]); });
+    }catch(e){}
+    showHint('✅ Cache clear ho gaya - Login nahi gaya', true);
+  };
+  window.logout = function(){
+    try{
+      if(window.AuthCore && window.AuthCore.logout) return window.AuthCore.logout();
+      localStorage.removeItem('TOKEN'); localStorage.removeItem('token'); localStorage.removeItem('userToken');
+    }catch(e){}
+    window.location.href = '/';
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){ bind(); loadSettings(); });
+  if(document.readyState !== 'loading'){ bind(); loadSettings(); }
+})();
+</script>
+</body>
+</html>

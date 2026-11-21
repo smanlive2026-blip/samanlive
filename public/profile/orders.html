@@ -1,11 +1,227 @@
+<!-- LOCATION: public/profile/orders.html - V2 - CUSTOMER ORDERS - ONE TRUTH - FULL CODE -->
+<!-- FIX V2: 1) Pehle Profile Orders /api/user/orders mangta tha, Checkout /api/common/checkout se Order banata tha - Isliye Profile me Order khaali dikhta tha. Ab dono ka ek hi sach = /api/common/checkout/orders/my?buyerId=XXX -->
+<!-- 2) localStorage wala Fake fallback hataya - myOrders me nakli Order kabhi nahi dikhega -->
+<!-- 3) Layout fix - Mobile stack + Laptop 760px, pehle 600px wali patli patti thi -->
+<!-- FLOW: Load -> /api/auth/me se buyerId lo -> GET /api/common/checkout/orders/my -> Khali hai toh GET /api/common/orders/list?role=customer -> Render -> Track / Cancel -->
 <!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>My Orders - SAMANLIVE</title>
 <link rel="stylesheet" href="/assets/css/main.css">
-<style>body{background:#f1f5f9;margin:0;font-family:Outfit,sans-serif} .header{background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;border-bottom:1px solid #e2e8f0;z-index:10} .back{width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-weight:900;cursor:pointer}</style>
-</head><body>
-<div class="header"><button class="back" onclick="location.href='/profile.html'">‹</button><b>My Orders</b></div>
-<div id="ordersContainer" style="max-width:600px;margin:12px auto;padding:0 12px">Loading...</div>
-<script src="/assets/js/app.js"></script><script src="/profile/js/orders.js"></script>
-</body></html>
+<style>
+*{box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f1f5f9;margin:0;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.orders-root{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:20px}
+.header{background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;border-bottom:1px solid #e2e8f0;z-index:10;flex-wrap:wrap}
+.back{width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-weight:900;cursor:pointer;font-size:20px;flex-shrink:0;line-height:1}
+.header b{font-size:16px}
+.header span{font-size:11px;color:#64748b;font-weight:600;display:block}
+.filters{display:flex;gap:6px;padding:12px;overflow-x:auto;background:#fff;border-bottom:1px solid #e2e8f0;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filter-btn{background:#fff;border:1px solid #e2e8f0;padding:8px 12px;border-radius:20px;font-weight:800;font-size:11px;white-space:nowrap}
+.filter-btn.active{background:#0f172a;color:#fff;border-color:#0f172a}
+#ordersContainer{display:flex;flex-direction:column;gap:10px;padding:12px}
+.order-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px}
+.order-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.order-top b{font-size:13px;word-break:break-word}
+.order-top small{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:2px}
+.status-pill{font-size:10px;font-weight:900;padding:4px 8px;border-radius:20px;white-space:nowrap;text-transform:uppercase}
+.status-placed{background:#fef3c7;color:#92400e}.status-confirmed{background:#dbeafe;color:#1e40af}.status-packed{background:#e0e7ff;color:#3730a3}.status-picked,.status-out_for_delivery{background:#ffedd5;color:#9a3412}.status-delivered{background:#dcfce7;color:#166534}.status-cancelled,.status-rejected{background:#fee2e2;color:#991b1b}
+.order-items{margin-top:10px;font-size:12px;color:#475569;font-weight:600;line-height:1.5;word-break:break-word}
+.order-total{margin-top:8px;display:flex;justify-content:space-between;font-size:13px;font-weight:900}
+.order-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn-track{background:#0f172a;color:#fff;padding:9px 14px;border-radius:8px;font-weight:800;font-size:12px}
+.btn-cancel{background:#fff;color:#991b1b;border:1px solid #fecaca;padding:9px 14px;border-radius:8px;font-weight:800;font-size:12px}
+.btn-shop{background:#f1f5f9;color:#0f172a;padding:9px 14px;border-radius:8px;font-weight:800;font-size:12px}
+.empty-state{text-align:center;padding:40px 16px;color:#94a3b8;font-weight:600;font-size:13px;line-height:1.5;background:#fff;border-radius:12px}
+.empty-state .icon{font-size:40px;display:block;margin-bottom:10px}
+.empty-state h2{color:#0f172a;font-size:15px;margin:0 0 4px}
+.primary-btn{background:#0f172a;color:#fff;padding:11px 18px;border-radius:10px;font-weight:800;font-size:12px;margin-top:14px}
+@media(max-width:600px){ .orders-root{max-width:100%} .header{padding:12px} .order-actions .btn-track,.order-actions .btn-cancel,.order-actions .btn-shop{flex:1;text-align:center} }
+@media(min-width:900px){ .orders-root{max-width:760px} .header{border-radius:0 0 16px 16px} .order-card{padding:16px} }
+</style>
+</head>
+<body>
+<div class="orders-root">
+  <div class="header">
+    <button class="back" onclick="location.href='/profile.html'">‹</button>
+    <div style="flex:1;min-width:0"><b>📦 My Orders</b><span id="ordersSubHeader">Loading...</span></div>
+  </div>
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="placed">Placed</button>
+    <button class="filter-btn" data-filter="confirmed">Confirmed</button>
+    <button class="filter-btn" data-filter="out_for_delivery">Out for Delivery</button>
+    <button class="filter-btn" data-filter="delivered">Delivered</button>
+    <button class="filter-btn" data-filter="cancelled">Cancelled</button>
+  </div>
+  <div id="ordersContainer">Loading...</div>
+</div>
+
+<script>
+(function(){
+  var buyerId = '';
+  var allOrders = [];
+  var currentFilter = 'all';
+
+  function esc(s){ var d=document.createElement('div'); d.textContent=String(s==null?'':s); return d.innerHTML; }
+  function getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    try{ return localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || localStorage.getItem('token') || ''; }catch(e){ return ''; }
+  }
+  function getHeaders(){
+    var t = getToken();
+    var h = { 'Content-Type':'application/json' };
+    if(t) h['Authorization'] = 'Bearer ' + t;
+    if(buyerId) h['x-buyer-id'] = buyerId;
+    return h;
+  }
+  function formatTime(t){
+    try{
+      var d=new Date(t);
+      return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    }catch(e){ return ''; }
+  }
+  function normOrder(o){
+    // Checkout / Common Orders dono ka shape alag hai - Ek hi shape me kar do
+    return {
+      _id: o._id || o.id || '',
+      orderId: o.orderId || o._id || '',
+      shopId: o.shopId || o.supplierId || '',
+      shopName: (o.shop && o.shop.shopName) || o.shopName || o.supplierName || 'Shop',
+      status: (o.status || 'placed').toLowerCase(),
+      total: o.totalAmount || o.total || o.grandTotal || 0,
+      createdAt: o.createdAt || o.date || '',
+      items: o.items || o.products || [],
+      paymentMethod: o.paymentMethod || o.paymentMode || 'cod'
+    };
+  }
+
+  async function loadBuyerId(){
+    // 1) AuthCore / currentUser se, 2) /api/auth/me se - localStorage ke guest_id se kabhi nahi, warna dusre ka Order dikhega
+    try{ if(window.AuthCore && window.AuthCore.getUserId) buyerId = window.AuthCore.getUserId() || ''; }catch(e){}
+    if(!buyerId && window.currentUser) buyerId = window.currentUser._id || window.currentUser.id || '';
+    if(!buyerId){
+      try{
+        var me = await fetch('/api/auth/me', { headers: getHeaders() }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+        if(me && me.user) buyerId = me.user._id || me.user.id || '';
+      }catch(e){}
+    }
+    // buyerId me user_ / guest_ prefix ho toh bhi chalega - Backend dono try karta hai
+    return buyerId;
+  }
+
+  async function loadOrders(){
+    var container = document.getElementById('ordersContainer');
+    container.innerHTML = 'Loading...';
+    await loadBuyerId();
+    if(!buyerId){
+      container.innerHTML = '<div class="empty-state"><div class="icon">🔐</div><h2>Login karo</h2><p>Orders dekhne ke liye pehle login karo</p><button class="primary-btn" onclick="location.href=\'/profile.html\'">‹ Back to Profile</button></div>';
+      document.getElementById('ordersSubHeader').innerText = 'Login required';
+      return;
+    }
+    var orders = [];
+    // TRY 1 - Ek hi sach - Checkout wala My Orders - Yahan se hi Order banta hai
+    try{
+      var d1 = await fetch('/api/common/checkout/orders/my?buyerId=' + encodeURIComponent(buyerId) + '&t=' + Date.now(), { headers: getHeaders(), cache:'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      orders = (d1 && (d1.orders || d1.data || [])) || [];
+    }catch(e){}
+    // TRY 2 - Fallback - Common Orders List - Customer wala
+    if(!orders.length){
+      try{
+        var d2 = await fetch('/api/common/orders/list?role=customer&id=' + encodeURIComponent(buyerId), { headers: getHeaders(), cache:'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+        orders = (d2 && (d2.orders || d2.data || [])) || [];
+      }catch(e){}
+    }
+    // TRY 3 - Fallback - Per-shop Customer Orders - Kabhi shopId URL me ho toh
+    if(!orders.length){
+      var sid = new URLSearchParams(location.search).get('shopId') || '';
+      if(sid){
+        try{
+          var d3 = await fetch('/api/common/customer-orders/' + encodeURIComponent(sid) + '/' + encodeURIComponent(buyerId), { headers: getHeaders(), cache:'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+          orders = (d3 && (d3.orders || d3.data || [])) || [];
+        }catch(e){}
+      }
+    }
+    // NO localStorage fallback - Nakli Order kabhi nahi dikhayenge
+    allOrders = orders.map(normOrder);
+    renderOrders();
+    updateHeader();
+  }
+
+  function updateHeader(){
+    document.getElementById('ordersSubHeader').innerText = allOrders.length + ' orders • ' + allOrders.filter(function(o){ return o.status !== 'delivered' && o.status !== 'cancelled' && o.status !== 'rejected'; }).length + ' active';
+  }
+
+  function renderOrders(){
+    var container = document.getElementById('ordersContainer');
+    var list = allOrders;
+    if(currentFilter !== 'all') list = list.filter(function(o){ return o.status === currentFilter; });
+    if(!list.length){
+      container.innerHTML = '<div class="empty-state"><div class="icon">📦</div><h2>No orders yet</h2><p>Abhi koi asli Order nahi hai<br>Dukaan se Order karoge toh yahi dikhega - Nakli Order nahi dikhayenge</p><button class="primary-btn" onclick="location.href=\'/nearby-shops.html\'">🛍️ Shop Karo</button></div>';
+      return;
+    }
+    list.sort(function(a,b){ return new Date(b.createdAt) - new Date(a.createdAt); });
+    container.innerHTML = list.map(function(o){
+      var itemsTxt = o.items.map(function(it){
+        var n = it.name || it.productName || it.title || 'Item';
+        var q = it.qty || it.quantity || 1;
+        return esc(n) + ' × ' + esc(q);
+      }).join(', ') || 'Items';
+      var canCancel = (o.status === 'placed');
+      var trackUrl = '/shop-templates/common/track/track-order.html?orderId=' + encodeURIComponent(o.orderId) + (o.shopId ? '&shopId=' + encodeURIComponent(o.shopId) : '');
+      return '<div class="order-card">'
+        + '<div class="order-top"><div><b>#' + esc(o.orderId) + '</b><small>' + esc(o.shopName) + ' • ' + esc(formatTime(o.createdAt)) + ' • ' + esc(o.paymentMethod.toUpperCase()) + '</small></div>'
+        + '<span class="status-pill status-' + esc(o.status) + '">' + esc(o.status.replace(/_/g,' ')) + '</span></div>'
+        + '<div class="order-items">' + itemsTxt + '</div>'
+        + '<div class="order-total"><span>Total</span><span>₹' + esc(o.total) + '</span></div>'
+        + '<div class="order-actions">'
+        + '<button class="btn-track" data-url="' + esc(trackUrl) + '">📍 Track Order</button>'
+        + (canCancel ? '<button class="btn-cancel" data-cancel="' + esc(o.orderId) + '">❌ Cancel Order</button>' : '')
+        + '<button class="btn-shop" data-shop="' + esc(o.shopId) + '">🛍️ Shop Again</button>'
+        + '</div></div>';
+    }).join('');
+    container.querySelectorAll('[data-url]').forEach(function(btn){
+      btn.addEventListener('click', function(){ window.location.href = btn.dataset.url; });
+    });
+    container.querySelectorAll('[data-cancel]').forEach(function(btn){
+      btn.addEventListener('click', function(){ cancelOrder(btn.dataset.cancel); });
+    });
+    container.querySelectorAll('[data-shop]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(btn.dataset.shop) window.location.href = '/nearby-shops.html?shopId=' + encodeURIComponent(btn.dataset.shop);
+        else window.location.href = '/nearby-shops.html';
+      });
+    });
+  }
+
+  async function cancelOrder(orderId){
+    if(!confirm('Kya Order cancel karna hai? - Sirf Placed wala Order hi cancel hoga')) return;
+    try{
+      var res = await fetch('/api/common/orders/' + encodeURIComponent(orderId) + '/status', {
+        method:'PUT', headers: getHeaders(),
+        body: JSON.stringify({ role:'customer', userId: buyerId, newStatus:'cancelled' })
+      }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      if(res && res.success){ alert('✅ Order cancel ho gaya'); await loadOrders(); }
+      else alert('❌ Cancel nahi hua - ' + ((res && (res.message || res.error)) || 'Shop ne confirm kar diya hoga'));
+    }catch(e){ alert('❌ Cancel nahi hua - Server check karo'); }
+  }
+
+  document.querySelectorAll('.filter-btn').forEach(function(f){
+    f.addEventListener('click', function(){
+      document.querySelectorAll('.filter-btn').forEach(function(x){ x.classList.remove('active'); });
+      f.classList.add('active');
+      currentFilter = f.dataset.filter;
+      renderOrders();
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', loadOrders);
+  if(document.readyState !== 'loading') loadOrders();
+})();
+</script>
+</body>
+</html>

@@ -1,10 +1,72 @@
+<!-- LOCATION: public/profile/wishlist.html - V2 COMMON - FULL CODE -->
+<!-- FIX V2 COMMON: Pehle /api/wishlist/:userId mangta tha, Dukaan /api/common/wishlist mangti thi - Dono alag, isliye ek dusre ka ❤️ nahi dikhta tha. Ab dono ek hi API pe hain -->
 <!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Wishlist - SAMANLIVE</title>
 <link rel="stylesheet" href="/assets/css/main.css">
-</head><body style="background:#f1f5f9;margin:0">
-<div style="background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;border-bottom:1px solid #e2e8f0"><button onclick="location.href='/profile.html'" style="width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-weight:900">‹</button><b>Wishlist</b></div>
-<div id="wishlistContainer" style="max-width:600px;margin:12px auto;padding:0 12px">Loading wishlist...</div>
-<script src="/assets/js/app.js"></script><script src="/profile/js/wishlist.js"></script>
-</body></html>
+<style>
+*{box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f1f5f9;margin:0;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.wl-root{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:20px}
+.header{background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;border-bottom:1px solid #e2e8f0;z-index:10}
+.back{width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-weight:900;cursor:pointer;font-size:20px;flex-shrink:0;line-height:1}
+.header b{font-size:16px}
+.header span{font-size:11px;color:#64748b;font-weight:600;display:block}
+#wishlistContainer{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.wl-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.wl-card img{width:100%;height:140px;object-fit:cover;border-radius:8px;background:#f1f5f9}
+.wl-card b{font-size:13px;line-height:1.3;word-break:break-word;display:block}
+.wl-card span{font-size:11px;color:#64748b;font-weight:600}
+.wl-price{font-size:14px;font-weight:900}
+.wl-actions{display:flex;gap:6px;margin-top:auto}
+.btn-cart{background:#0f172a;color:#fff;padding:8px;border-radius:8px;font-weight:800;font-size:11px;flex:1}
+.btn-del{background:#fff;border:1px solid #fecaca;color:#991b1b;padding:8px;border-radius:8px;font-weight:800;font-size:11px}
+.empty-state{text-align:center;padding:40px 16px;color:#94a3b8;font-weight:600;font-size:13px;line-height:1.5;background:#fff;border-radius:12px;grid-column:1/-1}
+.empty-state .icon{font-size:40px;display:block;margin-bottom:10px}
+.empty-state h2{color:#0f172a;font-size:15px;margin:0 0 4px}
+.primary-btn{background:#0f172a;color:#fff;padding:11px 18px;border-radius:10px;font-weight:800;font-size:12px;margin-top:14px}
+@media(max-width:600px){ .wl-root{max-width:100%} #wishlistContainer{grid-template-columns:1fr 1fr} }
+@media(min-width:900px){ .wl-root{max-width:760px} #wishlistContainer{grid-template-columns:1fr 1fr 1fr} }
+</style>
+</head>
+<body>
+<div class="wl-root">
+  <div class="header"><button class="back" onclick="location.href='/profile.html'">‹</button><div><b>❤️ Wishlist</b><span id="wlSub">Loading...</span></div></div>
+  <div id="wishlistContainer">Loading wishlist...</div>
+</div>
+<script src="/shop-templates/common/core/api-core.js"></script>
+<script src="/shop-templates/common/core/auth-core.js"></script>
+<script src="/shop-templates/common/js/wishlist.js"></script>
+<script>
+(function(){
+  function esc(s){ var d=document.createElement('div'); d.textContent=String(s==null?'':s); return d.innerHTML; }
+  async function load(){
+    var c = document.getElementById('wishlistContainer');
+    // Common WishlistCore hi sach hai - Profile apna alag Wishlist kabhi nahi banayega
+    var list = [];
+    try{
+      if(window.WishlistCore) list = await window.WishlistCore.loadWishlist();
+    }catch(e){}
+    document.getElementById('wlSub').innerText = list.length + ' items • Dukaan wala hi ❤️ yahan dikhega';
+    if(!list.length){
+      c.innerHTML = '<div class="empty-state"><div class="icon">❤️</div><h2>No wishlist yet</h2><p>Dukaan me kisi Product pe ❤️ dabao - Wahi yahan dikhega<br>Nakli Product nahi dikhayenge</p><button class="primary-btn" onclick="location.href=\'/nearby-shops.html\'">🛍️ Shop Karo</button></div>';
+      return;
+    }
+    c.innerHTML = list.map(function(p){
+      var pid = p.productId || p._id || p.id || '';
+      var img = p.image || p.thumbnail || p.images?.[0] || 'https://via.placeholder.com/300';
+      return '<div class="wl-card"><img src="' + esc(img) + '" onerror="this.src=\'https://via.placeholder.com/300\'"><b>' + esc(p.name || 'Product') + '</b><span>' + esc(p.shopName || '') + '</span><div class="wl-price">₹' + esc(p.price || 0) + '</div><div class="wl-actions"><button class="btn-cart" data-cart="' + esc(pid) + '">🛒 Cart</button><button class="btn-del" data-del="' + esc(pid) + '">🗑️ Remove</button></div></div>';
+    }).join('');
+    c.querySelectorAll('[data-del]').forEach(function(b){ b.addEventListener('click', async function(){ await window.WishlistCore.removeFromWishlist(b.dataset.del); await load(); }); });
+    c.querySelectorAll('[data-cart]').forEach(function(b){ b.addEventListener('click', function(){ if(window.CartCore) window.CartCore.addToCart({ productId:b.dataset.cart, qty:1 }); alert('✅ Cart me add ho gaya - Checkout me dekho'); }); });
+  }
+  document.addEventListener('DOMContentLoaded', load);
+  if(document.readyState !== 'loading') load();
+})();
+</script>
+</body>
+</html>

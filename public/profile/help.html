@@ -1,20 +1,130 @@
+<!-- LOCATION: public/profile/help.html - V2 COMMON - FULL CODE -->
+<!-- FIX V2 COMMON: 1) Pehle sirf 2 FAQ static the, koi Ticket nahi banta tha - Ab FAQ Common Support se aayega + Report Issue se Ticket banega -->
+<!-- 2) Call / WhatsApp hardcoded tha - Ab bhi hai, par Ticket bhi banega, taaki problem Admin tak pahunche -->
+<!-- API: GET /api/common/support/help | POST /api/common/support/issues { title, description, type, userId } - Fail ho toh WhatsApp pe jayega, par jhootha "Ticket ban gaya" nahi bolega -->
 <!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Help - SAMANLIVE</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Help & Support - SAMANLIVE</title>
 <link rel="stylesheet" href="/assets/css/main.css">
-</head><body style="background:#f1f5f9;margin:0">
-<div style="background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0"><button onclick="location.href='/profile.html'" style="width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%">‹</button><b>Help & Support</b></div>
-<div style="max-width:600px;margin:12px auto;padding:0 12px">
-  <input id="searchInput" placeholder="Search FAQ..." oninput="searchFAQ()" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px">
-  <div id="faqSection" style="margin-top:12px;background:#fff;border-radius:16px;padding:12px">
-    <div class="faq-item" style="padding:12px 0;border-bottom:1px solid #f1f5f9"><div class="faq-question" onclick="toggleFAQ(this)" style="font-weight:800;cursor:pointer">How to track order? ▼</div><div class="faq-answer" style="display:none;padding-top:8px;color:#475569">Go to My Orders > Track</div></div>
-    <div class="faq-item" style="padding:12px 0;border-bottom:1px solid #f1f5f9"><div class="faq-question" onclick="toggleFAQ(this)" style="font-weight:800;cursor:pointer">How to add address? ▼</div><div class="faq-answer" style="display:none;padding-top:8px;color:#475569">Profile > My Addresses > Add New - Yehi address dairy shop owner ko jayega</div></div>
+<style>
+*{box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f1f5f9;margin:0;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.help-root{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:20px}
+.header{background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;border-bottom:1px solid #e2e8f0;z-index:10}
+.back{width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-weight:900;cursor:pointer;font-size:20px;flex-shrink:0;line-height:1}
+.header b{font-size:16px}
+.header span{font-size:11px;color:#64748b;font-weight:600;display:block}
+.search-box{margin:12px}
+.search-box input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-family:inherit;font-weight:600;font-size:13px}
+.faq-card{background:#fff;border:1px solid #e2e8f0;margin:0 12px 8px;border-radius:12px;padding:14px;cursor:pointer}
+.faq-card b{font-size:13px;display:block}
+.faq-card p{font-size:12px;color:#475569;font-weight:600;margin:6px 0 0;line-height:1.5;display:none}
+.faq-card.open p{display:block}
+.issue-box{background:#fff;border:1px solid #e2e8f0;margin:12px;border-radius:12px;padding:16px}
+.issue-box b{display:block;font-weight:900;font-size:14px;margin-bottom:4px}
+.issue-box small{font-size:11px;color:#64748b;font-weight:600}
+.issue-box input,.issue-box select,.issue-box textarea{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-top:8px;font-family:inherit;font-weight:600;font-size:13px}
+.issue-box textarea{min-height:80px;resize:vertical}
+.btn-primary{width:100%;background:#0f172a;color:#fff;padding:12px;border-radius:10px;font-weight:800;font-size:13px;margin-top:10px}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px}
+.btn-light{padding:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;font-weight:700;font-size:13px}
+.btn-wa{padding:12px;background:#22c55e;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:13px}
+.hint{margin:12px;padding:10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;font-size:11px;font-weight:700;color:#0369a1;line-height:1.5;display:none}
+.hint.ok{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.hint.bad{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+@media(max-width:600px){ .help-root{max-width:100%} }
+@media(min-width:900px){ .help-root{max-width:760px} .header{border-radius:0 0 16px 16px} }
+</style>
+</head>
+<body>
+<div class="help-root">
+  <div class="header"><button class="back" onclick="location.href='/profile.html'">‹</button><div><b>🆘 Help & Support</b><span>FAQs + Report Issue</span></div></div>
+  <div class="search-box"><input id="searchInput" placeholder="Search FAQ... - jaise Order, Address, Payment" oninput="window.filterFAQ()"></div>
+  <div id="faqSection">Loading FAQs...</div>
+  <div id="helpHint" class="hint"></div>
+  <div class="issue-box">
+    <b>📝 Report Issue - Ticket Banega</b>
+    <small>Yahan likhoge toh Ticket banega aur Admin / Shop tak jayega - Sirf WhatsApp pe nahi jayega</small>
+    <select id="issueType"><option value="order">📦 Order Issue</option><option value="payment">💳 Payment Issue</option><option value="delivery">🛵 Delivery Issue</option><option value="address">📍 Address Issue</option><option value="other">❓ Other</option></select>
+    <input id="issueTitle" placeholder="Title - jaise Order nahi aaya">
+    <textarea id="issueDesc" placeholder="Poori baat likho - Order ID, Shop naam, kya hua?"></textarea>
+    <button id="issueSubmitBtn" class="btn-primary">📩 Submit Issue</button>
   </div>
-  <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
-    <button onclick="callSupport()" style="padding:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;font-weight:700">📞 Call</button>
-    <button onclick="openWhatsApp()" style="padding:12px;background:#22c55e;color:#fff;border:none;border-radius:12px;font-weight:700">💬 WhatsApp</button>
+  <div class="btn-row">
+    <button class="btn-light" onclick="window.callSupport()">📞 Call Support</button>
+    <button class="btn-wa" onclick="window.openWhatsApp()">💬 WhatsApp</button>
   </div>
 </div>
-<script src="/assets/js/app.js"></script><script src="/profile/js/help.js"></script>
-</body></html>
+<script>
+(function(){
+  var allFaqs = [];
+  function esc(s){ var d=document.createElement('div'); d.textContent=String(s==null?'':s); return d.innerHTML; }
+  function getToken(){ try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){} try{ return localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || localStorage.getItem('token') || ''; }catch(e){ return ''; } }
+  function hint(msg, ok){ var h=document.getElementById('helpHint'); h.style.display='block'; h.textContent=msg; h.className='hint '+(ok?'ok':(ok===false?'bad':'')); }
+  // Common Support se FAQ - Dukaan wali Help wali hi FAQ hogi, alag nahi
+  async function loadFaqs(){
+    var box = document.getElementById('faqSection');
+    try{
+      var data = await fetch('/api/common/support/help').then(function(r){ return r.json(); }).catch(function(){ return null; });
+      var faqs = (data && (data.faqs || data.data || [])) || [];
+      // Common Support me Customer wale FAQ nahi hain toh Customer wale dikhao - Dono me se jo asli hai wahi, Fake nahi banayenge
+      if(!faqs.length){
+        faqs = [
+          { q:'How to track order?', a:'Profile > My Orders > Track Order dabao - Wahi asli Status dikhega' },
+          { q:'How to add address?', a:'Profile > My Addresses > Add New - Wahi Address Checkout me bhi dikhega' },
+          { q:'Order cancel kaise kare?', a:'Profile > My Orders > Placed wale pe Cancel dabao - Sirf Placed wala hi cancel hoga' },
+          { q:'Payment kaise kare?', a:'Checkout me UPI / COD select karo - Saved Payment sirf list hai, Checkout me dobara select karna padega' },
+          { q:'Wishlist kahan hai?', a:'Profile > Wishlist - Dukaan me ❤️ dabao toh yahan dikhega' },
+          { q:'Refund kab aayega?', a:'Cancelled Order ka Refund Shop / Admin se confirm hone ke baad aayega - Issue Report karo toh Ticket banega' }
+        ];
+      }
+      allFaqs = faqs;
+      renderFaqs('');
+    }catch(e){
+      document.getElementById('faqSection').innerHTML = '<div class="faq-card"><b>How to track order?</b><p>Profile > My Orders > Track Order dabao</p></div>';
+    }
+  }
+  function renderFaqs(q){
+    var box = document.getElementById('faqSection');
+    var list = allFaqs.filter(function(f){ if(!q) return true; var t = String(f.q||f.question||'') + ' ' + String(f.a||f.answer||''); return t.toLowerCase().indexOf(q.toLowerCase()) !== -1; });
+    if(!list.length){ box.innerHTML = '<div class="faq-card"><b>Koi FAQ nahi mila</b><p>Neeche Report Issue me likh do</p></div>'; return; }
+    box.innerHTML = list.map(function(f){
+      return '<div class="faq-card" onclick="this.classList.toggle(\'open\')"><b>' + esc(f.q || f.question || 'FAQ') + ' ▼</b><p>' + esc(f.a || f.answer || '') + '</p></div>';
+    }).join('');
+  }
+  window.filterFAQ = function(){ renderFaqs(document.getElementById('searchInput').value || ''); };
+  window.toggleFAQ = function(el){ el.parentElement.classList.toggle('open'); };
+  window.callSupport = function(){ window.location.href = 'tel:+919999999999'; };
+  window.openWhatsApp = function(){ window.open('https://wa.me/919999999999?text=' + encodeURIComponent('Hi SamanLive, mujhe help chahiye - '), '_blank'); };
+
+  document.getElementById('issueSubmitBtn')?.addEventListener('click', async function(){
+    var title = document.getElementById('issueTitle').value.trim();
+    var desc = document.getElementById('issueDesc').value.trim();
+    var type = document.getElementById('issueType').value;
+    if(!title || !desc){ hint('❌ Title + Poori baat likhna zaroori hai', false); return; }
+    try{
+      // Common Support pe Ticket - ShopId nahi hai Customer ke paas, isliye userId se bhejenge
+      var userId = '';
+      try{ if(window.AuthCore && window.AuthCore.getUserId) userId = window.AuthCore.getUserId() || ''; }catch(e){}
+      var payload = { title:title, description:desc, issueType:type, type:type, userId:userId };
+      var data = await fetch('/api/common/support/issues', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() }, body: JSON.stringify(payload) }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      if(data && data.success){
+        hint('✅ Ticket ban gaya - ID: ' + (data.issueId || data._id || data.issue?._id || 'Saved') + ' - Admin tak pahunch gaya', true);
+        document.getElementById('issueTitle').value=''; document.getElementById('issueDesc').value='';
+      } else {
+        // Jhootha "Ticket ban gaya" nahi bolenge - Saaf bolenge ki Server pe nahi bana, WhatsApp pe bhejo
+        hint('⚠️ Ticket Server pe nahi bana - WhatsApp button se bhej do, wahan se Admin tak jayega', false);
+      }
+    }catch(e){ hint('⚠️ Ticket Server pe nahi bana - WhatsApp button se bhej do', false); }
+  });
+
+  document.addEventListener('DOMContentLoaded', loadFaqs);
+  if(document.readyState !== 'loading') loadFaqs();
+})();
+</script>
+</body>
+</html>

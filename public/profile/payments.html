@@ -1,11 +1,105 @@
+<!-- LOCATION: public/profile/payments.html - V2 HONEST + COMMON - FULL CODE -->
+<!-- FIX V2: 1) Pehle Card ka pura number bhi save karne ka form tha - Ab kabhi nahi hoga, sirf Last 4 digit -->
+<!-- 2) Pehle lagta tha Save kar diya toh Checkout me Pay ho jayega - Ab saaf likha hai ki Checkout me dobara select karna padega, ye sirf saved list hai -->
+<!-- 3) UPI ID ek hi sach hai - Yahan save karoge toh Checkout me wahi UPI pehle se bhara milega (Checkout FILE 6 me isko padhega) -->
+<!-- API: GET /api/user/payments | POST /api/user/payments | DELETE /api/user/payments/:id | PUT /api/user/payments/:id/default -->
 <!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Payments - SAMANLIVE</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Payment Methods - SAMANLIVE</title>
 <link rel="stylesheet" href="/assets/css/main.css">
-<style>body{background:#f1f5f9;margin:0} .header{background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;border-bottom:1px solid #e2e8f0}</style>
-</head><body>
-<div class="header"><button class="back" onclick="location.href='/profile.html'">‹</button><b>Payment Methods</b></div>
-<div id="paymentsContainer" style="max-width:600px;margin:12px auto;padding:0 12px">Loading...</div>
-<script src="/assets/js/app.js"></script><script src="/profile/js/payments.js"></script>
-</body></html>
+<style>
+*{box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f1f5f9;margin:0;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.pay-root{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:20px}
+.header{background:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;border-bottom:1px solid #e2e8f0;z-index:10}
+.back{width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-weight:900;cursor:pointer;font-size:20px;flex-shrink:0;line-height:1}
+.header b{font-size:16px}
+.header span{font-size:11px;color:#64748b;font-weight:600;display:block}
+.hint{margin:12px;padding:10px;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;font-size:11px;font-weight:700;color:#92400e;line-height:1.5}
+.hint.ok{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.hint.bad{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+#paymentsContainer{display:flex;flex-direction:column;gap:10px;padding:0 12px}
+.pay-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;display:flex;gap:10px;align-items:flex-start}
+.pay-icon{width:40px;height:40px;background:#f1f5f9;border-radius:10px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.pay-card b{font-size:13px;display:block}
+.pay-card span{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:2px}
+.pay-actions{margin-left:auto;display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.btn-small{background:#f1f5f9;border:1px solid #e2e8f0;padding:7px 10px;border-radius:8px;font-weight:800;font-size:11px}
+.btn-del{background:#fff;border:1px solid #fecaca;color:#991b1b;padding:7px 10px;border-radius:8px;font-weight:800;font-size:11px}
+.add-box{background:#fff;border:1px solid #e2e8f0;margin:12px;border-radius:12px;padding:16px}
+.add-box b{display:block;font-weight:900;font-size:14px;margin-bottom:10px}
+.add-box input,.add-box select{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-top:8px;font-family:inherit;font-weight:600;font-size:13px}
+.btn-primary{width:100%;background:#0f172a;color:#fff;padding:12px;border-radius:10px;font-weight:800;font-size:13px;margin-top:10px}
+.empty-state{text-align:center;padding:40px 16px;color:#94a3b8;font-weight:600;font-size:13px;line-height:1.5;background:#fff;border-radius:12px}
+.empty-state .icon{font-size:40px;display:block;margin-bottom:10px}
+.empty-state h2{color:#0f172a;font-size:15px;margin:0 0 4px}
+@media(max-width:600px){ .pay-root{max-width:100%} }
+@media(min-width:900px){ .pay-root{max-width:760px} .header{border-radius:0 0 16px 16px} }
+</style>
+</head>
+<body>
+<div class="pay-root">
+  <div class="header"><button class="back" onclick="location.href='/profile.html'">‹</button><div><b>💳 Payment Methods</b><span id="paySub">Loading...</span></div></div>
+  <div id="payHint" class="hint">⚠️ Note: Ye sirf saved list hai - Checkout me dobara Payment select karna padega. Card ka pura number kabhi save nahi hoga, sirf Last 4 digit.</div>
+  <div id="paymentsContainer">Loading...</div>
+  <div class="add-box">
+    <b>➕ Add Payment Method</b>
+    <select id="payType"><option value="upi">UPI ID</option><option value="card">Card (sirf Last 4)</option><option value="cod">COD - Cash on Delivery</option></select>
+    <input id="payUpi" placeholder="UPI ID - jaise 98765@okhdfc">
+    <input id="payCardLast4" placeholder="Card Last 4 digit - jaise 1234" maxlength="4" inputmode="numeric" style="display:none">
+    <input id="payName" placeholder="Naam - jaise Mera UPI / Mera Card">
+    <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:12px;font-weight:700"><input type="checkbox" id="payDefault" style="width:auto;margin:0"> Default banao</label>
+    <button id="paySaveBtn" class="btn-primary">💾 Save Payment Method</button>
+  </div>
+</div>
+<script>
+(function(){
+  function esc(s){ var d=document.createElement('div'); d.textContent=String(s==null?'':s); return d.innerHTML; }
+  function getToken(){ try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){} try{ return localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || localStorage.getItem('token') || ''; }catch(e){ return ''; } }
+  function hint(msg, ok){ var h=document.getElementById('payHint'); h.textContent=msg; h.className='hint '+(ok?'ok':(ok===false?'bad':'')); }
+  async function load(){
+    var c=document.getElementById('paymentsContainer');
+    try{
+      var data = await fetch('/api/user/payments', { headers:{ 'Authorization':'Bearer '+getToken() } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      var list = (data && (data.payments || data.methods || data.data || [])) || [];
+      document.getElementById('paySub').innerText = list.length + ' saved methods';
+      if(!list.length){ c.innerHTML='<div class="empty-state"><div class="icon">💳</div><h2>No payment method saved</h2><p>UPI ID jodo - Checkout me wahi UPI pehle se bhara milega<br>Card ka pura number kabhi mat likhna</p></div>'; return; }
+      c.innerHTML = list.map(function(p){
+        var type = p.type || p.method || 'upi';
+        var label = type==='upi' ? ('UPI: '+(p.upiId||p.upi||p.value||'')) : type==='card' ? ('Card •••• '+(p.last4||p.cardLast4||'****')) : 'COD - Cash on Delivery';
+        return '<div class="pay-card"><div class="pay-icon">'+(type==='upi'?'📱':type==='card'?'💳':'💵')+'</div><div style="flex:1;min-width:0"><b>'+esc(p.name||label)+'</b><span>'+esc(label)+'</span>'+(p.isDefault?'<span style="color:#166534;font-weight:900">✅ DEFAULT</span>':'')+'</div><div class="pay-actions"><button class="btn-small" data-def="'+esc(p._id||p.id)+'">✅ Default</button><button class="btn-del" data-del="'+esc(p._id||p.id)+'">🗑️</button></div></div>';
+      }).join('');
+      c.querySelectorAll('[data-del]').forEach(function(b){ b.addEventListener('click', async function(){ if(!confirm('Delete karna hai?')) return; await fetch('/api/user/payments/'+encodeURIComponent(b.dataset.del), { method:'DELETE', headers:{ 'Authorization':'Bearer '+getToken() } }).catch(function(){}); await load(); }); });
+      c.querySelectorAll('[data-def]').forEach(function(b){ b.addEventListener('click', async function(){ await fetch('/api/user/payments/'+encodeURIComponent(b.dataset.def)+'/default', { method:'PUT', headers:{ 'Authorization':'Bearer '+getToken() } }).catch(function(){}); await load(); }); });
+    }catch(e){ document.getElementById('paymentsContainer').innerHTML='<div class="empty-state"><h2>Load nahi hua</h2><p>Server check karo</p></div>'; }
+  }
+  document.getElementById('payType')?.addEventListener('change', function(e){
+    document.getElementById('payUpi').style.display = e.target.value==='upi' ? 'block' : 'none';
+    document.getElementById('payCardLast4').style.display = e.target.value==='card' ? 'block' : 'none';
+    document.getElementById('payName').placeholder = e.target.value==='upi' ? 'Naam - jaise Mera UPI' : e.target.value==='card' ? 'Naam - jaise Mera Card' : 'Naam - COD';
+  });
+  document.getElementById('paySaveBtn')?.addEventListener('click', async function(){
+    var type = document.getElementById('payType').value;
+    var upi = document.getElementById('payUpi').value.trim();
+    var last4 = document.getElementById('payCardLast4').value.trim();
+    var name = document.getElementById('payName').value.trim();
+    // Card ka pura number kabhi save nahi hoga - Sirf Last 4, wo bhi 4 digit hi hona chahiye
+    if(type==='upi' && !/^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test(upi)){ hint('❌ Sahi UPI ID likho - jaise 98765@okhdfc', false); return; }
+    if(type==='card' && !/^\d{4}$/.test(last4)){ hint('❌ Card ke sirf Last 4 digit likho - Pura number kabhi mat likhna', false); return; }
+    var payload = { type:type, name:name|| (type==='upi'?'Mera UPI':type==='card'?'Mera Card':'COD'), upiId: type==='upi'?upi:'', last4: type==='card'?last4:'', isDefault: document.getElementById('payDefault').checked };
+    try{
+      var data = await fetch('/api/user/payments', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() }, body: JSON.stringify(payload) }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      if(data && data.success){ hint('✅ Save ho gaya - Checkout me dobara select karna padega, ye sirf saved list hai', true); document.getElementById('payUpi').value=''; document.getElementById('payCardLast4').value=''; document.getElementById('payName').value=''; await load(); }
+      else hint('❌ Save nahi hua - ' + ((data && (data.message||data.error)) || 'Server check karo'), false);
+    }catch(e){ hint('❌ Save nahi hua - Server check karo', false); }
+  });
+  document.addEventListener('DOMContentLoaded', load);
+  if(document.readyState !== 'loading') load();
+})();
+</script>
+</body>
+</html>

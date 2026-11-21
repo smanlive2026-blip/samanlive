@@ -1,54 +1,128 @@
-<!-- LOCATION: public/profile/details.html - MAIN APP - MY DETAILS - V23 UNIFIED PROFILE - FULL CODE -->
+<!-- LOCATION: public/profile/details.html - V2 COMMON - FULL CODE - MY DETAILS -->
+<!-- FIX V2: 1) Pehle Save me 2 API try karta tha, pata hi nahi chalta kaunsi chali - Ab sirf 1 Save API = PUT /api/user/update -->
+<!-- 2) Pehle Photo turant upload ho jati thi, Save dabane se pehle hi - Ab Photo Cloudinary pe jayegi, par Save dabane pe hi Details save hogi - Dono ka sach ek hi Save me hoga -->
+<!-- FLOW: Load -> GET /api/auth/me -> Form bharo -> Photo badlo (Cloudinary URL) -> Save -> PUT /api/user/update { name, phone, email, profilePic } -> Server se dobara verify -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>My Details - SAMANLIVE</title>
 <link rel="stylesheet" href="/assets/css/main.css">
 <style>
-body{background:#f1f5f9;margin:0;font-family:Inter,sans-serif}
+*{box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f1f5f9;margin:0;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+.det-root{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:20px}
 .header{background:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;border-bottom:1px solid #e2e8f0}
-.back{width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer}
-.form{max-width:500px;margin:16px auto;background:#fff;border-radius:16px;padding:20px}
-.avatar-wrap{text-align:center;margin-bottom:16px;position:relative}
-.avatar-wrap img{width:90px;height:90px;border-radius:50%;border:3px solid #667eea;object-fit:cover;background:#f1f5f9}
-.avatar-wrap .cam{position:absolute;bottom:0;left:50%;transform:translateX(20px);width:28px;height:28px;background:#0f172a;color:#fff;border-radius:50%;display:grid;place-items:center;font-size:13px;cursor:pointer;border:2px solid #fff}
-.input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px;font-size:14px;box-sizing:border-box}
-label{display:block;font-size:12px;font-weight:800;color:#64748b;margin-top:14px;text-transform:uppercase}
-.btn{width:100%;margin-top:20px;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;cursor:pointer}
-.btn:disabled{opacity:.6}
-.success{background:#dcfce7;color:#166534;padding:10px;border-radius:10px;display:none;margin-top:12px;text-align:center;font-weight:700}
-.msg{font-size:12px;color:#64748b;text-align:center;margin-top:8px}
-.badge{display:inline-block;background:#dcfce7;color:#166534;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800}
+.back{width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.header b{font-size:16px}
+.form{max-width:500px;margin:16px auto;padding:16px;background:#fff;border-radius:12px;border:1px solid #e2e8f0}
+.pic-wrap{text-align:center;margin-bottom:16px}
+.pic-wrap img{width:96px;height:96px;border-radius:50%;object-fit:cover;background:#f1f5f9}
+.pic-wrap label{display:block;margin-top:8px;font-size:12px;font-weight:800;color:#0f172a;cursor:pointer}
+.form label{display:block;font-size:12px;font-weight:800;margin-top:12px}
+.form input,.form select{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px;font-family:inherit;font-weight:600;font-size:13px}
+.hint{margin-top:12px;padding:10px;border-radius:10px;font-size:11px;font-weight:700;line-height:1.5;display:none}
+.hint.ok{display:block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.hint.bad{display:block;background:#fee2e2;color:#991b1b;border-color:#fecaca}
+.save-btn{width:100%;margin-top:16px;background:#0f172a;color:#fff;padding:14px;border-radius:12px;font-weight:900;cursor:pointer;font-size:14px}
+.save-btn:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:600px){ .det-root{max-width:100%} .form{margin:12px} }
+@media(min-width:900px){ .det-root{max-width:760px} .header{border-radius:0 0 16px 16px} }
 </style>
 </head>
 <body>
-<div class="header"><button class="back" onclick="history.back()">‹</button><b>My Details</b><span id="roleBadge" class="badge" style="margin-left:auto">CUSTOMER</span></div>
-<div class="form">
-  <div class="avatar-wrap">
-    <img id="userProfilePic" src="/assets/default-avatar.png" alt="Profile Photo">
-    <div class="cam" onclick="document.getElementById('picInput').click()">📷</div><br>
-    <input type="file" id="picInput" accept="image/*" style="display:none">
-    <button onclick="document.getElementById('picInput').click()" style="margin-top:8px;background:#f1f5f9;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer">📷 Change Photo</button>
-    <div id="picMsg" class="msg"></div>
+<div class="det-root">
+  <div class="header"><button class="back" onclick="location.href='/profile.html'">‹</button><b>👤 My Details</b></div>
+  <div class="form">
+    <div class="pic-wrap">
+      <img id="userProfilePic" src="/assets/default-avatar.png" onerror="this.src='/assets/default-avatar.png'">
+      <label for="picInput">📷 Change Photo</label>
+      <input type="file" id="picInput" accept="image/*" style="display:none">
+      <div id="picMsg" style="font-size:11px;color:#64748b;font-weight:600;margin-top:4px"></div>
+    </div>
+    <label>Full Name *</label><input id="detailName" placeholder="Apna naam">
+    <label>Phone *</label><input id="detailPhone" placeholder="10 digit phone" maxlength="10" inputmode="numeric">
+    <label>Email</label><input id="detailEmail" placeholder="email (optional)" type="email">
+    <label>Language</label>
+    <select id="detailLang"><option value="hi">Hindi - हिन्दी</option><option value="en">English</option><option value="gu">Gujarati - ગુજરાતી</option></select>
+    <div id="detailHint" class="hint"></div>
+    <button id="saveBtn" class="save-btn">💾 Save Details</button>
   </div>
-  <label>Name *</label><input id="userName" class="input" placeholder="Your name">
-  <label>Phone *</label><input id="userPhone" class="input" placeholder="9876543210" maxlength="10">
-  <label>Email</label><input id="userEmail" class="input" placeholder="email@example.com">
-  <label>Gender</label>
-  <select id="userGender" class="input"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
-  <label>Address</label><input id="userAddress" class="input" placeholder="House, Street">
-  <label>City</label><input id="userCity" class="input" placeholder="Surat">
-  <label>State</label><input id="userState" class="input" placeholder="Gujarat">
-  <label>Pincode</label><input id="userPincode" class="input" placeholder="395007" maxlength="6">
-  <label>Language</label><select id="userLang" class="input"><option value="hi">Hindi</option><option value="en">English</option><option value="gu">Gujarati</option></select>
-  <div id="successMsg" class="success">✅ Saved successfully!</div>
-  <button id="saveBtn" class="btn" onclick="saveDetails()">💾 Save Details</button>
 </div>
 
-<!-- V23 - UnifiedProfile sabse pehle load karo, phir details.js -->
 <script src="/shop-templates/common/profile/profile-core.js"></script>
 <script src="/assets/js/app.js"></script>
-<script src="/profile/js/details.js"></script>
+<script>
+(function(){
+  var newProfilePicUrl = '';
+  function getToken(){ try{ if(window.AuthCore && window.AuthCore.getToken) { var t=window.AuthCore.getToken(); if(t) return t; } }catch(e){} try{ return localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || localStorage.getItem('token') || ''; }catch(e){ return ''; } }
+  function hint(msg, ok){ var h=document.getElementById('detailHint'); h.textContent=msg; h.className='hint '+(ok?'ok':'bad'); }
+
+  async function load(){
+    var token = getToken();
+    if(!token){ window.location.href = '/'; return; }
+    try{
+      var data = await fetch('/api/auth/me', { headers:{ 'Authorization':'Bearer '+token } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      var u = (data && data.user) || null;
+      if(!u){ hint('❌ Details load nahi hui - Dobara login karo', false); return; }
+      window.currentUser = u;
+      document.getElementById('detailName').value = u.name || '';
+      document.getElementById('detailPhone').value = u.phone || '';
+      document.getElementById('detailEmail').value = u.email || '';
+      document.getElementById('detailLang').value = u.language || (u.preferences && u.preferences.language) || 'hi';
+      var pic = u.profilePic || u.avatar || u.photo || '';
+      if(pic) document.getElementById('userProfilePic').src = pic;
+      newProfilePicUrl = pic;
+    }catch(e){ hint('❌ Details load nahi hui', false); }
+  }
+
+  // Photo - UnifiedProfile se Cloudinary pe jayegi - Sirf URL milega, Base64 DB me kabhi nahi jayega
+  document.getElementById('picInput')?.addEventListener('change', async function(){
+    var input = this;
+    if(!input.files || !input.files[0]) return;
+    document.getElementById('picMsg').innerText = 'Upload ho raha hai...';
+    try{
+      if(window.UnifiedProfile && window.UnifiedProfile.handleFileInput){
+        var r = await window.UnifiedProfile.handleFileInput(input, { role:'customer', previewSelector:'#userProfilePic', msgId:'picMsg', btnId:'saveBtn' });
+        if(r && r.success){ newProfilePicUrl = r.url; document.getElementById('picMsg').innerText = '✅ Photo upload ho gayi - Save dabao toh Details me save hogi'; return; }
+      }
+      // UnifiedProfile na chale toh seedha Cloudinary wale API pe - Base64 kabhi nahi bhejenge
+      var fd = new FormData(); fd.append('image', input.files[0]);
+      var up = await fetch('/api/upload/upload-pic', { method:'POST', headers:{ 'Authorization':'Bearer '+getToken() }, body: fd }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      var url = (up && (up.url || up.secure_url || up.data?.url)) || '';
+      if(url){ newProfilePicUrl = url; document.getElementById('userProfilePic').src = url; document.getElementById('picMsg').innerText = '✅ Photo upload ho gayi - Save dabao'; }
+      else document.getElementById('picMsg').innerText = '❌ Photo upload nahi hui - Dobara try karo';
+    }catch(e){ document.getElementById('picMsg').innerText = '❌ Photo upload nahi hui'; }
+  });
+
+  // Save - SIRF 1 API - PUT /api/user/update - Dusri API pe chupke nahi jayenge
+  document.getElementById('saveBtn')?.addEventListener('click', async function(){
+    var btn = this;
+    var name = document.getElementById('detailName').value.trim();
+    var phone = document.getElementById('detailPhone').value.trim();
+    var email = document.getElementById('detailEmail').value.trim();
+    var lang = document.getElementById('detailLang').value;
+    if(!name){ hint('❌ Naam chahiye', false); return; }
+    if(!/^\d{10}$/.test(phone)){ hint('❌ Sahi 10 digit Phone chahiye', false); return; }
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try{
+      var payload = { name:name, phone:phone, email:email, language:lang, profilePic: newProfilePicUrl, avatar: newProfilePicUrl };
+      var res = await fetch('/api/user/update', { method:'PUT', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() }, body: JSON.stringify(payload) }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      if(res && res.success){
+        hint('✅ Save ho gaya - Details Server pe save ho gayi', true);
+        try{ localStorage.setItem('USER_NAME', name); if(newProfilePicUrl) localStorage.setItem('USER_PIC', newProfilePicUrl); }catch(e){}
+      } else {
+        hint('❌ Save nahi hua - ' + ((res && (res.message || res.error)) || 'Server check karo'), false);
+      }
+    }catch(e){ hint('❌ Save nahi hua - ' + e.message, false); }
+    btn.disabled = false; btn.textContent = '💾 Save Details';
+  });
+
+  document.addEventListener('DOMContentLoaded', load);
+  if(document.readyState !== 'loading') load();
+})();
+</script>
 </body>
 </html>
