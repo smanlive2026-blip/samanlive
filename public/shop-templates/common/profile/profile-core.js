@@ -1,10 +1,11 @@
-// LOCATION: public/shop-templates/common/profile/profile-core.js - V24 - UNIFIED - FULL CODE - NO CUT
-// ROLE: customer + shop_owner + shop_logo + area_manager + executive + product_manager
-// FLOW: File -> Compress -> Cloudinary via /api/common/profile/upload-avatar -> URL -> Model + Media
-// RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Base64 sirf preview ke liye.
-// RULE 2: Is file me koi bhi browser storage use NAHI hoga. Sab kuch Server + Cloudinary se aayega.
-//         shopId = sirf opts / URL se. token = sirf AuthCore se. userId = sirf AuthCore / currentUser se.
-//         Upload ke baad URL kahin save NAHI hoga, sirf return hoga. Load hamesha Server se hoga.
+// LOCATION: public/shop-templates/common/profile/profile-core.js - V25 - UNIFIED - FULL CODE - NO CUT
+// ROLE: customer + shop_owner + shop_logo + shop_cover + shop_gallery + area_manager + executive + product_manager + delivery_boy
+// FLOW: File -> Compress (800px, Browser pe hi) -> FormData File -> POST /api/common/profile/upload-avatar -> Server -> Cloudinary upload_stream -> URL wapas -> Sirf return hoga
+// RULE 1: Photo SIRF Cloudinary pe jayegi - Website ke /uploads/ me kabhi nahi, Disk pe kabhi nahi, Base64 DB me kabhi nahi
+// RULE 2: Is file me localStorage / sessionStorage KAHIN NAHI HOGA - Token sirf AuthCore se, shopId sirf opts / URL se, userId sirf AuthCore / currentUser se
+// RULE 3: Upload ke baad URL KAHIN SAVE NAHI HOGA, sirf return hoga - Caller apne RAM wale variable me rakhega, localStorage me KABHI NAHI
+// RULE 4: alert() KABHI NAHI - Error sirf msgId me likhega, Button hamesha wapas enable hoga
+// RULE 5: Preview base64 se NAHI hoga - ObjectURL se hoga, Upload ke baad revokeObjectURL se RAM khaali hoga
 
 (function(){
   if(window.UnifiedProfile) return;
@@ -22,7 +23,7 @@
       delivery_boy: { folder: 'samanlive/delivery', field: 'photo', label: 'Delivery Boy' }
     },
 
-    // URL se 1 value nikaalo - shopId / role / userId ke liye
+    // URL se 1 value nikaalo - shopId / role / userId ke liye - localStorage se KABHI NAHI
     _fromUrl(key){
       try{
         var v = new URLSearchParams(location.search).get(key) || '';
@@ -41,7 +42,7 @@
       return 'customer';
     },
 
-    // IDs - sirf opts / URL / window.currentUser / AuthCore se - kahi aur se NAHI
+    // IDs - sirf opts / URL / window.currentUser / AuthCore se - localStorage se KABHI NAHI
     getIds(opts){
       opts = opts || {};
       var userId = opts.userId || opts.buyerId || '';
@@ -74,7 +75,7 @@
       };
     },
 
-    // Token - sirf AuthCore / window se - kahi aur se NAHI
+    // Token - sirf AuthCore / window se - localStorage se KABHI NAHI - Token ka ek hi maalik hai = AuthCore
     getToken(){
       try{
         if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || '';
@@ -83,55 +84,81 @@
       return '';
     },
 
-    // MAIN FUNCTION - har input isi ko call karega
+    // Msg me likhne ke liye - alert() kabhi nahi karenge
+    _setMsg(opts, text, color){
+      try{
+        if(!opts) return;
+        if(opts.msgId){
+          var m = document.getElementById(opts.msgId);
+          if(m){ m.textContent = text; if(color) m.style.color = color; }
+        }
+      }catch(e){}
+    },
+
+    // Button wapas laane ke liye - Hamesha chalega, chahe success ho ya fail - Button Uploading... pe kabhi nahi atkega
+    _restoreBtn(opts){
+      try{
+        if(!opts || !opts.btnId) return;
+        var btn = document.getElementById(opts.btnId);
+        if(btn){ btn.textContent = btn.dataset.oldText || 'Save'; btn.disabled = false; }
+      }catch(e){}
+    },
+
+    // MAIN FUNCTION - har input isi ko call karega - Ek hi rasta hai Photo ka
     async handleFileInput(inputEl, opts){
       opts = opts || {};
-      const file = inputEl && inputEl.files ? inputEl.files[0] : null;
-      if(!file) return { success: false, error: 'No file selected' };
-      if(!file.type || !file.type.startsWith('image/')){ alert('Sirf image allowed hai - JPG / PNG / WEBP'); return { success: false, error: 'Only image' }; }
-      if(file.size > 5 * 1024 * 1024){ alert('Photo 5MB se chhoti honi chahiye'); return { success: false, error: 'Max 5MB' }; }
+      var file = inputEl && inputEl.files ? inputEl.files[0] : null;
+      if(!file){
+        this._setMsg(opts, 'Koi file select nahi hui', 'red');
+        return { success: false, error: 'No file selected' };
+      }
+      if(!file.type || !file.type.startsWith('image/')){
+        this._setMsg(opts, 'Sirf image allowed hai - JPG / PNG / WEBP', 'red');
+        return { success: false, error: 'Only image' };
+      }
+      if(file.size > 5 * 1024 * 1024){
+        this._setMsg(opts, 'Photo 5MB se chhoti honi chahiye', 'red');
+        return { success: false, error: 'Max 5MB' };
+      }
 
-      const role = opts.role || this.getCurrentRole(opts);
-      const ids = this.getIds(opts);
-      const shopId = opts.shopId || ids.shopId;
-      const field = opts.field || (this.ROLES[role] ? this.ROLES[role].field : 'profilePic');
-      const type = opts.type || (role === 'shop_logo' ? 'logo' : role === 'shop_cover' ? 'banner' : role === 'shop_gallery' ? 'gallery' : 'avatar');
+      var role = opts.role || this.getCurrentRole(opts);
+      var ids = this.getIds(opts);
+      var shopId = opts.shopId || ids.shopId;
+      var field = opts.field || (this.ROLES[role] ? this.ROLES[role].field : 'profilePic');
+      var type = opts.type || (role === 'shop_logo' ? 'logo' : role === 'shop_cover' ? 'banner' : role === 'shop_gallery' ? 'gallery' : 'avatar');
 
-      // Shop wali photo ke liye shopId MUST hai - bina shopId ke upload nahi hoga
+      // Shop wali photo ke liye shopId MUST hai - bina shopId ke upload nahi hoga, warna galat dukaan ki photo badal jayegi
       if((role === 'shop_logo' || role === 'shop_cover' || role === 'shop_gallery' || role === 'shop_owner') && !shopId){
-        alert('shopId nahi mila - URL me ?shopId=XXX hona chahiye. Shop List se dobara kholo.');
+        this._setMsg(opts, 'shopId nahi mila - URL me ?shopId=XXX hona chahiye. Shop List se dobara kholo.', 'red');
         return { success: false, error: 'shopId missing - URL se nahi mila' };
       }
 
-      // 1. Preview turant - base64 sirf screen ke liye, kahin save NAHI hoga
-      let previewUrl = '';
+      // 1. Preview turant - ObjectURL se, base64 se NAHI - Photo RAM me double nahi hogi
+      var previewObjectUrl = '';
       try{
-        previewUrl = await this._readAsDataURL(file);
+        previewObjectUrl = URL.createObjectURL(file);
         if(opts.previewSelector){
-          document.querySelectorAll(opts.previewSelector).forEach(function(img){ img.src = previewUrl; });
+          document.querySelectorAll(opts.previewSelector).forEach(function(img){ img.src = previewObjectUrl; });
         }
         if(opts.previewId){
-          const el = document.getElementById(opts.previewId);
-          if(el) el.src = previewUrl;
+          var el = document.getElementById(opts.previewId);
+          if(el) el.src = previewObjectUrl;
         }
       }catch(e){}
 
-      // 2. Compress - 800px max, 0.85 quality
-      let uploadFile = file;
+      // 2. Compress - 800px max, 0.85 quality - Browser pe hi chhota hoga, Server pe bada File kabhi nahi jayega, Website pe load nahi aayega
+      var uploadFile = file;
       try{ uploadFile = await this._compress(file, 800); }catch(e){ uploadFile = file; }
 
-      // 3. Loading state
+      // 3. Loading state - Sirf Button + Msg, alert nahi
       if(opts.btnId){
-        const btn = document.getElementById(opts.btnId);
+        var btn = document.getElementById(opts.btnId);
         if(btn){ btn.dataset.oldText = btn.textContent; btn.textContent = 'Uploading... ⏳'; btn.disabled = true; }
       }
-      if(opts.msgId){
-        const m = document.getElementById(opts.msgId);
-        if(m) m.textContent = 'Uploading to Cloudinary...';
-      }
+      this._setMsg(opts, 'Uploading to Cloudinary...', '');
 
-      // 4. FormData - Cloudinary ke liye file hi jayegi, base64 nahi
-      const fd = new FormData();
+      // 4. FormData - Cloudinary ke liye File hi jayegi, base64 NAHI
+      var fd = new FormData();
       fd.append('profilePic', uploadFile, file.name);
       fd.append('role', role);
       fd.append('field', field);
@@ -146,53 +173,50 @@
       fd.append('phone', ids.phone);
 
       try{
-        const token = this.getToken();
-        const res = await fetch('/api/common/profile/upload-avatar', {
+        var token = this.getToken();
+        var res = await fetch('/api/common/profile/upload-avatar', {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': ids.userId },
           body: fd
         });
-        const data = await res.json();
+        var data = await res.json().catch(function(){ return null; });
 
-        if(opts.btnId){
-          const btn = document.getElementById(opts.btnId);
-          if(btn){ btn.textContent = btn.dataset.oldText || 'Save'; btn.disabled = false; }
-        }
+        // Preview wali ObjectURL ab khaali karo - RAM me Photo rehni nahi chahiye
+        try{ if(previewObjectUrl) URL.revokeObjectURL(previewObjectUrl); }catch(e){}
 
-        if(!data.success){
-          if(opts.msgId){ const m = document.getElementById(opts.msgId); if(m){ m.textContent = 'Error: ' + (data.message || data.error); m.style.color = 'red'; } }
-          alert('Upload fail: ' + (data.message || data.error || 'unknown'));
-          return data;
+        this._restoreBtn(opts);
+
+        if(!data || !data.success){
+          // Invalid Signature aaye toh ye Server ke .env ka dosh hai - Frontend ka nahi - Msg me saaf likhenge, alert nahi marenge
+          this._setMsg(opts, 'Error: ' + ((data && (data.message || data.error)) || 'Upload fail - Server check karo'), 'red');
+          return data || { success: false, error: 'Upload fail' };
         }
 
         // 5. NO SAVE HERE - URL kahin save NAHI hoga, sirf return hoga.
         //    Caller ko chahe toh apne RAM wale variable me rakhe, Server se dobara mang ke verify kare.
-        //    Mobile me dikh rahi hai, Laptop me nahi - wala dhokha ab khatam, kyunki kahin save hi nahi ho raha.
+        //    localStorage me Photo / URL kabhi nahi jayega.
 
-        // 6. Final preview - Cloudinary URL se
+        // 6. Final preview - Cloudinary URL se - Ab ye asli Photo hai, ObjectURL wali nahi
         if(opts.previewSelector){
           document.querySelectorAll(opts.previewSelector).forEach(function(img){ img.src = data.url; });
         }
         if(opts.previewId){
-          const el = document.getElementById(opts.previewId);
-          if(el) el.src = data.url;
+          var el2 = document.getElementById(opts.previewId);
+          if(el2) el2.src = data.url;
         }
 
-        if(opts.msgId){
-          const m = document.getElementById(opts.msgId);
-          if(m){ m.textContent = '✅ Saved! Photo Cloudinary pe save ho gayi'; m.style.color = 'green'; }
-        }
+        this._setMsg(opts, '✅ Saved! Photo Cloudinary pe save ho gayi', 'green');
         if(opts.onSuccess) opts.onSuccess(data);
 
-        // 7. VERIFY - Server me save hui ya nahi, turant dobara Server se mang ke check karo
-        //    Agar Server se wahi URL nahi aaya toh alert de do - chup-chap local wali photo mat dikhao
+        // 7. VERIFY - Shop wali Photo ke liye - Server me save hui ya nahi, turant dobara Server se mang ke check karo
+        //    Customer ke liye verify nahi karenge, kyunki Customer ka Save uske Details wale Save pe hoga, yahan turant nahi
         if(shopId){
           try{
             var chk = await this.loadMyProfile({ shopId: shopId, role: role, userId: ids.userId });
             var s = (chk && (chk.shop || chk.user)) || {};
             var serverUrl = s.logo || s.shopLogo || s.banner || s.coverPhoto || s.ownerPhotoUrl || s.ownerPhoto || '';
             if(!serverUrl){
-              alert('⚠️ Photo Cloudinary pe gayi, par Shop me save nahi hui! shopId galat hai - Shop List se dobara kholo.');
+              this._setMsg(opts, '⚠️ Photo Cloudinary pe gayi, par Shop me save nahi hui! shopId galat hai - Shop List se dobara kholo.', 'red');
             }
           }catch(e){}
         }
@@ -200,49 +224,46 @@
         return { success: true, url: data.url, public_id: data.public_id, savedTo: data.savedTo, role: role };
 
       }catch(err){
-        if(opts.btnId){
-          const btn = document.getElementById(opts.btnId);
-          if(btn){ btn.textContent = btn.dataset.oldText || 'Save'; btn.disabled = false; }
-        }
-        alert('Upload error: ' + err.message);
+        try{ if(previewObjectUrl) URL.revokeObjectURL(previewObjectUrl); }catch(e){}
+        this._restoreBtn(opts);
+        this._setMsg(opts, 'Upload error: ' + err.message, 'red');
         return { success: false, error: err.message };
       }
     },
 
-    // Purani base64 wali pic ko bhi Cloudinary pe bhejne ke liye - migration ke liye
+    // Purani base64 wali pic ko bhi Cloudinary pe bhejne ke liye - Migration ke liye
+    // Base64 ko yahin File me badal ke handleFileInput wale rasta se bhejenge - Base64 Server ko KABHI NAHI bhejenge
     async uploadBase64String(base64Str, opts){
       opts = opts || {};
-      const role = opts.role || this.getCurrentRole(opts);
-      const ids = this.getIds(opts);
-      const token = this.getToken();
-      const res = await fetch('/api/common/profile/upload-avatar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-buyer-id': ids.userId },
-        body: JSON.stringify({ role: role, field: opts.field || 'profilePic', type: opts.type || 'avatar', shopId: opts.shopId || ids.shopId, profilePic: base64Str, buyerId: ids.userId })
-      });
-      return await res.json();
-    },
-
-    _readAsDataURL(file){
-      return new Promise(function(resolve, reject){
-        const r = new FileReader();
-        r.onload = function(e){ resolve(e.target.result); };
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
+      try{
+        if(!base64Str || typeof base64Str !== 'string') return { success: false, error: 'base64 missing' };
+        if(base64Str.startsWith('http')) return { success: true, url: base64Str };
+        var parts = base64Str.split(',');
+        var mime = 'image/jpeg';
+        try{ var m = parts[0].match(/data:(.*);base64/); if(m) mime = m[1]; }catch(e){}
+        var bin = atob(parts[1] || '');
+        var bytes = new Uint8Array(bin.length);
+        for(var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        var blob = new Blob([bytes], { type: mime });
+        var fakeFile = new File([blob], 'migrated.jpg', { type: mime });
+        var fakeInput = { files: [fakeFile] };
+        return await this.handleFileInput(fakeInput, opts);
+      }catch(e){
+        return { success: false, error: e.message };
+      }
     },
 
     _compress(file, maxSize){
       return new Promise(function(resolve){
-        const img = new Image();
-        const url = URL.createObjectURL(file);
+        var img = new Image();
+        var url = URL.createObjectURL(file);
         img.onload = function(){
-          let w = img.width, h = img.height;
+          var w = img.width, h = img.height;
           if(w > maxSize){ h = Math.round(h * maxSize / w); w = maxSize; }
           if(h > maxSize){ w = Math.round(w * maxSize / h); h = maxSize; }
-          const c = document.createElement('canvas');
+          var c = document.createElement('canvas');
           c.width = w; c.height = h;
-          const ctx = c.getContext('2d');
+          var ctx = c.getContext('2d');
           ctx.drawImage(img, 0, 0, w, h);
           URL.revokeObjectURL(url);
           c.toBlob(function(b){
@@ -255,20 +276,20 @@
       });
     },
 
-    // Profile data load karo - 1 hi API sab role ke liye - HAMESHA Server se
+    // Profile data load karo - 1 hi API sab role ke liye - HAMESHA Server se - localStorage se KABHI NAHI
     // opts = { shopId, userId / buyerId, role, managerId, executiveId, pmId }
     async loadMyProfile(opts){
       opts = opts || {};
-      const ids = this.getIds(opts);
-      const token = this.getToken();
-      const role = opts.role || this.getCurrentRole(opts);
-      const shopId = opts.shopId || ids.shopId;
-      const userId = opts.userId || opts.buyerId || ids.userId;
+      var ids = this.getIds(opts);
+      var token = this.getToken();
+      var role = opts.role || this.getCurrentRole(opts);
+      var shopId = opts.shopId || ids.shopId;
+      var userId = opts.userId || opts.buyerId || ids.userId;
       try{
-        const res = await fetch('/api/common/profile/me?buyerId=' + encodeURIComponent(userId) + '&role=' + encodeURIComponent(role) + '&shopId=' + encodeURIComponent(shopId), {
+        var res = await fetch('/api/common/profile/me?buyerId=' + encodeURIComponent(userId) + '&role=' + encodeURIComponent(role) + '&shopId=' + encodeURIComponent(shopId), {
           headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': userId }
         });
-        const data = await res.json();
+        var data = await res.json();
         return data;
       }catch(e){ return { success: false, error: e.message }; }
     },
@@ -305,5 +326,5 @@
     return window.UnifiedProfile.handleFileInput(inputEl, { role: role, previewSelector: previewSelector });
   };
 
-  console.log('✅ UnifiedProfile V24 loaded - All roles + Cloudinary - NO BROWSER STORAGE');
+  console.log('✅ UnifiedProfile V25 loaded - All roles + Cloudinary - NO BROWSER STORAGE');
 })();

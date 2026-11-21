@@ -1,7 +1,8 @@
-<!-- LOCATION: public/profile/details.html - V2 COMMON - FULL CODE - MY DETAILS -->
-<!-- FIX V2: 1) Pehle Save me 2 API try karta tha, pata hi nahi chalta kaunsi chali - Ab sirf 1 Save API = PUT /api/user/update -->
-<!-- 2) Pehle Photo turant upload ho jati thi, Save dabane se pehle hi - Ab Photo Cloudinary pe jayegi, par Save dabane pe hi Details save hogi - Dono ka sach ek hi Save me hoga -->
-<!-- FLOW: Load -> GET /api/auth/me -> Form bharo -> Photo badlo (Cloudinary URL) -> Save -> PUT /api/user/update { name, phone, email, profilePic } -> Server se dobara verify -->
+<!-- LOCATION: public/profile/details.html - V3 - FULL CODE - NO CUT - MY DETAILS - CUSTOMER ONLY -->
+<!-- FLOW: Load -> GET /api/common/profile/me?role=customer -> Form bharo -> Photo badlo (UnifiedProfile -> Cloudinary URL) -> Save -> PUT /api/common/profile/update { role:customer, name, phone, email, gender, city, area, state, pincode, address, language, profilePic } -->
+<!-- RULE 1: Is file me localStorage / sessionStorage KAHIN NAHI HOGA - Token sirf AuthCore se, Data sirf Server se -->
+<!-- RULE 2: Photo SIRF Cloudinary pe jayegi - Base64 DB me kabhi nahi, /uploads/ me kabhi nahi, Disk pe kabhi nahi -->
+<!-- RULE 3: alert() KABHI NAHI - Error sirf hint / msg me likhega, Button hamesha wapas aayega -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,12 +24,14 @@ button{font-family:inherit;cursor:pointer;border:0}
 .pic-wrap label{display:block;margin-top:8px;font-size:12px;font-weight:800;color:#0f172a;cursor:pointer}
 .form label{display:block;font-size:12px;font-weight:800;margin-top:12px}
 .form input,.form select{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px;font-family:inherit;font-weight:600;font-size:13px}
+.row{display:flex;gap:10px}
+.row > div{flex:1}
 .hint{margin-top:12px;padding:10px;border-radius:10px;font-size:11px;font-weight:700;line-height:1.5;display:none}
 .hint.ok{display:block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
 .hint.bad{display:block;background:#fee2e2;color:#991b1b;border-color:#fecaca}
 .save-btn{width:100%;margin-top:16px;background:#0f172a;color:#fff;padding:14px;border-radius:12px;font-weight:900;cursor:pointer;font-size:14px}
 .save-btn:disabled{opacity:.5;cursor:not-allowed}
-@media(max-width:600px){ .det-root{max-width:100%} .form{margin:12px} }
+@media(max-width:600px){ .det-root{max-width:100%} .form{margin:12px} .row{flex-direction:column} }
 @media(min-width:900px){ .det-root{max-width:760px} .header{border-radius:0 0 16px 16px} }
 </style>
 </head>
@@ -42,77 +45,195 @@ button{font-family:inherit;cursor:pointer;border:0}
       <input type="file" id="picInput" accept="image/*" style="display:none">
       <div id="picMsg" style="font-size:11px;color:#64748b;font-weight:600;margin-top:4px"></div>
     </div>
-    <label>Full Name *</label><input id="detailName" placeholder="Apna naam">
-    <label>Phone *</label><input id="detailPhone" placeholder="10 digit phone" maxlength="10" inputmode="numeric">
-    <label>Email</label><input id="detailEmail" placeholder="email (optional)" type="email">
-    <label>Language</label>
-    <select id="detailLang"><option value="hi">Hindi - हिन्दी</option><option value="en">English</option><option value="gu">Gujarati - ગુજરાતી</option></select>
+
+    <label>Full Name *</label><input id="detailName" placeholder="Apna naam" autocomplete="name">
+    <label>Phone *</label><input id="detailPhone" placeholder="10 digit phone" maxlength="10" inputmode="numeric" autocomplete="tel">
+    <label>Email</label><input id="detailEmail" placeholder="email (optional)" type="email" autocomplete="email">
+
+    <div class="row">
+      <div><label>Gender</label>
+        <select id="detailGender"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
+      </div>
+      <div><label>Language</label>
+        <select id="detailLang"><option value="hi">Hindi - हिन्दी</option><option value="en">English</option><option value="gu">Gujarati - ગુજરાતી</option></select>
+      </div>
+    </div>
+
+    <label>Address</label><input id="detailAddress" placeholder="Ghar / Shop address" autocomplete="street-address">
+    <label>Area</label><input id="detailArea" placeholder="Area / Mohalla">
+
+    <div class="row">
+      <div><label>City</label><input id="detailCity" placeholder="City"></div>
+      <div><label>State</label><input id="detailState" placeholder="State"></div>
+      <div><label>Pincode</label><input id="detailPincode" placeholder="Pincode" maxlength="6" inputmode="numeric"></div>
+    </div>
+
     <div id="detailHint" class="hint"></div>
     <button id="saveBtn" class="save-btn">💾 Save Details</button>
   </div>
 </div>
 
+<script src="/shop-templates/common/core/auth-core.js"></script>
 <script src="/shop-templates/common/profile/profile-core.js"></script>
 <script src="/assets/js/app.js"></script>
 <script>
 (function(){
   var newProfilePicUrl = '';
-  function getToken(){ try{ if(window.AuthCore && window.AuthCore.getToken) { var t=window.AuthCore.getToken(); if(t) return t; } }catch(e){} try{ return localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || localStorage.getItem('token') || ''; }catch(e){ return ''; } }
-  function hint(msg, ok){ var h=document.getElementById('detailHint'); h.textContent=msg; h.className='hint '+(ok?'ok':'bad'); }
+  var currentUserId = '';
 
+  // Token - Sirf AuthCore se - Browser storage se KABHI NAHI padhenge
+  function getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  function getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.USER_ID) return window.USER_ID;
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return currentUserId || '';
+  }
+  function hint(msg, ok){
+    var h = document.getElementById('detailHint');
+    h.textContent = msg;
+    h.className = 'hint ' + (ok ? 'ok' : 'bad');
+  }
+  function setVal(id, v){
+    var el = document.getElementById(id);
+    if(el) el.value = v || '';
+  }
+
+  // Load - HAMESHA Server se - Ek hi API = /api/common/profile/me?role=customer
   async function load(){
     var token = getToken();
     if(!token){ window.location.href = '/'; return; }
     try{
-      var data = await fetch('/api/auth/me', { headers:{ 'Authorization':'Bearer '+token } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
-      var u = (data && data.user) || null;
-      if(!u){ hint('❌ Details load nahi hui - Dobara login karo', false); return; }
-      window.currentUser = u;
-      document.getElementById('detailName').value = u.name || '';
-      document.getElementById('detailPhone').value = u.phone || '';
-      document.getElementById('detailEmail').value = u.email || '';
-      document.getElementById('detailLang').value = u.language || (u.preferences && u.preferences.language) || 'hi';
-      var pic = u.profilePic || u.avatar || u.photo || '';
-      if(pic) document.getElementById('userProfilePic').src = pic;
+      var user = null;
+      // 1. UnifiedProfile se - Sabse pehle wahi, kyunki wahi FILE 1 hai
+      if(window.UnifiedProfile && window.UnifiedProfile.loadMyProfile){
+        try{
+          var prof = await window.UnifiedProfile.loadMyProfile({ role: 'customer', userId: getUserId() });
+          if(prof && prof.success && prof.user) user = prof.user;
+        }catch(e){}
+      }
+      // 2. Seedha /api/common/profile/me - UnifiedProfile na chale toh
+      if(!user){
+        var data = await fetch('/api/common/profile/me?role=customer&buyerId=' + encodeURIComponent(getUserId()), { headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': getUserId() } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+        if(data && data.success && data.user) user = data.user;
+      }
+      // 3. Last - /api/auth/me - Purana rasta, sirf fallback
+      if(!user){
+        var data2 = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+        if(data2 && data2.user) user = data2.user;
+      }
+      if(!user){ hint('❌ Details load nahi hui - Dobara login karo', false); return; }
+
+      window.currentUser = user;
+      currentUserId = user._id || '';
+      if(window.USER_ID === undefined) window.USER_ID = currentUserId;
+
+      setVal('detailName', user.name);
+      setVal('detailPhone', user.phone);
+      setVal('detailEmail', user.email);
+      setVal('detailGender', user.gender);
+      setVal('detailLang', user.language || (user.preferences && user.preferences.language) || 'hi');
+      // Address string ya object dono chalenge
+      var addr = '';
+      if(typeof user.address === 'string') addr = user.address;
+      else if(user.address && typeof user.address === 'object') addr = user.address.line1 || user.address.street || '';
+      else if(user.addresses && user.addresses[0]) addr = user.addresses[0].line1 || user.addresses[0].full || '';
+      setVal('detailAddress', addr);
+      setVal('detailArea', user.area);
+      setVal('detailCity', user.city || (user.address && user.address.city) || (user.addresses && user.addresses[0] && user.addresses[0].city) || '');
+      setVal('detailState', user.state || (user.address && user.address.state) || '');
+      setVal('detailPincode', user.pincode || (user.address && user.address.pincode) || '');
+
+      var pic = user.profilePic || user.avatar || user.photo || '';
       newProfilePicUrl = pic;
-    }catch(e){ hint('❌ Details load nahi hui', false); }
+      if(pic) document.getElementById('userProfilePic').src = pic;
+    }catch(e){ hint('❌ Details load nahi hui - ' + e.message, false); }
   }
 
   // Photo - UnifiedProfile se Cloudinary pe jayegi - Sirf URL milega, Base64 DB me kabhi nahi jayega
+  // UnifiedProfile ke andar alert() nahi hai, Button atakega nahi, Preview ObjectURL se hoga
   document.getElementById('picInput')?.addEventListener('change', async function(){
     var input = this;
     if(!input.files || !input.files[0]) return;
-    document.getElementById('picMsg').innerText = 'Upload ho raha hai...';
+    document.getElementById('picMsg').innerText = 'Upload ho raha hai... Cloudinary pe ja raha hai...';
     try{
       if(window.UnifiedProfile && window.UnifiedProfile.handleFileInput){
-        var r = await window.UnifiedProfile.handleFileInput(input, { role:'customer', previewSelector:'#userProfilePic', msgId:'picMsg', btnId:'saveBtn' });
-        if(r && r.success){ newProfilePicUrl = r.url; document.getElementById('picMsg').innerText = '✅ Photo upload ho gayi - Save dabao toh Details me save hogi'; return; }
+        var r = await window.UnifiedProfile.handleFileInput(input, { role: 'customer', previewSelector: '#userProfilePic', msgId: 'picMsg', btnId: 'saveBtn', userId: getUserId(), buyerId: getUserId() });
+        if(r && r.success && r.url){
+          newProfilePicUrl = r.url;
+          document.getElementById('picMsg').innerText = '✅ Photo upload ho gayi - Ab Save Details dabao toh Profile me save hogi';
+          return;
+        }
+        // UnifiedProfile ne msgId me hi error likh diya hoga - Yahan alert nahi marenge
+        return;
       }
-      // UnifiedProfile na chale toh seedha Cloudinary wale API pe - Base64 kabhi nahi bhejenge
-      var fd = new FormData(); fd.append('image', input.files[0]);
-      var up = await fetch('/api/upload/upload-pic', { method:'POST', headers:{ 'Authorization':'Bearer '+getToken() }, body: fd }).then(function(r){ return r.json(); }).catch(function(){ return null; });
-      var url = (up && (up.url || up.secure_url || up.data?.url)) || '';
-      if(url){ newProfilePicUrl = url; document.getElementById('userProfilePic').src = url; document.getElementById('picMsg').innerText = '✅ Photo upload ho gayi - Save dabao'; }
-      else document.getElementById('picMsg').innerText = '❌ Photo upload nahi hui - Dobara try karo';
-    }catch(e){ document.getElementById('picMsg').innerText = '❌ Photo upload nahi hui'; }
+      document.getElementById('picMsg').innerText = '❌ Photo upload nahi hui - profile-core.js load nahi hua';
+    }catch(e){
+      document.getElementById('picMsg').innerText = '❌ Photo upload nahi hui - ' + e.message;
+    } finally {
+      input.value = '';
+    }
   });
 
-  // Save - SIRF 1 API - PUT /api/user/update - Dusri API pe chupke nahi jayenge
+  // Save - SIRF 1 API - PUT /api/common/profile/update - FILE 2 wali hi API - Dusri API pe chupke nahi jayenge
   document.getElementById('saveBtn')?.addEventListener('click', async function(){
     var btn = this;
     var name = document.getElementById('detailName').value.trim();
     var phone = document.getElementById('detailPhone').value.trim();
     var email = document.getElementById('detailEmail').value.trim();
+    var gender = document.getElementById('detailGender').value;
     var lang = document.getElementById('detailLang').value;
+    var address = document.getElementById('detailAddress').value.trim();
+    var area = document.getElementById('detailArea').value.trim();
+    var city = document.getElementById('detailCity').value.trim();
+    var state = document.getElementById('detailState').value.trim();
+    var pincode = document.getElementById('detailPincode').value.trim();
+
     if(!name){ hint('❌ Naam chahiye', false); return; }
     if(!/^\d{10}$/.test(phone)){ hint('❌ Sahi 10 digit Phone chahiye', false); return; }
+    if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ hint('❌ Sahi Email likho ya khaali chhodo', false); return; }
+    if(pincode && !/^\d{6}$/.test(pincode)){ hint('❌ Sahi 6 digit Pincode chahiye', false); return; }
+
     btn.disabled = true; btn.textContent = 'Saving...';
     try{
-      var payload = { name:name, phone:phone, email:email, language:lang, profilePic: newProfilePicUrl, avatar: newProfilePicUrl };
-      var res = await fetch('/api/user/update', { method:'PUT', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() }, body: JSON.stringify(payload) }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      var payload = {
+        role: 'customer',
+        userId: getUserId(),
+        buyerId: getUserId(),
+        name: name,
+        phone: phone,
+        email: email,
+        gender: gender,
+        language: lang,
+        address: address,
+        area: area,
+        city: city,
+        state: state,
+        pincode: pincode,
+        profilePic: newProfilePicUrl,
+        avatar: newProfilePicUrl,
+        photo: newProfilePicUrl
+      };
+      var res = await fetch('/api/common/profile/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken(), 'x-buyer-id': getUserId() },
+        body: JSON.stringify(payload)
+      }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+
       if(res && res.success){
-        hint('✅ Save ho gaya - Details Server pe save ho gayi', true);
-        try{ localStorage.setItem('USER_NAME', name); if(newProfilePicUrl) localStorage.setItem('USER_PIC', newProfilePicUrl); }catch(e){}
+        hint('✅ Save ho gaya - Details Server pe save ho gayi, Photo Cloudinary URL se aayegi', true);
+        // NO browser storage save here - USER_NAME / USER_PIC kabhi browser me nahi jayega
+        // Verify - Server se dobara mang ke check karo ki sach me save hui ya nahi
+        try{
+          var chk = await fetch('/api/common/profile/me?role=customer&buyerId=' + encodeURIComponent(getUserId()), { headers: { 'Authorization': 'Bearer ' + getToken(), 'x-buyer-id': getUserId() } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+          if(chk && chk.user){
+            var pic2 = chk.user.profilePic || chk.user.avatar || chk.user.photo || '';
+            if(newProfilePicUrl && pic2 !== newProfilePicUrl) hint('⚠️ Save toh ho gaya, par Photo Server pe purani hi dikh rahi hai - Dobara Save dabao', false);
+          }
+        }catch(e){}
       } else {
         hint('❌ Save nahi hua - ' + ((res && (res.message || res.error)) || 'Server check karo'), false);
       }

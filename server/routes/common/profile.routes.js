@@ -4,9 +4,10 @@
 // NOTE: middleware/upload.js ko haath nahi lagaya - memoryStorage use kiya hai, Vercel safe hai
 // V27 CHANGE: 1) areaCode fallback HATA DIYA - managerId/phone na ho toh kuch update nahi hoga, galat aadmi ki photo kabhi nahi badlegi 2) PUT /update me har role me duplicate check -> 409 Hindi me, 500 nahi 3) phone hamesha 10 digit, email/gender hamesha chhota 4) PUT /pic me base64 reject 5) E11000 -> 409
 // RULE: DB me kabhi base64 nahi jayega, sirf Cloudinary URL jayega. Update hamesha _id se, areaCode se kabhi nahi.
+// FIX V27.1 CLOUDINARY ONLY: upload-avatar + upload-cover me dataURI base64 hataya - Ab upload_stream se Buffer seedha Cloudinary ko jayega - Disk pe kuch nahi, /uploads/ me kuch nahi, Website pe load nahi aayega. Baaki file me koi kaat-chhaant nahi hai.
 
-const express = require('express');
-const router = express.Router();
+const 【entity-express¦canonical_name=express】 = require('【entity-express¦canonical_name=express】');
+const router = 【entity-express¦canonical_name=express】.Router();
 const mongoose = require('mongoose');
 const multer = require('multer');
 const { cloudinary } = require('../../utils/cloudinary');
@@ -43,6 +44,23 @@ function handleDupErr(res, err) {
         return res.status(409).json({ success: false, message: `Ye ${f} (${err.keyValue ? err.keyValue[f] : ''}) pehle se kisi aur ka hai. Dusra ${f} use karo.` });
     }
     return null;
+}
+// FIX V27.1: Cloudinary env + stream helper - Sirf ye 2 helper naye hain, baaki sab waisa hi hai
+function checkCloudinaryEnv(res) {
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        res.status(500).json({ success: false, message: 'CLOUDINARY env missing - Server .env me CLOUDINARY_CLOUD_NAME / API_KEY / API_SECRET check karo, phir Server restart karo' });
+        return false;
+    }
+    return true;
+}
+function uploadBufferToCloudinary(buffer, folder, transformation) {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder, resource_type: 'image', transformation: transformation || [{ width: 800, height: 800, crop: 'limit' }, { quality: 'auto:good', fetch_format: 'auto' }] },
+            (err, result) => err ? reject(err) : resolve(result)
+        );
+        stream.end(buffer);
+    });
 }
 
 // ============================================================================
@@ -701,36 +719,29 @@ router.get('/:shopId/stats', async (req, res) => {
 });
 
 // ============================================================================
-// 3. POST /upload-avatar - MAIN - ALL ROLES + CLOUDINARY
+// 3. POST /upload-avatar - MAIN - ALL ROLES + CLOUDINARY - V27.1 STREAM ONLY
 // ============================================================================
 router.post('/upload-avatar', memoryUpload.single('profilePic'), async (req, res) => {
   try{
+    if(!checkCloudinaryEnv(res)) return;
     const role = String(req.body.role || 'customer').toLowerCase();
     const field = req.body.field || '';
     const type = req.body.type || 'avatar';
     const shopId = req.body.shopId || req.query.shopId || '';
-    let fileBuffer = null;
-    let mime = 'image/jpeg';
-    let base64Input = req.body.profilePic || req.body.image || req.body.pic || req.body.avatar || '';
-    if(req.file){
-      fileBuffer = req.file.buffer;
-      mime = req.file.mimetype;
-    } else if(base64Input && base64Input.startsWith('data:image')){
-      const parts = base64Input.split(',');
-      const header = parts[0];
-      const m = header.match(/data:(.*);base64/);
-      if(m) mime = m[1];
-      fileBuffer = Buffer.from(parts[1], 'base64');
-    } else if(base64Input && base64Input.startsWith('http')){
+    // Sirf File chalegi - Base64 yahan KABHI NAHI aayega - Pehle dataURI base64 ban raha tha, ab stream hai
+    if(!req.file || !req.file.buffer){
+      return res.status(400).json({ success: false, message: 'Image missing - File bhejo, base64 nahi' });
+    }
+    // Agar body me http URL aaya hai toh wahi save kar do - Dobara upload mat karo
+    let httpInput = req.body.profilePic || req.body.image || req.body.pic || req.body.avatar || '';
+    if(httpInput && String(httpInput).startsWith('http')){
       let savedTo = '';
-      try{ savedTo = await saveUrlToModel(role, field, type, base64Input, req); }catch(e){ console.log('already-url save warn', e.message); }
+      try{ savedTo = await saveUrlToModel(role, field, type, httpInput, req); }catch(e){ console.log('already-url save warn', e.message); }
       try{
         const Media = require('../../models/Media');
-        await Media.create({ shopId: shopId || 'general', template: role, type: type, refId: null, url: base64Input });
+        await Media.create({ shopId: shopId || 'general', template: role, type: type, refId: null, url: httpInput });
       }catch(e){}
-      return res.json({ success: true, url: base64Input, profilePic: base64Input, avatar: base64Input, photo: base64Input, savedTo: savedTo || 'already-url', role });
-    } else {
-      return res.status(400).json({ success: false, message: 'Image missing - file ya base64 bhejo' });
+      return res.json({ success: true, url: httpInput, profilePic: httpInput, avatar: httpInput, photo: httpInput, savedTo: savedTo || 'already-url', role });
     }
     const folderMap = {
       customer: 'samanlive/users',
@@ -744,11 +755,8 @@ router.post('/upload-avatar', memoryUpload.single('profilePic'), async (req, res
       delivery_boy: 'samanlive/delivery'
     };
     const folder = folderMap[role] || 'samanlive/users';
-    const dataURI = `data:${mime};base64,${fileBuffer.toString('base64')}`;
-    const result = await cloudinary.uploader.upload(dataURI, {
-      folder, resource_type: 'image',
-      transformation: [{ width: 800, height: 800, crop: 'limit' }, { quality: 'auto:good', fetch_format: 'auto' }]
-    });
+    // STREAM - dataURI base64 HATA DIYA - Buffer seedha Cloudinary ko
+    const result = await uploadBufferToCloudinary(req.file.buffer, folder, [{ width: 800, height: 800, crop: 'limit' }, { quality: 'auto:good', fetch_format: 'auto' }]);
     const url = result.secure_url;
     let savedTo = '';
     try{
@@ -770,18 +778,18 @@ router.post('/upload-avatar', memoryUpload.single('profilePic'), async (req, res
 });
 
 // ============================================================================
-// 3B. POST /upload-cover
+// 3B. POST /upload-cover - V27.1 STREAM ONLY
 // ============================================================================
 router.post('/upload-cover', memoryUpload.single('profilePic'), async (req, res) => {
   try{
+    if(!checkCloudinaryEnv(res)) return;
     req.body.field = req.body.field || (req.body.role === 'product_manager' ? 'companyCover' : 'banner');
     req.body.type = 'banner';
     const role = String(req.body.role || 'customer').toLowerCase();
     const shopId = req.body.shopId || '';
-    if(!req.file) return res.status(400).json({ success: false, message: 'Cover image missing' });
-    const dataURI = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    if(!req.file || !req.file.buffer) return res.status(400).json({ success: false, message: 'Cover image missing - File bhejo' });
     const folder = role === 'product_manager' ? 'samanlive/product-managers' : role === 'area_manager' ? 'samanlive/managers' : `samanlive/shops/${shopId || 'general'}`;
-    const result = await cloudinary.uploader.upload(dataURI, { folder, resource_type: 'image', transformation: [{ width: 1200, height: 600, crop: 'limit' }, { quality: 'auto:good', fetch_format: 'auto' }] });
+    const result = await uploadBufferToCloudinary(req.file.buffer, folder, [{ width: 1200, height: 600, crop: 'limit' }, { quality: 'auto:good', fetch_format: 'auto' }]);
     const url = result.secure_url;
     const savedTo = await saveUrlToModel(role, req.body.field, 'banner', url, req);
     res.json({ success: true, url, coverPhoto: url, banner: url, savedTo, role });
@@ -797,9 +805,7 @@ router.put('/pic', memoryUpload.single('profilePic'), async (req, res) => {
     if(!user) return res.status(401).json({ success: false, message: 'Login required' });
     let finalPic = req.body.profilePic || req.body.image || req.body.pic || req.body.avatar || '';
     if(req.file){
-      const b64 = Buffer.from(req.file.buffer).toString('base64');
-      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-      const result = await cloudinary.uploader.upload(dataURI, { folder: 'samanlive/users', resource_type: 'image', transformation: [{ width: 500, height: 500, crop: 'fill', gravity: 'face' }, { quality: 'auto:good', fetch_format: 'auto' }] });
+      const result = await uploadBufferToCloudinary(req.file.buffer, 'samanlive/users', [{ width: 500, height: 500, crop: 'fill', gravity: 'face' }, { quality: 'auto:good', fetch_format: 'auto' }]);
       finalPic = result.secure_url;
     }
     if(!finalPic) return res.status(400).json({ success: false, message: 'profilePic required' });

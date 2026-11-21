@@ -1,8 +1,8 @@
-<!-- LOCATION: public/profile.html - V2 COMMON - FULL CODE - CUSTOMER PROFILE HOME -->
-<!-- FIX V2 COMMON: 1) Pehle sirf userToken maanta tha, AuthCore TOKEN nahi maanta tha - Login hone pe bhi wapas / pe bhej deta tha. Ab dono chalenge -->
-<!-- 2) Pehle Wallet / Coupons / Referral ka link hi nahi tha - Ab jod diya hai, Common wale pages pe jayega -->
-<!-- 3) Layout fix - Mobile stack + Laptop 760px, pehle 600px wali patli patti thi -->
-<!-- FLOW: Load -> AuthCore Token -> GET /api/auth/me -> Naam / Phone / Photo bharo -> Card dabao -> Usi page pe jao -->
+<!-- LOCATION: public/profile.html - V3 - FULL CODE - NO CUT - CUSTOMER PROFILE HOME -->
+<!-- FLOW: Load -> AuthCore Token -> GET /api/common/profile/me?role=customer -> Naam / Phone / Photo bharo -> Card dabao -> Usi page pe jao -->
+<!-- RULE 1: Is file me localStorage / sessionStorage KAHIN NAHI HOGA - Token sirf AuthCore se, Data sirf Server se -->
+<!-- RULE 2: Photo SIRF Cloudinary URL se dikhegi - Browser me save kabhi nahi hogi -->
+<!-- RULE 3: alert() sirf Session Expire pe - Baaki sab page pe hi dikhega -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,6 +34,8 @@ button{font-family:inherit;cursor:pointer;border:0}
 .option-arrow{font-size:20px;font-weight:900;color:#cbd5e1;flex-shrink:0}
 .logout-card{cursor:pointer}
 .logout-card .option-icon{background:#fee2e2}
+.hint{margin:12px;padding:10px;border-radius:10px;font-size:11px;font-weight:700;line-height:1.5;display:none;text-align:center}
+.hint.bad{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
 @media(max-width:600px){ .prof-root{max-width:100%} .prof-header{padding:12px} }
 @media(min-width:900px){ .prof-root{max-width:760px} .prof-header{border-radius:0 0 16px 16px} .opt-list{gap:10px} }
 </style>
@@ -46,6 +48,7 @@ button{font-family:inherit;cursor:pointer;border:0}
     <div class="prof-info"><b id="userName">Loading...</b><span id="userPhone">...</span><span id="userIdLine"></span></div>
     <button class="edit-btn" onclick="location.href='/profile/details.html'">Edit</button>
   </div>
+  <div id="profHint" class="hint"></div>
 
   <div class="opt-list">
     <div class="opt-section">👤 My Account</div>
@@ -53,56 +56,98 @@ button{font-family:inherit;cursor:pointer;border:0}
     <a href="/profile/addresses.html" class="option-card"><div class="option-left"><div class="option-icon">📍</div><div class="option-text"><h3>My Addresses</h3><p>Delivery addresses - Checkout me bhi yahi dikhega</p></div></div><div class="option-arrow">›</div></a>
     <a href="/profile/payments.html" class="option-card"><div class="option-left"><div class="option-icon">💳</div><div class="option-text"><h3>Payment Methods</h3><p>UPI, cards - Sirf saved list</p></div></div><div class="option-arrow">›</div></a>
 
-    <div class="opt-section">📦 Orders & Savings</div>
+    <div class="opt-section">📦 Orders &amp; Savings</div>
     <a href="/profile/orders.html" class="option-card"><div class="option-left"><div class="option-icon">📦</div><div class="option-text"><h3>My Orders</h3><p>Common Checkout wale hi Orders dikhenge</p></div></div><div class="option-arrow">›</div></a>
     <a href="/profile/wishlist.html" class="option-card"><div class="option-left"><div class="option-icon">❤️</div><div class="option-text"><h3>Wishlist</h3><p>Dukaan wala ❤️ yahan dikhega</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/shop-templates/common/wallet/wallet.html" class="option-card"><div class="option-left"><div class="option-icon">💰</div><div class="option-text"><h3>My Wallet</h3><p>Balance & transactions</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/shop-templates/common/marketing/coupons.html" class="option-card"><div class="option-left"><div class="option-icon">🎟️</div><div class="option-text"><h3>Coupons & Offers</h3><p>Available coupons</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/shop-templates/common/marketing/referral.html" class="option-card"><div class="option-left"><div class="option-icon">🎁</div><div class="option-text"><h3>Refer & Earn</h3><p>Share karo, earn karo</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/shop-templates/common/wallet/wallet.html" class="option-card"><div class="option-left"><div class="option-icon">💰</div><div class="option-text"><h3>My Wallet</h3><p>Balance &amp; transactions</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/shop-templates/common/marketing/coupons.html" class="option-card"><div class="option-left"><div class="option-icon">🎟️</div><div class="option-text"><h3>Coupons &amp; Offers</h3><p>Available coupons</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/shop-templates/common/marketing/referral.html" class="option-card"><div class="option-left"><div class="option-icon">🎁</div><div class="option-text"><h3>Refer &amp; Earn</h3><p>Share karo, earn karo</p></div></div><div class="option-arrow">›</div></a>
 
-    <div class="opt-section">🔔 Settings & Help</div>
-    <a href="/profile/notifications.html" class="option-card"><div class="option-left"><div class="option-icon">🔔</div><div class="option-text"><h3>Notifications</h3><p>Order updates & offers - Fake nahi dikhayenge</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/profile/settings.html" class="option-card"><div class="option-left"><div class="option-icon">⚙️</div><div class="option-text"><h3>Settings</h3><p>Language, notifications & more - Server pe save hoga</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/profile/help.html" class="option-card"><div class="option-left"><div class="option-icon">🆘</div><div class="option-text"><h3>Help & Support</h3><p>FAQs + Report Issue - Ticket banega</p></div></div><div class="option-arrow">›</div></a>
+    <div class="opt-section">🔔 Settings &amp; Help</div>
+    <a href="/profile/notifications.html" class="option-card"><div class="option-left"><div class="option-icon">🔔</div><div class="option-text"><h3>Notifications</h3><p>Order updates &amp; offers - Fake nahi dikhayenge</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/profile/settings.html" class="option-card"><div class="option-left"><div class="option-icon">⚙️</div><div class="option-text"><h3>Settings</h3><p>Language, notifications &amp; more - Server pe save hoga</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/profile/help.html" class="option-card"><div class="option-left"><div class="option-icon">🆘</div><div class="option-text"><h3>Help &amp; Support</h3><p>FAQs + Report Issue - Ticket banega</p></div></div><div class="option-arrow">›</div></a>
 
     <div class="option-card logout-card" onclick="handleLogout()"><div class="option-left"><div class="option-icon">🚪</div><div class="option-text"><h3>Logout</h3><p>Sign out from your account</p></div></div><div class="option-arrow">›</div></div>
   </div>
 </div>
 
-<script src="/shop-templates/common/core/api-core.js"></script>
 <script src="/shop-templates/common/core/auth-core.js"></script>
+<script src="/shop-templates/common/profile/profile-core.js"></script>
 <script src="/assets/js/app.js"></script>
 <script>
-// COMMON AUTH - AuthCore TOKEN pehle, phir userToken fallback - Dono me se koi bhi ho toh Profile khulega
-function getToken(){
-  try{ if(window.AuthCore && window.AuthCore.getToken) { var t = window.AuthCore.getToken(); if(t) return t; } }catch(e){}
-  try{ return localStorage.getItem('TOKEN') || localStorage.getItem('userToken') || localStorage.getItem('token') || ''; }catch(e){ return ''; }
-}
-window.addEventListener('DOMContentLoaded', async function(){
-  var token = getToken();
-  if(!token){ window.location.href = '/'; return; }
-  try{
-    var res = await fetch('/api/auth/me', { headers:{ 'Authorization':'Bearer '+token } });
-    var data = await res.json();
-    if(res.status === 401){ localStorage.removeItem('TOKEN'); localStorage.removeItem('userToken'); localStorage.removeItem('token'); alert('Session expired. Please login again'); window.location.href = '/'; return; }
-    if(data && data.user){
-      var u = data.user;
-      document.getElementById('userName').innerText = u.name || 'Customer';
-      document.getElementById('userPhone').innerText = u.phone ? ('📞 ' + u.phone) : (u.email || '');
-      document.getElementById('userIdLine').innerText = u._id ? ('ID: ...' + String(u._id).slice(-6)) : '';
-      var pic = u.profilePic || u.avatar || u.photo || '/assets/default-avatar.png';
-      document.getElementById('userProfilePic').src = pic;
-      window.currentUser = u;
+(function(){
+  // Token - Sirf AuthCore se - Browser storage se KABHI NAHI padhenge
+  function getToken(){
+    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
+    return window.USER_TOKEN || '';
+  }
+  function getUserId(){
+    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    if(window.USER_ID) return window.USER_ID;
+    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    return '';
+  }
+  function showHint(msg){
+    var h = document.getElementById('profHint');
+    if(h){ h.textContent = msg; h.className = 'hint bad'; }
+  }
+
+  window.addEventListener('DOMContentLoaded', async function(){
+    var token = getToken();
+    if(!token){ window.location.href = '/'; return; }
+    try{
+      var user = null;
+      // 1. UnifiedProfile se - FILE 1 wali hi API - Sabse pehle wahi
+      if(window.UnifiedProfile && window.UnifiedProfile.loadMyProfile){
+        try{
+          var prof = await window.UnifiedProfile.loadMyProfile({ role: 'customer', userId: getUserId() });
+          if(prof && prof.success && prof.user) user = prof.user;
+        }catch(e){}
+      }
+      // 2. Seedha /api/common/profile/me - UnifiedProfile na chale toh
+      if(!user){
+        var res = await fetch('/api/common/profile/me?role=customer&buyerId=' + encodeURIComponent(getUserId()), { headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': getUserId() } });
+        if(res.status === 401){
+          // Session expire - AuthCore se logout karwa do, browser storage yahan se haath nahi lagayenge
+          try{ if(window.AuthCore && window.AuthCore.logout) return window.AuthCore.logout(); }catch(e){}
+          window.location.href = '/';
+          return;
+        }
+        var data = await res.json().catch(function(){ return null; });
+        if(data && data.success && data.user) user = data.user;
+      }
+      // 3. Last - /api/auth/me - Purana rasta, sirf fallback
+      if(!user){
+        var res2 = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+        var data2 = await res2.json().catch(function(){ return null; });
+        if(data2 && data2.user) user = data2.user;
+      }
+      if(user){
+        window.currentUser = user;
+        document.getElementById('userName').innerText = user.name || 'Customer';
+        document.getElementById('userPhone').innerText = user.phone ? ('📞 ' + user.phone) : (user.email || '');
+        document.getElementById('userIdLine').innerText = user._id ? ('ID: ...' + String(user._id).slice(-6)) : '';
+        var pic = user.profilePic || user.avatar || user.photo || '/assets/default-avatar.png';
+        document.getElementById('userProfilePic').src = pic;
+      } else {
+        document.getElementById('userName').innerText = 'Customer';
+        showHint('❌ Profile load nahi hui - Dobara login karo');
+      }
+    }catch(e){
+      document.getElementById('userName').innerText = 'Customer';
+      showHint('❌ Profile load nahi hui - ' + e.message);
     }
-  }catch(e){ document.getElementById('userName').innerText = 'Customer'; }
-});
-function handleLogout(){
-  try{
-    if(window.AuthCore && window.AuthCore.logout) return window.AuthCore.logout();
-    localStorage.removeItem('TOKEN'); localStorage.removeItem('token'); localStorage.removeItem('userToken');
-  }catch(e){}
-  window.location.href = '/';
-}
+  });
+
+  // Logout - Sirf AuthCore se - Yahan se browser storage haath nahi lagayenge
+  window.handleLogout = function(){
+    try{
+      if(window.AuthCore && window.AuthCore.logout) return window.AuthCore.logout();
+    }catch(e){}
+    window.location.href = '/';
+  };
+})();
 </script>
 </body>
 </html>
