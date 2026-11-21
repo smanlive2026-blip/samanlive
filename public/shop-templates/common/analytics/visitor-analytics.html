@@ -1,8 +1,11 @@
-<!-- LOCATION: public/shop-templates/common/analytics/visitor-analytics.html - V2 - HONEST VISITOR - FULL CODE -->
-<!-- SACH: Visitor Tracking abhi poore project me kahi hai hi nahi - Na ShopVisit Model hai, na Customer-View me Visit bhejne wala code hai, na Socket pe visitor-joined aata hai. -->
-<!-- Isliye is page pe Visitor ka number kahi se bhi asli nahi la sakte - Laaye toh nakli hi banega. Isliye Visitor wala hissa 0 + 'Tracking nahi hai' dikhayenge, nakli 1250 / Adajan-Vesu wale bande nahi banayenge. -->
-<!-- FLOW: Load -> GET /api/common/analytics/:shopId/visitors (khaali aayega - tracking nahi hai) + GET /api/common/analytics/:shopId (asli Order - Order karne wale Customer) -> Dono dikhao -->
-<!-- FIX V2: 1) Chart.js + ApiCore upar load kiya - Pehle dono nahi the. 2) Math.random() wala chart + har 10 sec wala nakli setInterval hata diya. 3) LIVE wala jhootha badge hata ke TRACKING OFF kar diya. -->
+<!-- LOCATION: public/shop-templates/common/analytics/visitor-analytics.html - V3 - REAL VISITOR + TRACKING ON/OFF BUTTON - FULL CODE -->
+<!-- SACH V3: Visitor Tracking ab chal rahi hai - ShopVisit Model hai + Customer-View me Visit bhejne wala code hai. -->
+<!-- FLOW: Load -> GET /api/common/analytics/:shopId/tracking-setting (ON hai ya OFF) + GET /api/common/analytics/:shopId/visitors (asli Visit) + GET /api/common/analytics/:shopId (asli Order) -> Dono dikhao -->
+<!-- FIX V3: 1) Upar Tracking ON / OFF wala button hai - Ye Backend ko bolega - POST /api/common/analytics/:shopId/tracking-setting { enabled: true/false } -->
+<!--   OFF karne ke baad Customer-View se Visit aayega bhi toh Backend usko save NAHI karega - Isliye Visitor badhega hi nahi. ON karte hi fir se save hone lagega. -->
+<!--   2) Traffic / Device wala fix - Pehle Visit ki list ko hi Source samajh raha tha, isliye galat dikhta tha. Ab Backend se jo asli trafficSources / devices aata hai, wahi dikhega. -->
+<!--   3) Chart fix - Pehle Visit me label / count dhoondh raha tha, jo Visit me hota hi nahi hai. Ab Visit ke createdAt wale date se din-wise gin ke chart banega. -->
+<!--   4) TRACKING OFF wala purana badge hata ke asli setting wala badge kar diya - ON hai toh Hara, OFF hai toh Laal. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,7 +26,17 @@ button{font-family:inherit;cursor:pointer;border:0}
 .visitor-header b{display:block;font-weight:900;font-size:16px}
 .visitor-header span{font-size:11px;color:#64748b;font-weight:600}
 .live-badge{margin-left:auto;background:#f1f5f9;color:#64748b;font-size:10px;font-weight:900;padding:6px 10px;border-radius:20px;display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0}
+.live-badge.on{background:#dcfce7;color:#166534}
+.live-badge.off{background:#fee2e2;color:#991b1b}
 .live-dot{width:8px;height:8px;background:#94a3b8;border-radius:50%}
+.live-badge.on .live-dot{background:#16a34a}
+.live-badge.off .live-dot{background:#dc2626}
+/* TRACKING TOGGLE - V3 - ON = Hara, OFF = Laal - Dabaane pe poora button badlega */
+.tracking-toggle{display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:999px;font-weight:900;font-size:11px;white-space:nowrap;border:1px solid #e2e8f0;transition:all .2s}
+.tracking-toggle.on{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.tracking-toggle.off{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+.tracking-toggle:disabled{opacity:.6;cursor:not-allowed}
+.tracking-toggle .dot{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block}
 .visitor-stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:12px}
 .v-stat-card{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:10px;position:relative}
 .v-icon{width:32px;height:32px;background:#f8fafc;border-radius:8px;display:grid;place-items:center;font-size:16px;margin-bottom:8px}
@@ -60,12 +73,18 @@ button{font-family:inherit;cursor:pointer;border:0}
     <button id="visitorBack" class="back-btn">‹</button>
     <div style="min-width:0;flex:1">
       <b>Visitor Analytics</b>
-      <span id="visitorSubHeader">Visitor tracking abhi OFF hai - Neeche asli Order wala hisaab hai</span>
+      <span id="visitorSubHeader">Visitor tracking ON hai - Neeche asli Visitor + Order wala hisaab hai</span>
     </div>
-    <div class="live-badge"><span class="live-dot"></span> TRACKING OFF</div>
+    <div class="live-badge on" id="trackingBadge"><span class="live-dot"></span><span id="trackingBadgeText">TRACKING ON</span></div>
   </div>
 
-  <div class="warn-box" id="visitorWarn">⚠️ Visitor Tracking abhi chalu nahi hai - Na ShopVisit Model hai, na Customer-View me Visit bhejne wala code hai. Isliye yahan Visitor ka number 0 dikhega - Nakli 1250 / Adajan-Vesu wale bande nahi banayenge. Neeche Order karne wale asli Customer ka hisaab hai.</div>
+  <!-- TRACKING ON/OFF - V3 - Ye button Header ke neeche hai, taaki dikhe - Dabaane pe Backend me save hoga -->
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 12px 0">
+    <button id="trackingToggle" class="tracking-toggle on"><span class="dot"></span><span id="trackingToggleText">Tracking ON</span></button>
+    <span id="trackingToggleHint" style="font-size:11px;color:#64748b;font-weight:600">ON hai - Customer aayega toh Visitor gina jayega</span>
+  </div>
+
+  <div class="hint-box" id="visitorWarn" style="margin-top:12px">✅ Visitor Tracking ON hai - Customer ne shop kholi toh yahan 1 Visitor gina jayega. Ek tab me 1 hi baar ginega, refresh pe dobara nahi.</div>
 
   <div class="visitor-stats">
     <div class="v-stat-card">
@@ -122,7 +141,7 @@ button{font-family:inherit;cursor:pointer;border:0}
       </div>
     </div>
     <canvas id="visitorChart" height="200" style="display:none"></canvas>
-    <div class="empty-box" id="visitorChartEmpty">Visitor ka chart nahi banega - Tracking hi nahi hai<br><span style="font-size:11px">Random graph bana ke dhokha nahi denge - Tracking chalu hogi toh yahan asli graph banega</span></div>
+    <div class="empty-box" id="visitorChartEmpty">Visitor ka chart nahi banega - Abhi koi Visit nahi aaya<br><span style="font-size:11px">Random graph bana ke dhokha nahi denge - Visit aayega toh yahan asli graph banega</span></div>
   </div>
 
   <div class="visitor-grid">
@@ -157,7 +176,12 @@ class VisitorAnalytics {
     this.period = new URLSearchParams(location.search).get('period') || 'today';
     this.visitors = [];
     this.liveVisitors = [];
+    this.trafficSources = [];
+    this.devices = [];
     this.chart = null;
+    // TRACKING - V3 - Default ON hai, kyunki pehle se Tracking chalu hai. Backend se asli setting aayegi toh wahi dikhegi.
+    this.trackingOn = true;
+    this.trackingSaving = false;
   }
 
   async init(){
@@ -169,7 +193,68 @@ class VisitorAnalytics {
     // Period wale tab ko URL wale period pe set karo
     document.querySelectorAll('.chart-tab').forEach(function(t){ t.classList.toggle('active', t.dataset.period === window.VisitorAnalyticsInstance.period); });
     this.bindEvents();
+    await this.loadTrackingSetting();
     await this.loadVisitorData();
+  }
+
+  // TRACKING SETTING - V3 - Backend se puchenge - Is dukaan ki tracking ON hai ya OFF
+  // GET /api/common/analytics/:shopId/tracking-setting -> { success: true, enabled: true/false }
+  async loadTrackingSetting(){
+    try{
+      var r = await fetch('/api/common/analytics/' + this.shopId + '/tracking-setting').then(function(x){ return x.json(); }).catch(function(){ return null; });
+      if(r && typeof r.enabled !== 'undefined') this.trackingOn = !!r.enabled;
+      // Agar Backend me abhi wo endpoint nahi laga hai (404), toh ON hi maanenge - Kyunki Tracking pehle se chal rahi hai, usko galat OFF nahi dikhayenge.
+    }catch(e){}
+    this.renderTrackingToggle();
+  }
+
+  // TRACKING TOGGLE UI - V3 - Button + Upar wala badge + Neeche wala hint - Teenon ek saath badlenge
+  renderTrackingToggle(){
+    var btn = document.getElementById('trackingToggle');
+    var txt = document.getElementById('trackingToggleText');
+    var hint = document.getElementById('trackingToggleHint');
+    var badge = document.getElementById('trackingBadge');
+    var badgeTxt = document.getElementById('trackingBadgeText');
+    var sub = document.getElementById('visitorSubHeader');
+    var warn = document.getElementById('visitorWarn');
+    if(btn) btn.className = 'tracking-toggle ' + (this.trackingOn ? 'on' : 'off');
+    if(txt) txt.innerText = this.trackingOn ? 'Tracking ON' : 'Tracking OFF';
+    if(hint) hint.innerText = this.trackingOn ? 'ON hai - Customer aayega toh Visitor gina jayega' : 'OFF hai - Customer aayega bhi toh Visitor NAHI gina jayega';
+    if(badge) badge.className = 'live-badge ' + (this.trackingOn ? 'on' : 'off');
+    if(badgeTxt) badgeTxt.innerText = this.trackingOn ? 'TRACKING ON' : 'TRACKING OFF';
+    if(sub) sub.innerText = this.trackingOn ? 'Visitor tracking ON hai - Neeche asli Visitor + Order wala hisaab hai' : 'Visitor tracking OFF hai - Visitor gina nahi jayega, par Order wala hisaab asli hai';
+    if(warn){
+      warn.className = this.trackingOn ? 'hint-box' : 'warn-box';
+      warn.style.marginTop = '12px';
+      warn.innerText = this.trackingOn ? '✅ Visitor Tracking ON hai - Customer ne shop kholi toh yahan 1 Visitor gina jayega. Ek tab me 1 hi baar ginega, refresh pe dobara nahi.' : '⚠️ Visitor Tracking OFF hai - Customer aayega bhi toh Visitor NAHI gina jayega. Wapas ON karne ke liye upar wala button dabao.';
+    }
+  }
+
+  // TRACKING TOGGLE CLICK - V3 - Button dabaate hi Backend ko bhejenge, Backend se OK aaya tabhi button badlega - Local me hi badal ke dhokha nahi denge
+  async toggleTracking(){
+    if(this.trackingSaving) return;
+    var btn = document.getElementById('trackingToggle');
+    var newVal = !this.trackingOn;
+    this.trackingSaving = true;
+    if(btn) btn.disabled = true;
+    try{
+      var r = await fetch('/api/common/analytics/' + this.shopId + '/tracking-setting', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: newVal })
+      }).then(function(x){ return x.json(); }).catch(function(){ return null; });
+      // Backend ne mana kar diya / endpoint nahi mila toh button wapas purana hi rahega - Galat ON/OFF nahi dikhayenge
+      if(!r || !r.success){
+        var h = document.getElementById('visitorHint');
+        if(h) h.innerText = 'Tracking badal nahi paya - Backend wala V4 endpoint abhi nahi laga hai. Pehle Backend wali V4 file lagao, fir button dabao.';
+        return;
+      }
+      this.trackingOn = !!r.enabled;
+      this.renderTrackingToggle();
+    }catch(e){} finally{
+      this.trackingSaving = false;
+      if(btn) btn.disabled = false;
+    }
   }
 
   async fetchJson(url){
@@ -184,16 +269,20 @@ class VisitorAnalytics {
       var hint = document.getElementById('visitorHint');
       if(hint) hint.innerText = 'Loading...';
 
-      // 1) Visitor API - Abhi Backend se khaali aayega - { visitors: [], total: 0 } - Isi ko sach maanenge, fallback me nakli Direct / Google nahi bharenge
+      // 1) Visitor API - Backend se asli Visit aayega - { visitors: [...], total: N, trafficSources: [...], devices: [...] }
       var v = await this.fetchJson('/api/common/analytics/' + this.shopId + '/visitors?period=' + this.period);
       this.visitors = (v && (v.visitors || [])) || [];
       this.liveVisitors = (v && (v.liveVisitors || [])) || [];
+      // V3 FIX: Traffic / Device Backend se jo aggregate aata hai, wahi rakhenge - Visit ki list ko Source nahi samjhenge
+      this.trafficSources = (v && (v.trafficSources || [])) || [];
+      this.devices = (v && (v.devices || [])) || [];
+      if(v && typeof v.trackingEnabled !== 'undefined') { this.trackingOn = !!v.trackingEnabled; this.renderTrackingToggle(); }
 
       // 2) Asli hisaab - Order API se - Order karne wale Customer hi asli Visitor ka sabse pakka saboot hain
       var an = await this.fetchJson('/api/common/analytics/' + this.shopId + '?period=' + this.period);
       var a = (an && (an.analytics || an.data)) || {};
 
-      document.getElementById('vTotalVisitors').innerText = this.visitors.length || 0;
+      document.getElementById('vTotalVisitors').innerText = this.visitors.length || (v && v.total) || 0;
       document.getElementById('vLiveVisitors').innerText = this.liveVisitors.length || 0;
       document.getElementById('vAvgTime').innerText = '-';
       document.getElementById('vBounceRate').innerText = '-';
@@ -205,7 +294,10 @@ class VisitorAnalytics {
       document.getElementById('orderAov').innerText = '₹' + Number(a.aov || 0).toLocaleString('en-IN');
 
       if(hint){
-        if(!this.visitors.length) hint.innerText = 'Visitor Tracking OFF hai - Isliye Visitor 0 hai. Par Order wala hisaab asli hai - ' + (a.orders || 0) + ' Orders • ₹' + Number(a.revenue || 0).toLocaleString('en-IN') + ' Revenue.';
+        if(!this.visitors.length){
+          if(!this.trackingOn) hint.innerText = 'Visitor Tracking OFF hai - Isliye Visitor 0 hai. Par Order wala hisaab asli hai - ' + (a.orders || 0) + ' Orders • ₹' + Number(a.revenue || 0).toLocaleString('en-IN') + ' Revenue.';
+          else hint.innerText = 'Tracking ON hai, par is period me koi Visit nahi aaya - Shop ka link share karo, Visit aayega toh yahan dikhega. Order wala hisaab asli hai - ' + (a.orders || 0) + ' Orders • ₹' + Number(a.revenue || 0).toLocaleString('en-IN') + ' Revenue.';
+        }
         else hint.innerText = '✅ Visitor Tracking ON hai - ' + this.visitors.length + ' Visitors mile.';
       }
 
@@ -222,11 +314,11 @@ class VisitorAnalytics {
   renderTrafficSources(){
     var container = document.getElementById('trafficSources');
     if(!container) return;
-    if(!this.visitors.length){
-      container.innerHTML = '<div class="empty-box">Tracking nahi hai<br><span style="font-size:11px">Kahan se Visitor aaya, ye pata hi nahi chalega - Nakli Direct 40% nahi dikhayenge</span></div>';
+    if(!this.trafficSources.length){
+      container.innerHTML = '<div class="empty-box">Koi Visit nahi aaya<br><span style="font-size:11px">Kahan se Visitor aaya, ye tab pata chalega jab Visit aayega - Nakli Direct 40% nahi dikhayenge</span></div>';
       return;
     }
-    container.innerHTML = this.visitors.map(function(s){
+    container.innerHTML = this.trafficSources.map(function(s){
       return '<div class="v-list-item"><span>' + (s.source || 'Unknown') + '</span><span><b>' + (s.count || 0) + '</b> • ' + (s.percent || 0) + '%</span></div>';
     }).join('');
   }
@@ -234,12 +326,12 @@ class VisitorAnalytics {
   renderDevices(){
     var container = document.getElementById('deviceBreakdown');
     if(!container) return;
-    if(!this.visitors.length){
-      container.innerHTML = '<div class="empty-box">Tracking nahi hai<br><span style="font-size:11px">Mobile 75% / Desktop 20% wala nakli hisaab nahi dikhayenge</span></div>';
+    if(!this.devices.length){
+      container.innerHTML = '<div class="empty-box">Koi Visit nahi aaya<br><span style="font-size:11px">Mobile 75% / Desktop 20% wala nakli hisaab nahi dikhayenge</span></div>';
       return;
     }
-    container.innerHTML = this.visitors.map(function(s){
-      return '<div class="v-list-item"><span>' + (s.device || 'Unknown') + '</span><span><b>' + (s.count || 0) + '</b></span></div>';
+    container.innerHTML = this.devices.map(function(s){
+      return '<div class="v-list-item"><span>' + (s.device || 'Unknown') + '</span><span><b>' + (s.count || 0) + '</b> • ' + (s.percent || 0) + '%</span></div>';
     }).join('');
   }
 
@@ -247,11 +339,12 @@ class VisitorAnalytics {
     var container = document.getElementById('liveVisitorsList');
     if(!container) return;
     if(!this.liveVisitors.length){
-      container.innerHTML = '<div class="empty-box">Koi Live Visitor nahi hai - Tracking bhi OFF hai<br><span style="font-size:11px">Shop ka link share karo - Tracking chalu hogi toh yahan asli Live Visitor dikhega, nakli Adajan-Vesu wala nahi</span></div>';
+      container.innerHTML = '<div class="empty-box">Koi Live Visitor nahi hai<br><span style="font-size:11px">Shop ka link share karo - Tracking chalu hogi toh yahan asli Live Visitor dikhega, nakli Adajan-Vesu wala nahi</span></div>';
       return;
     }
     container.innerHTML = this.liveVisitors.map(function(v){
-      return '<div style="display:flex;gap:8px;align-items:center;background:#f8fafc;padding:8px;border-radius:8px;font-size:11px;font-weight:600"><div style="width:32px;height:32px;border-radius:50%;background:#e2e8f0;display:grid;place-items:center">👤</div><div style="flex:1"><b style="display:block;font-size:12px">' + (v.location || 'Unknown') + '</b><span style="font-size:10px;color:#64748b">' + (v.device || 'Mobile') + ' • ' + (v.page || '/shop') + ' • ' + (v.time || 'Now') + '</span></div><span style="width:8px;height:8px;background:#10b981;border-radius:50%;display:inline-block"></span></div>';
+      var when = v.createdAt ? new Date(v.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Now';
+      return '<div style="display:flex;gap:8px;align-items:center;background:#f8fafc;padding:8px;border-radius:8px;font-size:11px;font-weight:600"><div style="width:32px;height:32px;border-radius:50%;background:#e2e8f0;display:grid;place-items:center">👤</div><div style="flex:1"><b style="display:block;font-size:12px">' + (v.source || 'Direct') + '</b><span style="font-size:10px;color:#64748b">' + (v.device || 'Mobile') + ' • ' + (v.page || '/shop') + ' • ' + when + '</span></div><span style="width:8px;height:8px;background:#10b981;border-radius:50%;display:inline-block"></span></div>';
     }).join('');
   }
 
@@ -259,7 +352,7 @@ class VisitorAnalytics {
     var canvas = document.getElementById('visitorChart');
     var emptyEl = document.getElementById('visitorChartEmpty');
     if(!canvas) return;
-    // V2: Visitor ka data hai hi nahi, isliye chart banayenge hi nahi - Math.random() se nakli graph nahi banayenge
+    // V3 FIX: Visit me label / count hota hi nahi hai - Isliye Visit ke createdAt wale date se din-wise gin ke chart banayenge
     if(!this.visitors.length){
       if(this.chart){ this.chart.destroy(); this.chart = null; }
       canvas.style.display = 'none';
@@ -270,6 +363,14 @@ class VisitorAnalytics {
       if(emptyEl){ emptyEl.style.display = 'block'; emptyEl.innerText = 'Chart library load nahi hui - Net check karo aur page dobara kholo.'; }
       return;
     }
+    var byDay = {};
+    for(var i = 0; i < this.visitors.length; i++){
+      var d = this.visitors[i].createdAt ? new Date(this.visitors[i].createdAt) : new Date();
+      var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      byDay[key] = (byDay[key] || 0) + 1;
+    }
+    var labels = Object.keys(byDay).sort();
+    var dataArr = labels.map(function(k){ return byDay[k]; });
     canvas.style.display = 'block';
     if(emptyEl) emptyEl.style.display = 'none';
     var ctx = canvas.getContext('2d');
@@ -277,8 +378,8 @@ class VisitorAnalytics {
     this.chart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: this.visitors.map(function(v){ return v.label || v.date || ''; }),
-        datasets: [{ label: 'Visitors', data: this.visitors.map(function(v){ return Number(v.count || 0); }), borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,0.1)', tension: 0.4, fill: true, borderWidth: 2 }]
+        labels: labels,
+        datasets: [{ label: 'Visitors', data: dataArr, borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,0.1)', tension: 0.4, fill: true, borderWidth: 2 }]
       },
       options: {
         responsive: true,
@@ -290,6 +391,8 @@ class VisitorAnalytics {
 
   bindEvents(){
     document.getElementById('visitorBack')?.addEventListener('click', function(){ history.back(); });
+    // TRACKING TOGGLE - V3 - Button dabao toh Backend ko bhejo
+    document.getElementById('trackingToggle')?.addEventListener('click', function(){ window.VisitorAnalyticsInstance.toggleTracking(); });
     document.querySelectorAll('.chart-tab').forEach(function(tab){
       tab.addEventListener('click', function(){
         document.querySelectorAll('.chart-tab').forEach(function(t){ t.classList.remove('active'); });
