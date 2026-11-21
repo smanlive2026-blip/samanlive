@@ -1,10 +1,17 @@
-<!-- LOCATION: public/shop-templates/common/settings/settings.html - V25 - UNIFIED - FULL CODE -->
+<!-- LOCATION: public/shop-templates/common/settings/settings.html - V26 - UNIFIED - FULL CODE -->
 <!-- WORLD CLASS SHOP SETTINGS MAIN - FULL -->
 <!-- RULE: Settings = Server se hi aayega. Is file me koi bhi browser storage use NAHI hoga. -->
 <!-- RULE 2: shopId SIRF URL se aayega. URL me nahi hai toh galat shop ki setting kabhi nahi kholega. -->
 <!-- RULE 3: Logout kabhi browser storage ko haath lagake nahi hoga, sirf AuthCore se hoga. -->
-<!-- FLOW: Load -> GET /api/shops/:shopId + GET /api/common/settings/:shopId/status + GET /api/common/profile/:shopId/verification -> Fill -->
-<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur shop/timing/verification browser storage se uthata tha, aur logout me token delete karta tha. Ab FULL HTML + RESPONSIVE + Server only + Logout Fix hai. -->
+<!-- FLOW: Load -> GET /api/shops/:shopId + GET /api/common/shop-toggle/:shopId/status + GET /api/common/profile/:shopId/verification -> Fill -->
+<!-- FIX V26 - OPEN/CLOSE SINGLE SOURCE OF TRUTH: -->
+<!--   Pehle status GET /api/common/settings/:shopId/status se aata tha - Wo RAM wale Map me tha, Shop.isOpen se iska koi lena-dena nahi tha. -->
+<!--   Isliye Dashboard se band karne pe yahan abhi bhi Open dikhta tha. Ab status GET /api/common/shop-toggle/:shopId/status se aayega - Shop Model ka isOpen hi sach hai. -->
+<!--   Open / Close Shop dabane pe open-close.html khulega - Us file me bhi wahi shop-toggle wala route use karna hai, settings wala nahi. -->
+<!-- FIX V26 - [object Object] BUG: Screenshot me "General • [object Object]" aa raha tha, kyunki shop.address ek Object hai, string nahi. -->
+<!--   Ab address ko seedha print nahi karenge - address.city / address.line1 nikal ke dikhayenge. Category bhi Object hui toh uska name nikalenge. -->
+<!-- FIX V26 - FINANCE LINK: Pehle ../finance/wallet.html tha - aisi file hai hi nahi, 404 aata tha. Ab ../wallet/wallet.html pe jayega. -->
+<!-- FIX V26 - SOCKET: Dashboard se band/kholo toh ye page khula hai toh yahan bhi turant update aayega, Refresh ki zarurat nahi. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -125,7 +132,7 @@ button{font-family:inherit;cursor:pointer;border:0}
         <span class="setting-arrow">›</span>
       </div>
       <div class="setting-item" data-link="language-settings.html">
-        <span class="setting-icon" style="background:#f0fdf4">🌐</span>
+        <span class="setting-icon" style="background:#f0f9ff">🌐</span>
         <div><b>Language Settings</b><span>Hindi, English, Gujarati</span></div>
         <span class="setting-arrow">›</span>
       </div>
@@ -152,7 +159,7 @@ button{font-family:inherit;cursor:pointer;border:0}
 
     <div class="settings-section">
       <b>📊 Business</b>
-      <div class="setting-item" data-link="../finance/wallet.html">
+      <div class="setting-item" data-link="../wallet/wallet.html">
         <span class="setting-icon" style="background:#f0fdf4">💰</span>
         <div><b>Finance & Wallet</b><span>Revenue, expenses, payouts</span></div>
         <span class="setting-arrow">›</span>
@@ -182,6 +189,7 @@ class SettingsMainPage {
     // shopId SIRF URL se - kahi aur se NAHI. URL me nahi hai toh galat shop ki setting kabhi nahi kholega.
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
     this.shop = null;
+    this.isOpen = true;
   }
 
   getToken(){
@@ -197,9 +205,53 @@ class SettingsMainPage {
     return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
   }
 
+  // FIX V26 - [object Object] BUG: Koi bhi field Object ho sakti hai - address, category, city.
+  // Seedha string me daalne se "[object Object]" aata hai. Isliye pehle Object hai toh uska andar ka text nikaalo.
+  safeStr(v, fallback){
+    if (v === null || v === undefined || v === '') return fallback || '';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'number') return String(v);
+    if (typeof v === 'object') {
+      return v.name || v.title || v.label || v.line1 || v.city || v.text || fallback || '';
+    }
+    return String(v);
+  }
+  safeCity(shop){
+    if (!shop) return 'Surat';
+    if (typeof shop.city === 'string' && shop.city) return shop.city;
+    if (shop.address && typeof shop.address === 'object' && shop.address.city) return shop.address.city;
+    if (shop.address && typeof shop.address === 'string' && shop.address) return shop.address;
+    if (typeof shop.area === 'string' && shop.area) return shop.area;
+    return 'Surat';
+  }
+
   async init(){
     await this.loadSettings();
     this.bindEvents();
+    this.initSocket();
+  }
+
+  initSocket(){
+    try{
+      if (window.SocketCore && window.SocketCore.on) {
+        window.SocketCore.on('shop-status-changed', (d) => {
+          if (d && String(d.shopId) === String(this.shopId)) {
+            this.isOpen = d.isOpen !== false;
+            this.updateOpenUI();
+          }
+        });
+      }
+    }catch(e){}
+  }
+
+  updateOpenUI(){
+    var el = document.getElementById('shopOpenStatus');
+    if (el) el.innerText = this.isOpen ? 'Open 🟢' : 'Closed 🔴';
+    var sub = document.getElementById('settingsSubHeader');
+    if (sub) {
+      var nm = (this.shop && (this.shop.shopName || this.shop.name)) || 'My Shop';
+      sub.innerText = this.safeStr(nm, 'My Shop') + ' • ' + (this.isOpen ? 'Open 🟢' : 'Closed 🔴');
+    }
   }
 
   async loadSettings(){
@@ -223,14 +275,16 @@ class SettingsMainPage {
           if(res) shop = res.shop || res;
         }catch(e){}
       }
-      // 2. Timing / Status - HAMESHA Server se - browser storage wala purana status KABHI nahi dikhayenge
+      // 2. OPEN/CLOSE STATUS - V26 FIX: Ab RAM wale /api/common/settings/:id/status se NAHI, asli wale /api/common/shop-toggle/:id/status se aayega.
+      // Yahi Dashboard wala sach hai - Shop Model ka isOpen.
       let isOpen = true;
       try{
         let sData = null;
-        if(window.ApiCore){ try{ sData = await window.ApiCore.get(`/api/common/settings/${this.shopId}/status`); }catch(e){} }
-        if(!sData){ const r = await fetch(`/api/common/settings/${this.shopId}/status`, { headers: this.getHeaders() }).then(x=>x.json()).catch(()=>null); sData = r; }
-        if(sData) isOpen = sData.isOpen !== false && sData.timing?.isOpen !== false;
+        if(window.ApiCore){ try{ sData = await window.ApiCore.get(`/api/common/shop-toggle/${this.shopId}/status`); }catch(e){} }
+        if(!sData){ const r = await fetch(`/api/common/shop-toggle/${this.shopId}/status`, { headers: this.getHeaders() }).then(x=>x.json()).catch(()=>null); sData = r; }
+        if(sData) isOpen = sData.isOpen !== false;
       }catch(e){}
+      this.isOpen = isOpen;
       // 3. Verification - HAMESHA Server se
       let verificationStatus = 'pending';
       try{
@@ -242,16 +296,21 @@ class SettingsMainPage {
 
       this.shop = shop || { name:'My Shop', category:'General', city:'Surat', phone:'', logo:'' };
 
-      document.getElementById('settingsShopName').innerText = this.shop.name || this.shop.shopName || 'My Shop';
-      document.getElementById('settingsShopCategory').innerText = `${this.shop.category || 'General'} • ${this.shop.city || this.shop.address || 'Surat'}`;
-      document.getElementById('settingsShopPhone').innerText = `📱 ${this.shop.phone || this.shop.ownerPhone || ''}`;
+      var shopName = this.safeStr(this.shop.shopName || this.shop.name, 'My Shop');
+      var shopCategory = this.safeStr(this.shop.category || this.shop.shopType || this.shop.serviceType, 'General');
+      var shopCity = this.safeCity(this.shop);
+      var shopPhone = this.safeStr(this.shop.phone || this.shop.ownerPhone, '');
+
+      document.getElementById('settingsShopName').innerText = shopName;
+      // FIX V26: Pehle `${category} • ${address}` likha tha, address Object tha isliye "[object Object]" aata tha. Ab city string nikal ke dikhayenge.
+      document.getElementById('settingsShopCategory').innerText = shopCategory + ' • ' + shopCity;
+      document.getElementById('settingsShopPhone').innerText = '📱 ' + (shopPhone || '-');
       const avatar = document.getElementById('settingsAvatar');
       const logo = this.shop.logo || this.shop.shopLogo || this.shop.avatar || '';
-      if(logo && logo.startsWith('http')) avatar.innerHTML = `<img src="${logo}" alt="Shop Logo">`;
-      else avatar.innerText = (this.shop.name || 'S').charAt(0).toUpperCase();
-      document.getElementById('shopOpenStatus').innerText = isOpen ? 'Open 🟢' : 'Closed 🔴';
+      if(logo && typeof logo === 'string' && logo.startsWith('http')) avatar.innerHTML = `<img src="${logo}" alt="Shop Logo">`;
+      else avatar.innerText = (shopName || 'S').charAt(0).toUpperCase();
+      this.updateOpenUI();
       document.getElementById('verificationBadge').innerText = verificationStatus==='verified' ? 'Verified ✅' : verificationStatus==='pending' ? 'Pending ⏳' : verificationStatus==='rejected' ? 'Rejected ❌' : 'Not verified';
-      document.getElementById('settingsSubHeader').innerText = `${this.shop.name || 'My Shop'} • ${isOpen ? 'Open 🟢' : 'Closed 🔴'}`;
 
     }catch(e){
       this.renderFallback();

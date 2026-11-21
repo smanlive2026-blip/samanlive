@@ -1,8 +1,14 @@
-<!-- LOCATION: public/shop-templates/common/profile/shop-timing.html - V25 - UNIFIED - FULL CODE -->
+<!-- LOCATION: public/shop-templates/common/profile/shop-timing.html - V26 - UNIFIED - FULL CODE -->
 <!-- WORLD CLASS SHOP TIMING - SHOP OWNER ONLY - FULL -->
 <!-- RULE: Timing = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga. -->
-<!-- FLOW: Load -> GET /api/common/profile/:shopId/timing -> Fill -> Save -> PUT /api/common/profile/:shopId/timing -> dobara Server se Load -->
-<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, isliye Laptop/Mobile me toota hua dikhta tha. Ab FULL HTML + RESPONSIVE CSS hai. -->
+<!-- FLOW: Load -> GET /api/common/shop-toggle/:shopId/status (isOpen + Opening/Closing - ASLI SACH) + GET /api/common/profile/:shopId/timing (Break / Weekly / Holiday / 24H - EXTRA) -> Fill -> Save -> POST shop-toggle/timing + POST shop-toggle/status/toggle + PUT profile/timing -> dobara Server se Load -->
+<!-- FIX V26 - TIMING SINGLE SOURCE OF TRUTH: -->
+<!--   Pehle Load + Save sirf /api/common/profile/:shopId/timing pe hota tha - Wo CommonShop model tha. Dashboard + Customer Shop Model ka isOpen padhte hain, isliye yahan se band karne pe wahan Open hi dikhta tha. -->
+<!--   Ab isOpen + Opening/Closing ka 1 hi sach hai = Shop-Toggle. Profile wala sirf Break / Weekly / Holiday / 24H ke liye hai - Extra cheezein, Open/Close ke liye nahi. -->
+<!--   Save me 3 call jayenge, 1 saath: 1) POST /api/common/shop-toggle/:id/timing - Opening/Closing, 2) POST /api/common/shop-toggle/:id/status/toggle - Open/Close, 3) PUT /api/common/profile/:id/timing - Break/Weekly/Holiday. -->
+<!--   Shop-Toggle fail hua toh Save fail bolega, dhokha nahi dega. Profile wala fail hua toh bhi batayega, par Open/Close + Timing pehle se save ho chuka hoga. -->
+<!-- FIX V26 - BUSY QUICK ACTION: Pehle Busy dabane pe sirf Toast aata tha - Server pe kuch save hi nahi hota tha. Ab POST /api/common/shop-toggle/:id/status/busy pe jayega - Sach me Busy hoga. -->
+<!-- RULE - ORDER KABHI NAHI RUKEGA: Closed sirf dikhane ke liye hai. Isliye Closed pe likha hai - "Order phir bhi aayega". -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,12 +74,10 @@ input{font-family:inherit;outline:none}
 .modal-input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-weight:600}
 .modal-actions{display:flex;gap:10px;padding:16px 20px 20px;border-top:1px solid #f1f5f9}
 .primary-btn{flex:1;background:#0f172a;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:900;cursor:pointer}
-/* LAPTOP */
 @media(min-width:721px){
   .form-section{padding:20px}
   .week-day span:first-of-type{width:60px}
 }
-/* MOBILE FIX - Sabse bada fix yahi hai */
 @media(max-width:600px){
   .timing-root{max-width:100%}
   .timing-header{padding:12px}
@@ -190,6 +194,9 @@ class ShopTimingPage {
     this.timing = null;
     this.holidays = [];
     this.weeklySchedule = {};
+    // V26: Quick Action se Busy dabane pe ye yaad rahega - Save me Busy wale route pe jayega
+    this.pendingMode = null;
+    this.serverIsOpen = true;
   }
 
   getToken(){
@@ -219,6 +226,21 @@ class ShopTimingPage {
     this.initWeeklySchedule();
     await this.loadTiming();
     this.bindEvents();
+    this.initSocket();
+  }
+
+  initSocket(){
+    try{
+      if (window.SocketCore && window.SocketCore.on) {
+        window.SocketCore.on('shop-status-changed', (d) => {
+          if (d && String(d.shopId) === String(this.shopId)) {
+            this.serverIsOpen = d.isOpen !== false;
+            document.getElementById('shopOpenToggle').checked = this.serverIsOpen;
+            this.updateStatus();
+          }
+        });
+      }
+    }catch(e){}
   }
 
   initWeeklySchedule(){
@@ -246,7 +268,17 @@ class ShopTimingPage {
     try{
       if(window.Loader) Loader.show('Loading timing...');
 
-      // HAMESHA Server se - ApiCore ho ya na ho, direct fetch se Server se mangenge
+      // V26 - STEP 1: ASLI SACH - Shop-Toggle se isOpen + Opening/Closing - Yahi Dashboard + Customer ko dikhega
+      let toggleData = null;
+      if(window.ApiCore){
+        try{ toggleData = await window.ApiCore.get(`/api/common/shop-toggle/${this.shopId}/status`); }catch(e){ toggleData = null; }
+      }
+      if(!toggleData){
+        const res = await fetch(`/api/common/shop-toggle/${this.shopId}/status`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+        if(res) toggleData = res;
+      }
+
+      // V26 - STEP 2: EXTRA CHEEZEIN - Profile se Break / Weekly / Holiday / 24H - Open/Close ke liye nahi, sirf extra ke liye
       let data = null;
       if(window.ApiCore){
         try{ data = await window.ApiCore.get(`/api/common/profile/${this.shopId}/timing`); }catch(e){ data = null; }
@@ -257,7 +289,32 @@ class ShopTimingPage {
       }
 
       // Server se nahi mila toh default - browser storage wala purana timing KABHI nahi dikhayenge
-      this.timing = data.timing || data || { openingTime:'09:00', closingTime:'21:00', isOpen:true, is24Hours:false, breakStart:'', breakEnd:'' };
+      const profTiming = data.timing || data || {};
+      this.timing = {
+        openingTime: '09:00',
+        closingTime: '21:00',
+        isOpen: true,
+        is24Hours: false,
+        breakStart: '',
+        breakEnd: '',
+        weeklySchedule: null,
+        holidays: []
+      };
+      // Pehle Profile wali extra cheezein bharo
+      Object.assign(this.timing, profTiming);
+      // Phir Shop-Toggle wali asli Opening/Closing + isOpen se OVERWRITE karo - Yahi sach hai, Profile wala isko nahi udayega
+      if(toggleData){
+        this.serverIsOpen = toggleData.isOpen !== false;
+        this.timing.isOpen = this.serverIsOpen;
+        const tt = toggleData.timing || {};
+        const tOpen = tt.openingTime || tt.open || toggleData.openingTime || null;
+        const tClose = tt.closingTime || tt.close || toggleData.closingTime || null;
+        if(tOpen) this.timing.openingTime = tOpen;
+        if(tClose) this.timing.closingTime = tClose;
+      } else {
+        this.serverIsOpen = profTiming.isOpen !== false;
+        this.timing.isOpen = this.serverIsOpen;
+      }
       this.holidays = data.holidays || this.timing.holidays || [];
       if(data.weeklySchedule) this.weeklySchedule = data.weeklySchedule;
       else if(this.timing.weeklySchedule) this.weeklySchedule = this.timing.weeklySchedule;
@@ -295,7 +352,8 @@ class ShopTimingPage {
 
     document.getElementById('statusIcon').innerText = isOpen?'🟢':'🔴';
     document.getElementById('shopStatusText').innerText = isOpen?'Open Now':'Closed Now';
-    document.getElementById('shopStatusTime').innerText = isOpen?`Closes at ${closingTime}`:`Opens at ${openingTime}`;
+    // V26: Closed pe bhi bata do - Order phir bhi aayega, rokega nahi
+    document.getElementById('shopStatusTime').innerText = isOpen?`Closes at ${closingTime}`:`Opens at ${openingTime} • Order phir bhi aayega`;
   }
 
   renderHolidays(){
@@ -338,21 +396,64 @@ class ShopTimingPage {
     btn.innerText='Saving...'; btn.disabled=true;
 
     try{
+      // V26 - STEP 1: ASLI TIMING - Shop-Toggle pe Opening/Closing save karo - Yahi Dashboard + Customer ko dikhega
       // HAMESHA Server pe - ApiCore ho ya na ho
-      let saved = false;
+      let timingSaved = false;
+      const timingBody = { open: openingTime, close: closingTime, openingTime, closingTime, shopId: this.shopId };
       if(window.ApiCore){
-        try{ await window.ApiCore.put(`/api/common/profile/${this.shopId}/timing`, timingData); saved = true; }catch(e){ saved = false; }
+        try{ const r = await window.ApiCore.post(`/api/common/shop-toggle/${this.shopId}/timing`, timingBody); if(r && r.success !== false) timingSaved = true; }catch(e){ timingSaved = false; }
       }
-      if(!saved){
-        const res = await fetch(`/api/common/profile/${this.shopId}/timing`, { method:'PUT', headers: this.getHeaders(), body: JSON.stringify(timingData) }).then(r=>r.json()).catch(()=>null);
-        if(res && (res.success || res.timing)) saved = true;
-        else if(res && !res.error) saved = true;
+      if(!timingSaved){
+        const res = await fetch(`/api/common/shop-toggle/${this.shopId}/timing`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify(timingBody) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.timing)) timingSaved = true;
+        else if(res && !res.error) timingSaved = true;
+      }
+      if(!timingSaved){
+        if(window.Toast) Toast.show('❌ Timing Server me save nahi hui - dobara try karo', 'error');
+        return;
       }
 
-      if(!saved){
-        // Server me save nahi hua - chup-chap browser storage me save karke dhokha nahi denge
-        if(window.Toast) Toast.show('❌ Server me save nahi hua - dobara try karo', 'error');
+      // V26 - STEP 2: ASLI OPEN/CLOSE - Shop-Toggle pe isOpen save karo - Yahi Dashboard + Customer ko dikhega
+      // Busy hai toh Busy wale route pe jayega, warna Toggle wale pe
+      let statusSaved = false;
+      if(this.pendingMode === 'busy'){
+        const busyBody = { busy: true, isOpen: true, mode: 'busy', status: 'busy', shopId: this.shopId };
+        if(window.ApiCore){
+          try{ const r = await window.ApiCore.post(`/api/common/shop-toggle/${this.shopId}/status/busy`, busyBody); if(r && r.success !== false) statusSaved = true; }catch(e){ statusSaved = false; }
+        }
+        if(!statusSaved){
+          const res = await fetch(`/api/common/shop-toggle/${this.shopId}/status/busy`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify(busyBody) }).then(r=>r.json()).catch(()=>null);
+          if(res && (res.success || !res.error)) statusSaved = true;
+        }
+      } else {
+        const statusBody = { isOpen, mode: isOpen ? 'open' : 'closed', status: isOpen ? 'open' : 'closed', shopId: this.shopId };
+        if(window.ApiCore){
+          try{ const r = await window.ApiCore.post(`/api/common/shop-toggle/${this.shopId}/status/toggle`, statusBody); if(r && r.success !== false) statusSaved = true; }catch(e){ statusSaved = false; }
+        }
+        if(!statusSaved){
+          const res = await fetch(`/api/common/shop-toggle/${this.shopId}/status/toggle`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify(statusBody) }).then(r=>r.json()).catch(()=>null);
+          if(res && (res.success || !res.error)) statusSaved = true;
+        }
+      }
+      if(!statusSaved){
+        if(window.Toast) Toast.show('❌ Open/Close Server me save nahi hua - Timing save ho gayi, par Status nahi', 'error');
         return;
+      }
+      this.pendingMode = null;
+      this.serverIsOpen = isOpen;
+
+      // V26 - STEP 3: EXTRA CHEEZEIN - Profile pe Break / Weekly / Holiday / 24H save karo - Open/Close ke liye nahi, sirf extra ke liye
+      let profileSaved = false;
+      if(window.ApiCore){
+        try{ await window.ApiCore.put(`/api/common/profile/${this.shopId}/timing`, timingData); profileSaved = true; }catch(e){ profileSaved = false; }
+      }
+      if(!profileSaved){
+        const res = await fetch(`/api/common/profile/${this.shopId}/timing`, { method:'PUT', headers: this.getHeaders(), body: JSON.stringify(timingData) }).then(r=>r.json()).catch(()=>null);
+        if(res && (res.success || res.timing)) profileSaved = true;
+        else if(res && !res.error) profileSaved = true;
+      }
+      if(!profileSaved){
+        if(window.Toast) Toast.show('⚠️ Timing + Open/Close save ho gaya, par Break/Weekly Server me save nahi hua', 'warning');
       }
 
       // Save ke baad turant Server se dobara mang ke verify karo
@@ -362,6 +463,7 @@ class ShopTimingPage {
       this.updateStatus();
 
       if(window.SocketCore){
+        window.SocketCore.emit('shop-status-changed', { shopId:this.shopId, isOpen, timing: timingData });
         window.SocketCore.emit('shop-timing-updated', { shopId:this.shopId, timing:timingData });
       }
 
@@ -428,7 +530,7 @@ class ShopTimingPage {
   bindEvents(){
     document.getElementById('timingBack')?.addEventListener('click', ()=> history.back());
     document.getElementById('saveTimingBtn')?.addEventListener('click', ()=> this.saveTiming());
-    document.getElementById('shopOpenToggle')?.addEventListener('change', ()=> this.updateStatus());
+    document.getElementById('shopOpenToggle')?.addEventListener('change', ()=> { this.pendingMode = null; this.updateStatus(); });
     document.getElementById('addHolidayBtn')?.addEventListener('click', ()=> this.openHolidayModal());
     document.getElementById('closeHolidayModal')?.addEventListener('click', ()=> this.closeHolidayModal());
     document.getElementById('cancelHoliday')?.addEventListener('click', ()=> this.closeHolidayModal());
@@ -464,16 +566,20 @@ class ShopTimingPage {
       btn.addEventListener('click', ()=>{
         const action = btn.dataset.action;
         if(action==='open'){
+          this.pendingMode = null;
           document.getElementById('shopOpenToggle').checked=true;
           this.updateStatus();
-          if(window.Toast) Toast.show('Shop opened 🟢', 'success');
         } else if(action==='close'){
+          this.pendingMode = null;
           document.getElementById('shopOpenToggle').checked=false;
           this.updateStatus();
-          if(window.Toast) Toast.show('Shop closed 🔴', 'success');
         } else if(action==='busy'){
-          if(window.Toast) Toast.show('Busy mode activated 🟡 - orders delayed', 'warning');
+          // V26: Busy sirf Toast nahi hai - pendingMode yaad rakho, saveTiming me Busy wale route pe jayega
+          this.pendingMode = 'busy';
+          document.getElementById('shopOpenToggle').checked=true;
+          this.updateStatus();
         }
+        // V26 FIX: Pehle Quick Action pe sirf Toast aata tha, Save hota hi nahi tha. Ab turant Save chalega.
         this.saveTiming();
       });
     });

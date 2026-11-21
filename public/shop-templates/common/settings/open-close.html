@@ -1,8 +1,17 @@
-<!-- LOCATION: public/shop-templates/common/settings/open-close.html - V25 - UNIFIED - FULL CODE -->
+<!-- LOCATION: public/shop-templates/common/settings/open-close.html - V26 - UNIFIED - FULL CODE -->
 <!-- WORLD CLASS OPEN CLOSE - FULL -->
 <!-- RULE: Shop Status = Server se hi aayega, Server pe hi save hoga. Is file me koi bhi browser storage use NAHI hoga. -->
-<!-- FLOW: Load -> GET /api/common/settings/:shopId/status -> Fill -> Toggle -> POST /api/common/settings/:shopId/status/toggle -> dobara Server se Load -->
-<!-- FIX V25: Pehle is file me <html> <head> <body> hi nahi tha, aur .status-card.active.sc-check me space nahi tha isliye tick ka circle nahi aata tha, aur browser storage se purana status uthata tha. Ab FULL HTML + RESPONSIVE + Server only + Tick Fix hai. -->
+<!-- FLOW: Load -> GET /api/common/shop-toggle/:shopId/status -> Fill -> Toggle -> POST /api/common/shop-toggle/:shopId/status/toggle -> dobara Server se Load -->
+<!-- FIX V26 - SETTING SYSTEM SINGLE SOURCE OF TRUTH: -->
+<!--   Pehle ye file GET/POST /api/common/settings/:shopId/status(/toggle) pe jati thi - Wo server/routes/common/settings.routes.js wala RAM / Map tha. -->
+<!--   Restart hote hi status udd jata tha, aur Dashboard + Customer ko pata bhi nahi chalta tha - Kyunki wo Shop Model ka isOpen padhte hain. -->
+<!--   Ab ye file GET/POST /api/common/shop-toggle/:shopId/status(/toggle) pe jayegi - Shop Model ka isOpen hi sach hai. Backend me ye route pehle se bana hua hai. -->
+<!--   Busy ke liye POST /api/common/shop-toggle/:shopId/status/busy pe jayegi - Backend me pehle se bana hua hai. -->
+<!--   History ke liye GET /api/common/shop-toggle/:shopId/status/history se aayegi. -->
+<!-- RULE - ORDER KABHI NAHI RUKEGA: Shop Closed sirf dikhane ke liye hai. Card pe "Not accepting orders" MAT likhna. -->
+<!--   Band dukaan ka bhi order banega aur Dashboard pe Pending me dikhega. Isliye text hai - "Shop band dikhegi • Order phir bhi aayega". -->
+<!-- FIX V26 - AUTO: Pehle Auto toggle POST /api/common/settings/:shopId/status/auto pe jata tha - RAM wala, kaam karta hi nahi tha, par ON dikhata tha. -->
+<!--   Ab Auto ko jhootha save nahi karenge. Auto sirf Timing se chalega - Timing page se time set karo. Isliye Auto toggle pe sirf info dikhayenge. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,7 +53,6 @@ button{font-family:inherit;cursor:pointer;border:0}
 .status-card div b{display:block;font-weight:900;font-size:13px}
 .status-card div span{display:block;font-size:11px;color:#64748b;font-weight:600;margin-top:2px}
 .sc-check{width:24px;height:24px;border-radius:50%;border:2px solid #e2e8f0;display:grid;place-items:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
-/* V25 FIX: Pehle .status-card.active.sc-check likha tha - space nahi tha, isliye tick ka circle nahi aata tha. Ab space hai. */
 .status-card.active .sc-check{background:#0f172a;border-color:#0f172a}
 .status-card.open.active .sc-check{background:#10b981;border-color:#10b981}
 .status-card.closed.active .sc-check{background:#ef4444;border-color:#ef4444}
@@ -73,11 +81,9 @@ button{font-family:inherit;cursor:pointer;border:0}
 .recent-status b{display:block;font-weight:900;margin-bottom:10px}
 .status-history{display:flex;flex-direction:column;gap:8px}
 .history-item{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#f8fafc;padding:10px;border-radius:8px;font-size:11px;font-weight:600}
-/* LAPTOP */
 @media(min-width:721px){
   .timing-quick,.auto-close-card,.recent-status{padding:20px}
 }
-/* MOBILE FIX */
 @media(max-width:600px){
   .open-close-root{max-width:100%}
   .open-close-header{padding:12px}
@@ -122,7 +128,7 @@ button{font-family:inherit;cursor:pointer;border:0}
     </div>
     <div class="status-card closed" data-status="closed">
       <span class="sc-icon">🔴</span>
-      <div><b>Close Shop</b><span>Not accepting orders</span></div>
+      <div><b>Close Shop</b><span>Shop band dikhegi • Order phir bhi aayega</span></div>
       <span class="sc-check"></span>
     </div>
     <div class="status-card busy" data-status="busy">
@@ -172,6 +178,7 @@ class OpenClosePage {
     this.currentMode = 'open';
     this.timing = { openingTime:'09:00', closingTime:'21:00' };
     this.statusHistory = [];
+    this.busy = false;
   }
 
   getToken(){
@@ -190,6 +197,23 @@ class OpenClosePage {
   async init(){
     await this.loadStatus();
     this.bindEvents();
+    this.initSocket();
+  }
+
+  initSocket(){
+    try{
+      if (window.SocketCore && window.SocketCore.on) {
+        window.SocketCore.on('shop-status-changed', (d) => {
+          if (d && String(d.shopId) === String(this.shopId)) {
+            this.isOpen = d.isOpen !== false;
+            if (d.mode) this.currentMode = d.mode;
+            else this.currentMode = this.isOpen ? 'open' : 'closed';
+            if (d.timing) this.timing = d.timing;
+            this.updateUI();
+          }
+        });
+      }
+    }catch(e){}
   }
 
   async loadStatus(){
@@ -203,14 +227,14 @@ class OpenClosePage {
       }
 
       let data = null;
-      // 1. ApiCore se - HAMESHA Server se
+      // 1. ApiCore se - HAMESHA Server se - V26: shop-toggle wala route, settings wala RAM route NAHI
       if(window.ApiCore){
-        try{ data = await window.ApiCore.get(`/api/common/settings/${this.shopId}/status`); }catch(e){ data = null; }
+        try{ data = await window.ApiCore.get(`/api/common/shop-toggle/${this.shopId}/status`); }catch(e){ data = null; }
       }
-      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server se hi mangenge - wahi shop-toggle route
       if(!data){
         try{
-          const res = await fetch(`/api/common/settings/${this.shopId}/status`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+          const res = await fetch(`/api/common/shop-toggle/${this.shopId}/status`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
           if(res) data = res;
         }catch(e){}
       }
@@ -218,10 +242,26 @@ class OpenClosePage {
       if(data){
         this.isOpen = data.isOpen!==false;
         if(data.mode) this.currentMode = data.mode;
+        else if(data.status) this.currentMode = data.status;
         else this.currentMode = this.isOpen ? 'open' : 'closed';
-        this.timing = data.timing || this.timing;
-        this.statusHistory = data.history || data.statusHistory || [];
+        // Backend kabhi timing.openingTime, kabhi timing.open bhejta hai - dono pakad lo
+        if(data.timing){
+          this.timing = {
+            openingTime: data.timing.openingTime || data.timing.open || '09:00',
+            closingTime: data.timing.closingTime || data.timing.close || '21:00',
+            open: data.timing.openingTime || data.timing.open || '09:00',
+            close: data.timing.closingTime || data.timing.close || '21:00'
+          };
+        }
+        if(data.openingTime) this.timing.openingTime = data.openingTime;
+        if(data.closingTime) this.timing.closingTime = data.closingTime;
+        this.statusHistory = data.history || data.statusHistory || this.statusHistory || [];
       }
+      // History alag se bhi maang lo - status wale me kabhi nahi aati toh yahan se aa jayegi
+      try{
+        const hr = await fetch(`/api/common/shop-toggle/${this.shopId}/status/history`, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
+        if(hr && (hr.history || hr.statusHistory)) this.statusHistory = hr.history || hr.statusHistory;
+      }catch(e){}
 
       this.updateUI();
 
@@ -237,7 +277,7 @@ class OpenClosePage {
     const time = document.getElementById('heroTime');
     const toggle = document.getElementById('bigShopToggle');
 
-    // Busy Mode - alag se
+    // Busy Mode - alag se - Dukaan khuli hai, bas busy hai
     if(this.currentMode==='busy'){
       hero.className='shop-status-hero busy';
       icon.innerText='🟡';
@@ -254,7 +294,7 @@ class OpenClosePage {
       hero.className='shop-status-hero closed';
       icon.innerText='🔴';
       status.innerText='Shop is Closed';
-      time.innerText=`Closed now • Opens at ${this.formatTime(this.timing.openingTime)}`;
+      time.innerText=`Closed now • Opens at ${this.formatTime(this.timing.openingTime)} • Order phir bhi aayega`;
       toggle.checked=false;
     }
 
@@ -277,7 +317,7 @@ class OpenClosePage {
       } else {
         historyContainer.innerHTML = this.statusHistory.slice(0,5).map(h=>`
           <div class="history-item">
-            <span>${h.status==='open'?'🟢 Opened': h.status==='closed'?'🔴 Closed':'🟡 Busy'} • ${new Date(h.time).toLocaleString()}</span>
+            <span>${(h.status||h.mode)==='open'?'🟢 Opened': (h.status||h.mode)==='closed'?'🔴 Closed':'🟡 Busy'} • ${new Date(h.time || h.createdAt || Date.now()).toLocaleString()}</span>
             <span style="font-size:10px;color:#64748b">${h.by||'owner'}</span>
           </div>
         `).join('');
@@ -287,9 +327,11 @@ class OpenClosePage {
 
   formatTime(timeStr){
     if(!timeStr) return '09:00 AM';
-    const [h,m] = timeStr.split(':').map(Number);
-    const hour = h>12? h-12 : h===0?12:h;
-    const ampm = h>=12?'PM':'AM';
+    const parts = String(timeStr).split(':');
+    const h = Number(parts[0]) || 0;
+    const m = Number(parts[1]) || 0;
+    const hour = h>12 ? h-12 : h===0 ? 12 : h;
+    const ampm = h>=12 ? 'PM' : 'AM';
     return `${hour}:${String(m).padStart(2,'0')} ${ampm}`;
   }
 
@@ -307,17 +349,27 @@ class OpenClosePage {
     this.currentMode = mode || (isOpen ? 'open' : 'closed');
     this.updateUI();
 
-    const historyItem = { _id:Date.now().toString(), status:this.currentMode, time:new Date().toISOString(), by:'owner' };
+    const historyItem = { _id:Date.now().toString(), status:this.currentMode, mode:this.currentMode, time:new Date().toISOString(), by:'owner' };
 
     try{
       let saved = false;
-      // 1. ApiCore se - HAMESHA Server pe
-      if(window.ApiCore){
-        try{ await window.ApiCore.post(`/api/common/settings/${this.shopId}/status/toggle`, { isOpen, mode: this.currentMode, status: this.currentMode }); saved = true; }catch(e){ saved = false; }
+      let url = '';
+      let body = {};
+      // V26: Busy ke liye alag route hai Backend me - /status/busy - Open/Close ke liye /status/toggle
+      if(this.currentMode === 'busy'){
+        url = `/api/common/shop-toggle/${this.shopId}/status/busy`;
+        body = { busy: true, isOpen: true, mode: 'busy', status: 'busy', shopId: this.shopId };
+      } else {
+        url = `/api/common/shop-toggle/${this.shopId}/status/toggle`;
+        body = { isOpen, mode: this.currentMode, status: this.currentMode, shopId: this.shopId };
       }
-      // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga
+      // 1. ApiCore se - HAMESHA Server pe - shop-toggle wala route
+      if(window.ApiCore){
+        try{ const r = await window.ApiCore.post(url, body); if(r && r.success !== false) saved = true; }catch(e){ saved = false; }
+      }
+      // 2. Direct fetch se - ApiCore na chale toh bhi Server pe hi save hoga - wahi shop-toggle route
       if(!saved){
-        const res = await fetch(`/api/common/settings/${this.shopId}/status/toggle`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify({ isOpen, mode: this.currentMode, status: this.currentMode, shopId: this.shopId }) }).then(r=>r.json()).catch(()=>null);
+        const res = await fetch(url, { method:'POST', headers: this.getHeaders(), body: JSON.stringify(body) }).then(r=>r.json()).catch(()=>null);
         if(res && (res.success || !res.error)) saved = true;
       }
       // 3. Server pe save nahi hua toh dhokha nahi denge - toggle wapas palat do
@@ -363,18 +415,9 @@ class OpenClosePage {
     });
 
     document.getElementById('autoToggle')?.addEventListener('change', async (e)=>{
-      // Auto Open/Close - Server pe save karo
-      try{
-        const res = await fetch(`/api/common/settings/${this.shopId}/status/auto`, { method:'POST', headers: this.getHeaders(), body: JSON.stringify({ autoEnabled: e.target.checked, shopId: this.shopId }) }).then(r=>r.json()).catch(()=>null);
-        if(res && (res.success || !res.error)){
-          if(window.Toast) Toast.show(e.target.checked ? 'Auto Open/Close ON 🤖' : 'Auto Open/Close OFF', 'info');
-        } else {
-          e.target.checked = !e.target.checked;
-          if(window.Toast) Toast.show('❌ Server me save nahi hua', 'error');
-        }
-      }catch(err){
-        e.target.checked = !e.target.checked;
-      }
+      // V26 FIX: Auto ko RAM wale /api/common/settings/:id/status/auto pe jhootha save MAT karo - Wo kaam karta hi nahi tha, par ON dikhata tha.
+      // Auto sirf Timing se chalega - Timing page se time set karo. Isliye yahan sirf info dikhayenge, server pe kuch nahi bhejenge.
+      if(window.Toast) Toast.show(e.target.checked ? 'Auto ON 🤖 - Timing page wala time hi chalega' : 'Auto OFF - Ab manual Open/Close chalega', 'info');
     });
   }
 }
