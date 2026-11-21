@@ -9,6 +9,10 @@
     <style>
       /* LOGIN MODAL EXTRA CSS */
       #loginModal input:focus{outline:none;border-color:#0f172a;box-shadow:0 0 0 3px rgba(15,23,42,.1)}
+      /* NEARBY SHOPS SECTION - HOME - CIRCLE WALA - Mobile + Laptop dono me sahi dikhega */
+      .nearby-shops-section{margin-top:16px}
+      .nearby-shops-section h3{font-size:16px;font-weight:900;margin-bottom:4px}
+      .nearby-shops-sub{font-size:11px;color:#64748b;font-weight:600;margin-bottom:12px}
     </style>
 </head>
 <body>
@@ -59,6 +63,17 @@
         <section class="nearby-product-section">
             <h3>Nearby Product</h3>
             <div class="nearby-product-list" id="nearbyProductsRepeat"></div>
+        </section>
+
+        <!-- 7. NEARBY SHOPS - CIRCLE WALA - NAYA - ISKO HAATH MAT LAGANA, YEHI HOME PE DUKAAN DIKHAYEGA -->
+        <!-- RULE: Home pe bhi wahi Circle wala hisaab chalega - Customer ka GPS -> Backend -> distance <= us Shop ka Radius wali dukaan hi dikhegi -->
+        <!-- RULE 2: GPS nahi diya toh saari dukaan dikha ke dhokha NAHI denge - "Location ON karo" dikhega -->
+        <!-- RULE 3: Thela wali pe LIVE badge aayega, Fixed wali pe nahi aayega -->
+        <!-- FLOW: #nearbyShopsGrid khali hai - /assets/js/nearby-shops.js khud isme Card bana dega - Isko khud mat bharna -->
+        <section class="nearby-shops-section">
+            <h3>Nearby Shops</h3>
+            <p class="nearby-shops-sub">Tere Circle me aane wali dukaan - Jitni door hai, utna hi dikhega</p>
+            <div id="nearbyShopsGrid"></div>
         </section>
     </main>
 
@@ -142,6 +157,8 @@
     <script src="/assets/js/product-core.js"></script>  
     <script src="/assets/js/role-hierarchy.js"></script>
     <script src="/assets/js/app.js?v=8"></script>
+    <!-- NEARBY SHOPS - HOME - CIRCLE WALA - NAYA - Isko sabse neeche hi rakhna, app.js ke baad -->
+    <script src="/assets/js/nearby-shops.js"></script>
 
     <script>
     // ===== LOGIN MODAL LOGIC - PROFILE ACTIVATION - V8 =====

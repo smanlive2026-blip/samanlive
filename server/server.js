@@ -338,7 +338,7 @@ app.use('/api', deliveryManagerRoutes);
 app.use('/api', require('./routes/adminRoutes'));
 app.use('/api', require('./routes/areaRoutes'));
 app.use('/api', require('./routes/stats'));
-app.use('/api/location', locationRoutes);
+//app.use('/api/location', locationRoutes);
 app.use('/api/location', require('./routes/user.location.routes'));
 app.use('/api/user', userRoutes);
 app.use('/api/admin', require('./routes/userAdmin'));
