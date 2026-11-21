@@ -7,6 +7,7 @@
 <!-- LOCATION V6 - ACHAR LOCATION FIX: Purana Current Location wala form hata diya - Wo Shop me save hota tha, ShopLocation me nahi, isliye Nearby me Achar wali dukaan kabhi dikhti hi nahi thi. -->
 <!--   Ab Location Status + Map + Circle wala button hai - Dabate hi ../common/profile/shop-location.html?shopId=XXX khulega - Map pe point + Radius -> POST /api/location/shop -> Nearby me dikhegi. -->
 <!--   dashboard.js ke purane saveLocation / loadLocation ko haath nahi lagaya - Wo if ($('saveLocationBtn')) check karke chalte hain, button hi nahi hai toh listener lagega hi nahi, crash nahi hoga. -->
+<!-- ANALYTICS V7 - NAYA: Sidebar + Quick Actions me Analytics wala button joda - Dabate hi ../common/analytics/analytics.html?shopId=XXX khulega. Baaki kuch nahi badla. data-page me nahi dala, warna Dashboard ka page-switch toot jata. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -145,6 +146,8 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <button data-page="settings"><i class="fa fa-gear"></i> Settings</button>
 <button data-page="profile"><i class="fa fa-user"></i> Profile</button>
 <button data-page="location"><i class="fa fa-location-dot"></i> Location</button>
+<!-- ANALYTICS V7 - NAYA: data-page NAHI diya, warna page-switch toot jata. Ye alag page kholega. -->
+<button id="analyticsNavBtn"><i class="fa fa-chart-line"></i> Analytics</button>
 </nav>
 <div class="sidefoot">
 <button id="viewShopBtn"><i class="fa fa-eye"></i> Customer View Dekho</button>
@@ -183,6 +186,8 @@ input:focus,select:focus,textarea:focus{border-color:#0f172a}
 <button class="btn dark block" id="quickAddBtn" style="margin-top:10px"><i class="fa fa-bolt"></i> 50+ Achar - Quick Add</button>
 <button class="btn light block" id="newOrderBtn" style="margin-top:10px"><i class="fa fa-receipt"></i> Manual Order Banao</button>
 <button class="btn light block" id="whatsappShareBtn" style="margin-top:10px"><i class="fa-brands fa-whatsapp"></i> WhatsApp Pe Share Karo</button>
+<!-- ANALYTICS V7 - NAYA: Quick Actions me bhi Analytics wala button -->
+<button class="btn light block" id="analyticsBtn" style="margin-top:10px"><i class="fa fa-chart-line"></i> 📊 Analytics Dekho</button>
 </div>
 <div class="panel"><h2>📣 Announcement</h2><p class="sub">Customer ko shop ke upar dikhega.</p><textarea id="announcementInput" rows="2" placeholder="Jaise: Naya Aam ka Achar aa gaya..."></textarea><button class="btn dark block" id="saveAnnouncement" style="margin-top:10px">Announcement Save Karo</button></div>
 <div class="panel"><h2>⚠️ Low Stock</h2><div id="stockAlert">Loading...</div></div>
@@ -420,6 +425,12 @@ document.addEventListener('DOMContentLoaded', function(){ refreshAcharLocation()
     if (nb) nb.addEventListener('click', function(){
       location.href = '../common/notifications/notifications.html?shopId=' + encodeURIComponent(shopId) + '&role=shop_owner';
     });
+    // ANALYTICS V7 - NAYA: Dono Analytics wale button yahin se khulenge - shopId URL se hi aayega, koi storage nahi
+    var goAnalytics = function(){
+      location.href = '../common/analytics/analytics.html?shopId=' + encodeURIComponent(shopId);
+    };
+    var an1 = document.getElementById('analyticsNavBtn'); if (an1) an1.addEventListener('click', goAnalytics);
+    var an2 = document.getElementById('analyticsBtn'); if (an2) an2.addEventListener('click', goAnalytics);
     var shareUrl = location.origin + '/shop-templates/achar-shop/customer-view.html?shopId=' + encodeURIComponent(shopId);
     window.SHOP_SHARE_URL = shareUrl;
     var doShare = function(){

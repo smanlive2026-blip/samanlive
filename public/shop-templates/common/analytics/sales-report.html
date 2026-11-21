@@ -1,11 +1,69 @@
-<!-- LOCATION: public/shop-templates/common/analytics/sales-report.html -->
-<!-- WORLD CLASS SALES REPORT - FULL 400+ LINES -->
+<!-- LOCATION: public/shop-templates/common/analytics/sales-report.html - V2 - REAL SALES REPORT - FULL CODE -->
+<!-- RULE: Koi nakli number NAHI hoga - 45000 / 125 / Tomato / COD 55% wala purana dhokha hata diya. Sab Backend se aayega. -->
+<!-- FLOW: Load -> GET /api/common/analytics/:shopId/sales-report?period=month (Daily + Top + Payment) + GET /api/common/analytics/:shopId?period=month (Total + Growth + Hourly) -> Stats + 3 Chart -> Export -->
+<!-- FIX V2: 1) Chart.js + ApiCore upar load kiya - Pehle dono nahi the, isliye chart banta hi nahi tha aur ApiCore milta hi nahi tha. -->
+<!--   2) Returns ka alag Model hai hi nahi, isliye Returns me Cancelled wali Order ginenge - Nakli 2 nahi dikhayenge. Abhi Cancelled ka count Backend se nahi aata, isliye 0 + hint dikhega. -->
+<!--   3) Export ab Frontend ka nakli CSV nahi banayega - Backend ka /sales-report?format=csv kholega - Din-wise asli list download hogi. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sales Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="../core/api-core.js"></script>
+<script src="../core/auth-core.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f8fafc;color:#0f172a}
+button{font-family:inherit;cursor:pointer;border:0}
+select{font-family:inherit;outline:none}
+.sales-report-root{font-family:'Outfit',sans-serif;max-width:700px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
+.report-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
+.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
+.report-header b{display:block;font-weight:900;font-size:16px}
+.report-header span{font-size:11px;color:#64748b;font-weight:600}
+.export-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.report-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.report-card{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:14px;display:flex;gap:10px;align-items:flex-start}
+.r-icon{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.report-card b{display:block;font-weight:900;font-size:18px}
+.report-card span{font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;display:block;margin:2px 0}
+.growth{font-size:10px;font-weight:800;padding:2px 6px;border-radius:20px;display:inline-block}
+.growth.up{background:#dcfce7;color:#166534}
+.growth.down{background:#fee2e2;color:#991b1b}
+.growth.zero{background:#f1f5f9;color:#64748b}
+.report-chart-card{background:#fff;margin:0 12px 12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.chart-header b{font-weight:900;font-size:14px}
+.chart-period-select{background:#f1f5f9;border:1px solid #e2e8f0;padding:6px 10px;border-radius:8px;font-weight:700;font-size:11px}
+.chart-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;background:#f8fafc;border-radius:10px;padding:10px}
+.c-stat{text-align:center}
+.c-stat span{display:block;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase}
+.c-stat b{font-weight:900;font-size:12px;display:block;margin-top:2px}
+.report-section{background:#fff;margin:0 12px 12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section-header b{font-weight:900;font-size:14px}
+.view-all-btn{background:#f1f5f9;border:none;padding:6px 10px;border-radius:6px;font-weight:800;font-size:11px;cursor:pointer}
+.table-header{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;padding:8px;background:#f8fafc;border-radius:8px;margin-bottom:8px}
+.product-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;font-size:12px;font-weight:600;padding:10px 8px;border-bottom:1px solid #f1f5f9;align-items:center}
+.product-row:last-child{border-bottom:none}
+.product-row span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.payment-breakdown{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.payment-item{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;background:#f8fafc;padding:8px 10px;border-radius:8px}
+.empty-box{text-align:center;padding:20px 8px;color:#94a3b8;font-weight:600;font-size:12px;line-height:1.5}
+.hint-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:10px;margin:0 12px 12px;font-size:11px;font-weight:600;color:#0369a1;line-height:1.5}
+@media(max-width:600px){ .report-header b{font-size:15px} }
+</style>
+</head>
+<body>
 <div id="salesReportRoot" class="sales-report-root">
   <div class="report-header">
     <button id="reportBack" class="back-btn">‹</button>
-    <div>
+    <div style="min-width:0;flex:1">
       <b>Sales Report</b>
-      <span id="reportPeriod">This Month • Detailed sales analysis</span>
+      <span id="reportPeriod">This Month • Asli Sale se</span>
     </div>
     <button id="exportReport" class="export-btn">📄 Export</button>
   </div>
@@ -14,51 +72,55 @@
     <div class="report-card">
       <span class="r-icon" style="background:#f0fdf4">💰</span>
       <div>
-        <b id="reportRevenue">₹45,000</b>
+        <b id="reportRevenue">₹0</b>
         <span>Total Revenue</span>
-        <small id="reportRevenueGrowth" class="growth up">+15% vs last month</small>
+        <small id="reportRevenueGrowth" class="growth zero">-</small>
       </div>
     </div>
     <div class="report-card">
       <span class="r-icon" style="background:#f0f9ff">📦</span>
       <div>
-        <b id="reportOrders">125</b>
+        <b id="reportOrders">0</b>
         <span>Total Orders</span>
-        <small id="reportOrdersGrowth" class="growth up">+8% vs last month</small>
+        <small id="reportOrdersGrowth" class="growth zero">-</small>
       </div>
     </div>
     <div class="report-card">
       <span class="r-icon" style="background:#fef3c7">💵</span>
       <div>
-        <b id="reportAov">₹360</b>
+        <b id="reportAov">₹0</b>
         <span>Avg Order Value</span>
-        <small id="reportAovGrowth" class="growth up">+5% vs last month</small>
+        <small id="reportAovGrowth" class="growth zero">Pichhle period se</small>
       </div>
     </div>
     <div class="report-card">
       <span class="r-icon" style="background:#fee2e2">↩️</span>
       <div>
-        <b id="reportReturns">2</b>
+        <b id="reportReturns">0</b>
         <span>Returns</span>
-        <small id="reportReturnsGrowth" class="growth down">-1% vs last month</small>
+        <small id="reportReturnsGrowth" class="growth zero">Return track nahi hai</small>
       </div>
     </div>
   </div>
+
+  <div class="hint-box" id="salesHint">Loading...</div>
 
   <div class="report-chart-card">
     <div class="chart-header">
       <b>Revenue Trend</b>
       <select id="reportChartPeriod" class="chart-period-select">
+        <option value="today">Today</option>
         <option value="week">This Week</option>
         <option value="month" selected>This Month</option>
         <option value="year">This Year</option>
       </select>
     </div>
     <canvas id="reportChart" height="200"></canvas>
+    <div class="empty-box" id="revenueEmpty" style="display:none">Is period me koi Order nahi hai<br><span style="font-size:11px">Order aayega toh yahan asli graph ban jayega</span></div>
     <div class="chart-stats">
-      <div class="c-stat"><span>Highest Day</span><b id="highestDay">₹4,200 (Sat)</b></div>
-      <div class="c-stat"><span>Lowest Day</span><b id="lowestDay">₹2,800 (Tue)</b></div>
-      <div class="c-stat"><span>Avg Daily</span><b id="avgDaily">₹3,500</b></div>
+      <div class="c-stat"><span>Highest Day</span><b id="highestDay">-</b></div>
+      <div class="c-stat"><span>Lowest Day</span><b id="lowestDay">-</b></div>
+      <div class="c-stat"><span>Avg Daily</span><b id="avgDaily">-</b></div>
     </div>
   </div>
 
@@ -69,7 +131,7 @@
     </div>
     <div id="topSellingProducts" class="products-table">
       <div class="table-header">
-        <span>Product</span><span>Qty Sold</span><span>Revenue</span><span>Growth</span>
+        <span>Product</span><span>Qty Sold</span><span>Revenue</span><span>Share</span>
       </div>
       <div id="topProductsRows"></div>
     </div>
@@ -81,6 +143,7 @@
     </div>
     <div id="paymentMethodsChart" class="payment-chart">
       <canvas id="paymentChart" height="150"></canvas>
+      <div class="empty-box" id="paymentEmpty" style="display:none">Koi Order nahi hai - Payment ka hisab Order aane pe dikhega</div>
       <div id="paymentBreakdown" class="payment-breakdown"></div>
     </div>
   </div>
@@ -90,136 +153,163 @@
       <b>⏰ Sales by Hour</b>
     </div>
     <canvas id="hourlySalesChart" height="150"></canvas>
+    <div class="empty-box" id="hourlyEmpty" style="display:none">Koi Order nahi hai - Kis ghante me sabse zyada Order aata hai, ye Order aane pe pata chalega</div>
   </div>
 </div>
-
-<style>
-.sales-report-root{ font-family:Outfit,sans-serif; max-width:700px; margin:0 auto; background:#f8fafc; min-height:100vh; padding-bottom:20px; }
-.report-header{ background:#fff; display:flex; align-items:center; gap:12px; padding:14px 16px; position:sticky; top:0; z-index:10; border-bottom:1px solid #f1f5f9; }
-.back-btn{ background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:20px; font-weight:900; cursor:pointer; }
-.report-header b{ display:block; font-weight:900; }
-.report-header span{ font-size:11px; color:#64748b; font-weight:600; }
-.export-btn{ margin-left:auto; background:#f1f5f9; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; }
-.report-summary{ display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:12px; }
-.report-card{ background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:14px; display:flex; gap:10px; align-items:flex-start; }
-.r-icon{ width:40px; height:40px; border-radius:10px; display:grid; place-items:center; font-size:18px; }
-.report-card b{ display:block; font-weight:900; font-size:18px; }
-.report-card span{ font-size:11px; color:#64748b; font-weight:700; text-transform:uppercase; display:block; margin:2px 0; }
-.growth{ font-size:10px; font-weight:800; padding:2px 6px; border-radius:20px; }
-.growth.up{ background:#dcfce7; color:#166534; }
-.growth.down{ background:#fee2e2; color:#991b1b; }
-.report-chart-card{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
-.chart-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-.chart-header b{ font-weight:900; font-size:14px; }
-.chart-period-select{ background:#f1f5f9; border:1px solid #e2e8f0; padding:6px 10px; border-radius:8px; font-weight:700; font-size:11px; }
-.chart-stats{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:12px; background:#f8fafc; border-radius:10px; padding:10px; }
-.c-stat{ text-align:center; }
-.c-stat span{ display:block; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; }
-.c-stat b{ font-weight:900; font-size:12px; display:block; margin-top:2px; }
-.report-section{ background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px; border:1px solid #f1f5f9; }
-.section-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-.section-header b{ font-weight:900; font-size:14px; }
-.view-all-btn{ background:#f1f5f9; border:none; padding:6px 10px; border-radius:6px; font-weight:800; font-size:11px; cursor:pointer; }
-.products-table{ }
-.table-header{ display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:8px; font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; padding:8px; background:#f8fafc; border-radius:8px; margin-bottom:8px; }
-.product-row{ display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:8px; font-size:12px; font-weight:600; padding:10px 8px; border-bottom:1px solid #f1f5f9; align-items:center; }
-.product-row:last-child{ border-bottom:none; }
-.payment-chart{ }
-.payment-breakdown{ display:flex; flex-direction:column; gap:6px; margin-top:12px; }
-.payment-item{ display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:600; background:#f8fafc; padding:8px 10px; border-radius:8px; }
-</style>
 
 <script>
 class SalesReport {
   constructor(){
     this.shopId = new URLSearchParams(location.search).get('shopId') || '';
-    this.period = 'month';
+    this.period = new URLSearchParams(location.search).get('period') || 'month';
     this.report = null;
+    this.analytics = null;
     this.charts = {};
   }
 
   async init(){
-    await this.loadReport();
-    this.initCharts();
+    if(!this.shopId){
+      var hint = document.getElementById('salesHint');
+      if(hint) hint.innerText = 'Shop not found - URL me ?shopId=XXX hona chahiye. Dashboard se dobara kholo.';
+      return;
+    }
+    var sel = document.getElementById('reportChartPeriod');
+    if(sel) sel.value = this.period;
     this.bindEvents();
+    await this.loadReport();
+  }
+
+  async fetchJson(url){
+    if(window.ApiCore){
+      try{ var r = await window.ApiCore.get(url); if(r) return r; }catch(e){}
+    }
+    try{ var res = await fetch(url).then(function(x){ return x.json(); }).catch(function(){ return null; }); return res; }catch(e){ return null; }
   }
 
   async loadReport(){
     try{
-      if(window.Loader) Loader.show('Loading sales report...');
+      var hint = document.getElementById('salesHint');
+      if(hint) hint.innerText = 'Loading... Asli Order se hisab nikal rahe hain...';
 
-      if(window.ApiCore){
-        const data = await window.ApiCore.get(`/api/common/analytics/${this.shopId}/sales-report?period=${this.period}`);
-        this.report = data.report||data;
-      } else {
-        this.report = {
-          revenue:45000, orders:125, aov:360, returns:2,
-          revenueGrowth:15, ordersGrowth:8, aovGrowth:5, returnsGrowth:-1,
-          topProducts:[
-            { name:'Tomato', qty:45, revenue:1800, growth:12 },
-            { name:'Potato', qty:30, revenue:900, growth:8 },
-            { name:'Milk', qty:25, revenue:700, growth:15 },
-            { name:'Bread', qty:20, revenue:500, growth:-2 }
-          ],
-          paymentMethods:{ COD:{ count:70, revenue:25000, percent:55 }, UPI:{ count:40, revenue:15000, percent:33 }, Card:{ count:15, revenue:5000, percent:12 } },
-          hourlySales:[{ hour:9, orders:5 },{ hour:12, orders:12 },{ hour:15, orders:8 },{ hour:18, orders:20 },{ hour:20, orders:15 }],
-          dailyRevenue:{ Mon:3200, Tue:2800, Wed:3500, Thu:4000, Fri:3800, Sat:4200, Sun:3000 }
-        };
+      // 2 API ek saath - sales-report se Daily + Top + Payment, analytics se Total + Growth + Hourly
+      // V2 FIX: Pehle frontend sirf sales-report ko padhta tha aur report.revenue maangta tha, par Backend report: [...] (list) bhejta tha, isliye sab 0 / nakli fallback dikhta tha.
+      var sr = await this.fetchJson('/api/common/analytics/' + this.shopId + '/sales-report?period=' + this.period);
+      var an = await this.fetchJson('/api/common/analytics/' + this.shopId + '?period=' + this.period);
+      this.analytics = (an && (an.analytics || an.data)) || {};
+      // sales-report V2 Backend: { success, report: [{date, orders, revenue}], totalOrders, totalRevenue, aov, topProducts, paymentMethods }
+      var daily = (sr && sr.report) || [];
+      var topProducts = (sr && sr.topProducts) || [];
+      var paymentRaw = (sr && sr.paymentMethods) || {};
+      // Analytics se bhi Top / Payment aa jaye toh wahi le lo - Dono me se jo bhara hua hai
+      if(!topProducts.length && this.analytics.topProducts) topProducts = this.analytics.topProducts;
+      if(Object.keys(paymentRaw).length === 0 && this.analytics.paymentMethods) {
+        paymentRaw = {};
+        this.analytics.paymentMethods.forEach(function(p){ paymentRaw[p.method] = { count: p.orders, revenue: p.revenue }; });
       }
 
-      document.getElementById('reportRevenue').innerText = `₹${this.report.revenue||0}`;
-      document.getElementById('reportOrders').innerText = this.report.orders||0;
-      document.getElementById('reportAov').innerText = `₹${this.report.aov||0}`;
-      document.getElementById('reportReturns').innerText = this.report.returns||0;
+      var totalRevenue = Number((sr && sr.totalRevenue) || this.analytics.revenue || 0);
+      var totalOrders = Number((sr && sr.totalOrders) || this.analytics.orders || 0);
+      var aov = Number((sr && sr.aov) || this.analytics.aov || (totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0));
 
-      document.getElementById('reportRevenueGrowth').innerText = `${this.report.revenueGrowth>=0?'+':''}${this.report.revenueGrowth||0}% vs last ${this.period}`;
-      document.getElementById('reportOrdersGrowth').innerText = `${this.report.ordersGrowth>=0?'+':''}${this.report.ordersGrowth||0}% vs last ${this.period}`;
+      this.report = {
+        revenue: totalRevenue,
+        orders: totalOrders,
+        aov: aov,
+        returns: 0,
+        revenueGrowth: Number(this.analytics.revenueGrowth || 0),
+        ordersGrowth: Number(this.analytics.ordersGrowth || 0),
+        topProducts: topProducts,
+        paymentMethods: paymentRaw,
+        hourlySales: this.analytics.hourly || this.analytics.salesByHour || [],
+        dailyRevenue: daily
+      };
+
+      document.getElementById('reportRevenue').innerText = '₹' + totalRevenue.toLocaleString('en-IN');
+      document.getElementById('reportOrders').innerText = totalOrders;
+      document.getElementById('reportAov').innerText = '₹' + aov.toLocaleString('en-IN');
+      document.getElementById('reportReturns').innerText = '0';
+
+      this.setGrowth('reportRevenueGrowth', this.report.revenueGrowth);
+      this.setGrowth('reportOrdersGrowth', this.report.ordersGrowth);
+
+      var periodText = this.period === 'today' ? 'Today' : this.period === 'week' ? 'This Week' : this.period === 'year' ? 'This Year' : 'This Month';
+      var periodEl = document.getElementById('reportPeriod');
+      if(periodEl) periodEl.innerText = periodText + ' • Asli Sale se';
+
+      if(hint){
+        if(!totalOrders) hint.innerText = 'Is period me koi Order nahi hai - Order aayega toh yahan asli hisab dikhega. Returns ka alag track nahi hai, isliye Returns 0 dikhega.';
+        else hint.innerText = '✅ Asli data hai - ' + totalOrders + ' Orders • ₹' + totalRevenue.toLocaleString('en-IN') + ' Revenue • Avg Order ₹' + aov.toLocaleString('en-IN');
+      }
+
+      // Highest / Lowest / Avg Daily - Asli din se, hardcode Sat / Tue wala nahi
+      if(daily.length > 0){
+        var sorted = daily.slice().sort(function(a, b){ return Number(b.revenue || 0) - Number(a.revenue || 0); });
+        var highest = sorted[0];
+        var lowest = sorted[sorted.length - 1];
+        var avg = Math.round(totalRevenue / daily.length);
+        document.getElementById('highestDay').innerText = '₹' + Number(highest.revenue || 0).toLocaleString('en-IN') + ' (' + (highest.date || '') + ')';
+        document.getElementById('lowestDay').innerText = '₹' + Number(lowest.revenue || 0).toLocaleString('en-IN') + ' (' + (lowest.date || '') + ')';
+        document.getElementById('avgDaily').innerText = '₹' + avg.toLocaleString('en-IN');
+      } else {
+        document.getElementById('highestDay').innerText = '-';
+        document.getElementById('lowestDay').innerText = '-';
+        document.getElementById('avgDaily').innerText = '-';
+      }
 
       this.renderTopProducts();
       this.renderPaymentMethods();
+      this.initCharts();
+    }catch(e){
+      var hint2 = document.getElementById('salesHint');
+      if(hint2) hint2.innerText = 'Load nahi hua - Server check karo, dobara try karo.';
+    }
+  }
 
-      const daily = this.report.dailyRevenue||{};
-      const entries = Object.entries(daily);
-      if(entries.length>0){
-        const highest = entries.sort((a,b)=> b[1]-a[1])[0];
-        const lowest = entries.sort((a,b)=> a[1]-b[1])[0];
-        const avg = Math.round(Object.values(daily).reduce((s,v)=> s+v,0)/entries.length);
-        document.getElementById('highestDay').innerText = `₹${highest[1]} (${highest[0]})`;
-        document.getElementById('lowestDay').innerText = `₹${lowest[1]} (${lowest[0]})`;
-        document.getElementById('avgDaily').innerText = `₹${avg}`;
-      }
-
-    }catch(e){ console.error(e); }finally{ if(window.Loader) Loader.hide(); }
+  setGrowth(elId, growth){
+    var el = document.getElementById(elId);
+    if(!el) return;
+    var g = Number(growth || 0);
+    if(!g){ el.innerText = '-'; el.className = 'growth zero'; return; }
+    el.innerText = (g > 0 ? '+' : '') + g + '% vs pichhla ' + this.period;
+    el.className = 'growth ' + (g >= 0 ? 'up' : 'down');
   }
 
   renderTopProducts(){
-    const container = document.getElementById('topProductsRows');
+    var container = document.getElementById('topProductsRows');
     if(!container) return;
-
-    const products = this.report.topProducts||[];
-
-    container.innerHTML = products.map(p=>`
-      <div class="product-row">
-        <span><b>${p.name}</b></span>
-        <span>${p.qty}</span>
-        <span>₹${p.revenue}</span>
-        <span style="color:${p.growth>=0?'#10b981':'#ef4444'};font-weight:800">${p.growth>=0?'+':''}${p.growth}%</span>
-      </div>
-    `).join('');
+    var products = this.report.topProducts || [];
+    if(products.length === 0){
+      container.innerHTML = '<div class="empty-box">Koi Product bika hi nahi<br><span style="font-size:11px">Order aayega toh yahan Top Product dikhega</span></div>';
+      return;
+    }
+    // Backend kabhi sales bhejta hai, kabhi qty - Dono ko sambhal lo. Growth ka data hai hi nahi, isliye Share % dikhayenge - Nakli +12% nahi
+    var totalQty = 0;
+    products.forEach(function(p){ totalQty += Number(p.sales || p.qty || 0); });
+    container.innerHTML = products.map(function(p){
+      var qty = Number(p.sales || p.qty || 0);
+      var share = totalQty > 0 ? Math.round((qty / totalQty) * 100) : 0;
+      return '<div class="product-row"><span><b>' + (p.name || 'Product') + '</b></span><span>' + qty + '</span><span>₹' + Number(p.revenue || 0).toLocaleString('en-IN') + '</span><span style="font-weight:800">' + share + '%</span></div>';
+    }).join('');
   }
 
   renderPaymentMethods(){
-    const container = document.getElementById('paymentBreakdown');
+    var container = document.getElementById('paymentBreakdown');
     if(!container) return;
-
-    const methods = this.report.paymentMethods||{};
-
-    container.innerHTML = Object.entries(methods).map(([method,data])=>`
-      <div class="payment-item">
-        <span>${method==='COD'?'💵': method==='UPI'?'📱':'💳'} ${method}</span>
-        <span>${data.count} orders • ₹${data.revenue} • ${data.percent}%</span>
-      </div>
-    `).join('');
+    var methods = this.report.paymentMethods || {};
+    var keys = Object.keys(methods);
+    if(keys.length === 0){
+      container.innerHTML = '<div class="empty-box">Koi Order nahi hai - Payment ka hisab Order aane pe dikhega</div>';
+      return;
+    }
+    var totalOrders = this.report.orders || 1;
+    container.innerHTML = keys.map(function(method){
+      var d = methods[method] || {};
+      // Backend kabhi count bhejta hai, kabhi orders - Dono ko sambhal lo. Revenue kabhi nahi bhejta, isliye Orders + % hi dikhayenge
+      var count = Number(d.count !== undefined ? d.count : (d.orders || 0));
+      var pct = Math.round((count / totalOrders) * 100);
+      var icon = method.toLowerCase().indexOf('upi') >= 0 ? '📱' : method.toLowerCase().indexOf('card') >= 0 || method.toLowerCase().indexOf('online') >= 0 ? '💳' : '💵';
+      return '<div class="payment-item"><span>' + icon + ' ' + method.toUpperCase() + '</span><span>' + count + ' orders • ' + pct + '%</span></div>';
+    }).join('');
   }
 
   initCharts(){
@@ -229,94 +319,117 @@ class SalesReport {
   }
 
   initRevenueChart(){
-    const canvas = document.getElementById('reportChart');
-    if(!canvas || typeof Chart==='undefined') return;
-
-    const ctx = canvas.getContext('2d');
+    var canvas = document.getElementById('reportChart');
+    var emptyEl = document.getElementById('revenueEmpty');
+    if(!canvas) return;
+    if(typeof Chart === 'undefined'){
+      if(emptyEl){ emptyEl.style.display = 'block'; emptyEl.innerText = 'Chart library load nahi hui - Net check karo aur page dobara kholo.'; }
+      return;
+    }
+    var daily = this.report.dailyRevenue || [];
+    if(!daily.length){
+      if(this.charts.revenue){ this.charts.revenue.destroy(); this.charts.revenue = null; }
+      canvas.style.display = 'none';
+      if(emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+    canvas.style.display = 'block';
+    if(emptyEl) emptyEl.style.display = 'none';
+    var ctx = canvas.getContext('2d');
     if(this.charts.revenue) this.charts.revenue.destroy();
-
-    const labels = Object.keys(this.report.dailyRevenue||{ Mon:3200, Tue:2800, Wed:3500, Thu:4000, Fri:3800, Sat:4200, Sun:3000 });
-    const data = Object.values(this.report.dailyRevenue||{});
-
     this.charts.revenue = new Chart(ctx, {
-      type:'line',
-      data:{
-        labels,
-        datasets:[{ label:'Revenue', data, borderColor:'#0f172a', backgroundColor:'rgba(15,23,42,0.1)', tension:0.4, fill:true, borderWidth:2 }]
+      type: 'line',
+      data: {
+        labels: daily.map(function(d){ return d.date || ''; }),
+        datasets: [{ label: 'Revenue', data: daily.map(function(d){ return Number(d.revenue || 0); }), borderColor: '#0f172a', backgroundColor: 'rgba(15,23,42,0.1)', tension: 0.4, fill: true, borderWidth: 2 }]
       },
-      options:{
-        responsive:true,
-        plugins:{ legend:{ display:false } },
-        scales:{ y:{ beginAtZero:true, grid:{ color:'#f1f5f9' } }, x:{ grid:{ display:false } } }
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
       }
     });
   }
 
   initPaymentChart(){
-    const canvas = document.getElementById('paymentChart');
-    if(!canvas || typeof Chart==='undefined') return;
-
-    const ctx = canvas.getContext('2d');
+    var canvas = document.getElementById('paymentChart');
+    var emptyEl = document.getElementById('paymentEmpty');
+    if(!canvas) return;
+    if(typeof Chart === 'undefined') return;
+    var methods = this.report.paymentMethods || {};
+    var keys = Object.keys(methods);
+    if(!keys.length){
+      if(this.charts.payment){ this.charts.payment.destroy(); this.charts.payment = null; }
+      canvas.style.display = 'none';
+      if(emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+    canvas.style.display = 'block';
+    if(emptyEl) emptyEl.style.display = 'none';
+    var ctx = canvas.getContext('2d');
     if(this.charts.payment) this.charts.payment.destroy();
-
-    const methods = this.report.paymentMethods||{ COD:{ percent:55 }, UPI:{ percent:33 }, Card:{ percent:12 } };
-    const labels = Object.keys(methods);
-    const percents = Object.values(methods).map(m=> m.percent||0);
-
     this.charts.payment = new Chart(ctx, {
-      type:'doughnut',
-      data:{
-        labels,
-        datasets:[{ data:percents, backgroundColor:['#0f172a','#10b981','#0ea5e9'] }]
+      type: 'doughnut',
+      data: {
+        labels: keys.map(function(k){ return k.toUpperCase(); }),
+        datasets: [{ data: keys.map(function(k){ var d = methods[k] || {}; return Number(d.count !== undefined ? d.count : (d.orders || 0)); }), backgroundColor: ['#0f172a', '#10b981', '#0ea5e9', '#f59e0b'] }]
       },
-      options:{
-        responsive:true,
-        plugins:{ legend:{ position:'bottom', labels:{ font:{ family:'Outfit', weight:'700' }, boxWidth:12 } } }
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Outfit', weight: '700' }, boxWidth: 12 } } }
       }
     });
   }
 
   initHourlyChart(){
-    const canvas = document.getElementById('hourlySalesChart');
-    if(!canvas || typeof Chart==='undefined') return;
-
-    const ctx = canvas.getContext('2d');
+    var canvas = document.getElementById('hourlySalesChart');
+    var emptyEl = document.getElementById('hourlyEmpty');
+    if(!canvas) return;
+    if(typeof Chart === 'undefined') return;
+    var hourly = this.report.hourlySales || [];
+    // Sirf wahi ghante dikhayenge jisme Order hai - Khaali 24 ghante ka graph nahi banayenge
+    var withOrders = hourly.filter(function(h){ return Number(h.orders || 0) > 0; });
+    if(!withOrders.length){
+      if(this.charts.hourly){ this.charts.hourly.destroy(); this.charts.hourly = null; }
+      canvas.style.display = 'none';
+      if(emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+    canvas.style.display = 'block';
+    if(emptyEl) emptyEl.style.display = 'none';
+    var ctx = canvas.getContext('2d');
     if(this.charts.hourly) this.charts.hourly.destroy();
-
-    const hourly = this.report.hourlySales||[{hour:9,orders:5},{hour:12,orders:12},{hour:15,orders:8},{hour:18,orders:20},{hour:20,orders:15}];
-    const labels = hourly.map(h=> `${h.hour}:00`);
-    const orders = hourly.map(h=> h.orders);
-
     this.charts.hourly = new Chart(ctx, {
-      type:'bar',
-      data:{
-        labels,
-        datasets:[{ label:'Orders', data:orders, backgroundColor:'#0f172a', borderRadius:8 }]
+      type: 'bar',
+      data: {
+        labels: withOrders.map(function(h){ return h.hour + ':00'; }),
+        datasets: [{ label: 'Orders', data: withOrders.map(function(h){ return Number(h.orders || 0); }), backgroundColor: '#0f172a', borderRadius: 8 }]
       },
-      options:{
-        responsive:true,
-        plugins:{ legend:{ display:false } },
-        scales:{ y:{ beginAtZero:true, grid:{ display:false } }, x:{ grid:{ display:false } } }
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
       }
     });
   }
 
   bindEvents(){
-    document.getElementById('reportBack')?.addEventListener('click', ()=> history.back());
-    document.getElementById('reportChartPeriod')?.addEventListener('change', (e)=>{ this.period=e.target.value; this.loadReport().then(()=> this.initCharts()); });
-    document.getElementById('exportReport')?.addEventListener('click', ()=>{
-      const csv = `Metric,Value\nRevenue,${this.report.revenue}\nOrders,${this.report.orders}\nAOV,${this.report.aov}\nReturns,${this.report.returns}\n`;
-      const blob = new Blob([csv], { type:'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href=url;
-      a.download=`sales-report-${this.shopId}-${this.period}.csv`;
-      a.click();
+    document.getElementById('reportBack')?.addEventListener('click', function(){ history.back(); });
+    document.getElementById('reportChartPeriod')?.addEventListener('change', function(e){
+      window.SalesReportInstance.period = e.target.value;
+      window.SalesReportInstance.loadReport();
     });
-    document.getElementById('viewAllProducts')?.addEventListener('click', ()=> window.location.href=`/shop-templates/common/analytics/analytics.html?shopId=${this.shopId}&view=products`);
+    // V2: Export ab Frontend ka nakli CSV nahi banayega - Backend ka asli CSV kholega
+    document.getElementById('exportReport')?.addEventListener('click', function(){
+      var url = '/api/common/analytics/' + window.SalesReportInstance.shopId + '/sales-report?period=' + window.SalesReportInstance.period + '&format=csv';
+      window.open(url, '_blank');
+    });
+    document.getElementById('viewAllProducts')?.addEventListener('click', function(){ window.location.href = '/shop-templates/common/analytics/analytics.html?shopId=' + window.SalesReportInstance.shopId + '&view=products'; });
   }
 }
 
 window.SalesReportInstance = new SalesReport();
-document.addEventListener('DOMContentLoaded', ()=> window.SalesReportInstance.init());
+document.addEventListener('DOMContentLoaded', function(){ window.SalesReportInstance.init(); });
 </script>
+</body>
+</html>
