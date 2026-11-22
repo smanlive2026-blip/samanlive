@@ -1,6 +1,5 @@
-// LOCATION: public/shop-templates/common/core/auth-core.js - V8 COOKIE PERSIST - FULL CODE - NO CUT
-// RULE: Token RAM me nahi, Cookie me rahega - Page badalne pe bhi Token nahi udega - Home se Profile tak jayega
-// RULE: Is file me browser storage ka naam KAHIN NAHI HAI - Na code me, na comment me
+// LOCATION: public/shop-templates/common/core/auth-core.js - V8 COOKIE PERSIST - FULL CODE
+// RULE: Token Cookie me rahega - Page badalne / Reload hone pe bhi Token nahi udega - Home se Profile tak jayega
 // RULE: Purane naam sab wahi hain - getToken / setToken / getUserId / getRole / checkAuth / login / logout / isLoggedIn
 (function(){
   window.AuthCore = window.AuthCore || {};
@@ -33,7 +32,7 @@
   if(_role) window.USER_ROLE = _role;
   function getToken(){
     if(_token) return _token;
-    if(window.USER_TOKEN) { _token = window.USER_TOKEN; return _token; }
+    if(window.USER_TOKEN){ _token = window.USER_TOKEN; return _token; }
     var c = getCookie('SL_TOKEN');
     if(c){ _token = c; window.USER_TOKEN = c; return c; }
     return '';
@@ -47,7 +46,7 @@
   function clearToken(){ _token = ''; window.USER_TOKEN = ''; eraseCookie('SL_TOKEN'); }
   function getUserId(){
     if(_userId) return _userId;
-    if(window.USER_ID) { _userId = window.USER_ID; return _userId; }
+    if(window.USER_ID){ _userId = window.USER_ID; return _userId; }
     var c = getCookie('SL_UID');
     if(c){ _userId = c; window.USER_ID = c; return c; }
     if(_user && _user._id) return _user._id;
@@ -59,7 +58,7 @@
   }
   function getRole(){
     if(_role) return _role;
-    if(window.USER_ROLE) { _role = window.USER_ROLE; return _role; }
+    if(window.USER_ROLE){ _role = window.USER_ROLE; return _role; }
     var c = getCookie('SL_ROLE');
     if(c){ _role = c; window.USER_ROLE = c; return c; }
     if(_user && _user.role) return _user.role;
