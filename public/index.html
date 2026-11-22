@@ -128,8 +128,6 @@
       </div>
     </div>
 
-    <!-- LOAD ORDER - FIXED: Auth -> Profile -> User -> Api -> Storage -> Cart -> App -> Nearby -->
-    <!-- Pehle wale me User / Api / Storage load hi nahi ho rahe the, isliye Profile tak Token pahunch hi nahi raha tha -->
     <script src="/shop-templates/common/core/auth-core.js"></script>
     <script src="/shop-templates/common/profile/profile-core.js"></script>
     <script src="/shop-templates/common/core/user-core.js"></script>
@@ -139,15 +137,57 @@
     <script src="/shop-templates/common/products/product-manager.js?v=20"></script>
     <script src="/shop-templates/common/cart/cart-core.js"></script>
     <script src="/shop-templates/common/cart/cart-count.js"></script>
-    <script src="/assets/js/product-core.js"></script>
     <script src="/assets/js/role-hierarchy.js"></script>
     <script src="/assets/js/app.js?v=8"></script>
     <script src="/assets/js/nearby-shops.js"></script>
 
     <script>
+    // FIX: Token ab isi file me Cookie me save hoga - AuthCore V7 ho ya V8, farak nahi padega
+    // Pehle Token sirf RAM me jata tha, Reload hote hi udd jata tha, isliye baar-baar Login mangta tha
+    function _slSetCookie(name, value, days){
+      try{
+        var d = new Date();
+        d.setTime(d.getTime() + (days || 7) * 24 * 60 * 60 * 1000);
+        document.cookie = name + '=' + encodeURIComponent(value || '') + '; expires=' + d.toUTCString() + '; path=/; SameSite=Lax';
+      }catch(e){}
+    }
+    function _slGetCookie(name){
+      try{
+        var parts = document.cookie.split(';');
+        for(var i = 0; i < parts.length; i++){
+          var p = parts[i].trim();
+          if(p.indexOf(name + '=') === 0) return decodeURIComponent(p.substring(name.length + 1));
+        }
+      }catch(e){}
+      return '';
+    }
+    function _slSaveLogin(token, user){
+      if(!token) return;
+      window.USER_TOKEN = token;
+      _slSetCookie('SL_TOKEN', token, 7);
+      try{ window.name = 'SL_TOKEN=' + token; }catch(e){}
+      if(user){
+        if(user._id){ window.USER_ID = user._id; _slSetCookie('SL_UID', user._id, 7); }
+        if(user.role){ window.USER_ROLE = user.role; _slSetCookie('SL_ROLE', user.role, 7); }
+        if(user.name) window.USER_NAME = user.name;
+        if(user.phone) window.USER_PHONE = user.phone;
+        window.currentUser = user;
+        window.__GUEST_ID = 'user_' + user._id;
+      }
+      try{ if(window.AuthCore && window.AuthCore.setToken) window.AuthCore.setToken(token); }catch(e){}
+      try{ if(window.AuthCore && window.AuthCore.setUser && user) window.AuthCore.setUser(user); }catch(e){}
+      try{ if(window.AuthCore && window.AuthCore.setUserId && user && user._id) window.AuthCore.setUserId(user._id); }catch(e){}
+      try{ if(window.AuthCore && window.AuthCore.setRole && user && user.role) window.AuthCore.setRole(user.role); }catch(e){}
+    }
     function getAppToken(){
-      try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
-      return window.USER_TOKEN || '';
+      try{ if(window.AuthCore && window.AuthCore.getToken){ var t = window.AuthCore.getToken() || ''; if(t) return t; } }catch(e){}
+      if(window.USER_TOKEN) return window.USER_TOKEN;
+      var c = _slGetCookie('SL_TOKEN');
+      if(c){ window.USER_TOKEN = c; return c; }
+      try{
+        if(window.name && window.name.indexOf('SL_TOKEN=') === 0) return window.name.replace('SL_TOKEN=', '');
+      }catch(e){}
+      return '';
     }
     function openLoginModal(){
       document.getElementById('loginModal').style.display='grid';
@@ -171,13 +211,8 @@
         });
         const data = await res.json();
         if(data.success && data.token){
-          // FIX: Token AuthCore se save karo - Taaki Cookie me jaye, Page badalne pe na ude
-          // Pehle wale me sirf window.USER_TOKEN me daal rahe the, Page badalte hi udd jata tha, Profile ko Token milta hi nahi tha
-          if(window.AuthCore && window.AuthCore.setToken) window.AuthCore.setToken(data.token);
-          if(window.AuthCore && window.AuthCore.setUser && data.user) window.AuthCore.setUser(data.user);
-          if(window.AuthCore && window.AuthCore.setUserId && data.user && data.user._id) window.AuthCore.setUserId(data.user._id);
-          if(window.AuthCore && window.AuthCore.setRole && data.user && data.user.role) window.AuthCore.setRole(data.user.role);
-          window.USER_TOKEN = data.token;
+          // FIX: Token isi file se Cookie me save karo, AuthCore pe bharosa mat karo
+          _slSaveLogin(data.token, data.user);
           window.USER_ID = data.user._id;
           window.USER_NAME = data.user.name;
           window.USER_PHONE = data.user.phone;
@@ -186,11 +221,14 @@
           window.__GUEST_ID = 'user_' + data.user._id;
           closeLoginModal();
           alert('✅ Login ho gaya: ' + data.user.name + '\nAb Profile > My Addresses me address add karo');
+          // FIX: Login ke baad Reload mat maro - Reload hi Token uda raha tha
+          // Seedha usi jagah jao jahan se aaye the, ya Profile pe jao
           if(window._redirectAfterLogin){
-            location.href = window._redirectAfterLogin;
+            var go = window._redirectAfterLogin;
             window._redirectAfterLogin = null;
+            location.href = go;
           } else {
-            location.reload();
+            location.href = '/profile.html';
           }
         }else{
           alert('Login fail: ' + (data.error||data.message||'Unknown'));
