@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Business - Join SAMANLIVE</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f1f5f9;margin:0;color:#0f172a;padding-bottom:30px}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer;border:0}
+.top{max-width:760px;margin:0 auto;padding:14px 16px 0}
+.back{width:38px;height:38px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;font-size:22px;font-weight:900}
+.hero{max-width:760px;margin:14px auto 0;padding:22px 18px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 55%,#0ea5e9 130%);color:#fff;border-radius:24px;margin-left:16px;margin-right:16px}
+.hero h1{font-size:24px;margin:0;line-height:1.2}
+.hero p{font-size:13px;opacity:.85;line-height:1.5;margin:10px 0 0}
+.hero .pill{display:inline-block;margin-top:12px;background:#fff;color:#0f172a;font-size:11px;font-weight:900;padding:7px 12px;border-radius:999px}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+.sec{font-size:11px;font-weight:900;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin:18px 0 10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.grid{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:16px;cursor:pointer;transition:.15s;text-align:left;width:100%}
+.card:active{transform:scale(.98)}
+.card.sel{border:2px solid #0f172a;box-shadow:0 10px 24px rgba(15,23,42,.12)}
+.card .ic{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:24px}
+.card h3{font-size:15px;margin:10px 0 4px}
+.card p{font-size:12px;color:#64748b;line-height:1.5;margin:0}
+.card .earn{margin-top:10px;font-size:11px;font-weight:900;color:#166534;background:#dcfce7;display:inline-block;padding:5px 9px;border-radius:999px}
+.form{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:16px;margin-top:14px}
+.form label{font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase}
+.form input,.form select,.form textarea{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;margin:6px 0 12px;font-weight:600;box-sizing:border-box;font-family:inherit}
+.form textarea{min-height:70px;resize:vertical}
+.btn{width:100%;background:#0f172a;color:#fff;padding:14px;border-radius:12px;font-weight:900;font-size:14px}
+.btn:disabled{opacity:.6}
+.btn-green{background:#16a34a}
+.hint{margin-top:12px;padding:11px;border-radius:12px;font-size:12px;font-weight:700;line-height:1.5;display:none;text-align:center}
+.hint.bad{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.hint.good{display:block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.req{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;margin-top:10px}
+.req b{font-size:14px}
+.req span{font-size:11px;color:#64748b;font-weight:700}
+.badge{display:inline-block;font-size:10px;font-weight:900;padding:4px 8px;border-radius:999px;margin-left:6px}
+.badge.pending{background:#fef3c7;color:#92400e}
+.badge.approved{background:#dcfce7;color:#166534}
+.badge.rejected{background:#fee2e2;color:#991b1b}
+.small{font-size:11px;color:#64748b;font-weight:600;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="top"><button class="back" onclick="location.href='/profile.html'">‹</button></div>
+<div class="hero">
+  <div class="pill">💼 SAMANLIVE BUSINESS</div>
+  <h1>Apna Business<br>Yahin se shuru karo</h1>
+  <p>Shop kholo, Area sambhalo, Products becho ya Executive bano. Neeche Role chuno, form bharo, Request Admin ke paas jayegi. Approve hote hi Login ka button yahin mil jayega.</p>
+</div>
+
+<div class="wrap">
+  <div class="sec">1️⃣ Role chuno - Kya banna hai?</div>
+  <div class="grid" id="roleGrid"></div>
+
+  <div class="sec">2️⃣ Apni detail bharo</div>
+  <div class="form">
+    <label>Full Name *</label>
+    <input id="bName" placeholder="Apna naam">
+    <label>Phone * (10 digit)</label>
+    <input id="bPhone" placeholder="93162XXXXX" maxlength="10" inputmode="numeric">
+    <label>City / Area *</label>
+    <input id="bCity" placeholder="Jaise - Surat, Bhuj, Naliya">
+    <label id="bExtraLabel">Shop / Company ka naam</label>
+    <input id="bExtra" placeholder="Jaise - Sharma Kirana Store">
+    <label>Admin ko message (optional)</label>
+    <textarea id="bMsg" placeholder="Jaise - Mere paas 2 saal ka kirana ka experience hai, Naliya area sambhal sakta hoon"></textarea>
+    <button class="btn" id="bSubmit" onclick="submitRequest()">📩 Admin ko Request bhejo</button>
+    <div id="bHint" class="hint"></div>
+    <p class="small" style="margin-top:10px">✅ Request bhejte hi koi paisa nahi katega. Admin Approve karega tabhi Login khulega. Ek hi Phone se ek Role ki ek hi Pending Request rahegi.</p>
+  </div>
+
+  <div class="sec">📋 Meri Requests - Status yahin dekho</div>
+  <button class="btn" style="background:#fff;color:#0f172a;border:1px solid #e2e8f0" onclick="loadMyRequests()">🔄 Status Refresh karo</button>
+  <div id="myReqList"></div>
+  <p class="small" style="margin-top:10px">Tip: Request bhejne ke baad isi page pe wapas aake Status dekho. Approved likha aaye toh neeche Login wala button dabao, seedha us Role ke Dashboard pe chale jaoge.</p>
+</div>
+
+<script>
+var ROLES = [
+  { id:'shop_owner', icon:'🏪', color:'#eff6ff', title:'Shop Owner - Shop Login', desc:'Apni dukaan ka Dashboard. Products, Orders, Stock sab yahin se.', earn:'💰 Apni dukaan ki kamai', extraLabel:'Shop ka naam *', extraPh:'Jaise - Sharma Kirana Store', link:'/area-manager.html' },
+  { id:'area_manager', icon:'🗺️', color:'#f0fdf4', title:'Area Manager', desc:'Poora Area sambhalo. Shops banao, Shops ko approve karo, Area ki kamai dekho.', earn:'💰 Area commission', extraLabel:'Kaunsa Area sambhaloge? *', extraPh:'Jaise - Naliya, Bhuj, Adipur', link:'/area-manager.html' },
+  { id:'product_manager', icon:'📦', color:'#fff7ed', title:'Product Manager', desc:'Apne Products Pool me daalo. Executive approve karega, phir Shops tak jayega.', earn:'💰 Product ki kamai', extraLabel:'Company / Brand ka naam', extraPh:'Jaise - Sharma Foods', link:'/product-manager/dashboard.html' },
+  { id:'executive', icon:'👑', color:'#f5f3ff', title:'Executive', desc:'Kingmaker Role. Product Pool approve karo, Shops assign karo, Poora network chalao.', earn:'💰 Executive commission', extraLabel:'Company ka naam (agar hai)', extraPh:'Jaise - SamanLive Partner', link:'/executive/dashboard.html' },
+  { id:'delivery_boy', icon:'🚚', color:'#fdf2f8', title:'Delivery Boy', desc:'Orders deliver karo. Area Manager ke under kaam, har delivery pe earning.', earn:'💰 Har delivery pe earning', extraLabel:'Vehicle - Bike / Cycle?', extraPh:'Jaise - Bike', link:'/delivery-boy.html' }
+];
+var selRole = 'shop_owner';
+function renderRoles(){
+  var g = document.getElementById('roleGrid');
+  g.innerHTML = ROLES.map(function(r){
+    return '<button class="card ' + (selRole===r.id?'sel':'') + '" onclick="pickRole(\''+r.id+'\')"><div class="ic" style="background:'+r.color+'">'+r.icon+'</div><h3>'+r.title+'</h3><p>'+r.desc+'</p><span class="earn">'+r.earn+'</span></button>';
+  }).join('');
+  var cur = ROLES.find(function(x){ return x.id===selRole; });
+  document.getElementById('bExtraLabel').innerText = cur.extraLabel;
+  document.getElementById('bExtra').placeholder = cur.extraPh;
+}
+function pickRole(id){ selRole = id; renderRoles(); }
+function showHint(msg, good){
+  var h = document.getElementById('bHint');
+  h.textContent = msg; h.className = 'hint ' + (good ? 'good' : 'bad');
+}
+function getPhone(){ return (document.getElementById('bPhone').value || '').replace(/\D/g,'').slice(-10); }
+async function submitRequest(){
+  var name = document.getElementById('bName').value.trim();
+  var phone = getPhone();
+  var city = document.getElementById('bCity').value.trim();
+  var extra = document.getElementById('bExtra').value.trim();
+  var msg = document.getElementById('bMsg').value.trim();
+  if(!name){ showHint('❌ Naam dalo', false); return; }
+  if(phone.length!==10){ showHint('❌ 10 digit Phone dalo', false); return; }
+  if(!city){ showHint('❌ City / Area dalo', false); return; }
+  var btn = document.getElementById('bSubmit');
+  btn.disabled = true; btn.innerText = 'Bhej rahe hain...';
+  try{
+    var res = await fetch('/api/business/request', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name:name, phone:phone, city:city, role:selRole, shopName:extra, companyName:extra, area:city, message:msg }) });
+    var data = await res.json().catch(function(){ return null; });
+    if(data && data.success){
+      showHint('✅ Request bhej di - Admin dekhega, Approve hote hi yahin Login ka button aa jayega', true);
+      loadMyRequests();
+    } else {
+      showHint('❌ ' + ((data && (data.error||data.message)) || 'Request fail - Dobara try karo'), false);
+    }
+  }catch(e){ showHint('❌ Server se connect nahi hua - ' + e.message, false); }
+  btn.disabled = false; btn.innerText = '📩 Admin ko Request bhejo';
+}
+async function loadMyRequests(){
+  var phone = getPhone();
+  if(phone.length!==10){
+    document.getElementById('myReqList').innerHTML = '<p class="small">Pehle upar Phone dalo, phir Status dekho.</p>';
+    return;
+  }
+  var box = document.getElementById('myReqList');
+  box.innerHTML = '<p class="small">Loading...</p>';
+  try{
+    var res = await fetch('/api/business/my-requests?phone=' + phone);
+    var data = await res.json();
+    var list = (data && data.data) || [];
+    if(!list.length){ box.innerHTML = '<p class="small">Abhi koi Request nahi hai. Upar se Role chuno aur Request bhejo.</p>'; return; }
+    box.innerHTML = list.map(function(r){
+      var role = ROLES.find(function(x){ return x.id===r.role; }) || { title:r.role, link:'/profile.html' };
+      var st = r.status || 'pending';
+      var badge = st==='approved' ? '<span class="badge approved">✅ APPROVED</span>' : st==='rejected' ? '<span class="badge rejected">❌ REJECTED</span>' : '<span class="badge pending">⏳ PENDING</span>';
+      var btn = '';
+      if(st==='approved') btn = '<button class="btn btn-green" style="margin-top:10px" onclick="location.href=\'' + role.link + '\'">🔓 ' + role.title + ' - Login / Dashboard kholo</button>';
+      if(st==='rejected' && r.adminNote) btn = '<p class="small" style="margin-top:8px">Admin ka jawab: ' + r.adminNote + '</p>';
+      return '<div class="req"><b>' + role.title + '</b>' + badge + '<br><span>' + (r.name||'') + ' • ' + (r.phone||'') + ' • ' + (r.city||r.area||'') + '</span><br><span>Request: ' + new Date(r.createdAt).toLocaleDateString('en-IN') + '</span>' + btn + '</div>';
+    }).join('');
+  }catch(e){ box.innerHTML = '<p class="small">Status load nahi hua - ' + e.message + '</p>'; }
+}
+renderRoles();
+// Agar Profile se Phone aaya ho toh bhar do
+try{
+  var qp = new URLSearchParams(location.search).get('phone') || '';
+  if(qp) document.getElementById('bPhone').value = qp.replace(/\D/g,'').slice(-10);
+}catch(e){}
+</script>
+</body>
+</html>

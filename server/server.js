@@ -342,6 +342,7 @@ app.use('/api', require('./routes/stats'));
 app.use('/api/location', require('./routes/user.location.routes'));
 app.use('/api/user', userRoutes);
 app.use('/api/admin', require('./routes/userAdmin'));
+app.use('/api/business', require('./routes/business.routes'));
 
 app.get('/admin/:page', (req, res) => {
     const filePath = path.join(__dirname, `../public/admin-panel/${req.params.page}.html`);
