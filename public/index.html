@@ -128,8 +128,13 @@
       </div>
     </div>
 
+    <!-- LOAD ORDER - FIXED: Auth -> Profile -> User -> Api -> Storage -> Cart -> App -> Nearby -->
+    <!-- Pehle wale me User / Api / Storage load hi nahi ho rahe the, isliye Profile tak Token pahunch hi nahi raha tha -->
     <script src="/shop-templates/common/core/auth-core.js"></script>
     <script src="/shop-templates/common/profile/profile-core.js"></script>
+    <script src="/shop-templates/common/core/user-core.js"></script>
+    <script src="/shop-templates/common/core/api-core.js"></script>
+    <script src="/shop-templates/common/core/storage-core.js"></script>
     <script src="/assets/js/location.core.js"></script>
     <script src="/shop-templates/common/products/product-manager.js?v=20"></script>
     <script src="/shop-templates/common/cart/cart-core.js"></script>
@@ -166,7 +171,12 @@
         });
         const data = await res.json();
         if(data.success && data.token){
+          // FIX: Token AuthCore se save karo - Taaki Cookie me jaye, Page badalne pe na ude
+          // Pehle wale me sirf window.USER_TOKEN me daal rahe the, Page badalte hi udd jata tha, Profile ko Token milta hi nahi tha
           if(window.AuthCore && window.AuthCore.setToken) window.AuthCore.setToken(data.token);
+          if(window.AuthCore && window.AuthCore.setUser && data.user) window.AuthCore.setUser(data.user);
+          if(window.AuthCore && window.AuthCore.setUserId && data.user && data.user._id) window.AuthCore.setUserId(data.user._id);
+          if(window.AuthCore && window.AuthCore.setRole && data.user && data.user.role) window.AuthCore.setRole(data.user.role);
           window.USER_TOKEN = data.token;
           window.USER_ID = data.user._id;
           window.USER_NAME = data.user.name;
