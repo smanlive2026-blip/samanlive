@@ -9,32 +9,32 @@
     <script src="/assets/js/shop-template-map.js"></script>
     <style>
       *{font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
-      body{background:#f8fafc}
-      .top-header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid #f1f5f9}
-      .greet-bar{display:flex;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto;padding:10px 16px 0}
-      .greet-bar b{font-size:17px;font-weight:900;line-height:1.2}
-      .greet-bar span{font-size:11px;color:#64748b;font-weight:700}
-      .loc-pill{background:#0f172a;color:#fff;font-size:11px;font-weight:800;padding:8px 12px;border-radius:999px;white-space:nowrap}
-      .offer-strip{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 4px;max-width:1100px;margin:0 auto;scrollbar-width:none}
-      .offer-strip::-webkit-scrollbar{display:none}
-      .offer-chip{flex-shrink:0;background:#fff;border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:11px;font-weight:800;white-space:nowrap}
-      .offer-chip.hot{background:#fef3c7;border-color:#fde68a;color:#92400e}
-      .offer-chip.green{background:#dcfce7;border-color:#bbf7d0;color:#166534}
-      .hero-card{max-width:1100px;margin:12px 16px 0;background:linear-gradient(135deg,#0f172a 0%,#1e293b 55%,#0ea5e9 130%);color:#fff;border-radius:22px;padding:18px;position:relative;overflow:hidden}
-      .hero-card h2{font-size:22px;margin:0;line-height:1.2}
-      .hero-card p{font-size:12px;opacity:.85;line-height:1.5;margin:8px 0 0}
-      .hero-btn{display:inline-block;margin-top:12px;background:#fff;color:#0f172a;font-size:12px;font-weight:900;padding:9px 14px;border-radius:999px}
-      .hero-off{position:absolute;right:14px;top:14px;background:#facc15;color:#0f172a;font-size:11px;font-weight:900;padding:6px 10px;border-radius:999px;transform:rotate(4deg)}
+      body{background:#fff;margin:0}
+      .top-header{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #f1f5f9;padding-bottom:10px}
+      .top-row{display:flex;align-items:center;gap:10px;max-width:1100px;margin:0 auto;padding:10px 16px 0}
+      .top-row .header-logo{height:34px;width:auto}
+      .deliver{flex:1;min-width:0;line-height:1.2}
+      .deliver small{font-size:11px;color:#64748b;font-weight:700}
+      .deliver b{font-size:14px;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .cart-btn{position:relative;background:#0f172a;color:#fff;border:0;padding:10px 13px;border-radius:12px;font-weight:800;cursor:pointer;flex-shrink:0}
+      .search-wrap{max-width:1100px;margin:10px auto 0;padding:0 16px}
+      .search-box-modern{background:#f1f5f9 !important;border:0 !important;border-radius:12px !important;box-shadow:none !important}
+      .search-box-modern input{background:transparent !important}
+      .category-row{position:sticky;top:0;z-index:90;background:#fff;padding:10px 0}
+      .container{max-width:1100px;margin:0 auto;padding:0 16px}
       .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
       .sec-head h3{font-size:16px;font-weight:900;margin:0}
       .sec-head span{font-size:12px;font-weight:800;color:#0ea5e9;cursor:pointer}
       .sec-sub{font-size:11px;color:#64748b;font-weight:600;margin:2px 0 0}
-      .category-row{position:sticky;top:58px;z-index:90;background:#f8fafc;padding:10px 0}
+      .hero-card{max-width:1100px;margin:14px auto 0;background:#f8fafc;border:1px solid #eef2f7;border-radius:16px;padding:16px}
+      .hero-card h2{font-size:20px;margin:0;line-height:1.25;color:#0f172a}
+      .hero-card p{font-size:12px;color:#64748b;line-height:1.5;margin:6px 0 0}
+      .hero-btn{display:inline-block;margin-top:10px;background:#0f172a;color:#fff;font-size:12px;font-weight:800;padding:9px 14px;border-radius:999px}
       .nearby-shops-section{margin-top:16px}
       .nearby-shops-section h3{font-size:16px;font-weight:900;margin-bottom:4px}
       .nearby-shops-sub{font-size:11px;color:#64748b;font-weight:600;margin-bottom:12px}
-      .bottom-nav{background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid #eef2f7;box-shadow:0 -8px 24px rgba(0,0,0,.06)}
-      .nav-center-hex{width:56px;height:56px;border-radius:50%;background:#0f172a;color:#fff;display:grid;place-items:center;font-size:11px;line-height:1.1;font-weight:900;box-shadow:0 8px 20px rgba(15,23,42,.3);border:3px solid #fff}
+      .bottom-nav{background:#fff;border-top:1px solid #eef2f7;box-shadow:0 -4px 20px rgba(0,0,0,.04)}
+      .nav-center-hex{width:52px;height:52px;border-radius:50%;background:#0f172a;color:#fff;display:grid;place-items:center;font-size:11px;line-height:1.1;font-weight:900;box-shadow:0 6px 16px rgba(15,23,42,.25);border:3px solid #fff}
       #loginModal{align-items:flex-end;padding:0}
       #loginModal>div{border-radius:24px 24px 0 0;max-width:520px;padding-bottom:26px;animation:sheetUp .25s ease}
       @keyframes sheetUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -42,7 +42,7 @@
       #slToast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:12px 18px;border-radius:999px;font-size:13px;font-weight:800;z-index:10001;opacity:0;pointer-events:none;transition:.25s;white-space:nowrap;box-shadow:0 12px 30px rgba(0,0,0,.25);max-width:92vw;overflow:hidden;text-overflow:ellipsis}
       #slToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
       .footer{margin-top:24px}
-      @media(max-width:640px){.footer .footer-container{grid-template-columns:1fr 1fr}.footer-col:last-child{display:none}.hero-card{margin-left:12px;margin-right:12px}}
+      @media(max-width:640px){.footer .footer-container{grid-template-columns:1fr 1fr}.footer-col:last-child{display:none}}
     </style>
 </head>
 <body>
@@ -50,37 +50,32 @@
     <div class="video-overlay"></div>
 
     <header class="top-header">
-        <div class="greet-bar">
-          <div><b id="greetText">Namaste 👋</b><br><span id="greetSub">Aaj kya chahiye? Paas ki dukaan se fast delivery</span></div>
-          <button class="loc-pill" onclick="location.href='/nearby-shops.html'">📍 Surat ›</button>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;padding:10px 16px;max-width:1100px;margin:0 auto">
+        <div class="top-row">
           <img id="headerLogoImg" src="/assets/images/samanlive-logo.png" alt="Logo" class="header-logo">
-          <div class="search-box-modern" style="flex:1">
+          <div class="deliver" onclick="location.href='/nearby-shops.html'">
+            <small>Deliver to</small>
+            <b>Surat, Gujarat</b>
+          </div>
+          <button class="cart-btn" onclick="location.href='/shop-templates/common/cart/cart.html'">
+              Cart <span data-cart-count style="display:none;position:absolute;top:-7px;right:-7px;background:#ef4444;color:#fff;min-width:20px;height:20px;border-radius:50%;place-items:center;font-size:11px;font-weight:900;padding:0 5px">0</span>
+          </button>
+        </div>
+        <div class="search-wrap">
+          <div class="search-box-modern">
               <span class="search-icon">🔍</span>
               <input type="text" id="searchInput" placeholder="Search products, shops...">
               <button class="search-btn-modern" onclick="performSearch()">→</button>
               <button class="scanner-btn-inline" onclick="openQRScanner()">📷</button>
           </div>
-          <button onclick="location.href='/shop-templates/common/cart/cart.html'" style="position:relative;background:#0f172a;color:#fff;border:none;padding:10px 13px;border-radius:12px;font-weight:800;cursor:pointer;flex-shrink:0">
-              🛒 <span data-cart-count style="display:none;position:absolute;top:-7px;right:-7px;background:#ef4444;color:#fff;min-width:20px;height:20px;border-radius:50%;place-items:center;font-size:11px;font-weight:900;padding:0 5px">0</span>
-          </button>
-        </div>
-        <div class="offer-strip">
-          <span class="offer-chip hot">🔥 Aaj ka Offer - Upto 30% Off</span>
-          <span class="offer-chip green">🚚 Free Delivery - Paas ki dukaan se</span>
-          <span class="offer-chip">🥛 Dairy - Subah 7 baje tak</span>
-          <span class="offer-chip">💼 Business - Join &amp; Earn</span>
         </div>
     </header>
 
     <header class="header-banner" id="mainHeaderBanner">
         <div class="banner-overlay"></div>
         <div class="hero-card" onclick="location.href='/nearby-shops.html'">
-          <span class="hero-off">30% OFF</span>
-          <h2>Paas ki dukaan,<br>Ab phone me.</h2>
-          <p>Kirana, Dairy, Sabji sab kuch - Tere Circle ki dukaan se, fast delivery ke saath.</p>
-          <span class="hero-btn">Shop karo →</span>
+          <h2>Paas ki dukaan, ab phone me.</h2>
+          <p>Kirana, Dairy, Sabji sab kuch. Tere Circle ki dukaan se, fast delivery ke saath.</p>
+          <span class="hero-btn">Shop karo</span>
         </div>
     </header>
 
@@ -90,22 +85,22 @@
         </section>
 
         <section class="history-section">
-            <div class="sec-head"><div><h3>History</h3><p class="sec-sub">Phir se kharido - Ek click me</p></div><span onclick="location.href='/profile/orders.html'">View All ›</span></div>
+            <div class="sec-head"><div><h3>History</h3><p class="sec-sub">Phir se kharido, ek click me</p></div><span onclick="location.href='/profile/orders.html'">View All</span></div>
             <div class="history-scroll" id="historyProducts"></div>
         </section>
 
         <section class="ad-product-section">
-            <div class="sec-head"><div><h3>Advertisement</h3><p class="sec-sub">Aaj ke best deals</p></div><span>View All ›</span></div>
+            <div class="sec-head"><div><h3>Advertisement</h3><p class="sec-sub">Aaj ke best deals</p></div><span>View All</span></div>
             <div class="ad-product-scroll" id="adminAdContainer"></div>
         </section>
 
         <section class="nearby-product-section">
-            <div class="sec-head"><div><h3>Nearby Product</h3><p class="sec-sub">Paas me available - Jaldi milega</p></div><span onclick="location.href='/nearby-shops.html'">View All ›</span></div>
+            <div class="sec-head"><div><h3>Nearby Product</h3><p class="sec-sub">Paas me available, jaldi milega</p></div><span onclick="location.href='/nearby-shops.html'">View All</span></div>
             <div class="nearby-product-list" id="nearbyProductsRepeat"></div>
         </section>
 
         <section class="nearby-shops-section">
-            <div class="sec-head"><div><h3>Nearby Shops</h3><p class="sec-sub">Tere Circle me aane wali dukaan - Jitni door hai, utna hi dikhega</p></div><span onclick="location.href='/nearby-shops.html'">View All ›</span></div>
+            <div class="sec-head"><div><h3>Nearby Shops</h3><p class="sec-sub">Tere Circle me aane wali dukaan</p></div><span onclick="location.href='/nearby-shops.html'">View All</span></div>
             <div id="nearbyShopsGrid"></div>
         </section>
     </main>
@@ -175,7 +170,7 @@
         <input id="loginName" placeholder="Apna naam likho" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;margin:6px 0 12px 0;font-weight:600;box-sizing:border-box">
         <label style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase">Phone * (10 digit)</label>
         <input id="loginPhone" placeholder="93162XXXXX" maxlength="10" inputmode="numeric" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;margin:6px 0 12px 0;font-weight:600;box-sizing:border-box">
-        <button id="loginBtn" onclick="doLogin()" style="width:100%;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;cursor:pointer">🔓 Login - Continue</button>
+        <button id="loginBtn" onclick="doLogin()" style="width:100%;background:#0f172a;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:900;cursor:pointer">Login - Continue</button>
         <small style="display:block;text-align:center;margin-top:12px;color:#94a3b8;font-size:11px;font-weight:600;line-height:1.4">No OTP needed - Direct login.<br>Yehi ID se dairy order ka address shop owner ko jayega.</small>
       </div>
     </div>
@@ -279,8 +274,7 @@
           window.currentUser = data.user;
           window.__GUEST_ID = 'user_' + data.user._id;
           closeLoginModal();
-          showToast('Welcome, ' + data.user.name + ' 👋');
-          try{ var g = document.getElementById('greetText'); if(g) g.innerText = 'Namaste, ' + data.user.name + ' 👋'; }catch(e){}
+          showToast('Welcome, ' + data.user.name);
           // FIX: Login ke baad Reload mat maro - Reload hi Token uda raha tha
           // Seedha usi jagah jao jahan se aaye the, ya Profile pe jao
           if(window._redirectAfterLogin){
@@ -321,16 +315,6 @@
     document.getElementById('loginPhone')?.addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
     document.getElementById('loginName')?.addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginPhone').focus(); });
     document.getElementById('loginModal')?.addEventListener('click', e=>{ if(e.target.id==='loginModal') closeLoginModal(); });
-    try{
-      var _h = new Date().getHours();
-      var _g = document.getElementById('greetText');
-      if(_g){
-        if(window.USER_NAME) _g.innerText = 'Namaste, ' + window.USER_NAME + ' 👋';
-        else if(_h < 12) _g.innerText = 'Good Morning 👋';
-        else if(_h < 17) _g.innerText = 'Good Afternoon 👋';
-        else _g.innerText = 'Good Evening 👋';
-      }
-    }catch(e){}
     </script>
 </body>
 </html>
