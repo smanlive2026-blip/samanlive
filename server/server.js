@@ -356,6 +356,8 @@ app.get('/managers.html', (req, res) => res.sendFile(path.join(__dirname, '../pu
 app.get('/', (req, res) => serveHtmlFresh(path.join(__dirname, '../public/index.html'), res));
 app.get('/local-market.html', (req, res) => serveHtmlFresh(path.join(__dirname, '../public/local-market.html'), res));
 app.get('/profile.html', (req, res) => serveHtmlFresh(path.join(__dirname, '../public/profile.html'), res));
+app.get('/business.html', (req, res) => serveHtmlFresh(path.join(__dirname, '../public/business.html'), res));
+app.get('/profile/business.html', (req, res) => serveHtmlFresh(path.join(__dirname, '../public/business.html'), res));
 app.get('/wishlist.html', (req, res) => serveHtmlFresh(path.join(__dirname, '../public/wishlist.html'), res));
 
 function getProjectTree(dirPath, basePath = '') {
