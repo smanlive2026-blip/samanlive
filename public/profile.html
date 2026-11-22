@@ -1,8 +1,3 @@
-<!-- LOCATION: public/profile.html - V3 - FULL CODE - NO CUT - CUSTOMER PROFILE HOME -->
-<!-- FLOW: Load -> AuthCore Token -> GET /api/common/profile/me?role=customer -> Naam / Phone / Photo bharo -> Card dabao -> Usi page pe jao -->
-<!-- RULE 1: Is file me localStorage / sessionStorage KAHIN NAHI HOGA - Token sirf AuthCore se, Data sirf Server se -->
-<!-- RULE 2: Photo SIRF Cloudinary URL se dikhegi - Browser me save kabhi nahi hogi -->
-<!-- RULE 3: alert() sirf Session Expire pe - Baaki sab page pe hi dikhega -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,63 +5,103 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>My Profile - SAMANLIVE</title>
 <link rel="stylesheet" href="/assets/css/main.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
 body{background:#f1f5f9;margin:0;color:#0f172a}
 a{text-decoration:none;color:inherit}
 button{font-family:inherit;cursor:pointer;border:0}
-.prof-root{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:20px}
-.prof-header{background:#fff;padding:16px;display:flex;gap:12px;align-items:center;position:sticky;top:0;border-bottom:1px solid #e2e8f0;z-index:10}
-.back{width:36px;height:36px;background:#f1f5f9;border:none;border-radius:50%;font-weight:900;cursor:pointer;font-size:20px;flex-shrink:0;line-height:1}
-.prof-pic{width:56px;height:56px;border-radius:50%;object-fit:cover;background:#f1f5f9;flex-shrink:0}
-.prof-info{flex:1;min-width:0}
-.prof-info b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.prof-info span{font-size:12px;color:#64748b;font-weight:600;display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.edit-btn{background:#0f172a;color:#fff;padding:9px 14px;border-radius:8px;font-weight:800;font-size:12px;white-space:nowrap;flex-shrink:0}
-.opt-list{display:flex;flex-direction:column;gap:8px;padding:12px}
+.prof-root{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:24px}
+.prof-hero{background:linear-gradient(135deg,#0f172a 0%,#1e293b 55%,#0ea5e9 130%);color:#fff;padding:14px 16px 22px;border-radius:0 0 26px 26px;position:relative}
+.prof-top{display:flex;align-items:center;gap:10px}
+.prof-back{width:38px;height:38px;background:rgba(255,255,255,.15);color:#fff;border-radius:12px;font-size:22px;font-weight:900;flex-shrink:0}
+.prof-top b{font-size:17px;font-weight:900}
+.prof-top span{font-size:11px;opacity:.75;font-weight:600;display:block}
+.prof-edit{margin-left:auto;background:#fff;color:#0f172a;padding:9px 14px;border-radius:11px;font-weight:900;font-size:12px;white-space:nowrap}
+.prof-card{background:#fff;border-radius:20px;margin:14px 16px 0;padding:18px 16px 16px;box-shadow:0 8px 24px rgba(0,0,0,.06);border:1px solid #e2e8f0;text-align:center;position:relative}
+.prof-avatar-wrap{position:relative;width:92px;height:92px;margin:-58px auto 0}
+.prof-avatar{width:92px;height:92px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 8px 20px rgba(0,0,0,.15);background:#f1f5f9;display:block}
+.prof-cam{position:absolute;right:0;bottom:2px;width:32px;height:32px;border-radius:50%;background:#0f172a;color:#fff;font-size:15px;display:grid;place-items:center;border:2px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+.prof-name{font-size:19px;font-weight:900;margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prof-phone{font-size:12px;color:#64748b;font-weight:700;margin-top:3px}
+.prof-id{font-size:10px;color:#94a3b8;font-weight:800;margin-top:3px;letter-spacing:.4px}
+.prof-verified{display:inline-block;margin-top:8px;background:#dcfce7;color:#166534;font-size:10px;font-weight:900;padding:5px 10px;border-radius:999px}
+.prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.prof-stat{background:#f8fafc;border:1px solid #eef2f7;border-radius:14px;padding:11px 6px;cursor:pointer}
+.prof-stat b{display:block;font-size:17px;font-weight:900}
+.prof-stat span{font-size:10px;color:#64748b;font-weight:800}
+.opt-list{display:flex;flex-direction:column;gap:8px;padding:12px 16px 0}
 .opt-section{font-size:11px;font-weight:900;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;padding:6px 4px 0}
-.option-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;display:flex;gap:12px;align-items:center}
+.option-card{background:#fff;border:1px solid #e2e8f0;border-radius:15px;padding:13px 14px;display:flex;gap:12px;align-items:center;transition:.15s}
+.option-card:active{transform:scale(.98)}
 .option-left{display:flex;gap:12px;align-items:center;flex:1;min-width:0}
-.option-icon{width:40px;height:40px;background:#f1f5f9;border-radius:10px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.option-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:19px;flex-shrink:0}
+.option-icon.blue{background:#eff6ff}
+.option-icon.green{background:#f0fdf4}
+.option-icon.pink{background:#fdf2f8}
+.option-icon.orange{background:#fff7ed}
+.option-icon.purple{background:#f5f3ff}
 .option-text{flex:1;min-width:0}
 .option-text h3{font-size:13px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .option-text p{font-size:11px;color:#64748b;font-weight:600;margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .option-arrow{font-size:20px;font-weight:900;color:#cbd5e1;flex-shrink:0}
+.option-badge{background:#ef4444;color:#fff;font-size:10px;font-weight:900;padding:3px 7px;border-radius:999px;flex-shrink:0}
 .logout-card{cursor:pointer}
 .logout-card .option-icon{background:#fee2e2}
-.hint{margin:12px;padding:10px;border-radius:10px;font-size:11px;font-weight:700;line-height:1.5;display:none;text-align:center}
+.hint{margin:12px 16px 0;padding:11px;border-radius:12px;font-size:11px;font-weight:700;line-height:1.5;display:none;text-align:center}
 .hint.bad{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
-@media(max-width:600px){ .prof-root{max-width:100%} .prof-header{padding:12px} }
-@media(min-width:900px){ .prof-root{max-width:760px} .prof-header{border-radius:0 0 16px 16px} .opt-list{gap:10px} }
+.hint.good{display:block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.prof-upload{margin-top:10px;font-size:11px;color:#64748b;font-weight:700}
+@media(max-width:600px){.prof-root{max-width:100%}.prof-hero{border-radius:0 0 22px 22px}}
 </style>
 </head>
 <body>
 <div class="prof-root">
-  <div class="prof-header">
-    <button class="back" onclick="location.href='/'">‹</button>
-    <img id="userProfilePic" class="prof-pic" src="/assets/default-avatar.png" onerror="this.src='/assets/default-avatar.png'">
-    <div class="prof-info"><b id="userName">Loading...</b><span id="userPhone">...</span><span id="userIdLine"></span></div>
-    <button class="edit-btn" onclick="location.href='/profile/details.html'">Edit</button>
+  <div class="prof-hero">
+    <div class="prof-top">
+      <button class="prof-back" onclick="location.href='/'">‹</button>
+      <div style="flex:1;min-width:0"><b>My Profile</b><span>Apna account, orders aur settings</span></div>
+      <button class="prof-edit" onclick="location.href='/profile/details.html'">✏️ Edit</button>
+    </div>
   </div>
+
+  <div class="prof-card">
+    <div class="prof-avatar-wrap">
+      <img id="userProfilePic" class="prof-avatar" src="/assets/default-avatar.png" onerror="this.src='/assets/default-avatar.png'">
+      <button class="prof-cam" id="profCamBtn" title="Photo badlo">📷</button>
+      <input type="file" id="profPicInput" accept="image/*" style="display:none">
+    </div>
+    <div class="prof-name" id="userName">Loading...</div>
+    <div class="prof-phone" id="userPhone">...</div>
+    <div class="prof-id" id="userIdLine"></div>
+    <div id="profVerified" class="prof-verified" style="display:none">✓ Verified Customer</div>
+    <div class="prof-stats">
+      <div class="prof-stat" onclick="location.href='/profile/orders.html'"><b id="statOrders">0</b><span>📦 Orders</span></div>
+      <div class="prof-stat" onclick="location.href='/profile/wishlist.html'"><b id="statWishlist">0</b><span>❤️ Wishlist</span></div>
+      <div class="prof-stat" onclick="location.href='/shop-templates/common/wallet/wallet.html'"><b id="statWallet">₹0</b><span>💰 Wallet</span></div>
+    </div>
+    <div class="prof-upload" id="profUploadMsg">📷 Camera dabao - Photo seedha Cloudinary pe jayegi</div>
+  </div>
+
   <div id="profHint" class="hint"></div>
 
   <div class="opt-list">
     <div class="opt-section">👤 My Account</div>
-    <a href="/profile/details.html" class="option-card"><div class="option-left"><div class="option-icon">👤</div><div class="option-text"><h3>My Details</h3><p>Name, phone, photo</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/profile/addresses.html" class="option-card"><div class="option-left"><div class="option-icon">📍</div><div class="option-text"><h3>My Addresses</h3><p>Delivery addresses - Checkout me bhi yahi dikhega</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/profile/payments.html" class="option-card"><div class="option-left"><div class="option-icon">💳</div><div class="option-text"><h3>Payment Methods</h3><p>UPI, cards - Sirf saved list</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/profile/details.html" class="option-card"><div class="option-left"><div class="option-icon blue">👤</div><div class="option-text"><h3>My Details</h3><p>Name, phone, photo</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/profile/addresses.html" class="option-card"><div class="option-left"><div class="option-icon green">📍</div><div class="option-text"><h3>My Addresses</h3><p>Delivery addresses - Checkout me bhi yahi dikhega</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/profile/payments.html" class="option-card"><div class="option-left"><div class="option-icon purple">💳</div><div class="option-text"><h3>Payment Methods</h3><p>UPI, cards - Sirf saved list</p></div></div><div class="option-arrow">›</div></a>
 
     <div class="opt-section">📦 Orders &amp; Savings</div>
-    <a href="/profile/orders.html" class="option-card"><div class="option-left"><div class="option-icon">📦</div><div class="option-text"><h3>My Orders</h3><p>Common Checkout wale hi Orders dikhenge</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/profile/wishlist.html" class="option-card"><div class="option-left"><div class="option-icon">❤️</div><div class="option-text"><h3>Wishlist</h3><p>Dukaan wala ❤️ yahan dikhega</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/shop-templates/common/wallet/wallet.html" class="option-card"><div class="option-left"><div class="option-icon">💰</div><div class="option-text"><h3>My Wallet</h3><p>Balance &amp; transactions</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/shop-templates/common/marketing/coupons.html" class="option-card"><div class="option-left"><div class="option-icon">🎟️</div><div class="option-text"><h3>Coupons &amp; Offers</h3><p>Available coupons</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/shop-templates/common/marketing/referral.html" class="option-card"><div class="option-left"><div class="option-icon">🎁</div><div class="option-text"><h3>Refer &amp; Earn</h3><p>Share karo, earn karo</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/profile/orders.html" class="option-card"><div class="option-left"><div class="option-icon orange">📦</div><div class="option-text"><h3>My Orders</h3><p>Common Checkout wale hi Orders dikhenge</p></div></div><span class="option-badge" id="orderBadge" style="display:none">0</span><div class="option-arrow">›</div></a>
+    <a href="/profile/wishlist.html" class="option-card"><div class="option-left"><div class="option-icon pink">❤️</div><div class="option-text"><h3>Wishlist</h3><p>Dukaan wala ❤️ yahan dikhega</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/shop-templates/common/wallet/wallet.html" class="option-card"><div class="option-left"><div class="option-icon green">💰</div><div class="option-text"><h3>My Wallet</h3><p>Balance &amp; transactions</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/shop-templates/common/marketing/coupons.html" class="option-card"><div class="option-left"><div class="option-icon orange">🎟️</div><div class="option-text"><h3>Coupons &amp; Offers</h3><p>Available coupons</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/shop-templates/common/marketing/referral.html" class="option-card"><div class="option-left"><div class="option-icon purple">🎁</div><div class="option-text"><h3>Refer &amp; Earn</h3><p>Share karo, earn karo</p></div></div><div class="option-arrow">›</div></a>
 
     <div class="opt-section">🔔 Settings &amp; Help</div>
-    <a href="/profile/notifications.html" class="option-card"><div class="option-left"><div class="option-icon">🔔</div><div class="option-text"><h3>Notifications</h3><p>Order updates &amp; offers - Fake nahi dikhayenge</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/profile/settings.html" class="option-card"><div class="option-left"><div class="option-icon">⚙️</div><div class="option-text"><h3>Settings</h3><p>Language, notifications &amp; more - Server pe save hoga</p></div></div><div class="option-arrow">›</div></a>
-    <a href="/profile/help.html" class="option-card"><div class="option-left"><div class="option-icon">🆘</div><div class="option-text"><h3>Help &amp; Support</h3><p>FAQs + Report Issue - Ticket banega</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/profile/notifications.html" class="option-card"><div class="option-left"><div class="option-icon blue">🔔</div><div class="option-text"><h3>Notifications</h3><p>Order updates &amp; offers</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/profile/settings.html" class="option-card"><div class="option-left"><div class="option-icon green">⚙️</div><div class="option-text"><h3>Settings</h3><p>Language, notifications &amp; more - Server pe save hoga</p></div></div><div class="option-arrow">›</div></a>
+    <a href="/profile/help.html" class="option-card"><div class="option-left"><div class="option-icon orange">🆘</div><div class="option-text"><h3>Help &amp; Support</h3><p>FAQs + Report Issue - Ticket banega</p></div></div><div class="option-arrow">›</div></a>
 
     <div class="option-card logout-card" onclick="handleLogout()"><div class="option-left"><div class="option-icon">🚪</div><div class="option-text"><h3>Logout</h3><p>Sign out from your account</p></div></div><div class="option-arrow">›</div></div>
   </div>
@@ -77,7 +112,6 @@ button{font-family:inherit;cursor:pointer;border:0}
 <script src="/assets/js/app.js"></script>
 <script>
 (function(){
-  // Token - Sirf AuthCore se - Browser storage se KABHI NAHI padhenge
   function getToken(){
     try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
     return window.USER_TOKEN || '';
@@ -88,28 +122,34 @@ button{font-family:inherit;cursor:pointer;border:0}
     if(window.currentUser && window.currentUser._id) return window.currentUser._id;
     return '';
   }
-  function showHint(msg){
+  function showHint(msg, good){
     var h = document.getElementById('profHint');
-    if(h){ h.textContent = msg; h.className = 'hint bad'; }
+    if(h){ h.textContent = msg; h.className = 'hint ' + (good ? 'good' : 'bad'); }
   }
-
+  function setStats(user){
+    if(!user) return;
+    var orders = user.totalOrders || 0;
+    var walletBal = (user.wallet && user.wallet.balance) || user.walletBalance || 0;
+    document.getElementById('statOrders').innerText = orders;
+    document.getElementById('statWallet').innerText = '₹' + walletBal;
+    var badge = document.getElementById('orderBadge');
+    if(badge && orders > 0){ badge.style.display = 'inline-block'; badge.innerText = orders; }
+    if(user.isVerified) document.getElementById('profVerified').style.display = 'inline-block';
+  }
   window.addEventListener('DOMContentLoaded', async function(){
     var token = getToken();
     if(!token){ window.location.href = '/'; return; }
     try{
       var user = null;
-      // 1. UnifiedProfile se - FILE 1 wali hi API - Sabse pehle wahi
       if(window.UnifiedProfile && window.UnifiedProfile.loadMyProfile){
         try{
           var prof = await window.UnifiedProfile.loadMyProfile({ role: 'customer', userId: getUserId() });
           if(prof && prof.success && prof.user) user = prof.user;
         }catch(e){}
       }
-      // 2. Seedha /api/common/profile/me - UnifiedProfile na chale toh
       if(!user){
         var res = await fetch('/api/common/profile/me?role=customer&buyerId=' + encodeURIComponent(getUserId()), { headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': getUserId() } });
         if(res.status === 401){
-          // Session expire - AuthCore se logout karwa do, browser storage yahan se haath nahi lagayenge
           try{ if(window.AuthCore && window.AuthCore.logout) return window.AuthCore.logout(); }catch(e){}
           window.location.href = '/';
           return;
@@ -117,7 +157,6 @@ button{font-family:inherit;cursor:pointer;border:0}
         var data = await res.json().catch(function(){ return null; });
         if(data && data.success && data.user) user = data.user;
       }
-      // 3. Last - /api/auth/me - Purana rasta, sirf fallback
       if(!user){
         var res2 = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
         var data2 = await res2.json().catch(function(){ return null; });
@@ -125,26 +164,34 @@ button{font-family:inherit;cursor:pointer;border:0}
       }
       if(user){
         window.currentUser = user;
+        if(window.AuthCore && window.AuthCore.setUser) window.AuthCore.setUser(user);
         document.getElementById('userName').innerText = user.name || 'Customer';
         document.getElementById('userPhone').innerText = user.phone ? ('📞 ' + user.phone) : (user.email || '');
         document.getElementById('userIdLine').innerText = user._id ? ('ID: ...' + String(user._id).slice(-6)) : '';
         var pic = user.profilePic || user.avatar || user.photo || '/assets/default-avatar.png';
         document.getElementById('userProfilePic').src = pic;
+        window.USER_PIC = pic;
+        setStats(user);
       } else {
         document.getElementById('userName').innerText = 'Customer';
-        showHint('❌ Profile load nahi hui - Dobara login karo');
+        showHint('❌ Profile load nahi hui - Dobara login karo', false);
       }
     }catch(e){
       document.getElementById('userName').innerText = 'Customer';
-      showHint('❌ Profile load nahi hui - ' + e.message);
+      showHint('❌ Profile load nahi hui - ' + e.message, false);
     }
   });
-
-  // Logout - Sirf AuthCore se - Yahan se browser storage haath nahi lagayenge
+  document.getElementById('profCamBtn').addEventListener('click', function(){ document.getElementById('profPicInput').click(); });
+  document.getElementById('profPicInput').addEventListener('change', async function(){
+    var msg = document.getElementById('profUploadMsg');
+    if(!window.UnifiedProfile || !window.UnifiedProfile.handleFileInput){ if(msg) msg.textContent = '❌ Upload system load nahi hua - Page reload karo'; return; }
+    if(msg) msg.textContent = '⏳ Uploading...';
+    var result = await window.UnifiedProfile.handleFileInput(this, { role: 'customer', previewSelector: '#userProfilePic', msgId: 'profUploadMsg', onSuccess: function(d){ if(msg) msg.textContent = '✅ Photo badal gayi'; if(d && d.url){ window.USER_PIC = d.url; if(window.currentUser) window.currentUser.profilePic = d.url; } } });
+    if(!result || !result.success){ if(msg) msg.textContent = '❌ ' + ((result && result.error) || 'Upload fail'); }
+    this.value = '';
+  });
   window.handleLogout = function(){
-    try{
-      if(window.AuthCore && window.AuthCore.logout) return window.AuthCore.logout();
-    }catch(e){}
+    try{ if(window.AuthCore && window.AuthCore.logout) return window.AuthCore.logout(); }catch(e){}
     window.location.href = '/';
   };
 })();

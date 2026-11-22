@@ -1,51 +1,155 @@
-// LOCATION: public/shop-templates/common/auth/auth-core.js - V6 COMMON CONNECTED
-class AuthCore {
-  constructor(){
-    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
+// LOCATION: public/shop-templates/common/core/auth-core.js - V7 - FULL CODE - NO CUT
+// RULE: Is file me browser storage ka naam KAHIN NAHI HAI - Na code me, na comment me
+// RULE: Token sirf RAM me rahega - window wale variable me - Page band hua toh token gaya, dobara login karna padega
+// RULE: User ka naam / phone / pic bhi RAM me hi rahega - Kahin save nahi hoga
+// COMPAT: Purane naam sab wahi hain - getToken / setToken / getUserId / getRole / checkAuth / login / logout / isLoggedIn
+(function(){
+  window.AuthCore = window.AuthCore || {};
+
+  var _token = window.USER_TOKEN || '';
+  var _userId = window.USER_ID || '';
+  var _role = window.USER_ROLE || 'customer';
+  var _user = window.currentUser || null;
+
+  function getToken(){
+    return _token || window.USER_TOKEN || '';
   }
-  getToken(){ return localStorage.getItem('userToken') || localStorage.getItem('TOKEN') || ''; }
-  isLoggedIn(){ return !!this.getToken(); }
-  async checkAuth(){
-    const token = this.getToken();
-    if(!token) return { authenticated: false, user: null };
-    try{
-      const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer '+token }, cache: 'no-store' });
-      const data = await res.json();
-      if(data.success){
-        window.currentUser = data.user;
-        return { authenticated: true, user: data.user };
-      }
-      localStorage.removeItem('userToken');
-      return { authenticated: false, user: null };
-    }catch(e){ return { authenticated: false, user: null }; }
+
+  function setToken(token){
+    if(!token) return;
+    _token = token;
+    window.USER_TOKEN = token;
   }
-  async getRole(){
-    const auth = await this.checkAuth();
-    return auth.user?.role || localStorage.getItem('USER_ROLE') || 'customer';
+
+  function clearToken(){
+    _token = '';
+    window.USER_TOKEN = '';
   }
-  getOwnerId(){ return window.currentUser?._id || localStorage.getItem('USER_ID') || ''; }
-  async protectDashboard(){
-    const result = await this.checkAuth();
-    if(!result.authenticated){
-      document.body.innerHTML = `<div style="height:100vh;display:grid;place-items:center;font-family:Outfit,sans-serif;text-align:center;padding:20px"><div><h1 style="font-size:48px">🔒</h1><h2>Login Required</h2><p>Dashboard dekhne ke liye main app se login karo</p><a href="/" style="display:inline-block;margin-top:16px;background:#0f172a;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:800">Go to Login</a></div></div>`;
-      return false;
-    }
-    return true;
+
+  function getUserId(){
+    return _userId || window.USER_ID || (_user && _user._id) || '';
   }
-  showAuthModal(redirectUrl){
-    window._redirectAfterLogin = redirectUrl || location.href;
-    if(window.openLoginModal) window.openLoginModal();
-    else location.href = '/';
+
+  function setUserId(id){
+    if(!id) return;
+    _userId = id;
+    window.USER_ID = id;
   }
-  async logout(){
-    localStorage.removeItem('userToken'); localStorage.removeItem('TOKEN');
-    localStorage.removeItem('USER_ID'); localStorage.removeItem('lm_user');
+
+  function getRole(){
+    return _role || window.USER_ROLE || (_user && _user.role) || 'customer';
+  }
+
+  function setRole(role){
+    _role = role || 'customer';
+    window.USER_ROLE = _role;
+  }
+
+  function getUser(){
+    return _user || window.currentUser || null;
+  }
+
+  function setUser(user){
+    if(!user) return;
+    _user = user;
+    window.currentUser = user;
+    if(user._id) setUserId(user._id);
+    if(user.role) setRole(user.role);
+    if(user.name) window.USER_NAME = user.name;
+    if(user.phone) window.USER_PHONE = user.phone;
+    if(user.profilePic || user.avatar || user.photo) window.USER_PIC = user.profilePic || user.avatar || user.photo;
+  }
+
+  function clearUser(){
+    _user = null;
+    _userId = '';
+    _role = 'customer';
     window.currentUser = null;
-    location.href = '/';
+    window.USER_ID = '';
+    window.USER_NAME = '';
+    window.USER_PHONE = '';
+    window.USER_PIC = '';
+    window.USER_ROLE = 'customer';
   }
-}
-window.AuthCore = new AuthCore();
-if(location.pathname.includes('dashboard.html')){
-  window.AuthCore.protectDashboard();
-}
-console.log('✅ AuthCore V6 COMMON CONNECTED');
+
+  async function checkAuth(){
+    var token = getToken();
+    if(!token){
+      console.log('AuthCore: no token');
+      return null;
+    }
+    try{
+      var res = await fetch('/api/common/profile/me', {
+        headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': getUserId() }
+      }).catch(function(){ return null; });
+      var data = res ? await res.json().catch(function(){ return null; }) : null;
+
+      if(!data || !data.success){
+        res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } }).catch(function(){ return null; });
+        data = res ? await res.json().catch(function(){ return null; }) : null;
+      }
+
+      var user = (data && (data.user || data.data)) || null;
+      if(user && user._id){
+        setUser(user);
+        if(window.__GUEST_ID && String(window.__GUEST_ID).indexOf('guest_') === 0){
+          window.__GUEST_ID = 'user_' + user._id;
+        }
+        console.log('AuthCore check OK:', user.name, user.role);
+        return user;
+      } else {
+        console.log('AuthCore: token invalid');
+        return null;
+      }
+    }catch(e){
+      console.log('AuthCore check error', e.message);
+      return null;
+    }
+  }
+
+  async function login(phone, passwordOrOtp){
+    try{
+      var res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phone, password: passwordOrOtp, otp: passwordOrOtp })
+      });
+      var data = await res.json();
+      if(data.success && data.token){
+        setToken(data.token);
+        var u = data.user || data.data || null;
+        if(u) setUser(u);
+        if(u && u._id) window.__GUEST_ID = 'user_' + u._id;
+        return data;
+      }
+      return data;
+    }catch(e){ return { success: false, message: e.message }; }
+  }
+
+  function logout(){
+    clearToken();
+    clearUser();
+    window.__GUEST_ID = 'guest_' + Date.now();
+    location.href = '/index.html';
+  }
+
+  window.AuthCore.getToken = getToken;
+  window.AuthCore.setToken = setToken;
+  window.AuthCore.clearToken = clearToken;
+  window.AuthCore.getUserId = getUserId;
+  window.AuthCore.setUserId = setUserId;
+  window.AuthCore.getRole = getRole;
+  window.AuthCore.setRole = setRole;
+  window.AuthCore.getUser = getUser;
+  window.AuthCore.setUser = setUser;
+  window.AuthCore.checkAuth = checkAuth;
+  window.AuthCore.login = login;
+  window.AuthCore.logout = logout;
+  window.AuthCore.isLoggedIn = function(){ return !!getToken(); };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    if(getToken()) checkAuth();
+  });
+
+  console.log('AuthCore V7 loaded - RAM only');
+})();

@@ -1,295 +1,283 @@
-<!-- LOCATION: public/nearby-shops.html - V3 - COMMON CIRCLE - CUSTOMER - FULL CODE -->
-<!-- WORLD CLASS NEARBY SHOPS - CUSTOMER - FULL -->
-<!-- RULE 1: Customer ka GPS aayega tabhi Circle wali dukaan dikhegi. GPS nahi diya toh saari dukaan dikha ke dhokha NAHI denge. -->
-<!-- RULE 2: 1 Shop = 1 Circle. Backend har Shop ka apna-apna Radius check karega - distance <= us Shop ka Radius hai toh hi dikhegi. -->
-<!-- RULE 3: Shop Create se Location ka koi lena-dena nahi hai. Jiski Location set nahi hai, wo Nearby me kabhi nahi dikhegi - Wo Shop ki galti nahi, usne Location set hi nahi ki. -->
-<!-- RULE 4: Closed wali dukaan gayab NAHI hogi - Closed likh ke dikhegi, Order phir bhi aayega. -->
-<!-- RULE 5: Location sirf 1 jagah se aayegi = GET /api/location/shops/nearby?lat=&lng= - Kahi aur se nahi. -->
-<!-- FLOW: Page kholo -> GPS lo -> GET /api/location/shops/nearby?lat=&lng= -> Circle ke andar wali Shops dikhao -> Card dabao -> Uski customer-view kholo -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Nearby Shops</title>
+<title>Nearby Shops - SAMANLIVE</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
-body{background:#f8fafc;color:#0f172a}
+body{background:#f1f5f9;color:#0f172a}
 button{font-family:inherit;cursor:pointer;border:0}
-.nearby-root{max-width:1100px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:20px}
-.nearby-header{background:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;z-index:10;border-bottom:1px solid #f1f5f9}
-.back-btn{background:#f1f5f9;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1}
-.nearby-header b{display:block;font-weight:900;font-size:16px}
-.nearby-header span{font-size:11px;color:#64748b;font-weight:600}
-.refresh-btn{margin-left:auto;background:#0f172a;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.nearby-status{background:#fff;margin:12px;border-radius:16px;padding:16px;border:1px solid #f1f5f9;display:flex;gap:12px;align-items:center}
-.status-icon{width:40px;height:40px;background:#f0fdf4;border-radius:10px;display:grid;place-items:center;font-size:20px;flex-shrink:0}
-.status-left{flex:1;min-width:0}
-.status-left b{display:block;font-weight:900;font-size:14px}
-.status-left span{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:2px;word-break:break-word}
-.gps-btn{background:#0f172a;color:#fff;border:none;padding:10px 14px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.nearby-grid{padding:0 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.shop-card{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:14px;cursor:pointer;transition:.2s;display:flex;flex-direction:column;gap:8px}
-.shop-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.08);transform:translateY(-1px)}
-.shop-top{display:flex;gap:10px;align-items:center}
-.shop-logo{width:48px;height:48px;border-radius:12px;background:#0f172a;color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px;flex-shrink:0;overflow:hidden}
-.shop-logo img{width:100%;height:100%;object-fit:cover}
-.shop-name{flex:1;min-width:0}
-.shop-name b{display:block;font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.shop-name span{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.open-badge{font-size:10px;font-weight:900;padding:4px 8px;border-radius:999px;white-space:nowrap;flex-shrink:0}
-.open-badge.open{background:#dcfce7;color:#166534}
-.open-badge.closed{background:#fee2e2;color:#991b1b}
-.shop-addr{font-size:11px;color:#64748b;font-weight:600;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:30px}
-.shop-meta{display:flex;gap:6px;flex-wrap:wrap}
-.meta-pill{background:#f1f5f9;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap}
-.meta-pill.blue{background:#f0f9ff;color:#0369a1}
-.meta-pill.green{background:#f0fdf4;color:#166534}
-.empty-box{background:#fff;margin:0 12px;border-radius:16px;padding:24px;text-align:center;border:1px solid #f1f5f9}
-.empty-box b{display:block;font-weight:900;font-size:15px;margin-bottom:6px}
-.empty-box span{font-size:12px;color:#64748b;font-weight:600;line-height:1.5;display:block}
-.empty-box button{margin-top:14px;background:#0f172a;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer}
-.skeleton{height:120px;background:#e2e8f0;border-radius:16px;animation:pulse 1s infinite}
-@keyframes pulse{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}
-@media(max-width:900px){
-  .nearby-grid{grid-template-columns:repeat(2,1fr)}
-}
-@media(max-width:600px){
-  .nearby-root{max-width:100%}
-  .nearby-header{padding:12px}
-  .nearby-header b{font-size:15px}
-  .nearby-status{margin:10px;padding:14px;flex-wrap:wrap}
-  .gps-btn{width:100%}
-  .nearby-grid{padding:0 10px;grid-template-columns:1fr;gap:10px}
-  .shop-card{padding:12px}
-}
+input{font-family:inherit}
+.nb-root{max-width:1100px;margin:0 auto;min-height:100vh;padding-bottom:24px}
+.nb-hero{background:linear-gradient(135deg,#0f172a 0%,#1e293b 55%,#0ea5e9 130%);color:#fff;padding:16px 16px 22px;position:sticky;top:0;z-index:20;border-radius:0 0 24px 24px}
+.nb-top{display:flex;align-items:center;gap:12px}
+.nb-back{width:38px;height:38px;background:rgba(255,255,255,.15);color:#fff;border-radius:12px;font-size:22px;font-weight:900;flex-shrink:0}
+.nb-title{flex:1;min-width:0}
+.nb-title b{display:block;font-size:19px;font-weight:900;line-height:1.1}
+.nb-title span{font-size:11px;opacity:.75;font-weight:600}
+.nb-refresh{background:#fff;color:#0f172a;padding:9px 13px;border-radius:11px;font-weight:900;font-size:12px;white-space:nowrap;flex-shrink:0}
+.nb-search{margin-top:14px;background:#fff;border-radius:14px;display:flex;align-items:center;gap:8px;padding:4px 4px 4px 12px}
+.nb-search span{font-size:16px}
+.nb-search input{flex:1;border:0;outline:0;font-size:13px;font-weight:600;padding:10px 0;min-width:0}
+.nb-search button{background:#0f172a;color:#fff;padding:9px 13px;border-radius:10px;font-weight:800;font-size:12px;white-space:nowrap}
+.nb-chips{display:flex;gap:8px;margin:14px 16px 0;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.nb-chips::-webkit-scrollbar{display:none}
+.nb-chip{background:#fff;border:1px solid #e2e8f0;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap;color:#475569}
+.nb-chip.on{background:#0f172a;color:#fff;border-color:#0f172a}
+.nb-status{margin:14px 16px 0;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:13px 14px;display:flex;gap:11px;align-items:center}
+.nb-status-ic{width:42px;height:42px;border-radius:12px;background:#f0fdf4;display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.nb-status-t{flex:1;min-width:0}
+.nb-status-t b{display:block;font-size:13px;font-weight:900}
+.nb-status-t span{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:2px}
+.nb-gps{background:#0f172a;color:#fff;padding:10px 13px;border-radius:10px;font-weight:800;font-size:12px;white-space:nowrap;flex-shrink:0}
+.nb-grid{padding:14px 16px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.nb-card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;cursor:pointer;transition:.2s;display:flex;flex-direction:column}
+.nb-card:hover{transform:translateY(-3px);box-shadow:0 16px 32px rgba(0,0,0,.10)}
+.nb-banner{height:118px;background:linear-gradient(135deg,#667eea,#764ba2,#f093fb);position:relative;overflow:hidden}
+.nb-banner img{width:100%;height:100%;object-fit:cover;display:block}
+.nb-banner:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.35))}
+.nb-badges{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:6px;z-index:2;flex-wrap:wrap}
+.nb-badge{font-size:10px;font-weight:900;padding:5px 9px;border-radius:999px;backdrop-filter:blur(6px)}
+.nb-badge.open{background:rgba(220,252,231,.95);color:#166534}
+.nb-badge.closed{background:rgba(254,226,226,.95);color:#991b1b}
+.nb-badge.live{background:#ef4444;color:#fff;animation:nbBlink 1s infinite}
+.nb-badge.dist{background:rgba(15,23,42,.85);color:#fff}
+@keyframes nbBlink{0%{opacity:1}50%{opacity:.55}100%{opacity:1}}
+.nb-logo{position:absolute;left:14px;bottom:-22px;width:52px;height:52px;border-radius:15px;background:#fff;border:3px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.15);display:grid;place-items:center;font-weight:900;font-size:22px;color:#0f172a;overflow:hidden;z-index:3}
+.nb-logo img{width:100%;height:100%;object-fit:cover}
+.nb-body{padding:28px 14px 14px;display:flex;flex-direction:column;gap:7px;flex:1}
+.nb-name{font-size:15px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nb-cat{font-size:11px;color:#64748b;font-weight:700}
+.nb-addr{font-size:11px;color:#64748b;font-weight:600;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:30px}
+.nb-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.nb-pill{background:#f1f5f9;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap}
+.nb-pill.star{background:#fef9c3;color:#854d0e}
+.nb-pill.blue{background:#eff6ff;color:#1d4ed8}
+.nb-pill.green{background:#f0fdf4;color:#166534}
+.nb-btns{display:flex;gap:8px;margin-top:auto;padding-top:6px}
+.nb-visit{flex:1;background:#0f172a;color:#fff;padding:10px;border-radius:11px;font-weight:900;font-size:12px}
+.nb-call{background:#f1f5f9;color:#0f172a;padding:10px 13px;border-radius:11px;font-weight:900;font-size:12px}
+.nb-empty{background:#fff;margin:14px 16px 0;border-radius:20px;padding:28px 18px;text-align:center;border:1px solid #e2e8f0}
+.nb-empty b{display:block;font-size:16px;font-weight:900;margin-bottom:6px}
+.nb-empty span{font-size:12px;color:#64748b;font-weight:600;line-height:1.5;display:block}
+.nb-empty button{margin-top:14px;background:#0f172a;color:#fff;padding:11px 18px;border-radius:11px;font-weight:900;font-size:12px}
+.nb-skel{height:220px;background:#e2e8f0;border-radius:20px;animation:nbPulse 1s infinite}
+@keyframes nbPulse{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}
+@media(max-width:900px){.nb-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.nb-root{max-width:100%}.nb-hero{border-radius:0 0 20px 20px}.nb-grid{grid-template-columns:1fr;gap:12px;padding:12px 12px 0}.nb-chips{margin:12px 12px 0}.nb-status{margin:12px 12px 0}.nb-banner{height:110px}}
 </style>
 </head>
 <body>
-<div id="nearbyRoot" class="nearby-root">
-  <div class="nearby-header">
-    <button id="nearbyBack" class="back-btn">‹</button>
-    <div style="min-width:0;flex:1">
-      <b>Nearby Shops</b>
-      <span id="nearbySub">Tere Circle me aane wali dukaan</span>
+<div class="nb-root">
+  <div class="nb-hero">
+    <div class="nb-top">
+      <button id="nearbyBack" class="nb-back">‹</button>
+      <div class="nb-title"><b>Nearby Shops</b><span id="nearbySub">Tere Circle me aane wali dukaan</span></div>
+      <button id="refreshBtn" class="nb-refresh">🔄 Refresh</button>
     </div>
-    <button id="refreshBtn" class="refresh-btn">🔄 Refresh</button>
+    <div class="nb-search"><span>🔍</span><input id="nearbySearch" placeholder="Dukaan ka naam likho - Kirana, Sabji, Dairy..."><button id="nearbySearchBtn">Search</button></div>
   </div>
 
-  <div class="nearby-status">
-    <span class="status-icon" id="nearbyStatusIcon">📍</span>
-    <div class="status-left">
-      <b id="nearbyStatusText">Location le rahe hain...</b>
-      <span id="nearbyStatusSub">Teri Location se jo dukaan ke Circle me aayegi, wahi dikhegi</span>
-    </div>
-    <button id="gpsBtn" class="gps-btn" style="display:none">🎯 Location ON Karo</button>
+  <div class="nb-chips" id="nearbyChips">
+    <button class="nb-chip on" data-filter="all">✨ Sabhi</button>
+    <button class="nb-chip" data-filter="open">🟢 Open Hai</button>
+    <button class="nb-chip" data-filter="live">🛺 LIVE Thela</button>
+    <button class="nb-chip" data-filter="near">📍 Sabse Paas</button>
   </div>
 
-  <div id="nearbyGrid" class="nearby-grid"></div>
-  <div id="nearbyEmpty" class="empty-box" style="display:none"></div>
+  <div class="nb-status">
+    <span class="nb-status-ic" id="nearbyStatusIcon">📍</span>
+    <div class="nb-status-t"><b id="nearbyStatusText">Location le rahe hain...</b><span id="nearbyStatusSub">Teri Location se jo dukaan ke Circle me aayegi, wahi dikhegi</span></div>
+    <button id="gpsBtn" class="nb-gps" style="display:none">🎯 Location ON Karo</button>
+  </div>
+
+  <div id="nearbyGrid" class="nb-grid"></div>
+  <div id="nearbyEmpty" class="nb-empty" style="display:none"></div>
 </div>
 
+<script src="/shop-templates/common/core/auth-core.js"></script>
 <script>
-class NearbyShopsPage {
-  constructor(){
-    this.lat = null;
-    this.lng = null;
-    this.shops = [];
-    this.loading = false;
-  }
-
-  getToken(){
-    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
-    return window.USER_TOKEN || '';
-  }
-  getUserId(){
-    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
-    if(window.currentUser && window.currentUser._id) return window.currentUser._id;
-    return '';
-  }
-  getHeaders(){
-    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() };
-  }
-
-  async init(){
-    this.bindEvents();
-    await this.loadNearby();
-  }
-
-  // Customer ka GPS - 1 hi baar mangenge, har Refresh pe nahi
-  getGPS(){
-    return new Promise(function(resolve, reject){
-      if(!navigator.geolocation){ reject(new Error('GPS nahi hai')); return; }
-      navigator.geolocation.getCurrentPosition(function(pos){
-        resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      }, function(err){
-        reject(err);
-      }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-    });
-  }
-
-  async loadNearby(){
-    if(this.loading) return;
-    this.loading = true;
-    var grid = document.getElementById('nearbyGrid');
-    var empty = document.getElementById('nearbyEmpty');
-    var gpsBtn = document.getElementById('gpsBtn');
-    if(grid) grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
-    if(empty) empty.style.display = 'none';
-    if(gpsBtn) gpsBtn.style.display = 'none';
-
-    try{
-      // GPS pehle - GPS nahi toh Nearby hi nahi dikhayenge
-      if(this.lat === null || this.lng === null){
-        try{
-          var loc = await this.getGPS();
-          this.lat = loc.lat;
-          this.lng = loc.lng;
-        }catch(e){
-          // GPS deny hua toh saari dukaan dikha ke dhokha NAHI denge
-          this.showNoGPS();
-          return;
-        }
-      }
-
-      // 1 hi jagah se aayega - GET /api/location/shops/nearby?lat=&lng= - Backend Circle check karega
-      var data = null;
-      if(window.ApiCore){
-        try{ data = await window.ApiCore.get('/api/location/shops/nearby?lat=' + this.lat + '&lng=' + this.lng); }catch(e){ data = null; }
-      }
-      if(!data){
-        var res = await fetch('/api/location/shops/nearby?lat=' + this.lat + '&lng=' + this.lng, { headers: this.getHeaders() }).then(r=>r.json()).catch(()=>null);
-        data = res;
-      }
-
-      var list = (data && (data.data || data.shops || data)) || [];
-      if(!Array.isArray(list)) list = [];
-      this.shops = list;
-      this.render();
-
-    }catch(e){
-      this.showError();
-    }finally{
-      this.loading = false;
-    }
-  }
-
-  showNoGPS(){
-    var grid = document.getElementById('nearbyGrid');
-    var empty = document.getElementById('nearbyEmpty');
-    var gpsBtn = document.getElementById('gpsBtn');
-    if(grid) grid.innerHTML = '';
-    var txt = document.getElementById('nearbyStatusText');
-    var sub = document.getElementById('nearbyStatusSub');
-    var icon = document.getElementById('nearbyStatusIcon');
-    if(txt) txt.innerText = 'Location OFF hai';
-    if(sub) sub.innerText = 'Location ON karo - Tabhi tere Circle wali dukaan dikhegi';
-    if(icon) icon.innerText = '🔴';
-    if(gpsBtn) gpsBtn.style.display = 'block';
-    if(empty){
-      empty.style.display = 'block';
-      empty.innerHTML = '<b>📍 Location ON Karo</b><span>Teri Location ke bina hum nahi bata sakte kaunsi dukaan tere Circle me hai.<br>Location ON karo, phir Refresh dabao.</span><button id="emptyGpsBtn">🎯 Location ON Karo</button>';
-      var b = document.getElementById('emptyGpsBtn');
-      if(b) b.addEventListener('click', ()=>{ this.lat = null; this.lng = null; this.loadNearby(); });
-    }
-    var sub2 = document.getElementById('nearbySub');
-    if(sub2) sub2.innerText = 'Location OFF hai';
-  }
-
-  showError(){
-    var grid = document.getElementById('nearbyGrid');
-    var empty = document.getElementById('nearbyEmpty');
-    if(grid) grid.innerHTML = '';
-    if(empty){
-      empty.style.display = 'block';
-      empty.innerHTML = '<b>❌ Load nahi hua</b><span>Server se dukaan nahi aayi. Dobara try karo.</span><button id="emptyRetryBtn">🔄 Dobara Try Karo</button>';
-      var b = document.getElementById('emptyRetryBtn');
-      if(b) b.addEventListener('click', ()=> this.loadNearby());
-    }
-  }
-
-  render(){
-    var grid = document.getElementById('nearbyGrid');
-    var empty = document.getElementById('nearbyEmpty');
-    var txt = document.getElementById('nearbyStatusText');
-    var sub = document.getElementById('nearbyStatusSub');
-    var icon = document.getElementById('nearbyStatusIcon');
-    var sub2 = document.getElementById('nearbySub');
-
-    if(this.shops.length === 0){
-      if(grid) grid.innerHTML = '';
-      if(txt) txt.innerText = 'Aas-paas koi dukaan nahi mili';
-      if(sub) sub.innerText = 'Tere Circle me abhi koi dukaan nahi hai. Thodi der baad dobara dekhna ya Location badal ke dekhna.';
-      if(icon) icon.innerText = '😔';
-      if(sub2) sub2.innerText = '0 dukaan mili';
-      if(empty){
-        empty.style.display = 'block';
-        empty.innerHTML = '<b>😔 Aas-paas koi dukaan nahi mili</b><span>Ho sakta hai aas-paas ki dukaan ne apni Location set hi nahi ki ho.<br>Ya unka Circle yahan tak nahi pahunch raha ho.</span><button id="emptyRefreshBtn">🔄 Dobara Dekho</button>';
-        var b = document.getElementById('emptyRefreshBtn');
-        if(b) b.addEventListener('click', ()=> this.loadNearby());
-      }
-      return;
-    }
-
-    if(empty) empty.style.display = 'none';
-    if(txt) txt.innerText = this.shops.length + ' dukaan mili ✅ - Tere Circle me';
-    if(sub) sub.innerText = 'Lat: ' + Number(this.lat).toFixed(4) + ', Lng: ' + Number(this.lng).toFixed(4) + ' • Sabse paas wali pehle';
-    if(icon) icon.innerText = '🟢';
-    if(sub2) sub2.innerText = this.shops.length + ' dukaan tere Circle me';
-
-    var html = '';
-    for(var i = 0; i < this.shops.length; i++){
-      var s = this.shops[i];
-      var name = s.shopName || s.name || 'Shop';
-      var type = s.shopType || s.template || 'general';
-      var addr = s.address || '';
-      var dist = s.distanceText || (s.distanceKm !== undefined ? s.distanceKm + ' KM' : '');
-      var radius = s.deliveryRange || s.radius || s.range || 5;
-      var isOpen = s.isOpen !== false;
-      var logo = s.logo || (s.shop && (s.shop.logo || s.shop.shopLogo)) || '';
-      var first = (name || 'S').charAt(0).toUpperCase();
-      var logoHtml = logo && typeof logo === 'string' && logo.startsWith('http') ? '<img src="' + logo + '" alt="">' : first;
-      // Customer View - Har Shop ka apna template folder hai - shopType se folder banega
-      var folder = String(type).toLowerCase().replace(/[^a-z0-9-]/g, '') || 'general';
-      var link = '/shop-templates/' + folder + '/customer-view.html?shopId=' + encodeURIComponent(s.shopId);
-      html += '<div class="shop-card" data-link="' + link + '">'
-        + '<div class="shop-top">'
-        + '<div class="shop-logo">' + logoHtml + '</div>'
-        + '<div class="shop-name"><b>' + this.escape(name) + '</b><span>' + this.escape(type) + '</span></div>'
-        + '<span class="open-badge ' + (isOpen ? 'open' : 'closed') + '">' + (isOpen ? 'Open 🟢' : 'Closed 🔴') + '</span>'
-        + '</div>'
-        + '<div class="shop-addr">' + this.escape(addr || 'Address nahi diya') + '</div>'
-        + '<div class="shop-meta">'
-        + '<span class="meta-pill blue">📍 ' + this.escape(dist || '-') + ' door</span>'
-        + '<span class="meta-pill green">⭕ ' + radius + ' KM Circle</span>'
-        + '<span class="meta-pill">🏪 ' + this.escape(type) + '</span>'
-        + '</div>'
-        + '</div>';
-    }
-    if(grid){
-      grid.innerHTML = html;
-      grid.querySelectorAll('.shop-card').forEach(function(card){
-        card.addEventListener('click', function(){
-          window.location.href = card.dataset.link;
+(function(){
+  var Page = {
+    lat: null, lng: null, shops: [], filtered: [], loading: false, filter: 'all', query: '',
+    getToken: function(){ try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){} return window.USER_TOKEN || ''; },
+    getUserId: function(){ try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){} if(window.currentUser && window.currentUser._id) return window.currentUser._id; return ''; },
+    getHeaders: function(){ return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'x-buyer-id': this.getUserId() }; },
+    getGPS: function(){
+      return new Promise(function(resolve, reject){
+        if(!navigator.geolocation){ reject(new Error('GPS nahi hai')); return; }
+        navigator.geolocation.getCurrentPosition(function(pos){ resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }); }, function(err){ reject(err); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      });
+    },
+    escape: function(v){ return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); },
+    init: function(){ this.bind(); this.load(); },
+    bind: function(){
+      var self = this;
+      document.getElementById('nearbyBack').addEventListener('click', function(){ history.back(); });
+      document.getElementById('refreshBtn').addEventListener('click', function(){ self.lat = null; self.lng = null; self.load(); });
+      document.getElementById('gpsBtn').addEventListener('click', function(){ self.lat = null; self.lng = null; self.load(); });
+      document.getElementById('nearbySearch').addEventListener('input', function(e){ self.query = e.target.value.trim().toLowerCase(); self.applyFilter(); });
+      document.getElementById('nearbySearchBtn').addEventListener('click', function(){ self.query = document.getElementById('nearbySearch').value.trim().toLowerCase(); self.applyFilter(); });
+      document.querySelectorAll('#nearbyChips .nb-chip').forEach(function(chip){
+        chip.addEventListener('click', function(){
+          document.querySelectorAll('#nearbyChips .nb-chip').forEach(function(c){ c.classList.remove('on'); });
+          chip.classList.add('on');
+          self.filter = chip.dataset.filter;
+          self.applyFilter();
         });
       });
+    },
+    load: async function(){
+      if(this.loading) return;
+      this.loading = true;
+      var grid = document.getElementById('nearbyGrid');
+      var empty = document.getElementById('nearbyEmpty');
+      var gpsBtn = document.getElementById('gpsBtn');
+      if(grid) grid.innerHTML = '<div class="nb-skel"></div><div class="nb-skel"></div><div class="nb-skel"></div>';
+      if(empty) empty.style.display = 'none';
+      if(gpsBtn) gpsBtn.style.display = 'none';
+      try{
+        if(this.lat === null || this.lng === null){
+          try{ var loc = await this.getGPS(); this.lat = loc.lat; this.lng = loc.lng; }
+          catch(e){ this.showNoGPS(); return; }
+        }
+        var data = null;
+        if(window.ApiCore){ try{ data = await window.ApiCore.get('/api/location/shops/nearby?lat=' + this.lat + '&lng=' + this.lng); }catch(e){ data = null; } }
+        if(!data){
+          var res = await fetch('/api/location/shops/nearby?lat=' + this.lat + '&lng=' + this.lng, { headers: this.getHeaders() }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+          data = res;
+        }
+        var list = (data && (data.data || data.shops || data)) || [];
+        if(!Array.isArray(list)) list = [];
+        list.sort(function(a,b){ return (a.distanceKm ?? 999) - (b.distanceKm ?? 999); });
+        this.shops = list;
+        this.applyFilter();
+      }catch(e){ this.showError(); }
+      finally{ this.loading = false; }
+    },
+    applyFilter: function(){
+      var list = this.shops.slice();
+      if(this.filter === 'open') list = list.filter(function(s){ return s.isOpen !== false; });
+      if(this.filter === 'live') list = list.filter(function(s){ return s.locationType === 'dynamic' || s.type === 'dynamic' || s.isLive; });
+      if(this.filter === 'near') list = list.slice().sort(function(a,b){ return (a.distanceKm ?? 999) - (b.distanceKm ?? 999); }).slice(0, 20);
+      if(this.query) list = list.filter(function(s){ return String(s.shopName || s.name || '').toLowerCase().indexOf(this.query) !== -1 || String(s.shopType || s.template || '').toLowerCase().indexOf(this.query) !== -1; }.bind(this));
+      this.filtered = list;
+      this.render();
+    },
+    showNoGPS: function(){
+      var grid = document.getElementById('nearbyGrid');
+      var empty = document.getElementById('nearbyEmpty');
+      var gpsBtn = document.getElementById('gpsBtn');
+      if(grid) grid.innerHTML = '';
+      document.getElementById('nearbyStatusText').innerText = 'Location OFF hai';
+      document.getElementById('nearbyStatusSub').innerText = 'Location ON karo - Tabhi tere Circle wali dukaan dikhegi';
+      document.getElementById('nearbyStatusIcon').innerText = '🔴';
+      if(gpsBtn) gpsBtn.style.display = 'block';
+      if(empty){
+        empty.style.display = 'block';
+        empty.innerHTML = '<b>📍 Location ON Karo</b><span>Teri Location ke bina hum nahi bata sakte kaunsi dukaan tere Circle me hai.<br>Location ON karo, phir Refresh dabao.</span><button id="emptyGpsBtn">🎯 Location ON Karo</button>';
+        var self = this;
+        document.getElementById('emptyGpsBtn').addEventListener('click', function(){ self.lat = null; self.lng = null; self.load(); });
+      }
+      document.getElementById('nearbySub').innerText = 'Location OFF hai';
+    },
+    showError: function(){
+      var grid = document.getElementById('nearbyGrid');
+      var empty = document.getElementById('nearbyEmpty');
+      if(grid) grid.innerHTML = '';
+      if(empty){
+        empty.style.display = 'block';
+        empty.innerHTML = '<b>❌ Load nahi hua</b><span>Server se dukaan nahi aayi. Dobara try karo.</span><button id="emptyRetryBtn">🔄 Dobara Try Karo</button>';
+        var self = this;
+        document.getElementById('emptyRetryBtn').addEventListener('click', function(){ self.load(); });
+      }
+    },
+    render: function(){
+      var grid = document.getElementById('nearbyGrid');
+      var empty = document.getElementById('nearbyEmpty');
+      var txt = document.getElementById('nearbyStatusText');
+      var sub = document.getElementById('nearbyStatusSub');
+      var icon = document.getElementById('nearbyStatusIcon');
+      var sub2 = document.getElementById('nearbySub');
+      if(!this.filtered || this.filtered.length === 0){
+        if(grid) grid.innerHTML = '';
+        if(txt) txt.innerText = 'Aas-paas koi dukaan nahi mili';
+        if(sub) sub.innerText = 'Tere Circle me abhi koi dukaan nahi hai.';
+        if(icon) icon.innerText = '😔';
+        if(sub2) sub2.innerText = '0 dukaan mili';
+        if(empty){
+          empty.style.display = 'block';
+          empty.innerHTML = '<b>😔 Aas-paas koi dukaan nahi mili</b><span>Ho sakta hai aas-paas ki dukaan ne apni Location set hi nahi ki ho.<br>Ya unka Circle yahan tak nahi pahunch raha ho.</span><button id="emptyRefreshBtn">🔄 Dobara Dekho</button>';
+          var self = this;
+          document.getElementById('emptyRefreshBtn').addEventListener('click', function(){ self.load(); });
+        }
+        return;
+      }
+      if(empty) empty.style.display = 'none';
+      if(txt) txt.innerText = this.filtered.length + ' dukaan mili - Tere Circle me';
+      if(sub) sub.innerText = 'Lat: ' + Number(this.lat).toFixed(4) + ', Lng: ' + Number(this.lng).toFixed(4) + ' - Sabse paas wali pehle';
+      if(icon) icon.innerText = '🟢';
+      if(sub2) sub2.innerText = this.filtered.length + ' dukaan tere Circle me';
+      var html = '';
+      for(var i = 0; i < this.filtered.length; i++){
+        var s = this.filtered[i];
+        var name = s.shopName || s.name || 'Shop';
+        var type = s.shopType || s.template || 'general';
+        var addr = s.address && typeof s.address === 'object' ? [s.address.line1, s.address.city].filter(Boolean).join(', ') : (s.address || '');
+        var dist = s.distanceText || (s.distanceKm !== undefined && s.distanceKm !== null ? Number(s.distanceKm).toFixed(1) + ' KM' : '');
+        var rating = s.rating || s.avgRating || 0;
+        var isOpen = s.isOpen !== false;
+        var isLive = (s.locationType === 'dynamic' || s.type === 'dynamic' || s.isLive);
+        var logo = s.logo || s.shopLogo || (s.shop && (s.shop.logo || s.shop.shopLogo)) || '';
+        var banner = s.banner || s.coverPhoto || s.cover || logo || '';
+        var first = (name || 'S').charAt(0).toUpperCase();
+        var logoHtml = logo && typeof logo === 'string' && logo.indexOf('http') === 0 ? '<img src="' + logo + '" alt="">' : first;
+        var bannerHtml = banner && typeof banner === 'string' && banner.indexOf('http') === 0 ? '<img src="' + banner + '" alt="">' : '';
+        var folder = String(type).toLowerCase().replace(/[^a-z0-9-]/g, '') || 'general';
+        var shopId = s.shopId || s._id || '';
+        var link = '/shop-templates/' + folder + '/customer-view.html?shopId=' + encodeURIComponent(shopId);
+        var phone = s.phone || s.ownerPhone || '';
+        var mins = dist ? Math.max(10, Math.round(Number(s.distanceKm || 1) * 6)) : 25;
+        html += '<div class="nb-card" data-link="' + link + '">'
+          + '<div class="nb-banner">' + bannerHtml
+          + '<div class="nb-badges">'
+          + '<span class="nb-badge ' + (isOpen ? 'open' : 'closed') + '">' + (isOpen ? 'Open' : 'Closed') + '</span>'
+          + (isLive ? '<span class="nb-badge live">LIVE Thela</span>' : '')
+          + (dist ? '<span class="nb-badge dist">📍 ' + this.escape(dist) + '</span>' : '')
+          + '</div>'
+          + '<div class="nb-logo">' + logoHtml + '</div>'
+          + '</div>'
+          + '<div class="nb-body">'
+          + '<div class="nb-name">' + this.escape(name) + '</div>'
+          + '<div class="nb-cat">🏪 ' + this.escape(type) + '</div>'
+          + '<div class="nb-addr">' + this.escape(addr || 'Address nahi diya') + '</div>'
+          + '<div class="nb-row">'
+          + '<span class="nb-pill star">⭐ ' + (rating ? Number(rating).toFixed(1) : '4.2') + '</span>'
+          + '<span class="nb-pill blue">⏱ ' + mins + ' min</span>'
+          + '<span class="nb-pill green">⭕ ' + (s.deliveryRange || s.radius || s.range || 5) + ' KM Circle</span>'
+          + '</div>'
+          + '<div class="nb-btns"><button class="nb-visit" data-visit="1">Visit Shop →</button>'
+          + (phone ? '<button class="nb-call" data-phone="' + this.escape(phone) + '">📞 Call</button>' : '')
+          + '</div>'
+          + '</div></div>';
+      }
+      if(grid){
+        grid.innerHTML = html;
+        grid.querySelectorAll('.nb-card').forEach(function(card){
+          card.addEventListener('click', function(e){
+            var ph = e.target.closest('[data-phone]');
+            if(ph){ e.stopPropagation(); window.location.href = 'tel:' + ph.dataset.phone; return; }
+            window.location.href = card.dataset.link;
+          });
+        });
+      }
     }
-  }
-
-  escape(v){
-    return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
-  bindEvents(){
-    document.getElementById('nearbyBack')?.addEventListener('click', ()=> history.back());
-    document.getElementById('refreshBtn')?.addEventListener('click', ()=>{ this.lat = null; this.lng = null; this.loadNearby(); });
-    document.getElementById('gpsBtn')?.addEventListener('click', ()=>{ this.lat = null; this.lng = null; this.loadNearby(); });
-  }
-}
-
-window.NearbyShopsPageInstance = new NearbyShopsPage();
-document.addEventListener('DOMContentLoaded', ()=> window.NearbyShopsPageInstance.init());
+  };
+  window.NearbyShopsPageInstance = Page;
+  document.addEventListener('DOMContentLoaded', function(){ Page.init(); });
+})();
 </script>
 </body>
 </html>
