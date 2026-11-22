@@ -112,14 +112,50 @@ button{font-family:inherit;cursor:pointer;border:0}
 <script src="/assets/js/app.js"></script>
 <script>
 (function(){
+  // FIX: Token / ID ab isi page me Cookie se bhi padhenge - AuthCore V7 ho ya V8, farak nahi padega
+  // Pehle ye sirf RAM me dhoondhta tha, Page badalte hi RAM khaali, isliye turant Home bhej deta tha
+  function _getCookie(name){
+    try{
+      var parts = document.cookie.split(';');
+      for(var i = 0; i < parts.length; i++){
+        var p = parts[i].trim();
+        if(p.indexOf(name + '=') === 0) return decodeURIComponent(p.substring(name.length + 1));
+      }
+    }catch(e){}
+    return '';
+  }
+  function _setCookie(name, value, days){
+    try{
+      var d = new Date();
+      d.setTime(d.getTime() + (days || 7) * 24 * 60 * 60 * 1000);
+      document.cookie = name + '=' + encodeURIComponent(value || '') + '; expires=' + d.toUTCString() + '; path=/; SameSite=Lax';
+    }catch(e){}
+  }
+  function _eraseCookie(name){
+    try{ document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax'; }catch(e){}
+  }
   function getToken(){
-    try{ if(window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; }catch(e){}
-    return window.USER_TOKEN || '';
+    try{ if(window.AuthCore && window.AuthCore.getToken){ var t = window.AuthCore.getToken() || ''; if(t) return t; } }catch(e){}
+    if(window.USER_TOKEN) return window.USER_TOKEN;
+    var c = _getCookie('SL_TOKEN');
+    if(c){ window.USER_TOKEN = c; return c; }
+    try{
+      var q = new URLSearchParams(location.search).get('token') || '';
+      if(q){ _setCookie('SL_TOKEN', q, 7); window.USER_TOKEN = q; return q; }
+    }catch(e){}
+    try{ if(window.name && window.name.indexOf('SL_TOKEN=') === 0) return window.name.replace('SL_TOKEN=', ''); }catch(e){}
+    return '';
   }
   function getUserId(){
-    try{ if(window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; }catch(e){}
+    try{ if(window.AuthCore && window.AuthCore.getUserId){ var a = window.AuthCore.getUserId() || ''; if(a) return a; } }catch(e){}
     if(window.USER_ID) return window.USER_ID;
+    var c = _getCookie('SL_UID');
+    if(c){ window.USER_ID = c; return c; }
     if(window.currentUser && window.currentUser._id) return window.currentUser._id;
+    try{
+      var q = new URLSearchParams(location.search).get('uid') || '';
+      if(q) return q;
+    }catch(e){}
     return '';
   }
   function showHint(msg, good){
@@ -138,7 +174,16 @@ button{font-family:inherit;cursor:pointer;border:0}
   }
   window.addEventListener('DOMContentLoaded', async function(){
     var token = getToken();
-    if(!token){ window.location.href = '/'; return; }
+    // FIX: Token nahi hai toh turant Home mat bhejo - Pehle Page pe hi batao, loop khatam
+    if(!token){
+      document.getElementById('userName').innerText = 'Login nahi hua';
+      document.getElementById('userPhone').innerText = 'Home jaake Login karo';
+      showHint('❌ Login nahi mila - Home jaake dobara Login karo, phir Profile khulega', false);
+      return;
+    }
+    // Token mil gaya toh Cookie me pakka kar do, taaki agli baar bhi mile
+    _setCookie('SL_TOKEN', token, 7);
+    if(getUserId()) _setCookie('SL_UID', getUserId(), 7);
     try{
       var user = null;
       if(window.UnifiedProfile && window.UnifiedProfile.loadMyProfile){
@@ -150,8 +195,9 @@ button{font-family:inherit;cursor:pointer;border:0}
       if(!user){
         var res = await fetch('/api/common/profile/me?role=customer&buyerId=' + encodeURIComponent(getUserId()), { headers: { 'Authorization': 'Bearer ' + token, 'x-buyer-id': getUserId() } });
         if(res.status === 401){
-          try{ if(window.AuthCore && window.AuthCore.logout) return window.AuthCore.logout(); }catch(e){}
-          window.location.href = '/';
+          // FIX: 401 pe logout() mat bulao - Wo Cookie saaf karke Home bhej deta tha, loop ban jata tha
+          document.getElementById('userName').innerText = 'Customer';
+          showHint('❌ Session khatam ho gaya - Home jaake dobara Login karo', false);
           return;
         }
         var data = await res.json().catch(function(){ return null; });
@@ -165,6 +211,7 @@ button{font-family:inherit;cursor:pointer;border:0}
       if(user){
         window.currentUser = user;
         if(window.AuthCore && window.AuthCore.setUser) window.AuthCore.setUser(user);
+        if(user._id){ window.USER_ID = user._id; _setCookie('SL_UID', user._id, 7); }
         document.getElementById('userName').innerText = user.name || 'Customer';
         document.getElementById('userPhone').innerText = user.phone ? ('📞 ' + user.phone) : (user.email || '');
         document.getElementById('userIdLine').innerText = user._id ? ('ID: ...' + String(user._id).slice(-6)) : '';
@@ -191,6 +238,7 @@ button{font-family:inherit;cursor:pointer;border:0}
     this.value = '';
   });
   window.handleLogout = function(){
+    try{ _eraseCookie('SL_TOKEN'); _eraseCookie('SL_UID'); _eraseCookie('SL_ROLE'); }catch(e){}
     try{ if(window.AuthCore && window.AuthCore.logout) return window.AuthCore.logout(); }catch(e){}
     window.location.href = '/';
   };
