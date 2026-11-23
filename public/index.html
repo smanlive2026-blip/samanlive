@@ -4,13 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAMANLIVE</title>
-    <link rel="stylesheet" href="/assets/css/main.css?v=6">
+    <link rel="stylesheet" href="/assets/css/main.css?v=7">
     <script src="/assets/js/shop-template-map.js"></script>
     <style>
       #loginModal input:focus{outline:none;border-color:#0f172a;box-shadow:0 0 0 3px rgba(15,23,42,.1)}
       .nearby-shops-section{margin-top:16px}
       .nearby-shops-section h3{font-size:16px;font-weight:900;margin-bottom:4px}
       .nearby-shops-sub{font-size:11px;color:#64748b;font-weight:600;margin-bottom:12px}
+      /* ===== MOBILE FIX - Sirf mobile pe chalega, laptop pe kuch nahi badlega ===== */
+      @media (max-width: 600px) {
+        .top-header{ padding: 6px 6px !important; gap: 6px !important; flex-wrap: nowrap !important; background: #fff !important; }
+        .header-logo{ width: 36px !important; height: 36px !important; }
+        .search-box-modern input{ height: 40px !important; font-size: 13px !important; padding: 0 82px 0 36px !important; }
+        .search-icon{ left: 12px !important; font-size: 16px !important; }
+        .search-btn-modern{ width: 32px !important; height: 32px !important; right: 40px !important; font-size: 14px !important; }
+        .scanner-btn-inline{ width: 32px !important; height: 32px !important; right: 3px !important; font-size: 16px !important; }
+        .cart-btn-mobile{ padding: 8px 10px !important; font-size: 16px !important; border-radius: 10px !important; }
+        .header-banner{ height: 128px !important; }
+        .container{ padding: 0 8px !important; }
+        .category-row{ margin-left: -8px !important; margin-right: -8px !important; padding-left: 8px !important; padding-right: 8px !important; }
+        .category-chips{ gap: 10px !important; padding: 0 8px 8px 2px !important; scroll-snap-type: x mandatory; }
+        .category-chip{ min-width: 76px !important; scroll-snap-align: start; }
+        body{ padding-bottom: 78px !important; }
+        .bottom-nav{ padding: 6px 4px calc(6px + env(safe-area-inset-bottom)) 4px !important; }
+        .nav-btn{ font-size: 9px !important; gap: 2px !important; }
+        .nav-btn .nav-icon{ font-size: 20px !important; }
+        .nav-center{ top: -8px !important; }
+        .nav-center-hex{ width: 54px !important; height: 54px !important; font-size: 9px !important; border-radius: 14px !important; }
+        .footer-container{ grid-template-columns: 1fr !important; gap: 18px !important; }
+        .footer{ padding: 24px 14px 14px !important; }
+      }
     </style>
 </head>
 <body>
@@ -25,7 +48,7 @@
             <button class="search-btn-modern" onclick="performSearch()">→</button>
             <button class="scanner-btn-inline" onclick="openQRScanner()">📷</button>
         </div>
-        <button onclick="location.href='/shop-templates/common/cart/cart.html'" style="position:relative;background:#0f172a;color:#fff;border:none;padding:10px 13px;border-radius:12px;font-weight:800;cursor:pointer;flex-shrink:0">
+        <button class="cart-btn-mobile" onclick="location.href='/shop-templates/common/cart/cart.html'" style="position:relative;background:#0f172a;color:#fff;border:none;padding:10px 13px;border-radius:12px;font-weight:800;cursor:pointer;flex-shrink:0">
             🛒 <span data-cart-count style="display:none;position:absolute;top:-7px;right:-7px;background:#ef4444;color:#fff;min-width:20px;height:20px;border-radius:50%;place-items:center;font-size:11px;font-weight:900;padding:0 5px">0</span>
         </button>
     </header>
