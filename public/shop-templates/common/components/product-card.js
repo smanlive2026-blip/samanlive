@@ -1,306 +1,285 @@
-// LOCATION: common/components/product-card.js - FULL WORLD CLASS PRODUCT CARD JS - PRODUCTION
+// LOCATION: public/shop-templates/common/components/product-card.js - V2 DOUBLE CART FIX
+// KAAM: Sirf card dikhana + Add / Wishlist / QuickView dabane pe sahi wali Core ko bulana.
+// RULE: Ye apna alag cart kabhi nahi banayega. Cart ka kaam sirf CartCore ka hai.
+// RULE: Ye apni alag wishlist kabhi nahi banayega. Wishlist ka kaam sirf WishlistCore / Wishlist API ka hai.
+// RULE: Ye apna alag paisa / total kabhi nahi ginega. Total CartCore ginega.
+
 class ProductCardRenderer {
-  constructor(){
-    this.shopId = new URLSearchParams(location.search).get('shopId') || '';
-    this.wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    this.cart = JSON.parse(localStorage.getItem(`cart_${this.shopId}`) || '[]');
+  constructor() {
+    this.shopId = new URLSearchParams(location.search).get('shopId') || window.__SAMAN_SHOP_ID || '';
   }
 
-  // Main render method
-  render(product, options = {}){
-    const {
-      showCategory = true,
-      showRating = true,
-      showStock = true,
-      showWishlist = true,
-      size = 'medium' // small, medium, large
-    } = options;
-
-    const isOutOfStock = (product.stock!== undefined && product.stock <= 0) || product.outOfStock;
-    const isBestseller = product.bestseller || product.isBestseller || (product.totalSales && product.totalSales > 50);
-    const discount = this.calculateDiscount(product.price, product.mrp);
-    const inWishlist = this.wishlist.includes(product._id || product.productId);
-    const inCart = this.cart.find(item => item._id === (product._id || product.productId));
-    const cartQty = inCart? inCart.qty || inCart.quantity || 1 : 0;
-
-    return `
-      <div class="product-card ${size} ${isOutOfStock? 'out-of-stock' : ''}" data-product-id="${product._id || product.productId}" data-product='${JSON.stringify(product).replace(/'/g, "&#39;")}'>
-        <div class="product-image-wrap" onclick="ProductCardRenderer.openQuickView('${product._id || product.productId}')">
-          <img src="${this.getProductImage(product)}" alt="${product.name || 'Product'}" class="product-image" loading="lazy" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
-          <div class="product-image-overlay"></div>
-
-          ${showWishlist? `<button class="product-wishlist-btn ${inWishlist? 'active' : ''}" onclick="event.stopPropagation(); ProductCardRenderer.toggleWishlist('${product._id || product.productId}')" title="${inWishlist? 'Remove from Wishlist' : 'Add to Wishlist'}"><span class="wish-icon">${inWishlist? '♥' : '♡'}</span></button>` : ''}
-
-          ${discount > 0 &&!isOutOfStock? `<span class="product-badge discount">${discount}% OFF</span>` : ''}
-          ${isOutOfStock? `<span class="product-badge out-of-stock">Out of Stock</span>` : ''}
-          ${isBestseller &&!isOutOfStock? `<span class="product-badge bestseller" style="${discount > 0? 'bottom:36px' : ''}">🔥 Bestseller</span>` : ''}
-
-          <div class="product-quick-actions">
-            <button class="quick-action-btn" onclick="event.stopPropagation(); ProductCardRenderer.openQuickView('${product._id || product.productId}')" title="Quick View">👁️</button>
-            <button class="quick-action-btn" onclick="event.stopPropagation(); ProductCardRenderer.shareProduct('${product._id || product.productId}')" title="Share">↗️</button>
-          </div>
-        </div>
-
-        <div class="product-info">
-          ${showCategory && product.category? `<div class="product-category">${product.category}</div>` : ''}
-
-          <b class="product-name" title="${product.name || product.title}">${product.name || product.title || 'Product Name'}</b>
-
-          ${showRating? `
-            <div class="product-rating">
-              <span class="stars">${this.renderStars(product.rating || 4.5)}</span>
-              <span class="rating-count">(${product.totalReviews || product.reviews || Math.floor(Math.random()*200)+10})</span>
-            </div>
-          ` : ''}
-
-          <div class="product-pricing">
-            <span class="product-price">₹${product.price}</span>
-            ${product.mrp && product.mrp > product.price? `<span class="product-mrp">₹${product.mrp}</span>` : ''}
-            ${discount > 0? `<span class="product-off">${discount}% OFF</span>` : ''}
-          </div>
-
-          ${showStock && product.stock!== undefined && product.stock <= 15 && product.stock > 0? `
-            <div class="product-stock">
-              <div class="stock-bar"><div class="stock-fill" style="width:${Math.max(10, (product.stock/20)*100)}%"></div></div>
-              <span class="stock-text">${product.stock} left • Selling fast 🔥</span>
-            </div>
-          ` : ''}
-
-          ${isOutOfStock? `
-            <button class="product-add-btn" disabled style="background:#e2e8f0;color:#94a3b8;cursor:not-allowed">Out of Stock</button>
-          ` : cartQty > 0? `
-            <div class="product-add-controls" style="display:flex">
-              <button class="qty-btn minus" onclick="event.stopPropagation(); ProductCardRenderer.updateCartQty('${product._id || product.productId}', -1)">−</button>
-              <span class="qty-count">${cartQty}</span>
-              <button class="qty-btn plus" onclick="event.stopPropagation(); ProductCardRenderer.updateCartQty('${product._id || product.productId}', 1)">+</button>
-            </div>
-          ` : `
-            <button class="product-add-btn" onclick="event.stopPropagation(); ProductCardRenderer.addToCart('${product._id || product.productId}')">
-              <span class="add-icon">🛒</span>
-              <span class="add-text">Add to Cart</span>
-            </button>
-          `}
-        </div>
-      </div>
-    `;
+  getShopId() {
+    return new URLSearchParams(location.search).get('shopId') || window.__SAMAN_SHOP_ID || this.shopId || '';
   }
 
-  getProductImage(product){
-    if(product.image) return product.image;
-    if(product.img) return product.img;
-    if(product.images && product.images[0]) return product.images[0];
-    if(product.imageUrl) return product.imageUrl;
-    return 'https://via.placeholder.com/300?text=No+Image';
+  getBuyerId() {
+    if (window.__SAMAN_GUEST_ID) return window.__SAMAN_GUEST_ID;
+    if (window.CartCore && window.CartCore.getBuyerId) { try { var b = window.CartCore.getBuyerId(); if (b) return b; } catch (e) {} }
+    if (window.RoleHierarchy && window.RoleHierarchy.getMyId) { try { var r = window.RoleHierarchy.getMyId(); if (r) return r; } catch (e) {} }
+    var gid = 'guest_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    window.__SAMAN_GUEST_ID = gid;
+    return gid;
   }
 
-  calculateDiscount(price, mrp){
-    if(!mrp || mrp <= price) return 0;
+  getApiBase() {
+    return window.API_BASE || window.location.origin;
+  }
+
+  getHeaders() {
+    var token = '';
+    try { if (window.AuthCore && window.AuthCore.getToken) token = window.AuthCore.getToken() || ''; } catch (e) {}
+    if (!token) token = window.USER_TOKEN || '';
+    var h = { 'Content-Type': 'application/json' };
+    if (token) h['Authorization'] = 'Bearer ' + token;
+    return h;
+  }
+
+  esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  calculateDiscount(price, mrp) {
+    price = Number(price || 0);
+    mrp = Number(mrp || 0);
+    if (!mrp || mrp <= price) return 0;
     return Math.round(((mrp - price) / mrp) * 100);
   }
 
-  renderStars(rating){
-    const fullStars = Math.floor(rating);
-    const hasHalf = rating % 1 >= 0.5;
-    let stars = '⭐'.repeat(fullStars);
-    if(hasHalf) stars += '⭐';
-    return stars || '⭐⭐⭐⭐⭐';
+  // Card ka HTML - sirf dikhane ke liye, isme koi cart ka hisaab nahi hai
+  render(product, options) {
+    options = options || {};
+    var showCategory = options.showCategory !== false;
+    var showRating = options.showRating !== false;
+    var showWishlist = options.showWishlist !== false;
+    var pid = product._id || product.productId || product.id || '';
+    var name = product.name || product.productName || product.title || 'Product';
+    var img = product.image || product.thumbnail || product.images && product.images[0] || 'https://via.placeholder.com/300';
+    if (Array.isArray(img)) img = img[0] || 'https://via.placeholder.com/300';
+    var price = Number(product.price || 0);
+    var mrp = Number(product.mrp || product.originalPrice || 0);
+    var stock = product.stock;
+    if (stock === undefined) stock = product.quantity;
+    var isOut = (stock !== undefined && Number(stock) <= 0) || product.outOfStock === true;
+    var isBest = product.bestseller || product.isBestseller || (product.totalSales && product.totalSales > 50);
+    var discount = this.calculateDiscount(price, mrp);
+    var rating = product.rating || product.avgRating || 4.5;
+    var ratingCount = product.ratingCount || product.reviewsCount || product.totalReviews || 0;
+    var category = product.category || product.categoryName || '';
+    var safePid = this.esc(pid);
+    var safeName = this.esc(name);
+    var html = '';
+    html += '<div class="product-card" data-product-id="' + safePid + '" data-product-card="1">';
+    html += '<div class="product-image-wrap">';
+    html += '<img class="product-image" src="' + this.esc(img) + '" alt="' + safeName + '" loading="lazy" data-zoom-img="' + this.esc(img) + '">';
+    html += '<div class="product-image-overlay"></div>';
+    if (showWishlist) html += '<button class="product-wishlist-btn" data-wishlist-btn="' + safePid + '" title="Wishlist"><span class="wish-icon">♡</span></button>';
+    if (discount > 0) html += '<span class="product-badge discount">' + discount + '% OFF</span>';
+    if (isOut) html += '<span class="product-badge out-of-stock">Out of Stock</span>';
+    if (isBest && !isOut) html += '<span class="product-badge bestseller">🔥 Bestseller</span>';
+    html += '<div class="product-quick-actions">';
+    html += '<button class="quick-action-btn" data-quick-view="' + safePid + '" title="Quick View">👁️</button>';
+    html += '<button class="quick-action-btn" data-share-product="' + safePid + '" title="Share">↗️</button>';
+    html += '</div></div>';
+    html += '<div class="product-info">';
+    if (showCategory && category) html += '<div class="product-category">' + this.esc(category) + '</div>';
+    html += '<b class="product-name">' + safeName + '</b>';
+    if (showRating) html += '<div class="product-rating"><span class="stars">⭐ ' + rating + '</span><span class="rating-count">(' + ratingCount + ')</span></div>';
+    html += '<div class="product-pricing"><b class="product-price">₹' + price + '</b>';
+    if (mrp > price) html += '<span class="product-mrp">₹' + mrp + '</span>';
+    html += '</div>';
+    if (isOut) {
+      html += '<button class="product-add-btn" disabled>Out of Stock</button>';
+    } else {
+      html += '<button class="product-add-btn" data-add="' + safePid + '"><span class="add-icon">🛒</span><span class="add-text">Add to Cart</span></button>';
+    }
+    html += '</div></div>';
+    return html;
   }
 
-  renderGrid(products, containerId, options = {}){
-    const container = document.getElementById(containerId);
-    if(!container){
-      console.warn(`Container ${containerId} not found`);
-      return;
-    }
-
-    if(!products || products.length === 0){
-      container.innerHTML = `
-        <div style="grid-column:1/-1;text-align:center;padding:40px 20px;font-family:Outfit,sans-serif">
-          <div style="font-size:48px">📦</div>
-          <h3 style="font-weight:900;margin:12px 0 6px">No products found</h3>
-          <p style="color:#64748b;font-size:13px">Try different filters or check back later</p>
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = products.map(p=> this.render(p, options)).join('');
-    container.style.display = 'grid';
-    container.style.gridTemplateColumns = 'repeat(2, 1fr)';
-    container.style.gap = '12px';
-
-    // Responsive
-    if(window.innerWidth >= 768){
-      container.style.gridTemplateColumns = 'repeat(3, 1fr)';
-    }
-    if(window.innerWidth >= 1024){
-      container.style.gridTemplateColumns = 'repeat(4, 1fr)';
-    }
-
-    // Trigger event
-    window.dispatchEvent(new CustomEvent('products:rendered', { detail: products }));
+  // Card ka data - DOM se uthao, dobara API mat maaro
+  readProductFromCard(card) {
+    if (!card) return null;
+    var pid = card.getAttribute('data-product-id') || '';
+    var nameEl = card.querySelector('.product-name');
+    var imgEl = card.querySelector('.product-image');
+    var priceEl = card.querySelector('.product-price');
+    var mrpEl = card.querySelector('.product-mrp');
+    var price = 0;
+    var mrp = 0;
+    if (priceEl) price = Number(String(priceEl.textContent || '').replace(/[^0-9.]/g, '')) || 0;
+    if (mrpEl) mrp = Number(String(mrpEl.textContent || '').replace(/[^0-9.]/g, '')) || 0;
+    return {
+      _id: pid, productId: pid, id: pid,
+      name: nameEl ? nameEl.textContent.trim() : 'Product',
+      price: price, mrp: mrp,
+      image: imgEl ? imgEl.getAttribute('src') || '' : '',
+      thumbnail: imgEl ? imgEl.getAttribute('src') || '' : '',
+      shopId: this.getShopId(), supplierId: this.getShopId()
+    };
   }
 
-  // Static methods for global access
-  static async addToCart(productId){
-    try{
-      // Find product data from DOM
-      const card = document.querySelector(`[data-product-id="${productId}"]`);
-      let product = null;
-
-      if(card){
-        try{
-          product = JSON.parse(card.dataset.product.replace(/&#39;/g, "'"));
-        }catch(e){
-          product = { _id: productId, name: card.querySelector('.product-name')?.innerText || 'Product', price: parseInt(card.querySelector('.product-price')?.innerText.replace('₹','')) || 0 };
-        }
-      }
-
-      if(!product) product = { _id: productId, name: 'Product', price: 100 };
-
-      // Use CartCore if available
-      if(window.CartCore){
-        await window.CartCore.addItem({
-          _id: product._id || productId,
-          productId: product._id || productId,
-          name: product.name,
-          title: product.name,
-          price: product.price,
-          image: product.image || '',
-          qty: 1
-        });
+  // ADD - Seedha CartCore ko bulao, apna cart mat banao
+  async addToCart(productId, qty) {
+    qty = qty || 1;
+    var card = document.querySelector('[data-product-id="' + productId + '"]');
+    var product = this.readProductFromCard(card);
+    if (!product) {
+      // Card nahi mila toh khaali product se bhi CartCore ko bula do, wo khud sambhal lega
+      product = { _id: productId, productId: productId, id: productId, name: 'Product', price: 0, shopId: this.getShopId(), supplierId: this.getShopId() };
+    }
+    try {
+      if (window.SamanComponents && window.SamanComponents.loader) window.SamanComponents.loader(true, 'Cart me daal rahe hain...');
+      if (window.CartCore && window.CartCore.add) {
+        await window.CartCore.add(product, qty);
+      } else if (window.CartCore && window.CartCore.addItem) {
+        await window.CartCore.addItem(product, qty);
       } else {
-        // Fallback to local cart
-        const shopId = new URLSearchParams(location.search).get('shopId') || '';
-        let cart = JSON.parse(localStorage.getItem(`cart_${shopId}`) || '[]');
-        const existing = cart.find(item=> item._id === productId);
+        // CartCore nahi mila toh cart page pe bhej do, alag cart mat banao
+        window.location.href = '../common/cart/cart.html?shopId=' + encodeURIComponent(this.getShopId()) + '&productId=' + encodeURIComponent(productId);
+        return;
+      }
+      if (window.SamanComponents && window.SamanComponents.toast) window.SamanComponents.toast(product.name + ' cart me aa gaya');
+      else if (window.Toast && window.Toast.show) window.Toast.show(product.name + ' cart me aa gaya', 'success');
+      if (navigator.vibrate) navigator.vibrate(20);
+      window.dispatchEvent(new CustomEvent('saman:cart-added', { detail: { productId: productId, qty: qty } }));
+    } catch (e) {
+      if (window.SamanComponents && window.SamanComponents.toast) window.SamanComponents.toast('Add nahi hua, dobara try karo', 'error');
+    } finally {
+      if (window.SamanComponents && window.SamanComponents.loader) window.SamanComponents.loader(false);
+    }
+  }
 
-        if(existing){
-          existing.qty = (existing.qty || 1) + 1;
+  // QTY - Seedha CartCore ko bulao
+  async updateCartQty(productId, change) {
+    try {
+      if (window.CartCore && window.CartCore.updateQty) {
+        var card = document.querySelector('[data-product-id="' + productId + '"]');
+        var countEl = card ? card.querySelector('.qty-count') : null;
+        var cur = countEl ? Number(countEl.textContent || 1) : 1;
+        var next = cur + change;
+        if (next <= 0) {
+          if (window.CartCore.removeItem) await window.CartCore.removeItem(productId);
+          else if (window.CartCore.remove) await window.CartCore.remove(productId);
         } else {
-          cart.push({ _id: productId, name: product.name, price: product.price, image: product.image || '', qty: 1 });
+          await window.CartCore.updateQty(productId, next);
         }
-
-        localStorage.setItem(`cart_${shopId}`, JSON.stringify(cart));
-        window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count: cart.reduce((s,i)=> s + (i.qty||1), 0) } }));
-      }
-
-      // Show feedback
-      if(window.Toast) window.Toast.cartAdded(product.name);
-
-      // Haptic
-      if(navigator.vibrate) navigator.vibrate(20);
-
-      // Update button to qty controls
-      if(card){
-        const btn = card.querySelector('.product-add-btn');
-        if(btn){
-          btn.outerHTML = `
-            <div class="product-add-controls" style="display:flex">
-              <button class="qty-btn minus" onclick="event.stopPropagation(); ProductCardRenderer.updateCartQty('${productId}', -1)">−</button>
-              <span class="qty-count">1</span>
-              <button class="qty-btn plus" onclick="event.stopPropagation(); ProductCardRenderer.updateCartQty('${productId}', 1)">+</button>
-            </div>
-          `;
+        if (countEl && next > 0) countEl.textContent = next;
+        if (next <= 0 && card) {
+          var controls = card.querySelector('.product-add-controls');
+          if (controls) {
+            controls.outerHTML = '<button class="product-add-btn" data-add="' + this.esc(productId) + '"><span class="add-icon">🛒</span><span class="add-text">Add to Cart</span></button>';
+          }
         }
       }
-
-    }catch(e){
-      console.error('Add to cart failed', e);
-      if(window.Toast) Toast.show('Failed to add to cart', 'error');
-    }
+    } catch (e) {}
   }
 
-  static updateCartQty(productId, change){
-    const shopId = new URLSearchParams(location.search).get('shopId') || '';
-    let cart = JSON.parse(localStorage.getItem(`cart_${shopId}`) || '[]');
-    let item = cart.find(i=> i._id === productId);
-
-    if(!item) return;
-
-    item.qty = (item.qty || 1) + change;
-
-    if(item.qty <= 0){
-      cart = cart.filter(i=> i._id!== productId);
-    }
-
-    localStorage.setItem(`cart_${shopId}`, JSON.stringify(cart));
-
-    if(window.CartCore){
-      if(item.qty <= 0) window.CartCore.removeItem(productId);
-      else window.CartCore.updateQty(productId, item.qty);
-    }
-
-    // Update UI
-    const card = document.querySelector(`[data-product-id="${productId}"]`);
-    if(card){
-      if(item.qty <= 0 ||!cart.find(i=> i._id === productId)){
-        const controls = card.querySelector('.product-add-controls');
-        if(controls){
-          controls.outerHTML = `
-            <button class="product-add-btn" onclick="event.stopPropagation(); ProductCardRenderer.addToCart('${productId}')">
-              <span class="add-icon">🛒</span>
-              <span class="add-text">Add to Cart</span>
-            </button>
-          `;
-        }
-      } else {
-        const countEl = card.querySelector('.qty-count');
-        if(countEl) countEl.innerText = item.qty;
+  // WISHLIST - Seedha WishlistCore / API ko bulao, apni wishlist mat banao
+  async toggleWishlist(productId) {
+    try {
+      if (window.WishlistCore && window.WishlistCore.toggle) {
+        await window.WishlistCore.toggle(productId);
+        return;
       }
-    }
-
-    window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count: cart.reduce((s,i)=> s + (i.qty||1), 0) } }));
-  }
-
-  static toggleWishlist(productId){
-    let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    const index = wishlist.indexOf(productId);
-
-    if(index >= 0){
-      wishlist.splice(index, 1);
-      if(window.Toast) Toast.show('Removed from wishlist', 'info');
-    } else {
-      wishlist.push(productId);
-      if(window.Toast) Toast.show('Added to wishlist ❤️', 'success');
-    }
-
-    localStorage.setItem('wishlist', JSON.stringify(wishlist));
-
-    // Update UI
-    document.querySelectorAll(`[data-product-id="${productId}"].product-wishlist-btn`).forEach(btn=>{
-      const isWishlisted = wishlist.includes(productId);
-      btn.classList.toggle('active', isWishlisted);
-      btn.querySelector('.wish-icon').innerText = isWishlisted? '♥' : '♡';
-      if(isWishlisted) btn.style.color = '#ef4444';
-      else btn.style.color = '';
-    });
-
-    if(window.WishlistCore) window.WishlistCore.sync();
-  }
-
-  static openQuickView(productId){
-    if(window.ProductQuickView) window.ProductQuickView.open(productId);
-    else {
-      // Fallback - go to product page
-      const shopId = new URLSearchParams(location.search).get('shopId') || '';
-      window.location.href = `/shop-templates/common/components/product-quick-view.html?shopId=${shopId}&productId=${productId}`;
-    }
-  }
-
-  static shareProduct(productId){
-    const shopId = new URLSearchParams(location.search).get('shopId') || '';
-    const url = `${location.origin}/shop.html?shopId=${shopId}&productId=${productId}`;
-
-    if(navigator.share){
-      navigator.share({ title: 'Check this product', url }).catch(()=>{});
-    } else {
-      navigator.clipboard.writeText(url).then(()=>{
-        if(window.Toast) Toast.show('Product link copied! 🔗', 'success');
+      if (window.SamanRWS && window.SamanRWS.wishlist) {
+        await window.SamanRWS.wishlist(productId);
+        return;
+      }
+      // Koi Core nahi mila toh seedha API - phir bhi apni alag wishlist nahi
+      var res = await fetch(this.getApiBase() + '/api/common/wishlist/toggle', {
+        method: 'POST', headers: this.getHeaders(), credentials: 'include',
+        body: JSON.stringify({ productId: productId, shopId: this.getShopId(), buyerId: this.getBuyerId() })
       });
+      var data = await res.json().catch(function () { return {}; });
+      if (window.SamanComponents && window.SamanComponents.toast) {
+        window.SamanComponents.toast(data && data.added === false ? 'Wishlist se hat gaya' : 'Wishlist me aa gaya');
+      }
+      document.querySelectorAll('[data-wishlist-btn="' + productId + '"]').forEach(function (btn) {
+        btn.classList.toggle('wish-on');
+        var icon = btn.querySelector('.wish-icon');
+        if (icon) icon.textContent = btn.classList.contains('wish-on') ? '♥' : '♡';
+      });
+    } catch (e) {
+      if (window.SamanComponents && window.SamanComponents.toast) window.SamanComponents.toast('Wishlist nahi hua', 'error');
+    }
+  }
+
+  openQuickView(productId) {
+    if (window.ProductQuickView && window.ProductQuickView.open) {
+      window.ProductQuickView.open(productId);
+      return;
+    }
+    var shopId = this.getShopId();
+    window.location.href = '../common/products/product-detail.html?shopId=' + encodeURIComponent(shopId) + '&productId=' + encodeURIComponent(productId);
+  }
+
+  shareProduct(productId) {
+    var shopId = this.getShopId();
+    var url = window.location.origin + '/shop-templates/achar-shop/customer-view.html?shopId=' + encodeURIComponent(shopId) + '&productId=' + encodeURIComponent(productId);
+    if (navigator.share) {
+      navigator.share({ title: 'Achar dekho', url: url }).catch(function () {});
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () {
+        if (window.SamanComponents && window.SamanComponents.toast) window.SamanComponents.toast('Link copy ho gaya');
+      });
+    }
+  }
+
+  openImageZoom(imgSrc) {
+    if (window.ImageZoom && window.ImageZoom.open) {
+      window.ImageZoom.open([imgSrc], 0, 'Product Image');
+      return;
+    }
+    if (window.ImageZoom && window.ImageZoom.prototype) {
+      var z = new window.ImageZoom();
+      z.open([imgSrc], 0, 'Product Image');
     }
   }
 }
 
 window.ProductCard = new ProductCardRenderer();
 window.ProductCardRenderer = ProductCardRenderer;
+
+// Ek hi click listener - sab card ke button yahin se chalenge, dobara listener mat lagana
+if (!window.__SAMAN_PRODUCT_CARD_BOUND__) {
+  window.__SAMAN_PRODUCT_CARD_BOUND__ = true;
+  document.addEventListener('click', function (e) {
+    var addBtn = e.target.closest ? e.target.closest('[data-add]') : null;
+    if (addBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.ProductCard.addToCart(addBtn.getAttribute('data-add'), 1);
+      return;
+    }
+    var wishBtn = e.target.closest ? e.target.closest('[data-wishlist-btn]') : null;
+    if (wishBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.ProductCard.toggleWishlist(wishBtn.getAttribute('data-wishlist-btn'));
+      return;
+    }
+    var qvBtn = e.target.closest ? e.target.closest('[data-quick-view]') : null;
+    if (qvBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.ProductCard.openQuickView(qvBtn.getAttribute('data-quick-view'));
+      return;
+    }
+    var shareBtn = e.target.closest ? e.target.closest('[data-share-product]') : null;
+    if (shareBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.ProductCard.shareProduct(shareBtn.getAttribute('data-share-product'));
+      return;
+    }
+    var zoomImg = e.target.closest ? e.target.closest('[data-zoom-img]') : null;
+    if (zoomImg) {
+      e.preventDefault();
+      window.ProductCard.openImageZoom(zoomImg.getAttribute('data-zoom-img') || zoomImg.getAttribute('src'));
+      return;
+    }
+  });
+}
