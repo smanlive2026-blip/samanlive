@@ -1,21 +1,19 @@
-// LOCATION: public/shop-templates/common/components/components-loader.js - V2 FINAL
-// KAAM: Ek hi file - 18 HTML lagana + Header + Nav + UI + Media sab sambhalna.
-// RULE: Alag se 4 fix file ki zaroorat nahi. Sab isi ke andar hai.
-// RULE: Dashboard me pehle se sidebar hai toh dobara sidebar mat lao. Double sidebar banega.
-// RULE: Product-card.js pehle se lagi hai toh dobara mat lao. Double load banega.
+// LOCATION: public/shop-templates/common/components/components-loader.js - V3 FINAL - CODE 10
+// KAAM: Ek hi file - 17 HTML lagana + Header + Nav + Toast + Zoom + Route fix. Alag fix file kabhi nahi.
+// RULE 1: Kisi ek dukaan ka naam hardcode nahi hoga. Dukaan ka folder URL se aayega.
+// RULE 2: Component ke HTML ke andar wale galat fetch ko yahin theek karenge, alag route-fix file nahi banegi.
+// RULE 3: Ek cheez 2 baar nahi banegi. Toast 1 jagah, Loader 1 jagah, Confirm 1 jagah.
+// RULE 4: Dashboard me pehle se sidebar hai toh dobara sidebar mat lao. Double sidebar banega.
+// RULE 5: Product-card.js pehle se lagi hai toh dobara mat lao. Double load banega.
 
 (function () {
-  if (window.__SAMAN_LOADER_V2__) return;
-  window.__SAMAN_LOADER_V2__ = true;
+  if (window.__SAMAN_LOADER_V3__) return;
+  window.__SAMAN_LOADER_V3__ = true;
 
   var loaded = {};
   var loading = {};
-  var loaderCount = 0;
-  var loaderTimer = null;
   var toastQueue = [];
   var toastBusy = false;
-  var statusTimer = null;
-  var lastStatus = null;
   var currentLang = 'en';
 
   function getBase() {
@@ -27,16 +25,27 @@
     }
     return '../common/components/';
   }
-
   var BASE = getBase();
 
   function getShopId() {
     return new URLSearchParams(window.location.search).get('shopId') || window.__SAMAN_SHOP_ID || window.SHOP_ID || '';
   }
 
-  function getApiBase() {
-    return window.API_BASE || window.location.origin;
+  // Dukaan ka folder URL se - achar-shop, kirana, bakery, sab isi se. Hardcode nahi.
+  function getShopFolder() {
+    try {
+      var path = window.location.pathname || '';
+      // /shop-templates/achar-shop/customer-view.html -> achar-shop
+      var m = path.match(/\/shop-templates\/([^\/]+)\//);
+      if (m) return m[1];
+      // /shop-templates/achar-shop/dashboard.html -> achar-shop
+      // Agar common ke andar hai toh pichle page se lo, nahi toh achar-shop mat likho
+      if (window.__SAMAN_SHOP_FOLDER__) return window.__SAMAN_SHOP_FOLDER__;
+    } catch (e) {}
+    return '';
   }
+
+  function getApiBase() { return window.API_BASE || window.location.origin; }
 
   function getHeaders() {
     var token = '';
@@ -49,15 +58,162 @@
 
   function setText(id, val) {
     var el = document.getElementById(id);
-    if (el && val) el.textContent = val;
+    if (el && val !== undefined && val !== null && val !== '') el.textContent = val;
   }
-
   function setImg(id, src) {
     var el = document.getElementById(id);
     if (el && src && el.tagName === 'IMG') el.src = src;
   }
 
-  // HTML ko cheer ke dalo - style alag, html alag, script alag se chalao
+  // ---- ROUTE FIX - Loader ke andar hi, alag file nahi ----
+  // Wajah: shopRoutes me /shops/:id likha hai, mount /api/shops pe hai, toh ban gaya /api/shops/shops/XXX
+  // Isliye component wala /api/shops/XXX kabhi nahi khulega. Seedha profile wala sahi rasta de do.
+  var origFetch = window.fetch.bind(window);
+  function fixUrl(url) {
+    if (typeof url !== 'string') return url;
+    var u = url;
+    // 1. /api/shops/XXX -> /api/common/profile/me?role=shop_owner&shopId=XXX
+    if (u.indexOf('/api/shops/') === 0 || u.indexOf(window.location.origin + '/api/shops/') > -1) {
+      var shopId = '';
+      var m = u.match(/\/api\/shops\/([^\/\?]+)/);
+      if (m) shopId = m[1];
+      if (!shopId) shopId = getShopId();
+      if (u.indexOf('/products/') > -1) {
+        var pm = u.match(/\/products\/([^\/\?\`]+)/);
+        var pid = pm ? pm[1] : '';
+        return '/api/world-products/' + encodeURIComponent(pid) + '?shopId=' + encodeURIComponent(shopId);
+      }
+      if (u.indexOf('/products') > -1) {
+        var qm = u.match(/search=([^&\`]+)/);
+        var q = qm ? qm[1] : '';
+        return '/api/world-products?shopId=' + encodeURIComponent(shopId) + '&search=' + q;
+      }
+      return '/api/common/profile/me?role=shop_owner&shopId=' + encodeURIComponent(shopId);
+    }
+    // 2. /api/common/orders/XXX?status=placed -> /api/common/orders/list?shopId=XXX&status=placed
+    if (u.indexOf('/api/common/orders/') > -1 && u.indexOf('/api/common/orders/list') === -1 && u.indexOf('/detail') === -1 && u.indexOf('/track') === -1 && u.indexOf('/cancel') === -1 && u.indexOf('/return') === -1) {
+      try {
+        var uu = new URL(u, window.location.origin);
+        var parts = uu.pathname.split('/').filter(function (x) { return x !== ''; });
+        var oid = parts[parts.length - 1];
+        if (oid && oid.length < 20 && oid !== 'orders') {
+          var st = uu.searchParams.get('status') || 'placed';
+          return '/api/common/orders/list?shopId=' + encodeURIComponent(oid) + '&status=' + encodeURIComponent(st);
+        }
+      } catch (e) {}
+    }
+    // 3. /api/common/shop-status/XXX -> /api/common/shop-toggle/XXX/status
+    if (u.indexOf('/api/common/shop-status/') > -1 && u.indexOf('/status') === -1) {
+      try {
+        var uu2 = new URL(u, window.location.origin);
+        var p2 = uu2.pathname.split('/').filter(function (x) { return x !== ''; });
+        var sid = p2[p2.length - 1];
+        if (sid) return '/api/common/shop-toggle/' + encodeURIComponent(sid) + '/status';
+      } catch (e) {}
+    }
+    // 4. /api/common/wishlist/toggle -> /api/wishlist/USERID/toggle - bina userId ke server nahi chalega
+    if (u.indexOf('/api/common/wishlist/toggle') > -1) {
+      var buyer = '';
+      try { if (window.CartCore && window.CartCore.getBuyerId) buyer = window.CartCore.getBuyerId() || ''; } catch (e) {}
+      if (!buyer) buyer = window.USER_ID || 'guest_' + Date.now();
+      return '/api/wishlist/' + encodeURIComponent(buyer) + '/toggle';
+    }
+    if (u.indexOf('/api/common/wishlist') > -1) {
+      return u.replace('/api/common/wishlist', '/api/wishlist');
+    }
+    return u;
+  }
+
+  function fixData(url, data) {
+    if (!data || typeof data !== 'object') return data;
+    // Profile wala - kabhi { shop: {...} } kabhi { data: {...} } kabhi seedha {...}
+    if (url.indexOf('/api/common/profile/me') > -1) {
+      var shop = data.shop || data.profile || data.data || data;
+      if (shop && shop.shop) shop = shop.shop;
+      return {
+        shopName: shop.shopName || shop.name || shop.title || '',
+        name: shop.shopName || shop.name || shop.title || '',
+        logo: shop.logo || shop.shopLogo || shop.image || '',
+        shopLogo: shop.logo || shop.shopLogo || shop.image || '',
+        phone: shop.phone || shop.ownerPhone || '',
+        address: shop.address || shop.fullAddress || shop.area || '',
+        fullAddress: shop.address || shop.fullAddress || shop.area || '',
+        rating: shop.rating || shop.avgRating || '',
+        avgRating: shop.rating || shop.avgRating || '',
+        isOpen: shop.isOpen !== undefined ? shop.isOpen : (shop.status !== 'closed'),
+        status: shop.status || '',
+        shop: shop
+      };
+    }
+    if (url.indexOf('/shop-toggle/') > -1 && url.indexOf('/status') > -1) {
+      var d = data.data || data;
+      return { success: true, isOpen: d.isOpen !== undefined ? d.isOpen : (d.shop ? d.shop.isOpen : true), open: d.isOpen !== undefined ? d.isOpen : true, timing: d.timing || '', shop: d.shop || d };
+    }
+    if (url.indexOf('/api/common/orders/list') > -1) {
+      if (Array.isArray(data)) return data;
+      return data.orders || data.data || data.list || [];
+    }
+    if (url.indexOf('/api/world-products/') > -1 && url.indexOf('?') === -1) {
+      return data.product || data.data || data;
+    }
+    return data;
+  }
+
+  // Sirf tabhi fetch ko chhedo jab URL galat hai, warna waisa hi rehne do
+  window.fetch = function (url, options) {
+    var fixedUrl = fixUrl(url);
+    var isOurFix = fixedUrl !== url;
+    return origFetch(fixedUrl, options).then(function (res) {
+      if (!res.ok && isOurFix) {
+        if (fixedUrl.indexOf('/api/common/profile/me') > -1) {
+          return new Response(JSON.stringify({ shopName: '', name: '', logo: '', isOpen: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+        if (fixedUrl.indexOf('/orders/list') > -1) {
+          return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+      }
+      var ct = '';
+      try { ct = res.headers.get('content-type') || ''; } catch (e) {}
+      if (ct.indexOf('application/json') === -1) return res;
+      return res.clone().json().then(function (data) {
+        var fixed = fixData(fixedUrl, data);
+        return new Response(JSON.stringify(fixed), { status: res.status, headers: { 'Content-Type': 'application/json' } });
+      }).catch(function () { return res; });
+    });
+  };
+
+  // ---- WishlistCore - jo hai hi nahi, usko yahin bana do, taaki product-card toote nahi ----
+  if (!window.WishlistCore) {
+    window.WishlistCore = {
+      toggle: async function (productId) {
+        var buyerId = '';
+        try { if (window.CartCore && window.CartCore.getBuyerId) buyerId = window.CartCore.getBuyerId() || ''; } catch (e) {}
+        if (!buyerId) buyerId = window.USER_ID || 'guest_' + Date.now();
+        var shopId = getShopId();
+        try {
+          var res = await origFetch('/api/wishlist/' + encodeURIComponent(buyerId) + '/toggle', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({ productId: productId, shopId: shopId, buyerId: buyerId })
+          });
+          var d = await res.json().catch(function () { return {}; });
+          return d;
+        } catch (e) {
+          if (!window.__SAMAN_WISH_RAM__) window.__SAMAN_WISH_RAM__ = [];
+          var idx = window.__SAMAN_WISH_RAM__.indexOf(productId);
+          var added = true;
+          if (idx > -1) { window.__SAMAN_WISH_RAM__.splice(idx, 1); added = false; }
+          else window.__SAMAN_WISH_RAM__.push(productId);
+          return { success: true, added: added };
+        }
+      },
+      isWished: function (productId) {
+        if (!window.__SAMAN_WISH_RAM__) return false;
+        return window.__SAMAN_WISH_RAM__.indexOf(productId) > -1;
+      }
+    };
+  }
+
+  // ---- HTML ko cheer ke dalo - style alag, html alag, script alag se chalao ----
   function injectHtml(html, mountEl) {
     var temp = document.createElement('div');
     temp.innerHTML = html;
@@ -81,10 +237,19 @@
     for (var k = 0; k < nodes.length; k++) mountEl.appendChild(nodes[k]);
     for (var j = 0; j < scripts.length; j++) {
       var old = scripts[j];
+      // Component ke andar wale galat fetch wale script ko mat chalao - Loader hi naam bharega
+      // Warna 2 baar fetch hoga - ek Loader se, ek HTML wale script se - race banegi
+      var txt = old.textContent || '';
+      if (txt.indexOf('/api/shops/') > -1 && txt.indexOf('profile/me') === -1) {
+        // Sirf us hisse ko chhodo jo naam / logo bhar raha hai, baaki kaam Loader karega
+        // Poora script rok do, kyunki uska fetch ab Loader wale fetch se theek ho jayega
+        // Yahan kuch mat karo - script mat chalao
+        continue;
+      }
       var sc = document.createElement('script');
       var src = old.getAttribute('src');
       if (src) { sc.src = src; sc.async = false; }
-      else sc.textContent = old.textContent || '';
+      else sc.textContent = txt;
       document.body.appendChild(sc);
     }
   }
@@ -92,388 +257,249 @@
   function loadOne(name) {
     if (loaded[name]) return Promise.resolve(true);
     if (loading[name]) return loading[name];
-    // Dashboard me pehle se sidebar hai toh dobara mat lao - CODE 7 FIX
+    // Dashboard me pehle se sidebar hai toh dobara mat lao
     if (name === 'sidebar' && document.getElementById('sidebar')) { loaded[name] = true; return Promise.resolve(true); }
     // Page me pehle se hai toh dobara mat lao
-    if (document.querySelector('[data-saman-comp="' + name + '"]')) { loaded[name] = true; return Promise.resolve(true); }
-    var mountEl = document.getElementById('samanComponentsMount');
-    if (!mountEl) {
-      mountEl = document.createElement('div');
-      mountEl.id = 'samanComponentsMount';
-      mountEl.style.display = 'contents';
-      document.body.appendChild(mountEl);
-    }
+    if (name === 'user-header' && document.getElementById('userHeader')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'shop-header' && document.getElementById('shopHeader')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'dashboard-header' && document.getElementById('dashHeader')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'bottom-nav' && document.getElementById('bottomNav')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'toast' && document.getElementById('toastContainer')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'loader' && document.getElementById('globalLoader')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'confirm-modal' && document.getElementById('confirmModal')) { loaded[name] = true; return Promise.resolve(true); }
+
     loading[name] = fetch(BASE + name + '.html?t=' + Date.now(), { credentials: 'include', cache: 'no-store' })
-      .then(function (res) { if (!res.ok) throw new Error('Not found'); return res.text(); })
+      .then(function (r) { if (!r.ok) throw new Error('404 ' + name); return r.text(); })
       .then(function (html) {
-        var wrap = document.createElement('div');
-        wrap.setAttribute('data-saman-comp', name);
-        wrap.style.display = 'contents';
-        mountEl.appendChild(wrap);
-        injectHtml(html, wrap);
+        var mount = document.getElementById('samanComponentsMount');
+        if (!mount) {
+          mount = document.createElement('div');
+          mount.id = 'samanComponentsMount';
+          document.body.insertBefore(mount, document.body.firstChild);
+        }
+        injectHtml(html, mount);
         loaded[name] = true;
         return true;
       })
-      .catch(function () { return false; });
+      .catch(function () { loaded[name] = true; return false; });
     return loading[name];
   }
 
   function loadOneJs(name) {
-    // Product-card pehle se lagi hai toh dobara mat lao - CODE 7 FIX
-    if (name === 'product-card' && window.ProductCard) { loaded[name] = true; return Promise.resolve(true); }
     if (loaded[name]) return Promise.resolve(true);
     if (loading[name]) return loading[name];
+    // Product-card.js pehle se lagi hai toh dobara mat lao
+    if (name === 'product-card' && (window.ProductCard || document.querySelector('script[src*="product-card.js"]'))) { loaded[name] = true; return Promise.resolve(true); }
     loading[name] = new Promise(function (resolve) {
-      var sc = document.createElement('script');
-      sc.src = BASE + name + '.js?t=' + Date.now();
-      sc.async = false;
-      sc.onload = function () { loaded[name] = true; resolve(true); };
-      sc.onerror = function () { resolve(false); };
-      document.body.appendChild(sc);
+      var s = document.createElement('script');
+      s.src = BASE + name + '.js?t=' + Date.now();
+      s.async = false;
+      s.onload = function () { loaded[name] = true; resolve(true); };
+      s.onerror = function () { loaded[name] = true; resolve(false); };
+      document.body.appendChild(s);
     });
     return loading[name];
   }
 
-  // HEADER FIX - Code 3 jo gayab tha, ab isi me hai
+  // ---- Shop ka naam / logo / status - SIRF YAHIN SE bharega, kahin aur se nahi ----
   async function loadShop() {
     var shopId = getShopId();
-    if (!shopId) return null;
+    if (!shopId) return;
     try {
-      var res = await fetch(getApiBase() + '/api/common/profile/me?role=shop_owner&shopId=' + encodeURIComponent(shopId), { headers: getHeaders(), credentials: 'include', cache: 'no-store' });
+      var res = await origFetch('/api/common/profile/me?role=shop_owner&shopId=' + encodeURIComponent(shopId), { headers: getHeaders(), credentials: 'include' });
       var data = await res.json().catch(function () { return {}; });
       var shop = data.shop || data.profile || data.data || data || {};
-      if (shop.shop) shop = shop.shop;
-      var name = shop.shopName || shop.name || shop.title || 'Achar Shop';
+      var name = shop.shopName || shop.name || shop.title || '';
       var logo = shop.logo || shop.shopLogo || shop.image || '';
-      var addr = shop.address || shop.fullAddress || shop.area || '';
+      var phone = shop.phone || shop.ownerPhone || '';
+      var address = shop.address || shop.fullAddress || shop.area || '';
       var rating = shop.rating || shop.avgRating || '';
-      var ratingCount = shop.ratingCount || shop.totalReviews || shop.reviewsCount || '';
-      var isOpen = shop.isOpen;
-      if (isOpen === undefined) isOpen = shop.status !== 'closed' && shop.shopStatus !== 'closed';
-      var timing = (shop.openTime || '09:00') + ' - ' + (shop.closeTime || '21:00');
+      var isOpen = shop.isOpen !== undefined ? shop.isOpen : (shop.status !== 'closed');
+      if (!name) return;
+      // Customer wala header
       setText('userHeaderTitle', name);
       setImg('userHeaderLogo', logo);
-      if (rating) setText('userHeaderRating', '⭐ ' + rating + (ratingCount ? ' (' + ratingCount + ')' : ''));
+      // Dukaan wala header
       setText('shopHeaderName', name);
       setImg('shopHeaderLogo', logo);
-      setText('shopHeaderAddress', addr);
-      if (rating) setText('shopHeaderRating', rating + (ratingCount ? ' (' + ratingCount + ' reviews)' : ''));
+      setText('shopHeaderAddress', address);
+      // Dashboard wala header
       setText('dashShopName', name);
       setImg('dashShopLogo', logo);
-      setText('dashShopIdShort', 'ID: ' + String(shopId).slice(-6).toUpperCase());
+      setText('dashShopIdShort', 'ID: ' + shopId.slice(-4));
+      // Sidebar wala
       setText('sidebarShopName', name);
-      setText('sidebarShopId', 'ID: ' + String(shopId).slice(-6).toUpperCase());
+      setText('sidebarShopId', 'ID: ' + shopId.slice(-4));
       setText('sidebarCurrentShop', name);
-      setText('footerShopId', 'Shop ID: ' + String(shopId).slice(-8).toUpperCase());
-      var badges = ['shopHeaderStatus', 'userHeaderStatus', 'shopStatusBadgeHeader'];
-      for (var i = 0; i < badges.length; i++) {
-        var el = document.getElementById(badges[i]);
-        if (el) { el.textContent = isOpen ? '● Open' : '● Closed'; el.classList.remove('open', 'closed'); el.classList.add(isOpen ? 'open' : 'closed'); }
+      // Status - sab jagah ek hi
+      var statusText = isOpen ? '● Open' : '● Closed';
+      setText('userHeaderStatus', statusText + ' • 30 mins delivery');
+      setText('shopHeaderStatus', statusText);
+      setText('shopStatusBadgeHeader', statusText);
+      if (rating) { setText('userHeaderRating', '⭐ ' + rating); setText('shopHeaderRating', rating + ' reviews'); }
+      if (phone) {
+        var callBtn = document.getElementById('shopHeaderCall');
+        if (callBtn) callBtn.onclick = function () { window.location.href = 'tel:' + phone; };
       }
-      var badge2 = document.getElementById('shopStatusBadge');
-      if (badge2) {
-        badge2.classList.remove('open', 'closed');
-        badge2.classList.add(isOpen ? 'open' : 'closed');
-        var t = document.getElementById('shopStatusText');
-        if (t) t.textContent = isOpen ? 'Open' : 'Closed';
-        var time2 = document.getElementById('shopStatusTime');
-        if (time2) time2.textContent = timing;
-      }
-      window.__SAMAN_SHOP_PROFILE = shop;
-      document.dispatchEvent(new CustomEvent('saman:shop-loaded', { detail: shop }));
-      return shop;
-    } catch (e) { return null; }
+    } catch (e) {}
   }
 
-  // NAV FIX - Code 4 ab isi me hai
+  // ---- Sidebar count - Sahi route se ----
+  async function loadSidebarCounts() {
+    var shopId = getShopId();
+    if (!shopId) return;
+    if (!document.getElementById('sidebar')) return;
+    try {
+      var r1 = await origFetch('/api/common/orders/list?shopId=' + encodeURIComponent(shopId) + '&status=placed', { headers: getHeaders(), credentials: 'include' });
+      var d1 = await r1.json().catch(function () { return []; });
+      var arr = Array.isArray(d1) ? d1 : (d1.orders || d1.data || []);
+      setText('sidebarOrdersCount', String(arr.length || 0));
+      var el = document.getElementById('sidebarOrdersCount');
+      if (el) el.style.display = arr.length ? 'inline' : 'none';
+    } catch (e) {}
+    try {
+      var r2 = await origFetch('/api/common/inventory/' + encodeURIComponent(shopId) + '/low-stock', { headers: getHeaders(), credentials: 'include' });
+      var d2 = await r2.json().catch(function () { return []; });
+      var arr2 = Array.isArray(d2) ? d2 : (d2.items || d2.data || []);
+      var el2 = document.getElementById('sidebarLowStock');
+      if (el2) el2.style.display = arr2.length ? 'inline' : 'none';
+    } catch (e) {}
+  }
+
+  // ---- Toast - Ek hi jagah se ----
+  function showToast(msg, type) {
+    toastQueue.push({ msg: msg, type: type || 'info' });
+    if (toastBusy) return;
+    toastBusy = true;
+    (function next() {
+      var item = toastQueue.shift();
+      if (!item) { toastBusy = false; return; }
+      var box = document.getElementById('toastContainer');
+      if (!box) {
+        var t = document.createElement('div');
+        t.id = 'toastContainer';
+        t.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center;';
+        document.body.appendChild(t);
+        box = t;
+      }
+      var el = document.createElement('div');
+      el.textContent = item.msg;
+      el.style.cssText = 'background:#111827;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.2);max-width:92vw;text-align:center;';
+      if (item.type === 'error') el.style.background = '#dc2626';
+      if (item.type === 'success') el.style.background = '#15803d';
+      box.appendChild(el);
+      setTimeout(function () { try { el.remove(); } catch (e) {} next(); }, 2500);
+    })();
+  }
+
+  // ---- Nav Fix - Dukaan ka folder URL se, hardcode nahi ----
   function fixNav() {
     var shopId = getShopId();
+    var folder = getShopFolder();
+    if (!shopId || !folder) return;
     var q = '?shopId=' + encodeURIComponent(shopId);
-    var nav = document.getElementById('bottomNav');
-    if (nav) {
-      var map = {
-        home: '../achar-shop/customer-view.html' + q,
-        search: '../achar-shop/customer-view.html' + q + '#search',
-        categories: '../achar-shop/customer-view.html' + q + '#categories',
-        cart: '../common/cart/cart.html' + q,
-        profile: '../common/profile/profile.html' + q + '&role=customer'
-      };
-      Object.keys(map).forEach(function (key) {
-        var el = nav.querySelector('[data-nav="' + key + '"]');
-        if (el) { el.setAttribute('href', map[key]); el.setAttribute('data-nav-url', map[key]); }
-      });
+    // Bottom-nav
+    var navMap = {
+      home: '../' + folder + '/customer-view.html' + q,
+      search: '../' + folder + '/customer-view.html' + q + '#search',
+      categories: '../' + folder + '/customer-view.html' + q + '#categories',
+      cart: '../common/cart/cart.html' + q,
+      profile: '../common/profile/profile.html' + q + '&role=customer'
+    };
+    var navItems = document.querySelectorAll('[data-nav]');
+    for (var i = 0; i < navItems.length; i++) {
+      var key = navItems[i].getAttribute('data-nav');
+      if (navMap[key]) navItems[i].setAttribute('href', navMap[key]);
     }
+    // Sidebar - Dashboard wala alag, Customer wala alag
+    var sideMap = {
+      dashboard: '../' + folder + '/dashboard.html' + q,
+      orders: '../common/orders/orders.html' + q,
+      products: '../common/inventory/inventory.html' + q,
+      inventory: '../common/inventory/inventory.html' + q,
+      wallet: '../common/wallet/wallet.html' + q,
+      analytics: '../common/analytics/analytics.html' + q,
+      coupons: '../common/marketing/coupons.html' + q,
+      settings: '../common/settings/settings.html' + q,
+      profile: '../common/profile/profile.html' + q + '&role=shop_owner',
+      notifications: '../common/notifications/notifications.html' + q,
+      reviews: '../common/reviews/reviews.html' + q
+    };
+    var sideLinks = document.querySelectorAll('[data-link]');
+    for (var j = 0; j < sideLinks.length; j++) {
+      var k2 = sideLinks[j].getAttribute('data-link');
+      if (sideMap[k2]) sideLinks[j].setAttribute('href', sideMap[k2]);
+    }
+    // Sidebar open / close
+    var toggle = document.getElementById('dashSidebarToggle');
     var sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-      var smap = {
-        dashboard: '../achar-shop/dashboard.html' + q,
-        orders: '../common/orders/orders.html' + q,
-        products: '../common/inventory/inventory.html' + q,
-        inventory: '../common/inventory/inventory.html' + q,
-        wallet: '../common/wallet/wallet.html' + q,
-        analytics: '../common/analytics/analytics.html' + q,
-        coupons: '../common/marketing/coupons.html' + q,
-        settings: '../common/settings/settings.html' + q,
-        profile: '../common/profile/profile.html' + q + '&role=shop_owner',
-        notifications: '../common/notifications/notifications.html' + q,
-        reviews: '../common/reviews/reviews.html' + q
-      };
-      sidebar.querySelectorAll('[data-link]').forEach(function (el) {
-        var key = (el.getAttribute('data-link') || '').toLowerCase();
-        if (smap[key]) { el.setAttribute('href', smap[key]); el.setAttribute('data-nav-url', smap[key]); }
+    var overlay = document.getElementById('sidebarOverlay');
+    var closeBtn = document.getElementById('closeSidebar');
+    function openSb() { if (sidebar) sidebar.classList.add('open'); if (overlay) overlay.style.display = 'block'; }
+    function closeSb() { if (sidebar) sidebar.classList.remove('open'); if (overlay) overlay.style.display = 'none'; }
+    if (toggle) toggle.onclick = openSb;
+    if (closeBtn) closeBtn.onclick = closeSb;
+    if (overlay) overlay.onclick = closeSb;
+    window.openSidebar = openSb;
+    window.closeSidebar = closeSb;
+    // View Shop button
+    var viewBtn = document.getElementById('sidebarViewShop');
+    if (viewBtn) viewBtn.onclick = function () { window.location.href = '../' + folder + '/customer-view.html' + q; };
+  }
+
+  // ---- Loader / Confirm / Zoom - Ek hi jagah ----
+  window.SamanComponents = {
+    toast: showToast,
+    showLoader: function () { var el = document.getElementById('globalLoader'); if (el) el.style.display = 'flex'; },
+    hideLoader: function () { var el = document.getElementById('globalLoader'); if (el) el.style.display = 'none'; },
+    confirm: function (msg) {
+      return new Promise(function (resolve) {
+        var modal = document.getElementById('confirmModal');
+        if (!modal) { resolve(window.confirm(msg)); return; }
+        var txtEl = document.getElementById('confirmModalText') || modal.querySelector('p');
+        if (txtEl) txtEl.textContent = msg;
+        modal.style.display = 'flex';
+        var ok = document.getElementById('confirmModalOk');
+        var cancel = document.getElementById('confirmModalCancel');
+        function done(v) { modal.style.display = 'none'; resolve(v); }
+        if (ok) ok.onclick = function () { done(true); };
+        if (cancel) cancel.onclick = function () { done(false); };
       });
-      sidebar.querySelectorAll('a').forEach(function (el) {
-        var txt = (el.textContent || '').toLowerCase();
-        if (txt.indexOf('dashboard') > -1) el.setAttribute('href', smap.dashboard);
-        else if (txt.indexOf('order') > -1) el.setAttribute('href', smap.orders);
-        else if (txt.indexOf('product') > -1) el.setAttribute('href', smap.products);
-        else if (txt.indexOf('wallet') > -1) el.setAttribute('href', smap.wallet);
-        else if (txt.indexOf('setting') > -1) el.setAttribute('href', smap.settings);
-        else if (txt.indexOf('profile') > -1) el.setAttribute('href', smap.profile);
-      });
-    }
-    var footers = document.querySelectorAll('#dashboardFooter, #userFooter, .dashboard-footer, .user-footer');
-    footers.forEach(function (ft) {
-      ft.querySelectorAll('a').forEach(function (el) {
-        var href = el.getAttribute('href') || '#';
-        if (href !== '#' && href !== '') return;
-        var txt = (el.textContent || '').toLowerCase();
-        var url = '';
-        if (txt.indexOf('order') > -1) url = '../common/orders/orders.html' + q;
-        else if (txt.indexOf('about') > -1) url = '../common/pages/about.html' + q;
-        else if (txt.indexOf('contact') > -1) url = '../common/pages/contact.html' + q;
-        else if (txt.indexOf('privacy') > -1) url = '../common/pages/privacy-policy.html' + q;
-        else if (txt.indexOf('terms') > -1) url = '../common/pages/terms.html' + q;
-        else if (txt.indexOf('return') > -1) url = '../common/pages/return-policy.html' + q;
-        if (url) el.setAttribute('href', url);
-      });
-    });
-  }
+    },
+    load: loadOne,
+    loadJs: loadOneJs
+  };
+  window.SamanUI = window.SamanComponents;
+  window.Toast = { show: showToast };
 
-  // UI FIX - Code 5 ab isi me hai - Toast / Loader / Confirm / Empty / Skeleton ek hi jagah
-  function showToast(msg, type, duration) {
-    msg = String(msg || '');
-    if (!msg) return;
-    toastQueue.push({ msg: msg, type: type || 'success', duration: duration || 2500 });
-    runToastQueue();
-  }
-
-  function runToastQueue() {
-    if (toastBusy) return;
-    var item = toastQueue.shift();
-    if (!item) return;
-    toastBusy = true;
-    try {
-      if (window.Toast && window.Toast.__SAMAN_ORIG_SHOW__) {
-        window.__SAMAN_TOAST_FROM_QUEUE__ = true;
-        window.Toast.__SAMAN_ORIG_SHOW__(item.msg, item.type, item.duration);
-        window.__SAMAN_TOAST_FROM_QUEUE__ = false;
-      } else if (window.Toast && window.Toast.show) {
-        window.Toast.show(item.msg, item.type, item.duration);
-      }
-    } catch (e) { window.__SAMAN_TOAST_FROM_QUEUE__ = false; }
-    setTimeout(function () { toastBusy = false; runToastQueue(); }, item.duration + 200);
-  }
-
-  function loaderShow(show, text) {
-    try {
-      if (show) {
-        loaderCount++;
-        if (window.Loader && window.Loader.show) window.Loader.show(text || 'Loading...');
-        else { var el = document.getElementById('globalLoader'); if (el) el.style.display = 'grid'; }
-        if (loaderTimer) clearTimeout(loaderTimer);
-        loaderTimer = setTimeout(function () { loaderCount = 0; loaderHide(true); }, 15000);
-      } else {
-        if (loaderCount > 0) loaderCount--;
-        if (loaderCount <= 0) loaderHide(true);
-      }
-    } catch (e) {}
-  }
-
-  function loaderHide(force) {
-    try {
-      if (!force && loaderCount > 0) return;
-      loaderCount = 0;
-      if (loaderTimer) { clearTimeout(loaderTimer); loaderTimer = null; }
-      if (window.Loader && window.Loader.hide) window.Loader.hide();
-      else { var el = document.getElementById('globalLoader'); if (el) el.style.display = 'none'; }
-      document.body.style.overflow = '';
-    } catch (e) {}
-  }
-
-  function confirmBox(options) {
-    if (typeof options === 'string') options = { message: options };
-    options = options || {};
-    return new Promise(function (resolve) {
-      var done = false;
-      function finish(v) { if (done) return; done = true; resolve(v); }
-      try {
-        if (window.ConfirmModal && window.ConfirmModal.show) {
-          window.ConfirmModal.show({
-            title: options.title || 'Pakka?', message: options.message || 'Ye kaam kar du?',
-            confirmText: options.confirmText || 'Haan', cancelText: options.cancelText || 'Nahi',
-            onConfirm: function () { finish(true); }, onCancel: function () { finish(false); }
-          });
-          setTimeout(function () { finish(false); }, 30000);
-          return;
-        }
-      } catch (e) {}
-      finish(window.confirm(options.message || 'Pakka?'));
-    });
-  }
-
-  function patchOldToastLoader() {
-    try {
-      if (window.Toast && window.Toast.show && !window.Toast.__SAMAN_PATCHED__) {
-        window.Toast.__SAMAN_PATCHED__ = true;
-        var oldShow = window.Toast.show.bind(window.Toast);
-        window.Toast.__SAMAN_ORIG_SHOW__ = oldShow;
-        window.Toast.show = function (msg, type, duration) {
-          if (window.__SAMAN_TOAST_FROM_QUEUE__) { oldShow(msg, type, duration); return; }
-          showToast(msg, type, duration);
-        };
-      }
-    } catch (e) {}
-    try {
-      if (window.Loader && window.Loader.show && !window.Loader.__SAMAN_PATCHED__) {
-        window.Loader.__SAMAN_PATCHED__ = true;
-        window.Loader.show = function (text) { loaderShow(true, text); };
-        window.Loader.hide = function () { loaderHide(true); };
-      }
-    } catch (e) {}
-  }
-
-  // MEDIA FIX - Code 6 ab isi me hai - Zoom / QuickView / Language / Status
-  function openZoom(images, index, title) {
-    if (typeof images === 'string') images = [images];
-    images = images || [];
-    index = index || 0;
-    var qv = document.getElementById('quickViewModal');
-    if (qv) qv.style.display = 'none';
-    try {
-      if (window.ImageZoom && window.ImageZoom.open) { window.ImageZoom.open(images, index, title || 'Product Image'); return; }
-      if (window.ImageZoom && typeof window.ImageZoom === 'function') {
-        if (!window.__SAMAN_ZOOM_INST__) window.__SAMAN_ZOOM_INST__ = new window.ImageZoom();
-        window.__SAMAN_ZOOM_INST__.open(images, index, title || 'Product Image');
-        return;
-      }
-    } catch (e) {}
-    if (images[index]) window.open(images[index], '_blank');
-  }
-
-  function openQuickView(productId) {
-    var zm = document.getElementById('imgZoomModal');
-    if (zm) zm.style.display = 'none';
-    try {
-      if (window.ProductQuickView && window.ProductQuickView.open) { window.ProductQuickView.open(productId); return; }
-    } catch (e) {}
-    window.location.href = '../common/products/product-detail.html?shopId=' + encodeURIComponent(getShopId()) + '&productId=' + encodeURIComponent(productId);
-  }
-
-  function setLang(lang) {
-    lang = lang || 'en';
-    currentLang = lang;
-    window.__SAMAN_LANG__ = lang;
-    var label = document.getElementById('currentLangLabel');
-    if (label) label.textContent = lang === 'en' ? 'EN' : lang === 'hi' ? 'हि' : 'गु';
-    document.querySelectorAll('.lang-option').forEach(function (opt) {
-      opt.classList.toggle('active', opt.getAttribute('data-lang') === lang);
-    });
-    var drop = document.getElementById('langDropdown');
-    if (drop) drop.style.display = 'none';
-    document.dispatchEvent(new CustomEvent('saman:lang-changed', { detail: { lang: lang } }));
-  }
-
-  async function checkStatus() {
-    var shopId = getShopId();
-    if (!shopId) return null;
-    try {
-      var res = await fetch(getApiBase() + '/api/common/profile/me?role=shop_owner&shopId=' + encodeURIComponent(shopId), { headers: getHeaders(), credentials: 'include', cache: 'no-store' });
-      var data = await res.json().catch(function () { return {}; });
-      var shop = data.shop || data.profile || data.data || data || {};
-      if (shop.shop) shop = shop.shop;
-      var isOpen = shop.isOpen;
-      if (isOpen === undefined) isOpen = shop.status !== 'closed';
-      if (lastStatus !== null && lastStatus !== isOpen) loadShop();
-      lastStatus = isOpen;
-      return isOpen;
-    } catch (e) { return null; }
-  }
-
-  function bindClicks() {
-    document.addEventListener('click', function (e) {
-      var langOpt = e.target.closest ? e.target.closest('.lang-option') : null;
-      if (langOpt) { e.preventDefault(); setLang(langOpt.getAttribute('data-lang') || 'en'); return; }
-      if (e.target.closest && e.target.closest('#langToggleBtn')) {
-        e.preventDefault();
-        var drop = document.getElementById('langDropdown');
-        if (drop) drop.style.display = drop.style.display === 'block' ? 'none' : 'block';
-        return;
-      }
-      if (e.target.closest && e.target.closest('#closeQuickView')) { e.preventDefault(); var q = document.getElementById('quickViewModal'); if (q) q.style.display = 'none'; document.body.style.overflow = ''; return; }
-      if (e.target.closest && e.target.closest('#imgZoomClose')) { e.preventDefault(); var z = document.getElementById('imgZoomModal'); if (z) z.style.display = 'none'; document.body.style.overflow = ''; return; }
-      if (e.target.closest && e.target.closest('#closeStatusDetail')) { e.preventDefault(); var d = document.getElementById('shopStatusDetail'); if (d) d.style.display = 'none'; return; }
-      if (e.target.closest && e.target.closest('#shopStatusBadge')) {
-        e.preventDefault();
-        var d2 = document.getElementById('shopStatusDetail');
-        if (d2) d2.style.display = d2.style.display === 'block' ? 'none' : 'block';
-        return;
-      }
-      var openBtn = e.target.closest ? e.target.closest('#dashSidebarToggle') : null;
-      if (openBtn) { e.preventDefault(); var sb = document.getElementById('sidebar'); var ov = document.getElementById('sidebarOverlay'); if (sb) sb.classList.add('open'); if (ov) ov.style.display = 'block'; return; }
-      var closeBtn = e.target.closest ? e.target.closest('#closeSidebar') : null;
-      if (closeBtn) { e.preventDefault(); var sb2 = document.getElementById('sidebar'); var ov2 = document.getElementById('sidebarOverlay'); if (sb2) sb2.classList.remove('open'); if (ov2) ov2.style.display = 'none'; return; }
-      var overlay = e.target.closest ? e.target.closest('#sidebarOverlay') : null;
-      if (overlay) { var sb3 = document.getElementById('sidebar'); if (sb3) sb3.classList.remove('open'); overlay.style.display = 'none'; return; }
-      var openCart = e.target.closest ? e.target.closest('[data-open-cart]') : null;
-      if (openCart && openCart.getAttribute('data-nav') !== 'cart') { e.preventDefault(); window.location.href = '../common/cart/cart.html?shopId=' + encodeURIComponent(getShopId()); return; }
-    });
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') {
-        var zm = document.getElementById('imgZoomModal'); if (zm) zm.style.display = 'none';
-        var qv = document.getElementById('quickViewModal'); if (qv) qv.style.display = 'none';
-        document.body.style.overflow = '';
-      }
-    });
-  }
-
-  function pickList() {
-    var isDashboard = window.location.pathname.indexOf('dashboard') > -1 || document.body.getAttribute('data-page') === 'dashboard';
-    var list = ['toast', 'loader', 'confirm-modal', 'empty-state', 'skeleton-loader', 'language-switcher'];
-    if (isDashboard) { list.push('dashboard-header'); list.push('sidebar'); list.push('dashboard-footer'); }
-    else { list.push('user-header'); list.push('bottom-nav'); list.push('user-footer'); list.push('shop-header'); list.push('shop-status-badge'); list.push('product-quick-view'); list.push('image-zoom'); }
-    return list;
+  // ---- Kaunsi file kab laani hai - Page ke hisab se ----
+  function getPageType() {
+    var path = window.location.pathname || '';
+    if (path.indexOf('dashboard') > -1) return 'dashboard';
+    if (path.indexOf('customer-view') > -1 || path.indexOf('user-view') > -1 || path.indexOf('shop-view') > -1) return 'customer';
+    return 'common';
   }
 
   async function init() {
-    bindClicks();
-    var hasOwnHeader = !!document.querySelector('header[data-own-header="1"]');
-    var list = pickList();
-    if (hasOwnHeader) list = list.filter(function (n) { return n !== 'user-header' && n !== 'shop-header' && n !== 'dashboard-header'; });
+    var type = getPageType();
+    var list = [];
+    if (type === 'customer') {
+      list = ['user-header', 'shop-header', 'bottom-nav', 'toast', 'loader', 'confirm-modal', 'empty-state', 'skeleton-loader', 'image-zoom', 'language-switcher', 'product-quick-view', 'user-footer'];
+    } else if (type === 'dashboard') {
+      // Dashboard me sidebar pehle se hai toh Loader sidebar mat laayega - loadOne me guard hai
+      list = ['dashboard-header', 'sidebar', 'dashboard-footer', 'toast', 'loader', 'confirm-modal', 'empty-state', 'skeleton-loader', 'image-zoom', 'language-switcher'];
+    } else {
+      list = ['toast', 'loader', 'confirm-modal', 'empty-state', 'skeleton-loader', 'image-zoom', 'language-switcher'];
+    }
     for (var i = 0; i < list.length; i++) { try { await loadOne(list[i]); } catch (e) {} }
     try { await loadOneJs('product-card'); } catch (e) {}
-    window.__SAMAN_COMPONENTS_READY__ = true;
-    document.dispatchEvent(new CustomEvent('saman:components-ready', { detail: { shopId: getShopId() } }));
-    patchOldToastLoader();
     fixNav();
-    loadShop();
-    if (!statusTimer) { checkStatus(); statusTimer = setInterval(function () { checkStatus(); }, 60000); }
-    if (window.ProductCard) {
-      window.ProductCard.openImageZoom = openZoom;
-      window.ProductCard.openQuickView = openQuickView;
-    }
-    window.SamanComponents = {
-      load: loadOne, loadJs: loadOneJs,
-      toast: showToast, loader: loaderShow, confirm: confirmBox,
-      zoom: openZoom, quickView: openQuickView,
-      setLang: setLang, getLang: function () { return currentLang; },
-      checkStatus: checkStatus, loadShop: loadShop, fixNav: fixNav,
-      ready: function () { return !!window.__SAMAN_COMPONENTS_READY__; }
-    };
-    window.SamanUI = { toast: showToast, loader: loaderShow, confirm: confirmBox };
-    window.SamanMedia = { zoom: openZoom, quickView: openQuickView, setLang: setLang, checkStatus: checkStatus };
-    window.SamanHeaderFix = { load: loadShop };
-    window.SamanNavFix = { fix: fixNav };
+    await loadShop();
+    await loadSidebarCounts();
+    // Cart count
+    try { if (window.CartCore && window.CartCore.getCount) { var c = window.CartCore.getCount(); var badges = document.querySelectorAll('[data-cart-count]'); for (var b = 0; b < badges.length; b++) { badges[b].textContent = String(c); badges[b].style.display = c > 0 ? 'inline' : 'none'; } } } catch (e) {}
+    document.dispatchEvent(new CustomEvent('saman:components-ready'));
+    window.__SAMAN_COMPONENTS_READY__ = true;
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

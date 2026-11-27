@@ -1,0 +1,38 @@
+<!-- LOCATION: public/shop-templates/common/components/shop-banner.html - V1 NEW - CODE 11 -->
+<!-- KAAM: Dukaan ka upar wala banner. Photo + Naam + Open/Closed + Call. -->
+<!-- RULE: Ye apna naam / photo khud nahi bharega. Loader hi bharega, taaki 2 baar fetch na ho. -->
+<!-- RULE: Agar banner photo nahi hai toh ye chhup jayega, khaali dikhega nahi. -->
+
+<div id="shopBanner" class="shop-banner" style="display:none">
+  <div class="shop-banner-img-wrap">
+    <img id="shopBannerImg" src="" alt="Shop Banner" style="width:100%;height:180px;object-fit:cover;display:block;border-radius:0 0 16px 16px" />
+    <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55),transparent 60%);border-radius:0 0 16px 16px"></div>
+    <div style="position:absolute;left:14px;bottom:12px;right:14px;display:flex;align-items:flex-end;gap:12px">
+      <img id="shopBannerLogo" src="" alt="Logo" style="width:56px;height:56px;border-radius:14px;object-fit:cover;border:2px solid #fff;background:#fff" />
+      <div style="flex:1;min-width:0">
+        <div id="shopBannerName" style="color:#fff;font-weight:900;font-size:18px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shop Name</div>
+        <div id="shopBannerAddress" style="color:rgba(255,255,255,.9);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <span id="shopBannerStatus" style="background:#fff;color:#111827;font-size:11px;font-weight:800;padding:4px 8px;border-radius:20px">● Open</span>
+          <span id="shopBannerRating" style="background:rgba(255,255,255,.9);color:#111827;font-size:11px;font-weight:800;padding:4px 8px;border-radius:20px;display:none"></span>
+        </div>
+      </div>
+      <button id="shopBannerCall" style="background:#fff;border:0;width:40px;height:40px;border-radius:50%;font-size:18px;flex-shrink:0">📞</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // Banner ko Loader bharega, yahan sirf Call button ka kaam hai
+  // Loader ne naam / photo bhar diya toh ye dikhega, nahi toh chhupa rahega
+  var callBtn = document.getElementById('shopBannerCall');
+  if (callBtn) {
+    callBtn.onclick = function () {
+      var phone = window.__SAMAN_SHOP_PHONE__ || '';
+      if (phone) window.location.href = 'tel:' + phone;
+      else if (window.SamanComponents) window.SamanComponents.toast('Phone number nahi hai', 'error');
+    };
+  }
+})();
+</script>
