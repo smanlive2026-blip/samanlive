@@ -1,0 +1,210 @@
+<!-- LOCATION: public/shop-templates/common/components/rating-widget.html - V1 NEW - CODE 12 - FILE 6/11 -->
+<!-- KAAM: Product / Shop ke neeche star rating dikhana + customer se rating lena. Page nahi hai, component hai. -->
+<!-- RULE 1: Ye sirf dikhayega aur bhejega. Rating ka asli hisaab /api/common/reviews wala karega. -->
+<!-- RULE 2: Agar koi rating nahi hai toh "Abhi koi rating nahi hai" dikhega, fake 4.5 star kabhi nahi dikhega. -->
+<!-- RULE 3: Ye reviews/rating-widget.html wali purani file nahi hai. Wo alag system ki hai, usko haath mat lagana. -->
+<!-- RULE 4: Ek baar rating bhej di toh dobara nahi bhejega, taaki double rating na bane. -->
+
+<div id="ratingWidgetBox" class="rating-widget-box">
+  <div class="rating-widget-head">
+    <div>
+      <b id="ratingWidgetTitle">Rating ⭐</b>
+      <span id="ratingWidgetSub">Abhi koi rating nahi hai</span>
+    </div>
+    <div id="ratingWidgetAvg" class="rating-widget-avg" style="display:none">
+      <b id="ratingWidgetAvgNum">0.0</b>
+      <span id="ratingWidgetAvgStars">☆☆☆☆☆</span>
+      <span id="ratingWidgetAvgCount">(0)</span>
+    </div>
+  </div>
+
+  <div id="ratingWidgetStars" class="rating-widget-stars">
+    <button data-star="1" aria-label="1 star">☆</button>
+    <button data-star="2" aria-label="2 stars">☆</button>
+    <button data-star="3" aria-label="3 stars">☆</button>
+    <button data-star="4" aria-label="4 stars">☆</button>
+    <button data-star="5" aria-label="5 stars">☆</button>
+    <span id="ratingWidgetPickText">Tap karke rating do</span>
+  </div>
+
+  <div id="ratingWidgetForm" class="rating-widget-form" style="display:none">
+    <textarea id="ratingWidgetComment" rows="2" placeholder="Apna review likho (optional) - kaisa laga product?"></textarea>
+    <button id="ratingWidgetSubmitBtn" class="rating-widget-submit-btn">Rating Bhejo</button>
+  </div>
+
+  <div id="ratingWidgetThanks" class="rating-widget-thanks" style="display:none">
+    <b>Thanks! 🙏 Rating mil gayi.</b>
+  </div>
+</div>
+
+<style>
+.rating-widget-box{background:#fff;border:1px solid #eee;border-radius:16px;padding:14px}
+.rating-widget-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.rating-widget-head b{font-size:15px;font-weight:900;font-family:Outfit,sans-serif;display:block}
+.rating-widget-head span{font-size:12px;color:#666}
+.rating-widget-avg{text-align:right;flex-shrink:0}
+.rating-widget-avg b{font-size:20px}
+.rating-widget-avg span{display:block;font-size:12px;color:#f59e0b}
+.rating-widget-avg span:last-child{color:#666}
+.rating-widget-stars{display:flex;align-items:center;gap:4px}
+.rating-widget-stars button{border:0;background:transparent;font-size:28px;cursor:pointer;padding:0;line-height:1;color:#f59e0b}
+.rating-widget-stars button.dim{color:#ddd}
+.rating-widget-stars span{font-size:12px;color:#666;margin-left:6px}
+.rating-widget-form{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.rating-widget-form textarea{width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box}
+.rating-widget-submit-btn{border:0;background:#111827;color:#fff;padding:11px;border-radius:10px;font-weight:900;cursor:pointer}
+.rating-widget-thanks{margin-top:12px;padding:10px;background:#dcfce7;border-radius:10px;font-size:13px;color:#166534}
+</style>
+
+<script>
+(function () {
+  if (window.__SAMAN_RATING_WIDGET_V1__) return;
+  window.__SAMAN_RATING_WIDGET_V1__ = true;
+
+  var picked = 0;
+  var sent = false;
+  var targetId = '';
+  var targetType = 'product';
+
+  function getShopId() {
+    return new URLSearchParams(window.location.search).get('shopId') || window.__SAMAN_SHOP_ID || window.SHOP_ID || '';
+  }
+  function getToken() {
+    try { if (window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; } catch (e) {}
+    return window.USER_TOKEN || '';
+  }
+  function getUserId() {
+    try { if (window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; } catch (e) {}
+    return '';
+  }
+  function toast(m) {
+    if (window.SamanComponents && window.SamanComponents.toast) { window.SamanComponents.toast(m, 'error'); return; }
+    alert(m);
+  }
+  function toastOk(m) {
+    if (window.SamanComponents && window.SamanComponents.toast) { window.SamanComponents.toast(m, 'success'); return; }
+    alert(m);
+  }
+  function starsText(avg) {
+    var full = Math.round(Number(avg) || 0);
+    var s = '';
+    for (var i = 1; i <= 5; i++) s += i <= full ? '★' : '☆';
+    return s;
+  }
+  function paintStars(n) {
+    var btns = document.querySelectorAll('#ratingWidgetStars button[data-star]');
+    for (var i = 0; i < btns.length; i++) {
+      var v = Number(btns[i].getAttribute('data-star'));
+      btns[i].textContent = v <= n ? '★' : '☆';
+      if (v <= n) btns[i].classList.remove('dim');
+      else btns[i].classList.add('dim');
+    }
+    var txt = document.getElementById('ratingWidgetPickText');
+    if (txt) {
+      if (n === 0) txt.textContent = 'Tap karke rating do';
+      else if (n === 1) txt.textContent = '1 star - Bahut kharab';
+      else if (n === 2) txt.textContent = '2 star - Theek nahi tha';
+      else if (n === 3) txt.textContent = '3 star - Theek tha';
+      else if (n === 4) txt.textContent = '4 star - Achha tha';
+      else txt.textContent = '5 star - Bahut badhiya!';
+    }
+  }
+
+  async function loadAvg() {
+    var box = document.getElementById('ratingWidgetBox');
+    if (!box) return;
+    // Target Product / Shop ka id - jo page dega wahi lega, khud nahi banayega
+    targetId = box.getAttribute('data-target-id') || window.__SAMAN_RATING_TARGET_ID__ || '';
+    targetType = box.getAttribute('data-target-type') || window.__SAMAN_RATING_TARGET_TYPE__ || 'product';
+    if (!targetId) return;
+    try {
+      var res = await fetch('/api/common/reviews/avg?targetId=' + encodeURIComponent(targetId) + '&type=' + encodeURIComponent(targetType) + '&shopId=' + encodeURIComponent(getShopId()));
+      var d = await res.json().catch(function () { return {}; });
+      var avg = Number(d.avg || d.average || d.rating || 0);
+      var count = Number(d.count || d.total || 0);
+      var sub = document.getElementById('ratingWidgetSub');
+      var avgWrap = document.getElementById('ratingWidgetAvg');
+      if (count > 0 && avg > 0) {
+        if (sub) sub.textContent = count + ' logo ne rating di hai';
+        if (avgWrap) avgWrap.style.display = 'block';
+        var num = document.getElementById('ratingWidgetAvgNum');
+        var stars = document.getElementById('ratingWidgetAvgStars');
+        var cnt = document.getElementById('ratingWidgetAvgCount');
+        if (num) num.textContent = avg.toFixed(1);
+        if (stars) stars.textContent = starsText(avg);
+        if (cnt) cnt.textContent = '(' + count + ')';
+      } else {
+        if (sub) sub.textContent = 'Abhi koi rating nahi hai';
+        if (avgWrap) avgWrap.style.display = 'none';
+      }
+    } catch (e) {}
+  }
+
+  async function submit() {
+    if (sent) { toast('Rating pehle hi bhej di hai'); return; }
+    if (!picked) { toast('Pehle star chuno'); return; }
+    var box = document.getElementById('ratingWidgetBox');
+    if (!box) return;
+    targetId = box.getAttribute('data-target-id') || window.__SAMAN_RATING_TARGET_ID__ || '';
+    targetType = box.getAttribute('data-target-type') || window.__SAMAN_RATING_TARGET_TYPE__ || 'product';
+    if (!targetId) { toast('Product / Shop ka pata nahi chala'); return; }
+    var token = getToken();
+    if (!token) { toast('Rating dene ke liye pehle login karo'); return; }
+    var commentEl = document.getElementById('ratingWidgetComment');
+    var comment = commentEl ? commentEl.value.trim() : '';
+    var btn = document.getElementById('ratingWidgetSubmitBtn');
+    if (btn) { btn.textContent = 'Bhej raha hoon...'; btn.disabled = true; }
+    try {
+      var res = await fetch('/api/common/reviews?shopId=' + encodeURIComponent(getShopId()), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        credentials: 'include',
+        body: JSON.stringify({ targetId: targetId, targetType: targetType, rating: picked, comment: comment, buyerId: getUserId() })
+      });
+      var d = await res.json().catch(function () { return {}; });
+      if (!res.ok) throw new Error(d.message || 'Rating nahi bheji gayi');
+      sent = true;
+      toastOk('Rating mil gayi, thanks!');
+      var form = document.getElementById('ratingWidgetForm');
+      var thanks = document.getElementById('ratingWidgetThanks');
+      if (form) form.style.display = 'none';
+      if (thanks) thanks.style.display = 'block';
+      await loadAvg();
+    } catch (e) {
+      toast(e.message || 'Rating nahi bheji gayi');
+      if (btn) { btn.textContent = 'Rating Bhejo'; btn.disabled = false; }
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.closest && t.closest('#ratingWidgetStars button[data-star]')) {
+      var b = t.closest('#ratingWidgetStars button[data-star]');
+      picked = Number(b.getAttribute('data-star'));
+      paintStars(picked);
+      var form = document.getElementById('ratingWidgetForm');
+      if (form) form.style.display = 'flex';
+      return;
+    }
+    if (t.id === 'ratingWidgetSubmitBtn') submit();
+  });
+
+  window.reloadRatingWidget = loadAvg;
+  window.loadRatingWidget = loadAvg;
+  window.setRatingTarget = function (id, type) {
+    targetId = id || '';
+    targetType = type || 'product';
+    window.__SAMAN_RATING_TARGET_ID__ = targetId;
+    window.__SAMAN_RATING_TARGET_TYPE__ = targetType;
+    var box = document.getElementById('ratingWidgetBox');
+    if (box) {
+      box.setAttribute('data-target-id', targetId);
+      box.setAttribute('data-target-type', targetType);
+    }
+    loadAvg();
+  };
+  document.addEventListener('saman:components-ready', loadAvg);
+  if (document.getElementById('ratingWidgetBox')) setTimeout(loadAvg, 300);
+})();
+</script>

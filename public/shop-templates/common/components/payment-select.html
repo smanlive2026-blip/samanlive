@@ -1,0 +1,123 @@
+<!-- LOCATION: public/shop-templates/common/components/payment-select.html - V1 NEW - CODE 12 - FILE 5/11 -->
+<!-- KAAM: Checkout me Payment Method chunna. Page nahi hai, component hai. -->
+<!-- RULE 1: Ye paise nahi lega, sirf method chune ga. Paise ka kaam Checkout karega. -->
+<!-- RULE 2: Default COD hai, kyunki gaon / sheher me sabse zyada COD hi chalta hai. -->
+<!-- RULE 3: Chunna hua method Checkout ko batayega - window.__SAMAN_SELECTED_PAYMENT__ me rakhega. -->
+<!-- RULE 4: Ye components/ wali hai. checkout/payment-select.html wali purani file alag system ki hai, usko haath mat lagana. -->
+
+<div id="paymentSelectBox" class="payment-select-box">
+  <div class="payment-select-head">
+    <b>Payment Method 💳</b>
+    <span>Safe & Secure</span>
+  </div>
+
+  <div id="paymentSelectList" class="payment-select-list">
+    <div class="payment-select-card selected" data-method="cod">
+      <div class="payment-select-icon">💵</div>
+      <div class="payment-select-info">
+        <b>Cash on Delivery (COD)</b>
+        <span>Samaan milne pe cash de do</span>
+      </div>
+      <div class="payment-select-radio"><span></span></div>
+    </div>
+
+    <div class="payment-select-card" data-method="upi">
+      <div class="payment-select-icon">📱</div>
+      <div class="payment-select-info">
+        <b>UPI</b>
+        <span>【entity-GPay¦canonical_name=GPay】 / 【entity-PhonePe¦canonical_name=PhonePe】 / 【entity-Paytm¦canonical_name=Paytm】 se pay karo</span>
+      </div>
+      <div class="payment-select-radio"><span></span></div>
+    </div>
+
+    <div class="payment-select-card" data-method="card">
+      <div class="payment-select-icon">💳</div>
+      <div class="payment-select-info">
+        <b>Card</b>
+        <span>Debit / Credit Card se pay karo</span>
+      </div>
+      <div class="payment-select-radio"><span></span></div>
+    </div>
+  </div>
+
+  <div id="paymentSelectUpiWrap" class="payment-select-upi-wrap" style="display:none">
+    <label>UPI ID (optional)</label>
+    <input id="paymentSelectUpiId" type="text" placeholder="jaise naam@okhdfcbank" />
+    <span>Agar UPI ID nahi bharoge toh Checkout pe UPI app khulega.</span>
+  </div>
+
+  <div id="paymentSelectNote" class="payment-select-note">
+    <span id="paymentSelectNoteText">COD chuna hai - Samaan milne pe cash de dena.</span>
+  </div>
+</div>
+
+<style>
+.payment-select-box{background:#fff;border:1px solid #eee;border-radius:16px;padding:14px}
+.payment-select-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.payment-select-head b{font-size:15px;font-weight:900;font-family:Outfit,sans-serif}
+.payment-select-head span{font-size:11px;color:#16a34a;font-weight:700}
+.payment-select-list{display:flex;flex-direction:column;gap:10px}
+.payment-select-card{display:flex;align-items:center;gap:12px;border:2px solid #eee;border-radius:12px;padding:12px;cursor:pointer}
+.payment-select-card.selected{border-color:#111827;background:#f9fafb}
+.payment-select-icon{font-size:24px;flex-shrink:0}
+.payment-select-info{flex:1;min-width:0}
+.payment-select-info b{font-size:14px;font-weight:800;display:block}
+.payment-select-info span{font-size:12px;color:#666}
+.payment-select-radio{width:22px;height:22px;border:2px solid #ddd;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.payment-select-card.selected .payment-select-radio{border-color:#111827}
+.payment-select-card.selected .payment-select-radio span{display:block;width:12px;height:12px;background:#111827;border-radius:50%}
+.payment-select-upi-wrap{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding:12px;background:#f9fafb;border-radius:12px}
+.payment-select-upi-wrap label{font-size:12px;font-weight:800}
+.payment-select-upi-wrap input{width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:14px;box-sizing:border-box}
+.payment-select-upi-wrap span{font-size:11px;color:#666}
+.payment-select-note{margin-top:12px;padding:10px;background:#fffbeb;border-radius:10px;font-size:12px;color:#92400e}
+</style>
+
+<script>
+(function () {
+  if (window.__SAMAN_PAYMENT_SELECT_V1__) return;
+  window.__SAMAN_PAYMENT_SELECT_V1__ = true;
+  window.__SAMAN_SELECTED_PAYMENT__ = window.__SAMAN_SELECTED_PAYMENT__ || { method: 'cod', upiId: '' };
+  function getNote(method) {
+    if (method === 'cod') return 'COD chuna hai - Samaan milne pe cash de dena.';
+    if (method === 'upi') return 'UPI chuna hai - Checkout pe UPI app se pay karna hoga.';
+    if (method === 'card') return 'Card chuna hai - Checkout pe card details bharni hongi.';
+    return '';
+  }
+  function select(method) {
+    window.__SAMAN_SELECTED_PAYMENT__ = { method: method, upiId: '' };
+    var cards = document.querySelectorAll('#paymentSelectBox .payment-select-card');
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      if (c.getAttribute('data-method') === method) c.classList.add('selected');
+      else c.classList.remove('selected');
+    }
+    var upiWrap = document.getElementById('paymentSelectUpiWrap');
+    if (upiWrap) upiWrap.style.display = method === 'upi' ? 'flex' : 'none';
+    var note = document.getElementById('paymentSelectNoteText');
+    if (note) note.textContent = getNote(method);
+    var upiInput = document.getElementById('paymentSelectUpiId');
+    if (upiInput && method !== 'upi') upiInput.value = '';
+    if (upiInput) {
+      upiInput.oninput = function () {
+        window.__SAMAN_SELECTED_PAYMENT__ = { method: 'upi', upiId: upiInput.value.trim() };
+        document.dispatchEvent(new CustomEvent('saman:payment-changed', { detail: window.__SAMAN_SELECTED_PAYMENT__ }));
+      };
+    }
+    document.dispatchEvent(new CustomEvent('saman:payment-changed', { detail: window.__SAMAN_SELECTED_PAYMENT__ }));
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t || !t.closest) return;
+    var card = t.closest('#paymentSelectBox .payment-select-card');
+    if (card) {
+      var m = card.getAttribute('data-method');
+      if (m) select(m);
+    }
+  });
+  window.selectPaymentMethod = select;
+  window.getSelectedPayment = function () { return window.__SAMAN_SELECTED_PAYMENT__; };
+  document.addEventListener('saman:components-ready', function () { select('cod'); });
+  if (document.getElementById('paymentSelectBox')) setTimeout(function () { select('cod'); }, 200);
+})();
+</script>

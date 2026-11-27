@@ -1,11 +1,12 @@
-<!-- LOCATION: public/shop-templates/achar-shop/customer-view.html - FULL - PRODUCT-FORM + COMMON PROFILE - V6 -->
+<!-- LOCATION: public/shop-templates/achar-shop/customer-view.html - FULL - PRODUCT-FORM + COMMON PROFILE - V6 - CODE 12 FIX -->
 <!-- RULE: Customer = Dekhega + Cart me dalega + Common Checkout pe jayega. Yahan Accept / Packed ka button kabhi nahi hoga. -->
-<!-- COMMON: api-core + auth-core + storage-core + socket-core + WORLD PRODUCT-MANAGER + UNIFIED PROFILE + cart-core + cart-count + shop-toggle/status + wishlist + reviews + share + location + common/checkout + common/customer-orders/my-orders + product-detail -->
+<!-- COMMON: api-core + auth-core + storage-core + socket-core + WORLD PRODUCT-MANAGER + UNIFIED PROFILE + cart-core + cart-count + shop-toggle/status + wishlist + reviews + share + common/checkout + common/customer-orders/my-orders + product-detail -->
 <!-- PRODUCT-FORM: Product = WORLD MODEL se aayega - /api/world-products?shopType=achar-shop - Achar API se nahi -->
 <!-- PROFILE: Shop ka Logo / Banner / Owner Photo / Naam / Address / Phone / Timing / Gallery = COMMON PROFILE se aayega - /api/common/profile/me?role=shop_owner&shopId=XXX - Achar API se nahi -->
 <!-- FIX V5: Pehle wali me customer-view.js + inline JS dono the - double Add hota tha. Ab sirf customer-view.js chalega. -->
 <!-- FIX V5 NO BROWSER STORAGE: shopId SIRF URL se aayega. Browser storage me shopId kabhi save / load NAHI hoga. -->
 <!-- FIX V6 VISITOR TRACKING ON: Customer ne shop kholi toh 1 Visit jayega - POST /api/common/analytics/:shopId/track - Ek tab me 1 hi baar, refresh pe dobara nahi. -->
+<!-- CODE 12 FIX: location.js + shop-banner-ext.js hatayi - dono Loader se takrati thi. Share = openQrShare(), Cart Bar = openCartDrawer(). -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -138,11 +139,9 @@ COD available • Free Delivery • SamanLive
 <script src="../common/core/storage-core.js"></script>
 <script src="../common/core/error-handler.js"></script>
 <script src="../common/core/socket-core.js"></script>
-<!-- 2. Shop ka Common - toggle / location / banner -->
+<!-- 2. Shop ka Common - toggle / status - CODE 12: shop-banner-ext.js + location.js HATAYI -->
 <script src="../common/js/shop-toggle.js"></script>
 <script src="../common/js/customer-shop-status.js"></script>
-<script src="../common/js/shop-banner-ext.js"></script>
-<script src="../common/js/location.js"></script>
 <!-- 3. Product - WORLD MODEL - Product Form ka Manager - iske bina Customer ko maal nahi dikhega -->
 <script src="../common/products/product-manager.js"></script>
 <!-- 4. UNIFIED PROFILE - Common Profile - iske bina Shop ka Logo / Banner / Owner Photo / Gallery nahi dikhega -->
@@ -182,6 +181,10 @@ COD available • Free Delivery • SamanLive
   // Cart ko shopId de do - warna Cart dusri dukaan ka maal dikhayega
   try{ if (window.CartCore) window.CartCore.shopId = shopId; }catch(e){}
   try{ if (window.CartCount) window.CartCount.shopId = shopId; }catch(e){}
+  // CODE 12: QR Share wale component ko link + naam de do - Loader ne qr-share-modal.html load kiya hoga
+  window.__SAMAN_SHOP_LINK__ = location.origin + '/shop-templates/achar-shop/customer-view.html?shopId=' + encodeURIComponent(shopId);
+  window.__SAMAN_SHOP_NAME__ = document.getElementById('shopName') ? document.getElementById('shopName').textContent : 'Maa Ke Haath Ka Achar';
+  window.SHOP_SHARE_URL = window.__SAMAN_SHOP_LINK__;
   if(!shopId){
     console.warn('[CUSTOMER-VIEW V5] shopId missing - URL me ?shopId=XXX hona chahiye. Shop List / Share Link se dobara kholo.');
   }
@@ -204,6 +207,40 @@ COD available • Free Delivery • SamanLive
       body: JSON.stringify({ event: 'visit', device: isMobile ? 'Mobile' : 'Desktop', page: location.pathname, shopType: 'achar-shop', source: document.referrer ? 'Referral' : 'Direct' })
     }).catch(function(){});
   }catch(e){}
+})();
+</script>
+
+<!-- CODE 12: Share + Cart Bar ko naye component se jodo - customer-view.js me dobara Share / Cart mat likhna -->
+<script>
+(function(){
+  function getShareUrl(){
+    return window.__SAMAN_SHOP_LINK__ || (location.origin + '/shop-templates/achar-shop/customer-view.html?shopId=' + encodeURIComponent(window.SHOP_ID || ''));
+  }
+  function getShareName(){
+    var el = document.getElementById('shopName');
+    return (el && el.textContent) || window.__SAMAN_SHOP_NAME__ || 'Maa Ke Haath Ka Achar';
+  }
+  function doShare(){
+    // Pehle naya QR modal, nahi khula toh purana ShareCore, uske baad navigator.share
+    if (window.openQrShare) { window.openQrShare(getShareName(), getShareUrl()); return; }
+    try{
+      if (window.ShareCore && window.ShareCore.share) return window.ShareCore.share({ title: getShareName(), text: 'Ghar ka bana shuddh achar - order karo', url: getShareUrl() });
+    }catch(e){}
+    if (navigator.share) navigator.share({ title: getShareName(), text: 'Ghar ka bana shuddh achar - order karo', url: getShareUrl() }).catch(function(){});
+    else { navigator.clipboard.writeText(getShareUrl()).then(function(){ alert('Link copy ho gaya'); }); }
+  }
+  function doCart(){
+    // Pehle naya Cart Drawer, nahi khula toh purana Cart page
+    if (window.openCartDrawer) { window.openCartDrawer(); return; }
+    if (window.openMiniCart) { window.openMiniCart(); return; }
+    location.href = '../common/cart/cart.html?shopId=' + encodeURIComponent(window.SHOP_ID || '');
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    var s1 = document.getElementById('shareBtn'); if (s1) s1.addEventListener('click', doShare);
+    var s2 = document.getElementById('shareTopBtn'); if (s2) s2.addEventListener('click', doShare);
+    var cb = document.getElementById('cartBar'); if (cb) cb.addEventListener('click', doCart);
+    var cbb = document.getElementById('cartBarBtn'); if (cbb) cbb.addEventListener('click', function(e){ e.stopPropagation(); doCart(); });
+  });
 })();
 </script>
 

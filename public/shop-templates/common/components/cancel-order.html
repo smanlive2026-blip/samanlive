@@ -1,0 +1,180 @@
+<!-- LOCATION: public/shop-templates/common/components/cancel-order.html - V1 NEW - CODE 12 - FILE 10/11 -->
+<!-- KAAM: Customer ke Order cancel karne ka popup. Page nahi hai, component hai. -->
+<!-- RULE 1: Ye order cancel nahi karega khud se, sirf wajah lega aur Order system ko bolega. Order system hi cancel karega. -->
+<!-- RULE 2: Wajah chune bina cancel nahi hoga. Bina wajah wala cancel nahi bhejenge. -->
+<!-- RULE 3: Ye customer-orders/cancel-order.html wali purani file nahi hai. Wo alag system ki hai, usko haath mat lagana. -->
+
+<div id="cancelOrderOverlay" class="cancel-order-overlay" style="display:none"></div>
+
+<div id="cancelOrderModal" class="cancel-order-modal" style="display:none">
+  <div class="cancel-order-head">
+    <b>Order Cancel Karna Hai? 😔</b>
+    <button id="cancelOrderClose" class="cancel-order-close" aria-label="Close">✕</button>
+  </div>
+
+  <div class="cancel-order-body">
+    <div class="cancel-order-order-info">
+      <span>Order ID</span>
+      <b id="cancelOrderIdText">-</b>
+    </div>
+    <p class="cancel-order-q">Kis wajah se cancel kar rahe ho?</p>
+
+    <div id="cancelOrderReasons" class="cancel-order-reasons">
+      <label><input type="radio" name="cancelOrderReason" value="Galti se order ho gaya" /> Galti se order ho gaya</label>
+      <label><input type="radio" name="cancelOrderReason" value="Ab nahi chahiye" /> Ab nahi chahiye</label>
+      <label><input type="radio" name="cancelOrderReason" value="Bahut der lag rahi hai" /> Bahut der lag rahi hai</label>
+      <label><input type="radio" name="cancelOrderReason" value="Dusri dukaan se mil gaya" /> Dusri dukaan se mil gaya</label>
+      <label><input type="radio" name="cancelOrderReason" value="Price zyada laga" /> Price zyada laga</label>
+      <label><input type="radio" name="cancelOrderReason" value="other" /> Aur koi wajah</label>
+    </div>
+
+    <textarea id="cancelOrderOtherText" class="cancel-order-other-text" rows="2" placeholder="Wajah likho..." style="display:none"></textarea>
+
+    <div id="cancelOrderError" class="cancel-order-error" style="display:none">Pehle wajah chuno</div>
+
+    <div class="cancel-order-btns">
+      <button id="cancelOrderConfirmBtn" class="cancel-order-confirm-btn">Haan, Cancel Kar Do</button>
+      <button id="cancelOrderKeepBtn" class="cancel-order-keep-btn">Nahi, Order Rakho</button>
+    </div>
+    <span class="cancel-order-note">Cancel hone ke baad paise wapas aane me 3-5 din lag sakte hain (agar online pay kiya tha toh).</span>
+  </div>
+</div>
+
+<style>
+.cancel-order-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9998}
+.cancel-order-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,92vw);background:#fff;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.25);z-index:9999;overflow:hidden}
+.cancel-order-head{display:flex;align-items:center;justify-content:space-between;padding:14px;border-bottom:1px solid #eee}
+.cancel-order-head b{font-size:15px;font-weight:900;font-family:Outfit,sans-serif}
+.cancel-order-close{border:0;background:#f3f4f6;width:30px;height:30px;border-radius:50%;cursor:pointer}
+.cancel-order-body{padding:14px;display:flex;flex-direction:column;gap:12px}
+.cancel-order-order-info{display:flex;justify-content:space-between;font-size:13px;padding:10px;background:#f9fafb;border-radius:10px}
+.cancel-order-order-info span{color:#666}
+.cancel-order-q{font-size:14px;font-weight:800;margin:0}
+.cancel-order-reasons{display:flex;flex-direction:column;gap:8px}
+.cancel-order-reasons label{display:flex;gap:10px;align-items:center;padding:11px;border:1px solid #eee;border-radius:10px;font-size:13px;cursor:pointer}
+.cancel-order-reasons label:has(input:checked){border-color:#111827;background:#f9fafb}
+.cancel-order-other-text{width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box}
+.cancel-order-error{padding:10px;background:#fef2f2;color:#dc2626;border-radius:10px;font-size:12px;font-weight:700}
+.cancel-order-btns{display:flex;flex-direction:column;gap:10px}
+.cancel-order-confirm-btn{border:0;background:#dc2626;color:#fff;padding:12px;border-radius:10px;font-weight:900;cursor:pointer}
+.cancel-order-keep-btn{border:1px solid #ddd;background:#fff;padding:12px;border-radius:10px;font-weight:800;cursor:pointer}
+.cancel-order-note{font-size:11px;color:#888;text-align:center}
+</style>
+
+<script>
+(function () {
+  if (window.__SAMAN_CANCEL_ORDER_V1__) return;
+  window.__SAMAN_CANCEL_ORDER_V1__ = true;
+
+  var currentOrderId = '';
+
+  function getShopId() {
+    return new URLSearchParams(window.location.search).get('shopId') || window.__SAMAN_SHOP_ID || window.SHOP_ID || '';
+  }
+  function getToken() {
+    try { if (window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; } catch (e) {}
+    return window.USER_TOKEN || '';
+  }
+  function toast(m) {
+    if (window.SamanComponents && window.SamanComponents.toast) { window.SamanComponents.toast(m, 'error'); return; }
+    alert(m);
+  }
+  function toastOk(m) {
+    if (window.SamanComponents && window.SamanComponents.toast) { window.SamanComponents.toast(m, 'success'); return; }
+    alert(m);
+  }
+  function getReason() {
+    var checked = document.querySelector('input[name="cancelOrderReason"]:checked');
+    if (!checked) return '';
+    if (checked.value === 'other') {
+      var other = document.getElementById('cancelOrderOtherText');
+      return other ? other.value.trim() : '';
+    }
+    return checked.value;
+  }
+
+  function openModal(orderId) {
+    currentOrderId = orderId || '';
+    if (!currentOrderId) { toast('Order ID nahi mila'); return; }
+    var overlay = document.getElementById('cancelOrderOverlay');
+    var modal = document.getElementById('cancelOrderModal');
+    if (!overlay || !modal) return;
+    var idEl = document.getElementById('cancelOrderIdText');
+    if (idEl) idEl.textContent = '#' + String(currentOrderId).slice(-6);
+    var err = document.getElementById('cancelOrderError');
+    if (err) err.style.display = 'none';
+    var radios = document.querySelectorAll('input[name="cancelOrderReason"]');
+    for (var i = 0; i < radios.length; i++) radios[i].checked = false;
+    var other = document.getElementById('cancelOrderOtherText');
+    if (other) { other.value = ''; other.style.display = 'none'; }
+    overlay.style.display = 'block';
+    modal.style.display = 'block';
+  }
+  function closeModal() {
+    var overlay = document.getElementById('cancelOrderOverlay');
+    var modal = document.getElementById('cancelOrderModal');
+    if (overlay) overlay.style.display = 'none';
+    if (modal) modal.style.display = 'none';
+  }
+
+  window.openCancelOrder = openModal;
+  window.closeCancelOrder = closeModal;
+
+  async function confirmCancel() {
+    var reason = getReason();
+    var err = document.getElementById('cancelOrderError');
+    if (!reason) {
+      if (err) err.style.display = 'block';
+      toast('Pehle wajah chuno');
+      return;
+    }
+    if (!currentOrderId) { toast('Order ID nahi mila'); return; }
+    var btn = document.getElementById('cancelOrderConfirmBtn');
+    if (btn) { btn.textContent = 'Cancel ho raha hai...'; btn.disabled = true; }
+    try {
+      var token = getToken();
+      var res = await fetch('/api/common/customer-orders/' + encodeURIComponent(currentOrderId) + '/cancel?shopId=' + encodeURIComponent(getShopId()), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
+        credentials: 'include',
+        body: JSON.stringify({ reason: reason, cancelReason: reason })
+      });
+      var d = await res.json().catch(function () { return {}; });
+      if (!res.ok) throw new Error(d.message || 'Cancel nahi hua');
+      toastOk('Order cancel ho gaya');
+      closeModal();
+      document.dispatchEvent(new CustomEvent('saman:order-cancelled', { detail: { orderId: currentOrderId, reason: reason } }));
+      document.dispatchEvent(new CustomEvent('saman:cart-updated'));
+      // My Orders wali list ko bolo dobara load kare
+      if (window.reloadMyOrders) { try { window.reloadMyOrders(); } catch (e) {} }
+      if (window.loadMyOrders) { try { window.loadMyOrders(); } catch (e) {} }
+    } catch (e) {
+      toast(e.message || 'Cancel nahi hua');
+    } finally {
+      if (btn) { btn.textContent = 'Haan, Cancel Kar Do'; btn.disabled = false; }
+    }
+  }
+
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t && t.name === 'cancelOrderReason') {
+      var other = document.getElementById('cancelOrderOtherText');
+      if (other) other.style.display = t.value === 'other' ? 'block' : 'none';
+      var err = document.getElementById('cancelOrderError');
+      if (err) err.style.display = 'none';
+    }
+  });
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.id === 'cancelOrderOverlay' || t.id === 'cancelOrderClose' || t.id === 'cancelOrderKeepBtn') { closeModal(); return; }
+    if (t.id === 'cancelOrderConfirmBtn') { confirmCancel(); return; }
+    // Kisi bhi button pe data-open-cancel-order + data-order-id ho toh modal kholega
+    var openBtn = t.closest ? t.closest('[data-open-cancel-order]') : null;
+    if (openBtn) {
+      e.preventDefault();
+      openModal(openBtn.getAttribute('data-order-id') || openBtn.getAttribute('data-id') || '');
+    }
+  });
+})();
+</script>

@@ -1,0 +1,164 @@
+<!-- LOCATION: public/shop-templates/common/components/saved-for-later.html - V1 NEW - CODE 12 - FILE 3/11 -->
+<!-- KAAM: Cart se hatake "Baad me lunga" wala samaan dikhana. Page nahi hai, component hai. -->
+<!-- RULE 1: Apna alag saved list kabhi nahi banayega. CartCore ke saved wale hisse se hi lega. -->
+<!-- RULE 2: Agar kuch saved nahi hai toh "Kuch saved nahi hai" dikhega, fake product kabhi nahi dikhega. -->
+<!-- RULE 3: Move to Cart dabane pe wapas Cart me jayega, yahan se gayab ho jayega. -->
+
+<div id="savedForLater" class="saved-later-box" style="display:none">
+  <div class="saved-later-head">
+    <b>Saved for Later 🔖 <span id="savedLaterCountBadge">(0)</span></b>
+    <button id="savedLaterClose" class="saved-later-close" aria-label="Close">✕</button>
+  </div>
+
+  <div id="savedLaterEmpty" class="saved-later-empty" style="display:none">
+    <div>🔖</div>
+    <b>Kuch saved nahi hai</b>
+    <span>Cart se hataya hua samaan yahan dikhega.</span>
+  </div>
+
+  <div id="savedLaterList" class="saved-later-list"></div>
+
+  <div id="savedLaterFoot" class="saved-later-foot" style="display:none">
+    <button id="savedLaterBackBtn" class="saved-later-back-btn">← Back to Cart</button>
+  </div>
+</div>
+
+<style>
+.saved-later-box{position:fixed;top:64px;right:12px;width:min(360px,92vw);background:#fff;border:1px solid #eee;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.18);z-index:9999;overflow:hidden}
+.saved-later-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #eee}
+.saved-later-head b{font-size:15px;font-weight:900;font-family:Outfit,sans-serif}
+.saved-later-close{border:0;background:#f3f4f6;width:30px;height:30px;border-radius:50%;cursor:pointer}
+.saved-later-list{max-height:320px;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+.saved-later-item{display:flex;gap:10px;padding:8px;border:1px solid #eee;border-radius:12px}
+.saved-later-item img{width:56px;height:56px;object-fit:cover;border-radius:8px;background:#f3f4f6;flex-shrink:0}
+.saved-later-item-info{flex:1;min-width:0}
+.saved-later-item-info b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saved-later-item-info span{font-size:11px;color:#666}
+.saved-later-item-price{font-size:13px;font-weight:900;margin-top:2px}
+.saved-later-item-btns{display:flex;gap:6px;margin-top:8px}
+.saved-later-item-btns button{border:1px solid #ddd;background:#fff;padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
+.saved-later-item-btns button.saved-later-move-btn{background:#111827;color:#fff;border-color:#111827}
+.saved-later-empty{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:18px}
+.saved-later-empty div{font-size:32px}
+.saved-later-empty b{font-size:14px}
+.saved-later-empty span{font-size:12px;color:#666}
+.saved-later-foot{padding:12px;border-top:1px solid #eee}
+.saved-later-back-btn{width:100%;border:1px solid #ddd;background:#fff;padding:11px;border-radius:10px;font-weight:800;cursor:pointer}
+</style>
+
+<script>
+(function () {
+  if (window.__SAMAN_SAVED_LATER_V1__) return;
+  window.__SAMAN_SAVED_LATER_V1__ = true;
+
+  function fmt(n) {
+    var v = Number(n);
+    if (!Number.isFinite(v)) v = 0;
+    return '₹' + v.toLocaleString('en-IN');
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function getSaved() {
+    try {
+      if (window.CartCore && window.CartCore.getSaved) return window.CartCore.getSaved() || [];
+      if (window.CartCore && window.CartCore.getSavedForLater) return window.CartCore.getSavedForLater() || [];
+    } catch (e) {}
+    return [];
+  }
+
+  function render() {
+    var box = document.getElementById('savedForLater');
+    if (!box) return;
+    var list = document.getElementById('savedLaterList');
+    var empty = document.getElementById('savedLaterEmpty');
+    var foot = document.getElementById('savedLaterFoot');
+    var badge = document.getElementById('savedLaterCountBadge');
+    if (!list || !empty || !foot) return;
+    var items = getSaved();
+    if (badge) badge.textContent = '(' + items.length + ')';
+    if (!items.length) {
+      list.innerHTML = '';
+      empty.style.display = 'flex';
+      foot.style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+    foot.style.display = 'block';
+    list.innerHTML = '';
+    items.forEach(function (it) {
+      var price = Number(it.price || it.sellingPrice || 0);
+      var row = document.createElement('div');
+      row.className = 'saved-later-item';
+      var img = it.image || it.thumbnail || it.img || 'https://via.placeholder.com/56';
+      var name = it.name || it.productName || 'Product';
+      row.innerHTML =
+        '<img src="' + esc(img) + '" alt="" onerror="this.src=\'https://via.placeholder.com/56\'" />' +
+        '<div class="saved-later-item-info">' +
+          '<b>' + esc(name) + '</b>' +
+          '<span>' + fmt(price) + '</span>' +
+          '<div class="saved-later-item-price">' + fmt(price) + '</div>' +
+          '<div class="saved-later-item-btns">' +
+            '<button class="saved-later-move-btn" data-act="move">Move to Cart</button>' +
+            '<button data-act="remove">Remove</button>' +
+          '</div>' +
+        '</div>';
+      var btns = row.querySelectorAll('button[data-act]');
+      for (var i = 0; i < btns.length; i++) {
+        (function (btn, item) {
+          btn.onclick = function () {
+            var act = btn.getAttribute('data-act');
+            var id = item.productId || item.id || item._id;
+            try {
+              if (act === 'move') {
+                if (window.CartCore && window.CartCore.moveSavedToCart) window.CartCore.moveSavedToCart(id);
+                else if (window.CartCore && window.CartCore.add) window.CartCore.add(item, 1);
+                if (window.CartCore && window.CartCore.removeSaved) window.CartCore.removeSaved(id);
+              }
+              if (act === 'remove' && window.CartCore && window.CartCore.removeSaved) window.CartCore.removeSaved(id);
+              else if (act === 'remove' && window.CartCore && window.CartCore.removeFromSaved) window.CartCore.removeFromSaved(id);
+            } catch (e) {}
+            render();
+            document.dispatchEvent(new CustomEvent('saman:cart-updated'));
+          };
+        })(btns[i], it);
+      }
+      list.appendChild(row);
+    });
+  }
+
+  function openBox() {
+    var box = document.getElementById('savedForLater');
+    if (!box) return;
+    // Drawer / Mini-cart khula hai toh usko band kar do, 3 ek sath nahi khulenge
+    if (window.closeCartDrawer) { try { window.closeCartDrawer(); } catch (e) {} }
+    if (window.closeMiniCart) { try { window.closeMiniCart(); } catch (e) {} }
+    render();
+    box.style.display = 'block';
+  }
+  function closeBox() {
+    var box = document.getElementById('savedForLater');
+    if (box) box.style.display = 'none';
+  }
+
+  window.openSavedForLater = openBox;
+  window.closeSavedForLater = closeBox;
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.id === 'savedLaterClose') { closeBox(); return; }
+    if (t.id === 'savedLaterBackBtn') {
+      closeBox();
+      if (window.openCartDrawer) { try { window.openCartDrawer(); } catch (e) {} }
+      return;
+    }
+    var openBtn = t.closest ? t.closest('[data-open-saved-later]') : null;
+    if (openBtn) { e.preventDefault(); openBox(); }
+  });
+
+  document.addEventListener('saman:cart-updated', render);
+  document.addEventListener('cart-updated', render);
+  document.addEventListener('saman:components-ready', render);
+})();
+</script>

@@ -1,0 +1,215 @@
+<!-- LOCATION: public/shop-templates/common/components/return-order.html - V1 NEW - CODE 12 - FILE 11/11 - LAST FILE -->
+<!-- KAAM: Customer ke Order return karne ka popup. Page nahi hai, component hai. -->
+<!-- RULE 1: Ye return accept nahi karega khud se, sirf wajah + photo lega aur Order system ko bolega. Order system hi return karega. -->
+<!-- RULE 2: Wajah chune bina return nahi bhejenge. -->
+<!-- RULE 3: Ye customer-orders/return-order.html wali purani file nahi hai. Wo alag system ki hai, usko haath mat lagana. -->
+<!-- RULE 4: Return sirf delivered order ka hi hoga. Baaki order ka return button dikhega hi nahi - wo My Orders wala sambhalega. -->
+
+<div id="returnOrderOverlay" class="return-order-overlay" style="display:none"></div>
+
+<div id="returnOrderModal" class="return-order-modal" style="display:none">
+  <div class="return-order-head">
+    <b>Order Return Karna Hai? ↩️</b>
+    <button id="returnOrderClose" class="return-order-close" aria-label="Close">✕</button>
+  </div>
+
+  <div class="return-order-body">
+    <div class="return-order-order-info">
+      <span>Order ID</span>
+      <b id="returnOrderIdText">-</b>
+    </div>
+    <p class="return-order-q">Kis wajah se return kar rahe ho?</p>
+
+    <div id="returnOrderReasons" class="return-order-reasons">
+      <label><input type="radio" name="returnOrderReason" value="Product kharab / toota hua aaya" /> Product kharab / toota hua aaya</label>
+      <label><input type="radio" name="returnOrderReason" value="Galat product aa gaya" /> Galat product aa gaya</label>
+      <label><input type="radio" name="returnOrderReason" value="Size / Colour galat hai" /> Size / Colour galat hai</label>
+      <label><input type="radio" name="returnOrderReason" value="Photo jaisa nahi laga" /> Photo jaisa nahi laga</label>
+      <label><input type="radio" name="returnOrderReason" value="other" /> Aur koi wajah</label>
+    </div>
+
+    <textarea id="returnOrderOtherText" class="return-order-other-text" rows="2" placeholder="Wajah likho..." style="display:none"></textarea>
+
+    <div class="return-order-photo-wrap">
+      <label>Product ki photo (optional, par rahegi toh return jaldi hoga)</label>
+      <input id="returnOrderPhoto" type="file" accept="image/*" />
+      <div id="returnOrderPhotoPreview" class="return-order-photo-preview" style="display:none">
+        <img id="returnOrderPhotoImg" src="" alt="Return photo" />
+        <button id="returnOrderPhotoRemove" type="button">Photo Hatao ✕</button>
+      </div>
+    </div>
+
+    <div id="returnOrderError" class="return-order-error" style="display:none">Pehle wajah chuno</div>
+
+    <div class="return-order-btns">
+      <button id="returnOrderConfirmBtn" class="return-order-confirm-btn">Haan, Return Kar Do</button>
+      <button id="returnOrderKeepBtn" class="return-order-keep-btn">Nahi, Rakhna Hai</button>
+    </div>
+    <span class="return-order-note">Return approve hone ke baad delivery boy product lene aayega, phir paise wapas aayenge.</span>
+  </div>
+</div>
+
+<style>
+.return-order-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9998}
+.return-order-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(400px,92vw);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.25);z-index:9999}
+.return-order-head{display:flex;align-items:center;justify-content:space-between;padding:14px;border-bottom:1px solid #eee}
+.return-order-head b{font-size:15px;font-weight:900;font-family:Outfit,sans-serif}
+.return-order-close{border:0;background:#f3f4f6;width:30px;height:30px;border-radius:50%;cursor:pointer}
+.return-order-body{padding:14px;display:flex;flex-direction:column;gap:12px}
+.return-order-order-info{display:flex;justify-content:space-between;font-size:13px;padding:10px;background:#f9fafb;border-radius:10px}
+.return-order-order-info span{color:#666}
+.return-order-q{font-size:14px;font-weight:800;margin:0}
+.return-order-reasons{display:flex;flex-direction:column;gap:8px}
+.return-order-reasons label{display:flex;gap:10px;align-items:center;padding:11px;border:1px solid #eee;border-radius:10px;font-size:13px;cursor:pointer}
+.return-order-reasons label:has(input:checked){border-color:#111827;background:#f9fafb}
+.return-order-other-text{width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box}
+.return-order-photo-wrap{display:flex;flex-direction:column;gap:8px}
+.return-order-photo-wrap label{font-size:12px;font-weight:800}
+.return-order-photo-wrap input[type="file"]{font-size:12px}
+.return-order-photo-preview{display:flex;align-items:center;gap:10px;padding:8px;background:#f9fafb;border-radius:10px}
+.return-order-photo-preview img{width:56px;height:56px;object-fit:cover;border-radius:8px}
+.return-order-photo-preview button{border:1px solid #ddd;background:#fff;padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
+.return-order-error{padding:10px;background:#fef2f2;color:#dc2626;border-radius:10px;font-size:12px;font-weight:700}
+.return-order-btns{display:flex;flex-direction:column;gap:10px}
+.return-order-confirm-btn{border:0;background:#111827;color:#fff;padding:12px;border-radius:10px;font-weight:900;cursor:pointer}
+.return-order-keep-btn{border:1px solid #ddd;background:#fff;padding:12px;border-radius:10px;font-weight:800;cursor:pointer}
+.return-order-note{font-size:11px;color:#888;text-align:center}
+</style>
+
+<script>
+(function () {
+  if (window.__SAMAN_RETURN_ORDER_V1__) return;
+  window.__SAMAN_RETURN_ORDER_V1__ = true;
+  var currentOrderId = '';
+  var photoDataUrl = '';
+  function getShopId() {
+    return new URLSearchParams(window.location.search).get('shopId') || window.__SAMAN_SHOP_ID || window.SHOP_ID || '';
+  }
+  function getToken() {
+    try { if (window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; } catch (e) {}
+    return window.USER_TOKEN || '';
+  }
+  function toast(m) {
+    if (window.SamanComponents && window.SamanComponents.toast) { window.SamanComponents.toast(m, 'error'); return; }
+    alert(m);
+  }
+  function toastOk(m) {
+    if (window.SamanComponents && window.SamanComponents.toast) { window.SamanComponents.toast(m, 'success'); return; }
+    alert(m);
+  }
+  function getReason() {
+    var checked = document.querySelector('input[name="returnOrderReason"]:checked');
+    if (!checked) return '';
+    if (checked.value === 'other') {
+      var other = document.getElementById('returnOrderOtherText');
+      return other ? other.value.trim() : '';
+    }
+    return checked.value;
+  }
+  function openModal(orderId) {
+    currentOrderId = orderId || '';
+    if (!currentOrderId) { toast('Order ID nahi mila'); return; }
+    var overlay = document.getElementById('returnOrderOverlay');
+    var modal = document.getElementById('returnOrderModal');
+    if (!overlay || !modal) return;
+    var idEl = document.getElementById('returnOrderIdText');
+    if (idEl) idEl.textContent = '#' + String(currentOrderId).slice(-6);
+    var err = document.getElementById('returnOrderError');
+    if (err) err.style.display = 'none';
+    var radios = document.querySelectorAll('input[name="returnOrderReason"]');
+    for (var i = 0; i < radios.length; i++) radios[i].checked = false;
+    var other = document.getElementById('returnOrderOtherText');
+    if (other) { other.value = ''; other.style.display = 'none'; }
+    photoDataUrl = '';
+    var photoInput = document.getElementById('returnOrderPhoto');
+    if (photoInput) photoInput.value = '';
+    var preview = document.getElementById('returnOrderPhotoPreview');
+    if (preview) preview.style.display = 'none';
+    overlay.style.display = 'block';
+    modal.style.display = 'block';
+  }
+  function closeModal() {
+    var overlay = document.getElementById('returnOrderOverlay');
+    var modal = document.getElementById('returnOrderModal');
+    if (overlay) overlay.style.display = 'none';
+    if (modal) modal.style.display = 'none';
+  }
+  window.openReturnOrder = openModal;
+  window.closeReturnOrder = closeModal;
+  async function confirmReturn() {
+    var reason = getReason();
+    var err = document.getElementById('returnOrderError');
+    if (!reason) {
+      if (err) err.style.display = 'block';
+      toast('Pehle wajah chuno');
+      return;
+    }
+    if (!currentOrderId) { toast('Order ID nahi mila'); return; }
+    var btn = document.getElementById('returnOrderConfirmBtn');
+    if (btn) { btn.textContent = 'Return bheja ja raha hai...'; btn.disabled = true; }
+    try {
+      var token = getToken();
+      var res = await fetch('/api/common/customer-orders/' + encodeURIComponent(currentOrderId) + '/return?shopId=' + encodeURIComponent(getShopId()), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
+        credentials: 'include',
+        body: JSON.stringify({ reason: reason, returnReason: reason, photo: photoDataUrl || '' })
+      });
+      var d = await res.json().catch(function () { return {}; });
+      if (!res.ok) throw new Error(d.message || 'Return nahi bheja gaya');
+      toastOk('Return request bhej di gayi');
+      closeModal();
+      document.dispatchEvent(new CustomEvent('saman:order-returned', { detail: { orderId: currentOrderId, reason: reason } }));
+      if (window.reloadMyOrders) { try { window.reloadMyOrders(); } catch (e) {} }
+      if (window.loadMyOrders) { try { window.loadMyOrders(); } catch (e) {} }
+    } catch (e) {
+      toast(e.message || 'Return nahi bheja gaya');
+    } finally {
+      if (btn) { btn.textContent = 'Haan, Return Kar Do'; btn.disabled = false; }
+    }
+  }
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.name === 'returnOrderReason') {
+      var other = document.getElementById('returnOrderOtherText');
+      if (other) other.style.display = t.value === 'other' ? 'block' : 'none';
+      var err = document.getElementById('returnOrderError');
+      if (err) err.style.display = 'none';
+      return;
+    }
+    if (t.id === 'returnOrderPhoto') {
+      var file = t.files && t.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        photoDataUrl = ev.target.result || '';
+        var preview = document.getElementById('returnOrderPhotoPreview');
+        var img = document.getElementById('returnOrderPhotoImg');
+        if (preview) preview.style.display = 'flex';
+        if (img) img.src = photoDataUrl;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.id === 'returnOrderOverlay' || t.id === 'returnOrderClose' || t.id === 'returnOrderKeepBtn') { closeModal(); return; }
+    if (t.id === 'returnOrderConfirmBtn') { confirmReturn(); return; }
+    if (t.id === 'returnOrderPhotoRemove') {
+      photoDataUrl = '';
+      var photoInput = document.getElementById('returnOrderPhoto');
+      if (photoInput) photoInput.value = '';
+      var preview = document.getElementById('returnOrderPhotoPreview');
+      if (preview) preview.style.display = 'none';
+      return;
+    }
+    var openBtn = t.closest ? t.closest('[data-open-return-order]') : null;
+    if (openBtn) {
+      e.preventDefault();
+      openModal(openBtn.getAttribute('data-order-id') || openBtn.getAttribute('data-id') || '');
+    }
+  });
+})();
+</script>

@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/achar-shop/customer-view.js - FULL - PRODUCT-FORM + COMMON PROFILE - V5
+// LOCATION: public/shop-templates/achar-shop/customer-view.js - FULL - PRODUCT-FORM + COMMON PROFILE - V5 - CODE 12 FIX
 // RULE: Customer = Dekhega + Cart me dalega + Common Checkout pe jayega. Yahan Accept / Packed ka button kabhi nahi hoga.
 // COMMON: WorldProductManager.getProducts = /api/world-products + cart-core + cart-count + api-core + shop-toggle/status + UNIFIED PROFILE + wishlist + reviews + share + common/checkout + common/customer-orders/my-orders + common/products/product-detail.html
 // PRODUCT-FORM: Product = WORLD MODEL se hi aayega. Seed / Achar API se nahi. Seed sirf Product Form ke Quick Add ke liye hai.
@@ -7,6 +7,7 @@
 //            logo = shop.logo || shop.shopLogo | banner = shop.banner || shop.coverPhoto | ownerPhoto = shop.ownerPhotoUrl
 // HTML: customer-view.html me isko <script src="customer-view.js"></script> se load karna hai - INLINE ME DOBARA MAT LIKHNA
 // RULE V5: shopId SIRF URL se aayega. Is file me koi bhi browser storage use NAHI hoga. Cart sirf CartCore se, nahi toh RAM wali cart se.
+// CODE 12 FIX: Share + Cart Bar ka listener YAHAN NAHI hai - wo customer-view.html me hai, nahi toh double khulega. goCheckout() ab pehle Cart Drawer kholega.
 
 (function(){
   // Double load guard - agar ye file 2 baar load ho gayi toh Add 2 baar na chale
@@ -390,7 +391,8 @@
   // ---------- BUTTONS ----------
   function bindButtons(){
     var si = $('searchInput'); if(si) si.addEventListener('input', applyFilter);
-    var cb = $('cartBar'); if(cb) cb.addEventListener('click', goCheckout);
+    // CODE 12: cartBar / shareBtn / shareTopBtn ka listener YAHAN NAHI lagayenge - wo customer-view.html me hai.
+    // Yahan lagaya toh Share 2 baar khulega, Cart 2 baar khulega. Sirf Orders / Call / WhatsApp yahan hai.
     var ob = $('ordersBtn'); if(ob) ob.addEventListener('click', function(){
       location.href = '../common/customer-orders/my-orders.html?shopId=' + encodeURIComponent(shopId);
     });
@@ -403,24 +405,17 @@
       try{ if (window.WhatsAppShare && window.WhatsAppShare.share) return window.WhatsAppShare.share('https://wa.me/91' + window.SHOP_PHONE, 'Namaste! Achar order karna hai.'); }catch(e){}
       window.open('https://wa.me/91' + window.SHOP_PHONE + '?text=' + encodeURIComponent('Namaste! Achar order karna hai.'), '_blank');
     });
-    var sb = $('shareBtn'); if(sb) sb.addEventListener('click', shareFn);
-    var stb = $('shareTopBtn'); if(stb) stb.addEventListener('click', shareFn);
   }
   function goCheckout(){
     var cart = getCart();
     if(!cart.length){ toast('Cart khali hai'); return; }
     if(!shopOpen){ toast('Dukaan band hai'); return; }
+    // CODE 12: Pehle naya Cart Drawer kholo - Drawer me se Checkout dabane pe Checkout khulega
+    if (window.openCartDrawer) { window.openCartDrawer(); return; }
     location.href = '../common/checkout/checkout.html?shopId=' + encodeURIComponent(shopId) + '&supplierId=' + encodeURIComponent(shopId) + '&supplierRole=shop_owner&shopType=' + SHOP_TYPE;
   }
-  function shareFn(){
-    var url = location.href;
-    try{
-      if (window.ShareCore && window.ShareCore.share) return window.ShareCore.share({ title: shopData.shopName || 'Achar Shop', text: 'Ghar ka bana shuddh achar - order karo', url: url });
-      if (window.WhatsAppShare && window.WhatsAppShare.share) return window.WhatsAppShare.share(url, 'Ghar ka bana shuddh achar - order karo');
-    }catch(e){}
-    if(navigator.share) navigator.share({ title: shopData.shopName || 'Achar Shop', text: 'Ghar ka bana shuddh achar - order karo', url: url }).catch(function(){});
-    else { navigator.clipboard.writeText(url).then(function(){ toast('Link copy ho gaya'); }); }
-  }
+  window.goCheckout = goCheckout;
+  // CODE 12: shareFn YAHAN NAHI hai - Share ka 1 hi maalik hai = customer-view.html wala doShare() -> openQrShare()
 
   document.addEventListener('cart:updated', updateCartBar);
   document.addEventListener('wishlist:updated', renderProducts);

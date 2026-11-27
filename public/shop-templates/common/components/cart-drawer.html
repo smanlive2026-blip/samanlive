@@ -1,0 +1,243 @@
+<!-- LOCATION: public/shop-templates/common/components/cart-drawer.html - V1 NEW - CODE 12 - FILE 1/11 -->
+<!-- KAAM: Cart ka side se khulne wala drawer. Page nahi hai, component hai. -->
+<!-- RULE 1: Apna alag cart kabhi nahi banayega. Cart ka kaam sirf CartCore karega. -->
+<!-- RULE 2: Ye apna naam / photo khud nahi bharega. Loader hi bharega. -->
+<!-- RULE 3: Agar cart khaali hai toh "Cart khaali hai" dikhega, fake product kabhi nahi dikhega. -->
+<!-- RULE 4: Checkout dabane pe ../common/cart/cart.html pe jayega, seedha checkout pe nahi. -->
+
+<div id="cartDrawerOverlay" class="cart-drawer-overlay" style="display:none"></div>
+
+<aside id="cartDrawer" class="cart-drawer" style="display:none">
+  <div class="cart-drawer-head">
+    <div>
+      <b id="cartDrawerTitle">Your Cart 🛒</b>
+      <span id="cartDrawerShopName"></span>
+    </div>
+    <button id="cartDrawerClose" class="cart-drawer-close" aria-label="Close">✕</button>
+  </div>
+
+  <div id="cartDrawerEmpty" class="cart-drawer-empty" style="display:none">
+    <div class="cart-drawer-empty-icon">🛒</div>
+    <b>Cart khaali hai</b>
+    <span>Abhi koi product add nahi hua hai.</span>
+    <button id="cartDrawerEmptyShopBtn" class="cart-drawer-empty-btn">Shop Now</button>
+  </div>
+
+  <div id="cartDrawerList" class="cart-drawer-list"></div>
+
+  <div id="cartDrawerSavedWrap" class="cart-drawer-saved-wrap" style="display:none">
+    <button id="cartDrawerSavedBtn" class="cart-drawer-saved-btn">Saved for Later 🔖 (<span id="cartDrawerSavedCount">0</span>)</button>
+  </div>
+
+  <div id="cartDrawerFoot" class="cart-drawer-foot" style="display:none">
+    <div class="cart-drawer-row">
+      <span>Items</span>
+      <b id="cartDrawerItemCount">0</b>
+    </div>
+    <div class="cart-drawer-row">
+      <span>Subtotal</span>
+      <b id="cartDrawerSubtotal">₹0</b>
+    </div>
+    <div class="cart-drawer-note">Delivery charge checkout pe dikhega.</div>
+    <button id="cartDrawerCheckoutBtn" class="cart-drawer-checkout-btn">Checkout →</button>
+    <button id="cartDrawerViewCartBtn" class="cart-drawer-view-btn">View Full Cart</button>
+  </div>
+</aside>
+
+<style>
+.cart-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998}
+.cart-drawer{position:fixed;top:0;right:0;width:min(380px,92vw);height:100dvh;background:#fff;z-index:9999;display:flex;flex-direction:column;box-shadow:-10px 0 30px rgba(0,0,0,.2)}
+.cart-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid #eee}
+.cart-drawer-head b{font-size:17px;font-weight:900;font-family:Outfit,sans-serif}
+.cart-drawer-head span{display:block;font-size:12px;color:#666;margin-top:2px}
+.cart-drawer-close{border:0;background:#f3f4f6;width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer}
+.cart-drawer-list{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:12px}
+.cart-drawer-item{display:flex;gap:12px;padding:10px;border:1px solid #eee;border-radius:14px}
+.cart-drawer-item img{width:64px;height:64px;object-fit:cover;border-radius:10px;background:#f3f4f6;flex-shrink:0}
+.cart-drawer-item-info{flex:1;min-width:0}
+.cart-drawer-item-info b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cart-drawer-item-info span{font-size:12px;color:#666}
+.cart-drawer-item-price{font-size:14px;font-weight:900;margin-top:4px}
+.cart-drawer-qty{display:flex;align-items:center;gap:8px;margin-top:8px}
+.cart-drawer-qty button{width:28px;height:28px;border-radius:50%;border:1px solid #ddd;background:#fff;font-size:16px;font-weight:800;cursor:pointer}
+.cart-drawer-qty b{min-width:20px;text-align:center}
+.cart-drawer-remove{border:0;background:transparent;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;padding:0}
+.cart-drawer-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:20px}
+.cart-drawer-empty-icon{font-size:48px}
+.cart-drawer-empty b{font-size:16px}
+.cart-drawer-empty span{font-size:13px;color:#666}
+.cart-drawer-empty-btn{margin-top:10px;border:0;background:#111827;color:#fff;padding:10px 20px;border-radius:10px;font-weight:800;cursor:pointer}
+.cart-drawer-saved-wrap{padding:0 12px 12px}
+.cart-drawer-saved-btn{width:100%;border:1px dashed #ddd;background:#fff9f0;padding:10px;border-radius:10px;font-weight:700;cursor:pointer}
+.cart-drawer-foot{padding:14px;border-top:1px solid #eee}
+.cart-drawer-row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
+.cart-drawer-note{font-size:11px;color:#888;margin:6px 0 10px}
+.cart-drawer-checkout-btn{width:100%;border:0;background:#111827;color:#fff;padding:13px;border-radius:12px;font-weight:900;font-size:15px;cursor:pointer}
+.cart-drawer-view-btn{width:100%;margin-top:8px;border:1px solid #ddd;background:#fff;padding:11px;border-radius:12px;font-weight:800;cursor:pointer}
+</style>
+
+<script>
+(function () {
+  if (window.__SAMAN_CART_DRAWER_V1__) return;
+  window.__SAMAN_CART_DRAWER_V1__ = true;
+
+  function getShopId() {
+    return new URLSearchParams(window.location.search).get('shopId') || window.__SAMAN_SHOP_ID || window.SHOP_ID || '';
+  }
+  function getShopFolder() {
+    try {
+      var m = (window.location.pathname || '').match(/\/shop-templates\/([^\/]+)\//);
+      if (m) return m[1];
+    } catch (e) {}
+    return '';
+  }
+  function fmt(n) {
+    var v = Number(n);
+    if (!Number.isFinite(v)) v = 0;
+    return '₹' + v.toLocaleString('en-IN');
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function getItems() {
+    try {
+      if (window.CartCore && window.CartCore.getItems) return window.CartCore.getItems() || [];
+      if (window.CartCore && window.CartCore.getCart) return window.CartCore.getCart() || [];
+    } catch (e) {}
+    return [];
+  }
+
+  function render() {
+    var list = document.getElementById('cartDrawerList');
+    var empty = document.getElementById('cartDrawerEmpty');
+    var foot = document.getElementById('cartDrawerFoot');
+    var savedWrap = document.getElementById('cartDrawerSavedWrap');
+    if (!list || !empty || !foot) return;
+    var items = getItems();
+    var shopId = getShopId();
+    var shopNameEl = document.getElementById('cartDrawerShopName');
+    if (shopNameEl) {
+      var nm = '';
+      try { if (window.CartCore && window.CartCore.getShopName) nm = window.CartCore.getShopName() || ''; } catch (e) {}
+      if (!nm) {
+        var h = document.getElementById('shopHeaderName') || document.getElementById('userHeaderTitle');
+        if (h) nm = h.textContent || '';
+      }
+      shopNameEl.textContent = nm;
+    }
+    if (!items.length) {
+      list.innerHTML = '';
+      empty.style.display = 'flex';
+      foot.style.display = 'none';
+      if (savedWrap) savedWrap.style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+    foot.style.display = 'block';
+    var total = 0;
+    var count = 0;
+    list.innerHTML = '';
+    items.forEach(function (it) {
+      var qty = Number(it.qty || it.quantity || 1);
+      var price = Number(it.price || it.sellingPrice || 0);
+      total += price * qty;
+      count += qty;
+      var row = document.createElement('div');
+      row.className = 'cart-drawer-item';
+      var img = it.image || it.thumbnail || it.img || 'https://via.placeholder.com/64';
+      var name = it.name || it.productName || 'Product';
+      row.innerHTML =
+        '<img src="' + esc(img) + '" alt="" onerror="this.src=\'https://via.placeholder.com/64\'" />' +
+        '<div class="cart-drawer-item-info">' +
+          '<b>' + esc(name) + '</b>' +
+          '<span>' + fmt(price) + ' x ' + qty + '</span>' +
+          '<div class="cart-drawer-item-price">' + fmt(price * qty) + '</div>' +
+          '<div class="cart-drawer-qty">' +
+            '<button data-act="minus">−</button><b>' + qty + '</b><button data-act="plus">+</button>' +
+          '</div>' +
+          '<button class="cart-drawer-remove" data-act="remove">Remove</button>' +
+        '</div>';
+      var btns = row.querySelectorAll('button[data-act]');
+      for (var i = 0; i < btns.length; i++) {
+        (function (btn, item) {
+          btn.onclick = function () {
+            var act = btn.getAttribute('data-act');
+            var id = item.productId || item.id || item._id;
+            try {
+              if (act === 'plus' && window.CartCore && window.CartCore.add) window.CartCore.add(item, 1);
+              else if (act === 'minus' && window.CartCore && window.CartCore.updateQty) window.CartCore.updateQty(id, qty - 1);
+              else if (act === 'minus' && window.CartCore && window.CartCore.remove && qty <= 1) window.CartCore.remove(id);
+              else if (act === 'remove' && window.CartCore && window.CartCore.remove) window.CartCore.remove(id);
+            } catch (e) {}
+            render();
+            document.dispatchEvent(new CustomEvent('saman:cart-updated'));
+          };
+        })(btns[i], it);
+      }
+      list.appendChild(row);
+    });
+    var countEl = document.getElementById('cartDrawerItemCount');
+    var subEl = document.getElementById('cartDrawerSubtotal');
+    if (countEl) countEl.textContent = String(count);
+    if (subEl) subEl.textContent = fmt(total);
+    // Saved for Later count - CartCore se, alag storage se nahi
+    var savedCount = 0;
+    try { if (window.CartCore && window.CartCore.getSavedCount) savedCount = window.CartCore.getSavedCount() || 0; } catch (e) {}
+    var savedCountEl = document.getElementById('cartDrawerSavedCount');
+    if (savedCountEl) savedCountEl.textContent = String(savedCount);
+    if (savedWrap) savedWrap.style.display = savedCount > 0 ? 'block' : 'none';
+  }
+
+  function openDrawer() {
+    var o = document.getElementById('cartDrawerOverlay');
+    var d = document.getElementById('cartDrawer');
+    if (o) o.style.display = 'block';
+    if (d) d.style.display = 'flex';
+    render();
+  }
+  function closeDrawer() {
+    var o = document.getElementById('cartDrawerOverlay');
+    var d = document.getElementById('cartDrawer');
+    if (o) o.style.display = 'none';
+    if (d) d.style.display = 'none';
+  }
+
+  window.openCartDrawer = openDrawer;
+  window.closeCartDrawer = closeDrawer;
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    var btn = t.closest ? t.closest('[data-open-cart-drawer]') : null;
+    if (btn) { e.preventDefault(); openDrawer(); return; }
+    if (t && t.id === 'cartDrawerOverlay') closeDrawer();
+    if (t && t.id === 'cartDrawerClose') closeDrawer();
+    if (t && t.id === 'cartDrawerEmptyShopBtn') {
+      closeDrawer();
+      var shopId = getShopId();
+      var folder = getShopFolder();
+      if (shopId && folder) window.location.href = '../' + folder + '/customer-view.html?shopId=' + encodeURIComponent(shopId);
+    }
+    if (t && t.id === 'cartDrawerCheckoutBtn') {
+      var sid = getShopId();
+      window.location.href = '../common/cart/cart.html?shopId=' + encodeURIComponent(sid);
+    }
+    if (t && t.id === 'cartDrawerViewCartBtn') {
+      var sid2 = getShopId();
+      window.location.href = '../common/cart/cart.html?shopId=' + encodeURIComponent(sid2);
+    }
+    if (t && t.id === 'cartDrawerSavedBtn') {
+      if (window.SamanComponents && window.SamanComponents.load) {
+        window.SamanComponents.load('saved-for-later').then(function () {
+          var el = document.getElementById('savedForLater');
+          if (el) el.style.display = 'block';
+        });
+      }
+    }
+  });
+
+  document.addEventListener('saman:cart-updated', render);
+  document.addEventListener('cart-updated', render);
+  document.addEventListener('saman:components-ready', render);
+})();
+</script>

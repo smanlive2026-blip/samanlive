@@ -1,0 +1,218 @@
+<!-- LOCATION: public/shop-templates/common/components/address-select.html - V1 NEW - CODE 12 - FILE 4/11 -->
+<!-- KAAM: Checkout me Address chunna. Page nahi hai, component hai. -->
+<!-- RULE 1: Apna alag address list kabhi nahi banayega. Address ka kaam sirf /api/common/profile/address wala karega. -->
+<!-- RULE 2: Agar address nahi hai toh "Koi address nahi hai" dikhega, fake address kabhi nahi dikhega. -->
+<!-- RULE 3: Chunna hua address Checkout ko batayega - window.__SAMAN_SELECTED_ADDRESS__ me rakhega. -->
+
+<div id="addressSelectBox" class="address-select-box">
+  <div class="address-select-head">
+    <b>Delivery Address 📍</b>
+    <button id="addressSelectAddBtn" class="address-select-add-btn">+ Add New</button>
+  </div>
+
+  <div id="addressSelectEmpty" class="address-select-empty" style="display:none">
+    <div>📍</div>
+    <b>Koi address nahi hai</b>
+    <span>Pehle apna delivery address add karo.</span>
+  </div>
+
+  <div id="addressSelectList" class="address-select-list"></div>
+
+  <div id="addressSelectForm" class="address-select-form" style="display:none">
+    <b>Naya Address</b>
+    <input id="addressSelectName" type="text" placeholder="Naam - jaise Ghar / Office" />
+    <input id="addressSelectPhone" type="tel" placeholder="Phone number" />
+    <textarea id="addressSelectFull" rows="3" placeholder="Poora address - gali, mohalla, landmark"></textarea>
+    <div class="address-select-form-row">
+      <input id="addressSelectCity" type="text" placeholder="City" />
+      <input id="addressSelectPincode" type="text" placeholder="Pincode" />
+    </div>
+    <div class="address-select-form-btns">
+      <button id="addressSelectSaveBtn" class="address-select-save-btn">Save Address</button>
+      <button id="addressSelectCancelBtn" class="address-select-cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.address-select-box{background:#fff;border:1px solid #eee;border-radius:16px;padding:14px}
+.address-select-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.address-select-head b{font-size:15px;font-weight:900;font-family:Outfit,sans-serif}
+.address-select-add-btn{border:1px solid #ddd;background:#fff;padding:7px 12px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer}
+.address-select-list{display:flex;flex-direction:column;gap:10px}
+.address-select-card{border:2px solid #eee;border-radius:12px;padding:12px;cursor:pointer}
+.address-select-card.selected{border-color:#111827;background:#f9fafb}
+.address-select-card b{font-size:14px;font-weight:800;display:block}
+.address-select-card span{font-size:12px;color:#555;display:block;margin-top:2px;line-height:1.5}
+.address-select-card .address-select-tag{display:inline-block;margin-top:6px;background:#111827;color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px}
+.address-select-card .address-select-default{display:inline-block;margin-top:6px;background:#dcfce7;color:#166534;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px}
+.address-select-empty{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:16px}
+.address-select-empty div{font-size:32px}
+.address-select-empty b{font-size:14px}
+.address-select-empty span{font-size:12px;color:#666}
+.address-select-form{display:flex;flex-direction:column;gap:10px;margin-top:12px;padding-top:12px;border-top:1px dashed #ddd}
+.address-select-form b{font-size:14px}
+.address-select-form input,.address-select-form textarea{width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box}
+.address-select-form-row{display:flex;gap:10px}
+.address-select-form-btns{display:flex;gap:10px}
+.address-select-save-btn{flex:1;border:0;background:#111827;color:#fff;padding:11px;border-radius:10px;font-weight:900;cursor:pointer}
+.address-select-cancel-btn{flex:1;border:1px solid #ddd;background:#fff;padding:11px;border-radius:10px;font-weight:800;cursor:pointer}
+</style>
+
+<script>
+(function () {
+  if (window.__SAMAN_ADDRESS_SELECT_V1__) return;
+  window.__SAMAN_ADDRESS_SELECT_V1__ = true;
+
+  window.__SAMAN_SELECTED_ADDRESS__ = window.__SAMAN_SELECTED_ADDRESS__ || null;
+
+  function getShopId() {
+    return new URLSearchParams(window.location.search).get('shopId') || window.__SAMAN_SHOP_ID || window.SHOP_ID || '';
+  }
+  function getToken() {
+    try { if (window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; } catch (e) {}
+    return window.USER_TOKEN || '';
+  }
+  function getUserId() {
+    try { if (window.AuthCore && window.AuthCore.getUserId) return window.AuthCore.getUserId() || ''; } catch (e) {}
+    return '';
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function toast(m) {
+    if (window.SamanComponents && window.SamanComponents.toast) { window.SamanComponents.toast(m, 'error'); return; }
+    alert(m);
+  }
+  function toastOk(m) {
+    if (window.SamanComponents && window.SamanComponents.toast) { window.SamanComponents.toast(m, 'success'); return; }
+    alert(m);
+  }
+
+  async function load() {
+    var list = document.getElementById('addressSelectList');
+    var empty = document.getElementById('addressSelectEmpty');
+    if (!list || !empty) return;
+    list.innerHTML = '<div style="font-size:13px;color:#666;padding:8px">Address load ho raha hai...</div>';
+    var addresses = [];
+    try {
+      var token = getToken();
+      var buyerId = getUserId();
+      var res = await fetch('/api/common/profile/address?buyerId=' + encodeURIComponent(buyerId) + '&shopId=' + encodeURIComponent(getShopId()), {
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+        credentials: 'include'
+      });
+      var d = await res.json().catch(function () { return {}; });
+      if (Array.isArray(d)) addresses = d;
+      else if (Array.isArray(d.addresses)) addresses = d.addresses;
+      else if (Array.isArray(d.data)) addresses = d.data;
+    } catch (e) {}
+    // Agar server se nahi aaya toh CartCore / local saved se mat lo, khaali dikhao - fake address mat dikhao
+    if (!addresses.length) {
+      list.innerHTML = '';
+      empty.style.display = 'flex';
+      window.__SAMAN_SELECTED_ADDRESS__ = null;
+      document.dispatchEvent(new CustomEvent('saman:address-changed', { detail: null }));
+      return;
+    }
+    empty.style.display = 'none';
+    list.innerHTML = '';
+    var selectedId = window.__SAMAN_SELECTED_ADDRESS__ ? (window.__SAMAN_SELECTED_ADDRESS__._id || window.__SAMAN_SELECTED_ADDRESS__.id) : null;
+    // Pehli baar hai toh Default wala ya pehla wala chun lo
+    if (!selectedId) {
+      var def = addresses.find(function (a) { return a.isDefault || a.default; }) || addresses[0];
+      selectedId = def._id || def.id;
+      window.__SAMAN_SELECTED_ADDRESS__ = def;
+    }
+    addresses.forEach(function (a) {
+      var id = a._id || a.id;
+      var card = document.createElement('div');
+      card.className = 'address-select-card' + (String(id) === String(selectedId) ? ' selected' : '');
+      var name = a.label || a.name || a.fullName || 'Address';
+      var phone = a.phone || a.mobile || '';
+      var full = a.address || a.fullAddress || a.street || '';
+      var city = a.city || '';
+      var pin = a.pincode || a.pin || '';
+      var line2 = [city, pin].filter(Boolean).join(' - ');
+      card.innerHTML =
+        '<b>' + esc(name) + '</b>' +
+        '<span>' + esc(full) + '</span>' +
+        (line2 ? '<span>' + esc(line2) + '</span>' : '') +
+        (phone ? '<span>📞 ' + esc(phone) + '</span>' : '') +
+        ((a.isDefault || a.default) ? '<span class="address-select-default">Default</span>' : '');
+      card.onclick = function () {
+        window.__SAMAN_SELECTED_ADDRESS__ = a;
+        var cards = list.querySelectorAll('.address-select-card');
+        for (var i = 0; i < cards.length; i++) cards[i].classList.remove('selected');
+        card.classList.add('selected');
+        document.dispatchEvent(new CustomEvent('saman:address-changed', { detail: a }));
+      };
+      list.appendChild(card);
+    });
+    document.dispatchEvent(new CustomEvent('saman:address-changed', { detail: window.__SAMAN_SELECTED_ADDRESS__ }));
+  }
+
+  async function saveNew() {
+    var nameEl = document.getElementById('addressSelectName');
+    var phoneEl = document.getElementById('addressSelectPhone');
+    var fullEl = document.getElementById('addressSelectFull');
+    var cityEl = document.getElementById('addressSelectCity');
+    var pinEl = document.getElementById('addressSelectPincode');
+    if (!nameEl || !phoneEl || !fullEl) return;
+    var name = nameEl.value.trim();
+    var phone = phoneEl.value.trim();
+    var full = fullEl.value.trim();
+    var city = cityEl ? cityEl.value.trim() : '';
+    var pin = pinEl ? pinEl.value.trim() : '';
+    if (!name || !full) { toast('Naam aur poora address bharo'); return; }
+    if (!phone) { toast('Phone number bharo'); return; }
+    var btn = document.getElementById('addressSelectSaveBtn');
+    if (btn) { btn.textContent = 'Save ho raha hai...'; btn.disabled = true; }
+    try {
+      var token = getToken();
+      var buyerId = getUserId();
+      var res = await fetch('/api/common/profile/address?buyerId=' + encodeURIComponent(buyerId) + '&shopId=' + encodeURIComponent(getShopId()), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
+        credentials: 'include',
+        body: JSON.stringify({ label: name, name: name, phone: phone, mobile: phone, address: full, fullAddress: full, city: city, pincode: pin, pin: pin })
+      });
+      var d = await res.json().catch(function () { return {}; });
+      if (!res.ok) throw new Error(d.message || 'Save nahi hua');
+      toastOk('Address save ho gaya');
+      var form = document.getElementById('addressSelectForm');
+      if (form) form.style.display = 'none';
+      nameEl.value = ''; phoneEl.value = ''; fullEl.value = '';
+      if (cityEl) cityEl.value = '';
+      if (pinEl) pinEl.value = '';
+      await load();
+    } catch (e) {
+      toast(e.message || 'Address save nahi hua');
+    } finally {
+      if (btn) { btn.textContent = 'Save Address'; btn.disabled = false; }
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.id === 'addressSelectAddBtn') {
+      var f = document.getElementById('addressSelectForm');
+      if (f) f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+      return;
+    }
+    if (t.id === 'addressSelectCancelBtn') {
+      var f2 = document.getElementById('addressSelectForm');
+      if (f2) f2.style.display = 'none';
+      return;
+    }
+    if (t.id === 'addressSelectSaveBtn') saveNew();
+  });
+
+  window.reloadAddressSelect = load;
+  window.loadAddressSelect = load;
+  document.addEventListener('saman:components-ready', load);
+  // Agar ye component Checkout page pe hai toh turant load kar do, components-ready ka wait mat karo
+  if (document.getElementById('addressSelectBox')) setTimeout(load, 300);
+})();
+</script>

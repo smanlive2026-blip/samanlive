@@ -1,0 +1,190 @@
+<!-- LOCATION: public/shop-templates/common/components/mini-cart.html - V1 NEW - CODE 12 - FILE 2/11 -->
+<!-- KAAM: Header me Cart icon dabane pe khulne wala chhota cart box. Page nahi hai, component hai. -->
+<!-- RULE 1: Apna alag cart kabhi nahi banayega. Cart ka kaam sirf CartCore karega. -->
+<!-- RULE 2: Ye sirf dikhayega - 3 item tak dikhega, usse zyada hai toh "View Full Cart" dabana padega. -->
+<!-- RULE 3: Agar cart khaali hai toh "Cart khaali hai" dikhega, fake product kabhi nahi dikhega. -->
+<!-- RULE 4: Drawer wala bada hai, ye chhota hai. Dono ko ek sath mat kholo. -->
+
+<div id="miniCartBox" class="mini-cart-box" style="display:none">
+  <div class="mini-cart-head">
+    <b>Cart <span id="miniCartCountBadge">(0)</span></b>
+    <button id="miniCartClose" class="mini-cart-close" aria-label="Close">✕</button>
+  </div>
+
+  <div id="miniCartEmpty" class="mini-cart-empty" style="display:none">
+    <div>🛒</div>
+    <b>Cart khaali hai</b>
+    <span>Abhi koi product add nahi hua hai.</span>
+  </div>
+
+  <div id="miniCartList" class="mini-cart-list"></div>
+
+  <div id="miniCartFoot" class="mini-cart-foot" style="display:none">
+    <div class="mini-cart-row">
+      <span>Subtotal</span>
+      <b id="miniCartSubtotal">₹0</b>
+    </div>
+    <button id="miniCartViewBtn" class="mini-cart-view-btn">View Full Cart →</button>
+    <button id="miniCartCheckoutBtn" class="mini-cart-checkout-btn">Checkout</button>
+  </div>
+</div>
+
+<style>
+.mini-cart-box{position:fixed;top:64px;right:12px;width:min(340px,92vw);background:#fff;border:1px solid #eee;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.18);z-index:9999;overflow:hidden}
+.mini-cart-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #eee}
+.mini-cart-head b{font-size:15px;font-weight:900;font-family:Outfit,sans-serif}
+.mini-cart-close{border:0;background:#f3f4f6;width:30px;height:30px;border-radius:50%;cursor:pointer}
+.mini-cart-list{max-height:280px;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+.mini-cart-item{display:flex;gap:10px;padding:8px;border:1px solid #eee;border-radius:12px}
+.mini-cart-item img{width:48px;height:48px;object-fit:cover;border-radius:8px;background:#f3f4f6;flex-shrink:0}
+.mini-cart-item-info{flex:1;min-width:0}
+.mini-cart-item-info b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-cart-item-info span{font-size:11px;color:#666}
+.mini-cart-item-price{font-size:13px;font-weight:900;margin-top:2px}
+.mini-cart-item-right{text-align:right;flex-shrink:0}
+.mini-cart-item-right button{border:0;background:transparent;color:#dc2626;font-size:11px;font-weight:700;cursor:pointer;padding:0;margin-top:4px}
+.mini-cart-empty{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:18px}
+.mini-cart-empty div{font-size:32px}
+.mini-cart-empty b{font-size:14px}
+.mini-cart-empty span{font-size:12px;color:#666}
+.mini-cart-foot{padding:12px;border-top:1px solid #eee}
+.mini-cart-row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:10px}
+.mini-cart-view-btn{width:100%;border:1px solid #ddd;background:#fff;padding:11px;border-radius:10px;font-weight:800;cursor:pointer}
+.mini-cart-checkout-btn{width:100%;margin-top:8px;border:0;background:#111827;color:#fff;padding:11px;border-radius:10px;font-weight:900;cursor:pointer}
+.mini-cart-more{font-size:12px;color:#666;text-align:center;padding:4px 0}
+</style>
+
+<script>
+(function () {
+  if (window.__SAMAN_MINI_CART_V1__) return;
+  window.__SAMAN_MINI_CART_V1__ = true;
+
+  function getShopId() {
+    return new URLSearchParams(window.location.search).get('shopId') || window.__SAMAN_SHOP_ID || window.SHOP_ID || '';
+  }
+  function fmt(n) {
+    var v = Number(n);
+    if (!Number.isFinite(v)) v = 0;
+    return '₹' + v.toLocaleString('en-IN');
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function getItems() {
+    try {
+      if (window.CartCore && window.CartCore.getItems) return window.CartCore.getItems() || [];
+      if (window.CartCore && window.CartCore.getCart) return window.CartCore.getCart() || [];
+    } catch (e) {}
+    return [];
+  }
+
+  function render() {
+    var box = document.getElementById('miniCartBox');
+    if (!box) return;
+    var list = document.getElementById('miniCartList');
+    var empty = document.getElementById('miniCartEmpty');
+    var foot = document.getElementById('miniCartFoot');
+    var badge = document.getElementById('miniCartCountBadge');
+    var subEl = document.getElementById('miniCartSubtotal');
+    if (!list || !empty || !foot) return;
+    var items = getItems();
+    var count = 0;
+    var total = 0;
+    items.forEach(function (it) {
+      var q = Number(it.qty || it.quantity || 1);
+      var p = Number(it.price || it.sellingPrice || 0);
+      count += q;
+      total += p * q;
+    });
+    if (badge) badge.textContent = '(' + count + ')';
+    if (!items.length) {
+      list.innerHTML = '';
+      empty.style.display = 'flex';
+      foot.style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+    foot.style.display = 'block';
+    if (subEl) subEl.textContent = fmt(total);
+    list.innerHTML = '';
+    var show = items.slice(0, 3);
+    show.forEach(function (it) {
+      var qty = Number(it.qty || it.quantity || 1);
+      var price = Number(it.price || it.sellingPrice || 0);
+      var row = document.createElement('div');
+      row.className = 'mini-cart-item';
+      var img = it.image || it.thumbnail || it.img || 'https://via.placeholder.com/48';
+      var name = it.name || it.productName || 'Product';
+      row.innerHTML =
+        '<img src="' + esc(img) + '" alt="" onerror="this.src=\'https://via.placeholder.com/48\'" />' +
+        '<div class="mini-cart-item-info">' +
+          '<b>' + esc(name) + '</b>' +
+          '<span>' + fmt(price) + ' x ' + qty + '</span>' +
+          '<div class="mini-cart-item-price">' + fmt(price * qty) + '</div>' +
+        '</div>' +
+        '<div class="mini-cart-item-right"><button data-act="remove">Remove</button></div>';
+      var btn = row.querySelector('button[data-act="remove"]');
+      if (btn) {
+        btn.onclick = function () {
+          var id = it.productId || it.id || it._id;
+          try { if (window.CartCore && window.CartCore.remove) window.CartCore.remove(id); } catch (e) {}
+          render();
+          document.dispatchEvent(new CustomEvent('saman:cart-updated'));
+        };
+      }
+      list.appendChild(row);
+    });
+    if (items.length > 3) {
+      var more = document.createElement('div');
+      more.className = 'mini-cart-more';
+      more.textContent = 'Aur ' + (items.length - 3) + ' item hain - View Full Cart dabao';
+      list.appendChild(more);
+    }
+  }
+
+  function toggle() {
+    var box = document.getElementById('miniCartBox');
+    if (!box) return;
+    // Drawer khula hai toh usko band kar do, dono ek sath nahi khulenge
+    if (window.closeCartDrawer) { try { window.closeCartDrawer(); } catch (e) {} }
+    var isOpen = box.style.display === 'block';
+    if (isOpen) { box.style.display = 'none'; return; }
+    render();
+    box.style.display = 'block';
+  }
+  function closeBox() {
+    var box = document.getElementById('miniCartBox');
+    if (box) box.style.display = 'none';
+  }
+
+  window.toggleMiniCart = toggle;
+  window.openMiniCart = toggle;
+  window.closeMiniCart = closeBox;
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.id === 'miniCartClose') { closeBox(); return; }
+    if (t.id === 'miniCartViewBtn' || t.id === 'miniCartCheckoutBtn') {
+      var sid = getShopId();
+      closeBox();
+      if (t.id === 'miniCartViewBtn') window.location.href = '../common/cart/cart.html?shopId=' + encodeURIComponent(sid);
+      else window.location.href = '../common/cart/cart.html?shopId=' + encodeURIComponent(sid);
+      return;
+    }
+    // Bahar click kiya toh band kar do
+    var box = document.getElementById('miniCartBox');
+    if (box && box.style.display === 'block') {
+      var inside = t.closest ? t.closest('#miniCartBox') : null;
+      var isBtn = t.closest ? t.closest('[data-open-mini-cart]') : null;
+      if (!inside && !isBtn) closeBox();
+    }
+    var openBtn = t.closest ? t.closest('[data-open-mini-cart]') : null;
+    if (openBtn) { e.preventDefault(); toggle(); }
+  });
+
+  document.addEventListener('saman:cart-updated', render);
+  document.addEventListener('cart-updated', render);
+  document.addEventListener('saman:components-ready', render);
+})();
+</script>

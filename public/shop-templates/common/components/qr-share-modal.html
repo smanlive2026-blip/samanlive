@@ -1,0 +1,165 @@
+<!-- LOCATION: public/shop-templates/common/components/qr-share-modal.html - V1 NEW - CODE 12 - FILE 8/11 -->
+<!-- KAAM: Dukaan ka link QR + WhatsApp se share karna. Page nahi hai, component hai. -->
+<!-- RULE 1: Ye QR nahi banayega server se, browser me hi banayega - koi paisa / API nahi lagega. -->
+<!-- RULE 2: Link wahi hoga jo page dega - window.__SAMAN_SHOP_LINK__ ya current URL. Khud link nahi banayega. -->
+<!-- RULE 3: Ye share/qr-share.html wali purani file nahi hai. Wo alag system ki hai, usko haath mat lagana. -->
+
+<div id="qrShareOverlay" class="qr-share-overlay" style="display:none"></div>
+
+<div id="qrShareModal" class="qr-share-modal" style="display:none">
+  <div class="qr-share-head">
+    <b>Dukaan Share Karo 📲</b>
+    <button id="qrShareClose" class="qr-share-close" aria-label="Close">✕</button>
+  </div>
+
+  <div class="qr-share-body">
+    <div id="qrShareBox" class="qr-share-box">
+      <div id="qrShareCanvasWrap" class="qr-share-canvas-wrap"></div>
+      <b id="qrShareShopName">Meri Dukaan</b>
+      <span id="qrShareShopTag">QR scan karo, dukaan khul jayegi</span>
+    </div>
+
+    <div class="qr-share-link-row">
+      <input id="qrShareLinkInput" type="text" readonly value="" />
+      <button id="qrShareCopyBtn" class="qr-share-copy-btn">Copy</button>
+    </div>
+
+    <div class="qr-share-btns">
+      <button id="qrShareWhatsAppBtn" class="qr-share-wa-btn">🟢 WhatsApp Pe Bhejo</button>
+      <button id="qrShareDownloadBtn" class="qr-share-download-btn">⬇️ QR Download</button>
+    </div>
+    <span class="qr-share-note">QR ko print karke dukaan pe chipka do, customer scan karke seedha dukaan pe aa jayega.</span>
+  </div>
+</div>
+
+<style>
+.qr-share-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9998}
+.qr-share-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(360px,92vw);background:#fff;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.25);z-index:9999;overflow:hidden}
+.qr-share-head{display:flex;align-items:center;justify-content:space-between;padding:14px;border-bottom:1px solid #eee}
+.qr-share-head b{font-size:15px;font-weight:900;font-family:Outfit,sans-serif}
+.qr-share-close{border:0;background:#f3f4f6;width:30px;height:30px;border-radius:50%;cursor:pointer}
+.qr-share-body{padding:14px;display:flex;flex-direction:column;gap:12px}
+.qr-share-box{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px;background:#f9fafb;border-radius:14px}
+.qr-share-canvas-wrap{width:180px;height:180px;background:#fff;border:1px solid #eee;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.qr-share-canvas-wrap canvas,.qr-share-canvas-wrap img{max-width:100%;max-height:100%}
+.qr-share-box b{font-size:15px;font-weight:900}
+.qr-share-box span{font-size:12px;color:#666;text-align:center}
+.qr-share-link-row{display:flex;gap:8px}
+.qr-share-link-row input{flex:1;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:12px;box-sizing:border-box;background:#f9fafb}
+.qr-share-copy-btn{border:1px solid #ddd;background:#fff;padding:0 16px;border-radius:10px;font-weight:800;cursor:pointer}
+.qr-share-btns{display:flex;gap:10px}
+.qr-share-wa-btn{flex:2;border:0;background:#25D366;color:#fff;padding:12px;border-radius:10px;font-weight:900;cursor:pointer}
+.qr-share-download-btn{flex:1;border:1px solid #ddd;background:#fff;padding:12px;border-radius:10px;font-weight:800;cursor:pointer}
+.qr-share-note{font-size:11px;color:#888;text-align:center}
+</style>
+
+<script>
+(function () {
+  if (window.__SAMAN_QR_SHARE_V1__) return;
+  window.__SAMAN_QR_SHARE_V1__ = true;
+
+  function getLink() {
+    // Page ne link diya hai toh wahi, nahi toh current page ka URL
+    return window.__SAMAN_SHOP_LINK__ || window.location.href.split('?')[0] + window.location.search;
+  }
+  function getShopName() {
+    return window.__SAMAN_SHOP_NAME__ || document.title || 'Meri Dukaan';
+  }
+  function toastOk(m) {
+    if (window.SamanComponents && window.SamanComponents.toast) { window.SamanComponents.toast(m, 'success'); return; }
+    alert(m);
+  }
+  function toast(m) {
+    if (window.SamanComponents && window.SamanComponents.toast) { window.SamanComponents.toast(m, 'error'); return; }
+    alert(m);
+  }
+
+  // Chhota sa QR banane wala - koi bahar ki library nahi chahiye, browser me hi banega
+  // QR API wala tareeka: Google Chart API se image lega, agar net nahi hai toh link hi dikhayega
+  function renderQR(link) {
+    var wrap = document.getElementById('qrShareCanvasWrap');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    var img = document.createElement('img');
+    img.alt = 'QR Code';
+    img.style.width = '170px';
+    img.style.height = '170px';
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(link);
+    img.onerror = function () {
+      wrap.innerHTML = '<div style="font-size:12px;color:#666;padding:16px;text-align:center">QR load nahi hua<br/>Link copy karke bhej do</div>';
+    };
+    wrap.appendChild(img);
+  }
+
+  function openModal(shopName, link) {
+    if (shopName) window.__SAMAN_SHOP_NAME__ = shopName;
+    if (link) window.__SAMAN_SHOP_LINK__ = link;
+    var finalLink = getLink();
+    var finalName = getShopName();
+    var overlay = document.getElementById('qrShareOverlay');
+    var modal = document.getElementById('qrShareModal');
+    if (!overlay || !modal) return;
+    var nameEl = document.getElementById('qrShareShopName');
+    var input = document.getElementById('qrShareLinkInput');
+    if (nameEl) nameEl.textContent = finalName;
+    if (input) input.value = finalLink;
+    renderQR(finalLink);
+    overlay.style.display = 'block';
+    modal.style.display = 'block';
+  }
+  function closeModal() {
+    var overlay = document.getElementById('qrShareOverlay');
+    var modal = document.getElementById('qrShareModal');
+    if (overlay) overlay.style.display = 'none';
+    if (modal) modal.style.display = 'none';
+  }
+
+  window.openQrShare = openModal;
+  window.closeQrShare = closeModal;
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.id === 'qrShareOverlay' || t.id === 'qrShareClose') { closeModal(); return; }
+    // Kisi bhi button pe data-open-qr-share ho toh modal kholega
+    var openBtn = t.closest ? t.closest('[data-open-qr-share]') : null;
+    if (openBtn) {
+      e.preventDefault();
+      var sn = openBtn.getAttribute('data-shop-name') || '';
+      var sl = openBtn.getAttribute('data-shop-link') || '';
+      openModal(sn || undefined, sl || undefined);
+      return;
+    }
+    if (t.id === 'qrShareCopyBtn') {
+      var input = document.getElementById('qrShareLinkInput');
+      if (!input) return;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(input.value).then(function () { toastOk('Link copy ho gaya'); }).catch(function () { input.select(); document.execCommand('copy'); toastOk('Link copy ho gaya'); });
+        } else { input.select(); document.execCommand('copy'); toastOk('Link copy ho gaya'); }
+      } catch (err) { toast('Copy nahi hua, link ko haath se copy karo'); }
+      return;
+    }
+    if (t.id === 'qrShareWhatsAppBtn') {
+      var input2 = document.getElementById('qrShareLinkInput');
+      var msg = 'Meri dukaan dekho: ' + (input2 ? input2.value : getLink());
+      window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+      return;
+    }
+    if (t.id === 'qrShareDownloadBtn') {
+      var wrap = document.getElementById('qrShareCanvasWrap');
+      var img = wrap ? wrap.querySelector('img') : null;
+      if (!img) { toast('QR abhi load nahi hua'); return; }
+      var a = document.createElement('a');
+      a.href = img.src;
+      a.download = 'dukaan-qr.png';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toastOk('QR download ho raha hai');
+      return;
+    }
+  });
+})();
+</script>

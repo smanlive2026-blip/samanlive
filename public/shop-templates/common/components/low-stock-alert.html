@@ -1,0 +1,131 @@
+<!-- LOCATION: public/shop-templates/common/components/low-stock-alert.html - V1 NEW - CODE 12 - FILE 9/11 -->
+<!-- KAAM: Dukaandaar ke Dashboard pe jab stock kam ho toh alert dikhana. Page nahi hai, component hai. -->
+<!-- RULE 1: Ye stock nahi ginega, sirf dikhayega. Stock ka hisaab Inventory system karega. -->
+<!-- RULE 2: Agar koi product low stock me nahi hai toh "Sab stock theek hai" dikhega, fake alert kabhi nahi dikhega. -->
+<!-- RULE 3: Ye inventory/low-stock-alert.html wali purani file nahi hai. Wo alag system ki hai, usko haath mat lagana. -->
+
+<div id="lowStockAlertBox" class="low-stock-alert-box">
+  <div class="low-stock-alert-head">
+    <b>⚠️ Low Stock Alert <span id="lowStockCountBadge">(0)</span></b>
+    <button id="lowStockRefreshBtn" class="low-stock-refresh-btn">Refresh</button>
+  </div>
+
+  <div id="lowStockEmpty" class="low-stock-empty" style="display:none">
+    <div>✅</div>
+    <b>Sab stock theek hai</b>
+    <span>Koi product kam stock me nahi hai.</span>
+  </div>
+
+  <div id="lowStockList" class="low-stock-list"></div>
+</div>
+
+<style>
+.low-stock-alert-box{background:#fff;border:1px solid #eee;border-radius:16px;padding:14px}
+.low-stock-alert-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.low-stock-alert-head b{font-size:15px;font-weight:900;font-family:Outfit,sans-serif}
+.low-stock-refresh-btn{border:1px solid #ddd;background:#fff;padding:7px 12px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer}
+.low-stock-list{display:flex;flex-direction:column;gap:10px}
+.low-stock-item{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid #fde68a;background:#fffbeb;border-radius:12px}
+.low-stock-item.critical{border-color:#fca5a5;background:#fef2f2}
+.low-stock-item img{width:48px;height:48px;object-fit:cover;border-radius:8px;background:#f3f4f6;flex-shrink:0}
+.low-stock-item-info{flex:1;min-width:0}
+.low-stock-item-info b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.low-stock-item-info span{font-size:11px;color:#666}
+.low-stock-item-stock{flex-shrink:0;text-align:right}
+.low-stock-item-stock b{font-size:14px;font-weight:900;color:#b45309}
+.low-stock-item.critical .low-stock-item-stock b{color:#dc2626}
+.low-stock-item-stock span{display:block;font-size:10px;color:#666}
+.low-stock-empty{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:16px}
+.low-stock-empty div{font-size:32px}
+.low-stock-empty b{font-size:14px}
+.low-stock-empty span{font-size:12px;color:#666}
+</style>
+
+<script>
+(function () {
+  if (window.__SAMAN_LOW_STOCK_V1__) return;
+  window.__SAMAN_LOW_STOCK_V1__ = true;
+
+  function getShopId() {
+    return new URLSearchParams(window.location.search).get('shopId') || window.__SAMAN_SHOP_ID || window.SHOP_ID || '';
+  }
+  function getToken() {
+    try { if (window.AuthCore && window.AuthCore.getToken) return window.AuthCore.getToken() || ''; } catch (e) {}
+    return window.USER_TOKEN || '';
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  async function load() {
+    var box = document.getElementById('lowStockAlertBox');
+    if (!box) return;
+    var list = document.getElementById('lowStockList');
+    var empty = document.getElementById('lowStockEmpty');
+    var badge = document.getElementById('lowStockCountBadge');
+    if (!list || !empty) return;
+    list.innerHTML = '<div style="font-size:13px;color:#666;padding:8px">Stock check ho raha hai...</div>';
+    var items = [];
+    try {
+      var token = getToken();
+      var res = await fetch('/api/common/inventory/low-stock?shopId=' + encodeURIComponent(getShopId()), {
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+        credentials: 'include'
+      });
+      var d = await res.json().catch(function () { return {}; });
+      if (Array.isArray(d)) items = d;
+      else if (Array.isArray(d.items)) items = d.items;
+      else if (Array.isArray(d.products)) items = d.products;
+      else if (Array.isArray(d.data)) items = d.data;
+      // Agar server se nahi aaya toh Dashboard ne pehle se list di hai toh wahi lega, khud fake nahi banayega
+      if (!items.length && Array.isArray(window.__SAMAN_LOW_STOCK_LIST__)) items = window.__SAMAN_LOW_STOCK_LIST__;
+    } catch (e) {
+      if (Array.isArray(window.__SAMAN_LOW_STOCK_LIST__)) items = window.__SAMAN_LOW_STOCK_LIST__;
+    }
+    if (badge) badge.textContent = '(' + items.length + ')';
+    if (!items.length) {
+      list.innerHTML = '';
+      empty.style.display = 'flex';
+      return;
+    }
+    empty.style.display = 'none';
+    list.innerHTML = '';
+    items.forEach(function (it) {
+      var stock = Number(it.stock ?? it.qty ?? it.quantity ?? 0);
+      var lowAt = Number(it.lowStockAt ?? it.minStock ?? it.threshold ?? 5);
+      var isCritical = stock <= 0;
+      var row = document.createElement('div');
+      row.className = 'low-stock-item' + (isCritical ? ' critical' : '');
+      var img = it.image || it.thumbnail || it.img || 'https://via.placeholder.com/48';
+      var name = it.name || it.productName || 'Product';
+      row.innerHTML =
+        '<img src="' + esc(img) + '" alt="" onerror="this.src=\'https://via.placeholder.com/48\'" />' +
+        '<div class="low-stock-item-info"><b>' + esc(name) + '</b><span>' + (isCritical ? 'Stock khatam ho gaya!' : 'Sirf ' + stock + ' bacha hai - jaldi stock bharo') + '</span></div>' +
+        '<div class="low-stock-item-stock"><b>' + stock + ' left</b><span>Min: ' + lowAt + '</span></div>';
+      row.onclick = function () {
+        // Dashboard pe us product pe le jao, yahan se stock badalna nahi hai
+        var pid = it.productId || it.id || it._id;
+        if (pid) {
+          document.dispatchEvent(new CustomEvent('saman:low-stock-click', { detail: it }));
+          if (window.SamanComponents && window.SamanComponents.toast) window.SamanComponents.toast('Product kholo aur stock bharo', 'success');
+        }
+      };
+      list.appendChild(row);
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.id === 'lowStockRefreshBtn') load();
+  });
+
+  window.reloadLowStockAlert = load;
+  window.loadLowStockAlert = load;
+  window.setLowStockList = function (list) {
+    window.__SAMAN_LOW_STOCK_LIST__ = Array.isArray(list) ? list : [];
+    load();
+  };
+  document.addEventListener('saman:components-ready', load);
+  if (document.getElementById('lowStockAlertBox')) setTimeout(load, 300);
+})();
+</script>

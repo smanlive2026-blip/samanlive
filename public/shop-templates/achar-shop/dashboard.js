@@ -1,4 +1,4 @@
-// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - PRODUCT-FORM + COMMON PROFILE - V6
+// LOCATION: public/shop-templates/achar-shop/dashboard.js - FULL - PRODUCT-FORM + COMMON PROFILE - V6 - CODE 12 FIX
 // RULE: Product = WORLD MODEL. Order = Common Order. Profile = COMMON UNIFIED PROFILE (V24).
 // PRODUCT-FORM: Add / Edit / Quick Add = ../common/products/product-form.html - Dashboard me apna modal NAHI hoga
 // PROFILE: Photo = UnifiedProfile.handleFileInput() -> /api/common/profile/upload-avatar -> Cloudinary -> Shop model
@@ -19,6 +19,7 @@
 //      Warna Profile wali timing aur Shop-Toggle wali timing alag-alag dikhegi.
 //   4. Order KABHI NAHI RUKEGA. Shop Closed sirf dikhane ke liye hai. Checkout me koi guard MAT lagana.
 //      Band dukaan ka bhi order banega aur Dashboard pe Pending me dikhega.
+// CODE 12 FIX: Socket new-order pe showNewOrderPopup() chalega. Low-stock Loader wale component se sync hoga.
 
 (function () {
   var params = new URLSearchParams(location.search);
@@ -319,13 +320,48 @@
   window.updateToggleUI = updateToggleUI;
   window.loadShopToggleStatus = loadShopToggleStatus;
 
+  // CODE 12: Naya order aaya toh popup dikhana - Loader wala new-order-popup component
+  function handleNewOrderSocket(d) {
+    // Socket se kabhi poora order aata hai, kabhi sirf orderId - dono haal me pehle list dobara lo
+    toast('🧾 Naya order aaya!');
+    loadCommonOrders().then(function () {
+      renderAll();
+      try {
+        var order = null;
+        var incomingId = d && (d.orderId || d._id || d.id || (d.order && (d.order.orderId || d.order._id || d.order.id)));
+        if (incomingId) {
+          for (var i = 0; i < allOrders.length; i++) {
+            var o = allOrders[i];
+            if (String(o.orderId) === String(incomingId) || String(o._id) === String(incomingId)) { order = o; break; }
+          }
+        }
+        if (!order) {
+          // Sabse naya placed order hi naya wala hoga
+          var placed = allOrders.filter(function (o) { return o.orderStatus === 'placed'; });
+          placed.sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+          order = placed[0] || null;
+        }
+        if (order && window.showNewOrderPopup) {
+          // Popup wala khud yaad rakhega - ek order ka popup 2 baar nahi dikhega
+          window.showNewOrderPopup({
+            _id: order._id, id: order._id, orderId: order.orderId,
+            customerName: order.customerName, customerPhone: order.customerPhone,
+            items: order.items, total: order.total, paymentMethod: order.payment,
+            address: order.customerAddress
+          });
+        } else if (d && window.showNewOrderPopup && (d.items || d.total)) {
+          window.showNewOrderPopup(d);
+        }
+      } catch (e) {}
+    }).catch(function () {});
+  }
+
   function initSocket() {
     try {
       if (window.SocketCore && window.SocketCore.on) {
         window.SocketCore.on('new-order', function (d) {
           if (d && d.shopId && String(d.shopId) !== String(shopId)) return;
-          toast('🧾 Naya order aaya!');
-          loadCommonOrders().then(renderAll);
+          handleNewOrderSocket(d);
         });
         window.SocketCore.on('shop-status-changed', function (d) {
           if (d && String(d.shopId) === String(shopId)) {
@@ -339,7 +375,7 @@
         });
       }
       if (window.shopSocket) {
-        window.shopSocket.on('new-order', function () { loadCommonOrders().then(renderAll); });
+        window.shopSocket.on('new-order', function (d) { handleNewOrderSocket(d); });
       }
     } catch (e) {}
   }
@@ -698,6 +734,14 @@
     if (stockEl) {
       var lows = allProducts.filter(function (p) { return num(p.stock) <= num(p.lowStockAlert || 2); });
       stockEl.innerHTML = lows.length ? lows.slice(0, 5).map(function (p) { return '<div class="kv"><span>' + esc(p.name) + '</span><b style="color:#dc2626">' + num(p.stock) + ' Kg</b></div>'; }).join('') : '<div class="empty">Sab stock thik hai ✅</div>';
+      // CODE 12: Loader wale low-stock-alert ko bhi yahi list de do - taaki wo apne galat API pe na jaye, dono jagah ek hi number dikhe
+      try {
+        if (window.setLowStockList) {
+          window.setLowStockList(lows.map(function (p) {
+            return { productId: p._id || p.id, id: p._id || p.id, name: p.name, stock: num(p.stock), lowStockAt: num(p.lowStockAlert || 2), image: p.image || p.thumbnail || '' };
+          }));
+        }
+      } catch (e) {}
     }
   }
 
@@ -929,6 +973,8 @@
   }
 
   async function saveLocation() {
+    // CODE 12 NOTE: Dashboard.html se saveLocationBtn / loadLocationBtn hat gaya hai - Location ab shop-location.html se set hogi.
+    // Ye function sirf backup hai, agar kahin se call ho gaya toh bhi crash nahi hoga.
     var payload = {
       locationType: $('locationType') ? $('locationType').value || 'fixed' : 'fixed',
       deliveryRange: num($('deliveryRange') ? $('deliveryRange').value : 5) || 5,

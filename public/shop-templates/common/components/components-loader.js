@@ -1,10 +1,11 @@
-// LOCATION: public/shop-templates/common/components/components-loader.js - V3 FINAL - CODE 10
-// KAAM: Ek hi file - 17 HTML lagana + Header + Nav + Toast + Zoom + Route fix. Alag fix file kabhi nahi.
+// LOCATION: public/shop-templates/common/components/components-loader.js - V4 - CODE 12
+// KAAM: Ek hi file - 28 HTML lagana + Header + Nav + Toast + Zoom + Route fix. Alag fix file kabhi nahi.
 // RULE 1: Kisi ek dukaan ka naam hardcode nahi hoga. Dukaan ka folder URL se aayega.
 // RULE 2: Component ke HTML ke andar wale galat fetch ko yahin theek karenge, alag route-fix file nahi banegi.
 // RULE 3: Ek cheez 2 baar nahi banegi. Toast 1 jagah, Loader 1 jagah, Confirm 1 jagah.
 // RULE 4: Dashboard me pehle se sidebar hai toh dobara sidebar mat lao. Double sidebar banega.
 // RULE 5: Product-card.js pehle se lagi hai toh dobara mat lao. Double load banega.
+// RULE 6: CODE 12 wali 11 nayi file - cart-drawer, mini-cart, saved-for-later, address-select, payment-select, rating-widget, new-order-popup, qr-share-modal, low-stock-alert, cancel-order, return-order - sirf isi list se load hongi. Purani cart/checkout/customer-orders/inventory/orders/share wali file ko haath mat lagana.
 
 (function () {
   if (window.__SAMAN_LOADER_V3__) return;
@@ -267,6 +268,18 @@
     if (name === 'toast' && document.getElementById('toastContainer')) { loaded[name] = true; return Promise.resolve(true); }
     if (name === 'loader' && document.getElementById('globalLoader')) { loaded[name] = true; return Promise.resolve(true); }
     if (name === 'confirm-modal' && document.getElementById('confirmModal')) { loaded[name] = true; return Promise.resolve(true); }
+    // CODE 12 - nayi file page me pehle se hai toh dobara mat lao, nahi toh id double ho jayegi
+    if (name === 'cart-drawer' && document.getElementById('cartDrawer')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'mini-cart' && document.getElementById('miniCart')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'saved-for-later' && document.getElementById('savedForLaterBox')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'address-select' && document.getElementById('addressSelectBox')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'payment-select' && document.getElementById('paymentSelectBox')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'rating-widget' && document.getElementById('ratingWidgetBox')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'new-order-popup' && document.getElementById('newOrderPopup')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'qr-share-modal' && document.getElementById('qrShareModal')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'low-stock-alert' && document.getElementById('lowStockAlertBox')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'cancel-order' && document.getElementById('cancelOrderModal')) { loaded[name] = true; return Promise.resolve(true); }
+    if (name === 'return-order' && document.getElementById('returnOrderModal')) { loaded[name] = true; return Promise.resolve(true); }
 
     loading[name] = fetch(BASE + name + '.html?t=' + Date.now(), { credentials: 'include', cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error('404 ' + name); return r.text(); })
@@ -484,12 +497,12 @@
     var type = getPageType();
     var list = [];
     if (type === 'customer') {
-      list = ['user-header', 'shop-header', 'bottom-nav', 'toast', 'loader', 'confirm-modal', 'empty-state', 'skeleton-loader', 'image-zoom', 'language-switcher', 'product-quick-view', 'user-footer'];
+      list = ['user-header', 'shop-header', 'bottom-nav', 'toast', 'loader', 'confirm-modal', 'empty-state', 'skeleton-loader', 'image-zoom', 'language-switcher', 'product-quick-view', 'user-footer', 'cart-drawer', 'mini-cart', 'saved-for-later', 'rating-widget', 'cancel-order', 'return-order', 'qr-share-modal'];
     } else if (type === 'dashboard') {
       // Dashboard me sidebar pehle se hai toh Loader sidebar mat laayega - loadOne me guard hai
-      list = ['dashboard-header', 'sidebar', 'dashboard-footer', 'toast', 'loader', 'confirm-modal', 'empty-state', 'skeleton-loader', 'image-zoom', 'language-switcher'];
+      list = ['dashboard-header', 'sidebar', 'dashboard-footer', 'toast', 'loader', 'confirm-modal', 'empty-state', 'skeleton-loader', 'image-zoom', 'language-switcher', 'new-order-popup', 'low-stock-alert', 'qr-share-modal'];
     } else {
-      list = ['toast', 'loader', 'confirm-modal', 'empty-state', 'skeleton-loader', 'image-zoom', 'language-switcher'];
+      list = ['toast', 'loader', 'confirm-modal', 'empty-state', 'skeleton-loader', 'image-zoom', 'language-switcher', 'cart-drawer', 'address-select', 'payment-select'];
     }
     for (var i = 0; i < list.length; i++) { try { await loadOne(list[i]); } catch (e) {} }
     try { await loadOneJs('product-card'); } catch (e) {}

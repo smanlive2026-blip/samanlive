@@ -1,6 +1,6 @@
-<!-- LOCATION: public/shop-templates/achar-shop/dashboard.html - FULL - PRODUCT-FORM + COMMON PROFILE - V5 -->
+<!-- LOCATION: public/shop-templates/achar-shop/dashboard.html - FULL - PRODUCT-FORM + COMMON PROFILE - V6 - CODE 12 FIX -->
 <!-- RULE: Design same hai. Product ka apna modal Dashboard me NAHI hoga. Profile = COMMON UNIFIED PROFILE (V24). Koi button / rang / layout nahi badla. -->
-<!-- COMMON: api-core + auth-core + socket-core + storage-core + error-handler + dashboard-core + shop-toggle + share + whatsapp + qr + notifications + orders + WORLD PRODUCT-MANAGER + inventory + wallet + UNIFIED PROFILE + settings + location + reviews -->
+<!-- COMMON: api-core + auth-core + socket-core + storage-core + error-handler + dashboard-core + shop-toggle + share + whatsapp + qr + notifications + orders + WORLD PRODUCT-MANAGER + inventory + wallet + UNIFIED PROFILE + settings + reviews -->
 <!-- PRODUCT-FORM: Add / Edit / Quick Add = ../common/products/product-form.html?type=achar-shop - Dashboard me addModal / quickAddModal DELETE kar diye hain -->
 <!-- PROFILE: 3 ALAG PHOTO - shop_logo -> logo, shop_cover -> banner, shop_owner -> ownerPhotoUrl - teeno alag input, alag ID -->
 <!-- RULE V5: shopId SIRF URL se aayega. Is file me koi bhi browser storage use NAHI hoga. -->
@@ -8,6 +8,7 @@
 <!--   Ab Location Status + Map + Circle wala button hai - Dabate hi ../common/profile/shop-location.html?shopId=XXX khulega - Map pe point + Radius -> POST /api/location/shop -> Nearby me dikhegi. -->
 <!--   dashboard.js ke purane saveLocation / loadLocation ko haath nahi lagaya - Wo if ($('saveLocationBtn')) check karke chalte hain, button hi nahi hai toh listener lagega hi nahi, crash nahi hoga. -->
 <!-- ANALYTICS V7 - NAYA: Sidebar + Quick Actions me Analytics wala button joda - Dabate hi ../common/analytics/analytics.html?shopId=XXX khulega. Baaki kuch nahi badla. data-page me nahi dala, warna Dashboard ka page-switch toot jata. -->
+<!-- CODE 12 FIX: location.js + shop-banner-ext.js hatayi - dono Loader se takrati thi. Share ab openQrShare() wale naye modal se khulega. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -369,8 +370,8 @@ document.addEventListener('DOMContentLoaded', function(){ refreshAcharLocation()
 <script src="../common/core/dashboard-core.js"></script>
 <script src="../common/core/user-core.js"></script>
 <script src="../common/js/shop-toggle.js"></script>
-<script src="../common/js/location.js"></script>
-<script src="../common/js/shop-banner-ext.js"></script>
+<!-- CODE 12: location.js HATAYI - purana Current Location wala, ShopLocation se takrata tha -->
+<!-- CODE 12: shop-banner-ext.js HATAYI - Loader wale banner se takrati thi, double banner banta tha -->
 <script src="../common/products/product-manager.js"></script>
 <script src="../common/inventory/inventory.js"></script>
 <script src="../common/orders/orders.js"></script>
@@ -434,7 +435,11 @@ document.addEventListener('DOMContentLoaded', function(){ refreshAcharLocation()
     var an2 = document.getElementById('analyticsBtn'); if (an2) an2.addEventListener('click', goAnalytics);
     var shareUrl = location.origin + '/shop-templates/achar-shop/customer-view.html?shopId=' + encodeURIComponent(shopId);
     window.SHOP_SHARE_URL = shareUrl;
+    window.__SAMAN_SHOP_LINK__ = shareUrl;
+    window.__SAMAN_SHOP_NAME__ = 'Achar Shop';
     var doShare = function(){
+      // CODE 12: Naya QR Share modal - Loader ne qr-share-modal.html load kiya hoga
+      if (window.openQrShare) { window.openQrShare('Achar Shop', shareUrl); return; }
       try{
         if (window.ShareCore && window.ShareCore.share) return window.ShareCore.share({ title: 'Achar Shop', text: 'Ghar ka bana shuddh achar - order karo', url: shareUrl });
         if (window.WhatsAppShare && window.WhatsAppShare.share) return window.WhatsAppShare.share(shareUrl, 'Ghar ka bana shuddh achar - order karo');
